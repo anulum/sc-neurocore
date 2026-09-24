@@ -35,7 +35,10 @@ def test_catalogue_formal_smoke_pass(sby_name: str) -> None:
     solver = "cvc5" if "smtbmc cvc5" in sby_text else "z3"
     if shutil.which(solver) is None:
         pytest.skip(f"{solver} not on PATH")
-    timeout_seconds = 900 if sby_name == "sc_dpineuron.sby" else 120
+    # The DPI job's wider saturating datapath needs about 8 minutes of cvc5
+    # time and 5 GB (933 s wall measured on a loaded workstation), so it gets
+    # twice that; the other jobs finish in seconds.
+    timeout_seconds = 1800 if sby_name == "sc_dpineuron.sby" else 120
     proc = subprocess.run(
         ["sby", "-f", sby_name],
         cwd=CATALOGUE,

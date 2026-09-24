@@ -28,7 +28,7 @@ wire signed [127:0] _mul0 = P_BETA * (I_t - P_THETA);
 wire signed [63:0] _t0 = (_mul0 >>> 32);
 // _sigmoid_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _sigmoid_lut1_arg = _t0;
-wire signed [64:0] _sigmoid_lut1_raw = (({{_sigmoid_lut1_arg[63]}, _sigmoid_lut1_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _sigmoid_lut1_raw = ($signed({{_sigmoid_lut1_arg[63]}, _sigmoid_lut1_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _sigmoid_lut1_idx = (_sigmoid_lut1_raw < 0) ? 8'd0 : ((_sigmoid_lut1_raw > 65'sd255) ? 8'd255 : _sigmoid_lut1_raw[7:0]);
 reg signed [63:0] _sigmoid_lut1_out;
 always @(*) case (_sigmoid_lut1_idx)
@@ -290,23 +290,23 @@ always @(*) case (_sigmoid_lut1_idx)
     8'd255: _sigmoid_lut1_out = 64'sd4294966748;
     default: _sigmoid_lut1_out = 64'sd0;
 endcase
-wire signed [63:0] _dop2 = ((-r_reg) + _sigmoid_lut1_out);
-wire signed [63:0] _dden2 = P_TAU;
-wire signed [127:0] _dnum2 = $signed({{64{_dop2[63]}}, _dop2}) <<< 32;
-wire signed [127:0] _div2 = _dnum2 / $signed({{64{_dden2[63]}}, _dden2});
+wire signed [127:0] _dop2 = ((-r_reg) + _sigmoid_lut1_out);
+wire signed [127:0] _dden2 = P_TAU;
+wire signed [127:0] _dnum2 = _dop2 <<< 32;
+wire signed [127:0] _div2 = _dnum2 / _dden2;
 wire signed [63:0] _dres2 = _div2[63:0];
 wire signed [127:0] _mul3 = _dres2 * 64'sd429496730;
 wire signed [63:0] _t1 = (_mul3 >>> 32);
-wire signed [63:0] _dop4 = (-64'sd4294967296);
-wire signed [63:0] _dden4 = P_TAU;
-wire signed [127:0] _dnum4 = $signed({{64{_dop4[63]}}, _dop4}) <<< 32;
-wire signed [127:0] _div4 = _dnum4 / $signed({{64{_dden4[63]}}, _dden4});
+wire signed [127:0] _dop4 = (-64'sd4294967296);
+wire signed [127:0] _dden4 = P_TAU;
+wire signed [127:0] _dnum4 = _dop4 <<< 32;
+wire signed [127:0] _div4 = _dnum4 / _dden4;
 wire signed [63:0] _dres4 = _div4[63:0];
 wire signed [127:0] _mul5 = _dres4 * 64'sd429496730;
 wire signed [63:0] _t2 = (_mul5 >>> 32);
 // _exprel_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exprel_lut6_arg = _t2;
-wire signed [64:0] _exprel_lut6_raw = (({{_exprel_lut6_arg[63]}, _exprel_lut6_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exprel_lut6_raw = ($signed({{_exprel_lut6_arg[63]}, _exprel_lut6_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exprel_lut6_idx = (_exprel_lut6_raw < 0) ? 8'd0 : ((_exprel_lut6_raw > 65'sd255) ? 8'd255 : _exprel_lut6_raw[7:0]);
 reg signed [63:0] _exprel_lut6_out;
 always @(*) case (_exprel_lut6_idx)

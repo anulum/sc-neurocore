@@ -26,22 +26,22 @@ module sc_rulkov_map #(
 reg signed [31:0] x_reg;
 reg signed [31:0] y_reg;
 
-wire signed [31:0] _dop0 = P_ALPHA;
-wire signed [31:0] _dden0 = (32'sd65536 - x_reg);
-wire signed [63:0] _dnum0 = $signed({{32{_dop0[31]}}, _dop0}) <<< 16;
-wire signed [63:0] _div0 = _dnum0 / $signed({{32{_dden0[31]}}, _dden0});
+wire signed [63:0] _dop0 = P_ALPHA;
+wire signed [63:0] _dden0 = (32'sd65536 - x_reg);
+wire signed [63:0] _dnum0 = _dop0 <<< 16;
+wire signed [63:0] _div0 = _dnum0 / _dden0;
 wire signed [31:0] _dres0 = _div0[31:0];
 wire signed [63:0] _mul1 = P_MU * (x_reg + 32'sd65536);
 wire signed [31:0] _t0 = (_mul1 >>> 16);
 wire signed [63:0] _mul2 = P_MU * P_SIGMA;
 wire signed [31:0] _t1 = (_mul2 >>> 16);
 
-wire signed [31:0] dx = (((x_reg <= 32'sd0)) ? (((_dres0 + y_reg) + I_t)) : ((((x_reg < ((P_ALPHA + y_reg) + I_t))) ? (((P_ALPHA + y_reg) + I_t)) : ((-32'sd65536)))));
-wire signed [31:0] dy = ((y_reg - _t0) + _t1);
+wire signed [63:0] dx = (((((x_reg) + 64'sd0) <= ((32'sd0) + 64'sd0))) ? (((_dres0 + y_reg) + I_t)) : ((((((x_reg) + 64'sd0) < ((((P_ALPHA + y_reg) + I_t)) + 64'sd0))) ? (((P_ALPHA + y_reg) + I_t)) : ((-32'sd65536)))));
+wire signed [63:0] dy = ((y_reg - _t0) + _t1);
 
-wire signed [32:0] x_raw = dx;
+wire signed [63:0] x_raw = dx;
 wire signed [31:0] x_next = (x_raw > 33'sd2147483647) ? 32'sd2147483647 : (x_raw < (-33'sd2147483648)) ? (-32'sd2147483648) : x_raw[31:0];
-wire signed [32:0] y_raw = dy;
+wire signed [63:0] y_raw = dy;
 wire signed [31:0] y_next = (y_raw > 33'sd2147483647) ? 32'sd2147483647 : (y_raw < (-33'sd2147483648)) ? (-32'sd2147483648) : y_raw[31:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -52,7 +52,7 @@ always @(posedge clk or negedge rst_n) begin
         y_out <= 32'sd4294770688;
         spike_out <= 1'b0;
     end else begin
-        if ((32'sd0 < x_reg) && (x_reg >= ((P_ALPHA + y_reg) + I_t))) begin
+        if ((((32'sd0) + 64'sd0) < ((x_reg) + 64'sd0)) && (((x_reg) + 64'sd0) >= ((((P_ALPHA + y_reg) + I_t)) + 64'sd0))) begin
             spike_out <= 1'b1;
             x_reg <= x_next;
             x_out <= x_next;

@@ -157,7 +157,7 @@ always @(posedge clk or negedge rst_n) begin
         spike_out <= 1'b0;
         _thr_prev <= 1'b0;
     end else begin
-        if (((v_next >= P_V_THRESHOLD)) && !_thr_prev) begin
+        if (((((v_next) + 32'sd0) >= ((P_V_THRESHOLD) + 32'sd0))) && !_thr_prev) begin
             spike_out <= 1'b1;
             v_reg <= v_next;
             v_out <= v_next;
@@ -174,7 +174,7 @@ always @(posedge clk or negedge rst_n) begin
             y_reg <= y_next;
             y_out <= y_next;
         end
-        _thr_prev <= ((v_next >= P_V_THRESHOLD));
+        _thr_prev <= ((((v_next) + 32'sd0) >= ((P_V_THRESHOLD) + 32'sd0)));
     end
 end
 

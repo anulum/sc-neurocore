@@ -25,7 +25,7 @@ reg signed [15:0] theta_reg;
 
 // _cos_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _cos_lut0_arg = theta_reg;
-wire signed [16:0] _cos_lut0_raw = (({{_cos_lut0_arg[15]}, _cos_lut0_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _cos_lut0_raw = ($signed({{_cos_lut0_arg[15]}, _cos_lut0_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _cos_lut0_idx = (_cos_lut0_raw < 0) ? 8'd0 : ((_cos_lut0_raw > 17'sd255) ? 8'd255 : _cos_lut0_raw[7:0]);
 reg signed [15:0] _cos_lut0_out;
 always @(*) case (_cos_lut0_idx)
@@ -289,7 +289,7 @@ always @(*) case (_cos_lut0_idx)
 endcase
 // _cos_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _cos_lut1_arg = theta_reg;
-wire signed [16:0] _cos_lut1_raw = (({{_cos_lut1_arg[15]}, _cos_lut1_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _cos_lut1_raw = ($signed({{_cos_lut1_arg[15]}, _cos_lut1_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _cos_lut1_idx = (_cos_lut1_raw < 0) ? 8'd0 : ((_cos_lut1_raw > 17'sd255) ? 8'd255 : _cos_lut1_raw[7:0]);
 reg signed [15:0] _cos_lut1_out;
 always @(*) case (_cos_lut1_idx)
@@ -562,7 +562,7 @@ wire signed [15:0] _mod5_remainder = $signed(_mod5_dividend) % $signed(16'sd1608
 wire signed [15:0] _mod5 = (_mod5_remainder < 0) ? (_mod5_remainder + 16'sd1608) : _mod5_remainder;
 // _cos_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _cos_lut6_arg = theta_reg;
-wire signed [16:0] _cos_lut6_raw = (({{_cos_lut6_arg[15]}, _cos_lut6_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _cos_lut6_raw = ($signed({{_cos_lut6_arg[15]}, _cos_lut6_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _cos_lut6_idx = (_cos_lut6_raw < 0) ? 8'd0 : ((_cos_lut6_raw > 17'sd255) ? 8'd255 : _cos_lut6_raw[7:0]);
 reg signed [15:0] _cos_lut6_out;
 always @(*) case (_cos_lut6_idx)
@@ -826,7 +826,7 @@ always @(*) case (_cos_lut6_idx)
 endcase
 // _cos_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _cos_lut7_arg = theta_reg;
-wire signed [16:0] _cos_lut7_raw = (({{_cos_lut7_arg[15]}, _cos_lut7_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _cos_lut7_raw = ($signed({{_cos_lut7_arg[15]}, _cos_lut7_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _cos_lut7_idx = (_cos_lut7_raw < 0) ? 8'd0 : ((_cos_lut7_raw > 17'sd255) ? 8'd255 : _cos_lut7_raw[7:0]);
 reg signed [15:0] _cos_lut7_out;
 always @(*) case (_cos_lut7_idx)
@@ -1095,9 +1095,9 @@ wire signed [15:0] _t4 = (_mul9 >>> 8);
 wire signed [31:0] _mul10 = 16'sd26 * ((16'sd256 - _cos_lut6_out) + _t4);
 wire signed [15:0] _t5 = (_mul10 >>> 8);
 
-wire signed [15:0] dtheta = _mod5;
+wire signed [31:0] dtheta = _mod5;
 
-wire signed [16:0] theta_raw = dtheta;
+wire signed [31:0] theta_raw = dtheta;
 wire signed [15:0] theta_next = (theta_raw > 17'sd32767) ? 16'sd32767 : (theta_raw < (-17'sd32768)) ? (-16'sd32768) : theta_raw[15:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -1106,7 +1106,7 @@ always @(posedge clk or negedge rst_n) begin
         theta_out <= 16'sd0;
         spike_out <= 1'b0;
     end else begin
-        if ((theta_reg < P_THETA_THRESHOLD) && (P_THETA_THRESHOLD <= (theta_reg + _t5))) begin
+        if ((((theta_reg) + 32'sd0) < ((P_THETA_THRESHOLD) + 32'sd0)) && (((P_THETA_THRESHOLD) + 32'sd0) <= (((theta_reg + _t5)) + 32'sd0))) begin
             spike_out <= 1'b1;
             theta_reg <= theta_next;
             theta_out <= theta_next;

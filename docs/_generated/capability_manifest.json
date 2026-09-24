@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4997
+    "test_files": 4998
   },
   "documentation": {
     "public_pages": [
@@ -4088,6 +4088,7 @@
       "tests/test_callbacks.py",
       "tests/test_cargo_lib_test_fixture.py",
       "tests/test_catalogue_formal_emitter_inventory.py",
+      "tests/test_catalogue_formal_inventory_json.py",
       "tests/test_catalogue_formal_other_precision_jobs.py",
       "tests/test_catalogue_formal_q3232_jobs.py",
       "tests/test_catalogue_formal_smoke.py",

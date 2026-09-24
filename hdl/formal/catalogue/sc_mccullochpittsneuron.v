@@ -27,7 +27,7 @@ always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         spike_out <= 1'b0;
     end else begin
-        if ((I_t >= P_THETA)) begin
+        if ((((I_t) + 64'sd0) >= ((P_THETA) + 64'sd0))) begin
             spike_out <= 1'b1;
         end else begin
             spike_out <= 1'b0;

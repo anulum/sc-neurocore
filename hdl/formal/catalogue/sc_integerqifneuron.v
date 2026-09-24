@@ -39,10 +39,12 @@ wire signed [31:0] _t1 = _mul2;
 wire signed [31:0] _floordiv3_dividend = _t1;
 wire signed [31:0] _floordiv3_integer = $signed(_floordiv3_dividend) >>> 3;
 wire signed [31:0] _floordiv3 = _floordiv3_integer;
+wire signed [63:0] _reset_raw_v = P_V_RESET;
+wire signed [31:0] _reset_v = (_reset_raw_v > 33'sd2147483647) ? 32'sd2147483647 : (_reset_raw_v < (-33'sd2147483648)) ? (-32'sd2147483648) : _reset_raw_v[31:0];
 
-wire signed [31:0] dv = ((P_V_MIN > (v_reg + ((((v_reg < P_BRANCH_POINT)) ? (_floordiv1) : (_floordiv3)) + I_t))) ? P_V_MIN : (v_reg + ((((v_reg < P_BRANCH_POINT)) ? (_floordiv1) : (_floordiv3)) + I_t)));
+wire signed [63:0] dv = ((((P_V_MIN) + 64'sd0) > (((v_reg + ((((((v_reg) + 64'sd0) < ((P_BRANCH_POINT) + 64'sd0))) ? (_floordiv1) : (_floordiv3)) + I_t))) + 64'sd0)) ? P_V_MIN : (v_reg + ((((((v_reg) + 64'sd0) < ((P_BRANCH_POINT) + 64'sd0))) ? (_floordiv1) : (_floordiv3)) + I_t)));
 
-wire signed [32:0] v_raw = dv;
+wire signed [63:0] v_raw = dv;
 wire signed [31:0] v_next = (v_raw > 33'sd2147483647) ? 32'sd2147483647 : (v_raw < (-33'sd2147483648)) ? (-32'sd2147483648) : v_raw[31:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -51,10 +53,10 @@ always @(posedge clk or negedge rst_n) begin
         v_out <= 32'sd128;
         spike_out <= 1'b0;
     end else begin
-        if ((v_next > P_V_MAX)) begin
+        if ((((v_next) + 64'sd0) > ((P_V_MAX) + 64'sd0))) begin
             spike_out <= 1'b1;
-            v_reg <= P_V_RESET;
-            v_out <= P_V_RESET;
+            v_reg <= _reset_v;
+            v_out <= _reset_v;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

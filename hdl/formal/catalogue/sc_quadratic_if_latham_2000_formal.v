@@ -33,8 +33,6 @@ module sc_quadratic_if_latham_2000_formal (
 
     always @(posedge clk) begin
         if (past_valid && rst_n) begin
-            assert ($signed(v_out) >= -32'sd2147483648);
-            assert ($signed(v_out) <= 32'sd2147483647);
             if (spike_out)
                 assert (v_out == -32'sd196608);
         end

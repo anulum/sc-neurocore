@@ -33,16 +33,16 @@ wire signed [127:0] _mul1 = P_B * P_B;
 wire signed [63:0] _t1 = (_mul1 >>> 32);
 wire signed [127:0] _mul2 = P_OMEGA * P_OMEGA;
 wire signed [63:0] _t2 = (_mul2 >>> 32);
-wire signed [63:0] _dop3 = _t0;
-wire signed [63:0] _dden3 = (_t1 + _t2);
-wire signed [127:0] _dnum3 = $signed({{64{_dop3[63]}}, _dop3}) <<< 32;
-wire signed [127:0] _div3 = _dnum3 / $signed({{64{_dden3[63]}}, _dden3});
+wire signed [127:0] _dop3 = _t0;
+wire signed [127:0] _dden3 = (_t1 + _t2);
+wire signed [127:0] _dnum3 = _dop3 <<< 32;
+wire signed [127:0] _div3 = _dnum3 / _dden3;
 wire signed [63:0] _dres3 = _div3[63:0];
 wire signed [127:0] _mul4 = P_B * P_DT;
 wire signed [63:0] _t3 = (_mul4 >>> 32);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut5_arg = _t3;
-wire signed [64:0] _exp_lut5_raw = (({{_exp_lut5_arg[63]}, _exp_lut5_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut5_raw = ($signed({{_exp_lut5_arg[63]}, _exp_lut5_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut5_idx = (_exp_lut5_raw < 0) ? 8'd0 : ((_exp_lut5_raw > 65'sd255) ? 8'd255 : _exp_lut5_raw[7:0]);
 reg signed [63:0] _exp_lut5_out;
 always @(*) case (_exp_lut5_idx)
@@ -310,16 +310,16 @@ wire signed [127:0] _mul7 = P_B * P_B;
 wire signed [63:0] _t5 = (_mul7 >>> 32);
 wire signed [127:0] _mul8 = P_OMEGA * P_OMEGA;
 wire signed [63:0] _t6 = (_mul8 >>> 32);
-wire signed [63:0] _dop9 = _t4;
-wire signed [63:0] _dden9 = (_t5 + _t6);
-wire signed [127:0] _dnum9 = $signed({{64{_dop9[63]}}, _dop9}) <<< 32;
-wire signed [127:0] _div9 = _dnum9 / $signed({{64{_dden9[63]}}, _dden9});
+wire signed [127:0] _dop9 = _t4;
+wire signed [127:0] _dden9 = (_t5 + _t6);
+wire signed [127:0] _dnum9 = _dop9 <<< 32;
+wire signed [127:0] _div9 = _dnum9 / _dden9;
 wire signed [63:0] _dres9 = _div9[63:0];
 wire signed [127:0] _mul10 = P_OMEGA * P_DT;
 wire signed [63:0] _t7 = (_mul10 >>> 32);
 // _cos_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _cos_lut11_arg = _t7;
-wire signed [64:0] _cos_lut11_raw = (({{_cos_lut11_arg[63]}, _cos_lut11_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _cos_lut11_raw = ($signed({{_cos_lut11_arg[63]}, _cos_lut11_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _cos_lut11_idx = (_cos_lut11_raw < 0) ? 8'd0 : ((_cos_lut11_raw > 65'sd255) ? 8'd255 : _cos_lut11_raw[7:0]);
 reg signed [63:0] _cos_lut11_out;
 always @(*) case (_cos_lut11_idx)
@@ -589,16 +589,16 @@ wire signed [127:0] _mul14 = P_B * P_B;
 wire signed [63:0] _t10 = (_mul14 >>> 32);
 wire signed [127:0] _mul15 = P_OMEGA * P_OMEGA;
 wire signed [63:0] _t11 = (_mul15 >>> 32);
-wire signed [63:0] _dop16 = _t9;
-wire signed [63:0] _dden16 = (_t10 + _t11);
-wire signed [127:0] _dnum16 = $signed({{64{_dop16[63]}}, _dop16}) <<< 32;
-wire signed [127:0] _div16 = _dnum16 / $signed({{64{_dden16[63]}}, _dden16});
+wire signed [127:0] _dop16 = _t9;
+wire signed [127:0] _dden16 = (_t10 + _t11);
+wire signed [127:0] _dnum16 = _dop16 <<< 32;
+wire signed [127:0] _div16 = _dnum16 / _dden16;
 wire signed [63:0] _dres16 = _div16[63:0];
 wire signed [127:0] _mul17 = P_OMEGA * P_DT;
 wire signed [63:0] _t12 = (_mul17 >>> 32);
 // _sin_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _sin_lut18_arg = _t12;
-wire signed [64:0] _sin_lut18_raw = (({{_sin_lut18_arg[63]}, _sin_lut18_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _sin_lut18_raw = ($signed({{_sin_lut18_arg[63]}, _sin_lut18_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _sin_lut18_idx = (_sin_lut18_raw < 0) ? 8'd0 : ((_sin_lut18_raw > 65'sd255) ? 8'd255 : _sin_lut18_raw[7:0]);
 reg signed [63:0] _sin_lut18_out;
 always @(*) case (_sin_lut18_idx)
@@ -870,16 +870,16 @@ wire signed [127:0] _mul22 = P_B * P_B;
 wire signed [63:0] _t16 = (_mul22 >>> 32);
 wire signed [127:0] _mul23 = P_OMEGA * P_OMEGA;
 wire signed [63:0] _t17 = (_mul23 >>> 32);
-wire signed [63:0] _dop24 = _t15;
-wire signed [63:0] _dden24 = (_t16 + _t17);
-wire signed [127:0] _dnum24 = $signed({{64{_dop24[63]}}, _dop24}) <<< 32;
-wire signed [127:0] _div24 = _dnum24 / $signed({{64{_dden24[63]}}, _dden24});
+wire signed [127:0] _dop24 = _t15;
+wire signed [127:0] _dden24 = (_t16 + _t17);
+wire signed [127:0] _dnum24 = _dop24 <<< 32;
+wire signed [127:0] _div24 = _dnum24 / _dden24;
 wire signed [63:0] _dres24 = _div24[63:0];
 wire signed [127:0] _mul25 = P_B * P_DT;
 wire signed [63:0] _t18 = (_mul25 >>> 32);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut26_arg = _t18;
-wire signed [64:0] _exp_lut26_raw = (({{_exp_lut26_arg[63]}, _exp_lut26_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut26_raw = ($signed({{_exp_lut26_arg[63]}, _exp_lut26_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut26_idx = (_exp_lut26_raw < 0) ? 8'd0 : ((_exp_lut26_raw > 65'sd255) ? 8'd255 : _exp_lut26_raw[7:0]);
 reg signed [63:0] _exp_lut26_out;
 always @(*) case (_exp_lut26_idx)
@@ -1147,16 +1147,16 @@ wire signed [127:0] _mul28 = P_B * P_B;
 wire signed [63:0] _t20 = (_mul28 >>> 32);
 wire signed [127:0] _mul29 = P_OMEGA * P_OMEGA;
 wire signed [63:0] _t21 = (_mul29 >>> 32);
-wire signed [63:0] _dop30 = _t19;
-wire signed [63:0] _dden30 = (_t20 + _t21);
-wire signed [127:0] _dnum30 = $signed({{64{_dop30[63]}}, _dop30}) <<< 32;
-wire signed [127:0] _div30 = _dnum30 / $signed({{64{_dden30[63]}}, _dden30});
+wire signed [127:0] _dop30 = _t19;
+wire signed [127:0] _dden30 = (_t20 + _t21);
+wire signed [127:0] _dnum30 = _dop30 <<< 32;
+wire signed [127:0] _div30 = _dnum30 / _dden30;
 wire signed [63:0] _dres30 = _div30[63:0];
 wire signed [127:0] _mul31 = P_OMEGA * P_DT;
 wire signed [63:0] _t22 = (_mul31 >>> 32);
 // _sin_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _sin_lut32_arg = _t22;
-wire signed [64:0] _sin_lut32_raw = (({{_sin_lut32_arg[63]}, _sin_lut32_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _sin_lut32_raw = ($signed({{_sin_lut32_arg[63]}, _sin_lut32_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _sin_lut32_idx = (_sin_lut32_raw < 0) ? 8'd0 : ((_sin_lut32_raw > 65'sd255) ? 8'd255 : _sin_lut32_raw[7:0]);
 reg signed [63:0] _sin_lut32_out;
 always @(*) case (_sin_lut32_idx)
@@ -1426,16 +1426,16 @@ wire signed [127:0] _mul35 = P_B * P_B;
 wire signed [63:0] _t25 = (_mul35 >>> 32);
 wire signed [127:0] _mul36 = P_OMEGA * P_OMEGA;
 wire signed [63:0] _t26 = (_mul36 >>> 32);
-wire signed [63:0] _dop37 = _t24;
-wire signed [63:0] _dden37 = (_t25 + _t26);
-wire signed [127:0] _dnum37 = $signed({{64{_dop37[63]}}, _dop37}) <<< 32;
-wire signed [127:0] _div37 = _dnum37 / $signed({{64{_dden37[63]}}, _dden37});
+wire signed [127:0] _dop37 = _t24;
+wire signed [127:0] _dden37 = (_t25 + _t26);
+wire signed [127:0] _dnum37 = _dop37 <<< 32;
+wire signed [127:0] _div37 = _dnum37 / _dden37;
 wire signed [63:0] _dres37 = _div37[63:0];
 wire signed [127:0] _mul38 = P_OMEGA * P_DT;
 wire signed [63:0] _t27 = (_mul38 >>> 32);
 // _cos_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _cos_lut39_arg = _t27;
-wire signed [64:0] _cos_lut39_raw = (({{_cos_lut39_arg[63]}, _cos_lut39_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _cos_lut39_raw = ($signed({{_cos_lut39_arg[63]}, _cos_lut39_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _cos_lut39_idx = (_cos_lut39_raw < 0) ? 8'd0 : ((_cos_lut39_raw > 65'sd255) ? 8'd255 : _cos_lut39_raw[7:0]);
 reg signed [63:0] _cos_lut39_out;
 always @(*) case (_cos_lut39_idx)
@@ -1701,13 +1701,17 @@ wire signed [127:0] _mul40 = (y_reg - _dres37) * _cos_lut39_out;
 wire signed [63:0] _t28 = (_mul40 >>> 32);
 wire signed [127:0] _mul41 = _exp_lut26_out * (_t23 + _t28);
 wire signed [63:0] _t29 = (_mul41 >>> 32);
+wire signed [127:0] _reset_raw_x = 64'sd0;
+wire signed [63:0] _reset_x = (_reset_raw_x > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_x < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_x[63:0];
+wire signed [127:0] _reset_raw_y = P_V_THRESHOLD;
+wire signed [63:0] _reset_y = (_reset_raw_y > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_y < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_y[63:0];
 
-wire signed [63:0] dx = (_dres3 + _t14);
-wire signed [63:0] dy = (_dres24 + _t29);
+wire signed [127:0] dx = (_dres3 + _t14);
+wire signed [127:0] dy = (_dres24 + _t29);
 
-wire signed [64:0] x_raw = dx;
+wire signed [127:0] x_raw = dx;
 wire signed [63:0] x_next = (x_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (x_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : x_raw[63:0];
-wire signed [64:0] y_raw = dy;
+wire signed [127:0] y_raw = dy;
 wire signed [63:0] y_next = (y_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (y_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : y_raw[63:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -1718,12 +1722,12 @@ always @(posedge clk or negedge rst_n) begin
         y_out <= 64'sd0;
         spike_out <= 1'b0;
     end else begin
-        if ((y_reg < P_V_THRESHOLD) && (P_V_THRESHOLD <= y_next)) begin
+        if ((((y_reg) + 128'sd0) < ((P_V_THRESHOLD) + 128'sd0)) && (((P_V_THRESHOLD) + 128'sd0) <= ((y_next) + 128'sd0))) begin
             spike_out <= 1'b1;
-            x_reg <= 64'sd0;
-            x_out <= 64'sd0;
-            y_reg <= P_V_THRESHOLD;
-            y_out <= P_V_THRESHOLD;
+            x_reg <= _reset_x;
+            x_out <= _reset_x;
+            y_reg <= _reset_y;
+            y_out <= _reset_y;
         end else begin
             spike_out <= 1'b0;
             x_reg <= x_next;

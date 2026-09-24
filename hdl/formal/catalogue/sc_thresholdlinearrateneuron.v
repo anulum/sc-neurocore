@@ -23,12 +23,12 @@ module sc_thresholdlinearrateneuron #(
 
 reg signed [31:0] r_reg;
 
-wire signed [63:0] _mul0 = P_GAIN * ((32'sd0 > (I_t - P_THETA)) ? 32'sd0 : (I_t - P_THETA));
+wire signed [63:0] _mul0 = P_GAIN * ((((32'sd0) + 64'sd0) > (((I_t - P_THETA)) + 64'sd0)) ? 32'sd0 : (I_t - P_THETA));
 wire signed [31:0] _t0 = (_mul0 >>> 16);
 
-wire signed [31:0] dr = _t0;
+wire signed [63:0] dr = _t0;
 
-wire signed [32:0] r_raw = dr;
+wire signed [63:0] r_raw = dr;
 wire signed [31:0] r_next = (r_raw > 33'sd2147483647) ? 32'sd2147483647 : (r_raw < (-33'sd2147483648)) ? (-32'sd2147483648) : r_raw[31:0];
 
 always @(posedge clk or negedge rst_n) begin

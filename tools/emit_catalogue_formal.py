@@ -5,14 +5,22 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Emit SymbiYosys jobs for dual-axis perfect catalogue models
+# SC-NeuroCore — Emit SymbiYosys jobs for declared dual-axis perfect catalogue models
 
-"""Emit schema→RTL + formal wrappers + ``.sby`` for dual-axis perfect models.
+"""Emit schema→RTL + formal wrappers + ``.sby`` for declared dual-axis perfect models.
 
-Only models with ``is_perfect`` (science S5 + silicon ≥ target H) are enrolled.
-Each job proves reset hygiene and spike reachability on the *committed* equation-
-compiler RTL (Q8.8 by default, with explicit per-schema overrides), without hierarchical ``uut.*`` probes so
-``default_nettype none`` stays clean.
+Models whose descriptors declare ``is_perfect`` (science S5 + silicon ≥ target
+H) are enrolled; enrolment follows the declaration and does not verify it. Each
+generated job checks bounded safety properties through public ports only —
+reset values and, where configured, event silence or a spike reset packet — on
+the committed equation-compiler RTL (Q8.8 by default, with explicit per-schema
+overrides), without hierarchical ``uut.*`` probes so ``default_nettype none``
+stays clean. Curated jobs keep their hand-written harness.
+
+``inventory.json`` states for every job what is checked, under which
+assumptions, to which depth, and what the job does not establish: equivalence
+with the model or the bit-true kernel, behaviour beyond the depth, and, for a
+property guarded by an event, whether the event was shown reachable.
 
 Usage
 -----
@@ -27,6 +35,7 @@ Outputs land under ``hdl/formal/catalogue/``.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shutil
 
@@ -35,6 +44,10 @@ import subprocess  # nosec B404
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sc_neurocore.neurons.equation_builder import EquationNeuron
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "hdl" / "formal" / "catalogue"
@@ -45,7 +58,6 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
     "AlphaNeuron": "alpha",
     "SCClippedLogisticBurstingMapNeuron": "sc_clipped_logistic_bursting_map",
-    "COBALIFNeuron": "coba_lif",
     "ConnorStevensNeuron": "connor_stevens",
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
     "DPINeuron": "dpi_neuron",
@@ -100,6 +112,7 @@ CURATED_CLASS_TO_MODULE: dict[str, str] = {
     "AmariNeuralField": "sc_amari_field",
     "BrunelWangNeuron": "sc_brunel_wang",
     "CazellesMapNeuron": "sc_cazelles_map",
+    "COBALIFNeuron": "sc_cobalifneuron",
     "ChialvoMapNeuron": "sc_chialvo_map",
     "CompteWMNeuron": "sc_compte_wm",
     "EnergyLIFNeuron": "energy_lif",
@@ -122,12 +135,23 @@ CURATED_CLASS_TO_MODULE: dict[str, str] = {
 
 CURATED_CLASS_TO_SCHEMA: dict[str, str] = {
     "AdExNeuron": "adex",
+    "AiharaMapNeuron": "aihara_map",
+    "AmariNeuralField": "amari_neural_field",
+    "BrunelWangNeuron": "brunel_wang",
     "CazellesMapNeuron": "cazelles_map",
     "ChialvoMapNeuron": "chialvo_map",
+    "COBALIFNeuron": "coba_lif",
+    "CompteWMNeuron": "compte_wm",
+    "EnergyLIFNeuron": "energy_lif",
     "ExpIFNeuron": "exp_if",
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
+    "LapicqueNeuron": "lapicque",
+    "MATNeuron": "mat",
+    "NagumoSatoMapNeuron": "nagumo_sato_map",
+    "NonResettingLIFNeuron": "non_resetting_lif",
     "PerfectIntegratorNeuron": "perfect_integrator",
     "QuadraticIFNeuron": "quadratic_if",
+    "SigmaDeltaNeuron": "sigma_delta",
     "ThetaNeuron": "theta",
     "SCSymmetricQuadraticIFNeuron": "sc_symmetric_quadratic_if",
 }
@@ -170,24 +194,33 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
 # BMC depth: small for huge LUT models; deeper for compact IF cores.
 DEPTH_BY_SCHEMA: dict[str, int] = {
     "adaptive_threshold_if": 4,
+    "aihara_map": 6,
     "alpha": 4,
+    "amari_neural_field": 12,
+    "brunel_wang": 4,
     "cazelles_map": 4,
     "sc_clipped_logistic_bursting_map": 4,
     "chialvo_map": 4,
-    "coba_lif": 4,
+    "coba_lif": 8,
     "connor_stevens": 4,
+    "compte_wm": 4,
     "courage_nekorkin_map": 4,
     "dpi_neuron": 8,
     "ermentrout_kopell_map_neuron": 4,
     "ermentrout_kopell_pop": 4,
+    "energy_lif": 2,
     "escape_rate": 4,
     "exp_if": 4,
     "hodgkin_huxley": 4,
     "ibarz_tanaka_map": 4,
     "iqif": 4,
     "jansen_rit": 4,
+    "lapicque": 20,
+    "mat": 12,
     "mcculloch_pitts": 4,
     "morris_lecar": 4,
+    "nagumo_sato_map": 12,
+    "non_resetting_lif": 12,
     "fitzhugh_nagumo": 4,
     "fitzhugh_rinzel": 4,
     "hindmarsh_rose": 4,
@@ -204,6 +237,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
+    "sigma_delta": 12,
     "theta": 110,
     "terman_wang": 4,
     "threshold_linear_rate": 4,
@@ -225,7 +259,6 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "cazelles_map",
         "sc_clipped_logistic_bursting_map",
         "chialvo_map",
-        "coba_lif",
         "courage_nekorkin_map",
         "dpi_neuron",
         "ermentrout_kopell_map_neuron",
@@ -295,11 +328,16 @@ FLATTEN_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wilson_cowan"})
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "adaptive_threshold_if": (64, 32),
+    "aihara_map": (32, 24),
     "alpha": (64, 32),
+    "amari_neural_field": (32, 16),
+    "brunel_wang": (32, 16),
     "coba_lif": (48, 24),
     "connor_stevens": (32, 16),
+    "compte_wm": (32, 16),
     "courage_nekorkin_map": (64, 32),
     "dpi_neuron": (32, 16),
+    "energy_lif": (64, 32),
     "ermentrout_kopell_pop": (64, 32),
     "escape_rate": (48, 24),
     "exp_if": (64, 32),
@@ -308,10 +346,14 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "ibarz_tanaka_map": (32, 16),
     "iqif": (32, 0),
     "jansen_rit": (64, 32),
+    "lapicque": (64, 32),
+    "mat": (64, 32),
     "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
     "mihalas_niebur": (64, 32),
     "morris_lecar": (32, 16),
+    "nagumo_sato_map": (32, 16),
+    "non_resetting_lif": (64, 32),
     "poisson": (48, 24),
     "quadratic_if": (32, 16),
     "resonate_fire": (64, 32),
@@ -321,6 +363,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "sc_scaled_reset_adaptive_if": (32, 16),
     "sc_clipped_rational_recovery_map": (64, 32),
     "sigmoid_rate": (64, 32),
+    "sigma_delta": (64, 32),
     "threshold_linear_rate": (32, 16),
     # Ermentrout-Kopell phase and fixed-circle envelope use Q16.16.
     "theta": (32, 16),
@@ -385,6 +428,11 @@ class EmitResult:
     depth: int
     data_width: int
     fraction: int
+    origin: str = "generated"
+    solver: str = "z3"
+    properties: tuple[str, ...] = ()
+    assumptions: tuple[str, ...] = ()
+    reachability_asserted: bool = False
 
 
 def _perfect_class_names() -> list[str]:
@@ -397,10 +445,11 @@ def _perfect_class_names() -> list[str]:
     from sc_neurocore.neurons.descriptor_tiers import is_perfect
     from sc_neurocore.neurons.model_descriptor import parse_model_descriptor
 
+    mapped_classes = set(CLASS_TO_SCHEMA) | set(CURATED_CLASS_TO_SCHEMA)
     names: list[str] = []
     for path in sorted(DESC_DIR.glob("*.toml")):
         desc = parse_model_descriptor(tomllib.loads(path.read_text(encoding="utf-8")))
-        if is_perfect(desc) and desc.class_name in CLASS_TO_SCHEMA:
+        if is_perfect(desc) and desc.class_name in mapped_classes:
             names.append(desc.class_name)
     return names
 
@@ -418,7 +467,7 @@ class ModulePorts:
 
 def _parse_module_ports(rtl: str) -> ModulePorts:
     """Return module name and output ports from generated RTL."""
-    mod_match = re.search(r"module\s+(\w+)", rtl)
+    mod_match = re.search(r"(?m)^\s*module\s+(\w+)", rtl)
     if not mod_match:
         raise ValueError("generated RTL has no module declaration")
     module = mod_match.group(1)
@@ -463,9 +512,16 @@ def _formal_wrapper(
     fixed_current_word: int | None = None,
     spike_state_words: dict[str, int] | None = None,
     post_spike_state_words: dict[str, int] | None = None,
+    reset_state_words: dict[str, int] | None = None,
     evidence_label: str = "dual-axis perfect model",
 ) -> str:
-    """Build a port-only formal harness (no hierarchical probes)."""
+    """Build a port-only formal harness (no hierarchical probes).
+
+    A non-minimal harness asserts that while reset is held every public state
+    port carries its encoded initial value (``reset_state_words``). It does not
+    assert that a signed ``data_width``-bit port lies in the signed
+    ``data_width``-bit range: such a check cannot fail.
+    """
     module = ports.name
     state_port = ports.primary_state
     wire_decls: list[str] = []
@@ -559,25 +615,18 @@ def _formal_wrapper(
     else:
         if state_port is None:
             raise ValueError(f"{module}: non-minimal formal job requires a signed state output")
+        reset_values = "\n".join(
+            f"            assert ($signed({port}) == {_signed_literal(word, data_width)});"
+            for port, word in (reset_state_words or {}).items()
+        )
         formal_body = f"""
 `ifdef FORMAL
-    reg past_valid = 1'b0;
-    always @(posedge clk)
-        past_valid <= 1'b1;
-
-    // Reset hygiene: async reset clears the spike flag. Primary state may reset
-    // to a non-zero rest / init (e.g. QIF v=-1, Izhikevich vr) — do not force 0.
+    // Reset values: while reset is held the spike flag is clear and every public
+    // state port carries its encoded initial value, which need not be zero.
     always @(*) begin
         if (!rst_n) begin
             assert (spike_out == 1'b0);
-        end
-    end
-
-    // Saturation contract on the primary membrane / phase / current state.
-    always @(posedge clk) begin
-        if (past_valid && rst_n) begin
-            assert ($signed({state_port}) >= -{data_width}'sd{1 << (data_width - 1)});
-            assert ($signed({state_port}) <= {data_width}'sd{(1 << (data_width - 1)) - 1});
+{reset_values}
         end
     end
 `endif
@@ -601,6 +650,32 @@ module {module}_formal (
 {formal_body}
 endmodule
 """
+
+
+def _signed_literal(word: int, data_width: int) -> str:
+    """Write a signed word as a Verilog literal (``-W'sdN`` for a negative one)."""
+    return f"-{data_width}'sd{-word}" if word < 0 else f"{data_width}'sd{word}"
+
+
+def _reset_state_words(
+    equation_neuron: EquationNeuron, ports: ModulePorts, data_width: int, fraction: int
+) -> dict[str, int]:
+    """Return the encoded initial word of every public state port.
+
+    Each ``<var>_out`` port resets to ``round(initial * 2**fraction)`` wrapped to
+    the word, exactly as the equation compiler encodes the initial state.
+    """
+    from sc_neurocore.compiler.c_fixed_emitter import signed_q
+    from sc_neurocore.compiler.verilog_compiler_config import Q88
+    from sc_neurocore.hdl_gen._ident import sanitize_ident
+
+    q = Q88(data_width=data_width, fraction=fraction)
+    words: dict[str, int] = {}
+    for variable in equation_neuron.equations:
+        port = f"{sanitize_ident(variable, context='state variable')}_out"
+        if port in ports.signed_outputs:
+            words[port] = signed_q(q, float(equation_neuron.initial_state.get(variable, 0.0)))
+    return words
 
 
 def _sby_script(
@@ -664,10 +739,18 @@ def _emit_schema(
     sby_path = OUT_DIR / f"{module}.sby"
 
     rtl_path.write_text(rtl if rtl.endswith("\n") else rtl + "\n", encoding="utf-8")
+    minimal = schema in MINIMAL_SAFETY_SCHEMAS
+    reset_words = (
+        None
+        if minimal
+        else _reset_state_words(neuron.to_equation_neuron(), ports, data_width, fraction)
+    )
+    properties, assumptions = _generated_claims(schema, minimal=minimal, ports=ports)
+    solver = "cvc5" if schema in {"dpi_neuron", "terman_wang"} else "z3"
     formal_path.write_text(
         _formal_wrapper(
             ports,
-            minimal=schema in MINIMAL_SAFETY_SCHEMAS,
+            minimal=minimal,
             event_silent=schema in EVENT_SILENT_SCHEMAS,
             data_width=data_width,
             fixed_current_word=(
@@ -691,6 +774,7 @@ def _emit_schema(
                 if schema in FORMAL_POST_SPIKE_STATE_BY_SCHEMA
                 else None
             ),
+            reset_state_words=reset_words,
             evidence_label=evidence_label,
         ),
         encoding="utf-8",
@@ -701,7 +785,7 @@ def _emit_schema(
             depth,
             flatten=schema in FLATTEN_FORMAL_SCHEMAS,
             evidence_label=evidence_label,
-            solver="cvc5" if schema in {"dpi_neuron", "terman_wang"} else "z3",
+            solver=solver,
         ),
         encoding="utf-8",
     )
@@ -717,7 +801,35 @@ def _emit_schema(
         depth=depth,
         data_width=data_width,
         fraction=fraction,
+        solver=solver,
+        properties=properties,
+        assumptions=assumptions,
     )
+
+
+def _generated_claims(
+    schema: str, *, minimal: bool, ports: ModulePorts
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Return the properties a generated harness asserts and what it assumes."""
+    properties = ["reset clears spike_out"]
+    if not minimal:
+        properties.append("reset holds every public state port at its encoded initial value")
+    if minimal and schema in EVENT_SILENT_SCHEMAS:
+        properties.append("no spike after reset")
+    if minimal and schema in FORMAL_SPIKE_STATE_BY_SCHEMA:
+        properties.append("public state words on every spike (guarded by the spike)")
+    if minimal and schema in FORMAL_POST_SPIKE_STATE_BY_SCHEMA:
+        properties.append("spike clear and state words on the cycle after a spike")
+    fixed = minimal and schema in FORMAL_FIXED_CURRENT_BY_SCHEMA and ports.has_current_input
+    assumptions = (
+        (
+            "reset on the first cycle only",
+            f"input held at {FORMAL_FIXED_CURRENT_BY_SCHEMA[schema]!r}",
+        )
+        if fixed
+        else ("reset and input unconstrained",)
+    )
+    return tuple(properties), assumptions
 
 
 def _curated_schema(class_name: str, schema: str, module: str) -> EmitResult:
@@ -729,9 +841,13 @@ def _curated_schema(class_name: str, schema: str, module: str) -> EmitResult:
         if not path.is_file():
             raise FileNotFoundError(f"curated formal artefact is missing: {path}")
     ports = _parse_module_ports(rtl_path.read_text(encoding="utf-8"))
-    if ports.name != module or "spike_out" not in ports.bit_outputs:
+    if ports.name != module or (ports.primary_state is None and not ports.bit_outputs):
         raise ValueError(f"curated module {module} has an invalid public-port contract")
     data_width, fraction = PRECISION_BY_SCHEMA.get(schema, DEFAULT_PRECISION)
+    harness = formal_path.read_text(encoding="utf-8")
+    solver_match = re.search(r"smtbmc\s+(\w+)", sby_path.read_text(encoding="utf-8"))
+    assertions = len(re.findall(r"\bassert\s*\(", harness))
+    assumptions = len(re.findall(r"\bassume\s*\(", harness))
     return EmitResult(
         schema=schema,
         class_name=class_name,
@@ -743,6 +859,11 @@ def _curated_schema(class_name: str, schema: str, module: str) -> EmitResult:
         depth=DEPTH_BY_SCHEMA.get(schema, 20),
         data_width=data_width,
         fraction=fraction,
+        origin="curated",
+        solver=solver_match.group(1) if solver_match else "z3",
+        properties=(f"curated harness: {assertions} assertions",),
+        assumptions=(f"curated harness: {assumptions} assumptions",),
+        reachability_asserted="assert (seen_spike)" in harness,
     )
 
 
@@ -785,10 +906,13 @@ def emit_all() -> list[EmitResult]:
         )
     inventory = OUT_DIR / "INVENTORY.md"
     lines = [
-        "# Catalogue formal inventory (dual-axis perfect models)",
+        "# Catalogue formal inventory (declared dual-axis perfect models)",
         "",
         "Generated by `tools/emit_catalogue_formal.py`. Each job is a SymbiYosys BMC",
-        "harness over equation-compiler RTL for a model with science S5 + silicon H≥target.",
+        "harness over equation-compiler or explicitly curated RTL for a model whose",
+        "descriptor declares science S5 + silicon H≥target; enrolment does not verify",
+        "that declaration. Every job is a bounded safety check, not an equivalence",
+        "proof: `inventory.json` lists what each job asserts, assumes and leaves open.",
         "",
         f"Jobs: **{len(results)}**",
         "",
@@ -822,7 +946,60 @@ def emit_all() -> list[EmitResult]:
             f"{row.depth} |"
         )
     inventory.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "inventory.json").write_text(
+        json.dumps(
+            {
+                "schema_version": FORMAL_INVENTORY_SCHEMA_VERSION,
+                "enrolment": (
+                    "models whose descriptor declares science S5 and the terminal silicon "
+                    "tier; the declaration is not verified by enrolment"
+                ),
+                "jobs": [_inventory_entry(row) for row in results],
+                "retained_jobs": [_inventory_entry(row) for row in retained_results],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     return results
+
+
+FORMAL_INVENTORY_SCHEMA_VERSION = "sc-neurocore.formal-inventory.v1"
+
+
+def _inventory_entry(row: EmitResult) -> dict[str, object]:
+    """State what one job checks, under which assumptions, and what it leaves open."""
+    not_established = [
+        "equivalence with the model or with the bit-true kernel",
+        f"any behaviour after {row.depth} cycles",
+    ]
+    if row.origin == "curated":
+        not_established.append(
+            "that the RTL is the current compiler's output: a curated job checks its "
+            "committed RTL file, which this tool does not regenerate"
+        )
+    if not row.reachability_asserted:
+        not_established.append(
+            "reachability of an event: a property guarded by a spike holds vacuously "
+            "if no spike occurs within the depth"
+        )
+    return {
+        "class": row.class_name,
+        "profile": row.schema,
+        "module": row.module,
+        "origin": row.origin,
+        "q_format": f"Q{row.data_width - row.fraction}.{row.fraction}",
+        "mode": "bmc",
+        "depth": row.depth,
+        "solver": row.solver,
+        "claim": "bounded safety",
+        "properties": list(row.properties),
+        "assumptions": list(row.assumptions),
+        "reachability_asserted": row.reachability_asserted,
+        "not_established": not_established,
+    }
 
 
 def run_sby(results: list[EmitResult], *, timeout_s: int = 120) -> dict[str, str]:

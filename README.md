@@ -100,7 +100,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 207 |
 | Optional extras | 30 |
-| Python test files | 4997 |
+| Python test files | 4998 |
 | Public documentation pages | 635 |
 | GitHub Actions workflows | 20 |
 
@@ -482,8 +482,7 @@ hdl/
   formal/ (90 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **90 SymbiYosys proof jobs and 441 formal
-statements (293 assert, 112 assume, 36 cover)** under `hdl/formal/` (18
+Formal verification inventory: **90 SymbiYosys proof jobs and 447 formal statements (296 assert, 115 assume, 36 cover)** under `hdl/formal/` (18
 non-catalogue jobs + **72 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.

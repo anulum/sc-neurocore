@@ -1,0 +1,1333 @@
+{
+  "enrolment": "models whose descriptor declares science S5 and the terminal silicon tier; the declaration is not verified by enrolment",
+  "jobs": [
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "AdExNeuron",
+      "depth": 6,
+      "mode": "bmc",
+      "module": "sc_adex",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 6 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "adex",
+      "properties": [
+        "curated harness: 4 assertions"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "AdaptiveThresholdIFNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_adaptive_threshold_if",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "adaptive_threshold_if",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "AiharaMapNeuron",
+      "depth": 6,
+      "mode": "bmc",
+      "module": "sc_aihara_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 6 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "aihara_map",
+      "properties": [
+        "curated harness: 2 assertions"
+      ],
+      "q_format": "Q8.24",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "AlphaNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_alpha_synapse_lif",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "alpha",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "AmariNeuralField",
+      "depth": 12,
+      "mode": "bmc",
+      "module": "sc_amari_field",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 12 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "amari_neural_field",
+      "properties": [
+        "curated harness: 6 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 7 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "BrunelWangNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_brunel_wang",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "brunel_wang",
+      "properties": [
+        "curated harness: 5 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "COBALIFNeuron",
+      "depth": 8,
+      "mode": "bmc",
+      "module": "sc_cobalifneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 8 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate"
+      ],
+      "origin": "curated",
+      "profile": "coba_lif",
+      "properties": [
+        "curated harness: 13 assertions"
+      ],
+      "q_format": "Q24.24",
+      "reachability_asserted": true,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "CazellesMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_cazelles_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "cazelles_map",
+      "properties": [
+        "curated harness: 1 assertions"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "ChialvoMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_chialvo_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "chialvo_map",
+      "properties": [
+        "curated harness: 4 assertions"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 4 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "CompteWMNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_compte_wm",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "compte_wm",
+      "properties": [
+        "curated harness: 6 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "reset on the first cycle only",
+        "input held at 100.0"
+      ],
+      "claim": "bounded safety",
+      "class": "ConnorStevensNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_connor_stevens",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "connor_stevens",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "CourageNekorkinMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_courbage_nekorkin_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "courage_nekorkin_map",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset on the first cycle only",
+        "input held at 500.0"
+      ],
+      "claim": "bounded safety",
+      "class": "DPINeuron",
+      "depth": 8,
+      "mode": "bmc",
+      "module": "sc_dpineuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 8 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "dpi_neuron",
+      "properties": [
+        "reset clears spike_out",
+        "public state words on every spike (guarded by the spike)",
+        "spike clear and state words on the cycle after a spike"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "curated harness: 2 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "EnergyLIFNeuron",
+      "depth": 2,
+      "mode": "bmc",
+      "module": "energy_lif",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 2 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "energy_lif",
+      "properties": [
+        "curated harness: 1 assertions"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "ErmentroutKopellMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_ermentrout_kopell_map_neuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "ermentrout_kopell_map_neuron",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "ErmentroutKopellPopulation",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_ermentroutkopellpopulation",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "ermentrout_kopell_pop",
+      "properties": [
+        "reset clears spike_out",
+        "no spike after reset"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "EscapeRateNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_escaperateneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "escape_rate",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q24.24",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "ExpIFNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_exponential_if",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "exp_if",
+      "properties": [
+        "curated harness: 5 assertions"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "FitzHughNagumoNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_fitzhugh_nagumo",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "fitzhugh_nagumo",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "FitzHughRinzelNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_fitzhugh_rinzel",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "fitzhugh_rinzel",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "HindmarshRoseNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_hindmarsh_rose",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "hindmarsh_rose",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset on the first cycle only",
+        "input held at 15.0"
+      ],
+      "claim": "bounded safety",
+      "class": "HodgkinHuxleyNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_hodgkin_huxley",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "hodgkin_huxley",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "IbarzTanakaMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_ibarz_tanaka_rulkov_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "ibarz_tanaka_map",
+      "properties": [
+        "curated harness: 5 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "IntegerQIFNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_integerqifneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "iqif",
+      "properties": [
+        "reset clears spike_out",
+        "reset holds every public state port at its encoded initial value"
+      ],
+      "q_format": "Q32.0",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "Izhikevich2007Neuron",
+      "depth": 20,
+      "mode": "bmc",
+      "module": "sc_izhikevich2007",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 20 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "izhikevich2007",
+      "properties": [
+        "reset clears spike_out",
+        "reset holds every public state port at its encoded initial value"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "JansenRitUnit",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_jansenritunit",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "jansen_rit",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "LapicqueNeuron",
+      "depth": 20,
+      "mode": "bmc",
+      "module": "sc_lapicque_1907",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 20 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "lapicque",
+      "properties": [
+        "curated harness: 6 assertions"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 4 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "MATNeuron",
+      "depth": 12,
+      "mode": "bmc",
+      "module": "sc_mat",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 12 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "mat",
+      "properties": [
+        "curated harness: 7 assertions"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "McCullochPittsNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_mccullochpittsneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "mcculloch_pitts",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.0",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "MedvedevMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_medvedev_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "medvedev_map",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset on the first cycle only",
+        "input held at 0.002"
+      ],
+      "claim": "bounded safety",
+      "class": "MihalasNieburNeuron",
+      "depth": 2,
+      "mode": "bmc",
+      "module": "sc_mihalasnieburneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 2 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "mihalas_niebur",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset on the first cycle only",
+        "input held at 100.0"
+      ],
+      "claim": "bounded safety",
+      "class": "MorrisLecarNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_morris_lecar",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "morris_lecar",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "NagumoSatoMapNeuron",
+      "depth": 12,
+      "mode": "bmc",
+      "module": "sc_nagumo_sato_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 12 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "nagumo_sato_map",
+      "properties": [
+        "curated harness: 2 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 4 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "NonResettingLIFNeuron",
+      "depth": 12,
+      "mode": "bmc",
+      "module": "sc_non_resetting_lif",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 12 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "non_resetting_lif",
+      "properties": [
+        "curated harness: 5 assertions"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "PerfectIntegratorNeuron",
+      "depth": 20,
+      "mode": "bmc",
+      "module": "sc_perfect_integrator_naud_gerstner_2012",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 20 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "perfect_integrator",
+      "properties": [
+        "curated harness: 2 assertions"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "PernarowskiNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_pernarowski",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "pernarowski",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "PoissonNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_poissonneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "poisson",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q24.24",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "QuadraticIFNeuron",
+      "depth": 20,
+      "mode": "bmc",
+      "module": "sc_quadratic_if_latham_2000",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 20 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "quadratic_if",
+      "properties": [
+        "curated harness: 2 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "ResonateAndFireNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_resonate_and_fire",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "resonate_fire",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "RulkovMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_rulkov_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "rulkov_map",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 4 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "SigmaDeltaNeuron",
+      "depth": 12,
+      "mode": "bmc",
+      "module": "sc_sigma_delta",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 12 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "sigma_delta",
+      "properties": [
+        "curated harness: 3 assertions"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "SigmoidRateNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_sigmoidrateneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "sigmoid_rate",
+      "properties": [
+        "reset clears spike_out",
+        "no spike after reset"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "TermanWangOscillator",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_terman_wang",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "terman_wang",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "cvc5"
+    },
+    {
+      "assumptions": [
+        "curated harness: 3 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "ThetaNeuron",
+      "depth": 110,
+      "mode": "bmc",
+      "module": "sc_theta",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 110 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "theta",
+      "properties": [
+        "curated harness: 5 assertions"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "ThresholdLinearRateNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_thresholdlinearrateneuron",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "threshold_linear_rate",
+      "properties": [
+        "reset clears spike_out",
+        "no spike after reset"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "WangBuzsakiNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_wang_buzsaki",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "wang_buzsaki",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "WilsonCowanUnit",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_wilsoncowanunit",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "wilson_cowan",
+      "properties": [
+        "reset clears spike_out",
+        "no spike after reset"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "WilsonHRNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_wilson_hr",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "wilson_hr",
+      "properties": [
+        "reset clears spike_out",
+        "reset holds every public state port at its encoded initial value"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "WongWangUnit",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_wongwangunit",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "wong_wang",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    }
+  ],
+  "retained_jobs": [
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "SCResettingWilsonHRNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_resetting_wilson_hr",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "sc_resetting_wilson_hr",
+      "properties": [
+        "reset clears spike_out",
+        "reset holds every public state port at its encoded initial value"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "SCInclusivePerfectIntegratorNeuron",
+      "depth": 20,
+      "mode": "bmc",
+      "module": "sc_perfect_integrator",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 20 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "sc_perfect_integrator",
+      "properties": [
+        "curated harness: 1 assertions"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "curated harness: 0 assumptions"
+      ],
+      "claim": "bounded safety",
+      "class": "SCSymmetricQuadraticIFNeuron",
+      "depth": 20,
+      "mode": "bmc",
+      "module": "sc_quadratic_if",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 20 cycles",
+        "that the RTL is the current compiler's output: a curated job checks its committed RTL file, which this tool does not regenerate",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "curated",
+      "profile": "sc_symmetric_quadratic_if",
+      "properties": [
+        "curated harness: 1 assertions"
+      ],
+      "q_format": "Q8.8",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "SCFourStateGLIFNeuron",
+      "depth": 6,
+      "mode": "bmc",
+      "module": "sc_four_state_glif",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 6 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "sc_four_state_glif",
+      "properties": [
+        "reset clears spike_out",
+        "reset holds every public state port at its encoded initial value"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset on the first cycle only",
+        "input held at 3.0"
+      ],
+      "claim": "bounded safety",
+      "class": "SCScaledResetAdaptiveIFNeuron",
+      "depth": 2,
+      "mode": "bmc",
+      "module": "sc_scaled_reset_adaptive_if",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 2 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "sc_scaled_reset_adaptive_if",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "SCClippedRationalRecoveryMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_clipped_rational_recovery_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "sc_clipped_rational_recovery_map",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q32.32",
+      "reachability_asserted": false,
+      "solver": "z3"
+    },
+    {
+      "assumptions": [
+        "reset and input unconstrained"
+      ],
+      "claim": "bounded safety",
+      "class": "SCUpwardCrossingRulkovMapNeuron",
+      "depth": 4,
+      "mode": "bmc",
+      "module": "sc_upward_crossing_rulkov_map",
+      "not_established": [
+        "equivalence with the model or with the bit-true kernel",
+        "any behaviour after 4 cycles",
+        "reachability of an event: a property guarded by a spike holds vacuously if no spike occurs within the depth"
+      ],
+      "origin": "generated",
+      "profile": "sc_upward_crossing_rulkov_map",
+      "properties": [
+        "reset clears spike_out"
+      ],
+      "q_format": "Q16.16",
+      "reachability_asserted": false,
+      "solver": "z3"
+    }
+  ],
+  "schema_version": "sc-neurocore.formal-inventory.v1"
+}

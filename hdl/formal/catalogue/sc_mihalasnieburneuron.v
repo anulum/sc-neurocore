@@ -142,8 +142,16 @@ wire signed [66:0] _rkw_i2 = _k1_i2 + _k2_i2 + _k2_i2 + _k3_i2 + _k3_i2 + _k4_i2
 wire signed [130:0] _rk6mul_i2 = _rkw_i2 * 64'sd71582788;
 wire signed [127:0] _mul20 = P_CURRENT_RETENTION_1 * i1_next;
 wire signed [63:0] _t20 = (_mul20 >>> 32);
+wire signed [127:0] _reset_raw_i1 = (_t20 + P_CURRENT_JUMP_1);
+wire signed [63:0] _reset_i1 = (_reset_raw_i1 > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_i1 < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_i1[63:0];
 wire signed [127:0] _mul21 = P_CURRENT_RETENTION_2 * i2_next;
 wire signed [63:0] _t21 = (_mul21 >>> 32);
+wire signed [127:0] _reset_raw_i2 = (_t21 + P_CURRENT_JUMP_2);
+wire signed [63:0] _reset_i2 = (_reset_raw_i2 > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_i2 < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_i2[63:0];
+wire signed [127:0] _reset_raw_v = P_V_RESET;
+wire signed [63:0] _reset_v = (_reset_raw_v > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_v < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_v[63:0];
+wire signed [127:0] _reset_raw_theta = ((((P_THETA_RESET) + 128'sd0) > ((theta_next) + 128'sd0)) ? P_THETA_RESET : theta_next);
+wire signed [63:0] _reset_theta = (_reset_raw_theta > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_theta < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_theta[63:0];
 
 wire signed [63:0] dv = (_rk6mul_v >>> 32);
 wire signed [63:0] dtheta = (_rk6mul_theta >>> 32);
@@ -171,16 +179,16 @@ always @(posedge clk or negedge rst_n) begin
         i2_out <= 64'sd0;
         spike_out <= 1'b0;
     end else begin
-        if ((v_next >= theta_next)) begin
+        if ((((v_next) + 128'sd0) >= ((theta_next) + 128'sd0))) begin
             spike_out <= 1'b1;
-            v_reg <= P_V_RESET;
-            v_out <= P_V_RESET;
-            theta_reg <= ((P_THETA_RESET > theta_next) ? P_THETA_RESET : theta_next);
-            theta_out <= ((P_THETA_RESET > theta_next) ? P_THETA_RESET : theta_next);
-            i1_reg <= (_t20 + P_CURRENT_JUMP_1);
-            i1_out <= (_t20 + P_CURRENT_JUMP_1);
-            i2_reg <= (_t21 + P_CURRENT_JUMP_2);
-            i2_out <= (_t21 + P_CURRENT_JUMP_2);
+            v_reg <= _reset_v;
+            v_out <= _reset_v;
+            theta_reg <= _reset_theta;
+            theta_out <= _reset_theta;
+            i1_reg <= _reset_i1;
+            i1_out <= _reset_i1;
+            i2_reg <= _reset_i2;
+            i2_out <= _reset_i2;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

@@ -36,10 +36,10 @@ wire signed [31:0] _mul0 = P_K * (v_reg - P_VR);
 wire signed [15:0] _t0 = (_mul0 >>> 8);
 wire signed [31:0] _mul1 = _t0 * (v_reg - P_VT);
 wire signed [15:0] _t1 = (_mul1 >>> 8);
-wire signed [15:0] _dop2 = ((_t1 - u_reg) + I_t);
-wire signed [15:0] _dden2 = P_C;
-wire signed [31:0] _dnum2 = $signed({{16{_dop2[15]}}, _dop2}) <<< 8;
-wire signed [31:0] _div2 = _dnum2 / $signed({{16{_dden2[15]}}, _dden2});
+wire signed [31:0] _dop2 = ((_t1 - u_reg) + I_t);
+wire signed [31:0] _dden2 = P_C;
+wire signed [31:0] _dnum2 = _dop2 <<< 8;
+wire signed [31:0] _div2 = _dnum2 / _dden2;
 wire signed [15:0] _dres2 = _div2[15:0];
 wire signed [31:0] _dt_mul_v = (_dres2) * 16'sd26;
 wire signed [15:0] _dt_trunc_v = (_dt_mul_v >>> 8);
@@ -49,6 +49,10 @@ wire signed [31:0] _mul4 = P_A * (_t2 - u_reg);
 wire signed [15:0] _t3 = (_mul4 >>> 8);
 wire signed [31:0] _dt_mul_u = (_t3) * 16'sd26;
 wire signed [15:0] _dt_trunc_u = (_dt_mul_u >>> 8);
+wire signed [31:0] _reset_raw_v = P_c;
+wire signed [15:0] _reset_v = (_reset_raw_v > 17'sd32767) ? 16'sd32767 : (_reset_raw_v < (-17'sd32768)) ? (-16'sd32768) : _reset_raw_v[15:0];
+wire signed [31:0] _reset_raw_u = (u_next + P_D);
+wire signed [15:0] _reset_u = (_reset_raw_u > 17'sd32767) ? 16'sd32767 : (_reset_raw_u < (-17'sd32768)) ? (-16'sd32768) : _reset_raw_u[15:0];
 
 wire signed [15:0] dv = _dt_trunc_v;
 wire signed [15:0] du = _dt_trunc_u;
@@ -66,12 +70,12 @@ always @(posedge clk or negedge rst_n) begin
         u_out <= 16'sd0;
         spike_out <= 1'b0;
     end else begin
-        if ((v_next >= P_VPEAK)) begin
+        if ((((v_next) + 32'sd0) >= ((P_VPEAK) + 32'sd0))) begin
             spike_out <= 1'b1;
-            v_reg <= P_c;
-            v_out <= P_c;
-            u_reg <= (u_next + P_D);
-            u_out <= (u_next + P_D);
+            v_reg <= _reset_v;
+            v_out <= _reset_v;
+            u_reg <= _reset_u;
+            u_out <= _reset_u;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

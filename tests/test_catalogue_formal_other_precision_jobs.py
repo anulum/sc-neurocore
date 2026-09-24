@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from tests.catalogue_formal_support import *  # noqa: F403
 
 
@@ -101,10 +103,22 @@ def test_coba_lif_formal_job_uses_enrolled_q2424_precision() -> None:
     sys.modules[name] = module
     spec.loader.exec_module(module)
 
-    assert module.CLASS_TO_SCHEMA["COBALIFNeuron"] == "coba_lif"
+    # COBA LIF runs through a curated harness that asserts its first spike is
+    # reachable; its RTL stays the current compiler output at Q24.24.
+    assert "COBALIFNeuron" not in module.CLASS_TO_SCHEMA
+    assert module.CURATED_CLASS_TO_MODULE["COBALIFNeuron"] == "sc_cobalifneuron"
+    assert module.CURATED_CLASS_TO_SCHEMA["COBALIFNeuron"] == "coba_lif"
     assert module.PRECISION_BY_SCHEMA["coba_lif"] == (48, 24)
-    assert module.DEPTH_BY_SCHEMA["coba_lif"] == 4
-    assert "coba_lif" in module.MINIMAL_SAFETY_SCHEMAS
+    assert module.DEPTH_BY_SCHEMA["coba_lif"] == 8
+    catalogue = Path(module.OUT_DIR)
+    assert "assert (seen_spike);" in (catalogue / "sc_cobalifneuron_formal.v").read_text()
+    from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
+    rtl = UniversalNeuron.from_schema("coba_lif").to_verilog(
+        module_name="sc_cobalifneuron", data_width=48, fraction=24
+    )
+    committed = (catalogue / "sc_cobalifneuron.v").read_text(encoding="utf-8")
+    assert committed == (rtl if rtl.endswith("\n") else rtl + "\n")
 
 
 def test_escape_rate_formal_job_uses_seeded_q2424_precision() -> None:

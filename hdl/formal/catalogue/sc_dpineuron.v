@@ -42,24 +42,24 @@ reg signed [31:0] refractory_time_reg;
 
 wire signed [63:0] _mul0 = P_TAU * P_I_TAU;
 wire signed [31:0] _t0 = (_mul0 >>> 16);
-wire signed [31:0] _dop1 = i_mem_reg;
-wire signed [31:0] _dden1 = _t0;
-wire signed [63:0] _dnum1 = $signed({{32{_dop1[31]}}, _dop1}) <<< 16;
-wire signed [63:0] _div1 = _dnum1 / $signed({{32{_dden1[31]}}, _dden1});
+wire signed [63:0] _dop1 = i_mem_reg;
+wire signed [63:0] _dden1 = _t0;
+wire signed [63:0] _dnum1 = _dop1 <<< 16;
+wire signed [63:0] _div1 = _dnum1 / _dden1;
 wire signed [31:0] _dres1 = _div1[31:0];
-wire signed [31:0] _dop2 = i_mem_reg;
-wire signed [31:0] _dden2 = P_I_G;
-wire signed [63:0] _dnum2 = $signed({{32{_dop2[31]}}, _dop2}) <<< 16;
-wire signed [63:0] _div2 = _dnum2 / $signed({{32{_dden2[31]}}, _dden2});
+wire signed [63:0] _dop2 = i_mem_reg;
+wire signed [63:0] _dden2 = P_I_G;
+wire signed [63:0] _dnum2 = _dop2 <<< 16;
+wire signed [63:0] _div2 = _dnum2 / _dden2;
 wire signed [31:0] _dres2 = _div2[31:0];
-wire signed [31:0] _dop3 = (P_I_REST + I_t);
-wire signed [31:0] _dden3 = (32'sd65536 + _dres2);
-wire signed [63:0] _dnum3 = $signed({{32{_dop3[31]}}, _dop3}) <<< 16;
-wire signed [63:0] _div3 = _dnum3 / $signed({{32{_dden3[31]}}, _dden3});
+wire signed [63:0] _dop3 = (P_I_REST + I_t);
+wire signed [63:0] _dden3 = (32'sd65536 + _dres2);
+wire signed [63:0] _dnum3 = _dop3 <<< 16;
+wire signed [63:0] _div3 = _dnum3 / _dden3;
 wire signed [31:0] _dres3 = _div3[31:0];
 // _log_lut lookup table (256 entries over [0.00390625, 8.00390625), step 0.03125)
 wire signed [31:0] _log_lut4_arg = P_I_0;
-wire signed [32:0] _log_lut4_raw = (({{_log_lut4_arg[31]}, _log_lut4_arg}) - 33'sd256) >>> 11;
+wire signed [32:0] _log_lut4_raw = ($signed({{_log_lut4_arg[31]}, _log_lut4_arg}) - 33'sd256) >>> 11;
 wire [7:0] _log_lut4_idx = (_log_lut4_raw < 0) ? 8'd0 : ((_log_lut4_raw > 33'sd255) ? 8'd255 : _log_lut4_raw[7:0]);
 reg signed [31:0] _log_lut4_out;
 always @(*) case (_log_lut4_idx)
@@ -323,7 +323,7 @@ always @(*) case (_log_lut4_idx)
 endcase
 // _log_lut lookup table (256 entries over [0.00390625, 8.00390625), step 0.03125)
 wire signed [31:0] _log_lut5_arg = i_mem_reg;
-wire signed [32:0] _log_lut5_raw = (({{_log_lut5_arg[31]}, _log_lut5_arg}) - 33'sd256) >>> 11;
+wire signed [32:0] _log_lut5_raw = ($signed({{_log_lut5_arg[31]}, _log_lut5_arg}) - 33'sd256) >>> 11;
 wire [7:0] _log_lut5_idx = (_log_lut5_raw < 0) ? 8'd0 : ((_log_lut5_raw > 33'sd255) ? 8'd255 : _log_lut5_raw[7:0]);
 reg signed [31:0] _log_lut5_out;
 always @(*) case (_log_lut5_idx)
@@ -587,14 +587,14 @@ always @(*) case (_log_lut5_idx)
 endcase
 wire signed [63:0] _mul6 = P_KAPPA * _log_lut5_out;
 wire signed [31:0] _t1 = (_mul6 >>> 16);
-wire signed [31:0] _dop7 = (_log_lut4_out + _t1);
-wire signed [31:0] _dden7 = (P_KAPPA + 32'sd65536);
-wire signed [63:0] _dnum7 = $signed({{32{_dop7[31]}}, _dop7}) <<< 16;
-wire signed [63:0] _div7 = _dnum7 / $signed({{32{_dden7[31]}}, _dden7});
+wire signed [63:0] _dop7 = (_log_lut4_out + _t1);
+wire signed [63:0] _dden7 = (P_KAPPA + 32'sd65536);
+wire signed [63:0] _dnum7 = _dop7 <<< 16;
+wire signed [63:0] _div7 = _dnum7 / _dden7;
 wire signed [31:0] _dres7 = _div7[31:0];
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [31:0] _exp_lut8_arg = _dres7;
-wire signed [32:0] _exp_lut8_raw = (({{_exp_lut8_arg[31]}, _exp_lut8_arg}) + 33'sd1048576) >>> 13;
+wire signed [32:0] _exp_lut8_raw = ($signed({{_exp_lut8_arg[31]}, _exp_lut8_arg}) + 33'sd1048576) >>> 13;
 wire [7:0] _exp_lut8_idx = (_exp_lut8_raw < 0) ? 8'd0 : ((_exp_lut8_raw > 33'sd255) ? 8'd255 : _exp_lut8_raw[7:0]);
 reg signed [31:0] _exp_lut8_out;
 always @(*) case (_exp_lut8_idx)
@@ -860,7 +860,7 @@ wire signed [63:0] _mul9 = P_ALPHA * (i_mem_reg - P_I_THRESHOLD);
 wire signed [31:0] _t2 = (_mul9 >>> 16);
 // _sigmoid_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [31:0] _sigmoid_lut10_arg = _t2;
-wire signed [32:0] _sigmoid_lut10_raw = (({{_sigmoid_lut10_arg[31]}, _sigmoid_lut10_arg}) + 33'sd1048576) >>> 13;
+wire signed [32:0] _sigmoid_lut10_raw = ($signed({{_sigmoid_lut10_arg[31]}, _sigmoid_lut10_arg}) + 33'sd1048576) >>> 13;
 wire [7:0] _sigmoid_lut10_idx = (_sigmoid_lut10_raw < 0) ? 8'd0 : ((_sigmoid_lut10_raw > 33'sd255) ? 8'd255 : _sigmoid_lut10_raw[7:0]);
 reg signed [31:0] _sigmoid_lut10_out;
 always @(*) case (_sigmoid_lut10_idx)
@@ -1126,36 +1126,42 @@ wire signed [63:0] _mul11 = _exp_lut8_out * _sigmoid_lut10_out;
 wire signed [31:0] _t3 = (_mul11 >>> 16);
 wire signed [63:0] _mul12 = _dres1 * (((_dres3 - P_I_TAU) + _t3) - i_ahp_reg);
 wire signed [31:0] _t4 = (_mul12 >>> 16);
-wire signed [63:0] _dt_mul_i_mem = ((((refractory_time_reg > 32'sd0)) ? (32'sd0) : (_t4))) * 32'sd6554;
+wire signed [63:0] _dt_mul_i_mem = ((((((refractory_time_reg) + 64'sd0) > ((32'sd0) + 64'sd0))) ? (32'sd0) : (_t4))) * 32'sd6554;
 wire signed [31:0] _dt_trunc_i_mem = (_dt_mul_i_mem >>> 16);
 wire signed [63:0] _mul13 = P_TAU_AHP * P_I_TAU_AHP;
 wire signed [31:0] _t5 = (_mul13 >>> 16);
-wire signed [31:0] _dop14 = i_ahp_reg;
-wire signed [31:0] _dden14 = _t5;
-wire signed [63:0] _dnum14 = $signed({{32{_dop14[31]}}, _dop14}) <<< 16;
-wire signed [63:0] _div14 = _dnum14 / $signed({{32{_dden14[31]}}, _dden14});
+wire signed [63:0] _dop14 = i_ahp_reg;
+wire signed [63:0] _dden14 = _t5;
+wire signed [63:0] _dnum14 = _dop14 <<< 16;
+wire signed [63:0] _div14 = _dnum14 / _dden14;
 wire signed [31:0] _dres14 = _div14[31:0];
-wire signed [31:0] _dop15 = i_ahp_reg;
-wire signed [31:0] _dden15 = P_I_GA;
-wire signed [63:0] _dnum15 = $signed({{32{_dop15[31]}}, _dop15}) <<< 16;
-wire signed [63:0] _div15 = _dnum15 / $signed({{32{_dden15[31]}}, _dden15});
+wire signed [63:0] _dop15 = i_ahp_reg;
+wire signed [63:0] _dden15 = P_I_GA;
+wire signed [63:0] _dnum15 = _dop15 <<< 16;
+wire signed [63:0] _div15 = _dnum15 / _dden15;
 wire signed [31:0] _dres15 = _div15[31:0];
-wire signed [31:0] _dop16 = (((refractory_time_reg > 32'sd0)) ? (P_I_SPIKE) : (32'sd0));
-wire signed [31:0] _dden16 = (32'sd65536 + _dres15);
-wire signed [63:0] _dnum16 = $signed({{32{_dop16[31]}}, _dop16}) <<< 16;
-wire signed [63:0] _div16 = _dnum16 / $signed({{32{_dden16[31]}}, _dden16});
+wire signed [63:0] _dop16 = (((((refractory_time_reg) + 64'sd0) > ((32'sd0) + 64'sd0))) ? (P_I_SPIKE) : (32'sd0));
+wire signed [63:0] _dden16 = (32'sd65536 + _dres15);
+wire signed [63:0] _dnum16 = _dop16 <<< 16;
+wire signed [63:0] _div16 = _dnum16 / _dden16;
 wire signed [31:0] _dres16 = _div16[31:0];
 wire signed [63:0] _mul17 = _dres14 * (_dres16 - P_I_TAU_AHP);
 wire signed [31:0] _t6 = (_mul17 >>> 16);
 wire signed [63:0] _dt_mul_i_ahp = (_t6) * 32'sd6554;
 wire signed [31:0] _dt_trunc_i_ahp = (_dt_mul_i_ahp >>> 16);
-wire signed [31:0] _dop18 = (-refractory_time_reg);
-wire signed [31:0] _dden18 = P_DT;
-wire signed [63:0] _dnum18 = $signed({{32{_dop18[31]}}, _dop18}) <<< 16;
-wire signed [63:0] _div18 = _dnum18 / $signed({{32{_dden18[31]}}, _dden18});
+wire signed [63:0] _dop18 = (-refractory_time_reg);
+wire signed [63:0] _dden18 = P_DT;
+wire signed [63:0] _dnum18 = _dop18 <<< 16;
+wire signed [63:0] _div18 = _dnum18 / _dden18;
 wire signed [31:0] _dres18 = _div18[31:0];
-wire signed [63:0] _dt_mul_refractory_time = ((((refractory_time_reg > 32'sd0)) ? ((((refractory_time_reg < P_DT)) ? (_dres18) : ((-32'sd65536)))) : (32'sd0))) * 32'sd6554;
+wire signed [63:0] _dt_mul_refractory_time = ((((((refractory_time_reg) + 64'sd0) > ((32'sd0) + 64'sd0))) ? ((((((refractory_time_reg) + 64'sd0) < ((P_DT) + 64'sd0))) ? (_dres18) : ((-32'sd65536)))) : (32'sd0))) * 32'sd6554;
 wire signed [31:0] _dt_trunc_refractory_time = (_dt_mul_refractory_time >>> 16);
+wire signed [63:0] _reset_raw_i_mem = P_I_RESET;
+wire signed [31:0] _reset_i_mem = (_reset_raw_i_mem > 33'sd2147483647) ? 32'sd2147483647 : (_reset_raw_i_mem < (-33'sd2147483648)) ? (-32'sd2147483648) : _reset_raw_i_mem[31:0];
+wire signed [63:0] _reset_raw_i_ahp = i_ahp_next;
+wire signed [31:0] _reset_i_ahp = (_reset_raw_i_ahp > 33'sd2147483647) ? 32'sd2147483647 : (_reset_raw_i_ahp < (-33'sd2147483648)) ? (-32'sd2147483648) : _reset_raw_i_ahp[31:0];
+wire signed [63:0] _reset_raw_refractory_time = P_REFRACTORY_PERIOD;
+wire signed [31:0] _reset_refractory_time = (_reset_raw_refractory_time > 33'sd2147483647) ? 32'sd2147483647 : (_reset_raw_refractory_time < (-33'sd2147483648)) ? (-32'sd2147483648) : _reset_raw_refractory_time[31:0];
 
 wire signed [31:0] di_mem = _dt_trunc_i_mem;
 wire signed [31:0] di_ahp = _dt_trunc_i_ahp;
@@ -1178,14 +1184,14 @@ always @(posedge clk or negedge rst_n) begin
         refractory_time_out <= 32'sd0;
         spike_out <= 1'b0;
     end else begin
-        if ((i_mem_next >= P_I_THRESHOLD)) begin
+        if ((((i_mem_next) + 64'sd0) >= ((P_I_THRESHOLD) + 64'sd0))) begin
             spike_out <= 1'b1;
-            i_mem_reg <= P_I_RESET;
-            i_mem_out <= P_I_RESET;
-            i_ahp_reg <= i_ahp_next;
-            i_ahp_out <= i_ahp_next;
-            refractory_time_reg <= P_REFRACTORY_PERIOD;
-            refractory_time_out <= P_REFRACTORY_PERIOD;
+            i_mem_reg <= _reset_i_mem;
+            i_mem_out <= _reset_i_mem;
+            i_ahp_reg <= _reset_i_ahp;
+            i_ahp_out <= _reset_i_ahp;
+            refractory_time_reg <= _reset_refractory_time;
+            refractory_time_out <= _reset_refractory_time;
         end else begin
             spike_out <= 1'b0;
             i_mem_reg <= i_mem_next;

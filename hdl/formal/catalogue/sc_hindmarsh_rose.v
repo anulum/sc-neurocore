@@ -163,7 +163,7 @@ always @(posedge clk or negedge rst_n) begin
         spike_out <= 1'b0;
         _thr_prev <= 1'b0;
     end else begin
-        if (((x_next >= P_X_THRESHOLD)) && !_thr_prev) begin
+        if (((((x_next) + 32'sd0) >= ((P_X_THRESHOLD) + 32'sd0))) && !_thr_prev) begin
             spike_out <= 1'b1;
             x_reg <= x_next;
             x_out <= x_next;
@@ -180,7 +180,7 @@ always @(posedge clk or negedge rst_n) begin
             z_reg <= z_next;
             z_out <= z_next;
         end
-        _thr_prev <= ((x_next >= P_X_THRESHOLD));
+        _thr_prev <= ((((x_next) + 32'sd0) >= ((P_X_THRESHOLD) + 32'sd0)));
     end
 end
 

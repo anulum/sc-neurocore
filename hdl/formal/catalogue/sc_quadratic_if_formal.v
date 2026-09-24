@@ -40,13 +40,6 @@ module sc_quadratic_if_formal (
         end
     end
 
-    // Saturation contract on the primary membrane / phase / current state.
-    always @(posedge clk) begin
-        if (past_valid && rst_n) begin
-            assert ($signed(v_out) >= -16'sd32768);
-            assert ($signed(v_out) <= 16'sd32767);
-        end
-    end
 `endif
 
 endmodule

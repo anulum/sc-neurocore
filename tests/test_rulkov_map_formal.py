@@ -55,8 +55,9 @@ def test_committed_jobs_bind_distinct_event_rtl() -> None:
 
     assert "Fixed-point: Q16.16" in source
     assert "Fixed-point: Q16.16" in retained
-    assert "x_reg >= ((P_ALPHA + y_reg) + I_t)" in source
-    assert "x_next >= P_X_THRESHOLD" in retained
+    # Comparisons read the unwrapped operands at twice the word width.
+    assert "((x_reg) + 64'sd0) >= ((((P_ALPHA + y_reg) + I_t)) + 64'sd0)" in source
+    assert "((x_next) + 64'sd0) >= ((P_X_THRESHOLD) + 64'sd0)" in retained
     for module in ("sc_rulkov_map", "sc_upward_crossing_rulkov_map"):
         sby = (CATALOGUE / f"{module}.sby").read_text(encoding="utf-8")
         harness = (CATALOGUE / f"{module}_formal.v").read_text(encoding="utf-8")

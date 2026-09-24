@@ -52,7 +52,7 @@ wire signed [127:0] _mul2 = P_R * (P_V0 - (y1_reg - y2_reg));
 wire signed [63:0] _t2 = (_mul2 >>> 32);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut3_arg = _t2;
-wire signed [64:0] _exp_lut3_raw = (({{_exp_lut3_arg[63]}, _exp_lut3_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut3_raw = ($signed({{_exp_lut3_arg[63]}, _exp_lut3_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut3_idx = (_exp_lut3_raw < 0) ? 8'd0 : ((_exp_lut3_raw > 65'sd255) ? 8'd255 : _exp_lut3_raw[7:0]);
 reg signed [63:0] _exp_lut3_out;
 always @(*) case (_exp_lut3_idx)
@@ -314,10 +314,10 @@ always @(*) case (_exp_lut3_idx)
     8'd255: _exp_lut3_out = 64'sd33680983255926552;
     default: _exp_lut3_out = 64'sd0;
 endcase
-wire signed [63:0] _dop4 = _t1;
-wire signed [63:0] _dden4 = (64'sd4294967296 + _exp_lut3_out);
-wire signed [127:0] _dnum4 = $signed({{64{_dop4[63]}}, _dop4}) <<< 32;
-wire signed [127:0] _div4 = _dnum4 / $signed({{64{_dden4[63]}}, _dden4});
+wire signed [127:0] _dop4 = _t1;
+wire signed [127:0] _dden4 = (64'sd4294967296 + _exp_lut3_out);
+wire signed [127:0] _dnum4 = _dop4 <<< 32;
+wire signed [127:0] _div4 = _dnum4 / _dden4;
 wire signed [63:0] _dres4 = _div4[63:0];
 wire signed [127:0] _mul5 = _t0 * _dres4;
 wire signed [63:0] _t3 = (_mul5 >>> 32);
@@ -343,7 +343,7 @@ wire signed [127:0] _mul13 = P_R * (P_V0 - _t10);
 wire signed [63:0] _t11 = (_mul13 >>> 32);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut14_arg = _t11;
-wire signed [64:0] _exp_lut14_raw = (({{_exp_lut14_arg[63]}, _exp_lut14_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut14_raw = ($signed({{_exp_lut14_arg[63]}, _exp_lut14_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut14_idx = (_exp_lut14_raw < 0) ? 8'd0 : ((_exp_lut14_raw > 65'sd255) ? 8'd255 : _exp_lut14_raw[7:0]);
 reg signed [63:0] _exp_lut14_out;
 always @(*) case (_exp_lut14_idx)
@@ -605,10 +605,10 @@ always @(*) case (_exp_lut14_idx)
     8'd255: _exp_lut14_out = 64'sd33680983255926552;
     default: _exp_lut14_out = 64'sd0;
 endcase
-wire signed [63:0] _dop15 = _t9;
-wire signed [63:0] _dden15 = (64'sd4294967296 + _exp_lut14_out);
-wire signed [127:0] _dnum15 = $signed({{64{_dop15[63]}}, _dop15}) <<< 32;
-wire signed [127:0] _div15 = _dnum15 / $signed({{64{_dden15[63]}}, _dden15});
+wire signed [127:0] _dop15 = _t9;
+wire signed [127:0] _dden15 = (64'sd4294967296 + _exp_lut14_out);
+wire signed [127:0] _dnum15 = _dop15 <<< 32;
+wire signed [127:0] _div15 = _dnum15 / _dden15;
 wire signed [63:0] _dres15 = _div15[63:0];
 wire signed [127:0] _mul16 = P_C2 * _dres15;
 wire signed [63:0] _t12 = (_mul16 >>> 32);
@@ -638,7 +638,7 @@ wire signed [127:0] _mul26 = P_R * (P_V0 - _t21);
 wire signed [63:0] _t22 = (_mul26 >>> 32);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut27_arg = _t22;
-wire signed [64:0] _exp_lut27_raw = (({{_exp_lut27_arg[63]}, _exp_lut27_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut27_raw = ($signed({{_exp_lut27_arg[63]}, _exp_lut27_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut27_idx = (_exp_lut27_raw < 0) ? 8'd0 : ((_exp_lut27_raw > 65'sd255) ? 8'd255 : _exp_lut27_raw[7:0]);
 reg signed [63:0] _exp_lut27_out;
 always @(*) case (_exp_lut27_idx)
@@ -900,10 +900,10 @@ always @(*) case (_exp_lut27_idx)
     8'd255: _exp_lut27_out = 64'sd33680983255926552;
     default: _exp_lut27_out = 64'sd0;
 endcase
-wire signed [63:0] _dop28 = _t20;
-wire signed [63:0] _dden28 = (64'sd4294967296 + _exp_lut27_out);
-wire signed [127:0] _dnum28 = $signed({{64{_dop28[63]}}, _dop28}) <<< 32;
-wire signed [127:0] _div28 = _dnum28 / $signed({{64{_dden28[63]}}, _dden28});
+wire signed [127:0] _dop28 = _t20;
+wire signed [127:0] _dden28 = (64'sd4294967296 + _exp_lut27_out);
+wire signed [127:0] _dnum28 = _dop28 <<< 32;
+wire signed [127:0] _div28 = _dnum28 / _dden28;
 wire signed [63:0] _dres28 = _div28[63:0];
 wire signed [127:0] _mul29 = _t19 * _dres28;
 wire signed [63:0] _t23 = (_mul29 >>> 32);

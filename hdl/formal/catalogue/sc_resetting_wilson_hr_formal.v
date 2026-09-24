@@ -30,23 +30,13 @@ module sc_resetting_wilson_hr_formal (
     );
 
 `ifdef FORMAL
-    reg past_valid = 1'b0;
-    always @(posedge clk)
-        past_valid <= 1'b1;
-
-    // Reset hygiene: async reset clears the spike flag. Primary state may reset
-    // to a non-zero rest / init (e.g. QIF v=-1, Izhikevich vr) — do not force 0.
+    // Reset values: while reset is held the spike flag is clear and every public
+    // state port carries its encoded initial value, which need not be zero.
     always @(*) begin
         if (!rst_n) begin
             assert (spike_out == 1'b0);
-        end
-    end
-
-    // Saturation contract on the primary membrane / phase / current state.
-    always @(posedge clk) begin
-        if (past_valid && rst_n) begin
-            assert ($signed(v_out) >= -16'sd32768);
-            assert ($signed(v_out) <= 16'sd32767);
+            assert ($signed(v_out) == -16'sd179);
+            assert ($signed(r_out) == 16'sd26);
         end
     end
 `endif

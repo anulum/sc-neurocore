@@ -38,13 +38,13 @@ wire [15:0] _escape_sample_7 = _escape_advance(_escape_sample_6);
 wire [15:0] _escape_sample_8 = _escape_advance(_escape_sample_7);
 wire [15:0] _escape_sample = _escape_sample_8;
 
-wire signed [95:0] _mul0 = (((I_t < 48'sd0)) ? (P_RATE_HZ) : (I_t)) * P_DT_MS;
+wire signed [95:0] _mul0 = (((((I_t) + 96'sd0) < ((48'sd0) + 96'sd0))) ? (P_RATE_HZ) : (I_t)) * P_DT_MS;
 wire signed [47:0] _t0 = (_mul0 >>> 24);
 wire signed [95:0] _mul1 = _t0 * 48'sd16777;
 wire signed [47:0] _t1 = (_mul1 >>> 24);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [47:0] _exp_lut2_arg = (-_t1);
-wire signed [48:0] _exp_lut2_raw = (({{_exp_lut2_arg[47]}, _exp_lut2_arg}) + 49'sd268435456) >>> 21;
+wire signed [48:0] _exp_lut2_raw = ($signed({{_exp_lut2_arg[47]}, _exp_lut2_arg}) + 49'sd268435456) >>> 21;
 wire [7:0] _exp_lut2_idx = (_exp_lut2_raw < 0) ? 8'd0 : ((_exp_lut2_raw > 49'sd255) ? 8'd255 : _exp_lut2_raw[7:0]);
 reg signed [47:0] _exp_lut2_out;
 always @(*) case (_exp_lut2_idx)

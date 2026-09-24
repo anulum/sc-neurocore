@@ -47,23 +47,23 @@ wire [15:0] _escape_sample = _escape_sample_8;
 
 wire signed [95:0] _mul0 = P_RESISTANCE * I_t;
 wire signed [47:0] _t0 = (_mul0 >>> 24);
-wire signed [47:0] _dop1 = ((-(v_reg - P_V_REST)) + _t0);
-wire signed [47:0] _dden1 = P_TAU_M;
-wire signed [95:0] _dnum1 = $signed({{48{_dop1[47]}}, _dop1}) <<< 24;
-wire signed [95:0] _div1 = _dnum1 / $signed({{48{_dden1[47]}}, _dden1});
+wire signed [95:0] _dop1 = ((-(v_reg - P_V_REST)) + _t0);
+wire signed [95:0] _dden1 = P_TAU_M;
+wire signed [95:0] _dnum1 = _dop1 <<< 24;
+wire signed [95:0] _div1 = _dnum1 / _dden1;
 wire signed [47:0] _dres1 = _div1[47:0];
 wire signed [95:0] _mul2 = _dres1 * 48'sd16777216;
 wire signed [47:0] _t1 = (_mul2 >>> 24);
-wire signed [47:0] _dop3 = (-48'sd16777216);
-wire signed [47:0] _dden3 = P_TAU_M;
-wire signed [95:0] _dnum3 = $signed({{48{_dop3[47]}}, _dop3}) <<< 24;
-wire signed [95:0] _div3 = _dnum3 / $signed({{48{_dden3[47]}}, _dden3});
+wire signed [95:0] _dop3 = (-48'sd16777216);
+wire signed [95:0] _dden3 = P_TAU_M;
+wire signed [95:0] _dnum3 = _dop3 <<< 24;
+wire signed [95:0] _div3 = _dnum3 / _dden3;
 wire signed [47:0] _dres3 = _div3[47:0];
 wire signed [95:0] _mul4 = _dres3 * 48'sd16777216;
 wire signed [47:0] _t2 = (_mul4 >>> 24);
 // _exprel_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [47:0] _exprel_lut5_arg = _t2;
-wire signed [48:0] _exprel_lut5_raw = (({{_exprel_lut5_arg[47]}, _exprel_lut5_arg}) + 49'sd268435456) >>> 21;
+wire signed [48:0] _exprel_lut5_raw = ($signed({{_exprel_lut5_arg[47]}, _exprel_lut5_arg}) + 49'sd268435456) >>> 21;
 wire [7:0] _exprel_lut5_idx = (_exprel_lut5_raw < 0) ? 8'd0 : ((_exprel_lut5_raw > 49'sd255) ? 8'd255 : _exprel_lut5_raw[7:0]);
 reg signed [47:0] _exprel_lut5_out;
 always @(*) case (_exprel_lut5_idx)
@@ -327,14 +327,14 @@ always @(*) case (_exprel_lut5_idx)
 endcase
 wire signed [95:0] _mul6 = _t1 * _exprel_lut5_out;
 wire signed [47:0] _t3 = (_mul6 >>> 24);
-wire signed [47:0] _dop7 = (v_next - P_V_THRESHOLD);
-wire signed [47:0] _dden7 = P_DELTA_U;
-wire signed [95:0] _dnum7 = $signed({{48{_dop7[47]}}, _dop7}) <<< 24;
-wire signed [95:0] _div7 = _dnum7 / $signed({{48{_dden7[47]}}, _dden7});
+wire signed [95:0] _dop7 = (v_next - P_V_THRESHOLD);
+wire signed [95:0] _dden7 = P_DELTA_U;
+wire signed [95:0] _dnum7 = _dop7 <<< 24;
+wire signed [95:0] _div7 = _dnum7 / _dden7;
 wire signed [47:0] _dres7 = _div7[47:0];
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
-wire signed [47:0] _exp_lut8_arg = ((_dres7 < (-48'sd11744051200)) ? (-48'sd11744051200) : ((_dres7 > 48'sd11744051200) ? 48'sd11744051200 : _dres7));
-wire signed [48:0] _exp_lut8_raw = (({{_exp_lut8_arg[47]}, _exp_lut8_arg}) + 49'sd268435456) >>> 21;
+wire signed [47:0] _exp_lut8_arg = ((((_dres7) + 96'sd0) < (((-48'sd11744051200)) + 96'sd0)) ? (-48'sd11744051200) : ((((_dres7) + 96'sd0) > ((48'sd11744051200) + 96'sd0)) ? 48'sd11744051200 : _dres7));
+wire signed [48:0] _exp_lut8_raw = ($signed({{_exp_lut8_arg[47]}, _exp_lut8_arg}) + 49'sd268435456) >>> 21;
 wire [7:0] _exp_lut8_idx = (_exp_lut8_raw < 0) ? 8'd0 : ((_exp_lut8_raw > 49'sd255) ? 8'd255 : _exp_lut8_raw[7:0]);
 reg signed [47:0] _exp_lut8_out;
 always @(*) case (_exp_lut8_idx)
@@ -602,7 +602,7 @@ wire signed [95:0] _mul10 = _t4 * 48'sd16777216;
 wire signed [47:0] _t5 = (_mul10 >>> 24);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [47:0] _exp_lut11_arg = (-_t5);
-wire signed [48:0] _exp_lut11_raw = (({{_exp_lut11_arg[47]}, _exp_lut11_arg}) + 49'sd268435456) >>> 21;
+wire signed [48:0] _exp_lut11_raw = ($signed({{_exp_lut11_arg[47]}, _exp_lut11_arg}) + 49'sd268435456) >>> 21;
 wire [7:0] _exp_lut11_idx = (_exp_lut11_raw < 0) ? 8'd0 : ((_exp_lut11_raw > 49'sd255) ? 8'd255 : _exp_lut11_raw[7:0]);
 reg signed [47:0] _exp_lut11_out;
 always @(*) case (_exp_lut11_idx)
@@ -864,6 +864,8 @@ always @(*) case (_exp_lut11_idx)
     8'd255: _exp_lut11_out = 48'sd131566340843463;
     default: _exp_lut11_out = 48'sd0;
 endcase
+wire signed [95:0] _reset_raw_v = P_V_RESET;
+wire signed [47:0] _reset_v = (_reset_raw_v > 49'sd140737488355327) ? 48'sd140737488355327 : (_reset_raw_v < (-49'sd140737488355328)) ? (-48'sd140737488355328) : _reset_raw_v[47:0];
 
 wire signed [47:0] dv = _t3;
 
@@ -887,8 +889,8 @@ always @(posedge clk or negedge rst_n) begin
         _escape_lfsr <= _escape_sample;
         if (_escape_spike) begin
             spike_out <= 1'b1;
-            v_reg <= P_V_RESET;
-            v_out <= P_V_RESET;
+            v_reg <= _reset_v;
+            v_out <= _reset_v;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

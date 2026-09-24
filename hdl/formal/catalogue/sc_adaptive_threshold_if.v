@@ -30,14 +30,14 @@ module sc_adaptive_threshold_if #(
 reg signed [63:0] v_reg;
 reg signed [63:0] theta_reg;
 
-wire signed [63:0] _dop0 = (-P_DT);
-wire signed [63:0] _dden0 = P_TAU_M;
-wire signed [127:0] _dnum0 = $signed({{64{_dop0[63]}}, _dop0}) <<< 32;
-wire signed [127:0] _div0 = _dnum0 / $signed({{64{_dden0[63]}}, _dden0});
+wire signed [127:0] _dop0 = (-P_DT);
+wire signed [127:0] _dden0 = P_TAU_M;
+wire signed [127:0] _dnum0 = _dop0 <<< 32;
+wire signed [127:0] _div0 = _dnum0 / _dden0;
 wire signed [63:0] _dres0 = _div0[63:0];
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut1_arg = _dres0;
-wire signed [64:0] _exp_lut1_raw = (({{_exp_lut1_arg[63]}, _exp_lut1_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut1_raw = ($signed({{_exp_lut1_arg[63]}, _exp_lut1_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut1_idx = (_exp_lut1_raw < 0) ? 8'd0 : ((_exp_lut1_raw > 65'sd255) ? 8'd255 : _exp_lut1_raw[7:0]);
 reg signed [63:0] _exp_lut1_out;
 always @(*) case (_exp_lut1_idx)
@@ -301,14 +301,14 @@ always @(*) case (_exp_lut1_idx)
 endcase
 wire signed [127:0] _mul2 = (v_reg - (P_V_REST + I_t)) * _exp_lut1_out;
 wire signed [63:0] _t0 = (_mul2 >>> 32);
-wire signed [63:0] _dop3 = (-P_DT);
-wire signed [63:0] _dden3 = P_TAU_THETA;
-wire signed [127:0] _dnum3 = $signed({{64{_dop3[63]}}, _dop3}) <<< 32;
-wire signed [127:0] _div3 = _dnum3 / $signed({{64{_dden3[63]}}, _dden3});
+wire signed [127:0] _dop3 = (-P_DT);
+wire signed [127:0] _dden3 = P_TAU_THETA;
+wire signed [127:0] _dnum3 = _dop3 <<< 32;
+wire signed [127:0] _div3 = _dnum3 / _dden3;
 wire signed [63:0] _dres3 = _div3[63:0];
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [63:0] _exp_lut4_arg = _dres3;
-wire signed [64:0] _exp_lut4_raw = (({{_exp_lut4_arg[63]}, _exp_lut4_arg}) + 65'sd68719476736) >>> 29;
+wire signed [64:0] _exp_lut4_raw = ($signed({{_exp_lut4_arg[63]}, _exp_lut4_arg}) + 65'sd68719476736) >>> 29;
 wire [7:0] _exp_lut4_idx = (_exp_lut4_raw < 0) ? 8'd0 : ((_exp_lut4_raw > 65'sd255) ? 8'd255 : _exp_lut4_raw[7:0]);
 reg signed [63:0] _exp_lut4_out;
 always @(*) case (_exp_lut4_idx)
@@ -572,13 +572,17 @@ always @(*) case (_exp_lut4_idx)
 endcase
 wire signed [127:0] _mul5 = (theta_reg - P_THETA_REST) * _exp_lut4_out;
 wire signed [63:0] _t1 = (_mul5 >>> 32);
+wire signed [127:0] _reset_raw_v = P_V_RESET;
+wire signed [63:0] _reset_v = (_reset_raw_v > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_v < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_v[63:0];
+wire signed [127:0] _reset_raw_theta = (theta_next + P_DELTA_THETA);
+wire signed [63:0] _reset_theta = (_reset_raw_theta > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (_reset_raw_theta < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : _reset_raw_theta[63:0];
 
-wire signed [63:0] dv = ((P_V_REST + I_t) + _t0);
-wire signed [63:0] dtheta = (P_THETA_REST + _t1);
+wire signed [127:0] dv = ((P_V_REST + I_t) + _t0);
+wire signed [127:0] dtheta = (P_THETA_REST + _t1);
 
-wire signed [64:0] v_raw = dv;
+wire signed [127:0] v_raw = dv;
 wire signed [63:0] v_next = (v_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (v_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : v_raw[63:0];
-wire signed [64:0] theta_raw = dtheta;
+wire signed [127:0] theta_raw = dtheta;
 wire signed [63:0] theta_next = (theta_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (theta_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : theta_raw[63:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -589,12 +593,12 @@ always @(posedge clk or negedge rst_n) begin
         theta_out <= 64'sd18446743858961186816;
         spike_out <= 1'b0;
     end else begin
-        if ((v_next >= theta_next)) begin
+        if ((((v_next) + 128'sd0) >= ((theta_next) + 128'sd0))) begin
             spike_out <= 1'b1;
-            v_reg <= P_V_RESET;
-            v_out <= P_V_RESET;
-            theta_reg <= (theta_next + P_DELTA_THETA);
-            theta_out <= (theta_next + P_DELTA_THETA);
+            v_reg <= _reset_v;
+            v_out <= _reset_v;
+            theta_reg <= _reset_theta;
+            theta_out <= _reset_theta;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

@@ -34,35 +34,35 @@ reg _thr_prev;
 
 wire signed [127:0] _mul0 = P_A * P_M1;
 wire signed [63:0] _t0 = (_mul0 >>> 32);
-wire signed [63:0] _dop1 = _t0;
-wire signed [63:0] _dden1 = (P_M0 + P_M1);
-wire signed [127:0] _dnum1 = $signed({{64{_dop1[63]}}, _dop1}) <<< 32;
-wire signed [127:0] _div1 = _dnum1 / $signed({{64{_dden1[63]}}, _dden1});
+wire signed [127:0] _dop1 = _t0;
+wire signed [127:0] _dden1 = (P_M0 + P_M1);
+wire signed [127:0] _dnum1 = _dop1 <<< 32;
+wire signed [127:0] _div1 = _dnum1 / _dden1;
 wire signed [63:0] _dres1 = _div1[63:0];
 wire signed [127:0] _mul2 = (-P_M0) * x_reg;
 wire signed [63:0] _t1 = (_mul2 >>> 32);
 wire signed [127:0] _mul3 = P_A * P_M1;
 wire signed [63:0] _t2 = (_mul3 >>> 32);
-wire signed [63:0] _dop4 = (P_M0 + _t2);
-wire signed [63:0] _dden4 = (P_M0 + P_M1);
-wire signed [127:0] _dnum4 = $signed({{64{_dop4[63]}}, _dop4}) <<< 32;
-wire signed [127:0] _div4 = _dnum4 / $signed({{64{_dden4[63]}}, _dden4});
+wire signed [127:0] _dop4 = (P_M0 + _t2);
+wire signed [127:0] _dden4 = (P_M0 + P_M1);
+wire signed [127:0] _dnum4 = _dop4 <<< 32;
+wire signed [127:0] _div4 = _dnum4 / _dden4;
 wire signed [63:0] _dres4 = _div4[63:0];
 wire signed [127:0] _mul5 = P_M1 * (x_reg - P_A);
 wire signed [63:0] _t3 = (_mul5 >>> 32);
 wire signed [127:0] _mul6 = (-P_M0) * (x_reg - 64'sd4294967296);
 wire signed [63:0] _t4 = (_mul6 >>> 32);
-wire signed [127:0] _mul7 = P_BETA * (((x_reg >= P_D)) ? (64'sd4294967296) : (64'sd0));
+wire signed [127:0] _mul7 = P_BETA * (((((x_reg) + 128'sd0) >= ((P_D) + 128'sd0))) ? (64'sd4294967296) : (64'sd0));
 wire signed [63:0] _t5 = (_mul7 >>> 32);
 wire signed [127:0] _mul8 = P_EPS * (x_reg - P_J);
 wire signed [63:0] _t6 = (_mul8 >>> 32);
 
-wire signed [63:0] dx = ((((x_reg + (((x_reg <= _dres1)) ? (_t1) : ((((x_reg < _dres4)) ? (_t3) : (_t4))))) - y_reg) - _t5) + I_t);
-wire signed [63:0] dy = (y_reg + _t6);
+wire signed [127:0] dx = ((((x_reg + (((((x_reg) + 128'sd0) <= ((_dres1) + 128'sd0))) ? (_t1) : ((((((x_reg) + 128'sd0) < ((_dres4) + 128'sd0))) ? (_t3) : (_t4))))) - y_reg) - _t5) + I_t);
+wire signed [127:0] dy = (y_reg + _t6);
 
-wire signed [64:0] x_raw = dx;
+wire signed [127:0] x_raw = dx;
 wire signed [63:0] x_next = (x_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (x_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : x_raw[63:0];
-wire signed [64:0] y_raw = dy;
+wire signed [127:0] y_raw = dy;
 wire signed [63:0] y_next = (y_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (y_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : y_raw[63:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -74,7 +74,7 @@ always @(posedge clk or negedge rst_n) begin
         spike_out <= 1'b0;
         _thr_prev <= 1'b0;
     end else begin
-        if (((x_next >= P_X_THRESHOLD)) && !_thr_prev) begin
+        if (((((x_next) + 128'sd0) >= ((P_X_THRESHOLD) + 128'sd0))) && !_thr_prev) begin
             spike_out <= 1'b1;
             x_reg <= x_next;
             x_out <= x_next;
@@ -87,7 +87,7 @@ always @(posedge clk or negedge rst_n) begin
             y_reg <= y_next;
             y_out <= y_next;
         end
-        _thr_prev <= ((x_next >= P_X_THRESHOLD));
+        _thr_prev <= ((((x_next) + 128'sd0) >= ((P_X_THRESHOLD) + 128'sd0)));
     end
 end
 

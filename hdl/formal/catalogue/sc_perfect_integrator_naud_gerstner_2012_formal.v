@@ -33,8 +33,6 @@ module sc_perfect_integrator_naud_gerstner_2012_formal (
 
     always @(posedge clk) begin
         if (past_valid && rst_n) begin
-            assert ($signed(v_out) >= -16'sd32768);
-            assert ($signed(v_out) <= 16'sd32767);
             // A source event always exposes the configured reset state.
             if (spike_out)
                 assert (v_out == 16'sd0);

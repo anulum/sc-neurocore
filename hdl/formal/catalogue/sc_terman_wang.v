@@ -36,14 +36,14 @@ wire signed [15:0] _t1 = (_mul1 >>> 8);
 wire signed [31:0] _mul2 = _t1 * v_reg;
 wire signed [15:0] _t2 = (_mul2 >>> 8);
 wire signed [15:0] _k1_v = (((((_t0 - _t2) + 16'sd512) - w_reg) + I_t) + P_RHO);
-wire signed [15:0] _dop3 = v_reg;
-wire signed [15:0] _dden3 = P_BETA;
-wire signed [31:0] _dnum3 = $signed({{16{_dop3[15]}}, _dop3}) <<< 8;
-wire signed [31:0] _div3 = _dnum3 / $signed({{16{_dden3[15]}}, _dden3});
+wire signed [31:0] _dop3 = v_reg;
+wire signed [31:0] _dden3 = P_BETA;
+wire signed [31:0] _dnum3 = _dop3 <<< 8;
+wire signed [31:0] _div3 = _dnum3 / _dden3;
 wire signed [15:0] _dres3 = _div3[15:0];
 // _tanh_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _tanh_lut4_arg = _dres3;
-wire signed [16:0] _tanh_lut4_raw = (({{_tanh_lut4_arg[15]}, _tanh_lut4_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _tanh_lut4_raw = ($signed({{_tanh_lut4_arg[15]}, _tanh_lut4_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _tanh_lut4_idx = (_tanh_lut4_raw < 0) ? 8'd0 : ((_tanh_lut4_raw > 17'sd255) ? 8'd255 : _tanh_lut4_raw[7:0]);
 reg signed [15:0] _tanh_lut4_out;
 always @(*) case (_tanh_lut4_idx)
@@ -323,14 +323,14 @@ wire signed [15:0] _t6 = (_mul8 >>> 8);
 wire signed [31:0] _mul9 = _t6 * _s1_v;
 wire signed [15:0] _t7 = (_mul9 >>> 8);
 wire signed [15:0] _k2_v = (((((_t5 - _t7) + 16'sd512) - _s1_w) + I_t) + P_RHO);
-wire signed [15:0] _dop10 = _s1_v;
-wire signed [15:0] _dden10 = P_BETA;
-wire signed [31:0] _dnum10 = $signed({{16{_dop10[15]}}, _dop10}) <<< 8;
-wire signed [31:0] _div10 = _dnum10 / $signed({{16{_dden10[15]}}, _dden10});
+wire signed [31:0] _dop10 = _s1_v;
+wire signed [31:0] _dden10 = P_BETA;
+wire signed [31:0] _dnum10 = _dop10 <<< 8;
+wire signed [31:0] _div10 = _dnum10 / _dden10;
 wire signed [15:0] _dres10 = _div10[15:0];
 // _tanh_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _tanh_lut11_arg = _dres10;
-wire signed [16:0] _tanh_lut11_raw = (({{_tanh_lut11_arg[15]}, _tanh_lut11_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _tanh_lut11_raw = ($signed({{_tanh_lut11_arg[15]}, _tanh_lut11_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _tanh_lut11_idx = (_tanh_lut11_raw < 0) ? 8'd0 : ((_tanh_lut11_raw > 17'sd255) ? 8'd255 : _tanh_lut11_raw[7:0]);
 reg signed [15:0] _tanh_lut11_out;
 always @(*) case (_tanh_lut11_idx)
@@ -610,14 +610,14 @@ wire signed [15:0] _t11 = (_mul15 >>> 8);
 wire signed [31:0] _mul16 = _t11 * _s2_v;
 wire signed [15:0] _t12 = (_mul16 >>> 8);
 wire signed [15:0] _k3_v = (((((_t10 - _t12) + 16'sd512) - _s2_w) + I_t) + P_RHO);
-wire signed [15:0] _dop17 = _s2_v;
-wire signed [15:0] _dden17 = P_BETA;
-wire signed [31:0] _dnum17 = $signed({{16{_dop17[15]}}, _dop17}) <<< 8;
-wire signed [31:0] _div17 = _dnum17 / $signed({{16{_dden17[15]}}, _dden17});
+wire signed [31:0] _dop17 = _s2_v;
+wire signed [31:0] _dden17 = P_BETA;
+wire signed [31:0] _dnum17 = _dop17 <<< 8;
+wire signed [31:0] _div17 = _dnum17 / _dden17;
 wire signed [15:0] _dres17 = _div17[15:0];
 // _tanh_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _tanh_lut18_arg = _dres17;
-wire signed [16:0] _tanh_lut18_raw = (({{_tanh_lut18_arg[15]}, _tanh_lut18_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _tanh_lut18_raw = ($signed({{_tanh_lut18_arg[15]}, _tanh_lut18_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _tanh_lut18_idx = (_tanh_lut18_raw < 0) ? 8'd0 : ((_tanh_lut18_raw > 17'sd255) ? 8'd255 : _tanh_lut18_raw[7:0]);
 reg signed [15:0] _tanh_lut18_out;
 always @(*) case (_tanh_lut18_idx)
@@ -897,14 +897,14 @@ wire signed [15:0] _t16 = (_mul22 >>> 8);
 wire signed [31:0] _mul23 = _t16 * _s3_v;
 wire signed [15:0] _t17 = (_mul23 >>> 8);
 wire signed [15:0] _k4_v = (((((_t15 - _t17) + 16'sd512) - _s3_w) + I_t) + P_RHO);
-wire signed [15:0] _dop24 = _s3_v;
-wire signed [15:0] _dden24 = P_BETA;
-wire signed [31:0] _dnum24 = $signed({{16{_dop24[15]}}, _dop24}) <<< 8;
-wire signed [31:0] _div24 = _dnum24 / $signed({{16{_dden24[15]}}, _dden24});
+wire signed [31:0] _dop24 = _s3_v;
+wire signed [31:0] _dden24 = P_BETA;
+wire signed [31:0] _dnum24 = _dop24 <<< 8;
+wire signed [31:0] _div24 = _dnum24 / _dden24;
 wire signed [15:0] _dres24 = _div24[15:0];
 // _tanh_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [15:0] _tanh_lut25_arg = _dres24;
-wire signed [16:0] _tanh_lut25_raw = (({{_tanh_lut25_arg[15]}, _tanh_lut25_arg}) + 17'sd4096) >>> 5;
+wire signed [16:0] _tanh_lut25_raw = ($signed({{_tanh_lut25_arg[15]}, _tanh_lut25_arg}) + 17'sd4096) >>> 5;
 wire [7:0] _tanh_lut25_idx = (_tanh_lut25_raw < 0) ? 8'd0 : ((_tanh_lut25_raw > 17'sd255) ? 8'd255 : _tanh_lut25_raw[7:0]);
 reg signed [15:0] _tanh_lut25_out;
 always @(*) case (_tanh_lut25_idx)
@@ -1193,7 +1193,7 @@ always @(posedge clk or negedge rst_n) begin
         spike_out <= 1'b0;
         _thr_prev <= 1'b0;
     end else begin
-        if (((v_next >= P_V_PEAK)) && !_thr_prev) begin
+        if (((((v_next) + 32'sd0) >= ((P_V_PEAK) + 32'sd0))) && !_thr_prev) begin
             spike_out <= 1'b1;
             v_reg <= v_next;
             v_out <= v_next;
@@ -1206,7 +1206,7 @@ always @(posedge clk or negedge rst_n) begin
             w_reg <= w_next;
             w_out <= w_next;
         end
-        _thr_prev <= ((v_next >= P_V_PEAK));
+        _thr_prev <= ((((v_next) + 32'sd0) >= ((P_V_PEAK) + 32'sd0)));
     end
 end
 

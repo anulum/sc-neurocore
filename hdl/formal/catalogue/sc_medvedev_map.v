@@ -32,10 +32,10 @@ module sc_medvedev_map #(
 
 reg signed [31:0] u_reg;
 
-wire signed [31:0] _dop0 = P_BETA_0;
-wire signed [31:0] _dden0 = (P_DELTA - P_BETA_0);
-wire signed [63:0] _dnum0 = $signed({{32{_dop0[31]}}, _dop0}) <<< 16;
-wire signed [63:0] _div0 = _dnum0 / $signed({{32{_dden0[31]}}, _dden0});
+wire signed [63:0] _dop0 = P_BETA_0;
+wire signed [63:0] _dden0 = (P_DELTA - P_BETA_0);
+wire signed [63:0] _dnum0 = _dop0 <<< 16;
+wire signed [63:0] _div0 = _dnum0 / _dden0;
 wire signed [31:0] _dres0 = _div0[31:0];
 wire signed [63:0] _mul1 = P_DECAY_T0 * u_reg;
 wire signed [31:0] _t0 = (_mul1 >>> 16);
@@ -43,10 +43,10 @@ wire signed [63:0] _mul2 = (32'sd65536 - P_DECAY_T0) * P_F_0;
 wire signed [31:0] _t1 = (_mul2 >>> 16);
 wire signed [63:0] _mul3 = P_INPUT_GAIN * I_t;
 wire signed [31:0] _t2 = (_mul3 >>> 16);
-wire signed [31:0] _dop4 = P_BETA_HC;
-wire signed [31:0] _dden4 = (P_DELTA - P_BETA_HC);
-wire signed [63:0] _dnum4 = $signed({{32{_dop4[31]}}, _dop4}) <<< 16;
-wire signed [63:0] _div4 = _dnum4 / $signed({{32{_dden4[31]}}, _dden4});
+wire signed [63:0] _dop4 = P_BETA_HC;
+wire signed [63:0] _dden4 = (P_DELTA - P_BETA_HC);
+wire signed [63:0] _dnum4 = _dop4 <<< 16;
+wire signed [63:0] _div4 = _dnum4 / _dden4;
 wire signed [31:0] _dres4 = _div4[31:0];
 wire signed [63:0] _mul5 = (32'sd65536 - P_ALPHA_T0) * u_reg;
 wire signed [31:0] _t3 = (_mul5 >>> 16);
@@ -58,10 +58,10 @@ wire signed [63:0] _mul8 = (32'sd65536 - P_ALPHA_T0) * u_reg;
 wire signed [31:0] _t6 = (_mul8 >>> 16);
 wire signed [63:0] _mul9 = P_ALPHA_T0 * P_F_0;
 wire signed [31:0] _t7 = (_mul9 >>> 16);
-wire signed [31:0] _dop10 = _t5;
-wire signed [31:0] _dden10 = (32'sd65536 + (_t6 + _t7));
-wire signed [63:0] _dnum10 = $signed({{32{_dop10[31]}}, _dop10}) <<< 16;
-wire signed [63:0] _div10 = _dnum10 / $signed({{32{_dden10[31]}}, _dden10});
+wire signed [63:0] _dop10 = _t5;
+wire signed [63:0] _dden10 = (32'sd65536 + (_t6 + _t7));
+wire signed [63:0] _dnum10 = _dop10 <<< 16;
+wire signed [63:0] _div10 = _dnum10 / _dden10;
 wire signed [31:0] _dres10 = _div10[31:0];
 wire signed [63:0] _mul11 = (32'sd65536 - P_ALPHA_T0) * u_reg;
 wire signed [31:0] _t8 = (_mul11 >>> 16);
@@ -73,16 +73,16 @@ wire signed [63:0] _mul14 = (32'sd65536 - P_ALPHA_T0) * u_reg;
 wire signed [31:0] _t11 = (_mul14 >>> 16);
 wire signed [63:0] _mul15 = P_ALPHA_T0 * P_F_0;
 wire signed [31:0] _t12 = (_mul15 >>> 16);
-wire signed [31:0] _dop16 = _t10;
-wire signed [31:0] _dden16 = (32'sd65536 + (_t11 + _t12));
-wire signed [63:0] _dnum16 = $signed({{32{_dop16[31]}}, _dop16}) <<< 16;
-wire signed [63:0] _div16 = _dnum16 / $signed({{32{_dden16[31]}}, _dden16});
+wire signed [63:0] _dop16 = _t10;
+wire signed [63:0] _dden16 = (32'sd65536 + (_t11 + _t12));
+wire signed [63:0] _dnum16 = _dop16 <<< 16;
+wire signed [63:0] _div16 = _dnum16 / _dden16;
 wire signed [31:0] _dres16 = _div16[31:0];
 wire signed [63:0] _mul17 = P_D * (P_BETA_HC - _dres16);
 wire signed [31:0] _t13 = (_mul17 >>> 16);
 // _log_lut lookup table (256 entries over [0.00390625, 8.00390625), step 0.03125)
 wire signed [31:0] _log_lut18_arg = _t13;
-wire signed [32:0] _log_lut18_raw = (({{_log_lut18_arg[31]}, _log_lut18_arg}) - 33'sd256) >>> 11;
+wire signed [32:0] _log_lut18_raw = ($signed({{_log_lut18_arg[31]}, _log_lut18_arg}) - 33'sd256) >>> 11;
 wire [7:0] _log_lut18_idx = (_log_lut18_raw < 0) ? 8'd0 : ((_log_lut18_raw > 33'sd255) ? 8'd255 : _log_lut18_raw[7:0]);
 reg signed [31:0] _log_lut18_out;
 always @(*) case (_log_lut18_idx)
@@ -348,7 +348,7 @@ wire signed [63:0] _mul19 = P_HOMOCLINIC_EXPONENT * _log_lut18_out;
 wire signed [31:0] _t14 = (_mul19 >>> 16);
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
 wire signed [31:0] _exp_lut20_arg = _t14;
-wire signed [32:0] _exp_lut20_raw = (({{_exp_lut20_arg[31]}, _exp_lut20_arg}) + 33'sd1048576) >>> 13;
+wire signed [32:0] _exp_lut20_raw = ($signed({{_exp_lut20_arg[31]}, _exp_lut20_arg}) + 33'sd1048576) >>> 13;
 wire [7:0] _exp_lut20_idx = (_exp_lut20_raw < 0) ? 8'd0 : ((_exp_lut20_raw > 33'sd255) ? 8'd255 : _exp_lut20_raw[7:0]);
 reg signed [31:0] _exp_lut20_out;
 always @(*) case (_exp_lut20_idx)
@@ -618,20 +618,20 @@ wire signed [63:0] _mul23 = _exp_lut20_out * ((_t15 + _t16) - P_F_1);
 wire signed [31:0] _t17 = (_mul23 >>> 16);
 wire signed [63:0] _mul24 = P_INPUT_GAIN * I_t;
 wire signed [31:0] _t18 = (_mul24 >>> 16);
-wire signed [31:0] _dop25 = P_BETA_SN;
-wire signed [31:0] _dden25 = (P_DELTA - P_BETA_SN);
-wire signed [63:0] _dnum25 = $signed({{32{_dop25[31]}}, _dop25}) <<< 16;
-wire signed [63:0] _div25 = _dnum25 / $signed({{32{_dden25[31]}}, _dden25});
+wire signed [63:0] _dop25 = P_BETA_SN;
+wire signed [63:0] _dden25 = (P_DELTA - P_BETA_SN);
+wire signed [63:0] _dnum25 = _dop25 <<< 16;
+wire signed [63:0] _div25 = _dnum25 / _dden25;
 wire signed [31:0] _dres25 = _div25[31:0];
-wire signed [31:0] _dop26 = P_BETA_HC;
-wire signed [31:0] _dden26 = (P_DELTA - P_BETA_HC);
-wire signed [63:0] _dnum26 = $signed({{32{_dop26[31]}}, _dop26}) <<< 16;
-wire signed [63:0] _div26 = _dnum26 / $signed({{32{_dden26[31]}}, _dden26});
+wire signed [63:0] _dop26 = P_BETA_HC;
+wire signed [63:0] _dden26 = (P_DELTA - P_BETA_HC);
+wire signed [63:0] _dnum26 = _dop26 <<< 16;
+wire signed [63:0] _div26 = _dnum26 / _dden26;
 wire signed [31:0] _dres26 = _div26[31:0];
 
-wire signed [31:0] du = (((u_reg <= _dres0)) ? (((_t0 + _t1) + _t2)) : ((((u_reg <= _dres4)) ? ((((((P_BETA_HC - _dres10) > 32'sd0)) ? ((_t17 + P_F_1)) : (P_F_1)) + _t18)) : (_dres25))));
+wire signed [63:0] du = (((((u_reg) + 64'sd0) <= ((_dres0) + 64'sd0))) ? (((_t0 + _t1) + _t2)) : ((((((u_reg) + 64'sd0) <= ((_dres4) + 64'sd0))) ? ((((((((P_BETA_HC - _dres10)) + 64'sd0) > ((32'sd0) + 64'sd0))) ? ((_t17 + P_F_1)) : (P_F_1)) + _t18)) : (_dres25))));
 
-wire signed [32:0] u_raw = du;
+wire signed [63:0] u_raw = du;
 wire signed [31:0] u_next = (u_raw > 33'sd2147483647) ? 32'sd2147483647 : (u_raw < (-33'sd2147483648)) ? (-32'sd2147483648) : u_raw[31:0];
 
 always @(posedge clk or negedge rst_n) begin
@@ -640,7 +640,7 @@ always @(posedge clk or negedge rst_n) begin
         u_out <= 32'sd16476;
         spike_out <= 1'b0;
     end else begin
-        if ((u_reg <= _dres26)) begin
+        if ((((u_reg) + 64'sd0) <= ((_dres26) + 64'sd0))) begin
             spike_out <= 1'b1;
             u_reg <= u_next;
             u_out <= u_next;
