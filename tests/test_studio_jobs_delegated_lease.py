@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -27,7 +27,7 @@ class Clock:
     """Controllable UTC clock for second-resolution lease timestamps."""
 
     def __init__(self) -> None:
-        self.now = datetime(2026, 9, 24, 0, 0, tzinfo=UTC)
+        self.now = datetime(2026, 9, 24, 0, 0, tzinfo=timezone.utc)
 
     def __call__(self) -> datetime:
         return self.now

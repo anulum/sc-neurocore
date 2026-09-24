@@ -18,7 +18,7 @@ writer; no product code is replaced.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import socket
@@ -48,7 +48,7 @@ class Clock:
     """Controllable UTC clock so lease renewal is observable at second resolution."""
 
     def __init__(self) -> None:
-        self.now = datetime(2026, 9, 24, 0, 0, tzinfo=UTC)
+        self.now = datetime(2026, 9, 24, 0, 0, tzinfo=timezone.utc)
 
     def __call__(self) -> datetime:
         return self.now
