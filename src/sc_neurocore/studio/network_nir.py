@@ -191,7 +191,7 @@ def _to_nir_graph(nir: Any, spec: GraphSpec, graph: Mapping[str, Any]) -> tuple[
     for projection in spec.projections:
         weight_name = f"{projection.id}_weight"
         delay_name = f"{projection.id}_delay"
-        weight = _dense_weight(projection, counts[projection.source], counts[projection.target])
+        weight = dense_weight(projection, counts[projection.source], counts[projection.target])
         nodes[weight_name] = nir.Linear(weight=weight)
         nodes[weight_name].metadata[STUDIO_METADATA_KEY] = json.dumps(
             _projection_metadata(projection), sort_keys=True
@@ -282,7 +282,7 @@ def _drive_note(population: PopulationSpec) -> str:
     )
 
 
-def _dense_weight(projection: ProjectionSpec, n_source: int, n_target: int) -> np.ndarray[Any, Any]:
+def dense_weight(projection: ProjectionSpec, n_source: int, n_target: int) -> np.ndarray[Any, Any]:
     """Return the realised connectivity as a dense ``[target, source]`` matrix."""
     indptr, indices, data, _removed = connectivity_arrays(projection, n_source, n_target)
     weight = np.zeros((n_target, n_source))
@@ -607,6 +607,7 @@ __all__ = [
     "STUDIO_NIR_EXPORT_SCHEMA_VERSION",
     "NIRExport",
     "NIRMappingRefused",
+    "dense_weight",
     "graph_to_nir_file",
     "nir_file_to_graph",
 ]

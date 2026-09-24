@@ -38310,6 +38310,75 @@ GraphRejected
 
 ---
 
+## Module `studio.network_hardware`
+
+### Class `HardwareLoweringRefused`
+The graph holds something the hardware lowering cannot reproduce exactly.
+
+- **__init__**(reasons)
+
+### Class `LoweredNetwork`
+A Studio network as the hardware compiler's graph, with its drive lanes.
+
+- **input_sha256**()
+  - Return the digest every later artefact of this lowering is bound to.
+
+### Function `lower_graph(graph)`
+Lower a Studio network graph to the hardware compiler's graph.
+
+Raises
+------
+GraphRejected
+    When the graph does not validate.
+HardwareLoweringRefused
+    When any population, drive or projection cannot be reproduced exactly;
+    the exception lists every reason.
+
+### Function `lowering_public_dict(lowered)`
+Return the JSON projection of a lowering: what was compiled, and what it rounds.
+
+---
+
+## Module `studio.network_hardware_cosim`
+
+### Class `HardwareCosimUnavailable`
+The simulation tools the co-simulation needs are not installed.
+
+
+### Class `NetworkCosim`
+The three rasters of one network, and the digests that bind them.
+
+- **rtl_matches_model**()
+  - Whether the RTL and its bit-true model spike identically on every step.
+- **studio_first_divergence**()
+  - The first step where the RTL and the Studio's run differ, if any.
+- **to_public_dict**()
+  - Return the JSON receipt of this co-simulation.
+
+### Function `compile_lowered(lowered)`
+Compile a lowered network with the direct interconnect the model reproduces.
+
+### Function `cosimulate(lowered, graph, workdir)`
+Run the compiled RTL, its bit-true model and the Studio for the same steps.
+
+Parameters
+----------
+lowered:
+    The lowering of ``graph``.
+graph:
+    The Studio graph the lowering came from; the Studio's run uses it.
+workdir:
+    An empty directory the sources, executables and outputs are written to.
+steps:
+    Steps to run; the graph's own step count when omitted.
+
+Raises
+------
+HardwareCosimUnavailable
+    When Icarus Verilog or a C compiler is not installed.
+
+---
+
 ## Module `studio.network_nir`
 
 ### Class `NIRMappingRefused`
@@ -38346,6 +38415,9 @@ Raises
 NIRMappingRefused
     When the file is not NIR, holds a node the graph cannot represent, or
     its tensors do not match the Studio network its metadata describes.
+
+### Function `dense_weight(projection, n_source, n_target)`
+Return the realised connectivity as a dense ``&#91;target, source&#93;`` matrix.
 
 ---
 
