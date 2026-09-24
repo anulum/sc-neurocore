@@ -923,7 +923,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260924T140126Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260924T154859Z__adaptive_threshold_if.json",
           "changed_subjects": [],
           "problems": []
         },

@@ -659,7 +659,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260923T041625Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260924T154859Z__adaptive_threshold_if.json",
           "validators": [
             {
               "facet": "cosim",
@@ -2257,7 +2257,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "BrunelWangNeuron__cosim__20260923T041641Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20260924T140143Z__brunel_wang.json",
           "validators": [
             {
               "facet": "cosim",
@@ -9049,7 +9049,7 @@
           "facet": "dynamics_faithful",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__dynamics_faithful__20260907T075826Z__lapicque.json",
+          "receipt": "LapicqueNeuron__dynamics_faithful__20260924T130847Z__lapicque.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -9112,7 +9112,7 @@
           "facet": "class_validated",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__class_validated__20260907T075830Z__lapicque.json",
+          "receipt": "LapicqueNeuron__class_validated__20260924T130838Z__lapicque.json",
           "validators": [
             {
               "facet": "class_validated",
@@ -9229,7 +9229,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__cosim__20260923T041700Z__lapicque.json",
+          "receipt": "LapicqueNeuron__cosim__20260924T140501Z__lapicque.json",
           "validators": [
             {
               "facet": "cosim",
@@ -10290,7 +10290,7 @@
           "facet": "dynamics_faithful",
           "declared": true,
           "status": "bound",
-          "receipt": "McCullochPittsNeuron__dynamics_faithful__20260907T075752Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__dynamics_faithful__20260924T130859Z__mcculloch_pitts.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -10309,7 +10309,7 @@
           "facet": "class_validated",
           "declared": true,
           "status": "bound",
-          "receipt": "McCullochPittsNeuron__class_validated__20260907T075755Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__class_validated__20260924T130852Z__mcculloch_pitts.json",
           "validators": [
             {
               "facet": "class_validated",
@@ -13724,7 +13724,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "ResonateAndFireNeuron__cosim__20260923T041712Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20260924T140310Z__resonate_fire.json",
           "validators": [
             {
               "facet": "cosim",
