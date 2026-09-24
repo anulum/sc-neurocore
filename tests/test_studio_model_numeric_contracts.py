@@ -19,7 +19,11 @@ import pytest
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from sc_neurocore.studio.model_catalogue import get_model_detail
 from sc_neurocore.studio.model_compile_configuration import resolve_model_compile_configuration
-from sc_neurocore.studio.model_numeric_contracts import STUDIO_Q_FORMATS, studio_numeric_contracts
+from sc_neurocore.studio.model_numeric_contracts import (
+    STUDIO_Q_FORMATS,
+    bit_true_mirrored,
+    studio_numeric_contracts,
+)
 
 
 def test_every_candidate_format_has_a_contract_in_order() -> None:
@@ -75,3 +79,24 @@ def test_the_compile_evidence_carries_the_contract_it_was_built_under() -> None:
     assert contract == configuration.numeric_contract.to_public_dict()
     capacitance = next(q for q in contract["quantities"] if q["name"] == "C")
     assert (capacitance["rtl_value"], capacitance["status"]) == (200.0, "exact")
+
+
+def test_co_simulation_is_offered_only_where_a_bit_true_kernel_mirrors_the_rtl() -> None:
+    """The Poisson neuron draws its spikes from an LFSR the kernel does not model."""
+    detail = get_model_detail("PoissonNeuron")
+    assert detail is not None
+    configuration = detail["compile_configuration"]
+    assert configuration["q_formats"] and configuration["cosim_integrators"] == []
+    schema = configuration["schema_name"]
+    assert bit_true_mirrored(schema, "euler", "Q16.16") is False
+    assert bit_true_mirrored("adex", "euler", "Q16.16") is True
+
+
+def test_a_derived_divisor_the_format_rounds_to_zero_refuses_the_format() -> None:
+    """(1/tau_v - 1/tau_inh)**2 = 0.0025 is zero at Q8.8: the RTL would divide by zero."""
+    detail = get_model_detail("AlphaNeuron")
+    assert detail is not None
+    configuration = detail["compile_configuration"]
+    assert configuration["q_formats"] == ["Q16.16"]
+    refusal = configuration["numeric_contracts"]["Q8.8"]["refusal"]
+    assert "divisor equation v: (1.0 / tau_v - 1.0 / tau_inh)" in refusal

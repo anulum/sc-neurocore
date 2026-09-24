@@ -303,3 +303,62 @@ class TestMirrorAndProjection:
             "evidence": "",
             "arithmetic": None,
         }
+
+
+class TestDerivedDivisors:
+    """A divisor built from parameters is evaluated as the datapath computes it."""
+
+    @pytest.mark.parametrize(
+        ("divisor", "zero_divisors"),
+        [
+            (
+                "(1.0 / a - 1.0 / b) * (1.0 / a - 1.0 / b)",
+                ["(1.0 / a - 1.0 / b) * (1.0 / a - 1.0 / b)"],
+            ),
+            ("a - a", ["a - a"]),
+            ("+a - a", ["+a - a"]),
+            ("a ** 2 - a ** 2", ["a ** 2 - a ** 2"]),
+            ("a / 4.0 - b / 2.0", ["a / 4.0 - b / 2.0"]),
+            ("a + x", []),
+            ("x + a", []),
+            ("-a + a * 2", []),
+            ("a ** 0.5", []),
+            ("a % 3.0", []),
+            ("exp(a)", []),
+            # Only the inner c - d is zero; the outer divisor is then not evaluated.
+            ("1.0 / (c - d)", ["c - d"]),
+            ("a / (-b) + a", []),
+        ],
+    )
+    def test_a_divisor_is_blocking_only_when_its_word_is_zero(
+        self, divisor: str, zero_divisors: list[str]
+    ) -> None:
+        neuron = EquationNeuron(
+            equations={"x": f"x / ({divisor})"},
+            parameters={"a": 20.0, "b": 10.0, "c": 0.001, "d": 0.0015},
+            method="map",
+            dt=1.0,
+        )
+        contract = hardware_numeric_contract(neuron, Q88)
+        divisors = [q for q in contract.quantities if q.kind == "divisor"]
+        assert [q.name for q in divisors] == [f"equation x: {name}" for name in zero_divisors]
+        assert all(
+            (q.rtl_value, q.status, q.blocking) == (0.0, "underflows_to_zero", True)
+            for q in divisors
+        )
+
+    def test_the_product_rounding_is_the_compiled_one(self) -> None:
+        """(1/20 - 1/10)**2 = 0.0025: -13 * -13 = 169 LSB**2 truncates to 0, rounds to 1."""
+        neuron = EquationNeuron(
+            equations={"x": "x / ((1.0 / a - 1.0 / b) * (1.0 / a - 1.0 / b))"},
+            parameters={"a": 20.0, "b": 10.0},
+            method="map",
+            dt=1.0,
+        )
+        (divisor,) = [
+            q for q in hardware_numeric_contract(neuron, Q88).quantities if q.kind == "divisor"
+        ]
+        assert divisor.value == pytest.approx(0.0025)
+        nearest = hardware_numeric_contract(neuron, Q88, rounding="nearest")
+        assert not [q for q in nearest.quantities if q.kind == "divisor"]
+        assert hardware_numeric_contract(neuron, Q1616).representable is True

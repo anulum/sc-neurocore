@@ -179,7 +179,10 @@ class TestEdgeCaseCoverage:
 
         verilog = compile_to_verilog(neuron, module_name="chained_threshold")
 
-        assert "(v_reg < P_THRESHOLD) && (P_THRESHOLD <= (v_reg + I_t))" in verilog
+        assert (
+            "(((v_reg) + 32'sd0) < ((P_THRESHOLD) + 32'sd0)) && "
+            "(((P_THRESHOLD) + 32'sd0) <= (((v_reg + I_t)) + 32'sd0))"
+        ) in verilog
 
     def test_unsupported_comparison_raises(self):
         import pytest

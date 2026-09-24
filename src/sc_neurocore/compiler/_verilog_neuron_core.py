@@ -53,6 +53,24 @@ class _NeuronCore:
         return len(self.pipeline_regs)
 
 
+def _commit(raw: str, overflow: str, data_width: int) -> str:
+    """Return the word a wide ``raw`` value commits to under ``overflow``.
+
+    ``saturate`` clamps to the signed word range; ``wrap`` and ``trap`` keep the
+    low ``data_width`` bits (``trap`` additionally checks the range in simulation
+    where the caller emits it).
+    """
+    if overflow != "saturate":
+        return f"{raw}[{data_width - 1}:0]"
+    max_val = (1 << (data_width - 1)) - 1
+    abs_min = 1 << (data_width - 1)
+    return (
+        f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
+        f"({raw} < (-{data_width + 1}'sd{abs_min})) ? (-{data_width}'sd{abs_min}) : "
+        f"{raw}[{data_width - 1}:0]"
+    )
+
+
 def _escape_threshold_wires(
     probability_expression: str,
     sample_expression: str,
@@ -245,21 +263,15 @@ def _build_neuron_core(
             # A discrete map's next state is f(state) itself (held in d<var>);
             # saturate it directly rather than adding the current state, which would
             # risk a full-scale overflow before the saturating clamp can recover it.
-            next_wires.append(f"wire signed [{data_width}:0] {raw} = d{safe_var};")
+            next_wires.append(f"wire signed [{2 * data_width - 1}:0] {raw} = d{safe_var};")
         else:
             next_wires.append(f"wire signed [{data_width}:0] {raw} = {safe_var}_reg + d{safe_var};")
 
-        if q.overflow == "saturate":
-            abs_min = abs(min_val)
+        if q.overflow in {"saturate", "wrap"}:
             next_wires.append(
                 f"wire signed [{data_width - 1}:0] {safe_var}_next = "
-                f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
-                f"({raw} < (-{data_width + 1}'sd{abs_min})) ? (-{data_width}'sd{abs_min}) : "
-                f"{raw}[{data_width - 1}:0];"
-            )
-        elif q.overflow == "wrap":
-            next_wires.append(
-                f"wire signed [{data_width - 1}:0] {safe_var}_next = {raw}[{data_width - 1}:0];"
+                + _commit(raw, q.overflow, data_width)
+                + ";"
             )
         elif q.overflow == "trap":
             abs_min = abs(min_val)
@@ -344,7 +356,17 @@ def _build_neuron_core(
         )
         all_intermediates.extend(r_intermediates)
         all_pipeline_regs.extend(r_pregs)
-        reset_expressions[safe_var] = rexpr
+        # A reset value is committed like a next state: computed unwrapped, then
+        # saturated (or wrapped) to the word, as the bit-true kernel commits it.
+        reset_raw = f"_reset_raw_{safe_var}"
+        reset_value = f"_reset_{safe_var}"
+        all_intermediates.append(f"wire signed [{2 * data_width - 1}:0] {reset_raw} = {rexpr};")
+        all_intermediates.append(
+            f"wire signed [{data_width - 1}:0] {reset_value} = "
+            + _commit(reset_raw, q.overflow, data_width)
+            + ";"
+        )
+        reset_expressions[safe_var] = reset_value
 
     return _NeuronCore(
         state_var_map=state_var_map,

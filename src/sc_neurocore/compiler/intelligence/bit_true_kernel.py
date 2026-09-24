@@ -161,6 +161,15 @@ def kernel_arithmetic_contract(
             f"wrapped to {data_width} bits; parameters, constants, initial state, the "
             "time step and every input word use this encoding"
         ),
+        "addition": (
+            f"sums and differences are carried unwrapped ({2 * data_width} bits in the RTL, "
+            "64 in the kernel) until a multiply, divide, look-up table or commit narrows "
+            "them; an expression whose sum could exceed that is refused"
+        ),
+        "comparison": (
+            "compares the unwrapped values; a comparison used as a number is 1.0 or 0.0, "
+            "and 'and' / 'or' combine comparisons"
+        ),
         "multiply": multiply,
         "division_by_constant": "multiply by the encoded reciprocal of the constant",
         "division": (
@@ -188,7 +197,11 @@ def kernel_arithmetic_contract(
             "otherwise the candidate is committed; the reported state and spike are "
             "the post-step values"
         ),
-        "threshold_detection": "level: the spike fires on every step the condition holds",
+        "threshold_detection": (
+            "level: the spike fires on every step the condition holds; for a "
+            "crossing-detection neuron, only on a step where it holds and did not hold "
+            "on the previous candidate (at reset, on the initial state)"
+        ),
         "input": (
             f"one signed {data_width}-bit word per step ({c_word_type(data_width)}), "
             "held for the whole step"
@@ -218,14 +231,19 @@ def _validate_modes(q: Q88) -> None:
 
 
 def _preamble_c(q: Q88) -> list[str]:
-    """Emit the shared C helpers: ``sc_wrap``, ``sat``, ``fxmul`` and constants."""
+    """Emit the shared C helpers: ``sc_wrap``, ``sat``, ``fxmul`` and constants.
+
+    ``fxmul`` multiplies as unsigned 64-bit words: a signed product that
+    overflows 64 bits is undefined in C, while the RTL keeps its low
+    ``2*data_width`` bits, which the unsigned product reproduces.
+    """
     dw, frac = q.data_width, q.fraction
     ctype = _ctype(dw)
     max_val = (1 << (dw - 1)) - 1
     min_val = -(1 << (dw - 1))
     if q.rounding == "nearest" and frac > 0:
         fxmul_body = [
-            "    int64_t product = sc_wrap(a * b, WIDE_BITS);",
+            "    int64_t product = sc_wrap((int64_t)((uint64_t)a * (uint64_t)b), WIDE_BITS);",
             "    int64_t half = ((int64_t)1 << (FRAC_BITS - 1));",
             "    int64_t bias = product < 0 ? half - 1 : half;",
             "    product = sc_wrap(product + bias, WIDE_BITS);",
@@ -233,7 +251,8 @@ def _preamble_c(q: Q88) -> list[str]:
         ]
     else:
         fxmul_body = [
-            f"    return ({ctype})sc_wrap(sc_wrap(a * b, WIDE_BITS) >> FRAC_BITS, WORD_BITS);"
+            f"    return ({ctype})sc_wrap("
+            "sc_wrap((int64_t)((uint64_t)a * (uint64_t)b), WIDE_BITS) >> FRAC_BITS, WORD_BITS);"
         ]
     return [
         "#include <stdint.h>",
@@ -280,14 +299,16 @@ def _preamble_rust(q: Q88) -> list[str]:
     min_val = -(1 << (dw - 1))
     if q.rounding == "nearest" and frac > 0:
         fxmul_body = [
-            "    let mut product = sc_wrap(a * b, WIDE_BITS);",
+            "    let mut product = sc_wrap(a.wrapping_mul(b), WIDE_BITS);",
             "    let half = 1i64 << (FRAC_BITS - 1);",
             "    let bias = if product < 0 { half - 1 } else { half };",
             "    product = sc_wrap(product + bias, WIDE_BITS);",
             f"    sc_wrap(product >> FRAC_BITS, WORD_BITS) as {rtype}",
         ]
     else:
-        fxmul_body = [f"    sc_wrap(sc_wrap(a * b, WIDE_BITS) >> FRAC_BITS, WORD_BITS) as {rtype}"]
+        fxmul_body = [
+            f"    sc_wrap(sc_wrap(a.wrapping_mul(b), WIDE_BITS) >> FRAC_BITS, WORD_BITS) as {rtype}"
+        ]
     return [
         f"const FRAC_BITS: u32 = {frac};",
         f"const WIDE_BITS: u32 = {2 * dw};",
@@ -345,10 +366,15 @@ def _format_tables_rust(tables: dict[str, list[int]], data_width: int) -> list[s
     return lines
 
 
-def _accumulate_bias(x: str, overflow: str) -> str:
-    """Wrap a raw ``reg + d`` accumulate expression per the overflow mode."""
+def _accumulate_bias(x: str, overflow: str, rust_type: str | None = None) -> str:
+    """Wrap a raw ``reg + d`` accumulate expression per the overflow mode.
+
+    ``sc_wrap`` returns a 64-bit value; Rust, unlike C, needs it cast to the
+    word type named by ``rust_type``.
+    """
     if overflow == "wrap":
-        return f"sc_wrap({x}, WORD_BITS)"
+        wrapped = f"sc_wrap({x}, WORD_BITS)"
+        return wrapped if rust_type is None else f"({wrapped} as {rust_type})"
     return f"sat({x})"
 
 
@@ -591,6 +617,17 @@ def generate_bittrue_kernel_from_neuron(
             f"got {neuron.method!r}"
         )
 
+    if getattr(neuron, "_stochastic_threshold_enabled", False):
+        raise ValueError(
+            "bit-true neuron kernel does not mirror stochastic spike detection "
+            f"({neuron.detection!r}): the RTL draws from an LFSR the kernel does not model"
+        )
+    if neuron.substeps > 1:
+        raise ValueError(
+            "bit-true neuron kernel does not mirror macro-step sub-stepping "
+            f"(substeps={neuron.substeps})"
+        )
+
     dt_q = signed_q(q, neuron.dt)
     if neuron.dt != 0.0 and dt_q == 0:
         raise ValueError(
@@ -712,6 +749,8 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
         lines.append(f"    {ctype} {ctx.safe[var]};")
         lines.append(f"    {ctype} {ctx.safe[var]}_out;")
     lines.append("    int spike_out;")
+    if _edge(ctx):
+        lines.append("    int thr_prev;")
     lines.append(f"}} {m}_state_t;")
     lines.append("")
     lines.append(f"static void {m}_reset({m}_state_t *s) {{")
@@ -719,6 +758,8 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
         lines.append(f"    s->{ctx.safe[var]} = {ctx.init_q[var]};")
         lines.append(f"    s->{ctx.safe[var]}_out = {ctx.init_q[var]};")
     lines.append("    s->spike_out = 0;")
+    if _edge(ctx):
+        lines.append(f"    s->thr_prev = {_initial_edge_state(ctx)};")
     lines.append("}")
     lines.append("")
     lines.append(f"int {m}_step({m}_state_t *s, {ctype} I_t) {{")
@@ -738,6 +779,20 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
     return "\n".join(lines)
 
 
+def _edge(ctx: _KernelContext) -> bool:
+    """Return whether the neuron fires on the rising edge of its condition."""
+    return bool(ctx.threshold_expr) and bool(getattr(ctx.neuron, "_edge_detection", False))
+
+
+def _initial_edge_state(ctx: _KernelContext) -> int:
+    """Return the edge tracker's reset value, as the RTL seeds ``_thr_prev``.
+
+    Before the first step the previously committed state is the initial state,
+    so the tracker starts at whether the condition holds there.
+    """
+    return 1 if ctx.neuron.initial_threshold_active() else 0
+
+
 def _neuron_commit_c(ctx: _KernelContext) -> list[str]:
     """Emit the threshold / reset / spike commit block for the C kernel."""
     lines: list[str] = []
@@ -751,9 +806,18 @@ def _neuron_commit_c(ctx: _KernelContext) -> list[str]:
         return lines
     for stmt in ctx.threshold_stmts:
         lines.append(f"    {stmt}")
-    lines.append(f"    int _spk = ({ctx.threshold_expr}) ? 1 : 0;")
+    if _edge(ctx):
+        # Crossing detection fires on the rising edge of the condition, as the
+        # RTL's _thr_prev register does; the condition is tracked before reset.
+        lines.append(f"    int _cond = ({ctx.threshold_expr}) ? 1 : 0;")
+        lines.append("    int _spk = (_cond && !s->thr_prev) ? 1 : 0;")
+        lines.append("    s->thr_prev = _cond;")
+    else:
+        lines.append(f"    int _spk = ({ctx.threshold_expr}) ? 1 : 0;")
     for var, expr in ctx.reset_exprs.items():
-        lines.append(f"    {_ctype(ctx.q.data_width)} _rst_{ctx.safe[var]} = sat({expr});")
+        # A reset value is committed like a next state, under the overflow policy.
+        reset = _accumulate_bias(expr, ctx.q.overflow)
+        lines.append(f"    {_ctype(ctx.q.data_width)} _rst_{ctx.safe[var]} = {reset};")
     lines.append("    if (_spk) {")
     for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
@@ -789,6 +853,8 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
         lines.append(f"    pub {ctx.safe[var]}: {rtype},")
         lines.append(f"    pub {ctx.safe[var]}_out: {rtype},")
     lines.append("    pub spike_out: i32,")
+    if _edge(ctx):
+        lines.append("    pub thr_prev: i32,")
     lines.append("}")
     lines.append("")
     lines.append(f"impl {struct} {{")
@@ -797,6 +863,8 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
         lines.append(f"        self.{ctx.safe[var]} = {ctx.init_q[var]};")
         lines.append(f"        self.{ctx.safe[var]}_out = {ctx.init_q[var]};")
     lines.append("        self.spike_out = 0;")
+    if _edge(ctx):
+        lines.append(f"        self.thr_prev = {_initial_edge_state(ctx)};")
     lines.append("    }")
     lines.append("")
     lines.append(f"    pub fn step(&mut self, I_t: {rtype}) -> i32 {{")
@@ -804,11 +872,12 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
         lines.append(f"        {stmt}")
     for var in ctx.neuron.equations:
         if ctx.neuron.method == "map":
-            acc = _accumulate_bias(ctx.derivs[var], q.overflow)
+            acc = _accumulate_bias(ctx.derivs[var], q.overflow, rtype)
         else:
             acc = _accumulate_bias(
                 f"(self.{ctx.safe[var]} as i64) + (fxmul({ctx.derivs[var]}, {ctx.dt_q}) as i64)",
                 q.overflow,
+                rtype,
             )
         lines.append(f"        let _next_{ctx.safe[var]}: {rtype} = {acc};")
     lines.extend(_neuron_commit_rust(ctx))
@@ -830,9 +899,17 @@ def _neuron_commit_rust(ctx: _KernelContext) -> list[str]:
         return lines
     for stmt in ctx.threshold_stmts:
         lines.append(f"        {stmt}")
-    lines.append(f"        let _spk: i32 = if ({ctx.threshold_expr}) {{ 1 }} else {{ 0 }};")
+    if _edge(ctx):
+        lines.append(f"        let _cond: i32 = if ({ctx.threshold_expr}) {{ 1 }} else {{ 0 }};")
+        lines.append(
+            "        let _spk: i32 = if _cond != 0 && self.thr_prev == 0 { 1 } else { 0 };"
+        )
+        lines.append("        self.thr_prev = _cond;")
+    else:
+        lines.append(f"        let _spk: i32 = if ({ctx.threshold_expr}) {{ 1 }} else {{ 0 }};")
     for var, expr in ctx.reset_exprs.items():
-        lines.append(f"        let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = sat({expr});")
+        reset = _accumulate_bias(expr, ctx.q.overflow, _rtype(ctx.q.data_width))
+        lines.append(f"        let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = {reset};")
     lines.append("        if _spk != 0 {")
     for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"

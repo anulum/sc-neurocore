@@ -47,6 +47,6 @@ class TestEdgeDetectionEmitter:
             module_name="wrapped_phase"
         )
 
-        assert "(theta_reg < P_THETA_THRESHOLD)" in rtl
-        assert "P_THETA_THRESHOLD <= (theta_reg +" in rtl
+        assert "(((theta_reg) + 32'sd0) < ((P_THETA_THRESHOLD) + 32'sd0))" in rtl
+        assert "((P_THETA_THRESHOLD) + 32'sd0) <= (((theta_reg +" in rtl
         assert "_thr_prev" not in rtl

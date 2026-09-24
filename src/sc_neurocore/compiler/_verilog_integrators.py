@@ -200,7 +200,9 @@ def _emit_map_deriv_wires(
         )
         all_intermediates.extend(intermediates)
         all_pipeline_regs.extend(p_regs)
-        deriv_wires.append(f"wire signed [{data_width - 1}:0] d{safe_var} = {vexpr};")
+        # The next state is f(state) itself: keep it unwrapped at 2*data_width bits
+        # so the saturating commit sees a value outside the word instead of its wrap.
+        deriv_wires.append(f"wire signed [{2 * data_width - 1}:0] d{safe_var} = {vexpr};")
     return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
 
 

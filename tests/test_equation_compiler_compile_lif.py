@@ -80,5 +80,6 @@ class TestCompileLIF:
         assert "module strict_lif" in verilog
         assert "P_V_THRESHOLD" in verilog
         assert "P_V_RESET" in verilog
-        assert "if ((v_next > P_V_THRESHOLD))" in verilog
-        assert "v_reg <= P_V_RESET;" in verilog
+        assert "if ((((v_next) + 32'sd0) > ((P_V_THRESHOLD) + 32'sd0)))" in verilog
+        assert "wire signed [31:0] _reset_raw_v = P_V_RESET;" in verilog
+        assert "v_reg <= _reset_v;" in verilog

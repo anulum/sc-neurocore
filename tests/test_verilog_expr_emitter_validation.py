@@ -27,5 +27,5 @@ def test_if_expression_lowers_to_a_verilog_ternary() -> None:
     """Piecewise expressions retain their comparison, true branch, and false branch."""
     result, *_ = _emit_expr("v if v > 0.0 else -v", _STATE_VARS, {}, Q88())
 
-    assert result.startswith("(((v_reg >")
+    assert result.startswith("(((((v_reg) + 32'sd0) > ((16'sd0) + 32'sd0)))")
     assert ") ? (v_reg) : ((-v_reg)))" in result

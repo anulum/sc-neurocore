@@ -27,7 +27,10 @@ from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
-from sc_neurocore.studio.model_numeric_contracts import studio_numeric_contracts
+from sc_neurocore.studio.model_numeric_contracts import (
+    bit_true_mirrored,
+    studio_numeric_contracts,
+)
 from sc_neurocore.studio.model_introspection import (
     _categorize,
     _classify_fields,
@@ -244,6 +247,8 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     and the first is the default; ``numeric_contracts`` states what the RTL
     holds at every candidate format, including the refused ones and why. A
     neuron no candidate can hold has no default and no offered format.
+    ``cosim_integrators`` keeps only integrators whose neuron a generated
+    bit-true C kernel mirrors, since the co-simulation compares against it.
     """
     canonical = _canonical_schema(descriptor)
     if canonical is None:
@@ -275,6 +280,8 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
             integrator
             for integrator in dict.fromkeys(integrators)
             if integrator in profile.lowering.cosim_methods
+            and q_formats
+            and bit_true_mirrored(schema_name, integrator, q_formats[0])
         ],
         "default_q_format": q_formats[0] if q_formats else None,
         "q_formats": q_formats,

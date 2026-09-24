@@ -21,11 +21,14 @@ def test_compile_to_verilog_resets_from_candidate_and_exposes_post_reset_state()
     """
     verilog = compile_to_verilog(_candidate_reset_neuron(), module_name="sc_candidate_reset")
 
-    assert "a_reg <= (a_next + P_KICK);" in verilog
-    assert "a_out <= (a_next + P_KICK);" in verilog
-    assert "a_reg <= (a_reg + P_KICK);" not in verilog
-    assert "v_reg <= P_V_RESET;" in verilog
-    assert "v_out <= P_V_RESET;" in verilog
+    # The reset value is computed unwrapped and committed like a next state.
+    assert "wire signed [31:0] _reset_raw_a = (a_next + P_KICK);" in verilog
+    assert "(a_reg + P_KICK)" not in verilog
+    assert "a_reg <= _reset_a;" in verilog
+    assert "a_out <= _reset_a;" in verilog
+    assert "wire signed [31:0] _reset_raw_v = P_V_RESET;" in verilog
+    assert "v_reg <= _reset_v;" in verilog
+    assert "v_out <= _reset_v;" in verilog
 
 
 def test_compile_to_verilog_lowers_map_method_and_piecewise_ifexp() -> None:

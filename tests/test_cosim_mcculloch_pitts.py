@@ -168,6 +168,6 @@ def test_q320_rtl_uses_only_signed_count_threshold_and_binary_output() -> None:
     for rtl in (registered, folded):
         assert "input wire signed [31:0] I_t" in rtl
         assert "parameter signed [31:0] P_THETA = 32'sd2" in rtl
-        assert "I_t >= P_THETA" in rtl
+        assert "((I_t) + 64'sd0) >= ((P_THETA) + 64'sd0)" in rtl
         assert "output" in rtl and "spike_out" in rtl
         assert "v_out" not in rtl

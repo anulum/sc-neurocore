@@ -15,8 +15,9 @@ def test_compile_to_datapath_resets_from_the_same_candidate_expression() -> None
     """The folded PE must expose the same candidate-based post-reset next state."""
     verilog = compile_to_datapath(_candidate_reset_neuron(), module_name="sc_candidate_reset_pe")
 
-    assert "assign a_next_out = spike_out ? ((a_next + P_KICK)) : a_next;" in verilog
-    assert "assign v_next_out = spike_out ? (P_V_RESET) : v_next;" in verilog
+    assert "wire signed [31:0] _reset_raw_a = (a_next + P_KICK);" in verilog
+    assert "assign a_next_out = spike_out ? (_reset_a) : a_next;" in verilog
+    assert "assign v_next_out = spike_out ? (_reset_v) : v_next;" in verilog
 
 
 def test_compile_to_datapath_rejects_unrepresentable_timestep() -> None:

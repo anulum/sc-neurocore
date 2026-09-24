@@ -49,4 +49,16 @@ def studio_numeric_contracts(neuron: UniversalNeuron) -> dict[str, HardwareNumer
     }
 
 
-__all__ = ["STUDIO_Q_FORMATS", "studio_numeric_contracts"]
+def bit_true_mirrored(schema_name: str, integrator: str, q_format: str) -> bool:
+    """Return whether a generated bit-true C kernel mirrors the schema's RTL.
+
+    The co-simulation compares the RTL with that kernel, so an integrator is
+    offered for it only when the kernel exists for the neuron as compiled with
+    that integrator.
+    """
+    neuron = UniversalNeuron.from_schema(schema_name, method_override=integrator)
+    contract = hardware_numeric_contract(neuron.to_equation_neuron(), QFormat.from_string(q_format))
+    return contract.arithmetic is not None
+
+
+__all__ = ["STUDIO_Q_FORMATS", "bit_true_mirrored", "studio_numeric_contracts"]

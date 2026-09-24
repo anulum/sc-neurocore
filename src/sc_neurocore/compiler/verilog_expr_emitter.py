@@ -126,12 +126,38 @@ class _VerilogExprEmitter(ast.NodeVisitor):
 
         return trunc_name
 
+    def _value(self, node: ast.AST) -> str:
+        """Emit ``node`` where a number is expected.
+
+        A comparison is a truth value; used as a number it is ``1.0`` or ``0.0``
+        in the Q-format, as ``w * (u > 0)`` means in the model, not one
+        least-significant bit.
+        """
+        text: str = self.visit(node)
+        if not isinstance(node, (ast.Compare, ast.BoolOp)):
+            return text
+        dw, frac = self.q.data_width, self.q.fraction
+        if frac >= dw - 1:
+            raise ValueError(
+                f"A comparison used as a number needs 1.0, which Q{dw - frac}.{frac} cannot hold."
+            )
+        return f"(({text}) ? {dw}'sd{1 << frac} : {dw}'sd0)"
+
+    def _wide(self, expr: str) -> str:
+        """Evaluate ``expr`` at ``2*data_width`` bits where Verilog would size it itself.
+
+        A comparison sizes its operands to the wider of the two, so a sum compared
+        with a word would wrap at the word width; the bit-true kernel compares the
+        unwrapped values. Adding a ``2*data_width``-bit zero widens the context.
+        """
+        return f"(({expr}) + {2 * self.q.data_width}'sd0)"
+
     def visit_BinOp(self, node: ast.BinOp) -> str:
         """Emit Verilog for a binary operation, including narrow floor division."""
         if isinstance(node.op, ast.FloorDiv) and not self.q.signed:
             raise ValueError("Floor divisor requires signed fixed-point state")
-        left: str = self.visit(node.left)
-        right: str = self.visit(node.right)
+        left: str = self._value(node.left)
+        right: str = self._value(node.right)
 
         if isinstance(node.op, ast.Add):
             return f"({left} + {right})"
@@ -177,16 +203,16 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             # Hoist both operands to named wires: a bit-select (msb for sign
             # extension) is only valid on a net/reg, not on a compound expression
             # such as ``(a - b)``, so ``right`` must be assigned before extension.
-            self.intermediates.append(f"wire signed [{dw - 1}:0] {num_wire} = {left};")
-            self.intermediates.append(f"wire signed [{dw - 1}:0] {den_wire} = {right};")
+            # Both operands keep 2*dw bits, as the bit-true kernel carries them:
+            # a numerator or divisor outside the word is not wrapped before the divide.
+            self.intermediates.append(f"wire signed [{wide - 1}:0] {num_wire} = {left};")
+            self.intermediates.append(f"wire signed [{wide - 1}:0] {den_wire} = {right};")
             self.intermediates.append(
-                f"wire signed [{wide - 1}:0] {ext_name} = "
-                f"$signed({{{{{dw}{{{num_wire}[{dw - 1}]}}}}, {num_wire}}}) <<< {frac};"
+                f"wire signed [{wide - 1}:0] {ext_name} = {num_wire} <<< {frac};"
             )
             res_name = f"_dres{self._mul_count - 1}"
             self.intermediates.append(
-                f"wire signed [{wide - 1}:0] {div_tmp} = "
-                f"{ext_name} / $signed({{{{{dw}{{{den_wire}[{dw - 1}]}}}}, {den_wire}}});"
+                f"wire signed [{wide - 1}:0] {div_tmp} = {ext_name} / {den_wire};"
             )
             self.intermediates.append(
                 f"wire signed [{dw - 1}:0] {res_name} = {div_tmp}[{dw - 1}:0];"
@@ -328,7 +354,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
         """Emit Verilog for a unary operation (negate, positive)."""
-        operand: str = self.visit(node.operand)
+        operand: str = self._value(node.operand)
         if isinstance(node.op, ast.USub):
             return f"(-{operand})"
         if isinstance(node.op, ast.UAdd):
@@ -357,14 +383,15 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         results: list[str] = []
         for op, comp in zip(node.ops, node.comparators):
             right: str = self.visit(comp)
+            a, b = self._wide(left), self._wide(right)
             if isinstance(op, ast.Gt):
-                results.append(f"({left} > {right})")
+                results.append(f"({a} > {b})")
             elif isinstance(op, ast.GtE):
-                results.append(f"({left} >= {right})")
+                results.append(f"({a} >= {b})")
             elif isinstance(op, ast.Lt):
-                results.append(f"({left} < {right})")
+                results.append(f"({a} < {b})")
             elif isinstance(op, ast.LtE):
-                results.append(f"({left} <= {right})")
+                results.append(f"({a} <= {b})")
             else:
                 raise ValueError(f"Unsupported comparison: {type(op).__name__}")
             left = right
@@ -379,9 +406,23 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         same combinational datapath the arithmetic nodes already use.
         """
         test: str = self.visit(node.test)
-        body: str = self.visit(node.body)
-        orelse: str = self.visit(node.orelse)
+        body: str = self._value(node.body)
+        orelse: str = self._value(node.orelse)
         return f"(({test}) ? ({body}) : ({orelse}))"
+
+    def visit_BoolOp(self, node: ast.BoolOp) -> str:
+        """Emit ``and`` / ``or`` over comparisons as a one-bit condition.
+
+        Only comparisons and nested boolean operations are accepted: Python's
+        ``and``/``or`` return an operand, which for numbers is not a truth value.
+        """
+        joiner = " && " if isinstance(node.op, ast.And) else " || "
+        parts = []
+        for value in node.values:
+            if not isinstance(value, (ast.Compare, ast.BoolOp)):
+                raise ValueError("'and' / 'or' operands must be comparisons in Verilog compilation")
+            parts.append(f"({self.visit(value)})")
+        return f"({joiner.join(parts)})"
 
     def visit_Call(self, node: ast.Call) -> str:
         """Emit Verilog for function calls."""
@@ -390,7 +431,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         fname = node.func.id
         if len(node.args) < 1:
             raise ValueError(f"Function {fname} requires at least 1 argument")
-        arg: str = self.visit(node.args[0])
+        arg: str = self._value(node.args[0])
 
         if fname == "exp":
             return self._emit_lut_call("_exp_lut", arg, self._exp_lut_entries())
@@ -423,19 +464,23 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         elif fname == "cos":
             return self._emit_lut_call("_cos_lut", arg, self._cos_lut_entries())
         elif fname == "abs":
-            return f"(({arg} < 0) ? (-{arg}) : {arg})"
+            return f"(({self._wide(arg)} < 0) ? (-{arg}) : {arg})"
         elif fname == "clip":
             if len(node.args) == 3:
-                lo: str = self.visit(node.args[1])
-                hi: str = self.visit(node.args[2])
-                return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) ? {hi} : {arg}))"
+                lo: str = self._value(node.args[1])
+                hi: str = self._value(node.args[2])
+                wide_arg = self._wide(arg)
+                return (
+                    f"(({wide_arg} < {self._wide(lo)}) ? {lo} : "
+                    f"(({wide_arg} > {self._wide(hi)}) ? {hi} : {arg}))"
+                )
             return arg
         elif fname in ("max", "min"):
             if len(node.args) >= 2:
-                b: str = self.visit(node.args[1])
+                b: str = self._value(node.args[1])
                 if fname == "max":
-                    return f"(({arg} > {b}) ? {arg} : {b})"
-                return f"(({arg} < {b}) ? {arg} : {b})"
+                    return f"(({self._wide(arg)} > {self._wide(b)}) ? {arg} : {b})"
+                return f"(({self._wide(arg)} < {self._wide(b)}) ? {arg} : {b})"
             return arg
         raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
 
@@ -479,7 +524,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         shift_op = f">>> {shift}" if shift >= 0 else f"<<< {-shift}"
         raw = f"{lut_id}_raw"
         self.intermediates.append(
-            f"wire signed [{dw}:0] {raw} = (({{{ext}}}) {op} {dw + 1}'sd{abs(min_q)}) {shift_op};"
+            # A concatenation is unsigned in Verilog: without $signed the offset sum
+            # and the shift are unsigned, and an argument below the table's first
+            # point indexes its last entry instead of clamping to the first.
+            f"wire signed [{dw}:0] {raw} = ($signed({{{ext}}}) {op} {dw + 1}'sd{abs(min_q)}) "
+            f"{shift_op};"
         )
         idx_wire = f"{lut_id}_idx"
         self.intermediates.append(
@@ -549,6 +598,47 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         raise ValueError(f"Unsupported AST node for Verilog: {type(node).__name__}")
 
 
+_COLLAPSING = (ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.FloorDiv)
+
+
+def _word_terms(node: ast.AST) -> int:
+    """Return how many word-sized addends an expression's value can sum.
+
+    Products, quotients, powers, remainders and look-up tables are narrowed to
+    the word, so each counts once; sums and differences add their terms, and a
+    select or clamp is as large as its largest branch.
+    """
+    if isinstance(node, ast.BinOp):
+        if isinstance(node.op, _COLLAPSING):
+            return 1
+        return _word_terms(node.left) + _word_terms(node.right)
+    if isinstance(node, ast.UnaryOp):
+        return _word_terms(node.operand)
+    if isinstance(node, ast.IfExp):
+        return max(_word_terms(node.body), _word_terms(node.orelse))
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+        if node.func.id in {"abs", "clip", "max", "min"}:
+            return max(_word_terms(arg) for arg in node.args)
+    return 1
+
+
+def _require_wide_headroom(root: ast.AST, q: Q88) -> None:
+    """Refuse an expression whose unwrapped value could exceed ``2*data_width`` bits.
+
+    Sums, divide operands and comparisons are carried at ``2*data_width`` bits
+    so they match the bit-true kernel, which carries them at 64. That is exact
+    only while no sum of word-sized terms can leave ``2*data_width`` bits.
+    """
+    limit = (1 << q.data_width) - 1
+    for node in ast.walk(root):
+        terms = _word_terms(node)
+        if terms > limit:
+            raise ValueError(
+                f"An expression sums {terms} word-sized terms; at {q.data_width} bits "
+                f"the {2 * q.data_width}-bit datapath holds at most {limit} exactly."
+            )
+
+
 def _emit_expr(
     expr_str: str,
     state_vars: dict[str, str],
@@ -562,6 +652,7 @@ def _emit_expr(
 ) -> tuple[str, list[str], int, int, list[str]]:
     """Parse a Python expression string and return Verilog."""
     tree = ast.parse(expr_str, mode="eval")
+    _require_wide_headroom(tree.body, q)
     emitter = _VerilogExprEmitter(
         state_vars,
         param_map,

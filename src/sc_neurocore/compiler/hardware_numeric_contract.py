@@ -55,6 +55,7 @@ QuantityKind = Literal[
     "literal",
     "literal_divisor",
     "modulo_period",
+    "divisor",
 ]
 EncodingStatus = Literal["exact", "rounded", "underflows_to_zero", "out_of_range"]
 
@@ -297,7 +298,9 @@ def hardware_numeric_contract(
         The encoded quantities, look-up tables and bit-true mirror status.
     """
     data_width, fraction = q_format.total_bits, q_format.fraction_bits
-    quantities = _deduplicated(_quantities(neuron, data_width=data_width, fraction=fraction))
+    quantities = _deduplicated(
+        _quantities(neuron, data_width=data_width, fraction=fraction, rounding=rounding)
+    )
     try:
         generate_bittrue_kernel_from_neuron(
             neuron,
@@ -389,7 +392,7 @@ def _numeric_literal(node: ast.AST) -> float | None:
 
 
 def _quantities(
-    neuron: EquationNeuron, *, data_width: int, fraction: int
+    neuron: EquationNeuron, *, data_width: int, fraction: int, rounding: str
 ) -> Iterator[EncodedQuantity]:
     """Yield every encoded value of ``neuron`` in declaration order."""
     for name, value in neuron.parameters.items():
@@ -414,6 +417,110 @@ def _quantities(
     for where, expression in _expressions(neuron):
         for kind, value in _literals(ast.parse(expression, mode="eval")):
             yield _encoded(kind, where, value, data_width=data_width, fraction=fraction)
+    values = {**neuron.parameters, **neuron.constants}
+    fixed = _FixedValue(values, data_width=data_width, fraction=fraction, rounding=rounding)
+    for where, expression in _expressions(neuron):
+        for node in ast.walk(ast.parse(expression, mode="eval")):
+            if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Div):
+                continue
+            denominator = node.right
+            # A bare parameter or literal divisor is already checked above.
+            if isinstance(denominator, (ast.Name, ast.Constant)):
+                continue
+            evaluated = fixed.evaluate(denominator)
+            if evaluated is None or evaluated[0] != 0:
+                continue
+            yield EncodedQuantity(
+                kind="divisor",
+                name=f"{where}: {ast.unparse(denominator)}",
+                value=evaluated[1],
+                rtl_value=0.0,
+                status="underflows_to_zero",
+                blocking=True,
+            )
+
+
+class _FixedValue:
+    """Evaluate a parameter-only expression as the RTL datapath computes it.
+
+    Sums are exact; products and quotients are narrowed to the word as the
+    bit-true kernel narrows them. An expression that reads the state, the
+    input, or anything outside ``+ - * /`` and integer powers 2 to 8 is not
+    evaluated.
+    """
+
+    def __init__(
+        self, values: dict[str, float], *, data_width: int, fraction: int, rounding: str
+    ) -> None:
+        self._values = values
+        self._dw = data_width
+        self._frac = fraction
+        self._nearest = rounding == "nearest" and fraction > 0
+
+    def _wrap(self, value: int, bits: int) -> int:
+        value &= (1 << bits) - 1
+        return value - (1 << bits) if value >= 1 << (bits - 1) else value
+
+    def _encode(self, value: float) -> int:
+        return self._wrap(int(round(value * (1 << self._frac))), self._dw)
+
+    def _mul(self, left: int, right: int) -> int:
+        product = self._wrap(left * right, 2 * self._dw)
+        if self._nearest:
+            half = 1 << (self._frac - 1)
+            product = self._wrap(product + (half - 1 if product < 0 else half), 2 * self._dw)
+        return self._wrap(product >> self._frac, self._dw)
+
+    def evaluate(self, node: ast.AST) -> tuple[int, float] | None:
+        """Return the RTL word and the real value of ``node``, or ``None``."""
+        literal = _numeric_literal(node)
+        if literal is not None:
+            return self._encode(literal), literal
+        if isinstance(node, ast.Name):
+            value = self._values.get(node.id)
+            return None if value is None else (self._encode(float(value)), float(value))
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+            operand = self.evaluate(node.operand)
+            if operand is None or isinstance(node.op, ast.UAdd):
+                return operand
+            return -operand[0], -operand[1]
+        if not isinstance(node, ast.BinOp):
+            return None
+        left = self.evaluate(node.left)
+        if left is None:
+            return None
+        if isinstance(node.op, ast.Pow):
+            exponent = node.right
+            if not (
+                isinstance(exponent, ast.Constant)
+                and type(exponent.value) is int
+                and 2 <= exponent.value <= 8
+            ):
+                return None
+            word = left[0]
+            for _ in range(exponent.value - 1):
+                word = self._mul(word, left[0])
+            return word, left[1] ** exponent.value
+        right = self.evaluate(node.right)
+        if right is None:
+            return None
+        if isinstance(node.op, ast.Add):
+            return left[0] + right[0], left[1] + right[1]
+        if isinstance(node.op, ast.Sub):
+            return left[0] - right[0], left[1] - right[1]
+        if isinstance(node.op, ast.Mult):
+            return self._mul(left[0], right[0]), left[1] * right[1]
+        if not isinstance(node.op, ast.Div) or right[1] == 0.0:
+            return None
+        if _numeric_literal(node.right) is not None:
+            word = self._mul(left[0], self._encode(1.0 / right[1]))
+        elif right[0] == 0:
+            return None
+        else:
+            shifted = self._wrap(left[0] * (1 << self._frac), 2 * self._dw)
+            quotient = abs(shifted) // abs(right[0])
+            word = self._wrap(quotient if (shifted < 0) == (right[0] < 0) else -quotient, self._dw)
+        return word, left[1] / right[1]
 
 
 def _encoded(

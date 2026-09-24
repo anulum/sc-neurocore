@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4994
+    "test_files": 4996
   },
   "documentation": {
     "public_pages": [
@@ -6816,6 +6816,8 @@
       "tests/test_resonate_and_fire_rust_parity.py",
       "tests/test_riscv_driver.py",
       "tests/test_robotics.py",
+      "tests/test_rtl_lowering_refusals.py",
+      "tests/test_rtl_overflow_parity.py",
       "tests/test_rulkov_map_backends_bit_exact.py",
       "tests/test_rulkov_map_backends_dispatch_validation.py",
       "tests/test_rulkov_map_backends_dynamics.py",

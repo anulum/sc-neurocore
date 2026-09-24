@@ -27,7 +27,9 @@ from sc_neurocore.studio.model_cosim import (
     _resolve_tool,
     _run_checked,
     _tool_version,
+    StimulusPhase,
     run_model_cosim,
+    simulate_phases,
 )
 
 HAS_COSIM_TOOLS = all(shutil.which(tool) is not None for tool in ("gcc", "iverilog", "vvp"))
@@ -58,6 +60,24 @@ def test_model_cosim_compares_every_real_rtl_state_cycle_bit_exactly() -> None:
     reference = cast(dict[str, str], report["reference"])
     assert rtl["trace_sha256"] == reference["trace_sha256"]
     assert set(cast(dict[str, str], report["tools"])) == {"gcc", "iverilog", "vvp"}
+    boundary = cast(dict[str, object], report["boundary"])
+    assert boundary["compared"] == "rtl_vs_bittrue"
+    stress = cast(dict[str, object], report["stress"])
+    assert (stress["bit_exact"], stress["first_mismatch"], stress["sample_count"]) == (
+        True,
+        None,
+        56,
+    )
+    assert stress["schedule"] == [
+        {"input_q": -32768, "steps": 16, "reset_before": True},
+        {"input_q": 32767, "steps": 16, "reset_before": False},
+        {"input_q": 2560, "steps": 16, "reset_before": True},
+        {"input_q": 0, "steps": 8, "reset_before": False},
+    ]
+    assert len(execution.stress_rtl_trace) == 56
+    assert execution.stress_rtl_trace == execution.stress_reference_trace
+    assert stress["rtl_trace_sha256"] == stress["reference_trace_sha256"]
+    assert "rst_n=0; #1; rst_n=1;" in execution.rtl_testbench
 
 
 def test_model_cosim_rejects_integrator_without_bit_true_reference() -> None:
@@ -157,3 +177,22 @@ def test_shared_model_compile_configuration_fails_closed(
 ) -> None:
     with pytest.raises(ValueError, match=message):
         resolve_model_compile_configuration(payload)
+
+
+def test_model_cosim_refuses_a_current_the_input_word_would_wrap() -> None:
+    with pytest.raises(ValueError, match=r"current 200\.0 is outside Q8\.8"):
+        run_model_cosim(_map_configuration(), current=200.0, n_steps=4)
+
+
+def test_phase_simulation_names_a_missing_tool() -> None:
+    configuration = _map_configuration()
+    with pytest.raises(RuntimeError, match="tools unavailable: gcc"):
+        simulate_phases(
+            configuration.neuron.to_equation_neuron(),
+            configuration.to_verilog(),
+            configuration.module_name,
+            (StimulusPhase(0, 1),),
+            data_width=16,
+            fraction=8,
+            tools={"gcc": None, "iverilog": "iverilog", "vvp": "vvp"},
+        )

@@ -37642,12 +37642,52 @@ than producing RTL for a different neuron.
 
 ## Module `studio.model_cosim`
 
+### Class `StimulusPhase`
+One stretch of a co-simulation schedule.
+
+``word`` is held on the input for ``steps`` cycles, after a reset of the
+neuron to its initial state when ``reset_before`` is set.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
 ### Class `ModelCosimExecution`
 Public parity report plus complete private artifacts for job custody.
 
 
+### Class `PhaseSimulation`
+What one RTL and generated-kernel run printed, and the sources it ran.
+
+
+### Function `stress_schedule(current_q, data_width)`
+Return the fixed stress schedule run after the requested one.
+
+It holds the most negative and then the most positive input word, so the
+accumulate commit saturates in both directions; resets the neuron mid-run;
+replays the requested input from the initial state; and ends at zero input.
+Every phase starts after the requested run, from a reset neuron.
+
 ### Function `run_model_cosim(configuration)`
 Compile and compare real C-reference and RTL state traces cycle by cycle.
+
+The requested constant ``current`` runs for ``n_steps`` cycles, then the
+:func:`stress_schedule` runs in the same simulation; ``bit_exact`` holds
+only when both traces agree. ``current`` must lie inside the Q-format's
+range, since an input word outside it would wrap.
+
+### Function `simulate_phases(neuron, rtl_source, module_name, phases)`
+Run ``rtl_source`` under Icarus and the generated C kernel through ``phases``.
+
+``rtl_source`` must be the RTL of ``neuron`` compiled at the same word,
+overflow and rounding the kernel is generated with. Each prints one row per
+step: the spike and every state word.
+
+Raises
+------
+ValueError
+    No bit-true kernel mirrors ``neuron`` at this configuration.
+RuntimeError
+    A tool is unavailable or a command fails.
 
 ---
 
@@ -37665,6 +37705,13 @@ Returns
 -------
 dict
     Contract per :data:`STUDIO_Q_FORMATS` label, in that order.
+
+### Function `bit_true_mirrored(schema_name, integrator, q_format)`
+Return whether a generated bit-true C kernel mirrors the schema's RTL.
+
+The co-simulation compares the RTL with that kernel, so an integrator is
+offered for it only when the kernel exists for the neuron as compiled with
+that integrator.
 
 ---
 

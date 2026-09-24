@@ -96,6 +96,7 @@ def test_each_module_owns_one_compiler_responsibility() -> None:
     assert _top_level_definitions(_MODULES["_verilog_neuron_core"]) == {
         "_NeuronCore",
         "_build_neuron_core",
+        "_commit",
         "_escape_threshold_wires",
     }
     assert _top_level_definitions(_MODULES["_verilog_registered_module"]) == {"compile_to_verilog"}

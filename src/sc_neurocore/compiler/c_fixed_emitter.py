@@ -154,6 +154,43 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             return f"(({expr}) as i64)"
         return f"((int64_t)({expr}))"
 
+    def _value(self, node: ast.AST) -> str:
+        """Emit ``node`` where a number is expected; a comparison becomes 1.0 or 0.0."""
+        text: str = self.visit(node)
+        if not isinstance(node, (ast.Compare, ast.BoolOp)):
+            return text
+        if self.q.fraction >= self.q.data_width - 1:
+            raise ValueError(
+                "A comparison used as a number needs 1.0, which "
+                f"Q{self.q.data_width - self.q.fraction}.{self.q.fraction} cannot hold."
+            )
+        return self._wide(self._tern(text, str(1 << self.q.fraction), "0"))
+
+    def _condition(self, node: ast.AST) -> str:
+        """Emit ``node`` where a truth value is expected (non-zero is true)."""
+        text: str = self.visit(node)
+        if isinstance(node, (ast.Compare, ast.BoolOp)):
+            return text
+        return f"({text} != 0)"
+
+    def visit_IfExp(self, node: ast.IfExp) -> str:
+        """Emit ``body if test else orelse`` as a select, like the RTL ``?:``."""
+        return self._wide(
+            self._tern(self._condition(node.test), self._value(node.body), self._value(node.orelse))
+        )
+
+    def visit_BoolOp(self, node: ast.BoolOp) -> str:
+        """Emit ``and`` / ``or`` over comparisons, as the RTL does."""
+        joiner = " && " if isinstance(node.op, ast.And) else " || "
+        parts = []
+        for value in node.values:
+            if not isinstance(value, (ast.Compare, ast.BoolOp)):
+                raise ValueError(
+                    "'and' / 'or' operands must be comparisons in bit-exact compilation"
+                )
+            parts.append(f"({self.visit(value)})")
+        return f"({joiner.join(parts)})"
+
     def _tern(self, cond: str, when_true: str, when_false: str) -> str:
         """Emit a conditional expression (C ``?:`` / Rust ``if``-expression)."""
         if self.lang == "rust":
@@ -186,32 +223,62 @@ class _CFixedExprEmitter(ast.NodeVisitor):
 
     def visit_BinOp(self, node: ast.BinOp) -> str:
         """Emit a binary op (add, sub, mul, div, positive modulo, pow)."""
-        left: str = self.visit(node.left)
+        left: str = self._value(node.left)
         if isinstance(node.op, ast.Add):
-            return f"({left} + {self.visit(node.right)})"
+            return f"({left} + {self._value(node.right)})"
         if isinstance(node.op, ast.Sub):
-            return f"({left} - {self.visit(node.right)})"
+            return f"({left} - {self._value(node.right)})"
         if isinstance(node.op, ast.Mult):
-            return self._fxmul(left, self.visit(node.right))
+            return self._fxmul(left, self._value(node.right))
         if isinstance(node.op, ast.Div):
             return self._emit_div(node, left)
         if isinstance(node.op, ast.Mod):
             return self._emit_mod(node, left)
         if isinstance(node.op, ast.Pow):
             return self._emit_pow(node, left)
+        if isinstance(node.op, ast.FloorDiv):
+            return self._emit_floordiv(node, left)
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
+
+    def _emit_floordiv(self, node: ast.BinOp, left: str) -> str:
+        """Emit ``x // 2**k`` as the RTL does: floor to a whole number, keep the scale.
+
+        The dividend is wrapped to the word, arithmetically shifted right by
+        ``fraction + k`` (a signed floor) and shifted back by ``fraction``, the
+        result wrapped to the word.
+        """
+        right = node.right
+        if (
+            not isinstance(right, ast.Constant)
+            or isinstance(right.value, bool)
+            or not isinstance(right.value, int)
+        ):
+            raise ValueError("Floor divisor must be a positive integer power-of-two literal")
+        divisor = right.value
+        if divisor <= 0 or divisor & (divisor - 1):
+            raise ValueError("Floor divisor must be a positive integer power-of-two literal")
+        if divisor > self.q.max_value:
+            raise ValueError(
+                f"Floor divisor {divisor} exceeds fixed-point maximum {self.q.max_value}"
+            )
+        dw, frac = self.q.data_width, self.q.fraction
+        shift = frac + divisor.bit_length() - 1
+        floored = f"(sc_wrap({left}, {dw}) >> {shift})"
+        return self._wide(f"sc_wrap({floored} * {1 << frac}, {dw})")
 
     def _emit_div(self, node: ast.BinOp, left: str) -> str:
         """Emit division: by a constant it becomes a reciprocal multiply, else a shift-divide."""
         if isinstance(node.right, ast.Constant) and isinstance(node.right.value, (int, float)):
             recip = self._q_signed(1.0 / float(node.right.value))
             return self._fxmul(left, str(recip))
-        right: str = self.visit(node.right)
+        right: str = self._value(node.right)
         dw = self.q.data_width
         wide = 2 * dw
         # num << fraction (wrapped to the 2*dw intermediate), integer-divided by
         # den, then the quotient truncated to dw bits — matching the RTL wires.
-        shifted = f"sc_wrap(({left}) << {self.q.fraction}, {wide})"
+        # Multiplying by 2**fraction, not shifting: a left shift of a negative
+        # value is undefined in C, and an optimising compiler may trap on it.
+        shifted = f"sc_wrap(({left}) * {1 << self.q.fraction}, {wide})"
         quotient = f"({shifted} / ({right}))"
         return self._wide(f"sc_wrap({quotient}, {dw})")
 
@@ -262,7 +329,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
         """Emit a unary op (negate, positive)."""
-        operand: str = self.visit(node.operand)
+        operand: str = self._value(node.operand)
         if isinstance(node.op, ast.USub):
             return f"(-({operand}))"
         if isinstance(node.op, ast.UAdd):
@@ -316,7 +383,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             raise ValueError(f"Unsupported function '{fname}' in bit-exact compilation.")
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
-        arg: str = self.visit(node.args[0])
+        arg: str = self._value(node.args[0])
 
         lut_name = {"sigmoid": "sigmoid", "expit": "sigmoid"}.get(fname, fname)
         if lut_name in _LUT_GEOMETRY:
@@ -325,14 +392,14 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             return self._tern(f"{arg} < 0", f"-({arg})", arg)
         if fname == "clip":
             if len(node.args) == 3:
-                lo: str = self.visit(node.args[1])
-                hi: str = self.visit(node.args[2])
+                lo: str = self._value(node.args[1])
+                hi: str = self._value(node.args[2])
                 inner = self._tern(f"{arg} > {hi}", hi, arg)
                 return self._tern(f"{arg} < {lo}", lo, inner)
             return arg
         # max / min
         if len(node.args) >= 2:
-            other: str = self.visit(node.args[1])
+            other: str = self._value(node.args[1])
             cmp = ">" if fname == "max" else "<"
             return self._tern(f"{arg} {cmp} {other}", arg, other)
         return arg
@@ -374,7 +441,8 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         self.statements.append(self._local(argv, f"sc_wrap({arg}, {dw})"))
         op = "-" if min_q >= 0 else "+"
         offset = f"sc_wrap(({argv} {op} {abs(min_q)}), {dwp1})"
-        shifted = f"{offset} >> {shift}" if shift >= 0 else f"{offset} << {-shift}"
+        # A left shift of a negative offset is undefined in C; multiply instead.
+        shifted = f"{offset} >> {shift}" if shift >= 0 else f"{offset} * {1 << -shift}"
         # Offset+shift both happen in the (dw+1)-bit domain of the RTL raw wire.
         self.statements.append(self._local(raw, f"sc_wrap({shifted}, {dwp1})"))
         clamp = self._tern(f"{raw} < 0", "0", self._tern(f"{raw} > {n - 1}", str(n - 1), raw))

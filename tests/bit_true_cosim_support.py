@@ -117,7 +117,8 @@ def _c_main(neuron: EquationNeuron, module: str, i_q: int, n_steps: int, dw: int
 def _rust_main(neuron: EquationNeuron, module: str, i_q: int, n_steps: int, dw: int) -> str:
     struct = f"{module.capitalize()}State"
     svs = list(neuron.equations)
-    fields = ", ".join([f"{v}: 0, {v}_out: 0" for v in svs] + ["spike_out: 0"])
+    tracker = ["thr_prev: 0"] if neuron.threshold_expr and neuron._edge_detection else []
+    fields = ", ".join([f"{v}: 0, {v}_out: 0" for v in svs] + ["spike_out: 0", *tracker])
     outs = ", ".join(["spike", *(f"st.{v}_out" for v in svs)])
     fmt = " ".join(["{}", *("{}" for _ in svs)])
     return (
@@ -172,6 +173,7 @@ def _c_trace(
     frac: int,
     tmp: Path,
     rounding: str = "truncate",
+    overflow: str = "saturate",
 ) -> list[list[str]]:
     kernel = generate_bittrue_kernel_from_neuron(
         neuron,
@@ -179,6 +181,7 @@ def _c_trace(
         data_width=dw,
         fraction=frac,
         rounding=rounding,
+        overflow=overflow,
     )
     (tmp / f"{module}.c").write_text(kernel + "\n" + _c_main(neuron, module, i_q, n_steps, dw))
     subprocess.run(
@@ -201,6 +204,7 @@ def _rust_trace(
     frac: int,
     tmp: Path,
     rounding: str = "truncate",
+    overflow: str = "saturate",
 ) -> list[list[str]]:
     kernel = generate_bittrue_kernel_from_neuron(
         neuron,
@@ -208,6 +212,7 @@ def _rust_trace(
         data_width=dw,
         fraction=frac,
         rounding=rounding,
+        overflow=overflow,
         language="rust",
     )
     src = "#![allow(warnings)]\n" + kernel + "\n" + _rust_main(neuron, module, i_q, n_steps, dw)
