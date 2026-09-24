@@ -79,7 +79,7 @@ class StorageBoundaryConfiguration(BaseModel):
             raise ValueError("storage manifest limit exceeds metadata limit")
         for path in (self.authority_root, self.spool_root, self.socket_path):
             try:
-                valid = path.is_absolute() and path != Path(path.anchor) and path.resolve() == path
+                valid = _canonical(path)
             except (OSError, RuntimeError) as exc:
                 raise ValueError("storage boundary path cannot be resolved") from exc
             if not valid:
@@ -90,6 +90,18 @@ class StorageBoundaryConfiguration(BaseModel):
                 if root.is_relative_to(other) or other.is_relative_to(root):
                     raise ValueError("storage, spool and socket parent must not overlap")
         return self
+
+
+def _canonical(path: Path) -> bool:
+    """Return whether ``path`` is absolute, not a root, and passes through no link.
+
+    ``Path.resolve`` alone does not decide this: from Python 3.13 it returns a
+    path through a symlink loop unchanged instead of raising, so every existing
+    component is also checked for being a link.
+    """
+    if not path.is_absolute() or path == Path(path.anchor) or path.resolve() != path:
+        return False
+    return not any(component.is_symlink() for component in (path, *path.parents))
 
 
 def _unique_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
