@@ -45,5 +45,17 @@ def test_install_profile_docs_list_studio_testclient_transport() -> None:
 
     assert (
         '| `pip install "sc-neurocore[studio]"` | Web studio / local design UI | '
-        "`fastapi`, `uvicorn`, `httpx`, `httpx2` |"
+        "`fastapi`, `uvicorn`, `httpx`, `httpx2`; `nir` for the canvas's NIR export and import |"
     ) in docs
+
+
+def test_studio_extra_installs_what_the_canvas_nir_export_imports() -> None:
+    """The canvas offers NIR export and import, so the Studio extra installs nir.
+
+    It carries the same pin as the ``nir`` extra: the NIR bridge and the
+    Studio read and write the same files.
+    """
+    optional_dependencies = _optional_dependencies()
+
+    assert optional_dependencies["nir"] == ["nir>=1.0,<1.0.9"]
+    assert "nir>=1.0,<1.0.9" in optional_dependencies["studio"]
