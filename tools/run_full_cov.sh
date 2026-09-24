@@ -138,7 +138,7 @@ echo "  Modules run: $ran"
 echo "  Batches run: $batch_count"
 
 if $coverage; then
-    python -m coverage report --skip-empty --precision=2 --fail-under="$cov_fail_under"
+    python -m coverage report --skip-empty --show-missing --precision=2 --fail-under="$cov_fail_under"
     python -m coverage xml -o coverage.xml
     if $write_html; then
         python -m coverage html -d htmlcov
