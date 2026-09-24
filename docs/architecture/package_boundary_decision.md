@@ -79,6 +79,7 @@ they satisfy the same promotion gate:
 | `quantum` | optional extra | Qiskit and PennyLane quantum-circuit experiments. |
 | `quantum-cognition` | optional extra | Alias over the quantum stack for Fisher-Posner experiments. |
 | `nir` | optional extra | Neuromorphic Intermediate Representation import/export. |
+| `neuroml` | optional extra | libNeuroML for writing and schema-validating NeuroML 2 documents; the NeuroML importer itself needs no extra. |
 | `mpi` | optional extra | Distributed simulation through `mpi4py`. |
 | `lava` | optional extra | Intel Lava bridge profile, constrained to Python versions supported by Lava. |
 | `studio` | optional extra | Local web studio runtime dependencies. |

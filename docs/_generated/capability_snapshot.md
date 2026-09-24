@@ -11,8 +11,8 @@
 | Python model classes | 183 |
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 207 |
-| Optional extras | 28 |
-| Python test files | 4988 |
+| Optional extras | 29 |
+| Python test files | 4989 |
 | Public documentation pages | 633 |
 | GitHub Actions workflows | 20 |
 

@@ -2569,9 +2569,15 @@ Class-oriented registry surface for spike-train conversion imports.
 ### Class `ImportedCell`
 Result of importing a NeuroML cell definition.
 
+Attributes
+----------
+notes : tuple of str
+    What the mapping to the SC-NeuroCore model assumed, approximated or
+    could not carry, in words a user can check against the document.
+
 
 ### Function `import_neuroml(path)`
-Parse a NeuroML 2 XML file and return imported cell definitions.
+Parse a NeuroML 2 document and return its point-cell definitions.
 
 Parameters
 ----------
@@ -2581,7 +2587,14 @@ path : str or Path
 Returns
 -------
 list of ImportedCell
-    One per cell definition found in the file.
+    One per cell definition, each with its mapping ``notes``.
+
+Raises
+------
+ValueError
+    The root is not a ``<neuroml>`` element, the document holds an element
+    this importer does not model, or a cell attribute is missing, lacks
+    its unit, has a unit of the wrong dimension or is out of range.
 
 ### Function `create_neuron(cell)`
 Instantiate an SC-NeuroCore neuron from an ImportedCell.

@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NeuroML 2 importer
 
-"""Import NeuroML 2 cell definitions into SC-NeuroCore neuron models.
+"""Import NeuroML 2 point-cell definitions into SC-NeuroCore neuron models.
 
 Supports:
   <iafCell>, <iafRefCell>, <iafTauCell>, <iafTauRefCell> -> StochasticLIFNeuron
@@ -15,11 +15,27 @@ Supports:
   <adExIaFCell> -> AdExNeuron
 
 NeuroML 2 spec: https://docs.neuroml.org/Userdocs/Schemas/Cells.html
+
+Nothing is invented. Every attribute the NeuroML schema requires must be present
+and carry a unit of the right physical dimension; a missing attribute, a bare
+number where a unit is required, or a unit of another dimension is refused with
+the cell and attribute named. A document element this importer does not model --
+a network, population, projection, input, channel or morphological cell -- is
+refused rather than skipped, because dropping it would silently change what the
+document describes. Documentation elements (``notes``, ``annotation``,
+``property``) carry no dynamics and are ignored.
+
+Where the SC-NeuroCore model cannot take a value exactly as NeuroML states it,
+the imported cell says so in ``notes``: the timestep the model runs at (NeuroML
+cells carry none), voltages expressed relative to the leak reversal, the
+normalised input resistance, refractory periods rounded to whole timesteps, and
+attributes the target model has no place for.
 """
 
 from __future__ import annotations
 
-# NeuroML import is restricted to the operator-selected local file.
+import math
+import re
 import xml.etree.ElementTree as ET  # nosec B405
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,164 +43,201 @@ from typing import Any
 
 NS = "{http://www.neuroml.org/schema/neuroml2}"
 
+# Unit -> factor to the base unit this importer uses for each NeuroML dimension:
+# voltage mV, capacitance pF, conductance nS, time ms, current pA, per-time
+# per_ms, conductance-per-voltage nS_per_mV.
+_UNITS: dict[str, dict[str, float]] = {
+    "voltage": {"V": 1e3, "mV": 1.0},
+    "capacitance": {"F": 1e12, "uF": 1e6, "nF": 1e3, "pF": 1.0},
+    "conductance": {"S": 1e9, "mS": 1e6, "uS": 1e3, "nS": 1.0, "pS": 1e-3},
+    "time": {"s": 1e3, "ms": 1.0},
+    "current": {"A": 1e12, "uA": 1e6, "nA": 1e3, "pA": 1.0},
+    "pertime": {"per_s": 1e-3, "per_ms": 1.0, "Hz": 1e-3},
+    "conductancePerVoltage": {"S_per_V": 1e6, "nS_per_mV": 1.0},
+}
+_NUMBER = re.compile(r"^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*([A-Za-z_]*)\s*$")
+_DOCUMENTATION = frozenset({"notes", "annotation", "property"})
+
 
 def _strip_ns(tag: str) -> str:
     """Remove XML namespace prefix."""
     return tag.split("}")[-1] if "}" in tag else tag
 
 
-def _parse_unit_value(s: str | None) -> float:
-    """Parse NeuroML unit string like '10nS', '-65mV', '100pF' to SI-ish float.
+def _cell_id(elem: Any) -> str:
+    cell_id = elem.get("id")
+    if not cell_id:
+        raise ValueError(f"NeuroML <{_strip_ns(elem.tag)}> has no id; an id is required")
+    return str(cell_id)
 
-    Returns value in base NeuroML units (mV, nS, pF, ms, nA); a missing (``None``)
-    attribute value parses to ``0.0``.
+
+def _quantity(elem: Any, attribute: str, dimension: str) -> float:
+    """Read one required attribute in the base unit of its NeuroML dimension.
+
+    Parameters
+    ----------
+    elem:
+        The cell element.
+    attribute:
+        The XML attribute name.
+    dimension:
+        A key of the unit table, or ``"none"`` for a dimensionless number.
+
+    Returns
+    -------
+    float
+        The value, finite, in the dimension's base unit.
+
+    Raises
+    ------
+    ValueError
+        The attribute is missing, not a number, has no unit where one is
+        required, has a unit of another dimension, or is not finite.
     """
-    if s is None:
-        return 0.0
-    s = s.strip()
-    multipliers = {
-        "mV": 1.0,
-        "V": 1e3,
-        "uV": 1e-3,
-        "nS": 1.0,
-        "uS": 1e3,
-        "mS": 1e6,
-        "S": 1e9,
-        "pF": 1.0,
-        "nF": 1e3,
-        "uF": 1e6,
-        "F": 1e12,
-        "ms": 1.0,
-        "s": 1e3,
-        "us": 1e-3,
-        "nA": 1.0,
-        "uA": 1e3,
-        "pA": 1e-3,
-        "per_ms": 1.0,
-        "nS_per_mV": 1.0,
-        "mS_per_cm2": 1.0,
-        "S_per_m2": 0.1,
-        "uF_per_cm2": 1.0,
-        "kohm_cm": 1.0,
-    }
-    for unit in sorted(multipliers, key=len, reverse=True):
-        if s.endswith(unit):
-            num = s[: -len(unit)].strip()
-            return float(num) * multipliers[unit]
-    # Dimensionless
-    return float(s)
-
-
-def _parse_current_pa(s: str | None) -> float:
-    """Parse a NeuroML current string into pA for biophysical IF equations.
-
-    A missing (``None``) attribute value parses to ``0.0``.
-    """
-    if s is None:
-        return 0.0
-    text = s.strip()
-    multipliers = {
-        "pA": 1.0,
-        "nA": 1e3,
-        "uA": 1e6,
-        "mA": 1e9,
-        "A": 1e12,
-    }
-    for unit in sorted(multipliers, key=len, reverse=True):
-        if text.endswith(unit):
-            return float(text[: -len(unit)].strip()) * multipliers[unit]
-    return float(text)
+    where = f"NeuroML <{_strip_ns(elem.tag)} id={elem.get('id')!r}> attribute {attribute!r}"
+    raw = elem.get(attribute)
+    if raw is None:
+        raise ValueError(f"{where} is missing; it is required")
+    match = _NUMBER.match(raw)
+    if match is None:
+        raise ValueError(f"{where} value {raw!r} is not a number with a unit")
+    number, unit = float(match.group(1)), match.group(2)
+    if dimension == "none":
+        if unit:
+            raise ValueError(f"{where} is dimensionless but has unit {unit!r}")
+        value = number
+    else:
+        units = _UNITS[dimension]
+        if unit not in units:
+            raise ValueError(f"{where} needs a {dimension} unit ({', '.join(units)}), got {raw!r}")
+        value = number * units[unit]
+    if not math.isfinite(value):
+        raise ValueError(f"{where} value {raw!r} is not finite")
+    return value
 
 
 @dataclass
 class ImportedCell:
-    """Result of importing a NeuroML cell definition."""
+    """Result of importing a NeuroML cell definition.
+
+    Attributes
+    ----------
+    notes : tuple of str
+        What the mapping to the SC-NeuroCore model assumed, approximated or
+        could not carry, in words a user can check against the document.
+    """
 
     cell_id: str
     cell_type: str
     params: dict[str, Any]
     source_tag: str
+    notes: tuple[str, ...] = ()
+
+
+def _refractory_steps(elem: Any, dt: float, notes: list[str]) -> int:
+    refract = _quantity(elem, "refract", "time")
+    steps = refract / dt
+    whole = int(round(steps))
+    if not math.isclose(steps, whole, rel_tol=0.0, abs_tol=1e-9):
+        notes.append(
+            f"refractory period {refract!r} ms realised as {whole} whole timesteps of {dt!r} ms"
+        )
+    return whole
+
+
+def _voltage_notes(e_l: float, notes: list[str]) -> None:
+    notes.append(
+        f"voltages are relative to the leak reversal {e_l!r} mV, which becomes 0 in the model"
+    )
 
 
 def _import_iaf_cell(elem: Any) -> ImportedCell:
     """Import <iafCell> or <iafRefCell>."""
     tag = _strip_ns(elem.tag)
-    cell_id = elem.get("id", "unnamed")
+    cell_id = _cell_id(elem)
+    dt = 1.0
+    notes = [f"NeuroML cells carry no timestep; the model runs at dt={dt!r} ms"]
 
-    C = _parse_unit_value(elem.get("C", "100pF"))
-    g_L = _parse_unit_value(elem.get("leakConductance", "10nS"))
-    E_L = _parse_unit_value(elem.get("leakReversal", "-65mV"))
-    thresh = _parse_unit_value(elem.get("thresh", "-55mV"))
-    reset = _parse_unit_value(elem.get("reset", "-70mV"))
+    C = _quantity(elem, "C", "capacitance")
+    g_L = _quantity(elem, "leakConductance", "conductance")
+    E_L = _quantity(elem, "leakReversal", "voltage")
+    thresh = _quantity(elem, "thresh", "voltage")
+    reset = _quantity(elem, "reset", "voltage")
+    if g_L <= 0 or C <= 0:
+        raise ValueError(f"NeuroML <{tag} id={cell_id!r}> needs positive C and leakConductance")
 
-    # Convert conductance-based LIF to tau-based for SC-NeuroCore
-    # tau = C / g_L (in ms, since C in pF and g_L in nS: pF/nS = ms)
-    tau = C / max(g_L, 1e-12)
-    # Normalise voltages relative to E_L
-    v_rest = 0.0
-    v_threshold = thresh - E_L
-    v_reset = reset - E_L
-    resistance = 1.0 / max(g_L, 1e-12) * 1000  # MOhm -> normalised
-
-    params = {
-        "tau_mem": tau,
-        "v_rest": v_rest,
-        "v_threshold": v_threshold,
-        "v_reset": v_reset,
-        "resistance": 1.0,
-        "noise_std": 0.0,
-        "dt": 1.0,
-    }
-
-    if tag in ("iafRefCell", "iafTauRefCell"):
-        ref = _parse_unit_value(elem.get("refract", "0ms"))
-        params["refractory_period"] = int(ref)  # ms -> timesteps at dt=1
-
-    return ImportedCell(cell_id, "StochasticLIFNeuron", params, tag)
-
-
-def _import_iaf_tau_cell(elem: Any) -> ImportedCell:
-    """Import <iafTauCell> or <iafTauRefCell>."""
-    tag = _strip_ns(elem.tag)
-    cell_id = elem.get("id", "unnamed")
-
-    tau = _parse_unit_value(elem.get("tau", "20ms"))
-    E_L = _parse_unit_value(elem.get("leakReversal", "-65mV"))
-    thresh = _parse_unit_value(elem.get("thresh", "-55mV"))
-    reset = _parse_unit_value(elem.get("reset", "-70mV"))
-
-    params = {
+    # tau = C / g_L in ms, since C is in pF and g_L in nS.
+    tau = C / g_L
+    _voltage_notes(E_L, notes)
+    notes.append(
+        "input current enters through a normalised resistance of 1; the document "
+        f"implies 1/leakConductance = {1e3 / g_L!r} MOhm"
+    )
+    params: dict[str, Any] = {
         "tau_mem": tau,
         "v_rest": 0.0,
         "v_threshold": thresh - E_L,
         "v_reset": reset - E_L,
         "resistance": 1.0,
         "noise_std": 0.0,
-        "dt": 1.0,
+        "dt": dt,
     }
+    if tag == "iafRefCell":
+        params["refractory_period"] = _refractory_steps(elem, dt, notes)
+    return ImportedCell(cell_id, "StochasticLIFNeuron", params, tag, tuple(notes))
 
+
+def _import_iaf_tau_cell(elem: Any) -> ImportedCell:
+    """Import <iafTauCell> or <iafTauRefCell>."""
+    tag = _strip_ns(elem.tag)
+    cell_id = _cell_id(elem)
+    dt = 1.0
+    notes = [f"NeuroML cells carry no timestep; the model runs at dt={dt!r} ms"]
+
+    tau = _quantity(elem, "tau", "time")
+    E_L = _quantity(elem, "leakReversal", "voltage")
+    thresh = _quantity(elem, "thresh", "voltage")
+    reset = _quantity(elem, "reset", "voltage")
+    _voltage_notes(E_L, notes)
+    notes.append("input current enters through a normalised resistance of 1")
+    params: dict[str, Any] = {
+        "tau_mem": tau,
+        "v_rest": 0.0,
+        "v_threshold": thresh - E_L,
+        "v_reset": reset - E_L,
+        "resistance": 1.0,
+        "noise_std": 0.0,
+        "dt": dt,
+    }
     if tag == "iafTauRefCell":
-        ref = _parse_unit_value(elem.get("refract", "0ms"))
-        params["refractory_period"] = int(ref)
-
-    return ImportedCell(cell_id, "StochasticLIFNeuron", params, tag)
+        params["refractory_period"] = _refractory_steps(elem, dt, notes)
+    return ImportedCell(cell_id, "StochasticLIFNeuron", params, tag, tuple(notes))
 
 
 def _import_izhikevich_cell(elem: Any) -> ImportedCell:
     """Import <izhikevichCell> (2003 dimensionless)."""
-    cell_id = elem.get("id", "unnamed")
+    cell_id = _cell_id(elem)
+    dt = 0.5
+    v0 = _quantity(elem, "v0", "voltage")
+    thresh = _quantity(elem, "thresh", "voltage")
+    notes = (
+        f"NeuroML cells carry no timestep; the model runs at dt={dt!r} ms",
+        f"initial potential v0={v0!r} mV is not carried; the model starts from its own rest state",
+        f"spike cut-off thresh={thresh!r} mV is not carried; the model uses its built-in 30 mV",
+    )
     return ImportedCell(
         cell_id,
         "SCIzhikevichNeuron",
         {
-            "a": float(elem.get("a", "0.02")),
-            "b": float(elem.get("b", "0.2")),
-            "c": float(elem.get("c", "-65")),
-            "d": float(elem.get("d", "8")),
-            "dt": 0.5,
+            "a": _quantity(elem, "a", "none"),
+            "b": _quantity(elem, "b", "none"),
+            "c": _quantity(elem, "c", "none"),
+            "d": _quantity(elem, "d", "none"),
+            "dt": dt,
             "noise_std": 0.0,
         },
         "izhikevichCell",
+        notes,
     )
 
 
@@ -193,36 +246,31 @@ def _import_izhikevich2007_cell(elem: Any) -> ImportedCell:
 
     Preserve the NeuroML 2 biophysical parameterisation.
     """
-    cell_id = elem.get("id", "unnamed")
-    C = _parse_unit_value(elem.get("C", "100pF"))
-    k = _parse_unit_value(elem.get("k", "0.7"))
-    vr = _parse_unit_value(elem.get("vr", "-60mV"))
-    vt = _parse_unit_value(elem.get("vt", "-40mV"))
-    vpeak = _parse_unit_value(elem.get("vpeak", "35mV"))
-    a = _parse_unit_value(elem.get("a", "0.03"))
-    b = _parse_unit_value(elem.get("b", "-2"))
-    c = _parse_unit_value(elem.get("c", "-50mV"))
-    d = _parse_current_pa(elem.get("d", "100pA"))
-    v0 = _parse_unit_value(elem.get("v0", f"{vr}mV"))
-
+    cell_id = _cell_id(elem)
+    dt = 0.1
+    notes = (
+        f"NeuroML cells carry no timestep; the model runs at dt={dt!r} ms",
+        "integrator assumed: rk4",
+    )
     return ImportedCell(
         cell_id,
         "Izhikevich2007Neuron",
         {
-            "C": C,
-            "k": k,
-            "vr": vr,
-            "vt": vt,
-            "vpeak": vpeak,
-            "a": a,
-            "b": b,
-            "c": c,
-            "d": d,
-            "v0": v0,
-            "dt": 0.1,
+            "C": _quantity(elem, "C", "capacitance"),
+            "k": _quantity(elem, "k", "conductancePerVoltage"),
+            "vr": _quantity(elem, "vr", "voltage"),
+            "vt": _quantity(elem, "vt", "voltage"),
+            "vpeak": _quantity(elem, "vpeak", "voltage"),
+            "a": _quantity(elem, "a", "pertime"),
+            "b": _quantity(elem, "b", "conductance"),
+            "c": _quantity(elem, "c", "voltage"),
+            "d": _quantity(elem, "d", "current"),
+            "v0": _quantity(elem, "v0", "voltage"),
+            "dt": dt,
             "integrator": "rk4",
         },
         "izhikevich2007Cell",
+        notes,
     )
 
 
@@ -234,31 +282,41 @@ def _import_adex_cell(elem: Any) -> ImportedCell:
     nS): the leak reversal becomes ``v_rest``, the exponential threshold ``V_T``
     becomes ``v_rh``, the membrane time constant is ``tau = C / g_L`` (pF/nS = ms)
     with the capacitance kept as ``c_m`` (pF), and the spike-triggered adaptation
-    ``b`` is parsed as a *current* in pA — ``w`` and the injected current share the
-    pA unit that keeps ``w / c_m`` a rate in mV/ms.
+    ``b`` is a *current* in pA -- ``w`` and the injected current share the pA unit
+    that keeps ``w / c_m`` a rate in mV/ms.
     """
-    cell_id = elem.get("id", "unnamed")
-    C = _parse_unit_value(elem.get("C", "281pF"))
-    g_L = _parse_unit_value(elem.get("gL", "30nS"))
-    E_L = _parse_unit_value(elem.get("EL", "-70.6mV"))
+    cell_id = _cell_id(elem)
+    dt = 0.1
+    C = _quantity(elem, "C", "capacitance")
+    g_L = _quantity(elem, "gL", "conductance")
+    if g_L <= 0 or C <= 0:
+        raise ValueError(f"NeuroML <adExIaFCell id={cell_id!r}> needs positive C and gL")
+    E_L = _quantity(elem, "EL", "voltage")
+    refract = _quantity(elem, "refract", "time")
+    notes = [f"NeuroML cells carry no timestep; the model runs at dt={dt!r} ms"]
+    if refract != 0.0:
+        notes.append(
+            f"refractory period {refract!r} ms is not carried; AdExNeuron has no refractory period"
+        )
     return ImportedCell(
         cell_id,
         "AdExNeuron",
         {
             "v": E_L,
             "v_rest": E_L,
-            "v_reset": _parse_unit_value(elem.get("reset", "-70.6mV")),
-            "v_threshold": _parse_unit_value(elem.get("thresh", "-40mV")),
-            "v_rh": _parse_unit_value(elem.get("VT", "-50.4mV")),
-            "delta_t": _parse_unit_value(elem.get("delT", "2mV")),
-            "tau": C / max(g_L, 1e-12),
-            "tau_w": _parse_unit_value(elem.get("tauw", "144ms")),
-            "a": _parse_unit_value(elem.get("a", "4nS")),
-            "b": _parse_current_pa(elem.get("b", "0.0805nA")),
+            "v_reset": _quantity(elem, "reset", "voltage"),
+            "v_threshold": _quantity(elem, "thresh", "voltage"),
+            "v_rh": _quantity(elem, "VT", "voltage"),
+            "delta_t": _quantity(elem, "delT", "voltage"),
+            "tau": C / g_L,
+            "tau_w": _quantity(elem, "tauw", "time"),
+            "a": _quantity(elem, "a", "conductance"),
+            "b": _quantity(elem, "b", "current"),
             "c_m": C,
-            "dt": 0.1,
+            "dt": dt,
         },
         "adExIaFCell",
+        tuple(notes),
     )
 
 
@@ -274,7 +332,7 @@ _IMPORTERS = {
 
 
 def import_neuroml(path: str | Path) -> list[ImportedCell]:
-    """Parse a NeuroML 2 XML file and return imported cell definitions.
+    """Parse a NeuroML 2 document and return its point-cell definitions.
 
     Parameters
     ----------
@@ -284,19 +342,37 @@ def import_neuroml(path: str | Path) -> list[ImportedCell]:
     Returns
     -------
     list of ImportedCell
-        One per cell definition found in the file.
+        One per cell definition, each with its mapping ``notes``.
+
+    Raises
+    ------
+    ValueError
+        The root is not a ``<neuroml>`` element, the document holds an element
+        this importer does not model, or a cell attribute is missing, lacks
+        its unit, has a unit of the wrong dimension or is out of range.
     """
     # The caller supplies a local NeuroML file; no remote entity is resolved.
     tree = ET.parse(path)  # nosec B314
     root = tree.getroot()
+    if _strip_ns(root.tag) != "neuroml":
+        raise ValueError(f"NeuroML document root must be <neuroml>, got <{_strip_ns(root.tag)}>")
 
-    cells = []
-    for elem in root:
-        tag = _strip_ns(elem.tag)
-        if tag in _IMPORTERS:
-            cells.append(_IMPORTERS[tag](elem))
-
-    return cells
+    unsupported = sorted(
+        {
+            _strip_ns(elem.tag)
+            for elem in root
+            if _strip_ns(elem.tag) not in _IMPORTERS and _strip_ns(elem.tag) not in _DOCUMENTATION
+        }
+    )
+    if unsupported:
+        raise ValueError(
+            "NeuroML document holds elements this importer does not model: "
+            f"{', '.join(unsupported)}; it imports point-cell definitions only "
+            f"({', '.join(sorted(_IMPORTERS))})"
+        )
+    return [
+        _IMPORTERS[_strip_ns(elem.tag)](elem) for elem in root if _strip_ns(elem.tag) in _IMPORTERS
+    ]
 
 
 def create_neuron(cell: ImportedCell) -> Any:

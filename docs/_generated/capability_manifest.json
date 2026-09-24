@@ -965,13 +965,13 @@
   "counts": {
     "github_workflows": 20,
     "model_documentation_pages": 200,
-    "optional_extras": 28,
+    "optional_extras": 29,
     "public_api_exports": 45,
     "public_documentation_pages": 633,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4988
+    "test_files": 4989
   },
   "documentation": {
     "public_pages": [
@@ -3020,6 +3020,7 @@
       "license",
       "minimal",
       "mpi",
+      "neuroml",
       "nir",
       "optics",
       "quantum",
@@ -6327,6 +6328,7 @@
       "tests/test_neuroml_import_izhikevich2007_neuron.py",
       "tests/test_neuroml_import_multiple_cells.py",
       "tests/test_neuroml_import_parse_helpers.py",
+      "tests/test_neuroml_import_upstream_documents.py",
       "tests/test_neuromorphic_profile_modularisation.py",
       "tests/test_neuron_complete_packet_domain.py",
       "tests/test_neuron_descriptor_coverage_closure.py",

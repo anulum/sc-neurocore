@@ -8,13 +8,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from textwrap import dedent
+
+from neuroml.utils import validate_neuroml2
 import pytest
+
 from sc_neurocore.adapters.neuroml import (
     ImportedCell,
-    _parse_current_pa,
-    _parse_unit_value,
     create_neuron,
     import_neuroml,
 )
@@ -25,19 +27,26 @@ FIXTURES = Path(__file__).parent / "fixtures" / "neuroml"
 
 
 @pytest.fixture(autouse=True)
-def ensure_fixtures(tmp_path):
+def ensure_fixtures(tmp_path: Path) -> Iterator[Path]:
     """Create test NeuroML files in tmp_path."""
     d = tmp_path / "neuroml"
     d.mkdir()
     yield d
 
 
-def _write_nml(path: Path, body: str) -> Path:
+def _write_nml(path: Path, body: str, *, valid: bool = True) -> Path:
+    """Write a NeuroML document; unless told otherwise, the upstream schema must accept it.
+
+    Every fixture meant to be valid is checked by libNeuroML's own validator,
+    so a test never exercises the importer on a document real tools reject.
+    """
     header = dedent("""\
     <neuroml xmlns="http://www.neuroml.org/schema/neuroml2"
              id="test">
     """)
     path.write_text(header + body + "\n</neuroml>")
+    if valid:
+        validate_neuroml2(str(path))
     return path
 
 
@@ -46,8 +55,6 @@ __all__ = [
     "dedent",
     "pytest",
     "ImportedCell",
-    "_parse_current_pa",
-    "_parse_unit_value",
     "create_neuron",
     "import_neuroml",
     "Izhikevich2007Neuron",

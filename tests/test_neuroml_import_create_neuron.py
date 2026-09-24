@@ -67,7 +67,8 @@ class TestCreateNeuron:
             dedent("""\
             <adExIaFCell id="adex0" C="281pF" gL="30nS" EL="-70.6mV"
                          VT="-50.4mV" thresh="-40mV" reset="-70.6mV"
-                         delT="2mV" tauw="144ms" a="4nS" b="0.0805nA"/>
+                         delT="2mV" tauw="144ms" a="4nS" b="0.0805nA"
+                         refract="0ms"/>
         """),
         )
         cells = import_neuroml(f)
