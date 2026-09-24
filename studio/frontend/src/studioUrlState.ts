@@ -232,3 +232,39 @@ export function decodeStudioStartupHash(
     return null;
   }
 }
+
+/** The fragment prefix of a link that opens one catalogue model. */
+export const MODEL_LINK_PREFIX = "model=";
+
+/**
+ * Build the readable link that opens one model.
+ *
+ * Unlike a share link it carries only the model's catalogue identity, in
+ * plain text, so it reads as what it is and stays valid while the share
+ * payload format changes.
+ *
+ * @param modelName - The catalogue identity.
+ * @param location - The address to build it against.
+ * @returns The link.
+ */
+export function buildModelLinkUrl(modelName: string, location: StudioShareUrlLocation): string {
+  return `${location.origin}${location.pathname}#${MODEL_LINK_PREFIX}${encodeURIComponent(modelName)}`;
+}
+
+/**
+ * Read the model a model link names.
+ *
+ * @param hash - The fragment, with or without its leading `#`.
+ * @returns The model name, or `null` when the fragment is not a model link
+ *   or its name does not decode.
+ */
+export function decodeModelLinkHash(hash: string): string | null {
+  const fragment = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (!fragment.startsWith(MODEL_LINK_PREFIX)) return null;
+  try {
+    const name = decodeURIComponent(fragment.slice(MODEL_LINK_PREFIX.length));
+    return name.length > 0 ? name : null;
+  } catch {
+    return null;
+  }
+}

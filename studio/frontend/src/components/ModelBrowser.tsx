@@ -6,10 +6,13 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStudioStore } from "../stores/studio";
 import {
     fetchModelFacets,
+    queryModels,
+    type CatalogueQueryParams,
+    type CatalogueQueryResult,
     type ModelBehavior,
     type ModelFacets,
     type ModelScanMetadata,
@@ -98,94 +101,82 @@ export function buildModelScanEvidenceItems(
     ];
 }
 
-/** The filters the catalogue list is narrowed by. */
+/** What the list is narrowed by once the server has answered. */
 interface ModelGroupFilters {
-    modelFilter: string;
-    familyFilter: string;
-    patternFilter: string;
-    minTier: number;
-    /** Minimum science dual-axis tier (S0–S5). 0 means no filter. */
-    minScienceTier?: number;
     /**
-     * Minimum silicon dual-axis tier (H0–H5). 0 means no filter.
-     * Models with null / unenrolled silicon never pass a positive min.
+     * The names the server's catalogue query admitted, or `null` before it has
+     * answered; the server holds the one filtering rule.
      */
-    minSiliconTier?: number;
-    /** When true, only models with silicon_tier !== null. */
-    siliconEnrolledOnly?: boolean;
+    matched: ReadonlySet<string> | null;
+    /** A live firing pattern from this browser's own scan, which only it holds. */
+    patternFilter: string;
     behaviors: Record<string, ModelBehavior>;
-    behaviorFilter?: string;
 }
 
 /**
- * Narrow the catalogue and group what survives by family.
+ * Keep the models the catalogue query admitted and group them by family.
  *
- * Filters by search text, family, measured behaviour tag, live firing pattern,
- * legacy evidence tier, and the dual-axis science and silicon floors.
+ * Search, family, behaviour and readiness are the server's decision; only the
+ * live scan pattern, which exists in this browser alone, is applied here.
  *
- * @param models - The catalogue to filter.
- * @param filters - What to narrow it by.
+ * @param models - The catalogue.
+ * @param filters - The admitted names and the scan pattern.
  * @returns Family name to the models in it, families with none omitted.
  */
-export function filterAndGroupModels<
-    T extends {
-        name: string;
-        category: string;
-        family: string;
-        tier?: number;
-        science_tier?: number;
-        silicon_tier?: number | null;
-        behavior_tags?: string[];
-    },
->(models: T[], filters: ModelGroupFilters): Record<string, T[]> {
-    let filtered = models;
-    if (filters.modelFilter) {
-        const q = filters.modelFilter.toLowerCase();
-        filtered = filtered.filter(
-            (m) =>
-                m.name.toLowerCase().includes(q) ||
-                m.category.toLowerCase().includes(q) ||
-                m.family.toLowerCase().includes(q),
-        );
-    }
-    if (filters.familyFilter) {
-        filtered = filtered.filter((m) => m.family === filters.familyFilter);
-    }
-    const behaviorFilter = filters.behaviorFilter;
-    if (behaviorFilter) {
-        filtered = filtered.filter((m) => m.behavior_tags?.includes(behaviorFilter));
-    }
-    if (filters.minTier > 0) {
-        filtered = filtered.filter((m) => (m.tier ?? 0) >= filters.minTier);
-    }
-    if ((filters.minScienceTier ?? 0) > 0) {
-        const floor = filters.minScienceTier ?? 0;
-        filtered = filtered.filter((m) => (m.science_tier ?? 0) >= floor);
-    }
-    if (filters.siliconEnrolledOnly) {
-        filtered = filtered.filter(
-            (m) => m.silicon_tier !== null && m.silicon_tier !== undefined,
-        );
-    }
-    if ((filters.minSiliconTier ?? 0) > 0) {
-        const floor = filters.minSiliconTier ?? 0;
-        filtered = filtered.filter(
-            (m) =>
-                m.silicon_tier !== null &&
-                m.silicon_tier !== undefined &&
-                m.silicon_tier >= floor,
-        );
-    }
-    if (filters.patternFilter) {
-        filtered = filtered.filter(
-            (m) => filters.behaviors[m.name]?.pattern === filters.patternFilter,
-        );
-    }
+export function filterAndGroupModels<T extends { name: string; category: string }>(
+    models: T[],
+    filters: ModelGroupFilters,
+): Record<string, T[]> {
+    const { matched, patternFilter, behaviors } = filters;
     const groups: Record<string, T[]> = {};
-    for (const m of filtered) {
+    for (const m of models) {
+        if (matched !== null && !matched.has(m.name)) continue;
+        if (patternFilter && behaviors[m.name]?.pattern !== patternFilter) continue;
         (groups[m.category] ??= []).push(m);
     }
     return groups;
+}
+
+/** The proven-readiness filters the panel offers, as catalogue query fields. */
+export interface ReadinessFilters {
+    minVerifiedScience: number;
+    minVerifiedSilicon: number;
+    verifiedPerfectOnly: boolean;
+}
+
+/**
+ * Build the catalogue query the panel's filters describe.
+ *
+ * @param text - The search text.
+ * @param family - The chosen family, or `""`.
+ * @param behavior - The chosen behaviour tag, or `""`.
+ * @param readiness - The proven-readiness floors.
+ * @returns The query; defaults are left for the encoder to drop.
+ */
+export function catalogueQueryFor(
+    text: string,
+    family: string,
+    behavior: string,
+    readiness: ReadinessFilters,
+): CatalogueQueryParams {
+    return {
+        text,
+        family,
+        behavior,
+        min_verified_science: readiness.minVerifiedScience,
+        min_verified_silicon: readiness.minVerifiedSilicon,
+        verified_perfect_only: readiness.verifiedPerfectOnly,
+    };
+}
+
+/**
+ * Order facet counts for display: largest first, then by name.
+ *
+ * @param counts - Value to count.
+ * @returns The entries, in display order.
+ */
+export function facetEntries(counts: Record<string, number>): [string, number][] {
+    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
 /**
@@ -222,6 +213,48 @@ export function CatalogueHealth({ facets }: { facets: ModelFacets | null }) {
 }
 
 /**
+ * One toggle in a filter group: a real button, so a keyboard reaches it and a
+ * screen reader hears whether it is on.
+ *
+ * @param props - Whether it is on, what pressing does, its tooltip, an optional
+ *   accent colour and its label.
+ * @returns The button.
+ */
+function FilterChip({
+    pressed,
+    onPress,
+    title,
+    colour,
+    children,
+}: {
+    pressed: boolean;
+    onPress: () => void;
+    title: string;
+    colour?: string;
+    children: ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            aria-pressed={pressed}
+            onClick={onPress}
+            title={title}
+            style={{
+                fontSize: 9,
+                padding: "1px 6px",
+                borderRadius: 3,
+                cursor: "pointer",
+                border: "1px solid var(--control-border)",
+                background: pressed ? colour ?? "var(--accent)" : "var(--bg-tertiary)",
+                color: pressed ? "var(--bg-primary)" : colour ?? "var(--text-muted)",
+            }}
+        >
+            {children}
+        </button>
+    );
+}
+
+/**
  * The catalogue panel: search, facets, scan, and the model list.
  *
  * @returns The panel.
@@ -243,10 +276,13 @@ export default function ModelBrowser() {
     const [facets, setFacets] = useState<ModelFacets | null>(null);
     const [familyFilter, setFamilyFilter] = useState<string>("");
     const [behaviorFilter, setBehaviorFilter] = useState<string>("");
-    const [minTier, setMinTier] = useState<number>(0);
-    const [minScienceTier, setMinScienceTier] = useState<number>(0);
-    const [minSiliconTier, setMinSiliconTier] = useState<number>(0);
-    const [siliconEnrolledOnly, setSiliconEnrolledOnly] = useState(false);
+    const [readiness, setReadiness] = useState<ReadinessFilters>({
+        minVerifiedScience: 0,
+        minVerifiedSilicon: 0,
+        verifiedPerfectOnly: false,
+    });
+    const [query, setQuery] = useState<CatalogueQueryResult | null>(null);
+    const [queryError, setQueryError] = useState<string | null>(null);
 
     useEffect(() => {
         void loadModels();
@@ -256,32 +292,27 @@ export default function ModelBrowser() {
             .then(setFacets)
             .catch(() => { setFacets(null); });
     }, []);
+    useEffect(() => {
+        let current = true;
+        queryModels(catalogueQueryFor(modelFilter, familyFilter, behaviorFilter, readiness))
+            .then((result) => {
+                if (!current) return;
+                setQuery(result);
+                setQueryError(null);
+            })
+            .catch((error: unknown) => {
+                if (!current) return;
+                setQuery(null);
+                setQueryError(error instanceof Error ? error.message : String(error));
+            });
+        // A slower answer to an older query must not replace a newer one.
+        return () => { current = false; };
+    }, [modelFilter, familyFilter, behaviorFilter, readiness]);
 
+    const matched = useMemo(() => (query === null ? null : new Set(query.models)), [query]);
     const grouped = useMemo(
-        () =>
-            filterAndGroupModels(models, {
-                modelFilter,
-                familyFilter,
-                patternFilter,
-                minTier,
-                minScienceTier,
-                minSiliconTier,
-                siliconEnrolledOnly,
-                behaviors,
-                behaviorFilter,
-            }),
-        [
-            models,
-            modelFilter,
-            familyFilter,
-            patternFilter,
-            minTier,
-            minScienceTier,
-            minSiliconTier,
-            siliconEnrolledOnly,
-            behaviors,
-            behaviorFilter,
-        ],
+        () => filterAndGroupModels(models, { matched, patternFilter, behaviors }),
+        [models, matched, patternFilter, behaviors],
     );
 
     const totalFiltered = Object.values(grouped).reduce(
@@ -378,220 +409,123 @@ export default function ModelBrowser() {
 
             <CatalogueHealth facets={facets} />
 
-            {facets && (
-                <select
-                    aria-label="Filter by family"
-                    value={familyFilter}
-                    onChange={(e) => { setFamilyFilter(e.target.value); }}
-                    style={{
-                        width: "100%",
-                        marginBottom: 4,
-                        padding: "3px 4px",
-                        fontSize: 10,
-                        background: "var(--bg-tertiary)",
-                        color: "var(--text-primary)",
-                        border: "1px solid var(--control-border)",
-                        borderRadius: "var(--radius)",
-                        fontFamily: "var(--font-mono)",
-                    }}
-                >
-                    <option value="">All families ({facets.total})</option>
-                    {facets.families.map((f) => (
-                        <option key={f.family} value={f.family}>
-                            {f.family} ({f.count})
-                        </option>
-                    ))}
-                </select>
-            )}
+            <select
+                aria-label="Filter by family"
+                value={familyFilter}
+                onChange={(e) => { setFamilyFilter(e.target.value); }}
+                style={{
+                    width: "100%",
+                    marginBottom: 4,
+                    padding: "3px 4px",
+                    fontSize: 10,
+                    background: "var(--bg-tertiary)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--control-border)",
+                    borderRadius: "var(--radius)",
+                    fontFamily: "var(--font-mono)",
+                }}
+            >
+                <option value="">All families</option>
+                {facetEntries(query?.facets.family ?? {}).map(([family, count]) => (
+                    <option key={family} value={family}>
+                        {family} ({count})
+                    </option>
+                ))}
+                {familyFilter !== "" && !(familyFilter in (query?.facets.family ?? {})) && (
+                    <option value={familyFilter}>{familyFilter} (0)</option>
+                )}
+            </select>
 
-            {facets && facets.behaviors.length > 0 && (
+            {query !== null && Object.keys(query.facets.behavior).length > 0 && (
                 <div
-                    style={{
-                        display: "flex",
-                        gap: 3,
-                        flexWrap: "wrap",
-                        marginBottom: 4,
-                    }}
+                    role="group"
+                    aria-label="Filter by declared behaviour"
+                    style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}
                 >
-                    <span
-                        onClick={() => { setBehaviorFilter(""); }}
-                        style={{
-                            fontSize: 9,
-                            padding: "1px 5px",
-                            borderRadius: 3,
-                            cursor: "pointer",
-                            background: !behaviorFilter
-                                ? "var(--accent)"
-                                : "var(--bg-tertiary)",
-                            color: !behaviorFilter
-                                ? "var(--bg-primary)"
-                                : "var(--text-muted)",
-                        }}
-                        title="Measured behaviour across the current sweep (descriptor facet)"
+                    <FilterChip
+                        pressed={!behaviorFilter}
+                        onPress={() => { setBehaviorFilter(""); }}
+                        title="Every declared behaviour"
                     >
-                        behaviour
-                    </span>
-                    {facets.behaviors.map((b) => (
-                        <span
-                            key={b.tag}
-                            onClick={() => { setBehaviorFilter(
-                                    b.tag === behaviorFilter ? "" : b.tag,
-                                ); }
-                            }
-                            title={`${b.count} models measured ${b.tag}`}
-                            style={{
-                                fontSize: 9,
-                                padding: "1px 5px",
-                                borderRadius: 3,
-                                cursor: "pointer",
-                                background:
-                                    b.tag === behaviorFilter
-                                        ? BEHAVIOR_COLORS[b.tag] ??
-                                          "var(--accent)"
-                                        : "var(--bg-tertiary)",
-                                color:
-                                    b.tag === behaviorFilter
-                                        ? "var(--bg-primary)"
-                                        : BEHAVIOR_COLORS[b.tag] ??
-                                          "var(--text-muted)",
-                            }}
+                        any behaviour
+                    </FilterChip>
+                    {facetEntries(query.facets.behavior).map(([tag, count]) => (
+                        <FilterChip
+                            key={tag}
+                            pressed={tag === behaviorFilter}
+                            onPress={() => { setBehaviorFilter(tag === behaviorFilter ? "" : tag); }}
+                            title={`${count} models under the other filters declare ${tag}`}
+                            colour={BEHAVIOR_COLORS[tag]}
                         >
-                            {b.tag} {b.count}
-                        </span>
+                            {tag} {count}
+                        </FilterChip>
                     ))}
                 </div>
             )}
 
             <div
-                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
                 role="group"
-                aria-label="Filter by legacy evidence tier"
+                aria-label="Filter by proven science readiness"
+                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
             >
                 {[
-                    { tier: 0, label: "all evidence" },
-                    { tier: 2, label: "curated+" },
-                    { tier: 3, label: "verified" },
+                    { tier: 0, label: "any science" },
+                    { tier: 3, label: "S3+ proven" },
+                    { tier: 5, label: "S5 proven" },
                 ].map((o) => (
-                    <span
-                        key={o.tier}
-                        onClick={() => { setMinTier(o.tier); }}
-                        style={{
-                            fontSize: 9,
-                            padding: "1px 6px",
-                            borderRadius: 3,
-                            cursor: "pointer",
-                            background:
-                                minTier === o.tier
-                                    ? "var(--accent)"
-                                    : "var(--bg-tertiary)",
-                            color:
-                                minTier === o.tier
-                                    ? "var(--bg-primary)"
-                                    : "var(--text-muted)",
-                        }}
-                        title={
-                            o.tier === 0
-                                ? "Show all models"
-                                : o.tier === 2
-                                  ? "Tier 2+ — scientifically curated"
-                                  : "Tier 3 — engineering-verified (parity + reproducibility)"
-                        }
-                    >
-                        {o.label}
-                    </span>
-                ))}
-            </div>
-
-            <div
-                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
-                role="group"
-                aria-label="Filter by science readiness axis"
-            >
-                {[
-                    { tier: 0, label: "all science" },
-                    { tier: 3, label: "S3+" },
-                    { tier: 5, label: "S5" },
-                ].map((o) => (
-                    <span
+                    <FilterChip
                         key={`s-${o.tier}`}
-                        onClick={() => { setMinScienceTier(o.tier); }}
-                        style={{
-                            fontSize: 9,
-                            padding: "1px 6px",
-                            borderRadius: 3,
-                            cursor: "pointer",
-                            background:
-                                minScienceTier === o.tier
-                                    ? "var(--accent)"
-                                    : "var(--bg-tertiary)",
-                            color:
-                                minScienceTier === o.tier
-                                    ? "var(--bg-primary)"
-                                    : "var(--text-muted)",
-                        }}
+                        pressed={readiness.minVerifiedScience === o.tier}
+                        onPress={() => { setReadiness({ ...readiness, minVerifiedScience: o.tier }); }}
                         title={
                             o.tier === 0
-                                ? "No science-axis floor"
-                                : o.tier === 3
-                                  ? "Science axis S3 or higher"
-                                  : "Science axis S5 only"
+                                ? "No science floor"
+                                : `Science tier S${o.tier} or higher, proven by fresh facet receipts; a declared tier is not enough`
                         }
                     >
                         {o.label}
-                    </span>
+                    </FilterChip>
                 ))}
             </div>
 
             <div
-                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
                 role="group"
-                aria-label="Filter by silicon readiness axis"
+                aria-label="Filter by proven silicon readiness"
+                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
             >
                 {[
-                    { tier: 0, label: "all silicon", enrolled: false },
-                    { tier: 0, label: "H enrolled", enrolled: true },
-                    { tier: 1, label: "H1+", enrolled: false },
-                ].map((o) => {
-                    const active = o.enrolled
-                        ? siliconEnrolledOnly && minSiliconTier === 0
-                        : !siliconEnrolledOnly && minSiliconTier === o.tier;
-                    return (
-                        <span
-                            key={`h-${o.label}`}
-                            onClick={() => {
-                                if (o.enrolled) {
-                                    setSiliconEnrolledOnly(true);
-                                    setMinSiliconTier(0);
-                                } else {
-                                    setSiliconEnrolledOnly(false);
-                                    setMinSiliconTier(o.tier);
-                                }
-                            }}
-                            style={{
-                                fontSize: 9,
-                                padding: "1px 6px",
-                                borderRadius: 3,
-                                cursor: "pointer",
-                                background: active
-                                    ? "var(--accent)"
-                                    : "var(--bg-tertiary)",
-                                color: active
-                                    ? "var(--bg-primary)"
-                                    : "var(--text-muted)",
-                            }}
-                            title={
-                                o.enrolled
-                                    ? "Only models with silicon facet enrolled (H0+)"
-                                    : o.tier === 0
-                                      ? "No silicon-axis floor (includes unenrolled)"
-                                      : "Silicon axis H1 or higher"
-                            }
-                        >
-                            {o.label}
-                        </span>
-                    );
-                })}
+                    { tier: 0, label: "any silicon" },
+                    { tier: 1, label: "H1+ proven" },
+                ].map((o) => (
+                    <FilterChip
+                        key={`h-${o.tier}`}
+                        pressed={readiness.minVerifiedSilicon === o.tier}
+                        onPress={() => { setReadiness({ ...readiness, minVerifiedSilicon: o.tier }); }}
+                        title={
+                            o.tier === 0
+                                ? "No silicon floor (includes models not enrolled on silicon)"
+                                : "Silicon tier H1 or higher, proven by fresh facet receipts"
+                        }
+                    >
+                        {o.label}
+                    </FilterChip>
+                ))}
+                <FilterChip
+                    pressed={readiness.verifiedPerfectOnly}
+                    onPress={() => {
+                        setReadiness({ ...readiness, verifiedPerfectOnly: !readiness.verifiedPerfectOnly });
+                    }}
+                    title="Proven at S5 and at the model's declared terminal silicon tier"
+                >
+                    perfect, proven{query !== null ? ` ${query.facets.verified_perfect}` : ""}
+                </FilterChip>
             </div>
+
+            {queryError !== null && (
+                <div role="alert" style={{ fontSize: 9, color: "var(--error, #ff5252)", marginBottom: 4 }}>
+                    Catalogue query failed: {queryError}. The list below is not filtered.
+                </div>
+            )}
 
             {patterns.length > 0 && (
                 <div

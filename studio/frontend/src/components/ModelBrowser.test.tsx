@@ -6,12 +6,17 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { at } from "../arrayAt";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ModelBehavior, ModelScanMetadata } from "../api/client";
-import { CatalogueHealth, buildModelScanEvidenceItems, filterAndGroupModels } from "./ModelBrowser";
+import {
+  CatalogueHealth,
+  buildModelScanEvidenceItems,
+  catalogueQueryFor,
+  facetEntries,
+  filterAndGroupModels,
+} from "./ModelBrowser";
 import type { ModelFacets } from "../api/client";
 import type { ModelScanJobViewState } from "../modelScanJob";
 import { initialModelScanJobState } from "../modelScanJob";
@@ -223,14 +228,8 @@ describe("ModelBrowser", () => {
     expect(failed).not.toContain("class");
   });
 
-  it("groups the catalogue by family with no filters", () => {
-    const grouped = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      behaviors: NONE,
-    });
+  it("groups every model by family before the catalogue query has answered", () => {
+    const grouped = filterAndGroupModels(CATALOGUE, { matched: null, patternFilter: "", behaviors: NONE });
     expect(Object.keys(grouped).sort()).toEqual([
       "Cerebellar",
       "Integrate-and-Fire",
@@ -242,171 +241,62 @@ describe("ModelBrowser", () => {
     ]);
   });
 
-  it("restricts the catalogue to a selected family", () => {
+  it("keeps only the models the catalogue query admitted", () => {
     const grouped = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "Cerebellar",
+      matched: new Set(["GLIFNeuron", "RulkovMapNeuron"]),
       patternFilter: "",
-      minTier: 0,
       behaviors: NONE,
     });
-    expect(Object.keys(grouped)).toEqual(["Cerebellar"]);
-    expect((grouped.Cerebellar ?? []).map((m) => m.name)).toEqual(["GolgiCell"]);
-  });
-
-  it("restricts the catalogue to a minimum evidence tier", () => {
-    const curated = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 2,
-      behaviors: NONE,
-    });
-    expect(Object.values(curated).flat().map((m) => m.name).sort()).toEqual([
-      "AdExNeuron",
+    expect(Object.values(grouped).flat().map((m) => m.name).sort()).toEqual([
       "GLIFNeuron",
       "RulkovMapNeuron",
     ]);
-
-    const verified = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 3,
-      behaviors: NONE,
-    });
-    expect(Object.values(verified).flat().map((m) => m.name).sort()).toEqual([
-      "GLIFNeuron",
-      "RulkovMapNeuron",
-    ]);
+    expect(filterAndGroupModels(CATALOGUE, { matched: new Set(), patternFilter: "", behaviors: NONE }))
+      .toEqual({});
   });
 
-  it("filters by search text across name and category", () => {
+  it("applies the live scan pattern, which only this browser holds, on top", () => {
+    const behaviors: Record<string, ModelBehavior> = {
+      AdExNeuron: {
+        name: "AdExNeuron", category: "Integrate-and-Fire", pattern: "bursting",
+        description: "", rate_hz: 12, spike_count: 24,
+      },
+      GLIFNeuron: {
+        name: "GLIFNeuron", category: "Integrate-and-Fire", pattern: "tonic",
+        description: "", rate_hz: 8, spike_count: 16,
+      },
+    };
     const grouped = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "map",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      behaviors: NONE,
-    });
-    expect(Object.keys(grouped)).toEqual(["Map-based"]);
-  });
-
-  it("restricts the catalogue to a measured behaviour tag", () => {
-    const tagged = [
-      { ...at(CATALOGUE, 0), behavior_tags: ["excitable", "tonic", "rate-coded"] },
-      { ...at(CATALOGUE, 1), behavior_tags: ["excitable", "adapting"] },
-      { ...at(CATALOGUE, 2), behavior_tags: ["quiescent"] },
-      { ...at(CATALOGUE, 3), behavior_tags: ["excitable", "bursting"] },
-    ];
-    const adapting = filterAndGroupModels(tagged, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      behaviors: NONE,
-      behaviorFilter: "adapting",
-    });
-    expect(Object.values(adapting).flat().map((m) => m.name)).toEqual(["GLIFNeuron"]);
-
-    const excitable = filterAndGroupModels(tagged, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      behaviors: NONE,
-      behaviorFilter: "excitable",
-    });
-    expect(Object.values(excitable).flat().map((m) => m.name).sort()).toEqual([
-      "AdExNeuron",
-      "GLIFNeuron",
-      "RulkovMapNeuron",
-    ]);
-  });
-
-  it("ignores a behaviour filter that no model carries", () => {
-    const tagged = [{ ...at(CATALOGUE, 0), behavior_tags: ["excitable", "tonic"] }];
-    const grouped = filterAndGroupModels(tagged, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      behaviors: NONE,
-      behaviorFilter: "chaotic",
-    });
-    expect(Object.values(grouped).flat()).toEqual([]);
-  });
-
-  it("restricts the catalogue to a minimum science dual-axis tier", () => {
-    const s5 = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      minScienceTier: 5,
-      behaviors: NONE,
-    });
-    expect(Object.values(s5).flat().map((m) => m.name).sort()).toEqual([
-      "AdExNeuron",
-      "RulkovMapNeuron",
-    ]);
-
-    const s3 = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      minScienceTier: 3,
-      behaviors: NONE,
-    });
-    expect(Object.values(s3).flat().map((m) => m.name).sort()).toEqual([
-      "AdExNeuron",
-      "GLIFNeuron",
-      "RulkovMapNeuron",
-    ]);
-  });
-
-  it("restricts the catalogue to silicon-enrolled models and H floors", () => {
-    const enrolled = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      siliconEnrolledOnly: true,
-      behaviors: NONE,
-    });
-    expect(Object.values(enrolled).flat().map((m) => m.name).sort()).toEqual([
-      "AdExNeuron",
-      "GLIFNeuron",
-      "RulkovMapNeuron",
-    ]);
-
-    const h1 = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      minSiliconTier: 1,
-      behaviors: NONE,
-    });
-    expect(Object.values(h1).flat().map((m) => m.name).sort()).toEqual([
-      "AdExNeuron",
-      "RulkovMapNeuron",
-    ]);
-  });
-
-  it("combines dual-axis floors with family search", () => {
-    const grouped = filterAndGroupModels(CATALOGUE, {
-      modelFilter: "integrate",
-      familyFilter: "",
-      patternFilter: "",
-      minTier: 0,
-      minScienceTier: 5,
-      minSiliconTier: 1,
-      behaviors: NONE,
+      matched: new Set(["AdExNeuron", "GLIFNeuron", "GolgiCell"]),
+      patternFilter: "bursting",
+      behaviors,
     });
     expect(Object.values(grouped).flat().map((m) => m.name)).toEqual(["AdExNeuron"]);
   });
+
+  it("asks the server for proven readiness, never declared tiers", () => {
+    expect(catalogueQueryFor("map", "Map-based", "chaotic", {
+      minVerifiedScience: 3,
+      minVerifiedSilicon: 1,
+      verifiedPerfectOnly: true,
+    })).toEqual({
+      text: "map",
+      family: "Map-based",
+      behavior: "chaotic",
+      min_verified_science: 3,
+      min_verified_silicon: 1,
+      verified_perfect_only: true,
+    });
+  });
+
+  it("orders facet counts largest first, then by name", () => {
+    expect(facetEntries({ tonic: 2, bursting: 5, adapting: 2 })).toEqual([
+      ["bursting", 5],
+      ["adapting", 2],
+      ["tonic", 2],
+    ]);
+  });
+
   it("says nothing about corpus health while every descriptor reads", () => {
     const facets: ModelFacets = {
       total: 3,

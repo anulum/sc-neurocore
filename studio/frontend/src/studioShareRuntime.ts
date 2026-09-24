@@ -19,6 +19,7 @@
  */
 
 import {
+  buildModelLinkUrl,
   buildStudioShareUrl,
   type StudioShareUrlClipboard,
   type StudioShareUrlInput,
@@ -174,6 +175,32 @@ export async function copyStudioShareUrlInRuntime(
       ok: false,
       message: error instanceof Error ? error.message : "Clipboard write failed.",
     };
+  }
+  return { ok: true, url };
+}
+
+/**
+ * Build the link that opens one model and copy it.
+ *
+ * @param modelName - The catalogue identity.
+ * @param runtime - The browser's clipboard and address; read by default.
+ * @returns The link, or the sentence explaining why it was not copied.
+ */
+export async function copyModelLinkInRuntime(
+  modelName: string,
+  runtime: StudioShareRuntime | null = browserStudioShareRuntime(),
+): Promise<StudioShareRuntimeResult> {
+  if (runtime === null) {
+    return { ok: false, message: "A model link is available only in a browser session." };
+  }
+  if (runtime.clipboard === null) {
+    return { ok: false, message: "Clipboard access is unavailable in this browser session." };
+  }
+  const url = buildModelLinkUrl(modelName, runtime.location);
+  try {
+    await runtime.clipboard.writeText(url);
+  } catch (error: unknown) {
+    return { ok: false, message: error instanceof Error ? error.message : "Clipboard write failed." };
   }
   return { ok: true, url };
 }

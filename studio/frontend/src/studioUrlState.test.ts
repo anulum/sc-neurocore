@@ -9,6 +9,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildModelLinkUrl,
+  decodeModelLinkHash,
   buildStudioShareUrl,
   copyStudioShareUrl,
   decodeStudioStartupHash,
@@ -115,5 +117,31 @@ describe("Studio share URL state codec", () => {
   it("keeps payload encoding independent from the browser global", () => {
     expect(encodeStudioSharePayload(studioShareUrlPayload(input), (payload) => payload))
       .toContain("\"m\":\"model\"");
+  });
+});
+
+describe("model links", () => {
+  const location = { origin: "https://lab.example", pathname: "/studios/sc-neurocore/" };
+
+  it("name the model in plain text and read back to it", () => {
+    const url = buildModelLinkUrl("AdExNeuron", location);
+    expect(url).toBe("https://lab.example/studios/sc-neurocore/#model=AdExNeuron");
+    expect(decodeModelLinkHash(new URL(url).hash)).toBe("AdExNeuron");
+  });
+
+  it("escape a name that is not URL-safe", () => {
+    const url = buildModelLinkUrl("Odd name/#1", location);
+    expect(decodeModelLinkHash(new URL(url).hash)).toBe("Odd name/#1");
+  });
+
+  it.each([["#"], [""], ["#model="], ["#model=%E0%A4%A"], ["#eyJtIjoibW9kZWwifQ=="]])(
+    "read nothing from %j",
+    (hash) => {
+      expect(decodeModelLinkHash(hash)).toBeNull();
+    },
+  );
+
+  it("are not misread as a share payload", () => {
+    expect(decodeStudioStartupHash("#model=AdExNeuron")).toBeNull();
   });
 });

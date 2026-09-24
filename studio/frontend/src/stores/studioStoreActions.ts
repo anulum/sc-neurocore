@@ -21,8 +21,8 @@ import type { PopulationNode, ProjectionEdge } from "../api/client";
 import { createStoreArtifactDownloader } from "./studioArtifactDownload";
 import { runStoreSimulation } from "./studioSimulation";
 import { studioNullclineRanges } from "../studioNullclineRanges";
-import { readStudioStartupHashState } from "../studioStartupRuntime";
-import { studioShareLinkDecision } from "../shareLinkApplication";
+import { readStudioModelLink, readStudioStartupHashState } from "../studioStartupRuntime";
+import { studioModelLinkDecision, studioShareLinkDecision } from "../shareLinkApplication";
 import {
   fetchTemplates,
   fetchModels,
@@ -1623,10 +1623,18 @@ export function createStudioStoreActions(
     // worse than no link, because the button promises otherwise.
     //
     // The judgement lives in `studioShareLinkDecision`; this only carries it out.
-    const decision = studioShareLinkDecision(
-      readStudioStartupHashState(),
-      get().models.map((model) => model.name),
-    );
+    const knownModels = get().models.map((model) => model.name);
+    // A model link opens one model and leaves the run settings alone.
+    const modelLink = studioModelLinkDecision(readStudioModelLink(), knownModels);
+    if (modelLink.kind === "unknown-model") {
+      set({ error: modelLink.message });
+      return;
+    }
+    if (modelLink.kind === "select") {
+      await get().selectModel(modelLink.modelName);
+      return;
+    }
+    const decision = studioShareLinkDecision(readStudioStartupHashState(), knownModels);
     if (decision.kind === "none") return;
     if (decision.kind === "unknown-model") {
       set({ error: decision.message });

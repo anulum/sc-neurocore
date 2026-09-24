@@ -29,6 +29,12 @@ export interface ApplicableShareLink {
   protocol: string;
 }
 
+/** A model link names a model this catalogue holds: select it and change nothing else. */
+export interface SelectableModelLink {
+  kind: "select";
+  modelName: string;
+}
+
 /** What a share link asks for, once judged against the catalogue. */
 export type ShareLinkDecision = NoShareLink | UnknownShareLinkModel | ApplicableShareLink;
 
@@ -52,13 +58,7 @@ export function studioShareLinkDecision(
     // link can outlive the name it carries. Saying which name failed beats
     // selecting nothing and leaving the reader to guess whether the link or
     // the Studio is at fault.
-    return {
-      kind: "unknown-model",
-      modelName: link.selectedModelName,
-      message:
-        `This link opens "${link.selectedModelName}", which this catalogue does not hold. `
-        + "It may have been renamed since the link was made.",
-    };
+    return unknownModel(link.selectedModelName);
   }
   return {
     kind: "apply",
@@ -67,4 +67,36 @@ export function studioShareLinkDecision(
     duration: link.duration,
     protocol: link.protocol,
   };
+}
+
+/**
+ * Say which name a link carried that this catalogue does not hold.
+ *
+ * @param modelName - The name the link carried.
+ * @returns The refusal.
+ */
+function unknownModel(modelName: string): UnknownShareLinkModel {
+  return {
+    kind: "unknown-model",
+    modelName,
+    message:
+      `This link opens "${modelName}", which this catalogue does not hold. `
+      + "It may have been renamed since the link was made.",
+  };
+}
+
+/**
+ * Decide what a model link asks the Studio to do.
+ *
+ * @param modelName - The name the link carries, or `null` for no model link.
+ * @param knownModels - The catalogue identities currently loaded.
+ * @returns Select the model, refuse the name, or do nothing.
+ */
+export function studioModelLinkDecision(
+  modelName: string | null,
+  knownModels: readonly string[],
+): NoShareLink | UnknownShareLinkModel | SelectableModelLink {
+  if (modelName === null) return { kind: "none" };
+  if (!knownModels.includes(modelName)) return unknownModel(modelName);
+  return { kind: "select", modelName };
 }

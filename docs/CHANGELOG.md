@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio catalogue: proven-readiness query and model links
+
+- `GET /api/models/query` filters the catalogue on the server by text, family,
+  behaviour, identity kind, metadata state and **verified** readiness
+  (`min_verified_science`, `min_verified_silicon`, `verified_perfect_only`),
+  and returns the matching models with drill-down facet counts. The readiness
+  floors read only tiers bound to fresh facet receipts, never declared tiers.
+  Each catalogue entry now carries `is_perfect_verified`.
+- The model browser uses that route for search and filtering. Its readiness
+  filters were declared-tier filters (one of them labelled "verified" for a
+  declared tier 3); they are now "proven" filters on the verified tiers,
+  including "perfect, proven", and every filter is a keyboard-reachable
+  button with its pressed state announced.
+- `#model=<ClassName>` opens one model; **Copy link** in the model panel builds
+  it. A link naming a model the catalogue no longer holds says which name
+  failed.
+
 ### Studio network NIR export and import
 
 - `POST /api/graph/export-nir` now writes a real NIR graph (HDF5, through the

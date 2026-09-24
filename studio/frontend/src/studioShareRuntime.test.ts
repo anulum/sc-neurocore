@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  copyModelLinkInRuntime,
   STUDIO_SHARE_STATUS_CLEAR_DELAY_MS,
   copyStudioShareUrlInRuntime,
   scheduleStudioShareStatusClear,
@@ -132,5 +133,24 @@ describe("Studio share URL browser runtime", () => {
 
     expect(scheduler.delays).toEqual([STUDIO_SHARE_STATUS_CLEAR_DELAY_MS]);
     expect(clearCount).toBe(1);
+  });
+});
+
+describe("copying a model link", () => {
+  it("says why outside a browser", async () => {
+    await expect(copyModelLinkInRuntime("AdExNeuron", null)).resolves.toEqual({
+      ok: false,
+      message: "A model link is available only in a browser session.",
+    });
+  });
+
+  it("says why when the browser gives no clipboard", async () => {
+    await expect(copyModelLinkInRuntime("AdExNeuron", {
+      clipboard: null,
+      location: { origin: "https://lab.example", pathname: "/" },
+    })).resolves.toEqual({
+      ok: false,
+      message: "Clipboard access is unavailable in this browser session.",
+    });
   });
 });

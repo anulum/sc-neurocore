@@ -70,6 +70,50 @@ identity ledger is generated from — not a second count kept beside it. An API
 alias is an identity there and not a registered catalogue model, so it reaches
 no row and cannot inflate the literature count.
 
+## Querying the catalogue
+
+The catalogue grows as models are enrolled, so the filtering rule lives on the
+server, in one place. `GET /api/models/query` takes any of these parameters;
+each one left out is no filter:
+
+| Parameter | Admits |
+| --- | --- |
+| `text` | Models whose name, public label, aliases, family or summary contain it (case-insensitive) |
+| `family`, `behavior`, `identity_kind`, `metadata_state` | Models with that value |
+| `min_verified_science` | Models proven at that science tier or higher (0–5) |
+| `min_verified_silicon` | Models proven at that silicon tier or higher (0–5); a model not enrolled on silicon meets no floor above 0 |
+| `verified_perfect_only` | `true`: models proven at S5 and at their declared terminal silicon tier |
+
+The readiness floors read **only the verified tiers**, the ones bound to facet
+receipts whose subjects still match the repository. A descriptor that declares
+S5 and is proven at S2 is not "at least S3". Each catalogue entry carries
+`is_perfect_verified`, the same judgement the model detail makes, so no client
+has to fetch every detail to filter on it.
+
+The answer (`sc-neurocore.studio.catalogue-query.v1`) names the matching
+models, `matched` and `total`, the `corpus_revision` it was computed on, and
+facet counts. `family`, `behavior`, `identity_kind` and `metadata_state` are
+counted over the models every *other* filter admits, so choosing a family still
+shows how many models each other family would give; the verified-tier counts
+and `verified_perfect` are counted over the matched models. An unknown
+parameter, a tier outside 0–5 or a non-boolean `verified_perfect_only` is
+refused with `422` and `detail.reason`.
+
+The model browser sends its search text, family, behaviour and readiness
+filters to this route and lists what it admits. The only filter it applies
+itself is a firing pattern from its own live scan, which exists nowhere else.
+Its readiness filters are labelled "proven" and are buttons a keyboard reaches
+and a screen reader hears as pressed or not.
+
+## Linking to a model
+
+`#model=<ClassName>` at the end of the Studio's address opens that model, for
+example `…/studios/sc-neurocore/#model=AdExNeuron`. The link names only the
+catalogue identity, in plain text; unlike a share link it carries no run
+settings and does not change them. **Copy link** in the model panel builds it.
+A link naming a model this catalogue does not hold (renamed or removed since
+the link was made) opens nothing and says which name failed.
+
 ## Guards
 
 `tests/test_studio_catalogue_metadata_state.py` makes one descriptor load raise

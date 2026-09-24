@@ -4353,6 +4353,25 @@
         "summary": "Api Model Facets"
       }
     },
+    "/api/models/query": {
+      "get": {
+        "description": "Filter the catalogue on verified readiness, with drill-down facet counts.",
+        "operationId": "api_model_query_api_models_query_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Query Api Models Query Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Model Query"
+      }
+    },
     "/api/models/scan": {
       "get": {
         "description": "Run a budgeted synchronous catalogue model scan.\n\nFull-catalogue scans that exceed the synchronous analysis budget are\nrejected with ``execution_mode=job_required`` so operators use\n:func:`api_model_scan_job` instead of blocking the HTTP request thread.",

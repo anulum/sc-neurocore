@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { readStudioStartupHashState } from "./studioStartupRuntime";
+import { readStudioModelLink, readStudioStartupHashState } from "./studioStartupRuntime";
 
 describe("Studio startup hash browser runtime", () => {
   it("returns null when no browser runtime is available", () => {
@@ -30,5 +30,13 @@ describe("Studio startup hash browser runtime", () => {
         protocol: "burst",
         selectedModelName: "lif",
       });
+  });
+});
+
+describe("reading a model link at startup", () => {
+  it("reads the model a link names, and nothing outside a browser", () => {
+    expect(readStudioModelLink({ hash: "#model=AdExNeuron" })).toBe("AdExNeuron");
+    expect(readStudioModelLink({ hash: "" })).toBeNull();
+    expect(readStudioModelLink(null)).toBeNull();
   });
 });

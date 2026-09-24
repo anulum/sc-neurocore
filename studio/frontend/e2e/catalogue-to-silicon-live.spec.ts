@@ -172,3 +172,40 @@ for (const representative of TERMINAL_REPRESENTATIVES) {
     }
   });
 }
+
+test("proven-readiness filters and a model link reach the live catalogue", async ({ page }) => {
+  await openLiveStudio(page);
+
+  // The floor is the server's decision, on the verified tiers only.
+  const proven = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname === "/api/models/query"
+      && url.searchParams.get("min_verified_science") === "5"
+      && response.ok();
+  });
+  await page.getByRole("button", { name: "S5 proven", exact: true }).click();
+  const answer = (await (await proven).json()) as { matched: number; total: number; models: string[] };
+  expect(answer.matched).toBeLessThan(answer.total);
+  await expect(page.getByRole("button", { name: "S5 proven", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(`${answer.matched}/${answer.total} models`, { exact: true })).toBeVisible();
+  for (const name of answer.models) {
+    await expect(page.getByTestId(`model-contract-${name}`)).toBeVisible();
+  }
+
+  // A model link opens that model after a fresh load, and names one it cannot open.
+  const linked = "PerfectIntegratorNeuron";
+  const detail = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === `/api/models/${linked}` && response.ok(),
+  );
+  await page.goto("about:blank");
+  await page.goto(`./#model=${linked}`);
+  await detail;
+  await expect(page.getByTestId("model-integration-method")).toBeVisible();
+
+  await page.goto("about:blank");
+  await page.goto("./#model=NoSuchNeuron");
+  await expect(page.getByText('This link opens "NoSuchNeuron", which this catalogue does not hold.', {
+    exact: false,
+  })).toBeVisible();
+});

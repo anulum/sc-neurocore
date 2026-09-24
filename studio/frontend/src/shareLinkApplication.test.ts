@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { studioShareLinkDecision } from "./shareLinkApplication";
+import { studioModelLinkDecision, studioShareLinkDecision } from "./shareLinkApplication";
 import type { StudioStartupHashState } from "./studioUrlState";
 
 const LINK: StudioStartupHashState = {
@@ -48,5 +48,24 @@ describe("what a share link asks for", () => {
     // The caller waits for the catalogue before asking; if it ever did not,
     // this must still be a refusal by name rather than a silent no-op.
     expect(studioShareLinkDecision(LINK, []).kind).toBe("unknown-model");
+  });
+});
+
+describe("what a model link asks for", () => {
+  it("does nothing without a model link", () => {
+    expect(studioModelLinkDecision(null, ["AdExNeuron"])).toEqual({ kind: "none" });
+  });
+
+  it("selects a model the catalogue holds and asks for nothing else", () => {
+    expect(studioModelLinkDecision("AdExNeuron", ["AdExNeuron"])).toEqual({
+      kind: "select",
+      modelName: "AdExNeuron",
+    });
+  });
+
+  it("refuses a name the catalogue does not hold, by name", () => {
+    const decision = studioModelLinkDecision("RetiredNeuron", ["AdExNeuron"]);
+    expect(decision.kind).toBe("unknown-model");
+    expect(decision.kind === "unknown-model" && decision.message).toContain('"RetiredNeuron"');
   });
 });

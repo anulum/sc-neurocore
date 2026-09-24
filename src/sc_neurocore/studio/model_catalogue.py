@@ -123,6 +123,7 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build a catalogue list entry from a declared descriptor."""
     tier = descriptor_completeness_tier(descriptor)
     tiers = completeness_tiers(descriptor)
+    verified = _verified_summary(descriptor.class_name)
     return {
         "name": descriptor.class_name,
         "module": descriptor.module,
@@ -135,7 +136,15 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
         "science_label": tiers.science_label,
         "silicon_tier": tiers.silicon,
         "silicon_label": tiers.silicon_label,
-        **_verified_summary(descriptor.class_name),
+        **verified,
+        # The same rule as the detail view's judgement, applied to the verified
+        # tiers, so a browser can filter on proven readiness without fetching
+        # every model's detail.
+        "is_perfect_verified": _verified_perfect(
+            verified["verified_science_tier"],
+            verified["verified_silicon_tier"],
+            descriptor.silicon.target_tier,
+        ),
         "validation_metric": descriptor.validation.metric,
         "integration_method": descriptor.integration_method,
         "terminal_silicon_tier": descriptor.silicon.target_tier,
@@ -451,6 +460,8 @@ def _introspected_summary(name: str) -> dict[str, Any]:
         "verified_science_label": "S0",
         "verified_silicon_tier": None,
         "verified_silicon_label": "none",
+        "verified_profile": None,
+        "is_perfect_verified": False,
         "silicon_label": "none",
         "validation_metric": "none",
         "integration_method": "unknown",
@@ -508,6 +519,7 @@ def _unreadable_summary(name: str) -> dict[str, Any]:
         "verified_silicon_tier": None,
         "verified_silicon_label": "none",
         "verified_profile": None,
+        "is_perfect_verified": False,
         "validation_metric": "none",
         "integration_method": "unknown",
         "terminal_silicon_tier": "",

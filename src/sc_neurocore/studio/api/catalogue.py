@@ -38,6 +38,11 @@ from sc_neurocore.studio.dcls import (
     dcls_tent_profile,
 )
 from sc_neurocore.studio.model_scan import scan_all_models
+from sc_neurocore.studio.catalogue_query import (
+    CatalogueQuery,
+    CatalogueQueryRejected,
+    query_catalogue,
+)
 from sc_neurocore.studio.model_catalogue import ModelDocumentationUnavailable
 from sc_neurocore.studio.models import (
     get_model_detail,
@@ -119,6 +124,15 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
     @router.get("/api/models/facets")
     def api_model_facets() -> Any:
         return _safe(model_facets)
+
+    @router.get("/api/models/query")
+    def api_model_query(request: Request) -> Any:
+        """Filter the catalogue on verified readiness, with drill-down facet counts."""
+        try:
+            query = CatalogueQuery.from_params(dict(request.query_params))
+        except CatalogueQueryRejected as exc:
+            raise HTTPException(status_code=422, detail={"reason": str(exc)}) from None
+        return _safe(lambda: query_catalogue(query))
 
     @router.get("/api/models/{name}/doc")
     def api_model_doc(name: str) -> Any:

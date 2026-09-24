@@ -11,6 +11,7 @@ import { useStudioStore } from "../stores/studio";
 import { formatCitation } from "../citation";
 import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
 import { perfectBadge, verifiedTiers } from "../modelReadinessBadge";
+import { copyModelLinkInRuntime } from "../studioShareRuntime";
 
 /**
  * The selected model's contract, readiness and citation.
@@ -20,6 +21,7 @@ import { perfectBadge, verifiedTiers } from "../modelReadinessBadge";
 export default function ModelInfo() {
   const { sourceMode, modelDetail, equations, odeParams, odeInit, dt, duration } = useStudioStore();
   const [copied, setCopied] = useState(false);
+  const [linkStatus, setLinkStatus] = useState<string | null>(null);
   const badge = perfectBadge(modelDetail?.readiness ?? undefined);
 
   const citation = modelDetail ? formatCitation(modelDetail.provenance, modelDetail.name) : "";
@@ -42,6 +44,28 @@ export default function ModelInfo() {
       <div>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>
           {modelDetail.docstring || modelDetail.name}
+          <button
+            type="button"
+            onClick={() => {
+              void copyModelLinkInRuntime(modelDetail.name).then((result) => {
+                setLinkStatus(result.ok ? "Model link copied" : result.message);
+                window.setTimeout(() => { setLinkStatus(null); }, 2000);
+              });
+            }}
+            title="Copy a link that opens this model; it names the model only, not the run settings"
+            style={{
+              marginLeft: 6, fontSize: 9, padding: "1px 6px", cursor: "pointer",
+              background: "transparent", color: "var(--text-muted)",
+              border: "1px solid var(--control-border)", borderRadius: 3,
+            }}
+          >
+            Copy link
+          </button>
+          {linkStatus !== null && (
+            <span role="status" style={{ marginLeft: 6, fontSize: 9, color: "var(--text-muted)" }}>
+              {linkStatus}
+            </span>
+          )}
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
           <DualAxisBadge

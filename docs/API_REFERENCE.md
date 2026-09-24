@@ -36741,6 +36741,32 @@ ValueError
 
 ---
 
+## Module `studio.catalogue_query`
+
+### Class `CatalogueQueryRejected`
+A query names a filter value the catalogue cannot hold.
+
+
+### Class `CatalogueQuery`
+What a catalogue query asks for; every field left at its default is no filter.
+
+- **from_params**(cls, params)
+  - Build a query from HTTP query parameters, refusing what cannot be one.
+
+### Function `query_catalogue(query)`
+Return the identities ``query`` admits and the facet counts around them.
+
+Returns
+-------
+dict
+    ``schema_version``, the ``corpus_revision`` the answer was computed on,
+    ``total`` registered identities, ``matched`` count, the matching
+    ``models`` (names, sorted) and ``facets``: for each facet, the count per
+    value over the models every other filter admits; for the verified tiers
+    and ``verified_perfect``, counts over the matched models.
+
+---
+
 ## Module `studio.characterize`
 
 ### Function `characterize_model(simulate_fn, base_config)`

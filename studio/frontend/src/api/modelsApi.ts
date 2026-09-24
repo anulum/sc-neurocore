@@ -8,6 +8,8 @@
 // Studio API: models endpoints.
 import { post, get } from "./http";
 import type {
+  CatalogueQueryParams,
+  CatalogueQueryResult,
   NeuronTemplate,
   ModelSummary,
   ModelDetail,
@@ -49,6 +51,34 @@ export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${na
  * @returns Families, maturities, firing patterns and behaviour tags.
  */
 export const fetchModelFacets = () => get<ModelFacets>("/models/facets");
+
+/**
+ * Ask the server which models a set of filters admits.
+ *
+ * The server holds the one filtering rule, and its readiness floors read the
+ * verified tiers, so the browser never re-implements either.
+ *
+ * @param params - The filters; a field left out is no filter.
+ * @returns The matching names and the facet counts around them.
+ */
+export const queryModels = (params: CatalogueQueryParams) =>
+  get<CatalogueQueryResult>(`/models/query${catalogueQueryString(params)}`);
+
+/**
+ * Encode catalogue filters as a query string, leaving out every default.
+ *
+ * @param params - The filters.
+ * @returns `""` when nothing filters, otherwise `?` and the parameters.
+ */
+export function catalogueQueryString(params: CatalogueQueryParams): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === "" || value === 0 || value === false) continue;
+    query.set(key, String(value));
+  }
+  const text = query.toString();
+  return text === "" ? "" : `?${text}`;
+}
 
 /**
  * Read a model's prose documentation.

@@ -23,6 +23,8 @@ const trace = {
 const detail: ModelDetail = {
   module: "controlled", category: "point", tier: 0, evidence_kind: "controlled",
   science_tier: 0, science_label: "S0", silicon_tier: null, silicon_label: "none",
+  verified_science_tier: 0, verified_science_label: "S0", verified_silicon_tier: null,
+  verified_silicon_label: "none", verified_profile: null, is_perfect_verified: false,
   validation_metric: "none", integration_method: "map", terminal_silicon_tier: "",
   terminal_reason: "Controlled fixture, not qualification evidence", category_slug: "point",
   category_source: "declared", metadata_state: "available", metadata_error: null,

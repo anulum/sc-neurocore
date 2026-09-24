@@ -14,6 +14,7 @@
  */
 
 import {
+  decodeModelLinkHash,
   decodeStudioStartupHash,
   type StudioStartupHashState,
 } from "./studioUrlState";
@@ -45,4 +46,16 @@ export function readStudioStartupHashState(
   decodeBase64: (payload: string) => string = atob,
 ): StudioStartupHashState | null {
   return runtime === null ? null : decodeStudioStartupHash(runtime.hash, decodeBase64);
+}
+
+/**
+ * Read the model a model link was opened with.
+ *
+ * @param runtime - The fragment; read from the browser by default.
+ * @returns The model name, or `null` when the page was not opened with one.
+ */
+export function readStudioModelLink(
+  runtime: StudioStartupRuntime | null = browserStudioStartupRuntime(),
+): string | null {
+  return runtime === null ? null : decodeModelLinkHash(runtime.hash);
 }

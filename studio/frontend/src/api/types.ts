@@ -383,6 +383,19 @@ export interface ModelSummary {
   /** Dual-axis silicon readiness H0–H5, or null when not enrolled. */
   silicon_tier: number | null;
   silicon_label: string;
+  /**
+   * The tiers fresh facet receipts establish for the profile Studio compiles.
+   * The tiers above are what the descriptor declares; these are what is
+   * proven, and readiness filters read only these.
+   */
+  verified_science_tier: number;
+  verified_science_label: string;
+  /** `null` when the model is not enrolled on the silicon axis. */
+  verified_silicon_tier: number | null;
+  verified_silicon_label: string;
+  verified_profile: string | null;
+  /** The verified tiers meet S5 and the declared terminal silicon tier. */
+  is_perfect_verified: boolean;
   /** Descriptor-backed validation, solver, and terminal silicon contract. */
   validation_metric: string;
   integration_method: string;
@@ -549,6 +562,45 @@ export interface ModelFacets {
   science_tiers?: Record<string, number>;
   /** Counts by silicon label (none, H0–H5). */
   silicon_tiers?: Record<string, number>;
+}
+
+/** What a catalogue query asks for. Every field left out is no filter. */
+export interface CatalogueQueryParams {
+  text?: string;
+  family?: string;
+  behavior?: string;
+  identity_kind?: string;
+  metadata_state?: string;
+  /** Minimum verified science tier, 0–5. */
+  min_verified_science?: number;
+  /** Minimum verified silicon tier, 0–5; an unenrolled model meets no floor above 0. */
+  min_verified_silicon?: number;
+  verified_perfect_only?: boolean;
+}
+
+/**
+ * The identities a catalogue query admits, with the facet counts around them.
+ *
+ * `family`, `behavior`, `identity_kind` and `metadata_state` are counted over
+ * the models every *other* filter admits, so a chosen family still shows what
+ * each other family would give. The verified-tier counts are over the matched
+ * models.
+ */
+export interface CatalogueQueryResult {
+  schema_version: "sc-neurocore.studio.catalogue-query.v1";
+  corpus_revision: string;
+  total: number;
+  matched: number;
+  models: string[];
+  facets: {
+    family: Record<string, number>;
+    behavior: Record<string, number>;
+    identity_kind: Record<string, number>;
+    metadata_state: Record<string, number>;
+    verified_science_tiers: Record<string, number>;
+    verified_silicon_tiers: Record<string, number>;
+    verified_perfect: number;
+  };
 }
 
 /** A model's prose documentation, as Markdown, with the slug it is filed under. */
