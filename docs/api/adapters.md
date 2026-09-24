@@ -61,6 +61,26 @@ mirror, Julia mirror, and Mojo validation shim expose the same parameter,
 timestep, feedback-projection, and decode boundaries for downstream
 generated-kernel checks; they are not benchmark-dispatched acceleration paths.
 
+## NeuroML and SONATA Import
+
+Both are import-only; SC-NeuroCore has no NeuroML or SONATA exporter, and NIR
+is its only export format. The NeuroML importer refuses missing attributes,
+attributes with a unit of the wrong dimension, and elements it does not model, and lists what each
+cell mapping assumed in `ImportedCell.notes` (see the
+[NeuroML import guide](../guides/neuroml_import.md)).
+
+The SONATA importer reads through libsonata, the reference reader (install
+`sc-neurocore[sonata]`). A node is identified by its population and its id in
+that population, and an edge names the populations of its source and target.
+A property that the file does not state stays `None` rather than a guessed
+value. Building a connectivity matrix refuses edges without `syn_weight`.
+Files without the SONATA magic, populations without type ids, populations
+spread over several property groups (libsonata reads single-group populations
+only), unreadable attributes, and edges to nodes the network does not contain
+are refused. Node-type and edge-type CSV files are not read.
+
+::: sc_neurocore.adapters.sonata
+
 ## SpikeInterface / Neo Adapter
 
 Import experimental spike data into SC-NeuroCore. Converts between

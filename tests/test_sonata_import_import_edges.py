@@ -14,7 +14,7 @@ from tests.sonata_import_support import *  # noqa: F403
 
 
 class TestImportEdges:
-    def test_basic(self, tmp_path):
+    def test_basic(self, tmp_path: Path) -> None:
         f = _create_edges_h5(
             tmp_path / "edges.h5",
             src_ids=[0, 1, 2],
@@ -27,11 +27,11 @@ class TestImportEdges:
         assert edges[0].target_id == 3
         assert edges[0].weight == pytest.approx(0.5)
 
-    def test_no_weights(self, tmp_path):
+    def test_an_unstated_weight_or_delay_stays_unstated(self, tmp_path: Path) -> None:
         f = _create_edges_h5(
             tmp_path / "edges.h5",
             src_ids=[0, 1],
             tgt_ids=[2, 3],
         )
         edges = import_sonata_edges(f)
-        assert edges[0].weight == 1.0  # default
+        assert (edges[0].weight, edges[0].delay) == (None, None)

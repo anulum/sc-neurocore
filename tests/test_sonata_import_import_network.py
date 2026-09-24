@@ -14,7 +14,7 @@ from tests.sonata_import_support import *  # noqa: F403
 
 
 class TestImportNetwork:
-    def test_full_network(self, tmp_path):
+    def test_full_network(self, tmp_path: Path) -> None:
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=5)
         ef = _create_edges_h5(
             tmp_path / "edges.h5",
@@ -26,7 +26,7 @@ class TestImportNetwork:
         assert net.n_nodes == 5
         assert net.n_edges == 3
 
-    def test_connectivity_matrix(self, tmp_path):
+    def test_connectivity_matrix(self, tmp_path: Path) -> None:
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=3)
         ef = _create_edges_h5(
             tmp_path / "edges.h5",
@@ -41,7 +41,7 @@ class TestImportNetwork:
         assert W[2, 1] == pytest.approx(0.8)
         assert W[0, 0] == 0.0
 
-    def test_nodes_only(self, tmp_path):
+    def test_nodes_only(self, tmp_path: Path) -> None:
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=10)
         net = import_sonata(nf)
         assert net.n_nodes == 10

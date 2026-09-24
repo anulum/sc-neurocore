@@ -965,13 +965,13 @@
   "counts": {
     "github_workflows": 20,
     "model_documentation_pages": 200,
-    "optional_extras": 29,
+    "optional_extras": 30,
     "public_api_exports": 45,
     "public_documentation_pages": 633,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4989
+    "test_files": 4990
   },
   "documentation": {
     "public_pages": [
@@ -3026,6 +3026,7 @@
       "quantum",
       "quantum-cognition",
       "research",
+      "sonata",
       "studio",
       "symbolic",
       "training",
@@ -7088,6 +7089,7 @@
       "tests/test_sonata_import_import_edges.py",
       "tests/test_sonata_import_import_network.py",
       "tests/test_sonata_import_import_nodes.py",
+      "tests/test_sonata_import_specification.py",
       "tests/test_sources_and_profiling_bitstream_current_source.py",
       "tests/test_sources_and_profiling_energy_metrics.py",
       "tests/test_sources_and_profiling_quantum_entropy_source.py",

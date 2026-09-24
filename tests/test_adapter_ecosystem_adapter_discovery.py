@@ -115,9 +115,14 @@ class TestAdapterDiscovery:
 
         nodes_path = tmp_path / "nodes.h5"
         with h5py.File(nodes_path, "w") as h5_file:
+            # A minimal file as the SONATA specification lays it out.
+            h5_file.attrs["magic"] = np.uint32(0x0A7A)
+            h5_file.attrs["version"] = np.array([0, 1], dtype=np.uint32)
             group = h5_file.create_group("nodes/exc")
-            group.create_dataset("node_id", data=np.arange(2))
             group.create_dataset("node_type_id", data=np.zeros(2, dtype=int))
+            group.create_dataset("node_group_id", data=np.zeros(2, dtype=np.uint32))
+            group.create_dataset("node_group_index", data=np.arange(2, dtype=np.uint64))
+            group.create_group("0")
         network = sonata_cls.import_network(nodes_path)
         assert network.n_nodes == 2
         assert network.n_edges == 0

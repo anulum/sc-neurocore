@@ -16,7 +16,8 @@ tests and coverage drops below the 99 % gate even though the code is
 reachable.
 
 ``neuroml`` adds libNeuroML, so the NeuroML importer's tests read documents
-the upstream library wrote and validated, not only hand-written fixtures.
+the upstream library wrote and validated, not only hand-written fixtures;
+``sonata`` adds libsonata, the reference reader the SONATA importer uses.
 
 ``federation`` (scpn-studio-platform) is added only on Python >= 3.12, the
 platform SDK's floor: it makes the studio-federation conformance tests under
@@ -28,7 +29,7 @@ import sys
 
 from ci_install_common import install_editable
 
-_EXTRAS = "dev,units,nir,neuroml,compression,training,research,bioware,studio,julia"
+_EXTRAS = "dev,units,nir,neuroml,sonata,compression,training,research,bioware,studio,julia"
 if sys.version_info >= (3, 12):
     _EXTRAS += ",federation"
 

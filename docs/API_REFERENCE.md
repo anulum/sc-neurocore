@@ -2608,36 +2608,57 @@ Returns a neuron object ready for .step() calls.
 ### Class `SONATANode`
 A single node (neuron) from a SONATA population.
 
+``node_id`` is the node's id within ``population``; ``model_type`` and
+``model_template`` are ``None`` when the file does not state them.
+
 
 ### Class `SONATAEdge`
 A single edge (synapse) from a SONATA population.
+
+``source_id`` and ``target_id`` are ids within ``source_population`` and
+``target_population``; ``weight`` and ``delay`` are ``None`` when the file
+does not state them.
 
 
 ### Class `SONATANetwork`
 Parsed SONATA network with nodes and edges.
 
+``node_populations`` maps each node population name to its node ids, and
+``edge_populations`` each edge population name to indices into ``edges``.
+``metadata`` records the file's SONATA version and how many edges state no
+weight or no delay.
+
 - **n_nodes**()
 - **n_edges**()
 - **connectivity_matrix**()
-  - Build dense connectivity matrix (n_nodes x n_nodes).
+  - Build the dense connectivity matrix (n_nodes x n_nodes), rows = targets.
 
 ### Function `import_sonata_nodes(path)`
-Parse a SONATA nodes HDF5 file.
+Parse a SONATA nodes HDF5 file through libsonata.
 
-Expected structure:
-  /nodes/<population_name>/node_id
-  /nodes/<population_name>/node_type_id
-  /nodes/<population_name>/0/model_type  (optional)
+Returns
+-------
+list of SONATANode
+    Every node of every population, populations in name order.
+
+Raises
+------
+ValueError
+    The file is not a SONATA file, has no node population, or a population
+    lacks ``node_type_id``.
 
 ### Function `import_sonata_edges(path)`
-Parse a SONATA edges HDF5 file.
+Parse a SONATA edges HDF5 file through libsonata.
 
-Expected structure:
-  /edges/<population_name>/source_node_id
-  /edges/<population_name>/target_node_id
-  /edges/<population_name>/edge_type_id
-  /edges/<population_name>/0/syn_weight  (optional)
-  /edges/<population_name>/0/delay       (optional)
+Returns
+-------
+list of SONATAEdge
+    Every edge of every population, populations in name order.
+
+Raises
+------
+ValueError
+    The file is not a SONATA file or a population lacks ``edge_type_id``.
 
 ### Function `import_sonata(nodes_path, edges_path)`
 Import a complete SONATA network from nodes + edges files.
@@ -2649,7 +2670,14 @@ edges_path : path to edges.h5 (optional)
 
 Returns
 -------
-SONATANetwork with parsed nodes, edges, and connectivity.
+SONATANetwork
+    Parsed nodes, edges, populations and version metadata.
+
+Raises
+------
+ValueError
+    A file is not SONATA or is incomplete, or an edge names a node the
+    nodes file does not contain.
 
 ---
 

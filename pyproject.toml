@@ -122,6 +122,7 @@ quantum = ["qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental layer
 nir = ["nir>=1.0,<1.0.9"]  # nir 1.0.8 makes Flatten.input_type mandatory; supplied by nir_bridge.export
 neuroml = ["libNeuroML>=0.6.7,<0.7"]  # write and schema-validate NeuroML 2 documents
+sonata = ["libsonata>=0.2.2,<0.3"]  # read SONATA circuits through the reference library
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27", "httpx2>=2.5,<3"]
@@ -332,7 +333,7 @@ exclude = [
 
 # External untyped third-party dependencies — no upstream stubs available.
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'orjson.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*', 'sympy.*', 'neuroml.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'orjson.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*', 'sympy.*', 'neuroml.*', 'libsonata.*']
 ignore_missing_imports = true
 
 # Strict-typing burn-down ledger — COMPLETE (2026-06-21). Package-wide
