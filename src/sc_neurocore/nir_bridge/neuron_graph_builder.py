@@ -28,7 +28,7 @@ from sc_neurocore.nir_bridge.neuron_graph_contracts import (
 )
 from sc_neurocore.nir_bridge.neuron_graph_dense import _weight_matrix_and_bias
 from sc_neurocore.nir_bridge.neuron_graph_hierarchy import _inline_single_port_subgraphs
-from sc_neurocore.nir_bridge.neuron_graph_metadata import _broadcast_threshold
+from sc_neurocore.nir_bridge.neuron_graph_metadata import _broadcast_threshold, _compose_delay_steps
 from sc_neurocore.nir_bridge.neuron_graph_nodes import (
     _SC_NODE_TO_TYPE,
     _SC_PASSTHROUGH_NODES,
@@ -90,7 +90,13 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
     ] = {}
     weight_source_for: dict[
         str,
-        tuple[str, np.ndarray[Any, Any] | None, int | None, np.ndarray[Any, Any] | None],
+        tuple[
+            str,
+            np.ndarray[Any, Any] | None,
+            int | None,
+            np.ndarray[Any, Any] | None,
+            DelaySteps,
+        ],
     ] = {}
 
     for name in topo_order:
@@ -119,12 +125,14 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
                         destination_scale,
                         destination_flatten_width,
                         destination_threshold,
+                        post_weight_delay_steps,
                     ) = resolved_destination
                     weight_source_for[destination_name] = (
                         name,
                         destination_scale,
                         destination_flatten_width,
                         destination_threshold,
+                        post_weight_delay_steps,
                     )
             continue
         if class_name in _SC_PASSTHROUGH_NODES:
@@ -160,6 +168,7 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
             destination_scale,
             destination_flatten_width,
             destination_threshold,
+            post_weight_delay_steps,
         ) = weight_source
         weights, bias = pending_weights[weight_node_name]
 
@@ -184,6 +193,7 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
                 ) = resolved_source
                 break
 
+        delay_steps = _compose_delay_steps(delay_steps, post_weight_delay_steps)
         if not source_name:
             candidate_predecessors = predecessors.get(weight_node_name, [])
             if candidate_predecessors:

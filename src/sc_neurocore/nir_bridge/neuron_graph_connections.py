@@ -47,6 +47,7 @@ ResolvedDestination = tuple[
     np.ndarray[Any, Any] | None,
     int | None,
     np.ndarray[Any, Any] | None,
+    DelaySteps,
 ]
 
 
@@ -149,8 +150,16 @@ def _resolve_weight_destination(
     accumulated_threshold: np.ndarray[Any, Any] | None = None,
     required_destination_width: int | None = None,
     flatten_input_width: int | None = None,
+    accumulated_delay_steps: DelaySteps = 0,
 ) -> ResolvedDestination | None:
-    """Resolve one neuron destination fed by a weight node."""
+    """Resolve one neuron destination fed by a weight node.
+
+    A ``Delay`` between the weight and the destination delays the whole
+    connection, as one before the weight does; its steps are carried to the
+    connection instead of being passed through as if it were not there. A
+    connection's delay is kept per source neuron, so a post-weight delay that
+    differs between destination neurons cannot be represented and is refused.
+    """
     node = nodes[node_name]
     class_name = type(node).__name__
     if class_name in _SC_NODE_TO_TYPE:
@@ -164,13 +173,29 @@ def _resolve_weight_destination(
                 f"Flatten output width {required_destination_width} does not match "
                 f"destination {node_name!r} width {node_width}"
             )
-        return node_name, accumulated_scale, flatten_input_width, accumulated_threshold
+        return (
+            node_name,
+            accumulated_scale,
+            flatten_input_width,
+            accumulated_threshold,
+            accumulated_delay_steps,
+        )
 
     if class_name == "SCOutputNode" and not successors.get(node_name):
         return None
     if class_name not in _SC_PASSTHROUGH_NODES or class_name == "SCInputNode":
         return None
 
+    delay_steps = accumulated_delay_steps
+    if class_name == _DELAY_NODE_NAME:
+        post_weight_steps = _delay_steps(node, node_name)
+        if isinstance(post_weight_steps, tuple):
+            raise ValueError(
+                f"Post-weight Delay {node_name!r} delays destination neurons differently; "
+                "a connection's delay is per source neuron, so it requires explicit "
+                "pre-lowering before FPGA compilation"
+            )
+        delay_steps = _compose_delay_steps(delay_steps, post_weight_steps)
     scale = accumulated_scale
     if class_name == _SCALE_NODE_NAME:
         scale = _compose_scale(scale, _scale_vector(node, node_name))
@@ -210,6 +235,7 @@ def _resolve_weight_destination(
         accumulated_threshold=threshold,
         required_destination_width=next_required_destination_width,
         flatten_input_width=next_flatten_input_width,
+        accumulated_delay_steps=delay_steps,
     )
 
 

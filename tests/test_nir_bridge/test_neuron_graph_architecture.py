@@ -288,8 +288,8 @@ def test_benchmark_evidence_is_source_bound_and_byte_identical() -> None:
     assert payload["results"]["candidate"]["sample_count"] == 30
     expected_comparison = {
         "generated_output_byte_identical": True,
-        "generated_sha256": "32498fa1106229a4fe064862e20b86e0f0b1f0d42f8598d1988e06e68c13ef13",
-        "generated_bytes": 22860,
+        "generated_sha256": "d1a19a26a33912f5c10c29d2f0d86cb14693d90a6a8242b8c1b063e6cf3bd899",
+        "generated_bytes": 22963,
         "population_count": 2,
         "connection_count": 2,
         "total_neurons": 8,
