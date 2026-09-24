@@ -23,6 +23,7 @@ pytest.importorskip("torch")
 
 import torch
 
+import sc_neurocore.benchmarks as benchmarks
 from sc_neurocore.benchmarks.stochastic_backprop import (
     STOCHASTIC_BACKPROP_BENCHMARK_SCHEMA_VERSION,
     STOCHASTIC_BACKPROP_ESTIMATOR_REGRESSION_SCHEMA_VERSION,
@@ -36,6 +37,17 @@ from sc_neurocore.benchmarks.stochastic_backprop import (
     write_stochastic_backprop_estimator_regression_manifest,
     write_stochastic_backprop_benchmark,
 )
+
+
+def test_stochastic_backprop_public_lazy_export(monkeypatch: pytest.MonkeyPatch) -> None:
+    name = "build_stochastic_backprop_benchmark"
+    monkeypatch.delitem(benchmarks.__dict__, name, raising=False)
+
+    assert name in dir(benchmarks)
+    assert getattr(benchmarks, name) is build_stochastic_backprop_benchmark
+    assert benchmarks.__dict__[name] is build_stochastic_backprop_benchmark
+    with pytest.raises(AttributeError, match="has no attribute"):
+        benchmarks.unknown_benchmark
 
 
 def test_stochastic_backprop_benchmark_reports_loss_and_stream_evidence() -> None:
