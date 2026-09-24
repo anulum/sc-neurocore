@@ -214,19 +214,27 @@ class IsolatedJobManager:
         )
 
     def cancel(self, job_id: str) -> StudioJobRecord:
-        """Record the cancellation at the authority; stop a worker supervised here."""
-        events = self._threads.events(job_id)
-        if events is not None:
-            events[0].set()
-        record = exchange_cancel(
-            self._runtime.connect(),
-            cancel_request(
-                self._configuration.workspace, job_id, requester=_delegation().requester
-            ),
-            expected_service_uid=self._runtime.storage_uid,
-            max_bytes=self._runtime.frame_max_bytes,
-            deadline=self._deadline(),
-        )
+        """Record the cancellation at the authority; stop a worker supervised here.
+
+        The authority records the request before the local generation is told
+        to stop, so a live job answers ``cancelling`` rather than a
+        ``cancelled`` its supervisor wrote first. The local generation is told
+        even when the exchange fails.
+        """
+        try:
+            record = exchange_cancel(
+                self._runtime.connect(),
+                cancel_request(
+                    self._configuration.workspace, job_id, requester=_delegation().requester
+                ),
+                expected_service_uid=self._runtime.storage_uid,
+                max_bytes=self._runtime.frame_max_bytes,
+                deadline=self._deadline(),
+            )
+        finally:
+            events = self._threads.events(job_id)
+            if events is not None:
+                events[0].set()
         if record.status not in TERMINAL_STATUSES and record.status != "cancelling":
             raise StudioJobRejected(
                 f"Studio job {job_id} cannot move from '{record.status}' to 'cancelling'."

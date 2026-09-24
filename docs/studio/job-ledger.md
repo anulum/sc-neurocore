@@ -248,7 +248,11 @@ metadata yields unknown liveness rather than an invented live owner.
 
 Stop requests are durable: both thread and process supervisors observe the
 shared ledger, so a second manager can cancel an existing job. A repeated Stop
-also delivers the owning manager's local cancellation event. Cancellation is
+also delivers the owning manager's local cancellation event. The request is
+recorded before that event is delivered, so Stop on a live job answers
+`cancelling` and its history shows the request before `cancelled`; a job that
+stops on its own before the request is recorded answers with the state it
+reached. The event is delivered even when the ledger write fails. Cancellation is
 cooperative for threads; it is a request, not proof of completion.
 
 If cancellation-state observation fails, the supervisor first requests thread

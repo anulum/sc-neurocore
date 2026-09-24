@@ -116,6 +116,55 @@ class TestCancellingAJobThatAlreadyStopped:
         assert release.is_set()
         assert cancelled.status == "completed"
 
+    def test_a_live_process_job_records_the_request_before_its_supervisor_stops_it(
+        self, manager: StudioJobManager
+    ) -> None:
+        """Stop on a running job answers ``cancelling`` however fast the supervisor is.
+
+        When the local stop event was delivered before the ledger write, the
+        supervisor could reap the worker and commit ``running -> cancelled``
+        first, so Stop answered ``cancelled`` and the history lacked the
+        request. Here cancel's connection holds for two seconds right before
+        its transition, long enough for any supervisor already told to stop.
+        """
+        submitted = manager.submit_process_task(
+            kind="compiler",
+            owner="test",
+            request_id=None,
+            task_path="tests.test_studio_jobs_cancel_race:peer_cancel_process_task",
+            payload={},
+            timeout_seconds=15.0,
+        )
+        marker = manager._root / submitted.job_id / "worker.pid"
+        deadline = time.monotonic() + 5.0
+        while not marker.exists() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert marker.exists()
+        done = manager._done_events[submitted.job_id]
+        statements: list[str] = []
+        stopped_before_write: list[bool] = []
+
+        def hold_before_write(statement: str) -> None:
+            read = statements and statements[-1].startswith("SELECT * FROM jobs WHERE job_id")
+            if read and statement == "BEGIN IMMEDIATE" and not stopped_before_write:
+                stopped_before_write.append(done.wait(2.0))
+            statements.append(statement)
+
+        connection = manager._ledger.connection()
+        connection.set_trace_callback(hold_before_write)
+        try:
+            answered = manager.cancel(submitted.job_id)
+        finally:
+            connection.set_trace_callback(None)
+
+        assert stopped_before_write == [False]
+        assert answered.status == "cancelling"
+        assert manager.wait(submitted.job_id, timeout_seconds=10.0).status == "cancelled"
+        history = [
+            (row["from_status"], row["to_status"]) for row in manager.transitions(submitted.job_id)
+        ]
+        assert history[-2:] == [("running", "cancelling"), ("cancelling", "cancelled")]
+
     def test_a_refusal_that_is_not_the_race_still_propagates(
         self, manager: StudioJobManager
     ) -> None:

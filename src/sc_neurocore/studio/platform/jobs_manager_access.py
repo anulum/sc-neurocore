@@ -53,23 +53,32 @@ def _cancel_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord
     server error for pressing Stop on a run that had just finished. Losing
     that race means the job is already stopped, so the record it reached is
     returned. A refusal for any other reason still propagates.
+
+    The request is recorded before the local worker is told to stop. Telling
+    it first let a fast supervisor write ``running -> cancelled`` before the
+    request reached the ledger, so a live job's Stop returned ``cancelled``
+    instead of ``cancelling`` and its history lacked the request. The local
+    event is still delivered when the ledger write fails, so Stop reaches a
+    worker this process supervises whatever the ledger does.
     """
     record = manager._ledger.record(job_id)
     if record.status in TERMINAL_STATUSES:
         return record
-    with manager._lock:
-        cancel_event = manager._cancel_events.get(job_id)
-    if cancel_event is not None:
-        cancel_event.set()
-    if record.status == "cancelling":
-        return record
     try:
-        return manager._ledger.transition(job_id, "cancelling", reason="cancellation requested")
-    except StudioJobRejected:
-        settled = manager._ledger.record(job_id)
-        if settled.status in TERMINAL_STATUSES or settled.status == "cancelling":
-            return settled
-        raise
+        if record.status == "cancelling":
+            return record
+        try:
+            return manager._ledger.transition(job_id, "cancelling", reason="cancellation requested")
+        except StudioJobRejected:
+            settled = manager._ledger.record(job_id)
+            if settled.status in TERMINAL_STATUSES or settled.status == "cancelling":
+                return settled
+            raise
+    finally:
+        with manager._lock:
+            cancel_event = manager._cancel_events.get(job_id)
+        if cancel_event is not None:
+            cancel_event.set()
 
 
 def _wait_for_job(
