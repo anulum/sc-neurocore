@@ -23120,7 +23120,8 @@ public_label:
     Row label on the public fidelity page, empty when unlisted.
 revalidation:
     For strict-promoted identities: whether the promotion is bound to an
-    independent source receipt.
+    independent source receipt that this package ships and that names the
+    model; a descriptor path to an absent receipt binds nothing.
 missing_gates:
     Evidence gates the descriptor does not yet claim.
 
@@ -23551,6 +23552,43 @@ Raises
 ------
 ModelProfileError
     If the payload does not carry the contract or a required field.
+
+---
+
+## Module `neurons.model_receipts`
+
+### Function `referenced_receipt_name(reference)`
+Return the receipt file a descriptor reference names.
+
+Parameters
+----------
+reference : str
+    The descriptor's ``reproducibility.reference_config`` value.
+
+Returns
+-------
+str or None
+    The bare ``*.json`` file name, or ``None`` when the reference names no
+    receipt or names one outside the receipt directory.
+
+### Function `load_bound_receipt(class_name, reference)`
+Load the receipt a descriptor reference binds to ``class_name``.
+
+Parameters
+----------
+class_name : str
+    The catalogue class the descriptor describes.
+reference : str
+    The descriptor's ``reproducibility.reference_config`` value.
+directory : Path
+    The receipt directory; the installed package's own by default.
+
+Returns
+-------
+Mapping or None
+    The receipt, or ``None`` when the reference names no receipt, the file
+    is absent or unreadable, it is not a JSON object, or it is bound to
+    another model.
 
 ---
 

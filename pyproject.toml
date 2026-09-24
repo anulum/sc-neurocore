@@ -173,6 +173,7 @@ sc_neurocore = [
   "neurons/model_schemas/*.json",
   "neurons/model_schemas/*.toml",
   "neurons/reference_trace_data/*.json",
+  "neurons/reference_receipts/*.json",
   "neurons/model_descriptors/*.toml",
 ]
 

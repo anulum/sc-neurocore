@@ -6,8 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Built distribution model resource contracts
 
-"""Verify actual wheels preserve canonical model descriptors and reference pages."""
+"""Verify actual wheels preserve every declared package resource and reference page."""
 
+from dataclasses import asdict
+from fnmatch import fnmatchcase
 from pathlib import Path
 import json
 import os
@@ -16,10 +18,12 @@ import subprocess
 import sys
 import sysconfig
 import tarfile
+import tomllib
 import zipfile
 
 import pytest
 
+from sc_neurocore.neurons.model_identity import catalogue_counts
 from sc_neurocore.studio.codegen import generate_experiment_script, generate_oneliner
 from sc_neurocore.studio.experiment_spec import resolve_experiment
 from sc_neurocore.studio.replay_pack import build_replay_pack
@@ -101,11 +105,54 @@ finally:
     )
 
 
+def declared_package_resources(source: Path) -> tuple[str, ...]:
+    """Return the resource patterns the distribution declares for the package.
+
+    Parameters
+    ----------
+    source:
+        Source tree whose ``pyproject.toml`` is the resource contract.
+
+    Returns
+    -------
+    tuple of str
+        The ``sc_neurocore`` package-data patterns, relative to the package.
+    """
+    project = tomllib.loads((source / "pyproject.toml").read_text(encoding="utf-8"))
+    return tuple(project["tool"]["setuptools"]["package-data"]["sc_neurocore"])
+
+
+def matches_resource(relative: str, pattern: str) -> bool:
+    """Match a package-relative path against one declared pattern, segment by segment.
+
+    Parameters
+    ----------
+    relative:
+        Path inside the package, with ``/`` separators.
+    pattern:
+        Declared package-data pattern; ``*`` never crosses a directory.
+
+    Returns
+    -------
+    bool
+        Whether the path is one the pattern declares.
+    """
+    parts, pattern_parts = relative.split("/"), pattern.split("/")
+    return len(parts) == len(pattern_parts) and all(
+        fnmatchcase(part, expected) for part, expected in zip(parts, pattern_parts, strict=True)
+    )
+
+
 @pytest.mark.parametrize("through_sdist", [False, True], ids=["wheel", "sdist-wheel"])
 def test_wheel_contains_exact_model_resources(
     distribution_source: Path, tmp_path: Path, through_sdist: bool
 ) -> None:
-    """Both supported build paths retain each descriptor and canonical page byte-for-byte."""
+    """Both build paths ship every declared resource and canonical page byte-for-byte.
+
+    Every package-data pattern must match at least one tracked source file, and
+    the wheel must hold exactly those files under that pattern -- so a resource
+    class the catalogue needs cannot silently drop out of the distribution.
+    """
     source = distribution_source
     if through_sdist:
         result = build_distribution(source, "build_sdist", tmp_path / "sdist")
@@ -117,11 +164,26 @@ def test_wheel_contains_exact_model_resources(
     result = build_distribution(source, "build_wheel", tmp_path / "wheel")
     assert result.returncode == 0, result.stdout + result.stderr
     (wheel_path,) = (tmp_path / "wheel").glob("*.whl")
+    package = source / "src" / "sc_neurocore"
     with zipfile.ZipFile(wheel_path) as wheel:
-        for directory, pattern, destination in (
-            ("src/sc_neurocore/neurons/model_descriptors", "*.toml", "neurons/model_descriptors"),
-            ("docs/api/models", "*.md", "studio/model_docs"),
-        ):
+        members = [name for name in wheel.namelist() if name.startswith("sc_neurocore/")]
+        for pattern in declared_package_resources(source):
+            declared_files = sorted(
+                path.relative_to(package).as_posix()
+                for path in package.rglob("*")
+                if path.is_file()
+                and matches_resource(path.relative_to(package).as_posix(), pattern)
+            )
+            assert declared_files, f"declared resource pattern {pattern!r} matches no source file"
+            shipped = sorted(
+                name.removeprefix("sc_neurocore/")
+                for name in members
+                if matches_resource(name.removeprefix("sc_neurocore/"), pattern)
+            )
+            assert shipped == declared_files, pattern
+            for relative in declared_files:
+                assert wheel.read(f"sc_neurocore/{relative}") == (package / relative).read_bytes()
+        for directory, pattern, destination in (("docs/api/models", "*.md", "studio/model_docs"),):
             originals = sorted((distribution_source / directory).glob(pattern))
             assert originals, directory
             expected = {f"sc_neurocore/{destination}/{path.name}" for path in originals}
@@ -141,7 +203,9 @@ def verify_installed_replays(installed: Path, workspace: Path) -> None:
 
     Compare every scalar/vector sample, spike, drive digest and state boundary
     for nondefault-timestep, nonconstant-drive, rate and seeded stochastic cases.
-    Dependencies reuse the test interpreter's site-packages; this is package
+    The installed catalogue must also report exactly the counts the source tree
+    does, so a receipt-bound identity is receipt-bound only because its receipt
+    was shipped and resolved inside the installed package. Dependencies reuse the test interpreter's site-packages; this is package
     isolation, not a fresh dependency-resolution or platform receipt.
 
     Parameters
@@ -178,6 +242,14 @@ assert Path(sc_neurocore.__file__).is_relative_to(installed)
 from sc_neurocore.studio.model_catalogue import model_documentation
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.studio.replay_pack import replay_pack, replay_expectation
+from dataclasses import asdict
+from sc_neurocore.neurons.model_identity import catalogue_counts, iter_source_catalogue
+from sc_neurocore.neurons.model_receipts import RECEIPT_DIRECTORY
+assert RECEIPT_DIRECTORY.is_relative_to(installed)
+counts = asdict(catalogue_counts())
+assert counts == json.loads(sys.argv[3]), counts
+bound = [record for record in iter_source_catalogue() if record.revalidation == "receipt-bound"]
+assert len(bound) == counts["receipt_bound_complete"] > 0
 packs = json.load(sys.stdin)
 for index, pack in enumerate(packs):
     name = pack["request"]["name"]
@@ -200,7 +272,16 @@ for index, pack in enumerate(packs):
 print("four model families replay exactly; both script forms reproduce full traces; tampering rejected")
 """
     result = subprocess.run(
-        [sys.executable, "-I", "-S", "-c", probe, str(installed), sysconfig.get_path("purelib")],
+        [
+            sys.executable,
+            "-I",
+            "-S",
+            "-c",
+            probe,
+            str(installed),
+            sysconfig.get_path("purelib"),
+            json.dumps(asdict(catalogue_counts())),
+        ],
         cwd=workspace,
         input=json.dumps(packs),
         capture_output=True,

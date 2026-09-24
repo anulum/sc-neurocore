@@ -46,6 +46,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
+from sc_neurocore.neurons.model_receipts import load_bound_receipt
 from sc_neurocore.neurons.model_taxonomy import _COMPATIBILITY_ALIASES as _TAXONOMY_ALIASES
 from sc_neurocore.neurons.model_taxonomy import model_family
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
@@ -69,7 +70,6 @@ Revalidation = Literal["receipt-bound", "not-revalidated", "not-completed"]
 
 SCHEMA_DIR = Path(__file__).resolve().parent / "model_schemas"
 REQUIRED_BACKENDS: tuple[str, ...] = ("python", "rust", "julia", "go", "mojo")
-_RECEIPT_MARKER = "neurons/reference_receipts/"
 
 
 class ModelIdentityError(ValueError):
@@ -146,7 +146,8 @@ class ModelIdentity:
         Row label on the public fidelity page, empty when unlisted.
     revalidation:
         For strict-promoted identities: whether the promotion is bound to an
-        independent source receipt.
+        independent source receipt that this package ships and that names the
+        model; a descriptor path to an absent receipt binds nothing.
     missing_gates:
         Evidence gates the descriptor does not yet claim.
     """
@@ -543,7 +544,11 @@ def _missing_gates(
     return tuple(gates)
 
 
-def _revalidation(payload: Mapping[str, Any] | None, status: PublicStatus) -> Revalidation:
+def _revalidation(
+    class_name: str, payload: Mapping[str, Any] | None, status: PublicStatus
+) -> Revalidation:
+    # "receipt-bound" needs the receipt itself, read from this package and
+    # naming this model; a reference path alone binds nothing.
     if status != "polyglot-complete":
         return "not-completed"
     if payload is None:
@@ -554,7 +559,7 @@ def _revalidation(payload: Mapping[str, Any] | None, status: PublicStatus) -> Re
     validation = payload.get("validation")
     validation_map = validation if isinstance(validation, Mapping) else {}
     faithful = bool(validation_map.get("dynamics_faithful", False))
-    if _RECEIPT_MARKER in reference and faithful:
+    if faithful and load_bound_receipt(class_name, reference) is not None:
         return "receipt-bound"
     return "not-revalidated"
 
@@ -626,7 +631,7 @@ def identity_registry() -> dict[str, ModelIdentity]:
             source=source,
             public_status=status,
             public_label=label,
-            revalidation=_revalidation(payload, status),
+            revalidation=_revalidation(class_name, payload, status),
             missing_gates=_missing_gates(payload, profiles, source, kind),
         )
     for alias, canonical in sorted(_TAXONOMY_ALIASES.items()):

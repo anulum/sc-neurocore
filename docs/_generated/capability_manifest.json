@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4984
+    "test_files": 4985
   },
   "documentation": {
     "public_pages": [
@@ -3041,6 +3041,7 @@
       "neurons/model_schemas/*.json",
       "neurons/model_schemas/*.toml",
       "neurons/reference_trace_data/*.json",
+      "neurons/reference_receipts/*.json",
       "neurons/model_descriptors/*.toml"
     ]
   },
@@ -5998,6 +5999,7 @@
       "tests/test_model_rall_cable_rall_cable_performance.py",
       "tests/test_model_rall_cable_rall_cable_propagation.py",
       "tests/test_model_rall_cable_rall_cable_spiking.py",
+      "tests/test_model_receipts.py",
       "tests/test_model_renshaw_cell.py",
       "tests/test_model_resonate_and_fire_batch_and_reset.py",
       "tests/test_model_resonate_and_fire_constructor_rejects.py",
