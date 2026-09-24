@@ -11,7 +11,8 @@
  *
  * Everything the diagram shows is here in text and reachable by keyboard: what
  * each population is, what drives it, what reaches it and what it reaches, and
- * a control to delete it that says what deleting it takes with it.
+ * controls to edit or delete each population and each projection, every one
+ * named for what it acts on.
  */
 
 import type { CSSProperties } from "react";
@@ -21,8 +22,10 @@ import type { StudioGraphIssueLocation } from "../studioGraphValidation";
 import {
   STUDIO_GRAPH_TABLE_COLUMNS,
   studioGraphTable,
+  studioGraphTableProjectionName,
   studioGraphTableRemoveLabel,
   type StudioGraphTableConnection,
+  type StudioGraphTableRow,
 } from "../studioGraphTable";
 
 const cell: CSSProperties = {
@@ -35,6 +38,17 @@ const cell: CSSProperties = {
 
 const headerCell: CSSProperties = { ...cell, fontWeight: 600 };
 
+const control: CSSProperties = {
+  background: "transparent",
+  border: "1px solid var(--control-border)",
+  borderRadius: 3,
+  color: "var(--text-muted)",
+  cursor: "pointer",
+  fontSize: 10,
+  marginRight: 4,
+  padding: "2px 8px",
+};
+
 /** Text placed for a screen reader without taking visual space. */
 const offscreen: CSSProperties = {
   clip: "rect(0 0 0 0)",
@@ -46,14 +60,29 @@ const offscreen: CSSProperties = {
   width: 1,
 };
 
+/** The controls a projection's entry carries, where it has any. */
+interface ProjectionActions {
+  row: StudioGraphTableRow;
+  onEdit: (id: string) => void;
+  onRemove: (id: string) => void;
+}
+
 /**
  * List the projections at one end of a population, or say there are none.
  *
- * An empty cell reads as missing information; `none` reads as an answer.
+ * An empty cell reads as missing information; `none` reads as an answer. Each
+ * projection is listed at both of its ends but carries its controls only at
+ * its source, so a reader walking the table meets each control once.
  *
  * @returns The connections as a list, or the word `none`.
  */
-function Connections({ connections }: { connections: StudioGraphTableConnection[] }) {
+function Connections({
+  connections,
+  actions,
+}: {
+  connections: StudioGraphTableConnection[];
+  actions?: ProjectionActions;
+}) {
   if (connections.length === 0) {
     return <span style={{ color: "var(--text-muted)" }}>none</span>;
   }
@@ -63,6 +92,26 @@ function Connections({ connections }: { connections: StudioGraphTableConnection[
         <li key={connection.id}>
           {connection.populationLabel}{" "}
           <span style={{ color: "var(--text-muted)" }}>{connection.detail}</span>
+          {actions !== undefined && (
+            <span style={{ display: "block", marginTop: 2 }}>
+              <button
+                type="button"
+                onClick={() => { actions.onEdit(connection.id); }}
+                aria-label={`Edit ${studioGraphTableProjectionName(actions.row, connection)}`}
+                style={control}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => { actions.onRemove(connection.id); }}
+                aria-label={`Delete ${studioGraphTableProjectionName(actions.row, connection)}`}
+                style={control}
+              >
+                Delete
+              </button>
+            </span>
+          )}
           <Problems messages={connection.issues} />
         </li>
       ))}
@@ -101,6 +150,11 @@ export interface NetworkGraphTableProps {
   /** Located validation failures; empty when the graph has not been refused. */
   issues?: StudioGraphIssueLocation[];
   onRemovePopulation: (id: string) => void;
+  /** Open the population's editor; the table view shows it beside the table. */
+  onEditPopulation: (id: string) => void;
+  /** Open the projection's editor. */
+  onEditProjection: (id: string) => void;
+  onRemoveProjection: (id: string) => void;
 }
 
 /**
@@ -117,6 +171,9 @@ export default function NetworkGraphTable({
   projections,
   issues = [],
   onRemovePopulation,
+  onEditPopulation,
+  onEditProjection,
+  onRemoveProjection,
 }: NetworkGraphTableProps) {
   const table = studioGraphTable(populations, projections, issues);
   return (
@@ -151,7 +208,10 @@ export default function NetworkGraphTable({
               <Connections connections={row.incoming} />
             </td>
             <td style={cell}>
-              <Connections connections={row.outgoing} />
+              <Connections
+                connections={row.outgoing}
+                actions={{ onEdit: onEditProjection, onRemove: onRemoveProjection, row }}
+              />
             </td>
             <td style={cell}>
               {row.issues.length === 0 ? (
@@ -163,17 +223,17 @@ export default function NetworkGraphTable({
             <td style={cell}>
               <button
                 type="button"
+                onClick={() => { onEditPopulation(row.id); }}
+                aria-label={`Edit population ${row.label}`}
+                style={control}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
                 onClick={() => { onRemovePopulation(row.id); }}
                 aria-label={studioGraphTableRemoveLabel(row)}
-                style={{
-                  background: "transparent",
-                  border: "1px solid var(--control-border)",
-                  borderRadius: 3,
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: 10,
-                  padding: "2px 8px",
-                }}
+                style={control}
               >
                 Delete
               </button>

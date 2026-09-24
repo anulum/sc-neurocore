@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Network Canvas: the whole graph editable without a pointer
+
+- The table view's rows carry **Edit** beside **Delete**, and each projection
+  carries **Edit** and **Delete** at its source row. The editor opens beside
+  the table and takes the focus; every control names what it acts on, a
+  projection by both ends and what it carries. Before, the table could delete
+  a population and connect two, but nothing in it could edit a population or
+  touch a projection, and the editors were hidden with the canvas.
+- The project list's open, delete and restore entries are buttons that name
+  their project. They were clickable text no keyboard could reach, so a saved
+  network could not be reopened without a mouse.
+- A live browser test builds, connects, edits, deletes and undoes a network by
+  keyboard alone, saves it, reloads the page and reopens it by keyboard; another
+  drags a node and holds the run's `graph_sha256` unchanged. A backend test
+  holds positions out of the resolved specification.
+- The canvas guide lists the keyboard shortcuts.
+
 ### Identity store lock: unavailable lock named, one file beside the store
 
 - A lock file that cannot be created or opened (a store directory the Studio

@@ -94,6 +94,16 @@ class TestResolution:
         assert changed["graph_sha256"] != first["graph_sha256"]
         assert changed["projections"][0]["seed"] == derived_seed(7, 1, 0)
 
+    def test_moving_a_node_leaves_the_run_and_its_digest_unchanged(self) -> None:
+        """Layout travels with a saved graph but is not part of what runs."""
+        placed = _graph()
+        moved = _graph()
+        placed["populations"][0]["position"] = {"x": 0, "y": 0}
+        moved["populations"][0]["position"] = {"x": 640.5, "y": -1200.0}
+        moved["populations"][1]["position"] = {"x": 3.0, "y": 9000.0}
+
+        assert resolve_graph(moved).to_public_dict() == resolve_graph(placed).to_public_dict()
+
     def test_explicit_seeds_and_params_are_taken_as_given(self) -> None:
         graph = _graph()
         graph["projections"][0]["seed"] = 123

@@ -32,7 +32,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   compareWithBaseline,
@@ -395,4 +395,125 @@ test("no text falls below its WCAG AA contrast threshold for the first time", as
   // The failures the baseline does record are real, user-facing defects,
   // tracked in the private TODO rather than accepted.
   expect(Array.isArray(BASELINE.failures)).toBe(true);
+});
+
+/** Activate a control the way a keyboard does: focus it, then press Enter. */
+async function pressWithKeyboard(page: Page, control: Locator): Promise<void> {
+  await control.focus();
+  await expect(control).toBeFocused();
+  await page.keyboard.press("Enter");
+}
+
+test("a network built, edited, deleted from and undone by keyboard survives save and reload", async ({
+  page,
+}) => {
+  await openCanvas(page);
+  await pressWithKeyboard(page, page.getByRole("button", { name: "+ Exc", exact: true }));
+  await pressWithKeyboard(page, page.getByRole("button", { name: "+ Inh", exact: true }));
+  await pressWithKeyboard(page, page.getByRole("button", { name: "Table view", exact: true }));
+  const table = graphTable(page);
+  await expect(table.getByRole("rowheader")).toHaveCount(2);
+  const headers = table.getByRole("rowheader");
+  const source = await headers.nth(0).locator("span").first().innerText();
+  const target = await headers.nth(1).locator("span").first().innerText();
+  /** The row whose header is `label`, found by that header rather than by position. */
+  const rowOf = (label: string) =>
+    graphTable(page)
+      .getByRole("row")
+      .filter({ has: page.getByRole("rowheader", { name: new RegExp(`^${label} `) }) });
+
+  // Connect by name, the table's stand-in for dragging between handles.
+  await page.getByLabel("Projection source population", { exact: true }).selectOption({ label: source });
+  await page.getByLabel("Projection target population", { exact: true }).selectOption({ label: target });
+  await pressWithKeyboard(
+    page,
+    page.getByRole("button", {
+      name: "Connect the chosen source population to the chosen target population",
+      exact: true,
+    }),
+  );
+  await expect(table.locator("caption")).toContainText("connected by 1 projection");
+
+  // Edit a population from its row: the editor takes the focus.
+  await pressWithKeyboard(page, table.getByRole("button", { name: `Edit population ${source}` }));
+  const populationEditor = page.getByRole("region", { name: `Population ${source}` });
+  await expect(populationEditor).toBeVisible();
+  expect(await populationEditor.evaluate((region) => region.contains(document.activeElement))).toBe(
+    true,
+  );
+  await page.locator("#population-count").fill("37");
+  await expect(rowOf(source).locator("td").nth(1)).toHaveText("37");
+
+  // Edit the projection from its source row, then delete it and undo.
+  const projectionEdit = table.getByRole("button", { name: new RegExp(`^Edit projection ${source} to ${target} `) });
+  await pressWithKeyboard(page, projectionEdit);
+  await page.locator("#projection-weight").fill("0.75");
+  await expect(table).toContainText("w=0.75");
+  await pressWithKeyboard(
+    page,
+    table.getByRole("button", { name: new RegExp(`^Delete projection ${source} to ${target} `) }),
+  );
+  await expect(table.locator("caption")).toContainText("connected by 0 projections");
+  await page.evaluate(() => { (document.activeElement as HTMLElement | null)?.blur(); });
+  await page.keyboard.press("Control+z");
+  await expect(table.locator("caption")).toContainText("connected by 1 projection");
+  await expect(table).toContainText("w=0.75");
+
+  // Save through the keyboard; the name is asked for in a dialog.
+  const name = `keyboard-${Date.now()}`;
+  page.once("dialog", (dialog) => { void dialog.accept(name); });
+  const saved = page.waitForResponse(
+    (response) => new URL(response.url()).pathname.startsWith("/api/project/save") && response.ok(),
+  );
+  // The project list's own Save; the operator workbench offers another by the same name.
+  await pressWithKeyboard(page, page.getByLabel("Save project", { exact: true }));
+  await saved;
+
+  await page.reload();
+  await openCanvas(page);
+  await pressWithKeyboard(page, page.getByRole("button", { name: "Refresh projects", exact: true }));
+  const loaded = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === `/api/project/load/${name}` && response.ok(),
+  );
+  await pressWithKeyboard(page, page.getByRole("button", { name: new RegExp(`^Open project ${name}`) }));
+  await loaded;
+  await pressWithKeyboard(page, page.getByRole("button", { name: "Table view", exact: true }));
+  await expect(graphTable(page).locator("caption")).toContainText(
+    "2 populations holding",
+  );
+  await expect(graphTable(page).locator("caption")).toContainText("connected by 1 projection");
+  await expect(rowOf(source).locator("td").nth(1)).toHaveText("37");
+  await expect(graphTable(page)).toContainText("w=0.75");
+});
+
+test("dragging a node moves the picture and leaves the run's digest unchanged", async ({ page }) => {
+  await openCanvas(page);
+  await addTwoConnectedPopulations(page);
+
+  const digestOfRun = async (): Promise<string> => {
+    const simulated = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === "/api/graph/simulate" && response.ok(),
+    );
+    await page.getByRole("button", { name: "Simulate", exact: true }).click();
+    const body = (await (await simulated).json()) as { spec?: { graph_sha256?: string } };
+    return body.spec?.graph_sha256 ?? "";
+  };
+
+  const before = await digestOfRun();
+  const node = page.locator(".react-flow__node").first();
+  const start = await node.boundingBox();
+  expect(start).not.toBeNull();
+  if (start === null) return;
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(start.x + start.width / 2 + 160, start.y + start.height / 2 + 90, {
+    steps: 12,
+  });
+  await page.mouse.up();
+  const end = await node.boundingBox();
+  expect(end).not.toBeNull();
+  expect(Math.abs((end?.x ?? 0) - start.x)).toBeGreaterThan(50);
+
+  expect(before).toMatch(/^[0-9a-f]{64}$/);
+  expect(await digestOfRun()).toBe(before);
 });

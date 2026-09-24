@@ -44,6 +44,18 @@ population or a projection are edits. **Moving a node is not** — a drag writes
 position on every frame, and recording those would bury the edits worth undoing
 under layout noise.
 
+### Keyboard shortcuts
+
+| Key | Where | What it does |
+|-----|-------|--------------|
+| `Ctrl+Z` / `Cmd+Z` | anywhere outside a text field | undo the last graph edit |
+| `Ctrl+Shift+Z` / `Cmd+Shift+Z` | anywhere outside a text field | redo the last undone edit |
+| `Backspace` | canvas, with a node or projection selected | delete the selection; a population takes its projections with it |
+| `Tab`, `Enter` | toolbar, table view, editors | reach and activate every control; the table view is the keyboard path for connecting, editing and deleting |
+
+A key pressed inside a field belongs to that field, so `Ctrl+Z` in a number
+input undoes typing, not a graph edit.
+
 The history holds the last 50 edits and lives for the session; it is not saved
 with the workspace, so a reopened workspace starts with an empty history and
 the graph exactly as you saved it. Editing after an undo drops the redo branch,
@@ -288,8 +300,13 @@ unusable without sight.
 
 The table is a second presentation of the same graph the canvas draws and the
 server runs, derived from the same fields: it is never a summary that could
-drift from the graph. Deleting through it is the same edit as deleting on the
-canvas, undo included. While the table is shown the canvas is hidden, so it
+drift from the graph. Each row also carries **Edit**, which opens the
+population's editor beside the table and moves the focus into it, and each
+projection carries **Edit** and **Delete** at its source row (not again at its
+target, so a reader meets each control once). Every control names what it acts
+on — a projection by both ends and what it carries, so two projections between
+the same pair stay distinguishable. Editing and deleting through the table are
+the same edits as on the canvas, undo included. While the table is shown the canvas is hidden, so it
 does not sit in the tab order behind it; the canvas keeps its viewport, and the
 toggle returns you to it.
 
@@ -511,5 +528,6 @@ A refusal answers `422` with `{"detail": {"reason": "<why>"}}`.
 | Duplicate a selection, with the projections inside it | copies every executed field; a projection crossing the selection is reported, not guessed |
 | Property editor for a projection's executed fields | weight, rule, probability, delay, seed, autapses; parsed in the browser, admitted by the server |
 | Property editor for a population's model, count, type, drive and params | driven by `GET /api/graph/models/{name}`; parsed in the browser, admitted by the server |
-| Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph, deletion included |
+| Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph; add, connect, edit, delete and undo without a pointer, surviving save and reopen |
+| Layout independence | positions are saved with the graph and excluded from the run's specification and `graph_sha256` |
 | Compiled (hardware) execution of a graph | separate unit; the pipeline compiles a fixed equation |

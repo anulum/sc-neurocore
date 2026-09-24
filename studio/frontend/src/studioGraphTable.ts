@@ -233,3 +233,21 @@ export function studioGraphTableRemoveLabel(row: StudioGraphTableRow): string {
   const projectionWord = incident === 1 ? "projection" : "projections";
   return `Delete population ${row.label} and its ${incident} ${projectionWord}`;
 }
+
+/**
+ * Return how the table names one projection, from the row it leaves.
+ *
+ * Its controls sit beside every other projection's, so each names both ends
+ * and what the projection carries: two projections between the same pair
+ * differ in their detail, and a name without it would not tell them apart.
+ *
+ * @param row - The row of the projection's source population.
+ * @param connection - The projection, as that row's outgoing connection.
+ * @returns The projection's name, for its edit and delete controls.
+ */
+export function studioGraphTableProjectionName(
+  row: StudioGraphTableRow,
+  connection: StudioGraphTableConnection,
+): string {
+  return `projection ${row.label} to ${connection.populationLabel} (${connection.detail})`;
+}

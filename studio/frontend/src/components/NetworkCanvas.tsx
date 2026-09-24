@@ -154,6 +154,10 @@ export default function NetworkCanvas() {
 
   const [tableView, setTableView] = useState(false);
   const nirFileInput = useRef<HTMLInputElement>(null);
+  const editorPanel = useRef<HTMLDivElement>(null);
+  // Set by the table's Edit controls: the editor they open takes the focus, so
+  // a keyboard user lands in it instead of hunting for it after the table.
+  const [focusEditor, setFocusEditor] = useState(false);
 
   useEffect(() => { void loadGraphModels(); }, [loadGraphModels]);
 
@@ -256,6 +260,22 @@ export default function NetworkCanvas() {
   const selectedPopulation = graphPopulations.find(
     (population) => population.id === selectedPopulationId,
   );
+
+  useEffect(() => {
+    if (!focusEditor) return;
+    editorPanel.current?.querySelector<HTMLElement>("input, select, textarea")?.focus();
+    setFocusEditor(false);
+  }, [focusEditor, selectedPopulationId, selectedProjectionId]);
+
+  const editPopulationFromTable = useCallback((id: string) => {
+    selectPopulation(id);
+    setFocusEditor(true);
+  }, [selectPopulation]);
+
+  const editProjectionFromTable = useCallback((id: string) => {
+    selectProjection(id);
+    setFocusEditor(true);
+  }, [selectProjection]);
 
   const onConnect: OnConnect = useCallback((conn) => {
     if (conn.source && conn.target) {
@@ -387,7 +407,8 @@ export default function NetworkCanvas() {
         </div>
       )}
 
-      {/* Table equivalent */}
+      {/* The table or the canvas, and beside either the selected object's editor */}
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
       {tableView && (
         <div style={{ flex: 1, overflow: "auto", padding: "8px 12px" }}>
           <NetworkGraphTable
@@ -395,6 +416,9 @@ export default function NetworkCanvas() {
             projections={graphProjections}
             issues={graphIssues}
             onRemovePopulation={removePopulation}
+            onEditPopulation={editPopulationFromTable}
+            onEditProjection={editProjectionFromTable}
+            onRemoveProjection={removeProjection}
           />
           <NetworkGraphConnect
             populations={graphPopulations}
@@ -402,10 +426,7 @@ export default function NetworkCanvas() {
           />
         </div>
       )}
-
-      {/* Canvas and, when a projection is selected, its property editor */}
-      <div style={{ display: tableView ? "none" : "flex", flex: 1, minHeight: 0 }}>
-      <div style={{ flex: 1, position: "relative" }}>
+      <div style={{ display: tableView ? "none" : "block", flex: 1, position: "relative" }}>
         {graphPopulations.length === 0 ? (
           <div style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center",
@@ -434,6 +455,7 @@ export default function NetworkCanvas() {
           </ReactFlow>
         )}
       </div>
+      <div ref={editorPanel} style={{ display: "contents" }}>
       {selectedPopulation !== undefined && (
         <PopulationEditor
           population={selectedPopulation}
@@ -453,6 +475,7 @@ export default function NetworkCanvas() {
           onValidate={() => void validateGraphAction()}
         />
       )}
+      </div>
       </div>
 
       {/* Pipeline result */}

@@ -27,6 +27,7 @@ import {
   STUDIO_GRAPH_TABLE_COLUMNS,
   studioGraphTable,
   studioGraphTableCaption,
+  studioGraphTableProjectionName,
   studioGraphTableRemoveLabel,
 } from "./studioGraphTable";
 
@@ -204,6 +205,24 @@ describe("studioGraphTableRemoveLabel", () => {
     );
 
     expect(studioGraphTableRemoveLabel(row)).toBe("Delete population Hidden and its 2 projections");
+  });
+});
+
+describe("studioGraphTableProjectionName", () => {
+  it("names both ends and what the projection carries", () => {
+    const row = at(studioGraphTable([hidden, output], [hiddenToOutput]).rows, 0);
+
+    expect(studioGraphTableProjectionName(row, at(row.outgoing, 0))).toBe(
+      "projection Hidden to Output (w=-0.4 all d=2ms)",
+    );
+  });
+
+  it("tells apart two projections between the same pair", () => {
+    const second = projection({ id: "p3", source: "input", target: "hidden", weight: 0.9 });
+    const row = at(studioGraphTable([input, hidden], [inputToHidden, second]).rows, 0);
+
+    const names = row.outgoing.map((connection) => studioGraphTableProjectionName(row, connection));
+    expect(new Set(names).size).toBe(2);
   });
 });
 

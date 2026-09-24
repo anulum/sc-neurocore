@@ -61,6 +61,12 @@ import {
 } from "./studioGuidedFlowInputs";
 import { Btn, CapabilityUnavailable, Tab } from "./appChrome";
 
+/** A project-list control drawn as the text it replaced, but a real button. */
+const projectListControl = {
+  background: "transparent", border: "none", color: "var(--text-secondary)",
+  cursor: "pointer", fontSize: 10, padding: 0, textAlign: "left" as const,
+};
+
 /**
  * The Studio itself: every panel, the toolbar above them, and the wiring that
  * connects them to the store.
@@ -661,11 +667,16 @@ export default function App() {
                     display: "flex", justifyContent: "space-between", fontSize: 10,
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
-                    <span style={{ cursor: "pointer" }} onClick={() => { void s.loadProjectFromServer(p.name); }}>
+                    {/* Buttons, not clickable text: a project has to be opened and
+                        deleted by keyboard too, and each control names its project. */}
+                    <button type="button" style={projectListControl}
+                      aria-label={`Open project ${p.name}${p.revision === null ? "" : ` revision ${p.revision}`}`}
+                      onClick={() => { void s.loadProjectFromServer(p.name); }}>
                       {p.name}{p.revision === null ? "" : ` r${p.revision}`}
-                    </span>
-                    <span style={{ cursor: "pointer", color: "var(--text-muted)" }}
-                      onClick={() => { void s.deleteServerProject(p.name); }}>x</span>
+                    </button>
+                    <button type="button" style={{ ...projectListControl, color: "var(--text-muted)" }}
+                      aria-label={`Delete project ${p.name}`}
+                      onClick={() => { void s.deleteServerProject(p.name); }}>x</button>
                   </div>
                 ))}
               </div>
@@ -679,9 +690,9 @@ export default function App() {
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
                     <span>{entry.name}</span>
-                    <span aria-label={`Restore ${entry.name}`}
-                      style={{ cursor: "pointer", color: "var(--text-muted)" }}
-                      onClick={() => void s.restoreDeletedServerProject(entry.token)}>restore</span>
+                    <button type="button" aria-label={`Restore ${entry.name}`}
+                      style={{ ...projectListControl, color: "var(--text-muted)" }}
+                      onClick={() => void s.restoreDeletedServerProject(entry.token)}>restore</button>
                   </div>
                 ))}
               </div>

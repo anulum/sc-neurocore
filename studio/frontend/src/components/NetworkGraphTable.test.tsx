@@ -61,13 +61,25 @@ const projections: ProjectionEdge[] = [
   },
 ];
 
+/** Handlers for the controls a case does not exercise. */
+const unused = {
+  onEditPopulation: () => undefined,
+  onEditProjection: () => undefined,
+  onRemoveProjection: () => undefined,
+};
+
 /** Render the table to static markup, so the assertions are on semantics. */
 function render(
   nodes: PopulationNode[] = populations,
   edges: ProjectionEdge[] = projections,
 ): string {
   return renderToStaticMarkup(
-    <NetworkGraphTable populations={nodes} projections={edges} onRemovePopulation={() => undefined} />,
+    <NetworkGraphTable
+      populations={nodes}
+      projections={edges}
+      onRemovePopulation={() => undefined}
+      {...unused}
+    />,
   );
 }
 
@@ -167,6 +179,7 @@ describe("NetworkGraphTable", () => {
           },
         ]}
         onRemovePopulation={() => undefined}
+        {...unused}
       />,
     );
 
@@ -178,24 +191,57 @@ describe("NetworkGraphTable", () => {
     );
   });
 
-  it("removes the population its own row names when the control is used", async () => {
+  it("acts on the object each control names, and on nothing else", async () => {
     const container = document.createElement("div");
     const root = createRoot(container);
-    const onRemovePopulation = vi.fn();
+    const handlers = {
+      onEditPopulation: vi.fn(),
+      onEditProjection: vi.fn(),
+      onRemovePopulation: vi.fn(),
+      onRemoveProjection: vi.fn(),
+    };
+
+    await act(async () => {
+      root.render(
+        <NetworkGraphTable populations={populations} projections={projections} {...handlers} />,
+      );
+    });
+    const named = (name: string): HTMLButtonElement => {
+      const found = container.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`);
+      if (found === null) throw new Error(`no control named ${name}`);
+      return found;
+    };
+    named("Delete population Output and its 1 projection").click();
+    named("Edit population Input").click();
+    named("Edit projection Input to Output (w=0.5 p=0.1)").click();
+    named("Delete projection Input to Output (w=0.5 p=0.1)").click();
+
+    expect(handlers.onRemovePopulation).toHaveBeenCalledExactlyOnceWith("output");
+    expect(handlers.onEditPopulation).toHaveBeenCalledExactlyOnceWith("input");
+    expect(handlers.onEditProjection).toHaveBeenCalledExactlyOnceWith("p1");
+    expect(handlers.onRemoveProjection).toHaveBeenCalledExactlyOnceWith("p1");
+    await act(async () => { root.unmount(); });
+  });
+
+  it("gives a projection its controls once, at its source, not again at its target", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
 
     await act(async () => {
       root.render(
         <NetworkGraphTable
           populations={populations}
           projections={projections}
-          onRemovePopulation={onRemovePopulation}
+          onRemovePopulation={() => undefined}
+          {...unused}
         />,
       );
     });
-    const controls = container.querySelectorAll<HTMLButtonElement>("tbody button");
-    at([...controls], 1).click();
+    const labels = [...container.querySelectorAll<HTMLButtonElement>("tbody button")].map(
+      (button) => button.getAttribute("aria-label"),
+    );
 
-    expect(onRemovePopulation).toHaveBeenCalledExactlyOnceWith("output");
+    expect(labels.filter((label) => label?.includes("projection Input to Output"))).toHaveLength(2);
     await act(async () => { root.unmount(); });
   });
 
@@ -210,12 +256,14 @@ describe("NetworkGraphTable", () => {
           populations={populations}
           projections={projections}
           onRemovePopulation={() => undefined}
+          {...unused}
         />,
       );
     });
     const controls = [...container.querySelectorAll<HTMLButtonElement>("tbody button")];
 
-    expect(controls).toHaveLength(2);
+    // Edit and delete per population, edit and delete for the one projection.
+    expect(controls).toHaveLength(6);
     for (const control of controls) {
       expect(control.tabIndex).toBe(0);
       control.focus();
