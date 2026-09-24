@@ -47,6 +47,7 @@ can change without a deprecation window.
 | `formal_property_check` | internal build tool | SymbiYosys RTL-property runner behind the hardware evidence pipeline. |
 | `fpga_wrapper` | internal build tool | Wrapper generator behind compiler and deployment paths. |
 | `guard_bits` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
+| `hardware_numeric_contract` | direct public module | Reports the RTL encoding of a neuron at a chosen fixed-point format for Studio and compiler consumers. |
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
 | `ir_type_checker` | public facade | Package-level exports provide stochastic IR validation helpers. |
 | `layer_precision` | internal build tool | Validated row model behind adaptive precision layer manifests. |
