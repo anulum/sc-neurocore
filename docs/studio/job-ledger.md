@@ -597,6 +597,11 @@ of the HTTP deployment profile. An absent value or `embedded` keeps the existing
 local ledger and job-root behavior. Embedded mode is **not** an OS isolation
 boundary, including when the deployment profile is `production`.
 
+**The supported deployment is `embedded`: a single-user lab installation.**
+`isolated` is a preview for evaluation and qualification. It stays one until a
+launcher backend can stop every descendant of a job and account for each job's
+resources, which needs host-level cgroup delegation (see below).
+
 `isolated` separates three Linux identities. The storage service alone owns
 the ledger and sealed artefacts; the API holds no job root or ledger; a
 privileged launcher starts each worker under a compute identity. The API reads
