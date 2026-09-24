@@ -33,6 +33,7 @@ from sc_neurocore.neurons.readiness import (
     FACET_STATUSES,
     ReadinessRecord,
     compiler_subjects,
+    current_digest,
     declared_facets,
     derive_subjects,
     readiness_report,
@@ -252,3 +253,29 @@ def test_profile_specific_readiness_does_not_promote_other_profiles() -> None:
     assert verify_model("LapicqueNeuron", profile="lif").verified_science < 4
     with pytest.raises(ValueError, match="unknown profile"):
         verify_model("LapicqueNeuron", profile="not-a-profile")
+
+
+def test_missing_facet_is_not_returned_as_unverified(report: dict[str, ReadinessRecord]) -> None:
+    with pytest.raises(KeyError, match="absent-facet"):
+        report["LapicqueNeuron"].facet("absent-facet")
+
+
+def test_missing_subject_digest_is_absent_for_files_and_trees(tmp_path: Path) -> None:
+    absent_file = Subject("validator", "tests/missing.py", "0" * 64)
+    absent_tree = Subject("compiler", "compiler/missing", "0" * 64, "tree")
+    assert current_digest(absent_file, tmp_path) is None
+    assert current_digest(absent_tree, tmp_path) is None
+
+
+def test_deleted_receipt_input_becomes_stale(
+    copied_receipt: tuple[Path, FacetReceipt],
+) -> None:
+    repo, receipt = copied_receipt
+    subject = next(s for s in receipt.subjects if s.scope == "file")
+    (repo / subject.path).unlink()
+    status, changed, problems = verify_receipt(
+        receipt, class_name=receipt.class_name, repo_root=repo
+    )
+    assert status == "stale"
+    assert changed == (f"{subject.kind}:{subject.path} (missing)",)
+    assert problems == ()

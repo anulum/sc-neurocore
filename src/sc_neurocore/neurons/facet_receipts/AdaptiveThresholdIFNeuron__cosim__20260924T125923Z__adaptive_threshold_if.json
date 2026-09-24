@@ -1,0 +1,173 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v2",
+  "class_name": "AdaptiveThresholdIFNeuron",
+  "facet": "cosim",
+  "profile": "adaptive_threshold_if",
+  "claim_scope": "trace",
+  "subjects": [
+    {
+      "kind": "committed-rtl",
+      "path": "hdl/formal/catalogue/sc_adaptive_threshold_if.v",
+      "sha256": "cb75acbcd01111d95f704e8efdb33df6333a1cb74e0bf32e7d6a477bf7c477ac",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/compiler",
+      "sha256": "3aba2fe368ac3a145364f74d07fe2e292e97a9b1b4ee797f2786e5a91d4bb341",
+      "scope": "tree"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_builder.py",
+      "sha256": "a19d63624f71dc56ceaa112291e2f079c3c795820d737dc7ed6366e035f8bde1",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_namespace.py",
+      "sha256": "79778540beb3614cdfdb3b76599ad9cfb138c48aa680c907504f9ceb76357e3b",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_safety.py",
+      "sha256": "87c42779221213ca6a09d789168619c3322188f29ea45844bfe32e532e335267",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_units_runtime.py",
+      "sha256": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/expression_derivative.py",
+      "sha256": "c061e934bcf061ede6c0859addec64e975231bd194bf451c04148df7f55a4409",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_contracts.py",
+      "sha256": "264caf838d10c54c4318b7a8815b332feecf3dfc2946b275ab0ba1ef09193962",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_validator.py",
+      "sha256": "76e1196266e891cfb848f4a35f808bfe6f70ae3358790af6d9bcfaa65f7094fd",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/universal_dsl.py",
+      "sha256": "dca9819d76eed76d5eb536ee3ec6a82a0b8c2134d0a0a8cddba3cd99a42ae6f1",
+      "scope": "file"
+    },
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/AdaptiveThresholdIFNeuron.toml",
+      "sha256": "3204201be132c89438856d306c91c7232d11d0d227319304a397c498837c04ef",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/adaptive_threshold_if.py",
+      "sha256": "20f635528ad3b94bda151632c26605f7c9962a77633cc52d09f708848098b6c8",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/adaptive_threshold_if.json",
+      "sha256": "d5ee63375e1117e2b571f7e162b929c17eff665725073d7f5e6d74d778585f83",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/adaptive_threshold_if.toml",
+      "sha256": "b749373413a0902947b061b834cb6715b100545586c28c3ddaf76d1da572aa8f",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/facet_receipts.py",
+      "sha256": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/readiness.py",
+      "sha256": "5534a558600f0960f2d2d5ec34a90b702be7d0dc5df391c3b4b14cfc525ff962",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/receipt_execution.py",
+      "sha256": "757c044dfc80cf275874175106585096c3b80bd2226bb52978429e6ff5716049",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_cosim_adaptive_threshold_if.py",
+      "sha256": "05ebc669d3ae433fda7f99345a00834e89e59fc25c37ab8d490893abab58f2bb",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt.py",
+      "sha256": "5699c0bcb3e7ac1f43674d44148e52d66a6da4863d4f3f3b9b5342d143b0f306",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_cosim_adaptive_threshold_if.py::test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector"
+  ],
+  "command": [
+    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_cosim_adaptive_threshold_if.py::test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "tool": {
+    "name": "pytest",
+    "version": "9.0.3",
+    "stdout": ".                                                                        [100%]\n1 passed in 1.11s\n",
+    "stderr": ""
+  },
+  "extra_tools": {
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "yosys": "Yosys 0.33 (git sha1 2584903a060)",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "sby": "usage: sby [options] [<jobname>.sby [tasknames] | <dirname>]"
+  },
+  "runtime": {
+    "python": "3.12.3",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "3.16.0",
+    "git_head": "885b2658a730102259eb9f14aaf6ceb250c8832b",
+    "dirty_subjects": ""
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v2",
+    "execution_contract": "pytest-junit.v1",
+    "junit_xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"1\" time=\"1.001\" timestamp=\"2026-09-24T14:59:21.757917+02:00\" hostname=\"aaarthuus\"><testcase classname=\"tests.test_cosim_adaptive_threshold_if\" name=\"test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector\" time=\"0.069\" /></testsuite></testsuites>"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "recorded_at": "2026-09-24T12:59:23Z",
+  "notes": "Requalified cosim after compiler tree update at 885b2658a",
+  "receipt_sha256": "a6769f1f80a7fdef2341950130ab05b7e4db29a0d8a4e6366f1c27f115559e8e"
+}
