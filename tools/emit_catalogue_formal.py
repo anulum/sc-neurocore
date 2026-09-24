@@ -308,6 +308,12 @@ EVENT_SILENT_SCHEMAS: frozenset[str] = frozenset(
 # Flattening lets Yosys prune those unobserved cones before the SMT handoff.
 FLATTEN_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wilson_cowan"})
 
+# Jobs the SMT handoff sends to cvc5 instead of z3. IQIF's saturating Q32.0
+# update, compared at 64 bits, passes in seconds under cvc5 1.1.2 and z3 4.16
+# but runs for over ten minutes under z3 4.8.12, the Ubuntu 24.04 package CI
+# installs.
+CVC5_FORMAL_SCHEMAS: frozenset[str] = frozenset({"dpi_neuron", "iqif", "terman_wang"})
+
 # Width overrides are additive: every pre-existing catalogue job retains Q8.8.
 # Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
 # Ibarz-Tanaka needs Q16.16 because its source mu=0.001 rounds to zero in Q8.8.
@@ -746,7 +752,7 @@ def _emit_schema(
         else _reset_state_words(neuron.to_equation_neuron(), ports, data_width, fraction)
     )
     properties, assumptions = _generated_claims(schema, minimal=minimal, ports=ports)
-    solver = "cvc5" if schema in {"dpi_neuron", "terman_wang"} else "z3"
+    solver = "cvc5" if schema in CVC5_FORMAL_SCHEMAS else "z3"
     formal_path.write_text(
         _formal_wrapper(
             ports,
