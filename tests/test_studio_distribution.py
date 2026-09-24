@@ -250,6 +250,13 @@ counts = asdict(catalogue_counts())
 assert counts == json.loads(sys.argv[3]), counts
 bound = [record for record in iter_source_catalogue() if record.revalidation == "receipt-bound"]
 assert len(bound) == counts["receipt_bound_complete"] > 0
+from sc_neurocore.runtime_lanes import ACCEL_ROOT, lane_statuses
+assert ACCEL_ROOT.is_relative_to(installed)
+lanes = {status.lane: status for status in lane_statuses()}
+assert lanes["python"].resources_present
+# The wheel ships no Julia kernels and no built Go or Mojo libraries, even
+# where juliacall itself is importable.
+assert not any(lanes[lane].resources_present for lane in ("julia", "go", "mojo")), lanes
 packs = json.load(sys.stdin)
 for index, pack in enumerate(packs):
     name = pack["request"]["name"]

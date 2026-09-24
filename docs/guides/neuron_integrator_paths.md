@@ -65,7 +65,9 @@ The maintained JuliaCall entry point is
 `sc_neurocore.accel.julia.neurons.simulate_rk4_neuron(model_name, current_trace, dt=None)`.
 It exposes the same output schema as the Rust parity path and uses fixed-step
 RK4 arithmetic so tests can compare directly against Python and Rust
-trajectories. Install the optional bridge with `sc-neurocore[julia]`.
+trajectories. It runs from a source checkout: install the optional bridge with
+`sc-neurocore[julia]` there, because the wheel does not ship the Julia kernels
+(see [execution lanes](install_profiles.md#execution-lanes-in-each-distribution)).
 The older per-model Julia mirror files are not authoritative unless loaded
 through a maintained Python wrapper.
 

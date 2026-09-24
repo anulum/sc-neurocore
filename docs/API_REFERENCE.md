@@ -7300,6 +7300,9 @@ subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
 ### Function `run_info(args)`
 Print runtime information without importing optional dependencies.
 
+The execution-lane report reads this installation's packages and files; it
+does not start Julia or load a native library.
+
 Parameters
 ----------
 args : argparse.Namespace
@@ -32485,6 +32488,54 @@ Synchronize two learning agents by mutually attracting their weights.
 
 - **synchronize**(agent_a, agent_b)
   - Adjust both agents toward a shared weight configuration.
+
+---
+
+## Module `runtime_lanes`
+
+### Class `LaneContract`
+How a distribution provides one execution lane.
+
+Parameters
+----------
+lane:
+    The lane's name, as the kernels' ``backend`` arguments use it.
+distribution:
+    ``bundled`` ships in every distribution, ``optional-package`` needs a
+    separately installed package, ``source-checkout`` needs a checkout.
+requirement:
+    What an installation needs for the lane, in words a user can act on.
+
+
+### Class `LaneStatus`
+Whether this installation has one lane's resources.
+
+Parameters
+----------
+lane:
+    The lane's name.
+distribution:
+    How distributions provide it.
+resources_present:
+    Whether the packages and files the lane needs are present here.
+detail:
+    What was found, or what is missing and how to provide it.
+
+
+### Function `lane_statuses()`
+Report, for every lane, whether this installation has its resources.
+
+Parameters
+----------
+accel_root:
+    The ``sc_neurocore.accel`` directory to inspect; this installation's by
+    default.
+
+Returns
+-------
+tuple of LaneStatus
+    One status per lane, in contract order. A lane without its resources
+    carries both what is missing and the contract's requirement.
 
 ---
 

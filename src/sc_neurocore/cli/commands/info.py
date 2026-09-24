@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Runtime information command
 
-"""Report package, Python, engine, and optional dependency versions."""
+"""Report package, Python, engine, optional dependency versions and execution lanes."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def add_info_command(
     """
     parser = subparsers.add_parser(
         "info",
-        help="Show package, Python, engine, and optional dependency versions",
+        help="Show package, Python, engine, optional dependency versions and execution lanes",
         description="Inspect the installed SC-NeuroCore runtime before compiling a model.",
     )
     parser.set_defaults(handler=run_info)
@@ -35,6 +35,9 @@ def add_info_command(
 
 def run_info(args: argparse.Namespace) -> int:
     """Print runtime information without importing optional dependencies.
+
+    The execution-lane report reads this installation's packages and files; it
+    does not start Julia or load a native library.
 
     Parameters
     ----------
@@ -54,7 +57,17 @@ def run_info(args: argparse.Namespace) -> int:
     print(_format_engine_status(__version__))
     _print_optional_dependency_version("numpy", "NumPy")
     _print_optional_dependency_version("jax", "JAX")
+    _print_execution_lanes()
     return 0
+
+
+def _print_execution_lanes() -> None:
+    from sc_neurocore.runtime_lanes import lane_statuses
+
+    print("Execution lanes:")
+    for status in lane_statuses():
+        state = "present" if status.resources_present else "absent"
+        print(f"  {status.lane} ({status.distribution}): {state}. {status.detail}")
 
 
 def _print_optional_dependency_version(module_name: str, label: str) -> None:
