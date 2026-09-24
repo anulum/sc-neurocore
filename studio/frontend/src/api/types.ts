@@ -444,6 +444,16 @@ export interface ModelVerifiedReadiness {
   science_label: string;
   silicon_tier: number | null;
   silicon_label: string;
+  /**
+   * Where the verification came from. `receipts`: re-derived from the facet
+   * receipts now, in a checkout. `sealed`: an installation, which cannot
+   * re-check receipts whose subjects it does not carry, serving the record
+   * sealed in the checkout it was built from. `unsealed`: no sealed record,
+   * so nothing is shown as verified.
+   */
+  source: "receipts" | "sealed" | "unsealed";
+  /** Why an `unsealed` model has no verified record. */
+  unsealed_reason?: string;
 }
 
 /**

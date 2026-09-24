@@ -24,6 +24,7 @@ import pytest
 
 from sc_neurocore.neurons.model_identity import catalogue_counts
 from sc_neurocore.studio.codegen import generate_experiment_script, generate_oneliner
+from sc_neurocore.studio.model_catalogue import corpus_revision, list_models
 from sc_neurocore.studio.experiment_spec import resolve_experiment
 from sc_neurocore.studio.replay_pack import build_replay_pack
 
@@ -254,6 +255,23 @@ from sc_neurocore.neurons.model_receipts import RECEIPT_DIRECTORY
 assert RECEIPT_DIRECTORY.is_relative_to(installed)
 counts = asdict(catalogue_counts())
 assert counts == json.loads(sys.argv[3]), counts
+# The Studio browses the same catalogue, in the same health, with the same
+# proven readiness: receipts whose subjects a wheel lacks would read as stale.
+from sc_neurocore.studio.model_catalogue import corpus_revision, list_models
+listed = list_models()
+studio_catalogue = {
+    "revision": corpus_revision(listed),
+    "readiness": sorted(
+        [m["name"], m["verified_science_label"], m["verified_silicon_label"], m["is_perfect_verified"]]
+        for m in listed
+    ),
+}
+checkout_catalogue = json.loads(sys.argv[4])
+differing = sorted(
+    {tuple(row) for row in studio_catalogue["readiness"]}
+    ^ {tuple(row) for row in checkout_catalogue["readiness"]}
+)
+assert studio_catalogue == checkout_catalogue, ("installed Studio catalogue differs", differing[:20])
 bound = [record for record in iter_source_catalogue() if record.revalidation == "receipt-bound"]
 assert len(bound) == counts["receipt_bound_complete"] > 0
 from sc_neurocore.runtime_lanes import ACCEL_ROOT, lane_statuses
@@ -315,6 +333,7 @@ print("four model families replay exactly; both script forms reproduce full trac
             str(installed),
             sysconfig.get_path("purelib"),
             json.dumps(asdict(catalogue_counts())),
+            json.dumps(_studio_catalogue()),
         ],
         cwd=workspace,
         input=json.dumps(packs),
@@ -325,6 +344,23 @@ print("four model families replay exactly; both script forms reproduce full trac
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "four model families replay exactly" in result.stdout
+
+
+def _studio_catalogue() -> dict[str, object]:
+    """Return the checkout's Studio catalogue revision and proven readiness per model."""
+    listed = list_models()
+    return {
+        "revision": corpus_revision(listed),
+        "readiness": sorted(
+            [
+                model["name"],
+                model["verified_science_label"],
+                model["verified_silicon_label"],
+                model["is_perfect_verified"],
+            ]
+            for model in listed
+        ),
+    }
 
 
 def test_build_refuses_missing_model_pages(distribution_source: Path, tmp_path: Path) -> None:

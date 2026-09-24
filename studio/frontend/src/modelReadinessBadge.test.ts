@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ModelReadiness } from "./api/client";
-import { perfectBadge, verifiedTiers } from "./modelReadinessBadge";
+import { perfectBadge, verifiedTiers, verifiedTiersSource } from "./modelReadinessBadge";
 
 /**
  * A readiness declared perfect whose receipts verify less.
@@ -31,6 +31,7 @@ function readiness(overrides: Partial<ModelReadiness> = {}): ModelReadiness {
       science_label: "S3",
       silicon_tier: 0,
       silicon_label: "H0",
+      source: "receipts",
     },
     ...overrides,
   };
@@ -66,5 +67,39 @@ describe("verifiedTiers", () => {
   it("is absent without a verification block", () => {
     expect(verifiedTiers(readiness({ verified: undefined }))).toBeNull();
     expect(verifiedTiers(undefined)).toBeNull();
+  });
+});
+
+describe("where the verified tiers come from", () => {
+  it("says a checkout re-derived them from receipts", () => {
+    expect(verifiedTiers(readiness())).toBe("verified S3 / H0");
+    expect(verifiedTiersSource(readiness())).toContain("fresh facet receipts");
+  });
+
+  it("says an installation serves them sealed at build", () => {
+    const sealed = readiness({
+      verified: { profile: "adex", science_tier: 3, science_label: "S3", silicon_tier: 0, silicon_label: "H0", source: "sealed" },
+    });
+    expect(verifiedTiers(sealed)).toBe("verified S3 / H0 (sealed at build)");
+    expect(verifiedTiersSource(sealed)).toContain("cannot re-check receipts");
+  });
+
+  it("shows nothing as verified without a sealed record, and says why", () => {
+    const unsealed = readiness({
+      verified: {
+        profile: null, science_tier: 0, science_label: "S0", silicon_tier: null, silicon_label: "none",
+        source: "unsealed", unsealed_reason: "AdExNeuron: the readiness seal holds no record of this model",
+      },
+    });
+    expect(verifiedTiers(unsealed)).toBe("not verified in this installation");
+    expect(verifiedTiersSource(unsealed)).toBe("AdExNeuron: the readiness seal holds no record of this model");
+    const reasonless = readiness({
+      verified: { profile: null, science_tier: 0, science_label: "S0", silicon_tier: null, silicon_label: "none", source: "unsealed" },
+    });
+    expect(verifiedTiersSource(reasonless)).toBe("No sealed verification record");
+  });
+
+  it("has nothing to explain before readiness loads", () => {
+    expect(verifiedTiersSource(undefined)).toBeNull();
   });
 });

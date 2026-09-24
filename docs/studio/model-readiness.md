@@ -33,6 +33,28 @@ When only the descriptor's flags meet the rule, the panel shows a muted
 At the time of writing, 49 catalogue models are declared perfect and none is
 verified perfect.
 
+## Verified readiness in an installation
+
+In a checkout, the verified tiers are re-derived on every read: a facet receipt
+counts only while every subject it recorded still has the digest it had. Some
+of those subjects, such as the validator tests and benchmark scripts, are not
+part of an installed distribution, so an installation cannot repeat the check.
+Before this was addressed, an installed Studio found those subjects missing
+and showed receipt-bound tiers as lost: Lapicque as S3 instead of S5, four
+models as not enrolled on silicon instead of H1.
+
+An installation therefore serves the verification **sealed** in the checkout
+the distribution was built from (`sc_neurocore/studio/verified_readiness.json`,
+written by `tools/studio_readiness_seal.py --write`). A test compares the
+committed seal with a fresh derivation, so a seal that no longer matches the
+receipts fails before it ships, and the distribution test checks that an
+installed wheel shows every model at the same verified tiers as the checkout.
+
+The verified block names its `source`: `receipts` when re-derived now,
+`sealed` when read from the seal, and `unsealed` when the seal holds no record,
+in which case nothing is shown as verified and `unsealed_reason` says why. The
+model panel shows "(sealed at build)" beside sealed tiers.
+
 ## Co-simulation results
 
 The co-simulation panel compares the generated RTL with the generated

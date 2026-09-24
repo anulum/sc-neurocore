@@ -56,5 +56,30 @@ export function verifiedTiers(readiness: ModelReadiness | undefined): string | n
   if (verified === undefined) {
     return null;
   }
-  return `verified ${verified.science_label} / ${verified.silicon_label}`;
+  if (verified.source === "unsealed") {
+    return "not verified in this installation";
+  }
+  const tiers = `verified ${verified.science_label} / ${verified.silicon_label}`;
+  return verified.source === "sealed" ? `${tiers} (sealed at build)` : tiers;
+}
+
+/**
+ * Say where the verified tiers come from, for the tooltip beside them.
+ *
+ * @param readiness - The model's readiness, or `undefined` before it loads.
+ * @returns The sentence, or `null` when there is nothing verified to explain.
+ */
+export function verifiedTiersSource(readiness: ModelReadiness | undefined): string | null {
+  const verified = readiness?.verified;
+  if (verified === undefined) {
+    return null;
+  }
+  if (verified.source === "receipts") {
+    return "Tiers bound to fresh facet receipts for the profile Studio compiles";
+  }
+  if (verified.source === "sealed") {
+    return "Verified in the checkout this installation was built from; an installation "
+      + "cannot re-check receipts whose subjects, such as validator tests, it does not carry";
+  }
+  return verified.unsealed_reason ?? "No sealed verification record";
 }

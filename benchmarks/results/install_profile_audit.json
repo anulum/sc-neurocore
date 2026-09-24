@@ -105,7 +105,8 @@
     "neurons/model_schemas/*.toml",
     "neurons/reference_trace_data/*.json",
     "neurons/reference_receipts/*.json",
-    "neurons/model_descriptors/*.toml"
+    "neurons/model_descriptors/*.toml",
+    "studio/verified_readiness.json"
   ],
   "passed": true,
   "polyglot_research_sources_in_wheel": [],

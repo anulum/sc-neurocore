@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio verified readiness in installations
+
+- An installed Studio showed receipt-bound readiness as lost, because receipt
+  subjects such as validator tests are not installed: Lapicque read S3 instead
+  of S5, and four models read as not enrolled on silicon instead of H1. An
+  installation now serves the verification sealed in the checkout it was built
+  from (`studio/verified_readiness.json`, `tools/studio_readiness_seal.py`),
+  and names the `source` of every verified block (`receipts`, `sealed` or
+  `unsealed`). A test holds the seal equal to a fresh derivation; the
+  distribution test holds an installed wheel's catalogue, including every
+  model's verified tiers, equal to the checkout's.
+
 ### Studio catalogue: proven-readiness query and model links
 
 - `GET /api/models/query` filters the catalogue on the server by text, family,

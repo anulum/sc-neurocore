@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import { formatCitation } from "../citation";
 import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
-import { perfectBadge, verifiedTiers } from "../modelReadinessBadge";
+import { perfectBadge, verifiedTiers, verifiedTiersSource } from "../modelReadinessBadge";
 import { copyModelLinkInRuntime } from "../studioShareRuntime";
 
 /**
@@ -96,7 +96,7 @@ export default function ModelInfo() {
           {verifiedTiers(modelDetail.readiness) && (
             <span
               data-testid="verified-tiers"
-              title="Tiers bound to fresh facet receipts for the profile Studio compiles"
+              title={verifiedTiersSource(modelDetail.readiness) ?? undefined}
               style={{ fontSize: 9, color: "var(--text-secondary)" }}
             >
               {verifiedTiers(modelDetail.readiness)}

@@ -37563,6 +37563,9 @@ state that applies to every model, the second is a fact about one. Reporting
 the first as the second blames the model for the distribution.
 
 
+### Function `readiness_seal_payload()`
+Return the verified-readiness seal of every registered catalogue model.
+
 ### Function `corpus_revision(models)`
 Return a digest identifying the catalogue corpus and its health.
 
@@ -44741,6 +44744,29 @@ Return the durable JSON representation for a saved project payload.
 The writer keeps the human-readable indentation used by existing Studio
 project files, while rejecting non-standard JSON values such as NaN and
 Infinity so saved projects remain portable across runtimes.
+
+---
+
+## Module `studio.readiness_seal`
+
+### Function `checkout_available(repo_root)`
+Return whether ``repo_root`` is a checkout the receipts can be re-verified in.
+
+Receipt subjects include the validator tests and the descriptor sources, so
+both trees must be present; an installation or an unpacked source
+distribution has neither the tests nor this layout.
+
+### Function `build_seal(names, verified_detail)`
+Return the seal of ``names``, each derived by ``verified_detail``.
+
+### Function `render_seal(seal)`
+Return the seal exactly as it is written: sorted keys, no timestamps.
+
+### Function `sealed_detail(class_name, path)`
+Return the sealed verified block of one model.
+
+A model the seal does not hold was not verified when the distribution was
+built; it is reported unverified with that reason, never given tiers.
 
 ---
 

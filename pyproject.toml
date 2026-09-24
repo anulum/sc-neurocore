@@ -177,6 +177,7 @@ sc_neurocore = [
   "neurons/reference_trace_data/*.json",
   "neurons/reference_receipts/*.json",
   "neurons/model_descriptors/*.toml",
+  "studio/verified_readiness.json",
 ]
 
 [tool.pytest.ini_options]

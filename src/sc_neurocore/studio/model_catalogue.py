@@ -31,6 +31,12 @@ from sc_neurocore.studio.model_numeric_contracts import (
     bit_true_mirrored,
     studio_numeric_contracts,
 )
+from sc_neurocore.studio.readiness_seal import (
+    SOURCE_RECEIPTS,
+    build_seal,
+    checkout_available,
+    sealed_detail,
+)
 from sc_neurocore.studio.model_introspection import (
     _categorize,
     _classify_fields,
@@ -337,7 +343,6 @@ def _verified_summary(class_name: str) -> dict[str, Any]:
     claimed and what is proven.
     """
     from sc_neurocore.neurons.model_identity import identity_registry
-    from sc_neurocore.neurons.readiness import verify_model
 
     if class_name not in identity_registry():
         return {
@@ -347,18 +352,41 @@ def _verified_summary(class_name: str) -> dict[str, Any]:
             "verified_silicon_label": "none",
             "verified_profile": None,
         }
-    record = verify_model(class_name, profile=_selected_profile(class_name))
+    detail = _verified_detail(class_name)
     return {
-        "verified_science_tier": record.verified_science,
-        "verified_science_label": record.verified_science_label,
-        "verified_silicon_tier": record.verified_silicon,
-        "verified_silicon_label": record.verified_silicon_label,
-        "verified_profile": record.profile,
+        "verified_science_tier": detail["science_tier"],
+        "verified_science_label": detail["science_label"],
+        "verified_silicon_tier": detail["silicon_tier"],
+        "verified_silicon_label": detail["silicon_label"],
+        "verified_profile": detail["profile"],
     }
 
 
 def _verified_detail(class_name: str) -> dict[str, Any]:
-    """Return the per-facet verification block for a model detail.
+    """Return the per-facet verification block, re-derived or sealed.
+
+    A checkout re-derives it from the receipts on every read (``source``
+    ``receipts``). An installation cannot, because receipt subjects such as the
+    validator tests are not installed, so it serves the record sealed in the
+    checkout the distribution was built from (``source`` ``sealed``).
+    """
+    from sc_neurocore.neurons.readiness import REPO_ROOT
+
+    if checkout_available(REPO_ROOT):
+        return {**_receipt_verified_detail(class_name), "source": SOURCE_RECEIPTS}
+    return sealed_detail(class_name)
+
+
+def readiness_seal_payload() -> dict[str, Any]:
+    """Return the verified-readiness seal of every registered catalogue model."""
+    from sc_neurocore.neurons.model_identity import identity_registry
+
+    registered = [name for name in _CLASS_TO_MODULE if name in identity_registry()]
+    return build_seal(registered, _receipt_verified_detail)
+
+
+def _receipt_verified_detail(class_name: str) -> dict[str, Any]:
+    """Return the per-facet verification block derived from the receipts now.
 
     The block names the profile the receipts were read for; a receipt of
     another profile of the same class never appears here.

@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 5000
+    "test_files": 5001
   },
   "documentation": {
     "public_pages": [
@@ -3046,7 +3046,8 @@
       "neurons/model_schemas/*.toml",
       "neurons/reference_trace_data/*.json",
       "neurons/reference_receipts/*.json",
-      "neurons/model_descriptors/*.toml"
+      "neurons/model_descriptors/*.toml",
+      "studio/verified_readiness.json"
     ]
   },
   "project": {
@@ -7508,6 +7509,7 @@
       "tests/test_studio_progress_scan_progress.py",
       "tests/test_studio_progress_web_socket_endpoint.py",
       "tests/test_studio_project_manifest.py",
+      "tests/test_studio_readiness_seal.py",
       "tests/test_studio_replay_pack.py",
       "tests/test_studio_router_contract.py",
       "tests/test_studio_runtime_job_receipt.py",
