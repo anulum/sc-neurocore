@@ -29,8 +29,9 @@ collapsing only at the ``fxmul`` / LUT points reproduces that behaviour for any
 because the intermediate would exceed 64 bits. The saturating Euler accumulate
 (``reg + d``) and the reset/threshold logic are added by the kernel generator in
 :mod:`sc_neurocore.compiler.intelligence.bit_true_kernel`; this module only lowers
-the right-hand-side expression grammar. Bit-exactness against the RTL is proven,
-not asserted, by the iverilog co-simulation in ``tests/test_bit_true_cosim.py``.
+the right-hand-side expression grammar. Bit-exactness against the RTL is checked,
+not proven, by the iverilog co-simulation in
+``tests/test_bit_true_cosim_bit_true_cosim.py`` on the stimuli it runs.
 """
 
 from __future__ import annotations

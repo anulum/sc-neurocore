@@ -21,7 +21,8 @@ class TestNeuronKernelC:
 
     def test_bit_identical_claim_present(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
-        assert "Bit-identical to compile_to_verilog" in code
+        assert "Bit-identical to compile_to_verilog (checked by iverilog co-simulation)" in code
+        assert "proven" not in code
 
     def test_threshold_and_spike_sequencing(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")

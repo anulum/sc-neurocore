@@ -40,14 +40,25 @@ def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None
     detail = response.json()
     assert detail["category_slug"] == "integrate-and-fire"
     assert "dynamics" in detail
-    assert detail["compile_configuration"] == {
+    configuration = detail["compile_configuration"]
+    contracts = configuration.pop("numeric_contracts")
+    # Q8.8 tops out below 128, so the AdEx capacitance C=200 would wrap to -56.
+    assert configuration == {
         "schema_name": "adex",
         "default_integrator": "euler",
         "integrators": ["euler", "rk4"],
         "cosim_integrators": ["euler"],
-        "default_q_format": "Q8.8",
-        "q_formats": ["Q8.8", "Q16.16"],
+        "default_q_format": "Q16.16",
+        "q_formats": ["Q16.16"],
     }
+    assert list(contracts) == ["Q8.8", "Q16.16"]
+    refused = contracts["Q8.8"]
+    assert refused["representable"] is False
+    assert "parameter C=200.0 becomes -56.0" in refused["refusal"]
+    offered = contracts["Q16.16"]
+    assert (offered["representable"], offered["refusal"]) == (True, "")
+    assert offered["bit_true_mirror"]["available"] is True
+    assert offered["bit_true_mirror"]["arithmetic"]["q_format"] == "Q16.16"
 
 
 def test_api_expif_detail_serves_source_receipt(client: TestClient) -> None:

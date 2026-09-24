@@ -35,7 +35,7 @@ const detail: ModelDetail = {
   reproducibility: { reference_config: "", golden_trace_sha256: "", reproducible: false },
   name: "AdaptiveThresholdIFNeuron", params: [], state_vars: [],
   compile_configuration: { schema_name: "adaptive_threshold_if", default_integrator: "map",
-    integrators: ["map"], cosim_integrators: ["map"], default_q_format: "Q8.8", q_formats: ["Q8.8", "Q16.16"] },
+    integrators: ["map"], cosim_integrators: ["map"], default_q_format: "Q8.8", q_formats: ["Q8.8", "Q16.16"], numeric_contracts: {} },
 };
 
 beforeEach(() => { useStudioStore.setState({ sourceMode: "model", selectedModelName: detail.name, modelDetail: detail, modelIntegrator: "map" }); });

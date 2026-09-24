@@ -146,6 +146,7 @@ nav:
   - Studio (Experimental):
       - Overview: studio/index.md
       - Compiler Inspector: studio/compiler-inspector.md
+      - Hardware Numeric Contract: studio/numeric-contract.md
       - Synthesis Dashboard: studio/synthesis-dashboard.md
       - Training Monitor: studio/training-monitor.md
       - Network Canvas: studio/network-canvas.md

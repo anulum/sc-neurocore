@@ -6,7 +6,12 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio selected-model compile configuration
 
-import type { ModelCompileRequest, ModelCosimRequest, ModelDetail } from "./api/client";
+import type {
+  ModelCompileConfiguration,
+  ModelCompileRequest,
+  ModelCosimRequest,
+  ModelDetail,
+} from "./api/client";
 
 /** What the compile needs: the model, and the settings the reader chose. */
 export interface StudioModelCompileInput {
@@ -50,8 +55,16 @@ export function modelCompileRequest(input: StudioModelCompileInput): ModelCompil
     throw new Error(`Integrator ${integrator} is not declared for the selected model.`);
   }
   const qFormat = input.qFormat || configuration.default_q_format;
+  if (qFormat === null) {
+    throw new Error(
+      `No Q-format Studio compiles at can hold the selected model. ${qFormatRefusals(configuration).map((item) => item.refusal).join(" ")}`,
+    );
+  }
   if (!configuration.q_formats.includes(qFormat)) {
-    throw new Error(`Q-format ${qFormat} is not offered for the selected model.`);
+    const refusal = configuration.numeric_contracts[qFormat]?.refusal;
+    throw new Error(
+      `Q-format ${qFormat} is not offered for the selected model.${refusal ? ` ${refusal}` : ""}`,
+    );
   }
   const params = Object.fromEntries(
     input.modelDetail.params.map((parameter) => [
@@ -66,6 +79,20 @@ export function modelCompileRequest(input: StudioModelCompileInput): ModelCompil
     params,
     q_format: qFormat,
   };
+}
+
+/**
+ * List the candidate Q-formats the model is not representable in, and why.
+ *
+ * @param configuration - The model's compile configuration.
+ * @returns Each refused format with the contract's reason, in candidate order.
+ */
+export function qFormatRefusals(
+  configuration: ModelCompileConfiguration,
+): { qFormat: string; refusal: string }[] {
+  return Object.entries(configuration.numeric_contracts)
+    .filter(([, contract]) => !contract.representable)
+    .map(([qFormat, contract]) => ({ qFormat, refusal: contract.refusal }));
 }
 
 /**

@@ -24,6 +24,7 @@ vi.mock("../stores/studio", () => ({
         cosim_integrators: ["euler"],
         default_q_format: "Q8.8",
         q_formats: ["Q8.8", "Q16.16"],
+        numeric_contracts: {},
       },
     },
     modelParams: {}, modelIntegrator: "rk4", modelQFormat: "Q16.16",

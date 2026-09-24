@@ -7,6 +7,7 @@
 // SC-NeuroCore — Source/config provenance header
 
 import { useStudioStore } from "../stores/studio";
+import { qFormatRefusals } from "../modelCompileConfig";
 
 /**
  * Bounds and a step for a parameter whose model declared none.
@@ -159,6 +160,11 @@ export default function ParameterSliders() {
                     ))}
                   </select>
                 </div>
+                {qFormatRefusals(modelDetail.compile_configuration).map(({ qFormat, refusal }) => (
+                  <div key={qFormat} className="slider-value" data-testid="q-format-refusal">
+                    {qFormat} not offered: {refusal}
+                  </div>
+                ))}
               </>
             ) : (
               <span className="slider-value">No canonical schema-backed RTL path</span>

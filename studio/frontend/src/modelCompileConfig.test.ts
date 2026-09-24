@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ModelDetail } from "./api/client";
-import { modelCompileRequest, modelCosimRequest } from "./modelCompileConfig";
+import { modelCompileRequest, modelCosimRequest, qFormatRefusals } from "./modelCompileConfig";
 
 /**
  * Build a model detail carrying a compile configuration.
@@ -32,6 +32,7 @@ function detail(overrides: Partial<ModelDetail> = {}): ModelDetail {
       cosim_integrators: [],
       default_q_format: "Q8.8",
       q_formats: ["Q8.8", "Q16.16"],
+      numeric_contracts: {},
     },
     ...overrides,
   } as ModelDetail;
@@ -64,6 +65,7 @@ describe("modelCompileRequest", () => {
         cosim_integrators: ["map"],
         default_q_format: "Q8.8",
         q_formats: ["Q8.8", "Q16.16"],
+        numeric_contracts: {},
       },
     });
 
@@ -103,5 +105,73 @@ describe("modelCompileRequest", () => {
       dt: 1, integrator: "rk4", modelDetail: detail(), modelParams: {}, qFormat: "Q8.8",
       selectedModelName: "LapicqueNeuron",
     })).toThrow("Integrator rk4 is not declared");
+  });
+});
+
+/**
+ * A detail whose model fits only Q16.16, as the served contract states it.
+ *
+ * @param offered - The formats the model is representable in.
+ * @returns The detail.
+ */
+function narrowDetail(offered: string[]): ModelDetail {
+  const contract = (qFormat: string, refusal: string) => ({
+    schema_version: "sc-neurocore.hardware-numeric-contract.v1",
+    q_format: qFormat,
+    resolution: 1 / 256,
+    min_value: -128,
+    max_value: 127.99609375,
+    representable: refusal === "",
+    refusal,
+    bit_true_mirror: { available: true, refusal: "", evidence: "" },
+    not_stated: [],
+  });
+  const refusal = "Q8.8 cannot hold this neuron: parameter C=200.0 becomes -56.0";
+  return detail({
+    compile_configuration: {
+      schema_name: "adex",
+      default_integrator: "euler",
+      integrators: ["euler"],
+      cosim_integrators: ["euler"],
+      default_q_format: offered[0] ?? null,
+      q_formats: offered,
+      numeric_contracts: {
+        "Q8.8": contract("Q8.8", refusal),
+        "Q16.16": contract("Q16.16", offered.length > 0 ? "" : "Q16.16 cannot hold this neuron"),
+      },
+    },
+  });
+}
+
+describe("Q-formats the model does not fit", () => {
+  it("lists each refused format with the contract's reason", () => {
+    const configuration = narrowDetail(["Q16.16"]).compile_configuration;
+    expect(configuration && qFormatRefusals(configuration)).toEqual([
+      { qFormat: "Q8.8", refusal: "Q8.8 cannot hold this neuron: parameter C=200.0 becomes -56.0" },
+    ]);
+  });
+
+  it("refuses a format the model does not fit, naming why", () => {
+    const input = {
+      dt: 1, integrator: "euler", modelParams: {}, selectedModelName: "AdExNeuron",
+    };
+    expect(() => modelCompileRequest({
+      ...input, modelDetail: narrowDetail(["Q16.16"]), qFormat: "Q8.8",
+    })).toThrow("Q-format Q8.8 is not offered for the selected model. Q8.8 cannot hold this neuron: parameter C=200.0 becomes -56.0");
+    expect(() => modelCompileRequest({
+      ...input, modelDetail: narrowDetail(["Q16.16"]), qFormat: "Q4.12",
+    })).toThrow(/^Q-format Q4.12 is not offered for the selected model\.$/);
+    expect(modelCompileRequest({
+      ...input, modelDetail: narrowDetail(["Q16.16"]), qFormat: "",
+    }).q_format).toBe("Q16.16");
+  });
+
+  it("refuses to compile a model no format can hold instead of guessing one", () => {
+    expect(() => modelCompileRequest({
+      dt: 1, integrator: "euler", modelDetail: narrowDetail([]), modelParams: {}, qFormat: "",
+      selectedModelName: "AdExNeuron",
+    })).toThrow(
+      "No Q-format Studio compiles at can hold the selected model. Q8.8 cannot hold this neuron: parameter C=200.0 becomes -56.0 Q16.16 cannot hold this neuron",
+    );
   });
 });

@@ -17,9 +17,14 @@ import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from sc_neurocore.compiler.hardware_numeric_contract import (
+    HardwareNumericContract,
+    hardware_numeric_contract,
+)
 from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
 from sc_neurocore.studio.model_catalogue import get_model_detail
+from sc_neurocore.studio.model_numeric_contracts import STUDIO_Q_FORMATS
 
 ModelDetailGetter = Callable[[str], dict[str, object] | None]
 
@@ -33,6 +38,7 @@ class ResolvedModelCompileConfiguration:
     model_name: str
     module_name: str
     neuron: UniversalNeuron
+    numeric_contract: HardwareNumericContract
     params: dict[str, float]
     q_format: QFormat
     schema_name: str
@@ -45,13 +51,16 @@ class ResolvedModelCompileConfiguration:
         neuron actually runs (declared and effective method, exactness class,
         step, sub-steps, macro step, randomness) so the evidence states whether
         the RTL was generated from the authored profile or from an admitted
-        override.
+        override. ``numeric_contract`` states what the RTL holds at the
+        selected format: every encoded value, the look-up tables and whether a
+        bit-true C kernel mirrors it.
         """
 
         return {
             "dt": self.dt,
             "integrator": self.integrator,
             "model_name": self.model_name,
+            "numeric_contract": self.numeric_contract.to_public_dict(),
             "profile": self.neuron.realised_profile(),
             "q_format": self.q_format.q_label,
             "schema_name": self.schema_name,
@@ -73,13 +82,25 @@ def resolve_model_compile_configuration(
     *,
     detail_getter: ModelDetailGetter = get_model_detail,
 ) -> ResolvedModelCompileConfiguration:
-    """Validate a model-mode compiler payload and instantiate its canonical schema."""
+    """Validate a model-mode compiler payload and instantiate its canonical schema.
+
+    The Q-format must be one Studio compiles at, and the neuron, with the
+    requested parameter overrides, step and integrator, must be representable
+    in it: a value the format would wrap, or a non-zero parameter, constant,
+    initial state or step it would round to zero, refuses the compile rather
+    than producing RTL for a different neuron.
+    """
 
     model_name = _required_string(payload, "model_name")
     params = _float_mapping(payload.get("params"))
     requested_dt = _optional_positive_float(payload.get("dt"), "dt")
     requested_integrator = _optional_string(payload.get("integrator"), "integrator")
     q_format = _q_format(_required_string(payload, "q_format", default="Q8.8"))
+    if q_format.q_label not in STUDIO_Q_FORMATS:
+        raise ValueError(
+            f"Q-format {q_format.q_label} is not one Studio compiles at "
+            f"({', '.join(STUDIO_Q_FORMATS)})."
+        )
     requested_module_name = _optional_string(payload.get("module_name"), "module_name")
 
     detail = detail_getter(model_name)
@@ -137,12 +158,16 @@ def resolve_model_compile_configuration(
         dt_override=dt,
         method_override=integrator,
     )
+    numeric_contract = hardware_numeric_contract(neuron.to_equation_neuron(), q_format)
+    if not numeric_contract.representable:
+        raise ValueError(numeric_contract.refusal())
     return ResolvedModelCompileConfiguration(
         dt=dt,
         integrator=integrator,
         model_name=model_name,
         module_name=module_name,
         neuron=neuron,
+        numeric_contract=numeric_contract,
         params=params,
         q_format=q_format,
         schema_name=schema_name,

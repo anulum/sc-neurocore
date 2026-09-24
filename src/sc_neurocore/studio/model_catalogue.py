@@ -26,7 +26,8 @@ from sc_neurocore.neurons.model_descriptor import (
 from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.neurons.schema_module_aliases import schema_for_module
-from sc_neurocore.neurons.universal_dsl import load_schema
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
+from sc_neurocore.studio.model_numeric_contracts import studio_numeric_contracts
 from sc_neurocore.studio.model_introspection import (
     _categorize,
     _classify_fields,
@@ -237,6 +238,12 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     profile's numerical family: a published map never offers an ODE integrator
     and an ODE never offers ``map``. A schema whose profile is contradictory or
     a descriptive record has no compile configuration.
+
+    Q-formats are offered only where the schema's neuron is representable (see
+    :mod:`sc_neurocore.studio.model_numeric_contracts`), smallest word first,
+    and the first is the default; ``numeric_contracts`` states what the RTL
+    holds at every candidate format, including the refused ones and why. A
+    neuron no candidate can hold has no default and no offered format.
     """
     canonical = _canonical_schema(descriptor)
     if canonical is None:
@@ -258,6 +265,8 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     ]
     if default_integrator not in integrators:
         integrators.insert(0, default_integrator)
+    contracts = studio_numeric_contracts(UniversalNeuron.from_schema(schema_name))
+    q_formats = [label for label, contract in contracts.items() if contract.representable]
     return {
         "schema_name": schema_name,
         "default_integrator": default_integrator,
@@ -267,8 +276,11 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
             for integrator in dict.fromkeys(integrators)
             if integrator in profile.lowering.cosim_methods
         ],
-        "default_q_format": "Q8.8",
-        "q_formats": ["Q8.8", "Q16.16"],
+        "default_q_format": q_formats[0] if q_formats else None,
+        "q_formats": q_formats,
+        "numeric_contracts": {
+            label: contract.to_public_dict() for label, contract in contracts.items()
+        },
     }
 
 

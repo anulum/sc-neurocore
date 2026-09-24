@@ -26,9 +26,10 @@ Two entry points:
   **bit-for-bit identical to the Verilog produced by**
   :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`: same dt,
   threshold, reset rules, parameter encoding and single ``I`` input. That
-  identity is *proven*, not asserted, by the iverilog co-simulation in
-  ``tests/test_bit_true_cosim.py``, which drives the compiled RTL and this
-  kernel with the same stimulus and asserts equal per-cycle state traces.
+  identity is checked, not proven, by the iverilog co-simulation in
+  ``tests/test_bit_true_cosim_bit_true_cosim.py``, which drives the compiled
+  RTL and this kernel with the same stimulus and asserts equal per-cycle state
+  traces: it holds for the stimuli and models tested.
 """
 
 from __future__ import annotations
@@ -193,9 +194,10 @@ def kernel_arithmetic_contract(
             "held for the whole step"
         ),
         "randomness": "none: the diffusion-noise symbol xi is not supported",
-        "identity_proof": (
-            "the generated kernel is bit-identical to the compile_to_verilog RTL; "
-            "proven by the Icarus Verilog co-simulation test of the bit-true kernel"
+        "identity_evidence": (
+            "the generated kernel mirrors the compile_to_verilog RTL; the Icarus "
+            "Verilog co-simulation test checks equal per-cycle traces on the stimuli "
+            "it runs, which is a check, not a proof"
         ),
     }
 
@@ -365,7 +367,7 @@ def generate_bittrue_kernel(
     Identifiers in the derivatives that are not state variables become step
     arguments (the input current ``I`` maps to ``I_t`` when referenced), so the
     kernel exercises the bit-true primitives without a per-instance I/O contract.
-    For a whole-neuron kernel proven bit-identical to the generated Verilog, use
+    For a whole-neuron kernel that mirrors the generated Verilog, use
     :func:`generate_bittrue_kernel_from_neuron`.
 
     Parameters
@@ -550,7 +552,7 @@ def generate_bittrue_kernel_from_neuron(
     register while ordinary state names resolve to the integrated candidate.
     Both state and output fields take the same post-reset value on a spike. The
     resulting ``<module>_step`` therefore produces the identical per-cycle state
-    trace as the RTL, which the iverilog co-simulation proves.
+    trace as the RTL, which the iverilog co-simulation checks on the stimuli it runs.
 
     Parameters
     ----------
@@ -700,7 +702,7 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
         f"/* Bit-true neuron kernel for {m} */",
         f"/* SC-NeuroCore — Q{int_bits}.{q.fraction} ({q.data_width}-bit), "
         f"{q.overflow} overflow, {q.rounding} rounding */",
-        "/* Bit-identical to compile_to_verilog (proven by iverilog co-simulation). */",
+        "/* Bit-identical to compile_to_verilog (checked by iverilog co-simulation). */",
         "",
     ]
     lines.extend(_preamble_c(q))

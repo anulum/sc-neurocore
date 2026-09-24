@@ -444,18 +444,41 @@ export interface ModelReadiness {
 }
 
 /**
+ * What one model's generated RTL holds at one fixed-point format.
+ *
+ * `representable` is false when a value would wrap or a non-zero parameter,
+ * constant, initial state or step would round to zero; `refusal` then names
+ * each one. The bit-true mirror is a finite co-simulation check, not a proof.
+ */
+export interface HardwareNumericContract {
+  schema_version: string;
+  q_format: string;
+  resolution: number;
+  min_value: number;
+  max_value: number;
+  representable: boolean;
+  refusal: string;
+  bit_true_mirror: { available: boolean; refusal: string; evidence: string };
+  not_stated: string[];
+}
+
+/**
  * What the compiler will accept for this model.
  *
  * `cosim_integrators` is a subset of `integrators`: an integrator can be
  * compilable without a co-simulation reference to check it against.
+ * `q_formats` lists only the formats the model is representable in, and
+ * `default_q_format` is null when there is none; `numeric_contracts` holds
+ * the contract of every candidate format, refused ones included.
  */
 export interface ModelCompileConfiguration {
   schema_name: string;
   default_integrator: string;
   integrators: string[];
   cosim_integrators: string[];
-  default_q_format: string;
+  default_q_format: string | null;
   q_formats: string[];
+  numeric_contracts: Record<string, HardwareNumericContract>;
 }
 
 /**
@@ -1518,6 +1541,8 @@ export interface ModelCompileResultConfiguration {
   dt: number;
   integrator: string;
   model_name: string;
+  /** What the RTL holds at `q_format`; the compile was refused unless representable. */
+  numeric_contract?: HardwareNumericContract;
   q_format: string;
   schema_name: string;
   schema_sha256: string;

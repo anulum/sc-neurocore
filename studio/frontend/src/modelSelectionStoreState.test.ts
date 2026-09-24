@@ -119,6 +119,7 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
       cosim_integrators: ["euler"],
       default_q_format: "Q8.8",
       q_formats: ["Q8.8", "Q16.16"],
+      numeric_contracts: {},
     },
     ...overrides,
   };
@@ -198,6 +199,15 @@ describe("model selection store state helpers", () => {
       modelQFormat: "Q8.8",
       sourceMode: "model",
     });
+    const unfit = modelDetail();
+    if (unfit.compile_configuration) {
+      unfit.compile_configuration = {
+        ...unfit.compile_configuration, default_q_format: null, q_formats: [],
+      };
+    }
+    expect(modelDetailLoadedState(unfit).modelQFormat).toBe("");
+    expect(modelDetailLoadedState({ ...detail, compile_configuration: null }).modelQFormat)
+      .toBe("Q8.8");
   });
 
   it("parses model presets into model runtime state and post-load action", () => {

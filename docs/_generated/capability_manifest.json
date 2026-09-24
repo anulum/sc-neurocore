@@ -967,11 +967,11 @@
     "model_documentation_pages": 200,
     "optional_extras": 30,
     "public_api_exports": 45,
-    "public_documentation_pages": 633,
+    "public_documentation_pages": 634,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4992
+    "test_files": 4994
   },
   "documentation": {
     "public_pages": [
@@ -1475,6 +1475,7 @@
       "docs/studio/integration.md",
       "docs/studio/job-ledger.md",
       "docs/studio/network-canvas.md",
+      "docs/studio/numeric-contract.md",
       "docs/studio/ode-editor.md",
       "docs/studio/onboarding.md",
       "docs/studio/replay-and-export.md",
@@ -5026,6 +5027,7 @@
       "tests/test_hardware_interface.py",
       "tests/test_hardware_mapper.py",
       "tests/test_hardware_number_provenance.py",
+      "tests/test_hardware_numeric_contract.py",
       "tests/test_hardware_package_contracts.py",
       "tests/test_hardware_resource_estimator.py",
       "tests/test_hdc/test_base.py",
@@ -7460,6 +7462,7 @@
       "tests/test_studio_model_cosim.py",
       "tests/test_studio_model_cosim_process.py",
       "tests/test_studio_model_documentation_availability.py",
+      "tests/test_studio_model_numeric_contracts.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_model_scan_budget.py",
       "tests/test_studio_model_scan_process.py",

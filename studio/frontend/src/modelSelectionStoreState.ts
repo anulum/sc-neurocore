@@ -193,7 +193,9 @@ export function modelDetailLoadedState(detail: ModelDetail): ModelDetailLoadedSt
     modelDetail: detail,
     modelParams: modelDefaultParameters(detail),
     modelIntegrator: compileConfiguration?.default_integrator ?? detail.integration_method,
-    modelQFormat: compileConfiguration?.default_q_format ?? "Q8.8",
+    // A model with a compile configuration but no representable format gets
+    // no format, so a compile is refused with the reasons instead of guessed.
+    modelQFormat: compileConfiguration ? (compileConfiguration.default_q_format ?? "") : "Q8.8",
     sourceMode: "model",
   };
 }

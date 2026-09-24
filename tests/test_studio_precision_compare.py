@@ -108,6 +108,9 @@ def test_kernel_arithmetic_contract_states_the_operation_semantics() -> None:
     assert "saturation" in str(contract["state_update"])
     assert "candidate" in str(contract["sequencing"])
     assert str(contract["randomness"]).startswith("none")
+    # A finite co-simulation checks the mirror; it does not prove it.
+    assert "identity_proof" not in contract
+    assert "a check, not a proof" in str(contract["identity_evidence"])
     nearest_wrap = kernel_arithmetic_contract(overflow="wrap", rounding="nearest", method="map")
     assert "half a unit" in str(nearest_wrap["multiply"])
     assert "wrap of the sum" in str(nearest_wrap["state_update"])

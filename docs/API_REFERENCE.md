@@ -8702,6 +8702,100 @@ dict
 
 ---
 
+## Module `compiler.hardware_numeric_contract`
+
+### Class `EncodedQuantity`
+One value the RTL encodes, and the value it holds there.
+
+Parameters
+----------
+kind:
+    Where the value comes from. ``literal_divisor`` is the reciprocal the
+    compiler multiplies by when an expression divides by a literal.
+name:
+    The parameter, constant or state name, or where a literal appears.
+value:
+    The value the neuron declares.
+rtl_value:
+    The value the encoded word represents in the RTL.
+status:
+    ``exact``, ``rounded``, ``underflows_to_zero`` or ``out_of_range``.
+blocking:
+    ``True`` when the status makes the format unrepresentable.
+
+- **relative_error**()
+  - Return ``|rtl_value - value| / |value|``, or ``None`` for a zero value.
+- **describe**()
+  - Return a one-line statement of what the RTL holds.
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `LookupTable`
+One transcendental look-up table the datapath uses.
+
+Arguments outside ``&#91;domain_min, domain_max)`` are clamped to the first or
+last entry.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `HardwareNumericContract`
+What one neuron's generated RTL holds at one fixed-point format.
+
+Parameters
+----------
+q_format:
+    Studio label, ``Q<integer bits>.<fraction bits>``.
+data_width, fraction:
+    Word width and fraction bits.
+method:
+    The integration method the RTL realises.
+overflow, rounding:
+    Accumulate commit policy and multiply product policy.
+arithmetic:
+    The bit-true arithmetic statement when the generated C kernel mirrors
+    this neuron, else ``None``.
+mirror_refusal:
+    Why no bit-true C kernel mirrors this neuron, or ``""``.
+quantities:
+    Every encoded value, in declaration order, literals once each.
+lookup_tables:
+    The look-up tables the datapath uses.
+
+- **resolution**()
+  - Return the value of one least-significant bit.
+- **min_value**()
+  - Return the most negative representable value.
+- **max_value**()
+  - Return the most positive representable value.
+- **blocking**()
+  - Return the quantities that make the format unrepresentable.
+- **representable**()
+  - Return whether every blocking check passes.
+- **refusal**()
+  - Return why the format is unrepresentable, or ``""``.
+- **to_public_dict**()
+  - Return the path-free JSON projection.
+
+### Function `hardware_numeric_contract(neuron, q_format)`
+Return what ``neuron``'s generated RTL holds at ``q_format``.
+
+Parameters
+----------
+neuron:
+    The neuron the equation compiler lowers.
+q_format:
+    The signed fixed-point format.
+overflow, rounding:
+    The accumulate and multiply policies the RTL is compiled with.
+
+Returns
+-------
+HardwareNumericContract
+    The encoded quantities, look-up tables and bit-true mirror status.
+
+---
+
 ## Module `compiler.host_driver_gen`
 
 ### Function `generate_host_driver(module_name, params)`
@@ -8929,7 +9023,7 @@ same wrap-truncate multiply and saturating accumulate as the RTL datapath.
 Identifiers in the derivatives that are not state variables become step
 arguments (the input current ``I`` maps to ``I_t`` when referenced), so the
 kernel exercises the bit-true primitives without a per-instance I/O contract.
-For a whole-neuron kernel proven bit-identical to the generated Verilog, use
+For a whole-neuron kernel that mirrors the generated Verilog, use
 :func:`generate_bittrue_kernel_from_neuron`.
 
 Parameters
@@ -8961,7 +9055,7 @@ and reset expressions may read ``<state>_prev`` aliases for the pre-step
 register while ordinary state names resolve to the integrated candidate.
 Both state and output fields take the same post-reset value on a spike. The
 resulting ``<module>_step`` therefore produces the identical per-cycle state
-trace as the RTL, which the iverilog co-simulation proves.
+trace as the RTL, which the iverilog co-simulation checks on the stimuli it runs.
 
 Parameters
 ----------
@@ -37538,6 +37632,12 @@ Validated schema, compiler options and instantiated universal neuron.
 ### Function `resolve_model_compile_configuration(payload)`
 Validate a model-mode compiler payload and instantiate its canonical schema.
 
+The Q-format must be one Studio compiles at, and the neuron, with the
+requested parameter overrides, step and integrator, must be representable
+in it: a value the format would wrap, or a non-zero parameter, constant,
+initial state or step it would round to zero, refuses the compile rather
+than producing RTL for a different neuron.
+
 ---
 
 ## Module `studio.model_cosim`
@@ -37548,6 +37648,23 @@ Public parity report plus complete private artifacts for job custody.
 
 ### Function `run_model_cosim(configuration)`
 Compile and compare real C-reference and RTL state traces cycle by cycle.
+
+---
+
+## Module `studio.model_numeric_contracts`
+
+### Function `studio_numeric_contracts(neuron)`
+Return the hardware numeric contract of ``neuron`` at every candidate format.
+
+Parameters
+----------
+neuron:
+    The instantiated schema neuron Studio would compile.
+
+Returns
+-------
+dict
+    Contract per :data:`STUDIO_Q_FORMATS` label, in that order.
 
 ---
 
