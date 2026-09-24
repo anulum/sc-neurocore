@@ -8,7 +8,11 @@
 
 from __future__ import annotations
 
-from build_accel_backends_support import *  # noqa: F403
+from pathlib import Path
+
+import pytest
+
+from tests.test_tools.build_accel_backends_support import MOD, _make_tree, _repo_root
 
 
 def test_discover_go_pairs_convention_recipe_and_pathlib(tmp_path: Path) -> None:
@@ -25,9 +29,12 @@ def test_discover_go_pairs_convention_recipe_and_pathlib(tmp_path: Path) -> None
 
 
 def test_discover_mojo_uses_convention_recipe_and_pathlib(tmp_path: Path) -> None:
+    """Discover conventional, recipe-paired and pathlib-backed Mojo output/source pairs."""
     accel, _ = _make_tree(tmp_path)
     by_name = {t.name: t for t in MOD.discover_targets("mojo", accel_root=accel)}
     assert set(by_name) == {"theta", "hindmarsh_rose", "lgssm"}
+    assert by_name["theta"].output.name == "libtheta.so"
+    assert by_name["theta"].source.name == "theta.mojo"
     # hindmarsh_rose mojo is paired only by the recipe in its .mojo header comment.
     assert by_name["hindmarsh_rose"].output.name == "libhr.so"
     assert by_name["hindmarsh_rose"].source.name == "hindmarsh_rose.mojo"
