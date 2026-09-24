@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio network to hardware
+
+- The Studio pipeline builds hardware for the network on the Canvas. It used to
+  synthesise one hardcoded LIF neuron whatever the graph, and then refused every
+  graph. `POST /api/pipeline/run` now validates, simulates, **lowers** the graph
+  with each catalogue model's own step (`SCLapicqueLIFNeuron` profile `sc_lif`
+  as its exact step, `PerfectIntegratorNeuron` with its profile's threshold
+  comparison), **co-simulates** the compiled RTL in Icarus Verilog beside a C
+  model built from the compiler's bit-true neuron kernels and beside the
+  Studio's own run, and synthesises only when the RTL reproduces its model on
+  every step. A graph it cannot reproduce is refused before any hardware with
+  every reason: another model, a Poisson drive, a membrane that does not start
+  at rest, an unrepresentable or vanishing fixed-point value, a delay over 1024
+  steps, one model with two parameter sets. The result's `trace` binds the
+  graph digest and format, the RTL, the model and the synthesised source.
+  `q_format` selects `Q8.8` (default) or `Q16.16`; the first step at which the
+  fixed-point hardware differs from the Studio run is reported.
+- The hardware network compiler gains the Studio's catalogue profiles as neuron
+  templates (`sc_lif`, `sc_if`); templates may name their integration method.
+- Fixed: the NIR hardware-graph lowering dropped a `Delay` that follows a
+  `Linear`, so such a file compiled with no delay; it is now composed into the
+  connection, and a post-weight delay that differs between destination
+  neurons is refused.
+
 ### Studio verified readiness in installations
 
 - An installed Studio showed receipt-bound readiness as lost, because receipt

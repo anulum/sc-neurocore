@@ -71,14 +71,20 @@ class TestEndpoints:
         assert r.status_code == 422
 
     def test_pipeline_endpoint(self, client: TestClient) -> None:
-        exc = create_population(count=20, neuron_type="excitatory")
-        inh = create_population(count=5, neuron_type="inhibitory")
+        exc = create_population(count=3, neuron_type="excitatory")
+        inh = create_population(count=2, neuron_type="inhibitory")
         proj = create_projection(exc["id"], inh["id"])
-        graph = {"populations": [exc, inh], "projections": [proj], "duration": 20.0}
-        r = client.post("/api/pipeline/run", json={"graph": graph, "target": "ice40"})
+        graph = {"populations": [exc, inh], "projections": [proj], "duration": 3.0}
+        r = client.post(
+            "/api/pipeline/run", json={"graph": graph, "target": "ice40", "q_format": "Q16.16"}
+        )
         assert r.status_code == 200
         data = r.json()
-        assert "steps" in data
+        # The route runs the whole chain on the caller's own network.
+        assert set(data["steps"]) == {"validate", "simulate", "lower", "cosimulate", "synthesise"}
+        assert data["steps"]["lower"]["q_format"] == "Q16.16"
+        assert data["steps"]["cosimulate"]["rtl_matches_bit_true_model"] is True
+        assert data["trace"]["input_sha256"] == data["steps"]["lower"]["input_sha256"]
 
     def test_pipeline_endpoint_empty_graph(self, client: TestClient) -> None:
         r = client.post(

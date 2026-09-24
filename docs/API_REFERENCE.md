@@ -38371,11 +38371,21 @@ workdir:
     An empty directory the sources, executables and outputs are written to.
 steps:
     Steps to run; the graph's own step count when omitted.
+compiled:
+    The lowering already compiled by :func:`compile_lowered`; compiled here
+    when omitted.
 
 Raises
 ------
 HardwareCosimUnavailable
     When Icarus Verilog or a C compiler is not installed.
+
+### Function `synthesis_source(compiled)`
+Return the design to synthesise: the top module and the neurons it instantiates.
+
+The weight ROM and the stochastic-source modules are not instantiated by the
+direct top module; leaving them out keeps the synthesis tool from choosing
+one of them as the top.
 
 ---
 
@@ -44706,39 +44716,21 @@ Return one revision as a self-contained document for transfer.
 ### Function `import_project(name, document)`
 Create a workspace from an exported document.
 
-### Function `graph_lowering_refusal(graph)`
-Return why this graph cannot be lowered to hardware.
-
-Parameters
-----------
-graph : dict
-    Studio network graph payload.
-
-Returns
--------
-dict
-    ``reason`` naming why no hardware result is claimed, and
-    ``unsupported_models`` listing the declared models whose descriptor
-    records no silicon lowering. The list is informational: the refusal
-    stands even when every model carries one, because lowering a *network*
-    is not the same capability as lowering one model and neither exists
-    here yet.
-
 ### Function `run_pipeline(graph, target)`
-Run the Studio graph-to-synthesis pipeline, or refuse to claim one.
+Validate, simulate, lower, co-simulate and synthesise a Studio network.
 
-The pipeline validates and simulates the graph, then reports a hardware
-result **only if it can lower the graph the caller supplied**. It cannot:
-no graph-level lowering exists, and a population declares a catalogue model
-rather than an equation, so there is nothing here to compile into hardware
-that is the caller's network. The compile step therefore refuses and names
-the reason instead of synthesising a stand-in.
+The hardware is the network the caller drew: the graph is lowered with each
+catalogue model's own step (:mod:`sc_neurocore.studio.network_hardware`) or
+refused with every reason it cannot be. The compiled RTL is then run beside
+its bit-true model and the Studio's own run
+(:mod:`sc_neurocore.studio.network_hardware_cosim`); synthesis runs only
+when the RTL reproduces its model on every co-simulated step. The result's
+``trace`` binds the lowering's input digest, the RTL, the model and the
+synthesised source.
 
-Until that refusal was added the step compiled one hardcoded leaky
-integrate-and-fire equation, ignoring the graph entirely, and returned its
-synthesis as ``graph -> simulate -> compile -> synthesise``. An operator
-building a Hodgkin-Huxley network received a successful hardware report for
-a generic neuron that shared nothing with it.
+Before the lowering existed the step compiled one hardcoded leaky
+integrate-and-fire equation, ignoring the graph, and later refused every
+graph; neither was the caller's network.
 
 Parameters
 ----------
@@ -44746,6 +44738,8 @@ graph:
     Studio network graph payload.
 target:
     Studio synthesis target identifier.
+q_format:
+    ``Q8.8`` or ``Q16.16``, the fixed-point format of the hardware.
 process_limits:
     Optional host-supported CPU and address-space ceilings for the
     downstream synthesis child process.
@@ -44753,8 +44747,14 @@ process_limits:
 Returns
 -------
 dict&#91;str, Any&#93;
-    Pipeline result containing validation, simulation, compile, and
-    synthesis step payloads, or a bounded failure payload.
+    ``success``, the ``step`` it ended at, each step's payload under
+    ``steps``, and ``trace`` once the RTL was built; a stop carries
+    ``error`` and, when the lowering refused, every ``reasons`` entry.
+
+Raises
+------
+ValueError
+    When ``q_format`` is not one the pipeline compiles to.
 
 ---
 

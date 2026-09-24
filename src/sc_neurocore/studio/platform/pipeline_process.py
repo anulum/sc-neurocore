@@ -18,7 +18,7 @@ from sc_neurocore.studio.platform.action_evidence import (
     write_studio_action_evidence_manifest,
 )
 from sc_neurocore.studio.platform.jobs import StudioJobContext
-from sc_neurocore.studio.project import run_pipeline
+from sc_neurocore.studio.project import PIPELINE_Q_FORMATS, run_pipeline
 from sc_neurocore.studio.synthesis import EdaProcessLimits, supported_targets
 
 PIPELINE_PROCESS_TASK = "sc_neurocore.studio.platform.pipeline_process:run_pipeline_process_task"
@@ -52,6 +52,7 @@ def run_pipeline_process_task(
     raw_result = run_pipeline(
         request.graph,
         request.target,
+        q_format=request.q_format,
         process_limits=request.process_limits,
     )
     result = _result_mapping(raw_result)
@@ -79,10 +80,12 @@ class _PipelineProcessRequest:
         *,
         graph: dict[str, object],
         target: str,
+        q_format: str,
         process_limits: EdaProcessLimits | None,
     ) -> None:
         self.graph = graph
         self.target = target
+        self.q_format = q_format
         self.process_limits = process_limits
 
 
@@ -90,6 +93,7 @@ def _pipeline_request_from_payload(payload: Mapping[str, object]) -> _PipelinePr
     return _PipelineProcessRequest(
         graph=_graph_field(payload, "graph"),
         target=_target_field(payload, "target"),
+        q_format=_q_format_field(payload, "q_format"),
         process_limits=_process_limits_from_payload(payload),
     )
 
@@ -106,6 +110,15 @@ def _target_field(payload: Mapping[str, object], key: str) -> str:
     targets = supported_targets()
     if not isinstance(value, str) or value not in targets:
         raise ValueError(f"Studio pipeline payload field {key!r} must be one of {list(targets)!r}.")
+    return value
+
+
+def _q_format_field(payload: Mapping[str, object], key: str) -> str:
+    value = payload.get(key, "Q8.8")
+    if not isinstance(value, str) or value not in PIPELINE_Q_FORMATS:
+        raise ValueError(
+            f"Studio pipeline payload field {key!r} must be one of {sorted(PIPELINE_Q_FORMATS)!r}."
+        )
     return value
 
 

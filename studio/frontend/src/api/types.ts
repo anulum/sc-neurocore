@@ -2519,8 +2519,30 @@ export interface PipelineResult {
   step?: string;
   errors?: string[];
   error?: string;
+  /** Every reason the lowering refused the graph, when it stopped there. */
+  reasons?: string[];
   steps?: Record<string, unknown>;
   pipeline?: string;
+  /**
+   * The digests binding the run, once the RTL was built: the lowering's input,
+   * the RTL, its bit-true model and the synthesised source.
+   */
+  trace?: {
+    input_sha256: string;
+    rtl_sha256: string;
+    bit_true_model_sha256: string;
+    synthesis_source_sha256: string;
+  };
+}
+
+/**
+ * The co-simulation step of a pipeline run: the RTL beside its bit-true model
+ * and beside the Studio's own run.
+ */
+export interface PipelineCosimStep {
+  steps: number;
+  rtl_matches_bit_true_model: boolean;
+  studio_agreement: { identical: boolean; first_divergent_step: number | null };
 }
 
 /**

@@ -17,17 +17,64 @@ from tests.studio_integration_support import *  # noqa: F403
 
 class TestPipeline:
     def _make_graph(self) -> dict[str, object]:
-        exc = create_population(count=30, neuron_type="excitatory")
-        inh = create_population(count=10, neuron_type="inhibitory")
+        exc = create_population(count=30, neuron_type="excitatory", model="AdExNeuron")
+        inh = create_population(count=10, neuron_type="inhibitory", model="AdExNeuron")
         proj = create_projection(exc["id"], inh["id"])
         return {"populations": [exc, inh], "projections": [proj], "duration": 30.0}
 
-    def test_pipeline_runs(self) -> None:
-        graph = self._make_graph()
-        result = run_pipeline(graph)
-        assert "steps" in result
-        assert "validate" in result["steps"]
-        assert "simulate" in result["steps"]
+    def _supported_graph(self) -> dict[str, Any]:
+        """Two small integrator populations with exactly representable values."""
+        src = create_population(
+            count=2,
+            model="PerfectIntegratorNeuron",
+            params={"c_m": 1.0, "v_threshold": 1.0},
+            drive={"kind": "constant", "current": 0.375},
+        )
+        dst = create_population(
+            count=2, model="PerfectIntegratorNeuron", params={"c_m": 1.0, "v_threshold": 1.0}
+        )
+        proj = create_projection(src["id"], dst["id"], weight=0.5, delay=2.0)
+        return {"populations": [src, dst], "projections": [proj], "duration": 12.0, "dt": 1.0}
+
+    def test_a_supported_network_reaches_synthesis_with_its_trace(self) -> None:
+        result = run_pipeline(self._supported_graph())
+
+        assert result["pipeline"] == PIPELINE_ROUTE
+        assert list(result["steps"]) == [
+            "validate",
+            "simulate",
+            "lower",
+            "cosimulate",
+            "synthesise",
+        ]
+        cosim = result["steps"]["cosimulate"]
+        assert cosim["rtl_matches_bit_true_model"] is True
+        assert cosim["studio_agreement"] == {"identical": True, "first_divergent_step": None}
+        assert cosim["steps"] == 12
+        assert result["trace"]["input_sha256"] == result["steps"]["lower"]["input_sha256"]
+        assert set(result["trace"]) == {
+            "input_sha256",
+            "rtl_sha256",
+            "bit_true_model_sha256",
+            "synthesis_source_sha256",
+        }
+        synthesis = result["steps"]["synthesise"]
+        assert result["success"] is synthesis["success"] is True
+        assert synthesis["resources"]["ffs"] > 0
+
+    def test_two_different_networks_give_different_hardware(self) -> None:
+        first = run_pipeline(self._supported_graph())
+        graph = self._supported_graph()
+        cast(list[dict[str, Any]], graph["projections"])[0]["weight"] = 0.25
+        second = run_pipeline(graph)
+        for key in ("input_sha256", "rtl_sha256", "synthesis_source_sha256"):
+            assert first["trace"][key] != second["trace"][key], key
+
+    def test_the_format_is_the_callers_choice_among_two(self) -> None:
+        result = run_pipeline(self._supported_graph(), q_format="Q16.16")
+        assert result["steps"]["lower"]["q_format"] == "Q16.16"
+        with pytest.raises(ValueError, match="q_format must be one of"):
+            run_pipeline(self._supported_graph(), q_format="Q4.4")
 
     def test_pipeline_empty_graph(self) -> None:
         result = run_pipeline({"populations": [], "projections": []})
@@ -35,8 +82,7 @@ class TestPipeline:
         assert result["step"] == "validate"
 
     def test_pipeline_target(self) -> None:
-        graph = self._make_graph()
-        result = run_pipeline(graph, target="ecp5")
+        result = run_pipeline(self._make_graph(), target="ecp5")
         assert result.get("target") == "ecp5"
 
     def test_pipeline_reports_simulation_failure(
@@ -61,46 +107,77 @@ class TestPipeline:
             "errors": ["sim failed"],
         }
 
-    def test_the_compile_step_refuses_to_claim_a_hardware_result(self) -> None:
-        """The pipeline cannot lower a graph, so it must not report that it did.
-
-        This case replaces one that asserted a bounded ``Compilation failed``
-        after monkeypatching the equation compiler to raise. That guarantee —
-        a client-facing error that leaks no internals — is preserved below
-        against the behaviour that now exists: the step never reaches a
-        compiler, because there is no graph lowering to reach it with.
-        """
+    def test_a_graph_it_cannot_lower_is_refused_with_every_reason(self) -> None:
+        """No stand-in is synthesised: the step names what the hardware cannot be."""
         result = run_pipeline(self._make_graph())
 
         assert result["success"] is False
-        assert result["step"] == "compile"
-        assert result["error"] == NO_GRAPH_LOWERING_REASON
-        assert result["pipeline"] == "graph → simulate → (no graph lowering)"
+        assert result["step"] == "lower"
+        assert result["error"] == "the graph cannot be lowered to hardware exactly"
+        assert len(result["reasons"]) == 2
+        assert all("model AdExNeuron has no hardware lowering" in r for r in result["reasons"])
+        assert "synthesise" not in result["steps"]
 
     def test_the_refusal_leaks_nothing_about_the_host(self) -> None:
-        """The guarantee the replaced case protected, held against the new path."""
-        result = run_pipeline(self._make_graph())
-
-        text = str(result)
+        text = str(run_pipeline(self._make_graph()))
         assert "Traceback" not in text
         assert "/home/" not in text
         assert "/media/" not in text
 
     def test_the_simulation_it_did_run_is_still_reported(self) -> None:
-        """Refusing the hardware claim must not discard the honest steps."""
         result = run_pipeline(self._make_graph())
-
         assert result["steps"]["validate"] == {"passed": True}
         assert "n_spikes" in result["steps"]["simulate"]
 
-    def test_a_model_without_recorded_silicon_is_named(self) -> None:
-        """A reader must see which declared models carry no lowering at all."""
+    def test_a_network_the_compiler_cannot_hold_stops_at_compile(self) -> None:
+        """1050 neurons fully connected exceed the compiler's synapse bound."""
+        pop = create_population(
+            count=1050, model="PerfectIntegratorNeuron", params={"c_m": 1.0, "v_threshold": 1.0}
+        )
+        proj = create_projection(pop["id"], pop["id"], weight=0.5, rule="all_to_all")
+        graph = {"populations": [pop], "projections": [proj], "duration": 2.0, "dt": 1.0}
 
-        def graph_using(model: str) -> dict[str, Any]:
-            graph = self._make_graph()
-            populations = cast(list[dict[str, Any]], graph["populations"])
-            populations[0]["model"] = model
-            return graph
+        result = run_pipeline(graph)
 
-        assert run_pipeline(graph_using("AmariNeuralField"))["unsupported_models"] == []
-        assert run_pipeline(graph_using("ArcaneNeuron"))["unsupported_models"] == ["ArcaneNeuron"]
+        assert result["step"] == "compile"
+        assert result["error"].startswith("the network compiler refused the lowered graph:")
+        assert "lower" in result["steps"]
+
+    def test_without_simulators_the_pipeline_stops_before_synthesis(
+        self, tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An empty PATH is an installation without Icarus Verilog or a C compiler."""
+        monkeypatch.setenv("PATH", str(tmp_path))
+        result = run_pipeline(self._supported_graph())
+        assert result["step"] == "cosimulate"
+        assert "needs iverilog, vvp, gcc" in result["error"]
+        assert "synthesise" not in result["steps"]
+
+    def test_rtl_that_is_not_its_model_is_never_synthesised(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Fault injection: the compiler's real output with one weight altered.
+
+        The only way to reach this guard is a compiler that emits the wrong
+        network, which no correct build does; the injected RTL stands in for
+        that defect, and everything around it is real.
+        """
+        import dataclasses
+
+        from sc_neurocore.studio import network_hardware_cosim
+
+        real = network_hardware_cosim.compile_lowered
+
+        def miscompiled(lowered: Any) -> Any:
+            result = real(lowered)
+            return dataclasses.replace(
+                result, top_module=result.top_module.replace("sh000000080", "sh000000040")
+            )
+
+        monkeypatch.setattr(network_hardware_cosim, "compile_lowered", miscompiled)
+        result = run_pipeline(self._supported_graph())
+
+        assert result["step"] == "cosimulate"
+        assert result["steps"]["cosimulate"]["rtl_matches_bit_true_model"] is False
+        assert "does not reproduce its bit-true model" in result["error"]
+        assert "synthesise" not in result["steps"]

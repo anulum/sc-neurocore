@@ -40,6 +40,7 @@ def build_deploy_router(context: StudioApiContext) -> APIRouter:
                     "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
                     "graph": graph,
                     "target": target,
+                    "q_format": data.get("q_format", "Q8.8"),
                 },
             )
         )

@@ -21,14 +21,19 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useStudioStore } from "../stores/studio";
-import { buildPipelineEvidenceModel, type PipelineEvidenceModel } from "../pipelineEvidence";
+import {
+  buildPipelineEvidenceModel,
+  pipelineCosimSummary,
+  pipelineFailureReason,
+  type PipelineEvidenceModel,
+} from "../pipelineEvidence";
 import { CANVAS_TINTS } from "../paletteContrast";
 import {
   studioNodeChangePlan,
   studioPopulationDriveLabel,
   studioProjectionLabel,
 } from "../studioGraphRequests";
-import type { GraphSimResult, PipelineResult } from "../api/client";
+import type { GraphSimResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 import NetworkGraphConnect from "./NetworkGraphConnect";
 import NetworkGraphTable from "./NetworkGraphTable";
@@ -45,11 +50,6 @@ import ProjectionEditor from "./ProjectionEditor";
  * @param result - The failed run.
  * @returns The reason to show, never empty.
  */
-function pipelineFailureReason(result: PipelineResult): string {
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-  return result.errors?.join(", ") || result.error || "unknown";
-}
-
 /**
  * What one population node shows on the canvas.
  *
@@ -465,6 +465,9 @@ export default function NetworkCanvas() {
           {pipelineResult.success
             ? `Pipeline complete: ${pipelineResult.pipeline} → ${pipelineResult.target.toUpperCase()}`
             : `Pipeline failed at ${pipelineResult.step}: ${pipelineFailureReason(pipelineResult)}`}
+          {pipelineCosimSummary(pipelineResult) !== null && (
+            <div style={{ marginTop: 2 }}>{pipelineCosimSummary(pipelineResult)}</div>
+          )}
           <PipelineEvidenceStrip evidence={buildPipelineEvidenceModel(pipelineResult)} />
         </div>
       )}

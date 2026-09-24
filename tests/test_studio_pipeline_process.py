@@ -76,6 +76,7 @@ def test_pipeline_process_task_writes_result_and_action_evidence(tmp_path: Path)
         {"graph": {}, "target": "ice40", "eda_process_cpu_seconds": "fast"},
         {"graph": {}, "target": "ice40", "eda_process_memory_bytes": 1.5},
         {"graph": {}, "target": "ice40", "eda_process_cpu_seconds": 0},
+        {"graph": {}, "target": "ice40", "q_format": "Q4.4"},
     ],
 )
 def test_pipeline_process_task_rejects_invalid_payloads(

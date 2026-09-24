@@ -122,6 +122,7 @@ def cosimulate(
     *,
     steps: int | None = None,
     timeout_seconds: float = 300.0,
+    compiled: NetworkCompilationResult | None = None,
 ) -> NetworkCosim:
     """Run the compiled RTL, its bit-true model and the Studio for the same steps.
 
@@ -135,6 +136,9 @@ def cosimulate(
         An empty directory the sources, executables and outputs are written to.
     steps:
         Steps to run; the graph's own step count when omitted.
+    compiled:
+        The lowering already compiled by :func:`compile_lowered`; compiled here
+        when omitted.
 
     Raises
     ------
@@ -147,7 +151,7 @@ def cosimulate(
             f"network co-simulation needs {', '.join(missing)}, which is not installed"
         )
     run_steps = lowered.spec.n_steps if steps is None else steps
-    compiled = compile_lowered(lowered)
+    compiled = compile_lowered(lowered) if compiled is None else compiled
     rtl_sources = _rtl_sources(compiled)
     model_source = _model_source(lowered, compiled, run_steps)
     rtl_raster = _run_rtl(lowered, compiled, rtl_sources, run_steps, workdir, timeout_seconds)
@@ -161,6 +165,17 @@ def cosimulate(
         model_raster=model_raster,
         studio_raster=_studio_raster(graph, lowered, run_steps),
     )
+
+
+def synthesis_source(compiled: NetworkCompilationResult) -> str:
+    """Return the design to synthesise: the top module and the neurons it instantiates.
+
+    The weight ROM and the stochastic-source modules are not instantiated by the
+    direct top module; leaving them out keeps the synthesis tool from choosing
+    one of them as the top.
+    """
+    neurons = [compiled.neuron_modules[name] for name in sorted(compiled.neuron_modules)]
+    return "\n\n".join([compiled.top_module, *neurons])
 
 
 def _rtl_sources(compiled: NetworkCompilationResult) -> dict[str, str]:
@@ -395,4 +410,5 @@ __all__ = [
     "NetworkCosim",
     "compile_lowered",
     "cosimulate",
+    "synthesis_source",
 ]

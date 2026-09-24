@@ -88,8 +88,12 @@ The left panel lists all models by category. Click any model to load it:
 
 1. Go back to **Canvas** tab
 2. With your network designed, click **Pipeline → ICE40**
-3. The pipeline chains: validate → simulate → compile → synthesise
-4. Status bar shows each step's result
+3. The pipeline chains: validate → simulate → lower → co-simulate → synthesise,
+   and builds hardware only for a network it can reproduce (LIF and perfect
+   integrator populations with constant drive); anything else is refused with
+   every reason
+4. The result under the canvas shows the step it ended at and what the
+   co-simulation of the RTL established
 
 ## 10. Save Your Work
 

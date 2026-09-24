@@ -29,7 +29,7 @@ from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.network_graph import create_population, create_projection
 
 from sc_neurocore.studio.project import (
-    NO_GRAPH_LOWERING_REASON,
+    PIPELINE_ROUTE,
     delete_project,
     list_projects,
     load_project,
@@ -69,7 +69,7 @@ __all__ = [
     "delete_project",
     "list_projects",
     "load_project",
-    "NO_GRAPH_LOWERING_REASON",
+    "PIPELINE_ROUTE",
     "run_pipeline",
     "save_project",
     "client",

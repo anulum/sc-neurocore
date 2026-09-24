@@ -17,8 +17,10 @@ than synthesising a stand-in neuron and presenting it as the caller's network.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
+import tempfile
 from pathlib import Path
 from collections.abc import Mapping
 from typing import Any
@@ -397,75 +399,38 @@ def import_project(name: str, document: dict[str, Any]) -> dict[str, Any]:
     return {"imported": name, "revision": created.revision}
 
 
-#: What the compile step refuses with when no graph lowering exists. Named so a
-#: caller can match the contract rather than the prose.
-NO_GRAPH_LOWERING_REASON = (
-    "no supported lowering exists for this graph: the pipeline lowers a single "
-    "equation, a population declares a catalogue model, and no graph-level "
-    "lowering is implemented. Refusing rather than synthesising a stand-in "
-    "neuron and reporting it as this graph's hardware result."
-)
+#: The route every pipeline result names.
+PIPELINE_ROUTE = "graph → simulate → lower → co-simulate → synthesise"
 
+#: Steps the pipeline co-simulates at most. A longer graph is co-simulated over
+#: its first steps; the receipt states how many.
+PIPELINE_COSIM_STEP_LIMIT = 2000
 
-def graph_lowering_refusal(graph: dict[str, Any]) -> dict[str, Any]:
-    """Return why this graph cannot be lowered to hardware.
-
-    Parameters
-    ----------
-    graph : dict
-        Studio network graph payload.
-
-    Returns
-    -------
-    dict
-        ``reason`` naming why no hardware result is claimed, and
-        ``unsupported_models`` listing the declared models whose descriptor
-        records no silicon lowering. The list is informational: the refusal
-        stands even when every model carries one, because lowering a *network*
-        is not the same capability as lowering one model and neither exists
-        here yet.
-    """
-    from sc_neurocore.neurons.descriptor_tiers import silicon_tier
-    from sc_neurocore.neurons.model_catalogue import load_descriptor
-
-    declared: list[str] = []
-    populations = graph.get("populations")
-    if isinstance(populations, list):
-        for population in populations:
-            if isinstance(population, dict):
-                model = population.get("model")
-                if isinstance(model, str) and model not in declared:
-                    declared.append(model)
-
-    unsupported: list[str] = []
-    for model in declared:
-        descriptor = load_descriptor(model)
-        if descriptor is None or silicon_tier(descriptor) is None:
-            unsupported.append(model)
-
-    return {"reason": NO_GRAPH_LOWERING_REASON, "unsupported_models": sorted(unsupported)}
+#: The fixed-point formats a pipeline may compile to, as (width, fraction bits).
+PIPELINE_Q_FORMATS: dict[str, tuple[int, int]] = {"Q8.8": (16, 8), "Q16.16": (32, 16)}
 
 
 def run_pipeline(
     graph: dict[str, Any],
     target: str = "ice40",
     *,
+    q_format: str = "Q8.8",
     process_limits: EdaProcessLimits | None = None,
 ) -> dict[str, Any]:
-    """Run the Studio graph-to-synthesis pipeline, or refuse to claim one.
+    """Validate, simulate, lower, co-simulate and synthesise a Studio network.
 
-    The pipeline validates and simulates the graph, then reports a hardware
-    result **only if it can lower the graph the caller supplied**. It cannot:
-    no graph-level lowering exists, and a population declares a catalogue model
-    rather than an equation, so there is nothing here to compile into hardware
-    that is the caller's network. The compile step therefore refuses and names
-    the reason instead of synthesising a stand-in.
+    The hardware is the network the caller drew: the graph is lowered with each
+    catalogue model's own step (:mod:`sc_neurocore.studio.network_hardware`) or
+    refused with every reason it cannot be. The compiled RTL is then run beside
+    its bit-true model and the Studio's own run
+    (:mod:`sc_neurocore.studio.network_hardware_cosim`); synthesis runs only
+    when the RTL reproduces its model on every co-simulated step. The result's
+    ``trace`` binds the lowering's input digest, the RTL, the model and the
+    synthesised source.
 
-    Until that refusal was added the step compiled one hardcoded leaky
-    integrate-and-fire equation, ignoring the graph entirely, and returned its
-    synthesis as ``graph -> simulate -> compile -> synthesise``. An operator
-    building a Hodgkin-Huxley network received a successful hardware report for
-    a generic neuron that shared nothing with it.
+    Before the lowering existed the step compiled one hardcoded leaky
+    integrate-and-fire equation, ignoring the graph, and later refused every
+    graph; neither was the caller's network.
 
     Parameters
     ----------
@@ -473,6 +438,8 @@ def run_pipeline(
         Studio network graph payload.
     target:
         Studio synthesis target identifier.
+    q_format:
+        ``Q8.8`` or ``Q16.16``, the fixed-point format of the hardware.
     process_limits:
         Optional host-supported CPU and address-space ceilings for the
         downstream synthesis child process.
@@ -480,20 +447,38 @@ def run_pipeline(
     Returns
     -------
     dict[str, Any]
-        Pipeline result containing validation, simulation, compile, and
-        synthesis step payloads, or a bounded failure payload.
+        ``success``, the ``step`` it ended at, each step's payload under
+        ``steps``, and ``trace`` once the RTL was built; a stop carries
+        ``error`` and, when the lowering refused, every ``reasons`` entry.
+
+    Raises
+    ------
+    ValueError
+        When ``q_format`` is not one the pipeline compiles to.
     """
     from sc_neurocore.studio.network_graph import simulate_graph, validate_graph
+    from sc_neurocore.studio.network_hardware import (
+        HardwareLoweringRefused,
+        lower_graph,
+        lowering_public_dict,
+    )
+    from sc_neurocore.studio.network_hardware_cosim import (
+        HardwareCosimUnavailable,
+        compile_lowered,
+        cosimulate,
+        synthesis_source,
+    )
+    from sc_neurocore.studio.synthesis import run_synthesis
 
+    if q_format not in PIPELINE_Q_FORMATS:
+        raise ValueError(f"q_format must be one of {sorted(PIPELINE_Q_FORMATS)}, got {q_format!r}")
     steps: dict[str, Any] = {}
 
-    # Step 1: Validate graph
     errors = validate_graph(graph)
     if errors:
         return {"success": False, "step": "validate", "errors": errors}
     steps["validate"] = {"passed": True}
 
-    # Step 2: Simulate
     sim_result = simulate_graph(graph)
     if not sim_result.get("success"):
         return {"success": False, "step": "simulate", "errors": sim_result.get("errors", [])}
@@ -502,14 +487,63 @@ def run_pipeline(
         "n_total": sim_result.get("n_total", 0),
     }
 
-    # Step 3: Lower the graph — or refuse, rather than synthesise a stand-in.
-    refusal = graph_lowering_refusal(graph)
+    def stopped(step: str, error: str, **extra: Any) -> dict[str, Any]:
+        return {
+            "success": False,
+            "step": step,
+            "target": target,
+            "steps": steps,
+            "error": error,
+            "pipeline": PIPELINE_ROUTE,
+            **extra,
+        }
+
+    data_width, fraction = PIPELINE_Q_FORMATS[q_format]
+    try:
+        lowered = lower_graph(graph, data_width=data_width, fraction=fraction)
+    except HardwareLoweringRefused as refused:
+        return stopped(
+            "lower",
+            "the graph cannot be lowered to hardware exactly",
+            reasons=list(refused.reasons),
+        )
+    steps["lower"] = lowering_public_dict(lowered)
+
+    try:
+        compiled = compile_lowered(lowered)
+    except ValueError as exc:
+        return stopped("compile", f"the network compiler refused the lowered graph: {exc}")
+    try:
+        with tempfile.TemporaryDirectory(prefix="sc_pipeline_") as workdir:
+            cosim = cosimulate(
+                lowered,
+                graph,
+                Path(workdir),
+                steps=min(lowered.spec.n_steps, PIPELINE_COSIM_STEP_LIMIT),
+                compiled=compiled,
+            )
+    except HardwareCosimUnavailable as exc:
+        return stopped("cosimulate", str(exc))
+    steps["cosimulate"] = cosim.to_public_dict()
+    if not cosim.rtl_matches_model:
+        return stopped(
+            "cosimulate",
+            "the compiled RTL does not reproduce its bit-true model; it is not the lowered network",
+        )
+
+    source = synthesis_source(compiled)
+    synthesis = run_synthesis(source, target, process_limits=process_limits)
+    steps["synthesise"] = synthesis
     return {
-        "success": False,
-        "step": "compile",
+        "success": bool(synthesis.get("success")),
+        "step": "synthesise",
         "target": target,
         "steps": steps,
-        "error": refusal["reason"],
-        "unsupported_models": refusal["unsupported_models"],
-        "pipeline": "graph → simulate → (no graph lowering)",
+        "trace": {
+            "input_sha256": cosim.input_sha256,
+            "rtl_sha256": cosim.rtl_sha256,
+            "bit_true_model_sha256": cosim.model_sha256,
+            "synthesis_source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+        },
+        "pipeline": PIPELINE_ROUTE,
     }
