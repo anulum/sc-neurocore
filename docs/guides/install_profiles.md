@@ -184,6 +184,8 @@ refreshed rather than ignored.
 | `pip install "sc-neurocore[core]"` | Explicit base install for reproducible scripts and Dockerfiles | No additional packages beyond base `numpy` / `scipy` |
 | `pip install "sc-neurocore[training]"` | Training PyTorch-backed models; `auto_device()` skips CUDA GPUs unsupported by the installed PyTorch build | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |
+| `pip install "sc-neurocore[neuroml]"` | Writing NeuroML 2 documents and validating them against the schema | `libNeuroML` |
+| `pip install "sc-neurocore[sonata]"` | Reading SONATA circuits through the reference library | `libsonata` |
 | `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
 | `pip install "sc-neurocore[optics]"` | Source-checkout photonic-layout and GDSII round-trip checks | `gdsfactory` |
 | `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility and does not change PyTorch CUDA architecture support | `cupy-cuda12x` |

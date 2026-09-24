@@ -60,7 +60,7 @@
     "static_primitive_pattern": "hdl/primitives/*.v",
     "vivado_required_for_baseline": false
   },
-  "optional_extra_count": 28,
+  "optional_extra_count": 30,
   "optional_extras": [
     "accel",
     "annealing",
@@ -81,11 +81,13 @@
     "license",
     "minimal",
     "mpi",
+    "neuroml",
     "nir",
     "optics",
     "quantum",
     "quantum-cognition",
     "research",
+    "sonata",
     "studio",
     "symbolic",
     "training",
@@ -102,6 +104,7 @@
     "neurons/model_schemas/*.json",
     "neurons/model_schemas/*.toml",
     "neurons/reference_trace_data/*.json",
+    "neurons/reference_receipts/*.json",
     "neurons/model_descriptors/*.toml"
   ],
   "passed": true,
