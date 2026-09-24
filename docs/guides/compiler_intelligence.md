@@ -318,11 +318,19 @@ print(f"Bandwidth reduction: {result.bandwidth_reduction:.1%}")
 
 ## Full-Stack Deployment Analysis (§42–§51)
 
-### §42. NIR / ONNX-SNN Import — `import_nir_graph()`
+### §42. Dict-form NIR Import — `import_nir_graph()`
 
-Imports trained SNN models from snnTorch, Norse, Sinabs, or Nengo via the
-Neuromorphic Intermediate Representation (NIR) standard, bridging the gap
-between ML training frameworks and hardware compilation.
+Imports a plain-dictionary description of a point-neuron NIR graph (`LIF`,
+`IF`, `LI`, `CubaLIF`, `CubaLI`, integrator, plus the `Izhikevich`
+extension) into ODE equations, bridging ML training frameworks and hardware
+compilation. For `.nir` files and typed `nir.*` graphs use
+`sc_neurocore.nir_bridge.from_nir`; ONNX models are not read.
+
+Nothing is invented silently: a node without a `type`, or with an unsupported
+one, raises `ValueError`, and so does an edge that does not join two nodes of
+the graph. Parameters a node omits take the template default and are listed in
+`graph.defaulted_parameters`; parameters its template does not use are not
+applied and are listed in `graph.unused_parameters`.
 
 ```python
 from sc_neurocore.compiler.intelligence import import_nir_graph

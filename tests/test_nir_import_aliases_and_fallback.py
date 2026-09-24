@@ -28,7 +28,7 @@ class TestAliasesAndFallback:
     def test_alias_resolution(self, alias, canonical):
         assert _one(alias).node_types["n0"] == canonical
 
-    def test_unknown_type_falls_back_to_leaky_integrator(self):
-        g = _one("Mystery", tau=5.0)
-        assert g.node_types["n0"] == "li"
-        assert "5.0" in g.equations["n0"]
+    def test_unknown_type_is_refused_rather_than_replaced(self):
+        # Substituting a leaky integrator would silently change the network.
+        with pytest.raises(ValueError, match=r"unsupported type 'Mystery'.*supported: cuba_li"):
+            _one("Mystery", tau=5.0)

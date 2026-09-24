@@ -117,7 +117,7 @@ sc-neurocore compile-nir model.nir \
   --output build/cortical_network
 ```
 
-`compile-nir` accepts `.nir` and `.onnx`. It rejects `data-width <= 1`, negative
+`compile-nir` accepts `.nir` files; it does not read ONNX models. It rejects `data-width <= 1`, negative
 fractions, and `fraction >= data-width` before loading the graph. Generated
 bundles include the top module, neuron modules, weight ROM, stochastic source
 modules, hierarchy boundary modules when present, `scnir_document.json`, and

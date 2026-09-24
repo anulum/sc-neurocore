@@ -73,14 +73,16 @@ class TestCompileNirCommand:
         assert run_cli("compile-nir", str(tmp_path / "model.nir"), *arguments) == 1
         assert message in capsys.readouterr().out
 
+    @pytest.mark.parametrize("name", ["model.pt", "model.onnx"])
     def test_compile_nir_rejects_unknown_extension(
         self,
         tmp_path: Path,
         capsys: pytest.CaptureFixture[str],
+        name: str,
     ) -> None:
-        """Only the NIR importer formats are accepted."""
-        assert run_cli("compile-nir", str(tmp_path / "model.pt")) == 1
-        assert "supports .nir and .onnx" in capsys.readouterr().out
+        """Only NIR files are accepted; ``nir.read`` cannot read ONNX models."""
+        assert run_cli("compile-nir", str(tmp_path / name)) == 1
+        assert "supports .nir files" in capsys.readouterr().out
 
     def test_compile_nir_reports_folded_web_metrics_without_fpga_area(
         self,

@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 
 class TestNIRImport:
     def test_lif_import(self) -> None:
@@ -48,9 +50,9 @@ class TestNIRImport:
         g = import_nir_graph({"nodes": {"n0": {"type": "Izhikevich"}}, "edges": []})
         assert "0.04" in g.equations["n0"]
 
-    def test_unknown_type_falls_back_to_leaky_equation(self) -> None:
-        """An unrecognised node type falls back to a generic leaky equation."""
+    def test_unknown_type_is_refused(self) -> None:
+        """An unrecognised node type is refused rather than replaced by another model."""
         from sc_neurocore.compiler.intelligence import import_nir_graph
 
-        g = import_nir_graph({"nodes": {"n0": {"type": "Mystery", "tau": 5.0}}, "edges": []})
-        assert "5.0" in g.equations["n0"]
+        with pytest.raises(ValueError, match="unsupported type 'Mystery'"):
+            import_nir_graph({"nodes": {"n0": {"type": "Mystery", "tau": 5.0}}, "edges": []})

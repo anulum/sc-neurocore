@@ -26,3 +26,15 @@ class TestGraphStructure:
     def test_empty_graph(self):
         g = import_nir_graph({})
         assert g.equations == {} and g.edges == []
+
+    @pytest.mark.parametrize(
+        ("edge", "message"),
+        [
+            (["a"], "must be a \\(source, target\\) pair"),
+            ("ab", "must be a \\(source, target\\) pair"),
+            (["a", "ghost"], "names nodes not in the graph: \\['ghost'\\]"),
+        ],
+    )
+    def test_an_edge_must_join_two_nodes_of_the_graph(self, edge, message):
+        with pytest.raises(ValueError, match=message):
+            import_nir_graph({"nodes": {"a": {"type": "LIF"}}, "edges": [edge]})

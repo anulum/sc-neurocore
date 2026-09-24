@@ -9955,6 +9955,12 @@ resets : dict&#91;str, str | None&#93;
 parameters : dict&#91;str, dict&#91;str, float&#93;&#93;
     Node name → the resolved numeric parameters (template defaults overlaid
     with the node's own values).
+defaulted_parameters : dict&#91;str, tuple&#91;str, ...&#93;&#93;
+    Node name → template parameters the node did not give, which took the
+    template's default value.
+unused_parameters : dict&#91;str, tuple&#91;str, ...&#93;&#93;
+    Node name → parameters the node gave that its template does not use and
+    that were therefore not applied.
 
 
 ### Function `import_nir_graph(nir_data)`
@@ -9962,14 +9968,14 @@ Import a dict-form Neuromorphic Intermediate Representation graph.
 
 Each node's ``type`` selects a canonical ODE template (shared with the FPGA
 back-end); the node's parameters overlay the template defaults and are
-substituted into concrete equations, thresholds and reset rules. Node types
-outside the recognised set fall back to a leaky integrator.
+substituted into concrete equations, thresholds and reset rules. Defaulted
+and unused parameters are reported on the result.
 
 Parameters
 ----------
 nir_data : dict
     Graph as ``{"nodes": {name: {"type": ..., <params>}}, "edges": &#91;...&#93;}``.
-    A node without a ``type`` defaults to ``LIF``.
+    Every node needs a ``type``.
 framework : str
     Source framework label recorded on the result.
 
@@ -9977,8 +9983,15 @@ Returns
 -------
 NIRGraph
     Imported graph with per-node equations, state equations, thresholds,
-    reset rules and resolved parameters. For the authoritative typed import
-    use :func:`sc_neurocore.nir_bridge.from_nir`.
+    reset rules, resolved parameters, and the defaulted and unused
+    parameters of each node. For the authoritative typed import use
+    :func:`sc_neurocore.nir_bridge.from_nir`.
+
+Raises
+------
+ValueError
+    A node has no type or an unsupported one, or an edge is not a pair of
+    node names of this graph.
 
 ---
 

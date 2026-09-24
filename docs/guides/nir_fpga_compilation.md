@@ -707,7 +707,7 @@ sc-neurocore compile-nir <model> [options]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `model` | — | `.nir` or `.onnx` file path |
+| `model` | — | `.nir` file path (ONNX models are not read) |
 | `--target` | `ice40` | FPGA target |
 | `-o, --output` | `build` | Output directory |
 | `--module-name` | `sc_equation_neuron` | Top module name |

@@ -14,10 +14,12 @@ from tests.nir_import_support import *  # noqa: F403
 
 
 class TestParameterResolution:
-    def test_defaults_are_applied(self):
-        g = _one("LIF")
-        assert g.parameters["n0"]["tau"] == 20.0
+    def test_defaults_are_applied_and_reported(self):
+        g = _one("LIF", tau=7.0)
+        assert g.parameters["n0"]["tau"] == 7.0
         assert g.parameters["n0"]["v_threshold"] == 1.0
+        assert "v_threshold" in g.defaulted_parameters["n0"]
+        assert "tau" not in g.defaulted_parameters["n0"]
 
     def test_node_params_override_defaults(self):
         g = _one("LIF", tau=7.0, v_threshold=2.0)
@@ -25,9 +27,10 @@ class TestParameterResolution:
         assert "7.0" in g.equations["n0"]
         assert g.thresholds["n0"] == "v > 2.0"
 
-    def test_unknown_params_are_ignored(self):
+    def test_unknown_params_are_not_applied_and_are_reported(self):
         g = _one("LIF", not_a_param=99.0)
         assert "not_a_param" not in g.parameters["n0"]
+        assert g.unused_parameters["n0"] == ("not_a_param",)
 
     def test_distinct_time_constants_substituted_independently(self):
         # tau_syn and tau_mem must not clobber one another (longest-first).

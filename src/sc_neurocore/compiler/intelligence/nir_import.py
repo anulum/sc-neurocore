@@ -28,6 +28,13 @@ Beyond the six NIR standard point-neuron types (``LIF``, ``IF``, ``LI``,
 ``CubaLIF``, ``CubaLI``, ``I``/integrator) this importer also recognises
 ``Izhikevich``, which is not part of the NIR node set and is provided here as a
 documented extension.
+
+Nothing is invented silently. A node without a ``type``, or with a type outside
+that set, is refused: substituting another model would change the network. A
+parameter the node does not give takes the template's default, and a parameter
+the template does not use is not applied; both are listed on the result, per
+node, so a caller can see exactly what was assumed and what was left out.
+Edges must name nodes of the graph.
 """
 
 from __future__ import annotations
@@ -67,8 +74,6 @@ _TYPE_ALIASES: dict[str, str] = {
     "izh": "izhikevich",
 }
 
-_FALLBACK_TYPE = "li"
-
 
 @dataclass(frozen=True)
 class NIRGraph:
@@ -99,6 +104,12 @@ class NIRGraph:
     parameters : dict[str, dict[str, float]]
         Node name → the resolved numeric parameters (template defaults overlaid
         with the node's own values).
+    defaulted_parameters : dict[str, tuple[str, ...]]
+        Node name → template parameters the node did not give, which took the
+        template's default value.
+    unused_parameters : dict[str, tuple[str, ...]]
+        Node name → parameters the node gave that its template does not use and
+        that were therefore not applied.
     """
 
     nodes: dict[str, dict[str, Any]]
@@ -110,12 +121,25 @@ class NIRGraph:
     thresholds: dict[str, str | None] = field(default_factory=dict)
     resets: dict[str, str | None] = field(default_factory=dict)
     parameters: dict[str, dict[str, float]] = field(default_factory=dict)
+    defaulted_parameters: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    unused_parameters: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
-def _canonical_type(raw: str) -> str:
-    """Resolve a free-form node-type tag to a canonical template key."""
+def _canonical_type(name: str, raw: object) -> str:
+    """Resolve a node's type tag to a canonical template key, or refuse it.
+
+    Raises
+    ------
+    ValueError
+        The node has no type, or a type this importer does not model.
+    """
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError(f"NIR node {name!r} has no type; a node type is required")
     key = re.sub(r"[^a-z0-9]", "", raw.lower())
-    return _TYPE_ALIASES.get(key, _FALLBACK_TYPE)
+    if key not in _TYPE_ALIASES:
+        supported = ", ".join(sorted(set(_TYPE_ALIASES.values())))
+        raise ValueError(f"NIR node {name!r} has unsupported type {raw!r}; supported: {supported}")
+    return _TYPE_ALIASES[key]
 
 
 def _template_for(ntype: str) -> dict[str, Any]:
@@ -166,14 +190,14 @@ def import_nir_graph(
 
     Each node's ``type`` selects a canonical ODE template (shared with the FPGA
     back-end); the node's parameters overlay the template defaults and are
-    substituted into concrete equations, thresholds and reset rules. Node types
-    outside the recognised set fall back to a leaky integrator.
+    substituted into concrete equations, thresholds and reset rules. Defaulted
+    and unused parameters are reported on the result.
 
     Parameters
     ----------
     nir_data : dict
         Graph as ``{"nodes": {name: {"type": ..., <params>}}, "edges": [...]}``.
-        A node without a ``type`` defaults to ``LIF``.
+        Every node needs a ``type``.
     framework : str
         Source framework label recorded on the result.
 
@@ -181,8 +205,15 @@ def import_nir_graph(
     -------
     NIRGraph
         Imported graph with per-node equations, state equations, thresholds,
-        reset rules and resolved parameters. For the authoritative typed import
-        use :func:`sc_neurocore.nir_bridge.from_nir`.
+        reset rules, resolved parameters, and the defaulted and unused
+        parameters of each node. For the authoritative typed import use
+        :func:`sc_neurocore.nir_bridge.from_nir`.
+
+    Raises
+    ------
+    ValueError
+        A node has no type or an unsupported one, or an edge is not a pair of
+        node names of this graph.
     """
     nodes = nir_data.get("nodes", {})
     edges = nir_data.get("edges", [])
@@ -193,9 +224,11 @@ def import_nir_graph(
     thresholds: dict[str, str | None] = {}
     resets: dict[str, str | None] = {}
     parameters: dict[str, dict[str, float]] = {}
+    defaulted: dict[str, tuple[str, ...]] = {}
+    unused: dict[str, tuple[str, ...]] = {}
 
     for name, params in nodes.items():
-        ntype = _canonical_type(str(params.get("type", "LIF")))
+        ntype = _canonical_type(name, params.get("type"))
         state_eqs, resolved, threshold, reset = _resolve_node(ntype, params)
         node_types[name] = ntype
         state_equations[name] = state_eqs
@@ -203,10 +236,23 @@ def import_nir_graph(
         thresholds[name] = threshold
         resets[name] = reset
         parameters[name] = resolved
+        given = set(params) - {"type"}
+        defaulted[name] = tuple(sorted(set(resolved) - given))
+        unused[name] = tuple(sorted(given - set(resolved)))
+
+    pairs: list[tuple[str, str]] = []
+    for edge in edges:
+        if not isinstance(edge, (list, tuple)) or len(edge) != 2:
+            raise ValueError(f"NIR edge {edge!r} must be a (source, target) pair")
+        source, target = edge
+        missing = [end for end in (source, target) if end not in nodes]
+        if missing:
+            raise ValueError(f"NIR edge {edge!r} names nodes not in the graph: {missing}")
+        pairs.append((source, target))
 
     return NIRGraph(
         nodes=nodes,
-        edges=[(e[0], e[1]) for e in edges],
+        edges=pairs,
         equations=equations,
         framework=framework,
         node_types=node_types,
@@ -214,4 +260,6 @@ def import_nir_graph(
         thresholds=thresholds,
         resets=resets,
         parameters=parameters,
+        defaulted_parameters=defaulted,
+        unused_parameters=unused,
     )

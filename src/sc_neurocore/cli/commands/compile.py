@@ -62,7 +62,7 @@ def add_compile_commands(
         help="Compile a NIR or ONNX graph into a Verilog network bundle",
         description="Lower one imported network into RTL, SC-NIR metadata, and source manifests.",
     )
-    nir.add_argument("model", nargs="?", help="NIR or ONNX model file")
+    nir.add_argument("model", nargs="?", help="NIR model file (.nir)")
     _add_target_argument(nir)
     _add_output_argument(nir)
     nir.add_argument("--dt", type=float, default=1.0, help="NIR simulation timestep")
@@ -120,15 +120,15 @@ def run_compile_nir(args: argparse.Namespace) -> int:
     from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
 
     ext = os.path.splitext(args.model)[1].lower()
-    if ext not in (".nir", ".onnx"):
-        print(f"Error: compile-nir supports .nir and .onnx files, got '{ext}'")
+    if ext != ".nir":
+        print(f"Error: compile-nir supports .nir files, got '{ext}'")
         return 1
 
     data_width = int(args.data_width)
     fraction = int(args.fraction)
 
     print(f"[1/4] Loading model: {args.model}")
-    # ``nir.read`` is the canonical importer for both NIR and ONNX inputs.
+    # ``nir.read`` reads NIR files (HDF5); it does not read ONNX models.
     graph = nir_lib.read(args.model)
     network = from_nir(graph, dt=args.dt)
 

@@ -14,9 +14,11 @@ from tests.nir_import_support import *  # noqa: F403
 
 
 class TestNodeTypes:
-    def test_default_type_is_lif(self):
-        g = _one()  # no "type" key
-        assert g.node_types["n0"] == "lif"
+    @pytest.mark.parametrize("missing", [None, "", "  ", 7])
+    def test_a_node_without_a_type_is_refused(self, missing):
+        spec = {} if missing is None else {"type": missing}
+        with pytest.raises(ValueError, match="NIR node 'n0' has no type"):
+            import_nir_graph({"nodes": {"n0": spec}, "edges": []})
 
     def test_if_has_threshold_no_leak(self):
         g = _one("IF")
