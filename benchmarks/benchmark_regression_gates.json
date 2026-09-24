@@ -3778,7 +3778,7 @@
       "expected_values": {
         "comparison.connection_count": 2,
         "comparison.generated_output_byte_identical": true,
-        "comparison.generated_sha256": "32498fa1106229a4fe064862e20b86e0f0b1f0d42f8598d1988e06e68c13ef13",
+        "comparison.generated_sha256": "d1a19a26a33912f5c10c29d2f0d86cb14693d90a6a8242b8c1b063e6cf3bd899",
         "comparison.population_count": 2,
         "comparison.total_neurons": 8,
         "comparison.total_synapses": 36,
@@ -3796,7 +3796,7 @@
         "polyglot_applicability.rust": "not_applicable",
         "schema_version": "sc-neurocore.nir-graph-modularisation-benchmark.v1",
         "source_file_count": 8,
-        "source_sha256": "fbb64ccc54613814a24cfc357423d5e8e85dd3cfe840cfa5e7bd4be78124e20b"
+        "source_sha256": "042655983fc833b9bdd3ab1184ff81e696a21584047c12467cc7127be4ebb205"
       },
       "id": "nir-graph-modularisation-local-diagnostics",
       "required_numbers": [
