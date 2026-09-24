@@ -129,6 +129,23 @@ def test_bytes_that_differ_from_the_manifest_are_not_sealed(ledger: StudioJobLed
     assert not (ledger.path.parent / JOB).exists()
 
 
+def test_a_refusal_that_arrives_while_bytes_remain_to_send_is_still_read(
+    ledger: StudioJobLedger,
+) -> None:
+    """The authority refuses the first bad frame and closes; the client reads that answer.
+
+    The client is held until the authority has answered and returned, so its
+    next send meets a closed peer. The refusal already in the channel is the
+    answer, not the broken pipe.
+    """
+    stop(started(ledger))
+    declared = request(FILES)
+    wrong = [b'{"ok": false}'[: len(FILES["reports/summary.json"])], *list(FILES.values())[1:]]
+    response = finish(ledger, declared, wrong, hold_after_first_payload=True)
+    assert (response.reply, response.reason) == ("refused", "bytes")
+    assert ledger.record(JOB).status == "running"
+
+
 def test_an_occupied_artefact_path_is_a_conflict(ledger: StudioJobLedger) -> None:
     """Bytes already sealed differently at a path are never replaced."""
     stop(started(ledger))

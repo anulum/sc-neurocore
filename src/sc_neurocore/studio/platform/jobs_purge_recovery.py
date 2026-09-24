@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import shutil
 import os
 import stat
 import threading
@@ -50,11 +49,22 @@ def _matches(path: Path, device: int | None, inode: int | None) -> bool:
 
 
 def _clear_directory(descriptor: int) -> None:
-    """Clear contents relative to an already verified open directory."""
+    """Clear contents relative to an already verified open directory.
+
+    Subdirectories are opened relative to their parent without following a
+    link and cleared the same way before they are removed, which is what
+    ``shutil.rmtree(dir_fd=...)`` does from Python 3.11; doing it here keeps one
+    path on every supported Python.
+    """
     for name in os.listdir(descriptor):
         entry = os.stat(name, dir_fd=descriptor, follow_symlinks=False)
         if stat.S_ISDIR(entry.st_mode):
-            shutil.rmtree(name, dir_fd=descriptor)
+            child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+            try:
+                _clear_directory(child)
+            finally:
+                os.close(child)
+            os.rmdir(name, dir_fd=descriptor)
         else:
             os.unlink(name, dir_fd=descriptor)
 

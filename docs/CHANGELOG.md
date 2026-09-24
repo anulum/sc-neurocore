@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Job custody on Python 3.10, and a refusal read instead of a broken pipe
+
+- Purging a finished job failed on Python 3.10: clearing its directory called
+  `shutil.rmtree(dir_fd=...)`, which exists from Python 3.11. The directory is
+  now cleared by walking it relative to its open descriptor without following
+  links, the same on every supported Python.
+- When the storage authority refused an artefact frame and closed, a finishing
+  API process that still had frames to send could hit a broken pipe, which
+  closes the channel with the refusal unread. The client now reads an answer
+  already waiting before it sends the next frame, so the refusal is reported.
+
 ### Candidate models: author, check and review a proposed model in the Studio
 
 - A candidate package (`sc-neurocore.studio.candidate.v1`) carries one

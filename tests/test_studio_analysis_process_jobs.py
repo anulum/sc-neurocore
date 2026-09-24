@@ -94,7 +94,8 @@ def test_named_process_matches_existing_thread_analysis(tmp_path: Path, analysis
         right = json.loads(json.dumps(expected.result))
         for result in (left, right):
             timestamp = result["evidence_receipt"].pop("produced_at_utc")
-            assert datetime.fromisoformat(timestamp).tzinfo is not None
+            # Python 3.10 reads no "Z" suffix; the stored form uses it, so it is spelled out.
+            assert datetime.fromisoformat(timestamp.replace("Z", "+00:00")).tzinfo is not None
         assert left == right
         assert receipt["schema_version"] == "studio.analysis.job.v1"
     finally:

@@ -18,6 +18,7 @@ import subprocess
 import sys
 import threading
 import time
+from typing import overload
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
@@ -107,11 +108,16 @@ def finish(
     *,
     competing: Callable[[], None] | None = None,
     frame_max_bytes: int = FRAME,
+    hold_after_first_payload: bool = False,
 ) -> StorageFinishResponse:
     """Run the real authority handler and the real client over one socket pair.
 
     ``competing`` runs as a concurrent writer when the handler begins its
     second write transaction, after the ownership check and before commit.
+    ``hold_after_first_payload`` makes the client wait, before sending any
+    artefact after the first, until the authority has answered and returned:
+    the ordering in which a refusal reaches the client while it still has bytes
+    to send, which otherwise depends on scheduling.
     """
     service, client = socket.socketpair()
     failures: list[BaseException] = []
@@ -137,12 +143,30 @@ def finish(
             ledger.close()
 
     thread = threading.Thread(target=serve)
+
+    class _HeldAfterFirst(Sequence[bytes]):
+        """The payloads, handed out only once the authority has finished."""
+
+        def __len__(self) -> int:
+            return len(payloads)
+
+        @overload
+        def __getitem__(self, index: int) -> bytes: ...
+
+        @overload
+        def __getitem__(self, index: slice) -> Sequence[bytes]: ...
+
+        def __getitem__(self, index: int | slice) -> bytes | Sequence[bytes]:
+            if isinstance(index, int) and index >= 1:
+                thread.join(timeout=10.0)
+            return payloads[index]
+
     thread.start()
     try:
         return exchange_finish(
             client,
             sent,
-            payloads,
+            _HeldAfterFirst() if hold_after_first_payload else payloads,
             expected_service_uid=os.getuid(),
             max_bytes=frame_max_bytes,
             deadline=time.monotonic() + 10.0,

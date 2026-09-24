@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 import secrets
+import select
 import socket
 import stat
 from collections.abc import Sequence
@@ -272,6 +273,13 @@ def exchange_finish(
         if response.reply != "ready":
             return response
         for payload in payloads:
-            if payload:
-                send(payload)
+            if not payload:
+                continue
+            # The authority writes before the last frame only to refuse one; it
+            # then closes without reading the rest. Read that answer instead of
+            # writing into a closed peer, which would close the channel with the
+            # answer still unread.
+            if select.select([channel], [], [], 0)[0]:
+                return receive()
+            send(payload)
         return receive()
