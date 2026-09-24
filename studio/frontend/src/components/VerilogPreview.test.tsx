@@ -62,7 +62,8 @@ describe("VerilogPreview", () => {
     const { default: VerilogPreview } = await import("./VerilogPreview");
     const html = renderToStaticMarkup(<VerilogPreview />);
 
-    expect(html).toContain("BIT-EXACT PASS");
+    expect(html).toContain("RTL = bit-true C kernel");
+    expect(html).not.toContain("BIT-EXACT PASS");
     expect(html).toContain("128 cycles");
     expect(html).toContain("GCC + Icarus/VVP");
     expect(html).toContain("aaaaaaaaaaaa");

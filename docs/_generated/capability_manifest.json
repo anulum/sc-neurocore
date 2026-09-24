@@ -967,11 +967,11 @@
     "model_documentation_pages": 200,
     "optional_extras": 30,
     "public_api_exports": 45,
-    "public_documentation_pages": 634,
+    "public_documentation_pages": 635,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4996
+    "test_files": 4997
   },
   "documentation": {
     "public_pages": [
@@ -1474,6 +1474,7 @@
       "docs/studio/index.md",
       "docs/studio/integration.md",
       "docs/studio/job-ledger.md",
+      "docs/studio/model-readiness.md",
       "docs/studio/network-canvas.md",
       "docs/studio/numeric-contract.md",
       "docs/studio/ode-editor.md",
@@ -7465,6 +7466,7 @@
       "tests/test_studio_model_cosim_process.py",
       "tests/test_studio_model_documentation_availability.py",
       "tests/test_studio_model_numeric_contracts.py",
+      "tests/test_studio_model_readiness_verified.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_model_scan_budget.py",
       "tests/test_studio_model_scan_process.py",

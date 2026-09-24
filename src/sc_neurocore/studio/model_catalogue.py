@@ -15,7 +15,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from sc_neurocore.neurons.descriptor_tiers import completeness_tiers, is_perfect
+from sc_neurocore.neurons.descriptor_tiers import SILICON_RUNGS, completeness_tiers, is_perfect
 from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.model_identity import identity_registry
@@ -378,6 +378,13 @@ def _verified_detail(class_name: str) -> dict[str, Any]:
     }
 
 
+def _verified_perfect(science: int, silicon: int | None, target: str | None) -> bool:
+    """Return whether verified tiers meet S5 and the declared terminal silicon tier."""
+    if science != 5 or silicon is None or target not in SILICON_RUNGS:
+        return False
+    return silicon >= SILICON_RUNGS.index(target)
+
+
 def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build the auditable dual-axis readiness view for a declared descriptor.
 
@@ -387,15 +394,22 @@ def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
     reviewer can see exactly why a model sits where it does, whether it meets
     its declared deployability class, and how much of the claim is bound to an
     executed, still-fresh receipt.
+
+    ``is_perfect`` is the declared judgement; ``is_perfect_verified`` applies
+    the same rule to the verified tiers, and only it may be shown as perfect.
     """
     tiers = completeness_tiers(descriptor)
+    verified = _verified_detail(descriptor.class_name)
     return {
         "science_tier": tiers.science,
         "science_label": tiers.science_label,
         "silicon_tier": tiers.silicon,
         "silicon_label": tiers.silicon_label,
-        "verified": _verified_detail(descriptor.class_name),
+        "verified": verified,
         "is_perfect": is_perfect(descriptor),
+        "is_perfect_verified": _verified_perfect(
+            verified["science_tier"], verified["silicon_tier"], descriptor.silicon.target_tier
+        ),
         "terminal_silicon_tier": descriptor.silicon.target_tier,
         "terminal_reason": descriptor.silicon.terminal_reason,
         "validation": {

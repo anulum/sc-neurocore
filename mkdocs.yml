@@ -147,6 +147,7 @@ nav:
       - Overview: studio/index.md
       - Compiler Inspector: studio/compiler-inspector.md
       - Hardware Numeric Contract: studio/numeric-contract.md
+      - Model Readiness Labels: studio/model-readiness.md
       - Synthesis Dashboard: studio/synthesis-dashboard.md
       - Training Monitor: studio/training-monitor.md
       - Network Canvas: studio/network-canvas.md

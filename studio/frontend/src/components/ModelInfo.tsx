@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import { formatCitation } from "../citation";
 import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
+import { perfectBadge, verifiedTiers } from "../modelReadinessBadge";
 
 /**
  * The selected model's contract, readiness and citation.
@@ -19,6 +20,7 @@ import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
 export default function ModelInfo() {
   const { sourceMode, modelDetail, equations, odeParams, odeInit, dt, duration } = useStudioStore();
   const [copied, setCopied] = useState(false);
+  const badge = perfectBadge(modelDetail?.readiness ?? undefined);
 
   const citation = modelDetail ? formatCitation(modelDetail.provenance, modelDetail.name) : "";
   /** Copy the model's citation, where the browser allows it. */
@@ -67,15 +69,26 @@ export default function ModelInfo() {
               background: "var(--bg-tertiary)", color: "var(--text-muted)", textTransform: "uppercase",
             }}>{modelDetail.maturity}</span>
           )}
-          {modelDetail.readiness?.is_perfect === true && (
+          {verifiedTiers(modelDetail.readiness) && (
             <span
-              title="Dual-axis perfect: science S5 and terminal silicon target met"
+              data-testid="verified-tiers"
+              title="Tiers bound to fresh facet receipts for the profile Studio compiles"
+              style={{ fontSize: 9, color: "var(--text-secondary)" }}
+            >
+              {verifiedTiers(modelDetail.readiness)}
+            </span>
+          )}
+          {badge && (
+            <span
+              data-testid="perfect-badge"
+              title={badge.title}
               style={{
                 fontSize: 8, padding: "0 4px", borderRadius: 2, fontWeight: 700,
-                background: "var(--success)", color: "var(--bg-primary)",
+                background: badge.verified ? "var(--success)" : "var(--bg-tertiary)",
+                color: badge.verified ? "var(--bg-primary)" : "var(--text-muted)",
               }}
             >
-              perfect
+              {badge.label}
             </span>
           )}
         </div>

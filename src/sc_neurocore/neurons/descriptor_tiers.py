@@ -109,7 +109,9 @@ def silicon_tier(descriptor: ModelDescriptor) -> int | None:
     both its boolean flag and its proof anchor are present:
 
     * **H0** — ``silicon.compiles`` (iverilog-valid RTL).
-    * **H1** — Python<->Verilog validated (``cosim_validated`` + ``cosim_evidence``).
+    * **H1** — co-simulation evidence recorded (``cosim_validated`` +
+      ``cosim_evidence``); which boundary it compares (float model, bit-true
+      kernel or RTL) is stated by that evidence, not by the rung.
     * **H2** — synthesisable (``synthesised`` + ``synth_report``).
     * **H3** — timing-closed and resource-characterised (``timing_closed`` +
       ``timing_report`` + ``clock_mhz``).

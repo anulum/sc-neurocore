@@ -8,6 +8,7 @@
 
 import Editor from "@monaco-editor/react";
 import { useStudioStore } from "../stores/studio";
+import { cosimVerdict } from "../cosimVerdict";
 
 /**
  * The generated RTL, as text.
@@ -76,10 +77,14 @@ export default function VerilogPreview() {
           )}
           {cosimResult && (
             <>
-              <strong style={{ color: cosimResult.bit_exact ? "#7bc67b" : "#ff5252" }}>
-                {cosimResult.bit_exact ? "BIT-EXACT PASS" : "PARITY FAIL"}
+              <strong
+                data-testid="cosim-verdict"
+                title={cosimVerdict(cosimResult).title}
+                style={{ color: cosimResult.bit_exact ? "#7bc67b" : "#ff5252" }}
+              >
+                {cosimVerdict(cosimResult).label}
               </strong>
-              <span>{cosimResult.sample_count} cycles</span>
+              <span>{cosimVerdict(cosimResult).cycles}</span>
               <span>{cosimResult.configuration.q_format}</span>
               <span>{cosimResult.configuration.integrator}</span>
               <span>{cosimResult.signals.length} signals</span>
@@ -90,10 +95,8 @@ export default function VerilogPreview() {
               <span title={Object.values(cosimResult.tools).join(" | ")}>
                 GCC + Icarus/VVP
               </span>
-              {cosimResult.first_mismatch && (
-                <span style={{ color: "#ff5252" }}>
-                  cycle {cosimResult.first_mismatch.cycle}: {cosimResult.first_mismatch.signals.join(", ")}
-                </span>
+              {cosimVerdict(cosimResult).mismatch && (
+                <span style={{ color: "#ff5252" }}>{cosimVerdict(cosimResult).mismatch}</span>
               )}
             </>
           )}

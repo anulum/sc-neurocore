@@ -424,6 +424,15 @@ export interface ModelBackendSupport {
   name: string; status: string; parity: string;
 }
 
+/** The tiers fresh facet receipts establish, for the profile Studio compiles. */
+export interface ModelVerifiedReadiness {
+  profile: string | null;
+  science_tier: number;
+  science_label: string;
+  silicon_tier: number | null;
+  silicon_label: string;
+}
+
 /**
  * A model's readiness on both axes, with the evidence behind each.
  *
@@ -436,7 +445,11 @@ export interface ModelReadiness {
   science_label: string;
   silicon_tier: number | null;
   silicon_label: string;
+  /** Declared: the descriptor's own flags meet S5 and the terminal tier. */
   is_perfect?: boolean;
+  /** Verified: fresh facet receipts meet S5 and the terminal tier. */
+  is_perfect_verified?: boolean;
+  verified?: ModelVerifiedReadiness;
   validation?: Record<string, unknown>;
   silicon?: Record<string, unknown>;
   terminal_silicon_tier?: string;
@@ -1618,6 +1631,17 @@ export interface ModelCosimReport {
   status: "completed";
   stimulus: { current: number; current_q: number; n_steps: number };
   tools: Record<"gcc" | "iverilog" | "vvp", string>;
+  /** What was compared: the RTL against the generated kernel, not the model. */
+  boundary?: { compared: "rtl_vs_bittrue"; statement: string; not_covered: string[] };
+  /** The fixed stress schedule run after the requested one; `bit_exact` needs both. */
+  stress?: {
+    bit_exact: boolean;
+    first_mismatch: ModelCosimMismatch | null;
+    reference_trace_sha256: string;
+    rtl_trace_sha256: string;
+    sample_count: number;
+    schedule: { input_q: number; steps: number; reset_before: boolean }[];
+  };
 }
 
 /**
