@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4990
+    "test_files": 4991
   },
   "documentation": {
     "public_pages": [
@@ -4813,6 +4813,7 @@
       "tests/test_extended_neurons_true_north.py",
       "tests/test_extended_neurons_wong_wang.py",
       "tests/test_facet_receipts.py",
+      "tests/test_facet_receipts_ingress.py",
       "tests/test_fault_engine_bindings.py",
       "tests/test_fault_injection/fault_injection_support.py",
       "tests/test_fault_injection/test_fault_injection_fault_injection_result.py",
