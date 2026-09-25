@@ -1,0 +1,95 @@
+{
+  "schema_version": "sc-neurocore.studio.candidate.v1",
+  "name": "LeakyIntegratorToFit",
+  "parent": null,
+  "model": {
+    "metadata": {
+      "schema_version": 1,
+      "name": "LeakyIntegratorToFit",
+      "author": "Lapicque, L.",
+      "year": 1907,
+      "doi": "10.1085/jgp.5.6.747",
+      "description": "Leaky Integrate-and-Fire \u2014 canonical first-order linear neuron model"
+    },
+    "state": {
+      "v": -65.0
+    },
+    "parameters": {
+      "v_rest": -65.0,
+      "tau_m": 10.0,
+      "R": 1.0,
+      "C": 1.0
+    },
+    "integration": {
+      "dt": 1.0,
+      "method": "euler"
+    },
+    "dynamics": {
+      "v": "-(v - v_rest) / tau_m + R * I / C"
+    },
+    "threshold": {
+      "condition": "v > -50",
+      "detection": "level"
+    },
+    "reset": {
+      "v": "v_rest"
+    },
+    "extensions": {},
+    "profile": {
+      "contract": "sc-neurocore.model-profile.v1",
+      "time_unit": "ms",
+      "notes": "Explicit Euler is a first-order realisation of the linear membrane; it is not the exact flow. Any ODE method may be selected as a numerical alternative.",
+      "state": {
+        "v": "biological"
+      },
+      "parameters": {
+        "v_rest": "source",
+        "tau_m": "source",
+        "R": "source",
+        "C": "source"
+      },
+      "units": {
+        "v": "mV",
+        "v_rest": "mV",
+        "tau_m": "ms"
+      }
+    }
+  },
+  "units": {
+    "state": {
+      "v": "mV"
+    },
+    "parameters": {
+      "v_rest": "mV",
+      "tau_m": "ms",
+      "R": "megaohm",
+      "C": "nF"
+    },
+    "current": "nA",
+    "time": "ms"
+  },
+  "source": {
+    "citation": "Lapicque, L. (1907) J. Physiol. Pathol. Gen. 9:620-635"
+  },
+  "assumptions": [
+    "point neuron driven below threshold"
+  ],
+  "authors": [
+    "A. Researcher"
+  ],
+  "reference_tests": [
+    {
+      "name": "rests",
+      "current": 0.0,
+      "steps": 100,
+      "expect": {
+        "final_state": {
+          "v": {
+            "min": -65.1,
+            "max": -64.9
+          }
+        }
+      }
+    }
+  ]
+}

@@ -14,6 +14,7 @@
     "e2e/catalogue-to-silicon-live.spec.ts",
     "e2e/experiment-export-live.spec.ts",
     "e2e/federation-host/main.tsx",
+    "e2e/fit-live.spec.ts",
     "e2e/federation-host/vite.config.ts",
     "e2e/guided-flow-truth-live.spec.ts",
     "e2e/guided-operator-run.spec.ts",

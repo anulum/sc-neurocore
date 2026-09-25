@@ -24,7 +24,7 @@ export type StudioInputViewTab =
   "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" | "sensitivity" |
   "precision" | "heatmap" | "verilog" | "code" | "compare" | "freq" |
   "sta" | "characterize" | "multi" | "network" | "ir" | "synth" |
-  "train" | "canvas" | "delays" | "admin" | "candidate";
+  "train" | "canvas" | "delays" | "admin" | "candidate" | "fit";
 
 /** The experiment now comes from a catalogue model, or from typed equations. */
 export interface StudioSourceModeStatePatch {

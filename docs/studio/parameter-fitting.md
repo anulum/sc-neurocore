@@ -72,6 +72,19 @@ process, so a replay on the same versions reproduces the digest.
 
 ## In the Studio
 
+The **Fit** tab fits either the selected catalogue model's canonical schema or
+the workspace's candidate draft. Parameters to fit are typed by name with
+their bounds and scale — the names are the schema's, which can differ from the
+catalogue class's constructor arguments, and an unknown name is refused with
+the reason. Fixed values are given as `name=value` lines. Recordings are CSV
+files with a current and an observed value per line (a header line is
+allowed); each is assigned to the training or the hold-out set, and a file
+with a line that is not two numbers is refused with that line. The result
+lists each fitted value with its standard error, or *not stated* when a
+parameter combination is unconstrained, names that combination, gives the
+hold-out error per recording and the optimiser's generations, trials and
+failed trials, and can be exported and replayed.
+
 `POST /api/fits` takes the problem as JSON: `catalogue_model` **or** `schema`,
 `observable`, `domains`, `fixed`, `train`, `holdout`, `seed`, `generations`
 (1–500) and `population` (4–100). A fit runs synchronously, so its size is

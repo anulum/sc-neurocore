@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### The Studio's Fit tab
+
+- **Fit** fits the selected catalogue model or the workspace's candidate
+  draft to recordings imported as CSV files, each assigned to training or
+  hold-out; it lists each fitted value with its standard error or *not
+  stated*, names any unconstrained parameter combination, gives the hold-out
+  error per recording and the optimiser's trial counts, and exports and
+  replays the result. A live browser test fits a candidate's model, checks
+  the recovered values and the replay, and fits the resistance–capacitance
+  pair that the model sees only as a ratio and finds it reported
+  unconstrained.
+
 ### Parameter fitting with held-out validation and identifiability
 
 - `sc_neurocore.fitting` fits the parameters of a Universal DSL model — a

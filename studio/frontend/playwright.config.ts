@@ -14,6 +14,7 @@ export default defineConfig({
     "candidate-authoring-live.spec.ts",
     "catalogue-to-silicon-live.spec.ts",
     "experiment-export-live.spec.ts",
+    "fit-live.spec.ts",
     "guided-flow-truth-live.spec.ts",
     "module-federation-host.spec.ts",
     "network-canvas-live.spec.ts",

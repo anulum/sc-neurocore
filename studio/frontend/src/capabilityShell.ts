@@ -60,7 +60,8 @@ export type PanelKey =
   | "canvas"
   | "delays"
   | "admin"
-  | "candidate";
+  | "candidate"
+  | "fit";
 
 /** The registry counted by status, with the worst one named. */
 export interface CapabilitySummary {
@@ -152,6 +153,7 @@ const PANEL_TITLES: Record<PanelKey, string> = {
   delays: "Learnable Delays (DCLS)",
   admin: "Admin",
   candidate: "Candidate model",
+  fit: "Parameter fitting",
 };
 
 /**
