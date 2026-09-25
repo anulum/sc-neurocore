@@ -17,6 +17,7 @@ export default defineConfig({
     "guided-flow-truth-live.spec.ts",
     "module-federation-host.spec.ts",
     "network-canvas-live.spec.ts",
+    "workbench-accessibility-live.spec.ts",
   ],
   timeout: 30_000,
   expect: {

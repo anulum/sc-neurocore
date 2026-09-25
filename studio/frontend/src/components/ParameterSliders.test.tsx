@@ -75,3 +75,17 @@ describe("ParameterSliders model compile configuration", () => {
     expect(html).toContain("Q16.16");
   });
 });
+
+describe("ParameterSliders accessible names", () => {
+  it("names every slider and states its value, since its visible label is only a sibling", async () => {
+    const { default: ParameterSliders } = await import("./ParameterSliders");
+    const html = renderToStaticMarkup(<ParameterSliders />);
+    const sliders = html.match(/<input type="range"[^>]*>/g) ?? [];
+
+    expect(sliders.length).toBeGreaterThanOrEqual(3);
+    expect(sliders.every((slider) => /aria-label="[^"]+"/.test(slider))).toBe(true);
+    expect(sliders.every((slider) => /aria-valuetext="[^"]+"/.test(slider))).toBe(true);
+    expect(html).toContain('aria-label="T (ms)"');
+    expect(html).toContain('aria-label="dt"');
+  });
+});

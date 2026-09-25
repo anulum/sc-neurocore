@@ -44,6 +44,8 @@ import {
   drawPhasePortraitView,
 } from "../plots/stateViews";
 import { drawTraceView } from "../plots/traceView";
+import { panelTitle } from "../capabilityShell";
+import { formatReading, plotDescription, traceDataRows } from "../plotAccessibility";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 /** Whichever analysis result the active tab is showing, if any. */
@@ -85,6 +87,8 @@ export default function SimulationPlot() {
   const zoomRef = useRef({ xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN });
   const dragRef = useRef<{ startX: number; startY: number; origXMin: number; origXMax: number; origYMin: number; origYMax: number } | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [traceShown, setTraceShown] = useState(false);
+  const [dataTableShown, setDataTableShown] = useState(false);
   const crosshairRef = useRef<number | null>(null);
   const store = useStudioStore();
   const {
@@ -244,6 +248,8 @@ export default function SimulationPlot() {
     );
     if (prepared === null) return;
     const { ctx, frame } = prepared;
+    // Which view is drawn decides what the canvas says to a screen reader.
+    const drewTrace = ((): boolean => {
 
     // Each view is a function in `../plots`; this chooses one. The conditions
     // are the originals, including which of them fall through to the trace
@@ -252,7 +258,7 @@ export default function SimulationPlot() {
     // spike-triggered average with nothing in it all show the trace instead.
     if (activeTab === "fi-curve" && fiResult) {
       drawFICurveView(ctx, frame, fiResult);
-      return;
+      return false;
     }
 
     if (!result) {
@@ -260,56 +266,56 @@ export default function SimulationPlot() {
       ctx.font = "13px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("Select a model and adjust parameters", frame.width / 2, frame.height / 2);
-      return;
+      return false;
     }
 
     if (activeTab === "phase" && Object.keys(result.states).length >= 2) {
       drawPhasePortraitView(ctx, frame, result, nullclineResult);
-      return;
+      return false;
     }
     if (activeTab === "isi" && result.stats.isi_histogram) {
       drawIsiHistogramView(ctx, frame, result);
-      return;
+      return false;
     }
     if (activeTab === "bifurcation" && bifResult) {
       drawBifurcationView(ctx, frame, bifResult);
-      return;
+      return false;
     }
     if (activeTab === "heatmap" && heatmapResult) {
       drawHeatmapView(ctx, frame, heatmapResult);
-      return;
+      return false;
     }
     if (activeTab === "sensitivity" && sensResult) {
       drawSensitivityView(ctx, frame, sensResult);
-      return;
+      return false;
     }
     if (activeTab === "precision" && precResult) {
       drawPrecisionView(ctx, frame, precResult);
-      return;
+      return false;
     }
     if (activeTab === "compare" && compareResult) {
       drawCompareView(ctx, frame, compareResult);
-      return;
+      return false;
     }
     if (activeTab === "freq" && freqResult) {
       drawFrequencyResponseView(ctx, frame, freqResult);
-      return;
+      return false;
     }
     if (activeTab === "sta" && staResult && staResult.time_ms.length > 0) {
       drawSpikeTriggeredAverageView(ctx, frame, staResult);
-      return;
+      return false;
     }
     if (activeTab === "characterize" && charResult) {
       drawCharacterizeView(ctx, frame, charResult);
-      return;
+      return false;
     }
     if (activeTab === "multi" && multiResults && multiResults.length > 0) {
       drawMultiModelView(ctx, frame, multiResults);
-      return;
+      return false;
     }
     if (activeTab === "network" && networkResult) {
       drawNetworkView(ctx, frame, networkResult);
-      return;
+      return false;
     }
 
     drawTraceView(ctx, frame, result, {
@@ -317,6 +323,9 @@ export default function SimulationPlot() {
       importedTrace,
       zoom: zoomRef.current,
     });
+    return true;
+    })();
+    setTraceShown((shown) => (shown === drewTrace ? shown : drewTrace));
   }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace, networkResult]);
 
   useEffect(() => {
@@ -349,7 +358,54 @@ export default function SimulationPlot() {
       {simulationMetadata && (
         <EvidenceSummaryStrip variant="overlay" items={buildSimulationEvidenceItems(simulationMetadata)} />
       )}
+      <button
+        type="button"
+        aria-pressed={dataTableShown}
+        onClick={() => { setDataTableShown((shown) => !shown); }}
+        style={{
+          position: "absolute", right: 8, bottom: 8, zIndex: 2, fontSize: 10,
+          background: "var(--bg-secondary)", color: "var(--text-secondary)",
+          border: "1px solid var(--control-border)", borderRadius: 3, padding: "2px 8px", cursor: "pointer",
+        }}
+      >Data table</button>
+      {dataTableShown && (
+        <div style={{
+          position: "absolute", right: 8, bottom: 36, zIndex: 2, maxHeight: "60%", overflow: "auto",
+          background: "var(--bg-secondary)", border: "1px solid var(--border)", padding: 6, fontSize: 10,
+        }}>
+          {result === null ? (
+            <p style={{ margin: 0 }}>Nothing has run yet.</p>
+          ) : (
+            <table style={{ borderCollapse: "collapse" }}>
+              <caption style={{ captionSide: "top", textAlign: "left" }}>
+                Trace data: {result.n_steps} steps of {formatReading(result.dt)} ms, {result.spike_count}{" "}
+                {result.spike_count === 1 ? "spike" : "spikes"}
+              </caption>
+              <thead>
+                <tr>
+                  {["Variable", "Samples shown", "Minimum", "Maximum", "Final"].map((column) => (
+                    <th key={column} scope="col" style={{ textAlign: "left", padding: "1px 6px" }}>{column}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {traceDataRows(result).map((row) => (
+                  <tr key={row.variable}>
+                    <th scope="row" style={{ textAlign: "left", padding: "1px 6px" }}>{row.variable}</th>
+                    <td style={{ padding: "1px 6px" }}>{row.samples}</td>
+                    <td style={{ padding: "1px 6px" }}>{formatReading(row.minimum)}</td>
+                    <td style={{ padding: "1px 6px" }}>{formatReading(row.maximum)}</td>
+                    <td style={{ padding: "1px 6px" }}>{formatReading(row.final)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
       <canvas ref={canvasRef}
+        role="img"
+        aria-label={plotDescription(panelTitle(activeTab), result, traceShown)}
         onClick={handleCanvasClick}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}

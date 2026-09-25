@@ -141,6 +141,24 @@ The main view shows:
 - **Axis labels**: mV for voltage, nA for current, ms for time
 - **Imported data overlay**: paste CSV data to compare with simulation
 
+The canvas is pixels, so it names itself with a sentence a screen reader
+reads: the variables, the run's length and step, its spike count, and each
+variable's range and final value. **Data table** (bottom right of the plot)
+shows the same numbers as a table. Both are read from the display projection
+the server sends, whose bucket extrema keep every minimum and maximum and whose
+last sample is the run's last, so they are the run's own values. Other views
+name themselves by title and point to the CSV and JSON exports for their
+numbers.
+
+A series with more samples than the plot has pixel columns is stroked as each
+column's first, lowest, highest and last sample, plus one sample either side of
+the visible window, so every visible extreme survives while the path the
+browser draws stays bounded. The result data are not changed; this applies
+wherever a series is longer than the server's own display projection, such as
+an imported trace. A series whose horizontal values do not increase (a phase
+portrait) is drawn in full. Every parameter slider carries its name and unit
+and states its value for assistive technology.
+
 ### Characterisation Dashboard
 
 Click **Char.** to run a one-click analysis that produces:

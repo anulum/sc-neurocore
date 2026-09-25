@@ -155,6 +155,16 @@ const PANEL_TITLES: Record<PanelKey, string> = {
 };
 
 /**
+ * The name a panel is shown under.
+ *
+ * @param panelKey - The panel.
+ * @returns Its title.
+ */
+export function panelTitle(panelKey: PanelKey): string {
+  return PANEL_TITLES[panelKey];
+}
+
+/**
  * Find one capability by its backend identifier.
  *
  * @param capabilities - The registry as it was last read.

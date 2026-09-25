@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import { mockPlotContext, drewNonFinite } from "./plots/mockPlotContext";
 
 import {
+  displayIndices,
   drawAxes,
   drawLine,
   niceStep,
@@ -79,5 +80,77 @@ describe("drawLine", () => {
     drawLine(recording.ctx, 0, 0, 100, 50, [0, 1], [], 0, 1, 0, 10, "#4fc3f7", 2);
 
     expect(recording.path).toEqual([]);
+  });
+});
+
+/**
+ * A long membrane-like trace: a slow ramp with narrow spikes.
+ *
+ * @param samples - How many samples.
+ * @returns Time and voltage, time strictly increasing.
+ */
+function longTrace(samples: number): { time: number[]; voltage: number[] } {
+  const time = Array.from({ length: samples }, (_, i) => i * 0.1);
+  const voltage = time.map((t, i) => (i % 997 === 0 ? 30 : -70 + 10 * Math.sin(t / 50)));
+  return { time, voltage };
+}
+
+describe("displayIndices", () => {
+  it("keeps every sample of a series the panel can hold", () => {
+    expect(displayIndices([0, 1, 2], [5, 6, 7], 0, 2, 100)).toEqual([0, 1, 2]);
+    expect(displayIndices([0, 1], [5], 0, 1, 0)).toEqual([0]);
+  });
+
+  it("keeps every sample when the horizontal values do not increase", () => {
+    const x = Array.from({ length: 1000 }, (_, i) => Math.sin(i));
+    const y = Array.from({ length: 1000 }, (_, i) => Math.cos(i));
+    expect(displayIndices(x, y, -1, 1, 10)).toHaveLength(1000);
+  });
+
+  it("strokes at most four samples per column and keeps every visible extreme", () => {
+    const { time, voltage } = longTrace(200_000);
+    const kept = displayIndices(time, voltage, 0, time.at(-1) ?? 0, 800);
+
+    expect(kept.length).toBeLessThanOrEqual(4 * 800 + 2);
+    const keptValues = kept.map((i) => voltage[i] ?? Number.NaN);
+    const highest = (values: number[]) => values.reduce((a, b) => Math.max(a, b), -Infinity);
+    const lowest = (values: number[]) => values.reduce((a, b) => Math.min(a, b), Infinity);
+    expect(highest(keptValues)).toBe(highest(voltage));
+    expect(lowest(keptValues)).toBe(lowest(voltage));
+    // Every spike sample survives: a spike is a column maximum.
+    const spikes = voltage.flatMap((v, i) => (v === 30 ? [i] : []));
+    expect(spikes.every((i) => kept.includes(i))).toBe(true);
+    expect(kept[0]).toBe(0);
+    expect(kept.at(-1)).toBe(voltage.length - 1);
+    expect([...kept].sort((a, b) => a - b)).toEqual(kept);
+  });
+
+  it("strokes the visible window and one sample either side of it", () => {
+    const { time, voltage } = longTrace(100_000);
+    const kept = displayIndices(time, voltage, 1000, 2000, 200);
+
+    expect(kept[0]).toBe(9999);
+    expect(kept.at(-1)).toBe(20001);
+    expect(kept.every((i) => i >= 9999 && i <= 20001)).toBe(true);
+  });
+
+  it("leaves non-finite samples out of the extremes", () => {
+    const time = Array.from({ length: 5000 }, (_, i) => i);
+    const voltage = time.map((i) => (i % 2 === 0 ? Number.NaN : i));
+    const kept = displayIndices(time, voltage, 0, 4999, 10);
+
+    expect(kept.filter((i) => Number.isNaN(voltage[i])).every((i) => i === 0)).toBe(true);
+    expect(kept).toContain(4999);
+  });
+
+  it("cuts the path drawLine hands the canvas without moving what it shows", () => {
+    const { time, voltage } = longTrace(100_000);
+    const recording = mockPlotContext();
+    drawLine(recording.ctx, 0, 0, 800, 200, time, voltage, 0, time.at(-1) ?? 0, -80, 40, "#4fc3f7");
+
+    expect(recording.path.length).toBeLessThanOrEqual(4 * 800 + 2);
+    // The first sample is a spike at 30 mV on a -80..40 mV axis 200 px tall.
+    expect(recording.path[0]).toBe(`M0,${200 - ((30 + 80) / 120) * 200}`);
+    expect(drewNonFinite(recording)).toBe(false);
   });
 });

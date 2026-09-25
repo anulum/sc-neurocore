@@ -80,7 +80,11 @@ function Slider({ label, value, onChange, min, max, step, unit, title }: {
   return (
     <div className="slider-row" title={title}>
       <span className="slider-label">{label}</span>
+      {/* The visible label is a sibling span, so the slider names itself: a
+          range input without a name is announced as "slider" and nothing else. */}
       <input type="range" min={lo} max={hi} step={st} value={value}
+        aria-label={unit ? `${label} (${unit})` : label}
+        aria-valuetext={unit ? `${fmt(value)} ${unit}` : fmt(value)}
         data-testid={`slider-${label}`}
         onChange={(e) => { onChange(parseFloat(e.target.value)); }} />
       <span className="slider-value">

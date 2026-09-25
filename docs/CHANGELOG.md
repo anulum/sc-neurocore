@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Simulation workbench: the plot in words, named sliders, bounded long series
+
+- The plot canvas names itself for assistive technology: for the trace view, a
+  sentence with the variables, the run's length and step, its spike count and
+  each variable's range and final value; for other views, what the view is and
+  where its numbers are. **Data table** shows the trace's numbers as a table.
+  Both come from the server's display projection, which keeps every extreme
+  and the last sample.
+- Every parameter slider carries its name and unit and states its value; they
+  had no accessible name at all, so a screen reader announced only "slider".
+- A series with more samples than the plot has pixel columns is stroked through
+  its per-column first, lowest, highest and last samples, keeping every visible
+  extreme while bounding the path; result data are unchanged.
+- A live browser test checks the slider names, the plot description, the data
+  table by keyboard, and that the workbench does not scroll sideways at twice
+  the zoom.
+
 ### Job custody on Python 3.10, and a refusal read instead of a broken pipe
 
 - Purging a finished job failed on Python 3.10: clearing its directory called

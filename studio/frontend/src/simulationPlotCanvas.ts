@@ -131,6 +131,70 @@ export function drawAxes(
 }
 
 /**
+ * Choose which samples of a series to stroke across `columns` pixel columns.
+ *
+ * A series with more samples than a panel has pixels is drawn as, per column,
+ * its first, lowest, highest and last finite sample, in sample order, plus the
+ * nearest sample on each side of the visible window so the line enters and
+ * leaves the panel where it should. Every extreme a reader could see survives
+ * and the result data are untouched; only the path handed to the canvas is
+ * shorter. A series whose horizontal values are not non-decreasing (a phase
+ * portrait) or that is short enough is drawn in full.
+ *
+ * @param xData - The samples' horizontal values.
+ * @param yData - The samples' vertical values, paired with `xData`.
+ * @param xMin - The lowest visible horizontal value.
+ * @param xMax - The highest visible horizontal value.
+ * @param columns - The panel's width in pixel columns.
+ * @returns The indices to stroke, ascending.
+ */
+export function displayIndices(
+  xData: readonly number[],
+  yData: readonly number[],
+  xMin: number,
+  xMax: number,
+  columns: number,
+): number[] {
+  const paired = Math.min(xData.length, yData.length);
+  const width = Math.max(1, Math.floor(columns));
+  const all = (): number[] => Array.from({ length: paired }, (_, index) => index);
+  if (paired <= 4 * width) return all();
+  for (let i = 1; i < paired; i++) {
+    if (!(at(xData, i) >= at(xData, i - 1))) return all();
+  }
+  let first = 0;
+  while (first < paired - 1 && at(xData, first + 1) < xMin) first++;
+  let last = paired - 1;
+  while (last > first && at(xData, last - 1) > xMax) last--;
+  const range = xMax - xMin || 1;
+  const kept = new Set<number>([first, last]);
+  let column = -1;
+  let low = -1;
+  let high = -1;
+  let end = -1;
+  const flush = () => {
+    for (const index of [low, high, end]) if (index >= 0) kept.add(index);
+  };
+  for (let i = first; i <= last; i++) {
+    const y = at(yData, i);
+    if (!Number.isFinite(y)) continue;
+    const here = Math.min(width - 1, Math.max(0, Math.floor(((at(xData, i) - xMin) / range) * width)));
+    if (here !== column) {
+      flush();
+      column = here;
+      kept.add(i);
+      low = high = end = i;
+      continue;
+    }
+    if (y < at(yData, low)) low = i;
+    if (y > at(yData, high)) high = i;
+    end = i;
+  }
+  flush();
+  return [...kept].sort((a, b) => a - b);
+}
+
+/**
  * Stroke a polyline of ``(xData[i], yData[i])`` samples into a plot panel.
  *
  * The two lists are paired samples of one trace and callers pass them from the
@@ -139,7 +203,8 @@ export function drawAxes(
  * takes the whole plot down for one bad trace, and the previous behaviour —
  * reading past the end and stroking `NaN` coordinates — was worse than either.
  * Surfacing a malformed response to the reader belongs to whoever validates
- * responses, not to a drawing primitive.
+ * responses, not to a drawing primitive. A series with more samples than the
+ * panel has pixels is stroked through {@link displayIndices}.
  *
  * @param ctx - The canvas to draw on.
  * @param x0 - The panel's left edge, in canvas pixels.
@@ -170,17 +235,16 @@ export function drawLine(
   color: string,
   lineWidth = 1.2,
 ): void {
-  const paired = Math.min(xData.length, yData.length);
   const xRange = xMax - xMin || 1;
   const yRange = yMax - yMin || 1;
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
   ctx.beginPath();
-  for (let i = 0; i < paired; i++) {
+  displayIndices(xData, yData, xMin, xMax, pw).forEach((i, order) => {
     const x = x0 + ((at(xData, i) - xMin) / xRange) * pw;
     const y = y0 + ph - ((at(yData, i) - yMin) / yRange) * ph;
-    if (i === 0) ctx.moveTo(x, y);
+    if (order === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
-  }
+  });
   ctx.stroke();
 }

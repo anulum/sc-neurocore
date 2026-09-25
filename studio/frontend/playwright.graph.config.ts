@@ -43,12 +43,13 @@ const uiOrigin = `http://127.0.0.1:${uiPort}`;
 export default defineConfig({
   testDir: "./e2e",
   // Live-backend browser contracts over the built bundle: the network canvas,
-  // the guided workflow's truthfulness under races and failures, and
-  // candidate-model authoring.
+  // the guided workflow's truthfulness under races and failures,
+  // candidate-model authoring, and workbench accessibility.
   testMatch: [
     "network-canvas-live.spec.ts",
     "guided-flow-truth-live.spec.ts",
     "candidate-authoring-live.spec.ts",
+    "workbench-accessibility-live.spec.ts",
   ],
   // A shared workstation can be heavily loaded; the budget is for the
   // boundary, not for the host's spare capacity.
