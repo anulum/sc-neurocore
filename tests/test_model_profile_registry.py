@@ -182,3 +182,30 @@ def test_registry_payload_and_method_table_are_serialisable(rows: tuple[ProfileR
         "exp_euler",
         "map",
     ]
+
+
+def test_an_unknown_facet_is_not_answered_by_another(rows: tuple[ProfileRow, ...]) -> None:
+    with pytest.raises(KeyError, match="no-such-facet"):
+        rows[0].entry("no-such-facet")
+
+
+def test_a_schema_validation_block_without_evidence_names_no_validator() -> None:
+    from sc_neurocore.neurons.profile_registry import _schema_validators
+    from sc_neurocore.neurons.readiness import REPO_ROOT
+
+    assert _schema_validators({"validation": {}}, REPO_ROOT) == ()
+    assert _schema_validators({"validation": {"evidence": ""}}, REPO_ROOT) == ()
+
+
+def test_a_class_without_a_descriptor_says_so_rather_than_agreeing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every bound class ships a descriptor, so its absence is produced by withholding it."""
+    from sc_neurocore.neurons import profile_registry
+
+    identity = identity_registry()["SCLapicqueLIFNeuron"]
+    stem = identity.schema_profiles[0].stem
+    monkeypatch.setattr(profile_registry, "load_descriptor_payload", lambda _name: None)
+    row = profile_registry.profile_row(identity, stem)
+    assert row.method_agreement == "no-descriptor"
+    assert (row.descriptor_method, row.descriptor_dt) == ("", None)

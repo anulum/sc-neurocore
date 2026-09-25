@@ -326,10 +326,13 @@ def simulate_go_complete(
             events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
         )
     )
-    if event_count < 0:
-        raise FloatingPointError("Go Lapicque kernel rejected the simulation contract.")
-    if event_count != int(np.sum(events, dtype=np.int64)):
-        raise FloatingPointError("Go Lapicque event count disagrees with its event trace.")
+    if event_count < 0 or event_count != int(np.sum(events, dtype=np.int64)):
+        reason = (
+            "kernel rejected the simulation contract"
+            if event_count < 0
+            else "event count disagrees with its event trace"
+        )
+        raise FloatingPointError(f"Go Lapicque {reason}.")
     final_excited = bool(excited or (source_profile and event_count > 0))
     return voltage[:n_steps], events, float(voltage[n_steps]), final_excited
 
@@ -407,9 +410,12 @@ def simulate_mojo_complete(
             int(events.ctypes.data),
         )
     )
-    if event_count < 0:
-        raise FloatingPointError("Mojo Lapicque kernel rejected the simulation contract.")
-    if event_count != int(np.sum(events, dtype=np.int64)):
-        raise FloatingPointError("Mojo Lapicque event count disagrees with its event trace.")
+    if event_count < 0 or event_count != int(np.sum(events, dtype=np.int64)):
+        reason = (
+            "kernel rejected the simulation contract"
+            if event_count < 0
+            else "event count disagrees with its event trace"
+        )
+        raise FloatingPointError(f"Mojo Lapicque {reason}.")
     final_excited = bool(excited or (source_profile and event_count > 0))
     return voltage[:n_steps], events, float(voltage[n_steps]), final_excited

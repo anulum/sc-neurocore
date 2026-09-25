@@ -113,6 +113,14 @@ def test_max_delay_per_synapse_without_state_raises():
         _ = proj.max_delay
 
 
+def test_delay_steps_per_synapse_without_state_raises() -> None:
+    src, tgt = _pops(2)
+    proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0))
+    proj._per_syn_delays = None  # simulate corrupted delay state
+    with pytest.raises(RuntimeError, match="per-synapse delay state is not initialized"):
+        _ = proj.delay_steps
+
+
 # ── propagation ──────────────────────────────────────────────────────
 
 

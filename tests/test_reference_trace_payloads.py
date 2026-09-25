@@ -189,6 +189,18 @@ def test_payload_validation_rejects_malformed_corpus_contracts() -> None:
             ),
             "relative value must be finite",
         ),
+        (
+            lambda payload: _section(payload, "protocol").__setitem__(
+                "parameter_overrides", {"tau": "slow"}
+            ),
+            "'parameter_overrides'.tau must be numeric",
+        ),
+        (
+            lambda payload: _section(payload, "protocol").__setitem__(
+                "parameter_overrides", {"tau": math.nan}
+            ),
+            "'parameter_overrides'.tau must be finite",
+        ),
     ]
 
     for mutate, message in cases:

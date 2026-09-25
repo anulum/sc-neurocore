@@ -274,3 +274,103 @@ def test_schema_for_class_separates_identities_sharing_a_module() -> None:
     )
     with pytest.raises(ModelIdentityError):
         schema_for_class("NoSuchNeuronAnywhere")
+
+
+def _with_stems(monkeypatch: pytest.MonkeyPatch, *extra: str) -> None:
+    original = model_identity._schema_stems
+    monkeypatch.setattr(model_identity, "_schema_stems", lambda: (*original(), *extra))
+
+
+def test_a_schema_stem_shared_by_several_classes_of_one_module_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A module stem alone cannot say which of its classes a schema describes."""
+    from sc_neurocore.neurons import schema_module_aliases
+
+    shared = sorted(
+        module
+        for module, names in model_identity._classes_by_module().items()
+        if len(names) > 1
+        and schema_module_aliases.class_for_schema(module) is None
+        and schema_module_aliases.module_for_schema(module) == module
+    )
+    assert shared, "the catalogue has modules holding more than one class"
+    identity_registry.cache_clear()
+    _with_stems(monkeypatch, shared[0])
+    try:
+        with pytest.raises(ModelIdentityError, match="joins more than one registered class"):
+            identity_registry()
+    finally:
+        identity_registry.cache_clear()
+
+
+def test_an_alias_table_entry_naming_an_unregistered_class_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from sc_neurocore.neurons import schema_module_aliases
+
+    identity_registry.cache_clear()
+    monkeypatch.setitem(schema_module_aliases.SCHEMA_TO_CLASS, "ghost_profile", "GhostNeuron")
+    _with_stems(monkeypatch, "ghost_profile")
+    try:
+        with pytest.raises(ModelIdentityError, match="names unregistered class 'GhostNeuron'"):
+            identity_registry()
+    finally:
+        identity_registry.cache_clear()
+
+
+def test_a_missing_schema_directory_binds_no_profile(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(model_identity, "SCHEMA_DIR", tmp_path / "no-schemas")
+    assert model_identity._schema_stems() == ()
+
+
+@pytest.mark.parametrize(
+    ("provenance", "basis"),
+    [
+        ({"url": "https://example.org/model"}, "url"),
+        ({"paper_title": "A model of a neuron"}, "citation-unlocated"),
+        ({"authors": "Smith, J."}, "citation-unlocated"),
+        ({"authors": ["SC-NeuroCore contributors"]}, "project-specification"),
+    ],
+)
+def test_the_source_basis_follows_what_the_provenance_locates(
+    provenance: dict[str, object], basis: str
+) -> None:
+    locator = model_identity._source_locator("SomeNeuron", {"provenance": provenance})
+    assert locator.basis == basis
+
+
+def test_a_class_without_a_descriptor_has_no_provenance_and_is_not_revalidated() -> None:
+    assert model_identity._provenance(None) == {}
+    assert model_identity._revalidation("AdExNeuron", None, "polyglot-complete") == (
+        "not-revalidated"
+    )
+
+
+def test_one_public_label_bound_to_two_classes_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = dict(model_identity._PUBLIC_FIDELITY_ROWS)
+    class_name, (label, status) = next(iter(rows.items()))
+    other = next(name for name in sorted(_CLASS_TO_MODULE) if name not in rows)
+    rows[other] = (label, status)
+    monkeypatch.setattr(model_identity, "_PUBLIC_FIDELITY_ROWS", rows)
+    with pytest.raises(ModelIdentityError, match=f"bound to both {class_name} and {other}"):
+        model_identity._validate_public_rows()
+
+
+@pytest.mark.parametrize(
+    ("alias", "canonical", "message"),
+    [
+        ("GhostAlias", "GhostNeuron", "resolves to unregistered class 'GhostNeuron'"),
+        ("AdExNeuron", "LapicqueNeuron", "is also a registered catalogue class"),
+    ],
+)
+def test_an_alias_that_cannot_stand_for_one_class_is_rejected(
+    monkeypatch: pytest.MonkeyPatch, alias: str, canonical: str, message: str
+) -> None:
+    monkeypatch.setattr(model_identity, "_TAXONOMY_ALIASES", {alias: canonical})
+    with pytest.raises(ModelIdentityError, match=message):
+        model_identity._validate_aliases()

@@ -42,6 +42,18 @@ class TestNetworkBackendAndStimulusBranches:
         assert net._can_use_rust() is False
         net.run(0.005, backend="auto")  # falls through to the Python backend
 
+    def test_a_bridgeable_network_is_not_dispatched_without_the_engine(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import sc_neurocore.network.network as network_mod
+
+        monkeypatch.setattr(network_mod, "_RUST_ENGINE", False)
+        # AdExNeuron passes every compatibility check, so the absent engine is
+        # the only reason left to stay on the Python loop.
+        net = Network(Population("AdExNeuron", 2))
+        assert net._rust_incompatibilities() == []
+        assert net._can_use_rust() is False
+
     def test_python_backend_progress_reporting(self, capsys):
         net = Network(Population("LapicqueNeuron", 2))
         net.run(0.02, dt=0.001, backend="python", progress=True)
