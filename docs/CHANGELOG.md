@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Network graphs refuse populations their model would not build
+
+- Graph validation checked each population parameter against its own range
+  but never built the model, so values each in range that no model accepts —
+  a threshold below the resting potential, or a model whose timestep range
+  excludes the graph's — passed validation and then failed while the
+  network was being built, reported only as invalid input. Validation now
+  builds one neuron with the validated keywords and reports the model's own
+  refusal on the population's parameters.
+- The population contract of the canvas's default model offered three fields
+  it inherits but whose constructor does not take them (`capacitance`,
+  `polarization_resistance`, `series_resistance`); they are no longer
+  offered, and the contract says why.
+- A NIR file with such a population — a self-driven LIF whose leak potential
+  lies above its threshold — is now refused with that reason instead of
+  failing while it runs.
+
 ### Network tutorial notebooks from the canvas
 
 - **Notebook** on the network canvas downloads a notebook that builds the

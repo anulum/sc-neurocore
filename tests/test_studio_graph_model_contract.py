@@ -145,6 +145,40 @@ class TestTheContractMatchesWhatTheGraphAccepts:
 
         assert [issue.field for issue in issues] == ["populations[0].params.not_a_parameter"]
 
+    def test_inherited_fields_the_constructor_does_not_take_are_not_offered(self) -> None:
+        """The Lapicque subclass narrows its parent's fields; the contract follows it."""
+        contract = population_model_contract(MODEL)
+
+        assert contract is not None
+        offered = {parameter["name"] for parameter in contract["parameters"]}
+        reasons = {entry["name"]: entry["reason"] for entry in contract["unsupported"]}
+        for name in ("capacitance", "polarization_resistance", "series_resistance"):
+            assert name not in offered
+            assert reasons[name] == "inherited field this model's constructor does not take"
+            issues = graph_issues(graph_with({name: 1.0}))
+            assert [issue.field for issue in issues] == [f"populations[0].params.{name}"]
+
+    def test_values_each_in_range_that_no_model_accepts_are_refused_before_running(
+        self, client: TestClient
+    ) -> None:
+        """A threshold below the resting potential passes every per-field check."""
+        graph = graph_with({"v_rest": 2.0, "v_threshold": 1.0})
+        issues = graph_issues(graph)
+
+        assert [issue.field for issue in issues] == ["populations[0].params"]
+        assert "v_threshold must be greater than v_rest" in issues[0].message
+        body = client.post("/api/graph/simulate", json=graph).json()
+        assert body["success"] is False
+        assert any("v_threshold must be greater than v_rest" in error for error in body["errors"])
+
+    def test_a_model_whose_timestep_range_excludes_the_graph_dt_is_refused(self) -> None:
+        graph = graph_with({})
+        graph["populations"][0]["model"] = "NMDANeuron"
+        issues = graph_issues(graph)
+
+        assert [issue.field for issue in issues] == ["populations[0].params"]
+        assert "dt must be within (0, 0.05] ms" in issues[0].message
+
 
 class TestAModelThatCannotFormAPopulation:
     def test_it_has_no_contract_rather_than_an_empty_one(self) -> None:

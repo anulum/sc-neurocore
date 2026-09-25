@@ -499,6 +499,18 @@ def _validate_populations(
                             f"{field}.model", f"Population {label_text} model {model}: {reason}"
                         )
                         inputs = None
+                    else:
+                        # Each field can be in range while the combination is not a
+                        # model: a threshold below the resting potential passes every
+                        # per-field contract. Building one neuron asks the model itself.
+                        try:
+                            inputs.instantiate()
+                        except ModelInputError as exc:
+                            collector.add(
+                                f"{field}.params",
+                                f"Population {label_text} parameters: {exc.reason}",
+                            )
+                            inputs = None
         drive = _validate_drive(
             collector,
             raw.get("drive"),

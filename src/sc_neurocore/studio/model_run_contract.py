@@ -286,10 +286,19 @@ def model_parameter_contracts(cls: type) -> ModelParameterContracts:
     unsupported: dict[str, str] = {}
     if dataclasses.is_dataclass(cls):
         hints = _type_hints(cls)
+        # A subclass may narrow the inherited fields with its own ``__init__``;
+        # a field it does not take is not an input, however the parent declares it.
+        accepted = inspect.signature(cls).parameters
+        takes_any = any(
+            parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in accepted.values()
+        )
         for field in dataclasses.fields(cls):
             annotation = hints.get(field.name, field.type)
             if not field.init:
                 unsupported[field.name] = "derived field (init=False) is computed by the model"
+                continue
+            if not takes_any and field.name not in accepted:
+                unsupported[field.name] = "inherited field this model's constructor does not take"
                 continue
             if field.name.startswith("_"):
                 unsupported[field.name] = "private model state is not an input"
