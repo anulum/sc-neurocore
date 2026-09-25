@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import builtins
 import io
 import json
 import queue
@@ -19,9 +18,7 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable
 from pathlib import Path
-from types import ModuleType
 from typing import cast
 
 import pytest
@@ -103,18 +100,6 @@ def _wait_for_terminal(job: TrainingJob) -> None:
         if time.monotonic() >= deadline:
             pytest.fail("training job did not reach a terminal state")
         time.sleep(0.01)
-
-
-def _blocked_import(
-    original_import: Callable[..., ModuleType],
-    blocked_prefix: str,
-) -> Callable[..., ModuleType]:
-    def import_module(name: str, *args: object, **kwargs: object) -> ModuleType:
-        if name == blocked_prefix or name.startswith(f"{blocked_prefix}."):
-            raise ImportError(f"blocked optional dependency: {blocked_prefix}")
-        return original_import(name, *args, **kwargs)
-
-    return import_module
 
 
 def test_seeded_synthetic_training_preserves_metrics_and_weight_artifact(
@@ -285,14 +270,19 @@ def test_mnist_adapter_trains_through_a_protocol_compatible_dataset(
     assert metadata["architecture"] == "784->4->10"
 
 
-def test_mnist_adapter_falls_back_when_torchvision_is_unavailable(
+def test_mnist_without_torchvision_fails_instead_of_training_on_other_data(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """A missing torchvision install falls back to the documented synthetic data."""
+    """A run that asked for MNIST never trains on anything else under that name.
+
+    Whether torchvision is installed differs between environments, and it
+    cannot be removed from a shared one, so its absence is fixed the way the
+    interpreter itself records a module that failed to import: ``None`` in
+    ``sys.modules``.
+    """
     pytest.importorskip("torch")
-    original_import = cast(Callable[..., ModuleType], builtins.__import__)
-    context = _context(tmp_path, "sj_training_mnist_fallback")
+    context = _context(tmp_path, "sj_training_mnist_missing")
     job = TrainingJob(
         {
             "dataset": "mnist",
@@ -305,18 +295,16 @@ def test_mnist_adapter_falls_back_when_torchvision_is_unavailable(
     )
 
     with monkeypatch.context() as patch:
-        patch.setattr(
-            builtins,
-            "__import__",
-            _blocked_import(original_import, "torchvision"),
-        )
-        result = job.run_blocking(context)
+        patch.setitem(sys.modules, "torchvision", None)
+        with pytest.raises(RuntimeError, match="needs torchvision") as failure:
+            job.run_blocking(context)
 
-    assert result["training_status"] == "completed"
-    metadata = json.loads(
-        (tmp_path / context.job_id / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH).read_text()
-    )
-    assert metadata["architecture"] == "64->8->10"
+    assert "No other data was substituted" in str(failure.value)
+    assert job.status == "failed"
+    status = json.loads((tmp_path / context.job_id / "training" / "status.json").read_text())
+    assert status["status"] == "failed"
+    assert "needs torchvision" in status["error"]
+    assert not (tmp_path / context.job_id / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH).exists()
 
 
 def test_initial_state_dict_loads_strictly_and_rejects_incompatible_state(

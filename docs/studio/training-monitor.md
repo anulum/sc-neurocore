@@ -571,5 +571,6 @@ Training requires PyTorch:
 pip install sc-neurocore[research]
 ```
 
-For MNIST, torchvision is also needed. If unavailable, synthetic data
-is used as fallback.
+For MNIST, torchvision is also needed. Without it an MNIST run fails with
+that reason before training; no other data is substituted under the MNIST
+name.

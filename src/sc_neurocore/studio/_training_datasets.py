@@ -64,33 +64,35 @@ def _make_synthetic(batch_size: int) -> tuple[Any, Any, int, int]:
 
 
 def _load_mnist(batch_size: int) -> tuple[Any, Any, int, int]:
-    """Load MNIST through torchvision, or use the synthetic fallback."""
-    try:
-        from torch.utils.data import DataLoader
-        from torchvision import datasets, transforms
+    """Load MNIST through torchvision.
 
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,)),
-            ]
-        )
-        train_dataset = datasets.MNIST(
-            "~/.cache/mnist",
-            train=True,
-            download=True,
-            transform=transform,
-        )
-        test_dataset = datasets.MNIST(
-            "~/.cache/mnist",
-            train=False,
-            transform=transform,
-        )
-        return (
-            DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
-            DataLoader(test_dataset, batch_size=batch_size),
-            784,
-            10,
-        )
-    except ImportError:
-        return _make_synthetic(batch_size)
+    Raises
+    ------
+    RuntimeError
+        torchvision is not installed. No other data is substituted: a run that
+        asked for MNIST and trained on something else would carry the name of
+        a dataset it never saw.
+    """
+    from torch.utils.data import DataLoader
+
+    try:
+        from torchvision import datasets, transforms
+    except ImportError as exc:
+        raise RuntimeError(
+            "The MNIST dataset needs torchvision, which is not installed here; "
+            "install it or choose the synthetic dataset. No other data was substituted."
+        ) from exc
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+    train_dataset = datasets.MNIST("~/.cache/mnist", train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST("~/.cache/mnist", train=False, transform=transform)
+    return (
+        DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
+        DataLoader(test_dataset, batch_size=batch_size),
+        784,
+        10,
+    )

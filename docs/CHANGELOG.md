@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+
+- Studio training: a run that asks for MNIST on a host without torchvision now
+  fails with that reason. It used to train on the synthetic demonstration data
+  while recording itself as an MNIST run.
+
 ### Documentation
 
 - Studio: "Reviewing and Sharing Experiments" (`docs/studio/collaboration.md`)
