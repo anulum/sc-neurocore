@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Documentation
+
+- Studio: "Reviewing and Sharing Experiments" (`docs/studio/collaboration.md`)
+  describes the procedure two researchers follow to review each other's work.
+  It covers what to hand over (transfer document, replay pack, notebooks) and
+  how to check that a run reproduces and that both sides are on the same
+  state digest. It also covers commenting on a revision, keeping both sides of
+  a refused save, and what is not provided.
+
 ### The model catalogue is built once on a cold start
 
 - Opening the Studio asks for the model list, its facets and a query at the
