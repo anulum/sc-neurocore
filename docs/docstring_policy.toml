@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 489
+expected_file_count = 493
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1181,6 +1181,18 @@ path = "src/sc_neurocore/datasets/loaders.py"
 rationale = "Public neuromorphic dataset loaders."
 
 [[file]]
+path = "src/sc_neurocore/datasets/manifest.py"
+rationale = "Public event-dataset manifests: files by SHA-256, samples by split, label and group, publisher terms."
+
+[[file]]
+path = "src/sc_neurocore/datasets/splits.py"
+rationale = "Public group splits that keep every speaker or recording on one side, with leak checks."
+
+[[file]]
+path = "src/sc_neurocore/datasets/encoders.py"
+rationale = "Public input encoders whose declaration rebuilds them exactly."
+
+[[file]]
 path = "src/sc_neurocore/distillation/distill.py"
 rationale = "Public temporal SNN knowledge-distillation loss and self-distiller."
 
@@ -1395,6 +1407,10 @@ rationale = "Responsibility-specific command package boundary."
 [[file]]
 path = "src/sc_neurocore/cli/commands/compile.py"
 rationale = "Public equation and NIR compilation command handlers."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/dataset.py"
+rationale = "Public dataset manifest, verify and split commands."
 
 [[file]]
 path = "src/sc_neurocore/cli/commands/deploy.py"

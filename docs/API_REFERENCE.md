@@ -7251,6 +7251,58 @@ The command supports three compilation modes via CLI flags:
 
 ---
 
+## Module `cli.commands.dataset`
+
+### Function `add_dataset_command(subparsers)`
+Register ``dataset manifest``, ``dataset verify`` and ``dataset split``.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_dataset_manifest(args)`
+Write the manifest of a dataset directory.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``dataset manifest`` arguments.
+
+Returns
+-------
+int
+    Zero on success, two when the directory or the version is refused.
+
+### Function `run_dataset_verify(args)`
+Compare a directory with a manifest.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``dataset verify`` arguments.
+
+Returns
+-------
+int
+    Zero when the directory holds exactly the manifest's bytes, one when it
+    differs, two when the manifest cannot be read.
+
+### Function `run_dataset_split(args)`
+Divide a published split by whole groups and write the plan.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``dataset split`` arguments.
+
+Returns
+-------
+int
+    Zero on success, two when the manifest or the request is refused.
+
+---
+
 ## Module `cli.commands.deploy`
 
 ### Function `add_deploy_command(subparsers)`
@@ -14018,6 +14070,103 @@ Simple CLI dashboard for monitoring SC simulation rates.
 
 ---
 
+## Module `datasets.encoders`
+
+### Class `EventBinning`
+Bin camera events into a binary spike tensor.
+
+An event at ``t`` ms lands in step ``floor(t / dt_ms)``; events at or after
+``n_steps * dt_ms`` are dropped, never merged into the last step. With
+``polarity="separate"`` ON and OFF events have their own channels (OFF
+first), with ``"merge"`` they share one. An event outside the sensor or
+before time zero is refused rather than clipped.
+
+Attributes
+----------
+dt_ms:
+    Step length in milliseconds.
+n_steps:
+    Number of steps in the window.
+width, height:
+    Sensor geometry in pixels.
+polarity:
+    ``"separate"`` or ``"merge"``.
+
+- **__post_init__**()
+  - Refuse a setting the declaration could not state faithfully.
+- **channels**()
+  - Channels per step: pixels, twice over when polarities are separate.
+- **declaration**()
+  - Return the full description, enough to rebuild this encoder.
+- **digest**()
+  - ``sha256:`` over the declaration.
+- **encode**(events)
+  - Bin ``(N, 4)`` events with columns ``x, y, polarity, t_ms``.
+
+### Class `PoissonRates`
+Encode per-step firing probabilities as seeded Bernoulli spike trains.
+
+Attributes
+----------
+n_steps:
+    Number of steps.
+dt_ms:
+    Step length; the probability per step is ``rate * dt_ms``, clipped
+    to ``&#91;0, 1&#93;``.
+seed:
+    Generator seed; the same seed and input give the same spikes.
+
+- **__post_init__**()
+  - Refuse a setting the declaration could not state faithfully.
+- **declaration**()
+  - Return the full description, enough to rebuild this encoder.
+- **digest**()
+  - ``sha256:`` over the declaration.
+- **encode**(rates)
+  - Return the spike trains for a vector of rates.
+
+### Class `FirstSpikeLatency`
+Encode values in ``&#91;0, 1&#93;`` as one spike each, larger values earlier.
+
+Attributes
+----------
+n_steps:
+    Number of steps.
+tau:
+    The spike of value ``v`` falls in step ``int(tau * (1 - v))``,
+    limited to the window.
+
+- **__post_init__**()
+  - Refuse a setting the declaration could not state faithfully.
+- **declaration**()
+  - Return the full description, enough to rebuild this encoder.
+- **digest**()
+  - ``sha256:`` over the declaration.
+- **encode**(values)
+  - Return one spike per value; a value outside ``&#91;0, 1&#93;`` is refused.
+
+### Function `encoder_from_declaration(declaration)`
+Rebuild the encoder a declaration describes.
+
+Parameters
+----------
+declaration:
+    A declaration as :meth:`EventBinning.declaration` and its siblings
+    return it.
+
+Returns
+-------
+EventBinning or PoissonRates or FirstSpikeLatency
+    The encoder; its own declaration equals the one given.
+
+Raises
+------
+ValueError
+    On another schema, an unknown encoder, or a declaration that is not
+    exactly what the rebuilt encoder declares.
+
+---
+
 ## Module `datasets.encoding`
 
 ### Function `poisson_encode(rates, T, dt_ms, seed)`
@@ -14167,6 +14316,259 @@ Returns
 samples : list of ndarray, each shape (N_events, 4)
     Columns: &#91;x, y, polarity, timestamp_ms&#93;.
 labels : ndarray of int
+
+---
+
+## Module `datasets.manifest`
+
+### Class `DatasetDescription`
+What one supported event dataset is, as its publisher states it.
+
+Attributes
+----------
+name:
+    Identifier used by the loaders and the manifest, e.g. ``"shd"``.
+title:
+    Published name.
+citation:
+    The paper to cite.
+doi:
+    DOI of that paper.
+url:
+    Where the publisher distributes the files.
+licence:
+    SPDX identifier of the data licence.
+licence_url:
+    Text of that licence.
+sensor:
+    ``"dvs"`` for an event camera, ``"cochlea"`` for an auditory model.
+geometry:
+    ``(width, height)`` of a camera, or ``(channels,)`` of a cochlea.
+polarities:
+    Number of event polarities; ``0`` when events carry none.
+classes:
+    Number of labels.
+file_format:
+    The file format the loader reads, including the unit of its times.
+group_key:
+    What a group is, and why it is the leakage unit.
+
+- **to_dict**()
+  - Return the JSON form.
+
+### Class `FileRecord`
+One file of the dataset: path relative to the root, size and digest.
+
+
+### Class `SampleRecord`
+One sample: where it is, which published split it is in, its label and group.
+
+
+### Class `EventDatasetManifest`
+Every file and sample of one event dataset as it lies on disk.
+
+Attributes
+----------
+dataset:
+    The dataset description.
+version:
+    The release of the data the user holds, as its publisher names it.
+files:
+    Every file read, sorted by path.
+samples:
+    Every sample, in loader order.
+
+- **to_dict**()
+  - Return the JSON form, with the schema identifier.
+- **digest**()
+  - ``sha256:`` over the canonical JSON form; identifies this exact manifest.
+- **splits**()
+  - Return the published split names, in first-seen order.
+
+### Class `ManifestVerification`
+How the files on disk differ from a manifest.
+
+Attributes
+----------
+missing:
+    Files the manifest lists that are not on disk.
+changed:
+    Files whose size or SHA-256 differs.
+unexpected:
+    Files in the dataset layout that the manifest does not list.
+
+- **ok**()
+  - ``True`` when the disk holds exactly the manifest's bytes.
+
+### Function `build_manifest(name, root)`
+Scan a dataset directory and record its files and samples.
+
+Parameters
+----------
+name:
+    ``"nmnist"``, ``"shd"`` or ``"dvs_cifar10"``.
+root:
+    Directory in the layout the matching loader reads.
+version:
+    The release the files come from, as the publisher names it; it is
+    recorded, not inferred, because the files do not carry it.
+
+Returns
+-------
+EventDatasetManifest
+    The manifest.
+
+Raises
+------
+ValueError
+    On an unknown dataset, an empty version, a directory holding none of
+    the dataset's files, or a label outside the dataset's classes.
+
+### Function `verify_manifest(manifest, root)`
+Compare the files under ``root`` with a manifest, byte for byte.
+
+Parameters
+----------
+manifest:
+    The manifest an experiment recorded.
+root:
+    Directory holding the dataset now.
+
+Returns
+-------
+ManifestVerification
+    Missing, changed and unexpected files; ``ok`` when there are none.
+
+### Function `manifest_from_dict(data)`
+Read a manifest's JSON form, refusing anything it does not define.
+
+Parameters
+----------
+data:
+    The parsed JSON.
+
+Returns
+-------
+EventDatasetManifest
+    The manifest.
+
+Raises
+------
+ValueError
+    On another schema, a missing or unknown field, or a dataset
+    description that differs from the one this version supports.
+
+---
+
+## Module `datasets.splits`
+
+### Class `SplitPlan`
+Which samples of a manifest go to which split, by whole groups.
+
+Attributes
+----------
+manifest_digest:
+    Digest of the manifest the positions refer to.
+source_split:
+    The published split that was divided.
+seed:
+    Seed of the group order.
+fractions:
+    Requested share of samples per split, in declaration order.
+assignment:
+    Split name to the positions of its samples in ``manifest.samples``.
+groups:
+    Split name to the groups it holds.
+
+- **to_dict**()
+  - Return the JSON form, with the schema identifier.
+- **digest**()
+  - ``sha256:`` over the canonical JSON form.
+
+### Function `group_split(manifest)`
+Divide one published split into new splits made of whole groups.
+
+Groups are taken in an order fixed by ``seed``; each goes to the split
+whose sample count is furthest below its requested share. The shares are
+therefore met as closely as whole groups allow, never by cutting a group.
+
+Parameters
+----------
+manifest:
+    The dataset manifest.
+fractions:
+    Share of the source split's samples per new split; positive, summing
+    to one.
+source_split:
+    The published split to divide; other published splits are untouched.
+seed:
+    Seed of the group order.
+
+Returns
+-------
+SplitPlan
+    The plan, tied to the manifest's digest.
+
+Raises
+------
+ValueError
+    On shares that are not positive or do not sum to one, an unknown
+    source split, or fewer groups than requested splits.
+
+### Function `leaked_groups(manifest, plan)`
+Return the groups that have samples in more than one split of a plan.
+
+Parameters
+----------
+manifest:
+    The manifest the plan was drawn from.
+plan:
+    The plan to check.
+
+Returns
+-------
+tuple of str
+    Leaked groups, sorted; empty for a sound plan.
+
+Raises
+------
+ValueError
+    When the plan was drawn from another manifest.
+
+### Function `group_overlap(manifest)`
+Report groups that the publisher's own splits share.
+
+Parameters
+----------
+manifest:
+    The dataset manifest.
+
+Returns
+-------
+dict
+    Each shared group to the published splits it appears in; empty when
+    the published splits keep every group apart.
+
+### Function `split_plan_from_dict(data)`
+Read a plan's JSON form, refusing anything it does not define.
+
+A plan read back is not trusted to be sound: check it against its
+manifest with :func:`leaked_groups` before training on it.
+
+Parameters
+----------
+data:
+    The parsed JSON.
+
+Returns
+-------
+SplitPlan
+    The plan.
+
+Raises
+------
+ValueError
+    On another schema or a missing or unknown field.
 
 ---
 

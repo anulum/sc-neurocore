@@ -15,6 +15,7 @@ from collections.abc import Callable, Sequence
 from typing import cast
 
 from .commands.compile import add_compile_commands
+from .commands.dataset import add_dataset_command
 from .commands.deploy import add_deploy_command
 from .commands.formal import add_formal_command
 from .commands.hub import add_hub_command
@@ -31,6 +32,7 @@ Modes and first steps:
   Model     info, compile, compile-nir, serve, map-nir
   Hardware  deploy, collect-synthesis, scnir, formal, hub-init
   Studio    studio and studio-* operator commands
+  Data      dataset manifest, dataset verify, dataset split
   Maintain  benchmark, preflight
 
 Start with `sc-neurocore info`, then run `sc-neurocore COMMAND --help`
@@ -73,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_formal_command(subparsers)
     add_hub_command(subparsers)
     add_studio_commands(subparsers)
+    add_dataset_command(subparsers)
     add_maintenance_commands(subparsers)
     return parser
 

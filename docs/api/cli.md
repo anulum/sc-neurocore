@@ -26,12 +26,13 @@ The command reports the package and Python versions, the optional Rust engine
 version and SIMD tier, and installed NumPy/JAX versions without importing
 optional dependencies merely to discover their metadata.
 
-Top-level help groups the product into four modes:
+Top-level help groups the product into five modes:
 
 ```text
 Model     info, compile, compile-nir, serve, map-nir
 Hardware  deploy, collect-synthesis, scnir, formal, hub-init
 Studio    studio and studio-* operator commands
+Data      dataset manifest, dataset verify, dataset split
 Maintain  benchmark, preflight
 ```
 
@@ -243,6 +244,26 @@ Identity commands require an explicit identity path. Browser-user creation also
 requires a username, at least one role, and `--password-stdin`; passwords are
 never accepted as command-line arguments.
 
+### Data mode
+
+Record which event-dataset files a study used, check a directory against that
+record, and divide a published split so that no speaker or recording is on
+both sides. Nothing is downloaded; the files must already be on disk in the
+layout the dataset's loader reads.
+
+```bash
+sc-neurocore dataset manifest shd data/shd --version 1.0 -o shd.manifest.json
+sc-neurocore dataset verify shd.manifest.json data/shd
+sc-neurocore dataset split shd.manifest.json --part train=0.8 --part validation=0.2 --seed 0 -o shd.split.json
+```
+
+`manifest` hashes every file and prints the licence, the citation, the sample
+and group counts per published split, and any group the publisher's own splits
+share. `verify` lists missing, changed and unlisted files and exits with status
+1 when there are any. `split` assigns whole groups to the new parts and prints
+the share each part received. Refused input exits with status 2 and writes no
+file. The formats are described in [Neuromorphic Datasets](datasets.md).
+
 ### Maintenance mode
 
 ```bash
@@ -265,6 +286,7 @@ inside handlers, keeping top-level help and `--version` lightweight.
 | `parser.py` | top-level help, version handling, parser composition, dispatch |
 | `commands/info.py` | runtime and optional-engine status |
 | `commands/compile.py` | ODE and NIR compilation |
+| `commands/dataset.py` | event-dataset manifests, verification and group splits |
 | `commands/serve.py` | spike-stream server launch |
 | `commands/mapping.py` | NIR silicon-mapping report |
 | `commands/deploy.py` | trusted model deployment and target project generation |
@@ -297,6 +319,7 @@ compute surfaces retain their language-specific implementations and benchmarks.
 | SC-NIR operations | schema, conversion, compatibility, closure, HDL audit | `tests/test_cli_scnir.py` and focused `tests/test_scnir_*.py` CLI cases |
 | Studio | app factory and platform state APIs | `tests/test_cli_studio.py` and focused Studio CLI cases |
 | synthesis evidence | optimiser report reader/writer | `tests/test_cli_synthesis.py`, `tests/test_optimizer/test_synthesis_evidence_cli.py` |
+| dataset | manifest builder and verifier, group splits | `tests/test_cli_dataset.py` |
 | serve/map/hub | server, mapping writer, hub generator | `tests/test_cli_serve.py`, `tests/test_cli_mapping.py`, `tests/test_cli_hub.py` |
 
 The NIR co-simulation oracle records post-threshold, post-reset membrane output,

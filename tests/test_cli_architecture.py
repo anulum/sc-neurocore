@@ -34,6 +34,7 @@ def test_command_modules_have_one_registration_boundary() -> None:
     assert {path.stem for path in command_files} == {
         "__init__",
         "compile",
+        "dataset",
         "deploy",
         "formal",
         "hub",

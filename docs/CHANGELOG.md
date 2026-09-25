@@ -5,6 +5,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Event-dataset manifests, group splits and declared encoders
+
+- `build_manifest` records an N-MNIST, SHD or CIFAR10-DVS directory: every
+  file by size and SHA-256, every sample by published split, label and
+  group, and the publisher's citation, licence, sensor geometry and time
+  unit. `verify_manifest` names missing, changed and unlisted files. Nothing
+  is downloaded, and the data version is stated by the user.
+- `group_split` divides a published split by whole groups — speakers in
+  SHD, recordings where the publisher names no finer identity — from a
+  seed, and records the manifest it was drawn from; `leaked_groups` checks
+  a plan read back, and `group_overlap` reports groups the publisher's own
+  splits share.
+- `EventBinning`, `PoissonRates` and `FirstSpikeLatency` declare everything
+  they do; `encoder_from_declaration` rebuilds the identical encoder and
+  refuses a declaration the running version would not reproduce. Event
+  binning drops late events and refuses events outside the sensor.
+- `sc-neurocore dataset manifest | verify | split` runs the same from the
+  command line.
+- The datasets page described the N-MNIST format that the reader fixed
+  earlier in this release no longer uses; it now gives the published 40-bit
+  layout and the SHD time unit.
+
 ### Studio workers no longer import PyTorch for analyses
 
 - Every process that imports the Studio routers imported PyTorch through the

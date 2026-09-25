@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5016
+    "test_files": 5021
   },
   "documentation": {
     "public_pages": [
@@ -3438,6 +3438,7 @@
       "tests/equivalence_check_support.py",
       "tests/equivalence_miter_support.py",
       "tests/ermentrout_kopell_pop_dispatch_support.py",
+      "tests/event_dataset_support.py",
       "tests/event_driven_support.py",
       "tests/expif_backends_support.py",
       "tests/explain_support.py",
@@ -4387,6 +4388,7 @@
       "tests/test_circuit_primitives_lateral_inhibition.py",
       "tests/test_circuit_primitives_winner_take_all.py",
       "tests/test_cli_architecture.py",
+      "tests/test_cli_dataset.py",
       "tests/test_cli_deploy_auto_synthesis.py",
       "tests/test_cli_deploy_deploy_nir.py",
       "tests/test_cli_deploy_deploy_pytorch.py",
@@ -4596,10 +4598,13 @@
       "tests/test_dashboard.py",
       "tests/test_datasets_check_root.py",
       "tests/test_datasets_dvscifar10_real_loader.py",
+      "tests/test_datasets_encoders.py",
       "tests/test_datasets_encoding.py",
       "tests/test_datasets_latency_encode_strict.py",
+      "tests/test_datasets_manifest.py",
       "tests/test_datasets_nmnist_real_loader.py",
       "tests/test_datasets_shd_real_loader.py",
+      "tests/test_datasets_splits.py",
       "tests/test_datasets_synthetic_loaders.py",
       "tests/test_dcls_engine_binding.py",
       "tests/test_dcls_q88_cosim.py",

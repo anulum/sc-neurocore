@@ -1,22 +1,25 @@
 # Neuromorphic Datasets
 
 **Module:** `sc_neurocore.datasets`
-**Source:** `src/sc_neurocore/datasets/` — 3 files, 423 LOC
-**Status (v3.14.0):** all 5 public symbols wired; 23 tests pass; pure
-NumPy I/O — no Rust path needed for the loaders, no synaptic kinetics.
-The "Poisson" encoder is actually Bernoulli (§3.1, same wording issue
-as `network/stimulus.PoissonInput`).
+**Source:** `src/sc_neurocore/datasets/` — 6 files, 1593 lines
+**Status (v3.16.0):** 18 public symbols; 98 tests across the dataset and
+`dataset` CLI test files; pure NumPy and h5py I/O — no Rust path needed for
+the loaders, no synaptic kinetics. The "Poisson" encoder is actually
+Bernoulli (§3.1, same wording issue as `network/stimulus.PoissonInput`).
 
-This page covers the two encoders (`poisson_encode`, `latency_encode`)
-and the three event-camera / cochlear loaders (`load_nmnist`,
-`load_shd`, `load_dvs_cifar10`), each of which can fall back to
-synthetic data when the real archive is not on disk.
+This page covers the two encoders (`poisson_encode`, `latency_encode`),
+the three event-camera / cochlear loaders (`load_nmnist`, `load_shd`,
+`load_dvs_cifar10`), each of which can fall back to synthetic data when the
+real archive is not on disk, and what a study needs to say which data it
+used and how: manifests of the files on disk (§2.5), splits that keep every
+speaker or recording on one side (§2.6) and encoders declared completely
+enough to rebuild them (§3.3).
 
 ---
 
 ## 1. Public surface
 
-`sc_neurocore.datasets.__init__` re-exports 5 symbols:
+`sc_neurocore.datasets.__init__` re-exports 18 symbols:
 
 | Symbol | Source file | Role |
 |--------|-------------|------|
@@ -25,6 +28,12 @@ synthetic data when the real archive is not on disk.
 | `load_nmnist` | `loaders.py` | N-MNIST (Orchard 2015), 34×34 DVS |
 | `load_shd` | `loaders.py` | Spiking Heidelberg Digits (Cramer 2022), 700 channels |
 | `load_dvs_cifar10` | `loaders.py` | DVS-CIFAR10 (Li 2017), 128×128 DVS |
+| `EventBinning`, `PoissonRates`, `FirstSpikeLatency` | `encoders.py` | Encoders with a complete declaration |
+| `encoder_from_declaration` | `encoders.py` | Rebuild an encoder from its declaration |
+| `EventDatasetManifest`, `build_manifest` | `manifest.py` | Files by SHA-256, samples by split, label and group |
+| `verify_manifest`, `manifest_from_dict` | `manifest.py` | Compare a directory with a manifest; read one back |
+| `SplitPlan`, `group_split`, `split_plan_from_dict` | `splits.py` | Divide a published split by whole groups |
+| `group_overlap`, `leaked_groups` | `splits.py` | Groups shared by published splits; groups a plan leaks |
 
 Each loader accepts `synthetic=True` to bypass disk reads — useful
 for unit tests and for CI where the real archives are not stored.
@@ -63,18 +72,19 @@ Returns `(samples, labels)`:
 
 The real-data path expects the directory layout
 `root/{Train,Test}/<class_id>/<sample>.bin`. Each `.bin` file is a
-sequence of 5-byte events: `[addr_high, addr_low, ts2, ts1, ts0]`,
-parsed by the helper `_parse_nmnist_bin` (`loaders.py:150`):
+sequence of 40-bit events in the format published with the dataset,
+parsed by the helper `_parse_nmnist_bin`:
 
 | Bits | Meaning |
 |------|---------|
-| 0–4 | x coordinate (5-bit, max 31) |
-| 5–9 | y coordinate |
-| 10 | polarity |
-| 16-bit `ts` | timestamp in microseconds |
+| 39–32 (byte 0) | x address in pixels |
+| 31–24 (byte 1) | y address in pixels |
+| 23 | polarity (0 OFF, 1 ON) |
+| 22–0 | timestamp in microseconds |
 
-`dt_ms` scales the parsed timestamps to milliseconds via
-`ts_us * (dt_ms / 1000.0)`.
+Timestamps are returned in milliseconds (microseconds / 1000); `dt_ms`
+does not affect the real path. The 34 × 34 sensor needs six address bits
+per axis, which is why the addresses are whole bytes.
 
 ### 2.2 `load_shd`
 
@@ -96,7 +106,9 @@ Returns `(samples, labels)`:
 
 The real-data path requires `h5py` (declared in extras) and reads
 `root/shd_{train,test}.h5`. The H5 layout is the standard SHD release:
-`/spikes/times[i]`, `/spikes/units[i]`, `/labels`.
+`/spikes/times[i]` in seconds, `/spikes/units[i]`, `/labels`, and
+`/extra/speaker`. Spikes after the `T`-step window are dropped rather than
+merged into the last bin.
 
 ### 2.3 `load_dvs_cifar10`
 
@@ -131,6 +143,54 @@ The synthetic generators draw class-conditional rate templates from
 `U(0, 0.3)` (event loaders) or `U(0, 0.1)` (SHD), then expand them
 through `poisson_encode` to per-sample spike trains. Polarities for
 event loaders are `randint(0, 2)`.
+
+### 2.5 Manifests of the files on disk
+
+`build_manifest(name, root, version=...)` records one dataset directory in
+the layout its loader reads: every file with its size and SHA-256, and every
+sample with its published split, label and group. The dataset description
+it carries is the publisher's: citation and DOI, where the files are
+distributed, the data licence, the sensor geometry and the unit of time the
+files store.
+
+| Dataset | Licence | Sensor | File times | Group |
+|---------|---------|--------|------------|-------|
+| `nmnist` | CC-BY-SA-4.0 | DVS 34 × 34, 2 polarities | microseconds | recording file |
+| `shd` | CC-BY-4.0 | cochlea, 700 channels | seconds | speaker |
+| `dvs_cifar10` | CC-BY-4.0 | DVS 128 × 128, 2 polarities | ms, in user-converted `.npy` | recording file |
+
+The group is the unit that must stay on one side of a split. SHD records a
+speaker for every sample; N-MNIST and CIFAR10-DVS name no identity finer than
+the recording, so each file is its own group. CIFAR10-DVS publishes no
+train/test split: the `train`/`test` folders the loader reads are the user's.
+
+The version is stated by the user, because the files do not carry it.
+Nothing is downloaded. `verify_manifest(manifest, root)` lists files that are
+missing, changed in size or bytes, or present in the layout but not in the
+manifest; `ok` is true only when there are none. `manifest.digest` identifies
+the exact manifest and can be recorded with a result.
+`manifest_from_dict` reads the JSON form back and refuses another schema, an
+unknown field, or a dataset description that differs from the one this
+version ships.
+
+### 2.6 Group splits
+
+`group_split(manifest, fractions={"train": 0.8, "validation": 0.2},
+source_split="train", seed=0)` divides one published split by whole groups.
+Groups are taken in an order fixed by the seed, and each goes to the part
+furthest below its requested share of samples, so the shares are met as
+closely as whole groups allow. Every part receives at least one group; a
+request for more parts than there are groups is refused. The other published
+splits are untouched.
+
+The plan records the manifest digest it was drawn from.
+`leaked_groups(manifest, plan)` returns the groups with samples in more than
+one part — empty for a plan `group_split` made, and the check to run on a
+plan read back with `split_plan_from_dict`. `group_overlap(manifest)` reports
+groups the publisher's own splits share, which matters before comparing a
+score with published ones. The SHD release states that two of its twelve
+speakers appear only in the test set; which training speakers the test set
+also holds is what `group_overlap` reports for the files on disk.
 
 ---
 
@@ -190,8 +250,26 @@ spike-time 0, `values=-0.5` clips toward T-1.
 `tau = 5.0` (default) means the latest possible spike (for v=0) is
 at timestep 5. For larger `T`, most timesteps are silent.
 
-`tau = 5.0` (default) means the latest possible spike (for v=0) is at
-timestep 5. For larger `T`, most timesteps are silent.
+### 3.3 Declared encoders
+
+How events or values become the tensor a network sees changes every result
+downstream. `EventBinning`, `PoissonRates` and `FirstSpikeLatency` are frozen
+values whose `declaration()` states everything they do, and
+`encoder_from_declaration` rebuilds the identical encoder from it; `digest`
+identifies the declaration.
+
+- `EventBinning(dt_ms, n_steps, width, height, polarity="separate")` puts an
+  event at `t` ms in step `floor(t / dt_ms)` and drops events at or after
+  `n_steps * dt_ms`. With `"separate"` ON and OFF events have their own
+  channels (OFF first); with `"merge"` they share one. Events outside the
+  sensor, with a polarity other than 0 or 1, or at a negative or non-finite
+  time are refused, not clipped.
+- `PoissonRates(n_steps, dt_ms, seed)` wraps `poisson_encode` with its seed.
+- `FirstSpikeLatency(n_steps, tau)` wraps `latency_encode` with `strict=True`.
+
+A declaration the running version would not reproduce exactly — an unknown
+encoder, another schema, or a changed rule such as `late_events` — is refused
+rather than rebuilt approximately.
 
 ---
 
@@ -261,7 +339,7 @@ but reachable from public loaders.
 
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
-| 1 | Pipeline wiring | ✅ PASS | All 5 symbols wired; loaders → encoders → synthetic fallbacks |
+| 1 | Pipeline wiring | ✅ PASS | All 18 symbols wired; loaders → encoders → synthetic fallbacks; manifests → group splits; `sc-neurocore dataset` |
 | 2 | Multi-angle tests | ✅ PASS | 23 tests across 6 classes (TestCheckRoot, TestSyntheticLoaders, TestEncoding, TestNMNISTRealLoader, TestSHDRealLoader, TestDVSCIFAR10RealLoader); covers shape, reproducibility, file-not-found, real-data parse, encoder rate correlation |
 | 3 | Rust path | N/A | I/O + NumPy-vectorised encoders; no compute kernel that would benefit |
 | 4 | Benchmarks | ✅ PASS | §4.1 + §4.2 measured this session |
@@ -295,12 +373,11 @@ values 0.0 / 1.0 accepted, interior values correctly ordered).
 
 ### 7.3 N-MNIST `_NMNIST_RES` constant is unused on the real path
 
-`loaders.py:24` declares `_NMNIST_RES = 34` but the real-data
-parser (`_parse_nmnist_bin`) decodes coordinates straight from the
-5-bit address fields without referring to the constant. The constant
-is used only on the synthetic path. Either delete it from the
-real path, or assert that decoded coordinates fall inside
-`[0, _NMNIST_RES)`.
+`loaders.py` declares `_NMNIST_RES = 34` but the real-data parser
+(`_parse_nmnist_bin`) decodes coordinates from whole address bytes
+(0–255) without referring to the constant, which is used only on the
+synthetic path. A corrupt file can therefore yield addresses beyond the
+sensor; `EventBinning` refuses such events rather than placing them.
 
 ### 7.4 `load_dvs_cifar10` real path requires `.npy` not raw
 
@@ -354,9 +431,15 @@ Not covered:
   Bernoulli ceiling). A test would document the §3.1 issue.
 - **Latency input range** — no test asserts behaviour for `value > 1`
   or `value < 0`.
-- **Real h5py format** — `TestSHDRealLoader::test_load_shd_real_path`
-  uses a synthesised H5 file; the actual SHD release format has not
-  been smoke-tested in CI.
+- **Published files** — the SHD tests write real HDF5 files in the
+  release layout with `h5py`, and the N-MNIST tests pack real 40-bit
+  records, but the published archives themselves are not downloaded in
+  CI.
+
+Manifests, splits, declared encoders and the `dataset` command are held by
+`tests/test_datasets_manifest.py`, `tests/test_datasets_splits.py`,
+`tests/test_datasets_encoders.py` and `tests/test_cli_dataset.py`, on files
+written in the published formats by `tests/event_dataset_support.py`.
 
 ---
 
@@ -372,6 +455,10 @@ Datasets (cited by source):
   Networks." *IEEE TNNLS* 33(7):2744-2757 (2022). SHD.
 - Li H. *et al.* "CIFAR10-DVS: An Event-Stream Dataset for Object
   Classification." *Front Neurosci* 11:309 (2017). DVS-CIFAR10.
+
+Data licences, as the publishers state them: N-MNIST under CC BY-SA 4.0
+(garrickorchard.com/datasets/n-mnist), SHD under CC BY 4.0
+(zenkelab.org), CIFAR10-DVS under CC BY 4.0 (figshare 4724671, version 2).
 
 Encoders (background):
 
@@ -401,3 +488,16 @@ Internal:
         - load_dvs_cifar10
         - poisson_encode
         - latency_encode
+        - EventBinning
+        - PoissonRates
+        - FirstSpikeLatency
+        - encoder_from_declaration
+        - EventDatasetManifest
+        - build_manifest
+        - verify_manifest
+        - manifest_from_dict
+        - SplitPlan
+        - group_split
+        - group_overlap
+        - leaked_groups
+        - split_plan_from_dict

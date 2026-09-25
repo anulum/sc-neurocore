@@ -34,6 +34,7 @@ def test_no_command_prints_grouped_help(capsys: pytest.CaptureFixture[str]) -> N
     assert "Model     info, compile, compile-nir, serve, map-nir" in output
     assert "Hardware  deploy, collect-synthesis, scnir, formal, hub-init" in output
     assert "Studio    studio and studio-* operator commands" in output
+    assert "Data      dataset manifest, dataset verify, dataset split" in output
 
 
 def test_command_help_is_progressively_disclosed(capsys: pytest.CaptureFixture[str]) -> None:
