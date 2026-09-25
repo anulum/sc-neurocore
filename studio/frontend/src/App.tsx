@@ -489,6 +489,11 @@ export default function App() {
           title="Download a sealed pack another installation can run and compare"
           testId="export-replay-pack"
           outline />
+        <Btn label="Notebook" onClick={() => { void s.exportReplayNotebook(); }}
+          disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
+          title="Download a Jupyter notebook that cites the model and replays the sealed pack"
+          testId="export-replay-notebook"
+          outline />
 
         <div className="header-spacer" />
 

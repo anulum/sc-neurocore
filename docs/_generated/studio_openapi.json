@@ -3880,6 +3880,60 @@
         "summary": "Api Dcls Info"
       }
     },
+    "/api/export/replay-notebook": {
+      "post": {
+        "description": "Export a cited Jupyter notebook that carries and replays a sealed pack.\n\nThe pack is built exactly as ``/api/export/replay-pack`` builds it and\nembedded in the notebook, so the notebook runs on another installation\nwithout any file from this one.",
+        "operationId": "api_export_replay_notebook_api_export_replay_notebook_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "model": "#/components/schemas/ModelExperimentExportRequest",
+                    "ode": "#/components/schemas/OdeExperimentExportRequest"
+                  },
+                  "propertyName": "mode"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ModelExperimentExportRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OdeExperimentExportRequest"
+                  }
+                ],
+                "title": "Req"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Export Replay Notebook Api Export Replay Notebook Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
+                }
+              }
+            },
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
+          }
+        },
+        "summary": "Api Export Replay Notebook"
+      }
+    },
     "/api/export/replay-pack": {
       "post": {
         "description": "Export a sealed pack another installation can run and compare.\n\nThe experiment is resolved, its randomness pinned and the run executed\nonce; the pack carries the re-resolvable request, the specification,\nthe scientific identity digest, the complete expectation (every spike\nevent, full scalar/vector samples bound to trace digests, initial/final\nstate and drive digest) and the environment that sealed it. Missing raw\nevidence or excessive pack size returns a structured HTTP 422 refusal. Replay it with\n``python -m sc_neurocore.studio.replay_pack <pack.json>``.",

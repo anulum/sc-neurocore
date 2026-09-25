@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5015
+    "test_files": 5016
   },
   "documentation": {
     "public_pages": [
@@ -7717,6 +7717,7 @@
       "tests/test_studio_progress_web_socket_endpoint.py",
       "tests/test_studio_project_manifest.py",
       "tests/test_studio_readiness_seal.py",
+      "tests/test_studio_replay_notebook.py",
       "tests/test_studio_replay_pack.py",
       "tests/test_studio_router_contract.py",
       "tests/test_studio_runtime_job_receipt.py",

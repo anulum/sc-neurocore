@@ -491,6 +491,7 @@ current protocol for each frequency. The injected trace is
 | GET | `/api/presets/{id}` | Get preset detail |
 | POST | `/api/codegen` | Export a script that reproduces the resolved experiment |
 | POST | `/api/export/replay-pack` | Export a sealed pack another installation can run and compare |
+| POST | `/api/export/replay-notebook` | Export a cited Jupyter notebook that carries and replays a sealed pack |
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
 | POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
 | POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity |

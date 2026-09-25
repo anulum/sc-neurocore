@@ -88,3 +88,12 @@ export const fetchCodegen = (req: Record<string, unknown>) =>
  */
 export const fetchReplayPack = (req: Record<string, unknown>) =>
   post<ReplayPack>("/export/replay-pack", req);
+
+/**
+ * Ask for a Jupyter notebook that cites the model and replays a sealed pack.
+ *
+ * @param req - The experiment to seal.
+ * @returns The notebook document (nbformat 4), the pack inline.
+ */
+export const fetchReplayNotebook = (req: Record<string, unknown>) =>
+  post<Record<string, unknown>>("/export/replay-notebook", req);

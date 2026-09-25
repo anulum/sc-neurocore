@@ -18,6 +18,7 @@ export default defineConfig({
     "guided-flow-truth-live.spec.ts",
     "module-federation-host.spec.ts",
     "network-canvas-live.spec.ts",
+    "notebook-export-live.spec.ts",
     "review-live.spec.ts",
     "workbench-accessibility-live.spec.ts",
   ],

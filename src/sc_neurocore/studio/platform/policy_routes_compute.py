@@ -116,6 +116,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         RouteVisibility.AUTHENTICATED,
         "studio.codegen.replay_pack",
     ),
+    (
+        "POST",
+        "/api/export/replay-notebook",
+        RouteVisibility.AUTHENTICATED,
+        "studio.codegen.replay_notebook",
+    ),
     ("POST", "/api/compile", RouteVisibility.AUTHENTICATED, "studio.compiler.compile"),
     (
         "POST",

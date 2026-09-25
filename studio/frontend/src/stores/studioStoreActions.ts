@@ -48,6 +48,7 @@ import {
   rotateStudioIdentityBrowserUserPassword,
   fetchPrecision,
   fetchCodegen,
+  fetchReplayNotebook,
   fetchReplayPack,
   fetchCompare,
   fetchNullclines,
@@ -848,6 +849,21 @@ export function createStudioStoreActions(
       const pack = await fetchReplayPack(studioExperimentExportRequest(simulationConfigInput(s)));
       const artefact = replayPackExport(pack);
       downloadBrowserArtefact(artefact.blob, artefact.filename);
+    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
+  },
+
+  exportReplayNotebook: async () => {
+    const s = get();
+    try {
+      if (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName) {
+        throw new Error("Selected model is still loading");
+      }
+      const notebook = await fetchReplayNotebook(studioExperimentExportRequest(simulationConfigInput(s)));
+      const stem = s.sourceMode === "model" ? s.selectedModelName : "equations";
+      downloadBrowserArtefact(
+        new Blob([JSON.stringify(notebook, null, 1)], { type: "application/x-ipynb+json" }),
+        `${stem}-replay.ipynb`,
+      );
     } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 

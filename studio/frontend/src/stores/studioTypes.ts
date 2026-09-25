@@ -324,6 +324,8 @@ export interface StudioState {
   runHeatmap: () => Promise<void>;
   runCodegen: () => Promise<void>;
   exportReplayPack: () => Promise<void>;
+  /** Download a cited notebook that carries and replays the sealed pack. */
+  exportReplayNotebook: () => Promise<void>;
   runCompile: () => Promise<void>;
   runCosim: () => Promise<void>;
   runCharacterize: () => void;

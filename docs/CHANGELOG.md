@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Cited notebooks generated from replay packs
+
+- **Notebook** (`POST /api/export/replay-notebook`) downloads a Jupyter
+  notebook built from a freshly sealed replay pack: it cites the catalogue
+  model from its descriptor (or says custom equations have no published
+  source), states that it runs the software model only, carries the pack
+  inline, and replays it with runtime differences reported rather than
+  refused. A test runs a generated notebook's code in a fresh process away
+  from the author's files and gets the verdict `match`.
+
 ### Review comments bound to immutable workspace revisions
 
 - A comment is made on one saved revision and records that revision's state

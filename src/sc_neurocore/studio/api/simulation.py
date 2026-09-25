@@ -549,6 +549,23 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         )
         return _safe(lambda: build_replay_pack(payload))
 
+    @router.post("/api/export/replay-notebook", responses=MODEL_RUN_ERROR_RESPONSES)
+    def api_export_replay_notebook(req: ExperimentExportRequest) -> Any:
+        """Export a cited Jupyter notebook that carries and replays a sealed pack.
+
+        The pack is built exactly as ``/api/export/replay-pack`` builds it and
+        embedded in the notebook, so the notebook runs on another installation
+        without any file from this one.
+        """
+        from sc_neurocore.studio.replay_notebook import notebook_from_pack
+
+        payload = _request_payload(req)
+        spec = _resolve_or_422_model(payload)
+        _guard_analysis_request(
+            analysis_budget, simulation_count=1, duration=spec.duration_ms, dt=spec.dt
+        )
+        return _safe(lambda: notebook_from_pack(build_replay_pack(payload)))
+
     @router.post("/api/classify")
     def api_classify(req: SimulateRequest) -> Any:
         _guard_analysis_request(

@@ -45199,6 +45199,24 @@ built; it is reported unverified with that reason, never given tiers.
 
 ---
 
+## Module `studio.replay_notebook`
+
+### Function `notebook_from_pack(pack)`
+Return a Jupyter notebook (nbformat 4) that cites and replays ``pack``.
+
+Parameters
+----------
+pack:
+    A sealed replay pack, as :func:`~sc_neurocore.studio.replay_pack.build_replay_pack`
+    returns it.
+
+Returns
+-------
+dict
+    The notebook document, ready to be written as ``.ipynb`` JSON.
+
+---
+
 ## Module `studio.replay_pack`
 
 ### Class `ReplayRejected`

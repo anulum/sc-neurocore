@@ -160,6 +160,21 @@ and vector samples, spike events, initial/final state and drive digest. These
 checks reuse installed dependencies without processing editable hooks. They do
 not establish fresh dependency resolution or portability to another platform.
 
+## Notebook
+
+**Notebook** (`POST /api/export/replay-notebook`, the same request body as the
+replay pack) downloads a Jupyter notebook built from a freshly sealed pack. Its
+first cell cites the catalogue model from the model's own descriptor — authors,
+year, paper title when the descriptor has one, DOI — or says that custom
+equations have no published source, gives the experiment digests, and states
+that the notebook runs the software model only: no fixed-point, RTL, synthesis
+or board step is part of it. The pack is carried inline, so the notebook needs
+no file from the machine that made it. Running it replays the pack through
+`sc_neurocore.studio.replay_pack.replay_pack` with runtime drift admitted and
+reported — another researcher's installation is expected to differ — and
+prints the verdict, the worst state deviation, the runtime differences and
+every difference found.
+
 ## Migrating from the earlier export
 
 The earlier `/api/codegen` returned a script that constructed the model with its

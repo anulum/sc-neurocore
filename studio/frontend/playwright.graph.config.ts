@@ -44,8 +44,8 @@ export default defineConfig({
   testDir: "./e2e",
   // Live-backend browser contracts over the built bundle: the network canvas,
   // the guided workflow's truthfulness under races and failures,
-  // candidate-model authoring, workbench accessibility, parameter fitting and
-  // review comments.
+  // candidate-model authoring, workbench accessibility, parameter fitting,
+  // review comments and notebook export.
   testMatch: [
     "network-canvas-live.spec.ts",
     "guided-flow-truth-live.spec.ts",
@@ -53,6 +53,7 @@ export default defineConfig({
     "workbench-accessibility-live.spec.ts",
     "fit-live.spec.ts",
     "review-live.spec.ts",
+    "notebook-export-live.spec.ts",
   ],
   // A shared workstation can be heavily loaded; the budget is for the
   // boundary, not for the host's spare capacity.
