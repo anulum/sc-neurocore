@@ -38308,7 +38308,8 @@ never dropped: an omitted row shows a smaller success count instead of a
 fault, and silently narrows every consumer that derives its scope from this
 list — the runtime-state conformance matrix among them.
 
-Results are cached after the first call.
+Results are cached after the first call. Concurrent first calls build the
+list once; the others wait for that build and return the same list.
 
 Returns
 -------

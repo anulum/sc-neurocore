@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5026
+    "test_files": 5027
   },
   "documentation": {
     "public_pages": [
@@ -7556,6 +7556,7 @@
       "tests/test_studio_catalogue_identity_classification.py",
       "tests/test_studio_catalogue_metadata_state.py",
       "tests/test_studio_catalogue_query.py",
+      "tests/test_studio_catalogue_single_build.py",
       "tests/test_studio_codegen_export.py",
       "tests/test_studio_compile_process.py",
       "tests/test_studio_compile_traceability.py",

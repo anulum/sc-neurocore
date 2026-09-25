@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +66,9 @@ METADATA_STATE_UNAVAILABLE = "unavailable"
 METADATA_STATE_INVALID = "invalid"
 
 _models_cache: list[dict[str, Any]] | None = None
+# One build at a time: a page opens the list, its facets and a query at once, and
+# each would otherwise build the whole catalogue in parallel on a cold start.
+_models_build_lock = threading.Lock()
 logger = logging.getLogger(__name__)
 
 
@@ -609,7 +613,8 @@ def list_models() -> list[dict[str, Any]]:
     fault, and silently narrows every consumer that derives its scope from this
     list — the runtime-state conformance matrix among them.
 
-    Results are cached after the first call.
+    Results are cached after the first call. Concurrent first calls build the
+    list once; the others wait for that build and return the same list.
 
     Returns
     -------
@@ -617,9 +622,16 @@ def list_models() -> list[dict[str, Any]]:
         One entry per registered model, sorted by identity.
     """
     global _models_cache
-    if _models_cache is not None:
+    cached = _models_cache
+    if cached is not None:
+        return cached
+    with _models_build_lock:
+        if _models_cache is None:
+            _models_cache = _build_model_list()
         return _models_cache
 
+
+def _build_model_list() -> list[dict[str, Any]]:
     result = []
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
@@ -633,7 +645,6 @@ def list_models() -> list[dict[str, Any]]:
             logger.exception("Studio model metadata unavailable for %s", name)
             entry = _unreadable_summary(name)
         result.append(entry)
-    _models_cache = result
     return result
 
 

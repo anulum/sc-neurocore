@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### The model catalogue is built once on a cold start
+
+- Opening the Studio asks for the model list, its facets and a query at the
+  same moment, and each request built the whole catalogue on a cold server;
+  with requests still running from pages already closed, the builds competed
+  for the interpreter and the list could take most of a minute. Concurrent
+  first requests now share one build.
+
 ### NIR interoperability acceptance corpus
 
 - The NIR graphs published with the NIR paper — written by Norse, Rockpool,
