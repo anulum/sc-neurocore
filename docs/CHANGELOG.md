@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Event dataset loaders read the real file formats
+
+- N-MNIST `.bin` files were decoded as a 16-bit address with x and y in five
+  bits each — too few for the 34 × 34 sensor — with the polarity bit inside
+  the timestamp and microseconds scaled by the synthetic time step. They are
+  now decoded as published: byte 0 x, byte 1 y, the top bit of byte 2 the
+  polarity, 23 bits of microseconds, reported in milliseconds.
+- SHD spikes after the requested `T`-step window were clipped into the last
+  bin, inventing a burst at the end of long samples; they are now dropped.
+
 ### Cited notebooks generated from replay packs
 
 - **Notebook** (`POST /api/export/replay-notebook`) downloads a Jupyter

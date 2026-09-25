@@ -77,3 +77,22 @@ class TestSHDRealLoader:
         (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="not found"):
             load_shd(root=tmp_path, train=True, synthetic=False)
+
+
+def test_load_shd_drops_spikes_after_the_window_instead_of_piling_them_up(tmp_path):
+    """A real HDF5 file in the SHD layout: times in seconds, one ragged array per sample."""
+    import h5py
+
+    with h5py.File(tmp_path / "shd_train.h5", "w") as handle:
+        times = handle.create_dataset("spikes/times", (1,), dtype=h5py.vlen_dtype(np.float32))
+        units = handle.create_dataset("spikes/units", (1,), dtype=h5py.vlen_dtype(np.int32))
+        # 1 ms bins, a 5-bin window: spikes at 1 ms and 3 ms fall inside, 9 ms and 20 ms do not.
+        times[0] = np.array([0.001, 0.003, 0.009, 0.020], dtype=np.float32)
+        units[0] = np.array([10, 11, 12, 13], dtype=np.int32)
+        handle.create_dataset("labels", data=np.array([4]))
+
+    samples, labels = load_shd(root=tmp_path, train=True, dt_ms=1.0, T=5)
+    (sample,) = samples
+    assert labels.tolist() == [4]
+    assert sample.shape == (5, 700)
+    assert sorted(zip(*np.nonzero(sample))) == [(1, 10), (3, 11)]

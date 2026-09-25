@@ -143,28 +143,35 @@ def load_nmnist(
             continue
         class_label = int(class_dir.name)
         for bin_file in sorted(class_dir.glob("*.bin")):
-            events = _parse_nmnist_bin(bin_file, dt_ms)
+            events = _parse_nmnist_bin(bin_file)
             samples.append(events)
             label_list.append(class_label)
     return samples, np.array(label_list, dtype=np.int64)
 
 
-def _parse_nmnist_bin(path: Path, dt_ms: float) -> np.ndarray[Any, Any]:
-    """Parse a single N-MNIST .bin file into (N, 4) event array."""
+def _parse_nmnist_bin(path: Path) -> np.ndarray[Any, Any]:
+    """Parse a single N-MNIST .bin file into an (N, 4) event array.
+
+    Each event is 40 bits, as published with the dataset (Orchard et al.
+    2015): byte 0 is the x address, byte 1 the y address, the top bit of
+    byte 2 the polarity, and the remaining 23 bits the timestamp in
+    microseconds, most significant first. The 34 x 34 sensor needs six
+    address bits per axis, so the addresses are whole bytes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Columns ``[x, y, polarity, timestamp_ms]``; the timestamp is the
+        recorded microseconds divided by 1000.
+    """
     raw = np.fromfile(path, dtype=np.uint8)
-    # Each event is 5 bytes: [addr_high, addr_low, ts2, ts1, ts0]
     n_events = len(raw) // 5
-    events = raw[: n_events * 5].reshape(n_events, 5)
-    addr = (events[:, 0].astype(np.uint16) << 8) | events[:, 1].astype(np.uint16)
-    x = addr & 0x1F  # bits 0-4
-    y = (addr >> 5) & 0x1F  # bits 5-9
-    polarity = (addr >> 10) & 0x1  # bit 10
-    ts = (
-        events[:, 2].astype(np.uint32) << 16
-        | events[:, 3].astype(np.uint32) << 8
-        | events[:, 4].astype(np.uint32)
-    )
-    ts_ms = ts.astype(np.float32) * (dt_ms / 1000.0)
+    events = raw[: n_events * 5].reshape(n_events, 5).astype(np.uint32)
+    x = events[:, 0]
+    y = events[:, 1]
+    polarity = events[:, 2] >> 7
+    ts_us = ((events[:, 2] & 0x7F) << 16) | (events[:, 3] << 8) | events[:, 4]
+    ts_ms = ts_us.astype(np.float64) / 1000.0
     return np.column_stack([x, y, polarity, ts_ms]).astype(np.float32)
 
 
@@ -232,9 +239,12 @@ def load_shd(
                 n_bins = T
             train_arr = np.zeros((n_bins, _SHD_CHANNELS), dtype=bool)
             if len(times) > 0:
-                bin_idx = np.clip((times / (dt_ms / 1000.0)).astype(int), 0, n_bins - 1)
+                bin_idx = (times / (dt_ms / 1000.0)).astype(int)
                 unit_idx = np.clip(units.astype(int), 0, _SHD_CHANNELS - 1)
-                train_arr[bin_idx, unit_idx] = True
+                # A spike after the T-step window is dropped: merging it into the
+                # last bin would invent a burst at the end of every long sample.
+                inside = bin_idx < n_bins
+                train_arr[bin_idx[inside], unit_idx[inside]] = True
             samples.append(train_arr)
 
     return samples, raw_labels.astype(np.int64)
