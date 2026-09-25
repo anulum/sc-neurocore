@@ -36120,6 +36120,10 @@ Build the deployment pipeline router over shared Studio runtime state.
 
 ## Module `studio.api.design`
 
+### Class `ReviewCommentBody`
+A review comment on one revision.
+
+
 ### Function `build_design_router(context)`
 Build the project and network-design router over shared Studio runtime state.
 
@@ -45045,6 +45049,24 @@ The source workspace is untouched; the fork starts at revision 1.
 ### Function `project_revisions(name)`
 Return every stored revision of one workspace, oldest first.
 
+### Function `review_comments(name)`
+Return a workspace's review comments, each checked against its revision.
+
+Raises
+------
+KeyError
+    The workspace does not exist.
+
+### Function `comment_on_revision(name, revision)`
+Append a review comment bound to one immutable revision.
+
+Raises
+------
+KeyError
+    The workspace or the revision does not exist.
+ValueError
+    The comment is empty or too long, or replies to a comment on another revision.
+
 ### Function `export_project(name)`
 Return one revision as a self-contained document for transfer.
 
@@ -46728,6 +46750,33 @@ WorkspaceLockTimeout
     Nothing was written.
 ValueError
     The name is not a single path segment.
+
+---
+
+## Module `studio.workspace_review`
+
+### Class `ReviewComment`
+One comment on one revision.
+
+
+### Function `add_comment(store, name, revision)`
+Append a comment on ``name`` at ``revision``.
+
+Raises
+------
+KeyError
+    The workspace or the revision does not exist.
+ValueError
+    The body is empty or longer than :data:`MAX_COMMENT_CHARS`, or
+    ``reply_to`` is not a comment on the same revision.
+
+### Function `list_comments(store, name)`
+Return a workspace's comments, each checked against its revision.
+
+Raises
+------
+KeyError
+    The workspace does not exist.
 
 ---
 

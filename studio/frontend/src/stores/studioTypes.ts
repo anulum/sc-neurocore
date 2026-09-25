@@ -45,7 +45,7 @@ export type SourceMode = "model" | "ode";
 /** Every panel the Studio can show. */
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "delays" | "admin" | "candidate" | "fit";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "delays" | "admin" | "candidate" | "fit" | "review";
 export type { EvidenceBundleSurface };
 
 /**

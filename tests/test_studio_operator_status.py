@@ -126,19 +126,20 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
 
     assert payload["schema_version"] == OPERATOR_STATUS_SCHEMA_VERSION
     assert payload["deployment_profile"] == "development"
-    # 137 since ten served routes gained the policies they lacked (three public
+    # 139 since ten served routes gained the policies they lacked (three public
     # catalogue and graph reads, seven authenticated project operations), the
     # four authenticated candidate-package routes arrived, and the two
-    # authenticated fitting routes after them.
+    # authenticated fitting routes after them, and the two authenticated
+    # review-comment routes.
     assert payload["route_policies"] == {
         "admin_count": 28,
-        "authenticated_count": 75,
+        "authenticated_count": 77,
         "enforced": True,
-        "protected_audit_action_count": 103,
-        "protected_count": 103,
+        "protected_audit_action_count": 105,
+        "protected_count": 105,
         "protected_routes_audited": True,
         "public_count": 34,
-        "total_count": 137,
+        "total_count": 139,
     }
     assert payload["identity"] == {
         "configured": True,

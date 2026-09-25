@@ -86,6 +86,18 @@ WORKSPACE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.project.revisions",
     ),
     (
+        "GET",
+        "/api/project/{name}/comments",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.comments.list",
+    ),
+    (
+        "POST",
+        "/api/project/{name}/revisions/{revision}/comments",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.comments.add",
+    ),
+    (
         "POST",
         "/api/project/{name}/fork",
         RouteVisibility.AUTHENTICATED,

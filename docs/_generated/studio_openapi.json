@@ -2350,6 +2350,32 @@
         "title": "RequestValidationErrorItem",
         "type": "object"
       },
+      "ReviewCommentBody": {
+        "additionalProperties": false,
+        "description": "A review comment on one revision.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "reply_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply To"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "ReviewCommentBody",
+        "type": "object"
+      },
       "SensitivityRequest": {
         "description": "Request body for Studio model sensitivity analysis.",
         "properties": {
@@ -6245,6 +6271,62 @@
         "summary": "Api Project Branch Refused Edit"
       }
     },
+    "/api/project/{name}/comments": {
+      "get": {
+        "description": "List a workspace's review comments, each checked against its revision.",
+        "operationId": "api_project_comments_api_project__name__comments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Comments Api Project  Name  Comments Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Comments"
+      }
+    },
     "/api/project/{name}/export": {
       "get": {
         "description": "Export one revision as a self-contained transfer document.",
@@ -6391,6 +6473,65 @@
           }
         },
         "summary": "Api Project Revisions"
+      }
+    },
+    "/api/project/{name}/revisions/{revision}/comments": {
+      "post": {
+        "description": "Comment on one immutable revision; the author is the request's principal.",
+        "operationId": "api_project_comment_api_project__name__revisions__revision__comments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revision",
+            "required": true,
+            "schema": {
+              "title": "Revision",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCommentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Comment Api Project  Name  Revisions  Revision  Comments Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Comment"
       }
     },
     "/api/sensitivity": {

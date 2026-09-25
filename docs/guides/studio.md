@@ -500,6 +500,8 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/candidates/review-packet` | Run a candidate's reference tests and return its review packet |
 | POST | `/api/fits` | Fit a model's parameters to a split cohort, with hold-out error and identifiability ([Parameter Fitting](../studio/parameter-fitting.md)) |
 | POST | `/api/fits/replay` | Run an exported fit again and report whether it reproduced |
+| GET | `/api/project/{name}/comments` | Review comments, each checked against its revision ([Workspaces](../studio/workspaces.md)) |
+| POST | `/api/project/{name}/revisions/{revision}/comments` | Comment on one immutable revision, or reply |
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 

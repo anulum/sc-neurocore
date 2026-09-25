@@ -378,6 +378,41 @@ def project_revisions(name: str) -> list[dict[str, Any]]:
     return [revision.to_public_dict() for revision in _store().revisions(_safe_name(name))]
 
 
+def review_comments(name: str, *, revision: int | None = None) -> dict[str, Any]:
+    """Return a workspace's review comments, each checked against its revision.
+
+    Raises
+    ------
+    KeyError
+        The workspace does not exist.
+    """
+    from sc_neurocore.studio.workspace_review import list_comments
+
+    return list_comments(_store(), _safe_name(name), revision=revision)
+
+
+def comment_on_revision(
+    name: str, revision: int, *, author: str, body: str, reply_to: str | None = None
+) -> dict[str, Any]:
+    """Append a review comment bound to one immutable revision.
+
+    Raises
+    ------
+    KeyError
+        The workspace or the revision does not exist.
+    ValueError
+        The comment is empty or too long, or replies to a comment on another revision.
+    """
+    from dataclasses import asdict
+
+    from sc_neurocore.studio.workspace_review import add_comment
+
+    comment = add_comment(
+        _store(), _safe_name(name), revision, author=author, body=body, reply_to=reply_to
+    )
+    return asdict(comment)
+
+
 def export_project(name: str, *, revision: int | None = None) -> dict[str, Any]:
     """Return one revision as a self-contained document for transfer."""
     name = _safe_name(name)

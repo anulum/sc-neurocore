@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5014
+    "test_files": 5015
   },
   "documentation": {
     "public_pages": [
@@ -7835,6 +7835,7 @@
       "tests/test_studio_vector_state_declaration.py",
       "tests/test_studio_worker_routes.py",
       "tests/test_studio_workspace_concurrency.py",
+      "tests/test_studio_workspace_review.py",
       "tests/test_studio_workspace_revisions.py",
       "tests/test_studio_workspace_routes.py",
       "tests/test_supply_chain_audit.py",

@@ -167,6 +167,24 @@ reapplying work that never conflicted with anything.
 Forking or importing onto a name that is already in use is refused, not
 merged.
 
+## Reviewing a revision
+
+A comment is made on one saved revision, never on a workspace in general:
+`POST /api/project/{name}/revisions/{revision}/comments` with a `body` (1 to
+4000 characters) and, for a reply, `reply_to` — a comment on the same
+revision. The author is the request's authenticated principal, or `local` in
+the single-user lab profile. The comment records the revision number and the
+digest of that revision's state, and is appended to `review.jsonl` beside the
+revisions; comments are never rewritten.
+
+`GET /api/project/{name}/comments` (optionally `?revision=N`) lists them, each
+checked against its revision as it is read: `revision_status` is `matches`,
+`changed` when the revision's state no longer has the digest it was reviewed
+at, or `missing` when the revision is gone — so a comment is never shown as if
+it applied to something else. The **Review** tab shows the comments on the
+revision the editor opened or last saved, threads replies under the comment
+they answer, and adds comments and replies.
+
 ## Deleting and restoring
 
 `DELETE /api/project/{name}` moves the workspace, with its whole history, into

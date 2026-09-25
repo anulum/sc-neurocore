@@ -5,6 +5,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Review comments bound to immutable workspace revisions
+
+- A comment is made on one saved revision and records that revision's state
+  digest; replies thread under a comment on the same revision. Listing checks
+  each comment against its revision and marks one whose revision changed or is
+  gone. Comments are appended, never rewritten; the author is the
+  authenticated principal, or `local` in the single-user lab profile.
+- `GET /api/project/{name}/comments` and
+  `POST /api/project/{name}/revisions/{revision}/comments` serve them, and the
+  **Review** tab shows, adds and threads the comments on the open revision. A
+  live browser test comments, replies and finds the thread after reopening
+  the project.
+
 ### The Studio's Fit tab
 
 - **Fit** fits the selected catalogue model or the workspace's candidate

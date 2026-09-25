@@ -129,3 +129,43 @@ export const restoreProject = (token: string) =>
  */
 export const runPipeline = (graph: NetworkGraph, target: string) =>
   post<PipelineResult>("/pipeline/run", { graph, target });
+
+/** One review comment, checked against the revision it was written on. */
+export interface ReviewComment {
+  comment_id: string;
+  revision: number;
+  state_sha256: string;
+  author: string;
+  created_at: number;
+  body: string;
+  reply_to: string | null;
+  /** `matches`, or `changed`/`missing` when the revision no longer is what was reviewed. */
+  revision_status: "matches" | "changed" | "missing";
+}
+
+/**
+ * List a workspace's review comments on one revision.
+ *
+ * @param name - The workspace's name.
+ * @param revision - The revision.
+ * @returns The comments, each with its revision's status.
+ */
+export const listReviewComments = (name: string, revision: number) =>
+  get<{ comments: ReviewComment[] }>(
+    `/project/${encodeURIComponent(name)}/comments?revision=${encodeURIComponent(String(revision))}`,
+  );
+
+/**
+ * Comment on one immutable revision.
+ *
+ * @param name - The workspace's name.
+ * @param revision - The revision reviewed.
+ * @param body - The comment.
+ * @param replyTo - The comment answered, on the same revision, or `null`.
+ * @returns The stored comment.
+ */
+export const addReviewComment = (name: string, revision: number, body: string, replyTo: string | null) =>
+  post<ReviewComment>(
+    `/project/${encodeURIComponent(name)}/revisions/${encodeURIComponent(String(revision))}/comments`,
+    { body, reply_to: replyTo },
+  );

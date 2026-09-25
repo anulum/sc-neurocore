@@ -72,12 +72,12 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
 
-    # 136 since `POST /api/fits` and `POST /api/fits/replay`, parameter fitting
-    # with held-out validation and its replay.
+    # 138 since the review-comment routes, listing a workspace's comments and
+    # commenting on one immutable revision.
     # The count is pinned so a route cannot
     # appear without a deliberate change here; raising it is how a new route is
     # admitted, never by relaxing the assertion.
-    assert len(backend_routes) == 136
+    assert len(backend_routes) == 138
     assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
     assert len(root_routes) <= 1
     assert all(

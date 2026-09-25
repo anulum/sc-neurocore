@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, ConfigDict
 
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
@@ -45,6 +46,15 @@ from sc_neurocore.studio.project import (
     restore_project,
     save_project,
 )
+
+
+class ReviewCommentBody(BaseModel):
+    """A review comment on one revision."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    body: str
+    reply_to: str | None = None
 
 
 def build_design_router(context: StudioApiContext) -> APIRouter:
@@ -86,6 +96,34 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
     def api_project_revisions(name: str) -> Any:
         """List every stored revision of one workspace, oldest first."""
         return _safe(lambda: {"name": name, "revisions": project_revisions(name)})
+
+    @router.get("/api/project/{name}/comments")
+    def api_project_comments(name: str, revision: int | None = None) -> Any:
+        """List a workspace's review comments, each checked against its revision."""
+        from sc_neurocore.studio.project import review_comments
+
+        try:
+            return review_comments(name, revision=revision)
+        except KeyError as exc:
+            raise HTTPException(404, f"Project '{name}' not found") from exc
+
+    @router.post("/api/project/{name}/revisions/{revision}/comments")
+    def api_project_comment(
+        name: str, revision: int, comment: ReviewCommentBody, request: Request
+    ) -> Any:
+        """Comment on one immutable revision; the author is the request's principal."""
+        from sc_neurocore.studio.project import comment_on_revision
+
+        principal = getattr(request.state, "studio_principal", None)
+        author = principal.principal_id if principal is not None else "local"
+        try:
+            return comment_on_revision(
+                name, revision, author=author, body=comment.body, reply_to=comment.reply_to
+            )
+        except KeyError as exc:
+            raise HTTPException(404, f"Project '{name}' has no revision {revision}") from exc
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
 
     @router.post("/api/project/{name}/fork")
     def api_project_fork(name: str, data: dict[str, Any]) -> Any:

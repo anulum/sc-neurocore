@@ -61,7 +61,8 @@ export type PanelKey =
   | "delays"
   | "admin"
   | "candidate"
-  | "fit";
+  | "fit"
+  | "review";
 
 /** The registry counted by status, with the worst one named. */
 export interface CapabilitySummary {
@@ -154,6 +155,7 @@ const PANEL_TITLES: Record<PanelKey, string> = {
   admin: "Admin",
   candidate: "Candidate model",
   fit: "Parameter fitting",
+  review: "Review",
 };
 
 /**
