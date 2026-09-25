@@ -392,6 +392,12 @@
         "tier": "core"
       },
       {
+        "domain": "Training & optimisation",
+        "name": "fitting",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
         "domain": "EDA / ASIC / verification",
         "name": "formal",
         "status": "library-only",
