@@ -160,7 +160,8 @@ def recover_purges(manager: PurgeCustody, *, own_job: str | None = None) -> tupl
 
     Each phase rechecks ownership under its own writer transaction. Ambiguous
     intents never resolve automatically, and live foreign supervisors retain
-    ownership. Three bounded phases suffice; this is not a background retry loop.
+    ownership. At most three phases run per intent; this is not a background
+    retry loop.
     """
     rows = manager._ledger.connection().execute("SELECT job_id FROM job_purges").fetchall()
     resolved: list[str] = []
@@ -168,10 +169,12 @@ def recover_purges(manager: PurgeCustody, *, own_job: str | None = None) -> tupl
         job_id = str(row["job_id"])
         if own_job is not None and own_job != job_id:
             continue
-        for _ in range(3):
+        # A phase advances only by committing the next state, committed to
+        # cleanup_started and cleanup_started to removed, and removed resolves.
+        # An intent therefore advances at most twice before it resolves or waits.
+        outcome = _recover_phase(manager, job_id, own_job)
+        while outcome == "advance":
             outcome = _recover_phase(manager, job_id, own_job)
-            if outcome == "resolved":
-                resolved.append(job_id)
-            if outcome != "advance":
-                break
+        if outcome == "resolved":
+            resolved.append(job_id)
     return tuple(resolved)

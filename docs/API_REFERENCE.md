@@ -41197,7 +41197,8 @@ Recover exact custody with committed cleanup-start and removal evidence.
 
 Each phase rechecks ownership under its own writer transaction. Ambiguous
 intents never resolve automatically, and live foreign supervisors retain
-ownership. Three bounded phases suffice; this is not a background retry loop.
+ownership. At most three phases run per intent; this is not a background
+retry loop.
 
 ---
 
