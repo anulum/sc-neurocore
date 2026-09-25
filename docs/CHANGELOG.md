@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio workers no longer import PyTorch for analyses
+
+- Every process that imports the Studio routers imported PyTorch through the
+  training job module, including the confined workers that run simulations
+  and analyses. A PyTorch build with its GPU libraries maps several gigabytes
+  of address space, which the worker's address-space limit counted, so a long
+  analysis could fail with `MemoryError` before its own deadline. Whether
+  PyTorch is installed is now found without importing it, and the training
+  run imports it when it starts; a test holds that an analysis worker's
+  imports leave PyTorch unloaded.
+
 ### Event dataset loaders read the real file formats
 
 - N-MNIST `.bin` files were decoded as a 16-bit address with x and y in five

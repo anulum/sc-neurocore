@@ -15,6 +15,8 @@ import io
 import json
 import queue
 import runpy
+import subprocess
+import sys
 import threading
 import time
 from collections.abc import Callable
@@ -196,9 +198,10 @@ def test_training_job_fails_cleanly_when_torch_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The optional-backend import path reports an actionable terminal error."""
-    original_import = cast(Callable[..., ModuleType], builtins.__import__)
     with monkeypatch.context() as patch:
-        patch.setattr(builtins, "__import__", _blocked_import(original_import, "torch"))
+        # A ``None`` entry is how the import system records an absent module:
+        # both the installation probe and ``import torch`` then see no Torch.
+        patch.setitem(sys.modules, "torch", None)
         namespace = runpy.run_path(
             str(_SOURCE_PATH),
             run_name="sc_neurocore.studio._training_without_torch",
@@ -212,6 +215,29 @@ def test_training_job_fails_cleanly_when_torch_is_unavailable(
     assert namespace["HAS_TORCH"] is False
     assert job.status == "failed"
     assert job.error == "PyTorch not installed. pip install sc-neurocore[research]"
+
+
+def test_an_analysis_worker_does_not_import_torch() -> None:
+    """Importing the analysis task, and the Studio routers with it, leaves Torch unloaded.
+
+    Workers run under an address-space limit; a Torch build with its GPU
+    libraries maps gigabytes that an analysis never uses.
+    """
+    probe = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys\n"
+            "import sc_neurocore.studio.api.analysis_jobs\n"
+            "import sc_neurocore.studio.training\n"
+            "print('torch' in sys.modules)",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=True,
+    )
+    assert probe.stdout.strip() == "False"
 
 
 def test_mnist_adapter_trains_through_a_protocol_compatible_dataset(

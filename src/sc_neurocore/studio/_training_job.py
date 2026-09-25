@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import queue
 import secrets
@@ -53,12 +54,11 @@ from sc_neurocore.studio.platform.training_weights import (
     write_training_weight_checkpoint,
 )
 
-try:
-    import torch
-
-    HAS_TORCH = True
-except ImportError:
-    HAS_TORCH = False
+# Whether PyTorch is installed, found without importing it: every process that
+# imports the Studio routers imports this module, and importing Torch there
+# starts its thread pools and maps its libraries. An analysis worker runs under
+# an address-space limit it would then spend on a library it never calls.
+HAS_TORCH = importlib.util.find_spec("torch") is not None
 
 
 # One owner for the supported vocabularies: the contract that refuses an
@@ -331,6 +331,8 @@ class TrainingJob:
         """Execute the Torch training loop and capture terminal weights."""
         if not HAS_TORCH:
             raise RuntimeError("PyTorch not installed. pip install sc-neurocore[research]")
+
+        import torch
 
         from sc_neurocore.training import (
             SpikingNet,
