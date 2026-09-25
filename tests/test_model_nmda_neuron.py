@@ -108,6 +108,10 @@ def test_magnesium_block_is_voltage_dependent() -> None:
         ("v_threshold", -29.9, ValueError),
         ("v_reset", -51.0, ValueError),
         ("refractory_period", -0.1, ValueError),
+        # A period above its bound that still holds the default remaining time
+        # reaches the period's own check rather than the remaining-time one.
+        ("refractory_period", 20.1, ValueError),
+        ("v_l", -39.0, ValueError),
     ],
 )
 def test_source_constructor_rejects_invalid_configuration(
@@ -124,6 +128,14 @@ def test_non_finite_source_drive_is_rejected_atomically(current: float) -> None:
     before = _source_state(neuron)
     with pytest.raises(ValueError, match="current"):
         neuron.step(current)
+    assert _source_state(neuron) == before
+
+
+def test_a_drive_that_overflows_the_candidate_state_is_rejected_atomically() -> None:
+    neuron = NMDANeuron()
+    before = _source_state(neuron)
+    with pytest.raises(ValueError, match="candidate state became non-finite"):
+        neuron.step(1.0e308)
     assert _source_state(neuron) == before
 
 
