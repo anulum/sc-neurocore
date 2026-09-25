@@ -131,6 +131,7 @@ export {
   validateGraph,
   simulateGraph,
   exportNIR,
+  fetchNetworkNotebook,
   importNIR,
 } from "./graphApi";
 

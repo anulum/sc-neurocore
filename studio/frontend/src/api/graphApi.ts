@@ -102,6 +102,16 @@ export const exportNIR = (graph: NetworkGraph) =>
   post<NIRExportResult>("/graph/export-nir", graph);
 
 /**
+ * Fetch a tutorial notebook that rebuilds the graph with the public network API.
+ *
+ * @param graph - The graph, with its timestep, duration and seed.
+ * @returns An nbformat 4 notebook whose last cell checks its run against the
+ *   Studio's run of the same graph.
+ */
+export const fetchNetworkNotebook = (graph: NetworkGraph) =>
+  post<Record<string, unknown>>("/graph/notebook", graph);
+
+/**
  * Import a NIR file, or a saved graph envelope, as a graph.
  *
  * @param request - The file's bytes as base64, or the envelope.

@@ -45,9 +45,10 @@ export default defineConfig({
   // Live-backend browser contracts over the built bundle: the network canvas,
   // the guided workflow's truthfulness under races and failures,
   // candidate-model authoring, workbench accessibility, parameter fitting,
-  // review comments and notebook export.
+  // review comments, notebook export and the network tutorial notebook.
   testMatch: [
     "network-canvas-live.spec.ts",
+    "network-notebook-live.spec.ts",
     "guided-flow-truth-live.spec.ts",
     "candidate-authoring-live.spec.ts",
     "workbench-accessibility-live.spec.ts",

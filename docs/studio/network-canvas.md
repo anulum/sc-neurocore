@@ -483,6 +483,33 @@ its spike raster equals the Studio's own run.
 
 A refusal answers `422` with `{"detail": {"reason": "<why>"}}`.
 
+## Tutorial notebook
+
+**Notebook** in the toolbar downloads `network-tutorial.ipynb`, a notebook that
+builds the network on the canvas by hand with the public `sc_neurocore.network`
+API. Each population is one visible `Population` call with the constructor
+keywords the Studio validated, its `SpikeMonitor` and its drive (`StepCurrent`
+or `PoissonInput` with its seed); each projection is one connectivity call
+(`random_connectivity` with its seed, or `all_to_all`), the diagonal dropped
+on a self-projection that does not declare autapses, and one `Projection`
+with the delay in whole steps. The objects join the network in the Studio's
+order and the reference Python loop runs it.
+
+The Studio runs the graph once when the notebook is made and seals the run
+into it: the graph digest, the spike count, a SHA-256 over every spike event
+(step and network-wide neuron index), and the CSR digest of every projection.
+The last cell recomputes them from its own run and prints `spikes match` and
+`connectivity match` per projection, so the tutorial shows whether it
+reproduced the network rather than asserting it. The first cell cites every
+catalogue model the network uses from its descriptor, and says what the
+notebook does not do: no fixed-point, RTL, synthesis or board step is part of
+it, and the Rust network runner is not used because it cannot preserve the
+graph.
+
+`POST /api/graph/notebook` takes the same body as `/api/graph/simulate`. A
+graph that does not validate answers 422 with every message; a graph that
+fails while running answers 422 with the failure.
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -493,6 +520,7 @@ A refusal answers `422` with `{"detail": {"reason": "<why>"}}`.
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate a graph; every error at once, each with the field it came from |
 | POST | `/api/graph/simulate` | Run the graph through the public Network runtime |
+| POST | `/api/graph/notebook` | A tutorial notebook that rebuilds the graph with the public API and checks its run against the Studio's |
 | POST | `/api/graph/export-nir` | Write the graph as a NIR (HDF5) file, returned as base64 with notes on what it does not carry |
 | POST | `/api/graph/import-nir` | Read a NIR file (`content_base64`) or a legacy graph envelope back into a graph |
 

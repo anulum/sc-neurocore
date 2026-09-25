@@ -216,6 +216,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     (
         "POST",
+        "/api/graph/notebook",
+        RouteVisibility.AUTHENTICATED,
+        "studio.graph.notebook",
+    ),
+    (
+        "POST",
         "/api/graph/export-nir",
         RouteVisibility.AUTHENTICATED,
         "studio.graph.export_nir",

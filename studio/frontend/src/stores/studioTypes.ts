@@ -406,6 +406,8 @@ export interface StudioState {
   simulateGraphAction: () => Promise<void>;
   /** Write the canvas network as a NIR file and say what the file does not carry. */
   exportGraphNIR: () => Promise<void>;
+  /** Download a notebook that rebuilds the canvas network by hand and checks its spikes. */
+  exportGraphNotebook: () => Promise<void>;
   /** Replace the canvas with the network in a NIR file or a saved graph envelope. */
   importGraphNIR: (file: Blob & { name: string }) => Promise<void>;
   loadSurrogates: () => Promise<void>;

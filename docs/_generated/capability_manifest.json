@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5021
+    "test_files": 5022
   },
   "documentation": {
     "public_pages": [
@@ -7696,6 +7696,7 @@
       "tests/test_studio_network_hardware.py",
       "tests/test_studio_network_interchange_fidelity.py",
       "tests/test_studio_network_nir.py",
+      "tests/test_studio_network_notebook.py",
       "tests/test_studio_nir_compile.py",
       "tests/test_studio_nullcline_budget.py",
       "tests/test_studio_nullclines.py",

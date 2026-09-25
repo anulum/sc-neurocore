@@ -20,6 +20,7 @@
     "e2e/guided-operator-run.spec.ts",
     "e2e/module-federation-host.spec.ts",
     "e2e/network-canvas-live.spec.ts",
+    "e2e/network-notebook-live.spec.ts",
     "e2e/notebook-export-live.spec.ts",
     "e2e/review-live.spec.ts",
     "e2e/workbench-accessibility-live.spec.ts",

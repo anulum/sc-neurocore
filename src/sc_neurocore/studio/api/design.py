@@ -18,6 +18,8 @@ from pydantic import BaseModel, ConfigDict
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.network_execution import GraphExecutionFailure
+from sc_neurocore.studio.network_graph_spec import resolve_graph
+from sc_neurocore.studio.network_notebook import network_notebook
 from sc_neurocore.studio.network_nir import (
     NIRMappingRefused,
     graph_to_nir_file,
@@ -287,6 +289,28 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
         def run() -> Any:
             try:
                 return simulate_graph(data)
+            except GraphExecutionFailure as exc:
+                raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+        return _safe(run)
+
+    @router.post("/api/graph/notebook")
+    def api_graph_notebook(data: dict[str, Any]) -> Any:
+        """Return a tutorial notebook that rebuilds the graph with the public API.
+
+        The graph is run once; its spike and connectivity digests are sealed
+        into the notebook, whose last cell compares them with its own run. A
+        graph that does not validate answers 422 with every message.
+        """
+
+        def run() -> dict[str, Any]:
+            issues = graph_issues(data)
+            if issues:
+                raise HTTPException(
+                    status_code=422, detail={"errors": [issue.message for issue in issues]}
+                )
+            try:
+                return network_notebook(resolve_graph(data))
             except GraphExecutionFailure as exc:
                 raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
 

@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Network tutorial notebooks from the canvas
+
+- **Notebook** on the network canvas downloads a notebook that builds the
+  drawn network by hand with the public `sc_neurocore.network` API: one
+  visible `Population` call per population with its monitor and drive, one
+  connectivity call and `Projection` per projection with its seed and delay
+  in whole steps, and the run in the Studio's order.
+- The Studio's own run of the graph is sealed into the notebook — graph
+  digest, spike count, a digest over every spike event and the CSR digest of
+  every projection — and the last cell prints whether its run matches. The
+  notebook cites each catalogue model it uses and states that no hardware
+  step is part of it.
+- `POST /api/graph/notebook` serves it; a graph that does not validate or
+  fails while running answers 422.
+
 ### Event-dataset manifests, group splits and declared encoders
 
 - `build_manifest` records an N-MNIST, SHD or CIFAR10-DVS directory: every

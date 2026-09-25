@@ -39141,6 +39141,43 @@ Return the realised connectivity as a dense ``&#91;target, source&#93;`` matrix.
 
 ---
 
+## Module `studio.network_notebook`
+
+### Function `spike_events_sha256(result)`
+Digest every spike event of a graph result, in network-wide neuron indices.
+
+Parameters
+----------
+result:
+    A ``studio.network-graph-result.v1`` payload.
+
+Returns
+-------
+str
+    SHA-256 over the int64 bytes of the event steps, then the event
+    neurons, sorted by step and then neuron.
+
+### Function `network_notebook(spec)`
+Run a resolved graph and return a tutorial notebook that rebuilds it.
+
+Parameters
+----------
+spec:
+    A graph resolved by :func:`~sc_neurocore.studio.network_graph_spec.resolve_graph`.
+
+Returns
+-------
+dict
+    An nbformat 4 notebook. Its metadata carries the graph digest and the
+    sealed spike and connectivity digests of the Studio run.
+
+Raises
+------
+GraphExecutionFailure
+    When the graph fails while running.
+
+---
+
 ## Module `studio.nir_compile`
 
 ### Function `compile_nir_graph(graph)`
@@ -45602,6 +45639,19 @@ built; it is reported unverified with that reason, never given tiers.
 ---
 
 ## Module `studio.replay_notebook`
+
+### Function `model_citation(class_name)`
+Cite one catalogue model from its own descriptor, or say it names no source.
+
+Parameters
+----------
+class_name:
+    The catalogue class name.
+
+Returns
+-------
+str
+    A Markdown sentence naming the model and its source.
 
 ### Function `notebook_from_pack(pack)`
 Return a Jupyter notebook (nbformat 4) that cites and replays ``pack``.

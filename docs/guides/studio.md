@@ -515,6 +515,7 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate graph JSON and return structured errors |
 | POST | `/api/graph/simulate` | Run a graph through the public `Network` runtime |
+| POST | `/api/graph/notebook` | Export a tutorial notebook that rebuilds the graph with the public API and checks its spikes |
 | POST | `/api/graph/export-nir` | Write the validated graph as a NIR (HDF5) file, returned as base64 with notes |
 | POST | `/api/graph/import-nir` | Read a NIR file or a legacy graph envelope into Studio graph JSON |
 

@@ -78,6 +78,7 @@ import {
   graphModelContract as apiGraphModelContract,
   validateGraph as apiValidateGraph,
   exportNIR as apiExportNIR,
+  fetchNetworkNotebook,
   importNIR as apiImportNIR,
   branchRefusedEdit as apiBranchRefusedEdit,
   saveProject as apiSaveProject,
@@ -1387,6 +1388,20 @@ export function createStudioStoreActions(
       networkNirExportPlan(exported).writeArtefact();
       set({ graphNotice: networkNirExportNotice(exported) });
     } catch (e) { set(studioGraphFailureState(e, "Graph NIR export failed")); }
+  },
+
+  exportGraphNotebook: async () => {
+    const s = get();
+    try {
+      const notebook = await fetchNetworkNotebook(
+        studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed),
+      );
+      downloadBrowserArtefact(
+        new Blob([JSON.stringify(notebook, null, 1)], { type: "application/x-ipynb+json" }),
+        "network-tutorial.ipynb",
+      );
+      set({ graphNotice: "Notebook written: it rebuilds this network step by step and checks its spikes against this run." });
+    } catch (e) { set(studioGraphFailureState(e, "Network notebook export failed")); }
   },
 
   importGraphNIR: async (file) => {

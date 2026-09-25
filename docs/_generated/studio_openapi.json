@@ -4325,6 +4325,47 @@
         "summary": "Api Graph Model Contract"
       }
     },
+    "/api/graph/notebook": {
+      "post": {
+        "description": "Return a tutorial notebook that rebuilds the graph with the public API.\n\nThe graph is run once; its spike and connectivity digests are sealed\ninto the notebook, whose last cell compares them with its own run. A\ngraph that does not validate answers 422 with every message.",
+        "operationId": "api_graph_notebook_api_graph_notebook_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Graph Notebook Api Graph Notebook Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Graph Notebook"
+      }
+    },
     "/api/graph/population": {
       "post": {
         "operationId": "api_create_population_api_graph_population_post",

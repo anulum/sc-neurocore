@@ -31,11 +31,19 @@ NOTEBOOK_FORMAT = 4
 NOTEBOOK_FORMAT_MINOR = 5
 
 
-def _citation(pack: Mapping[str, Any]) -> str:
-    model = pack.get("experiment", {}).get("model") or {}
-    class_name = model.get("class_name")
-    if not class_name:
-        return "Custom equations written in the Studio's equation playground; no published source is attached."
+def model_citation(class_name: str) -> str:
+    """Cite one catalogue model from its own descriptor, or say it names no source.
+
+    Parameters
+    ----------
+    class_name:
+        The catalogue class name.
+
+    Returns
+    -------
+    str
+        A Markdown sentence naming the model and its source.
+    """
     from sc_neurocore.neurons.model_catalogue import load_descriptor
 
     descriptor = load_descriptor(str(class_name))
@@ -48,6 +56,14 @@ def _citation(pack: Mapping[str, Any]) -> str:
         parts.append(f"*{provenance.paper_title}*")
     parts.append(f"doi:{provenance.doi}")
     return f"`{class_name}` follows " + " ".join(parts) + "."
+
+
+def _citation(pack: Mapping[str, Any]) -> str:
+    model = pack.get("experiment", {}).get("model") or {}
+    class_name = model.get("class_name")
+    if not class_name:
+        return "Custom equations written in the Studio's equation playground; no published source is attached."
+    return model_citation(str(class_name))
 
 
 def _markdown(text: str) -> dict[str, Any]:
@@ -138,4 +154,4 @@ def notebook_from_pack(pack: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-__all__ = ["NOTEBOOK_FORMAT", "notebook_from_pack"]
+__all__ = ["NOTEBOOK_FORMAT", "model_citation", "notebook_from_pack"]

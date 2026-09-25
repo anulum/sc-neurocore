@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 493
+expected_file_count = 495
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1823,6 +1823,14 @@ rationale = "The durable read surface of the job manager, scopeable by actor and
 [[file]]
 path = "src/sc_neurocore/studio/network_execution.py"
 rationale = "Lowering of a resolved Studio graph to public Network objects with stated execution semantics, topology digests and per-population spike custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/network_notebook.py"
+rationale = "Tutorial notebook that rebuilds a Studio graph with the public network API and checks its run against sealed spike and connectivity digests."
+
+[[file]]
+path = "src/sc_neurocore/studio/replay_notebook.py"
+rationale = "Cited, runnable notebook generated from a sealed replay pack, with model citations from catalogue descriptors."
 
 [[file]]
 path = "src/sc_neurocore/studio/network_graph_spec.py"

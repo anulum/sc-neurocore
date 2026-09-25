@@ -148,7 +148,7 @@ export default function NetworkCanvas() {
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     undoGraphEdit, redoGraphEdit, graphHistory,
-    simulateGraphAction, exportGraphNIR, importGraphNIR, loadGraphModels, runPipelineAction,
+    simulateGraphAction, exportGraphNIR, exportGraphNotebook, importGraphNIR, loadGraphModels, runPipelineAction,
     isSimulating, synthTarget,
   } = useStudioStore();
 
@@ -363,6 +363,16 @@ export default function NetworkCanvas() {
           background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>Export NIR</button>
+        <button
+          onClick={() => { void exportGraphNotebook(); }}
+          disabled={graphPopulations.length === 0}
+          title="A notebook that builds this network with the public API, one step at a time, and checks its spikes against this run"
+          data-testid="export-network-notebook"
+          style={{
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
+            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          }}
+        >Notebook</button>
         <button
           onClick={() => { nirFileInput.current?.click(); }}
           title="Replace the canvas with the network in a NIR file, or in a graph envelope saved as .json"
