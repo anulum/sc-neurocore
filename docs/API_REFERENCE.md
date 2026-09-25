@@ -17640,6 +17640,99 @@ metric : {"cosine", "euclidean", "hamming"}, default="cosine"
 
 ---
 
+## Module `fitting.fit`
+
+### Function `fit_parameters(problem)`
+Fit ``problem`` and return the complete, replayable result.
+
+Parameters
+----------
+problem:
+    The model, domains and split cohort.
+generations, population:
+    Differential-evolution size: at most ``generations`` generations of
+    ``population`` members per fitted parameter.
+
+Returns
+-------
+dict
+    The problem as given, the fitted values, training and hold-out error per
+    recording, the optimiser history and trial counts, the identifiability
+    diagnosis, the uncertainty, provenance, and the digest binding them.
+
+### Function `replay_fit(result)`
+Run an exported fit again and say whether it reproduced.
+
+Returns
+-------
+dict
+    ``reproduced`` is true when the new result's digest equals the exported
+    one; both digests and the new result are included.
+
+---
+
+## Module `fitting.problem`
+
+### Class `ParameterDomain`
+The range one parameter is searched over.
+
+Attributes
+----------
+name:
+    A parameter of the model's schema.
+low, high:
+    Finite bounds, ``low < high``.
+scale:
+    ``log`` searches the logarithm (bounds must be positive), for a
+    parameter whose plausible values span decades.
+
+- **__post_init__**()
+- **internal_bounds**()
+  - Return the bounds in the space the optimiser searches.
+- **to_value**(internal)
+  - Map a searched coordinate back to the parameter's own value.
+- **to_public_dict**()
+  - Return the domain as it is exported.
+
+### Class `Recording`
+One stimulus and the observed variable's response, sample by sample.
+
+- **__post_init__**()
+- **data_sha256**()
+  - Digest of the samples, independent of the recording's name.
+- **to_public_dict**()
+  - Return the recording as it is exported.
+
+### Class `FitProblem`
+A model, what to fit in it, and a cohort split into training and hold-out.
+
+- **__post_init__**()
+- **to_public_dict**()
+  - Return the whole problem as it is exported and replayed.
+
+### Function `canonical_sha256(payload)`
+Return the digest of a JSON value in canonical form.
+
+### Function `problem_from_dict(document)`
+Rebuild a problem from its exported form.
+
+Raises
+------
+ValueError
+    When the document is another version or its fields do not form a
+    valid problem.
+
+### Function `simulate(schema, observable, parameters, current)`
+Run the model with ``parameters`` under ``current`` and return the observable.
+
+Returns
+-------
+numpy.ndarray or None
+    The observable after each step, or ``None`` when the state stopped
+    being finite: a failed trial.
+
+---
+
 ## Module `formal.counterexample_replay`
 
 ### Class `RateBoundReplayResult`
@@ -36114,6 +36207,42 @@ ValueError
 
 ### Function `build_export_router(context)`
 Build the export and progress router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.fits`
+
+### Class `DomainBody`
+One fitted parameter's search domain.
+
+
+### Class `RecordingBody`
+One stimulus and the observed response.
+
+
+### Class `FitRequest`
+A fit: the model, what to fit, and the split cohort.
+
+
+### Class `ReplayRequest`
+An exported fit result.
+
+
+### Function `estimated_fit_steps(request)`
+Upper estimate of the model steps a fit takes.
+
+Differential evolution evaluates ``population x parameters`` members per
+generation, plus the initial population; the local polish and the
+identifiability differences add a few evaluations per parameter, counted
+here as one more generation.
+
+### Function `build_fits_router(context)`
+Build the parameter-fitting router.
+
+Parameters
+----------
+context:
+    Shared runtime state; the fitting routes hold none of their own.
 
 ---
 

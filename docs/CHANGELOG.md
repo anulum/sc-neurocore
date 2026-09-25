@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Parameter fitting with held-out validation and identifiability
+
+- `sc_neurocore.fitting` fits the parameters of a Universal DSL model — a
+  catalogue model's canonical schema or a candidate's model — to a cohort of
+  recordings split into training and hold-out sets; the objective sees the
+  training set only, and data shared between the sets is refused.
+- Seeded differential evolution with a local polish keeps the best loss of
+  every generation and counts failed trials (non-finite state, or a residual
+  too large to use) instead of hiding them; a fit with no finite trial does
+  not claim convergence.
+- The residual Jacobian at the optimum gives an identifiability diagnosis: a
+  parameter combination the data do not constrain is reported with its
+  direction, and then no standard error is reported. Otherwise standard errors
+  and correlations come from the Gauss–Newton asymptotic covariance.
+- Results carry the whole problem, versions and one digest, and replay.
+  `POST /api/fits` and `POST /api/fits/replay` serve it, bounded to 3 000 000
+  estimated model steps per synchronous fit.
+
 ### Simulation workbench: the plot in words, named sliders, bounded long series
 
 - The plot canvas names itself for assistive technology: for the trace view, a

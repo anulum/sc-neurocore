@@ -35,6 +35,7 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.deploy",
         "sc_neurocore.studio.api.design",
         "sc_neurocore.studio.api.export",
+        "sc_neurocore.studio.api.fits",
         "sc_neurocore.studio.api.identity",
         "sc_neurocore.studio.api.jobs",
         "sc_neurocore.studio.api.presets",
@@ -71,12 +72,12 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
 
-    # 134 since the four candidate-package routes (validate, diff, simulate,
-    # review packet) under `/api/candidates/`.
+    # 136 since `POST /api/fits` and `POST /api/fits/replay`, parameter fitting
+    # with held-out validation and its replay.
     # The count is pinned so a route cannot
     # appear without a deliberate change here; raising it is how a new route is
     # admitted, never by relaxing the assertion.
-    assert len(backend_routes) == 134
+    assert len(backend_routes) == 136
     assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
     assert len(root_routes) <= 1
     assert all(

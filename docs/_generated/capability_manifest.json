@@ -393,6 +393,12 @@
         "tier": "core"
       },
       {
+        "domain": "Training & optimisation",
+        "name": "fitting",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
         "domain": "EDA / ASIC / verification",
         "name": "formal",
         "status": "library-only",
@@ -967,12 +973,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 30,
     "public_api_exports": 45,
-    "public_documentation_pages": 636,
+    "public_documentation_pages": 637,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5012
+    "test_files": 5014
   },
   "documentation": {
     "public_pages": [
@@ -1481,6 +1487,7 @@
       "docs/studio/numeric-contract.md",
       "docs/studio/ode-editor.md",
       "docs/studio/onboarding.md",
+      "docs/studio/parameter-fitting.md",
       "docs/studio/replay-and-export.md",
       "docs/studio/svg-export.md",
       "docs/studio/synthesis-dashboard.md",
@@ -5075,6 +5082,7 @@
       "tests/test_fim_symmetry_dynamics_scfim_connection.py",
       "tests/test_fim_symmetry_dynamics_stdpfim_interaction.py",
       "tests/test_fisher_posner_contracts.py",
+      "tests/test_fitting.py",
       "tests/test_fitzhugh_nagumo_backends_bit_exact.py",
       "tests/test_fitzhugh_nagumo_backends_dispatch_validation.py",
       "tests/test_fitzhugh_nagumo_backends_dynamics.py",
@@ -7586,6 +7594,7 @@
       "tests/test_studio_experiment_http.py",
       "tests/test_studio_experiment_spec.py",
       "tests/test_studio_export_routes.py",
+      "tests/test_studio_fits_routes.py",
       "tests/test_studio_generator_state_visibility.py",
       "tests/test_studio_graph_model_contract.py",
       "tests/test_studio_graph_validation_locations.py",

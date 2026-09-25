@@ -662,6 +662,40 @@
         "title": "DirectCompileRequest",
         "type": "object"
       },
+      "DomainBody": {
+        "additionalProperties": false,
+        "description": "One fitted parameter's search domain.",
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "scale": {
+            "default": "linear",
+            "enum": [
+              "linear",
+              "log"
+            ],
+            "title": "Scale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "low",
+          "high"
+        ],
+        "title": "DomainBody",
+        "type": "object"
+      },
       "ExperimentRejectedDetail": {
         "description": "422 detail for a simulation request the experiment contract refuses.",
         "properties": {
@@ -816,6 +850,94 @@
           }
         },
         "title": "FICurveRequest",
+        "type": "object"
+      },
+      "FitRequest": {
+        "additionalProperties": false,
+        "description": "A fit: the model, what to fit, and the split cohort.",
+        "properties": {
+          "catalogue_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogue Model"
+          },
+          "domains": {
+            "items": {
+              "$ref": "#/components/schemas/DomainBody"
+            },
+            "title": "Domains",
+            "type": "array"
+          },
+          "fixed": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Fixed",
+            "type": "object"
+          },
+          "generations": {
+            "default": 40,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Generations",
+            "type": "integer"
+          },
+          "holdout": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingBody"
+            },
+            "title": "Holdout",
+            "type": "array"
+          },
+          "observable": {
+            "title": "Observable",
+            "type": "string"
+          },
+          "population": {
+            "default": 12,
+            "maximum": 100.0,
+            "minimum": 4.0,
+            "title": "Population",
+            "type": "integer"
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schema"
+          },
+          "seed": {
+            "default": 0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "train": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingBody"
+            },
+            "title": "Train",
+            "type": "array"
+          }
+        },
+        "required": [
+          "observable",
+          "domains",
+          "train",
+          "holdout"
+        ],
+        "title": "FitRequest",
         "type": "object"
       },
       "FreqResponseRequest": {
@@ -2145,6 +2267,53 @@
           "template_fingerprints"
         ],
         "title": "PresetDefaultFlowVerifyRequest",
+        "type": "object"
+      },
+      "RecordingBody": {
+        "additionalProperties": false,
+        "description": "One stimulus and the observed response.",
+        "properties": {
+          "current": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Current",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "observed": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Observed",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "current",
+          "observed"
+        ],
+        "title": "RecordingBody",
+        "type": "object"
+      },
+      "ReplayRequest": {
+        "additionalProperties": false,
+        "description": "An exported fit result.",
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "ReplayRequest",
         "type": "object"
       },
       "RequestValidationErrorItem": {
@@ -3814,6 +3983,88 @@
           }
         },
         "summary": "Api Fi Curve"
+      }
+    },
+    "/api/fits": {
+      "post": {
+        "description": "Fit the model to the training recordings and validate on the hold-out ones.",
+        "operationId": "api_fit_api_fits_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Fit Api Fits Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Fit"
+      }
+    },
+    "/api/fits/replay": {
+      "post": {
+        "description": "Run an exported fit again and say whether it reproduced.",
+        "operationId": "api_fit_replay_api_fits_replay_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Fit Replay Api Fits Replay Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Fit Replay"
       }
     },
     "/api/freq-response": {

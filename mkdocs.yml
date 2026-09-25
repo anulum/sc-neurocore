@@ -155,6 +155,7 @@ nav:
       - WebSocket Progress: studio/websocket-progress.md
       - ODE Equation Editor: studio/ode-editor.md
       - Candidate Models: studio/candidate-models.md
+      - Parameter Fitting: studio/parameter-fitting.md
       - SVG Vector Export: studio/svg-export.md
       - Replay & Code Export: studio/replay-and-export.md
       - Evidence Verification: studio/evidence-verification.md

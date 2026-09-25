@@ -498,6 +498,8 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/candidates/diff` | Diff a candidate against its parent, mathematically and semantically |
 | POST | `/api/candidates/simulate` | Run a candidate under its own profile, bounded |
 | POST | `/api/candidates/review-packet` | Run a candidate's reference tests and return its review packet |
+| POST | `/api/fits` | Fit a model's parameters to a split cohort, with hold-out error and identifiability ([Parameter Fitting](../studio/parameter-fitting.md)) |
+| POST | `/api/fits/replay` | Run an exported fit again and report whether it reproduced |
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 

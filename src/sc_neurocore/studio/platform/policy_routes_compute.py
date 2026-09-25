@@ -108,6 +108,8 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         RouteVisibility.AUTHENTICATED,
         "studio.candidates.review_packet",
     ),
+    ("POST", "/api/fits", RouteVisibility.AUTHENTICATED, "studio.fits.run"),
+    ("POST", "/api/fits/replay", RouteVisibility.AUTHENTICATED, "studio.fits.replay"),
     (
         "POST",
         "/api/export/replay-pack",
