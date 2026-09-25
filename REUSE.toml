@@ -99,3 +99,11 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# NIR graphs published with the NIR paper, vendored unchanged as an
+# interoperability acceptance corpus; see tests/fixtures/nir_interop/corpus.json.
+[[annotations]]
+path = ["tests/fixtures/nir_interop/*.nir"]
+precedence = "override"
+SPDX-FileCopyrightText = "2023 NIR Team"
+SPDX-License-Identifier = "BSD-3-Clause"

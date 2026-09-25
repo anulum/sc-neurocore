@@ -1,0 +1,114 @@
+{
+ "schema": "sc-neurocore.nir-interop-corpus.v1",
+ "source": {
+  "repository": "https://github.com/neuromorphs/NIR",
+  "commit": "da0551dad03c4818689fdae7a48bfcff0be07b81",
+  "licence": "BSD-3-Clause",
+  "copyright": "Copyright (c) 2023, NIR Team",
+  "licence_text": "LICENSES/BSD-3-Clause.txt",
+  "paper": "Pedersen, J. E. et al. (2024). Neuromorphic intermediate representation: a unified instruction set for interoperable brain-inspired computing. Nat. Commun. 15:8122. doi:10.1038/s41467-024-52259-9"
+ },
+ "nir_package": "1.0.7",
+ "files": [
+  {
+   "file": "lif_norse.nir",
+   "source_path": "paper/01_lif/lif_norse.nir",
+   "sha256": "0dd9143ef624892d4a6461f474d93653a337b3490a62e23ec9ec5d18fde9b7b6",
+   "bytes": 17584,
+   "written_by": "Norse",
+   "content": "single LIF neuron driven through an Affine input, the reference graph every platform in the NIR paper imports",
+   "readable_by_nir": true,
+   "nir_node_types": [
+    "Affine",
+    "Input",
+    "LIF",
+    "Output"
+   ],
+   "studio_import": "refused",
+   "studio_reason_contains": "Affine has no Studio population or projection"
+  },
+  {
+   "file": "lif_rockpool.nir",
+   "source_path": "paper/01_lif/lif_rockpool.nir",
+   "sha256": "f493a2cd00e20be6305acd7808faa1d4558993c91f3af43454bf637371e543d6",
+   "bytes": 17312,
+   "written_by": "Rockpool",
+   "content": "the same LIF neuron re-exported by Rockpool after import",
+   "readable_by_nir": false,
+   "nir_node_types": [],
+   "studio_import": "refused",
+   "studio_reason_contains": "the file is not a readable NIR graph"
+  },
+  {
+   "file": "two_lif_neurons.nir",
+   "source_path": "paper/01_lif/debug_spike_representation/two_lif_neurons.nir",
+   "sha256": "806c7c1cfae72b5be92ce15a670f37014b82a5d4fba8a077efce46d193c21a82",
+   "bytes": 21280,
+   "written_by": "SpiNNaker2 debugging example",
+   "content": "two LIF neurons joined by Linear; LIF1 is self-driven by a leak potential above its threshold",
+   "readable_by_nir": true,
+   "nir_node_types": [
+    "Input",
+    "LIF",
+    "Linear",
+    "Output"
+   ],
+   "studio_import": "refused",
+   "studio_reason_contains": "v_threshold must be greater than v_rest"
+  },
+  {
+   "file": "cnn_sinabs.nir",
+   "source_path": "paper/02_cnn/cnn_sinabs.nir",
+   "sha256": "e2fa55bda7aab5a772485e1b690358bcb825b303eca7dc426e3973937fcb5bcb",
+   "bytes": 273552,
+   "written_by": "Sinabs",
+   "content": "N-MNIST convolutional network: Conv2d, SumPool2d, Flatten, Affine and IF layers",
+   "readable_by_nir": true,
+   "nir_node_types": [
+    "Affine",
+    "Conv2d",
+    "Flatten",
+    "IF",
+    "Input",
+    "Output",
+    "SumPool2d"
+   ],
+   "studio_import": "refused",
+   "studio_reason_contains": "Conv2d has no Studio population or projection"
+  },
+  {
+   "file": "braille_noDelay_bias_zero.nir",
+   "source_path": "paper/03_rnn/braille_noDelay_bias_zero.nir",
+   "sha256": "f1aab3ce74024e7feac508a03b04c58d483ee3a01e293dba4b53d0b519b8650e",
+   "bytes": 34808,
+   "written_by": "snnTorch",
+   "content": "recurrent CubaLIF network for Braille reading, reset to zero, with bias",
+   "readable_by_nir": true,
+   "nir_node_types": [
+    "Affine",
+    "CubaLIF",
+    "Input",
+    "Output"
+   ],
+   "studio_import": "refused",
+   "studio_reason_contains": "Affine has no Studio population or projection"
+  },
+  {
+   "file": "braille_noDelay_noBias_subtract.nir",
+   "source_path": "paper/03_rnn/braille_noDelay_noBias_subtract.nir",
+   "sha256": "14f59e0903d76437be3cb23d7e4be6b4e08ea476e482f7478dbb4592b29377d3",
+   "bytes": 34616,
+   "written_by": "snnTorch",
+   "content": "recurrent CubaLIF network for Braille reading, reset by subtraction, without bias",
+   "readable_by_nir": true,
+   "nir_node_types": [
+    "CubaLIF",
+    "Input",
+    "Linear",
+    "Output"
+   ],
+   "studio_import": "refused",
+   "studio_reason_contains": "CubaLIF has no Studio population or projection"
+  }
+ ]
+}

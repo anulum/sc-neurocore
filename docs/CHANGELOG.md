@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### NIR interoperability acceptance corpus
+
+- The NIR graphs published with the NIR paper — written by Norse, Rockpool,
+  Sinabs and snnTorch, and a SpiNNaker2 debugging example — are vendored
+  unchanged from the NIR repository (BSD-3-Clause) with a manifest of their
+  source commit, SHA-256, writer, node types and the Studio's answer. Every
+  file is refused today, each with the node or parameter responsible, through
+  the importer and through `/api/graph/import-nir`; the canvas guide lists
+  them.
+
 ### Network graphs refuse populations their model would not build
 
 - Graph validation checked each population parameter against its own range

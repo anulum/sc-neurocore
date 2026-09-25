@@ -483,6 +483,32 @@ its spike raster equals the Studio's own run.
 
 A refusal answers `422` with `{"detail": {"reason": "<why>"}}`.
 
+### Files other frameworks wrote
+
+`tests/fixtures/nir_interop/` holds the NIR graphs published with the NIR
+paper (Pedersen et al. 2024, *Nature Communications* 15:8122), taken unchanged
+from the NIR repository at commit `da0551d` under its BSD-3-Clause licence.
+`corpus.json` records each file's source path, SHA-256, the framework that
+wrote it, the node types the NIR reference package reads, and what the Studio
+does with it; `tests/test_studio_nir_interop_corpus.py` holds every entry,
+through the importer and through `/api/graph/import-nir`.
+
+| File | Written by | Holds | Studio import |
+|------|------------|-------|---------------|
+| `lif_norse.nir` | Norse | one LIF neuron behind an `Affine` input | refused: `Affine` has no Studio population or projection |
+| `lif_rockpool.nir` | Rockpool | the same neuron, re-exported | refused: NIR 1.0.7 cannot read it (a type mismatch in the file) |
+| `two_lif_neurons.nir` | SpiNNaker2 example | two LIFs joined by `Linear`, one self-driven | refused: its leak potential lies above its threshold, which the Studio LIF cannot hold |
+| `cnn_sinabs.nir` | Sinabs | an N-MNIST convolutional network of `IF` layers | refused: `Conv2d` has no Studio counterpart |
+| `braille_noDelay_bias_zero.nir` | snnTorch | a recurrent `CubaLIF` network with bias | refused: `Affine` has no Studio counterpart |
+| `braille_noDelay_noBias_subtract.nir` | snnTorch | a recurrent `CubaLIF` network, reset by subtraction | refused: `CubaLIF` has no Studio population |
+
+Every file is refused today, and each refusal names the node or parameter
+responsible. The Studio graph holds uniform `nir.LIF` or `nir.IF` populations
+joined by all-to-all weights of one value; the published networks use dense
+trained weights, affine inputs, current-based neurons and convolutions. A
+change in what the importer reads fails this corpus until `corpus.json` is
+updated to the new answer.
+
 ## Tutorial notebook
 
 **Notebook** in the toolbar downloads `network-tutorial.ipynb`, a notebook that
