@@ -141,6 +141,26 @@ def test_a_group_this_identity_may_not_signal_is_not_gone(monkeypatch: pytest.Mo
     assert jobs_process_state.group_is_gone(12345) is False
 
 
+def test_a_process_that_exits_after_the_listing_is_not_a_survivor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A /proc listing can name a process that exits before it is probed.
+
+    That exit happens between two system calls, so the listing is made stale
+    instead: it names a process that no longer exists, and the real
+    ``getpgid`` then refuses it exactly as it does after such an exit.
+    """
+    absent = _absent_pid()
+    real_listdir = os.listdir
+
+    def stale_listing(path: str) -> list[str]:
+        entries = real_listdir(path)
+        return [str(absent), *entries] if path == "/proc" else entries
+
+    monkeypatch.setattr(os, "listdir", stale_listing)
+    assert jobs_process_state.group_survivors(absent) == ()
+
+
 class TestWorkerGroupStopped:
     def _call(self) -> bool:
         boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
