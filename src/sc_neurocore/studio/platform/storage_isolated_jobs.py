@@ -147,6 +147,18 @@ class IsolatedJobManager:
             job_id=job_id,
             workspace=self._configuration.workspace,
             requester=_delegation().requester,
+            authorized_route=(
+                "/api/fits/jobs/{job_id}"
+                if _delegation().route
+                in {
+                    "/api/fits/jobs",
+                    "/api/fits/replay/jobs",
+                    "/api/cohorts/jobs",
+                    "/api/fits/jobs/{job_id}",
+                    "/api/fits/jobs/{job_id}/cancel",
+                }
+                else None
+            ),
         )
         return read_storage_record(
             self._runtime.connect(),
@@ -219,26 +231,44 @@ class IsolatedJobManager:
         The authority records the request before the local generation is told
         to stop, so a live job answers ``cancelling`` rather than a
         ``cancelled`` its supervisor wrote first. The local generation is told
-        even when the exchange fails.
+        even when a legacy service exchange fails. Actor-owned laboratory
+        cancellation signals the local worker only after authority approval,
+        including legacy routes and lost replies. Custody is classified from
+        the admitted registered task, independently of the cancellation route.
         """
+        signal_worker = (
+            self._threads.is_service_task(job_id)
+            and _delegation().route != "/api/fits/jobs/{job_id}/cancel"
+        )
         try:
             record = exchange_cancel(
                 self._runtime.connect(),
                 cancel_request(
-                    self._configuration.workspace, job_id, requester=_delegation().requester
+                    self._configuration.workspace,
+                    job_id,
+                    requester=_delegation().requester,
+                    authorized_route=(
+                        "/api/fits/jobs/{job_id}/cancel"
+                        if _delegation().route == "/api/fits/jobs/{job_id}/cancel"
+                        else None
+                    ),
                 ),
                 expected_service_uid=self._runtime.storage_uid,
                 max_bytes=self._runtime.frame_max_bytes,
                 deadline=self._deadline(),
             )
+            signal_worker = record.status in TERMINAL_STATUSES or record.status == "cancelling"
+            if not signal_worker:
+                raise StudioJobRejected(
+                    f"Studio job {job_id} cannot move from '{record.status}' to 'cancelling'."
+                )
+        except (KeyError, PermissionError):
+            signal_worker = False
+            raise
         finally:
             events = self._threads.events(job_id)
-            if events is not None:
+            if signal_worker and events is not None:
                 events[0].set()
-        if record.status not in TERMINAL_STATUSES and record.status != "cancelling":
-            raise StudioJobRejected(
-                f"Studio job {job_id} cannot move from '{record.status}' to 'cancelling'."
-            )
         return record
 
     def read_artifact(self, job_id: str, relative_path: str) -> StudioJobArtifactPayload:

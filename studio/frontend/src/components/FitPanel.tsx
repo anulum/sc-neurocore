@@ -19,7 +19,7 @@
 
 import { useState, type CSSProperties } from "react";
 
-import { replayFit, runFit, type FitReplay, type FitResult } from "../api/fitsApi";
+import { submitFitReplay, submitFit, type FitReplay, type FitResult, type FitConstraint } from "../api/fitsApi";
 import { StudioRequestError } from "../api/http";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 import { parseCandidateText } from "../candidateWorkbench";
@@ -30,6 +30,8 @@ import {
   parseRecordingCsv,
 } from "../fitWorkbench";
 import type { FitRecording } from "../api/fitsApi";
+import { useLaboratoryJob } from "../useLaboratoryJob";
+import CohortPanel from "./CohortPanel";
 import { useStudioStore } from "../stores/studio";
 
 const button: CSSProperties = {
@@ -79,14 +81,16 @@ export default function FitPanel() {
   const [observable, setObservable] = useState("v");
   const [domains, setDomains] = useState<DomainRow[]>([{ name: "", low: "", high: "", log: false }]);
   const [fixedText, setFixedText] = useState("");
+  const [constraintText, setConstraintText] = useState("[]");
+  const task = useLaboratoryJob<FitResult | (FitReplay & { result: FitResult })>("sc-studio-fit-job");
   const [cohort, setCohort] = useState<CohortRow[]>([]);
   const [seed, setSeed] = useState("0");
   const [generations, setGenerations] = useState("40");
   const [population, setPopulation] = useState("12");
-  const [result, setResult] = useState<FitResult | null>(null);
-  const [replay, setReplay] = useState<FitReplay | null>(null);
+  const result = task.result === null ? null : "fitted" in task.result ? task.result : task.result.result;
+  const replay = task.result !== null && "reproduced" in task.result ? task.result : null;
   const [message, setMessage] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const busy = task.busy;
 
   const updateDomain = (index: number, patch: Partial<DomainRow>) => {
     setDomains((rows) => rows.map((row, at) => (at === index ? { ...row, ...patch } : row)));
@@ -94,8 +98,7 @@ export default function FitPanel() {
 
   /** Build the request from the form, or say what stops it. */
   async function fit(): Promise<void> {
-    setResult(null);
-    setReplay(null);
+
     const fixed = parseFixed(fixedText);
     if (!fixed.ok) {
       setMessage(fixed.message);
@@ -117,10 +120,10 @@ export default function FitPanel() {
       }
       model = { schema: schema as Record<string, unknown> };
     }
-    setBusy(true);
-    setMessage("Fitting…");
+    setMessage(null);
     try {
-      const fitted = await runFit({
+      const constraints = JSON.parse(constraintText) as FitConstraint[];
+      await task.start(() => submitFit({
         ...model,
         observable,
         domains: domains.map((row) => ({
@@ -130,18 +133,16 @@ export default function FitPanel() {
           scale: row.log ? "log" : "linear",
         })),
         fixed: fixed.value,
+        constraints,
         train: cohort.filter((row) => row.split === "train").map((row) => row.recording),
         holdout: cohort.filter((row) => row.split === "holdout").map((row) => row.recording),
         seed: Number(seed),
         generations: Number(generations),
         population: Number(population),
-      });
-      setResult(fitted);
+      }));
       setMessage(null);
     } catch (error) {
       setMessage(failureMessage(error));
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -198,6 +199,9 @@ export default function FitPanel() {
       <textarea id="fit-fixed" rows={3} value={fixedText} onChange={(event) => { setFixedText(event.target.value); }}
         style={{ fontFamily: "var(--font-mono)", fontSize: 10 }} />
 
+      <label htmlFor="fit-constraints">Parameter constraints (JSON: name, coefficients, low, high)</label>
+      <textarea id="fit-constraints" rows={3} value={constraintText} onChange={(event) => { setConstraintText(event.target.value); }} />
+
       <div>
         <label htmlFor="fit-recordings">Recordings (CSV: current,observed per step)</label>{" "}
         <input id="fit-recordings" type="file" multiple accept=".csv,text/csv"
@@ -212,7 +216,7 @@ export default function FitPanel() {
                     setMessage(entry.message);
                     return;
                   }
-                  imported.push({ recording: entry.value, split: "train" });
+                  imported.push({ recording: { ...entry.value, group: entry.value.name }, split: "train" });
                 }
                 setCohort((rows) => [...rows, ...imported]);
                 setMessage(null);
@@ -223,13 +227,15 @@ export default function FitPanel() {
         <table style={{ borderCollapse: "collapse" }}>
           <caption style={{ captionSide: "top", textAlign: "left" }}>Cohort</caption>
           <thead>
-            <tr>{["Recording", "Samples", "Set", ""].map((column) => <th key={column} scope="col" style={cell}>{column}</th>)}</tr>
+            <tr>{["Recording", "Samples", "Acquisition group", "Set", ""].map((column) => <th key={column} scope="col" style={cell}>{column}</th>)}</tr>
           </thead>
           <tbody>
             {cohort.map((row, index) => (
               <tr key={row.recording.name}>
                 <th scope="row" style={cell}>{row.recording.name}</th>
                 <td style={cell}>{row.recording.current.length}</td>
+                <td style={cell}><input aria-label={`Acquisition group of ${row.recording.name}`} value={row.recording.group ?? ""}
+                  onChange={(event) => { const group = event.target.value; setCohort((rows) => rows.map((each, at) => at === index ? { ...each, recording: { ...each.recording, group } } : each)); }} /></td>
                 <td style={cell}>
                   <select aria-label={`Set of ${row.recording.name}`} value={row.split}
                     onChange={(event) => {
@@ -260,12 +266,15 @@ export default function FitPanel() {
 
       <div id="fit-outcome" role="status">
         {message !== null && <p style={{ margin: 0 }}>{message}</p>}
+        {task.id !== null && <p>Background fit: {task.status} ({task.id})</p>}
+        {task.error !== null && <p>{task.error}</p>}
+        {busy && <button type="button" style={button} onClick={() => { void task.cancel(); }}>Cancel fit</button>}
         {result !== null && (
           <div>
             <table style={{ borderCollapse: "collapse" }}>
               <caption style={{ captionSide: "top", textAlign: "left" }}>Fitted parameters</caption>
               <thead>
-                <tr>{["Parameter", "Value", "Standard error"].map((column) => <th key={column} scope="col" style={cell}>{column}</th>)}</tr>
+                <tr>{["Parameter", "Value", "Standard error", "Effective search domain"].map((column) => <th key={column} scope="col" style={cell}>{column}</th>)}</tr>
               </thead>
               <tbody>
                 {fitParameterRows(result).map((row) => (
@@ -273,16 +282,21 @@ export default function FitPanel() {
                     <th scope="row" style={cell}>{row.name}</th>
                     <td style={cell}>{row.value.toPrecision(6)}</td>
                     <td style={cell}>{row.standardError === null ? "not stated" : row.standardError.toPrecision(3)}</td>
+                    <td style={cell}>{result.problem.domains.filter((domain) => domain.name === row.name).map((domain) => `${domain.low}…${domain.high} (${domain.scale})`).join(", ")}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {result.uncertainty.reason !== undefined && <p>{result.uncertainty.reason}</p>}
             {notes.map((note) => <p key={note} style={{ margin: 0 }}>{note}</p>)}
             <p style={{ margin: 0 }}>
-              Training loss {result.training_loss.toPrecision(4)}; {result.optimiser.generations_run} generations,
+              Training loss {result.training_loss?.toPrecision(4) ?? "no feasible finite trial"}; {result.optimiser.generations_run} generations,
               {" "}{result.optimiser.evaluations} trials, {result.optimiser.failed_trials} failed;
               {" "}{result.optimiser.converged ? "converged" : `not converged (${result.optimiser.message})`}.
             </p>
+            <details><summary>Optimiser history</summary><ol aria-label="Optimiser generation losses">
+              {result.optimiser.history.map((row) => <li key={row.generation}>Generation {row.generation}: {row.loss ?? "no feasible trial"}</li>)}
+            </ol></details>
             <ul aria-label="Hold-out error" style={{ margin: 0, paddingLeft: 16 }}>
               {result.holdout.map((row) => (
                 <li key={row.recording}>
@@ -295,11 +309,7 @@ export default function FitPanel() {
                 downloadBrowserArtefact(new Blob([JSON.stringify(result, null, 2)], { type: "application/json" }), "fit-result.json");
               }}>Export result</button>
               <button type="button" style={button} disabled={busy} onClick={() => {
-                setBusy(true);
-                void replayFit(result)
-                  .then((replayed) => { setReplay(replayed); })
-                  .catch((error: unknown) => { setMessage(failureMessage(error)); })
-                  .finally(() => { setBusy(false); });
+                void task.start(() => submitFitReplay(result));
               }}>Replay</button>
             </div>
             {replay !== null && (
@@ -311,6 +321,7 @@ export default function FitPanel() {
           </div>
         )}
       </div>
+      <CohortPanel />
     </section>
   );
 }

@@ -11,7 +11,7 @@
 The model is a catalogue model's canonical schema or a Universal DSL model sent
 with the request (a candidate's). The request states the domains, the fixed
 parameters and a cohort already split into training and hold-out recordings;
-see :mod:`sc_neurocore.fitting`. A fit runs synchronously, so its size is
+see :mod:`sc_neurocore.fitting`. Compatibility fits run synchronously, so their size is
 bounded before it starts: the number of model steps the optimiser can take is
 estimated from the domains, the population, the generations and the training
 recordings, and a larger fit is refused with that estimate rather than cut
@@ -25,6 +25,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from sc_neurocore.fitting.problem import FitProblem
 from sc_neurocore.studio.api.runtime import StudioApiContext
 
 MAX_SYNC_FIT_STEPS = 3_000_000
@@ -42,6 +43,16 @@ class DomainBody(BaseModel):
     scale: Literal["linear", "log"] = "linear"
 
 
+class ConstraintBody(BaseModel):
+    """A bounded linear combination of named parameter values."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    name: str
+    coefficients: dict[str, float]
+    low: float
+    high: float
+
+
 class RecordingBody(BaseModel):
     """One stimulus and the observed response."""
 
@@ -50,6 +61,7 @@ class RecordingBody(BaseModel):
     name: str
     current: list[float]
     observed: list[float]
+    group: str | None = None
 
 
 class FitRequest(BaseModel):
@@ -62,9 +74,10 @@ class FitRequest(BaseModel):
     observable: str
     domains: list[DomainBody]
     fixed: dict[str, float] = Field(default_factory=dict)
+    constraints: list[ConstraintBody] = Field(default_factory=list)
     train: list[RecordingBody]
     holdout: list[RecordingBody]
-    seed: int = 0
+    seed: int = Field(default=0, ge=0, le=2**32 - 1, strict=True)
     generations: int = Field(default=40, ge=1, le=500)
     population: int = Field(default=12, ge=4, le=100)
 
@@ -78,7 +91,7 @@ class ReplayRequest(BaseModel):
 
 
 def estimated_fit_steps(request: FitRequest) -> int:
-    """Upper estimate of the model steps a fit takes.
+    """Projected model steps for admission, not a hard execution-time guarantee.
 
     Differential evolution evaluates ``population x parameters`` members per
     generation, plus the initial population; the local polish and the
@@ -108,21 +121,61 @@ def _refuse(message: str) -> HTTPException:
     return HTTPException(status_code=422, detail={"reason": "invalid_fit", "message": message})
 
 
+def fit_problem(request: FitRequest) -> FitProblem:
+    """Validate a request into the replayable scientific fitting problem."""
+    from sc_neurocore.fitting import FitProblem, ParameterDomain, Recording
+    from sc_neurocore.fitting.constraints import constraints_from_dict
+
+    return FitProblem(
+        schema=_schema(request),
+        constraints=constraints_from_dict([c.model_dump() for c in request.constraints]),
+        observable=request.observable,
+        domains=tuple(
+            ParameterDomain(domain.name, domain.low, domain.high, domain.scale)
+            for domain in request.domains
+        ),
+        fixed=dict(request.fixed),
+        train=tuple(
+            Recording(item.name, tuple(item.current), tuple(item.observed), item.group)
+            for item in request.train
+        ),
+        holdout=tuple(
+            Recording(item.name, tuple(item.current), tuple(item.observed), item.group)
+            for item in request.holdout
+        ),
+        seed=request.seed,
+    )
+
+
+def fit_replay_request(result: dict[str, Any]) -> FitRequest:
+    """Validate replay optimiser limits through the same request schema as new fits."""
+    from sc_neurocore.fitting.problem import problem_from_dict
+
+    fields = problem_from_dict(result["problem"]).to_public_dict()
+    fields.pop("schema_version")
+    return FitRequest.model_validate(
+        {
+            **fields,
+            "generations": result["provenance"]["generations"],
+            "population": result["provenance"]["population"],
+        }
+    )
+
+
 def build_fits_router(context: StudioApiContext) -> APIRouter:
     """Build the parameter-fitting router.
 
     Parameters
     ----------
     context:
-        Shared runtime state; the fitting routes hold none of their own.
+        Shared runtime state, including the existing background process manager.
     """
-    del context
     router = APIRouter()
 
     @router.post("/api/fits")
     def api_fit(request: FitRequest) -> dict[str, Any]:
         """Fit the model to the training recordings and validate on the hold-out ones."""
-        from sc_neurocore.fitting import FitProblem, ParameterDomain, Recording, fit_parameters
+        from sc_neurocore.fitting import fit_parameters
 
         steps = estimated_fit_steps(request)
         if steps > MAX_SYNC_FIT_STEPS:
@@ -140,24 +193,7 @@ def build_fits_router(context: StudioApiContext) -> APIRouter:
                 },
             )
         try:
-            problem = FitProblem(
-                schema=_schema(request),
-                observable=request.observable,
-                domains=tuple(
-                    ParameterDomain(domain.name, domain.low, domain.high, domain.scale)
-                    for domain in request.domains
-                ),
-                fixed=dict(request.fixed),
-                train=tuple(
-                    Recording(item.name, tuple(item.current), tuple(item.observed))
-                    for item in request.train
-                ),
-                holdout=tuple(
-                    Recording(item.name, tuple(item.current), tuple(item.observed))
-                    for item in request.holdout
-                ),
-                seed=request.seed,
-            )
+            problem = fit_problem(request)
             return fit_parameters(
                 problem, generations=request.generations, population=request.population
             )
@@ -170,10 +206,18 @@ def build_fits_router(context: StudioApiContext) -> APIRouter:
         from sc_neurocore.fitting import replay_fit
 
         try:
+            replay_request = fit_replay_request(request.result)
+            if estimated_fit_steps(replay_request) > MAX_SYNC_FIT_STEPS:
+                raise ValueError(
+                    "replay exceeds the synchronous estimate budget; use /api/fits/replay/jobs"
+                )
             return replay_fit(request.result)
         except (KeyError, TypeError, ValueError) as exc:
             raise _refuse(f"the result cannot be replayed: {exc}") from exc
 
+    from sc_neurocore.studio.api.fit_jobs import build_fit_jobs_router
+
+    router.include_router(build_fit_jobs_router(context))
     return router
 
 

@@ -18042,6 +18042,122 @@ metric : {"cosine", "euclidean", "hamming"}, default="cosine"
 
 ---
 
+## Module `fitting.cohort`
+
+### Class `CohortSample`
+An independently split recording with explicit additive input noise.
+
+``group`` identifies the acquisition, subject or simulation replicate;
+related recordings must stay in one split. ``observations`` names physical
+state variables; ``spikes`` contains one binary event per simulation step.
+Noise is sampled before submission and replayed exactly for every model.
+
+- **__post_init__**()
+  - Refuse ambiguous splits, missing names and nonfinite samples.
+- **effective_current**()
+  - Return the identical additive input supplied to every trial.
+- **to_public_dict**()
+  - Export all samples and their split custody.
+
+### Class `SweepDomain`
+Explicit finite parameter values, typed as integer or real.
+
+- **__post_init__**()
+  - Refuse nonfinite, duplicate or incorrectly typed values.
+- **to_public_dict**()
+  - Export every trial value without resampling a range.
+
+### Class `CohortMetric`
+A model-specific observable and a declared lower-is-better metric.
+
+Trace RMSE requires the observed state and its physical unit. Binary event
+disagreement and absolute spike-count error operate on the recorded events.
+
+- **__post_init__**()
+  - Require metric-specific units instead of mixing unlike errors.
+- **to_public_dict**()
+  - Export the precise metric contract.
+
+### Class `CohortModel`
+One complete DSL model, its parameter sweep and its chosen metric.
+
+- **__post_init__**()
+  - Validate model references and unique parameter/constraint names.
+- **trial_count**()
+  - Return the Cartesian sweep size without materialising trials.
+- **parameter_sets**()
+  - Iterate the complete declared grid, including infeasible trials.
+- **to_public_dict**()
+  - Export the schema, sweep, metric and constraints together.
+
+### Class `ExperimentCohort`
+Versioned experiment with one time/input contract and leakage-safe splits.
+
+- **__post_init__**()
+  - Check sample custody, common timebase and complete pre-run admission.
+- **trial_count**()
+  - Return the complete grid size across all models.
+- **estimated_steps**()
+  - Return the complete simulation-step budget before execution.
+- **to_public_dict**()
+  - Export the full effective cohort, sufficient for replay.
+
+### Function `cohort_sha256(payload)`
+Hash JSON with integral float values normalised for browser round trips.
+
+JSON readers may emit ``1`` where Python emitted ``1.0``. Those are the
+same numerical cohort sample and must retain their digest after transport.
+
+### Function `cohort_from_dict(document)`
+Read a full cohort with strict version, field and numeric custody.
+
+---
+
+## Module `fitting.cohort_run`
+
+### Function `run_cohort(cohort)`
+Run every declared trial, retaining rejected and divergent members.
+
+Parameters
+----------
+cohort:
+    Admitted complete models, samples, sweep domains and split custody.
+progress:
+    Optional trial-event sink; raising cancels execution.
+
+Returns
+-------
+dict
+    Full cohort, all trial outcomes, training-only selection, provenance
+    and deterministic result digest. Hardware measurements are not inferred.
+
+### Function `replay_cohort(result)`
+Recompute the whole sweep and compare complete result digests.
+
+---
+
+## Module `fitting.constraints`
+
+### Class `ParameterConstraint`
+Require ``low <= sum(coefficients&#91;name&#93; * value&#91;name&#93;) <= high``.
+
+Coefficients and bounds are in the model's value space, including when a
+parameter is searched logarithmically. Bounds must define a nonempty interval; equality constraints are refused.
+
+- **__post_init__**()
+  - Refuse empty, nonfinite or reversed constraint definitions.
+- **value**(parameters)
+  - Evaluate this combination without changing parameter units.
+- **accepts**(parameters)
+  - Return whether the value obeys both bounds without clamping.
+- **to_public_dict**()
+  - Export the whole named constraint for deterministic replay.
+
+### Function `constraints_from_dict(entries)`
+Read exported constraints, preserving all coefficients and bounds.
+
+---
+
 ## Module `fitting.fit`
 
 ### Function `fit_parameters(problem)`
@@ -18051,6 +18167,8 @@ Parameters
 ----------
 problem:
     The model, domains and split cohort.
+progress:
+    Optional generation-event sink; it may raise to cancel a background job.
 generations, population:
     Differential-evolution size: at most ``generations`` generations of
     ``population`` members per fitted parameter.
@@ -18070,6 +18188,27 @@ Returns
 dict
     ``reproduced`` is true when the new result's digest equals the exported
     one; both digests and the new result are included.
+
+---
+
+## Module `fitting.pareto`
+
+### Function `measured_pareto(result, receipts)`
+Return nondominated holdout-error/latency/resource/energy rows or refuse.
+
+Parameters
+----------
+result:
+    Complete cohort result whose scientific digest and trials are verified.
+receipts:
+    Operator-supplied physical measurement documents, each bound to one
+    trial and the cohort. All acquisition contracts must match exactly.
+
+Returns
+-------
+dict
+    Custody-labelled comparison; all four axes are minimised. Missing or
+    incomparable evidence yields no frontier and an explicit reason.
 
 ---
 
@@ -18100,6 +18239,7 @@ scale:
 One stimulus and the observed variable's response, sample by sample.
 
 - **__post_init__**()
+  - Validate sample lengths, finiteness and optional acquisition custody.
 - **data_sha256**()
   - Digest of the samples, independent of the recording's name.
 - **to_public_dict**()
@@ -18109,6 +18249,7 @@ One stimulus and the observed variable's response, sample by sample.
 A model, what to fit in it, and a cohort split into training and hold-out.
 
 - **__post_init__**()
+  - Admit the model, parameter references, seed and leakage-safe split.
 - **to_public_dict**()
   - Return the whole problem as it is exported and replayed.
 
@@ -36616,10 +36757,44 @@ Build the export and progress router over shared Studio runtime state.
 
 ---
 
+## Module `studio.api.fit_jobs`
+
+### Class `MeasurementRequest`
+A complete scientific result and externally acquired receipts.
+
+
+### Class `CohortRequest`
+The full versioned experiment document, without local path references.
+
+
+### Function `execute_laboratory_task(context, payload)`
+Run an admitted scientific task with cancellation and durable artifacts.
+
+Parameters
+----------
+context:
+    Existing confined process-worker context.
+payload:
+    Validated operation and complete exported scientific problem.
+
+Returns
+-------
+dict
+    Replayable fit, cohort or replay result; no local filesystem paths.
+
+### Function `build_fit_jobs_router(context)`
+Register scientific jobs with the existing bounded process manager.
+
+---
+
 ## Module `studio.api.fits`
 
 ### Class `DomainBody`
 One fitted parameter's search domain.
+
+
+### Class `ConstraintBody`
+A bounded linear combination of named parameter values.
 
 
 ### Class `RecordingBody`
@@ -36635,12 +36810,18 @@ An exported fit result.
 
 
 ### Function `estimated_fit_steps(request)`
-Upper estimate of the model steps a fit takes.
+Projected model steps for admission, not a hard execution-time guarantee.
 
 Differential evolution evaluates ``population x parameters`` members per
 generation, plus the initial population; the local polish and the
 identifiability differences add a few evaluations per parameter, counted
 here as one more generation.
+
+### Function `fit_problem(request)`
+Validate a request into the replayable scientific fitting problem.
+
+### Function `fit_replay_request(result)`
+Validate replay optimiser limits through the same request schema as new fits.
 
 ### Function `build_fits_router(context)`
 Build the parameter-fitting router.
@@ -36648,7 +36829,7 @@ Build the parameter-fitting router.
 Parameters
 ----------
 context:
-    Shared runtime state; the fitting routes hold none of their own.
+    Shared runtime state, including the existing background process manager.
 
 ---
 
@@ -42740,8 +42921,10 @@ The generations this API supervises, with their cancel and done events.
   - Return the generations that ended without a final finish reply.
 - **events**(job_id)
   - Return the cancel and done events of a supervised job, if any.
+- **is_service_task**(job_id)
+  - Identify service custody from the admitted generation's registered task.
 - **start**(job)
-  - Supervise ``job`` in a new thread; ``False`` if already supervised.
+  - Supervise an admitted generation and retain its registered custody.
 
 ### Function `submit_named(configuration, delegation)`
 Admit one named job for the delegated requester.
@@ -43187,6 +43370,10 @@ preserve the current ledger classification. ``task_path`` is passed to a
 trusted launcher outside storage; ``routes`` constrain policy delegation.
 Constructing this value does not authorize or execute the task.
 
+- **owner_for**(principal_id)
+  - Derive actor custody from the authenticated delegation when required.
+- **validate_admission**()
+  - Bind laboratory operation and custody before connection or allocation.
 
 ### Function `resolve_named_studio_task(name)`
 Return one exact reviewed task for an already authorized POST route.
@@ -43806,7 +43993,9 @@ ValueError
 
 Notes
 -----
-Nullable fields remain mandatory. No defaults silently repair a request.
+Nullable identity and trace fields remain mandatory. The optional
+``authorized_route`` selects only actor-owned laboratory reads; omission
+retains the existing administrator read policy and original wire shape.
 Workspace and requester checks belong to the authority before ledger access.
 
 ### Function `decode_record_response(payload)`

@@ -10,7 +10,9 @@
 
 ``studio.storage.cancel.v1`` asks the authority to record that one job of the
 workspace should stop, for the requester the peer-verified API delegated,
-under the policy of ``POST /api/training/stop``, the one route that cancels.
+under the policy of ``POST /api/training/stop`` by default. An explicit
+``authorized_route`` can select the actor-owned laboratory cancellation
+route; the authority then checks both actor and laboratory task custody.
 The reply carries the job's record after the request, as the embedded
 manager returns it. Cancelling is idempotent, so a lost reply is resent.
 """
@@ -42,6 +44,9 @@ class StorageCancelRequest(BaseModel):
     workspace: Annotated[str, Field(min_length=1, max_length=256)]
     requester: StorageRequester | None
     job_id: _JobId
+    authorized_route: Literal["/api/fits/jobs/{job_id}/cancel"] | None = Field(
+        default=None, exclude_if=lambda route: route is None
+    )
 
 
 class StorageCancelResponse(BaseModel):

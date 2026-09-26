@@ -148,6 +148,7 @@ def derive_storage_admission_replay(
         raise ValueError("invalid storage admission payload JSON") from exc
     if not isinstance(payload, dict):
         raise ValueError("storage admission payload must be an object")
+    task.validate_admission(authorized_route=authorized_route, payload=payload, admission=admission)
     if not isinstance(seed_inputs, Mapping):
         raise ValueError("storage admission seeds must be a mapping")
     if len(seed_inputs) > max_seed_entries:
@@ -195,7 +196,7 @@ def derive_storage_admission_replay(
         "requester": {"principal_id": requester.principal_id, "roles": sorted(roles)},
         "workspace": workspace,
         "kind": task.kind,
-        "owner": task.owner,
+        "owner": task.owner_for(requester.principal_id),
         "named_task": task.name,
         "task_path": task.task_path,
         "authorized_route": authorized_route,

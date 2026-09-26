@@ -1,0 +1,285 @@
+{
+  "schema_version": "sc-neurocore.cohort.v1",
+  "name": "shared step",
+  "samples": [
+    {
+      "name": "train",
+      "group": "train",
+      "split": "train",
+      "current": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "noise": [
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05
+      ],
+      "observations": {
+        "v": [
+          -64.05,
+          -63.095,
+          -62.335499999999996,
+          -61.55195,
+          -60.946754999999996,
+          -60.3020795,
+          -59.82187155,
+          -59.289684394999995,
+          -58.910715955499995,
+          -58.469644359949996,
+          -58.172679923954995,
+          -57.8054119315595
+        ]
+      },
+      "spikes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "holdout",
+      "group": "holdout",
+      "split": "holdout",
+      "current": [
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0
+      ],
+      "noise": [
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05,
+        -0.05,
+        0.05
+      ],
+      "observations": {
+        "v": [
+          -63.05,
+          -61.195,
+          -59.6255,
+          -58.112950000000005,
+          -56.85165500000001,
+          -55.61648950000001,
+          -54.604840550000006,
+          -53.59435649500001,
+          -52.784920845500004,
+          -51.956428760950004,
+          -51.310785884855,
+          -50.6297072963695
+        ]
+      },
+      "spikes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "models": [
+    {
+      "name": "voltage",
+      "schema": {
+        "metadata": {
+          "schema_version": 1,
+          "name": "LIF",
+          "author": "Lapicque, L.",
+          "year": 1907,
+          "doi": "10.1085/jgp.5.6.747",
+          "description": "Leaky Integrate-and-Fire \u2014 canonical first-order linear neuron model"
+        },
+        "state": {
+          "v": -65.0
+        },
+        "parameters": {
+          "v_rest": -65.0,
+          "tau_m": 10.0,
+          "R": 1.0,
+          "C": 1.0
+        },
+        "integration": {
+          "dt": 1.0,
+          "method": "euler"
+        },
+        "dynamics": {
+          "v": "-(v - v_rest) / tau_m + R * I / C"
+        },
+        "threshold": {
+          "condition": "v > -50",
+          "detection": "level"
+        },
+        "reset": {
+          "v": "v_rest"
+        },
+        "extensions": {},
+        "profile": {
+          "contract": "sc-neurocore.model-profile.v1",
+          "time_unit": "ms",
+          "notes": "Explicit Euler is a first-order realisation of the linear membrane; it is not the exact flow. Any ODE method may be selected as a numerical alternative.",
+          "state": {
+            "v": "biological"
+          },
+          "parameters": {
+            "v_rest": "source",
+            "tau_m": "source",
+            "R": "source",
+            "C": "source"
+          },
+          "units": {
+            "v": "mV",
+            "v_rest": "mV",
+            "tau_m": "ms"
+          }
+        }
+      },
+      "domains": [
+        {
+          "name": "R",
+          "values": [
+            1.0,
+            2.0
+          ],
+          "kind": "real"
+        }
+      ],
+      "metric": {
+        "kind": "trace_rmse",
+        "observable": "v",
+        "unit": "mV"
+      },
+      "fixed": {},
+      "constraints": []
+    },
+    {
+      "name": "events",
+      "schema": {
+        "metadata": {
+          "schema_version": 1,
+          "name": "LIF",
+          "author": "Lapicque, L.",
+          "year": 1907,
+          "doi": "10.1085/jgp.5.6.747",
+          "description": "Leaky Integrate-and-Fire \u2014 canonical first-order linear neuron model"
+        },
+        "state": {
+          "v": -65.0
+        },
+        "parameters": {
+          "v_rest": -65.0,
+          "tau_m": 10.0,
+          "R": 1.0,
+          "C": 1.0
+        },
+        "integration": {
+          "dt": 1.0,
+          "method": "euler"
+        },
+        "dynamics": {
+          "v": "-(v - v_rest) / tau_m + R * I / C"
+        },
+        "threshold": {
+          "condition": "v > -50",
+          "detection": "level"
+        },
+        "reset": {
+          "v": "v_rest"
+        },
+        "extensions": {},
+        "profile": {
+          "contract": "sc-neurocore.model-profile.v1",
+          "time_unit": "ms",
+          "notes": "Explicit Euler is a first-order realisation of the linear membrane; it is not the exact flow. Any ODE method may be selected as a numerical alternative.",
+          "state": {
+            "v": "biological"
+          },
+          "parameters": {
+            "v_rest": "source",
+            "tau_m": "source",
+            "R": "source",
+            "C": "source"
+          },
+          "units": {
+            "v": "mV",
+            "v_rest": "mV",
+            "tau_m": "ms"
+          }
+        }
+      },
+      "domains": [
+        {
+          "name": "R",
+          "values": [
+            1.0,
+            2.0
+          ],
+          "kind": "real"
+        }
+      ],
+      "metric": {
+        "kind": "event_disagreement",
+        "observable": "",
+        "unit": "fraction"
+      },
+      "fixed": {},
+      "constraints": []
+    }
+  ],
+  "dt": 1.0,
+  "time_unit": "ms",
+  "input_unit": "nA",
+  "seed": 7,
+  "noise_provenance": "explicit alternating +/-0.05 nA samples; deterministic test stimulus"
+}

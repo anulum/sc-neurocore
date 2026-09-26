@@ -8,6 +8,18 @@
 
 """Fit Universal DSL model parameters to recordings, and state what the data support."""
 
+from sc_neurocore.fitting.cohort import (
+    CohortMetric,
+    CohortModel,
+    CohortSample,
+    ExperimentCohort,
+    SweepDomain,
+    cohort_from_dict,
+    cohort_sha256,
+)
+from sc_neurocore.fitting.cohort_run import replay_cohort, run_cohort
+from sc_neurocore.fitting.constraints import ParameterConstraint
+from sc_neurocore.fitting.pareto import measured_pareto
 from sc_neurocore.fitting.fit import (
     IDENTIFIABILITY_RATIO,
     UNCERTAINTY_METHOD,
@@ -24,6 +36,17 @@ from sc_neurocore.fitting.problem import (
 )
 
 __all__ = [
+    "CohortMetric",
+    "CohortModel",
+    "CohortSample",
+    "ExperimentCohort",
+    "SweepDomain",
+    "ParameterConstraint",
+    "cohort_from_dict",
+    "cohort_sha256",
+    "run_cohort",
+    "replay_cohort",
+    "measured_pareto",
     "FIT_SCHEMA_VERSION",
     "FitProblem",
     "IDENTIFIABILITY_RATIO",

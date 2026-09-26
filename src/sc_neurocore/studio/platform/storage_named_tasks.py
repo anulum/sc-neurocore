@@ -15,6 +15,7 @@ selected route before any admission. A name alone grants no operation.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 
@@ -33,9 +34,57 @@ class NamedStudioTask:
     owner: str
     task_path: str
     routes: tuple[str, ...]
+    requester_owned: bool = False
+
+    def owner_for(self, principal_id: str | None) -> str:
+        """Derive actor custody from the authenticated delegation when required.
+
+        Service tasks retain their registered owner. Laboratory tasks require
+        a nonempty authenticated actor; no client-selected owner is accepted.
+        """
+        if not self.requester_owned:
+            return self.owner
+        if not isinstance(principal_id, str) or not principal_id:
+            raise ValueError("requester-owned task requires authenticated identity")
+        return principal_id
+
+    def validate_admission(
+        self,
+        *,
+        authorized_route: str,
+        payload: Mapping[str, object],
+        admission: Mapping[str, object] | None,
+    ) -> None:
+        """Bind laboratory operation and custody before connection or allocation.
+
+        Both the isolated API facade and authority apply this registered
+        contract. Existing service-task payload contracts remain unchanged.
+        """
+        if self.name != "laboratory.run":
+            return
+        operation = {
+            "/api/fits/jobs": "fit",
+            "/api/fits/replay/jobs": "fit_replay",
+            "/api/cohorts/jobs": "cohort",
+        }.get(authorized_route)
+        if (
+            operation is None
+            or payload.get("operation") != operation
+            or not isinstance(admission, Mapping)
+            or admission.get("laboratory_task") != operation
+        ):
+            raise ValueError("laboratory operation and admission must match the authorized route")
 
 
 _TASKS = (
+    NamedStudioTask(
+        "laboratory.run",
+        "analysis",
+        "studio-laboratory",
+        "sc_neurocore.studio.api.fit_jobs:execute_laboratory_task",
+        ("/api/fits/jobs", "/api/fits/replay/jobs", "/api/cohorts/jobs"),
+        requester_owned=True,
+    ),
     NamedStudioTask(
         "analysis.run",
         "analysis",

@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5030
+    "test_files": 5034
   },
   "documentation": {
     "public_pages": [
@@ -5092,6 +5092,7 @@
       "tests/test_fim_symmetry_dynamics_stdpfim_interaction.py",
       "tests/test_fisher_posner_contracts.py",
       "tests/test_fitting.py",
+      "tests/test_fitting_cohorts.py",
       "tests/test_fitzhugh_nagumo_backends_bit_exact.py",
       "tests/test_fitzhugh_nagumo_backends_dispatch_validation.py",
       "tests/test_fitzhugh_nagumo_backends_dynamics.py",
@@ -7605,6 +7606,7 @@
       "tests/test_studio_experiment_http.py",
       "tests/test_studio_experiment_spec.py",
       "tests/test_studio_export_routes.py",
+      "tests/test_studio_fit_jobs.py",
       "tests/test_studio_fits_routes.py",
       "tests/test_studio_generator_state_visibility.py",
       "tests/test_studio_graph_model_contract.py",
@@ -7677,6 +7679,8 @@
       "tests/test_studio_jobs_worker_guard_main.py",
       "tests/test_studio_jobs_worker_recovery.py",
       "tests/test_studio_jobs_worker_registration.py",
+      "tests/test_studio_laboratory_cancel_reply_loss.py",
+      "tests/test_studio_laboratory_isolated_jobs.py",
       "tests/test_studio_ledger_lease_bounds.py",
       "tests/test_studio_model_capabilities.py",
       "tests/test_studio_model_catalogue_documentation.py",

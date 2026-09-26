@@ -20,6 +20,7 @@ from sc_neurocore.studio.platform.storage_named_tasks import resolve_named_studi
 
 
 _NAMED_ROUTES = {
+    "laboratory.run": "/api/fits/jobs",
     "analysis.run": "/api/analysis/jobs",
     "model.scan": "/api/models/scan/jobs",
     "audit.quarantine_archive": "/api/studio/audit/quarantine/archive",
@@ -43,7 +44,7 @@ def test_named_process_tasks_require_actual_nonpublic_post_policies() -> None:
     """All observed process submissions have an exact protected policy route."""
     policies = build_default_studio_route_policy_registry()
     source_root = Path(__file__).resolve().parents[1] / "src"
-    assert len(_NAMED_ROUTES) == 16
+    assert len(_NAMED_ROUTES) == 17
     for name, route in _NAMED_ROUTES.items():
         task = resolve_named_studio_task(name, authorized_route=route)
         assert task.name == name

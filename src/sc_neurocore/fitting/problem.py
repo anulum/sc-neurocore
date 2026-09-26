@@ -32,8 +32,10 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from sc_neurocore.fitting.constraints import ParameterConstraint, constraints_from_dict
+
 FIT_SCHEMA_VERSION = "sc-neurocore.fit.v1"
-"""The one fit document version this build reads and writes."""
+"""Legacy unconstrained document version; grouped/constrained problems use v2."""
 
 Scale = Literal["linear", "log"]
 
@@ -94,8 +96,12 @@ class Recording:
     name: str
     current: tuple[float, ...]
     observed: tuple[float, ...]
+    group: str | None = None
 
     def __post_init__(self) -> None:
+        """Validate sample lengths, finiteness and optional acquisition custody."""
+        if self.group is not None and (not isinstance(self.group, str) or not self.group.strip()):
+            raise ValueError("acquisition groups must be nonempty")
         if len(self.current) != len(self.observed) or len(self.current) < 2:
             raise ValueError(
                 f"recording {self.name} needs equal current and observed samples, >= 2"
@@ -110,7 +116,12 @@ class Recording:
 
     def to_public_dict(self) -> dict[str, Any]:
         """Return the recording as it is exported."""
-        return {"name": self.name, "current": list(self.current), "observed": list(self.observed)}
+        return {
+            "name": self.name,
+            "current": list(self.current),
+            "observed": list(self.observed),
+            **({"group": self.group} if self.group is not None else {}),
+        }
 
 
 @dataclass(frozen=True)
@@ -124,8 +135,12 @@ class FitProblem:
     holdout: tuple[Recording, ...]
     seed: int
     fixed: Mapping[str, float] = field(default_factory=dict)
+    constraints: tuple[ParameterConstraint, ...] = ()
 
     def __post_init__(self) -> None:
+        """Admit the model, parameter references, seed and leakage-safe split."""
+        if type(self.seed) is not int or not 0 <= self.seed <= 2**32 - 1:
+            raise ValueError("fit seed must be an integer in 0..2**32-1")
         state = self.schema.get("state")
         parameters = self.schema.get("parameters")
         if not isinstance(state, Mapping) or self.observable not in state:
@@ -140,19 +155,36 @@ class FitProblem:
                 raise ValueError(f"{name} is not a parameter of the model")
         if set(names) & set(self.fixed):
             raise ValueError("a parameter is either fitted or fixed, not both")
+        if not all(math.isfinite(value) for value in self.fixed.values()):
+            raise ValueError("fixed parameters must be finite")
+        labels = [constraint.name for constraint in self.constraints]
+        if len(set(labels)) != len(labels):
+            raise ValueError("constraint names must be unique")
+        for constraint in self.constraints:
+            if set(constraint.coefficients) - set(parameters):
+                raise ValueError("a constraint refers to an unknown parameter")
         if not self.train or not self.holdout:
             raise ValueError("a fit needs at least one training and one hold-out recording")
         labels = [recording.name for recording in (*self.train, *self.holdout)]
         if len(set(labels)) != len(labels):
             raise ValueError("recording names must be unique across the cohort")
+        if {r.group for r in self.train if r.group is not None} & {
+            r.group for r in self.holdout if r.group is not None
+        }:
+            raise ValueError("acquisition groups cannot cross training and hold-out splits")
         shared = {r.data_sha256 for r in self.train} & {r.data_sha256 for r in self.holdout}
         if shared:
             raise ValueError("a recording's data appears in both the training and the hold-out set")
+        from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
+        UniversalNeuron.from_dict(dict(self.schema), parameter_overrides=dict(self.fixed))
 
     def to_public_dict(self) -> dict[str, Any]:
         """Return the whole problem as it is exported and replayed."""
         return {
-            "schema_version": FIT_SCHEMA_VERSION,
+            "schema_version": "sc-neurocore.fit.v2"
+            if self.constraints or any(r.group is not None for r in (*self.train, *self.holdout))
+            else FIT_SCHEMA_VERSION,
             "schema": dict(self.schema),
             "observable": self.observable,
             "domains": [domain.to_public_dict() for domain in self.domains],
@@ -160,6 +192,11 @@ class FitProblem:
             "train": [recording.to_public_dict() for recording in self.train],
             "holdout": [recording.to_public_dict() for recording in self.holdout],
             "seed": self.seed,
+            **(
+                {"constraints": [c.to_public_dict() for c in self.constraints]}
+                if self.constraints
+                else {}
+            ),
         }
 
 
@@ -172,8 +209,11 @@ def problem_from_dict(document: Mapping[str, Any]) -> FitProblem:
         When the document is another version or its fields do not form a
         valid problem.
     """
-    if document.get("schema_version") != FIT_SCHEMA_VERSION:
+    if document.get("schema_version") not in (FIT_SCHEMA_VERSION, "sc-neurocore.fit.v2"):
         raise ValueError(f"unsupported fit document {document.get('schema_version')!r}")
+
+    if document.get("schema_version") == FIT_SCHEMA_VERSION and document.get("constraints"):
+        raise ValueError("parameter constraints require a v2 fit document")
 
     def recordings(entries: Sequence[Mapping[str, Any]]) -> tuple[Recording, ...]:
         return tuple(
@@ -181,6 +221,7 @@ def problem_from_dict(document: Mapping[str, Any]) -> FitProblem:
                 name=str(entry["name"]),
                 current=tuple(float(value) for value in entry["current"]),
                 observed=tuple(float(value) for value in entry["observed"]),
+                group=entry.get("group"),
             )
             for entry in entries
         )
@@ -200,7 +241,8 @@ def problem_from_dict(document: Mapping[str, Any]) -> FitProblem:
         fixed={str(name): float(value) for name, value in dict(document.get("fixed", {})).items()},
         train=recordings(document["train"]),
         holdout=recordings(document["holdout"]),
-        seed=int(document["seed"]),
+        seed=document["seed"],
+        constraints=constraints_from_dict(document.get("constraints", [])),
     )
 
 

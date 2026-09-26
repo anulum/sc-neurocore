@@ -40,7 +40,10 @@ from sc_neurocore.studio.platform.storage_generation_exchanges import (
     GenerationRuntime,
 )
 from sc_neurocore.studio.platform.storage_generation_supervisor import supervise_generation
-from sc_neurocore.studio.platform.storage_named_tasks import named_studio_task_for_path
+from sc_neurocore.studio.platform.storage_named_tasks import (
+    named_studio_task_for_path,
+    resolve_named_studio_task,
+)
 from sc_neurocore.studio.platform.storage_requester import Delegation
 
 
@@ -54,6 +57,7 @@ class GenerationThreads:
         self._cancel: dict[str, threading.Event] = {}
         self._done: dict[str, threading.Event] = {}
         self._failures: dict[str, BaseException] = {}
+        self._service_tasks: set[str] = set()
 
     def failures(self) -> dict[str, BaseException]:
         """Return the generations that ended without a final finish reply."""
@@ -67,13 +71,50 @@ class GenerationThreads:
             done = self._done.get(job_id)
         return None if cancel is None or done is None else (cancel, done)
 
+    def is_service_task(self, job_id: str) -> bool:
+        """Identify service custody from the admitted generation's registered task.
+
+        Parameters
+        ----------
+        job_id:
+            Locally supervised generation identifier.
+
+        Returns
+        -------
+        bool
+            True only for an admitted task with a registered service owner.
+            Requester-owned and unknown generations return False. The caller's
+            current route cannot change this classification.
+        """
+        with self._lock:
+            return job_id in self._service_tasks
+
     def start(self, job: GenerationJob) -> bool:
-        """Supervise ``job`` in a new thread; ``False`` if already supervised."""
+        """Supervise an admitted generation and retain its registered custody.
+
+        Parameters
+        ----------
+        job:
+            Authority-admitted job with its original task and admission route.
+
+        Returns
+        -------
+        bool
+            False when this generation is already supervised; otherwise True.
+
+        Raises
+        ------
+        ValueError
+            The task or its admission route is not registered.
+        """
         cancel, done = threading.Event(), threading.Event()
+        task = resolve_named_studio_task(job.task_name, authorized_route=job.authorized_route)
         with self._lock:
             if job.job_id in self._done:
                 return False
             self._cancel[job.job_id], self._done[job.job_id] = cancel, done
+            if not task.requester_owned:
+                self._service_tasks.add(job.job_id)
 
         def run() -> None:
             try:
@@ -134,8 +175,15 @@ def submit_named(
         task = named_studio_task_for_path(task_path, authorized_route=delegation.route)
     except ValueError as exc:
         raise StudioJobRejected(str(exc)) from exc
-    if (task.kind, task.owner) != (kind, owner):
+    claim = delegation.requester
+    expected_owner = task.owner_for(None if claim is None else claim.principal_id)
+    if (task.kind, expected_owner) != (kind, owner):
         raise StudioJobRejected("Studio job kind or owner differs from the reviewed task.")
+    task.validate_admission(
+        authorized_route=delegation.route,
+        payload=payload,
+        admission=admission,
+    )
     payload_json = _json_payload(payload, "Studio process job payload must be JSON.")
     if training_config is not None:
         # The same snapshot check the embedded submission makes before admission.

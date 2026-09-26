@@ -93,3 +93,62 @@ test("resistance and capacitance, seen only as a ratio, are reported unconstrain
   await expect(outcome).toContainText("The data do not constrain the combination", { timeout: 120_000 });
   await expect(page.getByRole("table", { name: "Fitted parameters" })).toContainText("not stated");
 });
+
+test("a full shared-noise cohort runs, exports, replays and recovers after reload", async ({ page }) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "Fit", exact: true }).first().click();
+  await page.getByLabel("Import experiment cohort JSON").setInputFiles(fixture("SharedSampleCohort.json"));
+  await page.getByRole("button", { name: "Run cohort", exact: true }).click();
+  const table = page.getByRole("table", { name: "Complete sweep trials" });
+  await expect(table).toBeVisible();
+  await expect(table.getByRole("row")).toHaveCount(5);
+  await expect(table).toContainText("trace_rmse / mV");
+  await expect(table).toContainText("event_disagreement / fraction");
+  await expect(page.getByRole("list", { name: "Training-only model selection" })).toContainText("voltage: training metric 0");
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export full cohort result", exact: true }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("cohort-result.json");
+  await page.getByRole("button", { name: "Replay full cohort", exact: true }).click();
+  await expect(page.getByRole("status", { name: "Cohort status" })).toContainText("Cohort replay reproduced the full result.");
+  await page.reload();
+  await page.getByRole("button", { name: "Fit", exact: true }).first().click();
+  await expect(table).toBeVisible();
+  await expect(table.getByRole("row")).toHaveCount(5);
+  await page.getByLabel("Import measurement receipts JSON").setInputFiles({ name: "empty-receipts.json", mimeType: "application/json", buffer: Buffer.from("[]") });
+  await expect(page.getByLabel("Measured tradeoffs")).toContainText("No frontier: at least two comparable measured trials are required");
+});
+
+test("fit constraints and acquisition split refusals reach the real backend", async ({ page }) => {
+  await prepare(page);
+  await parameter(page, 1, ["R", "0.1", "2", true]);
+  await page.getByLabel("Fixed parameters (name=value, one per line)").fill("v_rest=-65\ntau_m=10\nC=1");
+  await page.getByLabel("Parameter constraints (JSON: name, coefficients, low, high)").fill('[{"name":"R below C","coefficients":{"R":1,"C":-1},"low":-1,"high":-0.3}]');
+  await page.getByLabel("Generations", { exact: true }).fill("10");
+  await page.getByLabel("Population", { exact: true }).fill("8");
+  await page.getByLabel("Acquisition group of step-plus-5.csv").fill("same-subject");
+  await page.getByLabel("Acquisition group of step-plus-8.csv").fill("same-subject");
+  await page.getByRole("button", { name: "Run fit", exact: true }).click();
+  await expect(page.locator("#fit-outcome")).toContainText("acquisition groups cannot cross training and hold-out splits");
+  await page.getByLabel("Acquisition group of step-plus-8.csv").fill("independent-subject");
+  await page.getByRole("button", { name: "Run fit", exact: true }).click();
+  const fitted = page.getByRole("table", { name: "Fitted parameters" });
+  await expect(fitted).toBeVisible();
+  expect(Number(await fitted.locator("tbody td").first().innerText())).toBeLessThanOrEqual(0.7);
+  await expect(fitted).toContainText("not stated");
+  await expect(page.locator("#fit-outcome")).toContainText("constrained uncertainty estimator");
+});
+
+test("a large fit can be cancelled through its real process supervisor", async ({ page }) => {
+  await prepare(page);
+  await parameter(page, 1, ["v_rest", "-80", "-50", false]);
+  await page.getByRole("button", { name: "Add parameter", exact: true }).click();
+  await parameter(page, 2, ["tau_m", "1", "50", true]);
+  await page.getByLabel("Generations", { exact: true }).fill("500");
+  await page.getByLabel("Population", { exact: true }).fill("100");
+  await page.getByRole("button", { name: "Run fit", exact: true }).click();
+  await expect(page.locator("#fit-outcome")).toContainText("Background fit:");
+  await page.getByRole("button", { name: "Cancel fit", exact: true }).click();
+  await expect(page.locator("#fit-outcome")).toContainText("Background fit: cancelled");
+  await expect(page.getByRole("button", { name: "Run fit", exact: true })).toBeEnabled();
+});

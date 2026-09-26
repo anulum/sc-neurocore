@@ -57,6 +57,22 @@ def apply_cancel(
         except KeyError:
             status = "not_found"
         else:
+            if (
+                request.authorized_route is not None
+                or current.admission.get("laboratory_task") in {"fit", "fit_replay", "cohort"}
+            ) and (
+                request.requester is None
+                or current.owner != request.requester.principal_id
+                or current.admission.get("laboratory_task") not in {"fit", "fit_replay", "cohort"}
+            ):
+                return StorageCancelResponse(
+                    schema_version=CANCEL_SCHEMA_VERSION,
+                    operation="cancel",
+                    request_id=request.request_id,
+                    job_id=request.job_id,
+                    status="not_found",
+                    record=None,
+                )
             if current.status not in TERMINAL_STATUSES and current.status != "cancelling":
                 try:
                     current = transition_job(
@@ -140,7 +156,9 @@ def serve_cancel(
             if requester is None
             else Principal(requester.principal_id, frozenset(requester.roles))
         )
-        method, route = CANCEL_ROUTE
+        method, route = (
+            ("POST", request.authorized_route) if request.authorized_route else CANCEL_ROUTE
+        )
         decision = gateway.authorize(
             build_default_studio_route_policy_registry().policy_for(method, route),
             principal=principal,

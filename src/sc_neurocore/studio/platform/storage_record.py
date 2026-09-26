@@ -104,9 +104,10 @@ def serve_record_read(
             if request.requester is None
             else Principal(request.requester.principal_id, frozenset(request.requester.roles))
         )
-        policy = build_default_studio_route_policy_registry().policy_for("GET", _ROUTE)
+        route = request.authorized_route or _ROUTE
+        policy = build_default_studio_route_policy_registry().policy_for("GET", route)
         decision = gateway.authorize(
-            policy, principal=principal, route=_ROUTE, request_id=request.request_id
+            policy, principal=principal, route=route, request_id=request.request_id
         )
         response: dict[str, object] = {
             "schema_version": "studio.storage.record.v2",
@@ -120,8 +121,16 @@ def serve_record_read(
             except KeyError:
                 response["status"] = "not_found"
             else:
-                response["status"] = "ok"
-                response["record"] = record.to_public_dict()
+                if request.authorized_route is not None and (
+                    principal is None
+                    or record.owner != principal.principal_id
+                    or record.admission.get("laboratory_task")
+                    not in {"fit", "fit_replay", "cohort"}
+                ):
+                    response["status"] = "not_found"
+                else:
+                    response["status"] = "ok"
+                    response["record"] = record.to_public_dict()
         write_verified_frame(
             channel,
             json.dumps(response, allow_nan=False, sort_keys=True).encode("utf-8"),

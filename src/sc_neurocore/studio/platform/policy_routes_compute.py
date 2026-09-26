@@ -108,6 +108,23 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         RouteVisibility.AUTHENTICATED,
         "studio.candidates.review_packet",
     ),
+    ("POST", "/api/fits/jobs", RouteVisibility.AUTHENTICATED, "studio.fits.job"),
+    ("POST", "/api/fits/replay/jobs", RouteVisibility.AUTHENTICATED, "studio.fits.replay_job"),
+    ("GET", "/api/fits/jobs/{job_id}", RouteVisibility.AUTHENTICATED, "studio.fits.job_status"),
+    (
+        "POST",
+        "/api/fits/jobs/{job_id}/cancel",
+        RouteVisibility.AUTHENTICATED,
+        "studio.fits.job_cancel",
+    ),
+    ("POST", "/api/cohorts/jobs", RouteVisibility.AUTHENTICATED, "studio.cohorts.job"),
+    ("POST", "/api/cohorts/replay", RouteVisibility.AUTHENTICATED, "studio.cohorts.replay"),
+    (
+        "POST",
+        "/api/cohorts/measurements",
+        RouteVisibility.AUTHENTICATED,
+        "studio.cohorts.measurements",
+    ),
     ("POST", "/api/fits", RouteVisibility.AUTHENTICATED, "studio.fits.run"),
     ("POST", "/api/fits/replay", RouteVisibility.AUTHENTICATED, "studio.fits.replay"),
     (

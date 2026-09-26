@@ -50,7 +50,7 @@ def named_process_admission(
             return admission.admit(
                 job_id=f"sj_{secrets.token_hex(8)}",
                 kind=prepared.task.kind,
-                actor=prepared.task.owner,
+                actor=prepared.task.owner_for(prepared.replay.requester),
                 workspace=workspace,
                 request_id=request.request_id,
                 idempotency_key=None,

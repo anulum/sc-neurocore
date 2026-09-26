@@ -11,7 +11,8 @@
 The objective is the mean squared residual of the observed variable over the
 training recordings only. It is minimised by seeded differential evolution in
 each parameter's search space (logarithmic where the domain says so), polished
-locally; the best loss of every generation is kept as the optimiser's history,
+locally when unconstrained; constrained fits use value-space inequalities
+without polishing. The best loss of every generation is kept as the optimiser's history,
 and failed trials — a state that stopped being finite, or a mean squared residual
 of 1e150 or more — are counted, not hidden. A fit that found no finite trial does
 not report convergence.
@@ -33,15 +34,15 @@ certainty the data do not support.
 
 from __future__ import annotations
 
+import json
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
 from sc_neurocore.fitting.problem import (
-    FIT_SCHEMA_VERSION,
     FitProblem,
     canonical_sha256,
     problem_from_dict,
@@ -144,7 +145,13 @@ def _identifiability(
             return diverged
         columns.append((plus - minus) / (2.0 * step))
     jacobian = np.stack(columns, axis=1)
-    gram = jacobian.T @ jacobian
+    with np.errstate(over="ignore", invalid="ignore"):
+        gram = jacobian.T @ jacobian
+    if not np.all(np.isfinite(gram)):
+        return (
+            {"identifiable": False, "reason": "the residual Gram matrix is not finite"},
+            {"method": UNCERTAINTY_METHOD, "standard_errors": None, "correlation": None},
+        )
     eigenvalues, eigenvectors = np.linalg.eigh(gram)
     largest = float(eigenvalues[-1]) if eigenvalues[-1] > 0 else 0.0
     unconstrained = [
@@ -173,7 +180,26 @@ def _identifiability(
             "correlation": None,
             "reason": "the data leave a parameter combination unconstrained",
         }
-    dof = max(1, base.size - len(names))
+    if base.size <= len(names):
+        return diagnosis, {
+            "method": UNCERTAINTY_METHOD,
+            "standard_errors": None,
+            "correlation": None,
+            "reason": "no residual degrees of freedom for an uncertainty estimate",
+        }
+    if any(
+        min(float(coordinate) - low, high - float(coordinate)) <= 1e-4 * (high - low)
+        for coordinate, (low, high) in zip(
+            optimum, (domain.internal_bounds() for domain in problem.domains), strict=True
+        )
+    ):
+        return diagnosis, {
+            "method": UNCERTAINTY_METHOD,
+            "standard_errors": None,
+            "correlation": None,
+            "reason": "the optimum is at a search-domain boundary",
+        }
+    dof = base.size - len(names)
     variance = float(np.sum(base**2)) / dof
     covariance = variance * np.linalg.inv(gram)
     internal_se = np.sqrt(np.clip(np.diag(covariance), 0.0, None))
@@ -196,7 +222,11 @@ def _identifiability(
 
 
 def fit_parameters(
-    problem: FitProblem, *, generations: int = 40, population: int = 12
+    problem: FitProblem,
+    *,
+    generations: int = 40,
+    population: int = 12,
+    progress: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Fit ``problem`` and return the complete, replayable result.
 
@@ -204,6 +234,8 @@ def fit_parameters(
     ----------
     problem:
         The model, domains and split cohort.
+    progress:
+        Optional generation-event sink; it may raise to cancel a background job.
     generations, population:
         Differential-evolution size: at most ``generations`` generations of
         ``population`` members per fitted parameter.
@@ -216,17 +248,43 @@ def fit_parameters(
         diagnosis, the uncertainty, provenance, and the digest binding them.
     """
     import scipy
-    from scipy.optimize import differential_evolution
+    from scipy.optimize import NonlinearConstraint, differential_evolution
 
     from sc_neurocore import __version__
 
     if generations < 1 or population < 4:
         raise ValueError("generations must be at least 1 and population at least 4")
+    problem = problem_from_dict(json.loads(json.dumps(problem.to_public_dict(), allow_nan=False)))
     objective = _Objective(problem)
-    history: list[dict[str, float | int]] = []
+    history: list[dict[str, Any]] = []
+    constraints: list[Any] = []
+    constraint_checks = 0
+    rejected_constraints = 0
+
+    def constraint_values(internal: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Evaluate physical-value constraints and count rejected checks."""
+        nonlocal constraint_checks, rejected_constraints
+        constraint_checks += 1
+        values = {**dict(problem.schema["parameters"]), **objective.parameters(internal)}
+        if not all(c.accepts(values) for c in problem.constraints):
+            rejected_constraints += 1
+        return np.asarray([c.value(values) for c in problem.constraints], dtype=np.float64)
+
+    if problem.constraints:
+        constraints.append(
+            NonlinearConstraint(
+                constraint_values,
+                [c.low for c in problem.constraints],
+                [c.high for c in problem.constraints],
+            )
+        )
 
     def record(intermediate_result: Any) -> None:
-        history.append({"generation": len(history) + 1, "loss": float(intermediate_result.fun)})
+        loss = float(intermediate_result.fun)
+        event = {"generation": len(history) + 1, "loss": loss if math.isfinite(loss) else None}
+        history.append(event)
+        if progress is not None:
+            progress(event)
 
     outcome = differential_evolution(
         objective,
@@ -235,7 +293,8 @@ def fit_parameters(
         maxiter=generations,
         popsize=population,
         tol=1e-10,
-        polish=True,
+        polish=not problem.constraints,
+        constraints=constraints,
         callback=record,
         updating="immediate",
         workers=1,
@@ -243,23 +302,46 @@ def fit_parameters(
     optimum = np.asarray(outcome.x, dtype=np.float64)
     parameters = objective.parameters(optimum)
     diagnosis, uncertainty = _identifiability(objective, optimum)
+    feasible = all(
+        c.accepts({**dict(problem.schema["parameters"]), **parameters}) for c in problem.constraints
+    )
+    if not feasible:
+        diagnosis = {"identifiable": False, "reason": "no feasible optimum was found"}
+    if problem.constraints:
+        uncertainty = {
+            "method": UNCERTAINTY_METHOD,
+            "standard_errors": None,
+            "correlation": None,
+            "reason": "constrained fits require a constrained uncertainty estimator; unconstrained covariance is not reported",
+        }
     body: dict[str, Any] = {
-        "schema_version": FIT_SCHEMA_VERSION,
+        "schema_version": problem.to_public_dict()["schema_version"],
         "problem": problem.to_public_dict(),
         "fitted": {domain.name: parameters[domain.name] for domain in problem.domains},
-        "training_loss": float(outcome.fun),
+        "training_loss": float(outcome.fun) if math.isfinite(float(outcome.fun)) else None,
         "training": _rmse(problem, parameters, problem.train),
         "holdout": _rmse(problem, parameters, problem.holdout),
         "optimiser": {
-            "method": "differential-evolution+polish",
+            "method": "constrained-differential-evolution"
+            if problem.constraints
+            else "differential-evolution+polish",
             "generations_run": int(outcome.nit),
             "evaluations": objective.evaluations,
             "failed_trials": objective.failed,
             # Every member at the failure loss looks converged to the optimiser;
             # a fit that found no finite trial has not converged.
-            "converged": bool(outcome.success) and float(outcome.fun) < _FAILED_LOSS,
+            "converged": bool(outcome.success) and float(outcome.fun) < _FAILED_LOSS and feasible,
             "message": str(outcome.message),
             "history": history,
+            **(
+                {
+                    "constraint_checks": constraint_checks,
+                    "rejected_constraint_checks": rejected_constraints,
+                    "feasible": feasible,
+                }
+                if problem.constraints
+                else {}
+            ),
         },
         "identifiability": diagnosis,
         "uncertainty": uncertainty,

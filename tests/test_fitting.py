@@ -320,3 +320,182 @@ def test_the_optimiser_size_must_be_meaningful(cohort: Any) -> None:
         fit_parameters(_problem(cohort), generations=0)
     with pytest.raises(ValueError, match="population at least 4"):
         fit_parameters(_problem(cohort), population=3)
+
+
+def test_constrained_log_fit_is_feasible_replayable_and_has_no_unconstrained_error_bars(
+    cohort: Any,
+) -> None:
+    """Value-space constraints survive logarithmic search and exact replay."""
+    from sc_neurocore.fitting.constraints import ParameterConstraint
+
+    problem = _problem(
+        cohort,
+        domains=(ParameterDomain("R", 0.1, 2.0, "log"),),
+        fixed={"v_rest": -65.0, "tau_m": 10.0, "C": 1.0},
+        constraints=(ParameterConstraint("R below C", {"R": 1.0, "C": -1.0}, -1.0, -0.3),),
+    )
+    events: list[dict[str, Any]] = []
+    result = fit_parameters(problem, generations=12, population=8, progress=events.append)
+    assert 0.65 < result["fitted"]["R"] <= 0.7
+    assert result["optimiser"]["feasible"] is True
+    assert result["optimiser"]["rejected_constraint_checks"] > 0
+    assert result["uncertainty"]["standard_errors"] is None
+    assert "constrained uncertainty" in result["uncertainty"]["reason"]
+    assert result["problem"]["schema_version"] == "sc-neurocore.fit.v2"
+    assert problem_from_dict(result["problem"]) == problem
+    assert events == result["optimiser"]["history"]
+    assert replay_fit(result)["reproduced"] is True
+
+
+def test_infeasible_fit_never_claims_convergence_or_finite_training_loss(cohort: Any) -> None:
+    """An empty feasible search remains an explicit failure with preserved history."""
+    from sc_neurocore.fitting.constraints import ParameterConstraint
+
+    problem = _problem(
+        cohort,
+        domains=(ParameterDomain("R", 0.1, 2.0),),
+        fixed={"C": 1.0},
+        constraints=(ParameterConstraint("impossible", {"R": 1.0}, 10.0, 20.0),),
+    )
+    result = fit_parameters(problem, generations=2, population=4)
+    assert result["optimiser"]["feasible"] is False
+    assert result["optimiser"]["converged"] is False
+    assert result["training_loss"] is None
+    assert all(row["loss"] is None for row in result["optimiser"]["history"])
+
+
+def test_holdout_acquisition_groups_and_constraints_have_versioned_custody(cohort: Any) -> None:
+    """Grouped recordings cannot cross the split even when their samples differ."""
+    from dataclasses import replace
+    from sc_neurocore.fitting.constraints import ParameterConstraint
+
+    train, holdout = cohort
+    grouped_train = tuple(replace(r, group="subject-a") for r in train)
+    grouped_holdout = tuple(replace(r, group="subject-b") for r in holdout)
+    problem = _problem((grouped_train, grouped_holdout))
+    assert problem.to_public_dict()["schema_version"] == "sc-neurocore.fit.v2"
+    assert problem_from_dict(problem.to_public_dict()) == problem
+    with pytest.raises(ValueError, match="acquisition groups cannot cross"):
+        _problem((grouped_train, tuple(replace(r, group="subject-a") for r in holdout)))
+    with pytest.raises(ValueError, match="must be nonempty"):
+        replace(train[0], group="")
+    with pytest.raises(ValueError, match="fixed parameters must be finite"):
+        _problem(cohort, fixed={"C": math.inf})
+    constraint = ParameterConstraint("named", {"R": 1.0}, 0.0, 2.0)
+    with pytest.raises(ValueError, match="constraint names must be unique"):
+        _problem(cohort, constraints=(constraint, constraint))
+    with pytest.raises(ValueError, match="unknown parameter"):
+        _problem(cohort, constraints=(ParameterConstraint("bad", {"unknown": 1.0}, 0.0, 2.0),))
+    document = _problem(cohort, constraints=(constraint,)).to_public_dict()
+    document["schema_version"] = FIT_SCHEMA_VERSION
+    with pytest.raises(ValueError, match="require a v2"):
+        problem_from_dict(document)
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ("", {"R": 1.0}, 0.0, 2.0),
+        ("no terms", {}, 0.0, 2.0),
+        ("nonfinite", {"R": math.inf}, 0.0, 2.0),
+        ("zero", {"R": 0.0}, 0.0, 2.0),
+        ("equality", {"R": 1.0}, 1.0, 1.0),
+        ("backwards", {"R": 1.0}, 2.0, 1.0),
+    ],
+)
+def test_invalid_parameter_constraints_are_refused(arguments: tuple[Any, ...]) -> None:
+    """Constraints refuse ambiguous or unsupported definitions before optimisation."""
+    from sc_neurocore.fitting.constraints import ParameterConstraint
+
+    with pytest.raises(ValueError):
+        ParameterConstraint(*arguments)
+
+
+def test_uncertainty_is_withheld_without_residual_degrees_of_freedom() -> None:
+    """Two observations can identify two parameters without supporting a noise variance."""
+    schema = _schema()
+    training = simulate(schema, "v", TRUTH, [1.0, 2.0])
+    held = simulate(schema, "v", TRUTH, [2.0, 3.0])
+    assert training is not None and held is not None
+    problem = FitProblem(
+        schema,
+        "v",
+        (ParameterDomain("R", 0.1, 2.0), ParameterDomain("tau_m", 1.0, 30.0)),
+        (Recording("train", (1.0, 2.0), tuple(training)),),
+        (Recording("held", (2.0, 3.0), tuple(held)),),
+        3,
+        fixed={"v_rest": -65.0, "C": 1.0},
+    )
+    result = fit_parameters(problem, generations=5, population=4)
+    assert result["identifiability"]["identifiable"] is True
+    assert result["uncertainty"]["standard_errors"] is None
+    assert "degrees of freedom" in result["uncertainty"]["reason"]
+
+
+def test_domain_boundary_does_not_report_unconstrained_gaussian_error_bars(cohort: Any) -> None:
+    """An optimum pressed against its domain has no ordinary Gaussian covariance claim."""
+    result = fit_parameters(
+        _problem(
+            cohort,
+            domains=(ParameterDomain("R", 0.1, 0.7),),
+            fixed={"v_rest": -65.0, "tau_m": 10.0, "C": 1.0},
+        ),
+        generations=4,
+        population=4,
+    )
+    assert result["fitted"]["R"] == pytest.approx(0.7)
+    assert result["identifiability"]["identifiable"] is True
+    assert result["uncertainty"]["standard_errors"] is None
+    assert "boundary" in result["uncertainty"]["reason"]
+
+
+def test_unrepresentable_local_sensitivity_is_reported_without_nan_covariance() -> None:
+    """A finite low-loss model can have sensitivities too large for its Gram matrix."""
+    schema = {
+        "metadata": {"schema_version": 2, "name": "extreme units"},
+        "state": {"v": 0.0},
+        "parameters": {"k": 0.0, "gain": 1e200},
+        "integration": {"dt": 1.0, "method": "euler"},
+        "dynamics": {"v": "k * gain"},
+    }
+    problem = FitProblem(
+        schema,
+        "v",
+        (ParameterDomain("k", -1e-125, 1e-125),),
+        (Recording("train", (0.0,) * 4, (0.0,) * 4),),
+        (Recording("held", (0.0,) * 4, (1.0,) * 4),),
+        3,
+    )
+    result = fit_parameters(problem, generations=2, population=4)
+    assert result["identifiability"]["identifiable"] is False
+    assert result["identifiability"]["reason"] == "the residual Gram matrix is not finite"
+    assert result["uncertainty"]["standard_errors"] is None
+
+
+def test_fit_admits_schema_before_search_and_freezes_callback_mutations(cohort: Any) -> None:
+    """Bad equations are refused before optimisation and caller-owned schemas stay independent."""
+    schema = _schema()
+    schema["dynamics"]["v"] = "__import__('os')"
+    with pytest.raises(ValueError):
+        _problem(cohort, schema=schema)
+    problem = _problem(cohort)
+
+    def edit_original(event: dict[str, Any]) -> None:
+        problem.schema["parameters"]["C"] = 2.0
+
+    result = fit_parameters(problem, generations=2, population=4, progress=edit_original)
+    assert result["problem"]["schema"]["parameters"]["C"] == 1.0
+    assert replay_fit(result)["reproduced"] is True
+
+
+@pytest.mark.parametrize("seed", [-1, 2**32, True, 0.5])
+def test_fit_seeds_are_admitted_without_rounding_or_late_worker_failure(
+    cohort: Any, seed: Any
+) -> None:
+    """The legacy SciPy seed space is checked before optimisation or replay."""
+    with pytest.raises(ValueError, match="fit seed must be an integer"):
+        _problem(cohort, seed=seed)
+    document = _problem(cohort).to_public_dict()
+    document["seed"] = seed
+    with pytest.raises(ValueError, match="fit seed must be an integer"):
+        problem_from_dict(document)

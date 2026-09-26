@@ -140,7 +140,7 @@ def encode_named_admission_response(
         if (
             record.workspace != request.workspace
             or record.kind != task.kind
-            or record.owner != task.owner
+            or record.owner != task.owner_for(replay.requester)
             or record.execution_model != "process"
         ):
             raise ValueError("storage admission record does not match named request")
