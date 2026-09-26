@@ -44,6 +44,8 @@ from sc_neurocore.studio.platform.jobs_worker_registration import (
         "cancelling",
         "duplicate",
         "no-session",
+        "early-guard-exit",
+        "partial-limits",
     ],
 )
 def test_managed_worker_registers_before_task_import(tmp_path: Path, case: str) -> None:
@@ -107,6 +109,22 @@ def test_managed_worker_registers_before_task_import(tmp_path: Path, case: str) 
             "print(f'sqlite3.connect events: {len(opened)}', file=sys.stderr)\n"
             "raise SystemExit(code)\n",
         ]
+    elif case == "early-guard-exit":
+        # Keep real registration and guard readiness, then stop the guard
+        # before the worker's startup check can accept it.
+        entrypoint = [
+            "-c",
+            "import sc_neurocore.studio.platform.jobs_worker_guard as guards\n"
+            "real_arm = guards.arm_worker_guard\n"
+            "def arm_then_exit(supervisor):\n"
+            "    guard = real_arm(supervisor)\n"
+            "    guard.kill()\n"
+            "    guard.wait(timeout=5)\n"
+            "    return guard\n"
+            "guards.arm_worker_guard = arm_then_exit\n"
+            "from sc_neurocore.studio.platform.process_worker import main\n"
+            "raise SystemExit(main())\n",
+        ]
     child: subprocess.Popen[bytes] | None = None
     try:
         child = subprocess.Popen(
@@ -125,6 +143,7 @@ def test_managed_worker_registers_before_task_import(tmp_path: Path, case: str) 
                 "1024",
                 "--supervisor",
                 supervisor,
+                *(["--max-data-bytes", "67108864"] if case == "partial-limits" else []),
             ],
             env=environment,
             start_new_session=case != "no-session",
@@ -154,12 +173,16 @@ def test_managed_worker_registers_before_task_import(tmp_path: Path, case: str) 
             assert b"sqlite3.connect events: 0" in stderr
         evidence = json.loads(result.read_text())
         assert evidence["status"] == ("completed" if valid else "failed")
+        if case in {"early-guard-exit", "partial-limits"}:
+            assert evidence["error"] == (
+                "RuntimeError" if case == "early-guard-exit" else "ValueError"
+            )
         assert module.with_suffix(".imported").exists() is valid
         assert module.with_suffix(".executed").exists() is valid
         rows = ledger.connection().execute("SELECT * FROM job_workers").fetchall()
-        if valid:
+        if valid or case in {"early-guard-exit", "partial-limits"}:
             assert len(rows) == 1 and rows[0]["supervisor"] == ledger.supervisor
-            assert evidence["result"] == {"actual_execution": True}
+            assert evidence["result"] == ({"actual_execution": True} if valid else {})
         elif case == "duplicate":
             assert len(rows) == 1 and rows[0]["worker_identity"] == "preserved-identity"
         else:

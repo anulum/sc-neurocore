@@ -17,7 +17,9 @@ sigterm = True
 patch = subprocess
 
 [report]
-include = */sc_neurocore/studio/platform/jobs*.py
+include =
+    */sc_neurocore/studio/platform/jobs*.py
+    */sc_neurocore/studio/platform/process_worker.py
 # The gate stays at 100%; every line left uncovered stays visible in the
 # report until a real test reaches it.
 fail_under = 100

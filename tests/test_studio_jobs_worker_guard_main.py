@@ -131,3 +131,44 @@ def test_armed_guard_stops_its_group_when_a_live_supervisor_dies() -> None:
                 process.wait(timeout=10.0)
         if leader.stdout is not None:
             leader.stdout.close()
+
+
+def test_guard_stops_group_after_supervisor_metadata_stays_unknown() -> None:
+    """A real guard waits its deadline, then kills the group on unknown metadata.
+
+    A same-UID test cannot hide the supervisor's proc entry after a successful
+    initial probe. Only that later liveness result is injected; the guard,
+    deadline, process group and SIGKILL remain real.
+    """
+    guard_program = (
+        "import sys\n"
+        f"import {GUARD} as guard\n"
+        "real_probe = guard.supervisor_is_alive\n"
+        "observations = 0\n"
+        "def probe(identity):\n"
+        "    global observations\n"
+        "    observations += 1\n"
+        "    return real_probe(identity) if observations == 1 else None\n"
+        "guard.supervisor_is_alive = probe\n"
+        "sys.argv = ['guard', sys.argv[1], sys.argv[2]]\n"
+        "raise SystemExit(guard.main())\n"
+    )
+    leader_program = (
+        "import os, subprocess, sys, time\n"
+        f"subprocess.Popen([sys.executable, '-c', {guard_program!r}, "
+        "sys.argv[1], str(os.getpgrp())])\n"
+        "time.sleep(60)\n"
+    )
+    leader = subprocess.Popen(
+        [sys.executable, "-c", leader_program, supervisor_identity()],
+        env=_process_worker_environment(),
+        start_new_session=True,
+    )
+    try:
+        started = time.monotonic()
+        assert leader.wait(timeout=10.0) == -signal.SIGKILL
+        assert time.monotonic() - started >= 1.0
+    finally:
+        if leader.poll() is None:
+            leader.kill()
+            leader.wait(timeout=10.0)

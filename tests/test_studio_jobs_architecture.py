@@ -110,6 +110,9 @@ def test_jobs_coverage_gate_matches_the_measured_contract() -> None:
     assert measurement.get_option("run:patch") == ["subprocess"]
     assert measurement.get_option("run:parallel") is True
     assert measurement.get_option("run:sigterm") is True
-    assert measurement.get_option("report:include") == ["*/sc_neurocore/studio/platform/jobs*.py"]
+    assert measurement.get_option("report:include") == [
+        "*/sc_neurocore/studio/platform/jobs*.py",
+        "*/sc_neurocore/studio/platform/process_worker.py",
+    ]
     assert measurement.get_option("report:fail_under") == 100
     assert measurement.get_option("report:show_missing") is True

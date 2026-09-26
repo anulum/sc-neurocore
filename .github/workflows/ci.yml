@@ -509,14 +509,12 @@ jobs:
         if: matrix.primary
         shell: bash
         run: |
-          COVERAGE_FILE=.coverage-studio-jobs python -m coverage run \
-            --rcfile=/dev/null --branch \
-            --include='src/sc_neurocore/studio/platform/jobs*.py' \
-            -m pytest tests/test_studio_jobs*.py -q
-          COVERAGE_FILE=.coverage-studio-jobs python -m coverage report \
-            --rcfile=/dev/null \
-            --include='src/sc_neurocore/studio/platform/jobs*.py' \
-            --fail-under=100 --show-missing
+          COVERAGE_FILE=.coverage-studio-jobs python -m pytest \
+            tests/test_studio_jobs*.py \
+            tests/test_studio_storage_worker_grant_process.py \
+            tests/test_studio_worker_limits.py -q \
+            --cov --cov-config=tests/studio_jobs.coveragerc \
+            --cov-branch --cov-report=term-missing
 
       - name: Nagumo-Sato and SC adaptive-map exact coverage and backend parity
         if: matrix.primary
