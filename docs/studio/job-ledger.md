@@ -112,13 +112,15 @@ job records identify `execution_model: process`.
 
 Process execution is not an operating-system isolation guarantee. Embedded
 workers still use the launching user's identity. On POSIX, each embedded
-process worker takes unraisable `RLIMIT_DATA`, `RLIMIT_CPU`, `RLIMIT_NOFILE`,
+process worker takes hard `RLIMIT_DATA`, `RLIMIT_CPU`, `RLIMIT_NOFILE`,
 `RLIMIT_FSIZE` and `RLIMIT_CORE=0` ceilings after supervisor registration and
-before loading its payload or importing task code. The default data ceiling is
-half the host's physical RAM; the CPU ceiling is derived from the job timeout
-and CPU count. These are per-process limits, not a per-job aggregate or a
-defence against a descendant that leaves the worker process group. The
-isolated storage mode and its separate limits are described under
+before loading its payload or importing task code. The CPU soft limit may rise
+to its hard limit, at most one second higher. The default data ceiling is half the
+host's physical RAM; the CPU ceiling is derived from the job timeout and CPU
+count. These are per-process limits: concurrent workers can exceed RAM in
+aggregate. A descendant that leaves the worker process group retains inherited
+hard limits but escapes group cleanup. The isolated storage mode and its
+separate limits are described under
 [Storage mode and isolation](#storage-mode-and-isolation).
 
 An analysis cancellation recorded by another manager sharing the ledger is
@@ -527,8 +529,10 @@ Committed cleanup verifies an opened directory's device/inode and removes its
 contents relative to that descriptor, without following root symlinks. After
 the directory is opened, replacing its pathname does not redirect those
 descriptor-relative content operations. Device/inode matching does not prove
-identity across deletion and recreation: the filesystem can reuse an inode
-before cleanup opens the directory, and a replacement can then pass this check.
+identity across deletion and recreation. This is a known, unresolved
+embedded-profile limit: a same-UID writer with namespace access could present
+a replacement at `.purge-<id>` using a reused inode before cleanup opens it,
+and the replacement could pass this check.
 After removing the root pathname, cleanup checks that the verified open
 directory has zero links. Successful removal of a replacement is not reported
 as successful deletion of the original object. This detects false completion;

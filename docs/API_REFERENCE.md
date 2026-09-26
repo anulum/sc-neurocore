@@ -41224,7 +41224,7 @@ survivors : tuple of int
     unless ``outcome`` is ``unreaped``.
 
 - **reaped**()
-  - Return whether nothing from the worker is still running.
+  - Return whether the scoped worker cleanup was verified complete.
 - **to_public_dict**()
   - Return a path-free JSON representation of this reap.
 
@@ -41236,11 +41236,12 @@ the group id equals its pid. Reading it from the operating system rather
 than assuming it keeps the reap honest when the process has already gone.
 
 ### Function `reap_process_group(process)`
-Stop a worker and everything it started, and report what happened.
+Stop the registered worker process group and report what happened.
 
 SIGTERM to the group first, so a worker that handles it can seal its own
 files; SIGKILL to the group if the grace period passes; then a check that
-the group is actually gone.
+the group is actually gone. A descendant that leaves this group by
+creating another session or group is outside this cleanup scope.
 
 Parameters
 ----------
@@ -41260,7 +41261,8 @@ owned_group_id : int, optional
 Returns
 -------
 ReapReport
-    The outcome, never an exception.
+    The outcome for the worker group, or for the direct child when no
+    separate owned group can be resolved; never an exception.
 
 ---
 
@@ -41364,11 +41366,12 @@ max_cpu_seconds:
   - Encode limits for the worker launched with this job timeout.
 
 ### Function `apply_worker_limits()`
-Set unraisable POSIX limits in the worker before loading task code.
+Set POSIX hard ceilings in the worker before loading task code.
 
-An inherited hard ceiling is never raised. CPU has a one-second soft-to-hard
-interval so ``SIGXCPU`` can report exhaustion before the kernel kills the
-worker. No per-UID ``RLIMIT_NPROC`` is set.
+An inherited hard ceiling is never raised. The CPU soft limit can rise to
+its hard ceiling, at most one second higher, so ``SIGXCPU`` can report
+exhaustion before the kernel kills the worker. No per-UID ``RLIMIT_NPROC``
+is set.
 
 Parameters
 ----------

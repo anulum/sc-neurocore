@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio worker process-group reaping
 
-"""Stop and verify a worker's entire process group, including descendants.
+"""Stop and verify a worker's process group, including descendants still in it.
 
 Signal, escalate and check the group: direct-child exit alone is insufficient.
 Reports preserve cleanup outcome, elapsed time and surviving process IDs so
@@ -63,7 +63,7 @@ class ReapReport:
 
     @property
     def reaped(self) -> bool:
-        """Return whether nothing from the worker is still running."""
+        """Return whether the scoped worker cleanup was verified complete."""
         return self.outcome != "unreaped"
 
     def to_public_dict(self) -> dict[str, object]:
@@ -122,11 +122,12 @@ def reap_process_group(
     terminate_grace_seconds: float = DEFAULT_TERMINATE_GRACE_SECONDS,
     kill_grace_seconds: float = DEFAULT_KILL_GRACE_SECONDS,
 ) -> ReapReport:
-    """Stop a worker and everything it started, and report what happened.
+    """Stop the registered worker process group and report what happened.
 
     SIGTERM to the group first, so a worker that handles it can seal its own
     files; SIGKILL to the group if the grace period passes; then a check that
-    the group is actually gone.
+    the group is actually gone. A descendant that leaves this group by
+    creating another session or group is outside this cleanup scope.
 
     Parameters
     ----------
@@ -146,7 +147,8 @@ def reap_process_group(
     Returns
     -------
     ReapReport
-        The outcome, never an exception.
+        The outcome for the worker group, or for the direct child when no
+        separate owned group can be resolved; never an exception.
     """
     started = time.monotonic()
     group_id = process_group_of(process)

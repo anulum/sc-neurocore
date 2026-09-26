@@ -107,11 +107,12 @@ class StudioWorkerLimits:
 def apply_worker_limits(
     *, max_data_bytes: int, max_cpu_seconds: int, max_open_files: int, max_file_bytes: int
 ) -> None:
-    """Set unraisable POSIX limits in the worker before loading task code.
+    """Set POSIX hard ceilings in the worker before loading task code.
 
-    An inherited hard ceiling is never raised. CPU has a one-second soft-to-hard
-    interval so ``SIGXCPU`` can report exhaustion before the kernel kills the
-    worker. No per-UID ``RLIMIT_NPROC`` is set.
+    An inherited hard ceiling is never raised. The CPU soft limit can rise to
+    its hard ceiling, at most one second higher, so ``SIGXCPU`` can report
+    exhaustion before the kernel kills the worker. No per-UID ``RLIMIT_NPROC``
+    is set.
 
     Parameters
     ----------
