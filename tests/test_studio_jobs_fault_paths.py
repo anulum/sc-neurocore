@@ -6,14 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio job custody when the operating system does not cooperate
 
-"""Every job ends in a record that says what happened, even when the host refuses.
+"""Exercise Studio job fault paths through real workers, ledgers, and directories.
 
-The failures here are ones a shared, unprivileged test process cannot produce on
-demand: a thread the interpreter will not start, a process group that outlives
-its reap, a ``/proc`` entry that disappears between two reads, a rename that
-loses a race. Each is injected at the one boundary that fails, with the real
-job manager, ledger, worker processes and directories around it, and each case
-asserts the record the operator would read.
+Host-wide failures such as refused thread creation or an unreaped process group
+need a controlled boundary injection. Purge races instead create real conflicting
+filesystem entries at the point where the job manager observes them.
 """
 
 from __future__ import annotations
@@ -39,7 +36,6 @@ from sc_neurocore.studio.platform import (
     jobs_manager_thread,
     jobs_process_protocol,
     jobs_process_state,
-    jobs_purge,
     jobs_purge_paths,
     jobs_purge_recovery,
     jobs_reaper,
@@ -493,6 +489,46 @@ def _completed_job(manager: StudioJobManager) -> str:
     return job.job_id
 
 
+def _exchange_after_clear(monkeypatch: pytest.MonkeyPatch, target: Path) -> None:
+    """Exchange a real directory after its open descriptor has been cleared."""
+    clear = jobs_purge_recovery._clear_directory
+
+    def exchange(descriptor: int) -> None:
+        clear(descriptor)
+        target.rename(target.with_name(f"{target.name}-displaced"))
+        target.mkdir()
+        (target / "replacement.txt").write_text("another directory")
+
+    monkeypatch.setattr(jobs_purge_recovery, "_clear_directory", exchange)
+
+
+def _occupy_destination_during_move(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make the rename destination exist, then invoke the real atomic move."""
+    move = jobs_purge_paths.move_without_replace
+
+    def occupied(source: Path, destination: Path) -> bool:
+        destination.mkdir()
+        (destination / "replacement.txt").write_text("another directory")
+        return move(source, destination)
+
+    monkeypatch.setattr(jobs_purge_paths, "move_without_replace", occupied)
+
+
+def _exchange_after_move(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Move the owned directory, then place another inode at its destination."""
+    move = jobs_purge_paths.move_without_replace
+
+    def exchanged(source: Path, destination: Path) -> bool:
+        moved = move(source, destination)
+        assert moved
+        destination.rename(destination.with_name(f"{destination.name}-displaced"))
+        destination.mkdir()
+        (destination / "replacement.txt").write_text("another directory")
+        return moved
+
+    monkeypatch.setattr(jobs_purge_paths, "move_without_replace", exchanged)
+
+
 class TestOwnedDirectoryRemoval:
     def test_a_missing_directory_is_not_reported_removed(self, tmp_path: Path) -> None:
         assert jobs_purge_recovery._remove_owned_directory(tmp_path / "missing", 1, 1) is False
@@ -516,12 +552,13 @@ class TestOwnedDirectoryRemoval:
         target = tmp_path / "staged"
         target.mkdir()
         identity = target.stat()
-        monkeypatch.setattr(jobs_purge_recovery, "_matches", lambda *_args: False)
+        _exchange_after_clear(monkeypatch, target)
         assert (
             jobs_purge_recovery._remove_owned_directory(target, identity.st_dev, identity.st_ino)
             is False
         )
-        assert target.is_dir()
+        assert (target / "replacement.txt").read_text() == "another directory"
+        assert target.stat().st_ino != identity.st_ino
 
 
 class TestPurgeRecoveryPhases:
@@ -587,9 +624,11 @@ class TestPurgeRecoveryPhases:
         identity = work_dir.stat()
         work_dir.rename(tmp_path / f".purge-{job_id}")
         self._journal(manager, job_id, "prepared", identity)
-        monkeypatch.setattr(jobs_purge_paths, "move_without_replace", lambda *_args: False)
+        _occupy_destination_during_move(monkeypatch)
         assert jobs_purge_recovery.recover_purges(manager) == ()
         assert self._pending(manager, job_id) == "prepared"
+        assert (work_dir / "replacement.txt").read_text() == "another directory"
+        assert (tmp_path / f".purge-{job_id}" / "proof.txt").exists()
 
     def test_a_cleanup_that_cannot_prove_removal_is_marked_ambiguous(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -601,9 +640,11 @@ class TestPurgeRecoveryPhases:
         work_dir.rename(tmp_path / f".purge-{job_id}")
         manager._ledger.delete(job_id)
         self._journal(manager, job_id, "cleanup_started", identity)
-        monkeypatch.setattr(jobs_purge_recovery, "_remove_owned_directory", lambda *_args: False)
+        staged = tmp_path / f".purge-{job_id}"
+        _exchange_after_clear(monkeypatch, staged)
         assert jobs_purge_recovery.recover_purges(manager) == ()
         assert self._pending(manager, job_id) == "ambiguous"
+        assert (staged / "replacement.txt").read_text() == "another directory"
 
     def test_recovery_for_one_job_leaves_other_intents_untouched(self, tmp_path: Path) -> None:
         manager = _manager(tmp_path)
@@ -622,21 +663,24 @@ class TestPurgeCommit:
     ) -> None:
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
-        monkeypatch.setattr(jobs_purge_paths, "move_without_replace", lambda *_args: False)
+        _occupy_destination_during_move(monkeypatch)
         with pytest.raises(StudioJobRejected, match="pending purge requiring recovery"):
             manager.purge_terminal_record(job_id)
         assert manager.record(job_id).status == "completed"
         assert (tmp_path / job_id / "proof.txt").read_text() == "retained evidence"
+        assert (tmp_path / f".purge-{job_id}" / "replacement.txt").exists()
 
     def test_a_directory_exchanged_during_the_move_rejects_the_purge(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
-        monkeypatch.setattr(jobs_purge, "_matches", lambda *_args: False)
+        _exchange_after_move(monkeypatch)
         with pytest.raises(StudioJobRejected, match="identity changed during move"):
             manager.purge_terminal_record(job_id)
         assert manager.record(job_id).status == "completed"
+        assert (tmp_path / f".purge-{job_id}" / "replacement.txt").exists()
+        assert (tmp_path / f".purge-{job_id}-displaced" / "proof.txt").exists()
 
     def test_a_job_deleted_between_preparation_and_commit_is_forgotten(
         self, tmp_path: Path
@@ -672,9 +716,11 @@ class TestPurgeCommit:
     ) -> None:
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
-        monkeypatch.setattr(jobs_purge_recovery, "_remove_owned_directory", lambda *_args: False)
+        staged = tmp_path / f".purge-{job_id}"
+        _exchange_after_clear(monkeypatch, staged)
         with pytest.raises(StudioJobRejected, match="cleanup remains pending recovery"):
             manager.purge_terminal_record(job_id)
+        assert (staged / "replacement.txt").read_text() == "another directory"
 
 
 # ── remaining boundaries ─────────────────────────────────────────────
@@ -771,15 +817,11 @@ def test_a_restored_directory_with_another_identity_leaves_the_intent_pending(
     identity = work_dir.stat()
     work_dir.rename(tmp_path / f".purge-{job_id}")
     phases._journal(manager, job_id, "prepared", identity)
-    real = jobs_purge_recovery._matches
-
-    def exchanged_after_move(path: Path, device: int | None, inode: int | None) -> bool:
-        # The staged directory is ours; what arrives at the original path is not.
-        return real(path, device, inode) if path.name.startswith(".purge-") else False
-
-    monkeypatch.setattr(jobs_purge_recovery, "_matches", exchanged_after_move)
+    _exchange_after_move(monkeypatch)
     assert jobs_purge_recovery.recover_purges(manager) == ()
     assert phases._pending(manager, job_id) == "prepared"
+    assert (work_dir / "replacement.txt").read_text() == "another directory"
+    assert (tmp_path / f"{job_id}-displaced" / "proof.txt").exists()
 
 
 def test_a_group_that_outlives_sigkill_is_reported_unreaped(
