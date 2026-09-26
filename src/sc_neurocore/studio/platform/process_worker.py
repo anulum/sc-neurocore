@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import cast
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.jobs_worker_limits import apply_worker_limits
 
 _ProcessTask = Callable[[StudioJobContext, Mapping[str, object]], dict[str, object]]
 
@@ -69,6 +70,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             guard = arm_worker_guard(args.supervisor)
             if guard.poll() is not None:
                 raise RuntimeError("Worker lifetime guard exited before task startup.")
+        limits = (
+            args.max_data_bytes,
+            args.max_cpu_seconds,
+            args.max_open_files,
+            args.max_file_bytes,
+        )
+        if any(limit is not None for limit in limits):
+            if any(limit is None for limit in limits):
+                raise ValueError("Studio worker resource limits must be supplied together.")
+            apply_worker_limits(
+                max_data_bytes=args.max_data_bytes,
+                max_cpu_seconds=args.max_cpu_seconds,
+                max_open_files=args.max_open_files,
+                max_file_bytes=args.max_file_bytes,
+            )
         payload = _load_payload(Path(args.payload))
         task = _load_task(args.task)
         context = StudioJobContext(
@@ -98,6 +114,10 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument("--result", required=True)
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--max-artifact-bytes", type=int, required=True)
+    parser.add_argument("--max-data-bytes", type=int)
+    parser.add_argument("--max-cpu-seconds", type=int)
+    parser.add_argument("--max-open-files", type=int)
+    parser.add_argument("--max-file-bytes", type=int)
     parser.add_argument("--supervisor", help="Expected supervisor for ledger-managed execution")
     parser.add_argument(
         "--grant-socket",

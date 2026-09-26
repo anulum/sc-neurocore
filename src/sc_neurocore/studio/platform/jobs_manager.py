@@ -47,6 +47,7 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobTask,
     StudioProcessJobPayload,
 )
+from sc_neurocore.studio.platform.jobs_worker_limits import StudioWorkerLimits
 
 
 class StudioJobManager(StudioJobCustody, StudioJobSupervision):
@@ -70,6 +71,7 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         reconcile: bool = True,
         max_concurrent_jobs: int = DEFAULT_MAX_CONCURRENT_JOBS,
         max_queued_jobs: int = DEFAULT_MAX_QUEUED_JOBS,
+        worker_limits: StudioWorkerLimits | None = None,
     ) -> None:
         """Configure bounded execution over the durable job ledger.
 
@@ -79,6 +81,10 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         alive. ``max_concurrent_jobs`` and ``max_queued_jobs`` bound what runs.
         Execution timeouts are finite positive seconds; invalid defaults raise
         ``ValueError`` before creating the root or opening its ledger.
+        ``worker_limits`` applies POSIX kernel ceilings to each embedded
+        process worker before it imports task code. When omitted, host defaults
+        are used; thread jobs and the isolated storage worker keep their own
+        resource contracts.
         """
         if not allowed_kinds:
             raise ValueError("Studio job manager requires at least one allowed job kind.")
@@ -90,6 +96,7 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         self._allowed_kinds = frozenset(sorted(allowed_kinds))
         self._default_timeout_seconds = default_timeout_seconds
         self._max_artifact_bytes = max_artifact_bytes
+        self._worker_limits = worker_limits or StudioWorkerLimits.for_host()
         self._configured = configured
         self._clock = clock or self._utc_now
         self._lock = threading.Lock()

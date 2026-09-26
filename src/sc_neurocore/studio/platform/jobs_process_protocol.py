@@ -132,6 +132,7 @@ def _run_process_supervised(
         str(manager._max_artifact_bytes),
         "--supervisor",
         manager._ledger.supervisor,
+        *manager._worker_limits.worker_arguments(timeout_seconds),
     ]
     # Its own session, so stopping the job stops everything the worker
     # started rather than only the process the supervisor can see.

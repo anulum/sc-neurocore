@@ -7,6 +7,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Studio embedded process jobs now take per-process data, CPU, descriptor,
+  output-file and core-dump limits before importing task code. A refused
+  allocation ends as a failed job; nested Yosys limits respect the worker's
+  inherited hard ceiling.
+
 - Studio training: a run that asks for MNIST on a host without torchvision now
   fails with that reason. It used to train on the synthetic demonstration data
   while recording itself as an MNIST run.

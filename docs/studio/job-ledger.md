@@ -111,8 +111,15 @@ result's evidence seal. The public receipt remains `studio.analysis.job.v1`;
 job records identify `execution_model: process`.
 
 Process execution is not an operating-system isolation guarantee. Embedded
-workers still use the launching user's identity; the isolated storage mode and
-its limits are described under [Storage mode and isolation](#storage-mode-and-isolation).
+workers still use the launching user's identity. On POSIX, each embedded
+process worker takes unraisable `RLIMIT_DATA`, `RLIMIT_CPU`, `RLIMIT_NOFILE`,
+`RLIMIT_FSIZE` and `RLIMIT_CORE=0` ceilings after supervisor registration and
+before loading its payload or importing task code. The default data ceiling is
+half the host's physical RAM; the CPU ceiling is derived from the job timeout
+and CPU count. These are per-process limits, not a per-job aggregate or a
+defence against a descendant that leaves the worker process group. The
+isolated storage mode and its separate limits are described under
+[Storage mode and isolation](#storage-mode-and-isolation).
 
 An analysis cancellation recorded by another manager sharing the ledger is
 observed by its owning supervisor. Cancellation and execution timeout stop the

@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5028
+    "test_files": 5030
   },
   "documentation": {
     "public_pages": [
@@ -3767,6 +3767,7 @@
       "tests/studio_training_evidence_support.py",
       "tests/studio_training_support.py",
       "tests/studio_training_weights_support.py",
+      "tests/studio_worker_limit_tasks.py",
       "tests/surrogate_python_support.py",
       "tests/swarm_control_support.py",
       "tests/swarm_fitness_contracts_support.py",
@@ -7847,6 +7848,7 @@
       "tests/test_studio_training_weight_restore.py",
       "tests/test_studio_training_weight_route_failures.py",
       "tests/test_studio_vector_state_declaration.py",
+      "tests/test_studio_worker_limits.py",
       "tests/test_studio_worker_routes.py",
       "tests/test_studio_workspace_concurrency.py",
       "tests/test_studio_workspace_review.py",

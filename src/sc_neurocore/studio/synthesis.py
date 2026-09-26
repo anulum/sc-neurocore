@@ -94,9 +94,15 @@ def _build_limit_preexec(limits: EdaProcessLimits | None) -> Callable[[], None] 
 
         if limits.cpu_seconds is not None:
             cpu_limit = max(1, ceil(limits.cpu_seconds))
+            _, hard = resource.getrlimit(resource.RLIMIT_CPU)
+            if hard != resource.RLIM_INFINITY:
+                cpu_limit = min(cpu_limit, hard)
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))
         if limits.address_space_bytes is not None and hasattr(resource, "RLIMIT_AS"):
             memory_limit = int(limits.address_space_bytes)
+            _, hard = resource.getrlimit(resource.RLIMIT_AS)
+            if hard != resource.RLIM_INFINITY:
+                memory_limit = min(memory_limit, hard)
             resource.setrlimit(resource.RLIMIT_AS, (memory_limit, memory_limit))
 
     return apply_limits

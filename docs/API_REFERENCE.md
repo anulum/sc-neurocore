@@ -41339,6 +41339,50 @@ guard itself cannot be scheduled.
 
 ---
 
+## Module `studio.platform.jobs_worker_limits`
+
+### Class `StudioWorkerLimits`
+Per-process ceilings for embedded Studio jobs.
+
+Parameters
+----------
+max_data_bytes:
+    Private writable allocation ceiling in bytes.
+max_open_files:
+    Maximum number of open file descriptors.
+max_file_bytes:
+    Maximum size in bytes of any file written by the worker.
+max_cpu_seconds:
+    CPU seconds per process. ``None`` derives a ceiling from the job's
+    wall-clock timeout and the host CPU count.
+
+- **__post_init__**()
+  - Reject nonpositive, fractional and boolean resource ceilings.
+- **for_host**(cls)
+  - Use half of physical RAM and bounded descriptor and file ceilings.
+- **worker_arguments**(timeout_seconds)
+  - Encode limits for the worker launched with this job timeout.
+
+### Function `apply_worker_limits()`
+Set unraisable POSIX limits in the worker before loading task code.
+
+An inherited hard ceiling is never raised. CPU has a one-second soft-to-hard
+interval so ``SIGXCPU`` can report exhaustion before the kernel kills the
+worker. No per-UID ``RLIMIT_NPROC`` is set.
+
+Parameters
+----------
+max_data_bytes:
+    Private writable allocation ceiling in bytes.
+max_cpu_seconds:
+    CPU seconds before ``SIGXCPU``.
+max_open_files:
+    Maximum open file descriptors.
+max_file_bytes:
+    Maximum bytes in one output file.
+
+---
+
 ## Module `studio.platform.jobs_worker_recovery`
 
 ### Function `worker_group_stopped(identity, boot_id, group_id)`

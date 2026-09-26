@@ -26,6 +26,7 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobStatus,
     StudioJobTask,
 )
+from sc_neurocore.studio.platform.jobs_worker_limits import StudioWorkerLimits
 
 
 class _StudioJobManagerState(Protocol):
@@ -35,6 +36,7 @@ class _StudioJobManagerState(Protocol):
     _allowed_kinds: frozenset[str]
     _default_timeout_seconds: float
     _max_artifact_bytes: int
+    _worker_limits: StudioWorkerLimits
     _configured: bool
     _clock: Callable[[], datetime]
     _lock: LockType
