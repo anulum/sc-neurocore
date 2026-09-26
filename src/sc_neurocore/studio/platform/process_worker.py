@@ -190,5 +190,5 @@ def _write_result(
     os.replace(partial, result_path)
 
 
-if __name__ == "__main__":  # pragma: no cover - exercised through subprocess tests.
+if __name__ == "__main__":
     raise SystemExit(main())
