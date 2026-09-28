@@ -497,9 +497,9 @@ func TestRateLimiterRefill(t *testing.T) {
 func TestHealthCheckHealthy(t *testing.T) {
 	m := HubMetrics{
 		EventsReceived: 100,
-		BufferCapacity:  1024,
-		BufferHead:      50,
-		UptimeSeconds:   10,
+		BufferCapacity: 1024,
+		BufferHead:     50,
+		UptimeSeconds:  10,
 	}
 	h := CheckHealth(m)
 	if h.Status != "healthy" {

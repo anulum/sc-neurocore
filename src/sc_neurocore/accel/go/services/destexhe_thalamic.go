@@ -14,40 +14,40 @@ import (
 
 // DestexheThalamicNeuronState holds the neuron state
 type DestexheThalamicNeuronState struct {
-	V float64
-	HNa float64
-	NK float64
-	MT float64
-	HT float64
-	GNa float64
-	GK float64
-	GT float64
-	GL float64
-	ENa float64
-	EK float64
-	ECa float64
-	EL float64
-	Dt float64
+	V          float64
+	HNa        float64
+	NK         float64
+	MT         float64
+	HT         float64
+	GNa        float64
+	GK         float64
+	GT         float64
+	GL         float64
+	ENa        float64
+	EK         float64
+	ECa        float64
+	EL         float64
+	Dt         float64
 	VThreshold float64
 }
 
 // NewDestexheThalamicNeuron creates a new DestexheThalamicNeuron neuron with default parameters
 func NewDestexheThalamicNeuron() *DestexheThalamicNeuronState {
 	return &DestexheThalamicNeuronState{
-		V: -65.0,
-		HNa: 0.6,
-		NK: 0.3,
-		MT: 0.0,
-		HT: 1.0,
-		GNa: 100.0,
-		GK: 10.0,
-		GT: 2.0,
-		GL: 0.05,
-		ENa: 50.0,
-		EK: -90.0,
-		ECa: 120.0,
-		EL: -70.0,
-		Dt: 0.02,
+		V:          -65.0,
+		HNa:        0.6,
+		NK:         0.3,
+		MT:         0.0,
+		HT:         1.0,
+		GNa:        100.0,
+		GK:         10.0,
+		GT:         2.0,
+		GL:         0.05,
+		ENa:        50.0,
+		EK:         -90.0,
+		ECa:        120.0,
+		EL:         -70.0,
+		Dt:         0.02,
 		VThreshold: -20.0,
 	}
 }

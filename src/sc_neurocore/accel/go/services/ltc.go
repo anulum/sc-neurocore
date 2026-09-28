@@ -14,27 +14,27 @@ import (
 
 // LiquidTimeConstantNeuronState holds the neuron state
 type LiquidTimeConstantNeuronState struct {
-	X float64
-	TauBase float64
-	WTau float64
-	WX float64
-	WIn float64
-	Bias float64
+	X          float64
+	TauBase    float64
+	WTau       float64
+	WX         float64
+	WIn        float64
+	Bias       float64
 	VThreshold float64
-	Dt float64
+	Dt         float64
 }
 
 // NewLiquidTimeConstantNeuron creates a new LiquidTimeConstantNeuron neuron with default parameters
 func NewLiquidTimeConstantNeuron() *LiquidTimeConstantNeuronState {
 	return &LiquidTimeConstantNeuronState{
-		X: 0.0,
-		TauBase: 10.0,
-		WTau: -0.5,
-		WX: 0.8,
-		WIn: 1.0,
-		Bias: 0.0,
+		X:          0.0,
+		TauBase:    10.0,
+		WTau:       -0.5,
+		WX:         0.8,
+		WIn:        1.0,
+		Bias:       0.0,
 		VThreshold: 1.0,
-		Dt: 1.0,
+		Dt:         1.0,
 	}
 }
 

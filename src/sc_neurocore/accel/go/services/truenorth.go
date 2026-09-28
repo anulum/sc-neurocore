@@ -14,19 +14,19 @@ import (
 
 // TrueNorthNeuronState holds the neuron state
 type TrueNorthNeuronState struct {
-	V float64
-	Leak float64
+	V         float64
+	Leak      float64
 	Threshold float64
-	VReset float64
+	VReset    float64
 }
 
 // NewTrueNorthNeuron creates a new TrueNorthNeuron neuron with default parameters
 func NewTrueNorthNeuron() *TrueNorthNeuronState {
 	return &TrueNorthNeuronState{
-		V: 0.0,
-		Leak: 0.0,
+		V:         0.0,
+		Leak:      0.0,
 		Threshold: 100.0,
-		VReset: 0.0,
+		VReset:    0.0,
 	}
 }
 

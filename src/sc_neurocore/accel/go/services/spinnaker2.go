@@ -14,12 +14,12 @@ import (
 
 // SpiNNaker2NeuronState holds the neuron state
 type SpiNNaker2NeuronState struct {
-	V float64
-	VRest float64
-	VReset float64
-	VThreshold float64
-	DecayMult float64
-	DecayShift float64
+	V           float64
+	VRest       float64
+	VReset      float64
+	VThreshold  float64
+	DecayMult   float64
+	DecayShift  float64
 	RefracSteps float64
 	RefracCount float64
 }
@@ -27,12 +27,12 @@ type SpiNNaker2NeuronState struct {
 // NewSpiNNaker2Neuron creates a new SpiNNaker2Neuron neuron with default parameters
 func NewSpiNNaker2Neuron() *SpiNNaker2NeuronState {
 	return &SpiNNaker2NeuronState{
-		V: 0.0,
-		VRest: 0.0,
-		VReset: 0.0,
-		VThreshold: 1024.0,
-		DecayMult: 243.0,
-		DecayShift: 8.0,
+		V:           0.0,
+		VRest:       0.0,
+		VReset:      0.0,
+		VThreshold:  1024.0,
+		DecayMult:   243.0,
+		DecayShift:  8.0,
 		RefracSteps: 2.0,
 		RefracCount: 0.0,
 	}

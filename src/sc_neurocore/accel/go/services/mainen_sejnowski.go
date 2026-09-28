@@ -107,11 +107,11 @@ func (s *MainenSejnowskiNeuronState) TryStep(current float64) (int, error) {
 	for index := 0; index < 20; index++ {
 		va := next.Va
 		am := 0.182 * mainenLinoid(va+25.0, 9.0)
-		bm := 0.124 * mainenLinoid(-(va + 25.0), 9.0)
+		bm := 0.124 * mainenLinoid(-(va+25.0), 9.0)
 		ah := 0.024 * mainenLinoid(va+40.0, 5.0)
-		bh := 0.0091 * mainenLinoid(-(va + 65.0), 5.0)
+		bh := 0.0091 * mainenLinoid(-(va+65.0), 5.0)
 		an := 0.02 * mainenLinoid(va-20.0, 9.0)
-		bn := 0.002 * mainenLinoid(-(va - 20.0), 9.0)
+		bn := 0.002 * mainenLinoid(-(va-20.0), 9.0)
 
 		next.M = mainenClamp(next.M+(am*(1.0-next.M)-bm*next.M)*next.Dt, 0.0, 1.0)
 		next.H = mainenClamp(next.H+(ah*(1.0-next.H)-bh*next.H)*next.Dt, 0.0, 1.0)

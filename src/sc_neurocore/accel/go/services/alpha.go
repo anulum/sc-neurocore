@@ -15,17 +15,17 @@ import (
 
 // AlphaNeuronState holds the membrane potential and the two alpha cascades.
 type AlphaNeuronState struct {
-	V           float64
-	AExc        float64
-	IExc        float64
-	AInh        float64
-	IInh        float64
-	VRest       float64
-	VThreshold  float64
-	TauV        float64
-	TauExc      float64
-	TauInh      float64
-	Dt          float64
+	V          float64
+	AExc       float64
+	IExc       float64
+	AInh       float64
+	IInh       float64
+	VRest      float64
+	VThreshold float64
+	TauV       float64
+	TauExc     float64
+	TauInh     float64
+	Dt         float64
 }
 
 // NewAlphaNeuron returns the catalogue model-family defaults.

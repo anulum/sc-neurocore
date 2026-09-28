@@ -14,23 +14,23 @@ import (
 
 // LoihiCUBANeuronState holds the neuron state
 type LoihiCUBANeuronState struct {
-	V float64
-	U float64
-	TauV float64
-	TauU float64
+	V          float64
+	U          float64
+	TauV       float64
+	TauU       float64
 	VThreshold float64
-	VReset float64
+	VReset     float64
 }
 
 // NewLoihiCUBANeuron creates a new LoihiCUBANeuron neuron with default parameters
 func NewLoihiCUBANeuron() *LoihiCUBANeuronState {
 	return &LoihiCUBANeuronState{
-		V: 0.0,
-		U: 0.0,
-		TauV: 10.0,
-		TauU: 5.0,
+		V:          0.0,
+		U:          0.0,
+		TauV:       10.0,
+		TauU:       5.0,
 		VThreshold: 1000.0,
-		VReset: 0.0,
+		VReset:     0.0,
 	}
 }
 

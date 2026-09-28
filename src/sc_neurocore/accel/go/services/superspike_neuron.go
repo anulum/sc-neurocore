@@ -14,31 +14,31 @@ import (
 
 // SuperSpikeNeuronState holds the neuron state
 type SuperSpikeNeuronState struct {
-	V float64
-	Trace float64
-	TauM float64
-	TauE float64
+	V          float64
+	Trace      float64
+	TauM       float64
+	TauE       float64
 	VThreshold float64
-	VReset float64
-	BetaSg float64
-	Dt float64
-	AlphaM float64
-	AlphaE float64
+	VReset     float64
+	BetaSg     float64
+	Dt         float64
+	AlphaM     float64
+	AlphaE     float64
 }
 
 // NewSuperSpikeNeuron creates a new SuperSpikeNeuron neuron with default parameters
 func NewSuperSpikeNeuron() *SuperSpikeNeuronState {
 	return &SuperSpikeNeuronState{
-		V: 0.0,
-		Trace: 0.0,
-		TauM: 10.0,
-		TauE: 10.0,
+		V:          0.0,
+		Trace:      0.0,
+		TauM:       10.0,
+		TauE:       10.0,
 		VThreshold: 1.0,
-		VReset: 0.0,
-		BetaSg: 10.0,
-		Dt: 1.0,
-		AlphaM: 0.0,
-		AlphaE: 0.0,
+		VReset:     0.0,
+		BetaSg:     10.0,
+		Dt:         1.0,
+		AlphaM:     0.0,
+		AlphaE:     0.0,
 	}
 }
 

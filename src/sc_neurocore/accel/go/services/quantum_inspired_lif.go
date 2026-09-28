@@ -14,26 +14,26 @@ import (
 
 // QuantumInspiredLIFNeuronState holds the neuron state
 type QuantumInspiredLIFNeuronState struct {
-	Tau float64
-	Theta float64
-	Dt float64
-	VReset float64
-	Seed float64
-	ZRe float64
-	ZIm float64
+	Tau      float64
+	Theta    float64
+	Dt       float64
+	VReset   float64
+	Seed     float64
+	ZRe      float64
+	ZIm      float64
 	RngState float64
 }
 
 // NewQuantumInspiredLIFNeuron creates a new QuantumInspiredLIFNeuron neuron with default parameters
 func NewQuantumInspiredLIFNeuron() *QuantumInspiredLIFNeuronState {
 	return &QuantumInspiredLIFNeuronState{
-		Tau: 20.0,
-		Theta: 1.0,
-		Dt: 0.1,
-		VReset: 0.0,
-		Seed: 12345.0,
-		ZRe: 0.0,
-		ZIm: 0.0,
+		Tau:      20.0,
+		Theta:    1.0,
+		Dt:       0.1,
+		VReset:   0.0,
+		Seed:     12345.0,
+		ZRe:      0.0,
+		ZIm:      0.0,
 		RngState: 0.0,
 	}
 }

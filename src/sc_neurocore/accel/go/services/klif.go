@@ -14,25 +14,25 @@ import (
 
 // KLIFNeuronState holds the neuron state
 type KLIFNeuronState struct {
-	V float64
-	K float64
-	Tau float64
+	V          float64
+	K          float64
+	Tau        float64
 	VThreshold float64
-	VReset float64
-	Dt float64
-	Alpha float64
+	VReset     float64
+	Dt         float64
+	Alpha      float64
 }
 
 // NewKLIFNeuron creates a new KLIFNeuron neuron with default parameters
 func NewKLIFNeuron() *KLIFNeuronState {
 	return &KLIFNeuronState{
-		V: 0.0,
-		K: 1.0,
-		Tau: 10.0,
+		V:          0.0,
+		K:          1.0,
+		Tau:        10.0,
 		VThreshold: 1.0,
-		VReset: 0.0,
-		Dt: 1.0,
-		Alpha: 0.0,
+		VReset:     0.0,
+		Dt:         1.0,
+		Alpha:      0.0,
 	}
 }
 

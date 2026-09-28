@@ -14,38 +14,38 @@ import (
 
 // HuberBraunNeuronState holds the neuron state
 type HuberBraunNeuronState struct {
-	V float64
-	ASd float64
-	ASr float64
-	GSd float64
-	GSr float64
-	GL float64
-	ESd float64
-	ESr float64
-	EL float64
-	TauSd float64
-	TauSr float64
-	Eta float64
-	Dt float64
+	V          float64
+	ASd        float64
+	ASr        float64
+	GSd        float64
+	GSr        float64
+	GL         float64
+	ESd        float64
+	ESr        float64
+	EL         float64
+	TauSd      float64
+	TauSr      float64
+	Eta        float64
+	Dt         float64
 	VThreshold float64
 }
 
 // NewHuberBraunNeuron creates a new HuberBraunNeuron neuron with default parameters
 func NewHuberBraunNeuron() *HuberBraunNeuronState {
 	return &HuberBraunNeuronState{
-		V: -50.0,
-		ASd: 0.0,
-		ASr: 0.0,
-		GSd: 1.5,
-		GSr: 0.4,
-		GL: 0.1,
-		ESd: 50.0,
-		ESr: -90.0,
-		EL: -60.0,
-		TauSd: 10.0,
-		TauSr: 20.0,
-		Eta: 0.012,
-		Dt: 0.1,
+		V:          -50.0,
+		ASd:        0.0,
+		ASr:        0.0,
+		GSd:        1.5,
+		GSr:        0.4,
+		GL:         0.1,
+		ESd:        50.0,
+		ESr:        -90.0,
+		EL:         -60.0,
+		TauSd:      10.0,
+		TauSr:      20.0,
+		Eta:        0.012,
+		Dt:         0.1,
 		VThreshold: -20.0,
 	}
 }

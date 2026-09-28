@@ -14,21 +14,21 @@ import (
 
 // GatedLIFNeuronState holds the neuron state
 type GatedLIFNeuronState struct {
-	V float64
-	GateV float64
-	GateI float64
+	V          float64
+	GateV      float64
+	GateI      float64
 	VThreshold float64
-	Dt float64
+	Dt         float64
 }
 
 // NewGatedLIFNeuron creates a new GatedLIFNeuron neuron with default parameters
 func NewGatedLIFNeuron() *GatedLIFNeuronState {
 	return &GatedLIFNeuronState{
-		V: 0.0,
-		GateV: 0.9,
-		GateI: 1.0,
+		V:          0.0,
+		GateV:      0.9,
+		GateI:      1.0,
 		VThreshold: 1.0,
-		Dt: 1.0,
+		Dt:         1.0,
 	}
 }
 

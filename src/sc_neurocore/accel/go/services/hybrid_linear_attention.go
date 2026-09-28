@@ -14,27 +14,27 @@ import (
 
 // HybridLinearAttentionNeuronState holds the neuron state
 type HybridLinearAttentionNeuronState struct {
-	Dim float64
+	Dim         float64
 	LambdaDecay float64
-	WindowSize float64
-	Dt float64
-	V float64
-	StateKv float64
-	WindowBuf float64
-	WindowIdx float64
+	WindowSize  float64
+	Dt          float64
+	V           float64
+	StateKv     float64
+	WindowBuf   float64
+	WindowIdx   float64
 }
 
 // NewHybridLinearAttentionNeuron creates a new HybridLinearAttentionNeuron neuron with default parameters
 func NewHybridLinearAttentionNeuron() *HybridLinearAttentionNeuronState {
 	return &HybridLinearAttentionNeuronState{
-		Dim: 16.0,
+		Dim:         16.0,
 		LambdaDecay: 0.95,
-		WindowSize: 16.0,
-		Dt: 1.0,
-		V: 0.0,
-		StateKv: 0.0,
-		WindowBuf: 0.0,
-		WindowIdx: 0.0,
+		WindowSize:  16.0,
+		Dt:          1.0,
+		V:           0.0,
+		StateKv:     0.0,
+		WindowBuf:   0.0,
+		WindowIdx:   0.0,
 	}
 }
 

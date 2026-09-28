@@ -14,31 +14,31 @@ import (
 
 // InhibitoryLIFNeuronState holds the neuron state
 type InhibitoryLIFNeuronState struct {
-	V float64
-	InhTrace float64
-	TauM float64
-	TauInh float64
-	VThreshold float64
-	VReset float64
+	V           float64
+	InhTrace    float64
+	TauM        float64
+	TauInh      float64
+	VThreshold  float64
+	VReset      float64
 	InhStrength float64
-	Dt float64
-	AlphaM float64
-	AlphaInh float64
+	Dt          float64
+	AlphaM      float64
+	AlphaInh    float64
 }
 
 // NewInhibitoryLIFNeuron creates a new InhibitoryLIFNeuron neuron with default parameters
 func NewInhibitoryLIFNeuron() *InhibitoryLIFNeuronState {
 	return &InhibitoryLIFNeuronState{
-		V: 0.0,
-		InhTrace: 0.0,
-		TauM: 10.0,
-		TauInh: 5.0,
-		VThreshold: 1.0,
-		VReset: 0.0,
+		V:           0.0,
+		InhTrace:    0.0,
+		TauM:        10.0,
+		TauInh:      5.0,
+		VThreshold:  1.0,
+		VReset:      0.0,
 		InhStrength: 0.5,
-		Dt: 1.0,
-		AlphaM: 0.0,
-		AlphaInh: 0.0,
+		Dt:          1.0,
+		AlphaM:      0.0,
+		AlphaInh:    0.0,
 	}
 }
 

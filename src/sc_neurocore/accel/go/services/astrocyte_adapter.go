@@ -15,14 +15,14 @@ import (
 // AstrocyteNeuronState holds the neuron state
 type AstrocyteNeuronState struct {
 	CaThreshold float64
-	Dt float64
+	Dt          float64
 }
 
 // NewAstrocyteNeuron creates a new AstrocyteNeuron neuron with default parameters
 func NewAstrocyteNeuron() *AstrocyteNeuronState {
 	return &AstrocyteNeuronState{
 		CaThreshold: 0.3,
-		Dt: 0.01,
+		Dt:          0.01,
 	}
 }
 

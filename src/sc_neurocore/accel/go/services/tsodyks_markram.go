@@ -14,37 +14,37 @@ import (
 
 // TsodyksMarkramNeuronState holds the neuron state
 type TsodyksMarkramNeuronState struct {
-	V float64
-	X float64
-	U float64
-	VRest float64
-	VReset float64
+	V          float64
+	X          float64
+	U          float64
+	VRest      float64
+	VReset     float64
 	VThreshold float64
-	TauM float64
-	TauD float64
-	TauF float64
-	USe float64
-	ASe float64
-	RM float64
-	Dt float64
+	TauM       float64
+	TauD       float64
+	TauF       float64
+	USe        float64
+	ASe        float64
+	RM         float64
+	Dt         float64
 }
 
 // NewTsodyksMarkramNeuron creates a new TsodyksMarkramNeuron neuron with default parameters
 func NewTsodyksMarkramNeuron() *TsodyksMarkramNeuronState {
 	return &TsodyksMarkramNeuronState{
-		V: -65.0,
-		X: 1.0,
-		U: 0.2,
-		VRest: -65.0,
-		VReset: -65.0,
+		V:          -65.0,
+		X:          1.0,
+		U:          0.2,
+		VRest:      -65.0,
+		VReset:     -65.0,
 		VThreshold: -50.0,
-		TauM: 20.0,
-		TauD: 200.0,
-		TauF: 600.0,
-		USe: 0.2,
-		ASe: 50.0,
-		RM: 1.0,
-		Dt: 0.1,
+		TauM:       20.0,
+		TauD:       200.0,
+		TauF:       600.0,
+		USe:        0.2,
+		ASe:        50.0,
+		RM:         1.0,
+		Dt:         0.1,
 	}
 }
 

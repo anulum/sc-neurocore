@@ -14,35 +14,35 @@ import (
 
 // Loihi2NeuronState holds the neuron state
 type Loihi2NeuronState struct {
-	S1 float64
-	S2 float64
-	S3 float64
-	Tau1 float64
-	Tau2 float64
-	Tau3 float64
-	W12 float64
-	W13 float64
-	W23 float64
+	S1          float64
+	S2          float64
+	S3          float64
+	Tau1        float64
+	Tau2        float64
+	Tau3        float64
+	W12         float64
+	W13         float64
+	W23         float64
 	S1Threshold float64
-	S1Reset float64
-	S3Incr float64
+	S1Reset     float64
+	S3Incr      float64
 }
 
 // NewLoihi2Neuron creates a new Loihi2Neuron neuron with default parameters
 func NewLoihi2Neuron() *Loihi2NeuronState {
 	return &Loihi2NeuronState{
-		S1: 0.0,
-		S2: 0.0,
-		S3: 0.0,
-		Tau1: 10.0,
-		Tau2: 5.0,
-		Tau3: 50.0,
-		W12: 1.0,
-		W13: 0.0,
-		W23: 0.0,
+		S1:          0.0,
+		S2:          0.0,
+		S3:          0.0,
+		Tau1:        10.0,
+		Tau2:        5.0,
+		Tau3:        50.0,
+		W12:         1.0,
+		W13:         0.0,
+		W23:         0.0,
 		S1Threshold: 1000.0,
-		S1Reset: 0.0,
-		S3Incr: 10.0,
+		S1Reset:     0.0,
+		S3Incr:      10.0,
 	}
 }
 

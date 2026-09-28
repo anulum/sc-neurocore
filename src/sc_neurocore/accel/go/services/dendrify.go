@@ -14,39 +14,39 @@ import (
 
 // DendrifyNeuronState holds the neuron state
 type DendrifyNeuronState struct {
-	VS float64
-	VD float64
-	DActive float64
-	TauS float64
-	TauD float64
-	GC float64
+	VS         float64
+	VD         float64
+	DActive    float64
+	TauS       float64
+	TauD       float64
+	GC         float64
 	DThreshold float64
 	DAmplitude float64
-	DDuration float64
-	DTimer float64
-	VRest float64
+	DDuration  float64
+	DTimer     float64
+	VRest      float64
 	VThreshold float64
-	VReset float64
-	Dt float64
+	VReset     float64
+	Dt         float64
 }
 
 // NewDendrifyNeuron creates a new DendrifyNeuron neuron with default parameters
 func NewDendrifyNeuron() *DendrifyNeuronState {
 	return &DendrifyNeuronState{
-		VS: -65.0,
-		VD: -65.0,
-		DActive: 0.0,
-		TauS: 10.0,
-		TauD: 20.0,
-		GC: 0.8,
+		VS:         -65.0,
+		VD:         -65.0,
+		DActive:    0.0,
+		TauS:       10.0,
+		TauD:       20.0,
+		GC:         0.8,
 		DThreshold: -35.0,
 		DAmplitude: 30.0,
-		DDuration: 10.0,
-		DTimer: 0.0,
-		VRest: -65.0,
+		DDuration:  10.0,
+		DTimer:     0.0,
+		VRest:      -65.0,
 		VThreshold: -50.0,
-		VReset: -65.0,
-		Dt: 0.1,
+		VReset:     -65.0,
+		Dt:         0.1,
 	}
 }
 

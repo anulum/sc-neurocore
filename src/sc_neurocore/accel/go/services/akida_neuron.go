@@ -14,22 +14,22 @@ import (
 
 // AkidaNeuronState holds the neuron state
 type AkidaNeuronState struct {
-	V float64
-	Threshold float64
-	Modulation float64
-	Rank float64
-	Spiked float64
+	V                 float64
+	Threshold         float64
+	Modulation        float64
+	Rank              float64
+	Spiked            float64
 	CurrentModulation float64
 }
 
 // NewAkidaNeuron creates a new AkidaNeuron neuron with default parameters
 func NewAkidaNeuron() *AkidaNeuronState {
 	return &AkidaNeuronState{
-		V: 0.0,
-		Threshold: 100.0,
-		Modulation: 0.75,
-		Rank: 0.0,
-		Spiked: 0.0,
+		V:                 0.0,
+		Threshold:         100.0,
+		Modulation:        0.75,
+		Rank:              0.0,
+		Spiked:            0.0,
 		CurrentModulation: 1.0,
 	}
 }

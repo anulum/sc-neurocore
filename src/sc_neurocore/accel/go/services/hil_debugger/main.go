@@ -453,10 +453,10 @@ func (pt *PrecisionTracker) Update(precision float64) {
 
 // EventFilter selects events matching criteria.
 type EventFilter struct {
-	LayerID    string `json:"layer_id,omitempty"`
-	MinNeuron  int    `json:"min_neuron,omitempty"`
-	MaxNeuron  int    `json:"max_neuron,omitempty"`
-	HasNeuron  bool   `json:"-"`
+	LayerID   string `json:"layer_id,omitempty"`
+	MinNeuron int    `json:"min_neuron,omitempty"`
+	MaxNeuron int    `json:"max_neuron,omitempty"`
+	HasNeuron bool   `json:"-"`
 }
 
 // Match returns true if the event passes the filter.
@@ -583,7 +583,7 @@ func (rl *RateLimiter) Available() int64 {
 
 // HealthStatus represents the debugger health.
 type HealthStatus struct {
-	Status        string `json:"status"`
+	Status        string  `json:"status"`
 	EventsPerSec  float64 `json:"events_per_sec"`
 	BufferUsage   float64 `json:"buffer_usage"`
 	ClientsActive int     `json:"clients_active"`
