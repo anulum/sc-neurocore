@@ -9,7 +9,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { SimulateResponse } from "./api/types";
-import { formatReading, plotDescription, traceDataRows, traceDescription } from "./plotAccessibility";
+import {
+  formatReading,
+  multiModelDescription,
+  multiModelDriveNote,
+  plotDescription,
+  traceDataRows,
+  traceDescription,
+} from "./plotAccessibility";
 
 /**
  * A run with the fields the description reads.
@@ -66,9 +73,69 @@ describe("traceDescription", () => {
 describe("plotDescription", () => {
   it("describes the trace in numbers and any other view by what it is", () => {
     expect(plotDescription("Trace", run(), true)).toBe(traceDescription(run()));
-    expect(plotDescription("Bifurcation", run(), false)).toBe(
-      "Bifurcation plot. Its values are in the CSV and JSON exports; the data table describes the trace.",
-    );
     expect(plotDescription("Trace", null, false)).toBe("Trace plot: nothing has run yet.");
+  });
+
+  it("does not send the reader to exports that hold only the trace", () => {
+    // The CSV and JSON exports write the trace run; the sentence used to say
+    // they held every view's values.
+    const sentence = plotDescription("Bifurcation", run(), false);
+    expect(sentence).toBe(
+      "Bifurcation plot. This view is not put into words; the data table and the CSV and " +
+        "JSON exports hold the trace run, not this view.",
+    );
+    expect(sentence).not.toContain("Its values are in");
+  });
+
+  it("uses the view's own sentence when it has one", () => {
+    expect(plotDescription("Multi-model", run(), false, "Multi-model overlay of 2 runs.")).toBe(
+      "Multi-model overlay of 2 runs.",
+    );
+  });
+});
+
+describe("multiModelDriveNote", () => {
+  /**
+   * A run with a recorded drive.
+   *
+   * @param name - The model.
+   * @param current - The drive's current.
+   * @returns The run.
+   */
+  function driven(name: string, current: number): SimulateResponse {
+    return run({
+      model_name: name,
+      experiment: { protocol: { kind: "constant", current, frequency_hz: null } },
+    } as unknown as Partial<SimulateResponse>);
+  }
+
+  it("says the one drive every model had, in each model's own units", () => {
+    expect(multiModelDriveNote([driven("AdExNeuron", 10), driven("LIF", 10)])).toBe(
+      "Every model had the same drive (constant, I = 10), read in each model's own current units.",
+    );
+  });
+
+  it("names each model's drive when they differ", () => {
+    expect(multiModelDriveNote([driven("AdExNeuron", 10), driven("LIF", 2)])).toBe(
+      "The drives differ (AdExNeuron: constant, I = 10; LIF: constant, I = 2), " +
+        "read in each model's own current units.",
+    );
+  });
+
+  it("says nothing it cannot read from the runs", () => {
+    expect(multiModelDriveNote([run()])).toBeNull();
+    expect(multiModelDriveNote([])).toBeNull();
+  });
+});
+
+describe("multiModelDescription", () => {
+  it("states each model's first state, spikes and rate, and the time steps", () => {
+    const a = run({ model_name: "AdExNeuron", stats: { rate_hz: 12 } } as Partial<SimulateResponse>);
+    const b = run({ model_name: "", spike_count: 3, stats: { rate_hz: 30 } } as Partial<SimulateResponse>);
+    expect(multiModelDescription([a, b])).toBe(
+      "Multi-model overlay of 2 runs, each model's first state on one shared axis. " +
+        "AdExNeuron: v from -70 to 20, 1 spike (12 Hz); Model 2: v from -70 to 20, 3 spikes (30 Hz). " +
+        "Time steps: AdExNeuron 0.1 ms, Model 2 0.1 ms.",
+    );
   });
 });

@@ -7,6 +7,7 @@
 // SC-NeuroCore — Source/config provenance header
 
 import { useState } from "react";
+import { Btn } from "../appChrome";
 import { useStudioStore } from "../stores/studio";
 
 /**
@@ -36,7 +37,7 @@ export default function ComparePanel() {
 
   return (
     <div className="panel-section">
-      <div className="panel-header">Compare</div>
+      <h2 className="panel-header">A/B compare</h2>
       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
         <select
           aria-label="Model B"
@@ -49,17 +50,13 @@ export default function ComparePanel() {
             <option key={m.name} value={m.name}>{m.name}</option>
           ))}
         </select>
-        <button
-          className="btn-simulate"
+        <Btn
+          label="Run A/B"
           onClick={handleCompare}
           disabled={!compareModel || isSimulating}
-          style={{
-            background: "#ce93d8", color: "#0d1117", border: "none",
-            padding: "2px 8px", fontSize: "var(--fs-body)",
-          }}
-        >
-          vs
-        </button>
+          outline
+          title={`Run model B beside ${selectedModelName} on the same drive`}
+        />
       </div>
     </div>
   );

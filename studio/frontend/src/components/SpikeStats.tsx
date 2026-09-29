@@ -35,16 +35,14 @@ export default function SpikeStats() {
             <span className="info-value">{stats.isi_mean_ms} ms</span>
           </div>
         )}
+        {/* The number only. The firing pattern is named once, by the server's
+            classifier, in the Info section; a second verdict drawn here from
+            other thresholds called the same run "bursting" where the server
+            said "chaotic", and a high CV is not an error to colour as one. */}
         {stats.isi_cv !== null && (
           <div className="info-item">
             <span className="info-label">CV:</span>
-            <span className="info-value" style={{
-              color: stats.isi_cv < 0.3 ? "var(--success)" :
-                     stats.isi_cv < 0.7 ? "var(--warning)" : "var(--error)",
-            }}>
-              {stats.isi_cv} {stats.isi_cv < 0.3 ? "(regular)" :
-                              stats.isi_cv < 0.7 ? "(irregular)" : "(bursting)"}
-            </span>
+            <span className="info-value">{stats.isi_cv}</span>
           </div>
         )}
       </div>

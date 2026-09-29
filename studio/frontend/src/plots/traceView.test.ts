@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 import type { ImportedTrace, SimulateResponse } from "../api/client";
 import { drewNonFinite, mockPlotContext } from "./mockPlotContext";
 import { plotFrame } from "./plotFrame";
-import { drawTraceView, type TraceViewOptions } from "./traceView";
+import { CURRENT_PANEL_LABEL, drawTraceView, type TraceViewOptions } from "./traceView";
 
 const FRAME = plotFrame(400, 300);
 
@@ -56,6 +56,17 @@ describe("drawTraceView", () => {
     expect(labels).toContain("ms");
     expect(labels).toContain("v");
     expect(drewNonFinite(recording)).toBe(false);
+  });
+
+  it("does not claim a unit for the drive that no model declares", () => {
+    const recording = mockPlotContext();
+
+    drawTraceView(recording.ctx, FRAME, run(), PLAIN);
+
+    const labels = recording.texts.map((t) => t.text);
+    expect(labels).toContain(CURRENT_PANEL_LABEL);
+    expect(labels).toContain("drive");
+    expect(labels).not.toContain("nA");
   });
 
   it("draws no raster band for a run that never spiked", () => {

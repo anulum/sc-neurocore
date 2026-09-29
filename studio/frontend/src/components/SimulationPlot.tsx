@@ -47,7 +47,7 @@ import { drawTraceView } from "../plots/traceView";
 import { panelTitle } from "../capabilityShell";
 import { emptyViewDescription, emptyViewGuidance } from "../viewEmptyState";
 import type { EmptyViewAction } from "../viewEmptyState";
-import { formatReading, plotDescription, traceDataRows } from "../plotAccessibility";
+import { formatReading, multiModelDescription, plotDescription, traceDataRows } from "../plotAccessibility";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 /** Whichever analysis result the active tab is showing, if any. */
@@ -449,7 +449,14 @@ export default function SimulationPlot() {
         role="img"
         aria-label={emptyGuidance !== null
           ? emptyViewDescription(activeTab, emptyGuidance)
-          : plotDescription(panelTitle(activeTab), result, traceShown)}
+          : plotDescription(
+            panelTitle(activeTab),
+            result,
+            traceShown,
+            activeTab === "multi" && multiResults !== null && multiResults.length > 0
+              ? multiModelDescription(multiResults)
+              : null,
+          )}
         onClick={handleCanvasClick}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}

@@ -16,8 +16,9 @@ import {
   drawCompareView,
   drawMultiModelView,
   drawPrecisionView,
+  legendSlots,
 } from "./comparisonViews";
-import { drewNonFinite, mockPlotContext } from "./mockPlotContext";
+import { drewNonFinite, mockPlotContext, MONOSPACE_ADVANCE_PX } from "./mockPlotContext";
 import { plotFrame } from "./plotFrame";
 
 const FRAME = plotFrame(400, 300);
@@ -92,12 +93,57 @@ describe("drawMultiModelView", () => {
     expect(drewNonFinite(recording)).toBe(false);
   });
 
-  it("names a run with no model name by its position", () => {
+  it("names a run with no model name by its position, and the state drawn", () => {
     const recording = mockPlotContext();
 
     drawMultiModelView(recording.ctx, FRAME, [run("v", [-65, -60], "")]);
 
-    expect(recording.texts.map((t) => t.text)).toContain("Model 1 (12Hz)");
+    expect(recording.texts.map((t) => t.text)).toContain("Model 1 · v (12 Hz)");
+  });
+
+  it("wraps long legend entries onto rows of their own instead of overlapping them", () => {
+    const recording = mockPlotContext();
+    const long = ["SCExponentialTwoCompartmentLIFNeuron", "SCNonResettingAdaptiveLIFNeuron", "AdExNeuron"];
+
+    drawMultiModelView(recording.ctx, FRAME, long.map((name) => run("v", [-65, -60], name)));
+
+    const entries = recording.texts.filter((t) => t.text.includes(" · v "));
+    expect(entries).toHaveLength(3);
+    for (const [i, a] of entries.entries()) {
+      for (const b of entries.slice(i + 1)) {
+        const sameRow = a.y === b.y;
+        const apart = Math.abs(a.x - b.x) >= Math.min(a.text.length, b.text.length) * MONOSPACE_ADVANCE_PX;
+        expect(!sameRow || apart).toBe(true);
+      }
+      expect(a.x + a.text.length * MONOSPACE_ADVANCE_PX).toBeLessThanOrEqual(FRAME.left + FRAME.plotWidth + 1);
+    }
+    expect(new Set(entries.map((t) => t.y)).size).toBeGreaterThan(1);
+  });
+
+  it("says which drive the runs had and that its units are each model's", () => {
+    const recording = mockPlotContext();
+    const driven = (name: string) => ({
+      ...run("v", [-65, -60], name),
+      experiment: { protocol: { kind: "constant", current: 10, frequency_hz: null } },
+    }) as unknown as SimulateResponse;
+
+    drawMultiModelView(recording.ctx, FRAME, [driven("AdExNeuron"), driven("EnergyLIFNeuron")]);
+
+    expect(recording.texts.map((t) => t.text)).toContain(
+      "Every model had the same drive (constant, I = 10), read in each model's own current units.",
+    );
+  });
+
+  it("starts the plot below the legend, not under it", () => {
+    const recording = mockPlotContext();
+
+    drawMultiModelView(recording.ctx, FRAME, [run("v", [-65, -60], "AdEx")]);
+
+    const legend = recording.texts.find((t) => t.text.startsWith("AdEx · v"));
+    const panel = recording.rects.find((r) => r.width === FRAME.plotWidth);
+    expect(legend).toBeDefined();
+    expect(panel).toBeDefined();
+    expect((panel?.y ?? 0)).toBeGreaterThan(legend?.y ?? Infinity);
   });
 
   it("wraps the palette rather than running off the end of it", () => {
@@ -118,6 +164,21 @@ describe("drawMultiModelView", () => {
 
     expect(recording.texts).toEqual([]);
     expect(recording.path).toEqual([]);
+  });
+});
+
+describe("legendSlots", () => {
+  it("keeps entries on one row while they fit and wraps before one would leave the plot", () => {
+    expect(legendSlots([50, 50, 50], 300)).toEqual([
+      { x: 0, row: 0 }, { x: 78, row: 0 }, { x: 156, row: 0 },
+    ]);
+    expect(legendSlots([100, 100, 100], 300)).toEqual([
+      { x: 0, row: 0 }, { x: 128, row: 0 }, { x: 0, row: 1 },
+    ]);
+  });
+
+  it("gives an entry wider than the plot a row of its own", () => {
+    expect(legendSlots([500, 20], 300)).toEqual([{ x: 0, row: 0 }, { x: 0, row: 1 }]);
   });
 });
 

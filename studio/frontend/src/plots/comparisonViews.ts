@@ -24,6 +24,7 @@ import {
   PLOT_AXIS as AXIS,
   PLOT_COLORS as COLORS,
 } from "../simulationPlotCanvas";
+import { formatReading, multiModelDriveNote, runName } from "../plotAccessibility";
 import type { PlotFrame } from "./plotFrame";
 
 /**
@@ -138,11 +139,54 @@ export function drawCompareView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
   }
 }
 
+/** Height of one legend or note row above the overlay, in CSS pixels. */
+const LEGEND_ROW = 14;
+/** Room for a swatch and the gap after an entry, in CSS pixels. */
+const LEGEND_ENTRY_PAD = 28;
+
+/** Where one legend entry goes: its column offset and its row. */
+export interface LegendSlot {
+  x: number;
+  row: number;
+}
+
+/**
+ * Lay legend entries out in rows that fit the plot's width.
+ *
+ * Entries were placed every 120 px whatever their length, so a long model
+ * name ran into the next entry. Each entry now takes its own width and the
+ * row wraps before it would leave the plot; an entry wider than the plot
+ * gets a row of its own rather than being cut.
+ *
+ * @param widths - Each entry's text width, in CSS pixels.
+ * @param available - The plot's width, in CSS pixels.
+ * @returns One slot per entry, in order.
+ */
+export function legendSlots(widths: readonly number[], available: number): LegendSlot[] {
+  const slots: LegendSlot[] = [];
+  let x = 0;
+  let row = 0;
+  for (const width of widths) {
+    const span = width + LEGEND_ENTRY_PAD;
+    if (x > 0 && x + span > available) {
+      row += 1;
+      x = 0;
+    }
+    slots.push({ x, row });
+    x += span;
+  }
+  return slots;
+}
+
 /**
  * Overlay several runs on one shared scale, with a legend.
  *
  * Here the scale *is* shared, and deliberately: the point of the overlay is to
- * compare magnitudes across models, which per-run scaling would destroy.
+ * compare magnitudes across models, which per-run scaling would destroy. Each
+ * legend entry names the state drawn, because the first state of one model
+ * need not be the quantity another model calls first; a note under the legend
+ * says which drive the runs had, since one current is a different stimulus in
+ * each model's own units.
  *
  * @param ctx - The context to draw into.
  * @param frame - Where the view may draw.
@@ -150,7 +194,17 @@ export function drawCompareView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
  */
 export function drawMultiModelView(ctx: CanvasRenderingContext2D, frame: PlotFrame, multiResults: SimulateResponse[]): void {
   if (multiResults.length === 0) return;
-  const ph = frame.height - frame.top - frame.bottom;
+  ctx.font = "11px monospace";
+  const labels = multiResults.map((r, i) => {
+    const variable = Object.keys(r.states)[0] ?? "no state";
+    return `${runName(r, i)} · ${variable} (${formatReading(r.stats.rate_hz)} Hz)`;
+  });
+  const slots = legendSlots(labels.map((label) => ctx.measureText(label).width), frame.plotWidth - 12);
+  const note = multiModelDriveNote(multiResults);
+  const legendRows = (slots.at(-1)?.row ?? 0) + 1 + (note === null ? 0 : 1);
+  const top = frame.top + legendRows * LEGEND_ROW + 6;
+  const ph = frame.height - top - frame.bottom;
+
   let tMin = Infinity, tMax = -Infinity, vMin = Infinity, vMax = -Infinity;
   for (const r of multiResults) {
     const start = r.time[0];
@@ -164,23 +218,25 @@ export function drawMultiModelView(ctx: CanvasRenderingContext2D, frame: PlotFra
   }
   const vPad = (vMax - vMin) * 0.06 || 1;
   vMin -= vPad; vMax += vPad;
-  drawAxes(ctx, frame.left, frame.top, frame.plotWidth, ph, tMin, tMax, vMin, vMax, "ms");
+  drawAxes(ctx, frame.left, top, frame.plotWidth, ph, tMin, tMax, vMin, vMax, "ms");
   multiResults.forEach((r, i) => {
     const v0 = Object.keys(r.states)[0];
     const trace = v0 === undefined ? [] : r.states[v0] ?? [];
     const colour = at(COLORS as readonly string[], i % COLORS.length);
-    drawLine(ctx, frame.left, frame.top, frame.plotWidth, ph, r.time, trace, tMin, tMax, vMin, vMax, colour, 1.5);
+    drawLine(ctx, frame.left, top, frame.plotWidth, ph, r.time, trace, tMin, tMax, vMin, vMax, colour, 1.5);
   });
   ctx.font = "11px monospace";
-  multiResults.forEach((r, i) => {
-    // `||` and not `??`, for the same reason as in the compare view: an
-    // empty name is not a name, and numbering it is the point.
-    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-    const name = r.model_name || `Model ${String(i + 1)}`;
+  ctx.textAlign = "left";
+  labels.forEach((label, i) => {
+    const slot = at(slots, i);
     const colour = at(COLORS as readonly string[], i % COLORS.length);
+    const y = frame.top + 9 + slot.row * LEGEND_ROW;
     ctx.fillStyle = colour;
-    ctx.fillRect(frame.left + 6 + i * 120, frame.top + 4, 8, 2);
-    ctx.textAlign = "left";
-    ctx.fillText(`${name} (${r.stats.rate_hz}Hz)`, frame.left + 17 + i * 120, frame.top + 9);
+    ctx.fillRect(frame.left + 6 + slot.x, y - 5, 8, 2);
+    ctx.fillText(label, frame.left + 17 + slot.x, y);
   });
+  if (note !== null) {
+    ctx.fillStyle = AXIS;
+    ctx.fillText(note, frame.left + 6, frame.top + 9 + (legendRows - 1) * LEGEND_ROW);
+  }
 }

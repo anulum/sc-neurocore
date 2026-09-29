@@ -28,6 +28,9 @@ import {
 } from "../simulationPlotCanvas";
 import type { PlotFrame } from "./plotFrame";
 
+/** What the drive panel of the trace is labelled with. */
+export const CURRENT_PANEL_LABEL = "I (model's own units)";
+
 /** The time window the trace view is showing. */
 export interface TraceZoom {
   /** Left edge in milliseconds, or `NaN` for the whole run. */
@@ -138,13 +141,16 @@ export function drawTraceView(
   drawAxes(ctx, frame.left, curY, frame.plotWidth, currentH, zTMin, zTMax, iMin, iMax * 1.1);
   drawLine(ctx, frame.left, curY, frame.plotWidth, currentH, time, I, zTMin, zTMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
   ctx.fillStyle = "#ffb74d"; ctx.font = "11px monospace"; ctx.textAlign = "left";
-  ctx.fillText("I", frame.left + 4, curY + 10);
-  // Y-axis label for current
+  // No catalogue model declares the unit of its drive (a conductance model
+  // reads µA/cm², an integrate-and-fire model pA or a dimensionless input),
+  // so the panel names the quantity and says whose unit it is; the axis was
+  // labelled nA for every model.
+  ctx.fillText(CURRENT_PANEL_LABEL, frame.left + 4, curY + 10);
   ctx.save();
   ctx.translate(10, curY + currentH / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
-  ctx.fillText("nA", 0, 0);
+  ctx.fillText("drive", 0, 0);
   ctx.restore();
 
   // Spike raster

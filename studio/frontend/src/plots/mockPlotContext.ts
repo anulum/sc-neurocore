@@ -44,6 +44,9 @@ export interface RecordedRect {
   fill: string;
 }
 
+/** Advance of one character of the views' 11 px monospace font, in CSS pixels. */
+export const MONOSPACE_ADVANCE_PX = 6.6;
+
 /** What a view drew, in the order it drew it. */
 export interface PlotRecording {
   /** The context to pass to the view. */
@@ -111,6 +114,9 @@ export function mockPlotContext(): PlotRecording {
     fillText: vi.fn((text: string, x: number, y: number) => {
       texts.push({ fill: state.fillStyle, text, x, y });
     }),
+    // Every view draws in an 11 px monospace face, whose advance is 0.6 em:
+    // a fixed width per character is what a real context reports for it.
+    measureText: vi.fn((text: string) => ({ width: text.length * MONOSPACE_ADVANCE_PX })),
   } as unknown as CanvasRenderingContext2D;
   return { ctx, path, rects, strokes, texts };
 }

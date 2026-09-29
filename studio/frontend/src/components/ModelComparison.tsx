@@ -9,8 +9,8 @@
 import { useMemo, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import { buildComparisonRows } from "../modelComparison";
+import { shortModelLabels } from "../modelShortName";
 
-const SHORT = (name: string) => name.replace(/Neuron$|Model$/, "");
 
 /**
  * Choose which models the comparison view draws.
@@ -20,6 +20,8 @@ const SHORT = (name: string) => name.replace(/Neuron$|Model$/, "");
 export default function ModelComparison() {
   const { models, selectedModelName } = useStudioStore();
   const [picked, setPicked] = useState<string[]>([]);
+  const labels = useMemo(() => shortModelLabels(models.map((m) => m.name)), [models]);
+  const SHORT = (name: string) => labels.get(name) ?? name;
 
   const selection = picked.length > 0 ? picked : selectedModelName ? [selectedModelName] : [];
   const chosen = useMemo(

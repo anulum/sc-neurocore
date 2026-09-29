@@ -7,6 +7,7 @@
 // SC-NeuroCore — Source/config provenance header
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { shortModelLabels } from "../modelShortName";
 import { useStudioStore } from "../stores/studio";
 import {
     fetchModelFacets,
@@ -282,6 +283,9 @@ export default function ModelBrowser() {
         setModelFilter,
     } = useStudioStore();
 
+    // Unique across the whole catalogue, not the filtered list, so a label
+    // does not change as the filter narrows the rows around it.
+    const labels = useMemo(() => shortModelLabels(models.map((m) => m.name)), [models]);
     const modelScan = useModelScanJob();
     const behaviors = modelScan.state.behaviors;
     const scanMetadata = modelScan.state.scanMetadata;
@@ -660,11 +664,7 @@ export default function ModelBrowser() {
                                             title={m.description || m.name}
                                             onClick={() => { void selectModel(m.name); }}
                                         >
-                                            <span>
-                                                {m.name
-                                                    .replace("Neuron", "")
-                                                    .replace("Model", "")}
-                                            </span>
+                                            <span>{labels.get(m.name) ?? m.name}</span>
                                             {m.metadata_state !== "available" && (
                                                 <span
                                                     data-testid={`model-metadata-state-${m.name}`}
