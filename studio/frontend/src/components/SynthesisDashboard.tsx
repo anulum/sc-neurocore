@@ -305,9 +305,7 @@ export default function SynthesisDashboard() {
         borderBottom: "1px solid var(--border)",
         display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
       }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
-          FPGA Synthesis
-        </span>
+        <h2 className="panel-header" style={{ margin: 0 }}>FPGA synthesis</h2>
         <select
           aria-label="FPGA target"
           value={synthTarget}
@@ -361,7 +359,7 @@ export default function SynthesisDashboard() {
         )}
         {!hasSV && (
           <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
-            Generate Verilog first (RTL or SV button)
+            Generate Verilog first: {sourceMode === "model" ? "\u201cGenerate RTL\u201d" : "\u201cGenerate RTL\u201d or \u201cEmit SystemVerilog\u201d"} in the header
           </span>
         )}
         {hasSV && sourceMode === "model" && !selectedTerminalReady && (

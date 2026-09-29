@@ -141,7 +141,7 @@ for (const representative of TERMINAL_REPRESENTATIVES) {
     const hardwareAction = page.locator('[data-card="compile"]').getByRole("button");
     await expect(hardwareAction).toHaveText("Open synthesis");
     await hardwareAction.click();
-    const synthesisHeader = page.getByText("FPGA Synthesis").locator("..");
+    const synthesisHeader = page.getByRole("heading", { name: "FPGA synthesis", exact: true }).locator("..");
     await synthesisHeader.getByRole("combobox").selectOption("ecp5");
     await synthesisHeader.getByRole("button", { name: "Synthesise + Route" }).click();
     await expect(runNext).toContainText("Export evidence");

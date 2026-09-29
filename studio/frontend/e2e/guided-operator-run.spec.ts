@@ -404,8 +404,8 @@ test("guided operator run executes one ODE workflow through evidence export", as
   await page.getByRole("button", { exact: true, name: "ODE" }).click();
 
   const runNext = page.getByRole("button", { name: "Run next guided step" });
-  await expect(runNext).toContainText("Run simulation");
-  await runNext.click();
+  // Switching the source runs it (the run on screen would otherwise be the
+  // catalogue model's), and the guided flow counts that run as its simulation.
   await expect(runNext).toContainText("Run f-I analysis");
   await runNext.click();
   await expect(runNext).toContainText("Skip training");

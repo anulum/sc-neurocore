@@ -30,10 +30,13 @@ export default function VerilogPreview() {
   if (!verilogSrc) {
     return (
       <div style={{
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        color: "var(--text-muted)", fontSize: 13,
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        color: "var(--text-muted)", fontSize: "var(--fs-ui)", gap: 8, padding: 16, textAlign: "center",
       }}>
-        Click "Compile" to generate Verilog RTL from your {sourceMode === "model" ? "selected model" : "ODE"}.
+        <h2 className="panel-header" style={{ margin: 0 }}>RTL</h2>
+        {sourceMode === "model"
+          ? "Press \u201cGenerate RTL\u201d in the header to compile Verilog RTL from the selected model. A model without a canonical schema has no RTL path; the button says so."
+          : "Press \u201cGenerate RTL\u201d or \u201cEmit SystemVerilog\u201d in the header to compile RTL from the equations."}
       </div>
     );
   }
@@ -46,6 +49,7 @@ export default function VerilogPreview() {
 
   return (
     <div style={{ flex: 1, padding: 8, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <h2 className="panel-header" style={{ margin: "0 0 6px" }}>RTL</h2>
       {sourceMode === "model" && (
         <div
           aria-label="Selected model RTL co-simulation"

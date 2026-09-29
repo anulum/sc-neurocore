@@ -52,10 +52,14 @@ async function trainWithCriterion(page: Page, metric: "val_accuracy" | "val_loss
 }
 
 test("a met criterion is reported as met after the live run", async ({ page }) => {
-  await trainWithCriterion(page, "val_accuracy", "0");
+  const jobId = await trainWithCriterion(page, "val_accuracy", "0");
   const verdict = page.getByRole("status", { name: "Preregistered verdict" });
   await expect(verdict).toContainText("Criterion met: validation accuracy ≥ 0, observed");
   await expect(verdict).toContainText("Criterion stored before the run as");
+  // The run list is read once the job record is sealed; read on the terminal
+  // event it listed the finished run as still running until Refresh.
+  await expect(page.getByLabel("Retained run", { exact: true }).locator(`option[value="${jobId}"]`))
+    .toHaveText(new RegExp(`^${jobId} · completed`));
 });
 
 test("a missed criterion is reported as missed and survives selecting the retained run", async ({ page }) => {

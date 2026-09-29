@@ -443,31 +443,39 @@ export function createStudioStoreActions(
         if (!isTrainingTerminalStatus(get().trainingStatus)) {
           set(trainingTerminalState(status));
         }
-        if (status === "completed") void loadTrainingVerdict(jobId, stillSelected);
-        void get().loadTrainingJobs();
+        void readSealedTrainingJob(jobId, stillSelected, status === "completed");
       },
     });
   };
 
   // The verdict is part of the finished job's status, not of the event stream.
-  // The worker writes its "completed" event before the job manager seals the
+  // The worker writes its terminal event before the job manager seals the
   // job record, so the status route can still say "running" when the event
-  // arrives: it is read again until the record is terminal.
-  const loadTrainingVerdict = async (jobId: string, stillSelected: () => boolean): Promise<void> => {
+  // arrives: it is read again until the record is terminal. The run list is
+  // reloaded only then; reloading it on the event listed the finished run as
+  // "running" until the reader pressed Refresh.
+  const readSealedTrainingJob = async (
+    jobId: string,
+    stillSelected: () => boolean,
+    completed: boolean,
+  ): Promise<void> => {
     try {
       for (let attempt = 0; attempt < TRAINING_VERDICT_READ_ATTEMPTS && stillSelected(); attempt += 1) {
         const status = await apiFetchTrainingStatus(jobId);
         if (isTrainingTerminalStatus(status.status)) {
-          if (stillSelected()) {
+          if (stillSelected() && completed) {
             set({
               trainingPreregistrationVerdict: readTrainingPreregistrationVerdict(status.preregistration_verdict),
               trainingConversionResult: readTrainingConversionResult(status.final_metrics),
             });
           }
+          void get().loadTrainingJobs();
           return;
         }
         await new Promise((resolve) => { setTimeout(resolve, TRAINING_VERDICT_READ_INTERVAL_MS); });
       }
+      // Never sealed within the reads: list what the server says now.
+      if (stillSelected()) void get().loadTrainingJobs();
     } catch (error) {
       if (stillSelected()) set({ trainingJobsError: String(error) });
     }
@@ -475,10 +483,16 @@ export function createStudioStoreActions(
 
   return {
   setSourceMode: (m) => {
+    const changed = get().sourceMode !== m;
     if (m === "ode") modelSelectionVersion += 1;
     set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() });
     if (m === "model" && get().modelDetail === null && get().selectedModelName) {
       void get().selectModel(get().selectedModelName);
+    } else if (changed) {
+      // The run on screen belongs to the other source. Switching to the ODE
+      // editor kept showing the catalogue model's trace, spike statistics
+      // and firing pattern beside the equations until something was edited.
+      get().autoSimulate();
     }
   },
   setEquations: (eqs) => {
@@ -1169,7 +1183,9 @@ export function createStudioStoreActions(
       const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed);
       const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
       set(studioPipelineCompletedState(pipelineResult));
-    } catch (e) { set(studioGraphFailureState(e, "Pipeline run failed", { clearBusy: true })); }
+    } catch (e) {
+      set({ ...studioGraphFailureState(e, "Pipeline run failed", { clearBusy: true }), pipelineRunning: false });
+    }
   },
 
   loadGraphModels: async () => {
@@ -1246,7 +1262,7 @@ export function createStudioStoreActions(
       return;
     }
     try {
-      const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId, source.neuron_type));
+      const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId, source.neuron_type, get().dt));
       set((prev) => ({
         ...studioProjectionAddedState(prev.graphProjections, proj),
         graphHistory: studioGraphEditRecordedFrom(prev),

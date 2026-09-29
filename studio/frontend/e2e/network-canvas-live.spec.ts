@@ -113,6 +113,61 @@ test("the canvas builds a graph the live server validates and runs", async ({ pa
   expect(body.spec?.graph_sha256).toMatch(/^[0-9a-f]{64}$/);
 });
 
+test("projections are drawn, can be dragged, and the default network does not run away", async ({
+  page,
+}) => {
+  const warnings: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "warning" && message.text().includes("reactflow.dev/error#008")) {
+      warnings.push(message.text());
+    }
+  });
+  await openCanvas(page);
+  await addTwoConnectedPopulations(page);
+  // Two connection points per node: projections enter left and leave right.
+  await expect(page.locator(".react-flow__handle")).toHaveCount(4);
+  // Every population is in view: the first node used to be fitted at twice
+  // its size and the second landed outside the canvas.
+  await expect.poll(async () => {
+    const pane = await page.locator(".react-flow").boundingBox();
+    const boxes = await Promise.all(
+      (await page.locator(".react-flow__node").all()).map((node) => node.boundingBox()),
+    );
+    return pane !== null && boxes.every((box) => box !== null
+      && box.x >= pane.x && box.y >= pane.y
+      && box.x + box.width <= pane.x + pane.width && box.y + box.height <= pane.y + pane.height);
+  }).toBe(true);
+
+  // One projection from the table, one dragged on the canvas.
+  await openTableView(page);
+  await page.getByLabel("Projection source population").selectOption({ label: "Exc 0" });
+  await page.getByLabel("Projection target population").selectOption({ label: "Inh 1" });
+  await page.getByRole("button", { name: /^Connect the chosen/ }).click();
+  await page.getByRole("button", { name: "Table view", exact: true }).click();
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1);
+  const from = page.locator(".react-flow__node").filter({ hasText: "Inh 1" }).locator(".react-flow__handle.source");
+  const to = page.locator(".react-flow__node").filter({ hasText: "Exc 0" }).locator(".react-flow__handle.target");
+  await from.dragTo(to);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(2);
+  expect(warnings).toEqual([]);
+
+  const simulated = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/graph/simulate",
+  );
+  await page.getByRole("button", { name: "Simulate", exact: true }).click();
+  const body = (await (await simulated).json()) as {
+    dt: number;
+    populations: { label: string; mean_rate_hz: number }[];
+  };
+  // The defaults once ran at 1290 Hz per neuron. Now each spike moves its
+  // target by a fifth of threshold at any dt and inhibition is four times
+  // stronger, which keeps both populations in a physiological range.
+  for (const population of body.populations) {
+    expect(population.mean_rate_hz, population.label).toBeLessThan(200);
+  }
+  await expect(page.getByTestId("graph-saturation-warning")).toHaveCount(0);
+});
+
 test("a network exported as NIR reads back as the same network", async ({ page }, testInfo) => {
   await openCanvas(page);
   await addTwoConnectedPopulations(page);

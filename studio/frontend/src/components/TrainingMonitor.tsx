@@ -477,9 +477,7 @@ export default function TrainingMonitor() {
         borderBottom: "1px solid var(--border)",
         display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
       }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
-          Training Monitor
-        </span>
+        <h2 className="panel-header" style={{ margin: 0 }}>Training monitor</h2>
         <span style={{
           fontSize: "var(--fs-meta)", padding: "1px 6px", borderRadius: 3,
           background: isUncertain ? "rgba(255, 193, 7, 0.2)" :

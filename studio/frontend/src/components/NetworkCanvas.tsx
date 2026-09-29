@@ -17,7 +17,11 @@ import {
   type OnEdgesChange,
   type OnConnect,
   applyNodeChanges,
+  Handle,
   MarkerType,
+  Position,
+  useReactFlow,
+  useStore,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useStudioStore } from "../stores/studio";
@@ -34,6 +38,7 @@ import {
   studioProjectionLabel,
 } from "../studioGraphRequests";
 import type { GraphSimResult } from "../api/client";
+import { saturatedPopulations, saturationWarning } from "../networkSaturation";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 import NetworkGraphConnect from "./NetworkGraphConnect";
 import NetworkGraphTable from "./NetworkGraphTable";
@@ -41,22 +46,58 @@ import PopulationEditor from "./PopulationEditor";
 import ProjectionEditor from "./ProjectionEditor";
 
 /**
- * Why a pipeline run failed, in one line.
+ * How the canvas frames its populations: never closer than 1:1.
  *
- * `||` and not `??` throughout: an empty error list joins to an empty string,
- * and an empty message is no message; both must fall through to the next
- * source rather than being shown.
- *
- * @param result - The failed run.
- * @returns The reason to show, never empty.
+ * Fitting a single node zoomed to twice its size, and the next population
+ * was then placed outside the view: "+ Inh" appeared to do nothing.
  */
+const CANVAS_FIT = { maxZoom: 1, padding: 0.2 } as const;
+
+/**
+ * Frame every population again whenever one is added or removed.
+ *
+ * ReactFlow fits the view once, when it first has nodes; later additions
+ * land wherever their position puts them, visible or not.
+ *
+ * @param props - How many populations the graph holds. The view is also
+ *   fitted again when the canvas is resized, as it is when the run summary
+ *   appears below it (a view fitted before that cut the lowest node).
+ * @returns Nothing; it only moves the view.
+ */
+function FitOnPopulationCount({ count }: { count: number }) {
+  const { fitView } = useReactFlow();
+  // The size ReactFlow has measured, not the size the page last laid out:
+  // a fit requested when the run summary appeared used the old height.
+  const width = useStore((state) => state.width);
+  const height = useStore((state) => state.height);
+  useEffect(() => {
+    if (count === 0 || width === 0 || height === 0) return undefined;
+    // One frame later: a node added in this render is not yet measured, and
+    // a fit requested now leaves it out. (useNodesInitialized was tried as
+    // the gate and stayed false through every addition.)
+    const frame = requestAnimationFrame(() => { void fitView(CANVAS_FIT); });
+    return () => { cancelAnimationFrame(frame); };
+  }, [count, width, height, fitView]);
+  return null;
+}
+
+/** What the canvas says while a pipeline run is in flight. */
+export const PIPELINE_RUNNING_MESSAGE =
+  "Running the pipeline: simulate, lower to hardware, co-simulate the RTL, synthesise. " +
+  "Synthesis alone can take a minute or more.";
+
 /**
  * What one population node shows on the canvas.
+ *
+ * A custom node draws its own connection points. Without them ReactFlow has
+ * nowhere to attach an edge: no projection was ever drawn (warning #008 per
+ * projection per render) and "drag to connect" had nothing to drag from.
+ * Projections enter on the left and leave on the right.
  *
  * @param props - The node's data, as ReactFlow carries it.
  * @returns The node's contents.
  */
-function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
+export function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   const isExc = data.neuron_type === "excitatory";
   return (
     <div style={{
@@ -74,6 +115,8 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
       <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
         {isExc ? "excitatory" : "inhibitory"} · {data.drive as string}
       </div>
+      <Handle type="target" position={Position.Left} aria-label={`Projections into ${data.label as string}`} />
+      <Handle type="source" position={Position.Right} aria-label={`Drag a projection from ${data.label as string}`} />
     </div>
   );
 }
@@ -87,7 +130,14 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
 export function GraphResultSummary({ result }: { result: GraphSimResult }) {
   const populations = result.populations ?? [];
   const rejected = result.execution?.backend.rejected ?? [];
+  const warning = saturationWarning(saturatedPopulations(populations, result.dt ?? 0));
   return (
+    <>
+    {warning !== null && (
+      <p role="status" className="panel-note" data-testid="graph-saturation-warning" style={{
+        margin: 0, padding: "6px 12px", color: "var(--warning)", borderTop: "1px solid var(--border)",
+      }}>{warning}</p>
+    )}
     <div style={{
       padding: "6px 12px", borderTop: "1px solid var(--border)",
       fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)", color: "var(--text-secondary)",
@@ -106,6 +156,7 @@ export function GraphResultSummary({ result }: { result: GraphSimResult }) {
         {rejected.length > 0 ? ` (rejected: ${rejected.map((r) => r.name).join(", ")})` : ""}</span>
       {result.spec?.graph_sha256 && <span>graph {result.spec.graph_sha256.slice(0, 12)}</span>}
     </div>
+    </>
   );
 }
 
@@ -141,7 +192,7 @@ export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidence
  */
 export default function NetworkCanvas() {
   const {
-    graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult,
+    graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult, pipelineRunning,
     selectedProjectionId, selectProjection, updateProjection, validateGraphAction,
     selectedPopulationId, selectPopulation, populationModelContract, graphModels,
     selectedPopulationIds, selectPopulations, duplicateSelection, graphNotice,
@@ -205,7 +256,10 @@ export default function NetworkCanvas() {
       label: studioProjectionLabel(e),
       style: { stroke: "var(--text-muted)", strokeWidth: 1.5 },
       markerEnd: { type: MarkerType.ArrowClosed, color: "var(--text-muted)" },
-      labelStyle: { fontSize: "var(--fs-meta)", fill: "var(--text-muted)" },
+      labelStyle: { fontSize: "var(--fs-meta)", fill: "var(--text-secondary)" },
+      // The default label plate is white, which left the muted label text
+      // unreadable on it.
+      labelBgStyle: { fill: "var(--bg-secondary)" },
     })),
     [graphProjections],
   );
@@ -291,9 +345,7 @@ export default function NetworkCanvas() {
         borderBottom: "1px solid var(--border)",
         display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
       }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
-          Network Canvas
-        </span>
+        <h2 className="panel-header" style={{ margin: 0 }}>Network canvas</h2>
         <button onClick={() => { void addPopulation("excitatory"); }} style={{
           background: CANVAS_TINTS.excitatoryButton, color: "#4fc3f7", border: "1px solid #4fc3f7",
           padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
@@ -340,7 +392,7 @@ export default function NetworkCanvas() {
           background: "#81c784", color: "#0d1117", border: "none",
           padding: "3px 10px", fontSize: "var(--fs-body)", cursor: "pointer",
         }}>
-          {isSimulating ? "..." : "Simulate"}
+          {isSimulating && !pipelineRunning ? "Simulating…" : "Simulate"}
         </button>
         <button onClick={() => { void runPipelineAction(); }} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#a5d6a7", color: "#0d1117", border: "none",
@@ -457,11 +509,12 @@ export default function NetworkCanvas() {
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView
-            proOptions={{ hideAttribution: true }}
+            fitViewOptions={CANVAS_FIT}
             style={{ background: "var(--bg-primary)" }}
           >
+            <FitOnPopulationCount count={graphPopulations.length} />
             <Background color="var(--border)" gap={24} />
-            <Controls position="bottom-right" />
+            <Controls position="bottom-right" fitViewOptions={CANVAS_FIT} />
           </ReactFlow>
         )}
       </div>
@@ -488,6 +541,11 @@ export default function NetworkCanvas() {
       </div>
       </div>
 
+      {pipelineRunning && (
+        <p role="status" className="panel-note" data-testid="pipeline-running" style={{ margin: 0, padding: "6px 12px" }}>
+          {PIPELINE_RUNNING_MESSAGE}
+        </p>
+      )}
       {/* Pipeline result */}
       {pipelineResult && (
         <div style={{

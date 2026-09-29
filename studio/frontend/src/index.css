@@ -1414,3 +1414,13 @@ input[type="range"]::-moz-range-thumb {
     scroll-behavior: auto !important;
   }
 }
+
+/* The React Flow attribution stays visible (hiding it is reserved for its Pro
+   subscribers), in the Studio's own colours: its default grey on a light grey
+   plate measured 1.25:1 against the 4.5:1 text threshold. */
+.react-flow__attribution {
+  background: var(--bg-secondary);
+}
+.react-flow__attribution a {
+  color: var(--text-secondary);
+}

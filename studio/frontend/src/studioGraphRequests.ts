@@ -47,12 +47,42 @@ export const STUDIO_DEFAULT_POPULATION_MODEL = "SCLapicqueLIFNeuron";
  */
 export const STUDIO_DEFAULT_EXCITATORY_DRIVE: PopulationDrive = { kind: "constant", current: 1.2 };
 /**
- * Starting magnitude of a new projection weight. The public Network injects the
- * weight as drive for one timestep per source spike, so with dt 0.1 ms and
- * tau 20 ms one spike moves the default model by about weight × 0.005; 40 moves
- * it by a fifth of the threshold. This is a starting value, not a tuned one.
+ * The share of the threshold one presynaptic spike moves a target of the
+ * default model by, for a new excitatory projection.
+ *
+ * The public Network injects a projection's weight as drive for one step per
+ * source spike, so the default model (tau 20 ms, resistance 1, threshold 1)
+ * moves by about weight × dt / 20 per spike: the same weight is a five times
+ * larger kick at dt 0.5 ms than at 0.1 ms. A fixed weight of 40, reasoned for
+ * dt 0.1 ms, kicked a full threshold at the Studio's usual 0.5 ms and every
+ * default network ran away (1290 Hz per neuron; 6340 Hz at dt 0.1 ms, where
+ * the -1× inhibition could not hold it either).
  */
-export const STUDIO_DEFAULT_PROJECTION_WEIGHT = 40;
+export const STUDIO_DEFAULT_PSP_FRACTION = 0.2;
+/** Membrane time constant of the default population model, in ms. */
+const STUDIO_DEFAULT_MODEL_TAU_MS = 20;
+/**
+ * How much stronger a new inhibitory projection is than an excitatory one.
+ *
+ * With four excitatory neurons per inhibitory one, inhibition balances
+ * excitation only when each inhibitory synapse is at least four times as
+ * strong (Brunel 2000, g > N_E / N_I). At g = 4 the default network settles
+ * near 28 Hz (excitatory) and 50 Hz (inhibitory) at dt 0.5, 0.1 and 0.05 ms
+ * alike; at g = 1 it saturates at every dt.
+ */
+export const STUDIO_DEFAULT_INHIBITION_RATIO = 4;
+
+/**
+ * Starting weight of a new excitatory projection at a given time step.
+ *
+ * @param dtMs - The time step the graph runs at, in ms.
+ * @returns The weight whose one-step kick is
+ *   {@link STUDIO_DEFAULT_PSP_FRACTION} of the default model's threshold.
+ */
+export function studioDefaultProjectionWeight(dtMs: number): number {
+  return STUDIO_DEFAULT_PSP_FRACTION * STUDIO_DEFAULT_MODEL_TAU_MS / dtMs;
+}
+
 /** The connection probability a new random projection starts at. */
 export const STUDIO_DEFAULT_PROJECTION_PROBABILITY = 0.2;
 
@@ -92,12 +122,14 @@ export interface StudioGraphBusyStatePatch {
   graphSimResult?: null;
   isSimulating: true;
   pipelineResult?: null;
+  pipelineRunning?: true;
 }
 
 /** The pipeline finished, with its result. */
 export interface StudioPipelineCompletedStatePatch {
   isSimulating: false;
   pipelineResult: PipelineResult;
+  pipelineRunning: false;
 }
 
 /** The catalogue of models a population may use arrived. */
@@ -198,6 +230,7 @@ export function studioPipelineStartState(): StudioGraphBusyStatePatch {
     error: null,
     isSimulating: true,
     pipelineResult: null,
+    pipelineRunning: true,
   };
 }
 
@@ -213,6 +246,7 @@ export function studioPipelineCompletedState(
   return {
     isSimulating: false,
     pipelineResult,
+    pipelineRunning: false,
   };
 }
 
@@ -419,19 +453,22 @@ export function studioDefaultPopulationRequest(
  * @param sourceId - The population the projection leaves.
  * @param targetId - The population it reaches.
  * @param sourceNeuronType - What the source population declares itself to be.
+ * @param dtMs - The time step the graph runs at, which sets the weight.
  * @returns The request.
  */
 export function studioDefaultProjectionRequest(
   sourceId: string,
   targetId: string,
   sourceNeuronType: StudioNeuronType,
+  dtMs: number,
 ): StudioProjectionCreateRequest {
+  const excitatory = studioDefaultProjectionWeight(dtMs);
   return {
     source_id: sourceId,
     target_id: targetId,
     weight: sourceNeuronType === "inhibitory"
-      ? -STUDIO_DEFAULT_PROJECTION_WEIGHT
-      : STUDIO_DEFAULT_PROJECTION_WEIGHT,
+      ? -STUDIO_DEFAULT_INHIBITION_RATIO * excitatory
+      : excitatory,
     delay: 0,
     rule: "random",
     probability: STUDIO_DEFAULT_PROJECTION_PROBABILITY,

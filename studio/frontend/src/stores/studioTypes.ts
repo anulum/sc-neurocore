@@ -206,6 +206,11 @@ export interface StudioState {
   deletedProjects: DeletedProjectSummary[];
   serverProjects: ProjectSummary[];
   pipelineResult: PipelineResult | null;
+  /**
+   * A pipeline run is in flight. It takes a minute or more (synthesis), and
+   * the canvas said nothing while it ran but an ellipsis on another button.
+   */
+  pipelineRunning: boolean;
   trainingJobId: string | null;
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];

@@ -61,7 +61,7 @@ export const studioInitialData = {
   populationModelContract: null,
   graphHistory: emptyGraphHistory(),
   projectSaveResult: null, projectRevision: null, serverProjects: [],
-  deletedProjects: [], pipelineResult: null,
+  deletedProjects: [], pipelineResult: null, pipelineRunning: false,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null,
   latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],

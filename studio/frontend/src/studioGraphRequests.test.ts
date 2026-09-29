@@ -12,12 +12,14 @@ import type { GraphSimResult, PipelineResult, PopulationNode, ProjectionEdge } f
 import {
   STUDIO_DEFAULT_EXCITATORY_DRIVE,
   STUDIO_DEFAULT_POPULATION_MODEL,
-  STUDIO_DEFAULT_PROJECTION_WEIGHT,
+  STUDIO_DEFAULT_INHIBITION_RATIO,
+  STUDIO_DEFAULT_PSP_FRACTION,
   studioGraphFailureState,
   studioGraphImportedState,
   studioGraphModelsLoadedState,
   studioDefaultPopulationRequest,
   studioDefaultProjectionRequest,
+  studioDefaultProjectionWeight,
   studioGraphSimulationCompletedState,
   studioGraphSimulationStartState,
   studioGraphRequest,
@@ -95,16 +97,26 @@ describe("Studio graph request builders", () => {
   });
 
   it("signs the default projection weight by the source population type", () => {
-    expect(studioDefaultProjectionRequest("p1", "p2", "excitatory")).toEqual({
+    expect(studioDefaultProjectionRequest("p1", "p2", "excitatory", 0.1)).toEqual({
       source_id: "p1",
       target_id: "p2",
-      weight: STUDIO_DEFAULT_PROJECTION_WEIGHT,
+      weight: 40,
       delay: 0,
       rule: "random",
       probability: 0.2,
     });
-    expect(studioDefaultProjectionRequest("p2", "p1", "inhibitory").weight)
-      .toBe(-STUDIO_DEFAULT_PROJECTION_WEIGHT);
+    expect(studioDefaultProjectionRequest("p2", "p1", "inhibitory", 0.1).weight)
+      .toBe(-STUDIO_DEFAULT_INHIBITION_RATIO * 40);
+  });
+
+  it("keeps the kick of one spike the same fraction of threshold at any time step", () => {
+    // The weight is injected for one step, so its kick is weight × dt / tau:
+    // a fixed weight was a five times larger kick at dt 0.5 than at 0.1.
+    for (const dt of [0.05, 0.1, 0.5, 1]) {
+      const kick = (studioDefaultProjectionWeight(dt) * dt) / 20;
+      expect(kick).toBeCloseTo(STUDIO_DEFAULT_PSP_FRACTION, 12);
+    }
+    expect(studioDefaultProjectionWeight(0.5)).toBeCloseTo(8, 12);
   });
 
   it("labels drives and projections with their executed semantics", () => {
@@ -138,10 +150,12 @@ describe("Studio graph request builders", () => {
       error: null,
       isSimulating: true,
       pipelineResult: null,
+      pipelineRunning: true,
     });
     expect(studioPipelineCompletedState(pipelineResult)).toEqual({
       isSimulating: false,
       pipelineResult,
+      pipelineRunning: false,
     });
     expect(studioGraphSimulationStartState()).toEqual({
       error: null,
