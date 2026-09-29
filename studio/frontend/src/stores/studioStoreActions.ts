@@ -1753,7 +1753,7 @@ export function createStudioStoreActions(
     // A model link opens one model and leaves the run settings alone.
     const modelLink = studioModelLinkDecision(readStudioModelLink(), knownModels);
     if (modelLink.kind === "unknown-model") {
-      set({ error: modelLink.message });
+      set({ linkNotice: modelLink.message });
       return;
     }
     if (modelLink.kind === "select") {
@@ -1763,7 +1763,7 @@ export function createStudioStoreActions(
     const decision = studioShareLinkDecision(readStudioStartupHashState(), knownModels);
     if (decision.kind === "none") return;
     if (decision.kind === "unknown-model") {
-      set({ error: decision.message });
+      set({ linkNotice: decision.message });
       return;
     }
     set({

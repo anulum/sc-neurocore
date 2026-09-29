@@ -256,6 +256,12 @@ export interface StudioState {
    * `null` means there is nothing waiting to be kept.
    */
   refusedEdit: { name: string; baseRevision: number } | null;
+  /**
+   * Why a share or model link could not be applied. Kept apart from `error`,
+   * which every run clears on starting: the startup simulation wiped the
+   * message a moment after it appeared.
+   */
+  linkNotice: string | null;
   /** One run at a time: set by every simulation, analysis, compile, synthesis and graph run. */
   isSimulating: boolean;
   /**

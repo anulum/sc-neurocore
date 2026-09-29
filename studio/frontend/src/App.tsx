@@ -555,6 +555,15 @@ export default function App() {
           </button>
         </div>
       )}
+      {s.linkNotice !== null && (
+        <div className="error-banner" role="alert" data-testid="link-notice">
+          {s.linkNotice}{" "}
+          <button type="button" className="btn-simulate btn btn--ghost"
+            onClick={() => { useStudioStore.setState({ linkNotice: null }); }}>
+            Dismiss
+          </button>
+        </div>
+      )}
       {s.error && (
         <div className="error-banner" role="alert">
           {s.error}{" "}
