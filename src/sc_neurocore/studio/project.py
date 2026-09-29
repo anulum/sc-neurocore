@@ -579,14 +579,9 @@ def run_pipeline(
         # A netlist the device cannot hold is not a completed pipeline: a
         # 20-neuron network needed 6237 LUTs of the UP5K's 5280 and was
         # reported "Pipeline complete".
-        provenance = synthesis.get("target_provenance") or {}
-        device = provenance.get("device") if isinstance(provenance, dict) else None
         return stopped(
             "fit",
-            "synthesis succeeded, but "
-            + capacity_sentence(
-                target, device if isinstance(device, str) else None, synthesis["exceeds_capacity"]
-            ),
+            "synthesis succeeded, but " + capacity_sentence(target, synthesis["exceeds_capacity"]),
             trace=trace,
         )
     return {

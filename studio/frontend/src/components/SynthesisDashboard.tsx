@@ -52,27 +52,53 @@ export function ResourceBar({ label, used, total, color }: {
   );
 }
 
+/** The server's fit verdict, as a synthesis or an estimate carries it. */
+export type FitVerdictFields = Pick<
+  SynthResult, "target" | "fits_device" | "exceeds_capacity" | "capacity_device" | "uncounted_cells"
+>;
+
 /**
  * Say whether the device holds the design, beside its resource bars.
  *
- * @param props - The target and the server's verdict, when it gave one.
+ * The device is named: Gowin and Xilinx synthesis is not bound to one, so the
+ * family alone would not say what the counts were judged against. A fit is by
+ * count only, and a design with cells of unknown cost is not judged at all.
+ *
+ * @param props - The verdict, and whether it judges an estimate.
  * @returns The sentence, or nothing without a verdict.
  */
-export function FitVerdict({ target, fits, exceeds }: {
-  target: string;
-  fits: boolean | undefined;
-  exceeds: Record<string, { needed: number; available: number }> | undefined;
+export function FitVerdict({ verdict, estimate = false }: {
+  verdict: FitVerdictFields;
+  estimate?: boolean;
 }) {
+  const fits = verdict.fits_device;
   if (fits === undefined) return null;
+  const device = verdict.capacity_device ?? `${verdict.target.toUpperCase()} device`;
   const names: Record<string, string> = { luts: "LUTs", ffs: "flip-flops", brams: "block RAMs", dsps: "DSP blocks" };
-  const text = fits
-    ? `Fits the ${target.toUpperCase()} device.`
-    : `Does not fit the ${target.toUpperCase()} device: ${Object.entries(exceeds ?? {})
+  let text: string;
+  if (fits === null) {
+    const uncounted = Object.entries(verdict.uncounted_cells ?? {});
+    const total = uncounted.reduce((sum, [, count]) => sum + count, 0);
+    const cells = uncounted
+      .map(([type, count]) => `${String(count)} ${type} ${count === 1 ? "cell" : "cells"}`)
+      .join(", ");
+    text = `Not judged against the ${device}: ${cells} ${total === 1 ? "has" : "have"} no counted cost, so these counts are a floor.`;
+  } else if (fits) {
+    text = estimate
+      ? `The estimate fits the ${device}; synthesis counts the real design.`
+      : `Fits the ${device} by count; placement and routing decide the rest.`;
+  } else {
+    const lacks = Object.entries(verdict.exceeds_capacity ?? {})
       .map(([key, row]) => `${String(row.needed)} ${names[key] ?? key} needed, ${String(row.available)} available`)
-      .join("; ")}. Synthesis produced a netlist the device cannot hold.`;
+      .join("; ");
+    text = estimate
+      ? `The estimate does not fit the ${device}: ${lacks}.`
+      : `Does not fit the ${device}: ${lacks}. Synthesis produced a netlist the device cannot hold.`;
+  }
+  const color = fits === null ? "var(--warning)" : fits ? "var(--success)" : "var(--error)";
   return (
     <p role="status" data-testid="synthesis-fit-verdict" style={{
-      margin: "0 0 10px", fontSize: "var(--fs-body)", color: fits ? "var(--success)" : "var(--error)",
+      margin: "0 0 10px", fontSize: "var(--fs-body)", color,
     }}>{text}</p>
   );
 }
@@ -442,7 +468,7 @@ export default function SynthesisDashboard() {
             <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)", marginTop: 4 }}>
               Heuristic estimate from IR operation count. Run Yosys for exact numbers.
             </div>
-            <FitVerdict target={synthEstimate.target} fits={synthEstimate.fits_device} exceeds={synthEstimate.exceeds_capacity} />
+            <FitVerdict verdict={synthEstimate} estimate />
           </div>
         )}
 
@@ -500,7 +526,7 @@ export default function SynthesisDashboard() {
                 <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "var(--accent)", marginBottom: 12 }}>
                   {synthResult.target.toUpperCase()} — Synthesis Results
                 </div>
-                <FitVerdict target={synthResult.target} fits={synthResult.fits_device} exceeds={synthResult.exceeds_capacity} />
+                <FitVerdict verdict={synthResult} />
 
                 <ResourceBar
                   label="LUTs" used={synthResult.resources.luts}

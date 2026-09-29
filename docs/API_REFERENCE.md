@@ -49203,6 +49203,22 @@ Public terminal report plus private implementation artifacts.
 ### Function `check_tools()`
 Detect which EDA tools are installed.
 
+### Function `cell_cost(target, cell_type)`
+Return what one cell takes of the judged resources, or None if unknown.
+
+Parameters
+----------
+target : str
+    Target identifier.
+cell_type : str
+    The Yosys cell type.
+
+Returns
+-------
+dict&#91;str, int&#93; or None
+    Resource amounts, empty for a cell that takes none, None for a cell
+    whose cost the Studio does not know.
+
 ### Function `capacity_verdict(resources, capacity)`
 Say whether a synthesised design fits its target device.
 
@@ -49210,7 +49226,10 @@ Synthesis succeeding says the netlist exists, not that the device can
 hold it: a 20-neuron network synthesised to 6237 LUTs for a 5280-LUT
 UP5K and the pipeline reported it complete. Only resources the target's
 capacity lists are judged; a target without capacity data gets no
-verdict rather than a guessed one.
+verdict rather than a guessed one. Fitting by count is necessary, not
+sufficient: on iCE40 and ECP5 a LUT and a flip-flop share a logic cell
+(708 LUTs and 98 flip-flops took 752 UP5K cells), and placement and
+routing can still fail.
 
 Parameters
 ----------
@@ -49218,22 +49237,27 @@ resources : Mapping&#91;str, Any&#93;
     Counted resources of the design.
 capacity : Mapping&#91;str, int&#93;
     The device's capacity per resource.
+device : str or None, optional
+    The device the capacity describes, named with the verdict.
+uncounted : Mapping&#91;str, int&#93; or None, optional
+    Cells whose cost is unknown, by type. With any, the counts are a
+    floor: they can prove a design does not fit, never that it does.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    ``fits_device`` and ``exceeds_capacity`` (per resource, what the design
-    needs and the device has), or an empty dict without capacity data.
+    ``fits_device`` (True, False, or None when unknown cells leave it
+    open), ``exceeds_capacity`` (per resource, what the design needs and
+    the device has), ``capacity_device`` and ``uncounted_cells``; an empty
+    dict without capacity data.
 
-### Function `capacity_sentence(target, device, exceeds)`
+### Function `capacity_sentence(target, exceeds)`
 Say in words which resources a design needs beyond its device.
 
 Parameters
 ----------
 target : str
-    Target identifier.
-device : str or None
-    The device within the target family, when known.
+    Target identifier; its judged device is named.
 exceeds : Mapping&#91;str, Mapping&#91;str, int&#93;&#93;
     From :func:`capacity_verdict`.
 

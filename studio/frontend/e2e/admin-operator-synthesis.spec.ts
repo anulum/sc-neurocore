@@ -223,7 +223,7 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
           schema_version: "studio.synthesis-target-provenance-matrix.v1",
           targets: {
             gowin: {
-              capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+              capacity: { brams: 46, dsps: 48, ffs: 15552, luts: 20736 },
               device: null,
               evidence_classification: "synthesis",
               pnr_ready: true,
@@ -273,13 +273,13 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
         },
         targets: {
           gowin: {
-            capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+            capacity: { brams: 46, dsps: 48, ffs: 15552, luts: 20736 },
             log_excerpt: "",
             resources: { brams: 0, cells: 1, dsps: 0, ffs: 1, luts: 2, wires: 1 },
             success: true,
             target: "gowin",
             target_provenance: {
-              capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+              capacity: { brams: 46, dsps: 48, ffs: 15552, luts: 20736 },
               device: null,
               evidence_classification: "synthesis",
               pnr_ready: true,

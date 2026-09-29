@@ -64,12 +64,23 @@ single browser tab.
 
 ## Supported FPGA Targets
 
-| Target | Device | Synth Tool | PnR Tool | LUTs | FFs | BRAMs | DSPs |
+| Target | Judged against | Synth Tool | PnR Tool | LUTs | FFs | BRAMs | DSPs |
 |--------|--------|-----------|----------|------|-----|-------|------|
-| ice40 | iCE40 UP5K | `synth_ice40` | nextpnr-ice40 | 5,280 | 5,280 | 30 | 0 |
-| ECP5 | LFE5U-25F | `synth_ecp5` | nextpnr-ecp5 | 24,576 | 24,576 | 56 | 28 |
-| Gowin | GW1N | `synth_gowin` | — | 20,736 | 20,736 | 41 | 0 |
-| Xilinx | Artix-7 | `synth_xilinx` | — | 20,800 | 41,600 | 50 | 90 |
+| ice40 | iCE40 UP5K | `synth_ice40` | nextpnr-ice40 | 5,280 | 5,280 | 30 | 8 |
+| ECP5 | ECP5 LFE5U-25F | `synth_ecp5` | nextpnr-ecp5 | 24,288 | 24,288 | 56 | 28 |
+| Gowin | Gowin GW2A-18 | `synth_gowin` | — | 20,736 | 15,552 | 46 | 48 |
+| Xilinx | Artix-7 XC7A35T | `synth_xilinx -flatten` | — | 20,800 | 41,600 | 100 (RAMB18) | 90 |
+
+Sources: the iCE40 and ECP5 rows are what `nextpnr-ice40 --up5k` and
+`nextpnr-ecp5 --25k` report for the device (the ECP5 data sheet rounds to
+"24K"); Gowin from data sheet DS102 (GW2A-18: 20,736 LUT4, 15,552 flip-flops,
+46 B-SRAM, 48 18×18 multipliers); Xilinx from DS180 (XC7A35T: 50 RAMB36, counted
+as 100 RAMB18 halves so an 18 Kb block counts once). Gowin and Xilinx
+synthesis here is not bound to one device, so every verdict names the device
+it was judged against. Each target's netlist is written with `write_json`:
+`synth_xilinx` has no `-json` option (the Xilinx target failed on every design
+until this was corrected), and `synth_gowin -json` withholds block RAM for
+nextpnr-gowin, which this target does not run.
 
 ## Resource Metrics
 
@@ -89,6 +100,22 @@ synthesises is not a design that fits. The network pipeline stops at a `fit`
 step when it does not. The iCE40 capacity is the UltraPlus UP5K's: 5280
 LUTs and flip-flops, 30 EBR blocks and 8 SB_MAC16 DSP blocks. The
 multi-target comparison table shows all four metrics across all targets.
+
+Resources are counted from each family's own primitives, in the design's
+modules only (Yosys also writes the family's cell library, which is not the
+design): an ECP5 `CCU2C` carry cell is two LUT4s, a Gowin `MUX2_LUT5`–`8`
+wide multiplexer and an iCE40 `SB_CARRY` take no LUT, Xilinx distributed RAM
+counts its LUTs (a `RAM256X1S` is four) and not block RAM, and `SB_MAC16`,
+`DP16KD` and `RAMB36E1` are counted where substring matching missed them.
+A cell whose cost is not known (ECP5 and Gowin distributed RAM such as
+`TRELLIS_DPR16X4` or `RAM16SDP4`, a hand-placed primitive) is listed in
+`uncounted_cells`; the counts are then a floor, so `fits_device` is `null`
+unless they already overflow. `capacity_device` names the device.
+
+A fit is by count: necessary, not sufficient. On iCE40 and ECP5 a LUT and a
+flip-flop share a logic cell (a design of 708 LUTs and 98 flip-flops took
+752 UP5K cells), and placement and routing can still fail; `/api/synth/pnr`
+decides that for iCE40 and ECP5.
 
 ## Tool Installation
 
@@ -201,6 +228,8 @@ Returns:
   "utilisation": {"luts": 0.8, "ffs": 0.3, "brams": 0.0, "dsps": 0.0},
   "fits_device": true,
   "exceeds_capacity": {},
+  "capacity_device": "iCE40 UP5K",
+  "uncounted_cells": {},
   "log_excerpt": "...",
   "target_provenance": {
     "schema_version": "studio.synthesis-target-provenance.v1",
@@ -293,7 +322,9 @@ Returns:
   "capacity": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8},
   "utilisation": {"luts": 0.6, "ffs": 0.3, "brams": 0.0, "dsps": 12.5},
   "fits_device": true,
-  "exceeds_capacity": {}
+  "exceeds_capacity": {},
+  "capacity_device": "iCE40 UP5K",
+  "uncounted_cells": {}
 }
 ```
 

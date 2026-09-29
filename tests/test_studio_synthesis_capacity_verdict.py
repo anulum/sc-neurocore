@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
+import shutil
+
+import pytest
+
 from sc_neurocore.studio.synthesis import (
+    _CAPACITY_DEVICE,
     _DEVICE_CAPACITY,
+    _TARGETS,
     capacity_sentence,
     capacity_verdict,
     estimate_resources,
+    run_synthesis,
 )
 
 
@@ -28,7 +35,12 @@ def test_a_design_within_every_capacity_fits() -> None:
     verdict = capacity_verdict(
         {"luts": 1413, "ffs": 85, "brams": 0, "dsps": 0}, _DEVICE_CAPACITY["ice40"]
     )
-    assert verdict == {"fits_device": True, "exceeds_capacity": {}}
+    assert verdict == {
+        "fits_device": True,
+        "exceeds_capacity": {},
+        "capacity_device": None,
+        "uncounted_cells": {},
+    }
 
 
 def test_each_resource_beyond_the_device_is_named_with_both_counts() -> None:
@@ -41,9 +53,9 @@ def test_each_resource_beyond_the_device_is_named_with_both_counts() -> None:
         "luts": {"needed": 6237, "available": 5280},
         "dsps": {"needed": 9, "available": 8},
     }
-    assert capacity_sentence("ice40", "up5k", verdict["exceeds_capacity"]) == (
+    assert capacity_sentence("ice40", verdict["exceeds_capacity"]) == (
         "the design needs 6237 LUTs (the device has 5280), 9 DSP blocks (the device has 8): "
-        "it does not fit the ICE40 UP5K"
+        "it does not fit the iCE40 UP5K"
     )
 
 
@@ -57,3 +69,74 @@ def test_an_estimate_is_judged_the_same_way() -> None:
     assert small["fits_device"] is True
     assert large["fits_device"] is False
     assert large["exceeds_capacity"]["luts"]["needed"] == 10_000 * 2 + 12
+
+
+def test_every_target_names_the_device_its_capacity_describes() -> None:
+    assert set(_CAPACITY_DEVICE) == set(_TARGETS) == set(_DEVICE_CAPACITY)
+    # nextpnr-ecp5 --25k: 24288 LUT4 and TRELLIS_FF (the table said 24576).
+    assert _DEVICE_CAPACITY["ecp5"] == {"luts": 24288, "ffs": 24288, "brams": 56, "dsps": 28}
+    # Gowin DS102, GW2A-18 (the row said 20736 flip-flops, 41 B-SRAM, no multipliers).
+    assert _DEVICE_CAPACITY["gowin"] == {"luts": 20736, "ffs": 15552, "brams": 46, "dsps": 48}
+    # XC7A35T: 50 RAMB36, counted as 100 RAMB18 halves.
+    assert _DEVICE_CAPACITY["xilinx"] == {"luts": 20800, "ffs": 41600, "brams": 100, "dsps": 90}
+
+
+def test_cells_of_unknown_cost_leave_the_verdict_open() -> None:
+    verdict = capacity_verdict(
+        {"luts": 10, "ffs": 10, "brams": 0, "dsps": 0},
+        _DEVICE_CAPACITY["gowin"],
+        device="Gowin GW2A-18",
+        uncounted={"RAM16SDP4": 64},
+    )
+    assert verdict["fits_device"] is None
+    assert verdict["uncounted_cells"] == {"RAM16SDP4": 64}
+    assert verdict["capacity_device"] == "Gowin GW2A-18"
+
+
+def test_counts_that_already_overflow_decide_despite_unknown_cells() -> None:
+    verdict = capacity_verdict(
+        {"luts": 30_000}, _DEVICE_CAPACITY["gowin"], uncounted={"RAM16SDP4": 1}
+    )
+    assert verdict["fits_device"] is False
+
+
+#: A 256x16 memory, a registered 16x16 multiplier and a 24-bit counter: block
+#: RAM, a DSP, carry logic and LUTs in one design.
+_MIXED_DESIGN = """
+module top(input clk, input we, input [7:0] addr, input [15:0] din, input [15:0] a,
+           input [15:0] b, output reg [15:0] dout, output reg [31:0] prod, output reg [23:0] cnt);
+  reg [15:0] mem [0:255];
+  always @(posedge clk) begin
+    if (we) mem[addr] <= din;
+    dout <= mem[addr];
+    prod <= a * b;
+    cnt <= cnt + 24'd1;
+  end
+endmodule
+"""
+
+
+@pytest.mark.skipif(shutil.which("yosys") is None, reason="yosys is not installed")
+@pytest.mark.parametrize(
+    ("target", "expected"),
+    [
+        # nextpnr-ecp5 --25k on the same netlist: 24 LUT4, 56 TRELLIS_FF,
+        # 1 DP16KD, 1 MULT18X18D (the 12 carry cells are 2 LUT4s each).
+        ("ecp5", {"luts": 24, "ffs": 56, "brams": 1, "dsps": 1}),
+        # One B-SRAM, not 64 LUT-RAMs counted as block RAM; wide multiplexers
+        # are not LUTs.
+        ("gowin", {"brams": 1, "dsps": 0}),
+        # The Xilinx target failed on every design ("-json" is not an option
+        # of synth_xilinx). 16 RAM256X1S LUT-RAMs are 64 LUTs, not 16 BRAMs.
+        ("xilinx", {"brams": 0, "dsps": 1}),
+        ("ice40", {"brams": 1, "dsps": 0}),
+    ],
+)
+def test_real_netlists_are_counted_per_family(target: str, expected: dict[str, int]) -> None:
+    result = run_synthesis(_MIXED_DESIGN, target)
+
+    assert result["success"] is True, result.get("error")
+    assert {key: result["resources"][key] for key in expected} == expected
+    assert result["uncounted_cells"] == {}
+    assert result["fits_device"] is True
+    assert result["capacity_device"] == _CAPACITY_DEVICE[target]

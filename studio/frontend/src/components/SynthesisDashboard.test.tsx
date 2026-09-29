@@ -50,7 +50,7 @@ const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
       ],
     },
     gowin: {
-      capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+      capacity: { brams: 46, dsps: 48, ffs: 15552, luts: 20736 },
       device: null,
       evidence_classification: "synthesis",
       pnr_ready: true,
@@ -148,7 +148,7 @@ describe("SiliconTerminalSummary", () => {
     const ice40 = provenanceMatrix.targets.ice40;
     if (ice40 === undefined) throw new Error("the provenance fixture must define ice40");
     const synthesis = {
-      capacity: { brams: 56, dsps: 28, ffs: 24576, luts: 24576 },
+      capacity: { brams: 56, dsps: 28, ffs: 24288, luts: 24288 },
       log_excerpt: "complete",
       resources: { brams: 0, cells: 20, dsps: 0, ffs: 8, luts: 12, wires: 30 },
       success: true,
@@ -207,13 +207,52 @@ describe("ResourceBar and FitVerdict", () => {
     expect(html).not.toContain("(100.0%)");
   });
 
-  it("says whether the device holds the design, naming what it lacks", async () => {
+  it("says whether the named device holds the design, naming what it lacks", async () => {
     const { FitVerdict } = await import("./SynthesisDashboard");
     const over = renderToStaticMarkup(
-      <FitVerdict target="ice40" fits={false} exceeds={{ luts: { needed: 6237, available: 5280 } }} />,
+      <FitVerdict verdict={{
+        target: "ice40", fits_device: false, capacity_device: "iCE40 UP5K",
+        exceeds_capacity: { luts: { needed: 6237, available: 5280 } },
+      }} />,
     );
-    expect(over).toContain("Does not fit the ICE40 device: 6237 LUTs needed, 5280 available.");
-    expect(renderToStaticMarkup(<FitVerdict target="ice40" fits={true} exceeds={{}} />)).toContain("Fits the ICE40 device.");
-    expect(renderToStaticMarkup(<FitVerdict target="gowin" fits={undefined} exceeds={undefined} />)).toBe("");
+    expect(over).toContain("Does not fit the iCE40 UP5K: 6237 LUTs needed, 5280 available.");
+    const fits = renderToStaticMarkup(
+      <FitVerdict verdict={{ target: "xilinx", fits_device: true, capacity_device: "Artix-7 XC7A35T", exceeds_capacity: {} }} />,
+    );
+    // Synthesis for Xilinx is not bound to a device: the verdict names the one it judged against.
+    expect(fits).toContain("Fits the Artix-7 XC7A35T by count; placement and routing decide the rest.");
+    expect(renderToStaticMarkup(<FitVerdict verdict={{ target: "gowin" }} />)).toBe("");
+  });
+
+  it("leaves a design with cells of unknown cost unjudged", async () => {
+    const { FitVerdict } = await import("./SynthesisDashboard");
+    const html = renderToStaticMarkup(
+      <FitVerdict verdict={{
+        target: "gowin", fits_device: null, capacity_device: "Gowin GW2A-18",
+        exceeds_capacity: {}, uncounted_cells: { RAM16SDP4: 64 },
+      }} />,
+    );
+    expect(html).toContain("Not judged against the Gowin GW2A-18: 64 RAM16SDP4 cells have no counted cost, so these counts are a floor.");
+    expect(html).not.toContain("Fits");
+    const one = renderToStaticMarkup(
+      <FitVerdict verdict={{ target: "ecp5", fits_device: null, uncounted_cells: { TRELLIS_DPR16X4: 1 } }} />,
+    );
+    expect(one).toContain("Not judged against the ECP5 device: 1 TRELLIS_DPR16X4 cell has no counted cost");
+  });
+
+  it("says an estimate is an estimate", async () => {
+    const { FitVerdict } = await import("./SynthesisDashboard");
+    const fits = renderToStaticMarkup(
+      <FitVerdict estimate verdict={{ target: "ice40", fits_device: true, capacity_device: "iCE40 UP5K" }} />,
+    );
+    const over = renderToStaticMarkup(
+      <FitVerdict estimate verdict={{
+        target: "ice40", fits_device: false, capacity_device: "iCE40 UP5K",
+        exceeds_capacity: { luts: { needed: 20012, available: 5280 } },
+      }} />,
+    );
+    expect(fits).toContain("The estimate fits the iCE40 UP5K; synthesis counts the real design.");
+    expect(over).toContain("The estimate does not fit the iCE40 UP5K: 20012 LUTs needed, 5280 available.");
+    expect(over).not.toContain("Synthesis produced");
   });
 });

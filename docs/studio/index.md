@@ -901,12 +901,16 @@ status while keeping external proof and hardware claims fail-closed.
 
 Run Yosys synthesis on generated Verilog for 4 FPGA targets:
 
-| Target | Device | LUTs | FFs | BRAMs | DSPs |
+| Target | Judged against | LUTs | FFs | BRAMs | DSPs |
 |--------|--------|------|-----|-------|------|
-| ice40 | iCE40 UP5K | 5,280 | 5,280 | 30 | 0 |
-| ECP5 | LFE5U-25F | 24,576 | 24,576 | 56 | 28 |
-| Gowin | GW1N | 20,736 | 20,736 | 41 | 0 |
-| Xilinx | Artix-7 | 20,800 | 41,600 | 50 | 90 |
+| ice40 | iCE40 UP5K | 5,280 | 5,280 | 30 | 8 |
+| ECP5 | ECP5 LFE5U-25F | 24,288 | 24,288 | 56 | 28 |
+| Gowin | Gowin GW2A-18 | 20,736 | 15,552 | 46 | 48 |
+| Xilinx | Artix-7 XC7A35T | 20,800 | 41,600 | 100 (RAMB18) | 90 |
+
+Each result says whether the named device holds the design by count, or
+that it cannot judge when the netlist holds cells of unknown cost; see
+[Synthesis Dashboard](synthesis-dashboard.md) for sources and counting.
 
 Multi-target comparison table shows resource usage across all targets.
 Quick heuristic estimation available without Yosys installed.

@@ -15,7 +15,7 @@ PyTorch SNN directly to a size-optimised FPGA deployment.
 | Target | LUTs Available | Typical SNN Requirement | Fits? |
 |--------|---------------|------------------------|-------|
 | iCE40 UP5K | 5,280 | 2,000–50,000 | Maybe |
-| ECP5 25K | 24,576 | 2,000–50,000 | Usually |
+| ECP5 25K | 24,288 | 2,000–50,000 | Usually |
 | Artix-7 35T | 20,800 | 2,000–50,000 | Usually |
 
 A 784→256→128→10 MNIST SNN has ~230K weights. At Q8.8 (16 bits each),

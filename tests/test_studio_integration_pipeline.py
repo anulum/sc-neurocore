@@ -91,7 +91,7 @@ class TestPipeline:
         assert needed > 10
         assert result["error"] == (
             f"synthesis succeeded, but the design needs {needed} LUTs (the device has 10): "
-            "it does not fit the ICE40 UP5K"
+            "it does not fit the iCE40 UP5K"
         )
         assert set(result["trace"]) >= {"rtl_sha256", "synthesis_source_sha256"}
 

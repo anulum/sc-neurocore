@@ -170,32 +170,164 @@ _TARGETS: dict[str, dict[str, str | None]] = {
         "package": "CABGA381",
     },
     "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
-    "xilinx": {"synth_cmd": "synth_xilinx", "pnr": None, "device": None},
+    "xilinx": {"synth_cmd": "synth_xilinx -flatten", "pnr": None, "device": None},
 }
 
-#: Resource capacity of each target's device. The iCE40 entry is the UltraPlus
-#: UP5K the Studio synthesises for: 5280 LUT4 and flip-flops, 30 EBR blocks and
-#: 8 SB_MAC16 DSP blocks (Lattice iCE40 UltraPlus Family Data Sheet,
-#: FPGA-DS-02008). It said 0 DSPs, which would make any multiplier "not fit".
+#: Resource capacity of the device each target is judged against, and that
+#: device's name. Gowin and Xilinx synthesis here is not device-bound, so the
+#: device is named with the verdict rather than implied by the family.
+#:
+#: - iCE40 UltraPlus UP5K: 5280 LUT4 and flip-flops, 30 EBR, 8 SB_MAC16
+#:   (Lattice FPGA-DS-02008; nextpnr-ice40 --up5k reports the same).
+#: - ECP5 LFE5U-25F: 24288 LUT4 and flip-flops, 56 DP16KD, 28 MULT18X18D, as
+#:   nextpnr-ecp5 --25k reports them (the data sheet rounds to "24K"). The row
+#:   said 24576.
+#: - Gowin GW2A-18: 20736 LUT4, 15552 flip-flops, 46 B-SRAM, 48 18x18
+#:   multipliers (Gowin DS102). The row said 20736 flip-flops, 41 B-SRAM and
+#:   no multipliers, matching no device.
+#: - Artix-7 XC7A35T: 20800 LUT6, 41600 flip-flops, 50 RAMB36 (counted as 100
+#:   RAMB18 halves, so an 18 Kb block counts once), 90 DSP48E1 (Xilinx DS180).
 _DEVICE_CAPACITY = {
     "ice40": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8},
-    "ecp5": {"luts": 24576, "ffs": 24576, "brams": 56, "dsps": 28},
-    "gowin": {"luts": 20736, "ffs": 20736, "brams": 41, "dsps": 0},
-    "xilinx": {"luts": 20800, "ffs": 41600, "brams": 50, "dsps": 90},
+    "ecp5": {"luts": 24288, "ffs": 24288, "brams": 56, "dsps": 28},
+    "gowin": {"luts": 20736, "ffs": 15552, "brams": 46, "dsps": 48},
+    "xilinx": {"luts": 20800, "ffs": 41600, "brams": 100, "dsps": 90},
+}
+
+_CAPACITY_DEVICE = {
+    "ice40": "iCE40 UP5K",
+    "ecp5": "ECP5 LFE5U-25F",
+    "gowin": "Gowin GW2A-18",
+    "xilinx": "Artix-7 XC7A35T",
 }
 
 
 _CAPACITY_KEYS = ("luts", "ffs", "brams", "dsps")
 
+_NO_COST: dict[str, int] = {}
 
-def capacity_verdict(resources: Mapping[str, Any], capacity: Mapping[str, int]) -> dict[str, Any]:
+#: What each primitive a family's Yosys flow emits takes of the judged
+#: resources. I/O buffers, constants, clock buffers, carry cells that ride in
+#: a LUT's logic cell and wide-function multiplexers take none. A cell this
+#: table does not know (a family's distributed RAM, a hand-placed primitive)
+#: is reported and leaves the design without a fit verdict unless the counted
+#: cells already overflow: its cost is unknown, so the counts are a floor.
+#: Names were checked against Yosys 0.33 output for each family; the substring
+#: matching it replaces counted Gowin wide multiplexers as LUTs, Gowin and
+#: Xilinx LUT-RAM as block RAM, and missed ECP5 carry LUTs and DP16KD.
+_CELL_COST: dict[str, dict[str, dict[str, int]]] = {
+    "ice40": {
+        "SB_LUT4": {"luts": 1},
+        "SB_CARRY": _NO_COST,
+        "SB_RAM40_4K": {"brams": 1},
+        "SB_RAM40_4KNR": {"brams": 1},
+        "SB_RAM40_4KNW": {"brams": 1},
+        "SB_RAM40_4KNRNW": {"brams": 1},
+        "SB_MAC16": {"dsps": 1},
+        "SB_IO": _NO_COST,
+        "SB_GB": _NO_COST,
+        "SB_GB_IO": _NO_COST,
+    },
+    "ecp5": {
+        "LUT4": {"luts": 1},
+        "CCU2C": {"luts": 2},
+        "PFUMX": _NO_COST,
+        "L6MUX21": _NO_COST,
+        "TRELLIS_FF": {"ffs": 1},
+        "DP16KD": {"brams": 1},
+        "PDPW16KD": {"brams": 1},
+        "MULT18X18D": {"dsps": 1},
+        "TRELLIS_IO": _NO_COST,
+        "DCCA": _NO_COST,
+        "VHI": _NO_COST,
+        "VLO": _NO_COST,
+    },
+    "gowin": {
+        **{f"LUT{width}": {"luts": 1} for width in range(1, 5)},
+        "ALU": {"luts": 1},
+        **{f"MUX2_LUT{width}": _NO_COST for width in range(5, 9)},
+        **{name: {"brams": 1} for name in ("SP", "SPX9", "SDP", "SDPX9", "SDPB", "SDPX9B")},
+        **{name: {"brams": 1} for name in ("DP", "DPX9", "DPB", "DPX9B", "ROM", "ROMX9")},
+        **{name: {"brams": 1} for name in ("pROM", "pROMX9")},
+        "MULT18X18": {"dsps": 1},
+        "MULT36X36": {"dsps": 4},
+        **{name: _NO_COST for name in ("IBUF", "OBUF", "IOBUF", "TBUF", "GND", "VCC")},
+    },
+    "xilinx": {
+        **{f"LUT{width}": {"luts": 1} for width in range(1, 7)},
+        "LUT6_2": {"luts": 1},
+        "INV": {"luts": 1},
+        "SRL16E": {"luts": 1},
+        "SRLC32E": {"luts": 1},
+        # Distributed RAM, in LUTs per primitive (Xilinx UG474).
+        "RAM32X1S": {"luts": 1},
+        "RAM64X1S": {"luts": 1},
+        "RAM128X1S": {"luts": 2},
+        "RAM256X1S": {"luts": 4},
+        "RAM32X1D": {"luts": 2},
+        "RAM64X1D": {"luts": 2},
+        "RAM128X1D": {"luts": 4},
+        "RAM32M": {"luts": 4},
+        "RAM64M": {"luts": 4},
+        "CARRY4": _NO_COST,
+        "MUXF7": _NO_COST,
+        "MUXF8": _NO_COST,
+        **{name: {"ffs": 1} for name in ("FDRE", "FDSE", "FDCE", "FDPE", "LDCE", "LDPE")},
+        "RAMB18E1": {"brams": 1},
+        "RAMB36E1": {"brams": 2},
+        "DSP48E1": {"dsps": 1},
+        **{name: _NO_COST for name in ("IBUF", "OBUF", "OBUFT", "IOBUF", "BUFG", "BUFGCTRL")},
+        **{name: _NO_COST for name in ("GND", "VCC")},
+    },
+}
+
+
+def _flip_flop_cost(target: str, cell_type: str) -> dict[str, int] | None:
+    """Recognise a family's flip-flop variants, which the tables do not list."""
+    if target == "ice40" and cell_type.startswith("SB_DFF"):
+        return {"ffs": 1}
+    if target == "gowin" and cell_type.startswith("DFF"):
+        return {"ffs": 1}
+    return None
+
+
+def cell_cost(target: str, cell_type: str) -> dict[str, int] | None:
+    """Return what one cell takes of the judged resources, or None if unknown.
+
+    Parameters
+    ----------
+    target : str
+        Target identifier.
+    cell_type : str
+        The Yosys cell type.
+
+    Returns
+    -------
+    dict[str, int] or None
+        Resource amounts, empty for a cell that takes none, None for a cell
+        whose cost the Studio does not know.
+    """
+    known = _CELL_COST.get(target, {}).get(cell_type)
+    return known if known is not None else _flip_flop_cost(target, cell_type)
+
+
+def capacity_verdict(
+    resources: Mapping[str, Any],
+    capacity: Mapping[str, int],
+    *,
+    device: str | None = None,
+    uncounted: Mapping[str, int] | None = None,
+) -> dict[str, Any]:
     """Say whether a synthesised design fits its target device.
 
     Synthesis succeeding says the netlist exists, not that the device can
     hold it: a 20-neuron network synthesised to 6237 LUTs for a 5280-LUT
     UP5K and the pipeline reported it complete. Only resources the target's
     capacity lists are judged; a target without capacity data gets no
-    verdict rather than a guessed one.
+    verdict rather than a guessed one. Fitting by count is necessary, not
+    sufficient: on iCE40 and ECP5 a LUT and a flip-flop share a logic cell
+    (708 LUTs and 98 flip-flops took 752 UP5K cells), and placement and
+    routing can still fail.
 
     Parameters
     ----------
@@ -203,12 +335,19 @@ def capacity_verdict(resources: Mapping[str, Any], capacity: Mapping[str, int]) 
         Counted resources of the design.
     capacity : Mapping[str, int]
         The device's capacity per resource.
+    device : str or None, optional
+        The device the capacity describes, named with the verdict.
+    uncounted : Mapping[str, int] or None, optional
+        Cells whose cost is unknown, by type. With any, the counts are a
+        floor: they can prove a design does not fit, never that it does.
 
     Returns
     -------
     dict[str, Any]
-        ``fits_device`` and ``exceeds_capacity`` (per resource, what the design
-        needs and the device has), or an empty dict without capacity data.
+        ``fits_device`` (True, False, or None when unknown cells leave it
+        open), ``exceeds_capacity`` (per resource, what the design needs and
+        the device has), ``capacity_device`` and ``uncounted_cells``; an empty
+        dict without capacity data.
     """
     if not capacity:
         return {}
@@ -217,20 +356,23 @@ def capacity_verdict(resources: Mapping[str, Any], capacity: Mapping[str, int]) 
         for key in _CAPACITY_KEYS
         if key in capacity and int(resources.get(key, 0)) > int(capacity[key])
     }
-    return {"fits_device": not exceeds, "exceeds_capacity": exceeds}
+    unknown = dict(uncounted or {})
+    fits: bool | None = False if exceeds else (None if unknown else True)
+    return {
+        "fits_device": fits,
+        "exceeds_capacity": exceeds,
+        "capacity_device": device,
+        "uncounted_cells": unknown,
+    }
 
 
-def capacity_sentence(
-    target: str, device: str | None, exceeds: Mapping[str, Mapping[str, int]]
-) -> str:
+def capacity_sentence(target: str, exceeds: Mapping[str, Mapping[str, int]]) -> str:
     """Say in words which resources a design needs beyond its device.
 
     Parameters
     ----------
     target : str
-        Target identifier.
-    device : str or None
-        The device within the target family, when known.
+        Target identifier; its judged device is named.
     exceeds : Mapping[str, Mapping[str, int]]
         From :func:`capacity_verdict`.
 
@@ -240,7 +382,7 @@ def capacity_sentence(
         One sentence.
     """
     names = {"luts": "LUTs", "ffs": "flip-flops", "brams": "block RAMs", "dsps": "DSP blocks"}
-    where = f"{target.upper()} {device.upper()}" if device else target.upper()
+    where = _CAPACITY_DEVICE.get(target, target.upper())
     parts = [
         f"{row['needed']} {names.get(key, key)} (the device has {row['available']})"
         for key, row in exceeds.items()
@@ -416,7 +558,12 @@ def _run_synthesis_in_directory(
     v_path.write_text(verilog_source, encoding="utf-8")
     synth_cmd = _TARGETS[target]["synth_cmd"]
     script_path.write_text(
-        f"read_verilog {v_path.name}; {synth_cmd} -json {json_path.name}",
+        # write_json and not "-json": synth_xilinx has no such option, so
+        # the Xilinx target failed on every design; synth_gowin's "-json"
+        # also withholds block RAM for nextpnr-gowin, which this target does
+        # not run, and built a 256x16 memory from 64 LUT-RAMs. For iCE40 and
+        # ECP5 the two are the same command.
+        f"read_verilog {v_path.name}; {synth_cmd}; write_json {json_path.name}",
         encoding="utf-8",
     )
 
@@ -471,7 +618,7 @@ def _run_synthesis_in_directory(
             None,
         )
 
-    resources = _parse_yosys_json(str(json_path))
+    resources, uncounted = _parse_yosys_json(str(json_path), target)
     capacity = _DEVICE_CAPACITY.get(target, {})
     return (
         {
@@ -483,7 +630,9 @@ def _run_synthesis_in_directory(
                 key: round(resources.get(key, 0) / max(capacity.get(key, 1), 1) * 100, 1)
                 for key in ["luts", "ffs", "brams", "dsps"]
             },
-            **capacity_verdict(resources, capacity),
+            **capacity_verdict(
+                resources, capacity, device=_CAPACITY_DEVICE.get(target), uncounted=uncounted
+            ),
             "log_excerpt": log[-300:] if log else "",
             "target_provenance": dict(target_provenance),
         },
@@ -629,8 +778,25 @@ def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _parse_yosys_json(json_path: str) -> dict[str, Any]:
-    """Extract resource counts from Yosys JSON output."""
+def _parse_yosys_json(json_path: str, target: str) -> tuple[dict[str, int], dict[str, int]]:
+    """Count a synthesised design's resources from Yosys JSON output.
+
+    Only the design's own modules are read: Yosys also writes the family's
+    cell library (blackbox and whitebox modules holding timing cells), which
+    counted towards "cells" and "wires".
+
+    Parameters
+    ----------
+    json_path : str
+        The netlist Yosys wrote.
+    target : str
+        Target identifier, selecting the family's cell table.
+
+    Returns
+    -------
+    tuple[dict[str, int], dict[str, int]]
+        The counted resources, and the cells whose cost is unknown by type.
+    """
     with open(json_path) as f:
         data = json.load(f)
     if not isinstance(data, dict):
@@ -640,10 +806,14 @@ def _parse_yosys_json(json_path: str) -> dict[str, Any]:
         raise ValueError("Invalid Yosys JSON payload: 'modules' must be an object")
 
     resources = {"luts": 0, "ffs": 0, "brams": 0, "dsps": 0, "cells": 0, "wires": 0}
+    uncounted: dict[str, int] = {}
 
     for mod_name, mod in modules.items():
         if not isinstance(mod, dict):
             raise ValueError(f"Invalid Yosys JSON payload: module '{mod_name}' must be an object")
+        attributes = mod.get("attributes", {})
+        if isinstance(attributes, dict) and ("blackbox" in attributes or "whitebox" in attributes):
+            continue
         cells = mod.get("cells", {})
         if not isinstance(cells, dict):
             raise ValueError(
@@ -655,15 +825,13 @@ def _parse_yosys_json(json_path: str) -> dict[str, Any]:
                 raise ValueError(
                     f"Invalid Yosys JSON payload: module '{mod_name}.cells.{cell_name}' must be an object"
                 )
-            ctype = str(cell.get("type", "")).upper()
-            if "LUT" in ctype:
-                resources["luts"] += 1
-            elif _is_flip_flop_cell(ctype):
-                resources["ffs"] += 1
-            elif "RAM" in ctype:
-                resources["brams"] += 1
-            elif "DSP" in ctype or "MUL" in ctype:
-                resources["dsps"] += 1
+            cell_type = str(cell.get("type", ""))
+            cost = cell_cost(target, cell_type)
+            if cost is None:
+                uncounted[cell_type] = uncounted.get(cell_type, 0) + 1
+                continue
+            for key, amount in cost.items():
+                resources[key] += amount
         netnames = mod.get("netnames", {})
         if not isinstance(netnames, dict):
             raise ValueError(
@@ -671,17 +839,7 @@ def _parse_yosys_json(json_path: str) -> dict[str, Any]:
             )
         resources["wires"] += len(netnames)
 
-    return resources
-
-
-def _is_flip_flop_cell(cell_type: str) -> bool:
-    """Recognise Yosys flip-flop cells across supported target libraries."""
-
-    return (
-        "DFF" in cell_type
-        or cell_type.endswith("_FF")
-        or cell_type in {"FDCE", "FDPE", "FDRE", "FDSE"}
-    )
+    return resources, uncounted
 
 
 def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict[str, Any]:
@@ -707,7 +865,7 @@ def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict[str, Any
             k: round(resources[k] / max(capacity.get(k, 1), 1) * 100, 1)
             for k in ["luts", "ffs", "brams", "dsps"]
         },
-        **capacity_verdict(resources, capacity),
+        **capacity_verdict(resources, capacity, device=_CAPACITY_DEVICE.get(target)),
     }
 
 
