@@ -14,9 +14,12 @@
  * them ("Canvas", "Train", "Admin", "Freq") as separate buttons with the same
  * names. The list here is the one source for the view switcher: every view
  * has one full name, belongs to one named group, and is shown only when it
- * can hold something for the current source.
+ * can hold something for the current source. The names are the panels' own
+ * titles (`panelTitle`), so a view is called the same thing in the switcher,
+ * in its heading, in its empty state and when it is unavailable.
  */
 
+import { panelTitle } from "./capabilityShell";
 import type { ViewTab } from "./stores/studio";
 
 /** One view in the switcher. */
@@ -61,50 +64,50 @@ export function viewTabGroups(context: ViewTabContext): ViewTabGroup[] {
     {
       label: "Neuron",
       views: [
-        { view: "trace", label: "Trace" },
-        ...(context.hasPhase ? [{ view: "phase" as const, label: "Phase plane" }] : []),
-        ...(context.hasIsi ? [{ view: "isi" as const, label: "ISI" }] : []),
-        { view: "fi-curve", label: "f-I curve" },
-        { view: "bifurcation", label: "Bifurcation" },
-        { view: "heatmap", label: "2-D sweep" },
-        { view: "sensitivity", label: "Sensitivity" },
-        { view: "sta", label: "STA" },
-        { view: "freq", label: "Frequency response" },
-        ...(model ? [{ view: "characterize" as const, label: "Characterization" }] : []),
-        { view: "multi", label: "Multi-model" },
-        { view: "compare", label: "A/B compare" },
+        { view: "trace", label: panelTitle("trace") },
+        ...(context.hasPhase ? [{ view: "phase" as const, label: panelTitle("phase") }] : []),
+        ...(context.hasIsi ? [{ view: "isi" as const, label: panelTitle("isi") }] : []),
+        { view: "fi-curve", label: panelTitle("fi-curve") },
+        { view: "bifurcation", label: panelTitle("bifurcation") },
+        { view: "heatmap", label: panelTitle("heatmap") },
+        { view: "sensitivity", label: panelTitle("sensitivity") },
+        { view: "sta", label: panelTitle("sta") },
+        { view: "freq", label: panelTitle("freq") },
+        ...(model ? [{ view: "characterize" as const, label: panelTitle("characterize") }] : []),
+        { view: "multi", label: panelTitle("multi") },
+        { view: "compare", label: panelTitle("compare") },
       ],
     },
     {
       label: "Network",
       views: [
-        { view: "network", label: "E-I network" },
-        { view: "delays", label: "Synaptic delays" },
-        { view: "canvas", label: "Network canvas" },
+        { view: "network", label: panelTitle("network") },
+        { view: "delays", label: panelTitle("delays") },
+        { view: "canvas", label: panelTitle("canvas") },
       ],
     },
     {
       label: "Code and hardware",
       views: [
-        { view: "code", label: "Python code" },
-        ...(model ? [] : [{ view: "precision" as const, label: "Q8.8 precision" }]),
-        ...(model ? [] : [{ view: "ir" as const, label: "IR" }]),
-        { view: "verilog", label: "RTL" },
-        { view: "synth", label: "FPGA synthesis" },
+        { view: "code", label: panelTitle("code") },
+        ...(model ? [] : [{ view: "precision" as const, label: panelTitle("precision") }]),
+        ...(model ? [] : [{ view: "ir" as const, label: panelTitle("ir") }]),
+        { view: "verilog", label: panelTitle("verilog") },
+        { view: "synth", label: panelTitle("synth") },
       ],
     },
     {
       label: "Research",
       views: [
-        { view: "candidate", label: "Candidate model" },
-        { view: "fit", label: "Fitting" },
-        { view: "train", label: "Training" },
-        { view: "review", label: "Review" },
+        { view: "candidate", label: panelTitle("candidate") },
+        { view: "fit", label: panelTitle("fit") },
+        { view: "train", label: panelTitle("train") },
+        { view: "review", label: panelTitle("review") },
       ],
     },
     {
       label: "Operator",
-      views: [{ view: "admin", label: "Admin" }],
+      views: [{ view: "admin", label: panelTitle("admin") }],
     },
   ];
   return groups;

@@ -92,6 +92,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A Studio plot view with no result of its own no longer shows the voltage
+  trace under its own name. The 2-D sweep, bifurcation, sensitivity, f-I
+  curve, STA, frequency response, characterization, multi-model, A/B compare,
+  Q8.8 precision and E-I network views fell through to the trace, and a
+  screen reader was given the trace's description. Each now states that it is
+  empty and what produces its result (the sweep parameters it still needs, or
+  the action button that fills it), and every plot view has a heading. A view
+  is called the same thing in the switcher, its heading, its empty state and
+  its unavailable notice.
 - The Studio header is navigable. It carried one wrapping row of about forty
   controls: abbreviated view buttons ("Bif", "Sens", "2D", "Char") with
   nothing saying which view was showing, four views repeated as buttons with

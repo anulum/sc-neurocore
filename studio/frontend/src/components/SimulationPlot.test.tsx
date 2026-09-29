@@ -80,6 +80,7 @@ function resetStore(overrides: Record<string, unknown>): void {
     freqResult: null,
     heatmapResult: null,
     importedTrace: null,
+    isSimulating: false,
     multiResults: null,
     networkResult: null,
     nullclineResult: null,
@@ -87,6 +88,9 @@ function resetStore(overrides: Record<string, unknown>): void {
     result: simulationResult,
     runSimulation: async () => undefined,
     sensResult: null,
+    staResult: null,
+    sweepParam: "",
+    sweepParamY: "",
     ...overrides,
   };
 }
@@ -113,5 +117,37 @@ describe("SimulationPlot", () => {
     expect(html).toContain("class analysis");
     expect(html).toContain("in 3333333333");
     expect(html).toContain("out 4444444444");
+  });
+
+  it("says an analysis view is empty instead of passing the trace off as its result", () => {
+    resetStore({ activeTab: "bifurcation" });
+
+    const html = renderToStaticMarkup(<SimulationPlot />);
+
+    expect(html).toContain("<h2 class=\"visually-hidden\">Bifurcation</h2>");
+    expect(html).toContain("role=\"status\"");
+    expect(html).toContain("No bifurcation diagram yet");
+    expect(html).toContain("Choose a parameter in Sweep X");
+    expect(html).toContain("aria-label=\"Bifurcation: No bifurcation diagram yet.");
+    // The trace's own table and evidence are not offered under another view's name.
+    expect(html).not.toContain(">Data table<");
+    expect(html).not.toContain("class simulation");
+  });
+
+  it("offers the action that fills an empty view", () => {
+    resetStore({ activeTab: "network" });
+
+    const html = renderToStaticMarkup(<SimulationPlot />);
+
+    expect(html).toContain("No E-I network run yet");
+    expect(html).toMatch(/<button[^>]*>Run E-I network<\/button>/);
+  });
+
+  it("keeps the trace view's table and heading", () => {
+    const html = renderToStaticMarkup(<SimulationPlot />);
+
+    expect(html).toContain("<h2 class=\"visually-hidden\">Trace</h2>");
+    expect(html).toContain(">Data table<");
+    expect(html).not.toContain("role=\"status\"");
   });
 });

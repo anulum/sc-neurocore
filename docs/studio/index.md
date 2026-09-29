@@ -790,6 +790,9 @@ between views, and a view that cannot run in this deployment is shown
 disabled with the reason as its tooltip. The action that computes a view
 (for example **Characterize** or **Measure frequency response**) sits in the
 action row above it and opens its view when it finishes.
+A view that has no result yet says so, names what produces it and, where one
+action does, offers it as a button; it does not show the voltage trace in its
+place.
 
 | Group | View | Description |
 |-------|------|-------------|

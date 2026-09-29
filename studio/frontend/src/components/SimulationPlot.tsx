@@ -45,6 +45,8 @@ import {
 } from "../plots/stateViews";
 import { drawTraceView } from "../plots/traceView";
 import { panelTitle } from "../capabilityShell";
+import { emptyViewDescription, emptyViewGuidance } from "../viewEmptyState";
+import type { EmptyViewAction } from "../viewEmptyState";
 import { formatReading, plotDescription, traceDataRows } from "../plotAccessibility";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
@@ -107,6 +109,32 @@ export default function SimulationPlot() {
     activeTab === "phase" ? resultMetadata(nullclineResult) :
     null;
   const simulationMetadata = activeTab === "trace" ? result?.run_metadata ?? null : null;
+  const emptyGuidance = emptyViewGuidance(activeTab, {
+    hasRun: result !== null,
+    stateCount: result ? Object.keys(result.states).length : 0,
+    hasIsiHistogram: result?.stats.isi_histogram != null,
+    spikeCount: result?.spikes.length ?? 0,
+    sweepX: store.sweepParam,
+    sweepY: store.sweepParamY,
+    hasFi: fiResult !== null,
+    hasBifurcation: bifResult !== null,
+    hasHeatmap: heatmapResult !== null,
+    hasSensitivity: sensResult !== null,
+    hasPrecision: precResult !== null,
+    hasCompare: compareResult !== null,
+    hasFrequency: freqResult !== null,
+    hasSta: staResult !== null && staResult.time_ms.length > 0,
+    hasCharacterization: charResult !== null,
+    hasMulti: multiResults !== null && multiResults.length > 0,
+    hasNetwork: networkResult !== null,
+  });
+  const emptyActions: Record<EmptyViewAction, () => void> = {
+    characterize: () => { store.runCharacterize(); },
+    freq: () => { void store.runFreqResponse(); },
+    sta: () => { store.computeSTA(); },
+    network: () => { void store.runNetwork(); },
+    precision: () => { void store.runPrecision(); },
+  };
 
   /**
    * On the heatmap, adopt the parameters under the pointer and re-run.
@@ -251,11 +279,11 @@ export default function SimulationPlot() {
     // Which view is drawn decides what the canvas says to a screen reader.
     const drewTrace = ((): boolean => {
 
-    // Each view is a function in `../plots`; this chooses one. The conditions
-    // are the originals, including which of them fall through to the trace
-    // view rather than leaving a blank canvas: a phase portrait of a
-    // one-variable system, an ISI view of a run with no histogram, and a
-    // spike-triggered average with nothing in it all show the trace instead.
+    // Each view is a function in `../plots`; this chooses one. A view with no
+    // result of its own draws nothing and shows its empty state instead: it
+    // used to fall through to the trace, so a selected bifurcation, STA or
+    // network tab showed the membrane trace as if it were its result.
+    if (emptyGuidance !== null) return false;
     if (activeTab === "fi-curve" && fiResult) {
       drawFICurveView(ctx, frame, fiResult);
       return false;
@@ -326,7 +354,7 @@ export default function SimulationPlot() {
     return true;
     })();
     setTraceShown((shown) => (shown === drewTrace ? shown : drewTrace));
-  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace, networkResult]);
+  }, [result, activeTab, emptyGuidance, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace, networkResult]);
 
   useEffect(() => {
     draw();
@@ -343,6 +371,20 @@ export default function SimulationPlot() {
     <div ref={containerRef} style={{
       flex: 1, position: "relative", overflow: "hidden",
     }}>
+      <h2 className="visually-hidden">{panelTitle(activeTab)}</h2>
+      {emptyGuidance !== null && (
+        <div className="view-empty" role="status">
+          <h3>{emptyGuidance.title}</h3>
+          <p>{emptyGuidance.detail}</p>
+          {emptyGuidance.action !== null && emptyGuidance.actionLabel !== null && (
+            <button type="button" className="btn-simulate btn btn--primary"
+              disabled={store.isSimulating}
+              onClick={emptyActions[emptyGuidance.action]}>
+              {emptyGuidance.actionLabel}
+            </button>
+          )}
+        </div>
+      )}
       {tooltip && (
         <div style={{
           position: "absolute", left: tooltip.x + 10, top: tooltip.y - 24,
@@ -358,7 +400,7 @@ export default function SimulationPlot() {
       {simulationMetadata && (
         <EvidenceSummaryStrip variant="overlay" items={buildSimulationEvidenceItems(simulationMetadata)} />
       )}
-      <button
+      {emptyGuidance === null && <button
         type="button"
         aria-pressed={dataTableShown}
         onClick={() => { setDataTableShown((shown) => !shown); }}
@@ -367,8 +409,8 @@ export default function SimulationPlot() {
           background: "var(--bg-secondary)", color: "var(--text-secondary)",
           border: "1px solid var(--control-border)", borderRadius: 3, padding: "2px 8px", cursor: "pointer",
         }}
-      >Data table</button>
-      {dataTableShown && (
+      >Data table</button>}
+      {emptyGuidance === null && dataTableShown && (
         <div style={{
           position: "absolute", right: 8, bottom: 36, zIndex: 2, maxHeight: "60%", overflow: "auto",
           background: "var(--bg-secondary)", border: "1px solid var(--border)", padding: 6, fontSize: "var(--fs-body)",
@@ -405,7 +447,9 @@ export default function SimulationPlot() {
       )}
       <canvas ref={canvasRef}
         role="img"
-        aria-label={plotDescription(panelTitle(activeTab), result, traceShown)}
+        aria-label={emptyGuidance !== null
+          ? emptyViewDescription(activeTab, emptyGuidance)
+          : plotDescription(panelTitle(activeTab), result, traceShown)}
         onClick={handleCanvasClick}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}

@@ -712,6 +712,37 @@ body {
 .view-tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 .view-tab:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* Present to assistive technology, absent from the screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A plot view with no result of its own says so, and offers what produces it. */
+.view-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.view-empty h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.view-empty p { max-width: 52ch; font-size: var(--fs-ui); line-height: 1.5; color: var(--text-secondary); }
+
 /* The analysis-job control sits in the action row: one line, body size. */
 .analysis-job-control {
   display: flex;
