@@ -256,7 +256,14 @@ export interface StudioState {
    * `null` means there is nothing waiting to be kept.
    */
   refusedEdit: { name: string; baseRevision: number } | null;
+  /** One run at a time: set by every simulation, analysis, compile, synthesis and graph run. */
   isSimulating: boolean;
+  /**
+   * What the current run is, named for the operator ("Simulation", "f-I curve",
+   * "Network pipeline"). Read only while `isSimulating`; the busy flag alone
+   * made every run read as "Simulation running".
+   */
+  busyWith: string;
   activeTab: ViewTab;
   modelFilter: string;
   sweepParam: string;

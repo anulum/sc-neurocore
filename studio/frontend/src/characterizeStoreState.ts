@@ -29,6 +29,7 @@ export interface CharacterizeRequestInput {
 /** A characterisation has begun. */
 export interface CharacterizeRunStartStatePatch {
   activeTab: "characterize";
+  busyWith: "Characterization";
   error: null;
   isSimulating: true;
   progressMsg: string;
@@ -83,6 +84,7 @@ export function characterizeRequestConfig(
 export function characterizeRunStartState(): CharacterizeRunStartStatePatch {
   return {
     activeTab: "characterize",
+    busyWith: "Characterization",
     error: null,
     isSimulating: true,
     progressMsg: "Starting characterisation...",

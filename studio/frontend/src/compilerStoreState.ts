@@ -32,6 +32,7 @@ export interface CompilerErrorStatePatch {
 /** A compile has begun, on the tab that will show it. */
 export interface CompilerRunStartStatePatch {
   activeTab: "ir" | "verilog";
+  busyWith: "Compilation";
   error: null;
   isSimulating: true;
 }
@@ -122,7 +123,7 @@ export function compilerErrorState(error: string): CompilerErrorStatePatch {
 export function compilerRunStartState(
   activeTab: CompilerRunStartStatePatch["activeTab"],
 ): CompilerRunStartStatePatch {
-  return { activeTab, error: null, isSimulating: true };
+  return { activeTab, busyWith: "Compilation", error: null, isSimulating: true };
 }
 
 /**

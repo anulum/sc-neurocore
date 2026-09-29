@@ -67,6 +67,7 @@ describe("characterisation store state helpers", () => {
     });
     expect(characterizeRunStartState()).toEqual({
       activeTab: "characterize",
+      busyWith: "Characterization",
       error: null,
       isSimulating: true,
       progressMsg: "Starting characterisation...",

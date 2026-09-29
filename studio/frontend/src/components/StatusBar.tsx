@@ -14,12 +14,14 @@ import { useStudioStore } from "../stores/studio";
  * @returns The bar.
  */
 export default function StatusBar() {
-  const { result, activeTab, isSimulating, sourceMode, selectedModelName, networkResult } = useStudioStore();
+  const {
+    result, activeTab, isSimulating, busyWith, sourceMode, selectedModelName, networkResult,
+  } = useStudioStore();
 
   const parts: string[] = [];
 
   if (isSimulating) {
-    parts.push("simulating...");
+    parts.push(`${busyWith.length > 0 ? busyWith : "Run"} running…`);
   } else if (activeTab === "network" && networkResult) {
     parts.push(`E-I Network: ${networkResult.n_exc}E/${networkResult.n_inh}I`);
     parts.push(`${networkResult.n_spikes} spikes`);

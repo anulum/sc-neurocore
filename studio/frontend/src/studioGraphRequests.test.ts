@@ -147,6 +147,7 @@ describe("Studio graph request builders", () => {
     const simResult: GraphSimResult = { n_spikes: 10, success: true };
 
     expect(studioPipelineStartState()).toEqual({
+      busyWith: "Network pipeline",
       error: null,
       isSimulating: true,
       pipelineResult: null,
@@ -158,6 +159,7 @@ describe("Studio graph request builders", () => {
       pipelineRunning: false,
     });
     expect(studioGraphSimulationStartState()).toEqual({
+      busyWith: "Network simulation",
       error: null,
       graphErrors: [],
       graphIssues: [],

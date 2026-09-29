@@ -68,9 +68,10 @@ function simulationResult(overrides: Partial<SimulateResponse> = {}): SimulateRe
 
 describe("studio analysis state helpers", () => {
   it("builds shared start, failure, and idle patches", () => {
-    expect(studioAnalysisStartState()).toEqual({ error: null, isSimulating: true });
+    expect(studioAnalysisStartState()).toEqual({ busyWith: "Simulation", error: null, isSimulating: true });
     expect(studioAnalysisStartState("fi-curve")).toEqual({
       activeTab: "fi-curve",
+      busyWith: "f-I curve",
       error: null,
       isSimulating: true,
     });

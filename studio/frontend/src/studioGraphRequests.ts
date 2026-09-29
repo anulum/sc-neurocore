@@ -115,6 +115,7 @@ export interface StudioGraphElements {
 
 /** A graph request has started: clear the error, show it running. */
 export interface StudioGraphBusyStatePatch {
+  busyWith: "Network pipeline" | "Network simulation";
   error: null;
   graphErrors?: [];
   /** Cleared with the messages: a located failure outlives nothing else. */
@@ -227,6 +228,7 @@ export function studioGraphRequest(
  */
 export function studioPipelineStartState(): StudioGraphBusyStatePatch {
   return {
+    busyWith: "Network pipeline",
     error: null,
     isSimulating: true,
     pipelineResult: null,
@@ -257,6 +259,7 @@ export function studioPipelineCompletedState(
  */
 export function studioGraphSimulationStartState(): StudioGraphBusyStatePatch {
   return {
+    busyWith: "Network simulation",
     error: null,
     graphErrors: [],
     graphIssues: [],

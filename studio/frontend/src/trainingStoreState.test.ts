@@ -88,9 +88,6 @@ function restorePlan(): TrainingWeightRestorePlan {
     weights_artifact: {
       relative_path: "training/model_state.pt",
       sha256: "b".repeat(64),
-/**
- * An event source that is driven by the cases rather than by a network.
- */
       size_bytes: 256,
     },
   };

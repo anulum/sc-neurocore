@@ -54,9 +54,6 @@ function compileTraceability(
       params: { C: 1, E_L: -65, tau_m: 10 },
       reset: "v = -65",
       threshold: "v > -50",
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     },
     status: overrides.status ?? "completed",
     traceability_sha256: overrides.traceability_sha256 ?? "3".repeat(64),
@@ -100,9 +97,6 @@ function cosimReport(): ModelCosimReport {
       kind: "generated_bit_true_c",
       source_sha256: "5".repeat(64),
       trace_sha256: "6".repeat(64),
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     },
     rtl: {
       kind: "iverilog_vvp",
@@ -112,17 +106,11 @@ function cosimReport(): ModelCosimReport {
     sample_count: 128,
     schema_version: "studio.cosim-parity.v1",
     signals: ["spike_out", "v_out", "theta_out"],
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     status: "completed",
     stimulus: { current: 10, current_q: 2560, n_steps: 128 },
     tools: { gcc: "gcc 13", iverilog: "Icarus 12", vvp: "VVP 12" },
   };
 }
-/**
- * An event source that is driven by the cases rather than by a network.
- */
 
 /**
  * A built intermediate representation.
@@ -179,11 +167,13 @@ describe("compiler store state helpers", () => {
     });
     expect(compilerRunStartState("verilog")).toEqual({
       activeTab: "verilog",
+      busyWith: "Compilation",
       error: null,
       isSimulating: true,
     });
     expect(compilerRunStartState("ir")).toEqual({
       activeTab: "ir",
+      busyWith: "Compilation",
       error: null,
       isSimulating: true,
     });

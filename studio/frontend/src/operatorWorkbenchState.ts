@@ -41,6 +41,8 @@ export interface OperatorWorkbenchInputs {
   savedSessionCount: number;
   simulationResult: SimulateResponse | null;
   isSimulating: boolean;
+  /** What the current run is; see the store's `busyWith`. */
+  busyWith: string;
   progressMessage: string;
   operatorStatus: StudioOperatorStatus | null;
   guidedFlow: GuidedFlowState;
@@ -167,7 +169,7 @@ function modelCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
  * @returns The card.
  */
 function simulationCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
-  if (inputs.isSimulating) {
+  if (inputs.isSimulating && inputs.busyWith === "Simulation") {
     return {
       action: "Inspect progress",
       detail: inputs.progressMessage.length > 0 ? inputs.progressMessage : "Simulation is running",
@@ -175,6 +177,19 @@ function simulationCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard 
       status: "active",
       title: "Simulation",
       value: "Running",
+    };
+  }
+  if (inputs.isSimulating) {
+    // Another run holds the Studio: a pipeline or an analysis is not a
+    // simulation, and the card said "Simulation is running" for all of them.
+    const running = inputs.busyWith.length > 0 ? inputs.busyWith : "Another run";
+    return {
+      action: "Inspect progress",
+      detail: `${running} is running; a simulation can start when it ends`,
+      key: "simulation",
+      status: "warning",
+      title: "Simulation",
+      value: "Waiting",
     };
   }
   if (inputs.simulationResult === null) {

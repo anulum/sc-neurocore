@@ -1016,7 +1016,7 @@ export function createStudioStoreActions(
       }),
     );
     return studioNullclineResultState(nullclineResult);
-  }),
+  }, "phase"),
 
   runFreqResponse: () => runStoreDirectAnalysis(get, studioStageSet("analyse", get, set), async (s) => {
     const cfg = studioSimulationConfig(simulationConfigInput(s));

@@ -130,7 +130,7 @@ const PANEL_CAPABILITY_IDS: Partial<Record<PanelKey, string>> = {
 };
 
 /** The name each panel is shown under before its contract is consulted. */
-const PANEL_TITLES: Record<PanelKey, string> = {
+export const PANEL_TITLES: Record<PanelKey, string> = {
   trace: "Trace",
   phase: "Phase plane",
   isi: "ISI",

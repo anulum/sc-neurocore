@@ -27,9 +27,6 @@ function guidedInputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInpu
     modelSelected: false,
     simulationComplete: false,
     synthesisComplete: false,
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     trainingComplete: false,
     trainingSkipped: false,
     ...overrides,
@@ -97,9 +94,6 @@ function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOp
       authenticated_count: 2,
       enforced: true,
       protected_audit_action_count: 3,
-/**
- * An event source that is driven by the cases rather than by a network.
- */
       protected_count: 3,
       protected_routes_audited: true,
       public_count: 1,
@@ -134,9 +128,6 @@ function simulationResult(): SimulateResponse {
       state_variables: ["v"],
     },
     spike_count: 3,
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     spikes: [0.1, 0.2, 0.3],
     stats: {
       isi_cv: null,
@@ -159,6 +150,7 @@ function inputs(overrides: Partial<OperatorWorkbenchInputs> = {}): OperatorWorkb
   return {
     compileBundleExported: false,
     compileComplete: false,
+    busyWith: "",
     guidedFlow: computeGuidedFlowState(guidedInputs()),
     isSimulating: false,
     modelCount: 118,
@@ -200,6 +192,21 @@ describe("buildOperatorWorkbenchState", () => {
     expect(state.cards.find((card) => card.key === "simulation")).toMatchObject({
       action: "Run simulation",
       status: "blocked",
+    });
+  });
+
+  it("calls a running simulation running and names any other run instead", () => {
+    const simulating = buildOperatorWorkbenchState(inputs({ busyWith: "Simulation", isSimulating: true }));
+    const pipeline = buildOperatorWorkbenchState(inputs({ busyWith: "Network pipeline", isSimulating: true }));
+
+    expect(simulating.cards.find((card) => card.key === "simulation")).toMatchObject({
+      detail: "Simulation is running", status: "active", value: "Running",
+    });
+    // The busy flag is shared by every run: a pipeline read as "Simulation is running".
+    expect(pipeline.cards.find((card) => card.key === "simulation")).toMatchObject({
+      detail: "Network pipeline is running; a simulation can start when it ends",
+      status: "warning",
+      value: "Waiting",
     });
   });
 

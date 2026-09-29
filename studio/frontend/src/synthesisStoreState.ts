@@ -38,6 +38,7 @@ export interface SynthesisOperatorRefreshPatch {
 /** A synthesis has begun. */
 export interface SynthesisRunStartStatePatch {
   activeTab: "synth";
+  busyWith: "FPGA synthesis";
   error: null;
   isSimulating: true;
   latestSynthesisJobId: null;
@@ -49,6 +50,7 @@ export interface SynthesisRunStartStatePatch {
 /** An all-target synthesis has begun. */
 export interface MultiTargetSynthesisRunStartStatePatch {
   activeTab: "synth";
+  busyWith: "FPGA synthesis for every target";
   error: null;
   isSimulating: true;
   latestMultiTargetSynthesisJobId: null;
@@ -114,6 +116,7 @@ export interface SynthesisToolStatusLoadedStatePatch {
 export function synthesisRunStartState(): SynthesisRunStartStatePatch {
   return {
     activeTab: "synth",
+    busyWith: "FPGA synthesis",
     error: null,
     isSimulating: true,
     latestSynthesisJobId: null,
@@ -131,6 +134,7 @@ export function synthesisRunStartState(): SynthesisRunStartStatePatch {
 export function multiTargetSynthesisRunStartState(): MultiTargetSynthesisRunStartStatePatch {
   return {
     activeTab: "synth",
+    busyWith: "FPGA synthesis for every target",
     error: null,
     isSimulating: true,
     latestMultiTargetSynthesisJobId: null,

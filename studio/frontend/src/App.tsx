@@ -160,6 +160,7 @@ export default function App() {
     compileComplete: s.compileTraceability !== null,
     guidedFlow,
     isSimulating: s.isSimulating,
+    busyWith: s.busyWith,
     modelCount: s.models.length,
     operatorStatus: s.operatorStatus,
     progressMessage: s.progressMsg,

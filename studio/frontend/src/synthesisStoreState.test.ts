@@ -42,9 +42,6 @@ function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditSta
   return {
     configured: overrides.configured ?? true,
     healthy: overrides.healthy ?? true,
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     last_error: overrides.last_error ?? null,
     path_configured: overrides.path_configured ?? true,
     sink_type: overrides.sink_type ?? "jsonl",
@@ -63,9 +60,6 @@ function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
     allowed_kinds: overrides.allowed_kinds ?? ["synthesis"],
     completed_count: overrides.completed_count ?? 2,
     configured: overrides.configured ?? true,
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     failed_count: overrides.failed_count ?? 0,
     process_count: overrides.process_count ?? 0,
     resource_profiles: overrides.resource_profiles ?? [],
@@ -93,16 +87,10 @@ function jobRecord(
     }],
     created_at_utc: createdAt,
     error: null,
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     execution_model: "process",
     finished_at_utc: createdAt,
     job_id: jobId,
     kind: "synthesis",
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     owner: "studio-synthesis",
     request_id: null,
     result: null,
@@ -110,9 +98,6 @@ function jobRecord(
     status: "completed",
     training_config: null,
   };
-/**
- * An event source that is driven by the cases rather than by a network.
- */
 }
 
 /**
@@ -127,9 +112,6 @@ function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListR
     schema_version: overrides.schema_version ?? "studio.jobs.list.v2",
   };
 }
-/**
- * An event source that is driven by the cases rather than by a network.
- */
 
 /**
  * A device's capacity.
@@ -171,9 +153,6 @@ function resources(overrides: Partial<SynthResources> = {}): SynthResources {
  */
 function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
   return {
-/**
- * An event source that is driven by the cases rather than by a network.
- */
     capacity: overrides.capacity ?? capacity(),
     error: overrides.error,
     log_excerpt: overrides.log_excerpt ?? "synthesis complete",
@@ -188,9 +167,6 @@ function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
       pnr_tool: "nextpnr",
       provenance_grade: "tool_backed",
       schema_version: "studio.synthesis-target-provenance.v1",
-/**
- * An event source that is driven by the cases rather than by a network.
- */
       status: "completed",
       synthesis_command: "synth_ice40",
       synthesis_ready: true,
@@ -198,9 +174,6 @@ function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
       tools: [],
     },
     utilisation: overrides.utilisation ?? { luts: 0.01 },
-/**
- * An event source that is driven by the cases rather than by a network.
- */
   };
 }
 
@@ -300,6 +273,7 @@ describe("synthesis store state helpers", () => {
   it("builds single-target and multi-target start patches", () => {
     expect(synthesisRunStartState()).toEqual({
       activeTab: "synth",
+      busyWith: "FPGA synthesis",
       error: null,
       isSimulating: true,
       latestSynthesisJobId: null,
@@ -309,6 +283,7 @@ describe("synthesis store state helpers", () => {
     });
     expect(multiTargetSynthesisRunStartState()).toEqual({
       activeTab: "synth",
+      busyWith: "FPGA synthesis for every target",
       error: null,
       isSimulating: true,
       latestMultiTargetSynthesisJobId: null,

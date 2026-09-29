@@ -79,7 +79,7 @@ export const studioInitialData = {
   codeScript: "", codeOneliner: "", codeReplayScript: "", codeExperimentSha256: "",
   savedSessions: readStoredStudioSessions(),
   resultExperimentKey: null, analysisExperimentKey: null, trainingExperimentKey: null,
-  error: null, stageFailure: null, refusedEdit: null, isSimulating: false,
+  error: null, stageFailure: null, refusedEdit: null, isSimulating: false, busyWith: "",
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
 } satisfies StudioStateData;

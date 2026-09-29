@@ -21,6 +21,7 @@
  */
 
 import { at } from "./arrayAt";
+import { PANEL_TITLES } from "./capabilityShell";
 import type {
   BifurcationResponse,
   CompareResponse,
@@ -39,7 +40,8 @@ import { fullStateNames, fullStateTrace } from "./simulationRaw";
 /** An analysis has begun: the error clears, the run is marked in flight, and the tab moves if the caller named one. */
 export interface StudioAnalysisStartStatePatch {
   activeTab?: "bifurcation" | "compare" | "fi-curve" | "freq" | "heatmap" | "multi" |
-    "network" | "precision" | "sensitivity";
+    "network" | "phase" | "precision" | "sensitivity";
+  busyWith: string;
   error: null;
   isSimulating: true;
 }
@@ -159,6 +161,9 @@ export interface StudioSTAResultStatePatch {
 /**
  * Mark an analysis as begun.
  *
+ * The run is named by the view it fills; a run that moves to no view is the
+ * plain simulation.
+ *
  * @param activeTab - The tab to move to, or nothing to stay where the user is.
  * @returns The patch.
  */
@@ -166,8 +171,8 @@ export function studioAnalysisStartState(
   activeTab?: StudioAnalysisStartStatePatch["activeTab"],
 ): StudioAnalysisStartStatePatch {
   return activeTab === undefined
-    ? { error: null, isSimulating: true }
-    : { activeTab, error: null, isSimulating: true };
+    ? { busyWith: "Simulation", error: null, isSimulating: true }
+    : { activeTab, busyWith: PANEL_TITLES[activeTab], error: null, isSimulating: true };
 }
 
 /**
