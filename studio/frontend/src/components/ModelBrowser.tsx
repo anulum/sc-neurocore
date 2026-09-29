@@ -256,6 +256,21 @@ function FilterChip({
 }
 
 /** A model row's selecting button, drawn as the text it replaced. */
+/** The line holding a model's name and, when not available, its metadata state. */
+const MODEL_ROW_NAME = {
+    display: "flex",
+    alignItems: "baseline",
+    minWidth: 0,
+};
+
+/** A model's name, cut with an ellipsis rather than running under the badges. */
+const MODEL_ROW_NAME_TEXT = {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap" as const,
+    minWidth: 0,
+};
+
 const MODEL_ROW_BUTTON = {
     flex: 1,
     minWidth: 0,
@@ -661,10 +676,14 @@ export default function ModelBrowser() {
                                             className="model-row-select"
                                             aria-current={selected ? "true" : undefined}
                                             style={MODEL_ROW_BUTTON}
-                                            title={m.description || m.name}
+                                            title={m.description ? `${m.name}: ${m.description}` : m.name}
                                             onClick={() => { void selectModel(m.name); }}
                                         >
-                                            <span>{labels.get(m.name) ?? m.name}</span>
+                                            {/* Name and state on one line that ends in an ellipsis:
+                                                a long name ran on under the badges beside it. The
+                                                full name is in the button's title and accessible name. */}
+                                            <span style={MODEL_ROW_NAME}>
+                                            <span style={MODEL_ROW_NAME_TEXT}>{labels.get(m.name) ?? m.name}</span>
                                             {m.metadata_state !== "available" && (
                                                 <span
                                                     data-testid={`model-metadata-state-${m.name}`}
@@ -684,6 +703,7 @@ export default function ModelBrowser() {
                                                     [{m.metadata_state}]
                                                 </span>
                                             )}
+                                            </span>
                                             <span
                                                 data-testid={`model-contract-${m.name}`}
                                                 style={{
@@ -709,6 +729,8 @@ export default function ModelBrowser() {
                                                 display: "flex",
                                                 gap: 4,
                                                 alignItems: "center",
+                                                flexShrink: 0,
+                                                marginLeft: 6,
                                             }}
                                         >
                                             <DualAxisBadge

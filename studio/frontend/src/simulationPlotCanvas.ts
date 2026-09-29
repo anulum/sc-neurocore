@@ -73,6 +73,10 @@ export function niceStep(range: number, ticks: number): number {
  * @param yMin - The lowest value on the vertical axis.
  * @param yMax - The highest value on the vertical axis.
  * @param xLabel - A unit or name to print at the right of the horizontal axis.
+ * @param xTickLabels - Whether to number the horizontal gridlines. A panel
+ *   stacked above another shares the time axis numbered once at the bottom;
+ *   its own numbers fell into the gap and the last one stuck out beside the
+ *   next panel.
  */
 export function drawAxes(
   ctx: CanvasRenderingContext2D,
@@ -85,6 +89,7 @@ export function drawAxes(
   yMin: number,
   yMax: number,
   xLabel?: string,
+  xTickLabels = true,
 ): void {
   const xRange = xMax - xMin || 1;
   const yRange = yMax - yMin || 1;
@@ -121,8 +126,10 @@ export function drawAxes(
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y0 + ph);
     ctx.stroke();
-    ctx.fillStyle = PLOT_AXIS;
-    ctx.fillText(v.toFixed(xs < 1 ? 2 : 0), x, y0 + ph + 12);
+    if (xTickLabels) {
+      ctx.fillStyle = PLOT_AXIS;
+      ctx.fillText(v.toFixed(xs < 1 ? 2 : 0), x, y0 + ph + 12);
+    }
   }
   if (xLabel) {
     ctx.textAlign = "right";

@@ -22,6 +22,32 @@ import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
+/** Text size in the metric charts: the Studio's floor, which their 7–8 px labels were under. */
+const CHART_FONT_PX = 11;
+/** Advance of one legend character at {@link CHART_FONT_PX}, for placing entries without overlap. */
+const CHART_CHAR_PX = 6.6;
+
+/**
+ * Say what a metric chart shows, for a reader who cannot see it.
+ *
+ * @param data - The rows.
+ * @param xKey - Which key is the epoch.
+ * @param yKeys - The series.
+ * @returns One sentence per series: its first and last value and the epochs.
+ */
+export function metricChartDescription(data: Record<string, unknown>[], xKey: string, yKeys: string[]): string {
+  const epochs = data.map((d) => d[xKey] as number);
+  const parts = yKeys.map((key) => {
+    const values = data.map((d) => d[key] as number).filter((v) => Number.isFinite(v));
+    const first = values[0];
+    const last = values.at(-1);
+    return first === undefined || last === undefined
+      ? `${key.replace(/_/g, " ")}: no values`
+      : `${key.replace(/_/g, " ")} from ${first.toPrecision(4)} to ${last.toPrecision(4)}`;
+  });
+  return `${parts.join("; ")}, over epochs ${String(epochs[0] ?? "")}–${String(epochs.at(-1) ?? "")}.`;
+}
+
 /**
  * A small multi-series line chart for training metrics.
  *
@@ -47,48 +73,65 @@ function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
   const xMax = Math.max(...xVals);
   const xRange = xMax - xMin || 1;
 
-  const w = 320;
-  const pad = { top: 8, right: 8, bottom: 20, left: 40 };
+  const w = 340;
+  const pad = { top: 18, right: 10, bottom: 30, left: 52 };
   const pw = w - pad.left - pad.right;
   const ph = height - pad.top - pad.bottom;
 
   const toX = (v: number) => pad.left + ((v - xMin) / xRange) * pw;
   const toY = (v: number) => pad.top + (1 - (v - yMin) / yRange) * ph;
+  // Whole epochs only, at most six of them.
+  const epochStep = Math.max(1, Math.ceil(xRange / 5));
+  const epochTicks: number[] = [];
+  for (let e = Math.ceil(xMin); e <= xMax; e += epochStep) epochTicks.push(e);
+  let legendX = pad.left;
+  const legend = yKeys.map((key) => {
+    const label = key.replace(/_/g, " ");
+    const x = legendX;
+    legendX += 18 + label.length * CHART_CHAR_PX + 12;
+    return { key, label, x };
+  });
 
   return (
-    <svg width={w} height={height} style={{ display: "block" }}>
+    <svg width={w} height={height} role="img" aria-label={`${yLabel} by epoch: ${metricChartDescription(data, xKey, yKeys)}`}
+      style={{ display: "block", fontSize: CHART_FONT_PX }}>
       {/* Axes */}
       <line x1={pad.left} y1={pad.top} x2={pad.left} y2={pad.top + ph} stroke="var(--border)" strokeWidth={1} />
       <line x1={pad.left} y1={pad.top + ph} x2={pad.left + pw} y2={pad.top + ph} stroke="var(--border)" strokeWidth={1} />
-      <text x={2} y={pad.top + ph / 2} fill="var(--text-muted)" fontSize={8} textAnchor="start" transform={`rotate(-90, 8, ${pad.top + ph / 2})`}>{yLabel}</text>
-      <text x={pad.left + pw / 2} y={height - 2} fill="var(--text-muted)" fontSize={8} textAnchor="middle">epoch</text>
+      <text x={2} y={pad.top + ph / 2} fill="var(--text-muted)" fontSize={CHART_FONT_PX} textAnchor="middle" transform={`rotate(-90, 8, ${pad.top + ph / 2})`}>{yLabel}</text>
+      <text x={pad.left + pw / 2} y={height - 2} fill="var(--text-muted)" fontSize={CHART_FONT_PX} textAnchor="middle">epoch</text>
       {/* Y ticks */}
-      {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
+      {[0, 0.5, 1].map((frac) => {
         const val = yMin + frac * yRange;
         const y = toY(val);
         return (
           <g key={frac}>
             <line x1={pad.left - 3} y1={y} x2={pad.left} y2={y} stroke="var(--border)" />
-            <text x={pad.left - 5} y={y + 3} fill="var(--text-muted)" fontSize={7} textAnchor="end">
+            <text x={pad.left - 5} y={y + 4} fill="var(--text-muted)" fontSize={CHART_FONT_PX} textAnchor="end">
               {val < 1 ? val.toFixed(3) : val.toFixed(1)}
             </text>
           </g>
         );
       })}
+      {/* Epoch ticks */}
+      {epochTicks.map((e) => (
+        <g key={e}>
+          <line x1={toX(e)} y1={pad.top + ph} x2={toX(e)} y2={pad.top + ph + 3} stroke="var(--border)" />
+          <text x={toX(e)} y={pad.top + ph + 14} fill="var(--text-muted)" fontSize={CHART_FONT_PX} textAnchor="middle">{e}</text>
+        </g>
+      ))}
       {/* Lines */}
       {yKeys.map((key, ki) => {
-        const pts = data
-          .map((d) => ({ x: d[xKey] as number, y: d[key] as number }))
-          ;
+        const pts = data.map((d) => ({ x: d[xKey] as number, y: d[key] as number }));
         if (pts.length < 2) return null;
         const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${toX(p.x).toFixed(1)},${toY(p.y).toFixed(1)}`).join(" ");
         return <path key={key} d={path} fill="none" stroke={colors[ki]} strokeWidth={1.5} />;
       })}
-      {/* Legend */}
-      {yKeys.map((key, ki) => (
+      {/* Legend, each entry placed after the previous one's text */}
+      {legend.map(({ key, label, x }, ki) => (
         <g key={key}>
-          <line x1={pad.left + ki * 80} y1={2} x2={pad.left + ki * 80 + 12} y2={2} stroke={colors[ki]} strokeWidth={2} />
-          <text x={pad.left + ki * 80 + 15} y={6} fill="var(--text-secondary)" fontSize={8}>{key.replace(/_/g, " ")}</text>
+          <line x1={x} y1={7} x2={x + 12} y2={7} stroke={colors[ki]} strokeWidth={2} />
+          <text x={x + 16} y={11} fill="var(--text-secondary)" fontSize={CHART_FONT_PX}>{label}</text>
         </g>
       ))}
     </svg>
@@ -177,7 +220,7 @@ export function TrainingJobPicker({
           </option>
         ))}
       </select>
-      <button type="button" onClick={onRefresh} disabled={loading} style={{ fontSize: "var(--fs-body)" }}>
+      <button type="button" className="btn-simulate btn btn--ghost" onClick={onRefresh} disabled={loading}>
         {loading ? "Loading…" : "Refresh runs"}
       </button>
       {error !== null && <span role="alert" style={{ color: "#ff5252", fontSize: "var(--fs-body)" }}>{error}</span>}
@@ -559,7 +602,7 @@ export default function TrainingMonitor() {
         >
           Attach (warm-start)
         </button>
-        <button type="button"
+        <button type="button" className="btn-simulate btn btn--ghost"
           onClick={() => { void attachTrainingWeights("exact_resume"); }}
           disabled={trainingJobId === null || trainingStatus !== "completed" || !trainingInputReady}
           title="Continue the saved optimiser, random state and epoch position; keep the original input unchanged"

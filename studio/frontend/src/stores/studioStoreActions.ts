@@ -454,6 +454,17 @@ export function createStudioStoreActions(
   // arrives: it is read again until the record is terminal. The run list is
   // reloaded only then; reloading it on the event listed the finished run as
   // "running" until the reader pressed Refresh.
+  // The run list is a second record: it can still say "running" after the
+  // status route has turned terminal, so it is read until it agrees.
+  const listUntilTerminal = async (jobId: string, stillSelected: () => boolean): Promise<void> => {
+    for (let attempt = 0; attempt < TRAINING_VERDICT_READ_ATTEMPTS && stillSelected(); attempt += 1) {
+      await get().loadTrainingJobs();
+      const listed = get().trainingJobs.find((job) => job.job_id === jobId);
+      if (listed === undefined || isTrainingTerminalStatus(listed.status)) return;
+      await new Promise((resolve) => { setTimeout(resolve, TRAINING_VERDICT_READ_INTERVAL_MS); });
+    }
+  };
+
   const readSealedTrainingJob = async (
     jobId: string,
     stillSelected: () => boolean,
@@ -469,7 +480,7 @@ export function createStudioStoreActions(
               trainingConversionResult: readTrainingConversionResult(status.final_metrics),
             });
           }
-          void get().loadTrainingJobs();
+          await listUntilTerminal(jobId, stillSelected);
           return;
         }
         await new Promise((resolve) => { setTimeout(resolve, TRAINING_VERDICT_READ_INTERVAL_MS); });

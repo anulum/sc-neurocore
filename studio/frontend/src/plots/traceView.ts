@@ -39,6 +39,69 @@ export interface TraceZoom {
   xMax: number;
 }
 
+/** How many times wider or narrower a state may swing and still share the first state's axis. */
+export const SHARED_AXIS_SPAN_RATIO = 10;
+
+/** The states drawn on each of the trace's axes. */
+export interface TraceAxisGroups {
+  /** The first state and those on its scale. */
+  primary: string[];
+  /** States on a scale of their own, drawn in a second panel. */
+  secondary: string[];
+}
+
+/**
+ * Split a run's states between the first state's axis and a second one.
+ *
+ * Every state shared one axis, labelled mV: a conductance model's gating
+ * variables (0 to 1) lay flat along its zero line under a voltage swinging
+ * over 100 mV, and could not be read at all. A state whose range is more than
+ * {@link SHARED_AXIS_SPAN_RATIO} times wider or narrower than the first
+ * state's gets the second panel.
+ *
+ * @param states - The run's states, the first one first.
+ * @returns The two groups; `secondary` is empty when every state fits.
+ */
+export function traceAxisGroups(states: Record<string, readonly number[]>): TraceAxisGroups {
+  const names = Object.keys(states);
+  const span = (name: string): number => {
+    let lo = Infinity, hi = -Infinity;
+    for (const value of states[name] ?? []) {
+      if (Number.isFinite(value)) { if (value < lo) lo = value; if (value > hi) hi = value; }
+    }
+    return hi > lo ? hi - lo : 0;
+  };
+  const [first, ...rest] = names;
+  if (first === undefined) return { primary: [], secondary: [] };
+  const reference = span(first);
+  const primary = [first];
+  const secondary: string[] = [];
+  for (const name of rest) {
+    const own = span(name);
+    const apart = reference > 0 && own > 0
+      ? Math.max(own / reference, reference / own) > SHARED_AXIS_SPAN_RATIO
+      : reference > 0 !== own > 0;
+    (apart ? secondary : primary).push(name);
+  }
+  return { primary, secondary };
+}
+
+/**
+ * Label an axis with its states' declared unit, or with their names.
+ *
+ * The axis said mV for every model; no catalogue model declares its state
+ * units to the Studio yet, and a map model's state has none.
+ *
+ * @param names - The states on the axis.
+ * @param units - Each state's declared unit, empty when undeclared.
+ * @returns The label.
+ */
+export function traceAxisLabel(names: readonly string[], units: Readonly<Record<string, string>>): string {
+  const declared = new Set(names.map((name) => units[name] ?? ""));
+  const [only] = [...declared];
+  return declared.size === 1 && only !== undefined && only !== "" ? only : names.join(", ");
+}
+
 /** Everything the trace view needs beyond the run itself. */
 export interface TraceViewOptions {
   /** The time window to show. */
@@ -82,30 +145,53 @@ export function drawTraceView(
   const voltH = frame.height - frame.top - currentH - rasterH - gap * 2 - xLabelH;
   if (voltH < 30) return;
 
-  // Compute Y range
+  const groups = traceAxisGroups(result.states);
+  const units: Record<string, string> = {};
+  for (const variable of result.state_layout?.variables ?? []) units[variable.name] = variable.unit;
+  const secondH = groups.secondary.length > 0 ? Math.round(voltH * 0.35) : 0;
+  const firstH = groups.secondary.length > 0 ? voltH - secondH - gap : voltH;
+
+  /**
+   * Draw one panel of states on its own axis.
+   *
+   * @param names - The states.
+   * @param top - The panel's top edge.
+   * @param height - The panel's height.
+   */
+  const drawStatePanel = (names: readonly string[], top: number, height: number): void => {
+    let lo = Infinity, hi = -Infinity;
+    for (const name of names) {
+      for (const val of result.states[name] ?? []) {
+        if (isFinite(val)) { if (val < lo) lo = val; if (val > hi) hi = val; }
+      }
+    }
+    if (!(lo <= hi)) { lo = -1; hi = 1; }
+    const pad = (hi - lo) * 0.06 || 1;
+    lo -= pad; hi += pad;
+    drawAxes(ctx, frame.left, top, frame.plotWidth, height, zTMin, zTMax, lo, hi, undefined, false);
+    for (const name of names) {
+      drawLine(ctx, frame.left, top, frame.plotWidth, height, time, result.states[name] ?? [],
+        zTMin, zTMax, lo, hi, at(COLORS as readonly string[], vars.indexOf(name) % COLORS.length));
+    }
+    ctx.save();
+    ctx.translate(10, top + height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
+    ctx.fillText(traceAxisLabel(names, units), 0, 0);
+    ctx.restore();
+  };
+  drawStatePanel(groups.primary, frame.top, firstH);
+  if (groups.secondary.length > 0) drawStatePanel(groups.secondary, frame.top + firstH + gap, secondH);
+  // The imported trace is a voltage; it is compared on the first state's axis.
   let vMin = Infinity, vMax = -Infinity;
-  for (const v of vars) {
-    for (const val of result.states[v] ?? []) {
+  for (const name of groups.primary) {
+    for (const val of result.states[name] ?? []) {
       if (isFinite(val)) { if (val < vMin) vMin = val; if (val > vMax) vMax = val; }
     }
   }
   const vPad = (vMax - vMin) * 0.06 || 1;
   vMin -= vPad; vMax += vPad;
 
-  // Voltage plot
-  drawAxes(ctx, frame.left, frame.top, frame.plotWidth, voltH, zTMin, zTMax, vMin, vMax);
-  vars.forEach((v, i) => {
-    const trace = result.states[v] ?? [];
-    drawLine(ctx, frame.left, frame.top, frame.plotWidth, voltH, time, trace, zTMin, zTMax, vMin, vMax,
-      at(COLORS as readonly string[], i % COLORS.length));
-  });
-  // Y-axis label
-  ctx.save();
-  ctx.translate(10, frame.top + voltH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
-  ctx.fillText("mV", 0, 0);
-  ctx.restore();
   // Spike markers
   if (hasSpikes) {
     ctx.strokeStyle = "rgba(255,82,82,0.2)"; ctx.lineWidth = 1;
@@ -126,7 +212,7 @@ export function drawTraceView(
   // Imported trace overlay
   if (importedTrace) {
     ctx.setLineDash([4, 3]);
-    drawLine(ctx, frame.left, frame.top, frame.plotWidth, voltH, importedTrace.time, importedTrace.voltage,
+    drawLine(ctx, frame.left, frame.top, frame.plotWidth, firstH, importedTrace.time, importedTrace.voltage,
       zTMin, zTMax, vMin, vMax, "#ff9800", 1.5);
     ctx.setLineDash([]);
     ctx.fillStyle = "#ff9800"; ctx.font = "11px monospace"; ctx.textAlign = "left";
@@ -138,7 +224,7 @@ export function drawTraceView(
   const I = result.current_trace;
   let iMin = Math.min(...I), iMax = Math.max(...I);
   if (iMin === iMax) { iMin -= 1; iMax += 1; }
-  drawAxes(ctx, frame.left, curY, frame.plotWidth, currentH, zTMin, zTMax, iMin, iMax * 1.1);
+  drawAxes(ctx, frame.left, curY, frame.plotWidth, currentH, zTMin, zTMax, iMin, iMax * 1.1, undefined, false);
   drawLine(ctx, frame.left, curY, frame.plotWidth, currentH, time, I, zTMin, zTMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
   ctx.fillStyle = "#ffb74d"; ctx.font = "11px monospace"; ctx.textAlign = "left";
   // No catalogue model declares the unit of its drive (a conductance model
@@ -172,7 +258,9 @@ export function drawTraceView(
     const x = frame.left + ((v - zTMin) / (zTMax - zTMin || 1)) * frame.plotWidth;
     ctx.fillText(v.toFixed(0), x, frame.height - 2);
   }
-  ctx.textAlign = "right"; ctx.fillText("ms", frame.left + frame.plotWidth, frame.height - 2);
+  // The unit sits at the left end of the axis: at the right end the view's
+  // "Data table" button covered it.
+  ctx.textAlign = "right"; ctx.fillText("ms", frame.left - 4, frame.height - 2);
 
   // Crosshair
   if (crosshair !== null) {

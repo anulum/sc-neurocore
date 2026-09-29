@@ -74,3 +74,23 @@ test("at twice the zoom the page does not scroll sideways", async ({ page }) => 
   );
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test("no model name in the library runs under the badges beside it", async ({ page }) => {
+  await openWorkbench(page);
+  await expect(page.locator("button.model-row-select").first()).toBeVisible();
+  // Long names (ClosedFormContinuous, CompositionalBinding) used to run on
+  // under the tier badges; each name now ends in an ellipsis before them.
+  const overlapping = await page.evaluate(() => {
+    const found: string[] = [];
+    for (const button of document.querySelectorAll<HTMLElement>("button.model-row-select")) {
+      const name = button.firstElementChild;
+      const badges = button.nextElementSibling;
+      if (!name || !badges) continue;
+      const a = name.getBoundingClientRect();
+      const b = badges.getBoundingClientRect();
+      if (a.width > 0 && b.width > 0 && a.right > b.left + 0.5) found.push(name.textContent);
+    }
+    return found;
+  });
+  expect(overlapping).toEqual([]);
+});

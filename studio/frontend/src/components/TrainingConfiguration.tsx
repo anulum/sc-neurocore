@@ -89,7 +89,9 @@ export default function TrainingConfiguration({
           display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 6,
           fontSize: "var(--fs-body)",
         }}>
-          <label style={{ color: "var(--text-secondary)" }}>
+          {/* Model and dataset span two columns: their option texts are the
+              longest in the form and were cut to "Spiking networ". */}
+          <label style={{ color: "var(--text-secondary)", gridColumn: "span 2" }}>
             Model
             <select aria-label="Model" value={config.model_kind ?? "spiking"} onChange={(e) => { chooseKind(e.target.value); }}
               style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>
@@ -97,7 +99,7 @@ export default function TrainingConfiguration({
               <option value="qcfs_conversion">QCFS ANN, converted to IF</option>
             </select>
           </label>
-          <label style={{ color: "var(--text-secondary)" }}>
+          <label style={{ color: "var(--text-secondary)", gridColumn: "span 2" }}>
             Dataset
             <select aria-label="Dataset" value={config.dataset} onChange={(e) => { setDirtyInput(false); setConfig("event_data", undefined); setConfig("dataset", e.target.value); }}
               style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>

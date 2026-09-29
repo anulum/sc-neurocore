@@ -156,15 +156,20 @@ export default function FitPanel() {
         parameters generalise.
       </p>
 
-      <fieldset style={{ border: "1px solid var(--border)" }}>
+      {/* The observed variable is its own row: set inline after the radio
+          buttons it read as a third model choice. */}
+      <fieldset style={{ border: "1px solid var(--border)", display: "flex", gap: 16, flexWrap: "wrap" }}>
         <legend>Model</legend>
         <label><input type="radio" name="fit-source" checked={source === "catalogue"}
-          onChange={() => { setSource("catalogue"); }} /> Selected catalogue model ({selectedModelName || "none"})</label>{" "}
+          onChange={() => { setSource("catalogue"); }} /> Selected catalogue model ({selectedModelName || "none"})</label>
         <label><input type="radio" name="fit-source" checked={source === "candidate"}
-          onChange={() => { setSource("candidate"); }} /> Candidate draft</label>{" "}
-        <label htmlFor="fit-observable">Observed variable</label>{" "}
-        <input id="fit-observable" value={observable} onChange={(event) => { setObservable(event.target.value); }} style={{ width: 60 }} />
+          onChange={() => { setSource("candidate"); }} /> Candidate draft</label>
       </fieldset>
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <label htmlFor="fit-observable">Observed variable</label>
+        <input id="fit-observable" value={observable} onChange={(event) => { setObservable(event.target.value); }} style={{ width: 80 }} />
+        <span className="panel-note">the state the recordings' observed column is compared with</span>
+      </div>
 
       <table style={{ borderCollapse: "collapse" }}>
         <caption style={{ captionSide: "top", textAlign: "left" }}>Parameters to fit</caption>

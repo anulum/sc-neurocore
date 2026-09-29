@@ -18,7 +18,13 @@ import { describe, expect, it } from "vitest";
 import type { ImportedTrace, SimulateResponse } from "../api/client";
 import { drewNonFinite, mockPlotContext } from "./mockPlotContext";
 import { plotFrame } from "./plotFrame";
-import { CURRENT_PANEL_LABEL, drawTraceView, type TraceViewOptions } from "./traceView";
+import {
+  CURRENT_PANEL_LABEL,
+  drawTraceView,
+  traceAxisGroups,
+  traceAxisLabel,
+  type TraceViewOptions,
+} from "./traceView";
 
 const FRAME = plotFrame(400, 300);
 
@@ -52,10 +58,23 @@ describe("drawTraceView", () => {
     drawTraceView(recording.ctx, FRAME, run(), PLAIN);
 
     const labels = recording.texts.map((t) => t.text);
-    expect(labels).toContain("mV");
+    // No unit is declared for v, so the axis names the state, not mV.
+    expect(labels.filter((label) => label === "v")).toHaveLength(2);
+    expect(labels).not.toContain("mV");
     expect(labels).toContain("ms");
-    expect(labels).toContain("v");
     expect(drewNonFinite(recording)).toBe(false);
+  });
+
+  it("labels the axis with a unit the run declares", () => {
+    const recording = mockPlotContext();
+    const declared = {
+      ...run(),
+      state_layout: { variables: [{ name: "v", unit: "mV" }] },
+    } as unknown as SimulateResponse;
+
+    drawTraceView(recording.ctx, FRAME, declared, PLAIN);
+
+    expect(recording.texts.map((t) => t.text)).toContain("mV");
   });
 
   it("does not claim a unit for the drive that no model declares", () => {
@@ -141,5 +160,53 @@ describe("drawTraceView", () => {
 
     expect(recording.texts).toEqual([]);
     expect(recording.path).toEqual([]);
+  });
+});
+
+describe("traceAxisGroups", () => {
+  it("gives gating variables their own axis beside a voltage", () => {
+    // Hodgkin-Huxley: v swings over ~100 mV, the gates over at most 1.
+    const groups = traceAxisGroups({
+      v: [-75, 31, -65],
+      m: [0.02, 0.99, 0.05],
+      h: [0.07, 0.58, 0.6],
+      n: [0.33, 0.77, 0.32],
+    });
+    expect(groups).toEqual({ primary: ["v"], secondary: ["m", "h", "n"] });
+  });
+
+  it("keeps states of a comparable swing on one axis", () => {
+    expect(traceAxisGroups({ v: [-70, -50], v_d: [-72, -55] })).toEqual({ primary: ["v", "v_d"], secondary: [] });
+  });
+
+  it("splits off a state that never moves from one that does, and handles none", () => {
+    expect(traceAxisGroups({ v: [-70, -50], w: [0, 0] })).toEqual({ primary: ["v"], secondary: ["w"] });
+    expect(traceAxisGroups({})).toEqual({ primary: [], secondary: [] });
+  });
+});
+
+describe("traceAxisLabel", () => {
+  it("names the declared unit only when every state on the axis declares the same one", () => {
+    expect(traceAxisLabel(["v", "v_d"], { v: "mV", v_d: "mV" })).toBe("mV");
+    expect(traceAxisLabel(["h", "n"], { h: "", n: "" })).toBe("h, n");
+    expect(traceAxisLabel(["v", "w"], { v: "mV", w: "pA" })).toBe("v, w");
+  });
+});
+
+describe("drawTraceView with gating variables", () => {
+  it("draws two state panels and never claims mV for undeclared states", () => {
+    const recording = mockPlotContext();
+    const hh = {
+      ...run(),
+      states: { v: [-75, 31, -65, -70], m: [0.02, 0.99, 0.05, 0.03], h: [0.07, 0.58, 0.6, 0.6] },
+    } as SimulateResponse;
+
+    drawTraceView(recording.ctx, FRAME, hh, PLAIN);
+
+    const labels = recording.texts.map((t) => t.text);
+    expect(labels).toContain("v");
+    expect(labels).toContain("m, h");
+    expect(labels).not.toContain("mV");
+    expect(drewNonFinite(recording)).toBe(false);
   });
 });
