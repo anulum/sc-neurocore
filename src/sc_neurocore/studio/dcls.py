@@ -20,7 +20,6 @@ because the whole computation is exact integer Q8.8 arithmetic.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -36,16 +35,18 @@ from sc_neurocore.scpn.dcls_tent_kernel import (
 )
 
 
-def _julia_unsafe() -> bool:
-    """The juliacall bridge segfaults if torch was imported first.
-
-    The Studio loads torch through its neuron models, so a live Julia probe in
-    that process would crash (pytorch/pytorch#78829). When torch is present we
-    refuse to touch the Julia backend in-process; its bit-exact parity is instead
-    covered by the offline ``test_dcls_tent_kernel_parity`` suite.
-    """
-
-    return "torch" in sys.modules
+#: Backends the Studio server declares but never runs in its own process.
+#:
+#: Julia is one of them for two independent reasons. The juliacall bridge
+#: segfaults when torch was imported first, and the Studio loads torch through
+#: its neuron models (pytorch/pytorch#78829). And the server answers requests
+#: from a pool of threads, while JuliaCall work that compiles or reads a file
+#: only completes on the thread that initialised Julia: a Julia load issued from
+#: any other thread held the GIL and waited on that thread forever, so opening
+#: the Delays view froze the whole server, ``/api/health`` included (reproduced
+#: 2026-09-29 without torch loaded). Julia's bit-exact parity is covered by the
+#: offline ``test_dcls_tent_kernel_parity`` suite instead.
+IN_PROCESS_REFUSED_BACKENDS: frozenset[str] = frozenset({"julia"})
 
 
 def _probe_backend(name: str) -> bool:
@@ -66,8 +67,9 @@ def probe_backends() -> list[dict[str, Any]]:
     """Report each backend's in-process status without ever crashing.
 
     Each entry is ``{backend, available, live}``: ``live`` is ``False`` for a
-    backend we decline to run in this process (Julia under torch), in which case
-    ``available`` reflects its declared support rather than a live probe.
+    backend the server never runs in its own process
+    (:data:`IN_PROCESS_REFUSED_BACKENDS`), in which case ``available`` reflects
+    its declared support rather than a live probe.
     """
 
     status: list[dict[str, Any]] = []
@@ -75,7 +77,7 @@ def probe_backends() -> list[dict[str, Any]]:
         if name == "python":
             status.append({"backend": name, "available": True, "live": True})
             continue
-        if name == "julia" and _julia_unsafe():
+        if name in IN_PROCESS_REFUSED_BACKENDS:
             status.append({"backend": name, "available": True, "live": False})
             continue
         try:
@@ -225,7 +227,7 @@ def dcls_forward_parity(
             per_backend.append({"backend": name, "available": False, "live": True})
             continue
         if not probe["live"]:
-            # Declared-supported but not run in-process (Julia under torch);
+            # Declared-supported but never run in the server process (Julia);
             # its parity is asserted by the offline parity test suite.
             per_backend.append(
                 {"backend": name, "available": True, "live": False, "parity": "offline"}

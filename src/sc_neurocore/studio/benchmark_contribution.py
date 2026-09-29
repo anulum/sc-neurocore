@@ -95,8 +95,9 @@ def run_local_benchmark(
 
     Returns a fully-formed submission (schema ``scpn.benchmark.submission.v1``)
     that the caller may inspect and, opt-in, hand to :func:`store_contribution`.
-    Julia is skipped in-process (the torch/juliacall segfault) and reported as
-    parity-verified offline rather than timed live.
+    Julia is never run in the server process (see
+    :data:`sc_neurocore.studio.dcls.IN_PROCESS_REFUSED_BACKENDS`) and is reported
+    as parity-verified offline rather than timed live.
     """
 
     n_channels = max(16, min(8192, n_channels))

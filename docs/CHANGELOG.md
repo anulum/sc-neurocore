@@ -92,6 +92,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Opening the Studio's Delays view no longer freezes the whole server. The
+  view asks for the kernel information and the parity evaluation at once; in a
+  server process that had not yet loaded PyTorch both requests probed the Julia
+  backend from separate request threads, JuliaCall deadlocked, and no route
+  answered again, `/api/health` included. The Studio server now declares Julia
+  for the DCLS kernel but never runs it in its own process, as it already did
+  whenever PyTorch was loaded; the kernel's Julia parity stays covered by the
+  offline parity suite. A test sends the view's requests concurrently to a
+  fresh server process and requires every answer without JuliaCall loaded.
 - Public formal-verification counts now match the git-tracked `hdl/formal/`
   inventory everywhere (90 proof jobs, 447 statements: 296 assert, 115 assume,
   36 cover). The README diagram said 61 jobs; the formal-verification

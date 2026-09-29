@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
 import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.dcls import (
+    IN_PROCESS_REFUSED_BACKENDS,
     dcls_benchmark,
     dcls_forward_parity,
     dcls_kernel_info,
@@ -71,12 +78,58 @@ def test_forward_parity_is_bit_exact_across_live_backends() -> None:
     assert all(b["bit_exact"] for b in live)
 
 
-def test_julia_is_not_run_in_process_when_torch_is_loaded() -> None:
-    # The test suite imports torch, so the Julia probe must be skipped (no crash).
-    import torch  # noqa: F401
-
+def test_julia_is_declared_but_never_run_in_the_server_process() -> None:
+    assert frozenset({"julia"}) == IN_PROCESS_REFUSED_BACKENDS
     julia = next(b for b in probe_backends() if b["backend"] == "julia")
-    assert julia["live"] is False
+    assert julia == {"backend": "julia", "available": True, "live": False}
+
+
+_CONCURRENT_DELAY_REQUESTS = textwrap.dedent(
+    """
+    import faulthandler, os, sys
+    faulthandler.dump_traceback_later(150, exit=True)
+    from concurrent.futures import ThreadPoolExecutor
+    from starlette.testclient import TestClient
+    from sc_neurocore.studio.app import create_app
+
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    body = {"n_taps": 8, "centre_q88": 512, "sigma_q88": 768}
+    calls = [
+        lambda: client.get("/api/dcls/info"),
+        lambda: client.post("/api/dcls/evaluate", json=body),
+        lambda: client.post("/api/dcls/evaluate", json=body),
+        lambda: client.get("/api/dcls/info"),
+    ]
+    with ThreadPoolExecutor(len(calls)) as pool:
+        codes = [future.result() for future in [pool.submit(call) for call in calls]]
+    health = client.get("/api/health").status_code
+    print([response.status_code for response in codes], health, "juliacall" in sys.modules)
+    sys.stdout.flush()
+    os._exit(0)
+    """
+)
+
+
+def test_concurrent_delay_requests_answer_without_loading_julia(tmp_path: Path) -> None:
+    """The Delays view's parallel requests used to freeze the whole server.
+
+    Opening the view sends the kernel info and the parity evaluation at once.
+    Both probed Julia from separate request threads in a process without torch,
+    and the JuliaCall load deadlocked, so no route answered again. A fresh
+    process is used because that is where the freeze happened: nothing has
+    imported torch or JuliaCall yet.
+    """
+    env = {**os.environ, "SC_NEUROCORE_STUDIO_JOB_ROOT": str(tmp_path / "jobs")}
+    completed = subprocess.run(
+        [sys.executable, "-c", _CONCURRENT_DELAY_REQUESTS],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+        timeout=200,
+    )
+    assert completed.returncode == 0, completed.stderr[-4000:]
+    assert completed.stdout.strip().splitlines()[-1] == "[200, 200, 200, 200] 200 False"
 
 
 def test_forward_parity_validates_input() -> None:
