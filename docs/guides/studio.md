@@ -68,7 +68,7 @@ badges.
 
 When a model has a canonical bundled schema, the sidebar also exposes its
 schema-declared, compiler-supported integrator choices and supported signed
-Q-formats. **RTL** compiles the current selected model, parameter overrides,
+Q-formats. **Generate RTL** compiles the current selected model, parameter overrides,
 timestep, integrator and Q-format through the isolated schema-backed compiler
 job. The response includes
 `studio.compile-traceability.v1` provenance with the exact model/schema and
@@ -161,7 +161,7 @@ and states its value for assistive technology.
 
 ### Characterisation Dashboard
 
-Click **Char.** to run a one-click analysis that produces:
+Click **Characterize** to run a one-click analysis that produces:
 
 - Firing pattern classification
 - Threshold current (rheobase estimate)
@@ -201,9 +201,10 @@ Four injection protocols for all simulations:
 ## Interactive Features
 
 - **Auto-simulate**: simulation reruns 250ms after any slider change
-- **Keyboard shortcuts**: Space=run, 1-5=switch tabs, ?=help overlay
+- **Keyboard shortcuts**: Space=run, 1-5=switch between the first analysis
+  views, arrow keys/Home/End=move within the view switcher, ?=help overlay
 - **Session save/load**: save named sessions to localStorage
-- **Shareable URLs**: state encoded in URL hash (click Share)
+- **Shareable URLs**: state encoded in URL hash (click **Share link**)
 - **10 preset experiments**: threshold exploration, adaptation, bursting, chaos,
   hardware comparison, and more
 - **CSV export**: download the full-resolution raw traces at their post-step

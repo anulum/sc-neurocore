@@ -44,7 +44,7 @@ test("admin audit archive controls create, review, and purge archives", async ({
   const api = await installApiDispatcher(page, mocks);
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("tab", { name: "Admin", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Audit archive" })).toBeVisible();
   await expect(page.getByText("No archive retention inventory loaded")).toBeVisible();

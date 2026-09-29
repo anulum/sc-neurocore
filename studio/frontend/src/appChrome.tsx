@@ -17,105 +17,46 @@
 import type { PanelCapabilityState } from "./capabilityShell";
 
 /**
- * Pick a button's background, falling back to the accent colour.
+ * One action button, in one of three weights.
  *
- * A function rather than an inline `||` so the reason has somewhere to live:
- * callers pass `""` for "no particular colour", and `??` would render a button
- * with no background at all.
+ * The primary weight (filled with the accent) is for the one action a view is
+ * built around, such as running the simulation; the outline weight is for the
+ * other actions that compute something; the ghost weight is for import,
+ * export and reset. The header used to paint every action its own colour,
+ * which made eleven equally loud buttons with no order among them.
  *
- * @param colour - The colour the caller asked for, if any.
- * @returns The colour to paint.
- */
-function presentColour(colour: string | undefined): string {
-  return colour !== undefined && colour.length > 0 ? colour : "var(--accent)";
-}
-
-/**
- * One tab in the Studio's panel bar.
- *
- * @param props - The tab's label, its colour when active, whether it is
- *   active, whether it is disabled, its title, and what to do when it is
- *   clicked.
- * @returns The tab button.
- */
-export function Tab({
-  active,
-  color,
-  label,
-  onClick,
-  disabled,
-  title,
-}: {
-  active: boolean;
-  color: string;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  title?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      style={{
-        padding: "2px 6px",
-        fontSize: "var(--fs-meta)",
-        fontWeight: 600,
-        fontFamily: "var(--font-ui)",
-        lineHeight: 1.4,
-        background: active ? color : "transparent",
-        color: active ? "var(--bg-primary)" : disabled ? "var(--text-muted)" : "var(--text-secondary)",
-        border: "1px solid var(--control-border)",
-        cursor: disabled ? "not-allowed" : "pointer",
-        whiteSpace: "nowrap",
-        opacity: disabled ? 0.45 : 1,
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
-/**
- * One small action button.
- *
- * @param props - The button's label, what to do when it is clicked, and its
- *   optional colour, outline, title, disabled state and test handle.
+ * @param props - The button's label, what to do when it is clicked, its
+ *   weight (`outline` or `ghost`, primary otherwise), and its optional title,
+ *   disabled state and test handle.
  * @returns The button.
  */
 export function Btn({
   label,
   onClick,
   disabled,
-  color,
   outline,
+  ghost,
   title,
   testId,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  color?: string;
   outline?: boolean;
+  ghost?: boolean;
   title?: string;
   /** Stable handle for browser tests; several buttons share a label. */
   testId?: string;
 }) {
+  const weight = ghost === true ? "btn--ghost" : outline === true ? "btn--outline" : "btn--primary";
   return (
     <button
-      className="btn-simulate"
+      type="button"
+      className={`btn-simulate btn ${weight}`}
       onClick={onClick}
       disabled={disabled}
       title={title}
       data-testid={testId}
-      style={{
-        background: outline ? "transparent" : presentColour(color),
-        border: outline ? "1px solid var(--control-border)" : "none",
-        color: outline ? "var(--text-muted)" : "var(--bg-primary)",
-        padding: "2px 7px",
-        fontSize: "var(--fs-body)",
-      }}
     >
       {label}
     </button>

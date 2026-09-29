@@ -80,7 +80,7 @@ process, so a replay on the same versions reproduces the digest.
 
 ## In the Studio
 
-The **Fit** tab fits either the selected catalogue model's canonical schema or
+The **Fitting** view fits either the selected catalogue model's canonical schema or
 the workspace's candidate draft. Parameters to fit are typed by name with
 their bounds and scale — the names are the schema's, which can differ from the
 catalogue class's constructor arguments, and an unknown name is refused with

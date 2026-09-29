@@ -11,10 +11,10 @@ for review before downstream synthesis or hardware validation.
 ## Quick Start
 
 1. Switch to **ODE mode** and enter your equations
-2. Click **IR** to build the stochastic computing IR graph
+2. Click **Build IR** to build the stochastic computing IR graph
 3. The left pane shows the IR text; the right pane shows SystemVerilog
 4. A green/red badge indicates verification status
-5. Click **SV** for direct equation-to-Verilog via the Python compiler
+5. Click **Emit SystemVerilog** for direct equation-to-Verilog via the Python compiler
 6. Inspect the source-to-RTL traceability strip for the source digest,
    RTL digest, module name, and compile evidence class
 

@@ -34,7 +34,7 @@ test("admin evidence bundle form submits simulation and analysis result payloads
   const api = await installApiDispatcher(page, mocks);
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("tab", { name: "Admin", exact: true }).click();
 
   const simulationPayload = {
     dt: 0.1,
@@ -143,7 +143,7 @@ test("admin job rows can seed evidence bundle job IDs", async ({ page }) => {
   const api = await installApiDispatcher(page, mocks);
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("tab", { name: "Admin", exact: true }).click();
 
   await expect(page.getByText("compiler - sj_artifact")).toBeVisible();
   await expect(page.getByText("2 artifacts - 1 evidence")).toBeVisible();

@@ -25,7 +25,7 @@ These resources let an installed Studio resolve experiments and serve model
 documentation without a neighbouring source checkout. Their presence does not
 certify scientific or hardware readiness, which still requires matching evidence.
 
-`POST /api/codegen`, or the **Code** button, returns:
+`POST /api/codegen`, or the **Generate code** button, returns:
 
 | Field | What it is |
 |---|---|

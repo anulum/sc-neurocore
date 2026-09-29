@@ -92,6 +92,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Studio header is navigable. It carried one wrapping row of about forty
+  controls: abbreviated view buttons ("Bif", "Sens", "2D", "Char") with
+  nothing saying which view was showing, four views repeated as buttons with
+  the same names ("Canvas", "Train", "Admin", "Freq"), sweep selects whose
+  only name was a capability tooltip, and an analysis control that showed raw
+  refusal identifiers such as `analysis_selection_heatmap_param_x_blank`. The
+  header now has three rows: identity and source; actions in named groups
+  (Simulate, Analyse, sweep parameters, Code and hardware, Import and export)
+  with verb names and three visual weights; and a view switcher that is a real
+  `tablist` with full names in five groups (Neuron, Network, Code and
+  hardware, Research, Operator), the selected view announced and underlined,
+  arrow keys, Home and End moving between views, and the view area as its
+  `tabpanel` and the page's `main` landmark. RTL and FPGA synthesis are listed
+  in both source modes, because both can be opened from either. A refused
+  analysis request is explained in a sentence, with the identifier kept as
+  `data-error-code`. On a phone-width screen the page scrolls as a whole
+  instead of the header covering most of it, the page title is no longer
+  removed from the accessibility tree, and the view switcher no longer
+  overhangs the page at 200 % zoom.
+- The mocked browser run (`npm run test:e2e`, run in CI) no longer includes the
+  three live training specs added with the train-to-hardware chain; they need
+  a real backend and failed there on every run. A unit test now requires every
+  live spec to be excluded from the mocked run and matched by a live config.
 - The Studio's text is readable. Measured in a real browser on 2026-09-29,
   most of its text was set at 8 to 10 pixels; the Studio now has a type scale
   whose floor is 11 pixels for dense metadata and 12 for body text, including

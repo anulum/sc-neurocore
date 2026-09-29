@@ -11,10 +11,12 @@ import { useState, useEffect } from "react";
 const SHORTCUTS = [
   ["Space", "Run simulation"],
   ["1", "Trace view"],
-  ["2", "Phase portrait"],
+  ["2", "Phase plane"],
   ["3", "f-I curve"],
   ["4", "Bifurcation"],
   ["5", "Sensitivity"],
+  ["← →", "Previous / next view (in the view switcher)"],
+  ["Home End", "First / last view (in the view switcher)"],
   ["Scroll", "Zoom trace (time axis)"],
   ["Drag", "Pan trace"],
   ["Dbl-click", "Reset zoom"],

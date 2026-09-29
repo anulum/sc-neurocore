@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 
 test("a conversion run is judged on its converted network and says so", async ({ page }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "Train", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Training" }).click();
   await page.getByLabel("Model", { exact: true }).selectOption("qcfs_conversion");
   await expect(page.getByLabel("Surrogate", { exact: true })).toHaveCount(0);
   await page.getByLabel("Epochs", { exact: true }).fill("1");

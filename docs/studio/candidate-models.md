@@ -2,7 +2,7 @@
 
 A **candidate** is a proposed neuron model: one model written in the
 Universal DSL (`sc_neurocore.neurons.universal_dsl`) together with everything a reviewer
-needs to judge it. The Studio's **Candidate** tab imports, edits, validates,
+needs to judge it. The Studio's **Candidate model** view imports, edits, validates,
 diffs, simulates and reviews candidates, and exports both the candidate and a
 review packet.
 

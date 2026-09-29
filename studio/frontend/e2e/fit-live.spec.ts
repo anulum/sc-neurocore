@@ -29,9 +29,9 @@ test.beforeEach(async ({ page }) => {
 /** Import the candidate, open the fit panel and load the cohort, one held out. */
 async function prepare(page: Page): Promise<void> {
   await page.goto("./");
-  await page.getByRole("button", { name: "Candidate", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Candidate model" }).click();
   await page.getByLabel("Import candidate package file").setInputFiles(fixture("LeakyIntegratorToFit.candidate.json"));
-  await page.getByRole("button", { name: "Fit", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Fitting" }).click();
   await page.getByLabel("Candidate draft").check();
   await page.getByLabel("Recordings (CSV: current,observed per step)").setInputFiles([
     fixture("step-plus-5.csv"),
@@ -96,7 +96,7 @@ test("resistance and capacitance, seen only as a ratio, are reported unconstrain
 
 test("a full shared-noise cohort runs, exports, replays and recovers after reload", async ({ page }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "Fit", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Fitting" }).click();
   await page.getByLabel("Import experiment cohort JSON").setInputFiles(fixture("SharedSampleCohort.json"));
   await page.getByRole("button", { name: "Run cohort", exact: true }).click();
   const table = page.getByRole("table", { name: "Complete sweep trials" });
@@ -112,7 +112,7 @@ test("a full shared-noise cohort runs, exports, replays and recovers after reloa
   await page.getByRole("button", { name: "Replay full cohort", exact: true }).click();
   await expect(page.getByRole("status", { name: "Cohort status" })).toContainText("Cohort replay reproduced the full result.");
   await page.reload();
-  await page.getByRole("button", { name: "Fit", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Fitting" }).click();
   await expect(table).toBeVisible();
   await expect(table.getByRole("row")).toHaveCount(5);
   await page.getByLabel("Import measurement receipts JSON").setInputFiles({ name: "empty-receipts.json", mimeType: "application/json", buffer: Buffer.from("[]") });

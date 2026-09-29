@@ -11,7 +11,7 @@ Physical deployment requires separate board validation.
 
 ## Share links
 
-**Share** copies a link carrying the selected model, the current, the duration
+**Share link** copies a link carrying the selected model, the current, the duration
 and the protocol. Opening it applies them: the Studio waits for the catalogue,
 then selects the model the link names.
 
@@ -764,7 +764,7 @@ new code is documented by default instead of adding to the backlog.
 
 ### Equation Editor & Model Browser
 
-Browse 179 runtime catalogue entries by category (integrate-and-fire, biophysical,
+Browse <!-- count:studio_catalogue_models -->185<!-- /count --> catalogue models by category (integrate-and-fire, biophysical,
 stochastic, hardware emulators, AI-optimised). Select a model and
 adjust parameters with sliders — the trace view updates live.
 
@@ -782,30 +782,42 @@ The Monaco editor provides SC-NeuroCore-specific syntax highlighting:
 - **Purple:** directives (`threshold`, `reset`)
 - **Green:** comments (`# ...`)
 
-### 18+ Analysis Views
+### Views
 
-| View | Description |
-|------|-------------|
-| Trace | Membrane voltage + spike raster + current protocol |
-| Phase | Phase portrait with nullclines (2D ODE) |
-| ISI | Inter-spike interval histogram |
-| f-I | Firing rate vs. injected current curve |
-| Bifurcation | Parameter sweep → attractor diagram |
-| 2D Heatmap | Two-parameter sweep → firing rate heatmap |
-| Sensitivity | One-at-a-time parameter sensitivity |
-| STA | Spike-triggered average |
-| Frequency | Frequency response (sinusoidal input) |
-| Characterise | One-click dashboard: pattern + f-I + sensitivities |
-| Multi-model | Overlay up to 4 models for comparison |
-| A/B Compare | Side-by-side model comparison |
-| E-I Network | Balanced excitatory-inhibitory network raster + rates |
-| Code | Python script generator + clipboard one-liner |
-| Q8.8 | Float vs. fixed-point co-simulation diff |
-| RTL | Equation → Verilog compiler output |
-| IR | SC Intermediate Representation viewer |
-| FPGA | Synthesis resource bars |
-| Train | Live training monitor |
-| Canvas | Network graph editor |
+The view switcher under the header groups every view by what it is for. Only
+the selected view is in the Tab order; the arrow keys, Home and End move
+between views, and a view that cannot run in this deployment is shown
+disabled with the reason as its tooltip. The action that computes a view
+(for example **Characterize** or **Measure frequency response**) sits in the
+action row above it and opens its view when it finishes.
+
+| Group | View | Description |
+|-------|------|-------------|
+| Neuron | Trace | Membrane voltage + spike raster + current protocol |
+| Neuron | Phase plane | Phase portrait with nullclines (shown when the run has two or more state variables) |
+| Neuron | ISI | Inter-spike interval histogram (shown when the run produced one) |
+| Neuron | f-I curve | Firing rate vs. injected current curve |
+| Neuron | Bifurcation | Parameter sweep → attractor diagram (choose **Sweep X**) |
+| Neuron | 2-D sweep | Two-parameter sweep → firing rate heatmap (choose **Sweep X** and **Sweep Y**) |
+| Neuron | Sensitivity | One-at-a-time parameter sensitivity |
+| Neuron | STA | Spike-triggered average |
+| Neuron | Frequency response | Frequency response (sinusoidal input) |
+| Neuron | Characterization | One-click dashboard: pattern + f-I + sensitivities (catalogue models) |
+| Neuron | Multi-model | Overlay up to 4 models for comparison |
+| Neuron | A/B compare | Side-by-side model comparison |
+| Network | E-I network | Balanced excitatory-inhibitory network raster + rates |
+| Network | Synaptic delays | DCLS-max learnable-delay tent kernel and backend parity |
+| Network | Network canvas | Network graph editor |
+| Code and hardware | Python code | Python script generator + clipboard one-liner |
+| Code and hardware | Q8.8 precision | Float vs. fixed-point co-simulation diff (equations) |
+| Code and hardware | IR | SC Intermediate Representation viewer (equations) |
+| Code and hardware | RTL | Equation → Verilog compiler output |
+| Code and hardware | FPGA synthesis | Synthesis resource bars |
+| Research | Candidate model | Import, edit and validate a candidate model |
+| Research | Fitting | Parameter fitting with held-out validation |
+| Research | Training | Live training monitor |
+| Research | Review | Comments bound to a saved project revision |
+| Operator | Admin | Operator status, identity and audit |
 
 ### Data Export
 

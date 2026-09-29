@@ -66,8 +66,7 @@ test("unavailable panel contracts disable toolbar and keyboard activation", asyn
 
   await page.goto("/");
 
-  await expect(page.getByRole("button", { name: "f-I" }).first()).toBeDisabled();
-  await expect(page.getByRole("button", { name: "f-I" }).last()).toBeDisabled();
+  await expect(page.getByRole("tab", { name: "f-I curve" })).toBeDisabled();
 
   await page.keyboard.press("3");
 

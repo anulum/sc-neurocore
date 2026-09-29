@@ -143,7 +143,7 @@ test("project evidence strip ignores admin bundle artifacts", async ({ page }) =
     await dialog.accept("saved-network");
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("tab", { name: "Admin", exact: true }).click();
   await page.getByRole("button", { name: "Create evidence bundle" }).click();
   await expect(page.getByText("seb_admin")).toBeVisible();
   await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);

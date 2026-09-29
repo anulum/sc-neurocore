@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
  */
 async function trainWithCriterion(page: Page, metric: "val_accuracy" | "val_loss", threshold: string): Promise<string> {
   await page.goto("./");
-  await page.getByRole("button", { name: "Train", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Training" }).click();
   await page.getByLabel("Epochs", { exact: true }).fill("1");
   await page.getByLabel("Batch Size", { exact: true }).fill("32");
   await page.getByLabel("Timesteps", { exact: true }).fill("4");
@@ -63,7 +63,7 @@ test("a missed criterion is reported as missed and survives selecting the retain
   const verdict = page.getByRole("status", { name: "Preregistered verdict" });
   await expect(verdict).toContainText("Criterion missed: validation loss ≤ 0, observed");
   await page.reload();
-  await page.getByRole("button", { name: "Train", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Training" }).click();
   await page.getByRole("button", { name: "Refresh runs", exact: true }).click();
   await page.getByLabel("Retained run", { exact: true }).selectOption(jobId);
   await expect(page.getByRole("status", { name: "Preregistered verdict" }))

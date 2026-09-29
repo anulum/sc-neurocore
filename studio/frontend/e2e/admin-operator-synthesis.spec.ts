@@ -319,8 +319,8 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
 
   await page.goto("/");
   await page.getByRole("button", { name: "ODE", exact: true }).click();
-  await page.getByRole("button", { name: "SV", exact: true }).click();
-  await expect(page.getByText("SystemVerilog")).toBeVisible();
+  await page.getByRole("button", { name: "Emit SystemVerilog" }).click();
+  await expect(page.getByText("SystemVerilog", { exact: true })).toBeVisible();
   await expect(page.getByText("trace 333333333333")).toBeVisible();
   await page.getByRole("button", { name: "Export compile evidence bundle" }).click();
   await expect(page.getByText("bundle seb_compile")).toBeVisible();
@@ -349,7 +349,7 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
     authorization: "Bearer browser-token",
   });
 
-  await page.getByRole("button", { name: "FPGA" }).first().click();
+  await page.getByRole("tab", { name: "FPGA synthesis" }).click();
   await page.getByRole("button", { name: "All Targets" }).click();
 
   await expect(page.getByText("Target provenance matrix")).toBeVisible();

@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
 /** Open the Studio on the candidate panel. */
 async function openCandidate(page: Page): Promise<void> {
   await page.goto("./");
-  await page.getByRole("button", { name: "Candidate", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Candidate model" }).click();
   await expect(page.getByRole("region", { name: "Candidate model" })).toBeVisible();
 }
 

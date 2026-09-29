@@ -144,10 +144,12 @@ describe("AnalysisJobControl render", () => {
     })).toBe(true);
   });
 
-  it("disables submit and shows exact policy error for invalid request", () => {
+  it("disables submit and says in words why an invalid request is refused", () => {
     const html = renderControl({ request: invalidRequest });
     expect(html).toContain("data-testid=\"analysis-job-control-request-error\"");
-    expect(html).toContain("analysis_request_dt_invalid");
+    // The identifier stays the machine-readable contract; the reader gets the sentence.
+    expect(html).toContain("data-error-code=\"analysis_request_dt_invalid\"");
+    expect(html).toContain(">The time step must be a positive, finite number.<");
     expect(html).toContain("disabled");
     expect(isAnalysisJobControlSubmitEnabled({
       busy: false,

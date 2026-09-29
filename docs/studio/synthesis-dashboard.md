@@ -10,9 +10,9 @@ physical board deployment needs separate validation.
 ## Quick Start
 
 1. Write your ODE in the Equation Editor (switch to ODE mode)
-2. Click **IR** to build the intermediate representation
-3. Click **SV** to emit SystemVerilog
-4. Switch to the **FPGA** tab
+2. Click **Build IR** to build the intermediate representation
+3. Click **Emit SystemVerilog** to emit SystemVerilog
+4. Open the **FPGA synthesis** view
 5. Select your target FPGA (ice40, ECP5, Gowin, Xilinx)
 6. Click **Synthesise** for exact Yosys results, or **Estimate** for a quick heuristic
 
@@ -55,7 +55,7 @@ This gives a rough sizing before committing to a full synthesis run.
 ODE equation
   → [IR button] SC Intermediate Representation
   → [SV button] SystemVerilog
-  → [FPGA tab → Synthesise + Route] Yosys resource report
+  → [FPGA synthesis view → Synthesise + Route] Yosys resource report
   → [same isolated job] nextpnr routed-design and timing report (ice40/ECP5 only)
 ```
 

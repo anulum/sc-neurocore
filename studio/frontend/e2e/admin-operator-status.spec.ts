@@ -35,7 +35,7 @@ test("admin panel renders aggregate operator status", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByText("1/1 ready")).toBeVisible();
-  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("tab", { name: "Admin", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Operator" })).toBeVisible();
   const operatorSection = page.locator("section.admin-section").filter({
@@ -124,7 +124,7 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   );
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("tab", { name: "Admin", exact: true }).click();
 
   await page.getByRole("button", { name: "Refresh operator status" }).click();
   const operatorSection = page.locator("section.admin-section").filter({

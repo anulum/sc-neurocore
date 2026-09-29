@@ -106,7 +106,7 @@ optimized, report = optimize(graph)  # runs all by default
 # 2. Validate → collect firing rates via SpikeMonitor
 # 3. Build SNNGraph from trained weights + rates
 # 4. Run optimizer passes
-# 5. Export optimised weights to FPGA tab
+# 5. Export optimised weights to the FPGA synthesis view
 # 6. Synthesise → see resource reduction
 
 # The Pipeline button on Canvas can include optimisation automatically

@@ -214,7 +214,7 @@ export = net.export_quantized()                # per-layer LSQ codes + input sca
 In the Visual SNN Studio:
 
 1. Train your network in the Training Monitor (float32)
-2. Switch to the FPGA tab
+2. Open the FPGA synthesis view
 3. Select target bit-width (8, 4, 2, or 1)
 4. The Studio applies QAT-style quantisation and shows the accuracy
    impact before synthesis

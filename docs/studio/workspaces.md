@@ -181,7 +181,7 @@ revisions; comments are never rewritten.
 checked against its revision as it is read: `revision_status` is `matches`,
 `changed` when the revision's state no longer has the digest it was reviewed
 at, or `missing` when the revision is gone — so a comment is never shown as if
-it applied to something else. The **Review** tab shows the comments on the
+it applied to something else. The **Review** view shows the comments on the
 revision the editor opened or last saved, threads replies under the comment
 they answer, and adds comments and replies.
 

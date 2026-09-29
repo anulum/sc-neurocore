@@ -284,14 +284,14 @@ test("App mounts analysis-job-host and completes async fi_curve job", async ({ p
   await expect(host).toHaveAttribute("title", /.+/);
 
   // Kind follows active tab — open sensitivity tab before submit.
-  await page.getByRole("button", { name: "Sens", exact: true }).click();
+  await page.getByRole("tab", { name: "Sensitivity" }).click();
   await expect(page.getByTestId("analysis-job-control-selection")).toContainText(
     "sensitivity",
     { timeout: 5_000 },
   );
 
-  // Return to f-I tab (label "f-I" on tab strip).
-  await page.getByRole("button", { name: "f-I", exact: true }).click();
+  // Return to the f-I curve tab.
+  await page.getByRole("tab", { name: "f-I curve" }).click();
   await expect(page.getByTestId("analysis-job-control-selection")).toContainText("f-I");
 
   const submit = page.getByTestId("analysis-job-control-submit");

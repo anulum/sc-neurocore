@@ -571,6 +571,160 @@ body {
 
 .header-spacer { flex: 1; }
 
+/*
+ * Header: three rows. The first says what this is and where the experiment
+ * comes from; the second holds the actions, in named groups; the third is the
+ * view switcher. The single wrapping row it replaced mixed the three.
+ */
+.header {
+  --header-pad-x: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px var(--header-pad-x) 0;
+}
+
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.header-actions { gap: 6px 0; }
+
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.header-actions > .toolbar-group:first-child { padding-left: 0; }
+
+.header-actions > .toolbar-group + .toolbar-group { border-left: 1px solid var(--border); }
+
+.toolbar-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.toolbar-field select {
+  font-size: var(--fs-body);
+  padding: 3px 6px;
+  max-width: 150px;
+}
+
+.header-stats[data-pattern] { color: var(--accent); }
+.header-stats[data-pattern="tonic"] { color: var(--success); }
+.header-stats[data-pattern="bursting"] { color: var(--warning); }
+.header-stats[data-pattern="silent"] { color: var(--text-muted); }
+
+/* Source switch: two options, one pressed. */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.segmented-option {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 0;
+  padding: 4px 12px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented-option + .segmented-option { border-left: 1px solid var(--control-border); }
+.segmented-option[aria-pressed="true"] { background: var(--accent); color: var(--bg-primary); }
+.segmented-option:hover:not([aria-pressed="true"]) { background: var(--bg-tertiary); color: var(--text-primary); }
+
+/* Buttons in three weights; see Btn in appChrome.tsx. */
+.btn-simulate.btn {
+  padding: 4px 10px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 1.3;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.btn-simulate.btn--primary { background: var(--accent); color: var(--bg-primary); border: 1px solid var(--accent); }
+.btn-simulate.btn--outline { background: transparent; color: var(--accent); border: 1px solid var(--control-border); }
+.btn-simulate.btn--ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--control-border); font-weight: 500; }
+.btn-simulate.btn--outline:hover:not(:disabled),
+.btn-simulate.btn--ghost:hover:not(:disabled) { background: var(--bg-tertiary); border-color: var(--accent); opacity: 1; }
+.btn-simulate.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* View switcher: grouped tabs, the selected one underlined in the accent. */
+/* Full-bleed divider: the negative margin follows the header's own padding,
+   so the switcher never overhangs the page when that padding shrinks. */
+.view-tabs {
+  margin: 0 calc(-1 * var(--header-pad-x));
+  padding: 0 var(--header-pad-x);
+  border-top: 1px solid var(--border);
+}
+
+.view-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 18px;
+}
+
+.view-tabs-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 2px;
+}
+
+.view-tabs-group-label {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-right: 4px;
+}
+
+.view-tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  padding: 7px 8px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-tab:hover:not(:disabled) { color: var(--text-primary); background: var(--bg-tertiary); }
+.view-tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.view-tab:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* The analysis-job control sits in the action row: one line, body size. */
+.analysis-job-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.analysis-job-control .panel-header { margin: 0; }
+.analysis-job-control [role="alert"] { color: var(--error); }
+
 .header-stats {
   font-size: 12px;
   color: var(--text-secondary);
@@ -1070,9 +1224,22 @@ input[type="range"]::-moz-range-thumb {
 
 /* Mobile: stacked layout */
 @media (max-width: 768px) {
+  /* The page scrolls as a whole: the header and its action rows scroll away
+     and the view keeps a usable height, instead of a fixed-height page in
+     which the header took most of a phone screen and squeezed the plot. */
   .studio {
     grid-template-rows: auto auto 1fr;
+    height: auto;
+    min-height: 100vh;
   }
+  .main-content {
+    overflow: visible;
+  }
+  .header-actions { gap: 6px 8px; }
+  .header-actions > .toolbar-group,
+  .header-actions > .toolbar-group:first-child { padding: 0; }
+  .header-actions > .toolbar-group + .toolbar-group { border-left: 0; }
+  .header-actions > .header-spacer { display: none; }
   .main-content {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
@@ -1084,10 +1251,11 @@ input[type="range"]::-moz-range-thumb {
     overflow-y: auto;
   }
   .right-panel {
-    min-height: 50vh;
+    min-height: 70vh;
   }
   .header {
-    padding: 6px 8px;
+    --header-pad-x: 8px;
+    padding: 6px var(--header-pad-x) 0;
     gap: 4px;
   }
   .header-logo h1 {
@@ -1131,8 +1299,10 @@ input[type="range"]::-moz-range-thumb {
 
 /* Very narrow (phone portrait) */
 @media (max-width: 480px) {
+  /* Smaller, never hidden: it is the page's only level-one heading, and
+     display:none would take it out of the accessibility tree too. */
   .header-logo h1 {
-    display: none;
+    font-size: 13px;
   }
   .main-content {
     grid-template-columns: 1fr;

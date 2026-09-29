@@ -62,7 +62,9 @@ import {
   studioGuidedFlowInputs,
   studioSynthesisComplete,
 } from "./studioGuidedFlowInputs";
-import { Btn, CapabilityUnavailable, Tab } from "./appChrome";
+import { Btn, CapabilityUnavailable } from "./appChrome";
+import ViewTabs from "./components/ViewTabs";
+import { viewTabGroups, viewTabId, VIEW_PANEL_ID } from "./viewTabs";
 
 /** A project-list control drawn as the text it replaced, but a real button. */
 const projectListControl = {
@@ -167,13 +169,6 @@ export default function App() {
     synthesisBundleExported: studioBundleIsCurrent("synthesis", s),
     synthesisComplete,
   });
-  const panelControl = (panelKey: PanelKey) => {
-    const capabilityState = panelState(panelKey);
-    return {
-      disabled: !capabilityState.available,
-      title: capabilityState.message,
-    };
-  };
   const activatePanel = (panelKey: ViewTab) => {
     const capabilityState = panelState(panelKey);
     if (!capabilityState.available) return;
@@ -377,173 +372,140 @@ export default function App() {
         deploymentProfile={s.operatorStatus?.deployment_profile ?? "development"}
       />
       <header className="header">
-        <div className="header-logo">
-          <div className="dot" />
-          <h1>SC-NeuroCore Studio</h1>
-        </div>
-        <CapabilityStrip />
-        <AuthControl />
-
-        <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
-          <Tab active={s.sourceMode === "model"} color="var(--accent)"
-            label="Models" onClick={() => { s.setSourceMode("model"); }} />
-          <Tab active={s.sourceMode === "ode"} color="var(--warning)"
-            label="ODE" onClick={() => { s.setSourceMode("ode"); }} />
-        </div>
-
-        {s.sourceMode === "ode" && <TemplateLibrary />}
-
-        <Btn label={s.isSimulating ? "..." : "Run"} onClick={() => { void s.runSimulation(); }}
-          disabled={s.isSimulating || panelUnavailable("trace")}
-          title={panelState("trace").message} />
-        <Btn label="Char." onClick={s.runCharacterize}
-          disabled={s.isSimulating || s.sourceMode !== "model" || panelUnavailable("characterize")}
-          title={panelState("characterize").message}
-          color="#fff176" />
-        <Btn label="Code" onClick={() => { void s.runCodegen(); }}
-          disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
-          title={panelState("code").message}
-          testId="run-codegen"
-          color="#90a4ae" />
-        {paramKeys.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <select value={s.sweepParam} onChange={(e) => { s.setSweepParam(e.target.value); }}
-              style={{ fontSize: "var(--fs-meta)", padding: "1px 2px", maxWidth: 70 }}
-              title={panelState("bifurcation").message}>
-              <option value="">X...</option>
-              {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
-            </select>
-            <select value={s.sweepParamY} onChange={(e) => { s.setSweepParamY(e.target.value); }}
-              style={{ fontSize: "var(--fs-meta)", padding: "1px 2px", maxWidth: 70 }}
-              title={panelState("heatmap").message}>
-              <option value="">Y...</option>
-              {paramKeys.filter((k) => k !== s.sweepParam).map((k) => <option key={k} value={k}>{k}</option>)}
-            </select>
+        <div className="header-row">
+          <div className="header-logo">
+            <div className="dot" aria-hidden="true" />
+            <h1>SC-NeuroCore Studio</h1>
           </div>
-        )}
-        <div data-testid="analysis-job-host" title={panelState(analysisPanel).message}>
-          <AnalysisJobControl busy={analysisJob.busy} canSubmit={analysisJob.canSubmit}
-            request={analysisJob.request} startJob={analysisJob.startJob} state={analysisJob.state}
-            selectedAnalysisLabel={analysisJob.selectedAnalysisLabel ?? "analysis"} /></div>
-
-        <Btn label="RTL" onClick={() => { void s.runCompile(); }}
-          disabled={s.isSimulating || panelUnavailable("verilog") || (
-            s.sourceMode === "model" && s.modelDetail?.compile_configuration == null
+          <CapabilityStrip />
+          <div className="segmented" role="group" aria-label="Experiment source">
+            <button type="button" className="segmented-option" aria-pressed={s.sourceMode === "model"}
+              onClick={() => { s.setSourceMode("model"); }}>Models</button>
+            <button type="button" className="segmented-option" aria-pressed={s.sourceMode === "ode"}
+              onClick={() => { s.setSourceMode("ode"); }}>ODE</button>
+          </div>
+          {s.sourceMode === "ode" && <TemplateLibrary />}
+          <div className="header-spacer" />
+          {pattern && (
+            <span className="header-stats" data-pattern={pattern.pattern}>
+              {pattern.pattern}{s.result ? ` · ${s.result.stats.rate_hz} Hz` : ""}
+            </span>
           )}
-          title={s.sourceMode === "model" && s.modelDetail?.compile_configuration == null
-            ? "Selected model has no canonical schema-backed RTL path."
-            : panelState("verilog").message}
-          color="#a5d6a7" />
-        {s.sourceMode === "ode" && (
-          <>
-            <Btn label="Q8.8" onClick={() => { void s.runPrecision(); }}
-              disabled={s.isSimulating || panelUnavailable("precision")}
-              title={panelState("precision").message}
-              color="#80deea" />
-            <Btn label="IR" onClick={() => { void s.runBuildIR(); }}
-              disabled={s.isSimulating || panelUnavailable("ir")}
-              title={panelState("ir").message}
-              color="#ffcc80" />
-            <Btn label="SV" onClick={() => { void s.runEmitSV(); }}
-              disabled={s.isSimulating || panelUnavailable("ir")}
-              title={panelState("ir").message}
-              color="#c5e1a5" />
-          </>
-        )}
-
-        <Btn label="Canvas" onClick={() => { activatePanel("canvas"); }}
-          {...panelControl("canvas")}
-          color="#4fc3f7" />
-        <Btn label="Train" onClick={() => { activatePanel("train"); }}
-          {...panelControl("train")}
-          color="#b39ddb" />
-        <Btn label="Admin" onClick={() => { activatePanel("admin"); }}
-          {...panelControl("admin")}
-          color="#ffcc80" />
-        <Btn label="E-I Net" onClick={() => { void s.runNetwork(); }}
-          disabled={s.isSimulating || panelUnavailable("network")}
-          title={panelState("network").message}
-          color="#80cbc4" />
-        <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
-        <Btn label="Freq" onClick={() => { void s.runFreqResponse(); }}
-          disabled={s.isSimulating || panelUnavailable("freq")}
-          title={panelState("freq").message}
-          color="#fff176" />
-        {s.sourceMode === "ode" && s.equations.length >= 2 && (
-          <Btn label="Nullcl." onClick={() => { void s.runNullclines(); }}
-            disabled={s.isSimulating || panelUnavailable("sensitivity")}
-            title={panelState("sensitivity").message}
-            color="#ef9a9a" />
-        )}
-        <Btn label="Import" onClick={() => {
-          const csv = prompt("Paste voltage trace (one value per line, or CSV):");
-          if (csv) void s.importCSV(csv);
-        }} outline />
-        <Btn label="Share" onClick={s.shareURL} outline />
-        <Btn label="Reset" onClick={s.resetDefaults} outline />
-        <Btn label="JSON" onClick={s.exportData} disabled={!s.result} outline />
-        <Btn label="CSV" onClick={s.exportCSV} disabled={!s.result} outline />
-        <Btn label="SVG" onClick={s.exportSVG} disabled={!s.result} outline />
-        <Btn label="Replay pack" onClick={() => { void s.exportReplayPack(); }}
-          disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
-          title="Download a sealed pack another installation can run and compare"
-          testId="export-replay-pack"
-          outline />
-        <Btn label="Notebook" onClick={() => { void s.exportReplayNotebook(); }}
-          disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
-          title="Download a Jupyter notebook that cites the model and replays the sealed pack"
-          testId="export-replay-notebook"
-          outline />
-
-        <div className="header-spacer" />
-
-        <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", flexWrap: "wrap" }}>
-          <Tab active={s.activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => { activatePanel("trace"); }} {...panelControl("trace")} />
-          {hasPhase && <Tab active={s.activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => { activatePanel("phase"); }} {...panelControl("phase")} />}
-          {hasISI && <Tab active={s.activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => { activatePanel("isi"); }} {...panelControl("isi")} />}
-          <Tab active={s.activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => { activatePanel("fi-curve"); }} {...panelControl("fi-curve")} />
-          <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif" onClick={() => { activatePanel("bifurcation"); }} {...panelControl("bifurcation")} />
-          <Tab active={s.activeTab === "heatmap"} color="#ffab91" label="2D" onClick={() => { activatePanel("heatmap"); }} {...panelControl("heatmap")} />
-          <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens" onClick={() => { activatePanel("sensitivity"); }} {...panelControl("sensitivity")} />
-          <Tab active={s.activeTab === "sta"} color="#b0bec5" label="STA" onClick={() => { activatePanel("sta"); }} {...panelControl("sta")} />
-          <Tab active={s.activeTab === "freq"} color="#fff176" label="Freq" onClick={() => { activatePanel("freq"); }} {...panelControl("freq")} />
-          {s.sourceMode === "model" && (
-            <Tab active={s.activeTab === "characterize"} color="#fff176" label="Char" onClick={() => { activatePanel("characterize"); }} {...panelControl("characterize")} />
-          )}
-          <Tab active={s.activeTab === "multi"} color="#80cbc4" label="Multi" onClick={() => { activatePanel("multi"); }} {...panelControl("multi")} />
-          <Tab active={s.activeTab === "compare"} color="#ce93d8" label="A/B" onClick={() => { activatePanel("compare"); }} {...panelControl("compare")} />
-          <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => { activatePanel("network"); }} {...panelControl("network")} />
-          <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => { activatePanel("code"); }} {...panelControl("code")} />
-          <Tab active={s.activeTab === "delays"} color="#f48fb1" label="Delays" onClick={() => { activatePanel("delays"); }} {...panelControl("delays")} />
-          <Tab active={s.activeTab === "candidate"} color="#b0bec5" label="Candidate" onClick={() => { activatePanel("candidate"); }} {...panelControl("candidate")} />
-          <Tab active={s.activeTab === "fit"} color="#b0bec5" label="Fit" onClick={() => { activatePanel("fit"); }} {...panelControl("fit")} />
-          <Tab active={s.activeTab === "review"} color="#b0bec5" label="Review" onClick={() => { activatePanel("review"); }} {...panelControl("review")} />
-          {s.sourceMode === "ode" && (
-            <>
-              <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => { activatePanel("precision"); }} {...panelControl("precision")} />
-              <Tab active={s.activeTab === "verilog"} color="#a5d6a7" label="RTL" onClick={() => { activatePanel("verilog"); }} {...panelControl("verilog")} />
-              <Tab active={s.activeTab === "ir"} color="#ffcc80" label="IR" onClick={() => { activatePanel("ir"); }} {...panelControl("ir")} />
-              <Tab active={s.activeTab === "synth"} color="#a5d6a7" label="FPGA"
-                onClick={() => { activatePanel("synth"); }}
-                {...panelControl("synth")} />
-            </>
-          )}
-          <Tab active={s.activeTab === "canvas"} color="#4fc3f7" label="Canvas"
-            onClick={() => { activatePanel("canvas"); }}
-            {...panelControl("canvas")} />
-          <Tab active={s.activeTab === "train"} color="#b39ddb" label="Train" onClick={() => { activatePanel("train"); }} {...panelControl("train")} />
-          <Tab active={s.activeTab === "admin"} color="#ffcc80" label="Admin" onClick={() => { activatePanel("admin"); }} {...panelControl("admin")} />
+          <AuthControl />
         </div>
 
-        {pattern && (
-          <span className="header-stats" style={{
-            color: pattern.pattern === "tonic" ? "var(--success)" :
-                   pattern.pattern === "bursting" ? "var(--warning)" :
-                   pattern.pattern === "silent" ? "var(--text-muted)" : "var(--accent)",
-          }}>
-            {pattern.pattern} {s.result ? `${s.result.stats.rate_hz}Hz` : ""}
-          </span>
-        )}
+        <div className="header-row header-actions">
+          <div className="toolbar-group" role="group" aria-label="Simulate">
+            <Btn label={s.isSimulating ? "Running…" : "Run"} onClick={() => { void s.runSimulation(); }}
+              disabled={s.isSimulating || panelUnavailable("trace")}
+              title={panelState("trace").message} />
+          </div>
+          <div className="toolbar-group" role="group" aria-label="Analyse">
+            {s.sourceMode === "model" && (
+              <Btn label="Characterize" onClick={s.runCharacterize}
+                disabled={s.isSimulating || panelUnavailable("characterize")}
+                title={panelState("characterize").message} outline />
+            )}
+            <Btn label="Measure frequency response" onClick={() => { void s.runFreqResponse(); }}
+              disabled={s.isSimulating || panelUnavailable("freq")}
+              title={panelState("freq").message} outline />
+            <Btn label="Compute STA" onClick={s.computeSTA}
+              disabled={!s.result || s.result.spikes.length < 3}
+              title="Spike-triggered average of the input over the current run; needs at least three spikes."
+              outline />
+            <Btn label="Run E-I network" onClick={() => { void s.runNetwork(); }}
+              disabled={s.isSimulating || panelUnavailable("network")}
+              title={panelState("network").message} outline />
+            {s.sourceMode === "ode" && s.equations.length >= 2 && (
+              <Btn label="Nullclines" onClick={() => { void s.runNullclines(); }}
+                disabled={s.isSimulating || panelUnavailable("sensitivity")}
+                title={panelState("sensitivity").message} outline />
+            )}
+          </div>
+          {paramKeys.length > 0 && (
+            <div className="toolbar-group sweep-axes" role="group" aria-label="Sweep parameters">
+              <label className="toolbar-field">
+                <span>Sweep X</span>
+                <select value={s.sweepParam} onChange={(e) => { s.setSweepParam(e.target.value); }}
+                  title={panelState("bifurcation").message}>
+                  <option value="">choose…</option>
+                  {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </label>
+              <label className="toolbar-field">
+                <span>Sweep Y</span>
+                <select value={s.sweepParamY} onChange={(e) => { s.setSweepParamY(e.target.value); }}
+                  title={panelState("heatmap").message}>
+                  <option value="">choose…</option>
+                  {paramKeys.filter((k) => k !== s.sweepParam).map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </label>
+            </div>
+          )}
+          <div className="toolbar-group" data-testid="analysis-job-host" title={panelState(analysisPanel).message}>
+            <AnalysisJobControl busy={analysisJob.busy} canSubmit={analysisJob.canSubmit}
+              request={analysisJob.request} startJob={analysisJob.startJob} state={analysisJob.state}
+              selectedAnalysisLabel={analysisJob.selectedAnalysisLabel ?? "analysis"} />
+          </div>
+          <div className="toolbar-group" role="group" aria-label="Code and hardware">
+            <Btn label="Generate code" onClick={() => { void s.runCodegen(); }}
+              disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
+              title={panelState("code").message}
+              testId="run-codegen" outline />
+            <Btn label="Generate RTL" onClick={() => { void s.runCompile(); }}
+              disabled={s.isSimulating || panelUnavailable("verilog") || (
+                s.sourceMode === "model" && s.modelDetail?.compile_configuration == null
+              )}
+              title={s.sourceMode === "model" && s.modelDetail?.compile_configuration == null
+                ? "Selected model has no canonical schema-backed RTL path."
+                : panelState("verilog").message}
+              outline />
+            {s.sourceMode === "ode" && (
+              <>
+                <Btn label="Check Q8.8 precision" onClick={() => { void s.runPrecision(); }}
+                  disabled={s.isSimulating || panelUnavailable("precision")}
+                  title={panelState("precision").message} outline />
+                <Btn label="Build IR" onClick={() => { void s.runBuildIR(); }}
+                  disabled={s.isSimulating || panelUnavailable("ir")}
+                  title={panelState("ir").message} outline />
+                <Btn label="Emit SystemVerilog" onClick={() => { void s.runEmitSV(); }}
+                  disabled={s.isSimulating || panelUnavailable("ir")}
+                  title={panelState("ir").message} outline />
+              </>
+            )}
+          </div>
+          <div className="header-spacer" />
+          <div className="toolbar-group" role="group" aria-label="Import and export">
+            <Btn label="Import trace" onClick={() => {
+              const csv = prompt("Paste voltage trace (one value per line, or CSV):");
+              if (csv) void s.importCSV(csv);
+            }} ghost />
+            <Btn label="Share link" onClick={s.shareURL} ghost />
+            <Btn label="Reset" onClick={s.resetDefaults} ghost
+              title="Restore the model's default parameters and protocol" />
+            <Btn label="JSON" onClick={s.exportData} disabled={!s.result} ghost
+              title="Download the current run as JSON" />
+            <Btn label="CSV" onClick={s.exportCSV} disabled={!s.result} ghost
+              title="Download the current trace as CSV" />
+            <Btn label="SVG" onClick={s.exportSVG} disabled={!s.result} ghost
+              title="Download the current plot as SVG" />
+            <Btn label="Replay pack" onClick={() => { void s.exportReplayPack(); }}
+              disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
+              title="Download a sealed pack another installation can run and compare"
+              testId="export-replay-pack" ghost />
+            <Btn label="Notebook" onClick={() => { void s.exportReplayNotebook(); }}
+              disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
+              title="Download a Jupyter notebook that cites the model and replays the sealed pack"
+              testId="export-replay-notebook" ghost />
+          </div>
+        </div>
+
+        <ViewTabs
+          active={s.activeTab}
+          availability={(view) => ({ available: !panelUnavailable(view), message: panelState(view).message })}
+          groups={viewTabGroups({ sourceMode: s.sourceMode, hasPhase, hasIsi: hasISI })}
+          onSelect={activatePanel}
+        />
       </header>
 
       {s.error && <div className="error-banner">{s.error}</div>}
@@ -783,7 +745,8 @@ export default function App() {
           <ParameterSliders />
         </div>
 
-        <div className="right-panel">
+        <main className="right-panel" id={VIEW_PANEL_ID} role="tabpanel"
+          aria-labelledby={viewTabId(s.activeTab)} tabIndex={-1}>
           {!activePanelState.available ? (
             <CapabilityUnavailable state={activePanelState} />
           ) : s.activeTab === "canvas" ? (
@@ -833,7 +796,7 @@ export default function App() {
           ) : (
             <SimulationPlot />
           )}
-        </div>
+        </main>
       </div>
       <StatusBar />
       <KeyboardHelp />

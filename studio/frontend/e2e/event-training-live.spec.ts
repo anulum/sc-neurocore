@@ -21,7 +21,7 @@ test("event input reaches real training, checkpoint export and workspace reopeni
     window.localStorage.setItem("sc-studio-onboarding-dismissed", "true");
   });
   await page.goto("./");
-  await page.getByRole("button", { name: "Train", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Training" }).click();
   await page.getByLabel("Dataset", { exact: true }).selectOption("nmnist");
   const train = page.getByRole("button", { name: "Train", exact: true }).last();
   await expect(train).toBeDisabled();
@@ -70,7 +70,7 @@ test("event input reaches real training, checkpoint export and workspace reopeni
   await page.reload();
   await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
   await page.getByRole("button", { name: new RegExp(`^Open project ${name}`) }).click();
-  await page.getByRole("button", { name: "Train", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Training" }).click();
   await expect(page.getByLabel("Dataset", { exact: true })).toHaveValue("nmnist");
   await expect(page.getByLabel("Seed", { exact: true })).toHaveValue("7");
   await expect(page.getByLabel("Gradient norm limit", { exact: true })).toHaveValue("0");

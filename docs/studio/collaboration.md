@@ -67,7 +67,7 @@ document says what was set up, and the pack says what that setup produced.
 
 ## Writing the review
 
-Comment on the revision itself, in the **Review** tab or with
+Comment on the revision itself, in the **Review** view or with
 `POST /api/project/{name}/revisions/{revision}/comments`
 ([Workspaces](workspaces.md#reviewing-a-revision)).
 

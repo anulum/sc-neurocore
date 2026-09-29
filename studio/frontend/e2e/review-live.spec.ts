@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 
 test("a saved revision is reviewed, replied to, and the thread survives reopening", async ({ page }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "Review", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Review", exact: true }).click();
   await expect(page.getByRole("region", { name: "Review" })).toContainText("Save or open a project");
 
   const name = `review-${Date.now()}`;
@@ -49,6 +49,6 @@ test("a saved revision is reviewed, replied to, and the thread survives reopenin
   await page.reload();
   await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
   await page.getByRole("button", { name: new RegExp(`^Open project ${name}`) }).click();
-  await page.getByRole("button", { name: "Review", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Review", exact: true }).click();
   await expect(page.getByRole("list", { name: "Comments" })).toContainText("It resolves the spike upstroke.");
 });

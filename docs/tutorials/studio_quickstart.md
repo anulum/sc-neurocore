@@ -14,7 +14,7 @@ sc-neurocore studio
 ```
 
 Your browser opens at `http://127.0.0.1:8001/studios/sc-neurocore/`. The
-interface starts in **Model mode** with the first of <!-- count:studio_catalogue_models -->185<!-- /count --> neuron models
+interface starts in **Models** mode with the first of <!-- count:studio_catalogue_models -->185<!-- /count --> neuron models
 selected and a live voltage trace displayed.
 
 ## 2. Explore Neuron Models
@@ -22,15 +22,15 @@ selected and a live voltage trace displayed.
 The left panel lists all models by category. Click any model to load it:
 
 1. Click **AdExNeuron** — an adaptive exponential integrate-and-fire model
-2. Adjust the **current** slider (header) to 15.0 nA
+2. Adjust the **current** slider (parameter sliders, left panel) to 15.0 nA
 3. Watch the trace update live — you should see adaptation: initial
    burst followed by regular tonic spiking
-4. Click **Char.** to run a one-click characterisation
-5. The Char tab shows: firing pattern, f-I curve, top sensitivities
+4. Click **Characterize** (Analyse group) to run a one-click characterisation
+5. The **Characterization** view shows: firing pattern, f-I curve, top sensitivities
 
 ## 3. Compare Models
 
-1. Click **Multi** tab in the tab bar
+1. Open the **Multi-model** view (Neuron group of the view switcher)
 2. Select 2-3 models from the multi-model picker (left panel):
    - StochasticLIFNeuron (simple, fast)
    - AdExNeuron (adaptive)
@@ -39,15 +39,16 @@ The left panel lists all models by category. Click any model to load it:
 
 ## 4. Write a Custom ODE
 
-1. Switch to **ODE** mode (top toggle)
+1. Switch the source to **ODE** (the Models / ODE switch at the top)
 2. Select the **Hodgkin-Huxley** template from the dropdown
 3. The Monaco editor shows the four coupled ODEs
 4. Adjust parameters via sliders — tau_m, C, E_L
-5. Click **Bif** to generate a bifurcation diagram of a selected parameter
+5. Choose a parameter in **Sweep X**, open the **Bifurcation** view and click
+   **Run async analysis** to generate a bifurcation diagram
 
 ## 5. Design a Network
 
-1. Click **Canvas** tab (or the Canvas button)
+1. Open the **Network canvas** view (Network group)
 2. Click **+ Exc** to add an excitatory population (80 neurons)
 3. Click **+ Inh** to add an inhibitory population (20 neurons)
 4. Drag from the excitatory node handle to the inhibitory node to create
@@ -57,10 +58,10 @@ The left panel lists all models by category. Click any model to load it:
 
 ## 6. Train with Surrogate Gradients
 
-1. Click **Train** tab
+1. Open the **Training** view (Research group)
 2. Set dataset to **Synthetic** (fast, for demo)
 3. Set epochs to **5**, surrogate to **atan_surrogate**
-4. Click **Train**
+4. Click **Train** in the training panel
 5. Watch loss and accuracy curves update live as each epoch completes
 6. Layer spike rate bars show activity per spiking layer
 7. Click **Stop** to abort early if needed
@@ -69,15 +70,15 @@ The left panel lists all models by category. Click any model to load it:
 
 1. Switch to **ODE** mode
 2. Select the **LIF** template
-3. Click **IR** — the Compiler Inspector shows the SC Intermediate
+3. Click **Build IR** — the Compiler Inspector shows the SC Intermediate
    Representation with a verification badge
-4. Click **SV** — SystemVerilog source appears in the right pane
+4. Click **Emit SystemVerilog** — SystemVerilog source appears in the right pane
 5. This Verilog is synthesisable — it maps the ODE to Q8.8 fixed-point
    hardware
 
 ## 8. Synthesise to FPGA
 
-1. Click **FPGA** tab
+1. Open the **FPGA synthesis** view (Code and hardware group)
 2. Select target: **ice40** (iCE40 UP5K)
 3. Click **Synthesise** (requires Yosys installed)
 4. Resource bars show LUT, FF, BRAM, DSP utilisation
@@ -86,7 +87,7 @@ The left panel lists all models by category. Click any model to load it:
 
 ## 9. Full Pipeline
 
-1. Go back to **Canvas** tab
+1. Go back to the **Network canvas** view
 2. With your network designed, click **Pipeline → ICE40**
 3. The pipeline chains: validate → simulate → lower → co-simulate → synthesise,
    and builds hardware only for a network it can reproduce (LIF and perfect

@@ -118,7 +118,7 @@ For exact numbers, use the Synthesis Dashboard (Yosys) or
 The Synthesis Dashboard's **Estimate** button uses this same engine:
 
 1. Build IR from your ODE equations
-2. Click **Estimate** on the FPGA tab
+2. Click **Estimate** in the FPGA synthesis view
 3. See resource bars without running Yosys
 4. If it fits, click **Synthesise** for exact numbers
 

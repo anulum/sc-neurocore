@@ -93,7 +93,7 @@ missing.
 
 ### Using the Pipeline
 
-1. Design your network on the Canvas tab
+1. Design your network in the Network canvas view
 2. Select FPGA target in the Synthesis Dashboard (or use default ice40)
 3. Click **Pipeline → ICE40** (or whichever target) on the Canvas toolbar
 4. Read the result under the canvas: the step it ended at, every refusal

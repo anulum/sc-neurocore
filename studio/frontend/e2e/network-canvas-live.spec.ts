@@ -68,7 +68,7 @@ async function openCanvas(page: Page): Promise<void> {
   const models = page.waitForResponse(
     (response) => new URL(response.url()).pathname === "/api/graph/models" && response.ok(),
   );
-  await page.getByRole("button", { name: "Canvas", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Network canvas" }).click();
   await models;
 }
 

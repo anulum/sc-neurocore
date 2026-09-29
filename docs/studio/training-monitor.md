@@ -10,7 +10,7 @@ For manifest-bound local recordings through the training API, see
 
 ## Quick Start
 
-1. Switch to the **Train** tab
+1. Open the **Training** view
 2. Select dataset (Synthetic for fast demo, MNIST for real training)
 3. Choose surrogate gradient function
 4. Set epochs, batch size, learning rate, timesteps

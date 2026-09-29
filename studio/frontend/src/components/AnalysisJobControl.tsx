@@ -11,6 +11,7 @@
  * request builder, store, or API calls.
  */
 
+import { analysisRequestMessage } from "../analysisRequestMessages";
 import type { AnalysisJobRequestBody } from "../api/client";
 import {
   analysisJobPhaseLabel,
@@ -142,8 +143,9 @@ export default function AnalysisJobControl({
         <div
           role="alert"
           data-testid="analysis-job-control-request-error"
+          data-error-code={requestError}
         >
-          {requestError}
+          {analysisRequestMessage(requestError)}
         </div>
       )}
       {publicError !== null && (
@@ -168,7 +170,7 @@ export default function AnalysisJobControl({
       )}
       <button
         type="button"
-        className="btn-simulate"
+        className="btn-simulate btn btn--outline"
         data-testid="analysis-job-control-submit"
         disabled={!submitEnabled}
         aria-busy={busy}

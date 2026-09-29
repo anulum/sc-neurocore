@@ -16,7 +16,7 @@ field and the reason.
 
 ## Quick Start
 
-1. Switch to the **Canvas** tab
+1. Open the **Network canvas** view
 2. Click **+ Exc** to add an excitatory population (constant input `I = 1.2`)
 3. Click **+ Inh** to add an inhibitory population (no external input)
 4. Drag from one node's handle to another to create a projection
