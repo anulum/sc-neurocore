@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import type { TrainingConfig, TrainingEpochMetrics } from "./api/client";
 import { buildTrainingEvidenceModel } from "./trainingEvidence";
 
-const config: Pick<TrainingConfig, "dataset" | "epochs" | "surrogate" | "timesteps"> = {
+const config: Pick<TrainingConfig, "model_kind" | "dataset" | "epochs" | "surrogate" | "timesteps"> = {
   dataset: "synthetic",
   epochs: 12,
   surrogate: "atan_surrogate",
@@ -32,6 +32,14 @@ describe("training evidence model", () => {
   it("does not attribute current project settings to an old retained run", () => {
     expect(buildTrainingEvidenceModel("sj_old", "interrupted", null, null).configSummary)
       .toBe("not recorded");
+  });
+
+  it("names a conversion run's route instead of a surrogate it never used", () => {
+    expect(buildTrainingEvidenceModel(null, "idle", { ...config, model_kind: "qcfs_conversion" }, null)
+      .configSummary).toBe("synthetic, 12 epochs, QCFS conversion, 25 steps");
+    const unnamed = { dataset: "synthetic", epochs: 12, timesteps: 25 };
+    expect(buildTrainingEvidenceModel(null, "idle", unnamed, null).configSummary)
+      .toBe("synthetic, 12 epochs, default surrogate, 25 steps");
   });
 
   it("describes the pending training action-evidence contract before submission", () => {

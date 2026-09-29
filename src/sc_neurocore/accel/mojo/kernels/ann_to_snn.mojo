@@ -4,102 +4,114 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for ann_to_snn
+# SC-NeuroCore — Mojo deterministic complete dense IF replay
 
-fn _extract_layers(model: Int) -> Int:
-    var __extract_layers_line = 'layers = []'
-    var __extract_layers_line = 'for module in model.modules():'
-    var __extract_layers_line = 'if isinstance(module, (nn.Linear, nn.Conv2d)):'
-    var __extract_layers_line = 'w = module.weight.detach().cpu().numpy()'
-    var __extract_layers_line = 'b = module.bias.detach().cpu().numpy() if module.bias is not'
-    var __extract_layers_line = 'layers.append((w, b))'
-    return 0  # return layers
+"""Native dense-if-f64-sequential-v1 replay; compile with FP contraction disabled."""
 
-fn _compute_max_activations(model: Int, calibration_data: Int, percentile: Int) -> Int:
-    var __compute_max_activations_line = 'model: Any, calibration_data: torch.Tensor, percentile: floa'
-    var __compute_max_activations_line = ') -> list[float]:'
-    var __compute_max_activations_line = 'maxes = []'
-    var __compute_max_activations_line = 'hooks = []'
-    var __compute_max_activations_line = 'activations = []'
-    var __compute_max_activations_line = 'activations.append(out.detach().cpu())'
-    var __compute_max_activations_line = 'for module in model.modules():'
-    var __compute_max_activations_line = 'if isinstance(module, (nn.ReLU, nn.ReLU6)):'
-    var __compute_max_activations_line = 'hooks.append(module.register_forward_hook(hook_fn))'
-    var __compute_max_activations_line = 'with torch.no_grad():'
-    var __compute_max_activations_line = 'model(calibration_data)'
-    var __compute_max_activations_line = 'for h in hooks:'
-    var __compute_max_activations_line = 'h.remove()'
-    var __compute_max_activations_line = 'for act in activations:'
-    var __compute_max_activations_line = 'val = float(percentile(act.numpy(), percentile))'
-    var __compute_max_activations_line = 'maxes.append(max(val, 1e-6))'
-    return 0  # return maxes
+from ann_to_snn_parameters import DenseLayer, ConvertedSNN
+from ann_to_snn_resources import admit_replay, checked_add
+from std.math import isfinite
+from ann_to_snn_compute import ReplayResult, replay_owned
 
-fn convert(model: Int, calibration_data: Int, T: Int, percentile: Int) -> Int:
-    var _convert_line = 'model: object,'
-    var _convert_line = 'calibration_data: object = 0,'
-    var _convert_line = 'T: int = 16,'
-    var _convert_line = 'percentile: float = 99.9,'
-    var _convert_line = ') -> ConvertedSNN:'
-    var _convert_line = 'if not HAS_TORCH:'
-    var _convert_line = 'raise ImportError("PyTorch required for ANN-to-SNN conversio'
-    var _convert_line = 'layers = _extract_layers(model)'
-    var _convert_line = 'if not layers:'
-    var _convert_line = 'raise ValueError("No Linear/Conv2d layers found in model")'
-    var _convert_line = 'weights = [w for w, _ in layers]'
-    var _convert_line = 'biases = [b for _, b in layers]'
-    var _convert_line = 'if calibration_data is not 0:'
-    var _convert_line = 'max_acts = _compute_max_activations(model, calibration_data,'
-    var _convert_line = '# Pad if fewer ReLUs than Linear layers'
-    var _convert_line = 'while len(max_acts) < len(weights):'
-    var _convert_line = 'max_acts.append(1.0)'
-    var _convert_line = 'thresholds = max_acts'
-    var _convert_line = 'else:'
-    var _convert_line = 'thresholds = [1.0] * len(weights)'
-    var _convert_line = '# Normalize weights: scale so that max activation maps to th'
-    var _convert_line = 'normalized_weights = []'
-    var _convert_line = 'prev_scale = 1.0'
-    var _convert_line = 'for i, (w, theta) in enumerate(zip(weights, thresholds)):'
-    var _convert_line = 'scale = theta / prev_scale if i > 0 else theta'
-    var _convert_line = 'normalized_weights.append(w / scale)'
-    var _convert_line = 'prev_scale = theta'
-    return 0  # return ConvertedSNN(
-    var _convert_line = 'weights=normalized_weights,'
-    var _convert_line = 'biases=biases,'
-    var _convert_line = 'thresholds=[1.0] * len(weights),'
-    var _convert_line = 'T=T,'
-    var _convert_line = ')'
 
-fn run(x: Int) -> Int:
-    var _run_line = 'squeeze = x.ndim == 1'
-    var _run_line = 'if squeeze:'
-    var _run_line = 'x = x[newaxis]'
-    var _run_line = 'batch = x.shape[0]'
-    var _run_line = 'rng = random.RandomState(42)'
-    var _run_line = '# Initialize membrane voltages'
-    var _run_line = 'voltages = [zeros((batch, w.shape[0])) for w in weights]'
-    var _run_line = 'spike_counts = zeros((batch, weights[-1].shape[0]))'
-    var _run_line = 'for t in range(T):'
-    var _run_line = '# Rate-code input: spike with probability proportional to x'
-    var _run_line = 'input_spikes = (rng.random(x.shape) < x).astype(float64)'
-    var _run_line = 'layer_input = input_spikes'
-    var _run_line = 'for i, (w, b, theta) in enumerate(zip(weights, biases, thres'
-    var _run_line = 'current = layer_input @ w.T'
-    var _run_line = 'if b is not 0:'
-    var _run_line = 'current += b / T'
-    var _run_line = 'voltages[i] += current'
-    var _run_line = 'spikes = (voltages[i] >= theta).astype(float64)'
-    var _run_line = 'voltages[i] -= spikes * theta'
-    var _run_line = 'layer_input = spikes'
-    var _run_line = 'if i == n_layers - 1:'
-    var _run_line = 'spike_counts += spikes'
-    var _run_line = 'if squeeze:'
-    var _run_line = 'spike_counts = spike_counts[0]'
-    return 0  # return spike_counts
+def replay(model: ConvertedSNN, frames: List[Float64], steps: Int, batch: Int, initial_state: List[List[Float64]] = List[List[Float64]](), use_initial_state: Bool = False, trace: Bool = False, binary_inputs: Bool = True, max_working_bytes: Int = 268435456) raises -> ReplayResult:
+    """Replay row-major explicit frames with inclusive IF events and subtractive reset.
 
-fn classify(x: Int) -> Int:
-    var _classify_line = 'counts = run(x)'
-    return 0  # return argmax(counts, axis=-1)
+    Bias applies every step after ascending column multiply/add reductions. Layers
+    consume same-step events. Linear output retains cumulative signed current;
+    IF output counts incremental spikes. Empty axes preserve supplied states.
+    State/event traces capture every post-reset timestep. Numeric admission uses
+    8*(2P+2F+2S+2O+H+5M+I), excluding caller and runtime overhead. Refusal raises
+    Error with IF invalid input, IF resource limit or IF overflow and does not edit
+    caller state. Explicit use_initial_state distinguishes empty supplied state
+    from the default preloads. Returned arrays are independently owned.
 
-fn hook_fn(module: Int, inp: Int, out: Int) -> Int:
-    var _hook_fn_line = 'activations.append(out.detach().cpu())'
-    return 0
+    Args:
+        model: Dense stack; public parameters are snapshotted and revalidated.
+        frames: Flat time/batch/input finite currents in the unit interval.
+        steps: Nonnegative number of explicit input timesteps.
+        batch: Nonnegative number of samples.
+        initial_state: Batch/output state per layer when explicitly selected.
+        use_initial_state: Select supplied state instead of per-layer preloads.
+        trace: Retain complete state and IF event trajectories.
+        binary_inputs: Require exact zero/one events when true.
+        max_working_bytes: Positive addressable numeric allocation limit.
+
+    Returns:
+        Independently owned output, final states and requested full traces.
+
+    Raises:
+        Error: Invalid input, numeric reservation refusal or finite arithmetic overflow.
+    """
+    if steps < 0 or batch < 0 or len(model.layers) == 0:
+        raise Error("IF invalid input")
+    var snapshot = ConvertedSNN(model.layers, model.linear, max_working_bytes)
+    var input_width = snapshot.layers[0].inputs
+    if steps != 0 and batch > 0x7FFFFFFFFFFFFFFF // steps:
+        raise Error("IF invalid input")
+    var extent = steps * batch
+    if extent != 0 and input_width > 0x7FFFFFFFFFFFFFFF // extent:
+        raise Error("IF invalid input")
+    if extent * input_width != len(frames):
+        raise Error("IF invalid input")
+    if use_initial_state and len(initial_state) != len(snapshot.layers):
+        raise Error("IF invalid input")
+    var coefficients = 0
+    var widths = List[Int]()
+    for i in range(len(snapshot.layers)):
+        coefficients = checked_add(coefficients, checked_add(len(snapshot.layers[i].weights), len(snapshot.layers[i].bias)))
+        widths.append(snapshot.layers[i].outputs)
+    admit_replay(coefficients, input_width, widths, steps, batch, trace, snapshot.linear, max_working_bytes)
+    var owned_frames = List[Float64](capacity=len(frames))
+    for value in frames:
+        owned_frames.append(value)
+    var owned_states = List[List[Float64]]()
+    if use_initial_state:
+        for index in range(len(initial_state)):
+            if len(initial_state[index]) != batch * snapshot.layers[index].outputs:
+                raise Error("IF invalid input")
+            for value in initial_state[index]:
+                if not isfinite(value):
+                    raise Error("IF invalid input")
+        for index in range(len(initial_state)-1, -1, -1):
+            var state = List[Float64](capacity=len(initial_state[index]))
+            for value in initial_state[index]:
+                state.append(value)
+            owned_states.append(state^)
+    return replay_owned(snapshot^, owned_frames^, steps, batch, owned_states^, use_initial_state, trace, binary_inputs)
+
+
+def classify(model: ConvertedSNN, result: ReplayResult, batch: Int) raises -> List[Int]:
+    """Select first maximal finite output in each row, returning zero-based labels.
+
+    Args:
+        model: Stack declaring the final output width.
+        result: Replay response with finite batch/output values.
+        batch: Nonnegative number of classification rows.
+
+    Returns:
+        First-maximum zero-based labels, one per sample.
+
+    Raises:
+        Error: Invalid geometry, values or addressable classification size.
+    """
+    if batch < 0 or len(model.layers) == 0:
+        raise Error("IF invalid input")
+    var width = model.layers[len(model.layers)-1].outputs
+    if width <= 0:
+        raise Error("IF invalid input")
+    if batch != 0 and width > 0x7FFFFFFFFFFFFFFF // batch:
+        raise Error("IF invalid input")
+    if batch * width != len(result.output):
+        raise Error("IF invalid input")
+    for value in result.output:
+        if not isfinite(value):
+            raise Error("IF invalid input")
+    var labels = List[Int]()
+    for row in range(batch):
+        var best = 0
+        for node in range(1, width):
+            if result.output[row*width+node] > result.output[row*width+best]:
+                best = node
+        labels.append(best)
+    return labels^

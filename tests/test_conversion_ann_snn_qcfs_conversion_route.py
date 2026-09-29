@@ -14,7 +14,7 @@ from tests.conversion_ann_snn_support import *  # noqa: F403
 
 
 class TestQcfsConversionRoute:
-    def _qcfs_model(self, theta: float = 1.0, qcfs_t: int = 4) -> nn.Module:
+    def _qcfs_model(self, theta: float = 1.0, qcfs_t: int = 4) -> nn.Sequential:
         torch.manual_seed(7)
         return nn.Sequential(
             nn.Linear(4, 8),
@@ -50,14 +50,18 @@ class TestQcfsConversionRoute:
 
     def test_qcfs_theta_scales_first_layer_weights(self) -> None:
         model = self._qcfs_model(theta=4.0)
-        raw = model[0].weight.detach().cpu().numpy().copy()
+        first_layer = model[0]
+        assert isinstance(first_layer, nn.Linear)
+        raw = first_layer.weight.detach().cpu().numpy().copy()
         snn = convert(model)
         # First layer is divided by its QCFS threshold (theta == 4.0).
         np.testing.assert_allclose(snn.weights[0], raw / 4.0, rtol=1e-6)
 
     def test_qcfs_route_ignores_calibration_data(self) -> None:
         model = self._qcfs_model(theta=2.0)
-        raw = model[0].weight.detach().cpu().numpy().copy()
+        first_layer = model[0]
+        assert isinstance(first_layer, nn.Linear)
+        raw = first_layer.weight.detach().cpu().numpy().copy()
         snn = convert(model, calibration_data=torch.randn(20, 4))
         # Threshold comes from the learned theta, not calibration statistics.
         np.testing.assert_allclose(snn.weights[0], raw / 2.0, rtol=1e-6)

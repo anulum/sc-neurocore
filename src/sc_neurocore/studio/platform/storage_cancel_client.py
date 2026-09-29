@@ -22,7 +22,8 @@ from sc_neurocore.studio.platform.storage_cancel_protocol import (
     decode_cancel_response,
     encode_cancel_message,
 )
-from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
+from sc_neurocore.studio.platform.storage_peer import write_verified_frame
+from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
 
@@ -52,8 +53,12 @@ def exchange_cancel(
     expected_service_uid: int,
     max_bytes: int,
     deadline: float,
+    max_content_bytes: int | None = None,
 ) -> StudioJobRecord:
     """Run one cancellation over a connected, exclusively owned stream.
+
+    Individual frames obey ``max_bytes``; the complete snapshot independently
+    obeys ``max_content_bytes``, defaulting to event custody plus one frame.
 
     Returns
     -------
@@ -72,6 +77,7 @@ def exchange_cancel(
         The exchange failed; repeating the request is safe.
     """
     with channel:
+        content_limit = view_content_limit(max_bytes, max_content_bytes)
         write_verified_frame(
             channel,
             encode_cancel_message(request),
@@ -79,10 +85,16 @@ def exchange_cancel(
             max_bytes=max_bytes,
             deadline=deadline,
         )
-        reply = read_verified_frame(
-            channel, expected_uid=expected_service_uid, max_bytes=max_bytes, deadline=deadline
+        reply = read_view_content(
+            channel,
+            expected_uid=expected_service_uid,
+            frame_max_bytes=max_bytes,
+            content_schema=CANCEL_SCHEMA_VERSION,
+            request_id=request.request_id,
+            max_content_bytes=content_limit,
+            deadline=deadline,
         )
-    response = decode_cancel_response(reply, request=request, max_bytes=max_bytes)
+    response = decode_cancel_response(reply, request=request, max_bytes=content_limit)
     # An answered cancellation always carries its record.
     record = decode_job_snapshot(response.record or {})
     if record.job_id != request.job_id or record.workspace != request.workspace:

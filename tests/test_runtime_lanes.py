@@ -18,7 +18,13 @@ from typing import cast
 
 import pytest
 
-from sc_neurocore.runtime_lanes import ACCEL_ROOT, CONTRACT, LaneStatus, lane_statuses
+from sc_neurocore.runtime_lanes import (
+    ACCEL_ROOT,
+    CONTRACT,
+    WHEEL_JULIA_SUBSETS,
+    LaneStatus,
+    lane_statuses,
+)
 from tests.cli_test_support import run_cli
 
 
@@ -77,14 +83,37 @@ def test_native_resources_count_only_where_the_lane_keeps_them(tmp_path: Path) -
     assert not statuses["mojo"].resources_present
 
 
+@pytest.mark.parametrize("model_kernel", [None, "kernel.jl", "neurons/kernel.jl"])
+def test_wheel_conversion_and_dataset_julia_sources_are_not_model_kernels(
+    tmp_path: Path, model_kernel: str | None
+) -> None:
+    """The wheel's own IF and dataset Julia sources never make the model-kernel lane present."""
+    for subset in WHEEL_JULIA_SUBSETS:
+        (tmp_path / "julia" / subset).mkdir(parents=True)
+        (tmp_path / "julia" / subset / f"{subset}.jl").write_text("# owned\n", encoding="utf-8")
+    if model_kernel is not None:
+        (tmp_path / "julia" / model_kernel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / "julia" / model_kernel).write_text("# kernel\n", encoding="utf-8")
+
+    julia = _by_lane(lane_statuses(accel_root=tmp_path))["julia"]
+
+    assert julia.resources_present == (model_kernel is not None and _installed("juliacall"))
+    if model_kernel is None:
+        assert "Julia kernel sources" in julia.detail
+        assert "not the model kernel sources" in julia.detail
+
+
 def test_this_checkout_reports_the_resources_it_holds() -> None:
     """The default root is the installed accel package, read as files."""
     statuses = _by_lane(lane_statuses())
 
     assert ACCEL_ROOT.name == "accel" and ACCEL_ROOT.is_dir()
-    assert statuses["julia"].resources_present == (
-        any((ACCEL_ROOT / "julia").rglob("*.jl")) and _installed("juliacall")
-    )
+    model_kernels = [
+        path
+        for path in (ACCEL_ROOT / "julia").rglob("*.jl")
+        if path.relative_to(ACCEL_ROOT / "julia").parts[0] not in WHEEL_JULIA_SUBSETS
+    ]
+    assert statuses["julia"].resources_present == (bool(model_kernels) and _installed("juliacall"))
     assert statuses["go"].resources_present == any((ACCEL_ROOT / "go").rglob("*.so"))
     assert statuses["mojo"].resources_present == any((ACCEL_ROOT / "mojo").rglob("*.so"))
 

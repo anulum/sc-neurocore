@@ -12,7 +12,7 @@ the per-job sandbox directories it describes. The records survive the process
 that made them, so a restarted API still knows what it ran, and a second API
 process over the same root sees the same jobs.
 
-Schema `studio.job-ledger.v7`. Single host by design: SQLite in WAL mode
+Schema `studio.job-ledger.v8`. Single host by design: SQLite in WAL mode
 serialises the writers sharing one root. A distributed worker contract is a
 separate obligation and is not implied here.
 
@@ -598,8 +598,14 @@ Reading HTTP status does not trigger these operations.
   before directory deletion and inside direct ledger deletion; terminal status
   alone does not establish that a worker stopped. Reconcile proven-stopped work
   before retrying a refused purge.
-- Nothing expires on its own. Retention is an operator decision, and a job
-  removed from the ledger is gone from the audit trail with it.
+- Nothing expires on its own. Retention is an operator decision. Purge removes
+  the job record, worker identity, transition history and sealed directory.
+  Named storage admission replay retains its immutable original snapshot,
+  including the training configuration, requester and mutation identity.
+  Reusing that identity after purge returns the original admission outcome;
+  the API then finds no current job and reports not found without starting
+  another worker. A new explicit admission requires a new mutation identity.
+  Capture these replay rows in backups; job purge does not erase them.
 
 ## Storage mode and isolation
 
@@ -698,3 +704,18 @@ status edited around the state machine is exactly the corruption the machine
 exists to prevent. Resolve an `unknown` job through
 `manager._ledger.transition(job_id, "interrupted", reason="verified by …")`
 once you have established what happened to its supervisor.
+
+
+### Event input custody
+
+Training configurations retain their 4,096-byte row limit. Complete event input
+declarations are stored separately in the same admission transaction, with a
+64 MiB UTF-8 limit. The configuration carries the declaration's byte count and
+SHA-256; public record reads verify those bytes and reconstruct the complete
+configuration. Stored declarations cannot be updated after admission.
+Missing, altered or noncanonical input is reported as ledger corruption.
+
+Schema migration preserves legacy inline configurations and their original
+values. Reopening a ledger does not discard dataset manifests, split plans or
+encoder identities. This storage bound is independent of tensor input budgets
+and worker memory limits.

@@ -67,8 +67,13 @@ If you have a PyTorch `state_dict`, install the training extra and scaffold from
 the weight file:
 
 ```bash
-sc-neurocore deploy weights.pt --target ice40 --T 256 -o build/fpga_scaffold
+sc-neurocore deploy weights.pt \
+  --checkpoint-sha256 "$(sha256sum weights.pt | cut -d' ' -f1)" \
+  --target ice40 --T 256 -o build/fpga_scaffold
 ```
+
+The state dict must be a dense ReLU chain; the converted network is exported as
+`converted_network.npz`, while the scaffolded RTL stays a generic template.
 
 ## 2a. MNIST to NIR to FPGA handoff
 
@@ -82,14 +87,10 @@ python tools/train_pretrained_mnist.py \
   --output build/mnist/conv_spiking_net_mnist.pt
 ```
 
-That checkpoint can be scaffolded directly, without an FPGA toolchain:
-
-```bash
-sc-neurocore deploy build/mnist/conv_spiking_net_mnist.pt \
-  --target ice40 \
-  --T 256 \
-  -o build/mnist_fpga_scaffold
-```
+That checkpoint holds a convolutional spiking network, which `deploy` does not
+convert from a `.pt` file: the checkpoint path accepts dense ReLU chains and
+Studio `qcfs_conversion` runs, and refuses other parameters rather than
+dropping them. Export the trained network to NIR instead.
 
 If the MNIST model is trained in a NIR-native frontend such as SpikingJelly,
 snnTorch, or Norse, export the trained model to `build/mnist/mnist.nir` first,

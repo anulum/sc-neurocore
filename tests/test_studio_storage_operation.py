@@ -26,10 +26,10 @@ from sc_neurocore.studio.platform.storage_operation import classify_storage_oper
             b'{"schema_version":"studio.storage.supervision.v1","operation":"heartbeat"}',
             "supervision",
         ),
-        (b'{"schema_version":"studio.storage.finish.v1","operation":"finish"}', "finish"),
+        (b'{"schema_version":"studio.storage.finish.v2","operation":"finish"}', "finish"),
         (b'{"schema_version":"studio.storage.query.v1","operation":"query"}', "query"),
         (b'{"schema_version":"studio.storage.cancel.v1","operation":"cancel"}', "cancel"),
-        (b'{"schema_version":"studio.storage.artifact.v1","operation":"artifact"}', "artifact"),
+        (b'{"schema_version":"studio.storage.artifact.v2","operation":"artifact"}', "artifact"),
         (b'{"schema_version":"studio.storage.purge.v1","operation":"purge"}', "purge"),
     ],
 )
@@ -57,7 +57,15 @@ def test_exact_versioned_operations_dispatch(metadata: bytes, expected: str) -> 
             "unsupported storage operation",
         ),
         (
-            b'{"schema_version":"studio.storage.finish.v1","operation":"start"}',
+            b'{"schema_version":"studio.storage.finish.v2","operation":"start"}',
+            "unsupported storage operation",
+        ),
+        (
+            b'{"schema_version":"studio.storage.finish.v1","operation":"finish"}',
+            "unsupported storage operation",
+        ),
+        (
+            b'{"schema_version":"studio.storage.artifact.v1","operation":"artifact"}',
             "unsupported storage operation",
         ),
         (

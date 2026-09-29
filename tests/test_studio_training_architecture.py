@@ -29,6 +29,9 @@ _MODULE_PATHS = {
     "_training_job": _REPO_ROOT / "src/sc_neurocore/studio/_training_job.py",
     "_training_datasets": _REPO_ROOT / "src/sc_neurocore/studio/_training_datasets.py",
     "_training_weight_capture": _REPO_ROOT / "src/sc_neurocore/studio/_training_weight_capture.py",
+    "_training_live_attach": _REPO_ROOT / "src/sc_neurocore/studio/_training_live_attach.py",
+    "_training_conversion": _REPO_ROOT / "src/sc_neurocore/studio/_training_conversion.py",
+    "_training_evidence": _REPO_ROOT / "src/sc_neurocore/studio/_training_evidence.py",
 }
 _MODULE_LINE_CEILINGS = {
     "training": 375,
@@ -39,6 +42,9 @@ _MODULE_LINE_CEILINGS = {
     "_training_job": 675,
     "_training_datasets": 100,
     "_training_weight_capture": 130,
+    "_training_live_attach": 150,
+    "_training_conversion": 275,
+    "_training_evidence": 100,
 }
 _EXPECTED_DEPENDENCIES = {
     "training": {
@@ -52,9 +58,19 @@ _EXPECTED_DEPENDENCIES = {
     "_training_control": {"_training_events", "_training_job"},
     "_training_stream": {"_training_control", "_training_events"},
     "_training_events": set(),
-    "_training_job": {"_training_events", "_training_datasets", "_training_weight_capture"},
+    "_training_job": {
+        "_training_conversion",
+        "_training_events",
+        "_training_datasets",
+        "_training_evidence",
+        "_training_live_attach",
+        "_training_weight_capture",
+    },
     "_training_datasets": set(),
     "_training_weight_capture": set(),
+    "_training_live_attach": set(),
+    "_training_conversion": {"_training_datasets"},
+    "_training_evidence": set(),
 }
 _EXPECTED_EXPORTS = {
     "HAS_TORCH",
@@ -99,6 +115,7 @@ _EXPECTED_HTTP_ROUTES = {
     ("POST", "/api/studio/training/weight-restore/attach/live"),
     ("GET", "/api/training/surrogates"),
     ("GET", "/api/training/cell-types"),
+    ("GET", "/api/training/target-profiles"),
     ("POST", "/api/training/start"),
     ("POST", "/api/training/stop"),
     ("GET", "/api/training/jobs"),
@@ -149,6 +166,14 @@ def test_training_modules_have_bounded_single_direction_dependencies() -> None:
     _assert_acyclic(graph)
     for name, path in _MODULE_PATHS.items():
         assert len(path.read_text(encoding="utf-8").splitlines()) <= _MODULE_LINE_CEILINGS[name]
+
+
+def test_every_training_module_is_under_the_guard() -> None:
+    """A new training module cannot escape the size and dependency contract."""
+    present = {
+        path.stem for path in (_REPO_ROOT / "src/sc_neurocore/studio").glob("_training_*.py")
+    }
+    assert present | {"training"} == set(_MODULE_PATHS)
 
 
 def test_training_facade_preserves_exports_signatures_and_pickle_identity() -> None:

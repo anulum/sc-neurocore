@@ -13,7 +13,8 @@ unreserved job of the workspace with its sealed directory, for the requester
 the peer-verified API delegated, under the policy of the archive purge route,
 the one route that purges. The reply carries the purged record, or the
 ledger's refusal as text, as the embedded manager raises it. A lost reply is
-resolved by reading the record: a purged job is not found.
+resolved by reading the record: a purged job is not found. Complete snapshots
+larger than one frame use the correlated storage view content envelope.
 """
 
 from __future__ import annotations
@@ -60,7 +61,7 @@ class StoragePurgeResponse(BaseModel):
 
     @model_validator(mode="after")
     def validate_outcome(self) -> Self:
-        """A purge carries the record; a refusal carries the ledger's reason."""
+        """Require a record for success and the ledger's reason for refusal."""
         if (self.status == "ok") != (self.record is not None):
             raise ValueError("only a purge carries its record")
         if (self.status == "refused") != (self.error is not None):

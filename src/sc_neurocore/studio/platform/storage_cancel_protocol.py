@@ -15,6 +15,9 @@ under the policy of ``POST /api/training/stop`` by default. An explicit
 route; the authority then checks both actor and laboratory task custody.
 The reply carries the job's record after the request, as the embedded
 manager returns it. Cancelling is idempotent, so a lost reply is resent.
+Large snapshots use the correlated, SHA-bound storage view content envelope;
+each frame retains its original ceiling and the complete response has its own
+trusted content budget.
 """
 
 from __future__ import annotations

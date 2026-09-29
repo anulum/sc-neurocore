@@ -11,10 +11,6 @@ package loaders
 // Source: datasets/loaders.py (service score: 4)
 // 3 functions to accelerate
 
-func LoadNmnist() {
-	// Go-accelerated load_nmnist
-}
-
 func LoadShd() {
 	// Go-accelerated load_shd
 }

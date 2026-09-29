@@ -124,6 +124,8 @@ describe("training store state helpers", () => {
       trainingEpochs: [],
       trainingJobId: null,
       trainingObservedConfig: null,
+      trainingPreregistrationVerdict: null,
+      trainingConversionResult: null,
       trainingStatus: "starting",
       trainingWeightRestorePlan: null,
       trainingWeightRestoreVerification: null,

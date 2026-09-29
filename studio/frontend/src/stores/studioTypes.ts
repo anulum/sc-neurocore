@@ -15,7 +15,7 @@ import type {
   SensitivityResponse, PrecisionResponse, HeatmapResponse, CompareResponse,
   NullclineResponse, FreqResponse, ImportedTrace, NetworkResult, NeuronTemplate,
   ModelSummary, ModelDetail, PresetSummary, SimulateResponse, SynthResult,
-  SynthEstimate, MultiTargetResult, SynthToolInfo, SurrogateInfo, TrainingEpochMetrics,
+  SynthEstimate, MultiTargetResult, SynthToolInfo, SurrogateInfo, TrainingTargetProfile, TrainingEpochMetrics,
   TrainingWeightRestorePlan, TrainingWeightRestoreResult, TrainingWeightAttachResult,
   TrainingWeightLiveAttachResult, PopulationNode, PopulationModelContract, ProjectionEdge, GraphSimResult,
   DeletedProjectSummary, ProjectSaveResponse, ProjectSummary, PipelineResult,
@@ -26,6 +26,7 @@ import type {
   StudioAuthSession, StudioEvidenceBundleRequest, StudioEvidenceBundleResponse,
   StudioIdentityBrowserUser, StudioIdentityBrowserUserCreate, StudioIdentityServiceAccount,
   StudioJobRecord, StudioJobStatus, StudioOperatorStatus, TrainingJobSummary,
+  TrainingPreregistrationVerdict,
 } from "../api/client";
 import type { StudioSavedSession } from "../studioSavedSessions";
 import type {
@@ -37,6 +38,7 @@ import type { StudioNetworkParams } from "../studioInputState";
 import type { EvidenceBundleSurface } from "../evidenceBundles";
 import type { StudioBundleContext } from "../studioBundleContext";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
+import type { TrainingConversionResult } from "../trainingConversion";
 import type { GuidedFlowStepKey } from "../guidedFlowState";
 import type { StudioStageFailure } from "./studioStageFailure";
 
@@ -212,6 +214,10 @@ export interface StudioState {
   trainingJobsError: string | null;
   /** The retained run's configuration, separate from editable project settings. */
   trainingObservedConfig: StudioProjectTrainingConfig | null;
+  /** How the selected finished run met the criterion stored before it started. */
+  trainingPreregistrationVerdict: TrainingPreregistrationVerdict | null;
+  /** The selected finished conversion run's converted and source accuracy. */
+  trainingConversionResult: TrainingConversionResult | null;
   /**
    * The experiment the current training run was started under.
    *
@@ -227,6 +233,8 @@ export interface StudioState {
   trainingWeightAttach: TrainingWeightAttachResult | null;
   trainingWeightLiveAttach: TrainingWeightLiveAttachResult | null;
   trainingSurrogates: SurrogateInfo[];
+  /** Hardware profiles a conversion run can be calibrated for; empty until loaded. */
+  trainingTargetProfiles: TrainingTargetProfile[];
   trainingConfig: StudioProjectTrainingConfig;
   codeScript: string;
   codeOneliner: string;
@@ -411,6 +419,7 @@ export interface StudioState {
   /** Replace the canvas with the network in a NIR file or a saved graph envelope. */
   importGraphNIR: (file: Blob & { name: string }) => Promise<void>;
   loadSurrogates: () => Promise<void>;
+  loadTargetProfiles: () => Promise<void>;
   loadTrainingJobs: () => Promise<void>;
   selectTrainingJob: (jobId: string) => Promise<void>;
   startTraining: () => Promise<void>;
@@ -420,7 +429,7 @@ export interface StudioState {
   verifyTrainingWeightRestoreArtifact: () => Promise<void>;
   exportTrainingWeightRestoreVerification: () => void;
   materializeTrainingWeights: () => Promise<void>;
-  attachTrainingWeights: () => Promise<void>;
+  attachTrainingWeights: (mode?: "warm_start" | "exact_resume") => Promise<void>;
   liveAttachTrainingWeights: () => Promise<void>;
   setTrainingConfig: <K extends keyof StudioProjectTrainingConfig>(
     key: K,

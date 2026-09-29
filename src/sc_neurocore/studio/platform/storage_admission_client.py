@@ -19,6 +19,11 @@ import time
 from sc_neurocore.studio.platform.jobs_admission_replay import StorageAdmissionReplay
 from sc_neurocore.studio.platform.policy_models import Principal
 from sc_neurocore.studio.platform.storage_admission_digest import derive_storage_admission_replay
+from sc_neurocore.studio.platform.training_config_storage import EVENT_DATA_MAX_BYTES
+from sc_neurocore.studio.platform.storage_event_admission import (
+    encode_event_admission,
+    send_event_admission_content,
+)
 from sc_neurocore.studio.platform.storage_admission_protocol import (
     StorageNamedAdmissionRequest,
     decode_named_admission_request,
@@ -62,7 +67,8 @@ def send_named_admission_request(
 
     The trusted API caller must construct the requester only from its
     middleware-authenticated principal. This function checks a frozen metadata
-    and seed snapshot before sending, uses configuration-owned limits, and
+    and seed snapshot before sending, separates event declarations under their
+    existing custody ceiling, uses configuration-owned limits, and
     closes the channel on every failure. On success the caller retains an
     immutable transfer snapshot and the channel for one correlated response.
     The service independently derives and checks its own content identity.
@@ -109,8 +115,11 @@ def send_named_admission_request(
         ):
             raise ValueError("storage seed inputs must be named bytes")
         metadata = request.model_dump_json().encode("utf-8")
-        decoded = decode_named_admission_request(
-            metadata, max_metadata_bytes=configuration.max_metadata_bytes
+        if len(metadata) > configuration.max_metadata_bytes + 2 * EVENT_DATA_MAX_BYTES:
+            raise ValueError("storage admission request exceeds event custody limit")
+        decoded = decode_named_admission_request(metadata, max_metadata_bytes=len(metadata))
+        wire_metadata, event_content = encode_event_admission(
+            decoded, max_metadata_bytes=configuration.max_metadata_bytes
         )
         deadline = time.monotonic() + configuration.transfer_timeout_seconds
         manifest = dict(decoded.seed_manifest)
@@ -152,9 +161,16 @@ def send_named_admission_request(
         )
         write_verified_frame(
             channel,
-            metadata,
+            wire_metadata,
             expected_uid=configuration.storage_uid,
             max_bytes=configuration.max_metadata_bytes,
+            deadline=deadline,
+        )
+        send_event_admission_content(
+            channel,
+            event_content,
+            expected_uid=configuration.storage_uid,
+            frame_max_bytes=configuration.frame_max_bytes,
             deadline=deadline,
         )
         send_storage_seeds(

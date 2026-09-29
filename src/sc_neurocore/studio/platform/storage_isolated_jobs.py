@@ -81,6 +81,7 @@ class IsolatedJobManager:
             storage_uid=runtime.storage_uid,
             max_bytes=runtime.frame_max_bytes,
             timeout_seconds=runtime.transfer_timeout_seconds,
+            max_content_bytes=configuration.max_view_content_bytes,
         )
 
     def _deadline(self) -> float:
@@ -165,6 +166,7 @@ class IsolatedJobManager:
             request=request,
             expected_service_uid=self._runtime.storage_uid,
             max_bytes=self._runtime.frame_max_bytes,
+            max_content_bytes=self._configuration.max_view_content_bytes,
             deadline=self._deadline(),
         )
 
@@ -256,6 +258,7 @@ class IsolatedJobManager:
                 expected_service_uid=self._runtime.storage_uid,
                 max_bytes=self._runtime.frame_max_bytes,
                 deadline=self._deadline(),
+                max_content_bytes=self._configuration.max_view_content_bytes,
             )
             signal_worker = record.status in TERMINAL_STATUSES or record.status == "cancelling"
             if not signal_worker:
@@ -289,6 +292,7 @@ class IsolatedJobManager:
             ),
             expected_service_uid=self._runtime.storage_uid,
             max_bytes=self._runtime.frame_max_bytes,
+            max_artifact_bytes=self._runtime.max_artifact_bytes,
             deadline=self._deadline(),
         )
 
@@ -320,6 +324,7 @@ class IsolatedJobManager:
             expected_service_uid=self._runtime.storage_uid,
             max_bytes=self._runtime.frame_max_bytes,
             deadline=self._deadline(),
+            max_content_bytes=self._configuration.max_view_content_bytes,
         )
 
 

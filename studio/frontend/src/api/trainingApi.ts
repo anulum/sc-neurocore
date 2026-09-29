@@ -10,6 +10,7 @@ import { post, get } from "./http";
 import type {
   SurrogateInfo,
   CellTypeInfo,
+  TrainingTargetProfile,
   TrainingConfig,
   TrainingJobStatus,
   TrainingCheckpointPayload,
@@ -36,6 +37,13 @@ export const fetchSurrogates = () => get<SurrogateInfo[]>("/training/surrogates"
  * @returns Each cell type with what it supports.
  */
 export const fetchCellTypes = () => get<CellTypeInfo[]>("/training/cell-types");
+
+/**
+ * List the hardware profiles a conversion run can be calibrated for.
+ *
+ * @returns Each profile with its fixed-point format, ordered by name.
+ */
+export const fetchTargetProfiles = () => get<TrainingTargetProfile[]>("/training/target-profiles");
 
 /**
  * Start a training run.
@@ -119,16 +127,19 @@ export const restoreTrainingWeights = (
  * @param sourceJobId - The run whose weights to take.
  * @param config - The configuration for the new run.
  * @param expectedConfigSha256 - The config digest the caller expects.
+ * @param mode - Start fresh from weights or continue the saved optimiser and RNG position.
  * @returns The new run, or the mismatch that stopped it.
  */
 export const attachTrainingWeights = (
   sourceJobId: string,
   config: Partial<TrainingConfig>,
   expectedConfigSha256?: string,
+  mode: "warm_start" | "exact_resume" = "warm_start",
 ) =>
   post<TrainingWeightAttachResult>("/studio/training/weight-restore/attach", {
     source_job_id: sourceJobId,
     config,
+    mode,
     ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
   });
 

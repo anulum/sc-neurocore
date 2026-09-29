@@ -22,7 +22,6 @@ ended.
 
 from __future__ import annotations
 
-import hashlib
 import socket
 import sqlite3
 
@@ -33,6 +32,10 @@ from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_is_al
 from sc_neurocore.studio.platform.jobs_ledger_writes import transition_job
 from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobRejected
 from sc_neurocore.studio.platform.storage_artifact_seal import SealedArtifactWriter
+from sc_neurocore.studio.platform.storage_finish_chunks import (
+    FinishChunkMismatch,
+    receive_finish_artifact,
+)
 from sc_neurocore.studio.platform.storage_finish_protocol import (
     FINISH_SCHEMA_VERSION,
     FinishReason,
@@ -274,18 +277,16 @@ def serve_finish(
             return
         received: list[bytes] = []
         for artifact in request.artifacts:
-            payload = b""
-            if artifact.size_bytes:
-                payload = read_verified_frame(
+            try:
+                payload = receive_finish_artifact(
                     channel,
-                    expected_uid=expected_api_uid,
-                    max_bytes=frame_max_bytes,
+                    size_bytes=artifact.size_bytes,
+                    sha256=artifact.sha256,
+                    expected_api_uid=expected_api_uid,
+                    frame_max_bytes=frame_max_bytes,
                     deadline=deadline,
                 )
-            if (
-                len(payload) != artifact.size_bytes
-                or hashlib.sha256(payload).hexdigest() != artifact.sha256
-            ):
+            except FinishChunkMismatch:
                 _answer(channel, request, ("refused", "bytes"), deadline=deadline, **wire)
                 return
             received.append(payload)

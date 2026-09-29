@@ -4,91 +4,68 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia acceleration for conversion/ann_to_snn
+# SC-NeuroCore — Julia deterministic dense IF replay
 
+"""Native dense-if-f64-sequential-v1 replay; source tracing and encoding belong to the frontend."""
 module AnnToSnnAccel
 
-using Statistics, LinearAlgebra
+export DenseLayer, ConvertedSNN, LayerParameters, ReplayResult, replay, replay_parameters, classify
 
-mutable struct ConvertedSNNState
-    weights::Float64
-    biases::Float64
-    thresholds::Float64
-    T::Float64
-    n_layers::Float64
+include("ann_to_snn_resources.jl")
+include("ann_to_snn_parameters.jl")
+
+"""Owned output, final states and layer-major complete state/event traces, all row-major."""
+struct ReplayResult
+    output::Vector{Float64}
+    final_state::Vector{Vector{Float64}}
+    state_trace::Vector{Vector{Float64}}
+    spike_trace::Vector{Vector{Float64}}
 end
 
-function ConvertedSNNState()
-    ConvertedSNNState(0.0, 0.0, 0.0, 0.0, 0.0)
+include("ann_to_snn_compute.jl")
+include("ann_to_snn_source_parameters.jl")
+
+"""Replay time/batch/input flat frames with inclusive thresholds and subtractive reset.
+
+Each layer consumes preceding events in the same timestep. Bias follows ordered
+separate Float64 multiply/add reductions and is applied every timestep. Explicit
+states use batch/output order; traces use time/batch/output order. A linear final
+stage returns its cumulative signed integral, while an IF returns incremental
+counts. Empty time/batch preserves initial states. All returned storage is owned.
+Invalid geometry/domain raises ArgumentError, arithmetic overflow OverflowError,
+and an exceeded numeric reservation OutOfMemoryError before frame/state copies.
+Caller storage and allocator/interpreter overhead are excluded from the budget.
+"""
+function replay(model::ConvertedSNN, frames::AbstractVector{<:Real}, shape::Tuple{Int,Int};
+                initial_state::Union{Nothing,AbstractVector}=nothing, trace::Bool=false,
+                binary_inputs::Bool=true, max_working_bytes::Int=256 << 20)
+    steps, batch = shape
+    steps >= 0 && batch >= 0 || throw(ArgumentError("negative replay dimensions"))
+    isempty(model.layers) && throw(ArgumentError("at least one dense layer required"))
+    BigInt(steps) * batch * model.layers[1].inputs == length(frames) ||
+        throw(ArgumentError("invalid frame dimensions"))
+    isnothing(initial_state) || length(initial_state) == length(model.layers) ||
+        throw(ArgumentError("initial state must have one array per layer"))
+    admit_replay(model.layers, steps, batch, trace, model.output_mode == :linear, max_working_bytes)
+    snapshot = ConvertedSNN(model.layers; output_mode=model.output_mode, max_working_bytes=max_working_bytes)
+    return replay_owned(snapshot.layers, snapshot.output_mode, frames, shape;
+                        initial_state=initial_state, trace=trace, binary_inputs=binary_inputs)
 end
 
-function run(s::ConvertedSNNState, x)
-    squeeze = x.ndim == 1
-    if squeeze
-        x = x[np.newaxis]
-    batch = x.shape[0]
-    rng = np.random.RandomState(42)
-    # Initialize membrane voltages
-    voltages = [zeros((batch, w.shape[0])) for w in s.weights]
-    spike_counts = zeros((batch, s.weights[-1].shape[0]))
-    for t in 1:s.T
-        # Rate-code input: spike with probability proportional to x
-        input_spikes = (rng.random(x.shape) < x).astype(np.float64)
-        layer_input = input_spikes
-        for i, (w, b, theta) in enumerate(zip(s.weights, s.biases, s.thresholds))
-            current = layer_input @ w.T
-            if b is ! nothing
-                current += b / s.T
-            voltages[i] += current
-            spikes = (voltages[i] >= theta).astype(np.float64)
-            voltages[i] -= spikes * theta
-            layer_input = spikes
-            if i == s.n_layers - 1
-                spike_counts += spikes
-    if squeeze
-        spike_counts = spike_counts[0]
-    return spike_counts
-end
-
-function classify(s::ConvertedSNNState, x)
-    counts = s.run(x)
-    return argmax(counts, axis=-1)
-end
-
-function convert(model, calibration_data, T, percentile)
-    model: object,
-    calibration_data: object = nothing,
-    T: int = 16,
-    percentile: float = 99.9,
-    ) -> ConvertedSNN
-    if ! HAS_TORCH
-        raise ImportError("PyTorch required for ANN-to-SNN conversion")
-    layers = _extract_layers(model)
-    if ! layers
-        raise ValueError("No Linear/Conv2d layers found in model")
-    weights = [w for w, _ in layers]
-    biases = [b for _, b in layers]
-    if calibration_data is ! nothing
-        max_acts = _compute_max_activations(model, calibration_data, percentile)  # type: ignore[arg-type]
-        # Pad if fewer ReLUs than Linear layers
-        while length(max_acts) < length(weights)
-            max_acts = push!(, 1.0)
-        thresholds = max_acts
-    else
-        thresholds = [1.0] * length(weights)
-    # Normalize weights: scale so that max activation maps to threshold
-    normalized_weights = []
-    prev_scale = 1.0
-    for i, (w, theta) in enumerate(zip(weights, thresholds))
-        scale = theta / prev_scale if i > 0 else theta
-        normalized_weights = push!(, w / scale)
-        prev_scale = theta
-    return ConvertedSNN(
-        weights=normalized_weights,
-        biases=biases,
-        thresholds=[1.0] * length(weights),
-        T=T,
-    )
+"""Select the first maximal finite output in each row; returns zero-based labels."""
+function classify(model::ConvertedSNN, result::ReplayResult, batch::Int)
+    width = model.layers[end].outputs
+    batch >= 0 && BigInt(batch) * width == length(result.output) && all(isfinite, result.output) ||
+        throw(ArgumentError("invalid classification response"))
+    labels = Int[]
+    for row in 0:batch-1
+        best = 0
+        for node in 1:width-1
+            result.output[row*width+node+1] > result.output[row*width+best+1] && (best = node)
+        end
+        push!(labels, best)
+    end
+    return labels
 end
 
 end # module AnnToSnnAccel

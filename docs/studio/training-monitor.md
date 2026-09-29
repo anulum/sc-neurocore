@@ -5,6 +5,9 @@ Configure network architecture, surrogate gradients, and training
 hyperparameters, then watch loss curves, accuracy, and per-layer spike
 rates update in real time via Server-Sent Events.
 
+For manifest-bound local recordings through the training API, see
+[Event dataset training](event-training.md).
+
 ## Quick Start
 
 1. Switch to the **Train** tab
@@ -312,12 +315,88 @@ layout. It does **not** detect a change confined to the middle of a large
 corpus — hashing every sample on every run would cost more than the training
 step it protects.
 
+### A run can be judged against a criterion declared before it starts
+
+A request may carry a `preregistration`: the metric the finished run is judged
+on, its bound and, optionally, the hypothesis it tests.
+
+```json
+{"preregistration": {"metric": "val_accuracy", "threshold": 0.9,
+                     "rationale": "the event classifier beats 90 % on the held-out speakers"}}
+```
+
+| Metric | Passes when |
+|---|---|
+| `val_accuracy` | the validation accuracy is **at least** the threshold, a bound in `[0, 1]` |
+| `val_loss` | the validation loss is **at most** the threshold, a non-negative bound |
+
+The criterion is resolved with the rest of the configuration and stored with
+the job when it is submitted, with a `schema_version` and a `sha256` of its
+canonical form, so it exists before any training does. A stored criterion
+submitted again must carry a matching digest. An unknown metric or field, a
+bound outside the metric's range, or a rationale over 500 characters is refused
+with the field `preregistration` before a job exists.
+
+When the run completes, its status, job result and sealed `training/status.json`
+carry a `preregistration_verdict`: the metric, direction, threshold, the
+**unrounded** validation value observed, whether it passed and the digest of the
+criterion it was judged against. Rounding therefore never decides a verdict, and
+a non-finite observation never passes. A run that misses its criterion still
+completes; the verdict says it missed. The Training Monitor declares the
+criterion in the configuration form, keeps it in the saved workspace, and
+states the verdict of the selected finished run.
+
+The criterion only binds the judgement to a declaration made in advance. It
+does not make the validation split independent of the training data; that is
+the event contract's split custody.
+
+### A conversion run is judged on the network it converts to
+
+`"model_kind": "qcfs_conversion"` trains a dense ANN whose hidden activations
+are QCFS quantisers with `timesteps` as their step budget, converts it to a
+dense integrate-and-fire network with that same budget, and classifies the
+validation split with both networks under constant-current input. The Model
+selector in the configuration form chooses it.
+
+| Final metric | Meaning |
+|---|---|
+| `val_accuracy` | the **converted** network's validation accuracy |
+| `source_val_accuracy` | the trained ANN's validation accuracy |
+| `conversion_accuracy_drop` | the difference; positive is a loss |
+| `val_loss`, `train_loss`, `train_accuracy` | the ANN's, since the converted network has no loss |
+
+The comparison is sealed as `training/conversion_report.json`
+([fields](../api/conversion.md#measured-conversion-loss)), including the replay
+runtime that executed and digests of the source weights, the converted network
+and the validation samples. The criterion metric `conversion_accuracy_drop`
+(passes **at most** its bound, in `[0, 1]`) exists only on this route, and
+`val_accuracy` there judges the converted network.
+
+The route encodes static samples as rates, so it accepts `synthetic` (the same
+draws taken through the logistic function) and `mnist` (pixels in `[0, 1]`,
+unnormalised), and refuses event datasets, any `surrogate`, `learn_beta` or
+`learn_threshold` key, and a `timesteps` above `2**32 - 1`. Epoch events report
+the ANN during training and its QCFS thresholds; there are no spike rates. A
+conversion run starts from fresh weights: warm start, exact resume and live
+attach are refused, and its checkpoint holds no resume state. A validation split
+that serves no samples at the chosen batch size fails the run with that reason.
+
+A conversion run may name a `target_profile` from
+`GET /api/training/target-profiles` (the Target selector in the form). The
+converted network is then
+[calibrated for that format](../api/conversion.md#target-fixed-point-calibration)
+on the same validation samples, the calibration is sealed as
+`training/target_report.json`, and `target_accuracy` reports the accuracy with
+coefficients rounded for the target. This measures the numeric format; it is
+not execution on the target. A spiking run naming a target is refused.
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/training/surrogates` | List available surrogate functions |
 | GET | `/api/training/cell-types` | List available neuron cell types |
+| GET | `/api/training/target-profiles` | List hardware profiles a conversion run can be calibrated for |
 | POST | `/api/training/start` | Start a training job |
 | POST | `/api/training/stop` | Stop a running job |
 | GET | `/api/training/status/{job_id}` | Query job status |
@@ -345,11 +424,20 @@ step it protects.
 }
 ```
 
+An optional `preregistration` object declares the acceptance criterion; see
+[the criterion](#a-run-can-be-judged-against-a-criterion-declared-before-it-starts).
+`"model_kind": "qcfs_conversion"` selects the
+[conversion route](#a-conversion-run-is-judged-on-the-network-it-converts-to),
+which takes no `surrogate`, `learn_beta` or `learn_threshold`.
+
 Returns:
 
 ```json
 {"job_id": "sj_1711504200000", "status": "running"}
 ```
+
+`GET /api/training/status/{job_id}` reports `preregistration_verdict` for a
+completed run that declared a criterion, and `null` otherwise.
 
 ### GET /api/training/checkpoint/{job_id}
 

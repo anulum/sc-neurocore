@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import importlib.util
-import json
 import queue
 import secrets
 import threading
@@ -20,13 +19,18 @@ from collections.abc import Callable, Mapping
 from contextlib import suppress
 from typing import Any, Protocol, cast
 
+from sc_neurocore.studio._training_conversion import train_qcfs_conversion
 from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic, _seed_everything
+from sc_neurocore.studio._training_evidence import seal_training_status, write_refused_evidence
+from sc_neurocore.studio._training_live_attach import poll_live_attach
+from sc_neurocore.studio.event_training_budget import admit_event_training_input
 from sc_neurocore.studio._training_weight_capture import (
     CapturedWeightCheckpoint,
     capture_weight_checkpoint,
 )
 from sc_neurocore.studio.training_resume import (
     TrainingResumeState,
+    TrainingResumeMismatch,
     apply_resume_state,
     capture_resume_state,
     dataset_fingerprint,
@@ -34,19 +38,16 @@ from sc_neurocore.studio.training_resume import (
 from sc_neurocore.studio.training_contract import (
     SUPPORTED_CELL_TYPES,
     SUPPORTED_SURROGATES,
+    TrainingConfigError,
     resolve_training_config,
 )
 from sc_neurocore.studio._training_events import (
     TRAINING_EVENT_LOG_ARTIFACT_PATH,
     _json_event_payload,
 )
-from sc_neurocore.studio.platform.action_evidence import (
-    EvidenceStatus,
-    write_studio_action_evidence_manifest,
-)
+from sc_neurocore.studio.platform.action_evidence import EvidenceStatus
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.jobs import (
-    StudioJobArtifactUnavailable,
     StudioJobCancelled,
     StudioJobContext,
 )
@@ -134,6 +135,13 @@ class TrainingJob:
         # confusing error about a missing artifact instead of the real one.
         self._resume_state = resume_state
         self.resolved_config = resolve_training_config(config)
+        if self.resolved_config.model_kind != "spiking" and (
+            initial_state_dict is not None or resume_state is not None
+        ):
+            raise TrainingConfigError(
+                "model_kind",
+                "a qcfs_conversion run starts from fresh weights, never attached ones.",
+            )
         self.config = dict(self.resolved_config.to_public_dict())
         self.id = job_id or f"j{secrets.token_hex(6)}"
         self.status = "pending"
@@ -145,6 +153,7 @@ class TrainingJob:
         self._thread: threading.Thread | None = None
         self.error: str | None = None
         self.final_metrics: dict[str, Any] | None = None
+        self.preregistration_verdict: dict[str, object] | None = None
         self.weight_checkpoint: dict[str, JsonValue] | None = None
         self._captured_weight_checkpoint: CapturedWeightCheckpoint | None = None
         self._initial_state_dict = initial_state_dict
@@ -202,49 +211,12 @@ class TrainingJob:
         return {
             "training_status": self.status,
             "final_metrics": self.final_metrics,
+            "preregistration_verdict": self.preregistration_verdict,
             "weight_checkpoint": self.weight_checkpoint,
         }
 
-    @staticmethod
-    def write_refused_evidence(context: StudioJobContext, message: str) -> None:
-        """Seal failed evidence for a request that was refused before it ran.
-
-        Parameters
-        ----------
-        context : StudioJobContext
-            Job sandbox to write the status and evidence artifacts into.
-        message : str
-            The refusal, as the caller will read it.
-
-        Notes
-        -----
-        A refused configuration never builds a model, so there is no weight
-        checkpoint and no event log to publish — only the reason. Writing it
-        keeps the sandbox's account complete: every job that ends has an
-        evidence artifact saying how.
-        """
-        status_payload: dict[str, object] = {
-            "job_id": context.job_id,
-            "status": "failed",
-            "error": message,
-            "final_metrics": None,
-            "weight_checkpoint": None,
-        }
-        status_artifact = context.write_artifact(
-            "training/status.json",
-            json.dumps(status_payload, sort_keys=True),
-        )
-        write_studio_action_evidence_manifest(
-            context,
-            action_kind="studio.training.run",
-            result=status_payload,
-            result_artifact=status_artifact,
-            evidence_artifact_path="training/evidence.json",
-            evidence_classification="training",
-            replay_route="POST /api/training/start",
-            status="failed",
-            error_message=message,
-        )
+    #: Seal failed evidence for a request refused before it ran.
+    write_refused_evidence = staticmethod(write_refused_evidence)
 
     def _write_terminal_artifacts(
         self,
@@ -256,21 +228,8 @@ class TrainingJob:
         if self._persisted_event_count > 0:
             context.publish_existing_artifact(TRAINING_EVENT_LOG_ARTIFACT_PATH)
         self._publish_weight_checkpoint(context)
-        status_payload = self._public_status()
-        status_artifact = context.write_artifact(
-            "training/status.json",
-            json.dumps(status_payload, sort_keys=True),
-        )
-        write_studio_action_evidence_manifest(
-            context,
-            action_kind="studio.training.run",
-            result=status_payload,
-            result_artifact=status_artifact,
-            evidence_artifact_path="training/evidence.json",
-            evidence_classification="training",
-            replay_route="POST /api/training/start",
-            status=evidence_status,
-            error_message=self.error,
+        seal_training_status(
+            context, self._public_status(), status=evidence_status, error_message=self.error
         )
 
     def _emit(self, event_type: str, data: dict[str, Any]) -> None:
@@ -318,14 +277,43 @@ class TrainingJob:
             "error": self.error,
             "final_metrics": self.final_metrics,
             "job_id": self.id,
+            "preregistration_verdict": self.preregistration_verdict,
             "status": self.status,
             "weight_checkpoint": self.weight_checkpoint,
         }
 
     def _train(self, context: StudioJobContext | None = None) -> None:
-        """Train while holding this process's global generators."""
+        """Hold global generators and honour the event contract's CPU thread count."""
         with _GLOBAL_GENERATORS:
-            self._train_seeded(context)
+            if self.resolved_config.event_data is None or not HAS_TORCH:
+                self._train_seeded(context)
+                return
+            import torch
+
+            previous_threads = torch.get_num_threads()
+            try:
+                torch.set_num_threads(1)
+                self._train_seeded(context)
+            finally:
+                torch.set_num_threads(previous_threads)
+
+    @staticmethod
+    def _accumulate_spike_counts(monitor: Any, counts: dict[str, tuple[float, int]]) -> None:
+        """Accumulate element-weighted activity before the next batch changes shape.
+
+        Each monitor raster belongs to one batch. Summing spikes and element
+        counts separately retains incomplete batches without stacking tensors
+        with different batch sizes, and bounds retained tensors to one batch.
+        """
+        for name in monitor.layer_names:
+            raster = monitor.get(name)
+            if raster is not None:
+                previous_sum, previous_size = counts.get(name, (0.0, 0))
+                counts[name] = (
+                    previous_sum + float(raster.float().sum().item()),
+                    previous_size + int(raster.numel()),
+                )
+        monitor.reset()
 
     def _train_seeded(self, context: StudioJobContext | None) -> None:
         """Execute the Torch training loop and capture terminal weights."""
@@ -356,16 +344,29 @@ class TrainingJob:
         # global generators: an unseeded run cannot be replayed and its
         # checkpoint records a result nobody can reproduce.
         _seed_everything(resolved.seed)
+        if resolved.model_kind == "qcfs_conversion":
+            self._train_conversion(context)
+            return
 
         surrogate_fn = getattr(surr_mod, surrogate_name)
         device = auto_device()
 
         if dataset == "mnist":
             train_loader, test_loader, n_inputs, n_outputs = _load_mnist(batch_size)
+        elif resolved.event_data is not None:
+            from sc_neurocore.studio.event_training_data import event_training_loaders
+
+            train_loader, test_loader = event_training_loaders(resolved.event_data, batch_size)
+            n_inputs = resolved.event_data.encoder.channels
+            n_outputs = resolved.event_data.manifest.dataset.classes
         else:
             train_loader, test_loader, n_inputs, n_outputs = _make_synthetic(batch_size)
 
-        train_fingerprint = dataset_fingerprint(train_loader)
+        train_fingerprint = (
+            resolved.event_data.digest
+            if resolved.event_data is not None
+            else dataset_fingerprint(train_loader)
+        )
         model = SpikingNet(
             n_input=n_inputs,
             n_hidden=list(resolved.hidden_widths),
@@ -382,6 +383,13 @@ class TrainingJob:
         architecture = resolved.architecture(n_inputs, n_outputs)
         start_epoch = 0
         if self._resume_state is not None:
+            if (
+                resolved.event_data is not None
+                and self._resume_state.dataset_fingerprint != train_fingerprint
+            ):
+                raise TrainingResumeMismatch(
+                    "event data contract", self._resume_state.dataset_fingerprint, train_fingerprint
+                )
             # Restores the optimiser and the generator states, and returns the
             # epoch this run begins at, so a resumed run neither repeats nor
             # skips the work the interrupted one already did.
@@ -405,6 +413,12 @@ class TrainingJob:
                 "architecture": architecture,
                 "resolved_config": resolved.to_public_dict(),
                 "dataset_fingerprint": train_fingerprint,
+                "input_data": resolved.event_data.receipt()
+                if resolved.event_data is not None
+                else None,
+                "input_admission": admit_event_training_input(resolved.event_data, batch_size)
+                if resolved.event_data is not None
+                else None,
                 "start_epoch": start_epoch,
             },
         )
@@ -418,6 +432,7 @@ class TrainingJob:
 
             model.train()
             monitor.reset()
+            layer_counts: dict[str, tuple[float, int]] = {}
             epoch_loss = 0.0
             correct = 0
             total = 0
@@ -427,8 +442,11 @@ class TrainingJob:
                     return
 
                 data, targets = data.to(device), targets.to(device)
-                data = data.view(data.shape[0], -1)
-                data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
+                if resolved.event_data is not None:
+                    data = data.transpose(0, 1)
+                else:
+                    data = data.view(data.shape[0], -1)
+                    data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
 
                 spike_counts, _ = model(data)
                 loss = cast(_TrainingLoss, spike_count_loss(spike_counts, targets))
@@ -438,6 +456,7 @@ class TrainingJob:
                 if max_grad_norm:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                 optimizer.step()
+                self._accumulate_spike_counts(monitor, layer_counts)
 
                 epoch_loss += loss.item() * targets.shape[0]
                 correct += (spike_counts.argmax(dim=1) == targets).sum().item()
@@ -469,10 +488,14 @@ class TrainingJob:
                     if self._finish_if_stopped(epoch, monitor):
                         return
                     data, targets = data.to(device), targets.to(device)
-                    data = data.view(data.shape[0], -1)
-                    data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
+                    if resolved.event_data is not None:
+                        data = data.transpose(0, 1)
+                    else:
+                        data = data.view(data.shape[0], -1)
+                        data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
                     spike_counts, _ = model(data)
                     loss = cast(_TrainingLoss, spike_count_loss(spike_counts, targets))
+                    self._accumulate_spike_counts(monitor, layer_counts)
                     eval_loss += loss.item() * targets.shape[0]
                     eval_correct += (spike_counts.argmax(dim=1) == targets).sum().item()
                     eval_total += targets.shape[0]
@@ -483,11 +506,9 @@ class TrainingJob:
             val_loss = eval_loss / max(eval_total, 1)
             val_acc = eval_correct / max(eval_total, 1)
 
-            layer_rates = {}
-            for name in monitor.layer_names:
-                raster = monitor.get(name)
-                if raster is not None:
-                    layer_rates[name] = float(raster.float().mean().item())
+            layer_rates = {
+                name: count / max(size, 1) for name, (count, size) in layer_counts.items()
+            }
 
             parameter_snapshot = {}
             for parameter_name, parameter in model.named_parameters():
@@ -515,17 +536,20 @@ class TrainingJob:
 
         if self._finish_if_stopped(n_epochs, monitor):
             return
-        self.status = "completed"
-        self.final_metrics = {
-            "train_loss": round(train_loss, 6),
-            "train_accuracy": round(train_acc, 4),
-            "val_loss": round(val_loss, 6),
-            "val_accuracy": round(val_acc, 4),
-        }
-        self._capture_weight_checkpoint(
+        if resolved.event_data is not None:
+            from sc_neurocore.studio.event_training_data import verify_event_training_data
+
+            verify_event_training_data(resolved.event_data)
+        self._complete(
+            {
+                "train_loss": train_loss,
+                "train_accuracy": train_acc,
+                "val_loss": val_loss,
+                "val_accuracy": val_acc,
+            },
             model=model,
             architecture=architecture,
-            model_info=info,
+            info=info,
             resume_state=capture_resume_state(
                 epochs_completed=n_epochs,
                 architecture=architecture,
@@ -534,8 +558,50 @@ class TrainingJob:
                 dataset_fingerprint=train_fingerprint,
             ),
         )
-        self._emit("completed", self.final_metrics)
         monitor.remove()
+
+    def _train_conversion(self, context: StudioJobContext | None) -> None:
+        """Run the QCFS conversion route and record how it ended."""
+        outcome = train_qcfs_conversion(
+            self.resolved_config,
+            context,
+            job_id=self.id,
+            emit=self._emit,
+            stop_requested=self._stop_requested,
+        )
+        if outcome is None:
+            self.status = "stopped"
+            return
+        self._complete(
+            outcome.observed,
+            model=outcome.model,
+            architecture=outcome.architecture,
+            info=outcome.model_info,
+            resume_state=None,
+        )
+
+    def _complete(
+        self,
+        observed: dict[str, float],
+        *,
+        model: Any,
+        architecture: str,
+        info: dict[str, Any],
+        resume_state: TrainingResumeState | None,
+    ) -> None:
+        """Publish rounded metrics, judge the stored criterion and capture weights."""
+        self.status = "completed"
+        self.final_metrics = {
+            key: round(value, 6 if key.endswith("loss") else 4) for key, value in observed.items()
+        }
+        criterion = self.resolved_config.preregistration
+        if criterion is not None:
+            # Judged on the unrounded value: rounding must not decide a verdict.
+            self.preregistration_verdict = criterion.judge(float(observed[criterion.metric]))
+        self._capture_weight_checkpoint(
+            model=model, architecture=architecture, model_info=info, resume_state=resume_state
+        )
+        self._emit("completed", self.final_metrics)
 
     def _attach_initial_state_dict(
         self,
@@ -552,79 +618,10 @@ class TrainingJob:
         self._emit("attach", {"loaded_key_count": len(state_dict)})
 
     def _poll_live_attach(self, context: StudioJobContext, model: Any, epoch: int) -> None:
-        """Consume and apply a pending live weight-attach command."""
-        try:
-            command = context.poll_control_command()
-        except ValueError:
-            self._emit("attach_rejected", {"epoch": epoch, "reason": "invalid_command"})
-            return
-        if command is None or command.get("action") != "attach_weights":
-            return
-        self._apply_live_attach(context, model, command, epoch)
-
-    def _apply_live_attach(
-        self,
-        context: StudioJobContext,
-        model: Any,
-        command: Mapping[str, object],
-        epoch: int,
-    ) -> None:
-        """Verify and load a live weight attach, rejecting on any failure."""
-        from sc_neurocore.studio.platform.training_weight_loader import (
-            load_training_weight_state_dict,
-        )
-        from sc_neurocore.studio.platform.training_weights import (
-            TRAINING_WEIGHT_RESTORE_ATTACH_EVIDENCE_ARTIFACT_PATH,
-            build_training_weight_restore_attach_evidence,
-            materialize_training_weight_payload,
-        )
-
-        restore_plan = command.get("restore_plan")
-        fingerprint = command.get("architecture_fingerprint")
-        weights_seed = command.get("weights_seed_path")
-        metadata_seed = command.get("metadata_seed_path")
-        if (
-            not isinstance(restore_plan, Mapping)
-            or not isinstance(fingerprint, str)
-            or not isinstance(weights_seed, str)
-            or not isinstance(metadata_seed, str)
-        ):
-            self._emit("attach_rejected", {"epoch": epoch, "reason": "invalid_command"})
-            return
-        try:
-            metadata_payload = context.read_control_seed(metadata_seed)
-            weights_payload = context.read_control_seed(weights_seed)
-            materialization = materialize_training_weight_payload(
-                restore_plan=restore_plan,
-                metadata_payload=metadata_payload,
-                weights_payload=weights_payload,
-                trusted_loader=load_training_weight_state_dict,
-            )
-            model.load_state_dict(dict(materialization.state_dict), strict=True)
-        except (RuntimeError, KeyError, ValueError, StudioJobArtifactUnavailable):
-            self._emit("attach_rejected", {"epoch": epoch, "reason": "incompatible"})
-            return
-        evidence = build_training_weight_restore_attach_evidence(
-            materialization,
-            mode="live",
-            target_job_id=self.id,
-            target_architecture=materialization.architecture,
-            target_parameter_count=materialization.parameter_count,
-            architecture_fingerprint=fingerprint,
-        )
-        context.write_artifact(
-            TRAINING_WEIGHT_RESTORE_ATTACH_EVIDENCE_ARTIFACT_PATH,
-            json.dumps(evidence, sort_keys=True),
-        )
-        self.live_attach_evidence = evidence
-        self._emit(
-            "attach",
-            {
-                "epoch": epoch,
-                "mode": "live",
-                "loaded_key_count": len(materialization.state_dict),
-            },
-        )
+        """Apply a pending live weight attach and retain its evidence."""
+        evidence = poll_live_attach(context, model, epoch, job_id=self.id, emit=self._emit)
+        if evidence is not None:
+            self.live_attach_evidence = evidence
 
     def _capture_weight_checkpoint(
         self,

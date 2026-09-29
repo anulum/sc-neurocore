@@ -6,6 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for loaders
 
+#[path = "nmnist.rs"]
+pub mod nmnist;
+
 pub fn _synthetic_event_dataset(
     _n_samples: f64,
     _spatial_size: f64,
@@ -76,23 +79,9 @@ pub fn load_nmnist(
     0.0
 }
 
-pub fn _parse_nmnist_bin(_path: f64, _dt_ms: f64) -> f64 {
-    // raw = fromfile(path, dtype=uint8)
-    // # Each event is 5 bytes: [addr_high, addr_low, ts2, ts1, ts0]
-    // n_events = len(raw) // 5
-    // raw = raw[: n_events * 5].reshape(n_events, 5)
-    // addr = (raw[:, 0].astype(uint16) << 8) | raw[:, 1].astype(uint16)
-    // x = addr & 0x1F  # bits 0-4
-    // y = (addr >> 5) & 0x1F  # bits 5-9
-    // polarity = (addr >> 10) & 0x1  # bit 10
-    // ts = (
-    // raw[:, 2].astype(uint32) << 16
-    // | raw[:, 3].astype(uint32) << 8
-    // | raw[:, 4].astype(uint32)
-    // )
-    // ts_ms = ts.astype(float32) * (dt_ms / 1000.0)
-    // return column_stack([x, y, polarity, ts_ms]).astype(float32)
-    0.0
+/// Read real N-MNIST events as row-major float64 millisecond records.
+pub fn _parse_nmnist_bin(path: &std::path::Path) -> std::io::Result<Vec<f64>> {
+    nmnist::read_nmnist(path)
 }
 
 pub fn load_shd(

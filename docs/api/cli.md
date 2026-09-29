@@ -152,15 +152,26 @@ sc-neurocore deploy model.nir --target ice40 --output build/deploy
 ```
 
 PyTorch checkpoints are treated as untrusted input. `.pt`/`.pth` deployment
-requires an explicit SHA-256 digest and a state-dict-like payload containing a
-bounded, finite, floating-point, composition-compatible dense weight chain:
+requires an explicit SHA-256 digest and either a dense ReLU chain `state_dict`
+(bounded, finite, floating-point, composition-compatible, rebuilt in registration
+order with its biases; any other parameter is refused) or a Studio
+`qcfs_conversion` checkpoint, rebuilt from its recorded configuration:
 
 ```bash
 sc-neurocore deploy model.pt \
   --checkpoint-sha256 "$EXPECTED_SHA256" \
+  --calibration samples.npy \
   --target artix7 \
   --output build/deploy
 ```
+
+The converted network is written to `converted_network.npz` with a manifest
+`converted_network.json` (source checkpoint digest, layers, T, network digest).
+`--calibration` samples calibrate the ReLU thresholds and, for a target with a
+registered fixed-point profile, produce `target_report.json`
+([target calibration](conversion.md#target-fixed-point-calibration)). The
+generated `sc_deploy_lif.sv` is a generic LIF template and does not carry the
+network's weights.
 
 Supported targets are `ice40`, `ecp5`, `artix7`, `zynq`, and `web`. The first
 two emit Yosys/nextpnr build files, Artix-7/Zynq emit a Vivado Tcl project, and
@@ -263,6 +274,27 @@ share. `verify` lists missing, changed and unlisted files and exits with status
 1 when there are any. `split` assigns whole groups to the new parts and prints
 the share each part received. Refused input exits with status 2 and writes no
 file. The formats are described in [Neuromorphic Datasets](datasets.md).
+
+### Train mode
+
+Run one Studio training request from the command line through the same
+contract, job manager and worker as `POST /api/training/start`. The job ledger,
+sandboxes and sealed artefacts stay under `--job-root`.
+
+```bash
+sc-neurocore train request.json --job-root runs/
+```
+
+`request.json` is the body the route takes, optionally with a
+[preregistered criterion](../studio/training-monitor.md#a-run-can-be-judged-against-a-criterion-declared-before-it-starts)
+or `"model_kind": "qcfs_conversion"` for the
+[conversion route](../studio/training-monitor.md#a-conversion-run-is-judged-on-the-network-it-converts-to).
+The command waits for the run and prints its status, final metrics, verdict and
+weight checkpoint as JSON. Exit status: 0 completed with its criterion met or
+none declared, 1 failed or stopped (including a run the manager timed out after
+`--timeout` seconds), 2 request refused or unreadable, 3 completed but the
+criterion was missed. A refused request writes the reason to stderr and starts
+no job.
 
 ### Maintenance mode
 

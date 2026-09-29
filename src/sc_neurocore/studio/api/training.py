@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException
 
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
+from sc_neurocore.studio.training_contract import list_target_profiles
 from sc_neurocore.studio.training import (
     export_training_checkpoint,
     get_training_status,
@@ -41,6 +42,10 @@ def build_training_router(context: StudioApiContext) -> APIRouter:
     @router.get("/api/training/cell-types")
     def api_cell_types() -> Any:
         return list_cell_types()
+
+    @router.get("/api/training/target-profiles")
+    def api_target_profiles() -> Any:
+        return list_target_profiles()
 
     @router.post("/api/training/start")
     def api_training_start(data: dict[str, Any]) -> Any:

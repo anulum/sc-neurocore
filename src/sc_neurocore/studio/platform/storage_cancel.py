@@ -41,8 +41,8 @@ from sc_neurocore.studio.platform.storage_cancel_protocol import (
 from sc_neurocore.studio.platform.storage_peer import (
     read_verified_frame,
     require_storage_supervisor_identity,
-    write_verified_frame,
 )
+from sc_neurocore.studio.platform.storage_view_content import send_view_content, view_content_limit
 
 
 def apply_cancel(
@@ -105,6 +105,7 @@ def serve_cancel(
     max_bytes: int,
     deadline: float,
     initial_frame: bytes | None = None,
+    max_content_bytes: int | None = None,
 ) -> None:
     """Serve one peer-verified cancellation after the stop route's policy.
 
@@ -126,6 +127,8 @@ def serve_cancel(
         Absolute monotonic wire deadline.
     initial_frame : bytes or None
         First frame already read by the owning listener, if any.
+    max_content_bytes : int, optional
+        Independent total snapshot limit; defaults to event custody plus one frame.
 
     Raises
     ------
@@ -165,12 +168,16 @@ def serve_cancel(
             route=route,
             request_id=request.request_id,
         )
+        content_limit = view_content_limit(max_bytes, max_content_bytes)
         response = apply_cancel(ledger, request, allowed=decision.allowed)
-        write_verified_frame(
+        send_view_content(
             channel,
             encode_cancel_message(response),
             expected_uid=expected_api_uid,
-            max_bytes=max_bytes,
+            content_schema=CANCEL_SCHEMA_VERSION,
+            request_id=request.request_id,
+            frame_max_bytes=max_bytes,
+            max_content_bytes=content_limit,
             deadline=deadline,
         )
 

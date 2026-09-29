@@ -15,7 +15,6 @@ a lost reply is read again on a new connection.
 
 from __future__ import annotations
 
-import hashlib
 import secrets
 import socket
 
@@ -31,6 +30,7 @@ from sc_neurocore.studio.platform.storage_artifact_protocol import (
     decode_artifact_response,
     encode_artifact_message,
 )
+from sc_neurocore.studio.platform.storage_artifact_chunks import receive_artifact_chunks
 from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
@@ -63,8 +63,27 @@ def exchange_artifact(
     expected_service_uid: int,
     max_bytes: int,
     deadline: float,
+    max_artifact_bytes: int = 64 * 1024 * 1024,
 ) -> StudioJobArtifactPayload:
     """Read one sealed artefact over a connected, exclusively owned stream.
+
+    Parameters
+    ----------
+    channel : socket.socket
+        Exclusively owned connection, closed after this exchange.
+    request : StorageArtifactRequest
+        Route-authorised read with a fresh correlation identifier.
+    expected_service_uid : int
+        Configured storage identity, checked for each frame.
+    max_bytes, max_artifact_bytes : int
+        Independent frame and complete-content ceilings from trusted settings.
+    deadline : float
+        Absolute monotonic deadline covering the entire exchange.
+
+    Returns
+    -------
+    StudioJobArtifactPayload
+        Complete bytes after exact chunk, size and digest verification.
 
     Raises
     ------
@@ -92,18 +111,16 @@ def exchange_artifact(
             channel, expected_uid=expected_service_uid, max_bytes=max_bytes, deadline=deadline
         )
         declared = decode_artifact_response(reply, request=request, max_bytes=max_bytes).artifact
-        # An answered read always declares its artefact.
-        size = declared.size_bytes if declared is not None else 0
-        payload = b""
-        if size:
-            payload = read_verified_frame(
-                channel, expected_uid=expected_service_uid, max_bytes=max_bytes, deadline=deadline
-            )
-    if declared is None or (len(payload), hashlib.sha256(payload).hexdigest()) != (
-        declared.size_bytes,
-        declared.sha256,
-    ):
-        raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
+        if declared is None:
+            raise StudioJobArtifactUnavailable("Studio job artifact declaration is absent.")
+        payload = receive_artifact_chunks(
+            channel,
+            declared,
+            expected_service_uid=expected_service_uid,
+            frame_max_bytes=max_bytes,
+            max_artifact_bytes=max_artifact_bytes,
+            deadline=deadline,
+        )
     artifact = StudioJobArtifact(
         relative_path=declared.relative_path, size_bytes=declared.size_bytes, sha256=declared.sha256
     )

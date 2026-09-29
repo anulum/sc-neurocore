@@ -6,11 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuromorphic dataset loaders with synthetic fallbacks
 
-"""Neuromorphic dataset loaders with synthetic fallbacks.
+"""Neuromorphic dataset loaders with explicit synthetic fixtures.
 
 Supports N-MNIST, Spiking Heidelberg Digits (SHD), and DVS-CIFAR10.
-When real data is unavailable, generates reproducible synthetic spike
-patterns via Poisson encoding for pipeline testing.
+Explicit synthetic mode generates reproducible spike patterns for pipeline
+testing. Missing real data refuses without synthetic substitution.
 """
 
 from __future__ import annotations
@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+from sc_neurocore.accel.dvs_recordings import read_dvs_recording
 
 from .encoding import poisson_encode
 
@@ -117,7 +119,8 @@ def load_nmnist(
     Returns
     -------
     samples : list of ndarray, each shape (N_events, 4)
-        Columns: [x, y, polarity, timestamp_ms].
+        Real recordings use float64 columns [x, y, polarity, timestamp_ms]
+        to avoid float32 timestamp rounding before temporal binning.
     labels : ndarray of int
     """
     if synthetic:
@@ -162,17 +165,17 @@ def _parse_nmnist_bin(path: Path) -> np.ndarray[Any, Any]:
     -------
     numpy.ndarray
         Columns ``[x, y, polarity, timestamp_ms]``; the timestamp is the
-        recorded microseconds divided by 1000.
+        recorded microseconds divided by 1000, retained in float64 so a
+        float32 conversion cannot shift temporal bins or window boundaries.
+
+    Raises
+    ------
+    ValueError
+        The file ends with an incomplete 40-bit event.
     """
-    raw = np.fromfile(path, dtype=np.uint8)
-    n_events = len(raw) // 5
-    events = raw[: n_events * 5].reshape(n_events, 5).astype(np.uint32)
-    x = events[:, 0]
-    y = events[:, 1]
-    polarity = events[:, 2] >> 7
-    ts_us = ((events[:, 2] & 0x7F) << 16) | (events[:, 3] << 8) | events[:, 4]
-    ts_ms = ts_us.astype(np.float64) / 1000.0
-    return np.column_stack([x, y, polarity, ts_ms]).astype(np.float32)
+    from sc_neurocore.accel.event_recordings import decode_nmnist_recording
+
+    return decode_nmnist_recording(path.read_bytes())
 
 
 def load_shd(
@@ -231,15 +234,15 @@ def load_shd(
         spike_units = f["spikes"]["units"]
         raw_labels = f["labels"][:]
         for i in range(len(raw_labels)):
-            times = np.asarray(spike_times[i])
+            times = np.asarray(spike_times[i], dtype=np.float64) * 1000.0
             units = np.asarray(spike_units[i])
             if len(times) > 0:
-                n_bins = min(int(np.ceil(times.max() / (dt_ms / 1000.0))) + 1, T)
+                n_bins = min(int(np.ceil(times.max() / dt_ms)) + 1, T)
             else:
                 n_bins = T
             train_arr = np.zeros((n_bins, _SHD_CHANNELS), dtype=bool)
             if len(times) > 0:
-                bin_idx = (times / (dt_ms / 1000.0)).astype(int)
+                bin_idx = (times / dt_ms).astype(int)
                 unit_idx = np.clip(units.astype(int), 0, _SHD_CHANNELS - 1)
                 # A spike after the T-step window is dropped: merging it into the
                 # last bin would invent a burst at the end of every long sample.
@@ -308,7 +311,8 @@ def load_dvs_cifar10(
     Returns
     -------
     samples : list of ndarray, each shape (N_events, 4)
-        Columns: [x, y, polarity, timestamp_ms].
+        Real recordings use float64 columns [x, y, polarity, timestamp_ms]
+        to avoid float32 timestamp rounding before temporal binning.
     labels : ndarray of int
     """
     if synthetic:
@@ -326,7 +330,7 @@ def load_dvs_cifar10(
         raise FileNotFoundError(
             f"Expected split directory {split_dir.resolve()}. Download from {_DVS_CIFAR10_URL}"
         )
-    # Real loader: .aedat or .mat files grouped by class
+    # User-converted .npy recordings are grouped by class.
     samples: list[np.ndarray[Any, Any]] = []
     label_list: list[int] = []
     for class_dir in sorted(split_dir.iterdir()):
@@ -334,7 +338,7 @@ def load_dvs_cifar10(
             continue
         class_label = int(class_dir.name)
         for event_file in sorted(class_dir.glob("*.npy")):
-            events = np.load(event_file).astype(np.float32)
+            events = _parse_dvs_npy(event_file)
             samples.append(events)
             label_list.append(class_label)
     if not samples:
@@ -343,3 +347,27 @@ def load_dvs_cifar10(
             f"Convert raw data to .npy arrays with columns [x, y, pol, ts_ms]."
         )
     return samples, np.array(label_list, dtype=np.int64)
+
+
+def _parse_dvs_npy(path: Path) -> np.ndarray[Any, Any]:
+    """Read a converted camera recording without narrowing its timestamps.
+
+    Parameters
+    ----------
+    path : Path
+        A NumPy file with columns ``x, y, polarity, timestamp_ms``.
+
+    Returns
+    -------
+    numpy.ndarray
+        An ``(N, 4)`` float64 array retaining the recorded millisecond times.
+
+    Raises
+    ------
+    ValueError
+        Invalid NPY header, nonreal datatype, incompatible columns, oversized
+        event result, truncation or additional file content.
+    OSError
+        The recording cannot be read.
+    """
+    return read_dvs_recording(path)

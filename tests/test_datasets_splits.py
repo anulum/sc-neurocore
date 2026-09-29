@@ -23,6 +23,7 @@ from sc_neurocore.datasets.splits import (
     group_split,
     leaked_groups,
     split_plan_from_dict,
+    validate_split_plan,
 )
 from tests.event_dataset_support import write_nmnist, write_shd
 
@@ -133,3 +134,95 @@ def test_a_plan_that_is_not_exactly_this_schema_is_refused(
     data.update(edit)
     with pytest.raises(ValueError, match=message):
         split_plan_from_dict(data)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("manifest_digest", "not-a-digest"),
+        ("manifest_digest", "sha256:" + "z" * 64),
+        ("source_split", 7),
+        ("source_split", " "),
+        ("seed", True),
+        ("seed", "3"),
+        ("seed", -1),
+        ("seed", 2**32),
+        ("fractions", []),
+        ("fractions", [["train", 0.5], ["train", 0.5]]),
+        ("fractions", [["train", True], ["validation", 0.5]]),
+        ("fractions", [["train", -0.5], ["validation", 1.5]]),
+        ("fractions", [["train", float("nan")], ["validation", 0.5]]),
+        ("fractions", [["train", 10**400], ["validation", 0.5]]),
+        ("fractions", [["train", 0.7], ["validation", 0.7]]),
+        ("fractions", [["train"], ["validation", 0.5]]),
+        ("assignment", {"train": [], "unknown": []}),
+        ("assignment", {"train": "012", "validation": []}),
+        ("assignment", {"train": [-1], "validation": [1]}),
+        ("assignment", {"train": [False], "validation": [1]}),
+        ("assignment", {"train": ["0"], "validation": [1]}),
+        ("assignment", {"train": [0, 0], "validation": [1]}),
+        ("assignment", {"train": [0], "validation": [0]}),
+        ("groups", {"train": ["speaker:0", "speaker:0"], "validation": []}),
+    ],
+)
+def test_imported_split_values_are_validated_without_coercion(
+    shd: EventDatasetManifest, field: str, value: object
+) -> None:
+    """Reject malformed plans over actual generated SHD-format file manifests."""
+    data = group_split(shd, fractions={"train": 0.8, "validation": 0.2}, seed=3).to_dict()
+    data[field] = value
+    with pytest.raises(ValueError):
+        split_plan_from_dict(data)
+
+
+def test_training_admission_checks_the_complete_split_custody(shd: EventDatasetManifest) -> None:
+    """Keep source samples, declared speakers and imported split digests consistent."""
+    plan = group_split(shd, fractions={"train": 0.8, "validation": 0.2}, seed=3)
+    validate_split_plan(shd, plan)
+    validate_split_plan(shd, split_plan_from_dict(json.loads(json.dumps(plan.to_dict()))))
+
+    data = plan.to_dict()
+    data["groups"]["train"] = ["speaker:999"]
+    with pytest.raises(ValueError, match="declared groups"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    data["assignment"]["train"].pop()
+    with pytest.raises(ValueError, match="every source sample"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    data["assignment"]["train"][0] = len(TRAIN_SPEAKERS)
+    with pytest.raises(ValueError, match="every source sample"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    data["assignment"]["train"][0] = len(shd.samples)
+    with pytest.raises(ValueError, match="every source sample"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    data["source_split"] = "not-present"
+    with pytest.raises(ValueError, match="no samples"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    data["manifest_digest"] = "sha256:" + "0" * 64
+    with pytest.raises(ValueError, match="another manifest"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    data["assignment"]["train"].extend(data["assignment"]["validation"])
+    data["assignment"]["validation"] = []
+    data["groups"]["train"] = sorted({shd.samples[p].group for p in data["assignment"]["train"]})
+    data["groups"]["validation"] = []
+    with pytest.raises(ValueError, match="every split"):
+        validate_split_plan(shd, split_plan_from_dict(data))
+
+    data = plan.to_dict()
+    moved = data["assignment"]["train"].pop(0)
+    data["assignment"]["validation"].append(moved)
+    for name, positions in data["assignment"].items():
+        data["groups"][name] = sorted({shd.samples[p].group for p in positions})
+    with pytest.raises(ValueError, match="more than one split"):
+        validate_split_plan(shd, split_plan_from_dict(data))

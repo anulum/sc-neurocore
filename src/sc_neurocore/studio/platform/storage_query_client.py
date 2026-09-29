@@ -33,7 +33,8 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobStatusSnapshot,
 )
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
-from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
+from sc_neurocore.studio.platform.storage_peer import write_verified_frame
+from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 from sc_neurocore.studio.platform.storage_query_protocol import (
     QUERY_SCHEMA_VERSION,
     QueryView,
@@ -79,8 +80,13 @@ def exchange_query(
     expected_service_uid: int,
     max_bytes: int,
     deadline: float,
+    max_content_bytes: int | None = None,
 ) -> StorageQueryResponse:
     """Run one query over a connected, exclusively owned stream.
+
+    Each frame obeys ``max_bytes``; the complete reply independently obeys
+    ``max_content_bytes``, defaulting to the event custody ceiling plus one
+    frame. All frames share the original absolute deadline and peer identity.
 
     Raises
     ------
@@ -99,10 +105,18 @@ def exchange_query(
             max_bytes=max_bytes,
             deadline=deadline,
         )
-        reply = read_verified_frame(
-            channel, expected_uid=expected_service_uid, max_bytes=max_bytes, deadline=deadline
+        reply = read_view_content(
+            channel,
+            content_schema=QUERY_SCHEMA_VERSION,
+            request_id=request.request_id,
+            expected_uid=expected_service_uid,
+            frame_max_bytes=max_bytes,
+            deadline=deadline,
+            max_content_bytes=max_content_bytes,
         )
-    return decode_query_response(reply, request=request, max_bytes=max_bytes)
+    return decode_query_response(
+        reply, request=request, max_bytes=view_content_limit(max_bytes, max_content_bytes)
+    )
 
 
 class QueryReader:
@@ -116,6 +130,7 @@ class QueryReader:
         storage_uid: int,
         max_bytes: int,
         timeout_seconds: float,
+        max_content_bytes: int | None = None,
     ) -> None:
         """Keep the trusted endpoint settings; nothing is sent yet."""
         self._connect = connect
@@ -123,6 +138,7 @@ class QueryReader:
         self._storage_uid = storage_uid
         self._max_bytes = max_bytes
         self._timeout = timeout_seconds
+        self._content_limit = view_content_limit(max_bytes, max_content_bytes)
 
     def _query(
         self, view: QueryView, requester: StorageRequester | None, *, limit: int, after: str | None
@@ -135,6 +151,7 @@ class QueryReader:
             request,
             expected_service_uid=self._storage_uid,
             max_bytes=self._max_bytes,
+            max_content_bytes=self._content_limit,
             deadline=time.monotonic() + self._timeout,
         )
 

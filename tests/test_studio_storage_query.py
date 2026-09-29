@@ -10,12 +10,13 @@
 
 Every exchange runs over real sockets through the service's own dispatch, over
 a real SQLite ledger whose jobs were admitted by the real shared admission.
-Pages are cut by the real frame limit; policy is the existing gateway.
+Pages obey the independent content limit; policy is the existing gateway.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterator
+from dataclasses import replace
 import os
 from pathlib import Path
 import socket
@@ -83,13 +84,16 @@ def _admit(
     return ids
 
 
-def _reader(authority: Authority, max_bytes: int = FRAME) -> QueryReader:
+def _reader(
+    authority: Authority, max_bytes: int = FRAME, *, max_content_bytes: int | None = None
+) -> QueryReader:
     return QueryReader(
         authority.connect,
         workspace="default",
         storage_uid=os.getuid(),
         max_bytes=max_bytes,
         timeout_seconds=10.0,
+        max_content_bytes=max_content_bytes,
     )
 
 
@@ -101,21 +105,23 @@ def test_record_pages_follow_creation_order_within_the_workspace(
     _admit(ledger, 2, workspace="elsewhere", first=10)
     one = len(ledger.record(ids[0]).to_public_dict().__repr__())
     authority = Authority(ledger, frame_max_bytes=3 * one)
-    records = _reader(authority, 3 * one).records(ADMIN)
+    authority.services = replace(authority.services, max_view_content_bytes=3 * one)
+    records = _reader(authority, 3 * one, max_content_bytes=3 * one).records(ADMIN)
     authority.join()
     assert [record.job_id for record in records] == ids
     assert records == ledger.list_records(workspace="default")
     assert authority.seen.count("query") >= 3
 
 
-def test_a_record_larger_than_the_frame_is_a_configuration_fault(
+def test_a_record_larger_than_the_content_budget_is_refused(
     ledger: StudioJobLedger,
 ) -> None:
     """The authority refuses rather than truncating a record; the API sees the close."""
     _admit(ledger, 1)
     authority = Authority(ledger, frame_max_bytes=512)
+    authority.services = replace(authority.services, max_view_content_bytes=512)
     with pytest.raises(EOFError):
-        _reader(authority, 512).records(ADMIN)
+        _reader(authority, 512, max_content_bytes=512).records(ADMIN)
     authority.join(expected=(ValueError,))
 
 

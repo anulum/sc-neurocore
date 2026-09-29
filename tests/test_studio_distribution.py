@@ -37,6 +37,14 @@ else:
     import tomli as tomllib
 
 
+CONVERSION_BENCHMARK = (
+    "benchmarks/bench_ann_to_snn_replay.py",
+    "benchmarks/_ann_to_snn_replay_profiles.py",
+    "benchmarks/_ann_to_snn_replay_measurement.py",
+)
+"""Comparison scripts the source distribution carries for the installed benchmark command."""
+
+
 @pytest.fixture(scope="module")
 def distribution_source(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Copy build inputs without editable metadata or modifying the working tree."""
@@ -44,7 +52,7 @@ def distribution_source(tmp_path_factory: pytest.TempPathFactory) -> Path:
     source = tmp_path_factory.mktemp("studio-distribution") / "source"
     source.mkdir()
     tracked = subprocess.run(
-        ["git", "ls-files", "-z", "--", "src", "docs/api/models"],
+        ["git", "ls-files", "-z", "--", "src", "docs/api/models", *CONVERSION_BENCHMARK],
         cwd=root,
         capture_output=True,
         text=True,
@@ -90,7 +98,7 @@ coverage_file = os.environ.get("STUDIO_BUILD_COVERAGE_FILE")
 if coverage_file:
     import coverage
     tracer = coverage.Coverage(
-        data_file=coverage_file, data_suffix=True, config_file=False,
+        data_file=coverage_file, data_suffix=True, config_file=False, branch=True,
         include=["*/src/build_support.py"],
     )
     tracer.start()
@@ -281,8 +289,9 @@ from sc_neurocore.runtime_lanes import ACCEL_ROOT, lane_statuses
 assert ACCEL_ROOT.is_relative_to(installed)
 lanes = {status.lane: status for status in lane_statuses()}
 assert lanes["python"].resources_present
-# The wheel ships no Julia kernels and no built Go or Mojo libraries, even
-# where juliacall itself is importable.
+# The wheel ships no Julia model kernels and no built Go or Mojo libraries,
+# even where juliacall itself is importable: its dense IF conversion and
+# event-dataset Julia sources are not model kernels.
 assert not any(lanes[lane].resources_present for lane in ("julia", "go", "mojo")), lanes
 # Each lane the installation offers runs; a lane it lacks is refused, never
 # silently replaced by Python.

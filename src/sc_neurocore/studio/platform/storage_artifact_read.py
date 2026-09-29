@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+from itertools import chain
 from pathlib import Path
 import socket
 import stat
@@ -95,7 +96,11 @@ def read_sealed_artifact(root: Path, job_id: str, artifact: StudioJobArtifact) -
 
 
 def _answer(
-    ledger: StudioJobLedger, request: StorageArtifactRequest, *, allowed: bool, max_bytes: int
+    ledger: StudioJobLedger,
+    request: StorageArtifactRequest,
+    *,
+    allowed: bool,
+    max_artifact_bytes: int,
 ) -> tuple[StorageArtifactResponse, bytes]:
     status = "forbidden"
     declared: FinishArtifact | None = None
@@ -109,8 +114,12 @@ def _answer(
         except KeyError:
             status = "not_found"
         else:
-            sealed = read_sealed_artifact(ledger.path.parent, request.job_id, artifact)
-            if sealed is None or len(sealed) > max_bytes:
+            sealed = (
+                read_sealed_artifact(ledger.path.parent, request.job_id, artifact)
+                if artifact.size_bytes <= max_artifact_bytes
+                else None
+            )
+            if sealed is None:
                 status = "unavailable"
             else:
                 status, payload = "ok", sealed
@@ -142,6 +151,7 @@ def serve_artifact_read(
     max_bytes: int,
     deadline: float,
     initial_frame: bytes | None = None,
+    max_artifact_bytes: int = 64 * 1024 * 1024,
 ) -> None:
     """Serve one peer-verified sealed artefact read.
 
@@ -158,7 +168,9 @@ def serve_artifact_read(
     expected_api_uid : int
         Configured API identity.
     max_bytes : int
-        Frame ceiling for the request, the answer and the artefact bytes.
+        Frame ceiling for metadata and each content chunk.
+    max_artifact_bytes : int
+        Independent complete-content ceiling, checked before opening a seal.
     deadline : float
         Absolute monotonic wire deadline.
     initial_frame : bytes or None
@@ -176,6 +188,8 @@ def serve_artifact_read(
         The policy audit cannot persist its decision; nothing is read.
     """
     with channel:
+        if type(max_artifact_bytes) is not int or max_artifact_bytes <= 0:
+            raise ValueError("invalid artifact content limit")
         if not isinstance(workspace, str) or not workspace:
             raise ValueError("storage workspace must be nonempty")
         require_storage_supervisor_identity(channel, expected_uid=expected_api_uid)
@@ -201,8 +215,13 @@ def serve_artifact_read(
             route=request.route,
             request_id=request.request_id,
         )
-        response, payload = _answer(ledger, request, allowed=decision.allowed, max_bytes=max_bytes)
-        for frame_bytes in (encode_artifact_message(response), payload):
+        response, payload = _answer(
+            ledger, request, allowed=decision.allowed, max_artifact_bytes=max_artifact_bytes
+        )
+        for frame_bytes in chain(
+            (encode_artifact_message(response),),
+            (payload[offset : offset + max_bytes] for offset in range(0, len(payload), max_bytes)),
+        ):
             if frame_bytes:
                 write_verified_frame(
                     channel,

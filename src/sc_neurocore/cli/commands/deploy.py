@@ -48,6 +48,14 @@ def add_deploy_command(
         default=None,
         help="Required SHA-256 digest for .pt/.pth checkpoint inputs",
     )
+    parser.add_argument(
+        "--calibration",
+        default=None,
+        help=(
+            "Samples .npy in the checkpoint's input format, values in [0, 1]: calibrates "
+            "ReLU thresholds and measures the target fixed-point fit"
+        ),
+    )
     parser.set_defaults(handler=run_deploy)
 
 
@@ -77,6 +85,7 @@ def run_deploy(args: argparse.Namespace) -> int:
         float(args.dt),
         int(args.T),
         checkpoint_sha256=args.checkpoint_sha256,
+        calibration_path=args.calibration,
     )
 
 
@@ -92,6 +101,7 @@ def _deploy_model(
     bitstream_length: int,
     *,
     checkpoint_sha256: str | None = None,
+    calibration_path: str | None = None,
 ) -> int:
     """Deploy a model to FPGA or browser artefacts.
 
@@ -109,6 +119,8 @@ def _deploy_model(
         Stochastic bitstream length used by the generated workload model.
     checkpoint_sha256 : str | None
         Required digest for PyTorch checkpoint inputs.
+    calibration_path : str | None
+        Samples for ReLU calibration and the target fixed-point report.
 
     Returns
     -------
@@ -154,14 +166,9 @@ def _deploy_model(
         graph = nir_lib.read(model_path)
         network = from_nir(graph, dt=dt)
         print(f"  Loaded {len(network.topo_order)} nodes")
+        print("[2/5] The NIR graph is validated only; no RTL is generated for it")
     elif ext in (".pt", ".pth"):
-        print("[1/5] Loading PyTorch model and converting to SNN...")
-        from sc_neurocore.security.checkpoint_loading import (
-            CheckpointTrustError,
-            safe_load_checkpoint,
-        )
-        from sc_neurocore.conversion.ann_to_snn import convert
-
+        print("[1/5] Loading the trusted PyTorch checkpoint and converting its network...")
         if not checkpoint_sha256:
             print(
                 "Error: deploy requires --checkpoint-sha256 for .pt/.pth inputs "
@@ -171,93 +178,33 @@ def _deploy_model(
         if not _is_valid_sha256_digest(checkpoint_sha256):
             print("Error: --checkpoint-sha256 must be exactly 64 hexadecimal characters.")
             return 1
-        trusted_sha256 = {model_path: checkpoint_sha256}
+        from sc_neurocore.security.checkpoint_loading import (
+            CheckpointTrustError,
+            safe_load_checkpoint,
+        )
+
         try:
             state = safe_load_checkpoint(
                 model_path,
-                trusted_sha256=trusted_sha256,
+                trusted_sha256={model_path: checkpoint_sha256},
                 map_location="cpu",
             )
         except CheckpointTrustError as exc:
             print(f"Error: {exc}")
             return 1
-        import torch
-
-        if not isinstance(state, dict) or not all(isinstance(k, str) for k in state):
-            print("Error: checkpoint must contain a state_dict-like dictionary.")
+        converted = _convert_checkpoint(
+            state, output_dir, target, bitstream_length, checkpoint_sha256, calibration_path
+        )
+        if converted is None:
             return 1
-        if not all(torch.is_tensor(v) for v in state.values()):
-            print("Error: checkpoint state_dict entries must be tensors.")
-            return 1
-
-        layers: list[torch.nn.Module] = []
-        weight_keys = sorted(k for k in state if k.endswith(".weight") and state[k].dim() == 2)
-        if not weight_keys:
-            print(
-                "Error: checkpoint does not contain any 2D dense '.weight' tensors required for deploy."
-            )
-            return 1
-        total_dense_params = sum(int(state[key].numel()) for key in weight_keys)
-        if total_dense_params > _MAX_DEPLOY_DENSE_PARAMS:
-            print(
-                "Error: deploy checkpoint dense parameter count exceeds safety limit "
-                f"({_MAX_DEPLOY_DENSE_PARAMS:,}): {total_dense_params:,}"
-            )
-            return 1
-        for key in weight_keys:
-            weight = state[key]
-            if not torch.is_floating_point(weight):
-                print(f"Error: deploy weight tensor '{key}' must use floating-point dtype.")
-                return 1
-            if weight.shape[0] <= 0 or weight.shape[1] <= 0:
-                print(f"Error: deploy weight tensor '{key}' must have non-zero 2D shape.")
-                return 1
-            if not torch.isfinite(weight).all().item():
-                print(f"Error: deploy weight tensor '{key}' contains non-finite values.")
-                return 1
-        deployment_layer_sizes = [
-            (int(state[k].shape[1]), int(state[k].shape[0])) for k in weight_keys
-        ]
-        linear_layers: list[torch.nn.Linear] = []
-        for idx, k in enumerate(weight_keys):
-            w = state[k]
-            if idx > 0:
-                prev_key = weight_keys[idx - 1]
-                prev_out = int(state[prev_key].shape[0])
-                curr_in = int(w.shape[1])
-                if curr_in != prev_out:
-                    print(
-                        "Error: dense deploy weights are not composition-compatible "
-                        f"between '{prev_key}' (out={prev_out}) and '{k}' (in={curr_in})."
-                    )
-                    return 1
-            linear = torch.nn.Linear(w.shape[1], w.shape[0])
-            linear.weight.data.copy_(w.to(dtype=linear.weight.dtype))
-            linear.bias.data.zero_()
-            linear_layers.append(linear)
-            layers.append(linear)
-            layers.append(torch.nn.ReLU())
-        # Every accepted dense weight appends exactly one trailing activation.
-        layers.pop()
-        model = torch.nn.Sequential(*layers)
-        in_dim = linear_layers[0].in_features
-        cal_data = torch.randn(64, in_dim)
-        snn = convert(model, calibration_data=cal_data, T=bitstream_length)
+        deployment_layer_sizes = converted
         network = None
-        print(f"  Converted {snn.n_layers}-layer SNN, T={snn.T}")
     else:
         print(f"Error: unsupported file format '{ext}'. Supported: .nir, .pt")
         return 1
 
-    # Step 2: Quantize weights
-    print("[2/5] Quantizing weights to Q8.8...")
-    from sc_neurocore.compiler.equation_compiler import Q88
-
-    q = Q88()
-    print(f"  Q8.8: {q.data_width - q.fraction} integer + {q.fraction} fraction bits")
-
     # Step 3: Generate Verilog
-    print("[3/5] Generating SystemVerilog...")
+    print("[3/5] Generating the generic LIF RTL template (it carries no trained weights)...")
     from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
     neuron, sv_code = equation_to_fpga(
@@ -288,7 +235,7 @@ def _deploy_model(
 
     # Step 5: Generate project files
     print("[5/5] Generating project files...")
-    _generate_project(output_dir, target, "sc_deploy_lif")
+    _generate_project(output_dir, target, "sc_deploy_lif", converted=ext in (".pt", ".pth"))
     from sc_neurocore.edge.power_thermal import PowerThermalConfig, write_power_thermal_model
 
     power_model_path = write_power_thermal_model(
@@ -436,7 +383,9 @@ TARGET_CONFIGS: dict[str, dict[str, str]] = {
 }
 
 
-def _generate_project(output_dir: str, target: str, top_module: str) -> None:
+def _generate_project(
+    output_dir: str, target: str, top_module: str, *, converted: bool = False
+) -> None:
     """Write the target-specific build script and deployment README."""
     import os
 
@@ -486,15 +435,100 @@ wait_on_run impl_1
 Generated by `sc-neurocore deploy`.
 
 ## Files
-- `{top_module}.sv` — Generated neuron module (Q8.8 fixed-point)
+- `{top_module}.sv` — Generic LIF neuron template (Q8.8 fixed-point); it does
+  not carry the deployed model's weights
 - `hdl/` — SC-NeuroCore Verilog library (encoders, synapses, layers)
 - `{"Makefile" if cfg["tool"] == "yosys" else "project.tcl"}` — Build script
-
+{_CONVERTED_FILES if converted else ""}
 ## Build
 {"make synth" if cfg["tool"] == "yosys" else "vivado -mode batch -source project.tcl"}
 """
     with open(os.path.join(output_dir, "README.md"), "w") as f:
         f.write(readme)
+
+
+_CONVERTED_FILES = """- `converted_network.npz` / `converted_network.json` — The checkpoint's converted
+  dense IF network and its manifest; no RTL is generated for it
+- `target_report.json` — Its fixed-point calibration for this target, when
+  calibration samples were given
+"""
+
+
+def _convert_checkpoint(
+    state: object,
+    output_dir: str,
+    target: str,
+    steps: int,
+    checkpoint_sha256: str,
+    calibration_path: str | None,
+) -> list[tuple[int, int]] | None:
+    """Convert a loaded checkpoint, export the network and calibrate it for the target.
+
+    Returns
+    -------
+    list of tuple of int or None
+        Dense layer sizes, or ``None`` after printing why the checkpoint was refused.
+    """
+    import json
+    import os
+
+    import numpy as np
+
+    from sc_neurocore.conversion.checkpoint_network import network_from_checkpoint
+    from sc_neurocore.conversion.converted_io import save_converted_network
+
+    samples = None
+    try:
+        if calibration_path is not None:
+            samples = np.load(calibration_path, allow_pickle=False).astype(np.float64)
+        loaded = network_from_checkpoint(
+            state,
+            steps=steps,
+            calibration=None if samples is None else samples.reshape(len(samples), -1),
+            max_dense_params=_MAX_DEPLOY_DENSE_PARAMS,
+        )
+    except (OSError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return None
+    snn = loaded.snn
+    digest = save_converted_network(snn, os.path.join(output_dir, "converted_network.npz"))
+    manifest = {
+        "schema_version": "sc-neurocore.deploy-converted-network.v1",
+        "source_checkpoint_sha256": checkpoint_sha256.lower(),
+        "source": loaded.source,
+        "calibration": loaded.calibration,
+        "layer_sizes": loaded.layer_sizes,
+        "T": snn.T,
+        "output_mode": snn.output_mode,
+        "converted_sha256": digest,
+        "rtl": "the generated RTL is a generic LIF template and does not carry this network",
+    }
+    with open(os.path.join(output_dir, "converted_network.json"), "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2, sort_keys=True)
+    print(f"  Converted {snn.n_layers}-layer network, T={snn.T}, calibration: {loaded.calibration}")
+    print(f"  Network -> converted_network.npz (sha256 {digest[:12]})")
+    print("[2/5] Calibrating the converted network for the target format...")
+    if samples is None:
+        print("  Skipped: pass --calibration samples.npy to measure the target fit")
+        return loaded.layer_sizes
+    from sc_neurocore.compiler.platforms import get_profile
+    from sc_neurocore.conversion.target_report import calibrate_for_target
+
+    try:
+        profile = get_profile(target)
+    except KeyError:
+        print(f"  Skipped: no fixed-point profile is registered for '{target}'")
+        return loaded.layer_sizes
+    try:
+        report = calibrate_for_target(snn, profile, samples.reshape(len(samples), -1))
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        return None
+    with open(os.path.join(output_dir, "target_report.json"), "w", encoding="utf-8") as f:
+        json.dump(report.to_public_dict(), f, indent=2, sort_keys=True, allow_nan=False)
+    verdict = "compatible" if report.compatible else "; ".join(report.refusals)
+    print(f"  {profile.name} {profile.q_format_label}: {verdict} -> target_report.json")
+    return loaded.layer_sizes
 
 
 def _find_hdl_source() -> Path | None:

@@ -45,6 +45,7 @@ def test_command_modules_have_one_registration_boundary() -> None:
         "serve",
         "studio",
         "synthesis",
+        "train",
     }
     for path in command_files:
         if path.stem == "__init__":

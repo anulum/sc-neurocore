@@ -37,7 +37,7 @@ export interface TrainingEvidenceModel {
 export function buildTrainingEvidenceModel(
   jobId: string | null,
   status: string,
-  config: Pick<TrainingConfig, "dataset" | "epochs" | "surrogate" | "timesteps"> | null,
+  config: Pick<TrainingConfig, "model_kind" | "dataset" | "epochs" | "surrogate" | "timesteps"> | null,
   latestEpoch: TrainingEpochMetrics | null,
 ): TrainingEvidenceModel {
   const submitted = jobId !== null && jobId.length > 0;
@@ -45,7 +45,9 @@ export function buildTrainingEvidenceModel(
     actionKind: "studio.training.run",
     classification: "training",
     configSummary: config === null ? "not recorded" :
-      `${config.dataset}, ${config.epochs} epochs, ${config.surrogate}, ${config.timesteps} steps`,
+      `${config.dataset}, ${config.epochs} epochs, ${
+        config.model_kind === "qcfs_conversion" ? "QCFS conversion" : config.surrogate ?? "default surrogate"
+      }, ${config.timesteps} steps`,
     evidenceArtifact: submitted ? "training/evidence.json" : "pending",
     jobId: submitted ? jobId : "not submitted",
     latestEpoch: latestEpoch === null ? "none" : String(latestEpoch.epoch),

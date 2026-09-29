@@ -56,4 +56,5 @@ class TestConvert:
         x = np.random.default_rng(18).random((20, 4)) * 0.5
         snn_preds = snn.classify(x)
         # Not expecting perfect match, just that conversion runs
-        assert len(snn_preds) == 20
+        assert isinstance(snn_preds, np.ndarray)
+        assert snn_preds.shape == (20,)

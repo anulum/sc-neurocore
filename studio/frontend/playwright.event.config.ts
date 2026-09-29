@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — built-bundle event training acceptance
+
+import { isAbsolute } from "node:path";
+
+import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * Return a port from the environment, refusing anything that is not one.
+ *
+ * A shared workstation runs several of these suites at once, so the ports are
+ * configurable; a silent fallback on a malformed value would start the servers
+ * somewhere the tests do not look.
+ *
+ * @param name - Environment variable that may hold the port.
+ * @param fallback - Port to use when it is unset.
+ * @returns The port to bind.
+ * @throws {Error} When the variable holds something that is not a port.
+ */
+function configuredPort(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined) return fallback;
+  const port = Number(raw);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error(`${name} must be an integer port in the range 1..65535.`);
+  }
+  return port;
+}
+
+const eventRoot = process.env.SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT;
+if (eventRoot === undefined || !isAbsolute(eventRoot)) {
+  throw new Error("SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT must name a fresh absolute test directory");
+}
+
+const apiPort = configuredPort("SC_NEUROCORE_STUDIO_EVENT_API_PORT", 18_013);
+const uiPort = configuredPort("SC_NEUROCORE_STUDIO_EVENT_UI_PORT", 15_183);
+const apiOrigin = `http://127.0.0.1:${apiPort}`;
+const uiOrigin = `http://127.0.0.1:${uiPort}`;
+
+// Build before running; preview proxies the built UI to a real disposable API.
+export default defineConfig({
+  testDir: "./e2e",
+  testMatch: "event-training-live.spec.ts",
+  // A shared workstation can be heavily loaded; the budget is for the
+  // boundary, not for the host's spare capacity.
+  timeout: 900_000,
+  expect: { timeout: 60_000 },
+  fullyParallel: false,
+  workers: 1,
+  reporter: process.env.CI ? "github" : "list",
+  outputDir: `${eventRoot}/playwright`,
+  use: {
+    actionTimeout: 30_000,
+    baseURL: `${uiOrigin}/studios/sc-neurocore/`,
+    trace: "retain-on-failure",
+  },
+  projects: [
+    {
+      name: "chromium-event",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+  webServer: [
+    {
+      command: `python e2e/event_training_server.py --port ${apiPort}`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: `${apiOrigin}/api/health`,
+    },
+    {
+      command: `npm run preview -- --host 127.0.0.1 --port ${uiPort} --strictPort`,
+      env: {
+        SC_NEUROCORE_STUDIO_API_ORIGIN: apiOrigin,
+      },
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: `${uiOrigin}/studios/sc-neurocore/`,
+    },
+  ],
+});

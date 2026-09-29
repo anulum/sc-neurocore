@@ -14,8 +14,12 @@ than silently defaulted, so a damaged record is never presented as valid.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import sqlite3
+import threading
+from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
 
@@ -89,7 +93,11 @@ def record_from_row(row: sqlite3.Row) -> StudioJobRecord:
             None if row["experiment_sha256"] is None else str(row["experiment_sha256"])
         ),
         admission=json_or_none(row["admission"]) or {},
-        training_config=training_config_from_json(row["training_config"], kind=str(row["kind"])),
+        training_config=training_config_from_json(
+            row["training_config"],
+            kind=str(row["kind"]),
+            event_data=row["training_event_data"],
+        ),
         lease_owner=None if row["lease_owner"] is None else str(row["lease_owner"]),
         lease_expires_at_utc=(
             None if row["lease_expires_at_utc"] is None else str(row["lease_expires_at_utc"])
@@ -98,9 +106,29 @@ def record_from_row(row: sqlite3.Row) -> StudioJobRecord:
     )
 
 
-def training_config_from_json(value: str | None, *, kind: str) -> dict[str, object] | None:
-    """Decode a validated training snapshot, preserving absent legacy values."""
+#: Validated snapshots keyed by their exact stored bytes and the admission limit.
+#: Validation is a pure function of those, and an event declaration can hold a
+#: manifest of thousands of recordings: re-validating it on every read made one
+#: status read take about a quarter of a second, so a polling wait held a core.
+_VALIDATED: OrderedDict[tuple[str, str | None, str | None], str] = OrderedDict()
+_VALIDATED_LOCK = threading.Lock()
+_VALIDATED_ENTRIES = 64
+
+
+def training_config_from_json(
+    value: str | None, *, kind: str, event_data: str | None = None
+) -> dict[str, object] | None:
+    """Decode a validated training snapshot, preserving absent legacy values.
+
+    A snapshot whose exact stored bytes were validated before, under the same
+    event-input admission limit, is returned as a fresh copy of that result
+    without validating again; any other snapshot is validated in full.
+    """
+    if event_data is not None and not isinstance(event_data, str):
+        raise StudioJobLedgerCorrupt("stored event input data is not text")
     if value is None:
+        if event_data is not None:
+            raise StudioJobLedgerCorrupt("event input data has no training configuration")
         return None
     if kind != "training":
         raise StudioJobLedgerCorrupt("non-training job stores a training configuration")
@@ -109,13 +137,50 @@ def training_config_from_json(value: str | None, *, kind: str) -> dict[str, obje
     payload = json_or_none(value)
     if not isinstance(payload, dict):
         raise StudioJobLedgerCorrupt("stored training configuration is not an object")
-    from sc_neurocore.studio.training_contract import TrainingConfigError, resolve_training_config
+    from sc_neurocore.studio.event_training_budget import EVENT_INPUT_LIMIT_ENV
+
+    key = (
+        value,
+        None if event_data is None else hashlib.sha256(event_data.encode("utf-8")).hexdigest(),
+        os.environ.get(EVENT_INPUT_LIMIT_ENV),
+    )
+    with _VALIDATED_LOCK:
+        cached = _VALIDATED.get(key)
+        if cached is not None:
+            _VALIDATED.move_to_end(key)
+    if cached is not None:
+        return cast(dict[str, object], json.loads(cached))
+    resolved = _validated_training_config(value, payload, event_data)
+    with _VALIDATED_LOCK:
+        _VALIDATED[key] = json.dumps(resolved, sort_keys=True)
+        while len(_VALIDATED) > _VALIDATED_ENTRIES:
+            _VALIDATED.popitem(last=False)
+    return resolved
+
+
+def _validated_training_config(
+    value: str, payload: dict[str, Any], event_data: str | None
+) -> dict[str, object]:
+    """Resolve a stored snapshot and refuse it unless it is canonical."""
+    from sc_neurocore.studio.training_contract import resolve_training_config
 
     try:
-        resolved = resolve_training_config(payload).to_public_dict()
-    except TrainingConfigError as exc:
+        from sc_neurocore.studio.platform.training_config_storage import restore_training_config
+
+        restored = restore_training_config(payload, event_data)
+        resolved = resolve_training_config(restored).to_public_dict()
+    except ValueError as exc:
         raise StudioJobLedgerCorrupt(f"stored training configuration is invalid: {exc}") from exc
-    if json.dumps(resolved, sort_keys=True, separators=(",", ":")) != value:
+    from sc_neurocore.studio.platform.training_config_storage import prepare_training_config
+
+    try:
+        canonical, canonical_event = prepare_training_config(resolved)
+    except ValueError as exc:
+        raise StudioJobLedgerCorrupt("stored training configuration exceeds its bounds") from exc
+    # Legacy inline event declarations remain readable without a migration rewrite.
+    if event_data is None:
+        canonical = json.dumps(resolved, sort_keys=True, separators=(",", ":"))
+    if canonical != value or (event_data is not None and canonical_event != event_data):
         raise StudioJobLedgerCorrupt("stored training configuration is not canonical")
     return resolved
 

@@ -38,11 +38,12 @@ def _seed_everything(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def _make_synthetic(batch_size: int) -> tuple[Any, Any, int, int]:
-    """Generate synthetic classification data for quick demonstrations.
+def _make_synthetic(batch_size: int, *, rates: bool = False) -> tuple[Any, Any, int, int]:
+    """Generate synthetic classification data; ``rates`` maps the draws into ``(0, 1)``.
 
-    Torch is imported inside the loaders because it is an optional extra: a
-    Studio without it must still import this module to say which datasets exist.
+    The conversion route encodes inputs as rates, so it takes the same draws
+    through the logistic function. Torch is imported inside the loaders because
+    it is an optional extra.
     """
     import torch
     from torch.utils.data import DataLoader, TensorDataset
@@ -51,6 +52,7 @@ def _make_synthetic(batch_size: int) -> tuple[Any, Any, int, int]:
     n_inputs = 64
     n_classes = 10
     features = torch.randn(n_samples, n_inputs)
+    features = torch.sigmoid(features) if rates else features
     labels = torch.randint(0, n_classes, (n_samples,))
     split = int(0.8 * n_samples)
     train_dataset = TensorDataset(features[:split], labels[:split])
@@ -63,8 +65,8 @@ def _make_synthetic(batch_size: int) -> tuple[Any, Any, int, int]:
     )
 
 
-def _load_mnist(batch_size: int) -> tuple[Any, Any, int, int]:
-    """Load MNIST through torchvision.
+def _load_mnist(batch_size: int, *, rates: bool = False) -> tuple[Any, Any, int, int]:
+    """Load MNIST through torchvision; ``rates`` keeps pixels in ``[0, 1]`` unnormalised.
 
     Raises
     ------
@@ -82,12 +84,8 @@ def _load_mnist(batch_size: int) -> tuple[Any, Any, int, int]:
             "The MNIST dataset needs torchvision, which is not installed here; "
             "install it or choose the synthetic dataset. No other data was substituted."
         ) from exc
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,)),
-        ]
-    )
+    normalise = [] if rates else [transforms.Normalize((0.1307,), (0.3081,))]
+    transform = transforms.Compose([transforms.ToTensor(), *normalise])
     train_dataset = datasets.MNIST("~/.cache/mnist", train=True, download=True, transform=transform)
     test_dataset = datasets.MNIST("~/.cache/mnist", train=False, transform=transform)
     return (

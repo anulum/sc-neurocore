@@ -62,6 +62,7 @@ import {
   runMultiTargetSynthesis,
   fetchSynthEstimate,
   fetchSurrogates as apiFetchSurrogates,
+  fetchTargetProfiles as apiFetchTargetProfiles,
   fetchTrainingJobs as apiFetchTrainingJobs,
   fetchTrainingStatus as apiFetchTrainingStatus,
   startTraining as apiStartTraining,
@@ -217,6 +218,13 @@ import {
   isTrainingTerminalStatus,
   observedTrainingConfig,
 } from "../studioTrainingRecovery";
+import { readTrainingPreregistrationVerdict } from "../trainingPreregistration";
+import { readTrainingTargetProfiles, trainingRequestBody } from "../trainingRequest";
+import { readTrainingConversionResult } from "../trainingConversion";
+
+/** How often, and how many times, a finished run's status is read for its verdict. */
+const TRAINING_VERDICT_READ_ATTEMPTS = 40;
+const TRAINING_VERDICT_READ_INTERVAL_MS = 250;
 import {
   trainingCheckpointExportPlan,
   trainingWeightRestoreVerificationExportPlan,
@@ -435,9 +443,34 @@ export function createStudioStoreActions(
         if (!isTrainingTerminalStatus(get().trainingStatus)) {
           set(trainingTerminalState(status));
         }
+        if (status === "completed") void loadTrainingVerdict(jobId, stillSelected);
         void get().loadTrainingJobs();
       },
     });
+  };
+
+  // The verdict is part of the finished job's status, not of the event stream.
+  // The worker writes its "completed" event before the job manager seals the
+  // job record, so the status route can still say "running" when the event
+  // arrives: it is read again until the record is terminal.
+  const loadTrainingVerdict = async (jobId: string, stillSelected: () => boolean): Promise<void> => {
+    try {
+      for (let attempt = 0; attempt < TRAINING_VERDICT_READ_ATTEMPTS && stillSelected(); attempt += 1) {
+        const status = await apiFetchTrainingStatus(jobId);
+        if (isTrainingTerminalStatus(status.status)) {
+          if (stillSelected()) {
+            set({
+              trainingPreregistrationVerdict: readTrainingPreregistrationVerdict(status.preregistration_verdict),
+              trainingConversionResult: readTrainingConversionResult(status.final_metrics),
+            });
+          }
+          return;
+        }
+        await new Promise((resolve) => { setTimeout(resolve, TRAINING_VERDICT_READ_INTERVAL_MS); });
+      }
+    } catch (error) {
+      if (stillSelected()) set({ trainingJobsError: String(error) });
+    }
   };
 
   return {
@@ -1418,6 +1451,12 @@ export function createStudioStoreActions(
     } catch { /* non-critical */ }
   },
 
+  loadTargetProfiles: async () => {
+    try {
+      set({ trainingTargetProfiles: readTrainingTargetProfiles(await apiFetchTargetProfiles()) });
+    } catch { /* non-critical: the form still offers no target */ }
+  },
+
   loadTrainingJobs: async () => {
     const version = ++trainingListVersion;
     set({ trainingJobsLoading: true, trainingJobsError: null });
@@ -1449,11 +1488,14 @@ export function createStudioStoreActions(
     }
     const version = ++trainingSelectionVersion;
     try {
-      const status = decodeTrainingRecoveryStatus(await apiFetchTrainingStatus(jobId), jobId);
+      const retained = await apiFetchTrainingStatus(jobId);
+      const status = decodeTrainingRecoveryStatus(retained, jobId);
       if (version !== trainingSelectionVersion) return;
       const observedConfig = observedTrainingConfig(selected.config);
+      const verdict = readTrainingPreregistrationVerdict(retained.preregistration_verdict);
+      const conversion = readTrainingConversionResult(retained.final_metrics);
       set({
-        ...trainingRecoveredState(jobId, status, observedConfig),
+        ...trainingRecoveredState(jobId, status, observedConfig, verdict, conversion),
         trainingJobsError: null,
       });
       observeTrainingStream(jobId);
@@ -1473,7 +1515,7 @@ export function createStudioStoreActions(
     trainingStream = null;
     set({ ...trainingStartState(), trainingExperimentKey: studioTrainingKey(s.trainingConfig) });
     try {
-      const result = await apiStartTraining(s.trainingConfig);
+      const result = await apiStartTraining(trainingRequestBody(s.trainingConfig));
       if (version !== trainingSelectionVersion) {
         void get().loadTrainingJobs();
         return;
@@ -1578,17 +1620,42 @@ export function createStudioStoreActions(
     }
   },
 
-  attachTrainingWeights: async () => {
+  attachTrainingWeights: async (mode = "warm_start") => {
     const s = get();
     if (!s.trainingJobId) {
       set(trainingPreconditionErrorState("No completed training job is available."));
       return;
     }
+    if (["starting", "running", "stopping", "unknown", "disconnected"].includes(s.trainingStatus)) return;
+    const version = ++trainingSelectionVersion;
+    trainingStream?.close();
+    trainingStream = null;
+    set({ trainingStatus: "starting", error: null });
     try {
-      const attach = await apiAttachTrainingWeights(s.trainingJobId, s.trainingConfig);
-      set(trainingWeightAttachLoadedState(attach));
+      const attach = await apiAttachTrainingWeights(
+        s.trainingJobId, trainingRequestBody(s.trainingConfig), undefined, mode,
+      );
+      if (version !== trainingSelectionVersion) {
+        void get().loadTrainingJobs();
+        return;
+      }
+      if (attach.source_job_id !== s.trainingJobId || typeof attach.job_id !== "string"
+        || attach.job_id.length === 0 || attach.status !== "running"
+        || ((mode === "exact_resume" || attach.mode !== undefined) && attach.mode !== mode)) {
+        throw new Error("Training attachment response does not identify the requested operation");
+      }
+      set({
+        ...trainingStartState(), ...trainingStartedState(attach.job_id),
+        ...trainingWeightAttachLoadedState(attach),
+        trainingExperimentKey: studioTrainingKey(s.trainingConfig),
+        trainingObservedConfig: s.trainingConfig,
+      });
+      observeTrainingStream(attach.job_id);
+      void get().loadTrainingJobs();
     } catch (error: unknown) {
-      set(trainingFailureState(error, "Training weight attach failed"));
+      if (version === trainingSelectionVersion) {
+        set({ ...trainingFailureState(error, "Training weight attach failed"), trainingStatus: s.trainingStatus });
+      }
     }
   },
 

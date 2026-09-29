@@ -6,7 +6,10 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import TrainingConfiguration from "./TrainingConfiguration";
+import TrainingPreregistrationVerdict from "./TrainingPreregistrationVerdict";
+import TrainingConversionResult from "./TrainingConversionResult";
 import type {
   TrainingJobSummary,
   TrainingWeightAttachResult,
@@ -389,7 +392,7 @@ export function TrainingWeightAttachStrip({
       <EvidenceSummaryStrip
         variant="banner"
         items={[
-          { label: "Attach", value: "warm_start" },
+          { label: "Attach", value: attach.mode ?? "warm_start" },
           { label: "Job", value: attach.job_id },
           { label: "Source", value: attach.source_job_id },
           { label: "Status", value: attach.status },
@@ -438,6 +441,7 @@ export default function TrainingMonitor() {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
     trainingJobs, trainingJobsLoading, trainingJobsError, trainingObservedConfig,
+    trainingPreregistrationVerdict, trainingConversionResult, trainingTargetProfiles, loadTargetProfiles,
     trainingWeightMaterialization, trainingWeightAttach, trainingWeightLiveAttach,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
     loadTrainingJobs, selectTrainingJob, authSession,
@@ -447,8 +451,10 @@ export default function TrainingMonitor() {
   } = useStudioStore();
 
   useEffect(() => { void loadSurrogates(); }, [loadSurrogates]);
+  useEffect(() => { void loadTargetProfiles(); }, [loadTargetProfiles]);
   useEffect(() => { void loadTrainingJobs(); }, [loadTrainingJobs, authSession]);
 
+  const [trainingInputReady, setTrainingInputReady] = useState(true);
   const latestEpoch = trainingEpochs[trainingEpochs.length - 1] ?? null;
   const isActive = ["running", "starting", "stopping", "unknown", "disconnected"]
     .includes(trainingStatus);
@@ -498,7 +504,7 @@ export default function TrainingMonitor() {
         {!isActive && (
           <button
             onClick={() => { void startTraining(); }}
-            disabled={isSimulating}
+            disabled={isSimulating || !trainingInputReady}
             style={{
               background: "#81c784", color: "#0d1117", border: "none",
               padding: "3px 10px", fontSize: 10, cursor: "pointer",
@@ -542,7 +548,7 @@ export default function TrainingMonitor() {
         </button>
         <button
           onClick={() => { void attachTrainingWeights(); }}
-          disabled={trainingJobId === null || isActive}
+          disabled={trainingJobId === null || isActive || !trainingInputReady}
           title="Warm-start a new training job from the verified weights"
           style={{
             background: "var(--bg-tertiary)",
@@ -555,6 +561,11 @@ export default function TrainingMonitor() {
         >
           Attach (warm-start)
         </button>
+        <button type="button"
+          onClick={() => { void attachTrainingWeights("exact_resume"); }}
+          disabled={trainingJobId === null || trainingStatus !== "completed" || !trainingInputReady}
+          title="Continue the saved optimiser, random state and epoch position; keep the original input unchanged"
+        >Resume from checkpoint</button>
         <button
           onClick={() => { void liveAttachTrainingWeights(); }}
           disabled={!canLiveAttach || trainingWeightMaterialization === null}
@@ -573,6 +584,9 @@ export default function TrainingMonitor() {
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />
+      <TrainingConversionResult result={trainingConversionResult}
+        target={trainingObservedConfig?.target_profile} />
+      <TrainingPreregistrationVerdict verdict={trainingPreregistrationVerdict} />
       <TrainingWeightRestorePlanStrip
         onExportVerification={exportTrainingWeightRestoreVerification}
         onVerify={() => { void verifyTrainingWeightRestoreArtifact(); }}
@@ -583,69 +597,9 @@ export default function TrainingMonitor() {
       <TrainingWeightAttachStrip attach={trainingWeightAttach} />
       <TrainingWeightLiveAttachStrip liveAttach={trainingWeightLiveAttach} />
 
-      {/* Config panel */}
-      {!isActive && (
-        <div style={{
-          padding: "8px 12px", borderBottom: "1px solid var(--border)",
-          display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 6,
-          fontSize: 10,
-        }}>
-          <label style={{ color: "var(--text-secondary)" }}>
-            Dataset
-            <select value={trainingConfig.dataset} onChange={(e) => { setTrainingConfig("dataset", e.target.value); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }}>
-              <option value="synthetic">Synthetic (64D, fast)</option>
-              <option value="mnist">MNIST (784D)</option>
-            </select>
-          </label>
-          <label style={{ color: "var(--text-secondary)" }}>
-            Epochs
-            <input type="number" value={trainingConfig.epochs} min={1} max={100}
-              onChange={(e) => { setTrainingConfig("epochs", parseInt(e.target.value) || 10); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
-          </label>
-          <label style={{ color: "var(--text-secondary)" }}>
-            Batch Size
-            <input type="number" value={trainingConfig.batch_size} min={8} max={512} step={8}
-              onChange={(e) => { setTrainingConfig("batch_size", parseInt(e.target.value) || 64); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
-          </label>
-          <label style={{ color: "var(--text-secondary)" }}>
-            Learning Rate
-            <input type="number" value={trainingConfig.lr} min={0.0001} max={0.1} step={0.0001}
-              onChange={(e) => { setTrainingConfig("lr", parseFloat(e.target.value) || 0.001); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
-          </label>
-          <label style={{ color: "var(--text-secondary)" }}>
-            Timesteps
-            <input type="number" value={trainingConfig.timesteps} min={5} max={100}
-              onChange={(e) => { setTrainingConfig("timesteps", parseInt(e.target.value) || 25); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
-          </label>
-          <label style={{ color: "var(--text-secondary)" }}>
-            Surrogate
-            <select value={trainingConfig.surrogate} onChange={(e) => { setTrainingConfig("surrogate", e.target.value); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }}>
-              {(trainingSurrogates.length > 0 ? trainingSurrogates : [
-                { name: "atan_surrogate" }, { name: "fast_sigmoid" }, { name: "superspike" },
-                { name: "sigmoid_surrogate" }, { name: "straight_through" }, { name: "triangular" },
-              ]).map((s) => (
-                <option key={s.name} value={s.name}>{s.name.replace(/_/g, " ")}</option>
-              ))}
-            </select>
-          </label>
-          <label style={{ color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-            <input type="checkbox" checked={trainingConfig.learn_beta}
-              onChange={(e) => { setTrainingConfig("learn_beta", e.target.checked); }} />
-            Learn beta
-          </label>
-          <label style={{ color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-            <input type="checkbox" checked={trainingConfig.learn_threshold}
-              onChange={(e) => { setTrainingConfig("learn_threshold", e.target.checked); }} />
-            Learn threshold
-          </label>
-        </div>
-      )}
+      {!isActive && <TrainingConfiguration config={trainingConfig} surrogates={trainingSurrogates}
+        targetProfiles={trainingTargetProfiles}
+        setConfig={setTrainingConfig} onReadyChange={setTrainingInputReady} />}
 
       {/* Charts */}
       <div style={{ padding: 12, flex: 1, overflow: "auto" }}>

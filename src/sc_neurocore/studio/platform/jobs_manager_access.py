@@ -98,8 +98,12 @@ def _wait_for_job(
     with manager._lock:
         done_event = manager._done_events.get(job_id)
     record = manager.record(job_id)
+    # A local completion event wakes the wait at once; the durable ledger read
+    # backs off to at most half a second, so a long run does not hold a core.
+    interval = 0.05
     while record.status not in TERMINAL_STATUSES:
-        delay = 0.05
+        delay = interval
+        interval = min(interval * 1.5, 0.5)
         if deadline is not None:
             delay = min(delay, max(0.0, deadline - time.monotonic()))
             if delay == 0.0:

@@ -12,7 +12,7 @@ After the launcher reports a generation stopped, the API reports the job's
 terminal outcome and declares the artefacts the worker left in its spool. The
 authority first answers ``ready`` only for the delegated owner of a live job,
 or finally with ``already_sealed`` or ``refused``; after ``ready`` the declared
-bytes follow as frames in manifest order, and the authority seals them only
+bytes follow in full-size chunks and a final remainder per artefact, in manifest order, and the authority seals them only
 when every size and SHA-256 matches. The supervisor identity
 is never a wire field, and no path outside the job is expressible.
 """
@@ -28,7 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 from sc_neurocore.studio.platform.jobs_paths import _relative_path_candidate
 
-FINISH_SCHEMA_VERSION: Final[Literal["studio.storage.finish.v1"]] = "studio.storage.finish.v1"
+FINISH_SCHEMA_VERSION: Final[Literal["studio.storage.finish.v2"]] = "studio.storage.finish.v2"
 
 _JobId = Annotated[str, Field(pattern=r"^sj_[0-9a-f]{16}$")]
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
@@ -73,7 +73,7 @@ class StorageFinishRequest(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.finish.v1"]
+    schema_version: Literal["studio.storage.finish.v2"]
     operation: Literal["finish"]
     request_id: _RequestId
     workspace: _Workspace
@@ -108,7 +108,7 @@ class StorageFinishResponse(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.finish.v1"]
+    schema_version: Literal["studio.storage.finish.v2"]
     operation: Literal["finish"]
     request_id: _RequestId
     job_id: _JobId
@@ -137,7 +137,7 @@ def validate_artifact_budget(
     artifacts : Sequence[FinishArtifact]
         Declared artefacts, from a request or a worker's own manifest.
     frame_max_bytes : int
-        Largest single artefact the framed transfer can carry.
+        Positive ceiling for each chunk frame; artefacts may span frames.
     max_artifact_bytes, max_artifact_entries : int
         Aggregate byte and entry budgets from trusted configuration.
 
@@ -148,8 +148,8 @@ def validate_artifact_budget(
     """
     if len(artifacts) > max_artifact_entries:
         raise ValueError("artefact manifest exceeds entry limit")
-    if any(artifact.size_bytes > frame_max_bytes for artifact in artifacts):
-        raise ValueError("artefact exceeds frame limit")
+    if type(frame_max_bytes) is not int or not 0 < frame_max_bytes <= 0xFFFFFFFF:
+        raise ValueError("invalid artefact frame limit")
     if sum(artifact.size_bytes for artifact in artifacts) > max_artifact_bytes:
         raise ValueError("artefacts exceed aggregate limit")
 

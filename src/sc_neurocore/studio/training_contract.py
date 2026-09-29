@@ -31,13 +31,23 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
+from sc_neurocore.studio.event_training_contract import (
+    EventTrainingContract,
+    resolve_event_training_contract,
+)
+from sc_neurocore.studio.event_training_budget import admit_event_training_input
+from sc_neurocore.studio.training_preregistration import (
+    TrainingPreregistration,
+    resolve_training_preregistration,
+)
+
 #: Contract version. Widening the supported sets is backwards compatible;
 #: changing what a field means is not.
 TRAINING_CONFIG_SCHEMA_VERSION = "studio.training-config.v1"
 
 #: Datasets the runner can actually load. ``synthetic`` is generated in
 #: process; ``mnist`` is fetched through the torchvision loader.
-SUPPORTED_DATASETS: tuple[str, ...] = ("synthetic", "mnist")
+SUPPORTED_DATASETS: tuple[str, ...] = ("synthetic", "mnist", "nmnist", "shd", "dvs_cifar10")
 
 #: Surrogate gradients the training package exposes by name.
 SUPPORTED_SURROGATES: tuple[str, ...] = (
@@ -60,8 +70,24 @@ SUPPORTED_CELL_TYPES: tuple[str, ...] = (
     "AdExCell",
 )
 
+#: What a run trains. ``spiking`` trains the surrogate-gradient spiking
+#: classifier directly. ``qcfs_conversion`` trains an ANN whose activations are
+#: QCFS quantisers, converts it to a dense integrate-and-fire network and
+#: judges the converted network on the validation split.
+SUPPORTED_MODEL_KINDS: tuple[str, ...] = ("spiking", "qcfs_conversion")
+
+#: Static datasets the conversion route encodes as rates in ``[0, 1]``.
+CONVERSION_DATASETS: tuple[str, ...] = ("synthetic", "mnist")
+
+#: Largest QCFS step budget every QCFS runtime accepts.
+_QCFS_STEP_LIMIT = 2**32 - 1
+
+#: Keys that configure spiking cells, which the conversion route does not build.
+_SPIKING_ONLY = ("surrogate", "learn_beta", "learn_threshold")
+
 #: Every key a training request may carry, with its default.
 _DEFAULTS: Mapping[str, object] = {
+    "model_kind": "spiking",
     "dataset": "synthetic",
     "epochs": 10,
     "batch_size": 64,
@@ -73,6 +99,9 @@ _DEFAULTS: Mapping[str, object] = {
     "learn_threshold": False,
     "max_grad_norm": 1.0,
     "seed": 0,
+    "event_data": None,
+    "preregistration": None,
+    "target_profile": None,
 }
 
 
@@ -129,6 +158,19 @@ class ResolvedTrainingConfig:
         Whether the cell parameters are learned.
     seed : int
         Seed applied to every relevant generator, so a run is replayable.
+    event_data : EventTrainingContract or None
+        Manifest-bound temporal input for an event dataset; absent for static data.
+    preregistration : TrainingPreregistration or None
+        The acceptance criterion declared before the run; stored with the
+        configuration at submission and judged on the finished run.
+    model_kind : str
+        One of :data:`SUPPORTED_MODEL_KINDS`. On ``qcfs_conversion``,
+        ``timesteps`` is the QCFS step budget and the converted network's
+        timestep budget, and the surrogate and cell flags keep their unused
+        defaults.
+    target_profile : str or None
+        A registered hardware profile the converted network is calibrated
+        for; only on ``qcfs_conversion``.
     """
 
     dataset: str
@@ -142,6 +184,10 @@ class ResolvedTrainingConfig:
     learn_threshold: bool
     max_grad_norm: float
     seed: int
+    event_data: EventTrainingContract | None = None
+    preregistration: TrainingPreregistration | None = None
+    model_kind: str = "spiking"
+    target_profile: str | None = None
 
     def architecture(self, n_inputs: int, n_outputs: int) -> str:
         """Return the layer sizes this configuration builds, in order.
@@ -160,8 +206,14 @@ class ResolvedTrainingConfig:
         return "->".join(str(size) for size in sizes)
 
     def to_public_dict(self) -> dict[str, object]:
-        """Return the resolved configuration as the checkpoint records it."""
-        return {
+        """Return the resolved configuration as the checkpoint records it.
+
+        A spiking run records no ``model_kind``, so its configuration and
+        digest are what they were before the conversion route existed. A
+        conversion run records its kind and omits the cell settings it never
+        reads.
+        """
+        result: dict[str, object] = {
             "batch_size": self.batch_size,
             "dataset": self.dataset,
             "epochs": self.epochs,
@@ -175,6 +227,17 @@ class ResolvedTrainingConfig:
             "surrogate": self.surrogate,
             "timesteps": self.timesteps,
         }
+        if self.event_data is not None:
+            result["event_data"] = self.event_data.to_dict()
+        if self.preregistration is not None:
+            result["preregistration"] = self.preregistration.to_public_dict()
+        if self.target_profile is not None:
+            result["target_profile"] = self.target_profile
+        if self.model_kind != "spiking":
+            result["model_kind"] = self.model_kind
+            for key in _SPIKING_ONLY:
+                del result[key]
+        return result
 
 
 def resolve_training_config(payload: Mapping[str, Any]) -> ResolvedTrainingConfig:
@@ -211,20 +274,122 @@ def resolve_training_config(payload: Mapping[str, Any]) -> ResolvedTrainingConfi
         )
 
     dataset = _choice(payload, "dataset", SUPPORTED_DATASETS)
+    model_kind = _choice(payload, "model_kind", SUPPORTED_MODEL_KINDS)
     surrogate = _choice(payload, "surrogate", SUPPORTED_SURROGATES)
+    timesteps = _positive_int(payload, "timesteps")
+    batch_size = _positive_int(payload, "batch_size")
+    if model_kind == "qcfs_conversion":
+        _check_conversion_request(payload, dataset, timesteps)
+    event_data = None
+    if dataset not in ("synthetic", "mnist"):
+        try:
+            event_data = resolve_event_training_contract(
+                payload.get("event_data"), dataset=dataset, timesteps=timesteps
+            )
+            admit_event_training_input(event_data, batch_size)
+        except (ValueError, KeyError, TypeError, OverflowError) as exc:
+            raise TrainingConfigError("event_data", str(exc)) from exc
+    elif payload.get("event_data") is not None:
+        raise TrainingConfigError(
+            "event_data", "static datasets do not accept event data contracts."
+        )
+    try:
+        preregistration = resolve_training_preregistration(payload.get("preregistration"))
+    except ValueError as exc:
+        raise TrainingConfigError("preregistration", str(exc)) from exc
+    if model_kind != "qcfs_conversion" and (
+        preregistration is not None and preregistration.metric == "conversion_accuracy_drop"
+    ):
+        raise TrainingConfigError(
+            "preregistration",
+            "conversion_accuracy_drop is measured only on the qcfs_conversion route.",
+        )
     return ResolvedTrainingConfig(
         dataset=dataset,
         epochs=_positive_int(payload, "epochs"),
-        batch_size=_positive_int(payload, "batch_size"),
+        batch_size=batch_size,
         learning_rate=_positive_float(payload, "lr"),
         hidden_widths=_hidden_widths(payload),
-        timesteps=_positive_int(payload, "timesteps"),
+        timesteps=timesteps,
         surrogate=surrogate,
         learn_beta=_flag(payload, "learn_beta"),
         learn_threshold=_flag(payload, "learn_threshold"),
         max_grad_norm=_non_negative_float(payload, "max_grad_norm"),
         seed=_seed(payload),
+        event_data=event_data,
+        preregistration=preregistration,
+        model_kind=model_kind,
+        target_profile=_target_profile(payload, model_kind),
     )
+
+
+def _target_profile(payload: Mapping[str, Any], model_kind: str) -> str | None:
+    """Return the registered profile a conversion run is calibrated for, if any."""
+    value = payload.get("target_profile")
+    if value is None:
+        return None
+    if model_kind != "qcfs_conversion":
+        raise TrainingConfigError(
+            "target_profile", "only a qcfs_conversion run has a network to calibrate."
+        )
+    if not isinstance(value, str):
+        raise TrainingConfigError(
+            "target_profile", f"must be a profile name, got {type(value).__name__}."
+        )
+    from sc_neurocore.compiler.platforms import get_profile
+
+    try:
+        return get_profile(value).name
+    except KeyError as exc:
+        raise TrainingConfigError(
+            "target_profile", f"{value!r} is not a registered hardware profile."
+        ) from exc
+
+
+def list_target_profiles() -> list[dict[str, object]]:
+    """Return the hardware profiles a conversion run can be calibrated for.
+
+    Returns
+    -------
+    list of dict
+        Name, vendor, family, class and fixed-point format of every
+        registered profile, ordered by name.
+    """
+    from sc_neurocore.compiler.platforms import list_profiles
+
+    return [
+        {
+            "name": profile.name,
+            "vendor": profile.vendor,
+            "family": profile.family,
+            "platform_class": profile.platform_class,
+            "q_format": profile.q_format_label,
+            "data_width": profile.data_width,
+            "fraction": profile.fraction,
+            "signed": profile.signed,
+        }
+        for profile in sorted(list_profiles(), key=lambda profile: profile.name)
+    ]
+
+
+def _check_conversion_request(payload: Mapping[str, Any], dataset: str, timesteps: int) -> None:
+    """Refuse a conversion request the conversion route would not honour exactly."""
+    if dataset not in CONVERSION_DATASETS:
+        raise TrainingConfigError(
+            "dataset",
+            f"the qcfs_conversion route encodes static samples as rates; {dataset!r} is an "
+            "event dataset.",
+            CONVERSION_DATASETS,
+        )
+    for key in _SPIKING_ONLY:
+        if key in payload:
+            raise TrainingConfigError(
+                key, "the qcfs_conversion route builds no spiking cells to configure."
+            )
+    if timesteps > _QCFS_STEP_LIMIT:
+        raise TrainingConfigError(
+            "timesteps", f"a QCFS step budget is at most {_QCFS_STEP_LIMIT}, got {timesteps}."
+        )
 
 
 def _check_schema_version(payload: Mapping[str, Any]) -> None:
@@ -337,11 +502,14 @@ def _hidden_widths(payload: Mapping[str, Any]) -> tuple[int, ...]:
 
 
 __all__ = [
+    "CONVERSION_DATASETS",
     "SUPPORTED_CELL_TYPES",
     "SUPPORTED_DATASETS",
+    "SUPPORTED_MODEL_KINDS",
     "SUPPORTED_SURROGATES",
     "TRAINING_CONFIG_SCHEMA_VERSION",
     "ResolvedTrainingConfig",
     "TrainingConfigError",
+    "list_target_profiles",
     "resolve_training_config",
 ]

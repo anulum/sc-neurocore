@@ -23,8 +23,10 @@ _Uid = Annotated[int, Field(gt=0, lt=0xFFFFFFFF)]
 class StorageBoundaryConfiguration(BaseModel):
     """Immutable role, path and resource intent, not proof of OS isolation.
 
-    All fields are required. Three non-root OS identities must differ. Storage,
-    spool and socket-parent trees must be canonical absolute disjoint paths.
+    Core fields are required. An optional view-content ceiling defaults to the
+    existing event custody limit plus one frame. Three non-root OS identities
+    must differ. Storage, spool and socket-parent trees must be canonical
+    absolute disjoint paths.
     Limits carry explicit frame, metadata, seed, artefact, transfer and connection
     budgets.
     Actual ownership, ACLs, launcher and endpoint lifecycle are checked separately
@@ -48,6 +50,7 @@ class StorageBoundaryConfiguration(BaseModel):
     max_artifact_entries: Annotated[int, Field(ge=0, le=0xFFFFFFFF)]
     transfer_timeout_seconds: Annotated[float, Field(gt=0)]
     max_connections: Annotated[int, Field(gt=0)]
+    max_view_content_bytes: Annotated[int, Field(gt=0, le=0xFFFFFFFF)] | None = None
 
     @model_validator(mode="after")
     def validate_boundary(self) -> Self:

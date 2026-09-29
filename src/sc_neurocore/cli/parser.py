@@ -26,6 +26,7 @@ from .commands.scnir import add_scnir_command
 from .commands.serve import add_serve_command
 from .commands.studio import add_studio_commands
 from .commands.synthesis import add_synthesis_command
+from .commands.train import add_train_command
 
 _HELP_EPILOG = """\
 Modes and first steps:
@@ -33,6 +34,7 @@ Modes and first steps:
   Hardware  deploy, collect-synthesis, scnir, formal, hub-init
   Studio    studio and studio-* operator commands
   Data      dataset manifest, dataset verify, dataset split
+  Train     train (a Studio training job with its preregistered verdict)
   Maintain  benchmark, preflight
 
 Start with `sc-neurocore info`, then run `sc-neurocore COMMAND --help`
@@ -76,6 +78,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_hub_command(subparsers)
     add_studio_commands(subparsers)
     add_dataset_command(subparsers)
+    add_train_command(subparsers)
     add_maintenance_commands(subparsers)
     return parser
 

@@ -16,6 +16,8 @@ import math
 from collections.abc import Mapping
 
 from sc_neurocore.studio.platform.jobs_admission_replay import StorageAdmissionReplay
+from sc_neurocore.studio.platform.storage_event_admission import compact_event_admission
+from sc_neurocore.studio.platform.training_config_storage import EVENT_DATA_MAX_BYTES
 from sc_neurocore.studio.platform.policy_models import Principal
 from sc_neurocore.studio.platform.storage_seed_files import ReceivedStorageSeedFile
 from sc_neurocore.studio.platform.storage_named_tasks import (
@@ -91,7 +93,9 @@ def derive_storage_admission_replay(
     authorized_route : str
         Route whose existing policy the service has allowed.
     payload_json : bytes
-        Bounded UTF-8 JSON object from the admitted request.
+        UTF-8 process object bounded by metadata plus the event custody ceiling.
+        Large event declarations are validated and represented by their complete
+        SHA and byte reference in the canonical replay identity.
     seed_inputs : mapping of str to bytes or ReceivedStorageSeedFile
         Actual received seed bytes or private staged files. Staged files are
         rehashed in bounded chunks; their declared digests are not trusted.
@@ -102,7 +106,9 @@ def derive_storage_admission_replay(
     experiment_sha256 : str or None
         Effective experiment digest, when one exists.
     max_metadata_bytes, max_seed_bytes, max_seed_entries : int
-        Explicit service limits for canonical content and received seeds.
+        Explicit service limits for small canonical controls and received seeds.
+        Previously admitted inline event controls retain their legacy digest;
+        large declarations use the separately bounded event content identity.
 
     Returns
     -------
@@ -136,7 +142,10 @@ def derive_storage_admission_replay(
     reviewed_task = resolve_named_studio_task(task.name, authorized_route=authorized_route)
     if task != reviewed_task:
         raise ValueError("named Studio task differs from reviewed operation")
-    if not isinstance(payload_json, bytes) or not 0 < len(payload_json) <= max_metadata_bytes:
+    if (
+        not isinstance(payload_json, bytes)
+        or not 0 < len(payload_json) <= max_metadata_bytes + EVENT_DATA_MAX_BYTES
+    ):
         raise ValueError("storage admission payload exceeds metadata limit")
     try:
         payload = json.loads(
@@ -149,6 +158,15 @@ def derive_storage_admission_replay(
     if not isinstance(payload, dict):
         raise ValueError("storage admission payload must be an object")
     task.validate_admission(authorized_route=authorized_route, payload=payload, admission=admission)
+    original_payload = payload
+    payload, training_snapshot, event_content = compact_event_admission(
+        payload, None if training_config is None else dict(training_config)
+    )
+    if (
+        len(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+        > max_metadata_bytes
+    ):
+        raise ValueError("storage admission payload exceeds metadata limit")
     if not isinstance(seed_inputs, Mapping):
         raise ValueError("storage admission seeds must be a mapping")
     if len(seed_inputs) > max_seed_entries:
@@ -192,7 +210,11 @@ def derive_storage_admission_replay(
     ):
         raise ValueError("invalid storage admission requester")
     content = {
-        "schema_version": "studio.storage.admission-content.v1",
+        "schema_version": (
+            "studio.storage.admission-content.v2"
+            if event_content is not None
+            else "studio.storage.admission-content.v1"
+        ),
         "requester": {"principal_id": requester.principal_id, "roles": sorted(roles)},
         "workspace": workspace,
         "kind": task.kind,
@@ -205,10 +227,22 @@ def derive_storage_admission_replay(
         "execution_timeout_seconds": execution_timeout_seconds,
         "queue_wait_seconds": queue_wait_seconds,
         "admission": admission,
-        "training_config": training_config,
+        "training_config": training_snapshot,
         "experiment_sha256": experiment_sha256,
     }
     try:
+        if event_content is not None and len(payload_json) <= max_metadata_bytes:
+            legacy = {
+                **content,
+                "schema_version": "studio.storage.admission-content.v1",
+                "payload": original_payload,
+                "training_config": training_config,
+            }
+            legacy_bytes = json.dumps(
+                legacy, sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode("utf-8")
+            if len(legacy_bytes) <= max_metadata_bytes:
+                content = legacy
         canonical = json.dumps(content, sort_keys=True, separators=(",", ":"), allow_nan=False)
         json.loads(canonical, object_pairs_hook=_unique_fields, parse_constant=_reject_constant)
         encoded = canonical.encode("utf-8")

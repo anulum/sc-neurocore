@@ -63,6 +63,7 @@ Discussions = "https://github.com/anulum/sc-neurocore/discussions"
 
 [project.scripts]
 sc-neurocore = "sc_neurocore.cli:main"
+sc-neurocore-if-benchmark = "sc_neurocore.conversion.if_benchmark_cli:main"
 
 [project.entry-points."sc_neurocore.adapters"]
 neuroml = "sc_neurocore.adapters.importers:NeuroMLImporter"
@@ -167,6 +168,23 @@ build_py = "build_support.BuildStudioResources"
 sc_neurocore = [
   "py.typed",
   "juliapkg.json",
+  "accel/julia/datasets/*.jl",
+  "accel/julia/conversion/*.jl",
+  "accel/mojo/kernels/ann_to_snn*.mojo",
+  "accel/mojo/kernels/qcfs.mojo",
+  "accel/go/go.mod",
+  "accel/go/conversion/*.go",
+  "accel/go/conversion/cshared/*.go",
+  "accel/go/conversion/cshared/*.h",
+  "accel/go/conversion/qcfscshared/*.go",
+  "accel/rust/safety/ann_to_snn*.rs",
+  "accel/rust/safety/if_native/src/*.rs",
+  "accel/rust/safety/if_native/Cargo.toml",
+  "accel/rust/safety/if_native/Cargo.lock",
+  "accel/rust/safety/qcfs.rs",
+  "accel/rust/safety/qcfs_native/src/*.rs",
+  "accel/rust/safety/qcfs_native/Cargo.toml",
+  "accel/rust/safety/qcfs_native/Cargo.lock",
   "model_zoo/weights/*.npz",
   "hardware/*.v",
   "hdl/primitives/*.v",

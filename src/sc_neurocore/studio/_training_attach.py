@@ -29,7 +29,7 @@ from sc_neurocore.studio.platform.training_weights import (
     build_training_weight_restore_plan,
     training_architecture_fingerprint,
 )
-from sc_neurocore.studio.training_contract import resolve_training_config
+from sc_neurocore.studio.training_contract import TrainingConfigError, resolve_training_config
 from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 _LIVE_ATTACH_WEIGHTS_SEED = "model_state.pt"
@@ -58,7 +58,16 @@ def _start_training_attach(
         TRAINING_ATTACH_SEED_WEIGHTS_PATH,
     )
 
-    config = dict(resolve_training_config(config).to_public_dict())
+    resolved = resolve_training_config(config)
+    if resolved.model_kind != "spiking":
+        raise TrainingConfigError(
+            "model_kind", "a qcfs_conversion run starts from fresh weights, never attached ones."
+        )
+    if resolved.event_data is not None:
+        from sc_neurocore.studio.event_training_data import verify_event_training_data
+
+        verify_event_training_data(resolved.event_data)
+    config = dict(resolved.to_public_dict())
 
     status_payload = _get_training_status(source_job_id, job_manager)
     if "status" not in status_payload:
@@ -67,6 +76,17 @@ def _start_training_attach(
     if not isinstance(weight_checkpoint, dict):
         return {"error": "training_weight_checkpoint_unavailable"}
     source_status = cast(str, status_payload["status"])
+
+    if mode == "exact_resume" and resolved.event_data is not None:
+        source_config = job_manager.record(source_job_id).training_config
+        if (
+            source_config is None
+            or source_config.get("event_data") != resolved.event_data.to_dict()
+        ):
+            raise TrainingConfigError(
+                "event_data",
+                "exact resume requires the source manifest, split and encoder unchanged.",
+            )
 
     restore_plan = build_training_weight_restore_plan(
         source_job_id=source_job_id,
@@ -132,6 +152,9 @@ def _request_live_training_weight_attach(
         return {"error": "training_job_not_found"}
     if target_record.status != "running" or target_record.execution_model != "process":
         return {"error": "training_job_not_running"}
+    # A conversion run never polls for weights, so nothing could apply them.
+    if (target_record.training_config or {}).get("model_kind", "spiking") != "spiking":
+        return {"error": "architecture_incompatible"}
     target_proxy, source_proxy = _get_registered_pair(target_job_id, source_job_id)
     target_config = dict(target_proxy.config) if target_proxy is not None else {}
 

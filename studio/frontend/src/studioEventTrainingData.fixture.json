@@ -1,0 +1,146 @@
+{
+  "schema": "sc-neurocore.studio.event-training-data.v1",
+  "training_cpu_threads": 1,
+  "manifest": {
+    "schema": "sc-neurocore.event-dataset.v1",
+    "dataset": {
+      "name": "nmnist",
+      "title": "N-MNIST",
+      "citation": "Orchard, G., Jayawant, A., Cohen, G. K. & Thakor, N. (2015). Converting static image datasets to spiking neuromorphic datasets using saccades. Front. Neurosci. 9:437",
+      "doi": "10.3389/fnins.2015.00437",
+      "url": "https://www.garrickorchard.com/datasets/n-mnist",
+      "licence": "CC-BY-SA-4.0",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sensor": "dvs",
+      "geometry": [
+        34,
+        34
+      ],
+      "polarities": 2,
+      "classes": 10,
+      "file_format": "one .bin file per sample under Train/<label>/ or Test/<label>/; 40-bit events: x byte, y byte, polarity bit, 23-bit timestamp in microseconds",
+      "group_key": "recording file: each file is one MNIST image and the publisher names no writer, so no finer identity can be kept apart"
+    },
+    "version": "generated-format-fixture",
+    "files": [
+      {
+        "path": "Test/0/00000.bin",
+        "bytes": 5,
+        "sha256": "80b8f12e03c0b1617170c3e5f8d930a2b973bb7a3aa8403540d0134305103d78"
+      },
+      {
+        "path": "Train/0/00000.bin",
+        "bytes": 5,
+        "sha256": "80b8f12e03c0b1617170c3e5f8d930a2b973bb7a3aa8403540d0134305103d78"
+      },
+      {
+        "path": "Train/0/00001.bin",
+        "bytes": 5,
+        "sha256": "7181d3899c5135910854c067279596479c4ddfbffe8c53c792f7daa393e1b75e"
+      },
+      {
+        "path": "Train/1/00000.bin",
+        "bytes": 5,
+        "sha256": "42900ff8c19fe7307799e121b6117b07934396b1ccb45386008101214a76686e"
+      },
+      {
+        "path": "Train/1/00001.bin",
+        "bytes": 5,
+        "sha256": "018ee53c191b57c767cc2996c195ff36af03066af7245cd7b3331eb1a74e4814"
+      }
+    ],
+    "samples": [
+      {
+        "split": "train",
+        "file": "Train/0/00000.bin",
+        "index": 0,
+        "label": 0,
+        "group": "Train/0/00000.bin"
+      },
+      {
+        "split": "train",
+        "file": "Train/0/00001.bin",
+        "index": 0,
+        "label": 0,
+        "group": "Train/0/00001.bin"
+      },
+      {
+        "split": "train",
+        "file": "Train/1/00000.bin",
+        "index": 0,
+        "label": 1,
+        "group": "Train/1/00000.bin"
+      },
+      {
+        "split": "train",
+        "file": "Train/1/00001.bin",
+        "index": 0,
+        "label": 1,
+        "group": "Train/1/00001.bin"
+      },
+      {
+        "split": "test",
+        "file": "Test/0/00000.bin",
+        "index": 0,
+        "label": 0,
+        "group": "Test/0/00000.bin"
+      }
+    ]
+  },
+  "split": {
+    "schema": "sc-neurocore.event-dataset-split.v1",
+    "manifest_digest": "sha256:1bef062e79c020bd256a07030fc89ae7d61a43249850ff7b873dffcbacf4dfb5",
+    "source_split": "train",
+    "seed": 7,
+    "fractions": [
+      [
+        "train",
+        0.5
+      ],
+      [
+        "evaluation",
+        0.5
+      ]
+    ],
+    "assignment": {
+      "train": [
+        1,
+        3
+      ],
+      "evaluation": [
+        0,
+        2
+      ]
+    },
+    "groups": {
+      "train": [
+        "Train/0/00001.bin",
+        "Train/1/00001.bin"
+      ],
+      "evaluation": [
+        "Train/0/00000.bin",
+        "Train/1/00000.bin"
+      ]
+    }
+  },
+  "encoder": {
+    "schema": "sc-neurocore.input-encoder.v1",
+    "encoder": "event-binning",
+    "dt_ms": 1.002,
+    "n_steps": 4,
+    "width": 34,
+    "height": 34,
+    "polarity": "separate",
+    "step": "floor(t_ms / dt_ms)",
+    "late_events": "dropped",
+    "channel": "polarity * width * height + y * width + x",
+    "output": "bool (n_steps, channels)"
+  },
+  "train_split": "train",
+  "evaluation_split": "evaluation",
+  "digests": {
+    "manifest": "sha256:1bef062e79c020bd256a07030fc89ae7d61a43249850ff7b873dffcbacf4dfb5",
+    "split": "sha256:a8e726d0958444554f1774a6d2cc3063339c6ab5ca75500f0b4517b9c7e5155a",
+    "encoder": "sha256:991acd2a8ee0e0057226cad7aa05a949ea892d67c3a03f1686fae74beba824e8"
+  }
+}

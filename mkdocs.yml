@@ -266,6 +266,7 @@ nav:
   - Hardware:
       - Timing-Aware Formal Properties: formal/timing_aware_properties.md
       - Hardware Guide: hardware/HARDWARE_GUIDE.md
+      - Hardware Experiment Protocol: hardware/experiment_protocol.md
       - AER Priority Queue: hardware/aer_priority_queue.md
       - ADC-to-Spike Quantiser: hardware/adc_to_spike_quantiser.md
       - CORDIV State Machine: hardware/sc_cordiv.md

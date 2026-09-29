@@ -400,7 +400,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(julia --startup-file=no -e 'print(VERSION)')" = "1.11.9"
-          python -c "import juliacall; juliacall.Main.seval('1+1')"
+          python tools/studio_event_runtime_environment.py --github-env "$GITHUB_ENV"
           JULIA_DEPOT_PATH="$GITHUB_WORKSPACE/.venv/julia_depot" \
             julia --startup-file=no \
               --project=src/sc_neurocore/accel/julia/sc_compte_wm_network \

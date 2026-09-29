@@ -206,7 +206,7 @@ def test_untrusted_artefact_entries_are_refused(
     "limits,match",
     [
         ({"max_artifact_entries": 1}, "entry limit"),
-        ({"frame_max_bytes": 512}, "frame limit"),
+        ({"frame_max_bytes": 0}, "frame limit"),
         ({"max_artifact_bytes": 13}, "aggregate limit"),
     ],
 )

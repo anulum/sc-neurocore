@@ -14,8 +14,10 @@ records in creation order), ``status`` (aggregate counts, admission occupancy
 and pending purges) and ``purges`` (the operator purge journal page). The
 requester is the API's authenticated principal, delegated only by the
 peer-verified API; the authority applies the existing policy before reading.
-A page never exceeds the frame: the authority returns fewer items and a
-cursor instead.
+A page never exceeds its independent content budget: the authority returns
+fewer complete items and a cursor instead. Responses larger than one frame use
+the correlated, SHA-bound storage view content envelope; each frame retains
+its original ceiling.
 """
 
 from __future__ import annotations

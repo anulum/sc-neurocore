@@ -70,6 +70,7 @@ class StorageServices:
     admission: SharedJobAdmission | None = None
     admit_named: NamedAdmissionHandler | None = None
     authority_dirfd: int | None = None
+    max_view_content_bytes: int | None = None
 
 
 def _admit(
@@ -96,7 +97,7 @@ def _admit(
     staged = cast(ReceivedStorageSeedFiles, prepared.seed_files)
     with staged:
         request = decode_named_admission_request(
-            prepared.request_json, max_metadata_bytes=services.max_metadata_bytes
+            prepared.request_json, max_metadata_bytes=len(prepared.request_json)
         )
         response = encode_named_admission_response(
             request=request,
@@ -151,6 +152,7 @@ def serve_operation(
             expected_api_uid=uid,
             deadline=deadline,
             initial_frame=metadata,
+            max_content_bytes=services.max_view_content_bytes,
         )
     elif operation == "finish":
         serve_finish(
@@ -184,6 +186,7 @@ def serve_operation(
             expected_api_uid=uid,
             deadline=deadline,
             initial_frame=metadata,
+            max_content_bytes=services.max_view_content_bytes,
         )
     elif operation == "artifact":
         serve_artifact_read(
@@ -192,6 +195,7 @@ def serve_operation(
             gateway=services.gateway,
             workspace=services.workspace,
             max_bytes=services.frame_max_bytes,
+            max_artifact_bytes=services.max_artifact_bytes,
             expected_api_uid=uid,
             deadline=deadline,
             initial_frame=metadata,
@@ -206,6 +210,7 @@ def serve_operation(
             expected_api_uid=uid,
             deadline=deadline,
             initial_frame=metadata,
+            max_content_bytes=services.max_view_content_bytes,
         )
     elif operation == "query":
         if services.admission is None:
@@ -220,6 +225,7 @@ def serve_operation(
             expected_api_uid=uid,
             deadline=deadline,
             initial_frame=metadata,
+            max_content_bytes=services.max_view_content_bytes,
         )
     else:
         _admit(channel, metadata, services, deadline)

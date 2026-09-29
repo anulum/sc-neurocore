@@ -53,12 +53,20 @@ def _settings(configuration: dict[str, object]) -> StudioRuntimeSettings:
     )
 
 
-def test_boundary_intent_survives_settings_but_does_not_enable_storage(tmp_path: Path) -> None:
+@pytest.mark.parametrize("content_limit", [None, 131072])
+def test_boundary_intent_survives_settings_but_does_not_enable_storage(
+    tmp_path: Path, content_limit: int | None
+) -> None:
     """Valid distinct-role configuration creates no ledger, spool or endpoint."""
     payload = _configuration(tmp_path)
+    if content_limit is not None:
+        payload["max_view_content_bytes"] = content_limit
     settings = _settings(payload)
     assert settings.storage_boundary is not None
-    assert settings.storage_boundary.model_dump(mode="json") == payload
+    assert settings.storage_boundary.model_dump(mode="json") == {
+        **payload,
+        "max_view_content_bytes": content_limit,
+    }
     with pytest.raises(ValueError, match="frozen"):
         settings.storage_boundary.workspace = "another"
     app = FastAPI()
@@ -97,6 +105,10 @@ def test_boundary_requires_all_explicit_fields(tmp_path: Path, field: str) -> No
         ("frame_max_bytes", 0),
         ("frame_max_bytes", 0x100000000),
         ("frame_max_bytes", True),
+        ("max_view_content_bytes", 0),
+        ("max_view_content_bytes", 0x100000000),
+        ("max_view_content_bytes", True),
+        ("max_view_content_bytes", "131072"),
         ("max_metadata_bytes", 0),
         ("max_metadata_bytes", 8193),
         ("max_metadata_bytes", True),

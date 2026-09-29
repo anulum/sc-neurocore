@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
+from dataclasses import replace
 
 import pytest
 
@@ -135,13 +136,14 @@ def test_untrusted_sealed_bytes_are_unavailable(
     authority.join()
 
 
-def test_an_artefact_above_the_frame_is_unavailable(ledger: StudioJobLedger) -> None:
-    """A service configured with a smaller frame than the seal refuses, never truncates."""
+def test_artifacts_span_frames_and_obey_the_content_budget(ledger: StudioJobLedger) -> None:
+    """A small frame preserves large content; a separate content budget refuses it."""
     stop(started(ledger))
     large = {"large.bin": bytes(range(256)) * 12}
     assert finish(ledger, request(large), list(large.values())).reply == "sealed"
     authority = Authority(ledger, frame_max_bytes=2048)
+    assert _read(authority, "large.bin").payload == large["large.bin"]
+    authority.services = replace(authority.services, max_artifact_bytes=2048)
     with pytest.raises(StudioJobArtifactUnavailable):
         _read(authority, "large.bin")
     authority.join()
-    assert _read(Authority(ledger), "large.bin").payload == large["large.bin"]

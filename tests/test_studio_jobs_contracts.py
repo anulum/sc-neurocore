@@ -230,6 +230,9 @@ def test_oversized_training_snapshot_is_refused(tmp_path: Path) -> None:
     )
     public = manager.wait(job.job_id, 30.0).to_public_dict()
     assert decode_job_snapshot(public).training_config == config
-    public["training_config"] = {**config, "padding": "x" * 4096}
-    with pytest.raises(ValueError, match="exceeds the 4096-byte limit"):
+    # A valid configuration made large by its own fields, so the byte bound is
+    # what refuses it rather than the contract's unknown-field check.
+    public["training_config"] = {**config, "hidden": [1] * 2048}
+    with pytest.raises(ValueError, match="configuration is invalid") as refusal:
         decode_job_snapshot(public)
+    assert "4096-byte admission limit" in str(refusal.value.__cause__)

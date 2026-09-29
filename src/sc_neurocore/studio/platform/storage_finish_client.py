@@ -126,7 +126,7 @@ def spool_finish_request(
     exit_status : int or None
         Leader exit status reported by the launcher, if it ran.
     frame_max_bytes : int
-        Ceiling for the result file and for each artefact.
+        Ceiling for the result metadata and each artefact chunk frame.
     max_artifact_bytes, max_artifact_entries : int
         Aggregate budgets the authority enforces; a worker declaring more is
         refused before any artefact is read into memory.
@@ -149,6 +149,12 @@ def spool_finish_request(
         non-regular files, changed bytes, a digest or size different from the
         declaration, or an invalid manifest.
     """
+    validate_artifact_budget(
+        (),
+        frame_max_bytes=frame_max_bytes,
+        max_artifact_bytes=max_artifact_bytes,
+        max_artifact_entries=max_artifact_entries,
+    )
     try:
         raw = json.loads(_read_stable(RESULT_NAME, job_directory, limit=frame_max_bytes))
     except FileNotFoundError:
@@ -273,13 +279,10 @@ def exchange_finish(
         if response.reply != "ready":
             return response
         for payload in payloads:
-            if not payload:
-                continue
-            # The authority writes before the last frame only to refuse one; it
-            # then closes without reading the rest. Read that answer instead of
-            # writing into a closed peer, which would close the channel with the
-            # answer still unread.
-            if select.select([channel], [], [], 0)[0]:
-                return receive()
-            send(payload)
+            for offset in range(0, len(payload), max_bytes):
+                # A refusal can arrive before all chunks; retain that answer
+                # instead of writing into the authority's closed stream.
+                if select.select([channel], [], [], 0)[0]:
+                    return receive()
+                send(payload[offset : offset + max_bytes])
         return receive()

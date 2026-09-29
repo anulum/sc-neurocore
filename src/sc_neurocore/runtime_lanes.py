@@ -11,7 +11,10 @@
 The published wheel is pure Python. It always carries the Python reference
 implementations; the Rust engine is a separate optional package; the Julia,
 Go and Mojo lanes run only from a source checkout, because the wheel ships
-neither their kernel sources nor libraries built from them. A lane's
+neither their model kernel sources nor libraries built from them. The wheel
+does carry the dense IF conversion and event-dataset native sources that those
+public APIs load or build on their own; they are not model kernels and do not
+make a lane present. A lane's
 availability is therefore read from the installation itself -- the importable
 packages and the files beside this module -- never inferred from a checkout
 the code happens to sit next to. A lane whose resources are present can still
@@ -32,6 +35,10 @@ Distribution = Literal["bundled", "optional-package", "source-checkout"]
 ACCEL_ROOT = Path(__file__).resolve().parent / "accel"
 """The installed ``sc_neurocore.accel`` directory, read as files: importing the
 package would load its numerical dependencies just to report on them."""
+
+WHEEL_JULIA_SUBSETS = ("conversion", "datasets")
+"""Julia source directories the wheel ships for their own public APIs; the dense
+IF replay and event-dataset loaders use them, the model kernels do not."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,19 +99,20 @@ CONTRACT: tuple[LaneContract, ...] = (
         "julia",
         "source-checkout",
         "Run from a source checkout with juliacall installed (the `julia` extra): "
-        "the wheel does not ship the Julia kernel sources.",
+        "the wheel ships only the dense IF conversion and event-dataset Julia sources, "
+        "not the model kernel sources.",
     ),
     LaneContract(
         "go",
         "source-checkout",
-        "Build the Go shared libraries in a source checkout; the wheel ships neither "
-        "the Go sources nor built libraries.",
+        "Build the Go shared libraries in a source checkout; the wheel ships no built "
+        "libraries and only the dense IF conversion Go sources.",
     ),
     LaneContract(
         "mojo",
         "source-checkout",
         "Build the Mojo shared libraries with the Mojo toolchain in a source checkout; "
-        "the wheel ships neither the Mojo sources nor built libraries.",
+        "the wheel ships no built libraries and only the dense IF conversion Mojo sources.",
     ),
 )
 
@@ -122,6 +130,15 @@ def _has_files(directory: Path, pattern: str) -> bool:
     return directory.is_dir() and any(path.is_file() for path in directory.rglob(pattern))
 
 
+def _has_model_kernels(julia_root: Path) -> bool:
+    # Only the wheel's own conversion/dataset subsets may be present in an
+    # installation; any other Julia source means the checkout's model kernels.
+    return julia_root.is_dir() and any(
+        path.is_file() and path.relative_to(julia_root).parts[0] not in WHEEL_JULIA_SUBSETS
+        for path in julia_root.rglob("*.jl")
+    )
+
+
 def _present(lane: Lane, accel_root: Path) -> tuple[bool, str]:
     if lane == "python":
         return True, "Python reference implementations are part of this package."
@@ -130,7 +147,7 @@ def _present(lane: Lane, accel_root: Path) -> tuple[bool, str]:
             return True, "The sc_neurocore_engine package is installed."
         return False, "The sc_neurocore_engine package is not installed."
     if lane == "julia":
-        kernels = _has_files(accel_root / "julia", "*.jl")
+        kernels = _has_model_kernels(accel_root / "julia")
         if kernels and _importable("juliacall"):
             return True, "Julia kernel sources and juliacall are present."
         missing = [
@@ -178,5 +195,6 @@ __all__ = [
     "Lane",
     "LaneContract",
     "LaneStatus",
+    "WHEEL_JULIA_SUBSETS",
     "lane_statuses",
 ]

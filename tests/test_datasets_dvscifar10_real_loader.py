@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.datasets_support import *  # noqa: F403
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from sc_neurocore.datasets import load_dvs_cifar10
 
 
 class TestDVSCIFAR10RealLoader:
-    """Test DVS-CIFAR10 real-data path with mock .npy files."""
+    """Test DVS-CIFAR10 through real NumPy recording files."""
 
-    def test_load_dvs_cifar10_real_path(self, tmp_path):
+    def test_load_dvs_cifar10_real_path(self, tmp_path: Path) -> None:
+        """Load every class in deterministic order without narrowing source values."""
         rng = np.random.default_rng(0)
         split = tmp_path / "train"
         for cls in range(3):
@@ -29,14 +35,17 @@ class TestDVSCIFAR10RealLoader:
         samples, labels = load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)
         assert len(samples) == 6
         assert set(labels.tolist()) == {0, 1, 2}
-        assert samples[0].dtype == np.float32
+        assert samples[0].dtype == np.float64
+        np.testing.assert_array_equal(samples[0], np.load(split / "0" / "ev0.npy"))
 
-    def test_load_dvs_cifar10_missing_split_raises(self, tmp_path):
+    def test_load_dvs_cifar10_missing_split_raises(self, tmp_path: Path) -> None:
+        """An absent split refuses instead of manufacturing data."""
         (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="Expected split directory"):
             load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)
 
-    def test_load_dvs_cifar10_empty_dir_raises(self, tmp_path):
+    def test_load_dvs_cifar10_empty_dir_raises(self, tmp_path: Path) -> None:
+        """An empty real corpus reports that converted recordings are required."""
         split = tmp_path / "train"
         split.mkdir()
         with pytest.raises(FileNotFoundError, match="No .npy event files"):

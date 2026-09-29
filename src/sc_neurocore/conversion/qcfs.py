@@ -18,8 +18,12 @@ High-accuracy and Ultra-low-latency Spiking Neural Networks"
 
 from __future__ import annotations
 
+import math
+
 import torch
 import torch.nn as nn
+
+from .qcfs_kernel import QCFS_STEP_LIMIT
 
 
 class QCFSActivation(nn.Module):
@@ -34,7 +38,8 @@ class QCFSActivation(nn.Module):
     Parameters
     ----------
     T : int
-        Number of simulation timesteps.
+        Number of simulation timesteps, ``1 <= T <= 2**32 - 1``: the step
+        domain every native counterpart shares.
     theta : float
         Firing threshold (default 1.0).
     learn_theta : bool
@@ -42,12 +47,17 @@ class QCFSActivation(nn.Module):
     """
 
     def __init__(self, T: int = 8, theta: float = 1.0, learn_theta: bool = False) -> None:
+        """Create a positive finite threshold and positive integer rate grid."""
         super().__init__()
+        if type(T) is not int or not 1 <= T <= QCFS_STEP_LIMIT:
+            raise ValueError("QCFS T must be a positive integer no larger than 2**32 - 1")
+        if not math.isfinite(theta) or theta <= 0:
+            raise ValueError("QCFS theta must be finite and positive")
         self.T = T
         if learn_theta:
-            self.theta = nn.Parameter(torch.tensor(theta))
+            self.theta = nn.Parameter(torch.tensor(float(theta)))
         else:
-            self.register_buffer("theta", torch.tensor(theta))
+            self.register_buffer("theta", torch.tensor(float(theta)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Quantise activations to the spike-rate grid with a straight-through gradient.
@@ -61,13 +71,25 @@ class QCFSActivation(nn.Module):
         -------
         torch.Tensor
             Tensor with values clipped to ``[0, theta]`` and quantised to the
-            finite-timestep spike-rate lattice.
+            finite-timestep spike-rate lattice. The backward pass uses the
+            identity floor surrogate on the continuously clipped shifted input;
+            The two clipping endpoints use zero input derivative. Saturated values
+            have zero input derivative, and upper saturation differentiates to
+            one with respect to the learned threshold.
         """
-        scaled = x * self.T / self.theta + 0.5
-        # STE: floor in forward, pass gradient straight through
-        quantized = scaled.floor() - (scaled.floor() - scaled).detach()
-        clipped = quantized.clamp(0, self.T)
-        out: torch.Tensor = clipped * self.theta / self.T
+        if not bool(torch.isfinite(self.theta) & (self.theta > 0)):
+            raise ValueError("QCFS theta must be finite and positive")
+        scaled = (x * self.T / self.theta + 0.5).detach()
+        interior = (scaled > 0) & (scaled < self.T)
+        # Only interior elements carry a gradient. Rebuilding their coordinate
+        # from the element alone keeps a saturated infinite or NaN neighbour
+        # out of the threshold derivative, where a zero upstream times its
+        # infinite quotient would otherwise turn the whole batch into NaN.
+        carrier = torch.where(interior, x, torch.zeros_like(x)) * self.T / self.theta + 0.5
+        clipped = torch.where(interior, carrier, scaled).clamp(0, self.T)
+        # Bu et al., Eq. 17: floor has an identity surrogate derivative.
+        quantized = clipped + (clipped.floor() - clipped).detach()
+        out: torch.Tensor = quantized * self.theta / self.T
         return out
 
     def extra_repr(self) -> str:

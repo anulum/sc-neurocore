@@ -8,11 +8,11 @@
 
 """Strict wire contract for reading one sealed artefact from the authority.
 
-``studio.storage.artifact.v1`` names the HTTP route the read serves, from the
+``studio.storage.artifact.v2`` names the HTTP route the read serves, from the
 closed set of routes that read completed artefacts, so the authority applies
 that route's policy to the delegated requester. An answered read carries the
-declared artefact, and its bytes follow in one frame when it is not empty;
-the isolated profile seals only artefacts that fit one frame.
+declared artefact, and its bytes follow in full frames plus a final remainder.
+Empty content consumes no frames. Frame and complete-content budgets are independent.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from sc_neurocore.studio.platform.jobs_models import StudioJobArtifactUnavailabl
 from sc_neurocore.studio.platform.storage_finish_protocol import FinishArtifact
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
-ARTIFACT_SCHEMA_VERSION: Final[Literal["studio.storage.artifact.v1"]] = "studio.storage.artifact.v1"
+ARTIFACT_SCHEMA_VERSION: Final[Literal["studio.storage.artifact.v2"]] = "studio.storage.artifact.v2"
 
 ArtifactRoute = Literal[
     "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
@@ -50,7 +50,7 @@ class StorageArtifactRequest(BaseModel):
     """Read one declared artefact of a job in the configured workspace."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.artifact.v1"]
+    schema_version: Literal["studio.storage.artifact.v2"]
     operation: Literal["artifact"]
     request_id: _RequestId
     workspace: Annotated[str, Field(min_length=1, max_length=256)]
@@ -64,7 +64,7 @@ class StorageArtifactResponse(BaseModel):
     """The declared artefact, or a fixed refusal."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.artifact.v1"]
+    schema_version: Literal["studio.storage.artifact.v2"]
     operation: Literal["artifact"]
     request_id: _RequestId
     status: Literal["ok", "forbidden", "not_found", "unavailable"]

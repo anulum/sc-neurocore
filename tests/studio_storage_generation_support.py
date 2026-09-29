@@ -143,8 +143,9 @@ class Authority:
                 if decoded.reply == "ready":
                     write_frame(client, reply, max_bytes=FRAME, deadline=_deadline())
                     for artifact in request.artifacts:
-                        if artifact.size_bytes:
+                        for offset in range(0, artifact.size_bytes, FRAME):
                             payload = read_frame(client, max_bytes=FRAME, deadline=_deadline())
+                            assert len(payload) == min(FRAME, artifact.size_bytes - offset)
                             write_frame(relay, payload, max_bytes=FRAME, deadline=_deadline())
                     read_frame(relay, max_bytes=FRAME, deadline=_deadline())
         handler.join(timeout=_WIRE)

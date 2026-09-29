@@ -260,6 +260,7 @@ class StorageRecordListener:
                 api_uid=config.api_uid,
                 frame_max_bytes=config.frame_max_bytes,
                 max_metadata_bytes=config.max_metadata_bytes,
+                max_view_content_bytes=config.max_view_content_bytes,
                 max_seed_bytes=config.max_seed_bytes,
                 max_seed_entries=config.max_seed_entries,
                 max_manifest_bytes=config.max_manifest_bytes,

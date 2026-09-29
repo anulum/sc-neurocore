@@ -23,15 +23,15 @@ import json
 import socket
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
-from sc_neurocore.studio.platform.jobs_ledger_schema import record_from_row
 from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmission
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import Principal
 from sc_neurocore.studio.platform.policy_routes import build_default_studio_route_policy_registry
+from sc_neurocore.studio.platform.storage_query_pages import fit_page, read_record_page
+from sc_neurocore.studio.platform.storage_view_content import send_view_content, view_content_limit
 from sc_neurocore.studio.platform.storage_peer import (
     read_verified_frame,
     require_storage_supervisor_identity,
-    write_verified_frame,
 )
 from sc_neurocore.studio.platform.storage_query_protocol import (
     QUERY_ROUTES,
@@ -51,27 +51,6 @@ def _plain(item: Mapping[str, object]) -> dict[str, JsonValue]:
     """Return a public dictionary as JSON values, refusing non-JSON content."""
     decoded = json.loads(json.dumps(item, allow_nan=False))
     return {str(key): value for key, value in decoded.items()}
-
-
-def _records(ledger: StudioJobLedger, request: StorageQueryRequest) -> _Page | None:
-    """Read one creation-ordered page; ``None`` when the cursor is unknown."""
-    with ledger.transaction() as connection:
-        cursor: tuple[str, int] = ("", 0)
-        if request.after is not None:
-            row = connection.execute(
-                "SELECT created_at_utc, rowid FROM jobs WHERE job_id = ? AND workspace = ?",
-                (request.after, request.workspace),
-            ).fetchone()
-            if row is None:
-                return None
-            cursor = (str(row[0]), int(row[1]))
-        rows = connection.execute(
-            "SELECT * FROM jobs WHERE workspace = ? AND (created_at_utc, rowid) > (?, ?) "
-            "ORDER BY created_at_utc, rowid LIMIT ?",
-            (request.workspace, *cursor, request.limit + 1),
-        ).fetchall()
-    items = [record_from_row(row).to_public_dict() for row in rows[: request.limit]]
-    return [_plain(item) for item in items], len(rows) > request.limit
 
 
 def _purges(ledger: StudioJobLedger, request: StorageQueryRequest) -> _Page:
@@ -130,43 +109,6 @@ def _response(
     )
 
 
-def fit_page(
-    request: StorageQueryRequest,
-    items: list[dict[str, JsonValue]],
-    more: bool,
-    *,
-    max_bytes: int,
-) -> bytes:
-    """Encode the longest prefix of ``items`` whose response fits the frame.
-
-    Each item is measured by its own compact encoding plus one separator, and
-    the envelope is measured with a cursor of full length, so the estimate
-    never undercounts the encoded page. A shortened page carries a cursor to
-    its last item, so the API continues where it stopped.
-
-    Raises
-    ------
-    ValueError
-        A single item does not fit the frame: a configuration fault.
-    """
-    placeholder = "sj_" + "0" * 16
-    budget = max_bytes - len(
-        encode_query_message(_response(request, "ok", items=[], next_after=placeholder))
-    )
-    count = 0
-    for item in items:
-        size = len(json.dumps(item, sort_keys=True, separators=(",", ":"), allow_nan=False)) + 1
-        if size > budget:
-            break
-        budget -= size
-        count += 1
-    if items and count == 0:
-        raise ValueError("one storage query item exceeds the frame limit")
-    page = items[:count]
-    cursor = str(page[-1]["job_id"]) if page and (more or count < len(items)) else None
-    return encode_query_message(_response(request, "ok", items=page, next_after=cursor))
-
-
 def apply_query(
     ledger: StudioJobLedger,
     admission: SharedJobAdmission,
@@ -187,7 +129,11 @@ def apply_query(
     if request.view == "status":
         summary = _summary(ledger, admission, request.workspace)
         return encode_query_message(_response(request, "ok", summary=summary))
-    page = _records(ledger, request) if request.view == "records" else _purges(ledger, request)
+    page = (
+        read_record_page(ledger, request, max_bytes=max_bytes)
+        if request.view == "records"
+        else _purges(ledger, request)
+    )
     if page is None:
         return encode_query_message(_response(request, "invalid_cursor"))
     items, more = page
@@ -205,6 +151,7 @@ def serve_query(
     max_bytes: int,
     deadline: float,
     initial_frame: bytes | None = None,
+    max_content_bytes: int | None = None,
 ) -> None:
     """Serve one peer-verified query after the route's policy allowed it.
 
@@ -228,6 +175,9 @@ def serve_query(
         Absolute monotonic wire deadline.
     initial_frame : bytes or None
         First frame already read by the owning listener, if any.
+    max_content_bytes : int, optional
+        Independent total page ceiling; defaults to the event custody ceiling
+        plus one frame. Oversized records are refused without truncation.
 
     Raises
     ------
@@ -270,9 +220,19 @@ def serve_query(
             )
             return decision.allowed
 
-        response = apply_query(ledger, admission, request, authorize=authorize, max_bytes=max_bytes)
-        write_verified_frame(
-            channel, response, expected_uid=expected_api_uid, max_bytes=max_bytes, deadline=deadline
+        content_limit = view_content_limit(max_bytes, max_content_bytes)
+        response = apply_query(
+            ledger, admission, request, authorize=authorize, max_bytes=content_limit
+        )
+        send_view_content(
+            channel,
+            response,
+            content_schema=QUERY_SCHEMA_VERSION,
+            request_id=request.request_id,
+            expected_uid=expected_api_uid,
+            frame_max_bytes=max_bytes,
+            deadline=deadline,
+            max_content_bytes=content_limit,
         )
 
 

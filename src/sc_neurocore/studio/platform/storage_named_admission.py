@@ -20,8 +20,9 @@ from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import Principal
 from sc_neurocore.studio.platform.policy_routes import build_default_studio_route_policy_registry
 from sc_neurocore.studio.platform.storage_admission_digest import derive_storage_admission_replay
-from sc_neurocore.studio.platform.storage_admission_protocol import (
-    decode_named_admission_request,
+from sc_neurocore.studio.platform.storage_event_admission import (
+    decode_event_admission,
+    receive_event_admission_content,
 )
 from sc_neurocore.studio.platform.storage_named_tasks import (
     NamedStudioTask,
@@ -78,6 +79,9 @@ def prepare_named_admission(
     authority_dirfd: int | None = None,
 ) -> PreparedNamedAdmission:
     """Read and authorize a real connected API request without ledger mutation.
+
+    Event content follows a bounded header only after policy authorization;
+    the restored request is retained under the separate event custody limit.
 
     Parameters
     ----------
@@ -136,7 +140,9 @@ def prepare_named_admission(
                 max_bytes=min(frame_max_bytes, max_metadata_bytes),
                 deadline=deadline,
             )
-        request = decode_named_admission_request(metadata, max_metadata_bytes=max_metadata_bytes)
+        request, event_envelope = decode_event_admission(
+            metadata, max_metadata_bytes=max_metadata_bytes
+        )
         if request.workspace != workspace:
             raise ValueError("storage request does not match configured workspace")
         task = resolve_named_studio_task(
@@ -155,6 +161,15 @@ def prepare_named_admission(
         )
         if not decision.allowed or requester is None:
             raise PermissionError("storage named admission access denied")
+        request = receive_event_admission_content(
+            channel,
+            request,
+            event_envelope,
+            expected_uid=expected_api_uid,
+            frame_max_bytes=frame_max_bytes,
+            deadline=deadline,
+        )
+        metadata = request.model_dump_json().encode("utf-8")
         received_bytes: dict[str, bytes] = {}
         seed_inputs: Mapping[str, bytes | ReceivedStorageSeedFile]
         if authority_dirfd is None:

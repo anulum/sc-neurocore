@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.datasets_support import *  # noqa: F403
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from sc_neurocore.datasets import load_nmnist
 
 
 class TestNMNISTRealLoader:
     """Test N-MNIST real-data path with synthetic .bin files."""
 
-    def test_parse_nmnist_bin(self, tmp_path):
+    def test_parse_nmnist_bin(self, tmp_path: Path) -> None:
+        """Decode every complete record without narrowing its timestamp precision."""
         from sc_neurocore.datasets.loaders import _parse_nmnist_bin
 
         rng = np.random.default_rng(0)
@@ -26,9 +32,9 @@ class TestNMNISTRealLoader:
         raw.tofile(bin_file)
         events = _parse_nmnist_bin(bin_file)
         assert events.shape == (n_events, 4)
-        assert events.dtype == np.float32
+        assert events.dtype == np.float64
 
-    def test_parse_nmnist_bin_decodes_the_published_40_bit_event(self, tmp_path):
+    def test_parse_nmnist_bin_decodes_the_published_40_bit_event(self, tmp_path: Path) -> None:
         """Byte 0 is x, byte 1 y, the top bit of byte 2 polarity, 23 bits of microseconds."""
         from sc_neurocore.datasets.loaders import _parse_nmnist_bin
 
@@ -44,10 +50,11 @@ class TestNMNISTRealLoader:
             events,
             [[33, 0, 1, 1234.567], [0, 33, 0, 8388.607], [17, 5, 1, 0.0]],
             rtol=0,
-            atol=1e-3,
+            atol=0,
         )
 
-    def test_load_nmnist_real_path(self, tmp_path):
+    def test_load_nmnist_real_path(self, tmp_path: Path) -> None:
+        """Load all recorded classes through the public eager entry point."""
         rng = np.random.default_rng(0)
         split = tmp_path / "Train"
         for cls in range(3):
@@ -61,7 +68,8 @@ class TestNMNISTRealLoader:
         assert len(samples) == 6
         assert set(labels.tolist()) == {0, 1, 2}
 
-    def test_load_nmnist_missing_split_raises(self, tmp_path):
+    def test_load_nmnist_missing_split_raises(self, tmp_path: Path) -> None:
+        """An absent real split refuses rather than fabricating samples."""
         (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="Expected split directory"):
             load_nmnist(root=tmp_path, train=True, synthetic=False)

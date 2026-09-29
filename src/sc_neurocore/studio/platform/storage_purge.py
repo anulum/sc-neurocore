@@ -35,7 +35,6 @@ from sc_neurocore.studio.platform.policy_routes import build_default_studio_rout
 from sc_neurocore.studio.platform.storage_peer import (
     read_verified_frame,
     require_storage_supervisor_identity,
-    write_verified_frame,
 )
 from sc_neurocore.studio.platform.storage_purge_protocol import (
     PURGE_ROUTE,
@@ -45,6 +44,8 @@ from sc_neurocore.studio.platform.storage_purge_protocol import (
     decode_purge_request,
     encode_purge_message,
 )
+
+from sc_neurocore.studio.platform.storage_view_content import send_view_content, view_content_limit
 
 
 class AuthorityCustody:
@@ -107,6 +108,7 @@ def serve_purge(
     max_bytes: int,
     deadline: float,
     initial_frame: bytes | None = None,
+    max_content_bytes: int | None = None,
 ) -> None:
     """Serve one peer-verified purge after the archive purge route's policy.
 
@@ -128,6 +130,8 @@ def serve_purge(
         Absolute monotonic wire deadline.
     initial_frame : bytes or None
         First frame already read by the owning listener, if any.
+    max_content_bytes : int or None
+        Independent complete snapshot ceiling, validated before purging.
 
     Raises
     ------
@@ -165,12 +169,16 @@ def serve_purge(
             route=route,
             request_id=request.request_id,
         )
+        content_limit = view_content_limit(max_bytes, max_content_bytes)
         response = apply_purge(custody, request, allowed=decision.allowed)
-        write_verified_frame(
+        send_view_content(
             channel,
             encode_purge_message(response),
             expected_uid=expected_api_uid,
-            max_bytes=max_bytes,
+            frame_max_bytes=max_bytes,
+            content_schema=PURGE_SCHEMA_VERSION,
+            request_id=request.request_id,
+            max_content_bytes=content_limit,
             deadline=deadline,
         )
 

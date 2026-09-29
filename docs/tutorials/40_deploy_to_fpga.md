@@ -2,9 +2,12 @@
 
 # Tutorial 40: One-Command FPGA Deployment
 
-SC-NeuroCore deploys SNN models to FPGA in one command. Input: a trained
-model (NIR or PyTorch). Output: a complete synthesis project with Verilog,
-build scripts, and HDL library — ready for Yosys or Vivado.
+`sc-neurocore deploy` scaffolds an FPGA synthesis project in one command: a
+generic LIF neuron module, the SC-NeuroCore HDL library and build scripts for
+Yosys or Vivado. The generated RTL is a template; it does not carry a model's
+trained weights. For a PyTorch checkpoint the command also converts the trained
+dense network and exports exactly that network, and with calibration samples it
+measures how the network fits the target's fixed-point format.
 
 ## Quick Start
 
@@ -15,15 +18,19 @@ sc-neurocore deploy model.nir --target ice40 -o build/
 # Deploy to Xilinx Artix-7
 sc-neurocore deploy model.nir --target artix7 -o build/
 
-# Deploy a PyTorch state_dict
-sc-neurocore deploy weights.pt --target zynq -o build/
+# Deploy a PyTorch state_dict (its SHA-256 is required)
+sc-neurocore deploy weights.pt --checkpoint-sha256 "$(sha256sum weights.pt | cut -d' ' -f1)" \
+  --target zynq -o build/
 ```
 
 ## What Gets Generated
 
 ```
 build/
-  sc_deploy_lif.sv       Generated neuron module (Q8.8 fixed-point)
+  sc_deploy_lif.sv       Generic LIF neuron template (Q8.8), not the model's weights
+  converted_network.npz  PyTorch input only: the converted dense IF network
+  converted_network.json Its manifest: source digest, layers, T, network digest
+  target_report.json     With --calibration: fixed-point fit for the target
   hdl/                   SC-NeuroCore Verilog library (19 modules)
     sc_lif_neuron.v      Q8.8 LIF core
     sc_bitstream_encoder.v  LFSR encoder
@@ -48,9 +55,9 @@ build/
 ## Pipeline Stages
 
 ```
-[1/5] Load model (NIR graph or PyTorch state_dict)
-[2/5] Quantize weights to Q8.8 fixed-point
-[3/5] Generate SystemVerilog neuron module
+[1/5] Load model (NIR graph, or convert a trusted PyTorch checkpoint)
+[2/5] Calibrate the converted network for the target format (with --calibration)
+[3/5] Generate the generic LIF RTL template
 [4/5] Copy 19 HDL library modules
 [5/5] Generate target-specific project files
 ```
@@ -78,14 +85,28 @@ Save the model's state_dict (not the full model):
 
 ```python
 torch.save(model.state_dict(), "weights.pt")
+numpy.save("calibration.npy", validation_inputs)  # optional, values in [0, 1]
 ```
 
 ```bash
-sc-neurocore deploy weights.pt --target ice40 --T 256 -o build/
+sc-neurocore deploy weights.pt \
+  --checkpoint-sha256 "$(sha256sum weights.pt | cut -d' ' -f1)" \
+  --calibration calibration.npy --target ice40 --T 256 -o build/
 ```
 
-The deploy command reconstructs the model architecture from weight shapes
-and converts to an SNN using the conversion engine.
+A plain `state_dict` must be a dense ReLU chain: its layers are rebuilt in the
+order they were registered, with their trained biases, and any other parameter
+(a convolution, a normalisation, a QCFS threshold) is refused instead of being
+dropped. The ReLU thresholds come from the calibration samples, or unit scales
+without them. A Studio `qcfs_conversion` checkpoint (`training/model_state.pt`)
+is rebuilt from its recorded configuration and converted with its learned
+thresholds and its own timestep budget; its exported network has the same
+digest as the run's `training/conversion_report.json`. A Studio spiking
+checkpoint is refused, since it is already a spiking network.
+
+`converted_network.npz` reloads with
+`sc_neurocore.conversion.converted_io.load_converted_network`, which refuses a
+file whose contents do not match the recorded digest.
 
 ## Bitstream Length
 

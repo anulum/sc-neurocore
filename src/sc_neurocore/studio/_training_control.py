@@ -75,6 +75,10 @@ def _start_training(
         The request names something unsupported.
     """
     resolved = resolve_training_config(config)
+    if resolved.event_data is not None:
+        from sc_neurocore.studio.event_training_data import verify_event_training_data
+
+        verify_event_training_data(resolved.event_data)
     config = dict(resolved.to_public_dict())
     if job_manager is not None:
         from sc_neurocore.studio.platform.training_process import TRAINING_PROCESS_TASK
@@ -260,6 +264,9 @@ def _sync_proxy_job(
         weight_checkpoint = (platform_result or {}).get("weight_checkpoint")
         if isinstance(weight_checkpoint, dict):
             job.weight_checkpoint = cast(dict[str, JsonValue], dict(weight_checkpoint))
+        verdict = (platform_result or {}).get("preregistration_verdict")
+        if isinstance(verdict, dict):
+            job.preregistration_verdict = dict(verdict)
         return
     if platform_status in ("cancelled", "cancelling", "timed_out"):
         job.status = "stopped"
@@ -282,11 +289,13 @@ def _status_from_platform_record(
     platform_result = record.result if isinstance(record.result, dict) else None
     final_metrics = (platform_result or {}).get("final_metrics")
     weight_checkpoint = (platform_result or {}).get("weight_checkpoint")
+    verdict = (platform_result or {}).get("preregistration_verdict")
     return _status_with_evidence_summary(
         {
             "error": record.error,
             "final_metrics": final_metrics if isinstance(final_metrics, dict) else None,
             "job_id": record.job_id,
+            "preregistration_verdict": verdict if isinstance(verdict, dict) else None,
             "status": _training_status_from_platform_status(record.status),
             "weight_checkpoint": weight_checkpoint if isinstance(weight_checkpoint, dict) else None,
         },

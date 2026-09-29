@@ -23,9 +23,9 @@ from sc_neurocore.studio.platform.policy_routes import build_default_studio_rout
 from sc_neurocore.studio.platform.storage_peer import (
     read_verified_frame,
     require_storage_supervisor_identity,
-    write_verified_frame,
 )
 from sc_neurocore.studio.platform.storage_record_protocol import decode_record_request
+from sc_neurocore.studio.platform.storage_view_content import send_view_content
 
 _ROUTE = "/api/studio/jobs/{job_id}"
 
@@ -40,6 +40,7 @@ def serve_record_read(
     max_bytes: int,
     deadline: float,
     initial_frame: bytes | None = None,
+    max_content_bytes: int | None = None,
 ) -> None:
     """Serve one peer-verified read with policy evaluation before ledger lookup.
 
@@ -56,13 +57,16 @@ def serve_record_read(
     expected_api_uid : int
         Trusted API OS identity, distinct from workers in a qualified deployment.
     max_bytes : int
-        Explicit frame byte limit for both request and complete response.
+        Explicit byte limit for the request and each response frame.
     deadline : float
         Absolute monotonic wire deadline. Audit/SQLite execution has separate
         bounds; this is not a service-wide scheduling deadline.
     initial_frame : bytes or None
         Optional first frame already read through the same peer-verified channel
         by the owning listener. Direct callers leave this unset.
+    max_content_bytes : int, optional
+        Independent total response ceiling; defaults to the event custody
+        ceiling plus one frame.
 
     Raises
     ------
@@ -131,10 +135,13 @@ def serve_record_read(
                 else:
                     response["status"] = "ok"
                     response["record"] = record.to_public_dict()
-        write_verified_frame(
+        send_view_content(
             channel,
             json.dumps(response, allow_nan=False, sort_keys=True).encode("utf-8"),
             expected_uid=expected_api_uid,
-            max_bytes=max_bytes,
+            frame_max_bytes=max_bytes,
+            content_schema="studio.storage.record.v2",
+            request_id=request.request_id,
+            max_content_bytes=max_content_bytes,
             deadline=deadline,
         )

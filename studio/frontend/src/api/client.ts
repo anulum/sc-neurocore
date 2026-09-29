@@ -112,6 +112,7 @@ export {
 export {
   fetchSurrogates,
   fetchCellTypes,
+  fetchTargetProfiles,
   startTraining,
   stopTraining,
   fetchTrainingStatus,

@@ -15,7 +15,10 @@ from dataclasses import fields
 from pydantic import TypeAdapter
 
 from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobRecord
-from sc_neurocore.studio.training_contract import TrainingConfigError, resolve_training_config
+from sc_neurocore.studio.platform.training_config_storage import (
+    prepare_training_config,
+    restore_training_config,
+)
 
 _RECORD = TypeAdapter(StudioJobRecord)
 _RECORD_FIELDS = frozenset(field.name for field in fields(StudioJobRecord))
@@ -39,6 +42,8 @@ def decode_job_snapshot(payload: Mapping[str, object]) -> StudioJobRecord:
     ------
     ValueError
         Fields are missing, unknown, non-JSON or violate native record types.
+        Training configuration and event declarations obey the ledger's
+        independent byte limits; transport framing remains separately bounded.
     """
     if set(payload) != _RECORD_FIELDS:
         raise ValueError("Studio job snapshot fields do not match the public record.")
@@ -57,11 +62,10 @@ def decode_job_snapshot(payload: Mapping[str, object]) -> StudioJobRecord:
         if record.kind != "training":
             raise ValueError("Non-training snapshot carries a training configuration.")
         canonical = json.dumps(config, allow_nan=False, sort_keys=True, separators=(",", ":"))
-        if len(canonical.encode("utf-8")) > 4096:
-            raise ValueError("Training snapshot exceeds the 4096-byte limit.")
         try:
-            resolved = resolve_training_config(config).to_public_dict()
-        except TrainingConfigError as exc:
+            config_json, event_json = prepare_training_config(config)
+            resolved = restore_training_config(json.loads(config_json), event_json)
+        except ValueError as exc:
             raise ValueError("Training snapshot configuration is invalid.") from exc
         if canonical != json.dumps(
             resolved, allow_nan=False, sort_keys=True, separators=(",", ":")

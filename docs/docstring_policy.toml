@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 495
+expected_file_count = 534
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1995,3 +1995,159 @@ rationale = "Distribution build command: canonical model page ownership, install
 [[file]]
 path = "tests/test_studio_distribution.py"
 rationale = "Actual wheel and sdist resource equivalence, installed replay isolation and missing-documentation refusal contracts."
+
+[[file]]
+path = "src/sc_neurocore/conversion/calibration.py"
+rationale = "Public activation calibration and coefficient normalization with finite-value and buffer admission."
+
+[[file]]
+path = "src/sc_neurocore/conversion/converted_snn.py"
+rationale = "Owned dense runtime with explicit replay, encoded runs, rates and first-maximum classification."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_dispatch.py"
+rationale = "Public replay selection with explicit provider configuration and propagated native refusal."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_encoding.py"
+rationale = "Bounded input encoding and complete native-owner reservations across replay blocks."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_inputs.py"
+rationale = "Frame, continuation-state and encoding admission for the dense runtime."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_julia.py"
+rationale = "Explicit offline Julia runtime configuration, managed pointer calls and shutdown admission."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_julia_types.py"
+rationale = "Structural types for the managed Julia runtime and owned native callback module."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_native.py"
+rationale = "Owned native replay arrays, complete request admission and last-view lifetime."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_native_types.py"
+rationale = "Native request and result layouts shared across owned replay providers."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_parameters.py"
+rationale = "Owned dense parameter snapshots, geometry and response semantics."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_replay.py"
+rationale = "Reference ordered float64 IF replay with owned states and complete event traces."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_resources.py"
+rationale = "Numeric constructor and replay buffer reservations before storage allocation."
+
+[[file]]
+path = "src/sc_neurocore/conversion/model_trace.py"
+rationale = "Independent source inference graph capture with mode and CPU RNG custody."
+
+[[file]]
+path = "src/sc_neurocore/conversion/source_graph.py"
+rationale = "Supported source operation lowering in actual invocation order."
+
+[[file]]
+path = "src/sc_neurocore/conversion/source_calibration.py"
+rationale = "Per-invocation source activation calibration and declared scale admission."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_julia_configuration.py"
+rationale = "Explicit offline runtime admission, locked dependency versions and Python command-line option precedence before managed import."
+
+[[file]]
+path = "benchmarks/bench_ann_to_snn_replay.py"
+rationale = "Complete five-runtime public-call comparison with source/artifact custody and atomic publication."
+
+[[file]]
+path = "benchmarks/_ann_to_snn_replay_profiles.py"
+rationale = "Deterministic untrained workloads and complete shaped response digests."
+
+[[file]]
+path = "benchmarks/_ann_to_snn_replay_measurement.py"
+rationale = "Explicit native configuration, reproducible latency boundaries and bit-parity-gated warm measurements."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_benchmark_identity.py"
+rationale = "Imported-package and executing-script source digests plus configured-artifact digests shared by comparison and dispatch."
+
+[[file]]
+path = "src/sc_neurocore/studio/training_preregistration.py"
+rationale = "Acceptance criterion stored with a training configuration at submission and judged on the unrounded validation metric."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_live_attach.py"
+rationale = "Verified live weight attach into a running training job at an epoch boundary."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/train.py"
+rationale = "Command-line Studio training run with its preregistered verdict and exit status."
+
+[[file]]
+path = "src/sc_neurocore/conversion/random_custody.py"
+rationale = "Serialised restoration of Python, NumPy, PyTorch CPU and accelerator generators around user source code."
+
+[[file]]
+path = "src/sc_neurocore/conversion/qcfs_kernel.py"
+rationale = "Torch-free float64 QCFS reference in autograd operation order, shared step domain and input admission."
+
+[[file]]
+path = "src/sc_neurocore/conversion/qcfs_native.py"
+rationale = "QCFS array ABI loader for Rust, Go and Mojo libraries and the managed Julia module."
+
+[[file]]
+path = "src/sc_neurocore/conversion/qcfs_dispatch.py"
+rationale = "Public QCFS forward and derivative evaluation with measured runtime selection."
+
+[[file]]
+path = "benchmarks/bench_qcfs_runtimes.py"
+rationale = "Source- and library-bound five-runtime QCFS comparison with bit-parity-gated samples."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_benchmark_cli.py"
+rationale = "Installed console command that runs the bundled five-runtime comparison or the checkout's owning script."
+
+[[file]]
+path = "src/sc_neurocore/runtime_lanes.py"
+rationale = "Public execution-lane distribution contract; wheel-shipped IF and dataset Julia sources never report the model-kernel lane."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_benchmark_order.py"
+rationale = "Host and live-source bound explicit measured native selection without native startup."
+
+[[file]]
+path = "src/sc_neurocore/conversion/if_benchmark_record.py"
+rationale = "Complete raw timing and response corpus admission before measured native ordering."
+
+[[file]]
+path = "src/sc_neurocore/conversion/loss_report.py"
+rationale = "Measured source-to-converted accuracy, agreement and rate error bound to model, network and data digests."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_conversion.py"
+rationale = "Studio QCFS conversion route that trains, converts and judges the converted network on the validation split."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_evidence.py"
+rationale = "Single writer of a training job's terminal status artifact and the evidence manifest bound to it."
+
+[[file]]
+path = "src/sc_neurocore/conversion/target_report.py"
+rationale = "Per-layer fixed-point fit of a converted network into a target profile with measured rounding, range and accuracy cost."
+
+[[file]]
+path = "src/sc_neurocore/conversion/checkpoint_network.py"
+rationale = "Exact rebuild and conversion of a trusted dense or Studio QCFS checkpoint, refusing parameters it cannot rebuild."
+
+[[file]]
+path = "src/sc_neurocore/conversion/converted_io.py"
+rationale = "Pickle-free file form of a converted network whose reload is refused on a digest mismatch."
+
+[[file]]
+path = "src/sc_neurocore/hardware/experiment.py"
+rationale = "Preregistered hardware experiment protocol and a recomputable receipt that refuses uninstrumented energy."

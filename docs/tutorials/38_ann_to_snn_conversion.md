@@ -115,11 +115,15 @@ model = nn.Sequential(
 
 ## 6. Deploy to FPGA
 
-After conversion, the SNN weights can be compiled to Verilog:
+`sc-neurocore deploy` converts a trusted dense checkpoint, exports the converted
+network as `converted_network.npz` and scaffolds an FPGA project around a generic
+LIF RTL template; no RTL carrying the trained weights is generated yet:
 
 ```bash
 # Save weights, then deploy
-sc-neurocore deploy model_weights.pt --target artix7 -o build/
+sc-neurocore deploy model_weights.pt \
+  --checkpoint-sha256 "$(sha256sum model_weights.pt | cut -d' ' -f1)" \
+  --target artix7 -o build/
 ```
 
 ## Accuracy vs Timesteps

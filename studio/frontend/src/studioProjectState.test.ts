@@ -8,6 +8,9 @@
 
 import { describe, expect, it } from "vitest";
 
+import { studioTrainingKey } from "./studioExperimentKey";
+import { readEventTrainingData } from "./studioEventTrainingData";
+import eventData from "./studioEventTrainingData.fixture.json";
 import { StudioRequestError } from "./api/client";
 import {
   studioProjectDeletedListedState,
@@ -118,6 +121,32 @@ describe("Studio project state helpers", () => {
     expect(restored.trainingConfig).toEqual(snapshot().trainingConfig);
     expect(restored.graphPopulations).toHaveLength(1);
     expect(restored.graphProjections).toHaveLength(1);
+  });
+
+  it("keeps a declared criterion across save and load, and drops one this build cannot judge", () => {
+    const declared = { metric: "val_loss" as const, threshold: 0.8, rationale: "below 0.8" };
+    const state = snapshot();
+    const saved = { ...state, trainingConfig: { ...state.trainingConfig, preregistration: declared } };
+    expect(studioProjectStateFromLoadResponse({ state: saved }, fallbackTrainingConfig)
+      .trainingConfig.preregistration).toEqual(declared);
+    const unjudgeable = { ...state, trainingConfig: { ...state.trainingConfig, preregistration: {
+      metric: "val_accuracy", threshold: 4, rationale: "",
+    } } };
+    expect(studioProjectStateFromLoadResponse({ state: unjudgeable }, fallbackTrainingConfig)
+      .trainingConfig).not.toHaveProperty("preregistration");
+  });
+
+  it("keeps a conversion run's kind across save and load and drops an unknown one", () => {
+    const state = snapshot();
+    const conversion = { ...state, trainingConfig: {
+      ...state.trainingConfig, model_kind: "qcfs_conversion", target_profile: "loihi2",
+    } };
+    const restored = studioProjectStateFromLoadResponse({ state: conversion }, fallbackTrainingConfig).trainingConfig;
+    expect(restored.model_kind).toBe("qcfs_conversion");
+    expect(restored.target_profile).toBe("loihi2");
+    const unknown = { ...state, trainingConfig: { ...state.trainingConfig, model_kind: "ann" } };
+    expect(studioProjectStateFromLoadResponse({ state: unknown }, fallbackTrainingConfig)
+      .trainingConfig).not.toHaveProperty("model_kind");
   });
 
   it("defaults malformed loaded state fields without accepting invalid numeric records", () => {
@@ -326,4 +355,39 @@ describe("the recoverable trash", () => {
   it("is empty rather than absent when nothing is deleted", () => {
     expect(studioProjectDeletedListedState([])).toEqual({ deletedProjects: [] });
   });
+});
+
+
+describe("event training workspace custody", () => {
+  it("retains the backend-produced portable input and replay settings through JSON save/load", () => {
+    const original = snapshot();
+    const training = { ...original.trainingConfig, dataset: "nmnist", timesteps: 4,
+      seed: 7, max_grad_norm: 0, event_data: readEventTrainingData(eventData, "nmnist", 4) };
+    const saved = studioProjectSaveState({ ...original, trainingConfig: training });
+    const loaded: unknown = JSON.parse(JSON.stringify({ state: saved }));
+    const restored = studioProjectStateFromLoadResponse(loaded, fallbackTrainingConfig);
+    expect(restored.trainingConfig).toEqual(training);
+    expect(studioTrainingKey(restored.trainingConfig)).toBe(studioTrainingKey(training));
+    expect(studioTrainingKey(training)).not.toBeNull();
+  });
+});
+
+
+it("refuses saved replay settings and event windows that cannot be honoured", () => {
+  for (const patch of [{ seed: -1 }, { seed: 2 ** 32 }, { seed: 0.5 },
+    { max_grad_norm: -1 }, { max_grad_norm: "1" }]) {
+    expect(() => studioProjectStateFromLoadResponse({ state: {
+      trainingConfig: { ...fallbackTrainingConfig, ...patch },
+    } }, fallbackTrainingConfig)).toThrow("invalid");
+  }
+  expect(() => studioProjectStateFromLoadResponse({ state: {
+    trainingConfig: { ...fallbackTrainingConfig, dataset: "nmnist", event_data: eventData },
+  } }, fallbackTrainingConfig)).toThrow("incompatible");
+});
+
+
+it("retains a complete event fallback when a workspace has no training block", () => {
+  const fallback = { ...fallbackTrainingConfig, dataset: "nmnist", timesteps: 4,
+    event_data: readEventTrainingData(eventData, "nmnist", 4), seed: 0, max_grad_norm: 0 };
+  expect(studioProjectStateFromLoadResponse({}, fallback).trainingConfig).toEqual(fallback);
 });

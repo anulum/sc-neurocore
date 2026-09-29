@@ -6,6 +6,11 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — retained Training Monitor job decoding
 
+import { readEventTrainingData } from "./studioEventTrainingData";
+import { readTrainingPreregistration } from "./trainingPreregistration";
+import {
+  CELL_DEFAULTS, CONVERSION_DATASETS, readTrainingModelKind, readTrainingTargetProfile,
+} from "./trainingRequest";
 import type { ResolvedTrainingConfig, TrainingJobSummary } from "./api/client";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 
@@ -83,6 +88,29 @@ function nonemptyString(value: unknown): value is string {
 }
 
 /**
+ * Check the cell settings a retained configuration records for its kind.
+ *
+ * A spiking run records its surrogate and both cell flags and no target. A
+ * conversion run records its kind, a static dataset, an optional target
+ * profile and none of the cell settings.
+ *
+ * @param data - Candidate configuration.
+ * @returns Whether the recorded settings are exactly those of its kind.
+ */
+function cellSettingsMatchKind(data: Record<string, unknown>): boolean {
+  if (data.model_kind === undefined) {
+    return !("target_profile" in data)
+      && nonemptyString(data.surrogate)
+      && typeof data.learn_beta === "boolean"
+      && typeof data.learn_threshold === "boolean";
+  }
+  return data.model_kind === "qcfs_conversion"
+    && (data.target_profile === undefined || nonemptyString(data.target_profile))
+    && CONVERSION_DATASETS.includes(String(data.dataset))
+    && !("surrogate" in data) && !("learn_beta" in data) && !("learn_threshold" in data);
+}
+
+/**
  * Validate the complete resolved configuration before displaying provenance.
  *
  * @param value - Candidate configuration.
@@ -98,14 +126,17 @@ function resolvedConfig(value: unknown): ResolvedTrainingConfig | null {
     || !Array.isArray(data.hidden)
     || !data.hidden.every(positiveInteger)
     || !positiveInteger(data.timesteps)
-    || !nonemptyString(data.surrogate)
-    || typeof data.learn_beta !== "boolean"
-    || typeof data.learn_threshold !== "boolean"
+    || !cellSettingsMatchKind(data)
     || !nonnegativeFinite(data.max_grad_norm)
     || typeof data.seed !== "number"
     || !Number.isSafeInteger(data.seed)
     || data.seed < 0
     || data.seed >= 2 ** 32) {
+    return null;
+  }
+  try {
+    readEventTrainingData(data.event_data, data.dataset, data.timesteps);
+  } catch {
     return null;
   }
   return data as unknown as ResolvedTrainingConfig;
@@ -178,15 +209,25 @@ export function observedTrainingConfig(
   config: ResolvedTrainingConfig | null,
 ): StudioProjectTrainingConfig | null {
   if (config === null) return null;
+  const preregistration = readTrainingPreregistration(config.preregistration);
+  const modelKind = readTrainingModelKind(config.model_kind);
+  const targetProfile = readTrainingTargetProfile(config.target_profile);
   return {
+    ...(modelKind !== undefined ? { model_kind: modelKind } : {}),
+    ...(targetProfile !== undefined ? { target_profile: targetProfile } : {}),
     dataset: config.dataset,
     epochs: config.epochs,
     batch_size: config.batch_size,
     lr: config.lr,
     hidden: [...config.hidden],
     timesteps: config.timesteps,
-    surrogate: config.surrogate,
-    learn_beta: config.learn_beta,
-    learn_threshold: config.learn_threshold,
+    // A conversion run records no cell settings; the form keeps the server defaults.
+    surrogate: config.surrogate ?? CELL_DEFAULTS.surrogate,
+    learn_beta: config.learn_beta ?? CELL_DEFAULTS.learn_beta,
+    learn_threshold: config.learn_threshold ?? CELL_DEFAULTS.learn_threshold,
+    seed: config.seed,
+    max_grad_norm: config.max_grad_norm,
+    ...(config.event_data !== undefined ? { event_data: config.event_data } : {}),
+    ...(preregistration !== undefined ? { preregistration } : {}),
   };
 }

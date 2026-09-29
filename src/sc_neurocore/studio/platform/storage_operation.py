@@ -52,17 +52,20 @@ def classify_storage_operation(metadata: bytes) -> StorageOperation:
     version, operation = parsed.get("schema_version"), parsed.get("operation")
     if version == "studio.storage.record.v2" and operation == "record":
         return "record"
-    if version == "studio.storage.admission.v1" and operation == "admit_named":
+    if (
+        version in {"studio.storage.admission.v1", "studio.storage.admission.v2"}
+        and operation == "admit_named"
+    ):
         return "admit_named"
     if version == "studio.storage.supervision.v1" and operation in ("start", "heartbeat"):
         return "supervision"
-    if version == "studio.storage.finish.v1" and operation == "finish":
+    if version == "studio.storage.finish.v2" and operation == "finish":
         return "finish"
     if version == "studio.storage.query.v1" and operation == "query":
         return "query"
     if version == "studio.storage.cancel.v1" and operation == "cancel":
         return "cancel"
-    if version == "studio.storage.artifact.v1" and operation == "artifact":
+    if version == "studio.storage.artifact.v2" and operation == "artifact":
         return "artifact"
     if version == "studio.storage.purge.v1" and operation == "purge":
         return "purge"

@@ -54,6 +54,36 @@ class BuildStudioResources(build_py):
         for page in pages:
             self.copy_file(str(page), str(destination / page.name))
         self._package_studio_ui()
+        self._package_conversion_benchmark()
+
+    def _package_conversion_benchmark(self) -> None:
+        """Copy canonical comparison scripts and build declaration into the installed package.
+
+        Raises
+        ------
+        FileNotFoundError
+            A required owning benchmark script or declaration is absent.
+        OSError
+            A source cannot be read or the owned build directory cannot be written.
+        """
+        root = Path(__file__).resolve().parents[1]
+        inputs = [
+            root / "benchmarks" / name
+            for name in (
+                "bench_ann_to_snn_replay.py",
+                "_ann_to_snn_replay_profiles.py",
+                "_ann_to_snn_replay_measurement.py",
+            )
+        ] + [root / "pyproject.toml"]
+        for source in inputs:
+            if not source.is_file():
+                raise FileNotFoundError(f"Missing conversion benchmark source: {source}")
+        destination = Path(self.build_lib) / "sc_neurocore" / "conversion" / "benchmark_resources"
+        if destination.exists():
+            shutil.rmtree(destination)
+        destination.mkdir(parents=True)
+        for source in inputs:
+            shutil.copy2(source, destination / source.name)
 
     def _package_studio_ui(self) -> None:
         """Copy the built Studio frontend into the package, or refuse a release without it.

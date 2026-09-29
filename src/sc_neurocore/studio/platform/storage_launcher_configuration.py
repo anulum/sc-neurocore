@@ -18,6 +18,8 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 
+from sc_neurocore.studio.platform.storage_event_worker_configuration import EventWorkerConfiguration
+
 _Positive = Annotated[int, Field(gt=0)]
 _Uid = Annotated[int, Field(ge=0, lt=0xFFFFFFFF)]
 
@@ -29,6 +31,8 @@ class LauncherConfiguration(BaseModel):
     worker ceilings are passed to the bootstrap, which applies them before
     reading any request data. ``max_records`` bounds retained generation
     records used to answer lost-reply status queries.
+    ``event_input`` declares local recordings and native runtimes separately
+    from the API environment; job requests cannot set these paths.
     """
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True, allow_inf_nan=False)
@@ -48,6 +52,7 @@ class LauncherConfiguration(BaseModel):
     max_processes: _Positive
     stop_rounds: _Positive
     transfer_timeout_seconds: Annotated[float, Field(gt=0, le=60)]
+    event_input: EventWorkerConfiguration | None = None
 
     @model_validator(mode="after")
     def validate_paths(self) -> Self:

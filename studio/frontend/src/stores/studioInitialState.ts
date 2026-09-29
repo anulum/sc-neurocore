@@ -66,11 +66,11 @@ export const studioInitialData = {
   latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
   trainingJobs: [], trainingJobsLoading: false, trainingJobsError: null,
-  trainingObservedConfig: null,
+  trainingObservedConfig: null, trainingPreregistrationVerdict: null, trainingConversionResult: null,
   trainingWeightRestorePlan: null, trainingWeightRestoreVerification: null,
   trainingWeightMaterialization: null, trainingWeightAttach: null,
   trainingWeightLiveAttach: null,
-  trainingSurrogates: [],
+  trainingSurrogates: [], trainingTargetProfiles: [],
   trainingConfig: {
     dataset: "synthetic", epochs: 10, batch_size: 64, lr: 0.001,
     hidden: [128], timesteps: 25, surrogate: "atan_surrogate",

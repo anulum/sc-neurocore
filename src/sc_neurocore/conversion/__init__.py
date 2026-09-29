@@ -8,7 +8,11 @@
 
 """ANN-to-SNN conversion: convert trained PyTorch ANNs to spiking networks.
 
-Requires ``pip install sc-neurocore[torch]`` (PyTorch).
+Converting a network and ``QCFSActivation`` require ``pip install
+sc-neurocore[torch]`` (PyTorch). ``ConvertedSNN`` replay and the QCFS
+``qcfs_forward``/``qcfs_backward`` evaluation run on NumPy or a configured
+native runtime without PyTorch. ``measure_conversion_loss`` runs a PyTorch
+source beside its converted network and reports the measured difference.
 """
 
 from __future__ import annotations
@@ -34,13 +38,27 @@ def __getattr__(name: str) -> object:
     ImportError
         If the requested symbol requires PyTorch and PyTorch is unavailable.
     """
-    if name in ("convert", "ConvertedSNN", "replace_relu_with_qcfs"):
-        from .ann_to_snn import ConvertedSNN, convert, replace_relu_with_qcfs
+    if name == "ConvertedSNN":
+        from .converted_snn import ConvertedSNN
+
+        return ConvertedSNN
+    if name in ("convert", "replace_relu_with_qcfs"):
+        from .ann_to_snn import convert, replace_relu_with_qcfs
 
         return {
             "convert": convert,
-            "ConvertedSNN": ConvertedSNN,
             "replace_relu_with_qcfs": replace_relu_with_qcfs,
+        }[name]
+    if name in ("qcfs_forward", "qcfs_backward"):
+        from .qcfs_dispatch import qcfs_backward, qcfs_forward
+
+        return {"qcfs_forward": qcfs_forward, "qcfs_backward": qcfs_backward}[name]
+    if name in ("ConversionLossReport", "measure_conversion_loss"):
+        from .loss_report import ConversionLossReport, measure_conversion_loss
+
+        return {
+            "ConversionLossReport": ConversionLossReport,
+            "measure_conversion_loss": measure_conversion_loss,
         }[name]
     if name == "QCFSActivation":
         try:
@@ -53,4 +71,13 @@ def __getattr__(name: str) -> object:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ["convert", "ConvertedSNN", "QCFSActivation", "replace_relu_with_qcfs"]
+__all__ = [
+    "ConversionLossReport",
+    "convert",
+    "ConvertedSNN",
+    "measure_conversion_loss",
+    "QCFSActivation",
+    "qcfs_backward",
+    "qcfs_forward",
+    "replace_relu_with_qcfs",
+]

@@ -136,6 +136,8 @@ def spawn_worker_bootstrap(
         "PYTHONDONTWRITEBYTECODE": "1",
         "LANG": "C.UTF-8",
     }
+    if config.event_input is not None:
+        environment.update(config.event_input.environment())
     return subprocess.Popen(  # nosec B603 - fixed argument vector, no shell.
         command,
         env=environment,

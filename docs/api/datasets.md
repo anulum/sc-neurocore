@@ -3,8 +3,8 @@
 **Module:** `sc_neurocore.datasets`
 **Source:** `src/sc_neurocore/datasets/` — 6 files, 1593 lines
 **Status (v3.16.0):** 18 public symbols; 98 tests across the dataset and
-`dataset` CLI test files; pure NumPy and h5py I/O — no Rust path needed for
-the loaders, no synaptic kinetics. The "Poisson" encoder is actually
+`dataset` CLI test files; NumPy and h5py I/O with optional native decoding of
+N-MNIST binary records through Go, Rust, Mojo or Julia, no synaptic kinetics. The "Poisson" encoder is actually
 Bernoulli (§3.1, same wording issue as `network/stimulus.PoissonInput`).
 
 This page covers the two encoders (`poisson_encode`, `latency_encode`),
@@ -66,8 +66,9 @@ Loads the **N-MNIST** dataset:
 saccadic eye movements. 10 classes.
 
 Returns `(samples, labels)`:
-- `samples`: list of `(N_events, 4)` `float32` arrays with columns
-  `[x, y, polarity, timestamp_ms]`
+- `samples`: list of `(N_events, 4)` arrays with columns
+  `[x, y, polarity, timestamp_ms]`; real N-MNIST recordings use `float64`
+  to retain timestamp precision before binning. Synthetic samples use `float32`.
 - `labels`: `int64` array of length `len(samples)`
 
 The real-data path expects the directory layout
@@ -82,9 +83,174 @@ parsed by the helper `_parse_nmnist_bin`:
 | 23 | polarity (0 OFF, 1 ON) |
 | 22–0 | timestamp in microseconds |
 
+Incomplete 40-bit records are refused instead of silently discarded.
+Timestamp conversion retains float64: narrowing to float32 can move events
+across fractional bin and window boundaries.
+
 Timestamps are returned in milliseconds (microseconds / 1000); `dt_ms`
 does not affect the real path. The 34 × 34 sensor needs six address bits
 per axis, which is why the addresses are whole bytes.
+
+#### Native indexed SHD readers
+
+`sc_neurocore.accel.shd_recordings.read_shd_recording(path, index)` returns one
+float64 event matrix and its integer label. The manifest sample reader uses
+this interface and refuses a recording whose actual label differs from the
+manifest. Numeric variable-length time/channel vectors and the integer labels
+must have matching recording counts. Seconds are widened before conversion to
+milliseconds; an empty recording stays empty.
+
+The Python/h5py reader is always available. Build the optional Rust reader using
+the existing system HDF5 library and `pkg-config`; this standalone crate has no
+Cargo dependency downloads:
+
+```sh
+cargo build --offline --locked --release --manifest-path src/sc_neurocore/accel/rust/safety/shd_native/Cargo.toml --target-dir /absolute/operator/path/shd-target
+```
+
+Set `SC_NEUROCORE_SHD_RUST_LIBRARY` to the generated
+`/absolute/operator/path/shd-target/release/libsc_neurocore_shd.so`.
+The public Rust API is `sc_neurocore_shd::read_shd_recording`; the shared C ABI
+returns an owning result with `shd_read_c` and releases it with `shd_free_c`.
+Rust owns selected HDF5 ids, native variable-length reclaim and result buffers;
+its mutex serialises this reader's HDF5 calls.
+
+Build the optional Go reader from
+`src/sc_neurocore/accel/go` with system HDF5 headers/library and `pkg-config`:
+
+```sh
+go build -tags=hdf5 -buildmode=c-shared -o /absolute/operator/path/libshd.so ./services/loaders/cshared
+```
+
+Set `SC_NEUROCORE_SHD_GO_LIBRARY` to that absolute file before reading. This is
+separate from the N-MNIST library setting. Julia uses the existing absolute executable
+selected by `SC_NEUROCORE_SHD_JULIA_EXE`, with `backend="julia"`. Its standalone
+standard-library CLI calls system HDF5 directly; no JuliaCall project is required.
+On Linux, `SC_NEUROCORE_SHD_JULIA_HDF5_LIBRARY` can select an existing absolute
+HDF5 library; otherwise the library name is `libhdf5_serial.so`.
+Explicit `backend="rust"`, `backend="go"` or `backend="numpy"` selects those readers;
+auto considers measured `shd-recording` backend order, otherwise Rust, Go, configured Julia and configured Mojo before Python. A configured native failure refuses the
+read without substitution.
+
+Rust and Go execute in fresh Python processes loading their actual HDF5 C ABIs.
+Julia executes in its own runtime process. This
+keeps Julia's already-loaded dependencies separate from system HDF5; direct
+same-process library coexistence is not required. Each native read has a
+30-second lifetime, inherits the caller's process group for supervised
+cancellation, and exits if its parent dies. The caller reaps it. Julia installs
+its Linux parent-death guard and 30-second alarm after runtime startup, before
+loading and compiling the reader, and checks the expected parent before opening
+HDF5. The Linux signal tracks
+the creating parent thread. Startup still relies on the caller deadline and
+supervisor process-group ownership; it is not guarded before Julia begins
+executing the CLI. Actual blocked-open tests separately exercise parent death,
+the native alarm, stale-parent refusal and public-call timeout/reaping. Library code
+is operator-owned, never supplied by an experiment request.
+
+`maximum_bytes` defaults to 64 MiB and limits the returned event matrix. It
+is not an aggregate memory cap: HDF5 vectors, native copies and IPC buffers
+use additional transient memory. This bound is distinct from the Studio
+encoded-input admission budget. Cross-language
+SHD comparison benchmarks remain under implementation; these native paths do not
+establish whole-chain performance parity.
+
+#### Mojo native SHD API
+
+From a source checkout, the `shd` module in
+`src/sc_neurocore/accel/mojo/kernels` provides
+`read_shd_recording(path, index, maximum_bytes=67108864,
+hdf5_library="libhdf5_serial.so")`. It returns owned row-major double values
+and an int64 label, using direct system HDF5 calls through Mojo's dynamic FFI.
+Compile the caller with that kernel directory on the Mojo import path, on a
+64-bit host with system HDF5. No Python decoder is called. The owning context
+closes identifiers in reverse order and reclaims each selected VLEN buffer;
+errors propagate after cleanup. This API does not serialise foreign HDF5
+callers and should run in an isolated process.
+
+Compile the supervised standalone CLI from the checkout root:
+
+```sh
+mojo build --Werror --fp-mode contract=off src/sc_neurocore/accel/mojo/kernels/shd_cli.mojo -o /absolute/operator/path/shd-reader
+```
+
+Set `SC_NEUROCORE_SHD_MOJO_EXE` to that existing absolute executable and select
+`backend="mojo"`. `SC_NEUROCORE_SHD_MOJO_HDF5_LIBRARY` optionally selects an
+existing absolute system HDF5 file. This Linux CLI emits the same bounded
+SHD protocol, arms a parent-death guard and native 30-second alarm before
+reading, and runs in the caller's process group. The caller checks the whole
+result and reaps the process. A declared incompatible library or executable
+refuses without Python substitution. Actual blocked-FIFO tests independently
+verify parent-death SIGKILL, process-group cancellation, the native SIGALRM
+deadline and stale-parent refusal; the contained subreaper reaps its owned
+reader. The guard is installed when the CLI begins execution, so runtime
+startup remains under the caller deadline and supervisor ownership. Linux
+parent-death signals follow the creating parent thread. These checks do not
+establish full coverage or cross-language performance parity.
+
+#### Optional native decoders
+
+Both `load_nmnist` and the manifest-bound `read_event_sample` use the same
+decoder. By default NumPy is available without a native build. To compile the
+Go implementation from a checkout, run from `src/sc_neurocore/accel/go`:
+
+```sh
+go build -buildmode=c-shared -o /absolute/operator/path/libloaders.so ./services/loaders/cshared
+export SC_NEUROCORE_DATASET_GO_LIBRARY=/absolute/operator/path/libloaders.so
+```
+
+The same C interface is available from Rust. From the checkout root:
+
+```sh
+cargo build --release --locked --manifest-path src/sc_neurocore/accel/rust/safety/nmnist_native/Cargo.toml --target-dir /absolute/operator/path/nmnist-target
+export SC_NEUROCORE_DATASET_RUST_LIBRARY=/absolute/operator/path/nmnist-target/release/libsc_neurocore_nmnist.so
+```
+
+Automatic decoding uses the host's recorded `nmnist-recording` benchmark order.
+Without matching measurements, Rust precedes Mojo, Julia and Go; NumPy remains the final floor.
+Mojo uses the same C interface; build from the checkout root:
+
+```sh
+mojo build --Werror --fp-mode contract=off --emit shared-lib -o /absolute/operator/path/libnmnist.so src/sc_neurocore/accel/mojo/kernels/nmnist.mojo
+export SC_NEUROCORE_DATASET_MOJO_LIBRARY=/absolute/operator/path/libnmnist.so
+```
+
+Julia uses an existing JuliaCall/PythonCall environment with matching package
+versions. Configure it before starting Studio; reads do not install packages:
+
+```sh
+export SC_NEUROCORE_DATASET_JULIA_ENABLED=1
+export PYTHON_JULIACALL_EXE=/absolute/operator/path/julia
+export PYTHON_JULIACALL_PROJECT=/absolute/operator/path/julia-project
+export PYTHON_JULIACALL_THREADS=1
+export PYTHON_JULIACALL_HANDLE_SIGNALS=yes
+export PYTHON_JULIACALL_STARTUP_FILE=no
+```
+
+The project must already contain PythonCall matching the installed JuliaCall.
+JuliaCall performs JIT compilation on first use; warmup excludes that startup
+from decoder timing. Disabled Julia is skipped by automatic selection, while
+explicit Julia selection requires opt-in. Invalid runtime settings refuse the
+read, including after a kernel has already been loaded. Runtime settings are
+process-wide and cannot be changed after JuliaCall starts.
+
+The library path is an operator setting, never part of an imported dataset or
+workspace. Python does not build or download native libraries during reads.
+An explicitly selected missing, unreadable or incompatible native library refuses
+the read; it does not silently switch backends. The native decoder retains
+float64 timestamps and refuses incomplete records before output mutation.
+`sc_neurocore.accel.event_recordings.decode_nmnist_recording` also offers
+explicit `backend="numpy"`, `backend="rust"`, `backend="mojo"`, `backend="julia"` or `backend="go"` selection for parity measurements.
+This native path decodes the raw bytes; manifest verification, file selection
+and encoder validation still use the same public dataset contracts.
+
+`benchmarks/bench_event_recordings.py` compares the executable Rust, Mojo, Julia,
+Go and NumPy decoders on a caller-supplied `.bin` recording. It checks exact output
+parity before timing and records the file digest, CPU, warmup and repetitions.
+All three native libraries and the configured Julia runtime must be available;
+missing implementations are refused.
+File I/O is outside the timed region; output allocation and the native call
+are included. A format fixture can exercise the command, but its timings do
+not qualify publisher datasets, training performance, latency or power.
 
 ### 2.2 `load_shd`
 
@@ -110,6 +276,33 @@ The real-data path requires `h5py` (declared in extras) and reads
 `/extra/speaker`. Spikes after the `T`-step window are dropped rather than
 merged into the last bin.
 
+Stored seconds are widened to `float64` before conversion to milliseconds and
+binning, matching the manifest-bound training reader. Arithmetic in the source
+`float16` dtype can shift events to an earlier bin even when the recorded time
+itself is exact. Widening retains stored values; it cannot recover precision
+lost when recordings were written.
+
+#### Publisher integrity and release metadata
+
+The [publisher's resource page](https://zenkelab.org/resources/spiking-heidelberg-datasets-shd/)
+licenses SHD under CC BY 4.0 and supplies the dataset citation. Its
+[checksum list](https://zenkelab.org/datasets/md5sums.txt) identifies the
+compressed `shd_train.h5.gz` and `shd_test.h5.gz` files. Verify those archives
+against the publisher list, then compare the SHA-256 of their complete
+decompressed streams with the HDF5 files used by the manifest. A matching
+archive does not prove that a separately cached HDF5 file is unchanged.
+Publisher MD5 is an integrity reference; it is not a signed SHA-256 receipt.
+
+The [publisher README](https://zenkelab.org/datasets/README.md) names release
+1.0 but lists 8,332 training and 2,088 test recordings; the resource page lists
+8,156 and 2,264. Record the actual file digests and sample counts, and retain
+this metadata disagreement when declaring a release. Do not infer an
+unpublished revision from the counts. Published train/test partitions also
+share speakers: use the manifest's group-overlap report to distinguish the
+publisher benchmark from a split that holds out every evaluation speaker.
+A correct reader and encoder do not establish classifier accuracy or hardware
+performance.
+
 ### 2.3 `load_dvs_cifar10`
 
 Loads the **DVS-CIFAR10** dataset:
@@ -125,6 +318,107 @@ real-data path expects `.npy` files (one per sample) under
 `root/{train,test}/<class_id>/`. Each `.npy` must be an array with
 columns `[x, y, polarity, timestamp_ms]`. Raw `.aedat` / `.mat`
 conversion is left to the caller.
+
+Both the eager loader and the manifest-bound single-recording reader refuse
+arrays without four columns, complex/text/object values, malformed or ambiguous
+headers, truncated payloads and additional file content. Pickle is never read.
+NPY versions 1.0/2.0/3.0, C/Fortran order and either byte order are accepted.
+Real integer, Boolean and floating arrays become writable owned `float64`
+matrices, preserving the NumPy conversion of their stored values before binning;
+synthetic recordings remain `float32`. Conversion cannot recover precision
+already lost when the source file was written.
+
+The public `sc_neurocore.accel.dvs_recordings.read_dvs_recording(path,
+maximum_bytes=67108864)` reference reader checks shape and a 64 MiB returned
+matrix budget before reading the payload. Its header limit is 10,000 bytes;
+input bytes and temporary copies consume additional memory. Each converted file
+must contain exactly one event array. Geometry, finite values and time ordering
+remain the encoder's responsibility. Native Go, Rust, Julia and Mojo readers
+share this format contract. The DVS benchmark below measures actual public reader
+calls across all five paths; format checks are not publisher-data or
+target-hardware acceptance.
+
+The native Go API `loaders.ReadDVSRecording(path, maximumBytes)` returns an
+owned row-major `[]float64` with the same four columns. Its standalone command
+is built from `services/loaders/dvscli` in the Go module. Arguments are the NPY
+path, returned matrix byte budget and optional expected parent PID. The command
+requires Linux, arms parent-death termination and exits with status 124 after
+30 seconds, including blocked file or output I/O. Supplying the creating
+parent's PID also refuses stale startup. The caller must reap the process and
+reject incomplete output frames. The 16-byte extended floating representation
+is qualified for an x86-64 host.
+
+Python `read_dvs_recording(..., backend="auto")` selects the explicitly declared
+`SC_NEUROCORE_DVS_GO_EXE`, `SC_NEUROCORE_DVS_RUST_EXE`,
+`SC_NEUROCORE_DVS_JULIA_EXE` or `SC_NEUROCORE_DVS_MOJO_EXE`; without a declaration it uses NumPy. Multiple
+declarations refuse automatic selection. `backend="go"`, `backend="rust"` or
+`backend="julia"` or `backend="mojo"` requires its own setting, while `backend="numpy"` selects the reference.
+An attempted native read never falls back after failure. Eager DVS loading and
+manifest-bound lazy samples use the same automatic selection. Isolated Studio
+workers receive the setting only from the operator's `event_input.dvs_go_executable`
+or `event_input.dvs_rust_executable`, `event_input.dvs_julia_executable` or
+`event_input.dvs_mojo_executable`
+configuration, validated as an existing absolute executable. Job requests do not
+supply executable paths. The parent checks the complete binary result, bounds
+its wait and kills/reaps the child on timeout or interruption. Input/native
+buffers and pipe copies consume additional memory beyond the returned matrix.
+
+
+Rust `sc_neurocore_dvs::read_dvs_recording(path, maximum_bytes)` returns an owned
+row-major `Vec<f64>` under the same recording contract. Build the command from
+the repository root:
+
+```bash
+cargo build --offline --locked --release --manifest-path src/sc_neurocore/accel/rust/safety/dvs_native/Cargo.toml
+```
+
+It accepts the same
+arguments and emits the same little-endian frame as Go. Linux parent death is
+SIGKILL; the independent 30-second deadline terminates with SIGALRM. The caller
+must reap it and reject partial frames. Extended scalars use the host C
+`long double` conversion and require a 16-byte ABI; representation follows that
+host. Geometry, timestamp ordering and manifest validation remain caller duties.
+
+Julia `DVSRecordings.read_dvs_recording(path; maximum_bytes=64*1024*1024)` in
+`accel/julia/datasets/dvs.jl` returns an independent `Matrix{Float64}` with four
+event columns. The decoder uses Julia Base and supports the same NPY versions,
+byte orders and C/Fortran input layouts. Its extended conversion interprets the
+padded x87 encoding on Linux x86-64 and rounds to float64 through `BigFloat`.
+The direct command is:
+
+```bash
+julia --startup-file=no --check-bounds=yes --depwarn=error src/sc_neurocore/accel/julia/datasets/dvs_cli.jl PATH BYTE_BUDGET [EXPECTED_PARENT]
+```
+
+It emits the same row-major little-endian DVS1 frame and arms Linux parent-death
+termination and a 30-second input/output alarm before loading and compiling
+the recording reader. Julia
+runtime startup is additional time; callers must bound the complete process
+lifetime and reap it. Python selects the explicitly declared installed Julia
+runtime and supplies the packaged script, `--startup-file=no`,
+`--check-bounds=yes`, `--depwarn=error` and `--threads=1`. Its 30-second
+communication deadline includes runtime startup; timeout and interruption kill
+and reap the child. No JuliaCall project or package installation is involved.
+
+
+The Mojo `read_dvs_recording(path, maximum_bytes)` API in
+`accel/mojo/kernels/dvs_recordings.mojo` returns an owned row-major
+`List[Float64]`. It parses inert NPY metadata and converts stored scalars natively;
+Python is not used to decode the recording. Build its standalone command with the
+same host C extended-precision conversion used by the Rust reader:
+
+```bash
+cc -fPIC -c src/sc_neurocore/accel/rust/safety/dvs_native/src/extended.c -o /tmp/sc-neurocore-dvs-extended.o
+mojo build src/sc_neurocore/accel/mojo/kernels/dvs_cli.mojo --Werror --fp-mode contract=off -j 2 -Xlinker /tmp/sc-neurocore-dvs-extended.o -o /tmp/sc-neurocore-dvs-mojo
+```
+
+Set `SC_NEUROCORE_DVS_MOJO_EXE` to the compiled command's absolute path, or
+use the operator's `event_input.dvs_mojo_executable` setting for isolated Studio
+workers. Arguments and `DVS1` output framing match the other native commands.
+Linux parent-death termination and a 30-second alarm cover input and output
+blocking. The command completes decoding before emitting its frame; native
+refusal never selects NumPy. This implementation targets little-endian x86-64
+Linux with a 16-byte host C long-double ABI.
 
 ### 2.4 Common contracts
 
@@ -310,13 +604,40 @@ Linear in `n_samples`: ~17 ms per sample, ~50 k events per sample.
 The cost is split between `poisson_encode` and the per-event
 `np.column_stack` + dtype cast inside `_synthetic_event_dataset`.
 
-### 4.3 No Rust path
+### 4.3 Native recording path and NumPy encoders
 
-These are I/O loaders + per-call NumPy vectorised ops. The hot path
-(`rng.random((T, N))`) is already at NumPy/PCG64 speed (~80 M
-samples/s). A Rust port would gain little on the encoder side; the
-loader side is dominated by file I/O for real datasets and by NumPy
-allocation for synthetic data. No Rust path planned.
+N-MNIST recording decoding has Rust, Mojo, Julia and Go implementations as
+specified above. Indexed SHD reads have Rust and Go implementations using
+separate native processes. Representative SHD timing comparisons have not yet
+been recorded; process startup and file I/O belong in that measurement. The
+historical encoder and synthetic tables above do not qualify SHD throughput.
+Event encoders and synthetic generation continue to use the
+NumPy implementations. Decoder-call measurements exclude file I/O and cannot
+be used to infer full loader, encoder or training performance.
+
+---
+
+### 4.4 DVS public reader calls
+
+`benchmarks/bench_dvs_recordings.py` requires one existing converted NPY recording
+and all four explicitly configured native executables. It selects each backend
+explicitly; regular automatic reading still requires one native declaration.
+It refuses an unavailable backend or any difference in returned float64 storage
+bits. Example after setting
+`SC_NEUROCORE_DVS_{GO,RUST,JULIA,MOJO}_EXE` separately to the actual commands:
+
+```bash
+python benchmarks/bench_dvs_recordings.py /operator/recording.npy --corpus-kind operator-converted --repetitions 25 --warmup 3 --output dvs-reader-measurement.json
+```
+
+The timed region includes file I/O, output allocation, process startup and
+transport. Every Julia call starts a new runtime and includes compilation;
+warmup warms host caches. Output retains individual samples, affinity, load,
+source and native artifact SHA-256 values, recording digest and declared
+provenance. Exact output comparison occurs outside each timed region. These
+numbers measure reader calls and establish neither training speed nor physical
+target latency or energy. A generated-format fixture must use that provenance
+label and cannot qualify publisher acceptance.
 
 ---
 
@@ -341,14 +662,15 @@ but reachable from public loaders.
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 18 symbols wired; loaders → encoders → synthetic fallbacks; manifests → group splits; `sc-neurocore dataset` |
 | 2 | Multi-angle tests | ✅ PASS | 23 tests across 6 classes (TestCheckRoot, TestSyntheticLoaders, TestEncoding, TestNMNISTRealLoader, TestSHDRealLoader, TestDVSCIFAR10RealLoader); covers shape, reproducibility, file-not-found, real-data parse, encoder rate correlation |
-| 3 | Rust path | N/A | I/O + NumPy-vectorised encoders; no compute kernel that would benefit |
-| 4 | Benchmarks | ✅ PASS | §4.1 + §4.2 measured this session |
-| 5 | Performance docs | ✅ PASS | §4 |
+| 3 | Native recording decoding | N-MNIST and indexed SHD | N-MNIST: Rust/Mojo/Julia/Go; SHD: Rust/Go; encoders and synthetic paths remain NumPy |
+| 4 | Benchmarks | Historical encoder/synthetic baseline | §4.1 + §4.2 do not measure the indexed SHD process path |
+| 5 | Performance docs | Partial | SHD representative timing comparisons remain unmeasured |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ⚠️ WARN | SPDX header on every file ✅. **`poisson_encode` is misnamed** — it is Bernoulli, not Poisson (§3.1). **`latency_encode` has an unenforced `[0, 1]` input contract** (§3.2). British English consistent. |
 
-Net: **1 WARN, 0 FAIL.** Both WARN items are naming / contract
-issues, not behavioural bugs. Tasks #27 and #28 track them.
+The encoder caveats below apply independently of native recording parity.
+The historical tables do not establish complete loader, SHD process, encoder
+or training performance.
 
 ---
 

@@ -17,6 +17,9 @@
  * this build cannot use.
  */
 
+import { readEventTrainingData, type EventTrainingData } from "./studioEventTrainingData";
+import { readTrainingPreregistration } from "./trainingPreregistration";
+import { readTrainingModelKind, readTrainingTargetProfile } from "./trainingRequest";
 import { StudioRequestError } from "./api/client";
 import type {
   DeletedProjectSummary,
@@ -24,11 +27,17 @@ import type {
   ProjectSaveResponse,
   ProjectSummary,
   ProjectionEdge,
+  TrainingModelKind,
+  TrainingPreregistration,
 } from "./api/client";
 import type { StudioSimulationSourceMode } from "./studioSimulationConfig";
 
 /** The training settings a workspace carries. */
 export interface StudioProjectTrainingConfig {
+  /** Absent for the spiking route; the cell settings below stay editable either way. */
+  model_kind?: TrainingModelKind;
+  /** A conversion run's target profile; kept while the kind changes, sent only with conversion. */
+  target_profile?: string;
   dataset: string;
   epochs: number;
   batch_size: number;
@@ -38,6 +47,10 @@ export interface StudioProjectTrainingConfig {
   surrogate: string;
   learn_beta: boolean;
   learn_threshold: boolean;
+  seed?: number;
+  max_grad_norm?: number;
+  event_data?: EventTrainingData;
+  preregistration?: TrainingPreregistration;
 }
 
 /** A candidate model draft, kept exactly as its author typed it. */
@@ -490,16 +503,57 @@ function trainingConfigValue(
   value: unknown,
   fallback: StudioProjectTrainingConfig,
 ): StudioProjectTrainingConfig {
+  if (value === undefined || value === null) return { ...fallback, hidden: [...fallback.hidden] };
   const config = recordValue(value);
+  const dataset = stringValue(config.dataset, fallback.dataset);
+  const timesteps = finiteNumberValue(config.timesteps, fallback.timesteps);
+  const eventData = readEventTrainingData(config.event_data, dataset, timesteps);
+  const preregistration = readTrainingPreregistration(config.preregistration);
+  const modelKind = readTrainingModelKind(config.model_kind);
+  const targetProfile = readTrainingTargetProfile(config.target_profile);
   return {
-    dataset: stringValue(config.dataset, fallback.dataset),
+    ...(modelKind !== undefined ? { model_kind: modelKind } : {}),
+    ...(targetProfile !== undefined ? { target_profile: targetProfile } : {}),
+    dataset,
     epochs: finiteNumberValue(config.epochs, fallback.epochs),
     batch_size: finiteNumberValue(config.batch_size, fallback.batch_size),
     lr: finiteNumberValue(config.lr, fallback.lr),
     hidden: numberArrayValue(config.hidden, fallback.hidden),
-    timesteps: finiteNumberValue(config.timesteps, fallback.timesteps),
+    timesteps,
     surrogate: stringValue(config.surrogate, fallback.surrogate),
     learn_beta: booleanValue(config.learn_beta, fallback.learn_beta),
     learn_threshold: booleanValue(config.learn_threshold, fallback.learn_threshold),
+    ...(config.seed !== undefined ? { seed: replaySeed(config.seed) } : {}),
+    ...(config.max_grad_norm !== undefined ? { max_grad_norm: gradientLimit(config.max_grad_norm) } : {}),
+    ...(eventData !== undefined ? { event_data: eventData } : {}),
+    ...(preregistration !== undefined ? { preregistration } : {}),
   };
+}
+
+/**
+ * Refuse a saved replay seed that the server cannot honour.
+ *
+ * @param value - Stored seed.
+ * @returns The original unsigned 32-bit seed.
+ * @throws {Error} If the seed is invalid.
+ */
+function replaySeed(value: unknown): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value >= 2 ** 32) {
+    throw new Error("Saved training seed is invalid");
+  }
+  return value;
+}
+
+/**
+ * Preserve an explicit zero gradient limit without replacing invalid values.
+ *
+ * @param value - Stored gradient limit.
+ * @returns The finite nonnegative limit.
+ * @throws {Error} If the limit is invalid.
+ */
+function gradientLimit(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new Error("Saved training gradient limit is invalid");
+  }
+  return value;
 }

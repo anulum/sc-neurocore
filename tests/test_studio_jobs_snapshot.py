@@ -11,12 +11,14 @@
 import hashlib
 import json
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
 from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobRecord
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 from sc_neurocore.studio.training_contract import resolve_training_config
+from tests.test_studio_training_config_storage import _configuration
 
 
 def _record() -> StudioJobRecord:
@@ -61,11 +63,25 @@ def test_training_snapshot_roundtrip_retains_validated_config() -> None:
     assert decode_job_snapshot(json.loads(json.dumps(record.to_public_dict()))) == record
 
 
+def test_event_training_snapshot_preserves_the_full_large_declaration(tmp_path: Path) -> None:
+    """A real SHD manifest crosses the public snapshot without losing custody."""
+    config = _configuration(tmp_path / "recordings")
+    assert len(json.dumps(config).encode()) > 4096
+    record = replace(_record(), kind="training", training_config=config)
+    decoded = decode_job_snapshot(json.loads(json.dumps(record.to_public_dict())))
+    assert decoded == record
+    assert decoded.training_config == config
+    oversized = resolve_training_config({**config, "hidden": [1] * 2000}).to_public_dict()
+    with pytest.raises(ValueError, match="configuration is invalid"):
+        decode_job_snapshot(replace(record, training_config=oversized).to_public_dict())
+
+
 @pytest.mark.parametrize(
     ("kind", "config"),
     [
         ("evidence", resolve_training_config({"epochs": 1}).to_public_dict()),
         ("training", {"epochs": 0}),
+        ("training", {"epochs": 1}),
         ("training", {"hidden": [1] * 2000}),
     ],
 )

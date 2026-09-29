@@ -705,6 +705,104 @@ Run the complete configurable Mojo batch through its C ABI.
 
 ---
 
+## Module `accel.dvs_native`
+
+### Function `native_executable(backend)`
+Validate the selected operator command without discovery or runtime installation.
+
+### Function `read_native_recording(path, maximum, executable)`
+Read an owned native event matrix or refuse the entire command response.
+
+Parameters
+----------
+path : pathlib.Path
+    A local converted NPY camera recording.
+maximum : int
+    Validated returned float64 matrix byte limit.
+executable : pathlib.Path
+    Validated operator-owned Linux DVS command.
+backend : {"go", "rust", "julia", "mojo"}
+    Selected implementation used in refusal diagnostics. Julia takes an installed
+    runtime executable and runs the packaged DVS script without startup files.
+
+Returns
+-------
+numpy.ndarray
+    Writable owned C-contiguous four-column float64 events.
+
+Raises
+------
+RuntimeError
+    Native refusal, timeout, incomplete frame, invalid shape or oversized result.
+OSError
+    The declared executable cannot be started.
+
+Notes
+-----
+The child inherits the compute process group, receives this parent's PID
+and has its own 30-second guard before loading the recording reader. The parent
+bounds startup and communicate together to 30 seconds, kills
+and reaps on interruption. Input/native buffers and pipe copies consume
+additional memory; the result budget is not an aggregate memory limit.
+
+### Function `go_executable()`
+Validate the explicitly declared Go DVS command for existing callers.
+
+### Function `read_go_recording(path, maximum, executable)`
+Read the declared Go command through the shared guarded binary protocol.
+
+---
+
+## Module `accel.dvs_recordings`
+
+### Function `read_dvs_recording(path)`
+Read a converted camera recording as an owned row-major event matrix.
+
+Parameters
+----------
+path : pathlib.Path
+    One NPY array with x, y, polarity and millisecond timestamp columns.
+    Versions 1.0, 2.0 and 3.0, either byte order, and C/Fortran layouts
+    are supported. Real integer, Boolean and floating scalar types are
+    converted to float64; extended precision follows NumPy conversion.
+maximum_bytes : int
+    Returned matrix byte limit, default 64 MiB. Header parsing uses at
+    most 10,000 bytes. Input bytes and temporary copies are additional
+    memory; this is not an aggregate memory cap.
+
+backend : {"auto", "numpy", "go", "rust", "julia", "mojo"}
+    Auto selects one explicitly declared SC_NEUROCORE_DVS_GO_EXE or
+    SC_NEUROCORE_DVS_RUST_EXE, SC_NEUROCORE_DVS_JULIA_EXE or
+    SC_NEUROCORE_DVS_MOJO_EXE, otherwise
+    NumPy; multiple declarations refuse. Julia uses the declared runtime
+    with the packaged script, one thread and startup files disabled.
+    Explicit native selection requires an existing absolute Linux executable.
+    A selected native refusal never falls back to NumPy.
+
+Returns
+-------
+numpy.ndarray
+    Writable owned float64 array with shape (N, 4), without time rescaling.
+
+Raises
+------
+ValueError
+    Invalid budget, header, shape, nonreal dtype, truncation, extra content
+    or result exceeding its declared budget. Pickle is never invoked.
+OSError
+    The local recording or native executable is unreadable.
+RuntimeError
+    A selected native command is unavailable, refuses or violates its bounded protocol.
+
+Notes
+-----
+Geometry, finite values, time monotonicity and manifest identity are
+checked by the caller's dataset and encoder contracts. No download or
+synthetic substitution occurs. NumPy is the reference implementation. Each selected native backend
+reads the recording directly; no native refusal falls back to NumPy.
+
+---
+
 ## Module `accel.energy_lif`
 
 ### Function `backend_available(backend)`
@@ -841,6 +939,41 @@ Run the Go recurrence through its generated C ABI.
 
 ### Function `simulate_mojo(v, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance, dt, rng_state, n_steps, current)`
 Run the Mojo recurrence through its shared-library ABI.
+
+---
+
+## Module `accel.event_recordings`
+
+### Function `decode_nmnist_recording(raw)`
+Decode N-MNIST bytes with identical address, polarity and timestamp semantics.
+
+Parameters
+----------
+raw : bytes
+    Complete 40-bit records from one published-format recording.
+backend : {"auto", "numpy", "rust", "mojo", "julia", "go"}
+    ``auto`` chooses available native decoders using the host's recorded
+    benchmark order, then the NumPy floor. Without measurements Rust
+    precedes Mojo, Julia and Go. Explicit native selection refuses missing libraries.
+    Operator settings ``SC_NEUROCORE_DATASET_RUST_LIBRARY`` ,
+    ``SC_NEUROCORE_DATASET_MOJO_LIBRARY`` and
+    ``SC_NEUROCORE_DATASET_GO_LIBRARY`` select absolute library paths;
+    Julia requires an explicit operator opt-in and preconfigured JuliaCall
+    runtime. Loading never installs dependencies or downloads artifacts.
+
+Returns
+-------
+numpy.ndarray
+    Float64 columns ``x, y, polarity, timestamp_ms``. Microseconds are
+    divided by 1000 without encoder-dependent scaling or float32 narrowing.
+
+Raises
+------
+ValueError
+    Records are incomplete or the backend name is unknown.
+RuntimeError
+    A requested or configured native decoder is unavailable or refuses
+    the input. Native failure never silently substitutes another backend.
 
 ---
 
@@ -988,6 +1121,32 @@ packed_inputs : numpy.ndarray of shape (n_inputs, n_words), uint64
     Packed input bitstreams.
 outputs : numpy.ndarray of shape (n_neurons,)
     Output array receiving the accumulated MAC results.
+
+---
+
+## Module `accel.julia.event_recordings`
+
+### Function `julia_recording_enabled()`
+Return the explicit Julia opt-in; refuse malformed operator settings.
+
+### Function `decode_julia_recording(raw)`
+Decode live immutable input into an exclusive float64 destination.
+
+Parameters
+----------
+raw : bytes
+    Complete N-MNIST records. Runtime paths and opt-in are configured before
+    process startup; importing never resolves or installs Julia dependencies.
+
+Returns
+-------
+numpy.ndarray
+    Row-major x, y, polarity and millisecond timestamp columns.
+
+Raises
+------
+RuntimeError
+    The explicit opt-in, runtime configuration or native call is refused.
 
 ---
 
@@ -1787,6 +1946,55 @@ Select the first available backend under the configured policy.
 
 ### Function `simulate_sc_triangular_mckean(currents)`
 Execute the complete retained state/event trace on one runtime.
+
+---
+
+## Module `accel.shd_recordings`
+
+### Function `read_shd_recording(path, index)`
+Read one auditory recording and its label through a selected real reader.
+
+Parameters
+----------
+path : pathlib.Path
+    Local HDF5 file; the caller verifies dataset-manifest identity.
+index : int
+    Non-negative recording index, identical in all three datasets.
+maximum_bytes : int
+    Event-result byte budget, default 64 MiB. Zero admits empty rows.
+    HDF5 input vectors, IPC bytes and temporary copies are additional memory.
+backend : {"auto", "numpy", "rust", "go", "julia", "mojo"}
+    Auto uses measured ``shd-recording`` order, otherwise Rust, Go, Julia, Mojo then NumPy.
+    Rust uses ``SC_NEUROCORE_SHD_RUST_LIBRARY`` or installed
+    ``rust/safety/libshd.so``; Go requires an existing
+    ``SC_NEUROCORE_SHD_GO_LIBRARY`` absolute path
+    or installed ``go/services/loaders/libshd.so``. Its read runs in a
+    fresh process to separate Julia and system HDF5 shared libraries.
+    Julia requires an existing absolute ``SC_NEUROCORE_SHD_JULIA_EXE``
+    executable and system HDF5; its CLI uses only the installed standard
+    library. Linux parent-death signals bound its lifetime when the caller
+    disappears. Mojo requires an existing compiled Linux
+    ``SC_NEUROCORE_SHD_MOJO_EXE`` and can select system HDF5 via
+    ``SC_NEUROCORE_SHD_MOJO_HDF5_LIBRARY``. An attempted native read never silently falls back or downloads a file.
+
+Returns
+-------
+tuple
+    Writable float64 ``(events, 4)`` x/y/polarity/millisecond array and label.
+
+Raises
+------
+ValueError
+    Index, budget, backend or NumPy recording format is invalid.
+OSError
+    A NumPy recording is unreadable or native process creation fails.
+RuntimeError
+    A selected native library is absent, fails, times out or returns invalid data.
+
+Notes
+-----
+The operator owns native library code. Each native read lifetime is 30 seconds;
+every worker is reaped. Reads do not certify event geometry or finite values.
 
 ---
 
@@ -7653,6 +7861,32 @@ int
 
 ---
 
+## Module `cli.commands.train`
+
+### Function `add_train_command(subparsers)`
+Register ``train``.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_train(args)`
+Run one training request to a terminal state and print its outcome.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``config``, ``job_root`` and ``timeout``.
+
+Returns
+-------
+int
+    0 completed with its criterion met or none declared, 1 failed or
+    stopped, 2 request refused, 3 criterion missed.
+
+---
+
 ## Module `cli.parser`
 
 ### Function `build_parser()`
@@ -13471,47 +13705,21 @@ Map popcount density to activity zone.
 
 ## Module `conversion.ann_to_snn`
 
-### Class `ConvertedSNN`
-Rate-coded SNN converted from an ANN.
-
-Attributes
-----------
-weights : list of ndarray
-    Per-layer weight matrices.
-biases : list of ndarray or None
-    Per-layer biases (None if absent).
-thresholds : list of float
-    Per-layer firing thresholds after normalization.
-T : int
-    Number of simulation timesteps.
-initial_membrane_fraction : float
-    Fraction of each layer's threshold pre-loaded into the IF membrane
-    potential before the first timestep. ``0.0`` reproduces the
-    threshold-balancing route; ``0.5`` applies the QCFS optimal shift
-    (Bu et al. 2022) that cancels the quantisation flooring bias.
-n_layers : int
-    Number of layers.
-
-- **__post_init__**()
-  - Derive the layer count from the converted weight stack.
-- **run**(x)
-  - Run the converted SNN for T timesteps on input x.
-- **classify**(x)
-  - Run SNN and return predicted class indices.
-
 ### Function `replace_relu_with_qcfs(model, T, theta, learn_theta)`
 Swap every ReLU/ReLU6 in a model for a QCFS activation, in place.
 
 This prepares a trained or fresh ANN for conversion-aware fine-tuning:
 after substitution the network is retrained for a few epochs so the QCFS
-thresholds settle, after which :func:`convert` produces a near-lossless
-SNN (Bu et al. 2022).
+thresholds settle. Conversion loss is then measured against the source ANN;
+QCFS does not guarantee lossless conversion for arbitrary spike timing.
 
 Parameters
 ----------
 model : nn.Module
-    Model whose ReLU/ReLU6 activations are replaced. Mutated in place,
-    recursing through every submodule.
+    Model whose registered ReLU/ReLU6 children are replaced in place.
+    All aliases of one original activation retain one shared QCFS module
+    and learned threshold. The container and activation training modes
+    are preserved; the root module itself is returned unchanged.
 T : int
     Quantisation step budget for each inserted QCFS layer.
 theta : float
@@ -13528,21 +13736,20 @@ nn.Module
 ### Function `convert(model, calibration_data, T, percentile)`
 Convert a trained PyTorch ANN to a rate-coded SNN.
 
-The conversion route is selected from the model's activations: a model
-carrying :class:`QCFSActivation` layers takes the QCFS route (learned
-thresholds, ``theta / 2`` membrane shift, no calibration); any other
-model takes the threshold-balancing route (calibrated or unit
-thresholds, rest-state membrane).
+Activations are associated with their actual preceding source operations.
+ReLU and QCFS stages retain separate calibration scales and preloads in mixed
+networks. Unsupported dense-target operators fail compatibility admission.
 
 Parameters
 ----------
 model : nn.Module
-    Trained PyTorch model with Linear/Conv2d layers and either ReLU or
-    QCFS activations.
+    Trained PyTorch model representable by a single-input dense forward path
+    with Linear, ReLU/ReLU6 and QCFS operations. Actual invocations, including
+    shared modules and functional ReLUs, determine the exported topology.
 calibration_data : Tensor, optional
-    Sample input batch for threshold calibration on the ReLU route. If
-    None, the ReLU route uses a default threshold of 1.0 per layer.
-    Ignored on the QCFS route, whose thresholds are already learned.
+    Sample source-format input for every ReLU invocation, including functional
+    activations in mixed ReLU/QCFS networks. None uses unit ReLU scales;
+    QCFS invocations always retain their learned thresholds.
 T : int, optional
     Number of simulation timesteps (higher = more accurate, slower). If
     None, the QCFS route adopts the layers' trained step budget and the
@@ -13550,10 +13757,1010 @@ T : int, optional
 percentile : float
     Activation percentile for threshold normalization on the ReLU route.
 
+max_working_bytes : int
+    Numeric storage budget for source copying and exported snapshots.
+
 Returns
 -------
 ConvertedSNN
     Converted spiking network ready to run.
+
+---
+
+## Module `conversion.calibration`
+
+### Function `calibrate_activation_thresholds(model, calibration_data, percentile)`
+Measure each ReLU's inference activation percentile in forward order.
+
+Parameters
+----------
+model : nn.Module
+    Source ANN. Its original per-module training modes and user hooks are
+    retained on success and failure.
+calibration_data : torch.Tensor
+    Nonempty finite input tensor passed through the actual source network.
+percentile : float
+    Activation percentile in the closed interval ``&#91;0, 100&#93;``.
+
+Returns
+-------
+list of float
+    Per-invocation activation scales, floored at ``1e-6`` for silent ReLUs.
+
+Raises
+------
+ValueError
+    If the input, percentile or measured activations are invalid.
+
+---
+
+## Module `conversion.checkpoint_network`
+
+### Class `CheckpointNetwork`
+A converted network and how it was obtained from its checkpoint.
+
+Attributes
+----------
+snn : ConvertedSNN
+    The converted network.
+source : {'state_dict', 'studio_qcfs_conversion'}
+    Which checkpoint form was read.
+layer_sizes : list of tuple of int
+    ``(inputs, outputs)`` of every dense layer, in forward order.
+calibration : str
+    What set the ReLU thresholds: ``samples``, ``unit`` scales or
+    ``learned QCFS thresholds``.
+
+
+### Function `build_qcfs_classifier(n_inputs, hidden, n_outputs, steps)`
+Build the dense classifier with QCFS activations the Studio conversion route trains.
+
+Parameters
+----------
+n_inputs, n_outputs : int
+    Flattened input width and class count.
+hidden : tuple of int
+    Hidden widths in order; empty for a direct input-to-output layer.
+steps : int
+    QCFS step budget of every activation.
+
+Returns
+-------
+torch.nn.Sequential
+    ``Flatten`` then alternating ``Linear`` and QCFS layers, ending in ``Linear``.
+
+### Function `network_from_checkpoint(payload)`
+Convert the network a trusted, already loaded checkpoint holds.
+
+Parameters
+----------
+payload : object
+    What ``torch.load(..., weights_only=True)`` returned.
+steps : int
+    Timestep budget for a plain state dict; a Studio checkpoint uses its own.
+calibration : ndarray, optional
+    ``(samples, inputs)`` source-format samples for ReLU threshold calibration
+    of a plain state dict.
+max_dense_params : int
+    Largest accepted number of dense weights.
+
+Returns
+-------
+CheckpointNetwork
+    The converted network and its provenance.
+
+Raises
+------
+ValueError
+    The payload is not a dense checkpoint this function can rebuild exactly.
+
+---
+
+## Module `conversion.converted_io`
+
+### Function `save_converted_network(snn, path)`
+Write ``snn`` to ``path`` and return its digest.
+
+Parameters
+----------
+snn : ConvertedSNN
+    The network to write.
+path : str or Path
+    Destination ``.npz`` file; an existing file is replaced.
+
+Returns
+-------
+str
+    The network's ``converted_sha256``, also stored in the file.
+
+### Function `load_converted_network(path)`
+Read a network written by :func:`save_converted_network`.
+
+Parameters
+----------
+path : str or Path
+    The ``.npz`` file.
+
+Returns
+-------
+ConvertedSNN
+    The network, whose digest equals the one recorded in the file.
+
+Raises
+------
+ValueError
+    Another schema, missing or extra arrays, or a digest mismatch.
+
+---
+
+## Module `conversion.converted_snn`
+
+### Class `ConvertedSNN`
+A dense IF stack with deterministic input encoding and replayable state.
+
+Parameters
+----------
+weights : sequence of array_like
+    Output-by-input matrices. Constructor inputs are copied to float64.
+biases : sequence of array_like or None
+    Constant per-step currents in each layer's normalized threshold units.
+thresholds : sequence of float
+    Positive finite thresholds, one per layer.
+T : int
+    Positive timestep budget, at most ``2**53`` for exact count arithmetic.
+initial_membrane_fraction : float
+    Default IF membrane preload in threshold units; QCFS uses ``0.5``.
+output_scale : float
+    Positive finite source activation units per unit of decoded rate.
+output_mode : {'spikes', 'linear'}
+    IF spike-count output or integrated signed linear readout. A linear
+    final layer has no threshold/reset events and starts at zero.
+max_working_bytes : int
+    Numeric buffer budget for constructor coefficient snapshots. Runtime
+    calls accept their own budget; each defaults to 256 MiB.
+
+layer_membrane_fractions : sequence of float, optional
+    Per-layer preloads for mixed activation routes. None uses the global
+    fraction; the final linear integrator always starts at zero.
+
+Notes
+-----
+Public coefficient arrays are owned by this object. Replays snapshot and
+validate them again, so caller edits cannot bypass shape/domain admission.
+The ``dense-if-f64-sequential-v1`` profile orders input-column reductions
+and separates multiplication/addition instead of using BLAS reductions.
+
+- **__init__**(weights, biases, thresholds, T, initial_membrane_fraction, output_scale, output_mode)
+  - Copy and validate all coupled parameters before exposing the network.
+- **n_layers**()
+  - Return the current number of connected weighted layers.
+- **replay**(inputs)
+  - Replay explicit frames, optionally continuing independently owned states.
+- **run**(x)
+  - Encode and simulate one input vector or a batch for the stored budget.
+- **rates**(x)
+  - Decode accumulated responses into the source activation's units.
+- **classify**(x)
+  - Return the first maximal response index for a vector or each batch row.
+
+---
+
+## Module `conversion.if_benchmark_cli`
+
+### Function `main(argv)`
+Run the actual bundled comparison with the current interpreter and explicit owner settings.
+
+Parameters
+----------
+argv : sequence of str or None
+    Comparison arguments; None reads the actual command line.
+
+Returns
+-------
+int
+    Actual comparison process exit status; no dependency/build side effects.
+
+Raises
+------
+FileNotFoundError
+    Installed resources and the source checkout's owning script are absent.
+
+---
+
+## Module `conversion.if_benchmark_identity`
+
+### Function `source_digests(resources)`
+Bind the benchmark and all maintained runtime counterparts to current source bytes.
+
+The public and native owners are always read from the imported ``sc_neurocore``
+package, so a report binds the code that actually ran, whether that package is a
+source checkout or an installed wheel.
+
+Parameters
+----------
+resources : Path or None
+    Directory holding the executing comparison scripts. None resolves the
+    installed package's ``conversion/benchmark_resources``, or the owning
+    checkout's ``benchmarks`` when the package is a source tree.
+
+Returns
+-------
+dict of str to str
+    Repository-relative owning source paths and their SHA-256 digests.
+
+Raises
+------
+OSError
+    The build declaration beside the comparison scripts cannot be read.
+
+### Function `configured_artifacts(backends)`
+Require explicit installed native inputs and bind their actual bytes without building.
+
+Parameters
+----------
+backends : tuple of str
+    Configured providers whose actual artifact bytes must be bound.
+
+Returns
+-------
+dict of str to str
+    Declared native artifact names, Julia executable and locked-project digests.
+
+Raises
+------
+KeyError, OSError
+    Required owner configuration or its actual installed file is absent.
+
+---
+
+## Module `conversion.if_benchmark_order`
+
+### Function `measured_order()`
+Resolve host-matched measured native ordering without importing any native runtime.
+
+Returns
+-------
+tuple of str
+    Native providers ordered by full-response warm latency; NumPy stays the floor.
+
+Raises
+------
+RuntimeError
+    Explicit comparison is malformed, stale, instrumented or mismatched with
+    current runtime/source/configured artifacts. A different CPU uses static order.
+
+---
+
+## Module `conversion.if_benchmark_record`
+
+### Function `positive_integer(value)`
+Check an actual positive integer, excluding JSON booleans.
+
+Parameters
+----------
+value : object
+    Untrusted numeric record field.
+
+Returns
+-------
+bool
+    True only for a positive integral timing or repetition count.
+
+### Function `validated_timing_order(record)`
+Require all five bit-matched corpora and derive ordering from actual raw warm samples.
+
+Parameters
+----------
+record : dict
+    Parsed comparison after schema, runtime, source and artifact admission.
+
+Returns
+-------
+tuple of str
+    Native runtimes sorted by equal-weight geometric mean warm call latency.
+
+Raises
+------
+ValueError, KeyError, TypeError
+    Incomplete corpus, invalid samples or inconsistent recorded aggregates.
+
+---
+
+## Module `conversion.if_dispatch`
+
+### Function `replay_backend(parameters, inputs, initial_state, trace, binary_inputs, max_working_bytes, backend)`
+Select an explicitly configured native replay or the always-available floor.
+
+Parameters
+----------
+parameters : IFParameters
+    Owned finite coefficients and response semantics.
+inputs : array_like
+    Explicit replay frames.
+initial_state : sequence of array_like or None
+    Optional continuation states copied before execution.
+trace : bool
+    Retain complete post-step state/event trajectories.
+binary_inputs : bool
+    Require exact zero/one events when True.
+max_working_bytes : int
+    Positive numeric replay buffer limit.
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Auto uses a validated configured comparison, or the static native order, before NumPy.
+
+Returns
+-------
+IFReplayResult
+    Owned responses and complete requested trajectories.
+
+Raises
+------
+ValueError
+    Unknown backend or invalid replay domains.
+RuntimeError
+    Requested native library absent or incompatible.
+
+### Function `resolve_replay_backend(backend)`
+Name the runtime a replay request executes on, without loading it.
+
+Parameters
+----------
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Auto orders configured native providers by a validated optional comparison;
+    without one, Rust then Go then Mojo then Julia. NumPy always uses the floor.
+
+Returns
+-------
+{'numpy', 'rust', 'go', 'mojo', 'julia'}
+    The explicit name, or the provider auto resolves to under the current
+    configuration. Requesting that name explicitly selects the same runtime.
+
+Raises
+------
+ValueError
+    Backend name is unsupported.
+RuntimeError
+    The Julia opt-in is malformed, or the measured comparison is invalid.
+
+### Function `select_native(backend)`
+Resolve the requested native runtime, including for empty input batches.
+
+Parameters
+----------
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Auto orders configured native providers by a validated optional comparison;
+    without one, Rust then Go then Mojo then Julia. NumPy always uses the floor.
+
+Returns
+-------
+NativeAPI or None
+    Loaded native ownership API or the selected NumPy floor.
+
+Raises
+------
+ValueError
+    Backend name is unsupported.
+RuntimeError
+    Explicit native configuration is absent or its library cannot load.
+
+---
+
+## Module `conversion.if_encoding`
+
+### Function `simulate_encoded(parameters, x, steps, input_mode, seed, max_working_bytes, backend)`
+Run row-major MT19937 events or constant current with bounded storage.
+
+Parameters
+----------
+parameters : IFParameters
+    Owned and validated dense coefficients.
+x : array_like
+    Finite input vector or batch in the unit interval.
+steps : int
+    Positive timestep budget, at most 2**53.
+input_mode : {'poisson', 'constant'}
+    Bernoulli events or direct bounded currents.
+seed : int
+    Unsigned 32-bit MT19937 seed.
+max_working_bytes : int
+    Positive numeric buffer budget, checked before encoding allocation.
+
+backend : {"auto", "numpy", "rust", "go", "mojo", "julia"}
+    Replay runtime selected once for the complete encoded call, including empty batches.
+
+Returns
+-------
+ndarray
+    Accumulated output with the original vector/batch shape.
+
+Raises
+------
+ValueError
+    If encoding, shape, domains, seed or timestep budget are invalid.
+MemoryError
+    If a block's numeric buffers exceed the declared byte budget.
+
+---
+
+## Module `conversion.if_inputs`
+
+### Function `prepare_replay(parameters, inputs, initial_state, trace, binary_inputs, max_working_bytes)`
+Admit and own complete frames and initial states before native execution.
+
+Parameters
+----------
+parameters : IFParameters
+    Checked owned finite dense coefficients and final response mode.
+inputs : array_like
+    Explicit time/batch/input bounded currents or binary events.
+initial_state : sequence of array_like or None
+    Finite batch/output state per layer; None selects admitted preloads.
+trace : bool
+    Include complete trace storage in the numeric reservation.
+binary_inputs : bool
+    Require exact zero/one events when True.
+max_working_bytes : int
+    Positive addressable numeric-buffer limit excluding caller/runtime storage.
+
+Returns
+-------
+tuple
+    Owned contiguous float64 frames and independently owned initial states.
+
+Raises
+------
+ValueError
+    Invalid frame/state dimensions, storage domains or input values.
+MemoryError
+    Numeric reservation exceeds the working byte budget.
+FloatingPointError
+    Finite preload multiplication overflows.
+
+---
+
+## Module `conversion.if_julia`
+
+### Class `JuliaInterface`
+Keep the configured Julia module rooted while managing pointer calls and shutdown.
+
+- **__init__**(runtime, module)
+  - Retain the supplying managed runtime and forbid calls once its exit hook is pending.
+- **replay**(request, result)
+  - Call the complete native request through JuliaCall's registered-thread entry.
+- **buffer**(handle, kind, index, view)
+  - Borrow a rooted numeric vector while keeping managed runtime entry safe.
+- **free**(handle)
+  - Release an expired view owner's rooted storage through the managed runtime.
+
+### Function `admitted_julia_runtime(executable, project, label)`
+Return the running JuliaCall runtime only if it is the exact configured one.
+
+Parameters
+----------
+executable, project : str
+    Resolved configured Julia executable and locked project.
+label : str
+    Runtime user named in refusals, such as ``"Julia IF"``.
+
+Returns
+-------
+JuliaRuntime
+    The imported JuliaCall module with one thread and Julia signal handling.
+
+Raises
+------
+RuntimeError
+    JuliaCall started with another executable, project, thread count or
+    signal setting.
+ImportError
+    JuliaCall is not installed.
+
+### Function `load_julia()`
+Require explicit offline Julia configuration and obtain its owned replay interface.
+
+Returns
+-------
+NativeAPI
+    Managed Julia calls sharing the complete ABI-one request/view contract.
+
+Raises
+------
+RuntimeError
+    Runtime/project/versions/configuration unavailable or incompatible.
+
+---
+
+## Module `conversion.if_julia_configuration`
+
+### Function `julia_configuration(user)`
+Admit explicit matching Julia runtime options before importing JuliaCall.
+
+Parameters
+----------
+user : str
+    Runtime user named in every refusal, such as ``"Julia QCFS"``.
+
+Returns
+-------
+tuple of str
+    Resolved installed executable and locked project paths.
+
+Raises
+------
+RuntimeError
+    Options conflict, dependencies differ or required offline settings are absent.
+
+Notes
+-----
+A successful admission is reused while every setting, option and file
+identity it read is unchanged, so each managed call does not reparse the
+locked project; any change repeats the complete admission.
+
+---
+
+## Module `conversion.if_julia_types`
+
+### Class `JuliaNativeModule`
+Julia function values accepting scalar C addresses and ABI metadata.
+
+
+### Class `QCFSJuliaModule`
+Julia QCFS function values accepting integer addresses and element counts.
+
+
+### Class `JuliaNamespace`
+A Julia namespace containing a maintained rooted module.
+
+
+### Class `JuliaThreads`
+Active Julia default-pool worker count, fixed during runtime initialization.
+
+
+### Class `JuliaOptions`
+Active Julia signal handling selected when the runtime initialized.
+
+
+### Class `JuliaBase`
+The Julia include function value for loading source into a rooted namespace.
+
+
+### Class `JuliaMain`
+The managed main namespace used solely for source loading.
+
+
+### Class `JuliaRuntime`
+Configured runtime fields; import must not resolve or install dependencies.
+
+
+---
+
+## Module `conversion.if_native`
+
+### Function `load_native(path)`
+Load a configured C library and require the exact replay ownership ABI.
+
+Parameters
+----------
+path : str
+    Explicit owner-configured native library; no build or download occurs.
+
+Returns
+-------
+NativeAPI
+    Loaded ABI-one replay, buffer and release functions.
+
+Raises
+------
+RuntimeError
+    Library unavailable, entry points absent or ABI version incompatible.
+
+### Function `replay_native(api, parameters, inputs, initial_state, trace, binary_inputs, max_working_bytes)`
+Replay through the checked native C boundary with automatically owned views.
+
+Parameters
+----------
+api : NativeAPI
+    Configured ABI-one native library.
+parameters : IFParameters
+    Owned validated coefficients; borrowed throughout the native call.
+inputs : array_like
+    Explicit time/batch/input unit currents or binary events.
+initial_state : sequence of array_like or None
+    Optional independently copied batch/output states.
+trace : bool
+    Retain complete state/event trajectories.
+binary_inputs : bool
+    Require exact zero/one events when True.
+max_working_bytes : int
+    Positive numeric reservation excluding caller/runtime overhead.
+
+Returns
+-------
+IFReplayResult
+    Native-owned arrays whose views retain their supplying library/owner.
+
+Raises
+------
+ValueError
+    Invalid input, geometry, coefficients or native domain refusal.
+MemoryError
+    Native or shared numeric buffer reservation refused.
+FloatingPointError
+    Finite arithmetic overflow refused by the native kernel.
+RuntimeError
+    Malformed native ownership or internal native failure.
+
+---
+
+## Module `conversion.if_native_types`
+
+### Class `LayerSpec`
+Native ABI-one borrowed dense layer and optional initial-state descriptor.
+
+
+### Class `ReplayRequest`
+ABI-one request with retained caller-owned descriptors and arrays.
+
+
+### Class `BufferView`
+Borrowed row-major result storage, live until its opaque owner is freed.
+
+
+### Class `NativeAPI`
+Loaded library or managed-runtime root and typed ownership/buffer entry points.
+
+
+### Class `NativeOwner`
+Release native storage only after all arrays retaining this owner have expired.
+
+- **__init__**(api, handle)
+  - Bind one successful native allocation to automatic final-owner cleanup.
+
+---
+
+## Module `conversion.if_parameters`
+
+### Class `IFParameters`
+Owned row-major coefficients and the declared final-layer response.
+
+
+### Function `real_array(values, name)`
+Copy real numeric data to owned contiguous float64 storage.
+
+Parameters
+----------
+values : array_like
+    Boolean, integer or floating input data.
+name : str
+    Parameter name included in refusal messages.
+
+Returns
+-------
+ndarray
+    Finite, owned float64 values in C order.
+
+Raises
+------
+ValueError
+    If the data is nonreal, nonfinite or cannot be represented in float64.
+
+### Function `parameter_snapshot(weights, biases, thresholds, initial_membrane_fraction, output_mode)`
+Validate coupled layer dimensions and freeze independent parameter copies.
+
+Parameters
+----------
+weights : sequence of array_like
+    Output-by-input weight matrices, connected in sequence.
+biases : sequence of array_like or None
+    Per-step output currents, one per layer; None denotes absent bias.
+thresholds : sequence of float
+    Positive finite IF thresholds, one per layer.
+initial_membrane_fraction : float
+    Finite default membrane offset in threshold units.
+output_mode : {'spikes', 'linear'}
+    Final IF spike count or integrated linear readout.
+
+max_working_bytes : int
+    Numeric buffer budget checked before owned coefficient copies.
+
+layer_membrane_fractions : sequence of float, optional
+    Per-layer preloads; None repeats the global membrane fraction.
+
+Returns
+-------
+IFParameters
+    Validated owned coefficients for a complete replay.
+
+Raises
+------
+ValueError
+    If lengths, dimensions, parameter domains or output mode are invalid.
+
+---
+
+## Module `conversion.if_replay`
+
+### Class `IFReplayResult`
+Owned output responses, final states and optional complete traces.
+
+A spiking final layer produces spike counts; a linear final layer produces
+its integrated current. Final states include the linear readout integrator.
+Trace tuples contain every layer's post-reset state and only IF spike events.
+
+
+### Function `replay_dense_if(parameters, inputs)`
+Replay real input frames with inclusive thresholds and subtractive reset.
+
+Parameters
+----------
+parameters : IFParameters
+    Owned checked coefficients and final response mode.
+inputs : array_like
+    Explicit ``(steps, batch, input_neurons)`` frames in ``&#91;0, 1&#93;``.
+initial_state : sequence of array_like, optional
+    Finite ``(batch, output_neurons)`` states, one per layer. Caller-owned
+    buffers are copied. Default IF states use the configured membrane shift;
+    a linear readout starts from zero.
+trace : bool
+    Retain each post-step state and every IF event when True.
+binary_inputs : bool
+    Require exact zero/one input events. False admits bounded current drive.
+
+max_working_bytes : int
+    Numeric buffer reservation checked before copying frames or states.
+
+Returns
+-------
+IFReplayResult
+    Incremental spike counts or cumulative linear readout and owned states.
+
+Raises
+------
+ValueError
+    If input shape, values or initial-state dimensions are invalid.
+FloatingPointError
+    If a finite-input replay overflows its numerical state.
+MemoryError
+    If owned buffers exceed the declared working byte budget.
+
+Notes
+-----
+Input columns are accumulated in ascending order with separate float64
+multiply and add operations. Bias follows the complete dot product. Layers
+consume the preceding layer's events within the same timestep. Each IF
+emits at most one spike, including when the membrane equals its threshold.
+Empty time or batch axes preserve initial states and emit no events.
+A linear readout retains its supplied cumulative integral.
+
+---
+
+## Module `conversion.if_resources`
+
+### Function `admit_parameter_storage(weights, biases, max_working_bytes)`
+Admit coefficient snapshots and return their float64 element count.
+
+Parameters
+----------
+weights, biases : sequence of array_like
+    Coefficients whose metadata is inspected before owned float64 copies.
+max_working_bytes : int
+    Positive addressable byte budget. Caller-owned storage and interpreter
+    overhead are excluded; two complete coefficient copies are reserved.
+
+Returns
+-------
+int
+    Total number of weight and bias elements.
+
+Raises
+------
+ValueError
+    If the budget is not a positive addressable integer.
+MemoryError
+    If coefficient snapshots exceed the declared budget.
+
+### Function `admit_replay_buffers(weights, biases, shape)`
+Admit a conservative portable bound on one replay's numeric buffers.
+
+Parameters
+----------
+weights, biases : sequence of ndarray
+    Checked connected dense coefficients.
+shape : tuple of int
+    Time, batch and input-neuron dimensions.
+trace, linear : bool
+    Trace retention and final linear-integrator mode.
+max_working_bytes : int
+    Operator-selected positive addressable byte budget.
+
+Returns
+-------
+int
+    Reserved numeric bytes, excluding caller buffers and runtime overhead.
+
+Raises
+------
+MemoryError
+    If the complete reservation exceeds the supplied budget.
+
+Notes
+-----
+Reserve eight bytes per element of ``2P + 2F + 2S + 2O + H + 5M + I``:
+coefficients P, full frames F, all states S, output O, requested state/event
+traces H, largest layer M and one input frame I. Doubled buffers and five
+largest-layer buffers cover validation, snapshots and arithmetic temporaries.
+Python integer arithmetic cannot wrap the reservation.
+
+---
+
+## Module `conversion.loss_report`
+
+### Class `ConversionLossReport`
+Measured agreement between a source ANN and its converted SNN.
+
+Attributes
+----------
+schema_version : str
+    ``sc-neurocore.conversion-loss-report.v1``.
+samples : int
+    Number of labelled samples both networks classified.
+classes : int
+    Width of the output both networks produce.
+timesteps : int
+    The converted network's timestep budget.
+input_mode : {'constant', 'poisson'}
+    Declared input encoding of the converted network.
+seed : int
+    Poisson seed of the first batch; batch ``k`` uses ``(seed + k) mod 2**32``.
+batch_size : int
+    Samples per converted-network call.
+backend : {'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Replay runtime every converted batch executed on.
+source_accuracy : float
+    Fraction of samples the source ANN labels correctly.
+converted_accuracy : float
+    Fraction of samples the converted SNN labels correctly.
+accuracy_drop : float
+    ``source_accuracy - converted_accuracy``; positive is a loss.
+agreement : float
+    Fraction of samples on which both networks predict the same class.
+rate_mean_abs_error : float
+    Mean absolute difference between decoded SNN rates and source outputs.
+rate_max_abs_error : float
+    Largest such difference.
+source_sha256 : str
+    Digest of every source parameter and buffer, by name, dtype and shape.
+converted_sha256 : str
+    Digest of the converted coefficients and replay semantics.
+data_sha256 : str
+    Digest of the evaluated inputs, their shape and their labels.
+numerical_profile : str
+    Arithmetic profile of the converted replay.
+
+- **to_public_dict**()
+  - Return the report as JSON-ready fields.
+
+### Function `converted_sha256(snn)`
+Digest a converted network's coefficients and replay semantics.
+
+Parameters
+----------
+snn : ConvertedSNN
+    Network whose current public coefficients are digested.
+
+Returns
+-------
+str
+    Hex SHA-256 over weights, biases, thresholds, budget, preloads,
+    output scale and output mode.
+
+### Function `source_sha256(model)`
+Digest every parameter and buffer of a PyTorch module.
+
+Parameters
+----------
+model : torch.nn.Module
+    Module whose state is digested in name order.
+
+Returns
+-------
+str
+    Hex SHA-256 over each state entry's name, dtype, shape and C-ordered
+    storage bytes. PyTorch runs only on little-endian hosts, so the bytes
+    are little-endian for every dtype, including those NumPy lacks.
+
+### Function `data_sha256(inputs, labels)`
+Digest evaluated inputs and labels.
+
+Parameters
+----------
+inputs : ndarray
+    Float64 samples in their source shape.
+labels : ndarray
+    Int64 class labels, one per sample.
+
+Returns
+-------
+str
+    Hex SHA-256 over the input shape and values followed by the labels.
+
+### Function `measure_conversion_loss(model, snn, inputs, labels)`
+Classify labelled samples with a source ANN and its converted SNN and compare.
+
+Parameters
+----------
+model : torch.nn.Module
+    Source network. It runs under ``no_grad`` in inference mode on the
+    device and dtype of its first parameter; every module's training flag
+    is restored afterwards.
+snn : ConvertedSNN
+    The network converted from ``model``.
+inputs : array_like
+    ``(samples, *source_shape)`` values in ``&#91;0, 1&#93;``. The converted
+    network receives each sample flattened in C order.
+labels : array_like
+    ``(samples,)`` integer classes in ``&#91;0, classes)``.
+input_mode : {'constant', 'poisson'}
+    Declared encoding for the converted network.
+seed : int
+    Unsigned 32-bit Poisson seed of the first batch.
+batch_size : int
+    Positive number of samples per call of either network.
+max_working_bytes : int
+    Numeric buffer budget of each converted-network call.
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Replay runtime. Auto is resolved once, and every batch runs on the
+    runtime the report names.
+
+Returns
+-------
+ConversionLossReport
+    Accuracies, agreement, rate error, executed runtime and digests.
+
+Raises
+------
+ValueError
+    Empty, non-finite or mis-shaped inputs, invalid labels, an invalid
+    batch size or seed, or outputs of different widths.
+
+---
+
+## Module `conversion.model_trace`
+
+### Class `ConversionTracer`
+Retain QCFS as an atomic source activation alongside Torch leaf modules.
+
+- **is_leaf_module**(m, module_qualified_name)
+  - Keep actual QCFS invocations instead of tracing threshold validation.
+
+### Function `capture_inference_graph(model, max_working_bytes)`
+Trace an independent inference copy and restore every global random generator.
+
+Parameters
+----------
+model : nn.Module
+    Source network; its tensors, module modes and hook registries are retained.
+max_working_bytes : int
+    Positive numeric budget checked before copying source tensor storage.
+
+Returns
+-------
+GraphModule
+    Runnable inference graph retaining every actual forward invocation.
+
+Raises
+------
+MemoryError
+    If independent source tensor storage exceeds the declared byte budget.
+ValueError
+    If the source forward requires untraceable data-dependent control flow.
+
+Notes
+-----
+User forward code executes during symbolic tracing. Model state is isolated
+by deepcopy; Python, NumPy, Torch CPU and accelerator generator states are
+restored on both paths, serialised against other conversions in the process.
+This does not undo external effects performed by custom user forward code.
 
 ---
 
@@ -13571,17 +14778,451 @@ the achievable spike rates of an IF neuron over T timesteps.
 Parameters
 ----------
 T : int
-    Number of simulation timesteps.
+    Number of simulation timesteps, ``1 <= T <= 2**32 - 1``: the step
+    domain every native counterpart shares.
 theta : float
     Firing threshold (default 1.0).
 learn_theta : bool
     Make threshold trainable (default False).
 
 - **__init__**(T, theta, learn_theta)
+  - Create a positive finite threshold and positive integer rate grid.
 - **forward**(x)
   - Quantise activations to the spike-rate grid with a straight-through gradient.
 - **extra_repr**()
   - Return the compact PyTorch module representation.
+
+---
+
+## Module `conversion.qcfs_dispatch`
+
+### Function `select_qcfs_native(backend)`
+Resolve the requested QCFS runtime; None selects NumPy.
+
+Parameters
+----------
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Auto takes the first configured provider of ``QCFS_AUTO_ORDER`` (Mojo,
+    Rust, Go, Julia) and otherwise NumPy. An explicit native backend
+    requires its configuration; explicit NumPy never reads any.
+
+Returns
+-------
+QCFSNativeAPI or None
+    Loaded provider, or None for NumPy.
+
+Raises
+------
+ValueError
+    Backend name is unsupported.
+RuntimeError
+    Explicit configuration is absent, or a configured provider cannot load.
+
+### Function `qcfs_forward(x, steps, theta)`
+Quantise activations onto the QCFS rate lattice without PyTorch.
+
+Parameters
+----------
+x : array_like
+    Real activations of any shape.
+steps : int
+    Simulation steps, ``1 <= steps <= 2**32 - 1``.
+theta : float
+    Finite positive firing threshold.
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Runtime selection; see ``select_qcfs_native``.
+
+Returns
+-------
+numpy.ndarray
+    float64 ``floor(clip(x * T / theta + 0.5, 0, T)) * theta / T`` with the
+    shape of ``x``; infinities saturate and NaN stays NaN.
+
+Raises
+------
+ValueError
+    Step count, threshold or backend name invalid.
+TypeError
+    Non-real activations.
+RuntimeError
+    Selected runtime unavailable or a provider refused admitted input.
+
+### Function `qcfs_backward(x, upstream, steps, theta)`
+Evaluate QCFS straight-through derivatives without PyTorch.
+
+Parameters
+----------
+x, upstream : array_like
+    Real activations and upstream gradients of one shape.
+steps : int
+    Simulation steps, ``1 <= steps <= 2**32 - 1``.
+theta : float
+    Finite positive firing threshold.
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Runtime selection; see ``select_qcfs_native``.
+
+Returns
+-------
+tuple of numpy.ndarray
+    Input derivative and each element's threshold derivative, as
+    ``QCFSActivation`` autograd yields for a one-element batch; summing the
+    second array gives a shared threshold's gradient up to summation order.
+
+Raises
+------
+ValueError
+    Step count, threshold, backend name or shape mismatch.
+TypeError
+    Non-real activations or gradients.
+RuntimeError
+    Selected runtime unavailable or a provider refused admitted input.
+
+---
+
+## Module `conversion.qcfs_kernel`
+
+### Function `checked_qcfs_parameters(steps, theta)`
+Admit the shared QCFS step domain and a finite positive threshold.
+
+Parameters
+----------
+steps : int
+    Simulation steps and quantisation intervals, ``1 <= steps <= 2**32 - 1``.
+theta : float
+    Firing threshold and upper activation bound.
+
+Returns
+-------
+tuple of (int, float)
+    The admitted step count and threshold.
+
+Raises
+------
+ValueError
+    Step count outside the shared domain or threshold not finite and positive.
+
+### Function `qcfs_values(values, name)`
+Copy real activations into one contiguous float64 array.
+
+Parameters
+----------
+values : array_like
+    Real integer or floating activations of any shape.
+name : str
+    Argument name used in the refusal message.
+
+Returns
+-------
+numpy.ndarray
+    C-contiguous float64 copy with the input shape.
+
+Raises
+------
+TypeError
+    Boolean, complex, object or other non-real input.
+
+### Function `reference_forward(x, steps, theta)`
+Quantise admitted activations onto the shifted clipped rate lattice.
+
+Parameters
+----------
+x : numpy.ndarray
+    Contiguous float64 activations.
+steps, theta : int, float
+    Admitted step count and threshold.
+
+Returns
+-------
+numpy.ndarray
+    ``floor(clip(x * T / theta + 0.5, 0, T)) * theta / T``; NaN stays NaN.
+
+### Function `reference_backward(x, upstream, steps, theta)`
+Return per-element input and threshold derivatives of the surrogate.
+
+Parameters
+----------
+x, upstream : numpy.ndarray
+    Contiguous float64 activations and equally shaped upstream gradients.
+steps, theta : int, float
+    Admitted step count and threshold.
+
+Returns
+-------
+tuple of numpy.ndarray
+    Input derivative (upstream on the open interior ``0 < s < T``, zero
+    elsewhere) and each element's threshold contribution
+    ``upstream * floor(c) / T`` plus, on the interior, ``-upstream * x / theta``
+    in autograd's operation order: exactly the threshold gradient a
+    one-element batch receives. Summing the second array reduces a shared
+    threshold's gradient up to summation order.
+
+---
+
+## Module `conversion.qcfs_native`
+
+### Class `QCFSNativeAPI`
+A loaded provider root and its forward and backward array entry points.
+
+Parameters
+----------
+library : object
+    Loaded library or managed Julia interface kept alive by this record.
+forward : callable
+    ``(steps, theta, x, count, output) -> status`` over integer addresses.
+backward : callable
+    ``(steps, theta, x, upstream, count, input_gradient, threshold_gradient)
+    -> status`` over integer addresses.
+
+
+### Class `QCFSJulia`
+Keep the Julia QCFS module rooted and refuse calls once shutdown begins.
+
+- **__init__**(module)
+  - Retain the module and its bound functions; stop calls once exit is pending.
+- **forward**(steps, theta, x, count, output)
+  - Quantise through the managed runtime; see ``sc_qcfs_forward``.
+- **backward**(steps, theta, x, upstream, count, inputs, thresholds)
+  - Differentiate through the managed runtime; see ``sc_qcfs_backward``.
+
+### Function `load_qcfs_library(path)`
+Load a configured C library and require QCFS array ABI version one.
+
+Parameters
+----------
+path : str
+    Explicit owner-configured shared library; nothing is built or downloaded.
+
+Returns
+-------
+QCFSNativeAPI
+    Typed forward and backward entry points of the loaded library.
+
+Raises
+------
+RuntimeError
+    Library unavailable, entry points absent or ABI version incompatible.
+
+### Function `load_qcfs_julia()`
+Require explicit offline Julia configuration and return the QCFS interface.
+
+Returns
+-------
+QCFSNativeAPI
+    Managed Julia calls sharing the QCFS array contract.
+
+Raises
+------
+RuntimeError
+    Runtime, project, versions or configuration unavailable or incompatible,
+    or the runtime is closing.
+
+---
+
+## Module `conversion.random_custody`
+
+### Function `preserved_random_state()`
+Restore every global generator the body may advance, even when it raises.
+
+Covers Python ``random``, NumPy's legacy global generator, the PyTorch CPU
+generator and the generator of every device of the current accelerator type
+(``torch.accelerator``), through ``torch.random.fork_rng``. Sections are
+serialised across threads; other code that draws concurrently outside a
+section is not isolated.
+
+Yields
+------
+None
+    Control while the caller's states are held.
+
+---
+
+## Module `conversion.source_calibration`
+
+### Class `ActivationMeasurement`
+Retain independent observed tensors for the requested source invocations.
+
+- **__init__**(graph, names)
+  - Initialize actual graph execution and an empty observation map.
+- **run_node**(n)
+  - Snapshot each selected actual tensor before subsequent in-place operators.
+
+### Function `calibrate_source_nodes(plan, data, percentile)`
+Measure source ReLU invocation thresholds with inference graph execution.
+
+Parameters
+----------
+plan : SourcePlan
+    Independent source graph and actual activation metadata.
+data : Tensor
+    Nonempty finite source-format calibration input.
+percentile : float
+    Finite percentile in the closed interval zero to one hundred.
+
+Returns
+-------
+dict of str to float
+    Positive scales indexed by actual activation node name.
+
+Raises
+------
+MemoryError
+    If source input validation and activation buffers exceed the plan budget.
+ValueError
+    If inputs, percentile or observed tensors are invalid.
+
+---
+
+## Module `conversion.source_graph`
+
+### Class `SourceActivation`
+Source activation kind, exact invocation and learned quantization metadata.
+
+
+### Class `SourceLayer`
+One owned affine coefficient set followed by its actual source activation.
+
+
+### Class `SourcePlan`
+Runnable source inference graph and the supported target's lowered layers.
+
+
+### Function `compile_source_graph(model, max_working_bytes)`
+Lower a supported straight-line source graph using actual execution order.
+
+Parameters
+----------
+model : nn.Module
+    Source network. Repeated/shared calls remain distinct invocations.
+max_working_bytes : int
+    Budget for independent source storage and inserted identity coefficients.
+
+Returns
+-------
+SourcePlan
+    Owned dense coefficients with per-invocation activation metadata.
+
+Raises
+------
+ValueError
+    If inputs, outputs or operators cannot be represented by the dense target.
+MemoryError
+    If source copying or inserted identity storage exceeds the budget.
+
+Notes
+-----
+Consecutive affine maps are composed without inserting an IF nonlinearity.
+Composition uses float64 arithmetic; source/target loss still needs measured
+acceptance, including differences from the source dtype's rounding order.
+
+---
+
+## Module `conversion.target_report`
+
+### Class `LayerCalibration`
+How one layer was fitted into the target format, and what that cost.
+
+Attributes
+----------
+index : int
+    Zero-based layer position.
+drive : {'analog', 'spikes'}
+    What the layer integrates; only a spike-driven layer's replay is exact.
+readout : {'spiking', 'linear'}
+    Whether the layer fires or integrates its current as the readout.
+scale_exponent : int
+    ``e`` of the scale ``2**e`` applied to the layer's normalised values.
+threshold_code : int
+    The threshold as a stored integer; zero for a linear readout.
+measured_peak : float
+    Largest pre-reset membrane magnitude on the calibration samples, in
+    normalised threshold units.
+headroom_bits : float or None
+    ``log2`` of the representable maximum over the scaled peak; ``None``
+    when the membrane never moved.
+weights : int
+    Number of weights.
+zeroed_weights : int
+    Non-zero weights that round to zero.
+weight_max_abs_error, weight_rms_error : float
+    Rounding error of the weights in normalised units.
+bias_max_abs_error : float
+    Rounding error of the bias; zero without a bias.
+preload_exact : bool
+    Whether the initial membrane preload lies on the grid.
+overflow_steps : int
+    Sample-steps at which the rounded network's membrane left the range.
+
+
+### Class `TargetReport`
+A converted network fitted into one target format and measured there.
+
+Attributes
+----------
+schema_version : str
+    ``sc-neurocore.conversion-target-report.v1``.
+profile : dict
+    The target profile's identity and numeric format.
+compatible : bool
+    Every layer fits with a threshold of at least one grid step and no
+    measured overflow.
+refusals : list of str
+    Why the network is not compatible; empty when it is.
+layers : list of LayerCalibration
+    One entry per layer.
+samples, timesteps : int
+    Calibration samples and the network's timestep budget.
+input_mode : str
+    ``constant``: every sample drives the first layer as a current.
+backend : str
+    Replay runtime both networks ran on.
+agreement : float
+    Fraction of samples on which both networks predict the same class.
+output_max_abs_difference : float
+    Largest decoded-output difference between the two networks.
+float_accuracy, quantized_accuracy, accuracy_drop : float or None
+    Present when labels were given.
+exact_accumulation : bool
+    Whether spike-driven layers' replay equals integer accumulation: the
+    format is at most 53 bits wide and their preloads lie on the grid.
+converted_sha256, data_sha256 : str
+    Digests of the unrounded network and of the calibration samples.
+arithmetic : str
+    What the measurement emulates and what it does not.
+
+- **to_public_dict**()
+  - Return the report as JSON-ready fields.
+
+### Function `calibrate_for_target(snn, profile, inputs, labels)`
+Fit ``snn`` into ``profile``'s fixed-point format and measure the rounded network.
+
+Parameters
+----------
+snn : ConvertedSNN
+    Converted network in normalised threshold units.
+profile : HardwareProfile
+    Target format from :mod:`sc_neurocore.compiler.platforms`.
+inputs : array_like
+    ``(samples, input_neurons)`` calibration values in ``&#91;0, 1&#93;``, driven as
+    constant currents for the network's timestep budget.
+labels : array_like, optional
+    ``(samples,)`` integer classes; accuracies are reported when given.
+batch_size : int
+    Positive samples per replay.
+max_working_bytes : int
+    Numeric buffer budget of each replay chunk.
+backend : {'auto', 'numpy', 'rust', 'go', 'mojo', 'julia'}
+    Replay runtime, resolved once and named in the report.
+
+Returns
+-------
+TargetReport
+    Per-layer scales and rounding costs, measured ranges, both networks'
+    agreement and, with labels, accuracies.
+
+Raises
+------
+ValueError
+    Empty or out-of-range inputs, invalid labels or batch size.
 
 ---
 
@@ -14219,6 +15860,42 @@ ValueError
 
 ---
 
+## Module `datasets.event_samples`
+
+### Function `read_event_sample(root, dataset, sample)`
+Read a manifest sample as spatial events with millisecond timestamps.
+
+Parameters
+----------
+root:
+    Operator dataset root whose manifest has already been verified.
+dataset:
+    ``nmnist``, ``shd`` or ``dvs_cifar10``.
+sample:
+    Sample location in that verified manifest. SHD selects a recording
+    inside its HDF5 file; camera datasets use one file per recording.
+
+Returns
+-------
+numpy.ndarray
+    Events with columns ``x, y, polarity, t_ms``. Auditory channels use
+    ``x=channel, y=0, polarity=0``; seconds are converted to milliseconds.
+
+Raises
+------
+ValueError
+    For an unsupported dataset, a path outside the root, malformed
+    binary records, or incompatible sample indices and event columns.
+OSError
+    If a verified recording is no longer readable.
+
+Notes
+-----
+No download or synthetic substitution occurs. The caller must bind the
+sample metadata to an actual file manifest before invoking this reader.
+
+---
+
 ## Module `datasets.loaders`
 
 ### Function `load_nmnist(root, train, dt_ms, T, synthetic, n_samples, seed)`
@@ -14250,7 +15927,8 @@ seed : int
 Returns
 -------
 samples : list of ndarray, each shape (N_events, 4)
-    Columns: &#91;x, y, polarity, timestamp_ms&#93;.
+    Real recordings use float64 columns &#91;x, y, polarity, timestamp_ms&#93;
+    to avoid float32 timestamp rounding before temporal binning.
 labels : ndarray of int
 
 ### Function `load_shd(root, train, dt_ms, T, synthetic, n_samples, seed)`
@@ -14314,7 +15992,8 @@ seed : int
 Returns
 -------
 samples : list of ndarray, each shape (N_events, 4)
-    Columns: &#91;x, y, polarity, timestamp_ms&#93;.
+    Real recordings use float64 columns &#91;x, y, polarity, timestamp_ms&#93;
+    to avoid float32 timestamp rounding before temporal binning.
 labels : ndarray of int
 
 ---
@@ -14553,7 +16232,7 @@ dict
 Read a plan's JSON form, refusing anything it does not define.
 
 A plan read back is not trusted to be sound: check it against its
-manifest with :func:`leaked_groups` before training on it.
+manifest with :func:`validate_split_plan` before training on it.
 
 Parameters
 ----------
@@ -14568,7 +16247,30 @@ SplitPlan
 Raises
 ------
 ValueError
-    On another schema or a missing or unknown field.
+    On another schema, missing or unknown fields, invalid types, duplicate
+    positions, or inconsistent split names. Values are never coerced.
+
+### Function `validate_split_plan(manifest, plan)`
+Check a complete split's sample and group custody before training.
+
+Parameters
+----------
+manifest:
+    Manifest whose source split is being divided.
+plan:
+    Imported or generated plan. Every source sample must occur once,
+    every part must be non-empty, and declared groups must match samples.
+
+Raises
+------
+ValueError
+    If the schema, manifest digest, source split, sample membership,
+    coverage, group declarations or separation is invalid.
+
+Notes
+-----
+Requested fractions are allocation goals, not an exact sample-count
+constraint: indivisible groups can prevent exact fraction matching.
 
 ---
 
@@ -18735,6 +20437,122 @@ Attributes:
 
 ### Function `get_device(family)`
 Look up a device specification by family name or enum.
+
+---
+
+## Module `hardware.experiment`
+
+### Class `HardwareExperimentError`
+Raised when a protocol or its observations cannot be admitted as evidence.
+
+Attributes
+----------
+field : str
+    The protocol or observation field that was refused.
+reason : str
+    What is wrong, in words an operator can act on.
+
+- **__init__**(field, reason)
+
+### Class `Protocol`
+A hardware experiment as declared before it runs.
+
+Attributes
+----------
+declared_at : str
+    ISO 8601 timestamp with zone at which the protocol was fixed.
+operator : dict
+    ``name`` and optional ``contact`` of whoever authorised and runs it.
+device : dict
+    ``vendor``, ``model``, ``serial`` and optional ``firmware``.
+image : dict
+    ``kind`` (one of :data:`IMAGE_KINDS`) and ``sha256`` of what executes.
+network_sha256, data_sha256 : str
+    Digests of the converted network and of the evaluation data.
+samples : int
+    Evaluation samples per measured run.
+latency : dict
+    ``start_event``, ``end_event``, ``clock``, ``warmup_runs`` and
+    ``measured_runs``; ``includes_transport`` is always true.
+power : dict or None
+    ``instrument`` (vendor, model, serial), ``calibration`` (certificate,
+    calibrated_on, valid_until), ``measurement_point`` and
+    ``sample_rate_hz``; ``None`` when energy is not measured.
+criteria : list of dict
+    Preregistered ``metric`` and ``threshold`` pairs.
+
+- **to_public_dict**()
+  - Return the protocol as stored, including its opt-in and digest.
+- **sha256**()
+  - Return the digest that a receipt binds to.
+
+### Function `resolve_protocol(value)`
+Resolve a declared protocol, refusing anything that could not be evidence.
+
+Parameters
+----------
+value : mapping
+    The protocol document. ``opt_in`` must be ``true``; a stored protocol
+    resubmitted with its ``sha256`` must match it.
+
+Returns
+-------
+Protocol
+    The protocol exactly as a receipt will bind it.
+
+Raises
+------
+HardwareExperimentError
+    A missing opt-in or identity, an unknown field, a latency definition
+    without transport, a power declaration without a valid calibration, or
+    a criterion that cannot be judged.
+
+### Function `seal_receipt(protocol, observations)`
+Seal a hardware run's raw observations against its declared protocol.
+
+Parameters
+----------
+protocol : Protocol
+    The protocol declared before the run.
+observations : mapping
+    ``started_at``, ``finished_at``, ``device_serial``, ``image_sha256``,
+    ``warmup_latency_ms`` and ``latency_ms`` lists, ``correct`` and, when
+    power was declared, ``energy`` (``source: instrument``,
+    ``instrument_serial``, ``joules_per_inference`` per measured run);
+    optional ``notes``.
+
+Returns
+-------
+dict
+    The receipt: the full protocol, the admitted observations, derived
+    accuracy, nearest-rank latency percentiles and energy, the verdict of
+    every preregistered criterion, and ``sha256`` over all of it.
+
+Raises
+------
+HardwareExperimentError
+    An observation that does not belong to this protocol, or energy that
+    was not measured by its declared, calibrated instrument.
+
+### Function `verify_receipt(receipt)`
+Recompute a sealed receipt from its protocol and raw observations.
+
+Parameters
+----------
+receipt : mapping
+    A document :func:`seal_receipt` produced.
+
+Returns
+-------
+dict
+    The receipt, when every digest, derived figure and verdict recomputes
+    to exactly what it states.
+
+Raises
+------
+HardwareExperimentError
+    Another schema, a changed protocol or observation, or a derived figure
+    or verdict that does not follow from the observations.
 
 ---
 
@@ -36147,6 +37965,87 @@ Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
 
 ---
 
+## Module `studio._training_conversion`
+
+### Class `ConversionOutcome`
+A finished conversion run, ready to be recorded by its job.
+
+Attributes
+----------
+model : torch.nn.Module
+    The trained QCFS source network.
+architecture : str
+    Layer sizes, input to output.
+model_info : dict
+    Parameter counts and cell summary of the source.
+observed : dict
+    Unrounded terminal metrics; the job rounds them for publication and
+    judges a preregistered criterion on them as they are.
+report : dict
+    The sealed conversion loss report.
+target_report : dict or None
+    The sealed target calibration, when a target profile was named.
+
+
+### Function `train_qcfs_conversion(resolved, context)`
+Run the conversion route to completion, or stop at a batch boundary.
+
+Parameters
+----------
+resolved : ResolvedTrainingConfig
+    A configuration whose ``model_kind`` is ``qcfs_conversion``.
+context : StudioJobContext or None
+    Job sandbox the conversion report is sealed into; ``None`` for a
+    direct in-process run, which keeps the report on the outcome only.
+job_id : str
+    Identifier published in the configuration event.
+emit : callable
+    Event sink of the supervising job.
+stop_requested : callable
+    Cooperative cancellation probe.
+
+Returns
+-------
+ConversionOutcome or None
+    The finished run, or ``None`` after a ``stopped`` event.
+
+---
+
+## Module `studio._training_evidence`
+
+### Function `seal_training_status(context, status_payload)`
+Write the public status artifact and the evidence manifest bound to it.
+
+Parameters
+----------
+context : StudioJobContext
+    Job sandbox receiving both artifacts.
+status_payload : dict
+    The path-free public status.
+status : {'completed', 'failed', 'cancelled'}
+    How the job ended, as the evidence manifest records it.
+error_message : str or None
+    The failure, when there is one.
+
+### Function `write_refused_evidence(context, message)`
+Seal failed evidence for a request that was refused before it ran.
+
+Parameters
+----------
+context : StudioJobContext
+    Job sandbox to write the status and evidence artifacts into.
+message : str
+    The refusal, as the caller will read it.
+
+Notes
+-----
+A refused configuration never builds a model, so there is no weight
+checkpoint and no event log to publish — only the reason. Writing it
+keeps the sandbox's account complete: every job that ends has an
+evidence artifact saying how.
+
+---
+
 ## Module `studio._training_job`
 
 ### Class `TrainingJob`
@@ -36187,8 +38086,54 @@ TrainingConfigError
   - Request cooperative cancellation at the next training boundary.
 - **run_blocking**(context)
   - Run this training job inside a bounded Studio job context.
-- **write_refused_evidence**(context, message)
-  - Seal failed evidence for a request that was refused before it ran.
+
+---
+
+## Module `studio._training_live_attach`
+
+### Function `poll_live_attach(context, model, epoch)`
+Consume one pending control command and apply it when it is an attach.
+
+Parameters
+----------
+context : StudioJobContext
+    Running job whose control channel is polled.
+model : torch.nn.Module
+    The model being trained.
+epoch : int
+    Epoch boundary at which the command is considered.
+job_id : str
+    The running job, recorded in the attach evidence.
+emit : callable
+    The job's event emitter.
+
+Returns
+-------
+dict or None
+    The written attach evidence, or None when nothing was attached.
+
+### Function `apply_live_attach(context, model, command, epoch)`
+Verify and load a live weight attach, rejecting on any failure.
+
+Parameters
+----------
+context : StudioJobContext
+    Running job holding the control seeds.
+model : torch.nn.Module
+    The model being trained; loaded strictly.
+command : mapping
+    The attach command with its restore plan, fingerprint and seed paths.
+epoch : int
+    Epoch boundary at which the attach happens.
+job_id : str
+    The running job, recorded in the attach evidence.
+emit : callable
+    The job's event emitter.
+
+Returns
+-------
+dict or None
+    The written attach evidence, or None when the attach was rejected.
 
 ---
 
@@ -37842,6 +39787,153 @@ Run the contraction on every available backend and report the parity.
 The Python floor is the reference; each accelerated backend must reproduce
 its Q8.8 output bit-for-bit. The returned ``bit_exact`` flag is the evidence
 that the learnable-delay kernel is hardware-faithful across the whole stack.
+
+---
+
+## Module `studio.event_training_budget`
+
+### Function `admit_event_training_input(contract, batch_size)`
+Check the operator's budget for encoded inputs and loader collation.
+
+Parameters
+----------
+contract:
+    Structurally validated temporal input and complete split plan.
+batch_size:
+    Requested positive batch size. Accounting uses the largest actual
+    batch possible in the selected training and evaluation parts.
+
+Returns
+-------
+dict
+    Path-free accounting receipt with explicit sample, collation and
+    boolean encoding buffers, dimensions and operator limit.
+
+Raises
+------
+ValueError
+    Batch size cannot be represented by the loader, the operator limit
+    is invalid, or the accounted input buffers exceed that limit.
+
+Notes
+-----
+This is an admission budget for input tensors, not a bound on total
+process memory. Raw recording arrays, model parameters, optimiser state,
+activations and library overhead require the worker's separate resource
+limits. No tensor is allocated to calculate this receipt.
+
+---
+
+## Module `studio.event_training_contract`
+
+### Class `EventTrainingContract`
+Portable event data custody, with no operator filesystem path.
+
+Attributes
+----------
+manifest:
+    Every dataset file, sample, label, group and publisher declaration.
+split:
+    Complete partition of one published source split by whole groups.
+encoder:
+    Explicit event window, channel layout and late-event semantics.
+train_split, evaluation_split:
+    Distinct non-empty parts of the plan used for optimisation and scoring.
+
+- **to_dict**()
+  - Return the exact portable declaration used in training checkpoints.
+- **receipt**()
+  - Return input digests, sample counts and temporal semantics for a run.
+- **digest**()
+  - Return the SHA-256 of the complete canonical data contract.
+
+### Function `resolve_event_training_contract(payload)`
+Validate event data declarations before allocating a training job.
+
+Parameters
+----------
+payload:
+    Portable manifest, split, encoder and selected part names.
+dataset:
+    Dataset requested by the training configuration.
+timesteps:
+    Training window; must equal the declared encoder window.
+
+Returns
+-------
+EventTrainingContract
+    Structurally verified declaration. Disk verification is a separate
+    required admission step and is repeated by the training worker.
+
+Raises
+------
+ValueError
+    If the declaration, groups, geometry, polarity, time window or
+    selected optimisation/evaluation parts cannot be honoured.
+
+---
+
+## Module `studio.event_training_data`
+
+### Class `EventTrainingDataset`
+Read and encode an admitted plan's samples lazily for a Torch loader.
+
+Parameters
+----------
+root:
+    Verified operator root.
+contract:
+    Portable file, split and encoder custody.
+part:
+    A declared split part used by the training or evaluation loader.
+
+- **__init__**(root, contract, part)
+- **__len__**()
+  - Return the number of samples in this plan part.
+- **__getitem__**(index)
+  - Return one float spike tensor ``(timesteps,channels)`` and label.
+
+### Function `verify_event_training_data(contract)`
+Verify dataset files and sample metadata against the declared manifest.
+
+Parameters
+----------
+contract:
+    Structurally resolved input declaration.
+
+Returns
+-------
+pathlib.Path
+    Absolute operator-configured root. It is never supplied by an HTTP
+    request or included in exported checkpoints.
+
+Raises
+------
+ValueError
+    If the operator has not configured a root, the expected files are
+    unavailable, or their digests, labels or groups differ.
+
+Notes
+-----
+Rebuilding the manifest checks sample metadata as well as file bytes.
+This is a content check, not an immutable filesystem snapshot; the
+operator must keep the dataset unchanged while training runs.
+
+### Function `event_training_loaders(contract, batch_size)`
+Build lazy train/evaluation loaders after verifying the full manifest.
+
+Parameters
+----------
+contract:
+    Structurally resolved manifest, plan and encoder.
+batch_size:
+    Requested batch size. Incomplete final batches are retained.
+
+Returns
+-------
+tuple
+    Torch loaders whose batches have shape ``(batch,timesteps,channels)``.
+    The runner transposes the first two axes for ``SpikingNet``.
 
 ---
 
@@ -41056,6 +43148,10 @@ Rebuild one immutable public record from its stored row.
 ### Function `training_config_from_json(value)`
 Decode a validated training snapshot, preserving absent legacy values.
 
+A snapshot whose exact stored bytes were validated before, under the same
+event-input admission limit, is returned as a fresh copy of that result
+without validating again; any other snapshot is validated in full.
+
 ---
 
 ## Module `studio.platform.jobs_ledger_schema`
@@ -41081,6 +43177,14 @@ Raises
 StudioJobLedgerCorrupt
     The file was written by a newer schema than this build understands.
     Downgrading a ledger would silently drop columns, so it is refused.
+
+### Function `migrate_training_event_data(connection)`
+Add bounded per-job event custody and refuse mutation after admission.
+
+Parameters
+----------
+connection : sqlite3.Connection
+    The owning ledger's active schema migration transaction.
 
 ---
 
@@ -41488,6 +43592,8 @@ Raises
 ------
 ValueError
     Fields are missing, unknown, non-JSON or violate native record types.
+    Training configuration and event declarations obey the ledger's
+    independent byte limits; transport framing remains separately bounded.
 
 ---
 
@@ -41949,7 +44055,8 @@ Send validated metadata and exact seed bytes on one connected Unix stream.
 
 The trusted API caller must construct the requester only from its
 middleware-authenticated principal. This function checks a frozen metadata
-and seed snapshot before sending, uses configuration-owned limits, and
+and seed snapshot before sending, separates event declarations under their
+existing custody ceiling, uses configuration-owned limits, and
 closes the channel on every failure. On success the caller retains an
 immutable transfer snapshot and the channel for one correlated response.
 The service independently derives and checks its own content identity.
@@ -42047,7 +44154,9 @@ task : NamedStudioTask
 authorized_route : str
     Route whose existing policy the service has allowed.
 payload_json : bytes
-    Bounded UTF-8 JSON object from the admitted request.
+    UTF-8 process object bounded by metadata plus the event custody ceiling.
+    Large event declarations are validated and represented by their complete
+    SHA and byte reference in the canonical replay identity.
 seed_inputs : mapping of str to bytes or ReceivedStorageSeedFile
     Actual received seed bytes or private staged files. Staged files are
     rehashed in bounded chunks; their declared digests are not trusted.
@@ -42058,7 +44167,9 @@ admission, training_config : mapping or None
 experiment_sha256 : str or None
     Effective experiment digest, when one exists.
 max_metadata_bytes, max_seed_bytes, max_seed_entries : int
-    Explicit service limits for canonical content and received seeds.
+    Explicit service limits for small canonical controls and received seeds.
+    Previously admitted inline event controls retain their legacy digest;
+    large declarations use the separately bounded event content identity.
 
 Returns
 -------
@@ -42183,6 +44294,41 @@ ValueError
 
 ---
 
+## Module `studio.platform.storage_artifact_chunks`
+
+### Function `receive_artifact_chunks(channel, artifact)`
+Read and verify one declaration under a locally trusted content ceiling.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned storage connection, verified at every frame.
+artifact : FinishArtifact
+    Strict declaration from the correlated authority response.
+expected_service_uid : int
+    Configured storage UID.
+frame_max_bytes, max_artifact_bytes : int
+    Independent frame and complete-content limits configured at the API.
+deadline : float
+    Absolute deadline shared with the request and declaration transfer.
+
+Returns
+-------
+bytes
+    Exact content after full size and digest verification.
+
+Raises
+------
+ValueError
+    A local budget is invalid.
+StudioJobArtifactUnavailable
+    Declared content exceeds the budget, chunks have incorrect boundaries,
+    or the full content digest differs.
+PermissionError, TimeoutError, EOFError, OSError
+    Peer verification or transfer fails.
+
+---
+
 ## Module `studio.platform.storage_artifact_client`
 
 ### Function `artifact_request(workspace, job_id, relative_path)`
@@ -42190,6 +44336,24 @@ Build a sealed artefact read with a fresh random request ID.
 
 ### Function `exchange_artifact(channel, request)`
 Read one sealed artefact over a connected, exclusively owned stream.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connection, closed after this exchange.
+request : StorageArtifactRequest
+    Route-authorised read with a fresh correlation identifier.
+expected_service_uid : int
+    Configured storage identity, checked for each frame.
+max_bytes, max_artifact_bytes : int
+    Independent frame and complete-content ceilings from trusted settings.
+deadline : float
+    Absolute monotonic deadline covering the entire exchange.
+
+Returns
+-------
+StudioJobArtifactPayload
+    Complete bytes after exact chunk, size and digest verification.
 
 Raises
 ------
@@ -42276,7 +44440,9 @@ workspace : str
 expected_api_uid : int
     Configured API identity.
 max_bytes : int
-    Frame ceiling for the request, the answer and the artefact bytes.
+    Frame ceiling for metadata and each content chunk.
+max_artifact_bytes : int
+    Independent complete-content ceiling, checked before opening a seal.
 deadline : float
     Absolute monotonic wire deadline.
 initial_frame : bytes or None
@@ -42347,6 +44513,8 @@ deadline : float
     Absolute monotonic wire deadline.
 initial_frame : bytes or None
     First frame already read by the owning listener, if any.
+max_content_bytes : int, optional
+    Independent total snapshot limit; defaults to event custody plus one frame.
 
 Raises
 ------
@@ -42368,6 +44536,9 @@ Build a cancellation with a fresh random request ID.
 
 ### Function `exchange_cancel(channel, request)`
 Run one cancellation over a connected, exclusively owned stream.
+
+Individual frames obey ``max_bytes``; the complete snapshot independently
+obeys ``max_content_bytes``, defaulting to event custody plus one frame.
 
 Returns
 -------
@@ -42429,8 +44600,10 @@ KeyError
 ### Class `StorageBoundaryConfiguration`
 Immutable role, path and resource intent, not proof of OS isolation.
 
-All fields are required. Three non-root OS identities must differ. Storage,
-spool and socket-parent trees must be canonical absolute disjoint paths.
+Core fields are required. An optional view-content ceiling defaults to the
+existing event custody limit plus one frame. Three non-root OS identities
+must differ. Storage, spool and socket-parent trees must be canonical
+absolute disjoint paths.
 Limits carry explicit frame, metadata, seed, artefact, transfer and connection
 budgets.
 Actual ownership, ACLs, launcher and endpoint lifecycle are checked separately
@@ -42504,6 +44677,131 @@ PermissionError
     peer or policy check refused.
 TimeoutError, EOFError, OSError
     Wire transfer fails.
+
+---
+
+## Module `studio.platform.storage_event_admission`
+
+### Class `EventAdmissionEnvelope`
+Small admission request bound to one separately transferred event declaration.
+
+
+### Function `compact_event_admission(payload, training_config)`
+Separate a validated event contract while preserving all other request fields.
+
+Parameters
+----------
+payload, training_config : dict or None
+    Full process payload and the corresponding training snapshot.
+
+Returns
+-------
+tuple
+    Small payload, small snapshot and canonical event bytes, when present.
+
+Raises
+------
+ValueError
+    Configuration, event custody budget or payload/snapshot identity differs.
+
+### Function `encode_event_admission(request)`
+Freeze a bounded header and the separately bounded event declaration.
+
+Parameters
+----------
+request : StorageNamedAdmissionRequest
+    Full typed admission before transfer.
+max_metadata_bytes : int
+    Unchanged metadata ceiling for the complete header.
+
+Returns
+-------
+tuple
+    Exact metadata frame and optional canonical event content.
+
+### Function `decode_event_admission(metadata)`
+Read a small request without receiving content before policy authorization.
+
+Parameters
+----------
+metadata : bytes
+    Peer-verified bounded first frame.
+max_metadata_bytes : int
+    Unchanged complete metadata ceiling.
+
+Returns
+-------
+tuple
+    Small request and optional bounded event transfer declaration.
+
+### Function `send_event_admission_content(channel, content)`
+Send admitted event bytes as exact frames under one deadline and peer UID.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned authority connection.
+content : bytes, optional
+    Canonical declaration returned by the admission encoder.
+expected_uid : int
+    Configured storage identity.
+frame_max_bytes : int
+    Unchanged positive per-frame ceiling.
+deadline : float
+    Absolute transfer deadline shared with metadata and seeds.
+
+### Function `receive_event_admission_content(channel, request, envelope)`
+Verify all declared bytes and restore the request only after authorization.
+
+Parameters
+----------
+channel : socket.socket
+    Authorized API connection.
+request : StorageNamedAdmissionRequest
+    Small request decoded from its first frame.
+envelope : EventAdmissionEnvelope, optional
+    Typed declaration bounded by the existing 64 MiB event custody limit.
+expected_uid : int
+    Configured API identity.
+frame_max_bytes : int
+    Unchanged per-frame ceiling.
+deadline : float
+    Same absolute transfer deadline as metadata and seeds.
+
+Returns
+-------
+StorageNamedAdmissionRequest
+    Full request after exact frame lengths, content SHA and references agree.
+
+Raises
+------
+ValueError
+    Content length, SHA, configuration reference or canonical JSON differs.
+
+---
+
+## Module `studio.platform.storage_event_worker_configuration`
+
+### Class `EventJuliaRuntime`
+An explicit installed JuliaCall runtime, with one thread and signal policy.
+
+The operator must provision a compatible PythonCall project beforehand.
+Declaring this object opts into Julia decoding; no package is installed.
+
+- **validate_runtime**()
+  - Require existing operator executable and project paths.
+
+### Class `EventWorkerConfiguration`
+Operator-owned event root, input budget and optional native decoders.
+
+Paths must be readable by the configured compute identity. Validation
+checks their current availability to the launcher; it does not prove
+worker access, dependency compatibility or immutable file custody.
+
+- **validate_recordings**()
+  - Require an existing root and existing absolute native library files.
+- **environment**()
+  - Build only the declared event settings for the fixed worker environment.
 
 ---
 
@@ -42583,6 +44881,45 @@ TimeoutError, EOFError, OSError
 
 ---
 
+## Module `studio.platform.storage_finish_chunks`
+
+### Class `FinishChunkMismatch`
+An otherwise framed chunk does not match its declared artefact position.
+
+
+### Function `receive_finish_artifact(channel)`
+Read exact full-size chunks and a final remainder under one deadline.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned API connection, with identity checked per frame.
+size_bytes : int
+    Declared size already admitted under the aggregate artefact budget.
+sha256 : str
+    Manifest digest to verify over the complete received bytes.
+expected_api_uid : int
+    Operator-configured API identity.
+frame_max_bytes : int
+    Positive maximum frame payload; every nonfinal chunk has this size.
+deadline : float
+    Absolute monotonic deadline shared by the complete finish operation.
+
+Returns
+-------
+bytes
+    Complete content for independent digest verification before sealing.
+    An empty artefact consumes no frames.
+
+Raises
+------
+ValueError
+    Limits or chunk sizes are invalid.
+PermissionError, TimeoutError, EOFError, OSError
+    Verified transfer cannot finish. No content is sealed here.
+
+---
+
 ## Module `studio.platform.storage_finish_client`
 
 ### Function `spool_finish_request(job_directory)`
@@ -42601,7 +44938,7 @@ outcome : FinishOutcome or None
 exit_status : int or None
     Leader exit status reported by the launcher, if it ran.
 frame_max_bytes : int
-    Ceiling for the result file and for each artefact.
+    Ceiling for the result metadata and each artefact chunk frame.
 max_artifact_bytes, max_artifact_entries : int
     Aggregate budgets the authority enforces; a worker declaring more is
     refused before any artefact is read into memory.
@@ -42696,7 +45033,7 @@ Parameters
 artifacts : Sequence&#91;FinishArtifact&#93;
     Declared artefacts, from a request or a worker's own manifest.
 frame_max_bytes : int
-    Largest single artefact the framed transfer can carry.
+    Positive ceiling for each chunk frame; artefacts may span frames.
 max_artifact_bytes, max_artifact_entries : int
     Aggregate byte and entry budgets from trusted configuration.
 
@@ -43033,6 +45370,8 @@ Operator-owned launcher configuration; no request can change it.
 worker ceilings are passed to the bootstrap, which applies them before
 reading any request data. ``max_records`` bounds retained generation
 records used to answer lost-reply status queries.
+``event_input`` declares local recordings and native runtimes separately
+from the API environment; job requests cannot set these paths.
 
 - **validate_paths**()
   - Require absolute normalised paths and at least one worker import root.
@@ -43299,6 +45638,9 @@ its response; the admission handler must transfer them before returning.
 
 ### Function `prepare_named_admission(channel)`
 Read and authorize a real connected API request without ledger mutation.
+
+Event content follows a bounded header only after policy authorization;
+the restored request is retained under the separate event custody limit.
 
 Parameters
 ----------
@@ -43634,6 +45976,8 @@ deadline : float
     Absolute monotonic wire deadline.
 initial_frame : bytes or None
     First frame already read by the owning listener, if any.
+max_content_bytes : int or None
+    Independent complete snapshot ceiling, validated before purging.
 
 Raises
 ------
@@ -43655,6 +45999,9 @@ Build a purge with a fresh random request ID.
 
 ### Function `exchange_purge(channel, request)`
 Run one purge over a connected, exclusively owned stream.
+
+Frames obey ``max_bytes``; the full pre-purge snapshot independently obeys
+``max_content_bytes``, defaulting to event custody plus one frame.
 
 Returns
 -------
@@ -43686,7 +46033,7 @@ Purge one terminal job of the configured workspace.
 The purged record, a refusal text, or a fixed status.
 
 - **validate_outcome**()
-  - A purge carries the record; a refusal carries the ledger's reason.
+  - Require a record for success and the ledger's reason for refusal.
 
 ### Function `encode_purge_message(message)`
 Serialise a validated message as compact, sorted UTF-8 JSON.
@@ -43716,19 +46063,6 @@ StudioJobRejected
 ---
 
 ## Module `studio.platform.storage_query`
-
-### Function `fit_page(request, items, more)`
-Encode the longest prefix of ``items`` whose response fits the frame.
-
-Each item is measured by its own compact encoding plus one separator, and
-the envelope is measured with a cursor of full length, so the estimate
-never undercounts the encoded page. A shortened page carries a cursor to
-its last item, so the API continues where it stopped.
-
-Raises
-------
-ValueError
-    A single item does not fit the frame: a configuration fault.
 
 ### Function `apply_query(ledger, admission, request)`
 Answer one decoded request whose workspace matched the service.
@@ -43761,6 +46095,9 @@ deadline : float
     Absolute monotonic wire deadline.
 initial_frame : bytes or None
     First frame already read by the owning listener, if any.
+max_content_bytes : int, optional
+    Independent total page ceiling; defaults to the event custody ceiling
+    plus one frame. Oversized records are refused without truncation.
 
 Raises
 ------
@@ -43806,6 +46143,10 @@ pydantic.ValidationError
 ### Function `exchange_query(channel, request)`
 Run one query over a connected, exclusively owned stream.
 
+Each frame obeys ``max_bytes``; the complete reply independently obeys
+``max_content_bytes``, defaulting to the event custody ceiling plus one
+frame. All frames share the original absolute deadline and peer identity.
+
 Raises
 ------
 PermissionError
@@ -43814,6 +46155,53 @@ ValueError
     The reply is malformed, answers another request or refused the cursor.
 TimeoutError, EOFError, OSError
     The exchange failed; reading again is safe.
+
+---
+
+## Module `studio.platform.storage_query_pages`
+
+### Function `fit_page(request, items, more)`
+Encode the longest prefix of ``items`` whose response fits the content limit.
+
+Each item is measured by its own compact encoding plus one separator, and
+the envelope is measured with a cursor of full length, so the estimate
+never undercounts the encoded page. A shortened page carries a cursor to
+its last item, so the API continues where it stopped.
+
+Raises
+------
+ValueError
+    A single item does not fit the content limit: a configuration fault.
+
+### Function `read_record_page(ledger, request)`
+Materialize only records that fit the independently bounded page.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    Authorized service ledger, read without transitions or recovery.
+request : StorageQueryRequest
+    Workspace-bound records query and creation-order cursor.
+max_bytes : int
+    Trusted total page ceiling, distinct from the wire frame limit.
+
+Returns
+-------
+tuple or None
+    Complete records and whether another record remains; None for an unknown
+    cursor. A cursor always names the last returned record, so budget cutoff
+    never loses the first excluded item.
+
+Raises
+------
+ValueError
+    One complete record cannot fit the configured total page budget.
+
+Notes
+-----
+At most one next row is decoded beyond the returned page's memory. SQLite
+rows are consumed incrementally; a thousand 64 MiB declarations are never
+fetched into one Python list before the page budget is applied.
 
 ---
 
@@ -43873,13 +46261,16 @@ workspace : str
 expected_api_uid : int
     Trusted API OS identity, distinct from workers in a qualified deployment.
 max_bytes : int
-    Explicit frame byte limit for both request and complete response.
+    Explicit byte limit for the request and each response frame.
 deadline : float
     Absolute monotonic wire deadline. Audit/SQLite execution has separate
     bounds; this is not a service-wide scheduling deadline.
 initial_frame : bytes or None
     Optional first frame already read through the same peer-verified channel
     by the owning listener. Direct callers leave this unset.
+max_content_bytes : int, optional
+    Independent total response ceiling; defaults to the event custody
+    ceiling plus one frame.
 
 Raises
 ------
@@ -43922,6 +46313,8 @@ max_bytes : int
     Positive uint32 ceiling for each complete request and response frame.
 deadline : float
     Absolute monotonic deadline shared by both transfers, never renewed.
+max_content_bytes : int, optional
+    Independent total response ceiling, checked before content receipt.
 
 Returns
 -------
@@ -44579,6 +46972,92 @@ Success restores the caller's timeout. Failure never retries a mutation.
 
 ---
 
+## Module `studio.platform.storage_view_content`
+
+### Class `StorageViewContent`
+Correlated small header binding one complete storage snapshot response.
+
+
+### Function `view_content_limit(frame_max_bytes, maximum)`
+Validate independent view content and frame limits.
+
+Parameters
+----------
+frame_max_bytes : int
+    Positive uint32 per-frame ceiling.
+maximum : int, optional
+    Trusted operator content ceiling; defaults to the existing event custody
+    ceiling plus one frame of controls, within uint32.
+
+Returns
+-------
+int
+    Positive total content limit, independent of the frame ceiling.
+
+Raises
+------
+ValueError
+    Either supplied limit is not a positive uint32 integer.
+
+### Function `send_view_content(channel, content)`
+Send a complete admitted response with exact chunk boundaries and SHA.
+
+Parameters
+----------
+channel : socket.socket
+    Peer-verified connection whose read policy already allowed the response.
+content : bytes
+    Complete serialized inner record or query response.
+content_schema : str
+    Inner response grammar, bound again by the receiver.
+request_id : str, optional
+    Correlation from the original read request.
+expected_uid : int
+    Configured API peer identity.
+frame_max_bytes : int
+    Unchanged individual frame ceiling.
+deadline : float
+    Absolute deadline shared by every response frame.
+max_content_bytes : int, optional
+    Independent trusted total response ceiling.
+
+Raises
+------
+ValueError
+    Limits or total content size are invalid, before any response is sent.
+
+### Function `read_view_content(channel)`
+Read an inline or chunked response without weakening its inner grammar.
+
+Parameters
+----------
+channel : socket.socket
+    Same exclusively owned authority connection as the original request.
+content_schema : str
+    Expected inner grammar; a chunk header cannot select another one.
+request_id : str, optional
+    Original correlation checked before allocating content.
+expected_uid : int
+    Configured storage authority identity, checked on every frame.
+frame_max_bytes : int
+    Unchanged positive uint32 frame ceiling.
+deadline : float
+    One absolute request/response deadline.
+max_content_bytes : int, optional
+    Independent trusted total response ceiling checked before content receipt.
+
+Returns
+-------
+bytes
+    Exact complete response for the owning record/query decoder to validate.
+
+Raises
+------
+ValueError
+    Metadata, correlation, content size, chunk length or SHA is invalid.
+
+---
+
 ## Module `studio.platform.storage_worker_bootstrap`
 
 ### Class `WorkerDescriptor`
@@ -45064,6 +47543,51 @@ ValueError
 
 ---
 
+## Module `studio.platform.training_config_storage`
+
+### Function `prepare_training_config(config)`
+Validate a public configuration and separate its complete event contract.
+
+Parameters
+----------
+config : mapping
+    The complete public training configuration submitted with the payload.
+
+Returns
+-------
+tuple
+    Canonical small configuration and an optional canonical event contract.
+    Both belong to the same job admission transaction.
+
+Raises
+------
+ValueError
+    The training declaration is invalid or either independent byte limit
+    is exceeded. Large hidden-layer declarations retain the 4096-byte limit.
+
+### Function `restore_training_config(payload, event_json)`
+Verify stored event bytes before rebuilding a full public configuration.
+
+Parameters
+----------
+payload : dict
+    Decoded configuration row, either a legacy inline value or a reference.
+event_json : str, optional
+    The same row's separate immutable event declaration.
+
+Returns
+-------
+dict
+    Complete public configuration; no internal reference is exposed.
+
+Raises
+------
+ValueError
+    A declaration is absent, altered, oversized, malformed or noncanonical,
+    or a legacy row contains unexpected separate event data.
+
+---
+
 ## Module `studio.platform.training_evidence`
 
 ### Class `TrainingEvidenceSummary`
@@ -45455,7 +47979,9 @@ Return a SHA-256 fingerprint of a training config's architecture fields.
 
 The fingerprint folds only the configuration fields that determine the model
 state-dictionary shape (dataset, hidden layer widths, and the learnable
-beta/threshold flags). Two configurations whose fingerprints match produce
+beta/threshold flags, plus event input/output dimensions and a model kind
+other than ``spiking``). Two
+configurations whose fingerprints match produce
 architecturally compatible models, so the fingerprint identifies whether
 restored weights can be attached to a target training configuration.
 
@@ -45484,7 +48010,7 @@ materialization:
     Verified, path-free materialization returned by
     :func:`materialize_training_weight_payload`.
 mode:
-    Attach delivery mode. One of ``warm_start`` or ``live``.
+    Attach delivery mode: ``warm_start``, ``exact_resume`` or ``live``.
 target_job_id:
     Studio job ID that received the attached weights.
 target_architecture:
@@ -47134,6 +49660,19 @@ learn_beta, learn_threshold : bool
     Whether the cell parameters are learned.
 seed : int
     Seed applied to every relevant generator, so a run is replayable.
+event_data : EventTrainingContract or None
+    Manifest-bound temporal input for an event dataset; absent for static data.
+preregistration : TrainingPreregistration or None
+    The acceptance criterion declared before the run; stored with the
+    configuration at submission and judged on the finished run.
+model_kind : str
+    One of :data:`SUPPORTED_MODEL_KINDS`. On ``qcfs_conversion``,
+    ``timesteps`` is the QCFS step budget and the converted network's
+    timestep budget, and the surrogate and cell flags keep their unused
+    defaults.
+target_profile : str or None
+    A registered hardware profile the converted network is calibrated
+    for; only on ``qcfs_conversion``.
 
 - **architecture**(n_inputs, n_outputs)
   - Return the layer sizes this configuration builds, in order.
@@ -47161,6 +49700,64 @@ TrainingConfigError
     Any field names something unsupported, is the wrong type, or is out of
     range. The refusal happens before the dataset is loaded and before a
     model is built, so a rejected request costs nothing and leaves nothing.
+
+### Function `list_target_profiles()`
+Return the hardware profiles a conversion run can be calibrated for.
+
+Returns
+-------
+list of dict
+    Name, vendor, family, class and fixed-point format of every
+    registered profile, ordered by name.
+
+---
+
+## Module `studio.training_preregistration`
+
+### Class `TrainingPreregistration`
+One criterion a finished run must meet on its validation split.
+
+Attributes
+----------
+metric : str
+    ``val_accuracy`` (passes at or above the threshold), ``val_loss`` or
+    ``conversion_accuracy_drop`` (each passes at or below it).
+threshold : float
+    Finite bound; an accuracy or accuracy-drop bound lies in ``&#91;0, 1&#93;``,
+    a loss bound is non-negative.
+rationale : str
+    The hypothesis the criterion tests, as declared before the run.
+
+- **direction**()
+  - Return ``at_least`` or ``at_most`` for the declared metric.
+- **sha256**()
+  - Return the digest of the criterion's canonical JSON form.
+- **to_public_dict**()
+  - Return the stored criterion, including its digest.
+- **judge**(observed)
+  - Judge an unrounded validation metric against the criterion.
+
+### Function `resolve_training_preregistration(value)`
+Resolve an optional criterion, refusing anything that cannot be judged.
+
+Parameters
+----------
+value : object
+    ``None`` for no criterion, or an object with ``metric``, ``threshold``,
+    an optional ``rationale`` and, when resubmitting a stored criterion,
+    its ``schema_version`` and ``sha256``.
+
+Returns
+-------
+TrainingPreregistration or None
+    The criterion exactly as it will be judged.
+
+Raises
+------
+ValueError
+    Unknown fields, an unknown metric, a bound outside the metric's range,
+    an over-long rationale, another schema version, or a stored digest that
+    does not match the criterion it accompanies.
 
 ---
 

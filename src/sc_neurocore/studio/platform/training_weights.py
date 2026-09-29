@@ -29,7 +29,7 @@ STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION = "studio.training.torch-state-d
 STUDIO_TRAINING_WEIGHT_RESTORE_OWNER = "studio-training-restore"
 STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_OWNER = "studio-training-attach"
 STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION = "training"
-STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES = ("warm_start", "live")
+STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES = ("warm_start", "exact_resume", "live")
 TRAINING_WEIGHT_ARTIFACT_PATH = "training/model_state.pt"
 TRAINING_WEIGHT_METADATA_ARTIFACT_PATH = "training/model_state.json"
 TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH = "training/weight-restore.json"
@@ -495,7 +495,9 @@ def training_architecture_fingerprint(config: Mapping[str, object]) -> str:
 
     The fingerprint folds only the configuration fields that determine the model
     state-dictionary shape (dataset, hidden layer widths, and the learnable
-    beta/threshold flags). Two configurations whose fingerprints match produce
+    beta/threshold flags, plus event input/output dimensions and a model kind
+    other than ``spiking``). Two
+    configurations whose fingerprints match produce
     architecturally compatible models, so the fingerprint identifies whether
     restored weights can be attached to a target training configuration.
 
@@ -511,10 +513,9 @@ def training_architecture_fingerprint(config: Mapping[str, object]) -> str:
     """
 
     raw_hidden = config.get("hidden", [128])
+    # An empty list is the direct input-to-output network, not the default width.
     hidden: list[JsonValue] = (
-        [int(width) for width in raw_hidden]
-        if isinstance(raw_hidden, list | tuple) and raw_hidden
-        else [128]
+        [int(width) for width in raw_hidden] if isinstance(raw_hidden, list | tuple) else [128]
     )
     projection: dict[str, JsonValue] = {
         "dataset": str(config.get("dataset", "synthetic")),
@@ -522,6 +523,17 @@ def training_architecture_fingerprint(config: Mapping[str, object]) -> str:
         "learn_beta": bool(config.get("learn_beta", False)),
         "learn_threshold": bool(config.get("learn_threshold", False)),
     }
+    # Absent for spiking runs, so their fingerprints are unchanged.
+    model_kind = config.get("model_kind", "spiking")
+    if model_kind != "spiking":
+        projection["model_kind"] = str(model_kind)
+    if config.get("event_data") is not None:
+        from sc_neurocore.studio.training_contract import resolve_training_config
+
+        resolved = resolve_training_config(config)
+        if resolved.event_data is not None:
+            projection["input_channels"] = resolved.event_data.encoder.channels
+            projection["output_classes"] = resolved.event_data.manifest.dataset.classes
     return _sha256_json(projection)
 
 
@@ -548,7 +560,7 @@ def build_training_weight_restore_attach_evidence(
         Verified, path-free materialization returned by
         :func:`materialize_training_weight_payload`.
     mode:
-        Attach delivery mode. One of ``warm_start`` or ``live``.
+        Attach delivery mode: ``warm_start``, ``exact_resume`` or ``live``.
     target_job_id:
         Studio job ID that received the attached weights.
     target_architecture:

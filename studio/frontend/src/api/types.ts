@@ -7,6 +7,8 @@
 // SC-NeuroCore — Studio frontend API
 // Shared Studio API DTO contracts.
 
+import type { EventTrainingData } from "../studioEventTrainingData";
+
 /** Spike-train statistics the server computed from a run's own spike times. */
 export interface SpikeStats {
   rate_hz: number;
@@ -1974,6 +1976,54 @@ export interface CellTypeInfo {
   available: boolean;
 }
 
+/** A hardware profile a conversion run can be calibrated for, with its fixed-point format. */
+export interface TrainingTargetProfile {
+  name: string;
+  vendor: string;
+  family: string;
+  platform_class: string;
+  q_format: string;
+  data_width: number;
+  fraction: number;
+  signed: boolean;
+}
+
+/**
+ * A metric a training run can be judged on. `conversion_accuracy_drop` is the
+ * source ANN's validation accuracy minus its converted network's, and exists
+ * only on the `qcfs_conversion` route.
+ */
+export type TrainingPreregistrationMetric = "val_accuracy" | "val_loss" | "conversion_accuracy_drop";
+
+/**
+ * What a run trains: the surrogate-gradient spiking classifier, or a QCFS ANN
+ * that is converted to a dense integrate-and-fire network and judged as one.
+ */
+export type TrainingModelKind = "spiking" | "qcfs_conversion";
+
+/**
+ * The acceptance criterion declared before a run starts.
+ *
+ * The server stores it with the run's configuration at submission and judges
+ * the finished run on its unrounded validation metric.
+ */
+export interface TrainingPreregistration {
+  metric: TrainingPreregistrationMetric;
+  threshold: number;
+  rationale: string;
+}
+
+/** How a finished run met, or missed, the criterion stored before it started. */
+export interface TrainingPreregistrationVerdict {
+  schema_version: "studio.training-preregistration.v1";
+  metric: TrainingPreregistrationMetric;
+  direction: "at_least" | "at_most";
+  threshold: number;
+  observed: number | null;
+  passed: boolean;
+  preregistration_sha256: string;
+}
+
 /**
  * Everything a training run is defined by.
  *
@@ -1982,16 +2032,23 @@ export interface CellTypeInfo {
  * and therefore what it can be restored into.
  */
 export interface TrainingConfig {
+  /** Absent means `spiking`; a conversion run sends no surrogate or cell flags. */
+  model_kind?: TrainingModelKind;
+  /** A conversion run's target profile, calibrated for after conversion. */
+  target_profile?: string;
   dataset: string;
   epochs: number;
   batch_size: number;
   lr: number;
   hidden: number[];
   timesteps: number;
-  surrogate: string;
-  learn_beta: boolean;
-  learn_threshold: boolean;
+  surrogate?: string;
+  learn_beta?: boolean;
+  learn_threshold?: boolean;
   max_grad_norm: number;
+  seed?: number;
+  event_data?: EventTrainingData;
+  preregistration?: TrainingPreregistration;
 }
 
 /** The validated run configuration retained with a v7 ledger job. */
@@ -2017,6 +2074,7 @@ export interface TrainingJobStatus {
   status: string;
   error: string | null;
   final_metrics: Record<string, number> | null;
+  preregistration_verdict?: TrainingPreregistrationVerdict | null;
 }
 
 /**
@@ -2128,6 +2186,7 @@ export interface TrainingWeightRestoreResult {
  * later mismatch can be attributed rather than guessed at.
  */
 export interface TrainingWeightAttachResult {
+  mode?: "warm_start" | "exact_resume";
   architecture_fingerprint: string;
   job_id: string;
   source_job_id: string;

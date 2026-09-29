@@ -117,6 +117,18 @@ def test_training_architecture_fingerprint_changes_with_architecture() -> None:
     assert training_architecture_fingerprint({**base, "learn_beta": True}) != (
         training_architecture_fingerprint(base)
     )
+    # The direct input-to-output network is not the default single hidden layer.
+    assert training_architecture_fingerprint({**base, "hidden": []}) != (
+        training_architecture_fingerprint(base)
+    )
+    # A converted run's source network is not a spiking network of the same widths,
+    # while a spiking run that names its kind keeps its historical fingerprint.
+    assert training_architecture_fingerprint({**base, "model_kind": "qcfs_conversion"}) != (
+        training_architecture_fingerprint(base)
+    )
+    assert training_architecture_fingerprint({**base, "model_kind": "spiking"}) == (
+        training_architecture_fingerprint(base)
+    )
 
 
 def test_build_training_weight_restore_attach_evidence_wraps_materialization(

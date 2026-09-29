@@ -30,6 +30,10 @@
     "playwright.graph.config.ts",
     "playwright.live.config.ts",
     "vite.config.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "playwright.event.config.ts",
+    "e2e/event-training-live.spec.ts",
+    "e2e/training-preregistration-live.spec.ts",
+    "e2e/training-conversion-live.spec.ts"
   ]
 }

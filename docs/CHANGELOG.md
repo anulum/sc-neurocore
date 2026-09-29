@@ -5,12 +5,146 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+
+- A training request can declare a preregistered acceptance criterion
+  (`val_accuracy` at least or `val_loss` at most a bound, with a rationale). It
+  is stored and digested with the job's configuration at submission, and the
+  completed run reports a `preregistration_verdict` judged on the unrounded
+  validation metric. The Training Monitor declares the criterion, keeps it in
+  the workspace and shows the verdict.
+- Studio training accepts local N-MNIST, SHD and DVS-CIFAR10 recordings through
+  an event contract: a manifest of the files on disk, a whole-group split and a
+  declared encoder, digested and stored with the job. The API and the worker
+  verify file bytes, labels and groups before and at the end of a run; samples
+  reach the network as `(timesteps, batch, channels)` spike tensors on one CPU
+  thread; an input budget (`SC_NEUROCORE_STUDIO_EVENT_INPUT_MAX_BYTES`, 64 MiB by
+  default) is admitted before a job exists; large declarations are stored beside
+  the job record; exact resume requires the contract unchanged. Isolated workers
+  receive dataset roots and native readers only from the operator's launcher
+  configuration.
+- Native event-recording readers: N-MNIST decoders, indexed SHD readers and
+  DVS-CIFAR10 readers in Rust, Go, Julia and Mojo beside the NumPy/h5py
+  readers. A reader is selected explicitly or from the operator's declared
+  configuration; for N-MNIST and SHD, `auto` orders the configured readers by
+  the benchmarks measured on this CPU, else by a static order, with NumPy last.
+  A configured native reader that fails refuses the read; nothing silently
+  falls back.
+- `convert` lowers the model's actual forward invocations into a dense
+  integrate-and-fire network: shared modules keep every call, unused
+  registrations are ignored, consecutive affine maps are composed, each ReLU
+  call (module, function or tensor method) gets its own calibrated scale, and
+  each QCFS call keeps its learned threshold and half-threshold preload. A final
+  affine layer is a signed linear readout. Unsupported operators, residual
+  arithmetic, several outputs and input-dependent control flow are refused.
+- `ConvertedSNN.replay` runs explicit frames under the
+  `dense-if-f64-sequential-v1` profile with complete state and event traces,
+  continuation from previous states and a checked working-byte budget; `run`,
+  `rates` and `classify` share it. Replay runs in NumPy, Rust, Go, Mojo or Julia
+  with identical float64 results; `auto` follows a measured local comparison
+  (`SC_NEUROCORE_IF_BENCHMARK`) only when it matches this CPU, these sources and
+  the configured libraries, and otherwise a static order before NumPy.
+- `measure_conversion_loss` classifies labelled samples with a PyTorch source
+  and its converted network and reports both accuracies, their agreement, the
+  decoded-rate error, the replay runtime that executed and digests of the
+  source, the converted network and the data.
+- Studio training has a `qcfs_conversion` route: it trains a QCFS ANN, converts
+  it to a dense IF network with the same step budget, reports the converted
+  network's validation accuracy as `val_accuracy` beside the source's, and seals
+  the comparison as `training/conversion_report.json`. The criterion metric
+  `conversion_accuracy_drop` judges it. The Training Monitor's Model selector,
+  the HTTP route and `sc-neurocore train` all reach it.
+- `calibrate_for_target` fits a converted network into a hardware profile's
+  fixed-point format at a per-layer power-of-two scale, replays the rounded
+  network on calibration samples and reports rounding errors, measured
+  membrane headroom, overflow and the accuracy it costs. A conversion run can
+  name a `target_profile` (listed by `GET /api/training/target-profiles`) and
+  seals `training/target_report.json`.
+- `sc_neurocore.hardware.experiment` defines the hardware experiment protocol
+  declared before a device run (operator opt-in and identity, device, image
+  digest, network and data digests, latency including transport with declared
+  warmup, calibrated power instrument, preregistered criteria) and the receipt
+  that seals raw observations against it. The receipt computes accuracy,
+  nearest-rank latency percentiles, energy and verdicts itself, refuses energy
+  not measured by the declared calibrated instrument, and `verify_receipt`
+  recomputes a stored receipt end to end.
+- `sc-neurocore train` runs a Studio training request from the command line
+  through the same contract and job manager, prints status, metrics and
+  verdict, and exits 3 when the criterion was missed.
+- `qcfs_forward` and `qcfs_backward` evaluate QCFS quantisation and its
+  straight-through derivatives without PyTorch in NumPy, Rust, Go, Mojo and
+  Julia. All five return the float64 bits of `QCFSActivation` and its autograd,
+  including NaN payloads and the sign of zero. Each native runtime exports one
+  QCFS array ABI; `auto` follows the local five-runtime comparison
+  (`benchmarks/bench_qcfs_runtimes.py`), and the wheel ships the QCFS sources.
+- `sc-neurocore-if-benchmark` runs the five-runtime dense IF comparison from an
+  installed wheel. The wheel ships the comparison scripts and the dense IF Rust,
+  Go, Mojo and Julia sources, so an installation builds its native libraries,
+  measures all five runtimes and admits its own report. Reports bind the source
+  bytes of the imported package and of the scripts that ran; a report captured
+  in a source checkout is admitted by an installation with byte-identical
+  sources.
+
+### Changed
+
+- `QCFSActivation` accepts `T` in `[1, 2**32 - 1]`, the step domain shared by
+  every QCFS runtime.
+
 ### Fixed
+
+- Conversion restores the caller's accelerator random generators as well as
+  Python, NumPy and PyTorch CPU ones while user forward code runs, and
+  `calibrate_activation_thresholds` now restores them at all. Custody sections
+  are serialised, so two conversions in one process no longer restore each
+  other's states.
+- A saturated infinite or NaN element no longer turns a batch's QCFS threshold
+  gradient into NaN; only interior elements carry a gradient, and infinite
+  inputs contribute their own saturated derivative.
+- Julia replay and Julia QCFS no longer reparse the locked Julia project on
+  every call: an admitted configuration is reused while every setting, option
+  and file identity it read is unchanged (about 2.4 ms to 35 µs per call).
+- The Julia lane is reported present only for the model kernel sources. The
+  dense IF conversion and event-dataset Julia sources the wheel ships for their
+  own APIs no longer make an installation with JuliaCall claim the Julia lane.
 
 - Studio embedded process jobs now take per-process data, CPU, descriptor,
   output-file and core-dump limits before importing task code. A refused
   allocation ends as a failed job; nested Yosys limits respect the worker's
   inherited hard ceiling.
+
+- ANN-to-SNN conversion no longer changes the network it converts. It took
+  layers in registration rather than forward order and counted a shared module
+  once; accepted `Conv2d` weights the dense runtime could not execute; added
+  each bias as `bias / T` per step, so a constant bias reached the output
+  diluted by the timestep budget; made the final layer fire, losing negative
+  outputs; calibrated only registered ReLU modules; and padded missing QCFS
+  thresholds with 1.0. `replace_relu_with_qcfs` also left aliases of one shared
+  activation with separate thresholds.
+- `sc-neurocore deploy` now exports the network a `.pt` checkpoint holds. It
+  converted the network and then discarded it, ordered layers by key name (so
+  `10.weight` came before `2.weight`), zeroed every trained bias, calibrated on
+  random normal inputs and reported a Q8.8 quantisation it never performed. It
+  now rebuilds layers in registration order with their biases, calibrates on
+  `--calibration` samples (or unit scales), refuses parameters a dense ReLU
+  chain lacks, rebuilds Studio `qcfs_conversion` checkpoints exactly, writes
+  `converted_network.npz` with a digest manifest and, with calibration samples,
+  `target_report.json`. The generated RTL is labelled as the generic template
+  it is. The tutorials' checkpoint examples now pass the required digest.
+- Reading an event-training job record no longer re-validates its whole event
+  declaration every time. With the SHD publisher manifest one read took about
+  275 ms, so `sc-neurocore train` and any status poll held a full CPU core for
+  the length of a run. A validated snapshot is now reused while its stored
+  bytes and the admission limit are unchanged (about 9 ms), and waiting for a
+  job backs off to half a second between durable reads.
+- The SHD event-training example binned 100 steps of 1 ms, keeping only the
+  first tenth of each one-second utterance; it now uses 10 ms steps.
+- The CLI architecture test now lists the `train` command.
+- The training weight fingerprint no longer treats `hidden: []`, the direct
+  input-to-output network, as the default single hidden layer of 128.
+- The Studio training architecture guard now covers every `_training_*`
+  module; a new module could previously escape its size and dependency limits.
+- `ConvertedSNN` docstrings described an auto replay order without Mojo and
+  without the measured comparison; they now state the order dispatch uses.
 
 - Studio training: a run that asks for MNIST on a host without torchvision now
   fails with that reason. It used to train on the synthetic demonstration data

@@ -25,10 +25,10 @@ if TYPE_CHECKING:
 _INSERT_JOB = """
 INSERT INTO jobs (
     job_id, kind, actor, workspace, request_id, idempotency_key,
-    experiment_sha256, admission, training_config, execution_model, status,
+    experiment_sha256, admission, training_config, training_event_data, execution_model, status,
     created_at_utc, artifacts, lease_owner, lease_expires_at_utc,
     heartbeat_at_utc, sequence
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, '[]', ?, ?, ?, 0)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, '[]', ?, ?, ?, 0)
 """
 
 _INSERT_TRANSITION = """
@@ -91,15 +91,13 @@ def create_job(
         The stored record and whether it was already there.
     """
     training_config_json: str | None = None
+    training_event_data: str | None = None
     if training_config is not None:
         if kind != "training":
             raise ValueError("Only a training job can carry a training configuration.")
-        from sc_neurocore.studio.training_contract import resolve_training_config
+        from sc_neurocore.studio.platform.training_config_storage import prepare_training_config
 
-        resolved = resolve_training_config(training_config).to_public_dict()
-        training_config_json = json.dumps(resolved, sort_keys=True, separators=(",", ":"))
-        if len(training_config_json.encode("utf-8")) > 4096:
-            raise ValueError("Training configuration exceeds the 4096-byte admission limit.")
+        training_config_json, training_event_data = prepare_training_config(training_config)
     timestamp = ledger.timestamp()
     if connection is not None and (
         connection is not ledger.connection() or not connection.in_transaction
@@ -127,6 +125,7 @@ def create_job(
                 experiment_sha256,
                 json.dumps(dict(admission or {}), sort_keys=True),
                 training_config_json,
+                training_event_data,
                 execution_model,
                 timestamp,
                 ledger.supervisor if lease_owner is None else lease_owner,

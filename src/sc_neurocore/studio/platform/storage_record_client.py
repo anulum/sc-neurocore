@@ -14,7 +14,8 @@ import time
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
 from sc_neurocore.studio.platform.storage_connection import connect_storage_authority
-from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
+from sc_neurocore.studio.platform.storage_peer import write_verified_frame
+from sc_neurocore.studio.platform.storage_view_content import read_view_content
 from sc_neurocore.studio.platform.storage_record_protocol import (
     StorageRecordRequest,
     decode_record_response,
@@ -28,6 +29,7 @@ def read_storage_record(
     expected_service_uid: int,
     max_bytes: int,
     deadline: float,
+    max_content_bytes: int | None = None,
 ) -> StudioJobRecord:
     """Exchange one bounded request with a peer-verified storage authority.
 
@@ -44,6 +46,8 @@ def read_storage_record(
         Positive uint32 ceiling for each complete request and response frame.
     deadline : float
         Absolute monotonic deadline shared by both transfers, never renewed.
+    max_content_bytes : int, optional
+        Independent total response ceiling, checked before content receipt.
 
     Returns
     -------
@@ -79,10 +83,13 @@ def read_storage_record(
             max_bytes=max_bytes,
             deadline=deadline,
         )
-        response = read_verified_frame(
+        response = read_view_content(
             channel,
             expected_uid=expected_service_uid,
-            max_bytes=max_bytes,
+            frame_max_bytes=max_bytes,
+            content_schema="studio.storage.record.v2",
+            request_id=request.request_id,
+            max_content_bytes=max_content_bytes,
             deadline=deadline,
         )
         return decode_record_response(response, request=request)
@@ -108,5 +115,6 @@ def read_storage_record_at_endpoint(
         request=request,
         expected_service_uid=configuration.storage_uid,
         max_bytes=configuration.frame_max_bytes,
+        max_content_bytes=configuration.max_view_content_bytes,
         deadline=time.monotonic() + configuration.transfer_timeout_seconds,
     )

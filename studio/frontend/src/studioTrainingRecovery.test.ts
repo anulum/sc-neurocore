@@ -8,12 +8,14 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import eventData from "./studioEventTrainingData.fixture.json";
 import { setStudioAuthToken } from "./api/client";
 import { useStudioStore } from "./stores/studio";
 import {
   decodeTrainingJobSummaries,
   decodeTrainingRecoveryStatus,
   decodeTrainingStopResult,
+  observedTrainingConfig,
 } from "./studioTrainingRecovery";
 
 const retainedConfig = {
@@ -58,6 +60,34 @@ describe("retained Training Monitor recovery", () => {
     expect(decodeTrainingStopResult(
       { job_id: "sj_selected", status: "unknown" }, "sj_selected",
     )).toBe("unknown");
+  });
+
+  it("reads a conversion run's recorded kind and refuses cell settings it never used", () => {
+    const conversion: Record<string, unknown> = { ...retainedConfig, model_kind: "qcfs_conversion" };
+    delete conversion.surrogate;
+    delete conversion.learn_beta;
+    delete conversion.learn_threshold;
+    const [row] = decodeTrainingJobSummaries([{ job_id: "sj_conv", status: "completed", config: conversion }]);
+    expect(row?.config?.model_kind).toBe("qcfs_conversion");
+    const observed = observedTrainingConfig(row?.config ?? null);
+    expect(observed?.model_kind).toBe("qcfs_conversion");
+    expect(observed?.surrogate).toBe("atan_surrogate");
+    const [targeted] = decodeTrainingJobSummaries([
+      { job_id: "sj_target", status: "completed", config: { ...conversion, target_profile: "loihi2" } },
+    ]);
+    expect(observedTrainingConfig(targeted?.config ?? null)?.target_profile).toBe("loihi2");
+    expect(observedTrainingConfig(retainedConfig as never)).not.toHaveProperty("model_kind");
+    for (const bad of [
+      { ...conversion, surrogate: "atan_surrogate" },
+      { ...conversion, dataset: "shd" },
+      { ...conversion, model_kind: "ann" },
+      { ...retainedConfig, model_kind: "spiking" },
+      { ...retainedConfig, target_profile: "loihi2" },
+      { ...conversion, target_profile: "" },
+    ]) {
+      expect(() => decodeTrainingJobSummaries([{ job_id: "sj_bad", status: "completed", config: bad }]))
+        .toThrow("invalid configuration");
+    }
   });
 
   it("loads the retained list, selects the newest job and replays authenticated SSE", async () => {
@@ -183,5 +213,42 @@ describe("retained Training Monitor recovery", () => {
     await pending;
 
     expect(useStudioStore.getState().trainingStatus).toBe("completed");
+  });
+});
+
+
+describe("retained event training input", () => {
+  it("carries the portable input and replay settings into recovered provenance", () => {
+    const training = { ...retainedConfig, dataset: "nmnist", timesteps: 4,
+      max_grad_norm: 0, event_data: eventData };
+    const jobs = decodeTrainingJobSummaries([
+      { job_id: "sj_event", status: "completed", config: training },
+    ]);
+    expect(observedTrainingConfig(jobs[0]?.config ?? null)).toMatchObject({
+      event_data: eventData, seed: 7, max_grad_norm: 0,
+    });
+  });
+
+  it("carries the stored criterion, without the server's digest, into recovered provenance", () => {
+    const stored = { metric: "val_accuracy", threshold: 0.5, rationale: "above chance",
+      schema_version: "studio.training-preregistration.v1", sha256: "b".repeat(64) };
+    const jobs = decodeTrainingJobSummaries([
+      { job_id: "sj_criterion", status: "completed", config: { ...retainedConfig, preregistration: stored } },
+    ]);
+    expect(observedTrainingConfig(jobs[0]?.config ?? null)?.preregistration)
+      .toEqual({ metric: "val_accuracy", threshold: 0.5, rationale: "above chance" });
+    const plain = decodeTrainingJobSummaries([{ job_id: "sj_plain", status: "completed", config: retainedConfig }]);
+    expect(observedTrainingConfig(plain[0]?.config ?? null)).not.toHaveProperty("preregistration");
+  });
+
+  it("refuses retained event runs with absent or mismatched portable input", () => {
+    expect(() => decodeTrainingJobSummaries([
+      { job_id: "sj_event", status: "completed", config: { ...retainedConfig, dataset: "nmnist" } },
+    ])).toThrow("invalid configuration");
+    expect(() => decodeTrainingJobSummaries([
+      { job_id: "sj_event", status: "completed", config: {
+        ...retainedConfig, dataset: "shd", timesteps: 4, event_data: eventData,
+      } },
+    ])).toThrow("invalid configuration");
   });
 });

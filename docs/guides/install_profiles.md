@@ -118,12 +118,17 @@ The published wheel is pure Python. What each execution lane needs:
 | --- | --- | --- |
 | Python | every distribution | nothing further |
 | Rust | the separate `sc_neurocore_engine` package | installing that package |
-| Julia | a source checkout | the Julia kernel sources, which the wheel does not ship, and JuliaCall (the `julia` extra) |
+| Julia | a source checkout | the Julia model kernel sources, which the wheel does not ship, and JuliaCall (the `julia` extra) |
 | Go | a source checkout | shared libraries built from the Go sources |
 | Mojo | a source checkout | shared libraries built with the Mojo toolchain |
 
+The wheel does carry the dense IF conversion sources for Rust, Go, Mojo and
+Julia and the event-dataset Julia sources, which those public APIs load or
+build on their own (see [ANN-to-SNN conversion](../api/conversion.md)). They
+are not model kernels, so they do not make the Julia, Go or Mojo lane present.
+
 Installing the `julia` extra into a wheel installation adds JuliaCall only;
-the Julia lane still needs a source checkout. `sc-neurocore info` reports, for
+the Julia model-kernel lane still needs a source checkout. `sc-neurocore info` reports, for
 each lane, whether this installation holds its resources and, when it does
 not, what is missing. The report reads the installed files; it does not start
 Julia or load a native library, and an individual kernel still checks its own

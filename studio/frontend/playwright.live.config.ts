@@ -42,7 +42,11 @@ const auditLogPath = process.env.SC_NEUROCORE_STUDIO_LIVE_AUDIT_LOG_PATH
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "catalogue-to-silicon-live.spec.ts",
+  testMatch: [
+    "catalogue-to-silicon-live.spec.ts",
+    "training-preregistration-live.spec.ts",
+    "training-conversion-live.spec.ts",
+  ],
   timeout: 240_000,
   expect: {
     timeout: 30_000,

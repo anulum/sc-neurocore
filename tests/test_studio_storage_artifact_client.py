@@ -55,7 +55,7 @@ def _request() -> StorageArtifactRequest:
 
 def _reply(request_id: str, changes: dict[str, object] | None = None) -> bytes:
     body: dict[str, object] = {
-        "schema_version": "studio.storage.artifact.v1",
+        "schema_version": "studio.storage.artifact.v2",
         "operation": "artifact",
         "request_id": request_id,
         "status": "ok",

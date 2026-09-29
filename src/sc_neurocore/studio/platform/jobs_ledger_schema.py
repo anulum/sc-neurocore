@@ -31,9 +31,9 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobStatus,
 )
 
-JOB_LEDGER_SCHEMA_VERSION = "studio.job-ledger.v7"
+JOB_LEDGER_SCHEMA_VERSION = "studio.job-ledger.v8"
 LEDGER_FILENAME = "job_ledger.sqlite3"
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 #: A job in one of these states has finished and will never move again.
 TERMINAL_STATUSES: frozenset[StudioJobStatus] = frozenset(
@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     experiment_sha256 TEXT,
     admission TEXT NOT NULL,
     training_config TEXT,
+    training_event_data TEXT CHECK (training_event_data IS NULL OR length(CAST(training_event_data AS BLOB)) <= 67108864),
     execution_model TEXT NOT NULL,
     status TEXT NOT NULL,
     created_at_utc TEXT NOT NULL,
@@ -186,6 +187,7 @@ def migrate(connection: sqlite3.Connection) -> None:
             "INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_name', ?)",
             (JOB_LEDGER_SCHEMA_VERSION,),
         )
+        migrate_training_event_data(connection)
         return
     stored = int(str(row["value"]))
     if stored > SCHEMA_VERSION:
@@ -233,6 +235,39 @@ def migrate(connection: sqlite3.Connection) -> None:
             "INSERT OR REPLACE INTO schema_meta(key,value) VALUES('schema_name',?)",
             (JOB_LEDGER_SCHEMA_VERSION,),
         )
+    if stored < 8:
+        migrate_training_event_data(connection)
+        connection.execute(
+            "UPDATE schema_meta SET value = ? WHERE key = 'schema_version'", (str(SCHEMA_VERSION),)
+        )
+        connection.execute(
+            "INSERT OR REPLACE INTO schema_meta(key,value) VALUES('schema_name',?)",
+            (JOB_LEDGER_SCHEMA_VERSION,),
+        )
+
+
+def migrate_training_event_data(connection: sqlite3.Connection) -> None:
+    """Add bounded per-job event custody and refuse mutation after admission.
+
+    Parameters
+    ----------
+    connection : sqlite3.Connection
+        The owning ledger's active schema migration transaction.
+    """
+    columns = {str(row["name"]) for row in connection.execute("PRAGMA table_info(jobs)")}
+    if "training_event_data" not in columns:
+        connection.execute(
+            "ALTER TABLE jobs ADD COLUMN training_event_data TEXT "
+            "CHECK (training_event_data IS NULL OR length(CAST(training_event_data AS BLOB)) <= 67108864)"
+        )
+    connection.execute("""
+        CREATE TRIGGER IF NOT EXISTS training_event_data_no_update
+        BEFORE UPDATE OF training_event_data ON jobs
+        WHEN NEW.training_event_data IS NOT OLD.training_event_data
+        BEGIN
+            SELECT RAISE(ABORT, 'training event data is immutable');
+        END
+    """)
 
 
 __all__ = [

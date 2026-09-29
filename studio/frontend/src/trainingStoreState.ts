@@ -25,11 +25,13 @@ import type {
   TrainingWeightRestorePlan,
   TrainingWeightRestoreResult,
   TrainingJobSummary,
+  TrainingPreregistrationVerdict,
 } from "./api/client";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import type { StudioTrainingTerminalStatus } from "./studioTrainingStream";
 import type { TrainingStopStatus } from "./studioTrainingRecovery";
 import type { TrainingWeightRestoreVerification } from "./trainingRestore";
+import type { TrainingConversionResult } from "./trainingConversion";
 
 /** The surrogate gradients and cell types arrived. */
 export interface TrainingSurrogatesLoadedStatePatch {
@@ -43,6 +45,8 @@ export interface TrainingStartStatePatch {
   trainingEpochs: [];
   trainingJobId: null;
   trainingObservedConfig: null;
+  trainingPreregistrationVerdict: null;
+  trainingConversionResult: null;
   trainingStatus: "starting";
   trainingWeightRestorePlan: null;
   trainingWeightRestoreVerification: null;
@@ -64,6 +68,8 @@ export interface TrainingRecoveredStatePatch {
   trainingStatus: string;
   trainingEpochs: [];
   trainingObservedConfig: StudioProjectTrainingConfig | null;
+  trainingPreregistrationVerdict: TrainingPreregistrationVerdict | null;
+  trainingConversionResult: TrainingConversionResult | null;
   trainingExperimentKey: null;
   trainingWeightRestorePlan: null;
   trainingWeightRestoreVerification: null;
@@ -191,6 +197,8 @@ export function trainingStartState(): TrainingStartStatePatch {
     trainingEpochs: [],
     trainingJobId: null,
     trainingObservedConfig: null,
+    trainingPreregistrationVerdict: null,
+    trainingConversionResult: null,
     trainingStatus: "starting",
     trainingWeightRestorePlan: null,
     trainingWeightRestoreVerification: null,
@@ -219,12 +227,16 @@ export function trainingStartedState(jobId: string): TrainingStartedStatePatch {
  * @param jobId - The retained job ID.
  * @param status - Fresh status from the job's own endpoint.
  * @param observedConfig - Verified configuration, or null for an old row.
+ * @param verdict - The run's preregistered verdict, or null when none was declared or readable.
+ * @param conversion - A conversion run's converted and source accuracy, or null.
  * @returns The selected observation state.
  */
 export function trainingRecoveredState(
   jobId: string,
   status: string,
   observedConfig: StudioProjectTrainingConfig | null,
+  verdict: TrainingPreregistrationVerdict | null = null,
+  conversion: TrainingConversionResult | null = null,
 ): TrainingRecoveredStatePatch {
   return {
     error: null,
@@ -232,6 +244,8 @@ export function trainingRecoveredState(
     trainingStatus: status,
     trainingEpochs: [],
     trainingObservedConfig: observedConfig,
+    trainingPreregistrationVerdict: verdict,
+    trainingConversionResult: conversion,
     trainingExperimentKey: null,
     trainingWeightRestorePlan: null,
     trainingWeightRestoreVerification: null,
