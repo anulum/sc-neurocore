@@ -199,8 +199,9 @@ export default function ParameterSliders() {
       <div className="panel-section">
         <div className="panel-header">Current Injection</div>
         <div className="slider-row">
-          <span className="slider-label">protocol</span>
+          <span className="slider-label" aria-hidden="true">protocol</span>
           <select value={protocol} onChange={(e) => { setProtocol(e.target.value); }}
+            aria-label="Current protocol"
             data-testid="protocol-select"
             style={{ flex: 1 }}>
             {PROTOCOLS.map((p) => (

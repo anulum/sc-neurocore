@@ -72,6 +72,8 @@ describe("OperatorWorkbenchPanel", () => {
         onOpenCompiler={() => undefined}
         onOpenSynthesis={() => undefined}
         onOpenProjects={() => undefined}
+          onSaveProject={() => undefined}
+          onShowSource={() => undefined}
         onRunSimulation={() => undefined}
         state={workbenchState()}
       />,
@@ -94,6 +96,8 @@ describe("OperatorWorkbenchPanel", () => {
         onOpenCompiler={() => undefined}
         onOpenSynthesis={() => undefined}
         onOpenProjects={() => undefined}
+          onSaveProject={() => undefined}
+          onShowSource={() => undefined}
         onRunSimulation={() => undefined}
         state={workbenchState({ evidenceActionEnabled: true, evidenceExportTarget: "project" })}
       />,
@@ -128,6 +132,8 @@ describe("OperatorWorkbenchPanel", () => {
           onOpenAdmin={() => undefined}
           onOpenCompiler={onOpenCompiler}
           onOpenProjects={() => undefined}
+          onSaveProject={() => undefined}
+          onShowSource={() => undefined}
           onOpenSynthesis={onOpenSynthesis}
           onRunSimulation={() => undefined}
           state={state}
@@ -138,6 +144,43 @@ describe("OperatorWorkbenchPanel", () => {
 
     expect(onOpenSynthesis).toHaveBeenCalledOnce();
     expect(onOpenCompiler).not.toHaveBeenCalled();
+    await act(async () => { root.unmount(); });
+  });
+
+  it("saves or shows what its workspace and source cards name", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const onOpenProjects = vi.fn();
+    const onSaveProject = vi.fn();
+    const onShowSource = vi.fn();
+    const render = async (action: string, key: "workspace" | "model") => {
+      await act(async () => {
+        root.render(
+          <OperatorWorkbenchPanel
+            onExportEvidence={() => undefined}
+            onOpenAdmin={() => undefined}
+            onOpenCompiler={() => undefined}
+            onOpenProjects={onOpenProjects}
+            onOpenSynthesis={() => undefined}
+            onRunSimulation={() => undefined}
+            onSaveProject={onSaveProject}
+            onShowSource={onShowSource}
+            state={workbenchState({
+              cards: [{ action, detail: "", key, status: "ready", title: "", value: "" }],
+            })}
+          />,
+        );
+      });
+      container.querySelector("button")?.click();
+    };
+
+    await render("Save project", "workspace");
+    expect(onSaveProject).toHaveBeenCalledOnce();
+    await render("Open projects", "workspace");
+    expect(onOpenProjects).toHaveBeenCalledOnce();
+    await render("Browse models", "model");
+    expect(onShowSource).toHaveBeenCalledOnce();
+    expect(onSaveProject).toHaveBeenCalledOnce();
     await act(async () => { root.unmount(); });
   });
 });

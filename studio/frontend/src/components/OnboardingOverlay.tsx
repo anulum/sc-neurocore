@@ -120,11 +120,13 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
         {/* Progress dots */}
         <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 16 }}>
           {steps.map((_, i) => (
-            <div key={i} style={{
-              width: 8, height: 8, borderRadius: "50%",
+            <button type="button" key={i} style={{
+              width: 8, height: 8, borderRadius: "50%", border: 0, padding: 0,
               background: i === step ? "var(--accent)" : "var(--bg-tertiary)",
               cursor: "pointer",
-            }} onClick={() => { setStep(i); }} />
+            }} aria-label={`Go to step ${String(i + 1)} of ${String(steps.length)}`}
+              aria-current={i === step ? "step" : undefined}
+              onClick={() => { setStep(i); }} />
           ))}
         </div>
 

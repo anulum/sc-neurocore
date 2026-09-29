@@ -378,6 +378,10 @@ body {
   font-size: 12px;
 }
 
+/* A metric value wraps rather than hiding its end ("148 total / 114 protected"
+   was cut to "148 total / 114…" in a quarter-width cell). */
+.admin-metrics strong { white-space: normal; overflow-wrap: anywhere; }
+
 .admin-warning {
   margin: 0 12px 12px;
   padding: 8px;
@@ -393,7 +397,9 @@ body {
 
 .admin-audit-row {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  /* 90 px holds the longest status word ("unavailable") at the 12 px floor;
+     72 px cut it to "unavaila…". Fixed, so the rows stay aligned. */
+  grid-template-columns: 90px minmax(0, 1fr);
   gap: 6px 10px;
   padding: 7px 0;
   border-bottom: 1px solid var(--border);
@@ -464,10 +470,16 @@ body {
   opacity: 0.45;
 }
 
+/* Wraps instead of a fixed six-column grid: the columns needed over 600 px
+   and ran out of a half-width admin section. */
 .admin-identity-row {
-  grid-template-columns: 72px minmax(120px, 1fr) minmax(160px, 2fr) 84px 92px 64px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 6px 10px;
 }
+
+.admin-identity-row label:has(input:not([type="checkbox"])) { flex: 1 1 160px; }
 
 .admin-identity-row label {
   display: flex;
@@ -719,6 +731,23 @@ body {
   line-height: 1.4;
   color: var(--text-muted);
 }
+
+/* The text prompt that replaced window.prompt (TextPromptDialog). */
+.text-prompt {
+  min-width: min(420px, calc(100vw - 32px));
+  padding: 16px 18px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+}
+
+.text-prompt::backdrop { background: rgba(0, 0, 0, 0.6); }
+.text-prompt h2 { margin-bottom: 10px; font-size: 15px; font-weight: 600; }
+.text-prompt-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-body); color: var(--text-secondary); }
+.text-prompt-field input,
+.text-prompt-field textarea { width: 100%; font-size: var(--fs-ui); }
+.text-prompt-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
 /* Present to assistive technology, absent from the screen. */
 .visually-hidden {
@@ -1160,7 +1189,10 @@ button:focus-visible {
 }
 
 .slider-value {
-  width: 72px;
+  /* A minimum, not a fixed width: a value with its unit ("0.1200 mS/cm^2")
+     ran past a 72 px box and out of the panel. */
+  min-width: 72px;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-primary);
@@ -1170,6 +1202,9 @@ button:focus-visible {
 
 input[type="range"] {
   flex: 1;
+  /* Allowed to shrink: at its intrinsic width a slider pushed the unit label
+     past the left panel's edge and gave the panel a sideways scrollbar. */
+  min-width: 0;
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
@@ -1313,7 +1348,7 @@ input[type="range"]::-moz-range-thumb {
     font-size: var(--fs-body);
   }
   .slider-value {
-    width: 55px;
+    min-width: 55px;
     font-size: var(--fs-body);
   }
   .panel-section {

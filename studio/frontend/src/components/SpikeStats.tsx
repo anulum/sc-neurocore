@@ -49,10 +49,12 @@ export default function SpikeStats() {
         )}
       </div>
       {stats.isi_histogram && (
-        <div style={{ fontSize: "var(--fs-body)", color: "var(--accent)", cursor: "pointer" }}
-          onClick={() => { setActiveTab("isi"); }}>
+        <button type="button" style={{
+          fontSize: "var(--fs-body)", color: "var(--accent)", cursor: "pointer",
+          background: "transparent", border: 0, padding: 0,
+        }} onClick={() => { setActiveTab("isi"); }}>
           View ISI histogram →
-        </div>
+        </button>
       )}
     </div>
   );

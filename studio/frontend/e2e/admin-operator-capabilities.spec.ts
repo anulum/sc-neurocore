@@ -99,3 +99,23 @@ test("missing active panel capability fails closed at startup", async ({ page })
   await page.waitForTimeout(100);
   expect(api.requests("/api/simulate")).toBe(0);
 });
+
+test("an unreachable capability registry is said, with a retry that recovers", async ({ page }) => {
+  const mocks = defaultApiMocks();
+  const registryPayload = mocks.get("/api/studio/capabilities");
+  if (registryPayload === undefined) throw new Error("default mocks lost the capability registry");
+  mocks.delete("/api/studio/capabilities");
+  const api = await installApiDispatcher(page, mocks);
+
+  await page.goto("/");
+
+  const banner = page.getByTestId("api-unreachable");
+  await expect(banner).toBeVisible();
+  await expect(banner).toHaveAttribute("role", "alert");
+  await expect(banner).toContainText("could not read its capability registry");
+
+  mocks.set("/api/studio/capabilities", registryPayload);
+  await banner.getByRole("button", { name: "Retry" }).click();
+  await expect(banner).toBeHidden();
+  expect(api.requests("/api/studio/capabilities")).toBeGreaterThanOrEqual(2);
+});

@@ -19,8 +19,13 @@ export interface OperatorWorkbenchPanelProps {
   onOpenAdmin: () => void;
   onOpenCompiler: () => void;
   onOpenSynthesis: () => void;
+  /** Show the saved projects in the left panel. */
   onOpenProjects: () => void;
   onRunSimulation: () => void;
+  /** Ask for a name and save the workspace as a project. */
+  onSaveProject: () => void;
+  /** Show where the experiment's source is chosen: the model library or the equations. */
+  onShowSource: () => void;
   state: OperatorWorkbenchState;
 }
 
@@ -51,6 +56,8 @@ export default function OperatorWorkbenchPanel({
   onOpenSynthesis,
   onOpenProjects,
   onRunSimulation,
+  onSaveProject,
+  onShowSource,
   state,
 }: OperatorWorkbenchPanelProps) {
   return (
@@ -80,6 +87,8 @@ export default function OperatorWorkbenchPanel({
                 openSynthesis: onOpenSynthesis,
                 openProjects: onOpenProjects,
                 runSimulation: onRunSimulation,
+                saveProject: onSaveProject,
+                showSource: onShowSource,
                 state,
               }); }}
               type="button"
@@ -101,6 +110,8 @@ interface OperatorWorkbenchActions {
   openSynthesis: () => void;
   openProjects: () => void;
   runSimulation: () => void;
+  saveProject: () => void;
+  showSource: () => void;
   state: OperatorWorkbenchState;
 }
 
@@ -138,9 +149,15 @@ function runAction(card: OperatorWorkbenchCard, actions: OperatorWorkbenchAction
         actions.exportEvidence(actions.state.evidenceExportTarget);
       }
       return;
+    // Each card does what its button says. Both used to switch the view to
+    // the trace, so "Save project" saved nothing and "Browse models" showed
+    // no models.
     case "model":
+      actions.showSource();
+      return;
     case "workspace":
-      actions.openProjects();
+      if (card.action === "Save project") actions.saveProject();
+      else actions.openProjects();
       return;
     case "simulation":
       actions.runSimulation();

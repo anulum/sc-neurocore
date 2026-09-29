@@ -34,12 +34,12 @@ test("project evidence strip exports saved project bundles", async ({ page }) =>
   });
   const api = await installApiDispatcher(page, mocks);
 
-  page.once("dialog", async (dialog) => {
-    await dialog.accept("saved-network");
-  });
   await page.goto("/");
 
   await page.getByLabel("Save project", { exact: true }).click();
+  const saveDialog = page.getByRole("dialog", { name: "Save project" });
+  await saveDialog.getByLabel("Project name").fill("saved-network");
+  await saveDialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("project_workspace")).toBeVisible();
   await expect(page.getByText("state sha aaaaaaaaaaaa")).toBeVisible();
   await expect(page.getByText("project sha bbbbbbbbbbbb")).toBeVisible();
@@ -139,9 +139,6 @@ test("project evidence strip ignores admin bundle artifacts", async ({ page }) =
   });
   const api = await installApiDispatcher(page, mocks);
 
-  page.once("dialog", async (dialog) => {
-    await dialog.accept("saved-network");
-  });
   await page.goto("/");
   await page.getByRole("tab", { name: "Admin", exact: true }).click();
   await page.getByRole("button", { name: "Create evidence bundle" }).click();
@@ -149,6 +146,9 @@ test("project evidence strip ignores admin bundle artifacts", async ({ page }) =
   await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);
 
   await page.getByLabel("Save project", { exact: true }).click();
+  const saveDialog = page.getByRole("dialog", { name: "Save project" });
+  await saveDialog.getByLabel("Project name").fill("saved-network");
+  await saveDialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("project_workspace")).toBeVisible();
   await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);
   await expect(page.getByText("evidence/projects/saved-network.json", { exact: true })).toHaveCount(0);

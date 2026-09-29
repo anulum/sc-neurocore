@@ -92,6 +92,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Studio can be used from the keyboard and read by a screen reader
+  throughout. Choosing a model was a click on a `div`, so no model could be
+  chosen by keyboard; model rows, saved sessions, experiment presets, the
+  behaviour filters, the onboarding step dots, the ISI shortcut and the
+  code one-liner are now real buttons with names, the chosen model marked
+  `aria-current`. The model search, current protocol, model B, FPGA target
+  and E-I sliders have names; the 133 links called only "DOI" say whose
+  source they are. Every "docs" and "Documentation" link returned 404 (it
+  pointed at the Studio's own server); they now open the published
+  documentation, and a test requires each capability's page to exist. The
+  left-panel sections are headings.
+- The Operator workbench's buttons do what they say: "Save project" asks
+  for a name and saves, "Browse models" puts the keyboard in the model
+  search, "Open projects" shows the project list. All of them used to switch
+  the view to the trace.
+- Saving a project or session and importing a trace use a labelled Studio
+  dialog (focus held inside, Escape closes it, a multi-line field for a
+  pasted trace) instead of the browser's `prompt()` box.
+- When the capability registry cannot be read, a banner says so and offers
+  Retry, instead of a "capability check failed" note with the reason in a
+  tooltip beside a Studio in which every control was silently disabled.
+- The page is dark from its first paint and says it is loading, instead of a
+  white page until the bundle ran. The left panel no longer scrolls sideways
+  (a model's comma-joined state-variable list and fixed-width slider values
+  pushed it out), the admin identity form wraps in a half-width column, and
+  admin status words and metrics are no longer cut off.
 - The Studio's E-I network produced no spike for any setting its controls
   could reach. Both implementations (Rust engine and NumPy fallback)
   multiplied each delta-synapse jump by the step size, so a spike moved the

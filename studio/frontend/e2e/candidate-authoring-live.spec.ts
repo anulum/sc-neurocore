@@ -100,11 +100,13 @@ test("a candidate is imported, edited, checked, reviewed, exported and kept with
 
   // The draft is the workspace's: it is saved with it and comes back with it.
   const name = `candidate-${Date.now()}`;
-  page.once("dialog", (dialog) => { void dialog.accept(name); });
   const saved = page.waitForResponse(
     (response) => new URL(response.url()).pathname === "/api/project/save" && response.ok(),
   );
   await page.getByLabel("Save project", { exact: true }).click();
+  const saveDialog = page.getByRole("dialog", { name: "Save project" });
+  await saveDialog.getByLabel("Project name").fill(name);
+  await saveDialog.getByRole("button", { name: "Save", exact: true }).click();
   await saved;
 
   await page.reload();

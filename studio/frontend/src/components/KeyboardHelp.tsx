@@ -55,10 +55,11 @@ export default function KeyboardHelp() {
       <div style={{
         background: "var(--bg-secondary)", border: "1px solid var(--border)",
         borderRadius: 8, padding: "16px 24px", minWidth: 260,
-      }} onClick={(e) => { e.stopPropagation(); }}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text-primary)" }}>
-          Keyboard Shortcuts
-        </div>
+      }} role="dialog" aria-modal="true" aria-labelledby="keyboard-help-title"
+        onClick={(e) => { e.stopPropagation(); }}>
+        <h2 id="keyboard-help-title" style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text-primary)" }}>
+          Keyboard shortcuts
+        </h2>
         {SHORTCUTS.map(([key, desc]) => (
           <div key={key} style={{
             display: "flex", justifyContent: "space-between", gap: 16,

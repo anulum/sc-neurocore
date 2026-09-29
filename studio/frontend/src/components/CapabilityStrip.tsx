@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { publishedDocsUrl } from "../studioDocs";
 import { useStudioStore } from "../stores/studio";
 import { summarizeCapabilities } from "../capabilityShell";
 
@@ -63,7 +64,8 @@ export default function CapabilityStrip() {
                 <span>{capability.ui_placement}</span>
                 <span>{capability.evidence.join(", ") || "no evidence"}</span>
                 {capability.docs_path && (
-                  <a href={`/${capability.docs_path}`} target="_blank" rel="noreferrer">docs</a>
+                  <a href={publishedDocsUrl(capability.docs_path)} target="_blank" rel="noreferrer"
+                    aria-label={`${capability.title} documentation (opens in a new tab)`}>docs</a>
                 )}
               </div>
               {missing.length > 0 && (

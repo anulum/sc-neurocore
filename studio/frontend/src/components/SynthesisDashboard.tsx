@@ -309,6 +309,7 @@ export default function SynthesisDashboard() {
           FPGA Synthesis
         </span>
         <select
+          aria-label="FPGA target"
           value={synthTarget}
           onChange={(e) => { setSynthTarget(e.target.value); }}
           style={{ fontSize: "var(--fs-body)", padding: "2px 6px" }}

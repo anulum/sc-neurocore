@@ -64,6 +64,8 @@ import {
 } from "./studioGuidedFlowInputs";
 import { Btn, CapabilityUnavailable } from "./appChrome";
 import ViewTabs from "./components/ViewTabs";
+import TextPromptDialog from "./components/TextPromptDialog";
+import type { TextPromptRequest } from "./components/TextPromptDialog";
 import { viewTabGroups, viewTabId, VIEW_PANEL_ID } from "./viewTabs";
 
 /** A project-list control drawn as the text it replaced, but a real button. */
@@ -91,6 +93,8 @@ const projectListControl = {
  */
 export default function App() {
   const [guidedTrainingSkipped, setGuidedTrainingSkipped] = useState(false);
+  const [textPrompt, setTextPrompt] = useState<TextPromptRequest | null>(null);
+  const [textPromptKey, setTextPromptKey] = useState(0);
   const evidenceSession = useEvidenceCartSession();
   const s = useStudioStore();
   const { loadCapabilities, loadAuditStatus, loadAuthSession, loadOperatorStatus, loadPresets } = s;
@@ -327,6 +331,31 @@ export default function App() {
       return Promise.resolve();
     },
   });
+  /**
+   * Open the text prompt for one request; each request starts with an empty field.
+   *
+   * @param request - What to ask for and what to do with the answer.
+   */
+  const askText = (request: TextPromptRequest) => {
+    setTextPromptKey((key) => key + 1);
+    setTextPrompt(request);
+  };
+  const promptSaveProject = () => {
+    askText({
+      title: "Save project", label: "Project name", confirmLabel: "Save",
+      onSubmit: (name) => { void s.saveProjectToServer(name); },
+    });
+  };
+  /**
+   * Bring a left-panel section into view and put the keyboard there.
+   *
+   * @param id - The element to show and focus.
+   */
+  const focusSection = (id: string) => {
+    const target = document.getElementById(id);
+    target?.scrollIntoView({ block: "nearest" });
+    target?.focus();
+  };
   const refreshStudioReadiness = () => {
     void loadCapabilities();
     void loadOperatorStatus();
@@ -477,8 +506,11 @@ export default function App() {
           <div className="header-spacer" />
           <div className="toolbar-group" role="group" aria-label="Import and export">
             <Btn label="Import trace" onClick={() => {
-              const csv = prompt("Paste voltage trace (one value per line, or CSV):");
-              if (csv) void s.importCSV(csv);
+              askText({
+                title: "Import trace", label: "Voltage trace (one value per line, or CSV)",
+                confirmLabel: "Import", multiline: true,
+                onSubmit: (csv) => { void s.importCSV(csv); },
+              });
             }} ghost />
             <Btn label="Share link" onClick={s.shareURL} ghost />
             <Btn label="Reset" onClick={s.resetDefaults} ghost
@@ -508,7 +540,21 @@ export default function App() {
         />
       </header>
 
-      {s.error && <div className="error-banner">{s.error}</div>}
+      {s.capabilitiesError !== null && (
+        // Without the registry every server-backed control is disabled; a small
+        // "capability check failed" with the reason in a tooltip left a reader
+        // looking at a Studio that silently did nothing.
+        <div className="error-banner" role="alert" data-testid="api-unreachable">
+          The Studio could not read its capability registry from the server
+          ({s.capabilitiesError}). Controls that need the server stay disabled
+          until it answers.{" "}
+          <button type="button" className="btn-simulate btn btn--ghost"
+            onClick={() => { void loadCapabilities(); void loadOperatorStatus(); void s.loadModels(); }}>
+            Retry
+          </button>
+        </div>
+      )}
+      {s.error && <div className="error-banner" role="alert">{s.error}</div>}
 
       {s.isSimulating && s.progressMsg && (
         <div style={{
@@ -529,15 +575,16 @@ export default function App() {
       )}
 
       {s.codeOneliner && (
-        <div style={{
+        <button type="button" style={{
+          display: "block", width: "100%", textAlign: "left", border: 0,
           padding: "4px 16px", fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
           background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)",
           color: "var(--text-muted)", cursor: "pointer", overflow: "hidden", whiteSpace: "nowrap",
           textOverflow: "ellipsis",
         }} onClick={() => { void navigator.clipboard.writeText(s.codeOneliner); }}
-          title="Click to copy">
+          title="Copy to the clipboard" aria-label={`Copy the Python one-liner: ${s.codeOneliner}`}>
           {s.codeOneliner}
-        </div>
+        </button>
       )}
 
       <div className="main-content">
@@ -558,7 +605,9 @@ export default function App() {
               onOpenAdmin={() => { activatePanel("admin"); }}
               onOpenCompiler={() => { activatePanel("verilog"); }}
               onOpenSynthesis={() => { activatePanel("synth"); }}
-              onOpenProjects={() => { activatePanel(s.sourceMode === "model" ? "trace" : "ir"); }}
+              onOpenProjects={() => { focusSection("projects-heading"); }}
+              onSaveProject={promptSaveProject}
+              onShowSource={() => { focusSection(s.sourceMode === "model" ? "model-search" : "equations-heading"); }}
               onRunSimulation={() => {
                 if (s.isSimulating || panelUnavailable("trace")) {
                   return;
@@ -581,7 +630,7 @@ export default function App() {
           {s.sourceMode === "model" ? (
             <>
               <div className="panel-section">
-                <div className="panel-header">Model Library ({s.models.length})</div>
+                <h2 className="panel-header">Model library ({s.models.length})</h2>
                 <ModelBrowser />
               </div>
               <MultiModelPicker />
@@ -589,34 +638,31 @@ export default function App() {
             </>
           ) : (
             <div className="panel-section">
-              <div className="panel-header">Equations</div>
+              <h2 className="panel-header" id="equations-heading" tabIndex={-1}>Equations</h2>
               <EquationEditor />
             </div>
           )}
 
           {s.presets.length > 0 && (
             <div className="panel-section">
-              <div className="panel-header">Experiments ({s.presets.length})</div>
+              <h2 className="panel-header">Experiments ({s.presets.length})</h2>
               <div style={{ maxHeight: 100, overflowY: "auto" }}>
                 {s.presets.map((p) => (
-                  <div key={p.id} onClick={() => { void s.loadPreset(p.id); }} style={{
-                    padding: "2px 6px", fontSize: "var(--fs-body)", cursor: "pointer",
-                    borderRadius: 3, color: "var(--text-secondary)",
-                  }} title={p.description}>
+                  <button type="button" key={p.id} onClick={() => { void s.loadPreset(p.id); }} style={{
+                    ...projectListControl, display: "block", width: "100%",
+                    padding: "2px 6px", borderRadius: 3,
+                  }} title={p.description} aria-label={`Load experiment ${p.title}`}>
                     {p.title}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
           <div className="panel-section">
-            <div className="panel-header">Projects</div>
+            <h2 className="panel-header" id="projects-heading" tabIndex={-1}>Projects</h2>
             <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-              <button aria-label="Save project" onClick={() => {
-                const name = prompt("Project name:");
-                if (name) void s.saveProjectToServer(name);
-              }} style={{
+              <button aria-label="Save project" onClick={promptSaveProject} style={{
                 fontSize: "var(--fs-body)", padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
@@ -685,11 +731,13 @@ export default function App() {
           </div>
 
           <div className="panel-section">
-            <div className="panel-header">Sessions</div>
+            <h2 className="panel-header">Sessions</h2>
             <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
               <button aria-label="Save session" onClick={() => {
-                const name = prompt("Session name:");
-                if (name) s.saveSession(name);
+                askText({
+                  title: "Save session", label: "Session name", confirmLabel: "Save",
+                  onSubmit: (name) => { s.saveSession(name); },
+                });
               }} style={{
                 fontSize: "var(--fs-body)", padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--control-border)",
@@ -703,9 +751,14 @@ export default function App() {
                     display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)",
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
-                    <span style={{ cursor: "pointer" }} onClick={() => { s.loadSession(ss.name); }}>{ss.name}</span>
-                    <span style={{ cursor: "pointer", color: "var(--text-muted)" }}
-                      onClick={() => { s.deleteSession(ss.name); }}>x</span>
+                    {/* Buttons, as for projects: a session is opened and deleted
+                        by keyboard too, and each control names its session. */}
+                    <button type="button" style={projectListControl}
+                      aria-label={`Open session ${ss.name}`}
+                      onClick={() => { s.loadSession(ss.name); }}>{ss.name}</button>
+                    <button type="button" style={{ ...projectListControl, color: "var(--text-muted)" }}
+                      aria-label={`Delete session ${ss.name}`}
+                      onClick={() => { s.deleteSession(ss.name); }}>x</button>
                   </div>
                 ))}
               </div>
@@ -713,7 +766,7 @@ export default function App() {
           </div>
 
           <div className="panel-section">
-            <div className="panel-header">Info</div>
+            <h2 className="panel-header">Info</h2>
             <ModelInfo />
             {pattern && (
               <div style={{
@@ -735,7 +788,7 @@ export default function App() {
 
           {s.result && (
             <div className="panel-section">
-              <div className="panel-header">Spike Statistics</div>
+              <h2 className="panel-header">Spike statistics</h2>
               <SpikeStats />
             </div>
           )}
@@ -800,6 +853,8 @@ export default function App() {
       </div>
       <StatusBar />
       <KeyboardHelp />
+      <TextPromptDialog request={textPrompt} requestKey={textPromptKey}
+        onClose={() => { setTextPrompt(null); }} />
       <OnboardingOverlay modelCount={modelCount} />
     </div>
   );

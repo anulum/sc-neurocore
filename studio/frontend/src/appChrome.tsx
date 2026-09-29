@@ -15,6 +15,7 @@
  */
 
 import type { PanelCapabilityState } from "./capabilityShell";
+import { publishedDocsUrl } from "./studioDocs";
 
 /**
  * One action button, in one of three weights.
@@ -89,8 +90,8 @@ export function CapabilityUnavailable({ state }: { state: PanelCapabilityState }
       <div className="capability-blocked-meta">
         {state.evidence.length > 0 && <span>Evidence: {state.evidence.join(", ")}</span>}
         {state.docsPath && (
-          <a href={`/${state.docsPath}`} target="_blank" rel="noreferrer">
-            Documentation
+          <a href={publishedDocsUrl(state.docsPath)} target="_blank" rel="noreferrer">
+            {state.title} documentation (opens in a new tab)
           </a>
         )}
       </div>

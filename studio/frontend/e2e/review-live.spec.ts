@@ -25,11 +25,13 @@ test("a saved revision is reviewed, replied to, and the thread survives reopenin
   await expect(page.getByRole("region", { name: "Review" })).toContainText("Save or open a project");
 
   const name = `review-${Date.now()}`;
-  page.once("dialog", (dialog) => { void dialog.accept(name); });
   const saved = page.waitForResponse(
     (response) => new URL(response.url()).pathname === "/api/project/save" && response.ok(),
   );
   await page.getByLabel("Save project", { exact: true }).click();
+  const saveDialog = page.getByRole("dialog", { name: "Save project" });
+  await saveDialog.getByLabel("Project name").fill(name);
+  await saveDialog.getByRole("button", { name: "Save", exact: true }).click();
   await saved;
 
   const review = page.getByRole("region", { name: "Review" });

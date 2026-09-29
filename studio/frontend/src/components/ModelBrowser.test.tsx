@@ -59,7 +59,7 @@ vi.mock("../stores/studio", () => ({
         description: "LIF",
         maturity: "validated",
         evidence_kind: "publication",
-        provenance: {},
+        provenance: { doi: "10.1000/lif" },
         state_var_names: ["v"],
         n_params: 2,
       },
@@ -85,7 +85,7 @@ vi.mock("../stores/studio", () => ({
         n_params: 1,
       },
     ],
-    selectedModelName: "",
+    selectedModelName: "LIFNeuron",
     modelFilter: "",
     loadModels: vi.fn(),
     selectModel: vi.fn(),
@@ -225,7 +225,21 @@ describe("ModelBrowser", () => {
     const failed = renderToStaticMarkup(<ModelBrowser />);
     expect(failed).toContain("data-testid=\"model-scan-job-error\"");
     expect(failed).toContain("budget_exceeded");
-    expect(failed).not.toContain("class");
+    // No scan evidence (its "class" label) is shown for a failed scan.
+    expect(failed).not.toMatch(/>class</);
+  });
+
+  it("lets a model be chosen by keyboard and names its source link", async () => {
+    const { default: ModelBrowser } = await import("./ModelBrowser");
+    const html = renderToStaticMarkup(<ModelBrowser />);
+    // Each row is a list item whose name is a real button; the chosen one is current.
+    expect(html).toContain("role=\"list\" aria-label=\"IF models\"");
+    expect(html).toMatch(/<button type="button" class="model-row-select" aria-current="true"[^>]*>(?:(?!<\/button>).)*LIF/s);
+    expect(html).toMatch(/<button type="button" class="model-row-select" style="[^"]*" title="Theta">/);
+    // The DOI link says which model's source it is, not only "DOI".
+    expect(html).toContain("aria-label=\"DOI 10.1000/lif (LIFNeuron source)\"");
+    // A link is never nested inside the selecting button.
+    expect(html).not.toMatch(/<button[^>]*model-row-select(?:(?!<\/button>).)*<a /s);
   });
 
   it("groups every model by family before the catalogue query has answered", () => {

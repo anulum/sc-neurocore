@@ -63,9 +63,11 @@ test("event input reaches real training, checkpoint export and workspace reopeni
   await page.getByRole("button", { name: "Apply event input", exact: true }).click();
   await expect(warmStart).toBeEnabled();
   const name = `event-training-${Date.now()}`;
-  page.once("dialog", (dialog) => { void dialog.accept(name); });
   const saved = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/project/save");
   await page.getByLabel("Save project", { exact: true }).click();
+  const saveDialog = page.getByRole("dialog", { name: "Save project" });
+  await saveDialog.getByLabel("Project name").fill(name);
+  await saveDialog.getByRole("button", { name: "Save", exact: true }).click();
   expect((await saved).ok()).toBe(true);
   await page.reload();
   await page.getByRole("button", { name: "Refresh projects", exact: true }).click();

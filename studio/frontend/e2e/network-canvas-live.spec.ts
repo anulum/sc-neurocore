@@ -461,12 +461,15 @@ test("a network built, edited, deleted from and undone by keyboard survives save
 
   // Save through the keyboard; the name is asked for in a dialog.
   const name = `keyboard-${Date.now()}`;
-  page.once("dialog", (dialog) => { void dialog.accept(name); });
   const saved = page.waitForResponse(
     (response) => new URL(response.url()).pathname.startsWith("/api/project/save") && response.ok(),
   );
   // The project list's own Save; the operator workbench offers another by the same name.
   await pressWithKeyboard(page, page.getByLabel("Save project", { exact: true }));
+  // The name field has the focus; typing and Enter save without the pointer.
+  await expect(page.getByRole("dialog", { name: "Save project" }).getByLabel("Project name")).toBeFocused();
+  await page.keyboard.type(name);
+  await page.keyboard.press("Enter");
   await saved;
 
   await page.reload();

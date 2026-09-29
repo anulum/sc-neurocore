@@ -39,6 +39,7 @@ export default function ComparePanel() {
       <div className="panel-header">Compare</div>
       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
         <select
+          aria-label="Model B"
           value={compareModel}
           onChange={(e) => { setCompareModel(e.target.value); }}
           style={{ flex: 1, fontSize: "var(--fs-body)", padding: "2px 4px" }}

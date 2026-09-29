@@ -254,6 +254,19 @@ function FilterChip({
     );
 }
 
+/** A model row's selecting button, drawn as the text it replaced. */
+const MODEL_ROW_BUTTON = {
+    flex: 1,
+    minWidth: 0,
+    padding: 0,
+    border: 0,
+    background: "transparent",
+    color: "inherit",
+    font: "inherit",
+    textAlign: "left" as const,
+    cursor: "pointer",
+};
+
 /**
  * The catalogue panel: search, facets, scan, and the model list.
  *
@@ -327,7 +340,9 @@ export default function ModelBrowser() {
         <div>
             <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                 <input
-                    type="text"
+                    type="search"
+                    id="model-search"
+                    aria-label="Search models"
                     placeholder="Search models..."
                     value={modelFilter}
                     onChange={(e) => { setModelFilter(e.target.value); }}
@@ -536,9 +551,12 @@ export default function ModelBrowser() {
                         marginBottom: 4,
                     }}
                 >
-                    <span
+                    <button
+                        type="button"
+                        aria-pressed={!patternFilter}
                         onClick={() => { setPatternFilter(""); }}
                         style={{
+                            border: 0,
                             fontSize: "var(--fs-meta)",
                             padding: "1px 5px",
                             borderRadius: 3,
@@ -552,13 +570,16 @@ export default function ModelBrowser() {
                         }}
                     >
                         all
-                    </span>
+                    </button>
                     {patterns.map((p) => (
-                        <span
+                        <button
+                            type="button"
                             key={p}
+                            aria-pressed={p === patternFilter}
                             onClick={() => { setPatternFilter(p === patternFilter ? "" : p); }
                             }
                             style={{
+                                border: 0,
                                 fontSize: "var(--fs-meta)",
                                 padding: "1px 5px",
                                 borderRadius: 3,
@@ -575,7 +596,7 @@ export default function ModelBrowser() {
                             }}
                         >
                             {p}
-                        </span>
+                        </button>
                     ))}
                 </div>
             )}
@@ -604,33 +625,41 @@ export default function ModelBrowser() {
                             >
                                 {cat} ({ms.length})
                             </div>
+                            <div role="list" aria-label={`${cat} models`}>
                             {ms.map((m) => {
                                 const beh = behaviors[m.name];
+                                const selected = m.name === selectedModelName;
                                 return (
                                     <div
                                         key={m.name}
-                                        onClick={() => { void selectModel(m.name); }}
-                                        title={m.description || m.name}
+                                        role="listitem"
                                         style={{
                                             padding: "2px 8px",
                                             fontSize: "var(--fs-body)",
                                             fontFamily: "var(--font-mono)",
-                                            cursor: "pointer",
                                             borderRadius: 3,
-                                            background:
-                                                m.name === selectedModelName
-                                                    ? "var(--accent-dim)"
-                                                    : "transparent",
-                                            color:
-                                                m.name === selectedModelName
-                                                    ? "var(--accent)"
-                                                    : "var(--text-secondary)",
+                                            background: selected
+                                                ? "var(--accent-dim)"
+                                                : "transparent",
+                                            color: selected
+                                                ? "var(--accent)"
+                                                : "var(--text-secondary)",
                                             display: "flex",
                                             justifyContent: "space-between",
                                             alignItems: "center",
                                         }}
                                     >
-                                        <span style={{ flex: 1, minWidth: 0 }}>
+                                        {/* A real button: a model is chosen by keyboard too. The
+                                            row's badges and DOI link sit beside it, because a
+                                            link cannot be nested inside a button. */}
+                                        <button
+                                            type="button"
+                                            className="model-row-select"
+                                            aria-current={selected ? "true" : undefined}
+                                            style={MODEL_ROW_BUTTON}
+                                            title={m.description || m.name}
+                                            onClick={() => { void selectModel(m.name); }}
+                                        >
                                             <span>
                                                 {m.name
                                                     .replace("Neuron", "")
@@ -674,7 +703,7 @@ export default function ModelBrowser() {
                                                 {m.terminal_reason ||
                                                     "no terminal silicon target declared"}
                                             </span>
-                                        </span>
+                                        </button>
                                         <span
                                             style={{
                                                 display: "flex",
@@ -701,8 +730,7 @@ export default function ModelBrowser() {
                                                     href={`https://doi.org/${m.provenance.doi}`}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    onClick={(e) => { e.stopPropagation(); }
-                                                    }
+                                                    aria-label={`DOI ${m.provenance.doi} (${m.name} source)`}
                                                     title={`DOI ${m.provenance.doi}`}
                                                     style={{
                                                         fontSize: "var(--fs-meta)",
@@ -773,19 +801,27 @@ export default function ModelBrowser() {
                                                     {beh.pattern}
                                                 </span>
                                             )}
+                                            {/* The count, not the names: a comma-joined list of
+                                                up to 26 state variables cannot wrap and pushed
+                                                the whole panel sideways. The names stay in the title. */}
                                             <span
+                                                title={`state variables: ${m.state_var_names.join(", ")}`}
                                                 style={{
                                                     color: "var(--text-muted)",
                                                     fontSize: "var(--fs-meta)",
+                                                    whiteSpace: "nowrap",
                                                 }}
                                             >
-                                                {m.state_var_names.join(",")}
-                                                &middot;{m.n_params}p
+                                                {m.state_var_names.length}{" "}
+                                                {m.state_var_names.length === 1 ? "state" : "states"}
+                                                {" · "}{m.n_params}{" "}
+                                                {m.n_params === 1 ? "param" : "params"}
                                             </span>
                                         </span>
                                     </div>
                                 );
                             })}
+                            </div>
                         </div>
                     ))}
             </div>
