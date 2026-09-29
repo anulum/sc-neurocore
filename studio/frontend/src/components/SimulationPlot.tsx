@@ -47,7 +47,8 @@ import { drawTraceView } from "../plots/traceView";
 import { panelTitle } from "../capabilityShell";
 import { emptyViewDescription, emptyViewGuidance } from "../viewEmptyState";
 import type { EmptyViewAction } from "../viewEmptyState";
-import { formatReading, multiModelDescription, plotDescription, traceDataRows } from "../plotAccessibility";
+import { plotDescription } from "../plotAccessibility";
+import { describeView } from "../viewDescriptions";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 /** Whichever analysis result the active tab is showing, if any. */
@@ -128,6 +129,13 @@ export default function SimulationPlot() {
     hasMulti: multiResults !== null && multiResults.length > 0,
     hasNetwork: networkResult !== null,
   });
+  // What the view draws, in words and as a table: the canvas's accessible
+  // name and the Data table both read it, so neither describes the trace
+  // while the canvas shows something else.
+  const viewDescription = emptyGuidance !== null ? null : describeView(activeTab, {
+    result, fiResult, bifResult, heatmapResult, sensResult, staResult, freqResult, charResult,
+    compareResult, networkResult, nullclineResult, precResult, multiResults,
+  }, traceShown);
   const emptyActions: Record<EmptyViewAction, () => void> = {
     characterize: () => { store.runCharacterize(); },
     freq: () => { void store.runFreqResponse(); },
@@ -415,29 +423,24 @@ export default function SimulationPlot() {
           position: "absolute", right: 8, bottom: 36, zIndex: 2, maxHeight: "60%", overflow: "auto",
           background: "var(--bg-secondary)", border: "1px solid var(--border)", padding: 6, fontSize: "var(--fs-body)",
         }}>
-          {result === null ? (
+          {viewDescription === null ? (
             <p style={{ margin: 0 }}>Nothing has run yet.</p>
           ) : (
             <table style={{ borderCollapse: "collapse" }}>
-              <caption style={{ captionSide: "top", textAlign: "left" }}>
-                Trace data: {result.n_steps} steps of {formatReading(result.dt)} ms, {result.spike_count}{" "}
-                {result.spike_count === 1 ? "spike" : "spikes"}
-              </caption>
+              <caption style={{ captionSide: "top", textAlign: "left" }}>{viewDescription.table.caption}</caption>
               <thead>
                 <tr>
-                  {["Variable", "Samples shown", "Minimum", "Maximum", "Final"].map((column) => (
+                  {viewDescription.table.columns.map((column) => (
                     <th key={column} scope="col" style={{ textAlign: "left", padding: "1px 6px" }}>{column}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {traceDataRows(result).map((row) => (
-                  <tr key={row.variable}>
-                    <th scope="row" style={{ textAlign: "left", padding: "1px 6px" }}>{row.variable}</th>
-                    <td style={{ padding: "1px 6px" }}>{row.samples}</td>
-                    <td style={{ padding: "1px 6px" }}>{formatReading(row.minimum)}</td>
-                    <td style={{ padding: "1px 6px" }}>{formatReading(row.maximum)}</td>
-                    <td style={{ padding: "1px 6px" }}>{formatReading(row.final)}</td>
+                {viewDescription.table.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((value, columnIndex) => columnIndex === 0
+                      ? <th key={columnIndex} scope="row" style={{ textAlign: "left", padding: "1px 6px" }}>{value}</th>
+                      : <td key={columnIndex} style={{ padding: "1px 6px" }}>{value}</td>)}
                   </tr>
                 ))}
               </tbody>
@@ -449,14 +452,7 @@ export default function SimulationPlot() {
         role="img"
         aria-label={emptyGuidance !== null
           ? emptyViewDescription(activeTab, emptyGuidance)
-          : plotDescription(
-            panelTitle(activeTab),
-            result,
-            traceShown,
-            activeTab === "multi" && multiResults !== null && multiResults.length > 0
-              ? multiModelDescription(multiResults)
-              : null,
-          )}
+          : plotDescription(panelTitle(activeTab), result, traceShown, viewDescription?.sentence ?? null)}
         onClick={handleCanvasClick}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}

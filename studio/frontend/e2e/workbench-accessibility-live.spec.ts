@@ -65,6 +65,23 @@ test("the plot names itself with the run it draws, and offers it as a table", as
   ]);
 });
 
+test("an analysis view names itself with its own numbers and tables them, not the trace", async ({ page }) => {
+  await openWorkbench(page);
+  await page.getByRole("tab", { name: "f-I curve", exact: true }).click();
+  await page.getByTestId("analysis-job-control-submit").click();
+  // Every non-trace view used to be named "... Its values are in the CSV and
+  // JSON exports", which hold only the trace.
+  const plot = page.getByRole("img", { name: /^f-I curve over I from / });
+  await expect(plot).toBeVisible({ timeout: 120_000 });
+  await expect(plot).toHaveAttribute("aria-label", /\d+ points: .*Currents are in the model's own units\.$/);
+
+  await page.getByRole("button", { name: "Data table", exact: true }).click();
+  const table = page.getByRole("table", { name: "f-I curve: firing rate at each constant current" });
+  await expect(table).toBeVisible();
+  expect(await table.getByRole("columnheader").allInnerTexts()).toEqual(["Current", "Rate (Hz)"]);
+  expect(await table.getByRole("rowheader").count()).toBeGreaterThan(1);
+});
+
 test("at twice the zoom the page does not scroll sideways", async ({ page }) => {
   // 200 % zoom on a 1280-pixel window leaves 640 CSS pixels.
   await page.setViewportSize({ width: 640, height: 400 });

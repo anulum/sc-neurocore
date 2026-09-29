@@ -77,6 +77,31 @@ describe("validateAnalysisJobResult by kind", () => {
     expect(validateAnalysisJobResult(sensitivity, "sensitivity").ok).toBe(true);
   });
 
+  it("keeps the server's classification of each swept point, its state and its drive", () => {
+    const classified = {
+      ...bifurcation,
+      attractor_kinds: ["fixed_point", "extrema", "insufficient_samples"],
+      variable: "v",
+      protocol: "constant",
+    };
+    const parsed = validateAnalysisJobResult(classified, "bifurcation");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.ok && parsed.value).toMatchObject({
+      attractor_kinds: ["fixed_point", "extrema", "insufficient_samples"],
+      variable: "v",
+      protocol: "constant",
+    });
+  });
+
+  it("refuses a classification of the wrong length or an unknown kind", () => {
+    expect(validateAnalysisJobResult({ ...bifurcation, attractor_kinds: ["extrema"] }, "bifurcation"))
+      .toEqual({ ok: false, error: "bifurcation_attractor_kinds_invalid" });
+    expect(validateAnalysisJobResult({ ...bifurcation, attractor_kinds: ["extrema", "chaos", "extrema"] }, "bifurcation"))
+      .toEqual({ ok: false, error: "bifurcation_attractor_kinds_invalid" });
+    expect(validateAnalysisJobResult({ ...bifurcation, variable: 3 }, "bifurcation"))
+      .toEqual({ ok: false, error: "bifurcation_variable_invalid" });
+  });
+
   it("rejects malformed nested result fields fail-closed", () => {
     expect(
       validateAnalysisJobResult(

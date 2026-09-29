@@ -27,6 +27,7 @@ import type {
   AnalysisJobKind,
   AnalysisJobResult,
   AnalysisResultMetadata,
+  AttractorKind,
   BifurcationResponse,
   FICurveResponse,
   HeatmapResponse,
@@ -245,6 +246,24 @@ function parseBifurcation(
   if (attractors.length !== paramValues.value.length) {
     return { ok: false, error: "bifurcation_length_mismatch" };
   }
+  // The server classifies every point and names the state and the drive.
+  // These were dropped here, so the view could not say which points settle
+  // and which oscillate, nor what was swept under which drive.
+  let attractorKinds: AttractorKind[] | undefined;
+  if (body.attractor_kinds !== undefined) {
+    if (!Array.isArray(body.attractor_kinds)
+      || body.attractor_kinds.length !== paramValues.value.length
+      || !body.attractor_kinds.every((kind): kind is AttractorKind => ATTRACTOR_KINDS.has(kind as AttractorKind))) {
+      return { ok: false, error: "bifurcation_attractor_kinds_invalid" };
+    }
+    attractorKinds = body.attractor_kinds;
+  }
+  if (body.variable !== undefined && body.variable !== null && !isNonEmptyString(body.variable)) {
+    return { ok: false, error: "bifurcation_variable_invalid" };
+  }
+  if (body.protocol !== undefined && !isNonEmptyString(body.protocol)) {
+    return { ok: false, error: "bifurcation_protocol_invalid" };
+  }
   return {
     ok: true,
     value: {
@@ -252,9 +271,15 @@ function parseBifurcation(
       attractors,
       param_name: body.param_name,
       param_values: paramValues.value,
+      ...(attractorKinds === undefined ? {} : { attractor_kinds: attractorKinds }),
+      ...(typeof body.variable === "string" ? { variable: body.variable } : {}),
+      ...(typeof body.protocol === "string" ? { protocol: body.protocol } : {}),
     },
   };
 }
+
+/** The classifications the server gives a swept point. */
+const ATTRACTOR_KINDS: ReadonlySet<AttractorKind> = new Set(["extrema", "fixed_point", "insufficient_samples"]);
 
 /**
  * Read a completed two-parameter heatmap result.
