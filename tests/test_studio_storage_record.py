@@ -357,3 +357,39 @@ def test_malformed_operation_closes_before_policy(
     assert len(errors) == 1
     assert isinstance(errors[0], ValueError)
     assert sink.events == ()
+
+
+def test_laboratory_route_hides_another_owners_record(ledger: StudioJobLedger) -> None:
+    """A fits-route read of a record the requester does not own reports it as absent."""
+    payload = _request()
+    payload["authorized_route"] = "/api/fits/jobs/{job_id}"
+    response, errors = _exchange(ledger, payload, InMemoryAuditSink())
+    assert errors == []
+    assert response is not None
+    envelope = json.loads(response)
+    assert envelope["status"] == "not_found" and envelope["record"] is None
+
+
+def test_laboratory_route_returns_the_requesters_own_fit(ledger: StudioJobLedger) -> None:
+    """The owner of a fit job reads it through the fits route."""
+    job_id = "sj_0000000000000003"
+    ledger.create(
+        job_id=job_id,
+        kind="analysis",
+        actor="operátor",
+        workspace="default",
+        request_id=None,
+        idempotency_key=None,
+        experiment_sha256=None,
+        admission={"laboratory_task": "fit"},
+        execution_model="process",
+    )
+    payload = _request()
+    payload["job_id"] = job_id
+    payload["authorized_route"] = "/api/fits/jobs/{job_id}"
+    response, errors = _exchange(ledger, payload, InMemoryAuditSink())
+    assert errors == []
+    assert response is not None
+    envelope = json.loads(response)
+    assert envelope["status"] == "ok"
+    assert decode_job_snapshot(envelope["record"]).job_id == job_id

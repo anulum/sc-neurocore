@@ -16,7 +16,7 @@ class to a fresh object. "Restoring" with a second ``importlib.reload`` leaves t
 identities in place — so any module that imported the original classes *by value* at
 collection time (e.g. ``from mod import Thing``) then fails ``isinstance(x, Thing)`` against
 objects the reloaded code builds, because the producer resolves ``Thing`` from the mutated
-module namespace. Under CI's ``pytest -n auto --dist loadfile`` the polluter and victim land
+module namespace. Under a ``pytest -n <workers> --dist loadfile`` run the polluter and victim land
 on different xdist workers and never collide; a serial ``pytest tests/`` (or any co-located
 run) fails deterministically. Snapshotting the namespace and putting the *original* objects
 back on teardown keeps the canonical identities other modules hold valid.

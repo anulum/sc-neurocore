@@ -17,7 +17,7 @@ individual test remembered to restore.
 function and constant to a fresh object. Any consumer that imported a symbol *by value*
 (``from mod import Thing``) keeps the original object, so after an un-restored reload
 ``mod.Thing is not Thing``; an ``isinstance`` / identity check against the by-value import then
-fails for objects the reloaded code builds. Under CI's ``pytest -n auto --dist loadfile`` the
+fails for objects the reloaded code builds. Under a ``pytest -n <workers> --dist loadfile`` run the
 polluting reload and its victim land on different workers and never collide, but a serial run
 (or any co-located ordering) fails deterministically — a latent nondeterministic red. Note that
 pytest's ``--import-mode=importlib`` does **not** help: it changes how *test* modules are

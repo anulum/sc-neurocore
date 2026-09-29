@@ -14,7 +14,71 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 534
+expected_file_count = 550
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_namespace.py"
+rationale = "Read-only descriptor-relative service namespace inspection with explicit lifecycle, ownership prerequisites and isolation exclusions."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_configuration.py"
+rationale = "Explicit distinct-role and disjoint-path boundary intent with strict limits, no persistent effects and no readiness claim."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_record_client.py"
+rationale = "Peer-verified bounded record exchange with complete correlated snapshot validation and explicit no-fallback lifecycle."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_record.py"
+rationale = "One-shot peer-verified record lookup through existing policy and ledger authorities; deployment exclusions explicit."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_record_protocol.py"
+rationale = "Exact versioned read request and delegated claim schema with duplicate-key and invalid-JSON refusal."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_peer.py"
+rationale = "Kernel connection identity checked before bounded framing, with explicit application authorization exclusions."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/analysis_jobs.py"
+rationale = "Named analysis job validation, scientific dispatch and HTTP trace custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/simulation.py"
+rationale = "Simulation router public contracts and analysis request trace forwarding."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/catalogue.py"
+rationale = "Catalogue routing, bounded scans and persisted request trace contract."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_transport.py"
+rationale = "Bounded Unix byte framing with explicit deadlines, socket ownership and error contracts; no authentication claim."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/evidence_jobs.py"
+rationale = "Bounded process bundle ingress, lazy verified seeds and complete writer input contract."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/evidence_limits.py"
+rationale = "Explicit aggregate evidence byte budget and fail-closed environment parsing."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_snapshot.py"
+rationale = "Complete public record snapshot decoding without ledger access or lost custody fields."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/training_weight_jobs.py"
+rationale = "Training restore worker seed, verification, loader and evidence boundaries."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/audit_archive_jobs.py"
+rationale = "Named quarantine archive and restore process input and artifact contracts."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/model_scan_jobs.py"
+rationale = "Named full-catalogue scan task input validation and cancellation contract."
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"

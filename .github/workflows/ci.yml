@@ -516,6 +516,30 @@ jobs:
             --cov --cov-config=tests/studio_jobs.coveragerc \
             --cov-branch --cov-report=term-missing
 
+      - name: Studio evidence input limits exact coverage
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-studio-evidence-limits python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/studio/platform/evidence_limits.py' \
+            -m pytest tests/test_studio_evidence_limits.py -q
+          COVERAGE_FILE=.coverage-studio-evidence-limits python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/studio/platform/evidence_limits.py' \
+            --fail-under=100 --show-missing
+
+      - name: Studio evidence process exact coverage
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-studio-evidence-process python -m pytest \
+            tests/test_studio_evidence_seed_faults.py \
+            tests/test_studio_evidence_process.py \
+            tests/test_studio_evidence_bundle_routes.py -q \
+            --cov --cov-config=tests/studio_evidence_process.coveragerc \
+            --cov-branch --cov-report=term-missing
+
       - name: Nagumo-Sato and SC adaptive-map exact coverage and backend parity
         if: matrix.primary
         shell: bash
