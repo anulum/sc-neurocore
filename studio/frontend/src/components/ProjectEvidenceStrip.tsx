@@ -57,7 +57,7 @@ export default function ProjectEvidenceStrip({
           disabled={loading}
           onClick={onExportBundle}
           style={{
-            fontSize: 10,
+            fontSize: "var(--fs-body)",
             padding: "2px 6px",
             background: "var(--bg-tertiary)",
             color: "var(--text-secondary)",
@@ -70,17 +70,17 @@ export default function ProjectEvidenceStrip({
           Bundle
         </button>
         {exportBundleId !== null && (
-          <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: 9 }}>
+          <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "var(--fs-meta)" }}>
             {exportBundleId}
           </span>
         )}
         {exportJobId !== null && (
-          <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: 9 }}>
+          <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "var(--fs-meta)" }}>
             {exportJobId}
           </span>
         )}
         {exportError !== null && (
-          <span style={{ color: "#ff5252", fontSize: 9 }}>{exportError}</span>
+          <span style={{ color: "#ff5252", fontSize: "var(--fs-meta)" }}>{exportError}</span>
         )}
       </div>
       <EvidenceBundleArtifactList

@@ -80,7 +80,7 @@ export function drawPhasePortraitView(ctx: CanvasRenderingContext2D,
   const sy = frame.top + ph - ((at(yData, 0) - yMin) / (yMax - yMin)) * ph;
   ctx.fillStyle = "#81c784";
   ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText(at(vars, 1), frame.left + 4, frame.top + 12);
 
   // Nullcline overlay
@@ -102,7 +102,7 @@ export function drawPhasePortraitView(ctx: CanvasRenderingContext2D,
         }
       }
     }
-    ctx.font = "9px monospace"; ctx.textAlign = "right";
+    ctx.font = "11px monospace"; ctx.textAlign = "right";
     ctx.fillStyle = "#ff5252"; ctx.fillText(`d${vars[0]}/dt=0`, frame.left + frame.plotWidth - 4, frame.top + ph - 16);
     ctx.fillStyle = "#81c784"; ctx.fillText(`d${vars[1]}/dt=0`, frame.left + frame.plotWidth - 4, frame.top + ph - 4);
     // Invalid part of the field (domain errors, overflow, non-finite values): not zero.
@@ -150,7 +150,7 @@ export function drawCharacterizeView(ctx: CanvasRenderingContext2D, frame: PlotF
   y += 8;
   ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 11px sans-serif";
   ctx.fillText("State Variable Ranges", col1, y); y += lineH;
-  ctx.font = "10px monospace"; ctx.fillStyle = "#8b949e";
+  ctx.font = "11px monospace"; ctx.fillStyle = "#8b949e";
   for (const [v, r] of Object.entries(charResult.state_ranges)) {
     ctx.fillText(`${v}: [${r.min}, ${r.max}] mean=${r.mean}`, col1, y); y += lineH - 2;
   }
@@ -158,7 +158,7 @@ export function drawCharacterizeView(ctx: CanvasRenderingContext2D, frame: PlotF
   y += 8;
   ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 11px sans-serif";
   ctx.fillText("Top Sensitive Parameters", col1, y); y += lineH;
-  ctx.font = "10px monospace"; ctx.fillStyle = "#8b949e";
+  ctx.font = "11px monospace"; ctx.fillStyle = "#8b949e";
   for (const s of charResult.top_sensitivities) {
     ctx.fillText(`${s.param}: ±${s.rate_change} Hz`, col1, y); y += lineH - 2;
   }
@@ -172,7 +172,7 @@ export function drawCharacterizeView(ctx: CanvasRenderingContext2D, frame: PlotF
   const curMax = curs[curs.length - 1] ?? curMin + 1;
   drawAxes(ctx, fiX, fiY, fiW, fiH, curMin, curMax, 0, rMax * 1.1, "I (nA)");
   drawLine(ctx, fiX, fiY, fiW, fiH, curs, rts, curMin, curMax, 0, rMax * 1.1, "#4fc3f7", 2);
-  ctx.fillStyle = "#4fc3f7"; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = "#4fc3f7"; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText("f-I curve", fiX + 4, fiY + 12);
 }
 
@@ -202,7 +202,7 @@ export function drawNetworkView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
     ctx.fillStyle = n < networkResult.n_exc ? "#4fc3f7" : "#ff5252";
     ctx.fillRect(x, y, 1.5, 1.5);
   }
-  ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = "#4fc3f7"; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText(`E (${networkResult.n_exc})`, frame.left + 4, frame.top + 10);
   ctx.fillStyle = "#ff5252";
   ctx.fillText(`I (${networkResult.n_inh})`, frame.left + 60, frame.top + 10);
@@ -219,7 +219,7 @@ export function drawNetworkView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
     drawAxes(ctx, frame.left, rateY, frame.plotWidth, rateH, rtMin, rtMax, 0, rMax * 1.1, "ms");
     drawLine(ctx, frame.left, rateY, frame.plotWidth, rateH, rt, networkResult.exc_rates, rtMin, rtMax, 0, rMax * 1.1, "#4fc3f7", 1.5);
     drawLine(ctx, frame.left, rateY, frame.plotWidth, rateH, rt, networkResult.inh_rates, rtMin, rtMax, 0, rMax * 1.1, "#ff5252", 1.5);
-    ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "left";
+    ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
     ctx.fillText(`E: ${networkResult.mean_exc_rate}Hz  I: ${networkResult.mean_inh_rate}Hz`, frame.left + 4, rateY + 10);
   }
 }

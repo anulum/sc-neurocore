@@ -11,7 +11,7 @@ import { useState } from "react";
 import type { PopulationNode } from "../api/client";
 
 const control: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: "var(--fs-body)",
   fontFamily: "var(--font-mono)",
   padding: "3px 4px",
   background: "var(--bg-tertiary)",
@@ -52,7 +52,7 @@ export default function NetworkGraphConnect({
 
   if (populations.length < 2) {
     return (
-      <p data-testid="graph-connect-empty" style={{ fontSize: 10, color: "var(--text-muted)" }}>
+      <p data-testid="graph-connect-empty" style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)" }}>
         Add a second population to connect one.
       </p>
     );
@@ -61,7 +61,7 @@ export default function NetworkGraphConnect({
   const ready = sourceId !== "" && targetId !== "";
   return (
     <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 6 }}>
-      <label style={{ fontSize: 10 }}>
+      <label style={{ fontSize: "var(--fs-body)" }}>
         Source{" "}
         <select
           aria-label="Projection source population"
@@ -75,7 +75,7 @@ export default function NetworkGraphConnect({
           ))}
         </select>
       </label>
-      <label style={{ fontSize: 10 }}>
+      <label style={{ fontSize: "var(--fs-body)" }}>
         Target{" "}
         <select
           aria-label="Projection target population"

@@ -58,7 +58,7 @@ export default function EvidenceTierBadge({
     <span
       title={`Tier ${tier} — ${meta.label}`}
       style={{
-        fontSize: 8,
+        fontSize: "var(--fs-meta)",
         padding: "0 4px",
         borderRadius: 2,
         fontWeight: 700,
@@ -116,7 +116,7 @@ export function DualAxisBadge({
       <span
         title={sTitle}
         style={{
-          fontSize: 8,
+          fontSize: "var(--fs-meta)",
           padding: "0 4px",
           borderRadius: 2,
           fontWeight: 700,
@@ -130,7 +130,7 @@ export function DualAxisBadge({
       <span
         title={hTitle}
         style={{
-          fontSize: 8,
+          fontSize: "var(--fs-meta)",
           padding: "0 4px",
           borderRadius: 2,
           fontWeight: 700,

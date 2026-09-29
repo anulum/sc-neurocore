@@ -60,17 +60,17 @@ export default function KeyboardHelp() {
         {SHORTCUTS.map(([key, desc]) => (
           <div key={key} style={{
             display: "flex", justifyContent: "space-between", gap: 16,
-            padding: "3px 0", fontSize: 11,
+            padding: "3px 0", fontSize: "var(--fs-body)",
           }}>
             <kbd style={{
               background: "var(--bg-tertiary)", border: "1px solid var(--border)",
               borderRadius: 3, padding: "1px 6px", fontFamily: "var(--font-mono)",
-              fontSize: 10, color: "var(--accent)",
+              fontSize: "var(--fs-body)", color: "var(--accent)",
             }}>{key}</kbd>
             <span style={{ color: "var(--text-secondary)" }}>{desc}</span>
           </div>
         ))}
-        <div style={{ marginTop: 8, fontSize: 9, color: "var(--text-muted)", textAlign: "center" }}>
+        <div style={{ marginTop: 8, fontSize: "var(--fs-meta)", color: "var(--text-muted)", textAlign: "center" }}>
           Press ? or Esc to close
         </div>
       </div>

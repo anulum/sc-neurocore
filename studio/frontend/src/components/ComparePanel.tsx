@@ -41,7 +41,7 @@ export default function ComparePanel() {
         <select
           value={compareModel}
           onChange={(e) => { setCompareModel(e.target.value); }}
-          style={{ flex: 1, fontSize: 10, padding: "2px 4px" }}
+          style={{ flex: 1, fontSize: "var(--fs-body)", padding: "2px 4px" }}
         >
           <option value="">Select model B...</option>
           {available.map((m) => (
@@ -54,7 +54,7 @@ export default function ComparePanel() {
           disabled={!compareModel || isSimulating}
           style={{
             background: "#ce93d8", color: "#0d1117", border: "none",
-            padding: "2px 8px", fontSize: 10,
+            padding: "2px 8px", fontSize: "var(--fs-body)",
           }}
         >
           vs

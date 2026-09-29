@@ -33,10 +33,19 @@ describe("focus visibility", () => {
     // WCAG 2.4.7, measured in a browser before this was written: with no rule,
     // a text input and a range slider computed `outlineStyle: none` and
     // `boxShadow: none` on a real Tab. `select` already replaced its own; these
-    // two removed theirs and put nothing back.
-    expect(CSS).toContain('input[type="range"]:focus-visible');
-    expect(CSS).toContain('input[type="text"]:focus-visible');
-    expect(CSS).toContain("button:focus-visible");
+    // two removed theirs and put nothing back. The rule now names every input
+    // type at once (text, number, password, range, file, checkbox, radio), the
+    // other form controls, and the two keyboard targets that are not controls.
+    for (const selector of [
+      "input:focus-visible",
+      "textarea:focus-visible",
+      "select:focus-visible",
+      "summary:focus-visible",
+      "a:focus-visible",
+      "button:focus-visible",
+    ]) {
+      expect(CSS).toContain(selector);
+    }
     expect(CSS).toMatch(/:focus-visible[\s\S]{0,400}box-shadow:\s*0 0 0 2px/);
   });
 

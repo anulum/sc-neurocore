@@ -101,7 +101,7 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+          <span style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
             {step + 1} / {steps.length}
           </span>
           <button onClick={dismiss} style={{

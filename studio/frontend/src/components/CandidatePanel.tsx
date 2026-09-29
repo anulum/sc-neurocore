@@ -44,13 +44,13 @@ const button: CSSProperties = {
   borderRadius: 3,
   color: "var(--text-secondary)",
   cursor: "pointer",
-  fontSize: 10,
+  fontSize: "var(--fs-body)",
   padding: "2px 8px",
 };
 
 const cell: CSSProperties = {
   border: "1px solid var(--border)",
-  fontSize: 10,
+  fontSize: "var(--fs-body)",
   padding: "2px 6px",
   textAlign: "left",
   verticalAlign: "top",
@@ -117,7 +117,7 @@ export default function CandidatePanel() {
       style={{ flex: 1, overflow: "auto", padding: "8px 12px", display: "flex", flexDirection: "column", gap: 8 }}
     >
       <h2 style={{ fontSize: 13, margin: 0 }}>Candidate model</h2>
-      <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: 0 }}>
+      <p style={{ fontSize: "var(--fs-body)", color: "var(--text-secondary)", margin: 0 }}>
         A candidate is a proposal. It is never listed as a catalogue model and nothing here changes
         a canonical file; promotion into the catalogue is a separate, reviewed step.
       </p>
@@ -182,7 +182,7 @@ export default function CandidatePanel() {
         </button>
       </div>
 
-      <label htmlFor="candidate-draft" style={{ fontSize: 10 }}>
+      <label htmlFor="candidate-draft" style={{ fontSize: "var(--fs-body)" }}>
         Candidate package (JSON)
       </label>
       <textarea
@@ -192,10 +192,10 @@ export default function CandidatePanel() {
         aria-describedby="candidate-outcome"
         spellCheck={false}
         rows={16}
-        style={{ fontFamily: "var(--font-mono)", fontSize: 10, width: "100%", resize: "vertical" }}
+        style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-body)", width: "100%", resize: "vertical" }}
       />
 
-      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", fontSize: 10 }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", fontSize: "var(--fs-body)" }}>
         <label htmlFor="candidate-current">Current</label>
         <input id="candidate-current" type="number" value={current}
           onChange={(event) => { setCurrent(event.target.value); }} style={{ width: 80 }} />
@@ -209,7 +209,7 @@ export default function CandidatePanel() {
         }}>Simulate</button>
       </div>
 
-      <div id="candidate-outcome" role="status" style={{ fontSize: 10 }}>
+      <div id="candidate-outcome" role="status" style={{ fontSize: "var(--fs-body)" }}>
         {outcome.message !== null && <p style={{ margin: 0 }}>{outcome.message}</p>}
         {validation !== null && (validation.valid ? (
           <p style={{ margin: 0 }}>

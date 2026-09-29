@@ -24,7 +24,7 @@ export default function TrainingPreregistrationVerdict({ verdict }: { verdict: V
   if (verdict === null) return null;
   const comparison = verdict.direction === "at_least" ? "≥" : "≤";
   const observed = verdict.observed === null ? "not a finite number" : String(verdict.observed);
-  return <p role="status" aria-label="Preregistered verdict" style={{ padding: "0 12px", fontSize: 11 }}>
+  return <p role="status" aria-label="Preregistered verdict" style={{ padding: "0 12px", fontSize: "var(--fs-body)" }}>
     <strong>{verdict.passed ? "Criterion met" : "Criterion missed"}</strong>
     {`: ${METRIC_LABELS[verdict.metric]} ${comparison} ${String(verdict.threshold)}, observed ${observed}. `}
     <span title={verdict.preregistration_sha256}>

@@ -41,7 +41,7 @@ export default function EvidenceCartStrip({
     .join(" · ");
 
   return (
-    <div data-testid="evidence-cart-strip" style={{ fontSize: 10, color: "var(--text-secondary)" }}>
+    <div data-testid="evidence-cart-strip" style={{ fontSize: "var(--fs-body)", color: "var(--text-secondary)" }}>
       <div className="panel-header">Evidence cart</div>
       <div style={{ padding: "4px 6px", lineHeight: 1.45 }}>
         <div>
@@ -64,7 +64,7 @@ export default function EvidenceCartStrip({
           style={{
             marginTop: 4,
             padding: "2px 7px",
-            fontSize: 10,
+            fontSize: "var(--fs-body)",
             opacity: cart.items.length === 0 ? 0.45 : 1,
           }}
         >

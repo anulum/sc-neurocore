@@ -97,7 +97,7 @@ export function drawAxes(
 
   ctx.strokeStyle = PLOT_GRID;
   ctx.lineWidth = 0.5;
-  ctx.font = "10px monospace";
+  ctx.font = "11px monospace";
   ctx.fillStyle = PLOT_AXIS;
   ctx.textAlign = "right";
   const ys = niceStep(yRange, 4);

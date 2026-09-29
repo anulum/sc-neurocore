@@ -198,7 +198,7 @@ export function CatalogueHealth({ facets }: { facets: ModelFacets | null }) {
             style={{
                 marginBottom: 4,
                 padding: "3px 5px",
-                fontSize: 9,
+                fontSize: "var(--fs-meta)",
                 fontFamily: "var(--font-mono)",
                 color: "var(--error, #c0392b)",
                 border: "1px solid var(--error, #c0392b)",
@@ -240,7 +240,7 @@ function FilterChip({
             onClick={onPress}
             title={title}
             style={{
-                fontSize: 9,
+                fontSize: "var(--fs-meta)",
                 padding: "1px 6px",
                 borderRadius: 3,
                 cursor: "pointer",
@@ -334,7 +334,7 @@ export default function ModelBrowser() {
                     style={{
                         flex: 1,
                         padding: "4px 6px",
-                        fontSize: 11,
+                        fontSize: "var(--fs-body)",
                         background: "var(--bg-tertiary)",
                         color: "var(--text-primary)",
                         border: "1px solid var(--control-border)",
@@ -356,7 +356,7 @@ export default function ModelBrowser() {
                     disabled={modelScan.busy}
                     aria-busy={modelScan.busy}
                     style={{
-                        fontSize: 9,
+                        fontSize: "var(--fs-meta)",
                         padding: "2px 6px",
                         background: "var(--bg-tertiary)",
                         color:
@@ -379,7 +379,7 @@ export default function ModelBrowser() {
                     data-testid="model-scan-job-error"
                     role="alert"
                     style={{
-                        fontSize: 9,
+                        fontSize: "var(--fs-meta)",
                         color: "var(--error, #ff5252)",
                         marginBottom: 4,
                     }}
@@ -395,7 +395,7 @@ export default function ModelBrowser() {
                 <div
                     data-testid="model-scan-job-status"
                     style={{
-                        fontSize: 9,
+                        fontSize: "var(--fs-meta)",
                         color: "var(--text-muted)",
                         marginBottom: 4,
                     }}
@@ -417,7 +417,7 @@ export default function ModelBrowser() {
                     width: "100%",
                     marginBottom: 4,
                     padding: "3px 4px",
-                    fontSize: 10,
+                    fontSize: "var(--fs-body)",
                     background: "var(--bg-tertiary)",
                     color: "var(--text-primary)",
                     border: "1px solid var(--control-border)",
@@ -522,7 +522,7 @@ export default function ModelBrowser() {
             </div>
 
             {queryError !== null && (
-                <div role="alert" style={{ fontSize: 9, color: "var(--error, #ff5252)", marginBottom: 4 }}>
+                <div role="alert" style={{ fontSize: "var(--fs-meta)", color: "var(--error, #ff5252)", marginBottom: 4 }}>
                     Catalogue query failed: {queryError}. The list below is not filtered.
                 </div>
             )}
@@ -539,7 +539,7 @@ export default function ModelBrowser() {
                     <span
                         onClick={() => { setPatternFilter(""); }}
                         style={{
-                            fontSize: 9,
+                            fontSize: "var(--fs-meta)",
                             padding: "1px 5px",
                             borderRadius: 3,
                             cursor: "pointer",
@@ -559,7 +559,7 @@ export default function ModelBrowser() {
                             onClick={() => { setPatternFilter(p === patternFilter ? "" : p); }
                             }
                             style={{
-                                fontSize: 9,
+                                fontSize: "var(--fs-meta)",
                                 padding: "1px 5px",
                                 borderRadius: 3,
                                 cursor: "pointer",
@@ -594,7 +594,7 @@ export default function ModelBrowser() {
                         <div key={cat}>
                             <div
                                 style={{
-                                    fontSize: 9,
+                                    fontSize: "var(--fs-meta)",
                                     fontWeight: 700,
                                     color: "var(--accent)",
                                     padding: "3px 4px 1px",
@@ -613,7 +613,7 @@ export default function ModelBrowser() {
                                         title={m.description || m.name}
                                         style={{
                                             padding: "2px 8px",
-                                            fontSize: 10,
+                                            fontSize: "var(--fs-body)",
                                             fontFamily: "var(--font-mono)",
                                             cursor: "pointer",
                                             borderRadius: 3,
@@ -645,7 +645,7 @@ export default function ModelBrowser() {
                                                     }
                                                     style={{
                                                         marginLeft: 4,
-                                                        fontSize: 8,
+                                                        fontSize: "var(--fs-meta)",
                                                         color:
                                                             m.metadata_state === "invalid"
                                                                 ? "var(--error, #c0392b)"
@@ -664,7 +664,7 @@ export default function ModelBrowser() {
                                                     textOverflow: "ellipsis",
                                                     whiteSpace: "nowrap",
                                                     color: "var(--text-muted)",
-                                                    fontSize: 8,
+                                                    fontSize: "var(--fs-meta)",
                                                 }}
                                                 title={`validation ${m.validation_metric}; integrator ${m.integration_method}; terminal ${m.terminal_silicon_tier || "none"}: ${m.terminal_reason || "no terminal silicon target declared"}`}
                                             >
@@ -705,7 +705,7 @@ export default function ModelBrowser() {
                                                     }
                                                     title={`DOI ${m.provenance.doi}`}
                                                     style={{
-                                                        fontSize: 8,
+                                                        fontSize: "var(--fs-meta)",
                                                         color: "var(--accent)",
                                                         textDecoration: "none",
                                                     }}
@@ -758,7 +758,7 @@ export default function ModelBrowser() {
                                             {beh && (
                                                 <span
                                                     style={{
-                                                        fontSize: 8,
+                                                        fontSize: "var(--fs-meta)",
                                                         padding: "0 3px",
                                                         borderRadius: 2,
                                                         background:
@@ -776,7 +776,7 @@ export default function ModelBrowser() {
                                             <span
                                                 style={{
                                                     color: "var(--text-muted)",
-                                                    fontSize: 9,
+                                                    fontSize: "var(--fs-meta)",
                                                 }}
                                             >
                                                 {m.state_var_names.join(",")}
@@ -791,7 +791,7 @@ export default function ModelBrowser() {
             </div>
             <div
                 style={{
-                    fontSize: 9,
+                    fontSize: "var(--fs-meta)",
                     color: "var(--text-muted)",
                     marginTop: 3,
                 }}

@@ -46,7 +46,7 @@ export default function MultiModelPicker() {
         {models.slice(0, 50).map((m) => (
           <label key={m.name} style={{
             display: "flex", alignItems: "center", gap: 6,
-            fontSize: 10, fontFamily: "var(--font-mono)",
+            fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
             padding: "1px 4px", cursor: "pointer",
             color: selected.includes(m.name) ? "var(--accent)" : "var(--text-muted)",
           }}>
@@ -58,7 +58,7 @@ export default function MultiModelPicker() {
         ))}
       </div>
       <button onClick={run} disabled={isSimulating} style={{
-        fontSize: 10, padding: "3px 10px", background: "#80cbc4",
+        fontSize: "var(--fs-body)", padding: "3px 10px", background: "#80cbc4",
         color: "var(--bg-primary)", border: "none", borderRadius: 3,
         cursor: isSimulating ? "wait" : "pointer", fontWeight: 600,
       }}>

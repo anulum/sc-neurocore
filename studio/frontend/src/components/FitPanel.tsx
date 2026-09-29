@@ -36,9 +36,9 @@ import { useStudioStore } from "../stores/studio";
 
 const button: CSSProperties = {
   background: "transparent", border: "1px solid var(--control-border)", borderRadius: 3,
-  color: "var(--text-secondary)", cursor: "pointer", fontSize: 10, padding: "2px 8px",
+  color: "var(--text-secondary)", cursor: "pointer", fontSize: "var(--fs-body)", padding: "2px 8px",
 };
-const cell: CSSProperties = { border: "1px solid var(--border)", fontSize: 10, padding: "2px 6px", textAlign: "left" };
+const cell: CSSProperties = { border: "1px solid var(--border)", fontSize: "var(--fs-body)", padding: "2px 6px", textAlign: "left" };
 
 /** One parameter row as typed. */
 interface DomainRow {
@@ -149,7 +149,7 @@ export default function FitPanel() {
   const notes = result === null ? [] : fitIdentifiabilityNotes(result);
 
   return (
-    <section aria-label="Parameter fitting" style={{ flex: 1, overflow: "auto", padding: "8px 12px", display: "flex", flexDirection: "column", gap: 8, fontSize: 10 }}>
+    <section aria-label="Parameter fitting" style={{ flex: 1, overflow: "auto", padding: "8px 12px", display: "flex", flexDirection: "column", gap: 8, fontSize: "var(--fs-body)" }}>
       <h2 style={{ fontSize: 13, margin: 0 }}>Parameter fitting</h2>
       <p style={{ margin: 0, color: "var(--text-secondary)" }}>
         The fit sees the training recordings only; hold-out recordings measure how the fitted
@@ -197,7 +197,7 @@ export default function FitPanel() {
 
       <label htmlFor="fit-fixed">Fixed parameters (name=value, one per line)</label>
       <textarea id="fit-fixed" rows={3} value={fixedText} onChange={(event) => { setFixedText(event.target.value); }}
-        style={{ fontFamily: "var(--font-mono)", fontSize: 10 }} />
+        style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-body)" }} />
 
       <label htmlFor="fit-constraints">Parameter constraints (JSON: name, coefficients, low, high)</label>
       <textarea id="fit-constraints" rows={3} value={constraintText} onChange={(event) => { setConstraintText(event.target.value); }} />

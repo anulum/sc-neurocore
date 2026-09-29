@@ -65,13 +65,13 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
       border: `2px solid ${isExc ? "#4fc3f7" : "#ff5252"}`,
       minWidth: 100, textAlign: "center",
     }}>
-      <div style={{ fontSize: 11, fontWeight: 600, color: isExc ? "#4fc3f7" : "#ff5252" }}>
+      <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: isExc ? "#4fc3f7" : "#ff5252" }}>
         {data.label as string}
       </div>
-      <div style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 2 }}>
+      <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)", marginTop: 2 }}>
         {data.model as string} × {data.count as number}
       </div>
-      <div style={{ fontSize: 8, color: "var(--text-muted)" }}>
+      <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
         {isExc ? "excitatory" : "inhibitory"} · {data.drive as string}
       </div>
     </div>
@@ -90,7 +90,7 @@ export function GraphResultSummary({ result }: { result: GraphSimResult }) {
   return (
     <div style={{
       padding: "6px 12px", borderTop: "1px solid var(--border)",
-      fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-secondary)",
+      fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)", color: "var(--text-secondary)",
       display: "flex", gap: 16, flexWrap: "wrap",
     }}>
       <span>Neurons: {result.n_total}</span>
@@ -205,7 +205,7 @@ export default function NetworkCanvas() {
       label: studioProjectionLabel(e),
       style: { stroke: "var(--text-muted)", strokeWidth: 1.5 },
       markerEnd: { type: MarkerType.ArrowClosed, color: "var(--text-muted)" },
-      labelStyle: { fontSize: 8, fill: "var(--text-muted)" },
+      labelStyle: { fontSize: "var(--fs-meta)", fill: "var(--text-muted)" },
     })),
     [graphProjections],
   );
@@ -296,11 +296,11 @@ export default function NetworkCanvas() {
         </span>
         <button onClick={() => { void addPopulation("excitatory"); }} style={{
           background: CANVAS_TINTS.excitatoryButton, color: "#4fc3f7", border: "1px solid #4fc3f7",
-          padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
         }}>+ Exc</button>
         <button onClick={() => { void addPopulation("inhibitory"); }} style={{
           background: CANVAS_TINTS.inhibitoryButton, color: "#ff5252", border: "1px solid #ff5252",
-          padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
         }}>+ Inh</button>
         <button
           onClick={undoGraphEdit}
@@ -309,7 +309,7 @@ export default function NetworkCanvas() {
           title="Undo the last graph edit (Ctrl+Z). Moving a node is not an edit."
           style={{
             background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
-            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+            padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
           }}
         >Undo</button>
         <button
@@ -319,7 +319,7 @@ export default function NetworkCanvas() {
           title="Redo the last undone graph edit (Ctrl+Shift+Z)"
           style={{
             background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
-            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+            padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
           }}
         >Redo</button>
         <button
@@ -333,18 +333,18 @@ export default function NetworkCanvas() {
           title="Copy the selection, with the projections whose both ends are inside it. A projection leaving the selection is not copied."
           style={{
             background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
-            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+            padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
           }}
         >Duplicate</button>
         <button onClick={() => { void simulateGraphAction(); }} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#81c784", color: "#0d1117", border: "none",
-          padding: "3px 10px", fontSize: 10, cursor: "pointer",
+          padding: "3px 10px", fontSize: "var(--fs-body)", cursor: "pointer",
         }}>
           {isSimulating ? "..." : "Simulate"}
         </button>
         <button onClick={() => { void runPipelineAction(); }} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#a5d6a7", color: "#0d1117", border: "none",
-          padding: "3px 10px", fontSize: 10, cursor: "pointer",
+          padding: "3px 10px", fontSize: "var(--fs-body)", cursor: "pointer",
         }}>
           Pipeline → {synthTarget.toUpperCase()}
         </button>
@@ -356,12 +356,12 @@ export default function NetworkCanvas() {
             background: tableView ? "var(--border)" : "transparent",
             color: tableView ? "var(--text)" : "var(--text-muted)",
             border: "1px solid var(--control-border)",
-            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+            padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
           }}
         >Table view</button>
         <button onClick={() => { void exportGraphNIR(); }} disabled={graphPopulations.length === 0} style={{
           background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
-          padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
         }}>Export NIR</button>
         <button
           onClick={() => { void exportGraphNotebook(); }}
@@ -370,7 +370,7 @@ export default function NetworkCanvas() {
           data-testid="export-network-notebook"
           style={{
             background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
-            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+            padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
           }}
         >Notebook</button>
         <button
@@ -378,7 +378,7 @@ export default function NetworkCanvas() {
           title="Replace the canvas with the network in a NIR file, or in a graph envelope saved as .json"
           style={{
             background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
-            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+            padding: "2px 8px", fontSize: "var(--fs-body)", cursor: "pointer", borderRadius: 3,
           }}
         >Import NIR</button>
         <input
@@ -394,7 +394,7 @@ export default function NetworkCanvas() {
           style={{ display: "none" }}
           type="file"
         />
-        <span style={{ fontSize: 9, color: "var(--text-muted)" }}>
+        <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
           {graphPopulations.length} pop · {graphProjections.length} proj · drag to connect
         </span>
       </div>
@@ -402,7 +402,7 @@ export default function NetworkCanvas() {
       {graphNotice !== null && (
         <div role="status" style={{
           padding: "4px 12px", borderTop: "1px solid var(--border)",
-          fontSize: 10, color: "var(--text-secondary)",
+          fontSize: "var(--fs-body)", color: "var(--text-secondary)",
         }}>
           {graphNotice}
         </div>
@@ -411,7 +411,7 @@ export default function NetworkCanvas() {
       {/* Errors */}
       {graphErrors.length > 0 && (
         <div style={{
-          padding: "4px 12px", background: CANVAS_TINTS.errorStrip, fontSize: 10, color: "#ff5252",
+          padding: "4px 12px", background: CANVAS_TINTS.errorStrip, fontSize: "var(--fs-body)", color: "#ff5252",
         }}>
           {graphErrors.map((e, i) => <div key={i}>{e}</div>)}
         </div>
@@ -440,7 +440,7 @@ export default function NetworkCanvas() {
         {graphPopulations.length === 0 ? (
           <div style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center",
-            justifyContent: "center", color: "var(--text-muted)", fontSize: 11,
+            justifyContent: "center", color: "var(--text-muted)", fontSize: "var(--fs-body)",
           }}>
             Add excitatory and inhibitory populations, then drag between nodes to connect
           </div>
@@ -492,7 +492,7 @@ export default function NetworkCanvas() {
       {pipelineResult && (
         <div style={{
           padding: "6px 12px", borderTop: "1px solid var(--border)",
-          fontSize: 10, color: pipelineResult.success ? "var(--text-secondary)" : "#ff5252",
+          fontSize: "var(--fs-body)", color: pipelineResult.success ? "var(--text-secondary)" : "#ff5252",
           background: pipelineResult.success ? CANVAS_TINTS.pipelineSucceeded : CANVAS_TINTS.pipelineFailed,
         }}>
           {pipelineResult.success

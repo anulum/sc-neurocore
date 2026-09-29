@@ -38,7 +38,7 @@ export default function SynthesisEvidenceControls({
       padding: 8,
       background: "var(--bg-secondary)",
       borderRadius: 4,
-      fontSize: 10,
+      fontSize: "var(--fs-body)",
       color: "var(--text-secondary)",
       display: "flex",
       gap: 8,
@@ -60,7 +60,7 @@ export default function SynthesisEvidenceControls({
           background: "var(--accent)",
           color: "var(--bg-primary)",
           cursor: loading || jobId === null ? "not-allowed" : "pointer",
-          fontSize: 10,
+          fontSize: "var(--fs-body)",
         }}
         type="button"
       >

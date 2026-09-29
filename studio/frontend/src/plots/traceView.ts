@@ -100,7 +100,7 @@ export function drawTraceView(
   ctx.save();
   ctx.translate(10, frame.top + voltH / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "center";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
   ctx.fillText("mV", 0, 0);
   ctx.restore();
   // Spike markers
@@ -112,7 +112,7 @@ export function drawTraceView(
     }
   }
   // Legend
-  ctx.font = "10px monospace";
+  ctx.font = "11px monospace";
   vars.forEach((v, i) => {
     const colour = at(COLORS as readonly string[], i % COLORS.length);
     ctx.fillStyle = colour;
@@ -126,7 +126,7 @@ export function drawTraceView(
     drawLine(ctx, frame.left, frame.top, frame.plotWidth, voltH, importedTrace.time, importedTrace.voltage,
       zTMin, zTMax, vMin, vMax, "#ff9800", 1.5);
     ctx.setLineDash([]);
-    ctx.fillStyle = "#ff9800"; ctx.font = "9px monospace"; ctx.textAlign = "left";
+    ctx.fillStyle = "#ff9800"; ctx.font = "11px monospace"; ctx.textAlign = "left";
     ctx.fillText("imported", frame.left + 6 + vars.length * 52, frame.top + 9);
   }
 
@@ -137,13 +137,13 @@ export function drawTraceView(
   if (iMin === iMax) { iMin -= 1; iMax += 1; }
   drawAxes(ctx, frame.left, curY, frame.plotWidth, currentH, zTMin, zTMax, iMin, iMax * 1.1);
   drawLine(ctx, frame.left, curY, frame.plotWidth, currentH, time, I, zTMin, zTMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
-  ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = "#ffb74d"; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText("I", frame.left + 4, curY + 10);
   // Y-axis label for current
   ctx.save();
   ctx.translate(10, curY + currentH / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "center";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
   ctx.fillText("nA", 0, 0);
   ctx.restore();
 
@@ -160,7 +160,7 @@ export function drawTraceView(
   }
 
   // X-axis labels
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "center";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
   const xs = niceStep(zTMax - zTMin, 6);
   for (let v = Math.ceil(zTMin / xs) * xs; v <= zTMax; v += xs) {
     const x = frame.left + ((v - zTMin) / (zTMax - zTMin || 1)) * frame.plotWidth;
@@ -179,7 +179,7 @@ export function drawTraceView(
 
   // Zoom indicator
   if (!isNaN(zoom.xMin)) {
-    ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "right";
+    ctx.fillStyle = "#4fc3f7"; ctx.font = "11px monospace"; ctx.textAlign = "right";
     ctx.fillText(`zoom: ${zTMin.toFixed(1)}–${zTMax.toFixed(1)} ms (dbl-click to reset)`, frame.left + frame.plotWidth - 2, frame.height - 2);
   }
 }

@@ -56,7 +56,7 @@ export default function VerilogPreview() {
             display: "flex",
             flexWrap: "wrap",
             fontFamily: "var(--font-mono)",
-            fontSize: 10,
+            fontSize: "var(--fs-body)",
             gap: 10,
             marginBottom: 6,
             padding: "6px 8px",

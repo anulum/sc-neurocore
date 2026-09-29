@@ -82,7 +82,7 @@ export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelPr
         padding: 8,
         background: "var(--bg-secondary)",
         borderRadius: 4,
-        fontSize: 11,
+        fontSize: "var(--fs-body)",
         color: "var(--text-secondary)",
       }}
     >
@@ -107,7 +107,7 @@ export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelPr
               border: "1px solid var(--control-border)",
               color: actionDisabled ? "var(--text-muted)" : "var(--bg-primary)",
               cursor: actionDisabled ? "not-allowed" : "pointer",
-              fontSize: 10,
+              fontSize: "var(--fs-body)",
               padding: "2px 6px",
               width: "100%",
             }}

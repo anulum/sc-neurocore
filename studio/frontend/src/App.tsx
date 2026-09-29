@@ -67,7 +67,7 @@ import { Btn, CapabilityUnavailable, Tab } from "./appChrome";
 /** A project-list control drawn as the text it replaced, but a real button. */
 const projectListControl = {
   background: "transparent", border: "none", color: "var(--text-secondary)",
-  cursor: "pointer", fontSize: 10, padding: 0, textAlign: "left" as const,
+  cursor: "pointer", fontSize: "var(--fs-body)", padding: 0, textAlign: "left" as const,
 };
 
 /**
@@ -408,13 +408,13 @@ export default function App() {
         {paramKeys.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
             <select value={s.sweepParam} onChange={(e) => { s.setSweepParam(e.target.value); }}
-              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}
+              style={{ fontSize: "var(--fs-meta)", padding: "1px 2px", maxWidth: 70 }}
               title={panelState("bifurcation").message}>
               <option value="">X...</option>
               {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
             <select value={s.sweepParamY} onChange={(e) => { s.setSweepParamY(e.target.value); }}
-              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}
+              style={{ fontSize: "var(--fs-meta)", padding: "1px 2px", maxWidth: 70 }}
               title={panelState("heatmap").message}>
               <option value="">Y...</option>
               {paramKeys.filter((k) => k !== s.sweepParam).map((k) => <option key={k} value={k}>{k}</option>)}
@@ -553,7 +553,7 @@ export default function App() {
           padding: "4px 16px", borderBottom: "1px solid var(--border)",
           background: "var(--bg-secondary)",
         }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 2 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)", marginBottom: 2 }}>
             <span style={{ color: "var(--text-secondary)" }}>{s.progressMsg}</span>
             <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{s.progressPct}%</span>
           </div>
@@ -568,7 +568,7 @@ export default function App() {
 
       {s.codeOneliner && (
         <div style={{
-          padding: "4px 16px", fontSize: 10, fontFamily: "var(--font-mono)",
+          padding: "4px 16px", fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
           background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)",
           color: "var(--text-muted)", cursor: "pointer", overflow: "hidden", whiteSpace: "nowrap",
           textOverflow: "ellipsis",
@@ -638,7 +638,7 @@ export default function App() {
               <div style={{ maxHeight: 100, overflowY: "auto" }}>
                 {s.presets.map((p) => (
                   <div key={p.id} onClick={() => { void s.loadPreset(p.id); }} style={{
-                    padding: "2px 6px", fontSize: 10, cursor: "pointer",
+                    padding: "2px 6px", fontSize: "var(--fs-body)", cursor: "pointer",
                     borderRadius: 3, color: "var(--text-secondary)",
                   }} title={p.description}>
                     {p.title}
@@ -655,18 +655,18 @@ export default function App() {
                 const name = prompt("Project name:");
                 if (name) void s.saveProjectToServer(name);
               }} style={{
-                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                fontSize: "var(--fs-body)", padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Save</button>
               <button aria-label="Refresh projects" onClick={() => { void s.listServerProjects(); }} style={{
-                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                fontSize: "var(--fs-body)", padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Refresh</button>
               <button aria-label="Show deleted projects"
                 onClick={() => void s.listDeletedServerProjects()} style={{
-                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                fontSize: "var(--fs-body)", padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Deleted</button>
@@ -675,7 +675,7 @@ export default function App() {
               <div style={{ maxHeight: 60, overflowY: "auto" }}>
                 {s.serverProjects.map((p) => (
                   <div key={p.name} style={{
-                    display: "flex", justifyContent: "space-between", fontSize: 10,
+                    display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)",
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
                     {/* Buttons, not clickable text: a project has to be opened and
@@ -694,10 +694,10 @@ export default function App() {
             )}
             {s.deletedProjects.length > 0 && (
               <div style={{ maxHeight: 60, overflowY: "auto", marginTop: 4 }}>
-                <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Deleted (restorable)</div>
+                <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>Deleted (restorable)</div>
                 {s.deletedProjects.map((entry) => (
                   <div key={entry.token} style={{
-                    display: "flex", justifyContent: "space-between", fontSize: 10,
+                    display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)",
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
                     <span>{entry.name}</span>
@@ -729,7 +729,7 @@ export default function App() {
                 const name = prompt("Session name:");
                 if (name) s.saveSession(name);
               }} style={{
-                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                fontSize: "var(--fs-body)", padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Save</button>
@@ -738,7 +738,7 @@ export default function App() {
               <div style={{ maxHeight: 60, overflowY: "auto" }}>
                 {s.savedSessions.map((ss) => (
                   <div key={ss.name} style={{
-                    display: "flex", justifyContent: "space-between", fontSize: 10,
+                    display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)",
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
                     <span style={{ cursor: "pointer" }} onClick={() => { s.loadSession(ss.name); }}>{ss.name}</span>
@@ -755,7 +755,7 @@ export default function App() {
             <ModelInfo />
             {pattern && (
               <div style={{
-                marginTop: 4, fontSize: 11,
+                marginTop: 4, fontSize: "var(--fs-body)",
                 color: pattern.pattern === "tonic" ? "var(--success)" :
                        pattern.pattern === "bursting" ? "var(--warning)" :
                        pattern.pattern === "silent" ? "var(--text-muted)" : "var(--text-primary)",
@@ -810,7 +810,7 @@ export default function App() {
             <div style={{ flex: 1, padding: 8, display: "flex", flexDirection: "column", minHeight: 0 }}>
               {s.codeScript ? (
                 <pre style={{
-                  fontSize: 11, fontFamily: "var(--font-mono)",
+                  fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
                   color: "var(--text-primary)", background: "var(--bg-secondary)",
                   padding: 12, borderRadius: "var(--radius)",
                   overflow: "auto", flex: 1, minHeight: 0, whiteSpace: "pre-wrap",
@@ -819,7 +819,7 @@ export default function App() {
                 </pre>
               ) : null}
               {s.codeScript ? (
-                <div style={{ fontSize: 10, color: "var(--text-muted)", paddingTop: 8 }} data-testid="codegen-experiment">
+                <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)", paddingTop: 8 }} data-testid="codegen-experiment">
                   experiment {s.codeExperimentSha256.slice(0, 16)} — "Replay pack" saves the sealed
                   experiment; run it with{" "}
                   <code>python -m sc_neurocore.studio.replay_pack &lt;pack.json&gt;</code>

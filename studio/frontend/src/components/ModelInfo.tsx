@@ -55,7 +55,7 @@ export default function ModelInfo() {
             }}
             title="Copy a link that opens this model; it names the model only, not the run settings"
             style={{
-              marginLeft: 6, fontSize: 9, padding: "1px 6px", cursor: "pointer",
+              marginLeft: 6, fontSize: "var(--fs-meta)", padding: "1px 6px", cursor: "pointer",
               background: "transparent", color: "var(--text-muted)",
               border: "1px solid var(--control-border)", borderRadius: 3,
             }}
@@ -63,7 +63,7 @@ export default function ModelInfo() {
             Copy link
           </button>
           {linkStatus !== null && (
-            <span role="status" style={{ marginLeft: 6, fontSize: 9, color: "var(--text-muted)" }}>
+            <span role="status" style={{ marginLeft: 6, fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
               {linkStatus}
             </span>
           )}
@@ -86,11 +86,11 @@ export default function ModelInfo() {
           />
           <EvidenceTierBadge tier={modelDetail.tier} evidenceKind={modelDetail.evidence_kind} full />
           {modelDetail.family && (
-            <span style={{ fontSize: 10, color: "var(--accent)" }}>{modelDetail.family}</span>
+            <span style={{ fontSize: "var(--fs-body)", color: "var(--accent)" }}>{modelDetail.family}</span>
           )}
           {modelDetail.maturity && (
             <span style={{
-              fontSize: 8, padding: "0 4px", borderRadius: 2,
+              fontSize: "var(--fs-meta)", padding: "0 4px", borderRadius: 2,
               background: "var(--bg-tertiary)", color: "var(--text-muted)", textTransform: "uppercase",
             }}>{modelDetail.maturity}</span>
           )}
@@ -98,7 +98,7 @@ export default function ModelInfo() {
             <span
               data-testid="verified-tiers"
               title={verifiedTiersSource(modelDetail.readiness) ?? undefined}
-              style={{ fontSize: 9, color: "var(--text-secondary)" }}
+              style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}
             >
               {verifiedTiers(modelDetail.readiness)}
             </span>
@@ -108,7 +108,7 @@ export default function ModelInfo() {
               data-testid="perfect-badge"
               title={badge.title}
               style={{
-                fontSize: 8, padding: "0 4px", borderRadius: 2, fontWeight: 700,
+                fontSize: "var(--fs-meta)", padding: "0 4px", borderRadius: 2, fontWeight: 700,
                 background: badge.verified ? "var(--success)" : "var(--bg-tertiary)",
                 color: badge.verified ? "var(--bg-primary)" : "var(--text-muted)",
               }}
@@ -119,7 +119,7 @@ export default function ModelInfo() {
         </div>
         {prov && (prov.doi || prov.authors.length > 0) && (
           <div style={{
-            fontSize: 10, color: "var(--text-secondary)", marginBottom: 4,
+            fontSize: "var(--fs-body)", color: "var(--text-secondary)", marginBottom: 4,
             padding: "3px 5px", background: "var(--bg-tertiary)", borderRadius: "var(--radius)",
           }}>
             <div>
@@ -137,7 +137,7 @@ export default function ModelInfo() {
               {citation && (
                 <button type="button" onClick={copyCitation} title={citation}
                   style={{
-                    fontSize: 9, padding: "0 5px", cursor: "pointer",
+                    fontSize: "var(--fs-meta)", padding: "0 5px", cursor: "pointer",
                     background: "var(--bg-secondary)", color: "var(--text-secondary)",
                     border: "1px solid var(--control-border)", borderRadius: "var(--radius)",
                   }}>

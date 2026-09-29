@@ -60,7 +60,7 @@ export function drawPrecisionView(ctx: CanvasRenderingContext2D, frame: PlotFram
   // Each result is drawn on its own display sample times: the projections
   // of the two runs are chosen independently.
   drawLine(ctx, frame.left, frame.top, frame.plotWidth, ph, time_x, fixed_v, tMin, tMax, vMin, vMax, "#ff5252", 1.2);
-  ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillStyle = "#4fc3f7"; ctx.fillText("float64", frame.left + 6, frame.top + 12);
   ctx.fillStyle = "#ff5252"; ctx.fillText(arithmeticLabel, frame.left + 60, frame.top + 12);
 
@@ -77,7 +77,7 @@ export function drawPrecisionView(ctx: CanvasRenderingContext2D, frame: PlotFram
   if (errorSeries.length === time_f.length) {
     drawLine(ctx, frame.left, errY, frame.plotWidth, errH, time_f, errorSeries, tMin, tMax, 0, errMax * 1.1, "#ffb74d", 1.5);
   }
-  ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = "#ffb74d"; ctx.font = "11px monospace"; ctx.textAlign = "left";
   const divergence = precResult.error.first_divergence_step;
   ctx.fillText(
     `|float64 − bit-true| (max=${precResult.error.max_error.toFixed(4)}, rms=${precResult.error.rms_error.toFixed(4)}`
@@ -129,7 +129,7 @@ export function drawCompareView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
     const colour = at(COLORS as readonly string[], idx);
     drawAxes(ctx, frame.left, yOff, frame.plotWidth, ph, tStart, tEnd, yMin, yMax);
     drawLine(ctx, frame.left, yOff, frame.plotWidth, ph, tm, data, tStart, tEnd, yMin, yMax, colour, 1.2);
-    ctx.fillStyle = colour; ctx.font = "10px monospace"; ctx.textAlign = "left";
+    ctx.fillStyle = colour; ctx.font = "11px monospace"; ctx.textAlign = "left";
     // `||` and not `??`: a run with an empty model name is a custom system,
     // and `??` would label it with the empty string it actually carries.
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -171,7 +171,7 @@ export function drawMultiModelView(ctx: CanvasRenderingContext2D, frame: PlotFra
     const colour = at(COLORS as readonly string[], i % COLORS.length);
     drawLine(ctx, frame.left, frame.top, frame.plotWidth, ph, r.time, trace, tMin, tMax, vMin, vMax, colour, 1.5);
   });
-  ctx.font = "10px monospace";
+  ctx.font = "11px monospace";
   multiResults.forEach((r, i) => {
     // `||` and not `??`, for the same reason as in the compare view: an
     // empty name is not a name, and numbering it is the point.

@@ -105,11 +105,11 @@ function LayerRateBar({ name, rate }: { name: string; rate: number }) {
   const pct = Math.min(rate * 100, 100);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-      <span style={{ fontSize: 9, color: "var(--text-muted)", width: 60, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+      <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)", width: 60, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
       <div style={{ flex: 1, height: 6, background: "var(--bg-tertiary)", borderRadius: 3, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${pct}%`, background: "#80cbc4", borderRadius: 3, transition: "width 0.3s" }} />
       </div>
-      <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: "var(--text-muted)", width: 36, textAlign: "right" }}>
+      <span style={{ fontSize: "var(--fs-meta)", fontFamily: "var(--font-mono)", color: "var(--text-muted)", width: 36, textAlign: "right" }}>
         {(rate * 100).toFixed(1)}%
       </span>
     </div>
@@ -163,12 +163,12 @@ export function TrainingJobPicker({
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-      <label htmlFor="training-retained-job" style={{ fontSize: 10 }}>Retained run</label>
+      <label htmlFor="training-retained-job" style={{ fontSize: "var(--fs-body)" }}>Retained run</label>
       <select
         id="training-retained-job"
         value={jobs.some((job) => job.job_id === selectedJobId) ? selectedJobId ?? "" : ""}
         onChange={(event) => { if (event.target.value) onSelect(event.target.value); }}
-        style={{ maxWidth: 220, fontSize: 10 }}
+        style={{ maxWidth: 220, fontSize: "var(--fs-body)" }}
       >
         <option value="">{jobs.length === 0 ? "No retained runs" : "Choose a run"}</option>
         {jobs.map((job) => (
@@ -177,10 +177,10 @@ export function TrainingJobPicker({
           </option>
         ))}
       </select>
-      <button type="button" onClick={onRefresh} disabled={loading} style={{ fontSize: 10 }}>
+      <button type="button" onClick={onRefresh} disabled={loading} style={{ fontSize: "var(--fs-body)" }}>
         {loading ? "Loading…" : "Refresh runs"}
       </button>
-      {error !== null && <span role="alert" style={{ color: "#ff5252", fontSize: 10 }}>{error}</span>}
+      {error !== null && <span role="alert" style={{ color: "#ff5252", fontSize: "var(--fs-body)" }}>{error}</span>}
     </div>
   );
 }
@@ -213,7 +213,7 @@ export function TrainingCheckpointControls({
           border: "1px solid var(--control-border)",
           color: canExport ? "var(--text-secondary)" : "var(--text-muted)",
           cursor: canExport ? "pointer" : "not-allowed",
-          fontSize: 10,
+          fontSize: "var(--fs-body)",
           padding: "3px 8px",
         }}
       >
@@ -227,7 +227,7 @@ export function TrainingCheckpointControls({
           border: "1px solid var(--control-border)",
           color: "var(--text-secondary)",
           cursor: "pointer",
-          fontSize: 10,
+          fontSize: "var(--fs-body)",
           padding: "3px 8px",
         }}
       >
@@ -308,7 +308,7 @@ export function TrainingWeightRestorePlanStrip({
                 border: "1px solid var(--control-border)",
                 color: "var(--text-secondary)",
                 cursor: "pointer",
-                fontSize: 10,
+                fontSize: "var(--fs-body)",
                 padding: "3px 8px",
               }}
               title="Verify training weight artifact"
@@ -325,7 +325,7 @@ export function TrainingWeightRestorePlanStrip({
                 border: "1px solid var(--control-border)",
                 color: verification ? "var(--text-secondary)" : "var(--text-muted)",
                 cursor: verification ? "pointer" : "not-allowed",
-                fontSize: 10,
+                fontSize: "var(--fs-body)",
                 padding: "3px 8px",
               }}
               title="Export training weight verification manifest"
@@ -481,7 +481,7 @@ export default function TrainingMonitor() {
           Training Monitor
         </span>
         <span style={{
-          fontSize: 9, padding: "1px 6px", borderRadius: 3,
+          fontSize: "var(--fs-meta)", padding: "1px 6px", borderRadius: 3,
           background: isUncertain ? "rgba(255, 193, 7, 0.2)" :
                      isActive ? "rgba(129, 199, 132, 0.2)" :
                      trainingStatus === "completed" ? "rgba(79, 195, 247, 0.2)" :
@@ -507,7 +507,7 @@ export default function TrainingMonitor() {
             disabled={isSimulating || !trainingInputReady}
             style={{
               background: "#81c784", color: "#0d1117", border: "none",
-              padding: "3px 10px", fontSize: 10, cursor: "pointer",
+              padding: "3px 10px", fontSize: "var(--fs-body)", cursor: "pointer",
             }}
           >
             Train
@@ -520,7 +520,7 @@ export default function TrainingMonitor() {
             title={canStop ? "Request cooperative stop" : "Refresh to confirm the run before stopping"}
             style={{
               background: "#ff5252", color: "#fff", border: "none",
-              padding: "3px 10px", fontSize: 10, cursor: "pointer",
+              padding: "3px 10px", fontSize: "var(--fs-body)", cursor: "pointer",
             }}
           >
             Stop
@@ -540,7 +540,7 @@ export default function TrainingMonitor() {
             border: "1px solid var(--control-border)",
             color: trainingJobId !== null ? "var(--text-secondary)" : "var(--text-muted)",
             cursor: trainingJobId !== null ? "pointer" : "not-allowed",
-            fontSize: 10,
+            fontSize: "var(--fs-body)",
             padding: "3px 8px",
           }}
         >
@@ -555,7 +555,7 @@ export default function TrainingMonitor() {
             border: "1px solid var(--control-border)",
             color: trainingJobId !== null && !isActive ? "var(--text-secondary)" : "var(--text-muted)",
             cursor: trainingJobId !== null && !isActive ? "pointer" : "not-allowed",
-            fontSize: 10,
+            fontSize: "var(--fs-body)",
             padding: "3px 8px",
           }}
         >
@@ -575,7 +575,7 @@ export default function TrainingMonitor() {
             border: "1px solid var(--control-border)",
             color: canLiveAttach && trainingWeightMaterialization !== null ? "var(--text-secondary)" : "var(--text-muted)",
             cursor: canLiveAttach && trainingWeightMaterialization !== null ? "pointer" : "not-allowed",
-            fontSize: 10,
+            fontSize: "var(--fs-body)",
             padding: "3px 8px",
           }}
         >
@@ -631,7 +631,7 @@ export default function TrainingMonitor() {
             {/* Layer spike rates */}
             {latestEpoch && Object.keys(latestEpoch.layer_spike_rates).length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
+                <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
                   Layer Spike Rates (epoch {latestEpoch.epoch})
                 </div>
                 {Object.entries(latestEpoch.layer_spike_rates).map(([name, rate]) => (
@@ -643,12 +643,12 @@ export default function TrainingMonitor() {
             {/* Parameter evolution */}
             {latestEpoch && Object.keys(latestEpoch.param_snapshot).length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
+                <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
                   Learnable Parameters (epoch {latestEpoch.epoch})
                 </div>
                 <div style={{
                   display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 4,
-                  fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-muted)",
+                  fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)", color: "var(--text-muted)",
                 }}>
                   {Object.entries(latestEpoch.param_snapshot).map(([name, val]) => (
                     <div key={name}>{name.split(".").pop()}: {val.toFixed(4)}</div>
@@ -661,7 +661,7 @@ export default function TrainingMonitor() {
             {latestEpoch && (
               <div style={{
                 marginTop: 16, padding: 8, background: "var(--bg-secondary)",
-                borderRadius: 4, fontSize: 10, fontFamily: "var(--font-mono)",
+                borderRadius: 4, fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
                 color: "var(--text-secondary)",
                 display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4,
               }}>
@@ -678,7 +678,7 @@ export default function TrainingMonitor() {
         {trainingEpochs.length === 0 && !isActive && (
           <div style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-            color: "var(--text-muted)", fontSize: 11, minHeight: 100,
+            color: "var(--text-muted)", fontSize: "var(--fs-body)", minHeight: 100,
           }}>
             {trainingJobId === null
               ? "Configure training parameters above, then click Train"
@@ -690,7 +690,7 @@ export default function TrainingMonitor() {
         {isActive && trainingEpochs.length === 0 && (
           <div style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-            color: "var(--text-muted)", fontSize: 11, minHeight: 100,
+            color: "var(--text-muted)", fontSize: "var(--fs-body)", minHeight: 100,
           }}>
             {trainingStatus === "unknown" || trainingStatus === "disconnected"
               ? "Run status is uncertain; refresh runs to reconnect"

@@ -87,7 +87,7 @@ describe("NetworkGraphTable", () => {
   it("captions the table with the size of the topology", () => {
     expect(render()).toContain(
       "<caption" +
-        ' style="caption-side:top;font-size:11px;padding:4px 0;text-align:left">' +
+        ' style="caption-side:top;font-size:var(--fs-body);padding:4px 0;text-align:left">' +
         "Network topology: 2 populations holding 120 neurons, connected by 1 projection.",
     );
   });

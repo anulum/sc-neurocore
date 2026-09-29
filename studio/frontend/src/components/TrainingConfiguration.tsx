@@ -87,12 +87,12 @@ export default function TrainingConfiguration({
         <div style={{
           padding: "8px 12px", borderBottom: "1px solid var(--border)",
           display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 6,
-          fontSize: 10,
+          fontSize: "var(--fs-body)",
         }}>
           <label style={{ color: "var(--text-secondary)" }}>
             Model
             <select aria-label="Model" value={config.model_kind ?? "spiking"} onChange={(e) => { chooseKind(e.target.value); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }}>
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>
               <option value="spiking">Spiking network (surrogate gradients)</option>
               <option value="qcfs_conversion">QCFS ANN, converted to IF</option>
             </select>
@@ -100,7 +100,7 @@ export default function TrainingConfiguration({
           <label style={{ color: "var(--text-secondary)" }}>
             Dataset
             <select aria-label="Dataset" value={config.dataset} onChange={(e) => { setDirtyInput(false); setConfig("event_data", undefined); setConfig("dataset", e.target.value); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }}>
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>
               <option value="synthetic">Synthetic (64D, fast)</option>
               <option value="mnist">MNIST (784D)</option>
               {!conversion && <>
@@ -114,31 +114,31 @@ export default function TrainingConfiguration({
             Epochs
             <input aria-label="Epochs" type="number" value={config.epochs} min={1} max={100}
               onChange={(e) => { setConfig("epochs", Number(e.target.value)); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Batch Size
             <input aria-label="Batch Size" type="number" value={config.batch_size} min={1} step={1}
               onChange={(e) => { setConfig("batch_size", Number(e.target.value)); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Learning Rate
             <input aria-label="Learning Rate" type="number" value={config.lr} min={0.0001} max={0.1} step={0.0001}
               onChange={(e) => { setConfig("lr", Number(e.target.value)); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Timesteps
             <input aria-label="Timesteps" type="number" value={config.timesteps} min={1} step={1}
               onChange={(e) => { setConfig("timesteps", Number(e.target.value)); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }} />
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }} />
           </label>
           {conversion && <label style={{ color: "var(--text-secondary)" }}>
             Target
             <select aria-label="Target" value={config.target_profile ?? ""}
               onChange={(e) => { setConfig("target_profile", e.target.value === "" ? undefined : e.target.value); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }}>
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>
               <option value="">No target calibration</option>
               {config.target_profile !== undefined
                 && !targetProfiles.some((profile) => profile.name === config.target_profile)
@@ -152,7 +152,7 @@ export default function TrainingConfiguration({
           <label style={{ color: "var(--text-secondary)" }}>
             Surrogate
             <select aria-label="Surrogate" value={config.surrogate} onChange={(e) => { setConfig("surrogate", e.target.value); }}
-              style={{ display: "block", width: "100%", fontSize: 10 }}>
+              style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>
               {(surrogates.length > 0 ? surrogates : [
                 { name: "atan_surrogate" }, { name: "fast_sigmoid" }, { name: "superspike" },
                 { name: "sigmoid_surrogate" }, { name: "straight_through" }, { name: "triangular" },
@@ -185,7 +185,7 @@ export default function TrainingConfiguration({
               onChange={(e) => { setConfig("max_grad_norm", e.target.value === "" ? undefined : Number(e.target.value)); }} />
           </label>
         </div>
-    {conversion && <p style={{ padding: "0 12px", fontSize: 10 }}>
+    {conversion && <p style={{ padding: "0 12px", fontSize: "var(--fs-body)" }}>
       Trains an ANN with QCFS activations using Timesteps as their step budget, converts it to an
       integrate-and-fire network with the same budget and reports the converted network&apos;s
       validation accuracy beside the source&apos;s.

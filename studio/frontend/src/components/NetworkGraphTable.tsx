@@ -30,7 +30,7 @@ import {
 
 const cell: CSSProperties = {
   border: "1px solid var(--border)",
-  fontSize: 10,
+  fontSize: "var(--fs-body)",
   padding: "3px 6px",
   textAlign: "left",
   verticalAlign: "top",
@@ -44,7 +44,7 @@ const control: CSSProperties = {
   borderRadius: 3,
   color: "var(--text-muted)",
   cursor: "pointer",
-  fontSize: 10,
+  fontSize: "var(--fs-body)",
   marginRight: 4,
   padding: "2px 8px",
 };
@@ -178,7 +178,7 @@ export default function NetworkGraphTable({
   const table = studioGraphTable(populations, projections, issues);
   return (
     <table style={{ borderCollapse: "collapse", width: "100%" }}>
-      <caption style={{ captionSide: "top", fontSize: 11, padding: "4px 0", textAlign: "left" }}>
+      <caption style={{ captionSide: "top", fontSize: "var(--fs-body)", padding: "4px 0", textAlign: "left" }}>
         {table.caption}
       </caption>
       <thead>

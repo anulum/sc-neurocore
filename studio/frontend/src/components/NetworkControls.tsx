@@ -53,7 +53,7 @@ export default function NetworkControls() {
       <NetSlider label="p conn" param="p_conn" min={0.01} max={1} step={0.01} />
       <NetSlider label="ext Hz" param="ext_rate" min={0.1} max={100} step={0.5} />
       <button className="btn-simulate" onClick={() => { void runNetwork(); }} disabled={isSimulating}
-        style={{ width: "100%", marginTop: 4, background: "#80cbc4", color: "#0d1117", border: "none", padding: "3px 0", fontSize: 10 }}>
+        style={{ width: "100%", marginTop: 4, background: "#80cbc4", color: "#0d1117", border: "none", padding: "3px 0", fontSize: "var(--fs-body)" }}>
         {isSimulating ? "..." : "Run Network"}
       </button>
     </div>

@@ -347,7 +347,7 @@ export default function SimulationPlot() {
         <div style={{
           position: "absolute", left: tooltip.x + 10, top: tooltip.y - 24,
           background: "rgba(22,27,34,0.95)", color: "#e6edf3",
-          padding: "2px 6px", borderRadius: 3, fontSize: 10,
+          padding: "2px 6px", borderRadius: 3, fontSize: "var(--fs-body)",
           fontFamily: "var(--font-mono)", pointerEvents: "none",
           border: "1px solid var(--border)", whiteSpace: "nowrap",
         }}>{tooltip.text}</div>
@@ -363,7 +363,7 @@ export default function SimulationPlot() {
         aria-pressed={dataTableShown}
         onClick={() => { setDataTableShown((shown) => !shown); }}
         style={{
-          position: "absolute", right: 8, bottom: 8, zIndex: 2, fontSize: 10,
+          position: "absolute", right: 8, bottom: 8, zIndex: 2, fontSize: "var(--fs-body)",
           background: "var(--bg-secondary)", color: "var(--text-secondary)",
           border: "1px solid var(--control-border)", borderRadius: 3, padding: "2px 8px", cursor: "pointer",
         }}
@@ -371,7 +371,7 @@ export default function SimulationPlot() {
       {dataTableShown && (
         <div style={{
           position: "absolute", right: 8, bottom: 36, zIndex: 2, maxHeight: "60%", overflow: "auto",
-          background: "var(--bg-secondary)", border: "1px solid var(--border)", padding: 6, fontSize: 10,
+          background: "var(--bg-secondary)", border: "1px solid var(--border)", padding: 6, fontSize: "var(--fs-body)",
         }}>
           {result === null ? (
             <p style={{ margin: 0 }}>Nothing has run yet.</p>

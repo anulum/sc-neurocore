@@ -40,7 +40,7 @@ export default function DevelopmentPreviewBanner({
         borderBottom: "1px solid var(--border)",
         background: "rgba(210, 153, 34, 0.12)",
         color: "var(--text-secondary)",
-        fontSize: 11,
+        fontSize: "var(--fs-body)",
         fontFamily: "var(--font-ui)",
         display: "flex",
         gap: 10,

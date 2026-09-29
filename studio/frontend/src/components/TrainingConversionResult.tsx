@@ -26,7 +26,7 @@ function percent(value: number): string {
  */
 export default function TrainingConversionResult({ result, target }: { result: Result | null; target?: string }) {
   if (result === null) return null;
-  return <p role="status" aria-label="Conversion result" style={{ padding: "0 12px", fontSize: 11 }}>
+  return <p role="status" aria-label="Conversion result" style={{ padding: "0 12px", fontSize: "var(--fs-body)" }}>
     <strong>Converted network: {percent(result.val_accuracy)} validation accuracy</strong>
     {` (source ANN ${percent(result.source_val_accuracy)}, drop ${percent(result.conversion_accuracy_drop)}). `}
     Measured on the validation split and sealed in training/conversion_report.json.

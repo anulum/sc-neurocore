@@ -60,7 +60,7 @@ export function Tab({
       title={title}
       style={{
         padding: "2px 6px",
-        fontSize: 9,
+        fontSize: "var(--fs-meta)",
         fontWeight: 600,
         fontFamily: "var(--font-ui)",
         lineHeight: 1.4,
@@ -114,7 +114,7 @@ export function Btn({
         border: outline ? "1px solid var(--control-border)" : "none",
         color: outline ? "var(--text-muted)" : "var(--bg-primary)",
         padding: "2px 7px",
-        fontSize: 10,
+        fontSize: "var(--fs-body)",
       }}
     >
       {label}

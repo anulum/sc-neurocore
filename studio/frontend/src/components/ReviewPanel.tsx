@@ -22,7 +22,7 @@ import { useStudioStore } from "../stores/studio";
 
 const button: CSSProperties = {
   background: "transparent", border: "1px solid var(--control-border)", borderRadius: 3,
-  color: "var(--text-secondary)", cursor: "pointer", fontSize: 10, padding: "2px 8px",
+  color: "var(--text-secondary)", cursor: "pointer", fontSize: "var(--fs-body)", padding: "2px 8px",
 };
 
 const STATUS_WORDS: Record<ReviewComment["revision_status"], string> = {
@@ -57,7 +57,7 @@ export default function ReviewPanel() {
 
   if (projectRevision === null) {
     return (
-      <section aria-label="Review" style={{ padding: "8px 12px", fontSize: 10 }}>
+      <section aria-label="Review" style={{ padding: "8px 12px", fontSize: "var(--fs-body)" }}>
         <h2 style={{ fontSize: 13, margin: 0 }}>Review</h2>
         <p>Save or open a project: comments are made on one saved revision.</p>
       </section>
@@ -108,7 +108,7 @@ export default function ReviewPanel() {
   }
 
   return (
-    <section aria-label="Review" style={{ flex: 1, overflow: "auto", padding: "8px 12px", fontSize: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+    <section aria-label="Review" style={{ flex: 1, overflow: "auto", padding: "8px 12px", fontSize: "var(--fs-body)", display: "flex", flexDirection: "column", gap: 6 }}>
       <h2 style={{ fontSize: 13, margin: 0 }}>
         Review of {projectRevision.name}, revision {projectRevision.revision}
       </h2>

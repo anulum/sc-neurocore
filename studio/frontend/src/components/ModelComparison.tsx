@@ -49,7 +49,7 @@ export default function ModelComparison() {
       <div style={{ maxHeight: 110, overflowY: "auto", marginBottom: 4 }}>
         {models.map((m) => (
           <label key={m.name} style={{
-            display: "flex", alignItems: "center", gap: 6, fontSize: 10,
+            display: "flex", alignItems: "center", gap: 6, fontSize: "var(--fs-body)",
             fontFamily: "var(--font-mono)", padding: "0 4px", cursor: "pointer",
             color: selection.includes(m.name) ? "var(--accent)" : "var(--text-muted)",
           }}>
@@ -61,7 +61,7 @@ export default function ModelComparison() {
       </div>
       {chosen.length > 0 && (
         <div style={{ overflowX: "auto" }}>
-          <table style={{ borderCollapse: "collapse", fontSize: 9, width: "100%" }}>
+          <table style={{ borderCollapse: "collapse", fontSize: "var(--fs-meta)", width: "100%" }}>
             <thead>
               <tr>
                 <th style={{ textAlign: "left", color: "var(--text-muted)", padding: "1px 4px" }} />

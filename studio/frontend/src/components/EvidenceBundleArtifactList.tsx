@@ -68,7 +68,7 @@ export default function EvidenceBundleArtifactList({
             style={{
               color: "var(--text-secondary)",
               fontFamily: "var(--font-mono)",
-              fontSize: 9,
+              fontSize: "var(--fs-meta)",
               minWidth: 0,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -88,7 +88,7 @@ export default function EvidenceBundleArtifactList({
               borderRadius: 3,
               color: "var(--text-secondary)",
               cursor: loading ? "wait" : "pointer",
-              fontSize: 9,
+              fontSize: "var(--fs-meta)",
               padding: "2px 5px",
             }}
             type="button"
@@ -99,7 +99,7 @@ export default function EvidenceBundleArtifactList({
             style={{
               color: "var(--text-muted)",
               fontFamily: "var(--font-mono)",
-              fontSize: 8,
+              fontSize: "var(--fs-meta)",
               gridColumn: "1 / -1",
             }}
           >

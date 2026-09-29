@@ -31,6 +31,15 @@
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --radius: 6px;
+  /* Type scale. Nothing on the Studio is set below --fs-meta: at 8-10px the
+     dense metadata the workbench is built from could not be read at a normal
+     viewing distance (measured 2026-09-29: most text nodes were 8-10px). */
+  --fs-meta: 11px;
+  --fs-body: 12px;
+  --fs-ui: 13px;
+  /* Native controls, scrollbars and pickers follow the dark palette instead
+     of rendering as white browser defaults. */
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -95,7 +104,7 @@ body {
   background: var(--bg-tertiary);
   color: var(--success);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-body);
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -172,7 +181,7 @@ body {
 .capability-blocked-meta {
   margin-top: 6px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .capability-menu-meta a,
@@ -186,7 +195,7 @@ body {
   margin: 6px 0 0 16px;
   color: var(--warning);
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--fs-body);
 }
 
 .capability-badge {
@@ -195,7 +204,7 @@ body {
   border-radius: 999px;
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-meta);
 }
 
 .capability-badge-stable { color: var(--success); }
@@ -225,7 +234,7 @@ body {
   border-radius: 999px;
   color: var(--warning);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .auth-control {
@@ -242,7 +251,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .auth-control input {
@@ -252,7 +261,7 @@ body {
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .auth-control button {
@@ -262,7 +271,7 @@ body {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .auth-control button:disabled {
@@ -311,7 +320,7 @@ body {
 .admin-section-header span {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-actions {
@@ -326,7 +335,7 @@ body {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-actions button:disabled {
@@ -356,7 +365,7 @@ body {
   color: var(--text-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-metrics strong,
@@ -400,7 +409,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-job-row {
@@ -421,7 +430,7 @@ body {
   background: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-job-row button:disabled {
@@ -447,7 +456,7 @@ body {
   background: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-artifact-row button:disabled {
@@ -466,7 +475,7 @@ body {
   align-items: center;
   gap: 6px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-identity-row input[type="text"],
@@ -479,7 +488,7 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-body);
 }
 
 .admin-identity-row button {
@@ -489,7 +498,7 @@ body {
   background: var(--accent);
   color: var(--bg-primary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-identity-row button:disabled {
@@ -510,7 +519,7 @@ body {
   min-width: 0;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-evidence-form input,
@@ -523,7 +532,7 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-body);
 }
 
 .admin-evidence-form textarea {
@@ -548,7 +557,7 @@ body {
   background: var(--accent);
   color: var(--bg-primary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .admin-evidence-submit {
@@ -588,7 +597,7 @@ body {
 }
 
 .panel-header {
-  font-size: 11px;
+  font-size: var(--fs-body);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -617,7 +626,7 @@ body {
 .operator-workbench-subtitle,
 .operator-workbench-heading span {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .operator-workbench-heading span {
@@ -646,7 +655,7 @@ body {
   justify-content: space-between;
   gap: 6px;
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .operator-workbench-card-top span:first-child,
@@ -667,7 +676,7 @@ body {
 .operator-workbench-detail {
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .operator-workbench-card button {
@@ -680,7 +689,7 @@ body {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .operator-workbench-card button:disabled {
@@ -693,7 +702,7 @@ body {
 .operator-workbench-status-ready,
 .operator-workbench-status-warning {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-meta);
 }
 
 .operator-workbench-status-active { color: var(--accent); }
@@ -715,7 +724,7 @@ body {
 
 .studio-readiness-title {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--fs-body);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -729,7 +738,7 @@ body {
 .studio-readiness-subhead,
 .studio-readiness-heading span {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .studio-readiness-heading span {
@@ -751,7 +760,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-secondary);
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .studio-readiness-row strong,
@@ -789,14 +798,14 @@ body {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 
 .studio-readiness-status-blocked,
 .studio-readiness-status-ready,
 .studio-readiness-status-warning {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-meta);
 }
 
 .studio-readiness-status-blocked { color: var(--error); }
@@ -822,6 +831,66 @@ body {
   width: 100%;
   border-radius: var(--radius);
 }
+
+/*
+ * Form controls. Every text field, number field, text area, file picker,
+ * checkbox and radio gets the Studio's palette, so a panel that uses a plain
+ * element (the fitting laboratory, the training monitor, the candidate
+ * editor) no longer shows white browser defaults on the dark workbench.
+ * `:where` keeps the specificity at zero: a component's own class rule or
+ * inline style still decides its layout.
+ */
+:where(input:not([type="range"], [type="checkbox"], [type="radio"], [type="file"], [type="color"]), textarea) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+}
+
+:where(textarea) { font-family: var(--font-mono); line-height: 1.45; }
+
+:where(input, textarea)::placeholder { color: var(--text-muted); opacity: 1; }
+
+:where(input[type="checkbox"], input[type="radio"]) { accent-color: var(--accent); }
+
+:where(input[type="file"]) {
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+}
+
+:where(input[type="file"])::file-selector-button {
+  margin-right: 8px;
+  padding: 3px 10px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+
+:where(input[type="file"])::file-selector-button:hover { border-color: var(--accent); }
+
+:where(fieldset) {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px 8px;
+}
+
+:where(legend) {
+  padding: 0 4px;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+:where(button) { font-family: var(--font-ui); }
+
+/* `small` would otherwise shrink below the type scale's floor. */
+:where(small) { font-size: var(--fs-meta); }
 
 /* Template selector */
 select {
@@ -852,11 +921,11 @@ select:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-d
  * control the reader is already looking at, while every keyboard arrival does.
  * The ring repeats `select:focus`'s shape so one indicator means one thing.
  */
-input[type="text"]:focus-visible,
-input[type="search"]:focus-visible,
-input[type="number"]:focus-visible,
+input:focus-visible,
 textarea:focus-visible,
-input[type="range"]:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+a:focus-visible,
 button:focus-visible {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-dim);
@@ -1026,19 +1095,19 @@ input[type="range"]::-moz-range-thumb {
   }
   .btn-simulate {
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--fs-body);
   }
   select {
-    font-size: 11px;
+    font-size: var(--fs-body);
     padding: 3px 6px;
   }
   .slider-label {
     width: 50px;
-    font-size: 10px;
+    font-size: var(--fs-body);
   }
   .slider-value {
     width: 55px;
-    font-size: 10px;
+    font-size: var(--fs-body);
   }
   .panel-section {
     padding: 8px;

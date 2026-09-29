@@ -34,7 +34,7 @@ export default function ModelCapabilitiesStrip({ modelName }: { modelName: strin
     <ul
       aria-label="Silicon operations for this model"
       data-testid="model-capabilities"
-      style={{ listStyle: "none", padding: 0, margin: "4px 0", fontSize: 9 }}
+      style={{ listStyle: "none", padding: 0, margin: "4px 0", fontSize: "var(--fs-meta)" }}
     >
       {capabilityRows(capabilities).map((row) => (
         <li key={row.label} style={{ color: row.enabled ? "var(--text-secondary)" : "var(--text-muted)" }}>

@@ -40,7 +40,7 @@ export default function StatusBar() {
       height: 18, padding: "0 12px",
       display: "flex", alignItems: "center", gap: 12,
       background: "var(--bg-secondary)", borderTop: "1px solid var(--border)",
-      fontSize: 9, fontFamily: "var(--font-mono)", color: "var(--text-muted)",
+      fontSize: "var(--fs-meta)", fontFamily: "var(--font-mono)", color: "var(--text-muted)",
     }}>
       {parts.map((p, i) => (
         <span key={i}>{p}</span>

@@ -48,7 +48,7 @@ export default function BackendMatrix({ backends }: { backends: ModelBackendSupp
             key={b.name}
             title={`${b.name}: ${b.parity} parity vs the Python reference`}
             style={{
-              fontSize: 9, padding: "1px 5px", borderRadius: 3,
+              fontSize: "var(--fs-meta)", padding: "1px 5px", borderRadius: 3,
               fontFamily: "var(--font-mono)",
               background: "var(--bg-tertiary)",
               border: `1px solid ${PARITY_COLOR[b.parity] ?? "var(--border)"}`,

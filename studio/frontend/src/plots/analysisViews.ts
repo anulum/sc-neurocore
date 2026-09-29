@@ -57,7 +57,7 @@ export function drawFICurveView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
   drawAxes(ctx, frame.left, frame.top, frame.plotWidth, ph, xMin, xMax, 0, yMax * 1.1, "I (nA)");
   drawLine(ctx, frame.left, frame.top, frame.plotWidth, ph, fiResult.currents, fiResult.rates, xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
   ctx.fillStyle = AXIS;
-  ctx.font = "10px monospace";
+  ctx.font = "11px monospace";
   ctx.textAlign = "left";
   ctx.fillText("f (Hz)", frame.left + 4, frame.top + 12);
 }
@@ -93,7 +93,7 @@ export function drawIsiHistogramView(ctx: CanvasRenderingContext2D, frame: PlotF
     const bh = (count / (maxCount * 1.1)) * ph;
     ctx.fillRect(bx, frame.top + ph - bh, Math.max(bw - 1, 1), bh);
   }
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText("count", frame.left + 4, frame.top + 12);
 }
 
@@ -123,7 +123,7 @@ export function drawBifurcationView(ctx: CanvasRenderingContext2D, frame: PlotFr
       ctx.fillRect(x - 1, y - 1, 2, 2);
     }
   }
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText("V attractor", frame.left + 4, frame.top + 12);
 }
 
@@ -159,7 +159,7 @@ export function drawHeatmapView(ctx: CanvasRenderingContext2D, frame: PlotFrame,
       ctx.fillRect(cx, cy, cellW + 1, cellH + 1);
     }
   }
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText(`${heatmapResult.param_y} vs ${heatmapResult.param_x}  (${rate_min.toFixed(0)}–${rate_max.toFixed(0)} Hz)`, frame.left + 4, frame.top + 12);
 }
 
@@ -180,7 +180,7 @@ export function drawSensitivityView(ctx: CanvasRenderingContext2D, frame: PlotFr
   const defined = sens.map((s) => s.sensitivity).filter((v): v is number => v !== null);
   const maxS = Math.max(...defined, 0.01);
   const barH = Math.min(20, ph / sens.length - 2);
-  ctx.font = "10px monospace";
+  ctx.font = "11px monospace";
   sens.forEach((s, i) => {
     const y = frame.top + i * (barH + 2);
     ctx.fillStyle = AXIS; ctx.textAlign = "right";
@@ -217,7 +217,7 @@ export function drawFrequencyResponseView(ctx: CanvasRenderingContext2D, frame: 
   drawAxes(ctx, frame.left, frame.top, frame.plotWidth, ph, xMin, xMax, 0, yMax * 1.1, "freq (Hz)");
   drawLine(ctx, frame.left, frame.top, frame.plotWidth, ph, freqResult.frequencies_hz, freqResult.rates,
     xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText(`rate (Hz) @ amplitude=${freqResult.amplitude}`, frame.left + 4, frame.top + 12);
 }
 
@@ -246,6 +246,6 @@ export function drawSpikeTriggeredAverageView(ctx: CanvasRenderingContext2D, fra
   ctx.strokeStyle = "#ff5252"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
   ctx.beginPath(); ctx.moveTo(x0, frame.top); ctx.lineTo(x0, frame.top + ph); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
   ctx.fillText(`STA (n=${staResult.n_spikes} spikes)`, frame.left + 4, frame.top + 12);
 }

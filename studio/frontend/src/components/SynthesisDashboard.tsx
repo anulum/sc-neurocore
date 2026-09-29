@@ -29,7 +29,7 @@ function ResourceBar({ label, used, total, color }: {
   const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
   return (
     <div style={{ marginBottom: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 2 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)", marginBottom: 2 }}>
         <span style={{ color: "var(--text-secondary)" }}>{label}</span>
         <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
           {used} / {total} ({pct.toFixed(1)}%)
@@ -77,7 +77,7 @@ function TargetComparisonRow({ target, result }: {
     return (
       <tr>
         <td style={{ padding: "3px 8px", fontWeight: 600 }}>{target.toUpperCase()}</td>
-        <td colSpan={4} style={{ padding: "3px 8px", color: "#ff5252", fontSize: 10 }}>
+        <td colSpan={4} style={{ padding: "3px 8px", color: "#ff5252", fontSize: "var(--fs-body)" }}>
           {failureText(result.error)}
         </td>
       </tr>
@@ -108,7 +108,7 @@ function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenan
   return (
     <div style={{
       marginTop: 10, padding: 8, background: "var(--bg-secondary)",
-      borderRadius: 4, fontSize: 10, color: "var(--text-secondary)",
+      borderRadius: 4, fontSize: "var(--fs-body)", color: "var(--text-secondary)",
     }}>
       <div style={{ fontWeight: 600, marginBottom: 4 }}>Target provenance</div>
       <div>Command: {provenance.synthesis_command}</div>
@@ -137,7 +137,7 @@ export function SiliconTerminalSummary({ terminal }: { terminal: SiliconTerminal
   return (
     <div style={{
       marginTop: 10, padding: 8, background: "var(--bg-secondary)",
-      borderRadius: 4, fontSize: 10, color: "var(--text-secondary)",
+      borderRadius: 4, fontSize: "var(--fs-body)", color: "var(--text-secondary)",
     }}>
       <div style={{ fontWeight: 600, marginBottom: 4 }}>
         Selected RTL synthesis/PnR terminal
@@ -202,7 +202,7 @@ export function ProvenanceMatrixSummary({
   return (
     <div style={{
       marginTop: 10, padding: 8, background: "var(--bg-secondary)",
-      borderRadius: 4, fontSize: 10, color: "var(--text-secondary)",
+      borderRadius: 4, fontSize: "var(--fs-body)", color: "var(--text-secondary)",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
         <strong>Target provenance matrix</strong>
@@ -311,7 +311,7 @@ export default function SynthesisDashboard() {
         <select
           value={synthTarget}
           onChange={(e) => { setSynthTarget(e.target.value); }}
-          style={{ fontSize: 10, padding: "2px 6px" }}
+          style={{ fontSize: "var(--fs-body)", padding: "2px 6px" }}
         >
           {targets.map((t) => (
             <option
@@ -329,7 +329,7 @@ export default function SynthesisDashboard() {
           disabled={isSimulating || !hasSV || !selectedTerminalReady}
           style={{
             background: "#a5d6a7", color: "#0d1117", border: "none",
-            padding: "3px 10px", fontSize: 10,
+            padding: "3px 10px", fontSize: "var(--fs-body)",
           }}
         >
           {isSimulating ? "..." : sourceMode === "model" ? "Synthesise + Route" : "Synthesise"}
@@ -340,7 +340,7 @@ export default function SynthesisDashboard() {
           disabled={isSimulating || !hasSV || sourceMode === "model"}
           style={{
             background: "#80cbc4", color: "#0d1117", border: "none",
-            padding: "3px 10px", fontSize: 10,
+            padding: "3px 10px", fontSize: "var(--fs-body)",
           }}
         >
           All Targets
@@ -352,19 +352,19 @@ export default function SynthesisDashboard() {
             disabled={isSimulating}
             style={{
               background: "#ffcc80", color: "#0d1117", border: "none",
-              padding: "3px 10px", fontSize: 10,
+              padding: "3px 10px", fontSize: "var(--fs-body)",
             }}
           >
             Estimate
           </button>
         )}
         {!hasSV && (
-          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>
+          <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
             Generate Verilog first (RTL or SV button)
           </span>
         )}
         {hasSV && sourceMode === "model" && !selectedTerminalReady && (
-          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>
+          <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
             Compile and bit-exact co-simulate this RTL, then choose ICE40 or ECP5
           </span>
         )}
@@ -373,7 +373,7 @@ export default function SynthesisDashboard() {
       {/* Tool status */}
       {toolsAvailable && (
         <div style={{
-          padding: "4px 12px", fontSize: 9, display: "flex", gap: 12,
+          padding: "4px 12px", fontSize: "var(--fs-meta)", display: "flex", gap: 12,
           borderBottom: "1px solid var(--border)", color: "var(--text-muted)",
         }}>
           {Object.entries(toolsAvailable).map(([name, info]) => (
@@ -384,7 +384,7 @@ export default function SynthesisDashboard() {
               }} />
               {name}
               {info.version && (
-                <span style={{ fontSize: 8, color: "var(--text-muted)" }}> ({info.version})</span>
+                <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}> ({info.version})</span>
               )}
             </span>
           ))}
@@ -395,7 +395,7 @@ export default function SynthesisDashboard() {
         {/* Estimate preview */}
         {synthEstimate && !synthResult && !multiTargetResult && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#ffcc80", marginBottom: 8 }}>
+            <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "#ffcc80", marginBottom: 8 }}>
               {synthEstimate.target.toUpperCase()} — Resource Estimate (heuristic, no Yosys)
             </div>
             <ResourceBar
@@ -410,7 +410,7 @@ export default function SynthesisDashboard() {
               label="DSPs" used={synthEstimate.resources.dsps}
               total={synthEstimate.capacity.dsps} color="rgba(206, 147, 216, 0.5)"
             />
-            <div style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 4 }}>
+            <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)", marginTop: 4 }}>
               Heuristic estimate from IR operation count. Run Yosys for exact numbers.
             </div>
           </div>
@@ -419,11 +419,11 @@ export default function SynthesisDashboard() {
         {/* Multi-target comparison table */}
         {multiTargetResult && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#80cbc4", marginBottom: 8 }}>
+            <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "#80cbc4", marginBottom: 8 }}>
               Multi-Target Comparison
             </div>
             <table style={{
-              width: "100%", fontSize: 10, borderCollapse: "collapse",
+              width: "100%", fontSize: "var(--fs-body)", borderCollapse: "collapse",
               color: "var(--text-secondary)",
             }}>
               <thead>
@@ -461,13 +461,13 @@ export default function SynthesisDashboard() {
             {!synthResult.success ? (
               <div style={{
                 padding: 12, background: "rgba(255,82,82,0.1)", borderRadius: 4,
-                color: "#ff5252", fontSize: 11,
+                color: "#ff5252", fontSize: "var(--fs-body)",
               }}>
                 {synthResult.error}
               </div>
             ) : (
               <>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--accent)", marginBottom: 12 }}>
+                <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "var(--accent)", marginBottom: 12 }}>
                   {synthResult.target.toUpperCase()} — Synthesis Results
                 </div>
 
@@ -490,13 +490,13 @@ export default function SynthesisDashboard() {
 
                 <div style={{
                   marginTop: 12, padding: 8, background: "var(--bg-secondary)",
-                  borderRadius: 4, fontSize: 10, fontFamily: "var(--font-mono)",
+                  borderRadius: 4, fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
                   color: "var(--text-secondary)",
                 }}>
                   <div>Cells: {synthResult.resources.cells}</div>
                   <div>Wires: {synthResult.resources.wires}</div>
                   {synthResult.log_excerpt && (
-                    <div style={{ marginTop: 6, color: "var(--text-muted)", fontSize: 9, whiteSpace: "pre-wrap" }}>
+                    <div style={{ marginTop: 6, color: "var(--text-muted)", fontSize: "var(--fs-meta)", whiteSpace: "pre-wrap" }}>
                       {synthResult.log_excerpt}
                     </div>
                   )}
@@ -524,7 +524,7 @@ export default function SynthesisDashboard() {
         {!synthResult && !multiTargetResult && !synthEstimate && hasSV && (
           <div style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-            color: "var(--text-muted)", fontSize: 11, minHeight: 100,
+            color: "var(--text-muted)", fontSize: "var(--fs-body)", minHeight: 100,
           }}>
             Click Synthesise to run Yosys, or Estimate for a quick heuristic
           </div>

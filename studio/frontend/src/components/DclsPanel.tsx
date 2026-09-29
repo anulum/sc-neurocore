@@ -127,7 +127,7 @@ export default function DclsPanel() {
         Learnable synaptic delays — DCLS-max tent kernel
       </h2>
       {info && (
-        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 12 }}>
+        <div style={{ fontSize: "var(--fs-body)", color: "var(--text-secondary)", marginBottom: 12 }}>
           {info.provenance.authors.join(", ")} ({info.provenance.year}). {info.provenance.title}.{" "}
           <a href={`https://doi.org/${info.provenance.doi}`} target="_blank" rel="noreferrer"
             style={{ color: "var(--accent)" }}>
@@ -138,7 +138,7 @@ export default function DclsPanel() {
 
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 280px", minWidth: 260 }}>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>
+          <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)", marginBottom: 4 }}>
             Learnable tent weighting over delay taps
           </div>
           {evaluation && (
@@ -155,7 +155,7 @@ export default function DclsPanel() {
         </div>
 
         <div style={{ flex: "1 1 260px", minWidth: 240 }}>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>
+          <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)", marginBottom: 4 }}>
             Q8.8 contraction — cross-backend parity
           </div>
           {fwd && (
@@ -169,7 +169,7 @@ export default function DclsPanel() {
                 {" · "}{fwd.active_tap_count} active taps
                 {fwd.overflow && <span style={{ color: "var(--warning)" }}> · overflow</span>}
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--fs-body)" }}>
                 <tbody>
                   {fwd.backends.map((b) => (
                     <tr key={b.backend}>
@@ -191,7 +191,7 @@ export default function DclsPanel() {
 
       {benchmark && (
         <div style={{ marginTop: 16, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>
+          <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)", marginBottom: 6 }}>
             Backend throughput — recorded {benchmark.workload.n_channels.toLocaleString()} channels
             × {benchmark.workload.n_taps} taps, speed-up over the Python floor
           </div>
@@ -202,7 +202,7 @@ export default function DclsPanel() {
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       const max = benchmark.backends[0]?.speedup_over_python || 1;
               return (
-                <div key={b.backend} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                <div key={b.backend} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--fs-body)" }}>
                   <span style={{ width: 56, fontFamily: "var(--font-mono)" }}>{b.backend}</span>
                   <div style={{ flex: 1, background: "var(--bg-tertiary)", borderRadius: 2, height: 14 }}>
                     <div style={{
@@ -218,7 +218,7 @@ export default function DclsPanel() {
               );
             })}
           </div>
-          <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 5 }}>
+          <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)", marginTop: 5 }}>
             {benchmark.cpu} · {benchmark.isolation_mode} ·{" "}
             {benchmark.hardware_measurement_claimed ? "silicon" : "software measurement, not silicon"}
             {" · "}{benchmark.date_utc.slice(0, 10)}
@@ -231,7 +231,7 @@ export default function DclsPanel() {
       {info && (
         <div style={{
           marginTop: 16, paddingTop: 10, borderTop: "1px solid var(--border)",
-          fontSize: 11, color: "var(--text-secondary)", display: "grid", gap: 3,
+          fontSize: "var(--fs-body)", color: "var(--text-secondary)", display: "grid", gap: 3,
         }}>
           <div>
             <b>Fixed-point</b>: weights {info.fixed_point.weight_format}, accumulator{" "}
@@ -260,7 +260,7 @@ function Slider({ label, value, min, max, step, onChange }: {
   onChange: (v: number) => void;
 }) {
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--fs-body)" }}>
       <span style={{ width: 110, color: "var(--text-secondary)" }}>{label}</span>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => { onChange(parseFloat(e.target.value)); }} style={{ flex: 1 }} />

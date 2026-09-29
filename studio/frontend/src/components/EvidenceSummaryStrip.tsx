@@ -32,7 +32,7 @@ function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
       gap: 6,
-      fontSize: 9,
+      fontSize: "var(--fs-meta)",
       color: "var(--text-muted)",
     };
   }
@@ -61,7 +61,7 @@ function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
       background: "rgba(13,17,23,0.92)",
       color: "var(--text-secondary)",
       fontFamily: "var(--font-mono)",
-      fontSize: 10,
+      fontSize: "var(--fs-body)",
       pointerEvents: "none",
     };
   }
@@ -71,7 +71,7 @@ function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
     border: "1px solid var(--border)",
     borderRadius: 4,
     color: "var(--text-muted)",
-    fontSize: 9,
+    fontSize: "var(--fs-meta)",
     lineHeight: 1.5,
   };
 }

@@ -27,7 +27,7 @@ const DEFAULT_CRITERION: TrainingPreregistration = { metric: "val_accuracy", thr
  */
 export default function TrainingPreregistrationInput({ value, onChange, modelKind }: TrainingPreregistrationInputProps) {
   const problem = value === undefined ? null : preregistrationProblem(value, modelKind);
-  return <fieldset style={{ margin: "0 12px 8px", fontSize: 10, border: "1px solid var(--border)" }}>
+  return <fieldset style={{ margin: "0 12px 8px", fontSize: "var(--fs-body)", border: "1px solid var(--border)" }}>
     <legend style={{ color: "var(--text-secondary)" }}>Preregistered acceptance criterion</legend>
     <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
       <input type="checkbox" checked={value !== undefined}
@@ -39,7 +39,7 @@ export default function TrainingPreregistrationInput({ value, onChange, modelKin
         Metric
         <select aria-label="Criterion metric" value={value.metric}
           onChange={(e) => { onChange({ ...value, metric: e.target.value as TrainingPreregistrationMetric }); }}
-          style={{ display: "block", width: "100%", fontSize: 10 }}>
+          style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }}>
           <option value="val_accuracy">Validation accuracy, at least</option>
           <option value="val_loss">Validation loss, at most</option>
           {modelKind === "qcfs_conversion"
@@ -50,13 +50,13 @@ export default function TrainingPreregistrationInput({ value, onChange, modelKin
         Threshold
         <input aria-label="Criterion threshold" type="number" step="any" value={value.threshold}
           onChange={(e) => { onChange({ ...value, threshold: e.target.value === "" ? Number.NaN : Number(e.target.value) }); }}
-          style={{ display: "block", width: "100%", fontSize: 10 }} />
+          style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }} />
       </label>
       <label style={{ gridColumn: "1 / -1" }}>
         Rationale
         <textarea aria-label="Criterion rationale" value={value.rationale} maxLength={PREREGISTRATION_RATIONALE_MAX} rows={2}
           onChange={(e) => { onChange({ ...value, rationale: e.target.value }); }}
-          style={{ display: "block", width: "100%", fontSize: 10 }} />
+          style={{ display: "block", width: "100%", fontSize: "var(--fs-body)" }} />
       </label>
     </div>}
     {problem !== null && <p role="alert" style={{ margin: "4px 0 0" }}>{problem}</p>}

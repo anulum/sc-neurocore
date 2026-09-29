@@ -37,16 +37,16 @@ import {
 } from "../studioPopulationEditor";
 
 const row: CSSProperties = { display: "flex", flexDirection: "column", gap: 2, padding: "3px 0" };
-const labelStyle: CSSProperties = { color: "var(--text-primary)", fontSize: 11, fontWeight: 600 };
-const helpStyle: CSSProperties = { color: "var(--text-muted)", fontSize: 10 };
-const errorStyle: CSSProperties = { color: "var(--danger, #c0392b)", fontSize: 10 };
-const headingStyle: CSSProperties = { fontSize: 11, margin: "8px 0 0", textTransform: "uppercase" };
+const labelStyle: CSSProperties = { color: "var(--text-primary)", fontSize: "var(--fs-body)", fontWeight: 600 };
+const helpStyle: CSSProperties = { color: "var(--text-muted)", fontSize: "var(--fs-body)" };
+const errorStyle: CSSProperties = { color: "var(--danger, #c0392b)", fontSize: "var(--fs-body)" };
+const headingStyle: CSSProperties = { fontSize: "var(--fs-body)", margin: "8px 0 0", textTransform: "uppercase" };
 const inputStyle: CSSProperties = {
   background: "var(--bg-primary)",
   border: "1px solid var(--control-border)",
   borderRadius: 3,
   color: "var(--text-primary)",
-  fontSize: 11,
+  fontSize: "var(--fs-body)",
   padding: "2px 6px",
 };
 

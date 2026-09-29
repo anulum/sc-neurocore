@@ -92,6 +92,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Studio's text is readable. Measured in a real browser on 2026-09-29,
+  most of its text was set at 8 to 10 pixels; the Studio now has a type scale
+  whose floor is 11 pixels for dense metadata and 12 for body text, including
+  the axis labels drawn into the plots. Text fields, text areas, file pickers,
+  checkboxes and radios follow the dark palette instead of rendering as white
+  browser defaults (the fitting laboratory, the training monitor and the
+  candidate editor were affected), and every focusable control, links and
+  disclosure summaries included, shows the keyboard focus ring.
 - Opening the Studio's Delays view no longer freezes the whole server. The
   view asks for the kernel information and the parity evaluation at once; in a
   server process that had not yet loaded PyTorch both requests probed the Julia

@@ -61,7 +61,7 @@ export default function CompilerInspector() {
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 14, marginBottom: 8 }}>Compiler Inspector</div>
-          <div style={{ fontSize: 11 }}>
+          <div style={{ fontSize: "var(--fs-body)" }}>
             Click <strong>Build IR</strong> to compile your equation to stochastic computing IR,
             then <strong>Emit SV</strong> to generate SystemVerilog.
           </div>
@@ -74,7 +74,7 @@ export default function CompilerInspector() {
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Verification badge */}
       <div style={{
-        padding: "4px 12px", fontSize: 10, fontFamily: "var(--font-mono)",
+        padding: "4px 12px", fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
         background: irErrors.length > 0 ? "rgba(255,82,82,0.15)" : "rgba(129,199,132,0.15)",
         borderBottom: "1px solid var(--border)",
         color: irErrors.length > 0 ? "#ff5252" : "#81c784",
@@ -86,7 +86,7 @@ export default function CompilerInspector() {
 
       {compileTraceability && (
         <div style={{
-          padding: "6px 12px", fontSize: 10, fontFamily: "var(--font-mono)",
+          padding: "6px 12px", fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
           color: "var(--text-secondary)", background: "var(--bg-secondary)",
           borderBottom: "1px solid var(--border)", display: "flex", gap: 14,
           alignItems: "center", flexWrap: "wrap",
@@ -109,7 +109,7 @@ export default function CompilerInspector() {
               background: "var(--accent)",
               color: "var(--bg-primary)",
               cursor: compileEvidenceBundleLoading ? "wait" : "pointer",
-              fontSize: 10,
+              fontSize: "var(--fs-body)",
             }}
             type="button"
           >
@@ -138,7 +138,7 @@ export default function CompilerInspector() {
       {/* Error list */}
       {irErrors.length > 0 && (
         <div style={{
-          padding: "4px 12px", fontSize: 10, color: "#ff5252",
+          padding: "4px 12px", fontSize: "var(--fs-body)", color: "#ff5252",
           background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)",
           maxHeight: 60, overflowY: "auto",
         }}>
@@ -153,13 +153,13 @@ export default function CompilerInspector() {
         {/* IR panel */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid var(--border)" }}>
           <div style={{
-            padding: "3px 8px", fontSize: 9, fontWeight: 700,
+            padding: "3px 8px", fontSize: "var(--fs-meta)", fontWeight: 700,
             color: "var(--accent)", background: "var(--bg-secondary)",
             borderBottom: "1px solid var(--border)", textTransform: "uppercase",
           }}>SC Intermediate Representation</div>
           <pre style={{
             flex: 1, margin: 0, padding: 8, overflow: "auto",
-            fontSize: 11, fontFamily: "var(--font-mono)",
+            fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
             color: "var(--text-primary)", background: "var(--bg-primary)",
             whiteSpace: "pre-wrap",
           }}>{irText || "(no IR generated)"}</pre>
@@ -168,13 +168,13 @@ export default function CompilerInspector() {
         {/* SystemVerilog panel */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <div style={{
-            padding: "3px 8px", fontSize: 9, fontWeight: 700,
+            padding: "3px 8px", fontSize: "var(--fs-meta)", fontWeight: 700,
             color: "#a5d6a7", background: "var(--bg-secondary)",
             borderBottom: "1px solid var(--border)", textTransform: "uppercase",
           }}>SystemVerilog</div>
           <pre style={{
             flex: 1, margin: 0, padding: 8, overflow: "auto",
-            fontSize: 11, fontFamily: "var(--font-mono)",
+            fontSize: "var(--fs-body)", fontFamily: "var(--font-mono)",
             color: "var(--text-primary)", background: "var(--bg-primary)",
             whiteSpace: "pre-wrap",
           }}>{rtlSource || "(click Emit SV to generate)"}</pre>

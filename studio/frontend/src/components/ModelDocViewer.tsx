@@ -28,7 +28,7 @@ export function ModelDocMarkdown({ markdown }: { markdown: string }) {
     <pre
       style={{
         maxHeight: 320, overflowY: "auto", margin: 0, padding: 8,
-        fontSize: 10, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word",
+        fontSize: "var(--fs-body)", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word",
         background: "var(--bg-primary)", color: "var(--text-secondary)",
         border: "1px solid var(--border)", borderRadius: "var(--radius)",
         fontFamily: "var(--font-mono)",
@@ -79,7 +79,7 @@ export default function ModelDocViewer() {
         type="button"
         onClick={() => { setOpen((v) => !v); }}
         style={{
-          width: "100%", textAlign: "left", fontSize: 10, padding: "3px 4px",
+          width: "100%", textAlign: "left", fontSize: "var(--fs-body)", padding: "3px 4px",
           background: "var(--bg-tertiary)", color: "var(--text-secondary)",
           border: "1px solid var(--control-border)", borderRadius: "var(--radius)", cursor: "pointer",
         }}
@@ -89,10 +89,10 @@ export default function ModelDocViewer() {
       {open && (
         <div style={{ marginTop: 4 }}>
           {state.status === "loading" && (
-            <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Loading…</div>
+            <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)" }}>Loading…</div>
           )}
           {state.status === "absent" && (
-            <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "var(--fs-body)", color: "var(--text-muted)" }}>
               No reference page for this model yet.
             </div>
           )}
