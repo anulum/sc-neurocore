@@ -1887,6 +1887,10 @@ export interface SynthResult {
   resources: SynthResources;
   capacity: SynthCapacity;
   utilisation: Record<string, number>;
+  /** Whether the device holds the design; absent when the target has no capacity data. */
+  fits_device?: boolean;
+  /** Each resource the design needs beyond the device, with both counts. */
+  exceeds_capacity?: Record<string, { needed: number; available: number }>;
   log_excerpt: string;
   target_provenance: SynthesisTargetProvenance;
   silicon_terminal?: SiliconTerminalResult;
@@ -1904,6 +1908,8 @@ export interface SynthEstimate {
   resources: { luts: number; ffs: number; brams: number; dsps: number };
   capacity: SynthCapacity;
   utilisation: Record<string, number>;
+  fits_device?: boolean;
+  exceeds_capacity?: Record<string, { needed: number; available: number }>;
 }
 
 /** The same design synthesised for every supported target, with their provenance. */

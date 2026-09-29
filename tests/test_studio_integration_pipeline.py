@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import Any, cast
 
+import pytest
+
 from tests.studio_integration_support import *  # noqa: F403
 
 
@@ -61,6 +63,37 @@ class TestPipeline:
         synthesis = result["steps"]["synthesise"]
         assert result["success"] is synthesis["success"] is True
         assert synthesis["resources"]["ffs"] > 0
+        # A four-neuron network fits the UP5K, and the result says so.
+        assert synthesis["fits_device"] is True
+        assert synthesis["exceeds_capacity"] == {}
+
+    def test_a_design_the_device_cannot_hold_is_not_a_completed_pipeline(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Real synthesis of the real network; only the device is shrunk to
+        # fewer LUTs than the design needs. (A design that overflows the real
+        # UP5K costs about a minute of synthesis: 20 neurons, 6237 LUTs.)
+        from sc_neurocore.studio import synthesis as synthesis_module
+
+        monkeypatch.setitem(
+            synthesis_module._DEVICE_CAPACITY,
+            "ice40",
+            {"luts": 10, "ffs": 5280, "brams": 30, "dsps": 8},
+        )
+        result = run_pipeline(self._supported_graph())
+
+        assert result["success"] is False
+        assert result["step"] == "fit"
+        synthesis = result["steps"]["synthesise"]
+        assert synthesis["success"] is True
+        assert synthesis["fits_device"] is False
+        needed = synthesis["exceeds_capacity"]["luts"]["needed"]
+        assert needed > 10
+        assert result["error"] == (
+            f"synthesis succeeded, but the design needs {needed} LUTs (the device has 10): "
+            "it does not fit the ICE40 UP5K"
+        )
+        assert set(result["trace"]) >= {"rtl_sha256", "synthesis_source_sha256"}
 
     def test_two_different_networks_give_different_hardware(self) -> None:
         first = run_pipeline(self._supported_graph())

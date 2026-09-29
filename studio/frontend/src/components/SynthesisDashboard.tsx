@@ -23,27 +23,57 @@ import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
  *   colour to draw it in.
  * @returns The bar.
  */
-function ResourceBar({ label, used, total, color }: {
+export function ResourceBar({ label, used, total, color }: {
   label: string; used: number; total: number; color: string;
 }) {
-  const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+  // The figure is the real share; only the bar stops at full. The text was
+  // capped too, so 6237 of 5280 LUTs read "(100.0%)".
+  const share = total > 0 ? (used / total) * 100 : null;
+  const over = used > total;
+  const pct = share === null ? (used > 0 ? 100 : 0) : Math.min(share, 100);
   return (
     <div style={{ marginBottom: 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--fs-body)", marginBottom: 2 }}>
         <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-        <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-          {used} / {total} ({pct.toFixed(1)}%)
+        <span style={{ color: over ? "var(--error)" : "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+          {used} / {total} ({share === null ? (used > 0 ? "device has none" : "none used") : `${share.toFixed(1)}%`})
+          {over ? " over capacity" : ""}
         </span>
       </div>
       <div style={{
         height: 8, background: "var(--bg-tertiary)", borderRadius: 4, overflow: "hidden",
       }}>
         <div style={{
-          height: "100%", width: `${pct}%`, background: color,
+          height: "100%", width: `${pct}%`, background: over ? "var(--error)" : color,
           borderRadius: 4, transition: "width 0.3s",
         }} />
       </div>
     </div>
+  );
+}
+
+/**
+ * Say whether the device holds the design, beside its resource bars.
+ *
+ * @param props - The target and the server's verdict, when it gave one.
+ * @returns The sentence, or nothing without a verdict.
+ */
+export function FitVerdict({ target, fits, exceeds }: {
+  target: string;
+  fits: boolean | undefined;
+  exceeds: Record<string, { needed: number; available: number }> | undefined;
+}) {
+  if (fits === undefined) return null;
+  const names: Record<string, string> = { luts: "LUTs", ffs: "flip-flops", brams: "block RAMs", dsps: "DSP blocks" };
+  const text = fits
+    ? `Fits the ${target.toUpperCase()} device.`
+    : `Does not fit the ${target.toUpperCase()} device: ${Object.entries(exceeds ?? {})
+      .map(([key, row]) => `${String(row.needed)} ${names[key] ?? key} needed, ${String(row.available)} available`)
+      .join("; ")}. Synthesis produced a netlist the device cannot hold.`;
+  return (
+    <p role="status" data-testid="synthesis-fit-verdict" style={{
+      margin: "0 0 10px", fontSize: "var(--fs-body)", color: fits ? "var(--success)" : "var(--error)",
+    }}>{text}</p>
   );
 }
 
@@ -412,6 +442,7 @@ export default function SynthesisDashboard() {
             <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)", marginTop: 4 }}>
               Heuristic estimate from IR operation count. Run Yosys for exact numbers.
             </div>
+            <FitVerdict target={synthEstimate.target} fits={synthEstimate.fits_device} exceeds={synthEstimate.exceeds_capacity} />
           </div>
         )}
 
@@ -469,6 +500,7 @@ export default function SynthesisDashboard() {
                 <div style={{ fontSize: "var(--fs-body)", fontWeight: 600, color: "var(--accent)", marginBottom: 12 }}>
                   {synthResult.target.toUpperCase()} — Synthesis Results
                 </div>
+                <FitVerdict target={synthResult.target} fits={synthResult.fits_device} exceeds={synthResult.exceeds_capacity} />
 
                 <ResourceBar
                   label="LUTs" used={synthResult.resources.luts}

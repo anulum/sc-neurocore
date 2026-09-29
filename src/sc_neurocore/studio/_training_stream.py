@@ -29,6 +29,27 @@ def _frame(event: dict[str, object]) -> str:
     return f"data: {json.dumps(event)}\n\n"
 
 
+#: Polls a finished proxy job waits for the durable record to seal before the
+#: stream states the end from the proxy itself.
+PROXY_TERMINAL_GRACE_POLLS = 30
+
+
+def _event_from_proxy(job: object) -> dict[str, object]:
+    """Say how a finished local job ended, from the proxy's own fields."""
+    status = getattr(job, "status", "failed")
+    if status == "completed":
+        final = getattr(job, "final_metrics", None)
+        return {
+            "event": "completed",
+            "data": final if isinstance(final, dict) else {},
+            "timestamp": time.time(),
+        }
+    if status == "stopped":
+        return {"event": "stopped", "data": {}, "timestamp": time.time()}
+    message = getattr(job, "error", None) or "Training failed."
+    return {"event": "error", "data": {"message": message}, "timestamp": time.time()}
+
+
 def _stream_metrics(
     job_id: str,
     job_manager: StudioJobService | None = None,
@@ -47,6 +68,7 @@ def _stream_metrics(
 
     live_event_offset = 0
     live_event_buffer = ""
+    finished_polls = 0
     while True:
         if job_manager is not None:
             try:
@@ -90,5 +112,13 @@ def _stream_metrics(
                 return
         except queue.Empty:
             if job.status in ("completed", "stopped", "failed", "interrupted"):
+                # A proxy without a manager already handed its end over. With
+                # one, the proxy can finish before the record seals: returning
+                # silently left the browser's run "running" for good.
+                finished_polls += 1
+                if job_manager is not None and finished_polls <= PROXY_TERMINAL_GRACE_POLLS:
+                    continue
+                if job_manager is not None:
+                    yield _frame(_event_from_proxy(job))
                 return
             yield _frame({"event": "heartbeat"})

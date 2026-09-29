@@ -131,16 +131,19 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     # four authenticated candidate-package routes arrived, and the two
     # authenticated fitting routes after them, the two authenticated
     # review-comment routes, the authenticated replay-notebook export and the
-    # authenticated network tutorial notebook.
+    # authenticated network tutorial notebook; 149 since the seven
+    # authenticated fitting and cohort job routes of the experiment laboratory
+    # and the public training target-profile catalogue, which was served
+    # without a policy until the route-policy gate caught it.
     assert payload["route_policies"] == {
         "admin_count": 28,
-        "authenticated_count": 79,
+        "authenticated_count": 86,
         "enforced": True,
-        "protected_audit_action_count": 107,
-        "protected_count": 107,
+        "protected_audit_action_count": 114,
+        "protected_count": 114,
         "protected_routes_audited": True,
-        "public_count": 34,
-        "total_count": 141,
+        "public_count": 35,
+        "total_count": 149,
     }
     assert payload["identity"] == {
         "configured": True,

@@ -173,12 +173,79 @@ _TARGETS: dict[str, dict[str, str | None]] = {
     "xilinx": {"synth_cmd": "synth_xilinx", "pnr": None, "device": None},
 }
 
+#: Resource capacity of each target's device. The iCE40 entry is the UltraPlus
+#: UP5K the Studio synthesises for: 5280 LUT4 and flip-flops, 30 EBR blocks and
+#: 8 SB_MAC16 DSP blocks (Lattice iCE40 UltraPlus Family Data Sheet,
+#: FPGA-DS-02008). It said 0 DSPs, which would make any multiplier "not fit".
 _DEVICE_CAPACITY = {
-    "ice40": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 0},
+    "ice40": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8},
     "ecp5": {"luts": 24576, "ffs": 24576, "brams": 56, "dsps": 28},
     "gowin": {"luts": 20736, "ffs": 20736, "brams": 41, "dsps": 0},
     "xilinx": {"luts": 20800, "ffs": 41600, "brams": 50, "dsps": 90},
 }
+
+
+_CAPACITY_KEYS = ("luts", "ffs", "brams", "dsps")
+
+
+def capacity_verdict(resources: Mapping[str, Any], capacity: Mapping[str, int]) -> dict[str, Any]:
+    """Say whether a synthesised design fits its target device.
+
+    Synthesis succeeding says the netlist exists, not that the device can
+    hold it: a 20-neuron network synthesised to 6237 LUTs for a 5280-LUT
+    UP5K and the pipeline reported it complete. Only resources the target's
+    capacity lists are judged; a target without capacity data gets no
+    verdict rather than a guessed one.
+
+    Parameters
+    ----------
+    resources : Mapping[str, Any]
+        Counted resources of the design.
+    capacity : Mapping[str, int]
+        The device's capacity per resource.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``fits_device`` and ``exceeds_capacity`` (per resource, what the design
+        needs and the device has), or an empty dict without capacity data.
+    """
+    if not capacity:
+        return {}
+    exceeds = {
+        key: {"needed": int(resources.get(key, 0)), "available": int(capacity[key])}
+        for key in _CAPACITY_KEYS
+        if key in capacity and int(resources.get(key, 0)) > int(capacity[key])
+    }
+    return {"fits_device": not exceeds, "exceeds_capacity": exceeds}
+
+
+def capacity_sentence(
+    target: str, device: str | None, exceeds: Mapping[str, Mapping[str, int]]
+) -> str:
+    """Say in words which resources a design needs beyond its device.
+
+    Parameters
+    ----------
+    target : str
+        Target identifier.
+    device : str or None
+        The device within the target family, when known.
+    exceeds : Mapping[str, Mapping[str, int]]
+        From :func:`capacity_verdict`.
+
+    Returns
+    -------
+    str
+        One sentence.
+    """
+    names = {"luts": "LUTs", "ffs": "flip-flops", "brams": "block RAMs", "dsps": "DSP blocks"}
+    where = f"{target.upper()} {device.upper()}" if device else target.upper()
+    parts = [
+        f"{row['needed']} {names.get(key, key)} (the device has {row['available']})"
+        for key, row in exceeds.items()
+    ]
+    return f"the design needs {', '.join(parts)}: it does not fit the {where}"
 
 
 def supported_targets() -> tuple[str, ...]:
@@ -416,6 +483,7 @@ def _run_synthesis_in_directory(
                 key: round(resources.get(key, 0) / max(capacity.get(key, 1), 1) * 100, 1)
                 for key in ["luts", "ffs", "brams", "dsps"]
             },
+            **capacity_verdict(resources, capacity),
             "log_excerpt": log[-300:] if log else "",
             "target_provenance": dict(target_provenance),
         },
@@ -639,6 +707,7 @@ def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict[str, Any
             k: round(resources[k] / max(capacity.get(k, 1), 1) * 100, 1)
             for k in ["luts", "ffs", "brams", "dsps"]
         },
+        **capacity_verdict(resources, capacity),
     }
 
 

@@ -81,8 +81,14 @@ The dashboard shows four resource bars:
 - **DSPs** — Digital Signal Processing blocks (multipliers)
 
 Each bar shows absolute count and percentage utilisation against the
-target device's capacity. The multi-target comparison table shows all
-four metrics across all targets.
+target device's capacity; a share above 100 % is shown as it is and marked
+over capacity. Every synthesis and estimate result carries `fits_device` and
+`exceeds_capacity` (per resource, what the design needs and what the device
+has), and the view says whether the device holds the design: a netlist that
+synthesises is not a design that fits. The network pipeline stops at a `fit`
+step when it does not. The iCE40 capacity is the UltraPlus UP5K's: 5280
+LUTs and flip-flops, 30 EBR blocks and 8 SB_MAC16 DSP blocks. The
+multi-target comparison table shows all four metrics across all targets.
 
 ## Tool Installation
 
@@ -191,8 +197,10 @@ Returns:
   "success": true,
   "target": "ice40",
   "resources": {"luts": 42, "ffs": 18, "brams": 0, "dsps": 0, "cells": 60, "wires": 85},
-  "capacity": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 0},
+  "capacity": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8},
   "utilisation": {"luts": 0.8, "ffs": 0.3, "brams": 0.0, "dsps": 0.0},
+  "fits_device": true,
+  "exceeds_capacity": {},
   "log_excerpt": "...",
   "target_provenance": {
     "schema_version": "studio.synthesis-target-provenance.v1",
@@ -282,8 +290,10 @@ Returns:
   "target": "ice40",
   "estimated": true,
   "resources": {"luts": 32, "ffs": 18, "brams": 0, "dsps": 1},
-  "capacity": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 0},
-  "utilisation": {"luts": 0.6, "ffs": 0.3, "brams": 0.0, "dsps": 0.0}
+  "capacity": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8},
+  "utilisation": {"luts": 0.6, "ffs": 0.3, "brams": 0.0, "dsps": 12.5},
+  "fits_device": true,
+  "exceeds_capacity": {}
 }
 ```
 

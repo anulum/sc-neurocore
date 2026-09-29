@@ -90,6 +90,12 @@ DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         RouteVisibility.PUBLIC,
         "studio.training.cell_types.read",
     ),
+    (
+        "GET",
+        "/api/training/target-profiles",
+        RouteVisibility.PUBLIC,
+        "studio.training.target_profiles.read",
+    ),
     ("GET", "/api/graph/models", RouteVisibility.PUBLIC, "studio.graph.models.read"),
     ("GET", "/api/graph/models/{name}", RouteVisibility.PUBLIC, "studio.graph.models.read"),
 )

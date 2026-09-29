@@ -196,3 +196,24 @@ describe("SiliconTerminalSummary", () => {
     expect(html).toContain("37.08 MHz");
   });
 });
+
+describe("ResourceBar and FitVerdict", () => {
+  it("states the real share of an over-full device instead of capping it at 100 %", async () => {
+    const { ResourceBar } = await import("./SynthesisDashboard");
+    // The 20-neuron network measured at 6237 LUTs on the 5280-LUT UP5K.
+    const html = renderToStaticMarkup(<ResourceBar label="LUTs" used={6237} total={5280} color="#4fc3f7" />);
+    expect(html).toContain("6237 / 5280 (118.1%)");
+    expect(html).toContain("over capacity");
+    expect(html).not.toContain("(100.0%)");
+  });
+
+  it("says whether the device holds the design, naming what it lacks", async () => {
+    const { FitVerdict } = await import("./SynthesisDashboard");
+    const over = renderToStaticMarkup(
+      <FitVerdict target="ice40" fits={false} exceeds={{ luts: { needed: 6237, available: 5280 } }} />,
+    );
+    expect(over).toContain("Does not fit the ICE40 device: 6237 LUTs needed, 5280 available.");
+    expect(renderToStaticMarkup(<FitVerdict target="ice40" fits={true} exceeds={{}} />)).toContain("Fits the ICE40 device.");
+    expect(renderToStaticMarkup(<FitVerdict target="gowin" fits={undefined} exceeds={undefined} />)).toBe("");
+  });
+});

@@ -503,7 +503,7 @@ def run_pipeline(
         cosimulate,
         synthesis_source,
     )
-    from sc_neurocore.studio.synthesis import run_synthesis
+    from sc_neurocore.studio.synthesis import capacity_sentence, run_synthesis
 
     if q_format not in PIPELINE_Q_FORMATS:
         raise ValueError(f"q_format must be one of {sorted(PIPELINE_Q_FORMATS)}, got {q_format!r}")
@@ -569,16 +569,31 @@ def run_pipeline(
     source = synthesis_source(compiled)
     synthesis = run_synthesis(source, target, process_limits=process_limits)
     steps["synthesise"] = synthesis
+    trace = {
+        "input_sha256": cosim.input_sha256,
+        "rtl_sha256": cosim.rtl_sha256,
+        "bit_true_model_sha256": cosim.model_sha256,
+        "synthesis_source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+    }
+    if synthesis.get("success") and synthesis.get("fits_device") is False:
+        # A netlist the device cannot hold is not a completed pipeline: a
+        # 20-neuron network needed 6237 LUTs of the UP5K's 5280 and was
+        # reported "Pipeline complete".
+        provenance = synthesis.get("target_provenance") or {}
+        device = provenance.get("device") if isinstance(provenance, dict) else None
+        return stopped(
+            "fit",
+            "synthesis succeeded, but "
+            + capacity_sentence(
+                target, device if isinstance(device, str) else None, synthesis["exceeds_capacity"]
+            ),
+            trace=trace,
+        )
     return {
         "success": bool(synthesis.get("success")),
         "step": "synthesise",
         "target": target,
         "steps": steps,
-        "trace": {
-            "input_sha256": cosim.input_sha256,
-            "rtl_sha256": cosim.rtl_sha256,
-            "bit_true_model_sha256": cosim.model_sha256,
-            "synthesis_source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
-        },
+        "trace": trace,
         "pipeline": PIPELINE_ROUTE,
     }

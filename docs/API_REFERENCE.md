@@ -49203,6 +49203,45 @@ Public terminal report plus private implementation artifacts.
 ### Function `check_tools()`
 Detect which EDA tools are installed.
 
+### Function `capacity_verdict(resources, capacity)`
+Say whether a synthesised design fits its target device.
+
+Synthesis succeeding says the netlist exists, not that the device can
+hold it: a 20-neuron network synthesised to 6237 LUTs for a 5280-LUT
+UP5K and the pipeline reported it complete. Only resources the target's
+capacity lists are judged; a target without capacity data gets no
+verdict rather than a guessed one.
+
+Parameters
+----------
+resources : Mapping&#91;str, Any&#93;
+    Counted resources of the design.
+capacity : Mapping&#91;str, int&#93;
+    The device's capacity per resource.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    ``fits_device`` and ``exceeds_capacity`` (per resource, what the design
+    needs and the device has), or an empty dict without capacity data.
+
+### Function `capacity_sentence(target, device, exceeds)`
+Say in words which resources a design needs beyond its device.
+
+Parameters
+----------
+target : str
+    Target identifier.
+device : str or None
+    The device within the target family, when known.
+exceeds : Mapping&#91;str, Mapping&#91;str, int&#93;&#93;
+    From :func:`capacity_verdict`.
+
+Returns
+-------
+str
+    One sentence.
+
 ### Function `supported_targets()`
 Return synthesis targets accepted by the Studio EDA routes.
 
