@@ -11,9 +11,16 @@ import { useStudioStore } from "../stores/studio";
 import { buildComparisonRows } from "../modelComparison";
 import { shortModelLabels } from "../modelShortName";
 
+/** How many models the side-by-side table holds. */
+export const SIDE_BY_SIDE_LIMIT = 4;
 
 /**
  * Choose which models the comparison view draws.
+ *
+ * The heading and the group are named for this panel: its checkboxes carry
+ * the same model names as the multi-model picker's, and without a group name
+ * a screen reader heard two identical lists. A fifth model is refused visibly
+ * (the other boxes are disabled) rather than by ignoring the click.
  *
  * @returns The panel.
  */
@@ -39,27 +46,33 @@ export default function ModelComparison() {
     setPicked((prev) =>
       prev.includes(name)
         ? prev.filter((n) => n !== name)
-        : prev.length < 4
+        : prev.length < SIDE_BY_SIDE_LIMIT
           ? [...prev, name]
           : prev,
     );
   }
 
+  const full = picked.length >= SIDE_BY_SIDE_LIMIT;
   return (
     <div className="panel-section">
-      <div className="panel-header">Side-by-side ({chosen.length})</div>
-      <div style={{ maxHeight: 110, overflowY: "auto", marginBottom: 4 }}>
-        {models.map((m) => (
-          <label key={m.name} style={{
-            display: "flex", alignItems: "center", gap: 6, fontSize: "var(--fs-body)",
-            fontFamily: "var(--font-mono)", padding: "0 4px", cursor: "pointer",
-            color: selection.includes(m.name) ? "var(--accent)" : "var(--text-muted)",
-          }}>
-            <input type="checkbox" checked={picked.includes(m.name)}
-              onChange={() => { toggle(m.name); }} style={{ width: 11, height: 11 }} />
-            {SHORT(m.name)}
-          </label>
-        ))}
+      <h2 className="panel-header">Side-by-side ({chosen.length} of {SIDE_BY_SIDE_LIMIT})</h2>
+      <div role="group" aria-label="Models to compare side by side"
+        style={{ maxHeight: 110, overflowY: "auto", marginBottom: 4 }}>
+        {models.map((m) => {
+          const checked = picked.includes(m.name);
+          return (
+            <label key={m.name} style={{
+              display: "flex", alignItems: "center", gap: 6, fontSize: "var(--fs-body)",
+              fontFamily: "var(--font-mono)", padding: "0 4px",
+              cursor: !checked && full ? "not-allowed" : "pointer",
+              color: selection.includes(m.name) ? "var(--accent)" : "var(--text-muted)",
+            }}>
+              <input type="checkbox" checked={checked} disabled={!checked && full}
+                onChange={() => { toggle(m.name); }} style={{ width: 11, height: 11 }} />
+              {SHORT(m.name)}
+            </label>
+          );
+        })}
       </div>
       {chosen.length > 0 && (
         <div style={{ overflowX: "auto" }}>
