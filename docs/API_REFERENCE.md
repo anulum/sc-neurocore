@@ -39320,8 +39320,9 @@ Time the DCLS kernel across the in-process-safe backends on this machine.
 
 Returns a fully-formed submission (schema ``scpn.benchmark.submission.v1``)
 that the caller may inspect and, opt-in, hand to :func:`store_contribution`.
-Julia is skipped in-process (the torch/juliacall segfault) and reported as
-parity-verified offline rather than timed live.
+Julia is never run in the server process (see
+:data:`sc_neurocore.studio.dcls.IN_PROCESS_REFUSED_BACKENDS`) and is reported
+as parity-verified offline rather than timed live.
 
 ### Function `validate_submission(payload)`
 Return a list of schema/privacy violations; empty means the payload is OK.
@@ -39759,8 +39760,9 @@ not a float run with rounded parameters.
 Report each backend's in-process status without ever crashing.
 
 Each entry is ``{backend, available, live}``: ``live`` is ``False`` for a
-backend we decline to run in this process (Julia under torch), in which case
-``available`` reflects its declared support rather than a live probe.
+backend the server never runs in its own process
+(:data:`IN_PROCESS_REFUSED_BACKENDS`), in which case ``available`` reflects
+its declared support rather than a live probe.
 
 ### Function `dcls_benchmark()`
 Return the recorded multi-backend throughput benchmark, or ``None``.
