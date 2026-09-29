@@ -503,7 +503,12 @@ def run_pipeline(
         cosimulate,
         synthesis_source,
     )
-    from sc_neurocore.studio.synthesis import capacity_sentence, run_synthesis
+    from sc_neurocore.studio import synthesis as synthesis_module
+    from sc_neurocore.studio.synthesis import (
+        capacity_device_name,
+        capacity_sentence,
+        run_synthesis,
+    )
 
     if q_format not in PIPELINE_Q_FORMATS:
         raise ValueError(f"q_format must be one of {sorted(PIPELINE_Q_FORMATS)}, got {q_format!r}")
@@ -575,7 +580,24 @@ def run_pipeline(
         "bit_true_model_sha256": cosim.model_sha256,
         "synthesis_source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
     }
-    if synthesis.get("success") and synthesis.get("fits_device") is False:
+    if not synthesis.get("success"):
+        # The failure used to leave the result without an error, and the
+        # canvas said "Pipeline failed at synthesise: unknown".
+        if synthesis.get("timed_out"):
+            return stopped(
+                "synthesise",
+                f"Yosys did not finish within its {synthesis_module.SYNTHESIS_TIMEOUT_SECONDS} s "
+                f"limit for this {steps['simulate']['n_total']}-neuron network, so whether it "
+                f"fits the {capacity_device_name(target)} is unknown; synthesis time grows "
+                "quickly with network size, so try fewer neurons",
+                trace=trace,
+            )
+        return stopped(
+            "synthesise",
+            f"synthesis produced no netlist: {str(synthesis.get('error') or 'no message')[:300]}",
+            trace=trace,
+        )
+    if synthesis.get("fits_device") is False:
         # A netlist the device cannot hold is not a completed pipeline: a
         # 20-neuron network needed 6237 LUTs of the UP5K's 5280 and was
         # reported "Pipeline complete".

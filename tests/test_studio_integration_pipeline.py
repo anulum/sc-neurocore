@@ -95,6 +95,45 @@ class TestPipeline:
         )
         assert set(result["trace"]) >= {"rtl_sha256", "synthesis_source_sha256"}
 
+    def test_a_synthesis_that_runs_out_of_time_says_so_with_the_network_size(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Real Yosys, stopped by a shortened limit. The default 100-neuron
+        # canvas network hits the real 60 s limit, and the canvas said
+        # "Pipeline failed at synthesise: unknown".
+        from sc_neurocore.studio import synthesis as synthesis_module
+
+        monkeypatch.setattr(synthesis_module, "SYNTHESIS_TIMEOUT_SECONDS", 0.01)
+        result = run_pipeline(self._supported_graph())
+
+        assert result["success"] is False
+        assert result["step"] == "synthesise"
+        assert result["steps"]["synthesise"]["timed_out"] is True
+        assert result["error"] == (
+            "Yosys did not finish within its 0.01 s limit for this 4-neuron network, so whether "
+            "it fits the iCE40 UP5K is unknown; synthesis time grows quickly with network size, "
+            "so try fewer neurons"
+        )
+        assert "rtl_sha256" in result["trace"]
+
+    def test_a_synthesis_that_fails_carries_yosys_message(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from sc_neurocore.studio import synthesis as synthesis_module
+
+        monkeypatch.setitem(
+            synthesis_module._TARGETS["ice40"], "synth_cmd", "synth_ice40 -no_such_option"
+        )
+        result = run_pipeline(self._supported_graph())
+
+        assert result["success"] is False
+        assert result["step"] == "synthesise"
+        # Yosys's own error, not the help text it prints after it.
+        assert result["error"].startswith(
+            "synthesis produced no netlist: Synthesis failed: ERROR: Command syntax error"
+        )
+        assert "map_ram" not in result["error"]
+
     def test_two_different_networks_give_different_hardware(self) -> None:
         first = run_pipeline(self._supported_graph())
         graph = self._supported_graph()

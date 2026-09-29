@@ -204,6 +204,9 @@ _CAPACITY_DEVICE = {
 
 _CAPACITY_KEYS = ("luts", "ffs", "brams", "dsps")
 
+#: Seconds Yosys may run for one synthesis before the Studio stops it.
+SYNTHESIS_TIMEOUT_SECONDS = 60
+
 _NO_COST: dict[str, int] = {}
 
 #: What each primitive a family's Yosys flow emits takes of the judged
@@ -366,6 +369,22 @@ def capacity_verdict(
     }
 
 
+def capacity_device_name(target: str) -> str:
+    """Name the device a target's capacity is judged against.
+
+    Parameters
+    ----------
+    target : str
+        Target identifier.
+
+    Returns
+    -------
+    str
+        The device, or the target in capitals when none is named.
+    """
+    return _CAPACITY_DEVICE.get(target, target.upper())
+
+
 def capacity_sentence(target: str, exceeds: Mapping[str, Mapping[str, int]]) -> str:
     """Say in words which resources a design needs beyond its device.
 
@@ -382,7 +401,7 @@ def capacity_sentence(target: str, exceeds: Mapping[str, Mapping[str, int]]) -> 
         One sentence.
     """
     names = {"luts": "LUTs", "ffs": "flip-flops", "brams": "block RAMs", "dsps": "DSP blocks"}
-    where = _CAPACITY_DEVICE.get(target, target.upper())
+    where = capacity_device_name(target)
     parts = [
         f"{row['needed']} {names.get(key, key)} (the device has {row['available']})"
         for key, row in exceeds.items()
@@ -582,7 +601,7 @@ def _run_synthesis_in_directory(
         completed = _run_eda_command(
             [yosys_executable, "-s", str(script_path)],
             cwd=root,
-            timeout_seconds=60,
+            timeout_seconds=SYNTHESIS_TIMEOUT_SECONDS,
             process_limits=process_limits,
         )
         log = completed.stdout + completed.stderr
@@ -601,7 +620,8 @@ def _run_synthesis_in_directory(
         return (
             {
                 "success": False,
-                "error": "Synthesis timed out (60s)",
+                "error": f"Synthesis timed out ({SYNTHESIS_TIMEOUT_SECONDS}s)",
+                "timed_out": True,
                 "target": target,
                 "target_provenance": dict(target_provenance),
             },
@@ -611,7 +631,7 @@ def _run_synthesis_in_directory(
         return (
             {
                 "success": False,
-                "error": f"Synthesis failed. Log:\n{log[-500:]}",
+                "error": _yosys_failure_message(log),
                 "target": target,
                 "target_provenance": dict(target_provenance),
             },
@@ -638,6 +658,30 @@ def _run_synthesis_in_directory(
         },
         json_path,
     )
+
+
+def _yosys_failure_message(log: str) -> str:
+    """Say why Yosys wrote no netlist, from its own error lines.
+
+    Yosys prints a pass's whole help text after a command error, so the last
+    500 characters of the log, which this message used to be, showed the help
+    and not the error. Its standard output can end mid-line, so an error line
+    from standard error may follow other text on the same line.
+
+    Parameters
+    ----------
+    log : str
+        Yosys's standard output and error.
+
+    Returns
+    -------
+    str
+        The error lines, or the end of the log when it has none.
+    """
+    errors = [line[line.index("ERROR:") :].strip() for line in log.splitlines() if "ERROR:" in line]
+    if errors:
+        return "Synthesis failed: " + "; ".join(errors[:3])
+    return f"Synthesis failed. Log:\n{log[-500:]}"
 
 
 def _validate_selected_rtl_chain(

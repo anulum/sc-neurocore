@@ -49251,6 +49251,19 @@ dict&#91;str, Any&#93;
     the device has), ``capacity_device`` and ``uncounted_cells``; an empty
     dict without capacity data.
 
+### Function `capacity_device_name(target)`
+Name the device a target's capacity is judged against.
+
+Parameters
+----------
+target : str
+    Target identifier.
+
+Returns
+-------
+str
+    The device, or the target in capitals when none is named.
+
 ### Function `capacity_sentence(target, exceeds)`
 Say in words which resources a design needs beyond its device.
 

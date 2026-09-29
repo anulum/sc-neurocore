@@ -140,3 +140,15 @@ def test_real_netlists_are_counted_per_family(target: str, expected: dict[str, i
     assert result["uncounted_cells"] == {}
     assert result["fits_device"] is True
     assert result["capacity_device"] == _CAPACITY_DEVICE[target]
+
+
+def test_a_yosys_failure_is_told_by_its_error_lines() -> None:
+    from sc_neurocore.studio.synthesis import _yosys_failure_message
+
+    # Standard output can end mid-line; the error from standard error follows it.
+    log = "help text ... ice40_wrapcarrERROR: Command syntax error: Unknown option.\n> synth\n"
+    assert _yosys_failure_message(log) == (
+        "Synthesis failed: ERROR: Command syntax error: Unknown option."
+    )
+    assert _yosys_failure_message("x" * 600).startswith("Synthesis failed. Log:\n")
+    assert _yosys_failure_message("x" * 600).endswith("x" * 500)

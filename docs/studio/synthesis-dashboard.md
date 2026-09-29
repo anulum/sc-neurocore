@@ -97,7 +97,11 @@ over capacity. Every synthesis and estimate result carries `fits_device` and
 `exceeds_capacity` (per resource, what the design needs and what the device
 has), and the view says whether the device holds the design: a netlist that
 synthesises is not a design that fits. The network pipeline stops at a `fit`
-step when it does not. The iCE40 capacity is the UltraPlus UP5K's: 5280
+step when it does not. When synthesis itself fails the pipeline stops at
+`synthesise` with Yosys's own `ERROR:` lines (the end of its log is usually
+the help text it prints after an error); when Yosys runs past its 60 s limit
+(`timed_out: true`), the stop names the network's size and says the fit is
+unknown. The iCE40 capacity is the UltraPlus UP5K's: 5280
 LUTs and flip-flops, 30 EBR blocks and 8 SB_MAC16 DSP blocks. The
 multi-target comparison table shows all four metrics across all targets.
 
