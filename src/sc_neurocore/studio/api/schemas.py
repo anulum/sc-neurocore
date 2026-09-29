@@ -605,7 +605,13 @@ class AnalysisJobRequest(BaseModel):
 
 
 class NetworkRequest(BaseModel):
-    """Request body for balanced excitatory-inhibitory network simulation."""
+    """Request body for balanced excitatory-inhibitory network simulation.
+
+    Weights are membrane jumps in millivolts in the post-pre convention
+    (``w_ei`` is inhibitory-to-excitatory). ``ext_rate`` is the rate in hertz
+    of each of the 800 external excitatory inputs every neuron receives; about
+    9.4 Hz reaches threshold. See :mod:`sc_neurocore.studio.network`.
+    """
 
     n_exc: int = Field(default=80, ge=10, le=500)
     n_inh: int = Field(default=20, ge=5, le=200)
@@ -614,7 +620,7 @@ class NetworkRequest(BaseModel):
     w_ie: float = 0.1
     w_ii: float = 0.4
     p_conn: float = Field(default=0.2, ge=0.01, le=1.0)
-    ext_rate: float = 5.0
+    ext_rate: float = Field(default=12.0, ge=0.0, le=1000.0)
     duration: float = Field(default=200.0, gt=0, le=2000)
     dt: float = Field(default=0.1, gt=0)
 

@@ -23,8 +23,9 @@ class TestNetwork:
         assert len(r["spike_neurons"]) == r["n_spikes"]
 
     def test_network_produces_spikes(self):
+        # 50 Hz per external input is five times the drive's threshold rate.
         r = simulate_ei_network(n_exc=40, n_inh=10, duration=200.0, ext_rate=50.0)
-        assert r["n_spikes"] >= 0  # may be 0 with low drive, just verify no crash
+        assert r["n_spikes"] > 0
 
     def test_network_rates_arrays(self):
         r = simulate_ei_network(n_exc=20, n_inh=5, duration=50.0)

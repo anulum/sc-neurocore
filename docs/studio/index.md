@@ -822,6 +822,21 @@ place.
 | Research | Review | Comments bound to a saved project revision |
 | Operator | Admin | Operator status, identity and audit |
 
+#### E-I network model
+
+The **E-I network** view runs a Brunel (2000) style network of leaky
+integrate-and-fire neurons (τm = 20 ms, rest and reset −65 mV, threshold
+−50 mV, 2 ms refractory period) with random connections of probability
+`p conn`. Synapses are delta synapses: a presynaptic spike moves the
+postsynaptic membrane by its weight in millivolts one step later. The weights
+are named post-pre: **w I→E** is the inhibitory-to-excitatory weight
+(`w_ei` in the API) and **w E→I** the excitatory-to-inhibitory one (`w_ie`).
+Every neuron also receives 800 independent excitatory Poisson inputs of
+0.1 mV, each at **ext rate**; that drive alone reaches threshold at about
+9.4 Hz per input. With the defaults (12 Hz, weights 0.1/0.4 mV, g = 4) the
+network fires at about 31 Hz and its recurrent excitation and inhibition
+cancel on average. The Rust engine and the NumPy fallback run the same model.
+
 ### Data Export
 
 | Format | Contents | Use Case |

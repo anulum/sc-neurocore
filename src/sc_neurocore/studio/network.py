@@ -6,12 +6,36 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Network simulation for Studio (Rust engine backend)
 
-"""Balanced E-I network simulation helpers for Studio dashboards."""
+"""Balanced E-I network simulation helpers for Studio dashboards.
+
+The network is a Brunel (2000, J. Comput. Neurosci. 8:183) style LIF network
+with delta synapses: a presynaptic spike moves the postsynaptic membrane by
+its weight in millivolts, one step later. Every neuron also receives
+:data:`EXTERNAL_SYNAPSES` independent excitatory Poisson inputs at ``ext_rate``
+Hz each, every one moving the membrane by :data:`EXTERNAL_WEIGHT_MV`; that
+drive alone reaches threshold at about 9.4 Hz per input. The weights follow
+the post-pre convention: ``w_ei`` is the inhibitory-to-excitatory weight and
+``w_ie`` the excitatory-to-inhibitory one.
+
+The Rust engine and the NumPy fallback implement the same model. An earlier
+version multiplied each jump by the step size and gave each neuron a single
+external input, so no setting of the Studio's controls produced a spike.
+"""
 
 from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
+
+#: Independent external excitatory Poisson inputs per neuron (same as the engine).
+EXTERNAL_SYNAPSES = 800.0
+
+#: Membrane jump caused by one external input spike, in millivolts.
+EXTERNAL_WEIGHT_MV = 0.1
+
+#: Default rate of each external input, in hertz: 1.3x the drive's threshold rate.
+DEFAULT_EXTERNAL_RATE_HZ = 12.0
 
 try:
     from sc_neurocore_engine.studio import get_ei_network_simulator
@@ -30,7 +54,7 @@ def simulate_ei_network(
     w_ie: float = 0.1,
     w_ii: float = 0.4,
     p_conn: float = 0.2,
-    ext_rate: float = 5.0,
+    ext_rate: float = DEFAULT_EXTERNAL_RATE_HZ,
     duration: float = 200.0,
     dt: float = 0.1,
 ) -> dict[str, Any]:
@@ -159,21 +183,20 @@ def _simulate_numpy(
     inh_rates = np.zeros(n_steps)
     exc_bin = 0
     inh_bin = 0
+    exc_spikes = 0
+    inh_spikes = 0
+    prev_spiked = np.zeros(n_total, dtype=bool)
 
     for t in range(n_steps):
         refractory = np.maximum(refractory - dt, 0)
-        ext_input = rng.poisson(ext_rate * dt / 1000.0, n_total).astype(float) * 5.0
-
-        syn_input = np.zeros(n_total)
-        if t > 0:
-            prev_spikes = np.where(
-                (refractory > tau_ref - dt - 0.001) & (refractory <= tau_ref + 0.001)
-            )[0]
-            if len(prev_spikes) > 0:
-                syn_input = W[:, prev_spikes].sum(axis=1)
+        ext_input = (
+            rng.poisson(EXTERNAL_SYNAPSES * max(ext_rate, 0.0) * dt / 1000.0, n_total).astype(float)
+            * EXTERNAL_WEIGHT_MV
+        )
+        syn_input = W[:, prev_spiked].sum(axis=1) if prev_spiked.any() else np.zeros(n_total)
 
         active = refractory <= 0
-        dv = (-(v - v_rest) / tau_m + ext_input + syn_input) * dt
+        dv = -(v - v_rest) / tau_m * dt + ext_input + syn_input
         v[active] += dv[active]
 
         spiking = (v >= v_threshold) & active
@@ -184,11 +207,14 @@ def _simulate_numpy(
             spike_neurons.append(int(idx))
             if idx < n_exc:
                 exc_bin += 1
+                exc_spikes += 1
             else:
                 inh_bin += 1
+                inh_spikes += 1
 
         v[spiking] = v_reset
         refractory[spiking] = tau_ref
+        prev_spiked = spiking
 
         if (t + 1) % bin_size == 0:
             bi = t // bin_size
@@ -201,6 +227,8 @@ def _simulate_numpy(
 
     n_bins = n_steps // bin_size
     rate_time = np.arange(n_bins) * bin_size * dt
+    # Mean rate per neuron over the simulated time, silent time included.
+    simulated_s = max(n_steps * dt / 1000.0, np.finfo(float).tiny)
     exc_r = exc_rates[:n_bins]
     inh_r = inh_rates[:n_bins]
 
@@ -216,6 +244,6 @@ def _simulate_numpy(
         "inh_rates": inh_r.tolist(),
         "duration": duration,
         "dt": dt,
-        "mean_exc_rate": round(float(np.mean(exc_r[exc_r > 0])), 1) if np.any(exc_r > 0) else 0.0,
-        "mean_inh_rate": round(float(np.mean(inh_r[inh_r > 0])), 1) if np.any(inh_r > 0) else 0.0,
+        "mean_exc_rate": round(exc_spikes / max(n_exc, 1) / simulated_s, 1),
+        "mean_inh_rate": round(inh_spikes / max(n_inh, 1) / simulated_s, 1),
     }

@@ -11,9 +11,29 @@
 //! Runs a complete excitatory-inhibitory network with CSR weight matrix,
 //! Poisson external drive, and spike-scatter coupling in a single Rust
 //! call — no per-step Python overhead.
+//!
+//! Synapses are delta synapses in the sense of Brunel (2000, J. Comput.
+//! Neurosci. 8:183): a presynaptic spike moves the postsynaptic membrane by
+//! its weight in millivolts, one step later. Every neuron also receives
+//! [`EXTERNAL_SYNAPSES`] independent excitatory Poisson inputs, each firing at
+//! `ext_rate` Hz and moving the membrane by [`EXTERNAL_WEIGHT_MV`]. The
+//! external drive alone reaches threshold at about 9.4 Hz per input
+//! (15 mV / (0.1 mV x 800 x 20 ms)).
+//!
+//! An earlier version multiplied each jump by the step size, so a spike moved
+//! the membrane by `weight x dt` (0.01 mV for the default E-to-E weight at
+//! dt = 0.1 ms), and the external drive was one input per neuron: no setting
+//! of the Studio's controls produced a single spike.
 
 use rand::{RngExt, SeedableRng};
+use rand_distr::{Distribution, Poisson};
 use rand_xoshiro::Xoshiro256PlusPlus;
+
+/// Independent external excitatory Poisson inputs per neuron.
+pub const EXTERNAL_SYNAPSES: f64 = 800.0;
+
+/// Membrane jump caused by one external input spike, in millivolts.
+pub const EXTERNAL_WEIGHT_MV: f64 = 0.1;
 
 /// Result of an E-I network simulation.
 pub struct EIResult {
@@ -100,8 +120,17 @@ pub fn simulate_ei(
     let mut exc_bin = 0u32;
     let mut inh_bin = 0u32;
 
-    let ext_lambda = (ext_rate * dt / 1000.0).max(0.0);
-    let exp_neg_lambda = (-ext_lambda).exp();
+    // Expected external input spikes per neuron per step. `Poisson` samples
+    // exactly for any mean; the multiply-uniforms loop it replaces never
+    // terminated once exp(-mean) underflowed to zero.
+    let ext_lambda = EXTERNAL_SYNAPSES * ext_rate.max(0.0) * dt / 1000.0;
+    let ext_inputs = if ext_lambda > 0.0 {
+        Poisson::new(ext_lambda).ok()
+    } else {
+        None
+    };
+    let mut exc_spikes = 0usize;
+    let mut inh_spikes = 0usize;
 
     for t in 0..n_steps {
         // Decay refractory
@@ -128,18 +157,11 @@ pub fn simulate_ei(
                 continue;
             }
             // Knuth Poisson sampling (fast for small lambda)
-            let mut k = 0u32;
-            let mut p = 1.0_f64;
-            loop {
-                p *= rng.random::<f64>();
-                if p <= exp_neg_lambda {
-                    break;
-                }
-                k += 1;
-            }
-            let ext = k as f64 * 5.0;
-            let dv = (-(v[i] - v_rest) / tau_m + ext + syn[i]) * dt;
-            v[i] += dv;
+            let external = match &ext_inputs {
+                Some(poisson) => poisson.sample(&mut rng) * EXTERNAL_WEIGHT_MV,
+                None => 0.0,
+            };
+            v[i] += -(v[i] - v_rest) / tau_m * dt + external + syn[i];
         }
 
         // Spike detection
@@ -156,8 +178,10 @@ pub fn simulate_ei(
                 spike_neurons.push(i as u32);
                 if i < n_exc {
                     exc_bin += 1;
+                    exc_spikes += 1;
                 } else {
                     inh_bin += 1;
+                    inh_spikes += 1;
                 }
             }
         }
@@ -179,18 +203,11 @@ pub fn simulate_ei(
         .map(|i| i as f64 * bin_size as f64 * dt)
         .collect();
 
-    let mean_exc = if exc_rates.iter().any(|&r| r > 0.0) {
-        let pos: Vec<f64> = exc_rates.iter().copied().filter(|&r| r > 0.0).collect();
-        pos.iter().sum::<f64>() / pos.len() as f64
-    } else {
-        0.0
-    };
-    let mean_inh = if inh_rates.iter().any(|&r| r > 0.0) {
-        let pos: Vec<f64> = inh_rates.iter().copied().filter(|&r| r > 0.0).collect();
-        pos.iter().sum::<f64>() / pos.len() as f64
-    } else {
-        0.0
-    };
+    // Mean rate per neuron over the simulated time. It used to average only
+    // the rate bins that held a spike, which overstated sparse activity.
+    let simulated_s = (n_steps as f64 * dt / 1000.0).max(f64::MIN_POSITIVE);
+    let mean_exc = exc_spikes as f64 / n_exc.max(1) as f64 / simulated_s;
+    let mean_inh = inh_spikes as f64 / n_inh.max(1) as f64 / simulated_s;
 
     EIResult {
         spike_times,
@@ -209,6 +226,15 @@ pub fn simulate_ei(
 mod tests {
     use super::*;
 
+    const DEFAULT: (f64, f64, f64, f64, f64) = (0.1, 0.4, 0.1, 0.4, 0.2);
+
+    fn run(ext_rate: f64, duration: f64, dt: f64) -> EIResult {
+        let (w_ee, w_ei, w_ie, w_ii, p_conn) = DEFAULT;
+        simulate_ei(
+            80, 20, w_ee, w_ei, w_ie, w_ii, p_conn, ext_rate, duration, dt, 42,
+        )
+    }
+
     #[test]
     fn ei_network_runs_without_panic() {
         let r = simulate_ei(20, 5, 0.1, 0.4, 0.1, 0.4, 0.2, 10.0, 50.0, 0.1, 42);
@@ -219,12 +245,49 @@ mod tests {
     }
 
     #[test]
-    fn ei_network_with_high_drive_produces_spikes() {
-        // ext_rate=5000 Hz → lambda=0.5 per step → frequent Poisson events
-        let r = simulate_ei(40, 10, 0.1, 0.4, 0.1, 0.4, 0.2, 5000.0, 100.0, 0.1, 42);
+    fn default_drive_above_threshold_fires() {
+        // 12 Hz per input is 1.3x the 9.4 Hz threshold rate of the drive.
+        let r = run(12.0, 500.0, 0.1);
         assert!(
-            !r.spike_times.is_empty(),
-            "high drive should produce spikes"
+            r.mean_exc_rate > 5.0 && r.mean_exc_rate < 100.0,
+            "{}",
+            r.mean_exc_rate
         );
+        assert!(
+            r.mean_inh_rate > 5.0 && r.mean_inh_rate < 100.0,
+            "{}",
+            r.mean_inh_rate
+        );
+    }
+
+    #[test]
+    fn drive_well_below_threshold_stays_silent() {
+        // Mean drive 3.2 mV against a 15 mV gap, fluctuations of about 0.3 mV.
+        assert!(run(2.0, 500.0, 0.1).spike_times.is_empty());
+    }
+
+    #[test]
+    fn rate_does_not_depend_on_the_step_size() {
+        // A spike moves the membrane by its weight, not by weight x dt.
+        let coarse = run(12.0, 1000.0, 0.1).mean_exc_rate;
+        let fine = run(12.0, 1000.0, 0.05).mean_exc_rate;
+        assert!(
+            (coarse - fine).abs() < 0.2 * coarse.max(fine),
+            "{coarse} vs {fine}"
+        );
+    }
+
+    #[test]
+    fn mean_rate_counts_silent_time() {
+        let r = run(12.0, 500.0, 0.1);
+        let spikes = r.spike_neurons.iter().filter(|&&i| i < 80).count() as f64;
+        assert!((r.mean_exc_rate - spikes / 80.0 / 0.5).abs() < 0.051);
+    }
+
+    #[test]
+    fn very_large_external_mean_terminates() {
+        // 800 inputs x 100 Hz x 5 ms = 400 expected events per step.
+        let r = run(100.0, 50.0, 5.0);
+        assert!(!r.spike_times.is_empty());
     }
 }

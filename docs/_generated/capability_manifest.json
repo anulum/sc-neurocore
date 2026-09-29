@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5147
+    "test_files": 5148
   },
   "documentation": {
     "public_pages": [
@@ -7677,6 +7677,7 @@
       "tests/test_studio_distribution.py",
       "tests/test_studio_eda_process_limits.py",
       "tests/test_studio_eda_runtime_settings.py",
+      "tests/test_studio_ei_network_model.py",
       "tests/test_studio_endpoints_analysis_budget.py",
       "tests/test_studio_endpoints_analysis_metadata.py",
       "tests/test_studio_endpoints_bifurcation.py",

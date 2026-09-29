@@ -24,7 +24,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 #[pyo3(signature = (
     n_exc=80, n_inh=20,
     w_ee=0.1, w_ei=0.4, w_ie=0.1, w_ii=0.4,
-    p_conn=0.2, ext_rate=5.0,
+    p_conn=0.2, ext_rate=12.0,
     duration=200.0, dt=0.1, seed=42
 ))]
 fn py_simulate_ei_network<'py>(

@@ -27,14 +27,17 @@ extension = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
 
 
 def _simulate() -> dict[str, Any]:
+    # The default external drive (12 Hz per input, 1.3x threshold). These
+    # pins used to need 5,000 Hz, because the old model never fired below
+    # about 1,000 Hz; see tests/test_studio_ei_network_model.py.
     return cast(
         dict[str, Any],
         extension.py_simulate_ei_network(
             n_exc=20,
             n_inh=5,
-            duration=20.0,
+            duration=100.0,
             dt=0.1,
-            ext_rate=5_000.0,
+            ext_rate=12.0,
             seed=7,
         ),
     )
@@ -47,7 +50,7 @@ def test_exported_name_signature_and_bridge_identity_are_stable() -> None:
     assert function.__module__ == "sc_neurocore_engine.sc_neurocore_engine"
     assert function.__text_signature__ == (
         "(n_exc=80, n_inh=20, w_ee=0.1, w_ei=0.4, w_ie=0.1, "
-        "w_ii=0.4, p_conn=0.2, ext_rate=5.0, duration=200.0, dt=0.1, seed=42)"
+        "w_ii=0.4, p_conn=0.2, ext_rate=12.0, duration=200.0, dt=0.1, seed=42)"
     )
     assert engine.py_simulate_ei_network is function
     assert get_ei_network_simulator() is function
@@ -60,17 +63,16 @@ def test_seeded_spiking_trace_is_deterministic_and_typed() -> None:
     assert first["n_exc"] == 20
     assert first["n_inh"] == 5
     assert first["n_total"] == 25
-    assert first["n_spikes"] == 48
-    assert first["mean_exc_rate"] == 57.6
-    assert first["mean_inh_rate"] == 250.0
+    assert first["n_spikes"] == 70
+    # Rates count silent time: 57 and 13 spikes over 20 and 5 neurons in 0.1 s.
+    assert first["mean_exc_rate"] == 28.5
+    assert first["mean_inh_rate"] == 26.0
     for key in ("spike_times", "spike_neurons", "rate_time", "exc_rates", "inh_rates"):
         np.testing.assert_array_equal(first[key], second[key])
         assert first[key].flags.c_contiguous
     assert first["spike_times"].dtype == np.float64
     assert first["spike_neurons"].dtype == np.int64
-    np.testing.assert_array_equal(
-        first["spike_neurons"][:10], [11, 15, 12, 16, 20, 13, 7, 19, 3, 4]
-    )
+    np.testing.assert_array_equal(first["spike_neurons"][:10], [4, 12, 18, 11, 13, 8, 9, 20, 17, 5])
 
 
 def test_short_quiescent_network_preserves_rate_grid_and_empty_arrays() -> None:

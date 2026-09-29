@@ -39135,6 +39135,11 @@ simulation routes refuse as oversized).
 ### Class `NetworkRequest`
 Request body for balanced excitatory-inhibitory network simulation.
 
+Weights are membrane jumps in millivolts in the post-pre convention
+(``w_ei`` is inhibitory-to-excitatory). ``ext_rate`` is the rate in hertz
+of each of the 800 external excitatory inputs every neuron receives; about
+9.4 Hz reaches threshold. See :mod:`sc_neurocore.studio.network`.
+
 
 ### Class `ModelExperimentExportRequest`
 Export request for one catalogue-model experiment.

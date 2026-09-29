@@ -92,6 +92,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Studio's E-I network produced no spike for any setting its controls
+  could reach. Both implementations (Rust engine and NumPy fallback)
+  multiplied each delta-synapse jump by the step size, so a spike moved the
+  membrane by weight × dt (0.01 mV for the default E→E weight), and gave each
+  neuron one external input, so the whole 0.1–100 Hz slider range stayed
+  silent; activity began near 1,000 Hz, which is what the engine's own test
+  used. The network is now the Brunel (2000) style model the Studio page
+  describes: weights are millivolt jumps, every neuron receives 800 external
+  Poisson inputs of 0.1 mV, the drive reaches threshold at about 9.4 Hz, and
+  the default 12 Hz gives about 31 Hz with balanced recurrence. The mean rate
+  now counts silent time (it averaged only the bins that held a spike), the
+  Poisson sampler no longer loops forever once `exp(-mean)` underflows, the
+  route refuses a negative or absurd external rate, and the E→I and I→E
+  weight sliders, whose labels were swapped against the model's post-pre
+  names, are relabelled and named for screen readers.
 - A Studio plot view with no result of its own no longer shows the voltage
   trace under its own name. The 2-D sweep, bifurcation, sensitivity, f-I
   curve, STA, frequency response, characterization, multi-model, A/B compare,

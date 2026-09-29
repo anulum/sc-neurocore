@@ -712,6 +712,14 @@ body {
 .view-tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 .view-tab:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* A short explanatory line under a group of controls. */
+.panel-note {
+  margin: 4px 0;
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 /* Present to assistive technology, absent from the screen. */
 .visually-hidden {
   position: absolute;
