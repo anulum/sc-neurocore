@@ -415,7 +415,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>61 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>90 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"

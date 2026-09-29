@@ -316,6 +316,60 @@ def test_public_formal_claims_match_hdl_inventory() -> None:
     assert expected_summary in _compact_whitespace(readme)
     assert expected_summary in _compact_whitespace(comparison)
     assert expected_summary in _compact_whitespace(tutorial)
+    assert f"| SymbiYosys `.sby` proof jobs | {proof_jobs} |" in tutorial
+    assert f"| `assert(...)` statements | {statements['assert']} |" in tutorial
+    assert f"| `assume(...)` statements | {statements['assume']} |" in tutorial
+    assert f"| `cover(...)` statements | {statements['cover']} |" in tutorial
+    assert f"| Total formal statements | {total} |" in tutorial
+
+
+def test_every_public_formal_count_matches_hdl_inventory() -> None:
+    """Scan every public page, not a fixed list, for stale formal counts.
+
+    Dated changelogs record what was true at the time and are excluded.
+    """
+    root = _repo_root()
+    proof_jobs, statements = _formal_inventory()
+    total = sum(statements.values())
+    catalogue_jobs = sum(
+        1 for path in _tracked_formal_paths((".sby",)) if "catalogue" in path.parts
+    )
+    expected = {
+        r"(\d+)\**\s+(?:SymbiYosys\s+)?proof\s+jobs\b": (proof_jobs,),
+        r"(\d+)\**\s+formal\s+statements\b": (total,),
+        r"\((\d+)\s+assert,\s+(\d+)\s+assume,\s+(\d+)\s+cover\)": (
+            statements["assert"],
+            statements["assume"],
+            statements["cover"],
+        ),
+        r"(\d+)\s+non-catalogue\s+jobs\b": (proof_jobs - catalogue_jobs,),
+        r"(?<!-)\b(\d+)\s+catalogue\s+jobs\b": (catalogue_jobs,),
+    }
+    stale: list[str] = []
+    pages_with_claims: set[str] = set()
+    for path in _public_markdown_files():
+        relative = path.relative_to(root).as_posix()
+        if path.name == "CHANGELOG.md":
+            continue
+        text = _compact_whitespace(path.read_text(encoding="utf-8").replace("**", ""))
+        for pattern, counts in expected.items():
+            for match in re.finditer(pattern, text):
+                pages_with_claims.add(relative)
+                found = tuple(int(group) for group in match.groups())
+                if found != counts:
+                    stale.append(f"{relative}: {match.group(0)!r} != {counts}")
+
+    assert stale == []
+    assert {
+        "README.md",
+        "docs/benchmarks/comparison.md",
+        "docs/guides/FOR_RESEARCH_LABS.md",
+        "docs/guides/bci_codec.md",
+        "docs/tutorials/21_formal_verification.md",
+        "docs/tutorials/32_identity_substrate.md",
+        "docs/tutorials/52_formal_equiv.md",
+        "docs/tutorials/60_temporal_verification.md",
+    } <= pages_with_claims
 
 
 def test_rust_speedup_claims_are_artifact_anchored() -> None:

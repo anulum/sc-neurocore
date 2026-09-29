@@ -24,10 +24,10 @@ The current inventory is:
 | Inventory | Count |
 |-----------|------:|
 | SymbiYosys `.sby` proof jobs | 90 |
-| `assert(...)` statements | 293 |
-| `assume(...)` statements | 112 |
+| `assert(...)` statements | 296 |
+| `assume(...)` statements | 115 |
 | `cover(...)` statements | 36 |
-| Total formal statements | 441 |
+| Total formal statements | 447 |
 
 **Total: 90 SymbiYosys proof jobs and 447 formal statements (296 assert, 115 assume, 36 cover).**
 

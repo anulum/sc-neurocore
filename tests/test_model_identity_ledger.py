@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -94,6 +95,60 @@ def test_public_fidelity_page_rows_match_the_registry_bindings() -> None:
     for status, labels in expected.items():
         bound = sorted(label for label, bound_status in bindings.values() if bound_status == status)
         assert sorted(labels) == bound, status
+
+
+def _last_cells(section: str, next_section: str) -> dict[str, str]:
+    page = (_repo_root() / "docs/api/model_fidelity_status.md").read_text(encoding="utf-8")
+    body = page.split(section, maxsplit=1)[1].split(next_section, maxsplit=1)[0]
+    return {
+        line.split("|", maxsplit=2)[1].strip(): line.rstrip().rstrip("|").rsplit("|", 1)[1]
+        for line in body.splitlines()
+        if line.startswith("| ") and not line.startswith(("| Model", "|---"))
+    }
+
+
+def test_every_public_fidelity_row_names_real_evidence() -> None:
+    """Evidence cells name tracked files or commits, never a placeholder."""
+    root = _repo_root()
+    file_sections = (
+        (
+            "## Polyglot-complete models",
+            "## Runtime-validated models awaiting the complete acceleration chain",
+        ),
+        (
+            "## Runtime-complete compatibility identities awaiting benchmark closure",
+            "## In progress",
+        ),
+    )
+    problems: list[str] = []
+    checked = 0
+    for section, next_section in file_sections:
+        for model, cell in _last_cells(section, next_section).items():
+            anchors = re.findall(r"`([^`]+)`", cell)
+            if not anchors:
+                problems.append(f"{model}: no evidence anchor")
+            problems.extend(
+                f"{model}: {anchor}" for anchor in anchors if not (root / anchor).is_file()
+            )
+            checked += 1
+    closures = _last_cells(
+        "## Runtime-validated models awaiting the complete acceleration chain",
+        "## Runtime-complete compatibility identities awaiting benchmark closure",
+    )
+    for model, cell in closures.items():
+        commits = re.findall(r"`([0-9a-f]{7,40})`", cell)
+        if not commits:
+            problems.append(f"{model}: no closure commit")
+        for commit in commits:
+            found = subprocess.run(
+                ["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=root, check=False
+            )
+            if found.returncode != 0:
+                problems.append(f"{model}: {commit} is not a commit")
+        checked += 1
+
+    assert problems == []
+    assert checked == len(public_fidelity_bindings())
 
 
 def test_public_counts_are_derived_not_typed() -> None:

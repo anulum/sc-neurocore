@@ -92,6 +92,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Public formal-verification counts now match the git-tracked `hdl/formal/`
+  inventory everywhere (90 proof jobs, 447 statements: 296 assert, 115 assume,
+  36 cover). The README diagram said 61 jobs; the formal-verification
+  tutorial's table said 293/112/441; five further pages said 18 jobs and 130
+  statements, and the v3.13 report presented those as the current inventory.
+  A test now scans every public page for such counts instead of three named
+  pages, so a new page with a stale count fails.
+- The model fidelity page named `this commit` as the evidence for 31
+  polyglot-complete models. Each row now names its committed benchmark,
+  receipt, trace or formal file, and a test requires every evidence cell to
+  name a tracked file or an existing commit. The COBA LIF pages described its
+  formal job as a generated depth-4 reset-safety check; since the curated
+  harness landed it is a depth-8 job asserting reset, first-event and
+  refractory behaviour, and the pages now say so.
 - Conversion restores the caller's accelerator random generators as well as
   Python, NumPy and PyTorch CPU ones while user forward code runs, and
   `calibrate_activation_thresholds` now restores them at all. Custody sections

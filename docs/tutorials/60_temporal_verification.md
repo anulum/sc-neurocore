@@ -137,8 +137,8 @@ provides complete coverage.
 
 ## Integration with FPGA Formal Verification
 
-SC-NeuroCore also provides 18 SymbiYosys proof jobs and 130 formal statements
-(100 assert, 7 assume, 23 cover) for RTL-level verification of generated
+SC-NeuroCore also provides 90 SymbiYosys proof jobs and 447 formal statements
+(296 assert, 115 assume, 36 cover) for RTL-level verification of generated
 Verilog.
 The temporal properties here verify the *algorithm*; SymbiYosys verifies
 the *hardware implementation*.

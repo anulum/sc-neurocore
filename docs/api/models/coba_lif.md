@@ -116,9 +116,11 @@ protocol it preserves all six event indices exactly. The measured error bounds
 are `1e-5 mV` for voltage, `5e-6 nS` for excitatory conductance, `3e-6 nS` for
 inhibitory conductance, and `2e-6 ms` for the refractory timer.
 
-The generated SymbiYosys depth-4 job passes with Z3. Its formal assertion is a
-minimal reset-safety property; it is not presented as a proof of fixed-point
-equivalence. Float64 schema parity and Q24.24 trajectory/event parity are
+The curated SymbiYosys depth-8 job passes with Z3. Under one reset cycle and a
+constant input it asserts that reset clears every public state and event
+output, that an event occurs by protocol cycle 5, that an emitted event carries
+the reset voltage and the full refractory timer, and that no event follows on
+the next cycle. It is not presented as a proof of fixed-point equivalence. Float64 schema parity and Q24.24 trajectory/event parity are
 separate executed tests.
 
 ## Reference and acceleration evidence

@@ -31,7 +31,7 @@ candidates; and the refractory voltage hold continues RK4 conductance decay.
 | Paired schemas | TOML equals JSON; hand class equals universal runner | four states and all six events exact |
 | Generated RTL | 48-bit Q24.24 four-phase RK4 datapath | all six event indices exact; bounded state error |
 | Independent DOI trace | separately re-derived equations and RK4 | every feature within `1e-12` |
-| SymbiYosys | depth-4 Z3 bounded reset-safety property | `PASS` |
+| SymbiYosys | curated depth-8 Z3 bounded job: reset, first-event, and refractory assertions | `PASS` |
 
 The enrolled 400-step co-simulation protocol uses `dt=0.1`, `I=650`,
 `delta_ge=0.15`, and `delta_gi=0.07`. Python, the TOML/JSON schema runners, and
