@@ -50,13 +50,15 @@ LAPICQUE = {
     "current": 1.5,
     "protocol": "ramp",
 }
-# Nondefault dt (the model's own default is 0.01) and a non-constant drive:
+# Nondefault dt (the model's own default is 0.1) and a non-constant drive:
 # the old export ran the model at its default step and a constant current.
-HODGKIN_HUXLEY = {
-    "name": "HodgkinHuxleyNeuron",
+# AdEx steps once per dt; Hodgkin-Huxley, the vehicle before, steps in fixed
+# 1 ms macro steps that its profile times only at its own 0.01 ms sub-step.
+ADEX = {
+    "name": "AdExNeuron",
     "dt": 0.05,
     "duration": 50.0,
-    "current": 10.0,
+    "current": 1000.0,
     "protocol": "step",
 }
 STOCHASTIC_EQUATIONS = {
@@ -104,22 +106,22 @@ class TestPinning:
         assert replayed.cacheable is True
 
     def test_a_deterministic_experiment_is_not_given_a_seed(self) -> None:
-        spec = resolve_experiment(HODGKIN_HUXLEY)
-        sealed = pinned_request(HODGKIN_HUXLEY, spec)
+        spec = resolve_experiment(ADEX)
+        sealed = pinned_request(ADEX, spec)
         assert "seed" not in sealed
         # The contract refuses a seed here, so pinning one would break replay.
         resolve_experiment(sealed)
 
     def test_unknown_request_keys_never_enter_the_pack(self) -> None:
-        spec = resolve_experiment(HODGKIN_HUXLEY)
-        sealed = pinned_request({**HODGKIN_HUXLEY, "mode": "model", "nonsense": 1}, spec)
+        spec = resolve_experiment(ADEX)
+        sealed = pinned_request({**ADEX, "mode": "model", "nonsense": 1}, spec)
         assert "mode" not in sealed
         assert "nonsense" not in sealed
 
 
 class TestIdentity:
     def test_identity_excludes_the_runtime_and_the_cache_key(self) -> None:
-        public = resolve_experiment(HODGKIN_HUXLEY).public
+        public = resolve_experiment(ADEX).public
         identity = experiment_identity(public)
         assert "runtime" not in identity
         assert "cache" not in identity
@@ -128,16 +130,14 @@ class TestIdentity:
         assert identity["protocol"] == public["protocol"]
 
     def test_a_different_timestep_is_a_different_identity(self) -> None:
-        one = experiment_identity_sha256(resolve_experiment(HODGKIN_HUXLEY).public)
-        other = experiment_identity_sha256(
-            resolve_experiment({**HODGKIN_HUXLEY, "dt": 0.02}).public
-        )
+        one = experiment_identity_sha256(resolve_experiment(ADEX).public)
+        other = experiment_identity_sha256(resolve_experiment({**ADEX, "dt": 0.02}).public)
         assert one != other
 
     def test_a_different_protocol_is_a_different_identity(self) -> None:
-        one = experiment_identity_sha256(resolve_experiment(HODGKIN_HUXLEY).public)
+        one = experiment_identity_sha256(resolve_experiment(ADEX).public)
         other = experiment_identity_sha256(
-            resolve_experiment({**HODGKIN_HUXLEY, "protocol": "constant"}).public
+            resolve_experiment({**ADEX, "protocol": "constant"}).public
         )
         assert one != other
 
@@ -158,7 +158,7 @@ class TestBuildAndReplay:
 
     @pytest.mark.parametrize(
         "request_body",
-        [LAPICQUE, HODGKIN_HUXLEY, dict(STOCHASTIC_EQUATIONS, seed=4242)],
+        [LAPICQUE, ADEX, dict(STOCHASTIC_EQUATIONS, seed=4242)],
         ids=["step-signature", "nondefault-dt-and-protocol", "seeded-stochastic"],
     )
     def test_a_pack_replays_the_experiment_it_sealed(self, request_body: dict[str, Any]) -> None:
@@ -172,8 +172,8 @@ class TestBuildAndReplay:
         assert outcome["experiment_identity_sha256"] == pack["experiment_identity_sha256"]
 
     def test_the_pack_records_the_experiment_the_studio_would_run(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
-        direct = _run(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
+        direct = _run(ADEX)
 
         assert pack["expectation"]["n_steps"] == direct["n_steps"] == 1000
         assert pack["expectation"]["dt"] == direct["dt"] == 0.05
@@ -181,10 +181,10 @@ class TestBuildAndReplay:
         assert pack["experiment"]["protocol"]["kind"] == "step"
 
     def test_the_expectation_covers_every_state_not_only_the_spike_count(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         states = pack["expectation"]["states"]
-        # Hodgkin-Huxley carries the gating variables, not just a voltage.
-        assert set(states) >= {"v", "m", "h", "n"}
+        # AdEx carries its adaptation current, not just a voltage.
+        assert set(states) >= {"v", "w"}
         for block in states.values():
             assert block["n_samples"] == 1000
             assert block["sha256"]
@@ -207,7 +207,7 @@ class TestComparisonCatchesRealDivergence:
     """Controlled mutations of the sealed expectation, not of the run."""
 
     def test_a_changed_spike_train_is_a_mismatch(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
         mutated["spikes"] = [index + 1 for index in mutated["spikes"]]
@@ -221,7 +221,7 @@ class TestComparisonCatchesRealDivergence:
         assert any("spike events diverge" in difference for difference in outcome["differences"])
 
     def test_a_changed_final_state_is_a_mismatch(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
         mutated["final_state"]["v"] = float(mutated["final_state"]["v"]) + 1.0
@@ -232,7 +232,7 @@ class TestComparisonCatchesRealDivergence:
         assert any("final_state.v" in difference for difference in outcome["differences"])
 
     def test_a_changed_drive_is_a_mismatch(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
         mutated["drive_sha256"] = "0" * 64
@@ -243,7 +243,7 @@ class TestComparisonCatchesRealDivergence:
         assert "the drive samples differ from the sealed protocol" in outcome["differences"]
 
     def test_a_state_within_tolerance_is_not_called_exact(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         changed = copy.deepcopy(result)
         changed["raw"]["states"]["v"][10] += 1e-9
@@ -258,7 +258,7 @@ class TestComparisonCatchesRealDivergence:
     @pytest.mark.parametrize("tolerance", [0.0, 1e-12])
     def test_interior_permutation_is_not_hidden_by_equal_extrema(self, tolerance: float) -> None:
         """Pointwise divergence must fail even when every stored summary agrees."""
-        result = _run(dict(HODGKIN_HUXLEY, duration=5.0))
+        result = _run(dict(ADEX, duration=5.0))
         expected = replay_expectation(result)
         changed = copy.deepcopy(result)
         trace = changed["raw"]["states"]["v"]
@@ -305,7 +305,7 @@ def _through_a_browser(value: Any) -> Any:
 
 class TestSurvivesTheBrowser:
     def test_a_pack_saved_by_a_browser_still_replays(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         saved = json.loads(json.dumps(_through_a_browser(pack)))
 
         # The narrowing really happened, so the test is not vacuous.
@@ -316,7 +316,7 @@ class TestSurvivesTheBrowser:
         assert replay_pack(saved)["verdict"] == "match"
 
     def test_the_identity_digest_describes_the_json_value_not_the_python_type(self) -> None:
-        public = resolve_experiment(HODGKIN_HUXLEY).public
+        public = resolve_experiment(ADEX).public
         assert experiment_identity_sha256(public) == experiment_identity_sha256(
             _through_a_browser(public)
         )
@@ -431,7 +431,7 @@ class TestRefusalsBeforeExecution:
         assert replay_pack(pack)["verdict"] == "match"
 
     def test_an_unsupported_schema_is_refused(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         pack["schema_version"] = "studio.replay-pack.v99"
 
         with pytest.raises(ReplayRejected) as refusal:
@@ -441,7 +441,7 @@ class TestRefusalsBeforeExecution:
         assert "studio.replay-pack.v99" in refusal.value.reason
 
     def test_a_corrupted_pack_is_refused_by_its_own_digest(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         pack["experiment"]["protocol"]["current"] = 999.0
 
         with pytest.raises(ReplayRejected) as refusal:
@@ -451,10 +451,10 @@ class TestRefusalsBeforeExecution:
         assert "does not describe its own specification" in refusal.value.reason
 
     def test_an_experiment_that_resolves_differently_here_is_refused(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         # Seal a specification for a different timestep, consistently digested:
         # this is what a package whose defaults changed would look like.
-        other = resolve_experiment({**HODGKIN_HUXLEY, "dt": 0.02}).public
+        other = resolve_experiment({**ADEX, "dt": 0.02}).public
         pack["experiment"] = other
         pack["experiment_identity_sha256"] = experiment_identity_sha256(other)
 
@@ -465,7 +465,7 @@ class TestRefusalsBeforeExecution:
         assert "numerical" in refusal.value.differences or "steps" in refusal.value.differences
 
     def test_a_model_that_is_not_installed_is_refused(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         pack["request"]["name"] = "NoSuchNeuronExistsHere"
 
         with pytest.raises(ReplayRejected) as refusal:
@@ -475,7 +475,7 @@ class TestRefusalsBeforeExecution:
         assert "no longer resolves here" in refusal.value.reason
 
     def test_a_request_field_this_contract_does_not_execute_is_refused(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         pack["request"]["backend"] = "rust"
 
         with pytest.raises(ReplayRejected) as refusal:
@@ -485,7 +485,7 @@ class TestRefusalsBeforeExecution:
         assert refusal.value.differences == ("backend",)
 
     def test_runtime_drift_is_refused_unless_it_is_admitted(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         pack["environment"]["package_version"] = "0.0.1-not-this-one"
 
         with pytest.raises(ReplayRejected) as refusal:
@@ -506,7 +506,7 @@ class TestRefusalsBeforeExecution:
             verify_replay_pack(["not", "an", "object"])  # type: ignore[arg-type]
 
     def test_refusal_happens_before_the_experiment_runs(self, monkeypatch: Any) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         pack["environment"]["python"] = "1.0.0"
 
         def fail(*_args: Any, **_kwargs: Any) -> None:
@@ -548,7 +548,7 @@ class TestComparisonReportsStructuralDifference:
         assert "initial_state.v: invalid shape" in outcome["differences"][0]
 
     def test_a_state_the_replay_does_not_produce_is_named(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
         mutated["states"]["not_a_variable"] = dict(mutated["states"]["v"])
@@ -559,18 +559,18 @@ class TestComparisonReportsStructuralDifference:
         assert "state not_a_variable absent from the replay" in outcome["differences"]
 
     def test_a_state_the_pack_does_not_carry_is_named(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
-        del mutated["states"]["m"]
+        del mutated["states"]["w"]
 
         outcome = compare_to_expectation(mutated, result)
 
         assert outcome["verdict"] == "mismatch"
-        assert "state m not in the pack" in outcome["differences"]
+        assert "state w not in the pack" in outcome["differences"]
 
     def test_a_trace_of_a_different_length_is_reported_by_length(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
         mutated["states"]["v"]["sha256"] = "0" * 64
@@ -581,7 +581,7 @@ class TestComparisonReportsStructuralDifference:
         assert any("7 sealed" in difference for difference in outcome["differences"])
 
     def test_a_state_variable_present_on_one_side_only_is_reported(self) -> None:
-        pack = build_replay_pack(HODGKIN_HUXLEY)
+        pack = build_replay_pack(ADEX)
         result = _run(pack["request"])
         mutated = copy.deepcopy(pack["expectation"])
         mutated["initial_state"]["ghost"] = 0.0

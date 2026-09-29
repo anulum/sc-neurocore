@@ -198,7 +198,9 @@ class TestNumericalFailure:
         assert failure.model == "HodgkinHuxleyNeuron"
         assert failure.backend == "python"
         assert failure.step > 0
-        assert failure.time_ms == pytest.approx(failure.step * 0.01)
+        # One Hodgkin-Huxley step() is a 1 ms macro step of 0.01 ms sub-steps,
+        # so the failing step started at step × 1 ms, not step × 0.01 ms.
+        assert failure.time_ms == pytest.approx(failure.step * 1.0)
         assert failure.diagnostic.startswith("OverflowError")
         detail = failure.to_public_detail()
         assert detail["error"] == "model_simulation_failed"

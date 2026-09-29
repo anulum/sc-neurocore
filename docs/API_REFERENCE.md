@@ -40853,6 +40853,46 @@ ModelInputError
     When ``step`` takes no drive input or requires further inputs without
     defaults that the Studio current protocol cannot supply.
 
+### Function `declared_macro_step(name)`
+Return the sub-step and macro step of a model that steps in macro steps.
+
+A model profile states how long one public ``step()`` lasts
+(``numerical.macro_step``). For most models that is ``dt``. A few
+conductance models (Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki) run a
+fixed macro step of ``substeps`` sub-steps of ``dt`` per call, and the
+Studio used to time every call as ``dt``: their time axis was short by
+the factor ``substeps`` and every rate long by it (Hodgkin-Huxley at
+10 µA/cm² reported 6330 Hz instead of 63 Hz).
+
+Parameters
+----------
+name : str
+    Catalogue class name.
+
+Returns
+-------
+tuple of (float, float) or None
+    ``(sub-step dt, macro step)`` in ms when the profile declares a
+    time-subdividing macro step longer than ``dt``; ``None`` when a call
+    lasts ``dt`` or the model has no executable profile.
+
+### Function `macro_step_refusal(name)`
+Say why a macro-stepping model cannot join a network, or ``None``.
+
+A network advances every population once per ``dt``; a model whose
+``step()`` is a longer macro step would run a slower clock than its
+neighbours, and every projection between them would be mistimed.
+
+Parameters
+----------
+name : str
+    Catalogue class name.
+
+Returns
+-------
+str or None
+    The reason, or ``None`` when one call of the model lasts one ``dt``.
+
 ### Function `resolve_model_run_inputs(name, param_overrides, dt)`
 Validate a model-run request against the model's own constructor contract.
 
@@ -41641,8 +41681,10 @@ a ten-variable conductance model and admits requests it should refuse.
 Attributes
 ----------
 dt : float
-    The effective timestep the run will use, resolved from the model rather
-    than assumed.
+    Simulated time of one ``step()`` call, resolved from the model rather
+    than assumed: the timestep, or the macro step of a model that runs
+    ``substeps`` sub-steps per call. Taking the sub-step here counted a
+    Hodgkin-Huxley run's calls a hundred times over.
 substeps : int
     Integrator advances per step, from the model's numerical profile.
 state_count : int

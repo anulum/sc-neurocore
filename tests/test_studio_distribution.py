@@ -234,7 +234,13 @@ def verify_installed_replays(installed: Path, workspace: Path) -> None:
         Disposable working directory containing no source checkout.
     """
     requests = [
-        {"name": "HodgkinHuxleyNeuron", "dt": 0.05, "duration": 5.0, "protocol": "step"},
+        {
+            "name": "AdExNeuron",
+            "dt": 0.05,
+            "duration": 5.0,
+            "current": 1000.0,
+            "protocol": "step",
+        },
         {"name": "PoissonNeuron", "params": {"seed": 77, "rate_hz": 150}, "duration": 5.0},
         {"name": "WilsonCowanUnit", "duration": 5.0},
         {"name": "AmariNeuralField", "duration": 5.0},

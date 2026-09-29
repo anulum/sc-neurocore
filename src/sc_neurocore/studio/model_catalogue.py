@@ -218,9 +218,26 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
             "documentation_slug": descriptor.documentation_slug,
             "compile_configuration": _compile_configuration(descriptor),
             "profile_contract": _profile_contract(descriptor),
+            "macro_step": _macro_step(descriptor),
         }
     )
     return detail
+
+
+def _macro_step(descriptor: ModelDescriptor) -> dict[str, float] | None:
+    """Say how long one ``step()`` lasts when it is longer than one ``dt``.
+
+    The Studio clocks a run by the macro step and accepts only the sub-step
+    the profile times it at; a client that shows a free ``dt`` control for such
+    a model offers a value the server will refuse.
+    """
+    from sc_neurocore.studio.model_run_contract import declared_macro_step
+
+    declared = declared_macro_step(descriptor.class_name)
+    if declared is None:
+        return None
+    sub_step_ms, step_ms = declared
+    return {"sub_step_ms": sub_step_ms, "step_ms": step_ms}
 
 
 def _canonical_schema(descriptor: ModelDescriptor) -> tuple[str, dict[str, Any]] | None:

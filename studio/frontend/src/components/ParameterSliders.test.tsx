@@ -9,7 +9,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { sliderBounds } from "./ParameterSliders";
+import { MacroStepRow, sliderBounds } from "./ParameterSliders";
 
 vi.mock("../stores/studio", () => ({
   useStudioStore: () => ({
@@ -87,5 +87,16 @@ describe("ParameterSliders accessible names", () => {
     expect(sliders.every((slider) => /aria-valuetext="[^"]+"/.test(slider))).toBe(true);
     expect(html).toContain('aria-label="T (ms)"');
     expect(html).toContain('aria-label="dt"');
+  });
+});
+
+describe("MacroStepRow", () => {
+  it("states the fixed sub-step and the macro step instead of offering a dt", () => {
+    // Hodgkin-Huxley: one step() is 100 sub-steps of 0.01 ms, and the server
+    // refuses any other dt for it.
+    const html = renderToStaticMarkup(<MacroStepRow macro={{ sub_step_ms: 0.01, step_ms: 1 }} />);
+
+    expect(html.replace(/\s+/g, " ")).toContain("0.01 ms, fixed: one step is 1 ms of 100 sub-steps");
+    expect(html).not.toContain('type="range"');
   });
 });

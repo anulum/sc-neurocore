@@ -28,6 +28,7 @@ from sc_neurocore.studio.model_introspection import _load_class
 from sc_neurocore.studio.model_run_contract import (
     DT_OVERRIDE_REASON,
     ModelInputError,
+    macro_step_refusal,
     model_drive_contract,
     model_parameter_contracts,
 )
@@ -97,7 +98,7 @@ def population_model_admission(name: str) -> str | None:
         return "integer-drive model: the public Network injects float currents"
     if "seed" in model_parameter_contracts(cls).overridable:
         return "seed field: every neuron of a population would share its noise"
-    return None
+    return macro_step_refusal(name)
 
 
 def population_model_contract(name: str) -> dict[str, Any] | None:

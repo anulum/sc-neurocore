@@ -288,6 +288,7 @@ def _model_revision(inputs: ModelRunInputs) -> tuple[dict[str, Any], dict[str, A
         "family": "",
         "dt": inputs.dt,
         "dt_source": inputs.dt_source,
+        "step_ms": inputs.step_ms,
         "substeps": 1,
         "time_unit": "ms",
     }
@@ -430,7 +431,7 @@ def resolve_model_experiment(
     if effective_seed is not None:
         run_params["seed"] = effective_seed
         inputs = resolve_model_run_inputs(name, run_params, request.get("dt"))
-    n_steps = _steps(duration, inputs.dt, max_steps=max_steps)
+    n_steps = _steps(duration, inputs.step_ms, max_steps=max_steps)
     trace = resolve_drive_trace(
         inputs,
         protocol=protocol,
@@ -447,7 +448,7 @@ def resolve_model_experiment(
         "steps": {
             "n_steps": n_steps,
             "duration_requested_ms": duration,
-            "duration_effective_ms": n_steps * inputs.dt,
+            "duration_effective_ms": n_steps * inputs.step_ms,
             "synchronous_limit": max_steps,
         },
         "parameters": inputs.effective_parameters(),
@@ -485,7 +486,7 @@ def resolve_model_experiment(
         run_kwargs=run_kwargs,
         cacheable=randomness["effective_trial"] == "replay",
         n_steps=n_steps,
-        dt=inputs.dt,
+        dt=inputs.step_ms,
         duration_ms=duration,
     )
 

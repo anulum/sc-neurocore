@@ -223,8 +223,10 @@ class ModelCostFactors:
     Attributes
     ----------
     dt : float
-        The effective timestep the run will use, resolved from the model rather
-        than assumed.
+        Simulated time of one ``step()`` call, resolved from the model rather
+        than assumed: the timestep, or the macro step of a model that runs
+        ``substeps`` sub-steps per call. Taking the sub-step here counted a
+        Hodgkin-Huxley run's calls a hundred times over.
     substeps : int
         Integrator advances per step, from the model's numerical profile.
     state_count : int
@@ -283,7 +285,7 @@ def resolve_model_cost_factors(name: str, dt: float | None) -> ModelCostFactors:
     state_count = 1
     try:
         inputs = resolve_model_run_inputs(name, {}, dt)
-        effective_dt = inputs.dt
+        effective_dt = inputs.step_ms
     except (ModelInputError, KeyError, ValueError):
         return ModelCostFactors(dt=effective_dt, substeps=substeps, state_count=state_count)
     try:

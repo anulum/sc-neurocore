@@ -543,6 +543,13 @@ export interface ModelDetail extends ModelSummary {
   };
   documentation_slug: string;
   compile_configuration?: ModelCompileConfiguration | null;
+  /**
+   * How long one `step()` lasts when it is a macro step of several `dt`
+   * sub-steps (Hodgkin-Huxley: 1 ms of 0.01 ms); `null` when a step is one
+   * `dt`. The server clocks a run by `step_ms` and accepts only
+   * `sub_step_ms` as its `dt`.
+   */
+  macro_step?: { sub_step_ms: number; step_ms: number } | null;
 }
 
 /**

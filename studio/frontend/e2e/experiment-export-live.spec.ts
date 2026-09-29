@@ -28,10 +28,11 @@ interface ReplayOutcome {
   experiment_identity_sha256: string;
 }
 
-const MODEL_NAME = "HodgkinHuxleyNeuron";
-// The model's own default timestep is 0.01 ms and its default drive is
+const MODEL_NAME = "AdExNeuron";
+// The model's own default timestep is 0.1 ms and its default drive is
 // constant. Asking the UI for neither is the case a syntax-only export got
-// silently wrong.
+// silently wrong. (Hodgkin-Huxley was the model here until the Studio learned
+// that its step is a fixed 1 ms macro step, timed only at its own 0.01 ms.)
 const REQUESTED_DT = "0.05";
 const REQUESTED_PROTOCOL = "step";
 
@@ -55,7 +56,7 @@ async function openStudioWithTheModel(page: Page): Promise<void> {
   );
   await contract.locator("..").click();
   await detail;
-  await expect(page.getByTestId("slider-g_na")).toBeVisible();
+  await expect(page.getByTestId("slider-tau_w")).toBeVisible();
   await expect(page.getByTestId("slider-g_a")).not.toBeVisible();
 }
 

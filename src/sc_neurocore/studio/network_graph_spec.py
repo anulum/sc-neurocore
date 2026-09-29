@@ -37,6 +37,7 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.studio.model_run_contract import (
     ModelInputError,
     ModelRunInputs,
+    macro_step_refusal,
     model_drive_contract,
     model_parameter_contracts,
     resolve_model_run_inputs,
@@ -416,7 +417,7 @@ def _model_admissible(model: str, cls: type) -> str | None:
             "the model draws randomness from a seed field and every neuron of a "
             "population would share it (perfectly correlated noise); not admitted"
         )
-    return None
+    return macro_step_refusal(model)
 
 
 def _validate_populations(

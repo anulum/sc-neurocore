@@ -429,6 +429,14 @@ itself and never substitutes a default:
 - a model with a fixed class-level step (for example `IntegerQIFNeuron`,
   1.0 ms) accepts only that `dt`; a model without any timestep accepts only the
   Studio default of 0.1 ms per step;
+- a model whose profile declares a macro step (`HodgkinHuxleyNeuron` and
+  `ConnorStevensNeuron`: 1 ms of 100 sub-steps of 0.01 ms; `WangBuzsakiNeuron`:
+  0.5 ms of 50) is clocked by that macro step: one sample per `step()` call,
+  `duration / macro step` calls, and the response `dt` is the macro step. Its
+  `dt` is the sub-step, accepted only at the profile's value, because the class
+  chooses its own sub-step count from `dt` and nothing declares how long a call
+  lasts at another one. Such a model cannot form a network population, since a
+  network advances every population once per `dt`;
 - a model whose `step` needs inputs the current protocol cannot supply (for
   example `DendriticNMDANeuron`, which needs glutamate) is rejected before any
   step runs;
@@ -442,7 +450,8 @@ returns HTTP 422 with `detail = {"error": "model_simulation_failed", "model",
 "backend", "step", "time_ms", "diagnostic"}` and no partial payload; failed
 requests are never cached. A successful run carries an `effective_inputs`
 receipt (`studio.model-run-inputs.v1`): backend (`python` or `rust`), effective
-`dt` and its source, every effective parameter, the applied overrides, the
+`dt` and its source, `step_ms` (the simulated time of one `step()` call, which
+is `dt` except for a macro-stepping model), every effective parameter, the applied overrides, the
 `step` drive parameter and kind, the protocol, the requested duration, the step
 count with a `steps_truncated` flag, the plot stride, and the recorded and
 excluded state variables with the exclusion reason (non-scalar, absent, or not

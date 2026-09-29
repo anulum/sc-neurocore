@@ -28,7 +28,10 @@ from typing import Any, Literal
 
 import numpy as np
 
+from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
+from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.universal_dsl import load_schema
 from sc_neurocore.studio.model_introspection import _fixed_step_attribute, _load_class
 from sc_neurocore.studio.simulation import _make_current_trace
 
@@ -192,6 +195,10 @@ class ModelRunInputs:
     dt: float
     dt_source: DtSource
     drive: DriveContract
+    #: Simulated time one ``step()`` call advances, in ms: the sample interval
+    #: of the run's clock. It is ``dt`` except for a model whose profile
+    #: declares a macro step made of several ``dt`` sub-steps.
+    step_ms: float
 
     def effective_parameters(self) -> dict[str, float | int | None]:
         """Return every overridable field with the value the run will use."""
@@ -451,6 +458,104 @@ def _validated_overrides(
     return result
 
 
+def declared_macro_step(name: str) -> tuple[float, float] | None:
+    """Return the sub-step and macro step of a model that steps in macro steps.
+
+    A model profile states how long one public ``step()`` lasts
+    (``numerical.macro_step``). For most models that is ``dt``. A few
+    conductance models (Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki) run a
+    fixed macro step of ``substeps`` sub-steps of ``dt`` per call, and the
+    Studio used to time every call as ``dt``: their time axis was short by
+    the factor ``substeps`` and every rate long by it (Hodgkin-Huxley at
+    10 µA/cm² reported 6330 Hz instead of 63 Hz).
+
+    Parameters
+    ----------
+    name : str
+        Catalogue class name.
+
+    Returns
+    -------
+    tuple of (float, float) or None
+        ``(sub-step dt, macro step)`` in ms when the profile declares a
+        time-subdividing macro step longer than ``dt``; ``None`` when a call
+        lasts ``dt`` or the model has no executable profile.
+    """
+    try:
+        stem = schema_for_class(name)
+        numerical = resolve_profile(load_schema(stem), stem=stem).numerical
+    except (ModelIdentityError, FileNotFoundError, ValueError, KeyError):
+        return None
+    macro = numerical.macro_step
+    if (
+        macro is None
+        or numerical.substep_kind != "time-subdivision"
+        or numerical.substeps <= 1
+        or math.isclose(macro, numerical.dt)
+    ):
+        return None
+    return float(numerical.dt), float(macro)
+
+
+def macro_step_refusal(name: str) -> str | None:
+    """Say why a macro-stepping model cannot join a network, or ``None``.
+
+    A network advances every population once per ``dt``; a model whose
+    ``step()`` is a longer macro step would run a slower clock than its
+    neighbours, and every projection between them would be mistimed.
+
+    Parameters
+    ----------
+    name : str
+        Catalogue class name.
+
+    Returns
+    -------
+    str or None
+        The reason, or ``None`` when one call of the model lasts one ``dt``.
+    """
+    declared = declared_macro_step(name)
+    if declared is None:
+        return None
+    sub_dt, macro = declared
+    return (
+        f"one step of this model is a {macro:g} ms macro step of {sub_dt:g} ms sub-steps, "
+        "but a network advances every population once per dt"
+    )
+
+
+def _step_duration(name: str, effective_dt: float) -> float:
+    """Return how long one ``step()`` call lasts at ``effective_dt``.
+
+    A macro-stepping model's class chooses its own sub-step count from
+    ``dt`` (``round(1 / dt)``, ``int(0.5 / dt)``), and its profile times the
+    macro step only at the profile's ``dt``. At any other ``dt`` the length
+    of a call is not declared anywhere, so the run is refused rather than
+    timed by a guess.
+
+    Raises
+    ------
+    ModelInputError
+        When a macro-stepping model is asked for a ``dt`` other than its
+        profile's.
+    """
+    declared = declared_macro_step(name)
+    if declared is None:
+        return effective_dt
+    sub_dt, macro = declared
+    if not math.isclose(effective_dt, sub_dt):
+        raise ModelInputError(
+            model=name,
+            field="dt",
+            reason=(
+                f"one step of this model is a {macro:g} ms macro step of {sub_dt:g} ms "
+                f"sub-steps; its profile times a step only at dt {sub_dt:g} ms, so "
+                "another dt cannot be timed"
+            ),
+        )
+    return macro
+
+
 def resolve_model_run_inputs(
     name: object,
     param_overrides: Mapping[str, object] | None,
@@ -543,6 +648,7 @@ def resolve_model_run_inputs(
         dt=effective_dt,
         dt_source=dt_source,
         drive=drive,
+        step_ms=_step_duration(name, effective_dt),
     )
 
 
@@ -574,16 +680,19 @@ def resolve_drive_trace(
     current_value = _finite_number(model, "current", current)
     duration_value = _positive_finite(model, "duration", duration)
     frequency_value = _positive_finite(model, "frequency_hz", frequency_hz)
-    requested_steps = int(duration_value / inputs.dt)
+    requested_steps = int(duration_value / inputs.step_ms)
     if requested_steps < 1:
         raise ModelInputError(
             model=model,
             field="duration",
-            reason=f"duration {duration_value} ms with dt {inputs.dt} ms yields no complete step",
+            reason=(
+                f"duration {duration_value} ms with a step of {inputs.step_ms} ms yields no "
+                "complete step"
+            ),
         )
     n_steps = min(requested_steps, max_steps)
     samples = _make_current_trace(
-        protocol, current_value, n_steps, dt=inputs.dt, frequency_hz=frequency_value
+        protocol, current_value, n_steps, dt=inputs.step_ms, frequency_hz=frequency_value
     )
     if inputs.drive.kind == "int" and not bool(np.all(samples == np.round(samples))):
         raise ModelInputError(
@@ -636,6 +745,7 @@ def run_receipt(
         "backend": backend,
         "dt": inputs.dt,
         "dt_source": inputs.dt_source,
+        "step_ms": inputs.step_ms,
         "parameters": inputs.effective_parameters(),
         "overrides_applied": list(inputs.overrides_applied),
         "drive": {"step_parameter": inputs.drive.parameter, "kind": inputs.drive.kind},
@@ -666,6 +776,8 @@ __all__ = [
     "ModelSimulationFailure",
     "ParameterContract",
     "bounded_diagnostic",
+    "declared_macro_step",
+    "macro_step_refusal",
     "model_drive_contract",
     "model_parameter_contracts",
     "resolve_drive_trace",

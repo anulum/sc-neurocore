@@ -187,7 +187,8 @@ class TestNumericalFailure:
         assert detail["error"] == "model_simulation_failed"
         assert (detail["model"], detail["backend"]) == ("HodgkinHuxleyNeuron", "python")
         assert detail["step"] > 0
-        assert detail["time_ms"] == pytest.approx(detail["step"] * 0.01)
+        # A Hodgkin-Huxley step is a 1 ms macro step of 0.01 ms sub-steps.
+        assert detail["time_ms"] == pytest.approx(detail["step"] * 1.0)
         assert detail["diagnostic"].startswith("OverflowError")
         assert "time" not in first.json()
         assert _cache_size(client) == size_before

@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { formatReading } from "../plotAccessibility";
 import { useStudioStore } from "../stores/studio";
 import { qFormatRefusals } from "../modelCompileConfig";
 
@@ -90,6 +91,29 @@ function Slider({ label, value, onChange, min, max, step, unit, title }: {
       <span className="slider-value">
         {fmt(value)}
         {unit ? <span style={{ color: "var(--text-muted)", marginLeft: 3 }}>{unit}</span> : null}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * The step of a model that advances a macro step per call, stated not offered.
+ *
+ * Such a model runs `step_ms / sub_step_ms` sub-steps per call, and its
+ * profile times a call only at its own sub-step; the server refuses any
+ * other `dt`. A slider here offered values that could only be refused.
+ *
+ * @param props - The declared sub-step and macro step, in milliseconds.
+ * @returns The read-only row.
+ */
+export function MacroStepRow({ macro }: { macro: { sub_step_ms: number; step_ms: number } }) {
+  const substeps = Math.round(macro.step_ms / macro.sub_step_ms);
+  return (
+    <div className="slider-row" data-testid="macro-step-row">
+      <span className="slider-label">dt</span>
+      <span className="panel-note" style={{ flex: 1 }}>
+        {formatReading(macro.sub_step_ms)} ms, fixed: one step is {formatReading(macro.step_ms)} ms
+        of {substeps} sub-steps
       </span>
     </div>
   );
@@ -211,8 +235,12 @@ export default function ParameterSliders() {
         </div>
         <Slider label="I" value={current} onChange={setCurrent}
           min={-100} max={100} step={0.1} />
-        <Slider label="dt" value={dt} onChange={setDt}
-          min={0.001} max={1} step={0.001} />
+        {sourceMode === "model" && modelDetail?.macro_step ? (
+          <MacroStepRow macro={modelDetail.macro_step} />
+        ) : (
+          <Slider label="dt" value={dt} onChange={setDt}
+            min={0.001} max={1} step={0.001} />
+        )}
         <Slider label="T (ms)" value={duration} onChange={setDuration}
           min={10} max={2000} step={10} />
         {protocol === "sine" && (

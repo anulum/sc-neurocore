@@ -58,7 +58,7 @@ if spec.experiment_sha256 != EXPERIMENT_SHA256:
 result = run_experiment(spec)
 
 print(f"{{result['spike_count']}} spikes in {{result['n_steps']}} steps "
-      f"at dt {{result['dt']}} ms ({{result['stats']['rate_hz']:.1f}} Hz)")
+      f"of {{result['dt']}} ms ({{result['stats']['rate_hz']:.1f}} Hz)")
 print("final state:", result["final_state"])
 
 # Full-resolution traces, when you want them:

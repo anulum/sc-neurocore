@@ -232,7 +232,10 @@ def _simulate_python(inputs: ModelRunInputs, trace: DriveTrace) -> dict[str, Any
     """Run the Python reference model step by step under the resolved contract."""
     neuron = inputs.instantiate()
     n_steps = trace.n_steps
-    dt = inputs.dt
+    # The clock of the run: one sample per ``step()`` call, which lasts a
+    # macro step for a model that sub-steps internally (``inputs.dt`` is then
+    # the sub-step handed to the model, not the sample interval).
+    dt = inputs.step_ms
     source, stem, declared = declared_state(inputs.model)
     layout = observe_layout(
         neuron, source, stem, declared, n_steps=n_steps, element_budget=RAW_ELEMENT_BUDGET
@@ -420,7 +423,7 @@ def simulate_model(
     )
 
     if use_fast_path and not inputs.overrides_applied and dt is None:
-        rust_result = _try_rust_simulate(name, trace.n_steps, trace.samples, inputs.dt)
+        rust_result = _try_rust_simulate(name, trace.n_steps, trace.samples, inputs.step_ms)
         if rust_result is not None:
             recorded, excluded = _state_recording(_rust_layout(name))
             rust_result["effective_inputs"] = run_receipt(

@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5149
+    "test_files": 5150
   },
   "documentation": {
     "public_pages": [
@@ -7794,6 +7794,7 @@
       "tests/test_studio_laboratory_cancel_reply_loss.py",
       "tests/test_studio_laboratory_isolated_jobs.py",
       "tests/test_studio_ledger_lease_bounds.py",
+      "tests/test_studio_macro_step_clock.py",
       "tests/test_studio_model_capabilities.py",
       "tests/test_studio_model_catalogue_documentation.py",
       "tests/test_studio_model_catalogue_http_api.py",

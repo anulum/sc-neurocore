@@ -41,14 +41,24 @@ STEP_SIGNATURE = {
     "current": 1.5,
     "protocol": "ramp",
 }
+# AdEx steps once per dt, so a dt it does not default to (0.1 ms) is a
+# different experiment. Hodgkin-Huxley was the vehicle until the Studio learned
+# that its step is a fixed 1 ms macro step, timed by its profile only at the
+# 0.01 ms sub-step it declares.
 NONDEFAULT_DT = {
-    "name": "HodgkinHuxleyNeuron",
+    "name": "AdExNeuron",
     "dt": 0.05,
     "duration": 50.0,
-    "current": 10.0,
+    "current": 1000.0,
     "protocol": "constant",
 }
-NONCONSTANT_PROTOCOL = {**NONDEFAULT_DT, "dt": 0.01, "protocol": "step"}
+NONCONSTANT_PROTOCOL = {
+    "name": "HodgkinHuxleyNeuron",
+    "dt": 0.01,
+    "duration": 50.0,
+    "current": 10.0,
+    "protocol": "step",
+}
 MULTI_STATE = {
     "name": "HindmarshRoseNeuron",
     "dt": 0.05,
@@ -148,22 +158,22 @@ class TestExportedScriptsRun:
         assert completed.returncode == 0, completed.stderr
         expected = (
             f"{reference['spike_count']} spikes in {reference['n_steps']} steps "
-            f"at dt {reference['dt']} ms"
+            f"of {reference['dt']} ms"
         )
         assert expected in completed.stdout
         assert str(reference["final_state"]) in completed.stdout
 
     def test_the_export_honours_the_requested_timestep(self, tmp_path: Path) -> None:
-        # The model's own default is 0.01 ms; the request asks for 0.05 ms.
-        # An export that dropped dt ran five times less model time and still
-        # printed a plausible spike count.
+        # The model's own default is 0.1 ms; the request asks for 0.05 ms.
+        # An export that dropped dt ran twice the model time and still printed
+        # a plausible spike count.
         script, reference = _export(NONDEFAULT_DT)
         assert reference["dt"] == 0.05
         assert reference["n_steps"] == 1000
 
         completed = _execute(script, tmp_path)
 
-        assert "at dt 0.05 ms" in completed.stdout
+        assert "steps of 0.05 ms" in completed.stdout
         assert f"in {reference['n_steps']} steps" in completed.stdout
 
     def test_the_export_carries_the_drive_protocol(self, tmp_path: Path) -> None:
@@ -231,7 +241,8 @@ class TestExportRefusesToLieAboutDrift:
 
     def test_an_unresolvable_request_fails_loudly(self, tmp_path: Path) -> None:
         script, _ = _export(NONDEFAULT_DT)
-        edited = script.replace("'HodgkinHuxleyNeuron'", "'NoSuchNeuronExistsHere'")
+        edited = script.replace("'AdExNeuron'", "'NoSuchNeuronExistsHere'")
+        assert edited != script
 
         completed = _execute(edited, tmp_path)
 

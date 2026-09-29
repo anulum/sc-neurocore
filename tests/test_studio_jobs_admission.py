@@ -225,4 +225,15 @@ class TestResolvedCostFactors:
     def test_the_requested_timestep_wins_over_the_model_default(self) -> None:
         from sc_neurocore.studio.platform import resolve_model_cost_factors
 
-        assert resolve_model_cost_factors("HodgkinHuxleyNeuron", 0.05).dt == 0.05
+        assert resolve_model_cost_factors("AdExNeuron", 0.05).dt == 0.05
+
+    def test_a_macro_stepping_model_is_budgeted_per_call_not_per_sub_step(self) -> None:
+        from sc_neurocore.studio.platform import resolve_model_cost_factors
+
+        # One Hodgkin-Huxley call is a 1 ms macro step of 100 sub-steps. The
+        # budget counts duration / 1 ms calls of 100 sub-steps each; counting
+        # duration / 0.01 ms calls of 100 sub-steps each over-projected it a
+        # hundredfold and refused analyses the server could run.
+        factors = resolve_model_cost_factors("HodgkinHuxleyNeuron", None)
+        assert factors.dt == 1.0
+        assert factors.substeps == 100

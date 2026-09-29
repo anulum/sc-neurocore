@@ -140,10 +140,20 @@ class TestEffectiveConfiguration:
         assert override["protocol"]["drive_sha256"] == default["protocol"]["drive_sha256"]
 
     def test_effective_dt_comes_from_the_model_not_the_studio_default(self) -> None:
-        hh = _spec(name="HodgkinHuxleyNeuron", duration=1.0)
+        adex = _spec(name="AdExNeuron", duration=1.0)
         integer = _spec(name="IntegerQIFNeuron", duration=10.0)
-        assert (hh["numerical"]["dt"], hh["steps"]["n_steps"]) == (0.01, 100)
+        assert (adex["numerical"]["dt"], adex["steps"]["n_steps"]) == (0.1, 10)
         assert (integer["numerical"]["dt"], integer["steps"]["n_steps"]) == (1.0, 10)
+
+    def test_a_macro_stepping_model_is_counted_in_macro_steps(self) -> None:
+        # One Hodgkin-Huxley step() is 100 sub-steps of 0.01 ms: 20 ms is 20
+        # calls, not 2000. Counting sub-steps ran the model 100 times too long
+        # and divided its spikes by the requested 20 ms.
+        hh = _spec(name="HodgkinHuxleyNeuron", duration=20.0)
+        assert hh["numerical"]["dt"] == 0.01
+        assert hh["numerical"]["step_ms"] == 1.0
+        assert hh["steps"]["n_steps"] == 20
+        assert hh["steps"]["duration_effective_ms"] == 20.0
 
     @pytest.mark.parametrize(
         ("left", "right"),
