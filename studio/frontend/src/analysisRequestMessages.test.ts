@@ -11,7 +11,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { analysisRequestMessage } from "./analysisRequestMessages";
+import { analysisJobErrorMessage, analysisRequestMessage } from "./analysisRequestMessages";
 
 const SRC = new URL(".", import.meta.url).pathname;
 
@@ -45,6 +45,19 @@ describe("analysis refusal sentences", () => {
   it("names an identifier it does not know instead of hiding it", () => {
     expect(analysisRequestMessage("analysis_request_new_rule")).toBe(
       "The analysis request was refused (analysis_request_new_rule).",
+    );
+  });
+});
+
+describe("analysis job failure sentences", () => {
+  it("explains a numerical model failure and what to try", () => {
+    expect(analysisJobErrorMessage("ModelSimulationFailure")).toContain("safety bounds");
+    expect(analysisJobErrorMessage("ModelSimulationFailure")).toContain("smaller time step");
+  });
+
+  it("names a failure class it does not know", () => {
+    expect(analysisJobErrorMessage("ZeroDivisionError")).toBe(
+      "The analysis failed on the server (ZeroDivisionError).",
     );
   });
 });

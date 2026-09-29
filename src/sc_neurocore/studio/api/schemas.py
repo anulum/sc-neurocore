@@ -257,7 +257,10 @@ class BifurcationRequest(BaseModel):
 
     The response is labelled ``numerical-extrema-sweep``: the late-run
     extrema of one state trace per parameter value under the configured
-    drive, not a bifurcation continuation.
+    drive, not a bifurcation continuation. The drive is ``protocol`` at
+    ``current`` (and ``frequency_hz`` for a sine); it was a sine regardless
+    of the request, which the Studio did not show and which drove some
+    catalogue models out of their safety bounds at any swept value.
     """
 
     equations: list[str] | None = None
@@ -269,6 +272,8 @@ class BifurcationRequest(BaseModel):
     dt: float = 0.1
     duration: float = 200.0
     current: float = 10.0
+    protocol: StudioProtocol = "constant"
+    frequency_hz: PositiveFiniteFloat = 10.0
     sweep_param: str
     sweep_min: float
     sweep_max: float
@@ -568,7 +573,11 @@ class FreqResponseRequest(BaseModel):
 
 
 class HeatmapRequest(BaseModel):
-    """Request body for two-parameter response heatmap analysis."""
+    """Request body for two-parameter response heatmap analysis.
+
+    Every grid point runs under ``protocol`` at ``current`` (``frequency_hz``
+    for a sine): the drive the Studio shows, not a fixed constant one.
+    """
 
     equations: list[str] | None = None
     model_name: str | None = None
@@ -579,6 +588,8 @@ class HeatmapRequest(BaseModel):
     dt: float = 0.1
     duration: float = 100.0
     current: float = 10.0
+    protocol: StudioProtocol = "constant"
+    frequency_hz: PositiveFiniteFloat = 10.0
     param_x: str
     x_min: float
     x_max: float

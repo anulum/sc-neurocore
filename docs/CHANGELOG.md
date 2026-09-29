@@ -92,6 +92,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Studio's bifurcation sweep ran every point under a sine drive whatever
+  the reader had chosen: its request schema had no protocol field, so the
+  protocol the Studio sent was dropped. For the default catalogue model the
+  sine's negative half-cycle left the model's safety bounds at t = 62.4 ms
+  for every swept value and step size, so the bifurcation view failed every
+  time. Bifurcation and 2-D sweeps now run under the requested `protocol`
+  (and `frequency_hz`), default constant, and their results state the drive.
+- A failed simulation is said in full ("ATypeKNeuron (python) simulation
+  failed at step 173 (86.5 ms): …") instead of `model_simulation_failed`,
+  a failed analysis job is explained instead of showing an exception class
+  name, and the error banner can be dismissed.
+- Characterisation no longer waits minutes at "Starting characterisation…
+  0%" when its progress socket does not open: after five seconds it runs over
+  HTTP. The development server and preview now forward `/ws` to the API.
 - The Studio can be used from the keyboard and read by a screen reader
   throughout. Choosing a model was a click on a `div`, so no model could be
   chosen by keyboard; model rows, saved sessions, experiment presets, the

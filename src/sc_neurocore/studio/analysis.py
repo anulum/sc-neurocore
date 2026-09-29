@@ -93,6 +93,20 @@ def fi_curve_sweep(
     )
 
 
+def _drive_fields(base_config: dict[str, Any]) -> dict[str, Any]:
+    """The drive a sweep ran under, as reported in its result.
+
+    Returns ``protocol`` and, for a sine, its ``frequency_hz``, so a sweep's
+    result states the stimulus behind every point rather than leaving it to
+    the request.
+    """
+    protocol = str(base_config.get("protocol", "constant"))
+    fields: dict[str, Any] = {"protocol": protocol}
+    if protocol == "sine":
+        fields["frequency_hz"] = float(base_config.get("frequency_hz", 10.0))
+    return fields
+
+
 def bifurcation_sweep(
     simulate_fn: Callable[..., dict[str, Any]],
     base_config: dict[str, Any],
@@ -176,14 +190,13 @@ def bifurcation_sweep(
             attractors.append([round(float(np.mean(arr)), ATTRACTOR_DECIMALS)])
             kinds.append("fixed_point")
 
-    protocol = str(base_config.get("protocol", "constant"))
     payload: dict[str, Any] = {
         "param_name": param_name,
         "param_values": param_values,
         "attractors": attractors,
         "attractor_kinds": kinds,
         "variable": analysed,
-        "protocol": protocol,
+        **_drive_fields(base_config),
     }
     return attach_contract(
         payload,
@@ -196,7 +209,7 @@ def bifurcation_sweep(
             ),
             units={"param_values": MODEL_DEFINED_UNIT, "attractors": MODEL_DEFINED_UNIT},
             applicability=(
-                f"drive protocol {protocol!r}; the extrema reflect the driven response, "
+                f"drive protocol {payload['protocol']!r}; the extrema reflect the driven response, "
                 "not an autonomous attractor",
                 "each run restarts from the same initial state",
             ),
@@ -390,6 +403,7 @@ def heatmap_2d(
         "failed_points": 0,
         "total_points": total_points,
         "failure_rate": 0.0,
+        **_drive_fields(base_config),
     }
     return attach_contract(
         payload,

@@ -11,7 +11,7 @@
  * request builder, store, or API calls.
  */
 
-import { analysisRequestMessage } from "../analysisRequestMessages";
+import { analysisJobErrorMessage, analysisRequestMessage } from "../analysisRequestMessages";
 import type { AnalysisJobRequestBody } from "../api/client";
 import {
   analysisJobPhaseLabel,
@@ -153,8 +153,9 @@ export default function AnalysisJobControl({
           role="alert"
           aria-live="assertive"
           data-testid="analysis-job-control-error"
+          data-error-code={publicError}
         >
-          {publicError}
+          {analysisJobErrorMessage(publicError)}
         </div>
       )}
       {completed !== null && (

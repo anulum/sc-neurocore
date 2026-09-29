@@ -554,7 +554,17 @@ export default function App() {
           </button>
         </div>
       )}
-      {s.error && <div className="error-banner" role="alert">{s.error}</div>}
+      {s.error && (
+        <div className="error-banner" role="alert">
+          {s.error}{" "}
+          {/* The message outlives the view that produced it (panel jobs do not
+              clear store-owned errors), so the reader can put it away. */}
+          <button type="button" className="btn-simulate btn btn--ghost"
+            onClick={() => { useStudioStore.setState({ error: null }); }}>
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {s.isSimulating && s.progressMsg && (
         <div style={{

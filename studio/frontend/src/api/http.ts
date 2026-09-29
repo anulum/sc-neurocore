@@ -84,16 +84,29 @@ export class StudioRequestError extends Error {
 /**
  * Read a displayable sentence out of a server's `detail`.
  *
+ * A numerical model failure arrives as structured fields (`model`, `backend`,
+ * `step`, `time_ms`, `diagnostic`) under the code `model_simulation_failed`;
+ * the Studio showed only that code. It is now said in full.
+ *
  * @param detail - The `detail` field, of any shape.
  * @param status - The HTTP status, used when the detail says nothing usable.
  * @returns A sentence to show, never an empty string.
  */
-function errorMessage(detail: unknown, status: number): string {
+export function errorMessage(detail: unknown, status: number): string {
   if (typeof detail === "string" && detail.length > 0) {
     return detail;
   }
   if (typeof detail === "object" && detail !== null) {
     const record = detail as Record<string, unknown>;
+    if (record.error === "model_simulation_failed") {
+      const model = typeof record.model === "string" ? record.model : "The model";
+      const backend = typeof record.backend === "string" ? ` (${record.backend})` : "";
+      const step = typeof record.step === "number" ? ` at step ${String(record.step)}` : "";
+      const time = typeof record.time_ms === "number" ? ` (${record.time_ms.toFixed(1)} ms)` : "";
+      const why = typeof record.diagnostic === "string" && record.diagnostic.length > 0
+        ? `: ${record.diagnostic}` : "";
+      return `${model}${backend} simulation failed${step}${time}${why}.`;
+    }
     for (const key of ["reason", "message", "error"]) {
       const value = record[key];
       if (typeof value === "string" && value.length > 0) {

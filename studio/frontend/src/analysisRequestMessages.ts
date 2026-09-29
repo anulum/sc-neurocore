@@ -56,3 +56,26 @@ const MESSAGES: Readonly<Record<string, string>> = {
 export function analysisRequestMessage(code: string): string {
   return MESSAGES[code] ?? `The analysis request was refused (${code}).`;
 }
+
+const JOB_FAILURES: Readonly<Record<string, string>> = {
+  ModelSimulationFailure:
+    "The model's simulation failed at one of the analysed points: a state left the model's " +
+    "safety bounds or became non-finite. Try a narrower range, a smaller time step or a " +
+    "different drive.",
+  ModelInputError: "The server refused a model parameter or input for this analysis.",
+  cancelled: "The analysis was cancelled.",
+};
+
+/**
+ * Say in words why an analysis job failed.
+ *
+ * The job worker reports only an error class or a short status (it never
+ * returns a message that could carry a path), and the header showed that
+ * class name, such as `ModelSimulationFailure`, as the explanation.
+ *
+ * @param code - The class name or status the job failed with.
+ * @returns A sentence; an unknown code is named rather than hidden.
+ */
+export function analysisJobErrorMessage(code: string): string {
+  return JOB_FAILURES[code] ?? `The analysis failed on the server (${code}).`;
+}

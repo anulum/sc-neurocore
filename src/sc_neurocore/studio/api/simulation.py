@@ -351,7 +351,8 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
                 "dt": req.dt,
                 "duration": req.duration,
                 "current": req.current,
-                "protocol": "sine",
+                "protocol": req.protocol,
+                "frequency_hz": req.frequency_hz,
             }
             payload = bifurcation_sweep(
                 sim_fn,
@@ -487,7 +488,8 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
                 "dt": req.dt,
                 "duration": req.duration,
                 "current": req.current,
-                "protocol": "constant",
+                "protocol": req.protocol,
+                "frequency_hz": req.frequency_hz,
             }
             payload = heatmap_2d(
                 sim_fn,

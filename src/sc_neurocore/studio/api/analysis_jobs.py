@@ -162,7 +162,8 @@ def run_analysis_job_task(
             "dt": bif.dt,
             "duration": bif.duration,
             "current": bif.current,
-            "protocol": "sine",
+            "protocol": bif.protocol,
+            "frequency_hz": bif.frequency_hz,
         }
         sweep = bifurcation_sweep(
             sim_fn,
@@ -184,7 +185,8 @@ def run_analysis_job_task(
             "dt": heat.dt,
             "duration": heat.duration,
             "current": heat.current,
-            "protocol": "constant",
+            "protocol": heat.protocol,
+            "frequency_hz": heat.frequency_hz,
         }
         heat_payload = heatmap_2d(
             sim_fn,

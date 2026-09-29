@@ -14,6 +14,15 @@ import { studioSimulationConfigInput } from "../studioSimulationConfigInput";
 import type { StudioState } from "./studioTypes";
 
 /**
+ * How long the progress socket may take to open before the run falls back to
+ * HTTP. A socket the server never answers (a development proxy that does not
+ * forward `/ws`, a gateway that drops upgrades) used to leave the run at
+ * "Starting characterisation... 0%" until the browser gave up on the
+ * handshake, minutes later.
+ */
+export const PROGRESS_OPEN_TIMEOUT_MS = 5_000;
+
+/**
  * Characterise one captured experiment with at most one HTTP fallback.
  *
  * Terminal or obsolete requests detach their socket; both transports validate
@@ -32,7 +41,12 @@ export function runStoreCharacterize(
   let socket: WebSocket | undefined;
   let done = false;
   let fallbackStarted = false;
+  let openTimer: ReturnType<typeof setTimeout> | undefined;
   const detach = (): void => {
+    if (openTimer !== undefined) {
+      clearTimeout(openTimer);
+      openTimer = undefined;
+    }
     if (!socket) return;
     socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
     socket.close();
@@ -80,6 +94,20 @@ export function runStoreCharacterize(
       });
       socket.onerror = fallback;
       socket.onclose = fallback;
+      const sendConfig = socket.onopen;
+      let opened = false;
+      socket.onopen = function (this: WebSocket, event: Event) {
+        opened = true;
+        if (openTimer !== undefined) {
+          clearTimeout(openTimer);
+          openTimer = undefined;
+        }
+        sendConfig?.call(this, event);
+      };
+      openTimer = setTimeout(() => {
+        openTimer = undefined;
+        if (!opened) fallback();
+      }, PROGRESS_OPEN_TIMEOUT_MS);
     } catch { fallback(); }
   } catch (error: unknown) {
     done = true;

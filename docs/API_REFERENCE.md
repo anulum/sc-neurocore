@@ -38986,7 +38986,10 @@ Request body for one-parameter numerical extrema sweeps.
 
 The response is labelled ``numerical-extrema-sweep``: the late-run
 extrema of one state trace per parameter value under the configured
-drive, not a bifurcation continuation.
+drive, not a bifurcation continuation. The drive is ``protocol`` at
+``current`` (and ``frequency_hz`` for a sine); it was a sine regardless
+of the request, which the Studio did not show and which drove some
+catalogue models out of their safety bounds at any swept value.
 
 
 ### Class `SensitivityRequest`
@@ -39119,6 +39122,9 @@ Request body for frequency-response analysis.
 
 ### Class `HeatmapRequest`
 Request body for two-parameter response heatmap analysis.
+
+Every grid point runs under ``protocol`` at ``current`` (``frequency_hz``
+for a sine): the drive the Studio shows, not a fixed constant one.
 
 
 ### Class `AnalysisJobRequest`

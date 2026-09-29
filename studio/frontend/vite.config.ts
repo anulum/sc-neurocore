@@ -18,6 +18,13 @@ const studioApiProxy = {
     target: studioApiOrigin,
     changeOrigin: true,
   },
+  // The progress socket (characterisation) is same-origin too; without this
+  // entry the dev server and preview left its upgrade unanswered.
+  "/ws": {
+    target: studioApiOrigin,
+    changeOrigin: true,
+    ws: true,
+  },
 } as const;
 
 const reactSharedContract = {

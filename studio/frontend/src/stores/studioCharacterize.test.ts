@@ -8,6 +8,7 @@
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useStudioStore } from "./studio";
+import { PROGRESS_OPEN_TIMEOUT_MS } from "./studioCharacterize";
 
 const initial = useStudioStore.getState();
 const result = {
@@ -137,4 +138,38 @@ it("handles invalid input and ignores a second invocation while busy", () => {
   frame({ type: "complete", result });
   expect(useStudioStore.getState().error).toContain("NaN");
   expect(useStudioStore.getState().isSimulating).toBe(false);
+});
+
+it("falls back to HTTP when the socket does not open in time", async () => {
+  vi.useFakeTimers();
+  try {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify(result)));
+    vi.stubGlobal("fetch", fetch);
+    useStudioStore.getState().runCharacterize();
+    vi.advanceTimersByTime(PROGRESS_OPEN_TIMEOUT_MS - 1);
+    expect(fetch).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(socket.close).toHaveBeenCalledOnce();
+    await vi.waitFor(() => { expect(useStudioStore.getState().charResult).toEqual(result); });
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("keeps the socket when it opens in time", () => {
+  vi.useFakeTimers();
+  try {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    vi.stubGlobal("fetch", fetch);
+    useStudioStore.getState().runCharacterize();
+    socket.onopen?.();
+    expect(socket.send).toHaveBeenCalledOnce();
+    vi.advanceTimersByTime(PROGRESS_OPEN_TIMEOUT_MS * 2);
+    expect(fetch).not.toHaveBeenCalled();
+    frame({ type: "complete", result });
+    expect(useStudioStore.getState().charResult).toEqual(result);
+  } finally {
+    vi.useRealTimers();
+  }
 });

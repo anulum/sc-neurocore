@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5148
+    "test_files": 5149
   },
   "documentation": {
     "public_pages": [
@@ -7638,6 +7638,7 @@
       "tests/test_studio_analysis_process_jobs.py",
       "tests/test_studio_analysis_scan_costs.py",
       "tests/test_studio_analysis_simulation_protocols.py",
+      "tests/test_studio_analysis_sweep_drive.py",
       "tests/test_studio_analysis_timestep.py",
       "tests/test_studio_app_health.py",
       "tests/test_studio_app_policy_and_audit_audit_export.py",
