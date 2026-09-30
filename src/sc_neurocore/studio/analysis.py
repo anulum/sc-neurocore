@@ -29,6 +29,7 @@ import numpy as np
 
 from sc_neurocore.studio.analysis_contract import (
     MODEL_DEFINED_UNIT,
+    DomainStatus,
     MetricContract,
     attach_contract,
 )
@@ -475,47 +476,158 @@ def _sta_contract(window_ms: float, domain: str, spikes: int, used: int) -> Metr
     )
 
 
+#: Modulation depth of the frequency-response drive when none is given: the
+#: sine swings the current between half and one and a half times the bias.
+FREQUENCY_RESPONSE_DEPTH = 0.5
+
+#: Whole drive cycles a frequency needs within the run to be measured.
+FREQUENCY_RESPONSE_MIN_CYCLES = 1
+
+
+def _rate_modulation(
+    spike_indices: Sequence[int], step_ms: float, n_steps: int, freq_hz: float
+) -> dict[str, float | int | None]:
+    """Measure one frequency's response from the spike times of one run.
+
+    Over the largest whole number of drive cycles that fits the run, the
+    firing rate is ``r0 + r1 · cos(2π f t − ψ)`` to first order;
+    ``Z = Σ exp(−2πi f t_k)`` over the spikes in that window gives
+    ``r1 = 2|Z| / W`` and ``ψ = −arg Z``. The drive's own peak is at
+    ``2π f t = π/2``, so the response lags it by ``ψ − π/2``.
+    """
+    period_ms = 1000.0 / freq_hz
+    run_ms = n_steps * step_ms
+    # The tolerance keeps a log-spaced 39.999999… Hz from losing its
+    # sixteenth whole cycle in a 400 ms run.
+    cycles = int(np.floor(run_ms / period_ms + 1e-9))
+    if cycles < FREQUENCY_RESPONSE_MIN_CYCLES:
+        return {
+            "cycles": cycles,
+            "rate_hz": None,
+            "modulation_hz": None,
+            "phase_lag_deg": None,
+            "vector_strength": None,
+        }
+    window_ms = cycles * period_ms
+    # Post-step clock: a spike at step index k is recorded at (k + 1) · dt.
+    times = np.asarray([(int(k) + 1) * step_ms for k in spike_indices], dtype=np.float64)
+    times = times[times <= window_ms]
+    rate = 1000.0 * times.size / window_ms
+    if times.size == 0:
+        return {
+            "cycles": cycles,
+            "rate_hz": 0.0,
+            "modulation_hz": 0.0,
+            "phase_lag_deg": None,
+            "vector_strength": None,
+        }
+    z = complex(np.sum(np.exp(-2j * np.pi * freq_hz * times / 1000.0)))
+    lag = np.degrees(-np.angle(z) - np.pi / 2)
+    lag = float((lag + 180.0) % 360.0 - 180.0)
+    return {
+        "cycles": cycles,
+        "rate_hz": rate,
+        "modulation_hz": 1000.0 * 2.0 * abs(z) / window_ms,
+        "phase_lag_deg": lag,
+        "vector_strength": abs(z) / times.size,
+    }
+
+
 def frequency_response(
     simulate_fn: Callable[..., dict[str, Any]],
     base_config: dict[str, Any],
     freq_min: float = 1.0,
     freq_max: float = 100.0,
     n_freqs: int = 20,
-    amplitude: float = 10.0,
+    bias: float = 10.0,
+    depth: float = FREQUENCY_RESPONSE_DEPTH,
 ) -> dict[str, Any]:
-    """Sweep the frequency of a sinusoidal drive and record the firing rate.
+    """Measure how the firing rate follows a sinusoidally modulated current.
 
-    The drive is ``I(t) = amplitude · sin(2π f t)`` from the run's first
-    step; the rate follows the f-I definition. Frequencies are spaced
-    logarithmically.
+    The drive is ``I(t) = bias · (1 + depth · sin(2π f t))``: the current
+    stays about the operating point ``bias`` and, for ``depth < 1``, never
+    changes sign. A mean-zero sine, which this analysis used before, drove
+    the Studio's default model outside its safety bounds, and reported the
+    mean rate alone.
+
+    At each frequency the result gives the mean rate, the amplitude of the
+    rate's first harmonic, the gain (that amplitude per unit of modulating
+    current, ``modulation / (depth · |bias|)``), the phase by which the
+    response lags the drive, and the vector strength. A frequency whose
+    period is longer than the run is reported as not measured rather than
+    estimated from a fraction of a cycle.
     """
+    if not np.isfinite(bias) or bias == 0.0:
+        raise ValueError("the frequency response needs a non-zero, finite bias current")
+    if not 0.0 < depth < 1.0:
+        raise ValueError(f"depth must lie in (0, 1), got {depth}")
     freqs = np.logspace(np.log10(freq_min), np.log10(freq_max), n_freqs).tolist()
-    rates: list[float] = []
-
+    amplitude = depth * abs(bias)
+    points = []
     for freq in freqs:
         result = simulate_fn(
             **{
                 **base_config,
-                "current": amplitude,
+                "current": depth * bias,
+                "bias": bias,
                 "protocol": "sine",
                 "frequency_hz": freq,
             }
         )
-        rates.append(float(result["stats"]["rate_hz"]))
+        step_ms = float(result["observation"]["dt"])
+        points.append(
+            _rate_modulation(result["spikes"], step_ms, int(result["n_steps"]), float(freq))
+        )
 
-    payload: dict[str, Any] = {"frequencies_hz": freqs, "rates": rates, "amplitude": amplitude}
+    def column(key: str) -> list[Any]:
+        return [point[key] for point in points]
+
+    modulation = column("modulation_hz")
+    measured = sum(point["rate_hz"] is not None for point in points)
+    domain: DomainStatus = "complete" if measured == len(points) else "partial"
+    payload: dict[str, Any] = {
+        "frequencies_hz": freqs,
+        "rates": column("rate_hz"),
+        "modulation_hz": modulation,
+        "gain": [None if value is None else value / amplitude for value in modulation],
+        "phase_lag_deg": column("phase_lag_deg"),
+        "vector_strength": column("vector_strength"),
+        "cycles": column("cycles"),
+        "bias": bias,
+        "depth": depth,
+        "amplitude": amplitude,
+    }
     return attach_contract(
         payload,
         MetricContract(
             kind="frequency-response",
-            definition=RATE_DEFINITION,
-            units={"frequencies_hz": "Hz", "rates": "Hz", "amplitude": MODEL_DEFINED_UNIT},
-            applicability=(
-                "sinusoidal drive of the stated amplitude starting at phase 0",
-                "the rate counts every spike in the run, so at low frequencies the number "
-                "of drive cycles within the duration bounds the resolution",
+            definition=(
+                "drive I(t) = bias · (1 + depth · sin(2π f t)) from phase 0; over the largest "
+                "whole number of drive cycles in the run, rate = spikes / window, "
+                "modulation = 2|Σ exp(−2πi f t_k)| / window (first harmonic of the rate), "
+                "gain = modulation / (depth · |bias|), phase lag = −arg Σ exp(−2πi f t_k) − 90°, "
+                "vector strength = |Σ exp(−2πi f t_k)| / spikes"
             ),
-            limitations=("no phase-locking or gain measure; rate only",),
+            units={
+                "frequencies_hz": "Hz",
+                "rates": "Hz",
+                "modulation_hz": "Hz",
+                "gain": f"Hz per {MODEL_DEFINED_UNIT}",
+                "phase_lag_deg": "degrees",
+                "vector_strength": "dimensionless",
+                "bias": MODEL_DEFINED_UNIT,
+                "amplitude": MODEL_DEFINED_UNIT,
+            },
+            applicability=(
+                "a frequency is measured only when at least one whole drive cycle fits the run",
+                "the window starts at the run's first step and so includes the onset transient",
+            ),
+            limitations=(
+                "first harmonic only: a response far from sinusoidal has more than the gain says",
+                "phase and vector strength are undefined for a frequency without spikes",
+            ),
+            domain=domain,
+            domain_detail={"frequencies": len(points), "measured": measured},
         ),
     )
 
@@ -524,6 +636,8 @@ __all__ = [
     "ATTRACTOR_DECIMALS",
     "ATTRACTOR_EXTREMA_KEPT",
     "ATTRACTOR_MIN_SAMPLES",
+    "FREQUENCY_RESPONSE_DEPTH",
+    "FREQUENCY_RESPONSE_MIN_CYCLES",
     "RATE_DEFINITION",
     "SENSITIVITY_PERTURBATION",
     "bifurcation_sweep",

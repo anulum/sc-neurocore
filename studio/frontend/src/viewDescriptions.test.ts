@@ -147,11 +147,37 @@ describe("describeSta", () => {
 });
 
 describe("describeFrequency", () => {
-  it("names the drive amplitude and the frequencies of the highest and lowest rate", () => {
-    const freq = { frequencies_hz: [1, 10, 100], rates: [20, 60, 5], amplitude: 8 } as unknown as FreqResponse;
-    expect(describeFrequency(freq).sentence).toBe(
-      "Firing rate under a sine drive of amplitude 8 from 1 to 100 Hz in 3 points: highest 60 Hz at 10 Hz, lowest 5 Hz at 100 Hz.",
+  const sweep = {
+    frequencies_hz: [1, 10, 100],
+    cycles: [0, 2, 20],
+    rates: [null, 60, 55],
+    modulation_hz: [null, 40, 10],
+    gain: [null, 8, 2],
+    phase_lag_deg: [null, 12, 75],
+    vector_strength: [null, 0.3, 0.1],
+    bias: 10,
+    depth: 0.5,
+    amplitude: 5,
+  } as unknown as FreqResponse;
+
+  it("names the drive, the gain's extremes, the lag and the rate, over the measured points", () => {
+    expect(describeFrequency(sweep).sentence).toBe(
+      "Frequency response to I = 10 · (1 + 0.5 · sin 2πft) from 1 to 100 Hz in 3 points, 2 measured: " +
+      "gain highest 8 Hz per unit at 10 Hz, lowest 2 at 100 Hz; the rate lags the drive by 12° to 75°; " +
+      "mean rate 55 to 60 Hz.",
     );
+  });
+
+  it("marks a frequency with no whole cycle as not measured in its row", () => {
+    const table = describeFrequency(sweep).table;
+    expect(table.columns).toHaveLength(7);
+    expect(table.rows[0]).toEqual(["1", "0", "—", "—", "—", "—", "—"]);
+    expect(table.rows[1]).toEqual(["10", "2", "60", "40", "8", "12", "0.3"]);
+  });
+
+  it("says when no frequency could be measured", () => {
+    const none = { ...sweep, gain: [null, null, null] } as FreqResponse;
+    expect(describeFrequency(none).sentence).toContain("no drive frequency fits a whole cycle in this run.");
   });
 });
 

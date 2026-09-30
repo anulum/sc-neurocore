@@ -847,11 +847,29 @@ export interface CompareResponse {
   b: SimulateResponse;
 }
 
-/** Firing rate against input frequency, at one drive amplitude. */
+/**
+ * How the firing rate follows `bias · (1 + depth · sin 2πft)` at each
+ * frequency. A frequency with no whole drive cycle in the run is not
+ * measured: its values are `null`, and so are phase and vector strength
+ * where no spike fell.
+ */
 export interface FreqResponse {
   analysis_metadata: AnalysisResultMetadata;
   frequencies_hz: number[];
-  rates: number[];
+  /** Mean rate over the whole cycles, Hz. */
+  rates: (number | null)[];
+  /** Amplitude of the rate's first harmonic, Hz. */
+  modulation_hz: (number | null)[];
+  /** Modulation per unit of modulating current. */
+  gain: (number | null)[];
+  /** Degrees by which the rate's peak lags the drive's. */
+  phase_lag_deg: (number | null)[];
+  vector_strength: (number | null)[];
+  /** Whole drive cycles measured at each frequency. */
+  cycles: number[];
+  bias: number;
+  depth: number;
+  /** The modulating current, depth · |bias|. */
   amplitude: number;
 }
 

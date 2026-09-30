@@ -228,6 +228,7 @@ class DriveTrace:
     n_steps: int
     steps_truncated: bool
     samples: np.ndarray[Any, Any]
+    bias: float = 0.0
 
 
 def _type_hints(target: object) -> dict[str, Any]:
@@ -660,6 +661,7 @@ def resolve_drive_trace(
     duration: object,
     frequency_hz: object,
     max_steps: int,
+    bias: object = 0.0,
 ) -> DriveTrace:
     """Validate the injection protocol and build the sample trace for the run.
 
@@ -680,6 +682,13 @@ def resolve_drive_trace(
     current_value = _finite_number(model, "current", current)
     duration_value = _positive_finite(model, "duration", duration)
     frequency_value = _positive_finite(model, "frequency_hz", frequency_hz)
+    bias_value = _finite_number(model, "bias", bias)
+    if bias_value != 0.0 and protocol != "sine":
+        raise ModelInputError(
+            model=model,
+            field="bias",
+            reason=f"a bias applies to the sine protocol only, not {protocol!r}",
+        )
     requested_steps = int(duration_value / inputs.step_ms)
     if requested_steps < 1:
         raise ModelInputError(
@@ -692,7 +701,12 @@ def resolve_drive_trace(
         )
     n_steps = min(requested_steps, max_steps)
     samples = _make_current_trace(
-        protocol, current_value, n_steps, dt=inputs.step_ms, frequency_hz=frequency_value
+        protocol,
+        current_value,
+        n_steps,
+        dt=inputs.step_ms,
+        frequency_hz=frequency_value,
+        bias=bias_value,
     )
     if inputs.drive.kind == "int" and not bool(np.all(samples == np.round(samples))):
         raise ModelInputError(
@@ -711,6 +725,7 @@ def resolve_drive_trace(
         n_steps=n_steps,
         steps_truncated=requested_steps > n_steps,
         samples=samples,
+        bias=bias_value,
     )
 
 
@@ -739,7 +754,7 @@ def run_receipt(
         Number of points in the display projection (the raw result keeps every
         step; see ``raw`` and ``display`` on the payload).
     """
-    return {
+    receipt = {
         "schema_version": RECEIPT_SCHEMA_VERSION,
         "model": inputs.model,
         "backend": backend,
@@ -761,6 +776,11 @@ def run_receipt(
         },
         "display_points": display_points,
     }
+    if trace.bias != 0.0:
+        # Stated only when set, so a receipt of any run without one is
+        # byte-identical to what it was before sine drives could carry one.
+        receipt["bias"] = trace.bias
+    return receipt
 
 
 __all__ = [

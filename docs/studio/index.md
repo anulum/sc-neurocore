@@ -804,7 +804,7 @@ place.
 | Neuron | 2-D sweep | Two-parameter sweep → firing rate heatmap (choose **Sweep X** and **Sweep Y**) |
 | Neuron | Sensitivity | One-at-a-time parameter sensitivity |
 | Neuron | STA | Spike-triggered average |
-| Neuron | Frequency response | Frequency response (sinusoidal input) |
+| Neuron | Frequency response | Gain and phase lag under `bias · (1 + depth · sin 2πft)` (Bode plot) |
 | Neuron | Characterization | One-click dashboard: pattern + f-I + sensitivities (catalogue models) |
 | Neuron | Multi-model | Overlay up to 4 models for comparison |
 | Neuron | A/B compare | Side-by-side model comparison |

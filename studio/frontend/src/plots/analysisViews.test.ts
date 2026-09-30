@@ -275,18 +275,42 @@ describe("drawSensitivityView", () => {
 });
 
 describe("drawFrequencyResponseView", () => {
-  it("names the amplitude the sweep was driven at", () => {
+  const sweep = {
+    amplitude: 5,
+    analysis_metadata: METADATA,
+    bias: 10,
+    cycles: [0, 2, 20],
+    depth: 0.5,
+    frequencies_hz: [1, 10, 100],
+    gain: [null, 8, 2],
+    modulation_hz: [null, 40, 10],
+    phase_lag_deg: [null, 12, 75],
+    rates: [null, 60, 55],
+    vector_strength: [null, 0.3, 0.1],
+  };
+
+  it("draws gain and phase lag on a log frequency axis, naming the drive", () => {
     const recording = mockPlotContext();
 
-    drawFrequencyResponseView(recording.ctx, FRAME, {
-      amplitude: 2.5,
-      analysis_metadata: METADATA,
-      frequencies_hz: [1, 10, 100],
-      rates: [1, 5, 9],
-    });
+    drawFrequencyResponseView(recording.ctx, FRAME, sweep);
 
-    expect(recording.texts.map((t) => t.text)).toContain("rate (Hz) @ amplitude=2.5");
+    const texts = recording.texts.map((t) => t.text);
+    expect(texts).toContain("gain (Hz per unit) · bias 10, depth 0.5: I = bias · (1 + depth · sin 2πft)");
+    expect(texts).toContain("phase lag (°)");
+    expect(texts).toContain("freq (Hz, log)");
+    // Decade labels, not log10 values.
+    expect(texts).toEqual(expect.arrayContaining(["1", "10", "100"]));
     expect(drewNonFinite(recording)).toBe(false);
+  });
+
+  it("says what to change when no frequency was measured", () => {
+    const recording = mockPlotContext();
+
+    drawFrequencyResponseView(recording.ctx, FRAME, { ...sweep, gain: [null, null, null], phase_lag_deg: [null, null, null] });
+
+    expect(recording.texts.map((t) => t.text)).toContain(
+      "No drive frequency fits a whole cycle in this run: lengthen the run.",
+    );
   });
 });
 

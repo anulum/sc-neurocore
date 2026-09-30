@@ -38279,12 +38279,21 @@ Spikes whose window would leave the trace are excluded and counted
 against ``n_spikes``; the window half-width is ``window_ms / 2`` rounded
 down to whole steps (at least one step).
 
-### Function `frequency_response(simulate_fn, base_config, freq_min, freq_max, n_freqs, amplitude)`
-Sweep the frequency of a sinusoidal drive and record the firing rate.
+### Function `frequency_response(simulate_fn, base_config, freq_min, freq_max, n_freqs, bias, depth)`
+Measure how the firing rate follows a sinusoidally modulated current.
 
-The drive is ``I(t) = amplitude · sin(2π f t)`` from the run's first
-step; the rate follows the f-I definition. Frequencies are spaced
-logarithmically.
+The drive is ``I(t) = bias · (1 + depth · sin(2π f t))``: the current
+stays about the operating point ``bias`` and, for ``depth < 1``, never
+changes sign. A mean-zero sine, which this analysis used before, drove
+the Studio's default model outside its safety bounds, and reported the
+mean rate alone.
+
+At each frequency the result gives the mean rate, the amplitude of the
+rate's first harmonic, the gain (that amplitude per unit of modulating
+current, ``modulation / (depth · |bias|)``), the phase by which the
+response lags the drive, and the vector strength. A frequency whose
+period is longer than the run is reported as not measured rather than
+estimated from a fraction of a cycle.
 
 ---
 
@@ -39118,6 +39127,10 @@ Request body for comparing two Studio simulation configurations.
 
 ### Class `FreqResponseRequest`
 Request body for frequency-response analysis.
+
+The drive is ``bias · (1 + depth · sin(2π f t))``. ``amplitude`` named the
+mean-zero sine this analysis used before; a request that still sends it
+is refused with that reason rather than read under the new definition.
 
 
 ### Class `HeatmapRequest`
@@ -41020,7 +41033,7 @@ Raised when the Studio Rust batch-simulation path is unavailable.
 Raised when the Studio Rust batch-simulation path fails at runtime.
 
 
-### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path, max_steps)`
+### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path, max_steps, bias)`
 Simulate a named catalogue model under a fail-closed input contract.
 
 Parameters
@@ -41044,6 +41057,9 @@ protocol : {"constant", "step", "ramp", "pulse", "sine"}
     Current-injection protocol.
 frequency_hz : float
     Sine frequency; must be positive and finite.
+bias : float
+    Level a sine oscillates about; must be finite, and zero for any
+    other protocol.
 use_fast_path : bool
     Allow the Rust batch backend when no override or explicit ``dt`` is
     given. That lane transports one scalar trace, the soma voltage, and no
@@ -48843,7 +48859,7 @@ ForeignRuntimeError
 
 ## Module `studio.simulation`
 
-### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz, seed, max_steps)`
+### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz, seed, max_steps, bias)`
 Run an equation-neuron simulation and return its complete raw result.
 
 Parameters
@@ -48860,6 +48876,9 @@ dt, duration : float
     contract refuses a longer synchronous run instead of shortening it).
 current, protocol, frequency_hz : float, str, float
     Injection protocol.
+bias : float
+    Level a sine oscillates about; zero, and refused for any other
+    protocol, unless given.
 seed : int or None
     Seed of the diffusion-noise generator (the ``xi`` symbol). ``None``
     draws from the process-global ``numpy.random`` stream, which is not

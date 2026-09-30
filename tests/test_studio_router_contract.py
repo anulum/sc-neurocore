@@ -35,6 +35,7 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.deploy",
         "sc_neurocore.studio.api.design",
         "sc_neurocore.studio.api.export",
+        "sc_neurocore.studio.api.fit_jobs",
         "sc_neurocore.studio.api.fits",
         "sc_neurocore.studio.api.identity",
         "sc_neurocore.studio.api.jobs",
@@ -74,10 +75,14 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
 
     # 140 since `POST /api/graph/notebook`, a tutorial notebook that rebuilds
     # a drawn network with the public API and checks it against the Studio run.
+    # 148 since the fit and cohort job routes (`/api/fits/jobs`, its status and
+    # cancel, `/api/fits/replay/jobs`, `/api/cohorts/jobs`, `/measurements`,
+    # `/replay`) and `GET /api/training/target-profiles`, which landed without
+    # this count being raised, so the assertion failed on main until then.
     # The count is pinned so a route cannot
     # appear without a deliberate change here; raising it is how a new route is
     # admitted, never by relaxing the assertion.
-    assert len(backend_routes) == 140
+    assert len(backend_routes) == 148
     assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
     assert len(root_routes) <= 1
     assert all(

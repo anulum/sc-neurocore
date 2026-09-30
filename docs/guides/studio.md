@@ -119,7 +119,7 @@ current simulation:
 | 2D Heatmap | 2D | Two-parameter sweep → firing rate colour map |
 | Sensitivity | Sens | Parameter importance bar chart |
 | Spike-triggered average | STA | Average voltage shape around spikes |
-| Frequency response | Freq | Firing rate vs input frequency |
+| Frequency response | Freq | Bode plot: gain and phase lag of the rate vs the frequency of a modulated drive |
 | Characterisation | Char | One-click dashboard: pattern, rheobase, f-I, sensitivity |
 | Multi-model overlay | Multi | Compare 2-4 models in one plot |
 | A/B Comparison | A/B | Split-view of two configurations |
@@ -189,14 +189,15 @@ firing rate traces.
 
 ## Current Injection Protocols
 
-Four injection protocols for all simulations:
+Five injection protocols for all simulations:
 
 | Protocol | Description |
 |----------|-------------|
 | Constant | Steady current for full duration |
-| Step | 0 for first 20%, then I for remaining 80% |
+| Step | I from 20 % to 80 % of the run, 0 before and after |
 | Ramp | Linear increase from 0 to I |
-| Pulse train | 5ms on/off pulses at amplitude I |
+| Pulse train | Five pulses per run at amplitude I, each on for a fifth of its period (at least 10 steps per period, 2 on) |
+| Sine | `I · sin(2π f t)` at `frequency_hz`; the frequency response adds a `bias` it oscillates about |
 
 ## Interactive Features
 
@@ -331,9 +332,12 @@ manifest repeats the contract kind and the domain so an evidence bundle can
 tell a partial result apart without opening it. An invalid point is never a
 zero:
 
-- **f-I curve, heatmap, frequency response** — the rate is the spike count
-  over the whole simulated duration (transient included); the contract says
-  so, together with the drive protocol.
+- **f-I curve, heatmap** — the rate is the spike count over the whole
+  simulated duration (transient included); the contract says so, together
+  with the drive protocol.
+- **Frequency response** — measured over the largest whole number of drive
+  cycles in the run (transient included); a frequency without one whole
+  cycle is not measured (`null`, domain `partial`).
 - **Sensitivity** — the dimensionless rate elasticity
   `|rate(p+δ) − rate(p−δ)| / (2δ) · |p| / rate(p)` with δ = 10 % of `p`. A
   zero base rate or a zero parameter makes the elasticity undefined; the row
@@ -484,9 +488,17 @@ class, source, input digest, and result digest next to the rendered analysis.
 `studio.simulation-run.v2` schema so each overlaid trace carries the same
 reproducibility provenance as `/api/simulate`.
 
-The frequency-response endpoint runs the simulator with a true sinusoidal
-current protocol for each frequency. The injected trace is
-`I(t) = amplitude * sin(2*pi*frequency_hz*t)`, not a DC approximation.
+The frequency-response endpoint drives the model about an operating point:
+`I(t) = bias * (1 + depth * sin(2*pi*frequency_hz*t))` (`bias` is the Studio's
+current, `depth` 0.5 by default and below 1, so the current never changes
+sign). From the spike times `t_k` over the whole drive cycles it reports, per
+frequency, the mean rate, the rate's first-harmonic amplitude
+`2|Σ exp(−2πi f t_k)| / window`, the gain (that amplitude per unit of
+modulating current, `depth * |bias|`), the phase by which the rate lags the
+drive, and the vector strength. It used to drive a mean-zero sine
+`amplitude * sin(...)` and report the mean rate alone; the default model left
+its safety bounds under it. A request that still sends `amplitude` is refused
+with that reason.
 
 ### Resources
 
@@ -553,11 +565,11 @@ oversized run is refused rather than shortened. See
   "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
   "threshold": "v > -50",
   "reset": "v = -65",
-  "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+  "params": {"E_L": -65.0, "tau_m": 20.0, "C": 10.0},
   "init": {"v": -65.0},
   "dt": 0.1,
   "duration": 100.0,
-  "current": 30.0
+  "current": 10.0
 }
 ```
 

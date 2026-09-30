@@ -56,10 +56,10 @@ export const fetchPrecision = (req: Record<string, unknown>) => post<PrecisionRe
 export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unknown>) => post<CompareResponse>("/compare", { config_a: a, config_b: b });
 
 /**
- * Sweep input frequency and report the firing rate at each one.
+ * Sweep the frequency of a modulated drive and measure how the rate follows.
  *
- * @param req - The model, the amplitude, and the frequencies to sweep.
- * @returns The rate at each frequency.
+ * @param req - The model, the bias and depth, and the frequencies to sweep.
+ * @returns Rate, gain, phase lag and vector strength at each frequency.
  */
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
 

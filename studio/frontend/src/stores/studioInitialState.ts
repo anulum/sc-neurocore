@@ -26,7 +26,10 @@ export const studioInitialData = {
   sourceMode: "model",
   equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
   threshold: "v > -50", reset: "v = -65",
-  odeParams: { E_L: -65, tau_m: 10, C: 1 },
+  // A small high-resistance cell: tau_m 20 ms, C 10 pF (R = 2 GΩ), I in pA.
+  // Rheobase 7.5 pA; the Studio's default 10 pA fires about 36 Hz. The
+  // previous C = 1 put v_inf at +35 mV and fired about 590 Hz at 10.
+  odeParams: { E_L: -65, tau_m: 20, C: 10 },
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   modelIntegrator: "", modelQFormat: "Q8.8",

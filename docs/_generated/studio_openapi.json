@@ -262,7 +262,7 @@
         "type": "object"
       },
       "BifurcationRequest": {
-        "description": "Request body for one-parameter numerical extrema sweeps.\n\nThe response is labelled ``numerical-extrema-sweep``: the late-run\nextrema of one state trace per parameter value under the configured\ndrive, not a bifurcation continuation.",
+        "description": "Request body for one-parameter numerical extrema sweeps.\n\nThe response is labelled ``numerical-extrema-sweep``: the late-run\nextrema of one state trace per parameter value under the configured\ndrive, not a bifurcation continuation. The drive is ``protocol`` at\n``current`` (and ``frequency_hz`` for a sine); it was a sine regardless\nof the request, which the Studio did not show and which drove some\ncatalogue models out of their safety bounds at any swept value.",
         "properties": {
           "current": {
             "default": 10.0,
@@ -292,6 +292,12 @@
               }
             ],
             "title": "Equations"
+          },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
           },
           "init": {
             "anyOf": [
@@ -331,6 +337,18 @@
               }
             ],
             "title": "Params"
+          },
+          "protocol": {
+            "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
+            "title": "Protocol",
+            "type": "string"
           },
           "reset": {
             "anyOf": [
@@ -437,6 +455,22 @@
         "title": "CandidateSimulateRequest",
         "type": "object"
       },
+      "CohortRequest": {
+        "additionalProperties": false,
+        "description": "The full versioned experiment document, without local path references.",
+        "properties": {
+          "cohort": {
+            "additionalProperties": true,
+            "title": "Cohort",
+            "type": "object"
+          }
+        },
+        "required": [
+          "cohort"
+        ],
+        "title": "CohortRequest",
+        "type": "object"
+      },
       "CompareRequest": {
         "description": "Request body for comparing two Studio simulation configurations.",
         "properties": {
@@ -530,6 +564,39 @@
           "equations"
         ],
         "title": "CompileRequest",
+        "type": "object"
+      },
+      "ConstraintBody": {
+        "additionalProperties": false,
+        "description": "A bounded linear combination of named parameter values.",
+        "properties": {
+          "coefficients": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Coefficients",
+            "type": "object"
+          },
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "coefficients",
+          "low",
+          "high"
+        ],
+        "title": "ConstraintBody",
         "type": "object"
       },
       "DclsEvaluateRequest": {
@@ -867,6 +934,13 @@
             ],
             "title": "Catalogue Model"
           },
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintBody"
+            },
+            "title": "Constraints",
+            "type": "array"
+          },
           "domains": {
             "items": {
               "$ref": "#/components/schemas/DomainBody"
@@ -920,6 +994,8 @@
           },
           "seed": {
             "default": 0,
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
             "title": "Seed",
             "type": "integer"
           },
@@ -941,11 +1017,29 @@
         "type": "object"
       },
       "FreqResponseRequest": {
-        "description": "Request body for frequency-response analysis.",
+        "description": "Request body for frequency-response analysis.\n\nThe drive is ``bias \u00b7 (1 + depth \u00b7 sin(2\u03c0 f t))``. ``amplitude`` named the\nmean-zero sine this analysis used before; a request that still sends it\nis refused with that reason rather than read under the new definition.",
         "properties": {
           "amplitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amplitude"
+          },
+          "bias": {
             "default": 10.0,
-            "title": "Amplitude",
+            "title": "Bias",
+            "type": "number"
+          },
+          "depth": {
+            "default": 0.5,
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Depth",
             "type": "number"
           },
           "dt": {
@@ -1068,7 +1162,7 @@
         "type": "object"
       },
       "HeatmapRequest": {
-        "description": "Request body for two-parameter response heatmap analysis.",
+        "description": "Request body for two-parameter response heatmap analysis.\n\nEvery grid point runs under ``protocol`` at ``current`` (``frequency_hz``\nfor a sine): the drive the Studio shows, not a fixed constant one.",
         "properties": {
           "current": {
             "default": 10.0,
@@ -1098,6 +1192,12 @@
               }
             ],
             "title": "Equations"
+          },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
           },
           "init": {
             "anyOf": [
@@ -1145,6 +1245,18 @@
               }
             ],
             "title": "Params"
+          },
+          "protocol": {
+            "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
+            "title": "Protocol",
+            "type": "string"
           },
           "reset": {
             "anyOf": [
@@ -1208,6 +1320,31 @@
           "y_max"
         ],
         "title": "HeatmapRequest",
+        "type": "object"
+      },
+      "MeasurementRequest": {
+        "additionalProperties": false,
+        "description": "A complete scientific result and externally acquired receipts.",
+        "properties": {
+          "receipts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Receipts",
+            "type": "array"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "result",
+          "receipts"
+        ],
+        "title": "MeasurementRequest",
         "type": "object"
       },
       "ModelCompileRequest": {
@@ -1696,7 +1833,7 @@
         "type": "object"
       },
       "NetworkRequest": {
-        "description": "Request body for balanced excitatory-inhibitory network simulation.",
+        "description": "Request body for balanced excitatory-inhibitory network simulation.\n\nWeights are membrane jumps in millivolts in the post-pre convention\n(``w_ei`` is inhibitory-to-excitatory). ``ext_rate`` is the rate in hertz\nof each of the 800 external excitatory inputs every neuron receives; about\n9.4 Hz reaches threshold. See :mod:`sc_neurocore.studio.network`.",
         "properties": {
           "dt": {
             "default": 0.1,
@@ -1712,7 +1849,9 @@
             "type": "number"
           },
           "ext_rate": {
-            "default": 5.0,
+            "default": 12.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
             "title": "Ext Rate",
             "type": "number"
           },
@@ -2279,6 +2418,17 @@
             },
             "title": "Current",
             "type": "array"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group"
           },
           "name": {
             "title": "Name",
@@ -3730,6 +3880,129 @@
         "summary": "Api Codegen"
       }
     },
+    "/api/cohorts/jobs": {
+      "post": {
+        "description": "Refuse incomplete or over-budget sweeps before submitting a worker.",
+        "operationId": "cohort_job_api_cohorts_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cohort Job Api Cohorts Jobs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cohort Job"
+      }
+    },
+    "/api/cohorts/measurements": {
+      "post": {
+        "description": "Compare operator-supplied measurements with explicit custody limits.",
+        "operationId": "measurements_api_cohorts_measurements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Measurements Api Cohorts Measurements Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Measurements"
+      }
+    },
+    "/api/cohorts/replay": {
+      "post": {
+        "description": "Replay the full bounded cohort, including rejected and failed trials.",
+        "operationId": "cohort_replay_api_cohorts_replay_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cohort Replay Api Cohorts Replay Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cohort Replay"
+      }
+    },
     "/api/compare": {
       "post": {
         "operationId": "api_compare_api_compare_post",
@@ -4106,6 +4379,131 @@
         "summary": "Api Fit"
       }
     },
+    "/api/fits/jobs": {
+      "post": {
+        "description": "Validate the full fit and submit it without blocking the request.",
+        "operationId": "fit_job_api_fits_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Fit Job Api Fits Jobs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fit Job"
+      }
+    },
+    "/api/fits/jobs/{job_id}": {
+      "get": {
+        "description": "Read only the caller's laboratory job, including terminal failures.",
+        "operationId": "job_status_api_fits_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Job Status Api Fits Jobs  Job Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Job Status"
+      }
+    },
+    "/api/fits/jobs/{job_id}/cancel": {
+      "post": {
+        "description": "Cancel the caller's task through the existing process supervisor.",
+        "operationId": "cancel_job_api_fits_jobs__job_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cancel Job Api Fits Jobs  Job Id  Cancel Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Job"
+      }
+    },
     "/api/fits/replay": {
       "post": {
         "description": "Run an exported fit again and say whether it reproduced.",
@@ -4145,6 +4543,47 @@
           }
         },
         "summary": "Api Fit Replay"
+      }
+    },
+    "/api/fits/replay/jobs": {
+      "post": {
+        "description": "Admit replay under the same optimiser and sample limits as a new fit.",
+        "operationId": "fit_replay_job_api_fits_replay_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Fit Replay Job Api Fits Replay Jobs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fit Replay Job"
       }
     },
     "/api/freq-response": {
@@ -8652,6 +9091,24 @@
           }
         },
         "summary": "Api Surrogates"
+      }
+    },
+    "/api/training/target-profiles": {
+      "get": {
+        "operationId": "api_target_profiles_api_training_target_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Target Profiles Api Training Target Profiles Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Target Profiles"
       }
     }
   }

@@ -298,23 +298,39 @@ export function studioExperimentExportRequest(
   return { mode: input.sourceMode, ...studioSimulationConfig(input) };
 }
 
+/** Modulation depth of the frequency-response drive, as the server's default. */
+export const FREQUENCY_RESPONSE_DEPTH = 0.5;
+
+/** Highest drive frequency the Studio sweeps, in Hz. */
+export const FREQUENCY_RESPONSE_MAX_HZ = 200;
+
 /**
  * Extend a run into a frequency-response sweep.
  *
+ * The drive is `current · (1 + depth · sin 2πft)`: the run's current is the
+ * operating point the sine modulates. The lowest frequency is the one that
+ * fits two whole cycles in the run, since a frequency with less than one is
+ * not measured at all.
+ *
  * @param config - The run's request body.
- * @param current - The current the run is configured at, which becomes the
- *   drive amplitude; a zero current would drive nothing, so it falls back.
+ * @param current - The current the run is configured at.
  * @returns The sweep's request body.
+ * @throws {Error} For a zero current, which leaves nothing to modulate.
  */
 export function studioFrequencyResponseRequest(
   config: StudioSimulationRequest,
   current: number,
 ): StudioSimulationRequest {
+  if (!Number.isFinite(current) || current === 0) {
+    throw new Error("The frequency response modulates the run's current: set a non-zero current first.");
+  }
+  const duration = typeof config.duration === "number" && config.duration > 0 ? config.duration : 200;
   return {
     ...config,
-    amplitude: Math.abs(current) || 10,
-    freq_min: 1,
-    freq_max: 200,
+    bias: current,
+    depth: FREQUENCY_RESPONSE_DEPTH,
+    freq_min: Math.min(Math.max(1, 2000 / duration), FREQUENCY_RESPONSE_MAX_HZ / 2),
+    freq_max: FREQUENCY_RESPONSE_MAX_HZ,
     n_freqs: 20,
   };
 }

@@ -280,22 +280,41 @@ export function describeSta(sta: SpikeTriggeredAverage, variable: string): ViewD
  * @returns The description.
  */
 export function describeFrequency(freq: FreqResponse): ViewDescription {
-  const n = Math.min(freq.frequencies_hz.length, freq.rates.length);
-  let hi = 0, lo = 0;
+  const n = freq.frequencies_hz.length;
+  const measured: number[] = [];
   for (let i = 0; i < n; i += 1) {
-    if ((freq.rates[i] ?? -Infinity) > (freq.rates[hi] ?? -Infinity)) hi = i;
-    if ((freq.rates[i] ?? Infinity) < (freq.rates[lo] ?? Infinity)) lo = i;
+    const gain = freq.gain[i];
+    if (gain !== null && gain !== undefined) measured.push(i);
   }
   const span = extent(freq.frequencies_hz);
+  const drive = `Frequency response to I = ${r(freq.bias)} · (1 + ${r(freq.depth)} · sin 2πft)` +
+    (span === null ? "" : ` from ${r(span.min)} to ${r(span.max)} Hz`) +
+    ` in ${count(n, "point")}, ${String(measured.length)} measured`;
+  let sentence: string;
+  if (measured.length === 0) {
+    sentence = `${drive}: no drive frequency fits a whole cycle in this run.`;
+  } else {
+    const gainAt = (i: number) => freq.gain[i] ?? 0;
+    const hi = measured.reduce((best, i) => (gainAt(i) > gainAt(best) ? i : best));
+    const lo = measured.reduce((best, i) => (gainAt(i) < gainAt(best) ? i : best));
+    const lags = extent(measured.map((i) => freq.phase_lag_deg[i]).filter((v): v is number => v !== null && v !== undefined));
+    const rates = extent(measured.map((i) => freq.rates[i]).filter((v): v is number => v !== null && v !== undefined));
+    sentence = `${drive}: gain highest ${r(gainAt(hi))} Hz per unit at ${r(freq.frequencies_hz[hi] ?? null)} Hz, ` +
+      `lowest ${r(gainAt(lo))} at ${r(freq.frequencies_hz[lo] ?? null)} Hz` +
+      (lags === null ? "" : `; the rate lags the drive by ${r(lags.min)}° to ${r(lags.max)}°`) +
+      (rates === null ? "" : `; mean rate ${r(rates.min)} to ${r(rates.max)} Hz`) + ".";
+  }
+  const cell = (value: number | null | undefined) => (value === null || value === undefined ? "—" : r(value));
   return {
-    sentence: `Firing rate under a sine drive of amplitude ${r(freq.amplitude)}` +
-      (span === null ? "" : ` from ${r(span.min)} to ${r(span.max)} Hz`) + ` in ${count(n, "point")}` +
-      (n === 0 ? "." : `: highest ${r(freq.rates[hi] ?? null)} Hz at ${r(freq.frequencies_hz[hi] ?? null)} Hz, ` +
-        `lowest ${r(freq.rates[lo] ?? null)} Hz at ${r(freq.frequencies_hz[lo] ?? null)} Hz.`),
+    sentence,
     table: {
-      caption: "Firing rate at each drive frequency",
-      columns: ["Drive frequency (Hz)", "Rate (Hz)"],
-      rows: capped(Array.from({ length: n }, (_, i) => [r(freq.frequencies_hz[i] ?? null), r(freq.rates[i] ?? null)]), 2),
+      caption: "Response at each drive frequency (— where it was not measured)",
+      columns: ["Drive frequency (Hz)", "Whole cycles", "Mean rate (Hz)", "Modulation (Hz)",
+        "Gain (Hz per unit)", "Phase lag (°)", "Vector strength"],
+      rows: capped(Array.from({ length: n }, (_, i) => [
+        r(freq.frequencies_hz[i] ?? null), String(freq.cycles[i] ?? 0), cell(freq.rates[i]),
+        cell(freq.modulation_hz[i]), cell(freq.gain[i]), cell(freq.phase_lag_deg[i]), cell(freq.vector_strength[i]),
+      ]), 7),
     },
   };
 }

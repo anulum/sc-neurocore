@@ -10,9 +10,10 @@
 
 from __future__ import annotations
 
+import math
 from typing import Annotated, Any, Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 FiniteFloat = Annotated[float, Field(strict=True, allow_inf_nan=False)]
 PositiveFiniteFloat = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
@@ -556,7 +557,12 @@ class CompareRequest(BaseModel):
 
 
 class FreqResponseRequest(BaseModel):
-    """Request body for frequency-response analysis."""
+    """Request body for frequency-response analysis.
+
+    The drive is ``bias · (1 + depth · sin(2π f t))``. ``amplitude`` named the
+    mean-zero sine this analysis used before; a request that still sends it
+    is refused with that reason rather than read under the new definition.
+    """
 
     equations: list[str] | None = None
     model_name: str | None = None
@@ -566,10 +572,29 @@ class FreqResponseRequest(BaseModel):
     init: dict[str, float] | None = None
     dt: float = 0.1
     duration: float = 200.0
-    amplitude: float = 10.0
+    bias: float = 10.0
+    depth: float = Field(default=0.5, gt=0.0, lt=1.0)
+    amplitude: float | None = None
     freq_min: float = 1.0
     freq_max: float = 100.0
     n_freqs: int = Field(default=15, ge=3, le=50)
+
+    @field_validator("amplitude")
+    @classmethod
+    def _amplitude_is_retired(cls, value: float | None) -> float | None:
+        if value is not None:
+            raise ValueError(
+                "amplitude was the mean-zero sine's amplitude; the frequency response now "
+                "drives bias · (1 + depth · sin 2πft): send bias and depth"
+            )
+        return value
+
+    @field_validator("bias")
+    @classmethod
+    def _bias_is_an_operating_point(cls, value: float) -> float:
+        if not math.isfinite(value) or value == 0.0:
+            raise ValueError("bias must be a finite, non-zero current")
+        return value
 
 
 class HeatmapRequest(BaseModel):

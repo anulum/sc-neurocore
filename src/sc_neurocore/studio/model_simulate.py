@@ -351,6 +351,7 @@ def simulate_model(
     frequency_hz: float = 10.0,
     use_fast_path: bool = True,
     max_steps: int = MAX_STEPS,
+    bias: float = 0.0,
 ) -> dict[str, Any]:
     """Simulate a named catalogue model under a fail-closed input contract.
 
@@ -375,6 +376,9 @@ def simulate_model(
         Current-injection protocol.
     frequency_hz : float
         Sine frequency; must be positive and finite.
+    bias : float
+        Level a sine oscillates about; must be finite, and zero for any
+        other protocol.
     use_fast_path : bool
         Allow the Rust batch backend when no override or explicit ``dt`` is
         given. That lane transports one scalar trace, the soma voltage, and no
@@ -420,6 +424,7 @@ def simulate_model(
         duration=duration,
         frequency_hz=frequency_hz,
         max_steps=max_steps,
+        bias=bias,
     )
 
     if use_fast_path and not inputs.overrides_applied and dt is None:

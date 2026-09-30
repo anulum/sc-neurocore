@@ -74,7 +74,9 @@ function payload(action: Action): object {
     case "runCompare": return { analysis_metadata, a: sim, b: sim };
     case "runNullclines": return { analysis_metadata, var_names: ["v", "w"],
       nullcline_0: { variable: "v", points: [[0, 1]] }, nullcline_1: { variable: "w", points: [[0, 0]] } };
-    case "runFreqResponse": return { analysis_metadata, frequencies_hz: [1, 2], rates: [0, 1], amplitude: 1 };
+    case "runFreqResponse": return { analysis_metadata, frequencies_hz: [1, 2], cycles: [0, 1], rates: [null, 1],
+      modulation_hz: [null, 1], gain: [null, 0.2], phase_lag_deg: [null, 10], vector_strength: [null, 0.5],
+      bias: 10, depth: 0.5, amplitude: 5 };
   }
 }
 

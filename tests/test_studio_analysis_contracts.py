@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -123,12 +124,45 @@ def test_fi_curve_and_frequency_response_state_their_rate_definition() -> None:
     assert "transient" in fi["contract"]["definition"]
     assert fi["contract"]["units"]["rates"] == "Hz"
 
-    freq = frequency_response(
-        _rate_fn(lambda cfg: cfg["frequency_hz"]), {"dt": 0.1}, 1.0, 100.0, 3, 4.0
-    )
-    assert freq["contract"]["kind"] == "frequency-response"
-    assert freq["contract"]["units"]["frequencies_hz"] == "Hz"
-    assert freq["amplitude"] == 4.0
+    # The estimator on spike trains whose answer is known: one spike at every
+    # drive peak (vector strength 1, no lag), then at every trough.
+    def locked(offset_cycles: float) -> Callable[..., dict[str, Any]]:
+        def simulate(**cfg: Any) -> dict[str, Any]:
+            period_steps = round(1000.0 / cfg["frequency_hz"] / 0.1)
+            first = round((0.25 + offset_cycles) * period_steps) - 1
+            return {
+                "spikes": list(range(first, 2000, period_steps)),
+                "observation": {"dt": 0.1},
+                "n_steps": 2000,
+            }
+
+        return simulate
+
+    peaks = frequency_response(locked(0.0), {}, 10.0, 20.0, 2, bias=4.0)
+    assert peaks["contract"]["kind"] == "frequency-response"
+    assert peaks["contract"]["units"]["frequencies_hz"] == "Hz"
+    assert peaks["contract"]["units"]["phase_lag_deg"] == "degrees"
+    assert peaks["amplitude"] == 2.0 and peaks["cycles"] == [2, 4]
+    assert peaks["vector_strength"] == pytest.approx([1.0, 1.0])
+    assert peaks["phase_lag_deg"] == pytest.approx([0.0, 0.0], abs=1e-6)
+    # One spike per cycle: rate f, first harmonic 2f, gain 2f / (depth · bias).
+    assert peaks["rates"] == pytest.approx([10.0, 20.0])
+    assert peaks["modulation_hz"] == pytest.approx([20.0, 40.0])
+    assert peaks["gain"] == pytest.approx([10.0, 20.0])
+    troughs = frequency_response(locked(0.5), {}, 10.0, 10.0, 3, bias=4.0)
+    assert [abs(lag) for lag in troughs["phase_lag_deg"]] == pytest.approx([180.0] * 3)
+
+    # A period longer than the run is not measured, and the domain says so.
+    slow = frequency_response(locked(0.0), {}, 0.1, 10.0, 3, bias=4.0)
+    assert slow["cycles"] == [0, 0, 2]
+    assert slow["rates"][:2] == [None, None] and slow["gain"][:2] == [None, None]
+    assert slow["contract"]["domain"] == "partial"
+    assert slow["contract"]["domain_detail"] == {"frequencies": 3, "measured": 1}
+
+    with pytest.raises(ValueError, match="non-zero"):
+        frequency_response(locked(0.0), {}, 1.0, 2.0, 3, bias=0.0)
+    with pytest.raises(ValueError, match="depth"):
+        frequency_response(locked(0.0), {}, 1.0, 2.0, 3, bias=1.0, depth=1.0)
 
 
 def test_bifurcation_sweep_is_labelled_as_a_numerical_extrema_sweep() -> None:
@@ -211,5 +245,5 @@ def test_analysis_routes_attach_contract_and_manifest_summary(client: TestClient
     assert sweep["variable"] == "v" and len(sweep["attractor_kinds"]) == 5
     assert sweep["analysis_metadata"]["contract"] == "numerical-extrema-sweep"
 
-    freq = client.post("/api/freq-response", json={**LIF, "amplitude": 20.0, "n_freqs": 3}).json()
+    freq = client.post("/api/freq-response", json={**LIF, "bias": 20.0, "n_freqs": 3}).json()
     assert freq["analysis_metadata"]["contract"] == "frequency-response"

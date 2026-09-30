@@ -188,7 +188,7 @@ def test_analysis_result_manifest_rejects_unknown_status() -> None:
         ("/api/precision", LIF_REQUEST, "precision", "ode"),
         (
             "/api/freq-response",
-            {**LIF_REQUEST, "freq_min": 1.0, "freq_max": 5.0, "n_freqs": 3, "amplitude": 20.0},
+            {**LIF_REQUEST, "freq_min": 1.0, "freq_max": 5.0, "n_freqs": 3, "bias": 20.0},
             "frequency_response",
             "ode",
         ),

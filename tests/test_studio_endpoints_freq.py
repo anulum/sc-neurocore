@@ -20,8 +20,7 @@ class TestFreqResponseEndpoint:
             json={
                 "model_name": MODEL,
                 "duration": 20.0,
-                "current": 10.0,
-                "amplitude": 10,
+                "bias": 10.0,
                 "freq_min": 1,
                 "freq_max": 50,
                 "n_freqs": 3,
@@ -31,3 +30,22 @@ class TestFreqResponseEndpoint:
         data = r.json()
         assert "frequencies_hz" in data
         assert "rates" in data
+        assert data["bias"] == 10.0 and data["depth"] == 0.5
+
+    def test_the_retired_amplitude_is_refused_with_its_reason(self, client):
+        # "amplitude" meant a mean-zero sine; reading it as the new bias would
+        # answer a different question under the old name.
+        r = client.post(
+            "/api/freq-response",
+            json={"model_name": MODEL, "duration": 20.0, "amplitude": 10, "n_freqs": 3},
+        )
+        assert r.status_code == 422
+        assert "send bias and depth" in r.text
+
+    def test_a_zero_bias_is_refused(self, client):
+        r = client.post(
+            "/api/freq-response",
+            json={"model_name": MODEL, "duration": 20.0, "bias": 0.0, "n_freqs": 3},
+        )
+        assert r.status_code == 422
+        assert "non-zero" in r.text

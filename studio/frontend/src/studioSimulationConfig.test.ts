@@ -227,13 +227,21 @@ describe("Studio simulation request builders", () => {
     expect(withoutMode).toEqual(studioSimulationConfig(input));
   });
 
-  it("builds a frequency-response request with the Studio sweep defaults", () => {
-    expect(studioFrequencyResponseRequest({ equations: ["dv/dt = -v"] }, 0)).toEqual({
+  it("builds a frequency-response request that modulates the run's current", () => {
+    expect(studioFrequencyResponseRequest({ equations: ["dv/dt = -v"], duration: 200 }, 10)).toEqual({
       equations: ["dv/dt = -v"],
-      amplitude: 10,
-      freq_min: 1,
+      duration: 200,
+      bias: 10,
+      depth: 0.5,
+      // Two whole cycles of the lowest frequency fit the 200 ms run.
+      freq_min: 10,
       freq_max: 200,
       n_freqs: 20,
     });
+    expect(studioFrequencyResponseRequest({ duration: 5000 }, -3)).toMatchObject({ bias: -3, freq_min: 1 });
+  });
+
+  it("refuses a zero current instead of inventing an operating point", () => {
+    expect(() => studioFrequencyResponseRequest({ duration: 200 }, 0)).toThrow("non-zero current");
   });
 });

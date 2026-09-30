@@ -20,6 +20,7 @@ from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 
 from sc_neurocore.studio.analysis import frequency_response, heatmap_2d
 
+from sc_neurocore.studio.api.analysis_guards import _make_simulate_fn
 from sc_neurocore.studio.simulation import _make_current_trace, simulate
 
 
@@ -38,6 +39,7 @@ __all__ = [
     "frequency_response",
     "heatmap_2d",
     "_make_current_trace",
+    "_make_simulate_fn",
     "simulate",
     "client",
 ]

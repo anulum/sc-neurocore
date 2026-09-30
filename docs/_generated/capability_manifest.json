@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5151
+    "test_files": 5152
   },
   "documentation": {
     "public_pages": [
@@ -7866,6 +7866,7 @@
       "tests/test_studio_simulation_simulate_all_templates.py",
       "tests/test_studio_simulation_simulate_basic.py",
       "tests/test_studio_simulation_simulate_edge_cases.py",
+      "tests/test_studio_sine_bias.py",
       "tests/test_studio_single_api_process.py",
       "tests/test_studio_state_custody.py",
       "tests/test_studio_storage_admission_client.py",

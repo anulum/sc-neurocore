@@ -16,14 +16,18 @@ from typing import Any
 TEMPLATES: dict[str, dict[str, Any]] = {
     "lif": {
         "name": "lif",
-        "description": "Leaky Integrate-and-Fire",
+        "description": (
+            "Leaky Integrate-and-Fire: tau_m 20 ms, C 10 pF (R = 2 GΩ), I in pA; "
+            "rheobase 7.5 pA, about 36 Hz at 10 pA, no refractory period"
+        ),
         "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
         "threshold": "v > -50",
         "reset": "v = -65",
-        "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+        # C = 1 with I = 30 put v_inf at +235 mV and fired about 1670 Hz.
+        "params": {"E_L": -65.0, "tau_m": 20.0, "C": 10.0},
         "init": {"v": -65.0},
         "dt": 0.1,
-        "current": 30.0,
+        "current": 10.0,
         "duration": 100.0,
     },
     "izhikevich": {

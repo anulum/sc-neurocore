@@ -203,22 +203,92 @@ export function drawSensitivityView(ctx: CanvasRenderingContext2D, frame: PlotFr
 }
 
 /**
- * Draw firing rate against input frequency.
+ * The frequencies at which a value was measured, as log10 of the frequency.
+ *
+ * @param freqs - The drive frequencies.
+ * @param values - One value per frequency, `null` where none was measured.
+ * @returns The measured points.
+ */
+function measuredLogPoints(freqs: number[], values: (number | null)[]): { x: number[]; y: number[] } {
+  const x: number[] = [];
+  const y: number[] = [];
+  freqs.forEach((freq, index) => {
+    const value = values[index];
+    if (value !== null && value !== undefined && Number.isFinite(value) && freq > 0) {
+      x.push(Math.log10(freq));
+      y.push(value);
+    }
+  });
+  return { x, y };
+}
+
+/**
+ * Label a logarithmic frequency axis at 1, 2 and 5 times each power of ten.
+ *
+ * @param ctx - The context to draw into.
+ * @param frame - Where the view may draw.
+ * @param y - Where the labels go.
+ * @param logMin - log10 of the lowest frequency.
+ * @param logMax - log10 of the highest frequency.
+ */
+function drawLogFrequencyTicks(
+  ctx: CanvasRenderingContext2D, frame: PlotFrame, y: number, logMin: number, logMax: number,
+): void {
+  const span = logMax - logMin || 1;
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "center";
+  for (let decade = Math.floor(logMin); decade <= Math.ceil(logMax); decade += 1) {
+    for (const mantissa of [1, 2, 5]) {
+      const value = mantissa * 10 ** decade;
+      const logValue = Math.log10(value);
+      if (logValue < logMin - 1e-9 || logValue > logMax + 1e-9) continue;
+      ctx.fillText(String(value), frame.left + ((logValue - logMin) / span) * frame.plotWidth, y);
+    }
+  }
+  ctx.textAlign = "right";
+  ctx.fillText("freq (Hz, log)", frame.left + frame.plotWidth, y + 13);
+}
+
+/**
+ * Draw the frequency response as a Bode plot: gain above, phase lag below,
+ * on a logarithmic frequency axis (the sweep is log-spaced).
+ *
+ * A frequency with no whole drive cycle in the run was not measured and is
+ * not drawn; when none was, the view says what to change instead.
  *
  * @param ctx - The context to draw into.
  * @param frame - Where the view may draw.
  * @param freqResult - The sweep to draw.
  */
 export function drawFrequencyResponseView(ctx: CanvasRenderingContext2D, frame: PlotFrame, freqResult: FreqResponse): void {
-  const ph = frame.height - frame.top - frame.bottom;
-  const xMin = freqResult.frequencies_hz[0] ?? 0;
-  const xMax = freqResult.frequencies_hz[freqResult.frequencies_hz.length - 1] ?? xMin + 1;
-  const yMax = Math.max(...freqResult.rates, 1);
-  drawAxes(ctx, frame.left, frame.top, frame.plotWidth, ph, xMin, xMax, 0, yMax * 1.1, "freq (Hz)");
-  drawLine(ctx, frame.left, frame.top, frame.plotWidth, ph, freqResult.frequencies_hz, freqResult.rates,
-    xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
+  const freqs = freqResult.frequencies_hz;
+  const gain = measuredLogPoints(freqs, freqResult.gain);
+  const phase = measuredLogPoints(freqs, freqResult.phase_lag_deg);
+  const header = `bias ${String(freqResult.bias)}, depth ${String(freqResult.depth)}: ` +
+    `I = bias · (1 + depth · sin 2πft)`;
   ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
-  ctx.fillText(`rate (Hz) @ amplitude=${freqResult.amplitude}`, frame.left + 4, frame.top + 12);
+  if (gain.x.length === 0) {
+    ctx.fillText(header, frame.left + 4, frame.top + 12);
+    ctx.fillText("No drive frequency fits a whole cycle in this run: lengthen the run.", frame.left + 4, frame.top + 30);
+    return;
+  }
+  const logMin = Math.log10(freqs[0] ?? 1);
+  const logMax = Math.log10(freqs[freqs.length - 1] ?? 10);
+  const total = frame.height - frame.top - frame.bottom;
+  const gap = 22;
+  const gainHeight = Math.round((total - gap) * 0.6);
+  const phaseTop = frame.top + gainHeight + gap;
+  const phaseHeight = total - gainHeight - gap;
+  const gainMax = Math.max(...gain.y, 1e-9) * 1.1;
+
+  drawAxes(ctx, frame.left, frame.top, frame.plotWidth, gainHeight, logMin, logMax, 0, gainMax, undefined, false);
+  drawLine(ctx, frame.left, frame.top, frame.plotWidth, gainHeight, gain.x, gain.y, logMin, logMax, 0, gainMax, "#4fc3f7", 2);
+  drawAxes(ctx, frame.left, phaseTop, frame.plotWidth, phaseHeight, logMin, logMax, -180, 180, undefined, false);
+  drawLine(ctx, frame.left, phaseTop, frame.plotWidth, phaseHeight, phase.x, phase.y, logMin, logMax, -180, 180, "#ce93d8", 2);
+  drawLogFrequencyTicks(ctx, frame, phaseTop + phaseHeight + 12, logMin, logMax);
+
+  ctx.fillStyle = AXIS; ctx.font = "11px monospace"; ctx.textAlign = "left";
+  ctx.fillText(`gain (Hz per unit) · ${header}`, frame.left + 4, frame.top + 12);
+  ctx.fillText("phase lag (°)", frame.left + 4, phaseTop + 12);
 }
 
 /**

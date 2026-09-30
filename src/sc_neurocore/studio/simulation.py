@@ -79,8 +79,15 @@ def _make_current_trace(
     step_offset: float = 0.8,
     ramp_start: float = 0.0,
     ramp_end: float | None = None,
+    bias: float = 0.0,
 ) -> np.ndarray[Any, Any]:
-    """Generate a current injection trace for the given protocol."""
+    """Generate a current injection trace for the given protocol.
+
+    ``bias`` is the constant level a sine oscillates about,
+    ``I(t) = bias + current · sin(2π f t)``; the other protocols take none.
+    """
+    if bias != 0.0 and protocol != "sine":
+        raise ValueError(f"a bias applies to the sine protocol only, not {protocol!r}")
     I = np.zeros(n_steps)
     if protocol == "constant":
         I[:] = current
@@ -98,7 +105,7 @@ def _make_current_trace(
             I[start : start + on_dur] = current
     elif protocol == "sine":
         t_ms = np.arange(n_steps) * dt
-        I[:] = current * np.sin(2 * np.pi * frequency_hz * t_ms / 1000.0)
+        I[:] = bias + current * np.sin(2 * np.pi * frequency_hz * t_ms / 1000.0)
     else:
         I[:] = current
     return I
@@ -145,6 +152,7 @@ def simulate(
     frequency_hz: float = 10.0,
     seed: int | None = None,
     max_steps: int = MAX_STEPS,
+    bias: float = 0.0,
 ) -> dict[str, Any]:
     """Run an equation-neuron simulation and return its complete raw result.
 
@@ -162,6 +170,9 @@ def simulate(
         contract refuses a longer synchronous run instead of shortening it).
     current, protocol, frequency_hz : float, str, float
         Injection protocol.
+    bias : float
+        Level a sine oscillates about; zero, and refused for any other
+        protocol, unless given.
     seed : int or None
         Seed of the diffusion-noise generator (the ``xi`` symbol). ``None``
         draws from the process-global ``numpy.random`` stream, which is not
@@ -218,7 +229,9 @@ def simulate(
     traces = {v.name: np.empty(n_steps, dtype=np.float64) for v in layout.scalars}
     spike_indices: list[int] = []
 
-    I_trace = _make_current_trace(protocol, current, n_steps, dt=dt, frequency_hz=frequency_hz)
+    I_trace = _make_current_trace(
+        protocol, current, n_steps, dt=dt, frequency_hz=frequency_hz, bias=bias
+    )
 
     for t in range(n_steps):
         try:

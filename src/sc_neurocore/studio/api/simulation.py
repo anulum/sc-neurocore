@@ -461,11 +461,16 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
                 "init": req.init,
                 "dt": req.dt,
                 "duration": req.duration,
-                "current": req.amplitude,
-                "protocol": "constant",
+                "protocol": "sine",
             }
             payload = frequency_response(
-                sim_fn, base_cfg, req.freq_min, req.freq_max, req.n_freqs, req.amplitude
+                sim_fn,
+                base_cfg,
+                req.freq_min,
+                req.freq_max,
+                req.n_freqs,
+                bias=req.bias,
+                depth=req.depth,
             )
             return _attach_analysis_metadata("frequency_response", req.model_dump(), payload)
 

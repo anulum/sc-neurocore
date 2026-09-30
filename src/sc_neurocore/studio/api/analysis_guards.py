@@ -240,6 +240,7 @@ def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]
                 "current": overrides.get("current", req_dict.get("current", 10)),
                 "protocol": overrides.get("protocol", req_dict.get("protocol", "constant")),
                 "frequency_hz": overrides.get("frequency_hz", req_dict.get("frequency_hz", 10.0)),
+                "bias": overrides.get("bias", 0.0),
             }
             return simulate_model(**cfg)
 
@@ -258,6 +259,7 @@ def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]
                 current=overrides.get("current", req_dict.get("current", 10)),
                 protocol=overrides.get("protocol", req_dict.get("protocol", "constant")),
                 frequency_hz=overrides.get("frequency_hz", req_dict.get("frequency_hz", 10.0)),
+                bias=overrides.get("bias", 0.0),
             )
 
         return fn

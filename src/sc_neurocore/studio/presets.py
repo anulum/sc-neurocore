@@ -21,7 +21,9 @@ PRESETS: list[dict[str, Any]] = [
         "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
         "threshold": "v > -50",
         "reset": "v = -65",
-        "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+        # Rheobase 7.5: the ramp to 15 crosses it halfway (first spike near
+        # 120 ms). With C = 1 the rheobase was 1.5 and it fired from 20 ms.
+        "params": {"E_L": -65.0, "tau_m": 20.0, "C": 10.0},
         "init": {"v": -65.0},
         "dt": 0.1,
         "duration": 200.0,
