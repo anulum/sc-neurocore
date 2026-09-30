@@ -139,9 +139,9 @@ validated on that named surface only, not graduation under the stricter bar abov
 
 | Model | Python | Rust engine | Rust safety | Go | Julia | Mojo | RTL | Executed parity basis | Local closure |
 |---|---|---|---|---|---|---|---|---|---|
-| SK neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `aed317321` |
-| T-type calcium neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `5577616dc` |
-| GLM neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | 64-step spike and history-buffer parity within `1e-12` under explicit uniform samples; legacy engine filters remain reconstructible without a second model identity | `0e1770007`, `8897bd0d0` |
+| SK neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `6251766ac` |
+| T-type calcium neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `548c5212d` |
+| GLM neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | 64-step spike and history-buffer parity within `1e-12` under explicit uniform samples; legacy engine filters remain reconstructible without a second model identity | `ea91c4969`, `51475169b` |
 
 ## Runtime-complete compatibility identities awaiting benchmark closure
 

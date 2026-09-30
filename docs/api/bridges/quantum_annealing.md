@@ -262,7 +262,9 @@ environment before publishing a native speed claim.
 ## Modularisation benchmark
 
 `benchmarks/bench_quantum_annealing_modularisation.py` compares the committed
-single-file parent (`9308910a5d863ebfb338244b43d10f73f25cfbc6`) with the
+single-file parent (`9308910a5d863ebfb338244b43d10f73f25cfbc6`, the measured
+object; history was later rebased and main carries the same change, with
+identical quantum-annealing sources, as `9ac2e0a19f8b52dc4cc2e332af14fd4e8dbce5b0`) with the
 modular candidate. It uses 30 measured child processes after five warm-ups,
 alternates variant order, pins each child with `taskset`, records raw samples
 and load context, and binds both variants to source digests.

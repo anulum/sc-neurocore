@@ -394,7 +394,7 @@ last residuals to ≤ 1.05× across all populations.
 ### 4.2 Historical baseline (single-mean-delay)
 
 Before the per-connection Gaussian delay distribution landed
-(commit `d0631150`), the legacy single-mean-delay path produced
+(commit `0439103a`), the legacy single-mean-delay path produced
 rates 1.6-7.5× over Potjans Table 4. The per-connection
 distribution is what currently brings the bulk of the gap from
 ~5× down to ~1.2×. Removed factors that had been speculated as

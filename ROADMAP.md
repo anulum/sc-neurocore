@@ -5,7 +5,8 @@
 
 ## Historical Maintenance Snapshot — 2026-07-06
 
-- Mainline CI was verified green on 2026-05-25 at `edc35c11934f`;
+- Mainline CI was verified green on 2026-05-25 at `edc35c11934f`
+  (history later rebased; the identical tree is `284ca11cf31e` on main);
   obsolete completed failed/cancelled repair-sequence Actions runs were purged
   only after replacement green evidence was present.
 - GitHub deployment hygiene was refreshed on 2026-05-25: inactive stale Pages

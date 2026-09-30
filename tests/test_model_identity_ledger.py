@@ -140,11 +140,16 @@ def test_every_public_fidelity_row_names_real_evidence() -> None:
         if not commits:
             problems.append(f"{model}: no closure commit")
         for commit in commits:
-            found = subprocess.run(
-                ["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=root, check=False
+            # Ancestry, not mere object existence: a workstation keeps rebased-away
+            # objects that no clone of main can resolve.
+            reachable = subprocess.run(
+                ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+                cwd=root,
+                check=False,
+                capture_output=True,
             )
-            if found.returncode != 0:
-                problems.append(f"{model}: {commit} is not a commit")
+            if reachable.returncode != 0:
+                problems.append(f"{model}: {commit} is not a commit reachable from HEAD")
         checked += 1
 
     assert problems == []

@@ -520,9 +520,9 @@ Golomb et al. (2007) validated against:
 |------|--------|--------|
 | 2026-03-20 | Initial Python implementation (n⁴, voltage-dependent tau) | — |
 | 2026-04-04 | Rust port (simplified: n², fixed tau) | — |
-| 2026-04-05 | Multi-angle Rust tests (7 tests) | `328cd4e` |
-| 2026-04-05 | Criterion benchmark: 711 ns/step | `71bd1ec` |
-| 2026-04-05 | Doc expanded with verification + benchmarks | `4bfc1a9` |
+| 2026-04-05 | Multi-angle Rust tests (7 tests) | `7fa16bd` |
+| 2026-04-05 | Criterion benchmark: 711 ns/step | `c4982aa` |
+| 2026-04-05 | Doc expanded with verification + benchmarks | `af54049` |
 
 ---
 

@@ -453,8 +453,8 @@ Parity status verified in pipeline tests.
 |------|--------|--------|
 | 2026-03-20 | Initial Python implementation | — |
 | 2026-04-04 | Rust port, parity verified | — |
-| 2026-04-05 | Multi-angle Rust tests (7 tests) | `328cd4e` |
-| 2026-04-05 | Criterion benchmark: 1.11 µs/step | `71bd1ec` |
+| 2026-04-05 | Multi-angle Rust tests (7 tests) | `7fa16bd` |
+| 2026-04-05 | Criterion benchmark: 1.11 µs/step | `c4982aa` |
 | 2026-04-05 | Doc expanded with verification + benchmarks | — |
 
 ---
