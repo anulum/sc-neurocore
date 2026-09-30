@@ -28,6 +28,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
 from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
@@ -52,7 +53,7 @@ Backend = Literal["python", "rust"]
 DT_OVERRIDE_REASON = "the timestep is set through the dt field, not a parameter override"
 
 
-class ModelInputError(ValueError):
+class ModelInputError(AuthoredRefusal):
     """Raised when a Studio model-run request is rejected before any simulation step.
 
     Parameters
@@ -64,7 +65,7 @@ class ModelInputError(ValueError):
         Dotted request field that failed (``name``, ``params.tau_m``, ``dt``,
         ``constructor``, ``step``, ``protocol``, ``current``, ``duration``).
     reason : str
-        Bounded human-readable reason without repository paths.
+        Deliberately authored reason; never generated exception text.
     """
 
     def __init__(self, *, model: str | None, field: str, reason: str) -> None:
@@ -83,7 +84,7 @@ class ModelInputError(ValueError):
         }
 
 
-class ModelSimulationFailure(RuntimeError):
+class ModelSimulationFailure(RuntimeError, AuthoredRefusal):
     """Raised when a validated model run fails numerically at a specific step.
 
     Parameters
@@ -97,8 +98,8 @@ class ModelSimulationFailure(RuntimeError):
     time_ms : float
         Simulated time of that step in milliseconds.
     diagnostic : str
-        Bounded description of the failure (exception class and message, or
-        the non-finite state variable).
+        Deliberately authored failure reason, optionally naming a state
+        variable. Original faults remain in the exception cause.
     """
 
     def __init__(
@@ -130,7 +131,11 @@ class ModelSimulationFailure(RuntimeError):
 
 
 def bounded_diagnostic(exc: BaseException) -> str:
-    """Return ``ClassName: message`` truncated to :data:`DIAGNOSTIC_LIMIT` characters."""
+    """Return a bounded exception description for local diagnosis only.
+
+    This text includes interpreter and library messages and must not be used
+    in a caller-facing refusal or response.
+    """
     text = f"{type(exc).__name__}: {exc}"
     if len(text) <= DIAGNOSTIC_LIMIT:
         return text
@@ -213,7 +218,9 @@ class ModelRunInputs:
             return self.cls(**self.constructor_kwargs)
         except (TypeError, ValueError, ArithmeticError) as exc:
             raise ModelInputError(
-                model=self.model, field="constructor", reason=bounded_diagnostic(exc)
+                model=self.model,
+                field="constructor",
+                reason="model constructor rejected the supplied parameters",
             ) from exc
 
 
@@ -364,7 +371,7 @@ def model_drive_contract(model: str, cls: type) -> DriveContract:
         raise ModelInputError(
             model=model,
             field="step",
-            reason=f"step signature unavailable: {bounded_diagnostic(exc)}",
+            reason="model step signature is unavailable",
         ) from exc
     parameters = list(signature.parameters.values())
     if parameters and parameters[0].name == "self":

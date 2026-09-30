@@ -403,7 +403,9 @@ def precision_compare(
             method="euler",
         )
     except ValueError as exc:
-        raise _input_error("q_format", str(exc)[:300]) from exc
+        raise _input_error(
+            "q_format", "fixed-point arithmetic configuration is unsupported"
+        ) from exc
 
     try:
         neuron = from_equations(
@@ -415,7 +417,7 @@ def precision_compare(
             dt=dt,
         )
     except (ValueError, TypeError, SyntaxError, KeyError) as exc:
-        raise _input_error("equations", str(exc)[:300]) from exc
+        raise _input_error("equations", "equations could not be parsed") from exc
     if neuron.uses_diffusion_noise:
         raise _input_error(
             "equations", "the diffusion-noise symbol xi has no bit-true fixed-point arithmetic"

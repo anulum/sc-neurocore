@@ -124,6 +124,15 @@ browser saved has been through JavaScript's single number type, which narrows
 
 Nothing runs until every refusal has been ruled out.
 
+Simulation, graph execution and analysis refusals carry deliberately authored
+reasons. Constructor and equation-parser faults use fixed sentences; numerical
+step failures retain the model, backend, step index and simulated time without
+copying interpreter or library messages. Original exceptions remain chained
+locally for diagnosis. State-observation refusals still name the affected
+variable and its violated rule. FastAPI request-schema validation is retained.
+Replay admission and unreadable JSON packs follow the same rule: generated
+exception text is never part of the public reason.
+
 ### What a replay compares
 
 Spike events and the drive are compared exactly — a spike train is an

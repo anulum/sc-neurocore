@@ -37,6 +37,7 @@ from typing import Any, Literal
 import numpy as np
 
 import sc_neurocore
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.neurons import equation_builder
 from sc_neurocore.neurons.seed_domain import (
     UNIVERSAL_SEED_DOMAIN,
@@ -81,7 +82,7 @@ _PROTOCOL_FRACTIONS: dict[str, dict[str, float]] = {
 }
 
 
-class ExperimentRejected(ValueError):
+class ExperimentRejected(AuthoredRefusal):
     """Raised when a request cannot become one effective experiment.
 
     Parameters
@@ -89,7 +90,7 @@ class ExperimentRejected(ValueError):
     field : str
         Request field that failed.
     reason : str
-        Bounded, path-free reason.
+        Deliberately authored reason; never generated exception text.
     execution_mode : {"refused", "job_required"}
         ``job_required`` when the run is valid but too large for the
         synchronous route and must be submitted as a job.

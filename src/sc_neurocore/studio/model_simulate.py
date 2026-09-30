@@ -36,7 +36,6 @@ from sc_neurocore.studio.model_run_contract import (
     DriveTrace,
     ModelRunInputs,
     ModelSimulationFailure,
-    bounded_diagnostic,
     resolve_drive_trace,
     resolve_model_run_inputs,
     run_receipt,
@@ -281,7 +280,7 @@ def _simulate_python(inputs: ModelRunInputs, trace: DriveTrace) -> dict[str, Any
                 backend="python",
                 step=t,
                 time_ms=t * dt,
-                diagnostic=bounded_diagnostic(exc),
+                diagnostic="model step could not produce a finite result",
             ) from exc
         for variable in per_step:
             try:

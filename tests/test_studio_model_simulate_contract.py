@@ -128,9 +128,12 @@ class TestRejectedRequests:
         assert error.field == "params.dt"
 
     def test_invalid_constructor_is_reported_not_replaced_by_defaults(self) -> None:
+        """Keep the rejected field and local cause, never substitute a default model."""
         error = _rejects(name=ATIF, param_overrides={"theta_rest": -70.0}, use_fast_path=False)
         assert (error.model, error.field) == (ATIF, "constructor")
-        assert "theta_rest must be greater than v_rest" in error.reason
+        assert error.reason == "model constructor rejected the supplied parameters"
+        assert isinstance(error.__cause__, ValueError)
+        assert "theta_rest must be greater than v_rest" in str(error.__cause__)
 
     def test_explicit_dt_on_a_model_without_timestep(self) -> None:
         error = _rejects(name="ChialvoMapNeuron", dt=0.5, use_fast_path=False)
@@ -186,6 +189,7 @@ class TestRejectedRequests:
 
 class TestNumericalFailure:
     def test_intermediate_overflow_raises_with_step_and_time(self) -> None:
+        """Preserve the real overflow cause while reporting an authored step failure."""
         with pytest.raises(ModelSimulationFailure) as info:
             simulate_model(
                 "HodgkinHuxleyNeuron",
@@ -201,7 +205,9 @@ class TestNumericalFailure:
         # One Hodgkin-Huxley step() is a 1 ms macro step of 0.01 ms sub-steps,
         # so the failing step started at step × 1 ms, not step × 0.01 ms.
         assert failure.time_ms == pytest.approx(failure.step * 1.0)
-        assert failure.diagnostic.startswith("OverflowError")
+        assert failure.diagnostic == "model step could not produce a finite result"
+        assert isinstance(failure, RuntimeError)
+        assert isinstance(failure.__cause__, OverflowError)
         detail = failure.to_public_detail()
         assert detail["error"] == "model_simulation_failed"
         assert detail["step"] == failure.step

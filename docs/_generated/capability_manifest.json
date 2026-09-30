@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5157
+    "test_files": 5158
   },
   "documentation": {
     "public_pages": [
@@ -7808,6 +7808,7 @@
       "tests/test_studio_model_documentation_availability.py",
       "tests/test_studio_model_numeric_contracts.py",
       "tests/test_studio_model_readiness_verified.py",
+      "tests/test_studio_model_run_contract_routes.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_model_scan_budget.py",
       "tests/test_studio_model_scan_process.py",

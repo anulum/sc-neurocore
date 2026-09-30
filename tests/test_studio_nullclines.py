@@ -21,6 +21,39 @@ from sc_neurocore.studio.model_run_contract import ModelInputError
 from sc_neurocore.studio.nullclines import NULLCLINE_SCHEMA_VERSION, nullclines_2d
 
 
+@pytest.mark.parametrize(
+    ("expression", "reason"),
+    [
+        ("(", "equations could not be parsed"),
+        ("caller_text_xyz", "equations reference an unknown symbol"),
+    ],
+)
+def test_parser_and_symbol_faults_have_authored_http_reasons(
+    client: TestClient, expression: str, reason: str
+) -> None:
+    """Real parsing and evaluation faults do not publish generated diagnostic text."""
+    response = client.post(
+        "/api/nullclines",
+        json={
+            "equations": [f"dv/dt = {expression}", "dw/dt = -v"],
+            "params": {},
+            "var_names": ["v", "w"],
+            "ranges": {},
+            "grid_size": 20,
+        },
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": {
+            "error": "invalid_model_input",
+            "model": "ode",
+            "field": "equations",
+            "reason": reason,
+        }
+    }
+    assert "caller_text_xyz" not in response.text
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(create_app(), base_url="http://127.0.0.1")

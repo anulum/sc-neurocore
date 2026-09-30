@@ -73,11 +73,12 @@ class TestRejectedRequests:
         assert (detail["model"], detail["field"]) == (ATIF, "params.no_such_parameter")
 
     def test_invalid_constructor(self, client: TestClient) -> None:
+        """Keep the constructor refusal structured without copying its ValueError."""
         response = _post(client, SIMULATE, {"model_name": ATIF, "params": {"theta_rest": -70.0}})
         assert response.status_code == 422
         detail = response.json()["detail"]
         assert detail["field"] == "constructor"
-        assert "theta_rest must be greater than v_rest" in detail["reason"]
+        assert detail["reason"] == "model constructor rejected the supplied parameters"
 
     def test_fractional_integer_parameter(self, client: TestClient) -> None:
         response = _post(
@@ -180,6 +181,7 @@ class TestNumericalFailure:
     def test_intermediate_overflow_is_422_with_step_and_never_cached(
         self, client: TestClient
     ) -> None:
+        """A numerical fault keeps its step metadata and never populates the cache."""
         size_before = _cache_size(client)
         first = _post(client, SIMULATE, self.OVERFLOW)
         assert first.status_code == 422
@@ -189,7 +191,7 @@ class TestNumericalFailure:
         assert detail["step"] > 0
         # A Hodgkin-Huxley step is a 1 ms macro step of 0.01 ms sub-steps.
         assert detail["time_ms"] == pytest.approx(detail["step"] * 1.0)
-        assert detail["diagnostic"].startswith("OverflowError")
+        assert detail["diagnostic"] == "model step could not produce a finite result"
         assert "time" not in first.json()
         assert _cache_size(client) == size_before
         second = _post(client, SIMULATE, self.OVERFLOW)

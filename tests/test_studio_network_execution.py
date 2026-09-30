@@ -343,6 +343,7 @@ class TestCustody:
     def test_execution_failures_are_reported_not_zeroed(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Keep non-finite-state rules and replace generated faults with fixed reasons."""
         spec = resolve_graph({"populations": [_pop("e", 2)], "projections": [], "duration": 1.0})
         lowered = lower_graph(spec)
 
@@ -361,8 +362,10 @@ class TestCustody:
             simulate_graph_spec(spec)
         assert info.value.to_public_detail() == {
             "error": "graph_execution_failed",
-            "reason": "ArithmeticError: overflow in step",
+            "reason": "graph execution could not produce a finite result",
         }
+        assert isinstance(info.value, RuntimeError)
+        assert isinstance(info.value.__cause__, ArithmeticError)
 
     def test_connectivity_arrays_all_to_all_matches_public_generator(self) -> None:
         spec = resolve_graph(

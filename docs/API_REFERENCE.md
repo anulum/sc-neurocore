@@ -40480,7 +40480,7 @@ Parameters
 field : str
     Request field that failed.
 reason : str
-    Bounded, path-free reason.
+    Deliberately authored reason; never generated exception text.
 execution_mode : {"refused", "job_required"}
     ``job_required`` when the run is valid but too large for the
     synchronous route and must be submitted as a job.
@@ -40810,7 +40810,7 @@ field : str
     Dotted request field that failed (``name``, ``params.tau_m``, ``dt``,
     ``constructor``, ``step``, ``protocol``, ``current``, ``duration``).
 reason : str
-    Bounded human-readable reason without repository paths.
+    Deliberately authored reason; never generated exception text.
 
 - **__init__**()
 - **to_public_detail**()
@@ -40830,8 +40830,8 @@ step : int
 time_ms : float
     Simulated time of that step in milliseconds.
 diagnostic : str
-    Bounded description of the failure (exception class and message, or
-    the non-finite state variable).
+    Deliberately authored failure reason, optionally naming a state
+    variable. Original faults remain in the exception cause.
 
 - **__init__**()
 - **to_public_detail**()
@@ -40880,7 +40880,10 @@ Validated current-injection protocol resolved against the run inputs.
 
 
 ### Function `bounded_diagnostic(exc)`
-Return ``ClassName: message`` truncated to :data:`DIAGNOSTIC_LIMIT` characters.
+Return a bounded exception description for local diagnosis only.
+
+This text includes interpreter and library messages and must not be used
+in a caller-facing refusal or response.
 
 ### Function `model_parameter_contracts(cls)`
 Inventory the numerically overridable constructor fields of ``cls``.
@@ -41154,8 +41157,8 @@ Raised when a lowered graph fails while running.
 Parameters
 ----------
 reason : str
-    Bounded, path-free description (exception class and message, or the
-    population whose state is non-finite).
+    Deliberately authored failure reason, optionally naming the
+    population whose state is non-finite.
 
 - **__init__**()
 - **to_public_detail**()
@@ -48569,7 +48572,7 @@ Parameters
 stage : {"schema", "request", "identity", "revision", "runtime"}
     Which admission step refused.
 reason : str
-    Bounded, path-free explanation.
+    Deliberately authored explanation; never generated exception text.
 differences : sequence of str, optional
     Named blocks or fields that differ, for a drift refusal.
 

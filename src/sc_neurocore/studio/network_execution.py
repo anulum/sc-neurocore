@@ -46,7 +46,7 @@ from sc_neurocore.studio.analysis_contract import (
     MetricContract,
     attach_contract,
 )
-from sc_neurocore.studio.model_run_contract import bounded_diagnostic
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.network_graph_spec import GraphSpec, PopulationSpec, ProjectionSpec
 
 GRAPH_RESULT_SCHEMA_VERSION = "studio.network-graph-result.v1"
@@ -63,14 +63,14 @@ _RUST_REJECTION = {
 }
 
 
-class GraphExecutionFailure(RuntimeError):
+class GraphExecutionFailure(RuntimeError, AuthoredRefusal):
     """Raised when a lowered graph fails while running.
 
     Parameters
     ----------
     reason : str
-        Bounded, path-free description (exception class and message, or the
-        population whose state is non-finite).
+        Deliberately authored failure reason, optionally naming the
+        population whose state is non-finite.
     """
 
     def __init__(self, *, reason: str) -> None:
@@ -239,7 +239,9 @@ def run_lowered_graph(lowered: LoweredGraph) -> None:
     try:
         lowered.network.run(duration=spec.n_steps * dt_s, dt=dt_s, backend="python")
     except (ArithmeticError, ValueError, TypeError) as exc:
-        raise GraphExecutionFailure(reason=bounded_diagnostic(exc)) from exc
+        raise GraphExecutionFailure(
+            reason="graph execution could not produce a finite result"
+        ) from exc
     for population, public in zip(spec.populations, lowered.populations, strict=True):
         if not bool(np.all(np.isfinite(public.voltages))):
             raise GraphExecutionFailure(

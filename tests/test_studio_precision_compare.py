@@ -16,6 +16,7 @@ everywhere.
 from __future__ import annotations
 
 import shutil
+import importlib
 from typing import Any
 
 import numpy as np
@@ -57,6 +58,53 @@ LIF: dict[str, Any] = {
     "duration": 50.0,
     "current": 30.0,
 }
+
+
+def test_malformed_equation_has_an_authored_http_reason(client: TestClient) -> None:
+    """A real equation parser failure stays structured without copying its ValueError."""
+    response = client.post(
+        "/api/precision", json={"equations": ["dv/dt = ("], "params": {}, "duration": 1.0}
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": {
+            "error": "invalid_model_input",
+            "model": "ode",
+            "field": "equations",
+            "reason": "equations could not be parsed",
+        }
+    }
+
+
+def test_compiler_configuration_fault_has_an_authored_http_reason(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Inject a compiler configuration fault and run the real kernel validator and route."""
+    module = importlib.import_module("sc_neurocore.studio.precision_compare")
+
+    def invalid_method(
+        *, data_width: int, fraction: int, overflow: str, rounding: str, method: str
+    ) -> dict[str, object]:
+        return kernel_arithmetic_contract(
+            data_width=data_width,
+            fraction=fraction,
+            overflow=overflow,
+            rounding=rounding,
+            method="caller-text-xyz",
+        )
+
+    monkeypatch.setattr(module, "kernel_arithmetic_contract", invalid_method)
+    response = client.post("/api/precision", json={**LIF, "duration": 1.0})
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": {
+            "error": "invalid_model_input",
+            "model": "ode",
+            "field": "q_format",
+            "reason": "fixed-point arithmetic configuration is unsupported",
+        }
+    }
+    assert "caller-text-xyz" not in response.text
 
 
 @pytest.mark.parametrize(

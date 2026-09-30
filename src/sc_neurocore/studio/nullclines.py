@@ -52,7 +52,7 @@ def _build_neuron(
     try:
         return from_equations(*equations, params=dict(params), init=dict(held) or None, dt=0.01)
     except (ValueError, TypeError, SyntaxError, KeyError) as exc:
-        raise _input_error("equations", str(exc)[:300]) from exc
+        raise _input_error("equations", "equations could not be parsed") from exc
 
 
 def _sign_change(values: Sequence[float]) -> bool:
@@ -165,7 +165,9 @@ def nullclines_2d(
                         # blocks the residual escape vectors.
                         value = float(eval(code, {"__builtins__": {}}, env))  # nosec B307
                     except NameError as exc:
-                        raise _input_error("equations", f"unknown symbol: {exc}") from exc
+                        raise _input_error(
+                            "equations", "equations reference an unknown symbol"
+                        ) from exc
                     except _EVALUATION_ERRORS:
                         continue
                     if math.isfinite(value):

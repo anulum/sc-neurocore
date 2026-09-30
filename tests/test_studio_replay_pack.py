@@ -120,6 +120,30 @@ class TestPinning:
 
 
 class TestIdentity:
+    def test_invalid_parameter_conversion_has_only_an_authored_replay_refusal(self) -> None:
+        """A malformed sealed request must not echo the float conversion exception."""
+        pack = build_replay_pack(ADEX)
+        pack["request"]["dt"] = "caller-text-xyz"
+        with pytest.raises(ReplayRejected) as caught:
+            replay_pack(pack)
+        assert caught.value.stage == "identity"
+        assert caught.value.reason == "the sealed request no longer resolves here"
+        assert caught.value.__cause__ is not None
+        assert "caller-text-xyz" not in str(caught.value)
+
+    @pytest.mark.parametrize("content", [b"{caller-text-xyz", b"\xffcaller-text-xyz"])
+    def test_unreadable_json_has_only_an_authored_cli_refusal(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str], content: bytes
+    ) -> None:
+        """Real JSON and Unicode decoder failures are refused by the public CLI."""
+        path = tmp_path / "pack.json"
+        path.write_bytes(content)
+        assert main([str(path)]) == 2
+        captured = capsys.readouterr()
+        assert "the replay pack is not valid JSON" in captured.err + captured.out
+        assert "caller-text-xyz" not in captured.err + captured.out
+        assert "decode" not in captured.err + captured.out
+
     def test_identity_excludes_the_runtime_and_the_cache_key(self) -> None:
         public = resolve_experiment(ADEX).public
         identity = experiment_identity(public)

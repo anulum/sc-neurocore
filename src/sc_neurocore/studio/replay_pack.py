@@ -53,6 +53,7 @@ from typing import Any, Literal
 import numpy as np
 
 import sc_neurocore
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.experiment_spec import (
     ExperimentRejected,
     ExperimentSpec,
@@ -118,7 +119,7 @@ RefusalStage = Literal["schema", "request", "identity", "revision", "runtime"]
 Verdict = Literal["match", "match-within-tolerance", "mismatch"]
 
 
-class ReplayRejected(ValueError):
+class ReplayRejected(AuthoredRefusal):
     """Raised when a pack cannot be replayed, before anything is executed.
 
     Parameters
@@ -126,7 +127,7 @@ class ReplayRejected(ValueError):
     stage : {"schema", "request", "identity", "revision", "runtime"}
         Which admission step refused.
     reason : str
-        Bounded, path-free explanation.
+        Deliberately authored explanation; never generated exception text.
     differences : sequence of str, optional
         Named blocks or fields that differ, for a drift refusal.
     """
@@ -573,7 +574,7 @@ def verify_replay_pack(
     except Exception as exc:  # noqa: BLE001 - the run contract raises its own family
         raise ReplayRejected(
             stage="identity",
-            reason=f"the sealed request no longer resolves here ({exc})",
+            reason="the sealed request no longer resolves here",
         ) from exc
     public = spec.public
     identity = experiment_identity_sha256(public)
@@ -838,9 +839,7 @@ def load_replay_pack(path: Path) -> dict[str, Any]:
     try:
         document = json.loads(resolved.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ReplayRejected(
-            stage="schema", reason=f"the replay pack is not valid JSON ({exc})"
-        ) from exc
+        raise ReplayRejected(stage="schema", reason="the replay pack is not valid JSON") from exc
     return dict(_require_mapping(document))
 
 

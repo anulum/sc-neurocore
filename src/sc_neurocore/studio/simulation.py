@@ -123,12 +123,12 @@ def _run_failure(step: int, dt: float, exc: BaseException) -> Exception:
     which imports the protocol builder above; the import is deferred to the
     failure path to keep the module graph acyclic.
     """
-    from sc_neurocore.studio.model_run_contract import ModelSimulationFailure, bounded_diagnostic
+    from sc_neurocore.studio.model_run_contract import ModelSimulationFailure
 
     diagnostic = (
         f"state {exc.name!r} {exc.reason}"
         if isinstance(exc, StateObservationError)
-        else bounded_diagnostic(exc)
+        else "equation step could not produce a finite result"
     )
     return ModelSimulationFailure(
         model=ODE_MODEL_NAME,
