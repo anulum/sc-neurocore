@@ -261,3 +261,13 @@ def test_the_quantity_sink_refuses_what_the_allowlist_refuses(expression: str) -
 
     with pytest.raises(ValueError, match="Unsafe AST node|Blocked function|Dunder attribute"):
         validate_quantity_expression(expression, build_quantity_namespace(), label="probe")
+
+
+@pytest.mark.parametrize(
+    "expression", ["'{0.__class__.__mro__}'.format(v)", "'{0[__builtins__]}'.format(g)"]
+)
+def test_the_quantity_sink_refuses_format_string_traversal(expression: str) -> None:
+    from sc_neurocore.neurons._units import build_quantity_namespace, validate_quantity_expression
+
+    with pytest.raises(ValueError, match="Blocked string constant|Blocked attribute .format"):
+        validate_quantity_expression(expression, build_quantity_namespace(), label="probe")

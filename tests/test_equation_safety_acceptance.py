@@ -45,3 +45,27 @@ def test_bounded_powers_and_nested_bases_are_permitted() -> None:
 def test_montbrio_rate_equation_still_validates() -> None:
     """Regression guard: the MPR firing-rate expression is not caught by the new caps."""
     ExpressionSafetyValidator().validate("delta/(3.141592653589793*tau**2) + 2.0*r*v/tau")
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        # The two probes of the CEO security review of CodeQL #484: format
+        # field names traversed dunders the Attribute rule never sees.
+        "'{0.__class__.__mro__}'.format(v)",
+        "'{0[__builtins__]}'.format(g)",
+        "b'x'",
+        "v + len('abc')",
+    ],
+)
+def test_string_constants_are_refused(expression: str) -> None:
+    """Equations are numeric: no string or bytes constant passes."""
+    with pytest.raises(ValueError, match="Blocked string constant|Blocked attribute .format"):
+        ExpressionSafetyValidator().validate(expression)
+
+
+@pytest.mark.parametrize("attribute", ["format", "format_map"])
+def test_format_attributes_are_refused_on_any_object(attribute: str) -> None:
+    """A formatting method is refused even reached from a non-string name."""
+    with pytest.raises(ValueError, match=f"Blocked attribute '{attribute}'"):
+        ExpressionSafetyValidator().validate(f"v.{attribute}(w)")

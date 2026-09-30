@@ -12,7 +12,9 @@ Equation-defined neurons compile user-supplied expression strings and evaluate
 them with :func:`eval`. Before an expression is ever compiled it is validated
 here against an AST allowlist: only the whitelisted maths/comparison node types
 survive, dangerous builtins and sandbox-escape dunder chains are rejected by
-name, and pathologically deep trees are refused. :data:`EVAL_GLOBALS` gives the
+name, string constants are refused (a format string's field names reach any
+attribute or index, dunders included, where no node check sees them), and
+pathologically deep trees are refused. :data:`EVAL_GLOBALS` gives the
 ``eval`` a minimal ``__builtins__`` holding only ``__import__`` — which CPython's
 own ``eval`` machinery dereferences while evaluating some otherwise-safe
 expressions (numpy overflow/warning paths), so it must remain present — yet the
@@ -113,6 +115,10 @@ _BLOCKED_NAMES = {
     "__getattr__",
     "__setattr__",
     "__delattr__",
+    # String formatting resolves attribute and index lookups inside the format
+    # string, where the dunder rule on ast.Attribute cannot see them.
+    "format",
+    "format_map",
     # Module names that must never appear as identifiers
     "os",
     "sys",
@@ -184,6 +190,12 @@ class ExpressionSafetyValidator:
                     )
                 if node.attr in _BLOCKED_NAMES:
                     raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
+            if isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):
+                # Equations are numeric. A string constant carried a format
+                # string whose field names ('{0.__class__.__mro__}') read any
+                # attribute or index, dunders included, past every other rule
+                # here (CEO security review of CodeQL #484, 2026-09-30).
+                raise ValueError(f"Blocked string constant in equation: {expr!r}")
             if (
                 isinstance(node, ast.Constant)
                 and isinstance(node.value, (int, float))
