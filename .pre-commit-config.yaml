@@ -23,11 +23,13 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 22f0422809455ec89ffdcf5a00170ba816e42ddb  # v0.15.16
+    rev: a56c0b927e6465d37cae3e97d35d4d18ab2b96cd  # v0.16.9
     hooks:
       - id: ruff
         exclude: '^data/'
       - id: ruff-format
+        # Preserve the existing Python, stub, and notebook formatting scope.
+        types_or: [python, pyi, jupyter]
         exclude: '^data/'
 
   - repo: https://github.com/crate-ci/typos

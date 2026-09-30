@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Changed
+- Align Ruff hooks, development declarations, and hash-locked CI environments
+  on 0.16.9. The formatter retains its Python, stub, and notebook scope.
+
 ### Fixed
 - The published Studio OpenAPI reference matches the running application again.
   Three landed changes never reached it: `GET /api/graph/models/{name}` was
