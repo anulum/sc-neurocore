@@ -65,11 +65,21 @@ def test_bifurcation_runs_the_requested_protocol(client: TestClient) -> None:
 
 
 def test_bifurcation_under_the_sine_drive_reports_the_model_failure(client: TestClient) -> None:
+    """Report the real sine-drive fault with an authored reason and its exact clock."""
     # The drive the sweep used to impose on every request: for this model it
     # leaves the safety bounds, which is now a stated choice, not a hidden one.
     response = _bifurcation(client, protocol="sine", frequency_hz=10.0)
     assert response.status_code == 422, response.text[:400]
-    assert "safety bounds" in response.text
+    assert response.json() == {
+        "detail": {
+            "error": "model_simulation_failed",
+            "model": MODEL,
+            "backend": "python",
+            "step": 125,
+            "time_ms": 62.5,
+            "diagnostic": "model step could not produce a finite result",
+        }
+    }
 
 
 def test_heatmap_runs_the_requested_protocol(client: TestClient) -> None:
