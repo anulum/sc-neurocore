@@ -56,7 +56,7 @@ def _population(pop_id: str, model: str, count: int, **fields: Any) -> dict[str,
 
 
 def _network() -> dict[str, Any]:
-    """A driven LIF population projecting at random onto an IF population."""
+    """Build a driven LIF population projecting at random onto an IF population."""
     return {
         "populations": [
             _population(
@@ -137,7 +137,10 @@ def _foreign(nodes: dict[str, Any], edges: list[tuple[str, str]]) -> str:
 
 
 class TestExport:
-    def test_the_export_is_a_real_nir_file_of_the_network(self, tmp_path):
+    """Verify exported NIR tensors against the graph and realised connectivity."""
+
+    def test_the_export_is_a_real_nir_file_of_the_network(self, tmp_path: Path) -> None:
+        """Read the exported HDF5 and verify each primitive, edge, latency and metadata field."""
         exported = graph_to_nir_file(_network())
         assert exported.content.startswith(HDF5_SIGNATURE)
         assert exported.nir_version == nir.version
@@ -176,7 +179,8 @@ class TestExport:
             "time_unit": "ms",
         }
 
-    def test_the_weight_is_the_connectivity_the_runtime_realises(self, tmp_path):
+    def test_the_weight_is_the_connectivity_the_runtime_realises(self, tmp_path: Path) -> None:
+        """The exported dense weights must equal the public runtime's realised projection."""
         graph = _network()
         weight = _read(graph_to_nir_file(graph).content, tmp_path).nodes["p_ff_weight"].weight
         projection = resolve_graph(graph).projections[0]
@@ -193,7 +197,8 @@ class TestExport:
         }
         assert set(np.unique(weight[weight != 0])) == set(np.unique(data))
 
-    def test_the_notes_state_what_the_file_does_not_carry(self):
+    def test_the_notes_state_what_the_file_does_not_carry(self) -> None:
+        """Export notes identify units, threshold comparisons, external drive and propagation."""
         notes = graph_to_nir_file(_network()).notes
         assert any("milliseconds" in note for note in notes)
         assert any(
@@ -209,7 +214,8 @@ class TestExport:
         assert any("1-step spike propagation latency at dt = 1.0 ms" in note for note in notes)
         assert not any("initial membrane" in note for note in notes)
 
-    def test_a_poisson_drive_and_initial_state_are_named_in_the_notes(self):
+    def test_a_poisson_drive_and_initial_state_are_named_in_the_notes(self) -> None:
+        """Export notes retain the declared Poisson drive and identify omitted initial voltage."""
         graph = _network()
         graph["populations"][0]["params"]["v"] = 0.3
         graph["populations"][1]["params"]["v"] = 0.2
@@ -224,35 +230,42 @@ class TestExport:
         assert any("population acc: initial membrane 0.2 is not carried" in n for n in notes)
         assert any("Poisson input at 40.0 Hz, weight 0.5, seed 4" in n for n in notes)
 
-    def test_the_public_dict_carries_the_file_bytes(self):
+    def test_the_public_dict_carries_the_file_bytes(self) -> None:
+        """The JSON projection must retain the exact NIR bytes, filename, version and notes."""
         exported = graph_to_nir_file(_network())
         public = exported.to_public_dict()
         assert public["schema_version"] == STUDIO_NIR_EXPORT_SCHEMA_VERSION
         assert public["filename"] == NIR_EXPORT_FILENAME
         assert public["media_type"] == "application/x-hdf5"
         assert public["nir_version"] == nir.version
-        assert base64.b64decode(public["content_base64"]) == exported.content
+        content_base64 = public["content_base64"]
+        assert isinstance(content_base64, str)
+        assert base64.b64decode(content_base64) == exported.content
         assert public["notes"] == list(exported.notes)
 
-    def test_a_model_without_an_nir_primitive_is_refused_by_name(self):
+    def test_a_model_without_an_nir_primitive_is_refused_by_name(self) -> None:
+        """Export must identify an unsupported AdEx population instead of substituting LIF."""
         graph = _network()
         graph["populations"][1]["model"] = "AdExNeuron"
         graph["populations"][1]["params"] = {}
         with pytest.raises(NIRMappingRefused, match=r"population acc: model AdExNeuron has no NIR"):
             graph_to_nir_file(graph)
 
-    def test_a_refused_model_with_a_profile_names_the_profile(self):
+    def test_a_refused_model_with_a_profile_names_the_profile(self) -> None:
+        """An unsupported model refusal identifies its selected dynamics profile."""
         graph = _network()
         graph["populations"][1]["model"] = "QuadraticIFNeuron"
         graph["populations"][1]["params"] = {}
         with pytest.raises(NIRMappingRefused, match=r"QuadraticIFNeuron \(profile sc_symmetric\)"):
             graph_to_nir_file(graph)
 
-    def test_an_invalid_graph_is_rejected_before_export(self):
+    def test_an_invalid_graph_is_rejected_before_export(self) -> None:
+        """Graph validation must refuse a non-object before writing an NIR file."""
         with pytest.raises(GraphRejected):
             graph_to_nir_file([])
 
-    def test_a_population_without_params_drive_or_position_exports(self, tmp_path):
+    def test_a_population_without_params_drive_or_position_exports(self, tmp_path: Path) -> None:
+        """An export without optional population fields records their documented defaults."""
         graph = {
             "populations": [
                 {
@@ -273,7 +286,9 @@ class TestExport:
         assert metadata["drive"] == {"kind": "none"}
         assert metadata["position"] is None
 
-    def test_without_the_nir_package_export_says_which_extra_to_install(self, monkeypatch):
+    def test_without_the_nir_package_export_says_which_extra_to_install(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """``sys.modules[name] = None`` is Python's own import block: the extra is absent."""
         monkeypatch.setitem(sys.modules, "nir", None)
         with pytest.raises(NIRMappingRefused, match=r"install sc-neurocore\[nir\]"):
@@ -281,7 +296,10 @@ class TestExport:
 
 
 class TestStudioRoundTrip:
-    def test_a_studio_file_reads_back_as_the_same_network(self):
+    """Reconstruct saved metadata without accepting edits to its NIR tensors."""
+
+    def test_a_studio_file_reads_back_as_the_same_network(self) -> None:
+        """Studio metadata reconstructs every population and the resolved autapse decision."""
         graph = _network()
         imported = nir_file_to_graph(_export_base64(graph))
         assert imported["origin"] == "studio"
@@ -291,7 +309,7 @@ class TestStudioRoundTrip:
         expected["projections"][0]["autapses"] = False
         assert imported["graph"] == expected
 
-    def test_the_graph_order_and_the_seeds_derived_from_it_survive(self):
+    def test_the_graph_order_and_the_seeds_derived_from_it_survive(self) -> None:
         """HDF5 lists nodes by name; the order Studio seeds from must come back."""
         graph = _network()
         graph["populations"].reverse()
@@ -310,7 +328,8 @@ class TestStudioRoundTrip:
         assert rebuilt.projections[0].seed == original.projections[0].seed
         assert simulate_graph(imported)["populations"] == simulate_graph(graph)["populations"]
 
-    def test_an_all_to_all_poisson_network_reads_back(self):
+    def test_an_all_to_all_poisson_network_reads_back(self) -> None:
+        """A round trip retains all-to-all connectivity and the explicit Poisson seed."""
         graph = _network()
         graph["populations"][1]["drive"] = {
             "kind": "poisson",
@@ -327,29 +346,32 @@ class TestStudioRoundTrip:
         assert "probability" not in imported["projections"][0]
         assert resolve_graph(imported) == resolve_graph(graph)
 
-    def test_a_population_without_a_position_is_laid_out(self):
+    def test_a_population_without_a_position_is_laid_out(self) -> None:
+        """Imported populations with no saved position receive deterministic layout coordinates."""
         graph = _network()
         for population in graph["populations"]:
             del population["position"]
         populations = nir_file_to_graph(_export_base64(graph))["graph"]["populations"]
         assert [p["position"] for p in populations] == [{"x": 0, "y": 0}, {"x": 200, "y": 0}]
 
-    def test_an_edited_tensor_is_refused(self, tmp_path):
+    def test_an_edited_tensor_is_refused(self, tmp_path: Path) -> None:
+        """An edited time constant must not be silently replaced by the saved metadata."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         read.nodes["lif"].tau = np.full(4, 13.0)
         with pytest.raises(NIRMappingRefused, match="node lif does not match"):
             nir_file_to_graph(base64.b64encode(_write(read)).decode("ascii"))
 
-    def test_a_resized_tensor_is_refused(self, tmp_path):
+    def test_a_resized_tensor_is_refused(self, tmp_path: Path) -> None:
         """NIR's own type check on reading refuses it before Studio compares."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         read.nodes["p_ff_delay"] = nir.Delay(
             delay=np.full(5, 3.0), metadata=read.nodes["p_ff_delay"].metadata
         )
-        with pytest.raises(NIRMappingRefused, match="type mismatch"):
+        with pytest.raises(NIRMappingRefused, match="^the file is not a readable NIR graph$"):
             nir_file_to_graph(base64.b64encode(_write(read)).decode("ascii"))
 
-    def test_a_replaced_primitive_is_refused(self, tmp_path):
+    def test_a_replaced_primitive_is_refused(self, tmp_path: Path) -> None:
+        """Replacing IF with LIF must fail the comparison with the saved Studio network."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         metadata = read.nodes["acc"].metadata
         read.nodes["acc"] = _lif(3)
@@ -357,7 +379,8 @@ class TestStudioRoundTrip:
         with pytest.raises(NIRMappingRefused, match="node acc does not match"):
             nir_file_to_graph(base64.b64encode(_write(read)).decode("ascii"))
 
-    def test_a_removed_edge_is_refused(self, tmp_path):
+    def test_a_removed_edge_is_refused(self, tmp_path: Path) -> None:
+        """An edited edge set must fail the comparison with the saved Studio network."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         read.edges.remove(("lif", "output_lif"))
         with pytest.raises(NIRMappingRefused, match="nodes or edges differ"):
@@ -374,17 +397,20 @@ class TestStudioRoundTrip:
             (json.dumps([1, 2]), "the graph: its Studio metadata is not an object"),
             (
                 json.dumps({"schema_version": STUDIO_NIR_EXPORT_SCHEMA_VERSION, "dt": 1.0}),
-                "lacks the field 'duration'",
+                "the file's Studio metadata is missing a required field",
             ),
         ],
     )
-    def test_unreadable_graph_metadata_is_refused(self, tmp_path, graph_metadata, reason):
+    def test_unreadable_graph_metadata_is_refused(
+        self, tmp_path: Path, graph_metadata: str, reason: str
+    ) -> None:
+        """Malformed graph metadata receives its authored refusal without parser diagnostics."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         read.metadata[STUDIO_METADATA_KEY] = graph_metadata
         with pytest.raises(NIRMappingRefused, match=reason):
             nir_file_to_graph(base64.b64encode(_write(read)).decode("ascii"))
 
-    def test_graph_metadata_written_as_a_group_is_read(self, tmp_path):
+    def test_graph_metadata_written_as_a_group_is_read(self, tmp_path: Path) -> None:
         """HDF5 stores a dict as a group; the version check still applies to it."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         read.metadata[STUDIO_METADATA_KEY] = {"schema_version": "other"}
@@ -395,22 +421,34 @@ class TestStudioRoundTrip:
         ("node", "entry", "reason"),
         [
             ("acc", {"kind": "synapse"}, "node acc: its Studio metadata names an unknown kind"),
-            ("acc", {"kind": "population"}, "lacks the field 'index'"),
-            ("acc", {"kind": "population", "index": 1}, "lacks the field 'label'"),
+            (
+                "acc",
+                {"kind": "population"},
+                "the file's Studio metadata is missing a required field",
+            ),
+            (
+                "acc",
+                {"kind": "population", "index": 1},
+                "the file's Studio metadata is missing a required field",
+            ),
             (
                 "p_ff_weight",
                 {"kind": "projection", "index": 0, "id": "p_ff"},
-                "lacks the field 'source'",
+                "the file's Studio metadata is missing a required field",
             ),
         ],
     )
-    def test_unreadable_node_metadata_is_refused(self, tmp_path, node, entry, reason):
+    def test_unreadable_node_metadata_is_refused(
+        self, tmp_path: Path, node: str, entry: dict[str, Any], reason: str
+    ) -> None:
+        """Incomplete population or projection metadata receives an authored missing-field refusal."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         read.nodes[node].metadata[STUDIO_METADATA_KEY] = json.dumps(entry)
         with pytest.raises(NIRMappingRefused, match=reason):
             nir_file_to_graph(base64.b64encode(_write(read)).decode("ascii"))
 
-    def test_metadata_describing_an_invalid_network_is_refused(self, tmp_path):
+    def test_metadata_describing_an_invalid_network_is_refused(self, tmp_path: Path) -> None:
+        """A zero population count in saved metadata must be refused before tensor comparison."""
         read = _read(graph_to_nir_file(_network()).content, tmp_path)
         entry = json.loads(read.nodes["acc"].metadata[STUDIO_METADATA_KEY])
         entry["count"] = 0
@@ -418,7 +456,7 @@ class TestStudioRoundTrip:
         with pytest.raises(NIRMappingRefused, match="does not validate"):
             nir_file_to_graph(base64.b64encode(_write(read)).decode("ascii"))
 
-    def test_the_studio_network_runs_the_same_through_the_nir_bridge(self, tmp_path):
+    def test_the_studio_network_runs_the_same_through_the_nir_bridge(self, tmp_path: Path) -> None:
         """The exported file, executed by the NIR bridge, spikes as Studio does."""
         graph = {
             "populations": [
@@ -471,7 +509,10 @@ def _export_base64(graph: dict[str, Any]) -> str:
 
 
 class TestForeignImport:
-    def test_lif_and_if_populations_joined_by_linear_weights_are_read(self):
+    """Read representable foreign graphs and refuse unsupported semantics."""
+
+    def test_lif_and_if_populations_joined_by_linear_weights_are_read(self) -> None:
+        """A foreign graph preserves uniform neuron parameters, signed weights and delay semantics."""
         content = _foreign(
             {
                 "in": nir.Input(input_type={"input": np.array([2])}),
@@ -627,26 +668,35 @@ class TestForeignImport:
             ),
         ],
     )
-    def test_what_the_studio_graph_cannot_hold_is_refused(self, nodes, edges, reason):
+    def test_what_the_studio_graph_cannot_hold_is_refused(
+        self, nodes: dict[str, Any], edges: list[tuple[str, str]], reason: str
+    ) -> None:
+        """Unsupported primitives, tensors, topology and budgets fail with the stated mapping reason."""
         with pytest.raises(NIRMappingRefused, match=reason):
             nir_file_to_graph(_foreign(nodes, edges))
 
 
 class TestUnreadableInput:
+    """Refuse malformed base64, unreadable HDF5 and unrelated file contents."""
+
     @pytest.mark.parametrize("payload", [None, "", 12, b"abc"])
-    def test_an_import_needs_base64_text(self, payload):
+    def test_an_import_needs_base64_text(self, payload: object) -> None:
+        """The file importer refuses absent, empty and non-text payloads."""
         with pytest.raises(NIRMappingRefused, match="needs the file's bytes as base64 text"):
             nir_file_to_graph(payload)
 
-    def test_text_that_is_not_base64_is_refused(self):
+    def test_text_that_is_not_base64_is_refused(self) -> None:
+        """Malformed base64 must be refused before invoking the NIR reader."""
         with pytest.raises(NIRMappingRefused, match="not valid base64"):
             nir_file_to_graph("not*base64!")
 
-    def test_bytes_that_are_not_nir_are_refused(self):
+    def test_bytes_that_are_not_nir_are_refused(self) -> None:
+        """Plain-text bytes must be refused by the real HDF5 reader."""
         with pytest.raises(NIRMappingRefused, match="not a readable NIR graph"):
             nir_file_to_graph(base64.b64encode(b"plain text, not HDF5").decode("ascii"))
 
-    def test_an_hdf5_file_that_is_not_nir_is_refused(self, tmp_path):
+    def test_an_hdf5_file_that_is_not_nir_is_refused(self, tmp_path: Path) -> None:
+        """An unrelated HDF5 dataset must not be accepted as a neuron graph."""
         import h5py
 
         path = tmp_path / "other.h5"

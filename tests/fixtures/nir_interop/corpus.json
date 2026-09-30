@@ -54,7 +54,7 @@
     "Output"
    ],
    "studio_import": "refused",
-   "studio_reason_contains": "v_threshold must be greater than v_rest"
+   "studio_reason_contains": "the model cannot accept these parameters"
   },
   {
    "file": "cnn_sinabs.nir",

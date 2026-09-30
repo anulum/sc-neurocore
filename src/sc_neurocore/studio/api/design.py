@@ -26,6 +26,7 @@ from sc_neurocore.studio.network_nir import (
     nir_file_to_graph,
 )
 from sc_neurocore.studio.network_graph import (
+    GraphEnvelopeRefusal,
     GraphRejected,
     available_models as graph_available_models,
     create_population,
@@ -318,7 +319,7 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/graph/export-nir")
     def api_export_nir(data: dict[str, Any]) -> Any:
-        """Write the graph as a real NIR file, with what NIR does not carry."""
+        """Write the graph as NIR, returning only authored graph or mapping refusals."""
 
         def run() -> dict[str, object]:
             try:
@@ -330,7 +331,11 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/graph/import-nir")
     def api_import_nir(data: dict[str, Any]) -> Any:
-        """Read a real NIR file, or a Studio graph envelope an earlier export wrote."""
+        """Read NIR or a legacy Studio envelope, with caller-safe parsing refusals.
+
+        Explicit domain refusals retain their messages. Other envelope parsing
+        failures receive a fixed HTTP 422 reason without exception text.
+        """
 
         def run() -> dict[str, Any]:
             try:
@@ -338,11 +343,15 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
                     return nir_file_to_graph(data["content_base64"])
                 try:
                     graph = envelope_to_graph(data)
-                except ValueError as exc:
-                    # The envelope loader's refusals are sentences written for
-                    # the reader; the generic handler would reduce them to
-                    # "Invalid input".
-                    raise NIRMappingRefused(str(exc)) from exc
+                except (LookupError, TypeError, ValueError, AttributeError) as exc:
+                    if isinstance(exc, GraphEnvelopeRefusal):
+                        raise
+                    raise HTTPException(
+                        status_code=422,
+                        detail={
+                            "reason": "a required graph field is missing or has the wrong JSON type"
+                        },
+                    ) from None
                 return {
                     "graph": graph,
                     "origin": "studio-envelope",
@@ -351,7 +360,7 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
                         "obtain a real NIR file"
                     ],
                 }
-            except (GraphRejected, NIRMappingRefused) as exc:
+            except (GraphRejected, GraphEnvelopeRefusal, NIRMappingRefused) as exc:
                 raise HTTPException(status_code=422, detail={"reason": str(exc)}) from None
 
         return _safe(run)

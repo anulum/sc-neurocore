@@ -34,6 +34,7 @@ from typing import Any, Literal
 import numpy as np
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_run_contract import (
     ModelInputError,
     ModelRunInputs,
@@ -77,8 +78,11 @@ _SEED_SPAWN_PROJECTION = 1
 _SEED_SPAWN_DRIVE = 2
 
 
-class GraphRejected(ValueError):
-    """Raised when a graph cannot be resolved into one executable specification.
+class GraphRejected(AuthoredRefusal):
+    """An authored refusal of a graph that cannot form an executable specification.
+
+    Graph validation replaces inherited model-constructor diagnostics with
+    fixed reasons before constructing this exception.
 
     Parameters
     ----------
@@ -489,9 +493,14 @@ def _validate_populations(
                 try:
                     inputs = resolve_model_run_inputs(model, params, dt)
                 except ModelInputError as exc:
+                    refusal_reason = (
+                        "the model's input contract cannot be resolved"
+                        if exc.__cause__ is not None
+                        else exc.reason
+                    )
                     collector.add(
                         f"{field}.{exc.field}",
-                        f"Population {label_text} {exc.field}: {exc.reason}",
+                        f"Population {label_text} {exc.field}: {refusal_reason}",
                     )
                 else:
                     reason = _model_admissible(model, inputs.cls)
@@ -506,10 +515,11 @@ def _validate_populations(
                         # per-field contract. Building one neuron asks the model itself.
                         try:
                             inputs.instantiate()
-                        except ModelInputError as exc:
+                        except ModelInputError:
                             collector.add(
                                 f"{field}.params",
-                                f"Population {label_text} parameters: {exc.reason}",
+                                f"Population {label_text} parameters: "
+                                "the model cannot accept these parameters",
                             )
                             inputs = None
         drive = _validate_drive(

@@ -483,6 +483,16 @@ its spike raster equals the Studio's own run.
 
 A refusal answers `422` with `{"detail": {"reason": "<why>"}}`.
 
+Graph, envelope and NIR refusals return only deliberately authored reasons.
+Unreadable base64, HDF5 and JSON metadata receive fixed sentences; parser,
+missing-key and numeric-conversion diagnostics stay out of the response.
+An envelope with a missing field or the wrong JSON type receives
+`a required graph field is missing or has the wrong JSON type`. A population
+whose constructor rejects the combined parameters receives
+`the model cannot accept these parameters`. Schema rules and unsupported
+NIR mappings still state their authored reason. The outer request-body
+validation retains FastAPI's structured `422` response.
+
 ### Files other frameworks wrote
 
 `tests/fixtures/nir_interop/` holds the NIR graphs published with the NIR

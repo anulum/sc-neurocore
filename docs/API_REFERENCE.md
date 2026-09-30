@@ -41217,6 +41217,13 @@ GraphExecutionFailure
 Raised when Studio model discovery cannot produce a trustworthy list.
 
 
+### Class `GraphEnvelopeRefusal`
+A deliberately authored refusal of a Studio graph envelope.
+
+The message describes an envelope rule. Interpreter and library errors
+are not converted into this type with their original diagnostic text.
+
+
 ### Function `population_model_admission(name)`
 Return why catalogue model ``name`` cannot form a population, or ``None``.
 
@@ -41289,7 +41296,7 @@ Export a validated network graph as the Studio graph envelope (JSON).
 
 Raises
 ------
-ValueError
+GraphEnvelopeRefusal
     When the graph does not validate.
 
 ### Function `envelope_to_graph(nir_data)`
@@ -41312,7 +41319,7 @@ rejected here instead of surfacing later on the canvas.
 
 Raises
 ------
-ValueError
+GraphEnvelopeRefusal
     On a malformed payload, a node type that is not a catalogue model, or
     an assembled graph that does not validate.
 
@@ -41321,7 +41328,10 @@ ValueError
 ## Module `studio.network_graph_spec`
 
 ### Class `GraphRejected`
-Raised when a graph cannot be resolved into one executable specification.
+An authored refusal of a graph that cannot form an executable specification.
+
+Graph validation replaces inherited model-constructor diagnostics with
+fixed reasons before constructing this exception.
 
 Parameters
 ----------
@@ -41485,7 +41495,10 @@ one of them as the top.
 ## Module `studio.network_nir`
 
 ### Class `NIRMappingRefused`
-A graph or file holds something the other side cannot represent.
+A deliberately authored refusal of an unrepresentable graph or NIR file.
+
+Generated parser and library diagnostics remain in the exception cause;
+only the authored message may be returned to a caller.
 
 
 ### Class `NIRExport`
@@ -41518,6 +41531,8 @@ Raises
 NIRMappingRefused
     When the file is not NIR, holds a node the graph cannot represent, or
     its tensors do not match the Studio network its metadata describes.
+    Malformed file fields receive authored fixed sentences; generated
+    parser and library diagnostics remain only in the exception cause.
 
 ### Function `dense_weight(projection, n_source, n_target)`
 Return the realised connectivity as a dense ``&#91;target, source&#93;`` matrix.

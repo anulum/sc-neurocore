@@ -24,6 +24,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_introspection import _load_class
 from sc_neurocore.studio.model_run_contract import (
     DT_OVERRIDE_REASON,
@@ -78,6 +79,14 @@ POPULATION_MODEL_CONTRACT_VERSION = "studio.population-model-contract.v1"
 
 class ModelDiscoveryError(RuntimeError):
     """Raised when Studio model discovery cannot produce a trustworthy list."""
+
+
+class GraphEnvelopeRefusal(AuthoredRefusal):
+    """A deliberately authored refusal of a Studio graph envelope.
+
+    The message describes an envelope rule. Interpreter and library errors
+    are not converted into this type with their original diagnostic text.
+    """
 
 
 def population_model_admission(name: str) -> str | None:
@@ -258,14 +267,14 @@ def graph_to_envelope(graph: object) -> dict[str, Any]:
 
     Raises
     ------
-    ValueError
+    GraphEnvelopeRefusal
         When the graph does not validate.
     """
     if not isinstance(graph, Mapping):
-        raise ValueError("Network graph must be an object")
+        raise GraphEnvelopeRefusal("Network graph must be an object")
     errors = validate_graph(graph)
     if errors:
-        raise ValueError(f"Invalid network graph: {'; '.join(errors)}")
+        raise GraphEnvelopeRefusal(f"Invalid network graph: {'; '.join(errors)}")
 
     nodes = {}
     edges = []
@@ -327,15 +336,15 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
 
     Raises
     ------
-    ValueError
+    GraphEnvelopeRefusal
         On a malformed payload, a node type that is not a catalogue model, or
         an assembled graph that does not validate.
     """
     if not isinstance(nir_data, Mapping):
-        raise ValueError("Network graph payload must be an object")
+        raise GraphEnvelopeRefusal("Network graph payload must be an object")
     declared = nir_data.get("format")
     if declared is not None and declared not in ACCEPTED_GRAPH_ENVELOPE_FORMATS:
-        raise ValueError(
+        raise GraphEnvelopeRefusal(
             f"unreadable interchange format {declared!r}: this loader reads the "
             f"Studio network graph envelope ({GRAPH_ENVELOPE_FORMAT!r}, or the "
             f"legacy {LEGACY_GRAPH_ENVELOPE_FORMAT!r} an earlier export wrote). "
@@ -345,9 +354,9 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
     raw_nodes = nir_data.get("nodes", {})
     raw_edges = nir_data.get("edges", [])
     if not isinstance(raw_nodes, Mapping):
-        raise ValueError("Graph envelope nodes must be an object")
+        raise GraphEnvelopeRefusal("Graph envelope nodes must be an object")
     if not isinstance(raw_edges, list):
-        raise ValueError("Graph envelope edges must be a list")
+        raise GraphEnvelopeRefusal("Graph envelope edges must be a list")
 
     populations = []
     projections = []
@@ -355,12 +364,12 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
     x_offset = 0
     for node_id, node in raw_nodes.items():
         if not isinstance(node_id, str) or not node_id:
-            raise ValueError("Graph envelope node ids must be non-empty strings")
+            raise GraphEnvelopeRefusal("Graph envelope node ids must be non-empty strings")
         if not isinstance(node, Mapping):
-            raise ValueError(f"Graph envelope node {node_id!r} must be an object")
+            raise GraphEnvelopeRefusal(f"Graph envelope node {node_id!r} must be an object")
         model = node.get("type", DEFAULT_MODEL)
         if not isinstance(model, str) or model not in _CLASS_TO_MODULE:
-            raise ValueError(
+            raise GraphEnvelopeRefusal(
                 f"Graph envelope node {node_id!r} type {model!r} is not a catalogue model"
             )
         populations.append(
@@ -385,13 +394,17 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
 
     for index, edge in enumerate(raw_edges):
         if not isinstance(edge, Mapping):
-            raise ValueError(f"Graph envelope edge {index} must be an object")
+            raise GraphEnvelopeRefusal(f"Graph envelope edge {index} must be an object")
         source = edge.get("source")
         target = edge.get("target")
         if not isinstance(source, str) or not source:
-            raise ValueError(f"Graph envelope edge {index} source must be a non-empty string")
+            raise GraphEnvelopeRefusal(
+                f"Graph envelope edge {index} source must be a non-empty string"
+            )
         if not isinstance(target, str) or not target:
-            raise ValueError(f"Graph envelope edge {index} target must be a non-empty string")
+            raise GraphEnvelopeRefusal(
+                f"Graph envelope edge {index} target must be a non-empty string"
+            )
         projection: dict[str, Any] = {
             "id": f"proj_{secrets.token_hex(4)}",
             "source": source,
@@ -411,11 +424,12 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
     graph = {"populations": populations, "projections": projections}
     errors = validate_graph(graph)
     if errors:
-        raise ValueError(f"Imported graph is not executable: {'; '.join(errors)}")
+        raise GraphEnvelopeRefusal(f"Imported graph is not executable: {'; '.join(errors)}")
     return graph
 
 
 __all__ = [
+    "GraphEnvelopeRefusal",
     "GraphRejected",
     "ModelDiscoveryError",
     "POPULATION_MODEL_CONTRACT_VERSION",

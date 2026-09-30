@@ -47,6 +47,7 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.network_execution import PROJECTION_LATENCY_STEPS, connectivity_arrays
 from sc_neurocore.studio.network_graph_spec import (
     DEFAULT_DT_MS,
@@ -70,8 +71,12 @@ _TIME_UNIT_NOTE = (
 )
 
 
-class NIRMappingRefused(ValueError):
-    """A graph or file holds something the other side cannot represent."""
+class NIRMappingRefused(AuthoredRefusal):
+    """A deliberately authored refusal of an unrepresentable graph or NIR file.
+
+    Generated parser and library diagnostics remain in the exception cause;
+    only the authored message may be returned to a caller.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,13 +134,15 @@ def nir_file_to_graph(content_base64: object) -> dict[str, Any]:
     NIRMappingRefused
         When the file is not NIR, holds a node the graph cannot represent, or
         its tensors do not match the Studio network its metadata describes.
+        Malformed file fields receive authored fixed sentences; generated
+        parser and library diagnostics remain only in the exception cause.
     """
     if not isinstance(content_base64, str) or not content_base64:
         raise NIRMappingRefused("an NIR import needs the file's bytes as base64 text")
     try:
         content = base64.b64decode(content_base64, validate=True)
     except (binascii.Error, ValueError) as exc:
-        raise NIRMappingRefused(f"the NIR import is not valid base64: {exc}") from exc
+        raise NIRMappingRefused("the NIR import is not valid base64") from exc
     nir = _nir()
     with tempfile.TemporaryDirectory(prefix="sc_studio_nir_") as directory:
         path = Path(directory) / NIR_EXPORT_FILENAME
@@ -143,11 +150,18 @@ def nir_file_to_graph(content_base64: object) -> dict[str, Any]:
         try:
             nir_graph = nir.read(path)
         except (OSError, KeyError, ValueError, TypeError, AttributeError) as exc:
-            raise NIRMappingRefused(f"the file is not a readable NIR graph: {exc}") from exc
-    studio = _studio_metadata(nir_graph.metadata)
-    if studio is not None:
-        return _studio_graph(nir, nir_graph, studio)
-    return _foreign_graph(nir, nir_graph)
+            raise NIRMappingRefused("the file is not a readable NIR graph") from exc
+    try:
+        studio = _studio_metadata(nir_graph.metadata)
+        if studio is not None:
+            return _studio_graph(nir, nir_graph, studio)
+        return _foreign_graph(nir, nir_graph)
+    except NIRMappingRefused:
+        raise
+    except (LookupError, TypeError, ValueError, AttributeError, ArithmeticError) as exc:
+        raise NIRMappingRefused(
+            "the NIR graph has a missing field or a field with the wrong type or value"
+        ) from exc
 
 
 def _nir() -> Any:
@@ -338,7 +352,7 @@ def _decode_metadata(raw: object, where: str) -> dict[str, Any]:
     try:
         decoded = json.loads(raw) if isinstance(raw, str) else raw
     except json.JSONDecodeError as exc:
-        raise NIRMappingRefused(f"{where}: its Studio metadata is not JSON: {exc}") from exc
+        raise NIRMappingRefused(f"{where}: its Studio metadata is not JSON") from exc
     if not isinstance(decoded, dict):
         raise NIRMappingRefused(f"{where}: its Studio metadata is not an object: {decoded!r}")
     return decoded
@@ -371,13 +385,20 @@ def _studio_graph(nir: Any, nir_graph: Any, studio: Mapping[str, Any]) -> dict[s
             "duration": studio["duration"],
             "seed": studio["seed"],
         }
+    except NIRMappingRefused:
+        raise
     except KeyError as exc:
-        raise NIRMappingRefused(f"the file's Studio metadata lacks the field {exc}") from exc
+        raise NIRMappingRefused("the file's Studio metadata is missing a required field") from exc
+    except (TypeError, ValueError, AttributeError, ArithmeticError) as exc:
+        raise NIRMappingRefused(
+            "the file's Studio metadata has a field with the wrong type"
+        ) from exc
     try:
         spec = resolve_graph(graph)
     except GraphRejected as exc:
         raise NIRMappingRefused(
-            f"the network the file's Studio metadata describes does not validate: {exc}"
+            "the network the file's Studio metadata describes does not validate: "
+            f"{exc.field}: {exc.reason}"
         ) from exc
     rebuilt, _notes = _to_nir_graph(nir, spec, graph)
     if set(rebuilt.nodes) != set(nir_graph.nodes) or sorted(rebuilt.edges) != sorted(
@@ -489,7 +510,9 @@ def _foreign_graph(nir: Any, nir_graph: Any) -> dict[str, Any]:
     try:
         resolve_graph(graph)
     except GraphRejected as exc:
-        raise NIRMappingRefused(f"the imported network does not validate: {exc}") from exc
+        raise NIRMappingRefused(
+            f"the imported network does not validate: {exc.field}: {exc.reason}"
+        ) from exc
     return {"graph": graph, "origin": "foreign", "notes": notes}
 
 
