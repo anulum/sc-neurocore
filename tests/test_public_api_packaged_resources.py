@@ -8,6 +8,12 @@
 
 """Verify the public wheel resource boundary and HDL resource helpers."""
 
+from fnmatch import fnmatchcase
+from pathlib import Path
+import subprocess
+import sys
+from zipfile import ZipFile
+
 import pytest
 
 from tests.public_api_support import _package_root, _project_metadata
@@ -113,9 +119,63 @@ def test_hdl_resource_helper_contract_and_missing_packaged_file(
         hdl_resources.baseline_primitive_path("sc_lif_neuron.v")
 
 
-def test_base_wheel_does_not_package_polyglot_research_sources() -> None:
-    """The base wheel omits research-only polyglot source trees."""
-    package_data = _project_metadata()["tool"]["setuptools"]["package-data"]["sc_neurocore"]
-
-    forbidden_prefixes = ("accel/julia/", "accel/go/", "accel/mojo/")
-    assert not any(item.startswith(forbidden_prefixes) for item in package_data)
+def test_base_wheel_does_not_package_polyglot_research_sources(tmp_path: Path) -> None:
+    """Build the public wheel and confine native assets to installed runtime dependencies."""
+    root = Path(__file__).resolve().parents[1]
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--no-deps",
+            "--no-build-isolation",
+            "--wheel-dir",
+            str(tmp_path),
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=120,
+    )
+    wheels = list(tmp_path.glob("sc_neurocore-*.whl"))
+    assert len(wheels) == 1
+    # Installed SHD/dataset loaders and ANN conversion adapters resolve these
+    # resources at runtime. Other neuron/research native trees stay source-only.
+    runtime_assets = (
+        "accel/julia/datasets/*.jl",
+        "accel/julia/conversion/*.jl",
+        "accel/go/go.mod",
+        "accel/go/conversion/*.go",
+        "accel/go/conversion/cshared/*.go",
+        "accel/go/conversion/cshared/*.h",
+        "accel/go/conversion/qcfscshared/*.go",
+        "accel/mojo/kernels/ann_to_snn*.mojo",
+        "accel/mojo/kernels/qcfs.mojo",
+    )
+    required = {
+        "accel/julia/datasets/shd_cli.jl",
+        "accel/julia/conversion/ann_to_snn_native.jl",
+        "accel/go/go.mod",
+        "accel/go/conversion/cshared/main.go",
+        "accel/go/conversion/qcfscshared/main.go",
+        "accel/mojo/kernels/ann_to_snn_native.mojo",
+        "accel/mojo/kernels/qcfs.mojo",
+    }
+    with ZipFile(wheels[0]) as wheel:
+        native = {
+            name.removeprefix("sc_neurocore/")
+            for name in wheel.namelist()
+            if name.startswith(
+                ("sc_neurocore/accel/julia/", "sc_neurocore/accel/go/", "sc_neurocore/accel/mojo/")
+            )
+            and not name.endswith(".py")
+        }
+        assert required <= native
+        for name in native:
+            assert any(fnmatchcase(name, pattern) for pattern in runtime_assets), name
+            assert (
+                wheel.read("sc_neurocore/" + name)
+                == (root / "src/sc_neurocore" / name).read_bytes()
+            )
