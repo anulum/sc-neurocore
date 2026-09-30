@@ -25,7 +25,7 @@
   },
   "overrides": {
     "adm-zip": "0.6.1",
-    "dompurify": "3.4.15",
+    "dompurify": "3.4.16",
     "nanoid": "3.3.19",
     "undici": "7.29.1"
   },

@@ -16,3 +16,5 @@ anyio>=4.14.2
 # PyJWT arrives through mcp and semgrep; 2.13.0 carries ten advisories
 # (GHSA-9j54-fg26-wv3r and others), all first patched in 2.14.0.
 pyjwt>=2.14.0
+# urllib3 2.8 fixes HTTPS-proxy TLS and response-streaming advisories.
+urllib3>=2.8.0,<3
