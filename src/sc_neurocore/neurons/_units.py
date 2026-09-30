@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.exceptions import SCDependencyError
+from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
 
 try:
     import pint
@@ -145,8 +146,14 @@ def validate_quantity_expression(
     label: str,
 ) -> Any:
     require_pint()
+    # The same AST allowlist as every other equation eval site, applied here
+    # at the sink: the strict-units check runs in EquationNeuron's constructor
+    # before the neuron's own validator is built, so without this an
+    # expression reached eval unvalidated (CodeQL py/code-injection #483).
+    ExpressionSafetyValidator().validate(expr)
     code = compile(expr, f"<units:{label}>", "eval")
     try:
+        # Bandit B307 justification: AST-allowlisted just above.
         result = eval(code, {"__builtins__": {}}, env)  # nosec B307
     except NameError as exc:
         raise ValueError(f"Unknown symbol in {label}: {exc}") from exc

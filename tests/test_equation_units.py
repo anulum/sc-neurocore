@@ -230,3 +230,34 @@ def test_equation_to_fpga_rejects_strict_unit_mismatch_before_rtl_emit() -> None
             data_width=32,
             fraction=24,
         )
+
+
+def test_strict_units_validate_an_expression_before_evaluating_it() -> None:
+    # The strict-units check evaluated each expression before the neuron's AST
+    # allowlist existed; a dunder chain reached eval and only failed later on
+    # its dimensions. It is now refused by the allowlist itself.
+    with pytest.raises(ValueError, match="Dunder attribute access '__class__' blocked"):
+        from_equations(
+            "dv/dt = (-(v - E_L)).__class__ / tau_m",
+            threshold="v > v_threshold",
+            reset="v = v_reset",
+            params={"E_L": -65.0 * UNIT_REGISTRY.millivolt, "tau_m": 10.0 * UNIT_REGISTRY.ms},
+            init={"v": -65.0 * UNIT_REGISTRY.millivolt},
+            constants={
+                "v_threshold": -50.0 * UNIT_REGISTRY.millivolt,
+                "v_reset": -65.0 * UNIT_REGISTRY.millivolt,
+            },
+            dt=0.1 * UNIT_REGISTRY.millisecond,
+            units="strict",
+        )
+
+
+@pytest.mark.parametrize(
+    "expression",
+    ["().__class__", "__import__('os')", "exec('1')", "[x for x in (1,)]", "lambda: 1"],
+)
+def test_the_quantity_sink_refuses_what_the_allowlist_refuses(expression: str) -> None:
+    from sc_neurocore.neurons._units import build_quantity_namespace, validate_quantity_expression
+
+    with pytest.raises(ValueError, match="Unsafe AST node|Blocked function|Dunder attribute"):
+        validate_quantity_expression(expression, build_quantity_namespace(), label="probe")
