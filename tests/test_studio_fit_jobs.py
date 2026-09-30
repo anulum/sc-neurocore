@@ -190,3 +190,33 @@ def test_document_byte_admission_and_worker_operation_refusal() -> None:
         result = manager.wait(submitted.job_id, timeout_seconds=20.0)
         assert result.status == "failed"
         assert result.result is None
+
+
+def test_malformed_lab_documents_are_refused_without_exception_text() -> None:
+    """Every laboratory route answers a structural fault with 422 and one fixed sentence."""
+    from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT
+    from tests.test_fitting_cohorts import cohort
+
+    document = cohort().to_public_dict()
+    requests: list[tuple[str, dict[str, Any]]] = [
+        ("/api/fits/replay/jobs", {"result": {}}),
+        ("/api/fits/replay/jobs", {"result": {"problem": 5}}),
+        ("/api/cohorts/jobs", {"cohort": {**document, "samples": 5}}),
+        ("/api/cohorts/replay", {"result": {}}),
+        ("/api/cohorts/replay", {"result": {"cohort": 5}}),
+        ("/api/cohorts/replay", {"result": {"cohort": document}}),
+    ]
+    app = create_app()
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        before = app.state.studio_job_manager.status().to_public_dict()
+        for route, body in requests:
+            response = client.post(route, json=body)
+            assert response.status_code == 422, (route, response.text)
+            assert response.json()["detail"] == {
+                "reason": "invalid_laboratory_request",
+                "message": MALFORMED_DOCUMENT,
+            }, route
+            for leaked in ("'problem'", "'cohort'", "'trials'", "int", "attribute"):
+                assert leaked not in response.text, (route, leaked)
+        after = app.state.studio_job_manager.status().to_public_dict()
+        assert after == before

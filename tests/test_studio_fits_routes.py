@@ -123,3 +123,52 @@ def test_a_result_that_is_not_a_fit_cannot_be_replayed(client: TestClient) -> No
     response = client.post("/api/fits/replay", json={"result": {"problem": {}}})
     assert response.status_code == 422
     assert response.json()["detail"]["message"].startswith("the result cannot be replayed")
+
+
+def _exported_problem() -> dict[str, Any]:
+    """Return a complete exported fit problem, the part a replay reads first."""
+    from sc_neurocore.studio.api.fits import fit_problem
+
+    return fit_problem(FitRequest.model_validate(_body())).to_public_dict()
+
+
+@pytest.mark.parametrize(
+    "result",
+    [
+        pytest.param({}, id="problem-missing"),
+        pytest.param({"problem": 5, "provenance": {}}, id="problem-integer"),
+        pytest.param({"problem": "lif", "provenance": {}}, id="problem-string"),
+        pytest.param("exported", id="provenance-missing"),
+        pytest.param("provenance-list", id="provenance-list"),
+    ],
+)
+def test_a_malformed_replay_names_no_key_or_python_type(client: TestClient, result: Any) -> None:
+    """Structural faults are refused with one sentence; the server never errors."""
+    from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT
+
+    if result == "exported":
+        result = {"problem": _exported_problem()}
+    elif result == "provenance-list":
+        result = {"problem": _exported_problem(), "provenance": []}
+    response = client.post("/api/fits/replay", json={"result": result})
+    assert response.status_code == 422
+    assert response.json()["detail"] == {
+        "reason": "invalid_fit",
+        "message": f"the result cannot be replayed: {MALFORMED_DOCUMENT}",
+    }
+    for leaked in ("'problem'", "'provenance'", "int", "str", "list", "attribute"):
+        assert leaked not in response.text
+
+
+def test_refusal_message_keeps_authored_reasons_and_hides_structural_faults() -> None:
+    """Only ``ValueError`` text is authored for callers; lookup and type faults are not."""
+    from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT, refusal_message
+
+    assert refusal_message(ValueError("gain is not a parameter")) == "gain is not a parameter"
+    for fault in (
+        KeyError("secret_key"),
+        IndexError("list index out of range"),
+        TypeError("'int' object is not subscriptable"),
+        AttributeError("'int' object has no attribute 'get'"),
+    ):
+        assert refusal_message(fault) == MALFORMED_DOCUMENT

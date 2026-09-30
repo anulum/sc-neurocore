@@ -22,11 +22,13 @@ from sc_neurocore.fitting.cohort_run import replay_cohort, run_cohort
 from sc_neurocore.fitting.fit import fit_parameters
 from sc_neurocore.fitting.problem import canonical_sha256, problem_from_dict
 from sc_neurocore.studio.api.fits import (
+    LABORATORY_REQUEST_ERRORS,
     FitRequest,
     ReplayRequest,
     estimated_fit_steps,
     fit_problem,
     fit_replay_request,
+    refusal_message,
 )
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
@@ -59,7 +61,9 @@ def _actor(request: Request) -> str:
 
 
 def _error(exc: Exception) -> HTTPException:
-    return HTTPException(422, detail={"reason": "invalid_laboratory_request", "message": str(exc)})
+    return HTTPException(
+        422, detail={"reason": "invalid_laboratory_request", "message": refusal_message(exc)}
+    )
 
 
 def _bounded(document: Mapping[str, Any]) -> None:
@@ -158,7 +162,7 @@ def build_fit_jobs_router(context: StudioApiContext) -> APIRouter:
             if estimated_fit_steps(body) > MAX_JOB_FIT_STEPS:
                 raise ValueError("fit exceeds the background model-step estimate budget")
             problem = fit_problem(body)
-        except (KeyError, TypeError, ValueError) as exc:
+        except LABORATORY_REQUEST_ERRORS as exc:
             raise _error(exc) from exc
         return submit(
             "fit",
@@ -175,7 +179,7 @@ def build_fit_jobs_router(context: StudioApiContext) -> APIRouter:
         """Admit replay under the same optimiser and sample limits as a new fit."""
         try:
             fit = fit_replay_request(body.result)
-        except (KeyError, TypeError, ValueError) as exc:
+        except LABORATORY_REQUEST_ERRORS as exc:
             raise _error(exc) from exc
         if estimated_fit_steps(fit) > MAX_JOB_FIT_STEPS:
             raise _error(ValueError("fit replay exceeds the background model-step estimate budget"))
@@ -186,7 +190,7 @@ def build_fit_jobs_router(context: StudioApiContext) -> APIRouter:
         """Refuse incomplete or over-budget sweeps before submitting a worker."""
         try:
             cohort = cohort_from_dict(body.cohort)
-        except (KeyError, TypeError, ValueError) as exc:
+        except LABORATORY_REQUEST_ERRORS as exc:
             raise _error(exc) from exc
         return submit("cohort", cohort.to_public_dict(), request)
 
@@ -196,7 +200,7 @@ def build_fit_jobs_router(context: StudioApiContext) -> APIRouter:
         try:
             _bounded(body.result)
             return replay_cohort(body.result)
-        except (KeyError, TypeError, ValueError) as exc:
+        except LABORATORY_REQUEST_ERRORS as exc:
             raise _error(exc) from exc
 
     @router.post("/api/cohorts/measurements")

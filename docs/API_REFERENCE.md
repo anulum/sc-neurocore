@@ -38773,6 +38773,21 @@ generation, plus the initial population; the local polish and the
 identifiability differences add a few evaluations per parameter, counted
 here as one more generation.
 
+### Function `refusal_message(exc)`
+Return the text a refused laboratory request may show its caller.
+
+Parameters
+----------
+exc:
+    The exception that stopped the request.
+
+Returns
+-------
+str
+    The authored message of a ``ValueError``, or :data:`MALFORMED_DOCUMENT`
+    for a structural fault, whose text would echo the caller's key names or
+    Python type details.
+
 ### Function `fit_problem(request)`
 Validate a request into the replayable scientific fitting problem.
 

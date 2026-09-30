@@ -117,6 +117,36 @@ def _schema(request: FitRequest) -> dict[str, Any]:
         raise ValueError(f"{request.catalogue_model} has no canonical schema to fit") from exc
 
 
+MALFORMED_DOCUMENT = "a required field is missing or has the wrong JSON type"
+"""Caller-safe refusal for a structural fault in a submitted document."""
+
+MALFORMED_DOCUMENT_ERRORS: tuple[type[Exception], ...] = (LookupError, TypeError, AttributeError)
+"""Faults raised while reading a caller's document; their text names keys or Python types."""
+
+LABORATORY_REQUEST_ERRORS: tuple[type[Exception], ...] = (*MALFORMED_DOCUMENT_ERRORS, ValueError)
+"""Every fault a laboratory route refuses with HTTP 422 instead of a server error."""
+
+
+def refusal_message(exc: Exception) -> str:
+    """Return the text a refused laboratory request may show its caller.
+
+    Parameters
+    ----------
+    exc:
+        The exception that stopped the request.
+
+    Returns
+    -------
+    str
+        The authored message of a ``ValueError``, or :data:`MALFORMED_DOCUMENT`
+        for a structural fault, whose text would echo the caller's key names or
+        Python type details.
+    """
+    if isinstance(exc, MALFORMED_DOCUMENT_ERRORS):
+        return MALFORMED_DOCUMENT
+    return str(exc)
+
+
 def _refuse(message: str) -> HTTPException:
     return HTTPException(status_code=422, detail={"reason": "invalid_fit", "message": message})
 
@@ -212,8 +242,8 @@ def build_fits_router(context: StudioApiContext) -> APIRouter:
                     "replay exceeds the synchronous estimate budget; use /api/fits/replay/jobs"
                 )
             return replay_fit(request.result)
-        except (KeyError, TypeError, ValueError) as exc:
-            raise _refuse(f"the result cannot be replayed: {exc}") from exc
+        except LABORATORY_REQUEST_ERRORS as exc:
+            raise _refuse(f"the result cannot be replayed: {refusal_message(exc)}") from exc
 
     from sc_neurocore.studio.api.fit_jobs import build_fit_jobs_router
 
@@ -223,8 +253,12 @@ def build_fits_router(context: StudioApiContext) -> APIRouter:
 
 __all__ = [
     "FitRequest",
+    "LABORATORY_REQUEST_ERRORS",
+    "MALFORMED_DOCUMENT",
+    "MALFORMED_DOCUMENT_ERRORS",
     "MAX_SYNC_FIT_STEPS",
     "ReplayRequest",
     "build_fits_router",
     "estimated_fit_steps",
+    "refusal_message",
 ]
