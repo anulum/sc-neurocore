@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from tests.julia_runtimes import require_julia_runtime
 
 
 _PROBE = r"""
@@ -138,7 +139,7 @@ def test_julia_public_replay_and_owned_buffers_in_locked_runtime(
 ) -> None:
     """Run actual JuliaCall with a cached, version-matched offline graph and the complete public corpus."""
     root = Path(__file__).resolve().parents[1]
-    binaries = sorted((Path.home() / ".julia/juliaup").glob(f"julia-{runtime}.*/bin/julia"))
+    binaries = [require_julia_runtime(runtime)]
     assert binaries, f"Julia {runtime} native runtime required"
     project = tmp_path / "project"
     project.mkdir()

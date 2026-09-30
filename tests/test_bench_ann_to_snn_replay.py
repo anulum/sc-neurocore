@@ -21,6 +21,7 @@ import pytest
 from tests.test_accel_mojo_if_abi import library as mojo_library
 from tests.test_conversion_go_native import library as go_library
 from tests.test_conversion_native_replay import library as rust_library
+from tests.julia_runtimes import require_julia_runtime
 
 __all__ = ["ROOT", "SCRIPT", "environment", "rust_library", "go_library", "mojo_library"]
 
@@ -36,7 +37,7 @@ def environment(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> dict[str, str]:
     """Configure actual compiled providers and an owned matching offline Julia project."""
-    executables = sorted((Path.home() / ".julia/juliaup").glob("julia-1.11.*/bin/julia"))
+    executables = [require_julia_runtime("1.11")]
     assert executables, "installed Julia required"
     project = tmp_path_factory.mktemp("comparison-julia")
     version = importlib.metadata.version("juliacall")

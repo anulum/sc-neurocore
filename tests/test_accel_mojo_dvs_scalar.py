@@ -16,6 +16,7 @@ import subprocess
 
 import numpy as np
 import pytest
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 DecodeScalar = Callable[[int, int, int, int, int, int, int], int]
@@ -42,23 +43,25 @@ def native(tmp_path_factory: pytest.TempPathFactory) -> DecodeScalar:
     )
     path = directory / "libdvs_scalar.so"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            str(root / "src/sc_neurocore/accel/mojo/kernels/dvs_scalar.mojo"),
-            "--emit",
-            "shared-lib",
-            "--Werror",
-            "--diagnose-missing-doc-strings",
-            "--fp-mode",
-            "contract=off",
-            "-j",
-            "2",
-            "-Xlinker",
-            str(object),
-            "-o",
-            str(path),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                str(root / "src/sc_neurocore/accel/mojo/kernels/dvs_scalar.mojo"),
+                "--emit",
+                "shared-lib",
+                "--Werror",
+                "--diagnose-missing-doc-strings",
+                "--fp-mode",
+                "contract=off",
+                "-j",
+                "2",
+                "-Xlinker",
+                str(object),
+                "-o",
+                str(path),
+            ]
+        ),
         check=True,
         capture_output=True,
         timeout=120,

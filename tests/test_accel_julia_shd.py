@@ -23,6 +23,7 @@ from sc_neurocore.accel.shd_recordings import read_shd_recording
 from sc_neurocore.datasets.event_samples import read_event_sample
 from sc_neurocore.datasets.manifest import SampleRecord
 from tests.test_accel_go_shd_abi import recording_file as recording_file
+from tests.julia_runtimes import require_julia_runtime
 
 
 @pytest.mark.parametrize("channel", ["1.11", "release"])
@@ -36,8 +37,7 @@ def test_julia_shd_direct_cli_preserves_selected_row_and_float16_widening(
     )
     result = subprocess.run(
         [
-            "julia",
-            f"+{channel}",
+            str(require_julia_runtime(channel)),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",
@@ -69,8 +69,7 @@ def test_julia_shd_cli_refuses_index_and_budget_without_partial_output(
     )
     result = subprocess.run(
         [
-            "julia",
-            "+1.11",
+            str(require_julia_runtime("1.11")),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",
@@ -108,8 +107,7 @@ def test_julia_shd_cli_refuses_real_hdf5_format_damage(recording_file: Path, dam
     )
     result = subprocess.run(
         [
-            "julia",
-            "+1.11",
+            str(require_julia_runtime("1.11")),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",
@@ -130,8 +128,7 @@ def test_public_julia_shd_return_type_is_inferred(recording_file: Path) -> None:
     kernel = Path(__file__).resolve().parents[1] / "src/sc_neurocore/accel/julia/datasets/shd.jl"
     subprocess.run(
         [
-            "julia",
-            "+1.11",
+            str(require_julia_runtime("1.11")),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",
@@ -151,8 +148,7 @@ def julia_shd_executable() -> Path:
     """Resolve an already-installed Julia executable, avoiding Juliaup in runtime reads."""
     path = subprocess.check_output(
         [
-            "julia",
-            "+1.11",
+            str(require_julia_runtime("1.11")),
             "--startup-file=no",
             "-e",
             "print(joinpath(Sys.BINDIR, Base.julia_exename()))",

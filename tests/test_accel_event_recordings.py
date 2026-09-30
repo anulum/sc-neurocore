@@ -24,6 +24,7 @@ from sc_neurocore.datasets.encoders import EventBinning
 from sc_neurocore.datasets.event_samples import read_event_sample
 from sc_neurocore.datasets.manifest import build_manifest
 from tests.event_dataset_support import nmnist_event_bytes, write_nmnist
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 @pytest.fixture(scope="module")
@@ -71,18 +72,20 @@ def mojo_recording_library(tmp_path_factory: pytest.TempPathFactory) -> Path:
     root = Path(__file__).resolve().parents[1]
     output = tmp_path_factory.mktemp("mojo-event-reader") / "libnmnist.so"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--Werror",
-            "--fp-mode",
-            "contract=off",
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(output),
-            str(root / "src/sc_neurocore/accel/mojo/kernels/nmnist.mojo"),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--Werror",
+                "--fp-mode",
+                "contract=off",
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(output),
+                str(root / "src/sc_neurocore/accel/mojo/kernels/nmnist.mojo"),
+            ]
+        ),
         check=True,
         capture_output=True,
         timeout=120,

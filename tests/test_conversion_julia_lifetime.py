@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from tests.julia_runtimes import require_julia_runtime
 
 _PROBE = r"""
 import atexit
@@ -66,7 +67,7 @@ def test_stored_public_julia_callbacks_refuse_after_actual_shutdown(
 ) -> None:
     """Use complete live C metadata and genuine managed runtime exit, without synthetic providers."""
     root = Path(__file__).resolve().parents[1]
-    binaries = sorted((Path.home() / ".julia/juliaup").glob(f"julia-{runtime}.*/bin/julia"))
+    binaries = [require_julia_runtime(runtime)]
     assert binaries, f"Julia {runtime} native runtime required"
     project = tmp_path / "project"
     project.mkdir()

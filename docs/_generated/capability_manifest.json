@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5152
+    "test_files": 5153
   },
   "documentation": {
     "public_pages": [
@@ -3519,6 +3519,7 @@
       "tests/jax_adapter_fallback_contracts_support.py",
       "tests/jax_backend_support.py",
       "tests/julia_requirement.py",
+      "tests/julia_runtimes.py",
       "tests/lapicque_backends_support.py",
       "tests/layers/fusion_support.py",
       "tests/layers/sc_conv_layer_support.py",

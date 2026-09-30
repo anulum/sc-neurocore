@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from tests.julia_runtimes import require_julia_runtime
 
 _PROBE = r"""
 import os
@@ -71,7 +72,7 @@ def julia_environment(
 ) -> tuple[dict[str, str], str]:
     """Resolve a real version-matched project once per installed runtime, exclusively offline."""
     runtime = cast(str, request.param)
-    binaries = sorted((Path.home() / ".julia/juliaup").glob(f"julia-{runtime}.*/bin/julia"))
+    binaries = [require_julia_runtime(runtime)]
     assert binaries, f"Julia {runtime} native runtime required"
     project = tmp_path_factory.mktemp(f"julia-startup-{runtime}")
     version = importlib.metadata.version("juliacall")

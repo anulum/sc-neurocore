@@ -17,6 +17,7 @@ import pytest
 
 from sc_neurocore.conversion import ConvertedSNN
 from sc_neurocore.conversion.if_parameters import OutputMode
+from tests.julia_runtimes import require_julia_runtime
 
 
 def values(array: npt.NDArray[np.float64]) -> str:
@@ -31,7 +32,7 @@ def values(array: npt.NDArray[np.float64]) -> str:
 @pytest.mark.parametrize("runtime", ["1.11", "1.13"])
 def test_julia_c_callbacks_complete_buffers_and_raw_refusal(tmp_path: Path, runtime: str) -> None:
     """Compile actual C callbacks in each native runtime, retain owners across GC, and compare all bits."""
-    binaries = sorted((Path.home() / ".julia/juliaup").glob(f"julia-{runtime}.*/bin/julia"))
+    binaries = [require_julia_runtime(runtime)]
     assert binaries, f"Julia {runtime} native runtime required"
     root = Path(__file__).resolve().parents[1]
     api = root / "src/sc_neurocore/accel/julia/conversion/ann_to_snn_native.jl"

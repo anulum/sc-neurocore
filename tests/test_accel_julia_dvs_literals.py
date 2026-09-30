@@ -18,6 +18,7 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel.dvs_recordings import read_dvs_recording
+from tests.julia_runtimes import require_julia_runtime
 
 
 def recording(directory: Path, index: int, header: str, payload: bytes) -> Path:
@@ -225,8 +226,7 @@ main(ARGS[2:end])
     )
     result = subprocess.run(
         [
-            "julia",
-            f"+{channel}",
+            str(require_julia_runtime(channel)),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",

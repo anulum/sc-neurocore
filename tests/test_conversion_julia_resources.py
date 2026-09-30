@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from tests.julia_runtimes import require_julia_runtime
 
 _PROBE = r"""
 import gc
@@ -77,7 +78,7 @@ if measurement is not None:
 def test_actual_julia_allocation_failure_preserves_inputs_and_recovers(tmp_path: Path) -> None:
     """Limit only a fresh child after Julia warmup and exercise real native refusal and recovery."""
     root = Path(__file__).resolve().parents[1]
-    executables = sorted((Path.home() / ".julia/juliaup").glob("julia-1.11.*/bin/julia"))
+    executables = [require_julia_runtime("1.11")]
     assert executables, "installed Julia 1.11 runtime required"
     project = tmp_path / "project"
     project.mkdir()

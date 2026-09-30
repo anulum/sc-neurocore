@@ -10,6 +10,7 @@
 
 import subprocess
 from pathlib import Path
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 def test_mojo_native_admission_ownership_and_overflow(tmp_path: Path) -> None:
@@ -143,21 +144,23 @@ def main() raises:
     caller.write_text("\n".join(source))
     executable = tmp_path / "admission"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            str(caller),
-            "-I",
-            str(kernels),
-            "--Werror",
-            "--diagnose-missing-doc-strings",
-            "--fp-mode",
-            "contract=off",
-            "-j",
-            "2",
-            "-o",
-            str(executable),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                str(caller),
+                "-I",
+                str(kernels),
+                "--Werror",
+                "--diagnose-missing-doc-strings",
+                "--fp-mode",
+                "contract=off",
+                "-j",
+                "2",
+                "-o",
+                str(executable),
+            ]
+        ),
         capture_output=True,
         check=True,
         timeout=120,

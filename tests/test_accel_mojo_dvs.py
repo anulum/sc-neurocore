@@ -17,6 +17,7 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel.dvs_recordings import read_dvs_recording
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 @pytest.fixture(scope="module")
@@ -40,21 +41,23 @@ def mojo_dvs_executable(tmp_path_factory: pytest.TempPathFactory) -> Path:
     )
     executable = directory / "dvs-reader"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            str(root / "src/sc_neurocore/accel/mojo/kernels/dvs_cli.mojo"),
-            "--Werror",
-            "--diagnose-missing-doc-strings",
-            "--fp-mode",
-            "contract=off",
-            "-j",
-            "2",
-            "-Xlinker",
-            str(object),
-            "-o",
-            str(executable),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                str(root / "src/sc_neurocore/accel/mojo/kernels/dvs_cli.mojo"),
+                "--Werror",
+                "--diagnose-missing-doc-strings",
+                "--fp-mode",
+                "contract=off",
+                "-j",
+                "2",
+                "-Xlinker",
+                str(object),
+                "-o",
+                str(executable),
+            ]
+        ),
         check=True,
         capture_output=True,
         timeout=120,

@@ -22,6 +22,7 @@ from sc_neurocore.datasets.encoders import EventBinning
 from sc_neurocore.datasets.event_samples import read_event_sample
 from sc_neurocore.datasets.manifest import build_manifest
 from tests.event_dataset_support import nmnist_event_bytes, write_nmnist
+from tests.julia_runtimes import require_julia_runtime
 
 
 @pytest.mark.parametrize("channel", ["1.11", "release"])
@@ -34,8 +35,7 @@ def test_julia_file_decoder_matches_numpy(tmp_path: Path, channel: str) -> None:
     kernel = Path(__file__).resolve().parents[1] / "src/sc_neurocore/accel/julia/datasets/nmnist.jl"
     subprocess.run(
         [
-            "julia",
-            f"+{channel}",
+            str(require_julia_runtime(channel)),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",

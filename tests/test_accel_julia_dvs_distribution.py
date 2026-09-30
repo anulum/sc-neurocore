@@ -32,8 +32,17 @@ def dvs_wheel(
 ) -> Path:
     """Build direct and source-distribution wheels from current sources and native scripts."""
     root = Path(__file__).resolve().parents[1]
-    inputs = list((root / "src").rglob("*.py"))
-    inputs.extend((root / "src/sc_neurocore/accel/julia/datasets").glob("*.jl"))
+    # Tracked sources only, as an sdist carries: a walk of src/ also copied
+    # ignored virtual environments (accel/go/.venv holds a whole Go toolchain
+    # whose read-only .py files made the second build's copy fail).
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z", "--", "src/*.py", "src/sc_neurocore/accel/julia/datasets/*.jl"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    inputs = [root / name for name in tracked.split("\0") if name]
     for source in inputs:
         destination = distribution_source / source.relative_to(root)
         destination.parent.mkdir(parents=True, exist_ok=True)

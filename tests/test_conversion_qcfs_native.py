@@ -28,6 +28,8 @@ import torch
 from sc_neurocore.conversion import qcfs_backward, qcfs_forward
 from sc_neurocore.conversion.qcfs import QCFSActivation
 from sc_neurocore.conversion.qcfs_native import load_qcfs_library
+from tests.julia_runtimes import require_julia_runtime
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 ROOT = Path(__file__).resolve().parents[1]
 ACCEL = ROOT / "src/sc_neurocore/accel"
@@ -82,21 +84,23 @@ def qcfs_libraries(accel: Path, workspace: Path) -> dict[str, Path]:
     )
     kernels = accel / "mojo/kernels"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--fp-mode",
-            "contract=off",
-            "--diagnose-missing-doc-strings",
-            "--Werror",
-            "-I",
-            str(kernels),
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(workspace / "mojo.so"),
-            str(kernels / "qcfs.mojo"),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--fp-mode",
+                "contract=off",
+                "--diagnose-missing-doc-strings",
+                "--Werror",
+                "-I",
+                str(kernels),
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(workspace / "mojo.so"),
+                str(kernels / "qcfs.mojo"),
+            ]
+        ),
         capture_output=True,
         check=True,
         timeout=300,
@@ -113,7 +117,7 @@ def qcfs_environment(tmp_path_factory: pytest.TempPathFactory) -> dict[str, str]
     """Configure the three compiled libraries and an owned offline Julia project."""
     workspace = tmp_path_factory.mktemp("qcfs-native")
     libraries = qcfs_libraries(ACCEL, workspace)
-    executables = sorted((Path.home() / ".julia/juliaup").glob("julia-1.11.*/bin/julia"))
+    executables = [require_julia_runtime("1.11")]
     assert executables, "installed Julia required"
     project = workspace / "julia"
     project.mkdir()

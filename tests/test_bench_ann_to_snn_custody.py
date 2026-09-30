@@ -27,6 +27,7 @@ from tests.test_bench_ann_to_snn_replay import (
     go_library as go_library,
     mojo_library as mojo_library,
 )
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 def test_fused_actual_mojo_library_refuses_full_comparison_and_preserves_report(
@@ -37,19 +38,21 @@ def test_fused_actual_mojo_library_refuses_full_comparison_and_preserves_report(
     kernels = ROOT / "src/sc_neurocore/accel/mojo/kernels"
     library = tmp_path / "fused.so"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--Werror",
-            "--diagnose-missing-doc-strings",
-            "-I",
-            str(kernels),
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(library),
-            str(kernels / "ann_to_snn_native.mojo"),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--Werror",
+                "--diagnose-missing-doc-strings",
+                "-I",
+                str(kernels),
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(library),
+                str(kernels / "ann_to_snn_native.mojo"),
+            ]
+        ),
         capture_output=True,
         check=True,
         timeout=120,

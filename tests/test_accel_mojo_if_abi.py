@@ -21,6 +21,7 @@ from tests.test_accel_go_if_abi import (
 from tests.test_accel_go_if_abi import (
     test_pinned_complete_result_buffers_and_caller_custody as complete_buffer_contract,
 )
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 @pytest.fixture(scope="module")
@@ -30,21 +31,23 @@ def library(tmp_path_factory: pytest.TempPathFactory) -> Path:
     kernels = root / "src/sc_neurocore/accel/mojo/kernels"
     target = tmp_path_factory.mktemp("mojo-if-abi") / "if-replay.so"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--fp-mode",
-            "contract=off",
-            "--diagnose-missing-doc-strings",
-            "--Werror",
-            "-I",
-            str(kernels),
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(target),
-            str(kernels / "ann_to_snn_native.mojo"),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--fp-mode",
+                "contract=off",
+                "--diagnose-missing-doc-strings",
+                "--Werror",
+                "-I",
+                str(kernels),
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(target),
+                str(kernels / "ann_to_snn_native.mojo"),
+            ]
+        ),
         capture_output=True,
         check=True,
         timeout=120,

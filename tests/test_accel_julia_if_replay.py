@@ -17,6 +17,7 @@ import pytest
 
 from sc_neurocore.conversion import ConvertedSNN
 from sc_neurocore.conversion.if_parameters import OutputMode
+from tests.julia_runtimes import require_julia_runtime
 
 
 def _julia_values(values: npt.NDArray[np.float64]) -> str:
@@ -27,7 +28,7 @@ def _julia_values(values: npt.NDArray[np.float64]) -> str:
 @pytest.mark.parametrize("runtime", ["1.11", "1.13"])
 def test_native_julia_complete_replay_parity_and_admission(tmp_path: Path, runtime: str) -> None:
     """Match every emitted bit across mixed preload, continuation, signed and empty replay."""
-    binaries = sorted((Path.home() / ".julia/juliaup").glob(f"julia-{runtime}.*/bin/julia"))
+    binaries = [require_julia_runtime(runtime)]
     assert binaries, f"Julia {runtime} native runtime required"
     api = (
         Path(__file__).resolve().parents[1]

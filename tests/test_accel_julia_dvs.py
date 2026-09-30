@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.accel.dvs_recordings import read_dvs_recording
+from tests.julia_runtimes import require_julia_runtime
 
 
 @pytest.mark.parametrize("channel", ["1.11", "release"])
@@ -96,8 +97,7 @@ main(ARGS[2:end])
     )
     result = subprocess.run(
         [
-            "julia",
-            f"+{channel}",
+            str(require_julia_runtime(channel)),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",
@@ -146,8 +146,7 @@ def test_julia_native_production_cli_refusals_and_frame(
     cli = Path(__file__).resolve().parents[1] / "src/sc_neurocore/accel/julia/datasets/dvs_cli.jl"
     result = subprocess.run(
         [
-            "julia",
-            f"+{channel}",
+            str(require_julia_runtime(channel)),
             "--startup-file=no",
             "--check-bounds=yes",
             "--depwarn=error",

@@ -41,6 +41,7 @@ from tests.test_studio_distribution import (
     distribution_source,
     installation_environment,
 )
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 __all__ = [
     "comparison",
@@ -189,21 +190,23 @@ def native_libraries(accel: Path, workspace: Path) -> dict[str, Path]:
     )
     kernels = accel / "mojo/kernels"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--fp-mode",
-            "contract=off",
-            "--diagnose-missing-doc-strings",
-            "--Werror",
-            "-I",
-            str(kernels),
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(workspace / "mojo.so"),
-            str(kernels / "ann_to_snn_native.mojo"),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--fp-mode",
+                "contract=off",
+                "--diagnose-missing-doc-strings",
+                "--Werror",
+                "-I",
+                str(kernels),
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(workspace / "mojo.so"),
+                str(kernels / "ann_to_snn_native.mojo"),
+            ]
+        ),
         capture_output=True,
         check=True,
         timeout=300,

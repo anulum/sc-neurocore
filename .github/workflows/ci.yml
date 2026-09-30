@@ -200,14 +200,41 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
+      # The Julia native-parity tests run each program on 1.11 and on the
+      # current release (tests/julia_runtimes.py). They found both only through
+      # Juliaup (`julia +1.11`), which hosted runners lack, so every one failed
+      # here. The release is installed first so that 1.11.9 below stays first on
+      # PATH for juliacall; the tests reach 1.13 through the variable only.
+      - id: julia-release
+        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        with:
+          version: "1.13"
+          show-versioninfo: "never"
+
       # juliacall 0.9.x currently constrains Julia to 1.10.3-1.11. GitHub's
       # hosted image also exposes Julia 1.12, which juliapkg rejects before
       # attempting an uncontrolled fallback download. Install the exact
       # compatible runtime once and put it first on PATH for every matrix leg.
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - id: julia-1-11
+        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
         with:
           version: "1.11.9"
           show-versioninfo: "never"
+
+      - name: Pin the Julia runtimes of the native-parity tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          release="${{ steps.julia-release.outputs.julia-bindir }}/julia"
+          lts="${{ steps.julia-1-11.outputs.julia-bindir }}/julia"
+          test -x "$release" && test -x "$lts"
+          case "$("$release" --startup-file=no -e 'print(VERSION)')" in 1.13.*) ;; *) exit 1 ;; esac
+          test "$("$lts" --startup-file=no -e 'print(VERSION)')" = "1.11.9"
+          {
+            echo "SC_NEUROCORE_TEST_JULIA_1_11=$lts"
+            echo "SC_NEUROCORE_TEST_JULIA_1_13=$release"
+            echo "SC_NEUROCORE_TEST_JULIA_RELEASE=$release"
+          } >> "$GITHUB_ENV"
 
       # Go toolchain for the c-shared accel backends. Must match accel/go/go.mod's
       # `go 1.27.1` (and release.yml / security-scanners.yml). A mismatched
@@ -251,7 +278,9 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys z3
+          # libhdf5-dev: the SHD readers link HDF5 (Go via `pkg-config hdf5`
+          # under -tags=hdf5, Mojo by loading libhdf5_serial.so).
+          sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys z3 libhdf5-dev pkg-config
           python -m pip install --require-hashes -r requirements/sby.txt
           # Build SBY from a PINNED SOURCE COMMIT, not an unverified release
           # archive. The GitHub-generated tarball carried no upstream
@@ -405,6 +434,17 @@ jobs:
             julia --startup-file=no \
               --project=src/sc_neurocore/accel/julia/sc_compte_wm_network \
               -e 'using Pkg; Pkg.instantiate()'
+
+      # The native-safety crate tests build with `cargo build --offline
+      # --locked`; fetch their locked dependencies once so offline means
+      # "no network during the test", not "nothing to build with".
+      - name: Fetch the native safety crates' locked dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          for manifest in src/sc_neurocore/accel/rust/safety/*_native/Cargo.toml; do
+            cargo fetch --locked --manifest-path "$manifest"
+          done
 
       - name: Test + coverage
         shell: bash

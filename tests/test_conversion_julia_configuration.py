@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.conversion import ConvertedSNN
+from tests.julia_runtimes import require_julia_runtime
 
 
 @pytest.mark.parametrize(
@@ -39,7 +40,7 @@ def test_public_julia_refuses_unsafe_configuration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, condition: str, message: str
 ) -> None:
     """Refuse invalid operator settings before initializing or resolving Julia packages."""
-    executables = sorted((Path.home() / ".julia/juliaup").glob("julia-1.11.*/bin/julia"))
+    executables = [require_julia_runtime("1.11")]
     assert executables, "installed Julia executable required"
     version = importlib.metadata.version("juliacall")
     project = tmp_path / "project"

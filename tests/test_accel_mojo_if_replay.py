@@ -16,6 +16,7 @@ import numpy.typing as npt
 
 from sc_neurocore.conversion import ConvertedSNN
 from sc_neurocore.conversion.if_parameters import OutputMode
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 def _values(values: npt.NDArray[np.float64]) -> str:
@@ -181,21 +182,23 @@ def check(a: List[Float64], b: List[Float64]) raises:
     caller.write_text("\n".join(source))
     executable = tmp_path / "complete_replay"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            str(caller),
-            "-I",
-            str(kernels),
-            "--Werror",
-            "--diagnose-missing-doc-strings",
-            "--fp-mode",
-            "contract=off",
-            "-j",
-            "2",
-            "-o",
-            str(executable),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                str(caller),
+                "-I",
+                str(kernels),
+                "--Werror",
+                "--diagnose-missing-doc-strings",
+                "--fp-mode",
+                "contract=off",
+                "-j",
+                "2",
+                "-o",
+                str(executable),
+            ]
+        ),
         capture_output=True,
         check=True,
         timeout=120,

@@ -24,6 +24,7 @@ from sc_neurocore.datasets.event_samples import read_event_sample
 from sc_neurocore.datasets.manifest import SampleRecord
 from sc_neurocore.studio.platform.storage_event_worker_configuration import EventWorkerConfiguration
 from tests.test_accel_go_shd_abi import recording_file as recording_file
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 
 @pytest.fixture(scope="module")
@@ -41,18 +42,20 @@ def mojo_shd_reader(tmp_path_factory: pytest.TempPathFactory) -> Path:
     )
     executable = directory / "reader"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--Werror",
-            "--fp-mode",
-            "contract=off",
-            "-I",
-            str(root / "src/sc_neurocore/accel/mojo/kernels"),
-            str(source),
-            "-o",
-            str(executable),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--Werror",
+                "--fp-mode",
+                "contract=off",
+                "-I",
+                str(root / "src/sc_neurocore/accel/mojo/kernels"),
+                str(source),
+                "-o",
+                str(executable),
+            ]
+        ),
         check=True,
         capture_output=True,
         timeout=120,
@@ -151,16 +154,18 @@ def mojo_shd_executable(tmp_path_factory: pytest.TempPathFactory) -> Path:
     root = Path(__file__).resolve().parents[1]
     executable = tmp_path_factory.mktemp("mojo-shd-cli") / "reader"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--Werror",
-            "--fp-mode",
-            "contract=off",
-            str(root / "src/sc_neurocore/accel/mojo/kernels/shd_cli.mojo"),
-            "-o",
-            str(executable),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--Werror",
+                "--fp-mode",
+                "contract=off",
+                str(root / "src/sc_neurocore/accel/mojo/kernels/shd_cli.mojo"),
+                "-o",
+                str(executable),
+            ]
+        ),
         check=True,
         capture_output=True,
         timeout=120,

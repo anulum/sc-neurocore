@@ -20,6 +20,7 @@ from sc_neurocore.datasets.event_samples import read_event_sample
 from sc_neurocore.datasets.manifest import SampleRecord
 from sc_neurocore.studio.platform.storage_event_worker_configuration import EventWorkerConfiguration
 import subprocess
+from tests.julia_runtimes import require_julia_runtime
 
 
 @pytest.fixture(scope="module", params=["1.11", "release"])
@@ -28,8 +29,7 @@ def julia_dvs_executable(request: pytest.FixtureRequest) -> Path:
     channel = str(request.param)
     result = subprocess.check_output(
         [
-            "julia",
-            f"+{channel}",
+            str(require_julia_runtime(channel)),
             "--startup-file=no",
             "-e",
             "print(joinpath(Sys.BINDIR, Base.julia_exename()))",

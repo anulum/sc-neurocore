@@ -367,7 +367,8 @@ ignore_missing_imports = true
 # call/decorator/subclassing checks only, since these bindings have no upstream type stubs.
 # Exception rationale: the archived §1.4 closeout documents the missing upstream stubs.
 [[tool.mypy.overrides]]
-module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*', 'sc_neurocore.quantum_cognition.fs_watcher']
+# torch subclasses: without torch (the CI lint job installs none) the base is Any.
+module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.studio.event_training_data', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*', 'sc_neurocore.quantum_cognition.fs_watcher']
 disallow_subclassing_any = false
 disallow_untyped_decorators = false
 disallow_untyped_calls = false
