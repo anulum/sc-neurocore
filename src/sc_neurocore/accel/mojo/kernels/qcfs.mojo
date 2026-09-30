@@ -220,5 +220,3 @@ def sc_qcfs_backward(
         return 0
     except:
         return -1
-
-

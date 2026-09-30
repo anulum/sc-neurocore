@@ -14,6 +14,8 @@ import (
 	"testing"
 )
 
+// TestBorrowedCoefficientConstructionOwnsCompleteStack checks that a model built from
+// borrowed layer parameters owns every coefficient, so later edits to the source change nothing.
 func TestBorrowedCoefficientConstructionOwnsCompleteStack(t *testing.T) {
 	weights := []float64{1}
 	bias := []float64{0.25}
@@ -40,6 +42,8 @@ func TestBorrowedCoefficientConstructionOwnsCompleteStack(t *testing.T) {
 	}
 }
 
+// TestBorrowedCoefficientConstructorRefusesWithoutModel checks that invalid layer stacks,
+// output modes and budgets are refused without returning a model.
 func TestBorrowedCoefficientConstructorRefusesWithoutModel(t *testing.T) {
 	valid := conversion.LayerParameters{Inputs: 1, Outputs: 1, Weights: []float64{1}, Threshold: 1}
 	cases := []struct {

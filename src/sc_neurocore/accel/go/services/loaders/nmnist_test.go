@@ -16,6 +16,8 @@ import (
 	"testing"
 )
 
+// TestDecodeNMNISTPreservesPublishedFields checks the decoded x, y, polarity and time of
+// published N-MNIST event records, including the 23-bit timestamp.
 func TestDecodeNMNISTPreservesPublishedFields(t *testing.T) {
 	raw := []byte{33, 32, 0x80, 3, 234, 1, 0, 0, 7, 212, 0, 33, 0x7f, 0xff, 0xff}
 	got, err := DecodeNMNIST(raw)
@@ -25,6 +27,8 @@ func TestDecodeNMNISTPreservesPublishedFields(t *testing.T) {
 	}
 }
 
+// TestDecodeNMNISTRefusalPreservesDestination checks that a truncated record is refused
+// with ErrIncompleteNMNIST and leaves the destination buffer untouched.
 func TestDecodeNMNISTRefusalPreservesDestination(t *testing.T) {
 	for _, raw := range [][]byte{{1}, {1, 2, 3, 4}, {0, 0, 0, 0, 0, 1}} {
 		output := []float64{9, 9, 9, 9}
@@ -44,6 +48,8 @@ func TestDecodeNMNISTRefusalPreservesDestination(t *testing.T) {
 	}
 }
 
+// TestLoadNmnistReadsSortedRecordedFiles checks that recordings are read in sorted label
+// and file-name order from the Train directory tree.
 func TestLoadNmnistReadsSortedRecordedFiles(t *testing.T) {
 	root := t.TempDir()
 	for _, label := range []string{"2", "0"} {

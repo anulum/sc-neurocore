@@ -15,6 +15,9 @@ import (
 	"testing"
 )
 
+// TestPublicReplayOwnershipAndContinuation checks that a model owns copies of its
+// coefficients and of the initial state, that the trace does not alias the final state,
+// and that a replay continues from a returned final state.
 func TestPublicReplayOwnershipAndContinuation(t *testing.T) {
 	w, b := []float64{1}, []float64{0.25}
 	layer, err := c.NewDenseLayer(1, 1, w, b, 1, 0.5, 1024)
@@ -49,6 +52,8 @@ func TestPublicReplayOwnershipAndContinuation(t *testing.T) {
 	}
 }
 
+// TestPublicReplayOverflowAtomicityAndSignedClassification checks that an overflowing
+// membrane update is refused with ErrOverflow and no partial result.
 func TestPublicReplayOverflowAtomicityAndSignedClassification(t *testing.T) {
 	maximum := math.MaxFloat64
 	for _, pair := range []struct{ weight, bias, theta, fraction float64 }{{maximum, maximum, 1, 0}, {1, 0, maximum, maximum}} {
@@ -78,6 +83,8 @@ func TestPublicReplayOverflowAtomicityAndSignedClassification(t *testing.T) {
 	}
 }
 
+// TestPublicSignedTraceAndNonFirstClassification checks a linear readout's signed state
+// trace and that classification picks the largest output even when it is not the first.
 func TestPublicSignedTraceAndNonFirstClassification(t *testing.T) {
 	layer, err := c.NewDenseLayer(1, 2, []float64{-2, -1}, nil, 1, 0, 1024)
 	if err != nil {
@@ -100,6 +107,8 @@ func TestPublicSignedTraceAndNonFirstClassification(t *testing.T) {
 	}
 }
 
+// TestPublicConcurrentReplayIsolatesOwnedStates checks that concurrent replays of one
+// model return identical, independently owned results.
 func TestPublicConcurrentReplayIsolatesOwnedStates(t *testing.T) {
 	layer, _ := c.NewDenseLayer(1, 1, []float64{1}, nil, 1, 0, 1024)
 	model, _ := c.NewConvertedSNN([]c.DenseLayer{layer}, c.Spikes, 1024)

@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Converted DVS NPY recording
 
+// Package loaders reads recorded neuromorphic datasets (N-MNIST, SHD, converted DVS)
+// into owned float64 buffers, refusing malformed records instead of guessing.
 package loaders
 
 import (

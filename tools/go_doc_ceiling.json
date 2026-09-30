@@ -3,9 +3,9 @@
   "provenance": {
     "argv": "git ls-files -- '*.go' | go run tools/godoc_coverage/main.go",
     "go": "go version go1.27.1 linux/amd64",
-    "source_sha256": "352fcc9d04727e51d0694f2480f4faa26de8450b"
+    "source_sha256": "2ad4560d58a67ffb26d52139b21a31864ec2622f"
   },
   "schema_version": "sc-neurocore.go-doc-ceiling.v1",
-  "undocumented": 1530,
+  "undocumented": 1529,
   "undocumented_files": 227
 }

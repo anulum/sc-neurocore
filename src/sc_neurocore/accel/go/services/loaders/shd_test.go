@@ -12,6 +12,8 @@ package loaders
 
 import "testing"
 
+// TestReadSHDRecordingRejectsInvalidParameters checks that an empty or NUL-bearing path,
+// a negative index and a negative budget are refused without a recording.
 func TestReadSHDRecordingRejectsInvalidParameters(t *testing.T) {
 	for _, input := range []struct {
 		path          string

@@ -294,7 +294,7 @@ def measure_conversion_loss(
     Raises
     ------
     ValueError
-        Empty, non-finite or mis-shaped inputs, invalid labels, an invalid
+        Empty, non-finite or malformed inputs, invalid labels, an invalid
         batch size or seed, or outputs of different widths.
     """
     if type(batch_size) is not int or batch_size < 1:

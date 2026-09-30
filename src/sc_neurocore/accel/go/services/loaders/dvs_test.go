@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Converted DVS NPY recording
 
+// Package loaders_test exercises the loaders package through its public API only.
 package loaders_test
 
 import (

@@ -15,6 +15,8 @@ import (
 	"testing"
 )
 
+// TestPublicReplayResourceAndDomainRefusals checks the exact working-memory budget a
+// replay needs, with and without a trace, and its refusal one byte below it.
 func TestPublicReplayResourceAndDomainRefusals(t *testing.T) {
 	layer, _ := c.NewDenseLayer(1, 1, []float64{1}, nil, 1, 0, 1024)
 	model, _ := c.NewConvertedSNN([]c.DenseLayer{layer}, c.Spikes, 1024)

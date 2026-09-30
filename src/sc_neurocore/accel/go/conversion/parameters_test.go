@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Go public dense parameter admission
 
+// Package conversion_test exercises the conversion package through its public API only.
 package conversion_test
 
 import (
@@ -14,6 +15,8 @@ import (
 	"testing"
 )
 
+// TestPublicParameterAdmission checks that a dense layer refuses empty shapes, mismatched
+// bias lengths, non-finite coefficients, a non-positive threshold and an exhausted budget.
 func TestPublicParameterAdmission(t *testing.T) {
 	for _, entry := range []struct {
 		inputs, outputs int
