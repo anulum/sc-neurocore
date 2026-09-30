@@ -24,9 +24,15 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
-__all__ = ["julia_runtime", "julia_runtime_variable", "require_julia_runtime"]
+__all__ = [
+    "julia_runtime",
+    "julia_runtime_variable",
+    "juliacall_host_environment",
+    "require_julia_runtime",
+]
 
 
 def julia_runtime_variable(runtime: str) -> str:
@@ -71,3 +77,21 @@ def require_julia_runtime(runtime: str) -> Path:
         "or install it with Juliaup"
     )
     return path
+
+
+def juliacall_host_environment(executable: Path) -> dict[str, str]:
+    """Return what a Python process hosting ``executable`` through juliacall needs.
+
+    Julia 1.13 bundles an OpenSSL whose libssl needs OPENSSL_3.3.0 symbols. A
+    Python that links the system libcrypto (distribution builds and
+    actions/setup-python; not uv's standalone builds, which carry OpenSSL
+    statically) loads an older libcrypto.so.3 first, and Julia's OpenSSL_jll
+    then fails with "version `OPENSSL_3.3.0' not found". Preloading the
+    runtime's own libcrypto makes both use it. Measured: Julia 1.13.0 and
+    1.13.1 fail with the system 3.0.13 preloaded and load with their own.
+    """
+    bundled = executable.resolve().parent.parent / "lib" / "julia" / "libcrypto.so.3"
+    if not sys.platform.startswith("linux") or not bundled.is_file():
+        return {}
+    preload = [str(bundled), *filter(None, os.environ.get("LD_PRELOAD", "").split(":"))]
+    return {"LD_PRELOAD": ":".join(preload)}

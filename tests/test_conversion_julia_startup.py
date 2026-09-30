@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from tests.julia_runtimes import require_julia_runtime
+from tests.julia_runtimes import juliacall_host_environment, require_julia_runtime
 
 _PROBE = r"""
 import os
@@ -105,6 +105,7 @@ def julia_environment(
         JULIA_CONDAPKG_BACKEND="Null",
         SC_NEUROCORE_IF_JULIA_ENABLED="1",
     )
+    environment.update(juliacall_host_environment(binaries[-1]))
     for name in ("SC_NEUROCORE_IF_RUST_LIB", "SC_NEUROCORE_IF_GO_LIB"):
         environment.pop(name, None)
     return environment, runtime

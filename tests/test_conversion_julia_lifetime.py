@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from tests.julia_runtimes import require_julia_runtime
+from tests.julia_runtimes import juliacall_host_environment, require_julia_runtime
 
 _PROBE = r"""
 import atexit
@@ -101,6 +101,7 @@ def test_stored_public_julia_callbacks_refuse_after_actual_shutdown(
         JULIA_CONDAPKG_BACKEND="Null",
         SC_NEUROCORE_IF_JULIA_ENABLED="1",
     )
+    environment.update(juliacall_host_environment(binaries[-1]))
     parent_data = os.environ.get("COVERAGE_FILE", "")
     child_data = f"{parent_data}-lifetime-{runtime}" if parent_data else ""
     result = subprocess.run(

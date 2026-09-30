@@ -180,6 +180,18 @@ export JULIA_CONDAPKG_BACKEND=Null
 export JULIA_PKG_OFFLINE=true
 ```
 
+On Linux, Julia 1.13 bundles an OpenSSL whose `libssl` needs `OPENSSL_3.3.0`
+symbols. A Python that links the system `libcrypto` (distribution packages,
+`actions/setup-python`) has already loaded an older `libcrypto.so.3` by the
+time JuliaCall starts, and the runtime fails with
+``version `OPENSSL_3.3.0' not found``. Preload the runtime's own library for
+that process (uv's standalone Pythons carry OpenSSL statically and do not need
+it; Julia 1.11 does not need it):
+
+```bash
+export LD_PRELOAD="$(dirname "$PYTHON_JULIACALL_EXE")/../lib/julia/libcrypto.so.3${LD_PRELOAD:+:$LD_PRELOAD}"
+```
+
 Initialize the configured runtime before importing PyTorch or using conversion
 factories. Resolving `ConvertedSNN` itself only loads the NumPy runtime.
 

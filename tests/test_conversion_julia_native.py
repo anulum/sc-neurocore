@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from tests.julia_runtimes import require_julia_runtime
+from tests.julia_runtimes import juliacall_host_environment, require_julia_runtime
 
 
 _PROBE = r"""
@@ -173,6 +173,7 @@ def test_julia_public_replay_and_owned_buffers_in_locked_runtime(
         JULIA_CONDAPKG_BACKEND="Null",
         SC_NEUROCORE_IF_JULIA_ENABLED="1",
     )
+    environment.update(juliacall_host_environment(binaries[-1]))
     environment.pop("SC_NEUROCORE_IF_RUST_LIB", None)
     environment.pop("SC_NEUROCORE_IF_GO_LIB", None)
     parent_data = os.environ.get("COVERAGE_FILE", "")

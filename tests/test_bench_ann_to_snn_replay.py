@@ -21,7 +21,7 @@ import pytest
 from tests.test_accel_mojo_if_abi import library as mojo_library
 from tests.test_conversion_go_native import library as go_library
 from tests.test_conversion_native_replay import library as rust_library
-from tests.julia_runtimes import require_julia_runtime
+from tests.julia_runtimes import juliacall_host_environment, require_julia_runtime
 
 __all__ = ["ROOT", "SCRIPT", "environment", "rust_library", "go_library", "mojo_library"]
 
@@ -61,6 +61,7 @@ def environment(
         JULIA_CONDAPKG_BACKEND="Null",
         JULIA_PKG_OFFLINE="true",
     )
+    configured.update(juliacall_host_environment(executables[-1]))
     subprocess.run(
         [
             str(executables[-1]),

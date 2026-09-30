@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from tests.julia_runtimes import require_julia_runtime
+from tests.julia_runtimes import juliacall_host_environment, require_julia_runtime
 
 _PROBE = r"""
 import gc
@@ -100,6 +100,7 @@ def test_actual_julia_allocation_failure_preserves_inputs_and_recovers(tmp_path:
         JULIA_PKG_PRECOMPILE_AUTO="0",
         SC_NEUROCORE_IF_JULIA_ENABLED="1",
     )
+    environment.update(juliacall_host_environment(executables[-1]))
     subprocess.run(
         [
             str(executables[-1]),

@@ -28,7 +28,7 @@ import torch
 from sc_neurocore.conversion import qcfs_backward, qcfs_forward
 from sc_neurocore.conversion.qcfs import QCFSActivation
 from sc_neurocore.conversion.qcfs_native import load_qcfs_library
-from tests.julia_runtimes import require_julia_runtime
+from tests.julia_runtimes import juliacall_host_environment, require_julia_runtime
 from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,6 +138,7 @@ def qcfs_environment(tmp_path_factory: pytest.TempPathFactory) -> dict[str, str]
         JULIA_PKG_OFFLINE="true",
         **{name: str(path) for name, path in libraries.items()},
     )
+    settings.update(juliacall_host_environment(executables[-1]))
     subprocess.run(
         [
             str(executables[-1]),
