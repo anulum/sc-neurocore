@@ -401,6 +401,12 @@ runtime features:
   browser-user changes that would remove the final active admin path. The Admin
   panel exposes create, lifecycle, and secret-rotation controls without
   returning password verifier material.
+- Identity mutations retain deliberate validation messages with `422` and
+  use `Studio identity request could not be validated.` for unexpected
+  validation faults. Unicode usernames and passwords are supported. Expiry
+  timestamps require a timezone and a representable UTC date within years
+  1–9999; validation refusals leave identity records unchanged. See
+  [Admin identity & audit access](admin-identity.md).
 - Admins rotate a browser user's password with
   `POST /api/studio/identity/browser-users/{username}/password`. The request
   writes a fresh PBKDF2-HMAC-SHA256 verifier, preserves password-free user

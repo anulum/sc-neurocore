@@ -39,6 +39,13 @@ from sc_neurocore.studio.platform import (
     update_studio_identity_record,
 )
 
+from sc_neurocore.studio.platform.identity_refusals import (
+    StudioIdentityConflict,
+    StudioIdentityRefused,
+)
+
+IDENTITY_REQUEST_INVALID = "Studio identity request could not be validated."
+
 
 def build_identity_router(context: StudioApiContext) -> APIRouter:
     """Build the identity and browser-session router over shared Studio runtime state."""
@@ -238,10 +245,12 @@ def build_identity_router(context: StudioApiContext) -> APIRouter:
                     timestamp_utc=_studio_timestamp_utc(),
                 )
             )
+        except StudioIdentityConflict as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except StudioIdentityRefused as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         except ValueError as exc:
-            detail = str(exc)
-            status_code = 409 if "already exists" in detail else 422
-            raise HTTPException(status_code=status_code, detail=detail) from exc
+            raise HTTPException(status_code=422, detail=IDENTITY_REQUEST_INVALID) from exc
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_append_failed") from exc
         return created.to_public_dict()
@@ -320,8 +329,10 @@ def build_identity_router(context: StudioApiContext) -> APIRouter:
             ) from exc
         except StudioIdentityLifecycleError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        except ValueError as exc:
+        except StudioIdentityRefused as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=IDENTITY_REQUEST_INVALID) from exc
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_append_failed") from exc
         return updated.to_public_dict()
@@ -368,8 +379,10 @@ def build_identity_router(context: StudioApiContext) -> APIRouter:
             ) from exc
         except StudioIdentityLifecycleError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        except ValueError as exc:
+        except StudioIdentityRefused as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=IDENTITY_REQUEST_INVALID) from exc
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_append_failed") from exc
         return updated.to_public_dict()
@@ -414,8 +427,10 @@ def build_identity_router(context: StudioApiContext) -> APIRouter:
                 status_code=404,
                 detail="identity_browser_user_not_found",
             ) from exc
-        except ValueError as exc:
+        except StudioIdentityRefused as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=IDENTITY_REQUEST_INVALID) from exc
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_append_failed") from exc
         return updated.to_public_dict()

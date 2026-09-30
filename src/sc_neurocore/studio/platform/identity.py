@@ -21,6 +21,10 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sc_neurocore.studio.platform.identity_refusals import (
+    StudioIdentityConflict,
+    StudioIdentityRefused,
+)
 from sc_neurocore.studio.platform.policy import Principal
 from sc_neurocore.studio.platform.identity_passwords import (
     DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS,
@@ -37,7 +41,7 @@ _ADMIN_ROLE = "studio.admin"
 _LOGGER = logging.getLogger("sc_neurocore.studio.identity")
 
 
-class StudioIdentityLifecycleError(ValueError):
+class StudioIdentityLifecycleError(StudioIdentityRefused):
     """Raised when an identity mutation would break lifecycle invariants."""
 
 
@@ -273,7 +277,9 @@ class StudioIdentityAuthenticator:
         if not clean_username or not password:
             return StudioIdentityResult(principal=None, failure_reason="invalid_browser_login")
         for record in self._identity_store.browser_users:
-            if not hmac.compare_digest(record.username, clean_username):
+            if not hmac.compare_digest(
+                record.username.encode("utf-8"), clean_username.encode("utf-8")
+            ):
                 continue
             if not record.active:
                 return StudioIdentityResult(
@@ -327,20 +333,20 @@ def load_studio_identity_store(path: Path) -> StudioIdentityStore:
         _require_private_identity_file(path)
         payload = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
-        raise ValueError("Studio identity file cannot be read.") from exc
+        raise StudioIdentityRefused("Studio identity file cannot be read.") from exc
     except json.JSONDecodeError as exc:
-        raise ValueError("Studio identity file must be valid JSON.") from exc
+        raise StudioIdentityRefused("Studio identity file must be valid JSON.") from exc
     if not isinstance(payload, dict):
-        raise ValueError("Studio identity schema must be a JSON object.")
+        raise StudioIdentityRefused("Studio identity schema must be a JSON object.")
     if payload.get("schema_version") != IDENTITY_SCHEMA_VERSION:
-        raise ValueError("Studio identity schema version is not supported.")
+        raise StudioIdentityRefused("Studio identity schema version is not supported.")
     raw_accounts = payload.get("service_accounts")
     if not isinstance(raw_accounts, list):
-        raise ValueError("Studio identity service_accounts must be a list.")
+        raise StudioIdentityRefused("Studio identity service_accounts must be a list.")
     records = tuple(_parse_identity_record(index, item) for index, item in enumerate(raw_accounts))
     raw_browser_users = payload.get("browser_users", [])
     if not isinstance(raw_browser_users, list):
-        raise ValueError("Studio identity browser_users must be a list.")
+        raise StudioIdentityRefused("Studio identity browser_users must be a list.")
     browser_users = tuple(
         _parse_browser_user_record(index, item) for index, item in enumerate(raw_browser_users)
     )
@@ -632,7 +638,7 @@ def add_studio_browser_user_record(
     store = load_studio_identity_store(path)
     clean_username = _parse_username(username)
     if any(record.username == clean_username for record in store.browser_users):
-        raise ValueError("Studio browser user username already exists.")
+        raise StudioIdentityConflict("Studio browser user username already exists.")
     record = StudioBrowserUserRecord(
         active=active,
         expires_at_utc=_parse_expiry(expires_at_utc),
@@ -651,20 +657,20 @@ def add_studio_browser_user_record(
 
 def _parse_identity_record(index: int, item: object) -> StudioIdentityRecord:
     if not isinstance(item, dict):
-        raise ValueError(f"Studio identity service account {index} must be an object.")
+        raise StudioIdentityRefused(f"Studio identity service account {index} must be an object.")
     principal_id = item.get("principal_id")
     if not isinstance(principal_id, str) or not principal_id.strip():
-        raise ValueError("Studio identity principal_id must be a non-empty string.")
+        raise StudioIdentityRefused("Studio identity principal_id must be a non-empty string.")
     raw_roles = item.get("roles")
     if not isinstance(raw_roles, list) or not raw_roles:
-        raise ValueError("Studio identity roles must be a non-empty list.")
+        raise StudioIdentityRefused("Studio identity roles must be a non-empty list.")
     roles = frozenset(_parse_role(role) for role in raw_roles)
     token_sha256 = item.get("token_sha256")
     if not isinstance(token_sha256, str) or not _is_sha256_hex(token_sha256):
-        raise ValueError("Studio identity token_sha256 must be a SHA-256 hex digest.")
+        raise StudioIdentityRefused("Studio identity token_sha256 must be a SHA-256 hex digest.")
     raw_active = item.get("active", True)
     if not isinstance(raw_active, bool):
-        raise ValueError("Studio identity active flag must be boolean.")
+        raise StudioIdentityRefused("Studio identity active flag must be boolean.")
     expires_at_utc = _parse_expiry(item.get("expires_at_utc"))
     return StudioIdentityRecord(
         principal_id=principal_id.strip(),
@@ -677,26 +683,26 @@ def _parse_identity_record(index: int, item: object) -> StudioIdentityRecord:
 
 def _parse_browser_user_record(index: int, item: object) -> StudioBrowserUserRecord:
     if not isinstance(item, dict):
-        raise ValueError(f"Studio identity browser user {index} must be an object.")
+        raise StudioIdentityRefused(f"Studio identity browser user {index} must be an object.")
     username = item.get("username")
     if not isinstance(username, str) or not username.strip():
-        raise ValueError("Studio browser user username must be a non-empty string.")
+        raise StudioIdentityRefused("Studio browser user username must be a non-empty string.")
     principal_id = item.get("principal_id")
     if not isinstance(principal_id, str) or not principal_id.strip():
-        raise ValueError("Studio browser user principal_id must be a non-empty string.")
+        raise StudioIdentityRefused("Studio browser user principal_id must be a non-empty string.")
     raw_roles = item.get("roles")
     if not isinstance(raw_roles, list) or not raw_roles:
-        raise ValueError("Studio browser user roles must be a non-empty list.")
+        raise StudioIdentityRefused("Studio browser user roles must be a non-empty list.")
     roles = frozenset(_parse_role(role) for role in raw_roles)
     password_verifier = item.get("password_pbkdf2_sha256")
     if (
         not isinstance(password_verifier, str)
         or _parse_password_verifier(password_verifier) is None
     ):
-        raise ValueError("Studio browser user password verifier is invalid.")
+        raise StudioIdentityRefused("Studio browser user password verifier is invalid.")
     raw_active = item.get("active", True)
     if not isinstance(raw_active, bool):
-        raise ValueError("Studio browser user active flag must be boolean.")
+        raise StudioIdentityRefused("Studio browser user active flag must be boolean.")
     expires_at_utc = _parse_expiry(item.get("expires_at_utc"))
     return StudioBrowserUserRecord(
         active=raw_active,
@@ -711,22 +717,22 @@ def _parse_browser_user_record(index: int, item: object) -> StudioBrowserUserRec
 def _parse_principal_id(principal_id: str) -> str:
     cleaned = principal_id.strip()
     if not cleaned:
-        raise ValueError("Studio identity principal_id must be a non-empty string.")
+        raise StudioIdentityRefused("Studio identity principal_id must be a non-empty string.")
     return cleaned
 
 
 def _parse_username(username: str) -> str:
     cleaned = username.strip()
     if not cleaned:
-        raise ValueError("Studio browser user username must be a non-empty string.")
+        raise StudioIdentityRefused("Studio browser user username must be a non-empty string.")
     if any(character.isspace() for character in cleaned):
-        raise ValueError("Studio browser user username must not contain whitespace.")
+        raise StudioIdentityRefused("Studio browser user username must not contain whitespace.")
     return cleaned
 
 
 def _parse_roles(roles: Sequence[str]) -> tuple[str, ...]:
     if not roles:
-        raise ValueError("Studio identity roles must be a non-empty list.")
+        raise StudioIdentityRefused("Studio identity roles must be a non-empty list.")
     cleaned: list[str] = []
     for role in roles:
         parsed = _parse_role(role)
@@ -737,7 +743,7 @@ def _parse_roles(roles: Sequence[str]) -> tuple[str, ...]:
 
 def _parse_role(role: object) -> str:
     if not isinstance(role, str) or not role.strip():
-        raise ValueError("Studio identity roles must be non-empty strings.")
+        raise StudioIdentityRefused("Studio identity roles must be non-empty strings.")
     return role.strip()
 
 
@@ -745,17 +751,24 @@ def _parse_expiry(value: object) -> datetime | None:
     if value is None:
         return None
     if not isinstance(value, str) or not value.strip():
-        raise ValueError("Studio identity expires_at_utc must be a UTC timestamp.")
+        raise StudioIdentityRefused("Studio identity expires_at_utc must be a UTC timestamp.")
     normalized = value.strip()
     if normalized.endswith("Z"):
         normalized = f"{normalized[:-1]}+00:00"
     try:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
-        raise ValueError("Studio identity expires_at_utc must be an ISO timestamp.") from exc
+        raise StudioIdentityRefused(
+            "Studio identity expires_at_utc must be an ISO timestamp."
+        ) from exc
     if parsed.tzinfo is None:
-        raise ValueError("Studio identity expires_at_utc must include a timezone.")
-    return parsed.astimezone(UTC)
+        raise StudioIdentityRefused("Studio identity expires_at_utc must include a timezone.")
+    try:
+        return parsed.astimezone(UTC)
+    except OverflowError as exc:
+        raise StudioIdentityRefused(
+            "Studio identity expires_at_utc must be within the supported UTC date range."
+        ) from exc
 
 
 def _is_sha256_hex(value: str) -> bool:
@@ -811,7 +824,7 @@ def _require_private_identity_file(path: Path) -> None:
         return
     info = path.stat()
     if info.st_uid != os.geteuid():
-        raise ValueError(
+        raise StudioIdentityRefused(
             "Studio identity file must be owned by the account running Studio; "
             f"{path.name} is owned by uid {info.st_uid}."
         )

@@ -384,6 +384,8 @@ def test_identity_mutation_maps_lifecycle_failures(
     assert response.status_code == expected_status
     if error_type is KeyError:
         assert response.json()["detail"].endswith("not_found")
+    elif error_type is ValueError:
+        assert response.json()["detail"] == identity.IDENTITY_REQUEST_INVALID
     else:
         assert response.json()["detail"] == "bounded lifecycle detail"
 

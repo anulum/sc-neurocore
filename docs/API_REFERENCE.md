@@ -42930,6 +42930,18 @@ Verify a raw browser-user password against an encoded verifier.
 
 ---
 
+## Module `studio.platform.identity_refusals`
+
+### Class `StudioIdentityRefused`
+A deliberate identity validation message suitable for callers.
+
+
+### Class `StudioIdentityConflict`
+An identity mutation conflicts with an existing persistent identity.
+
+
+---
+
 ## Module `studio.platform.jobs_admission`
 
 ### Class `StudioJobQueueFull`

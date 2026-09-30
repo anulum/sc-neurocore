@@ -9,6 +9,17 @@ without any identity store.
 
 This page covers enabling the privileged surface for a real deployment.
 
+Identity mutations return `422` with the identity contract's validation message.
+Unexpected validation faults return `Studio identity request could not be
+validated.`; Python conversion or codec diagnostics are never returned. Duplicate
+browser usernames return `409`, as do updates that would remove the last active,
+unexpired `studio.admin` principal. Validation refusals leave the identity records
+unchanged.
+
+Browser usernames and passwords support Unicode. Expiry timestamps must include
+a timezone and convert to a UTC date within years 1–9999; an offset that moves
+an otherwise valid timestamp outside that range returns `422`.
+
 ## What is gated
 
 These endpoints require a configured identity store (otherwise `409`):

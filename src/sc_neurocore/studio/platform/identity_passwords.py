@@ -18,6 +18,8 @@ import hashlib
 import hmac
 import secrets
 
+from sc_neurocore.studio.platform.identity_refusals import StudioIdentityRefused
+
 DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS = 390_000
 MIN_BROWSER_USER_PASSWORD_ITERATIONS = 100_000
 MIN_BROWSER_USER_PASSWORD_SALT_BYTES = 16
@@ -25,13 +27,7 @@ MIN_BROWSER_USER_PASSWORD_SALT_BYTES = 16
 
 def _is_sha256_hex(value: str) -> bool:
     """Return whether ``value`` is a 64-character lowercase/upper hex digest."""
-    if len(value) != 64:
-        return False
-    try:
-        int(value, 16)
-    except ValueError:
-        return False
-    return True
+    return len(value) == 64 and all(character in "0123456789abcdefABCDEF" for character in value)
 
 
 def make_browser_user_password_verifier(password: str) -> str:
@@ -49,7 +45,7 @@ def make_browser_user_password_verifier(password: str) -> str:
     """
 
     if not password:
-        raise ValueError("Studio browser-user password must not be empty.")
+        raise StudioIdentityRefused("Studio browser-user password must not be empty.")
     salt = secrets.token_hex(MIN_BROWSER_USER_PASSWORD_SALT_BYTES)
     password_hash = _pbkdf2_sha256(password, salt, DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS)
     return f"pbkdf2_sha256${DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS}${salt}${password_hash}"

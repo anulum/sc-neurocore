@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5159
+    "test_files": 5160
   },
   "documentation": {
     "public_pages": [
@@ -7734,6 +7734,7 @@
       "tests/test_studio_identity_browser_users.py",
       "tests/test_studio_identity_mutations.py",
       "tests/test_studio_identity_passwords.py",
+      "tests/test_studio_identity_refusals.py",
       "tests/test_studio_identity_route_failures.py",
       "tests/test_studio_identity_service_accounts.py",
       "tests/test_studio_integration_endpoints.py",
