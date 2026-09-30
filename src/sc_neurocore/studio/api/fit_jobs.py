@@ -17,6 +17,7 @@ from typing import Any, cast
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
+from sc_neurocore.fitting.refusals import LaboratoryRefusal
 from sc_neurocore.fitting.cohort import cohort_from_dict
 from sc_neurocore.fitting.cohort_run import replay_cohort, run_cohort
 from sc_neurocore.fitting.fit import fit_parameters
@@ -69,7 +70,7 @@ def _error(exc: Exception) -> HTTPException:
 def _bounded(document: Mapping[str, Any]) -> None:
     """Refuse oversized or nonfinite documents before worker admission."""
     if len(json.dumps(document, allow_nan=False).encode()) > MAX_LAB_DOCUMENT_BYTES:
-        raise ValueError("laboratory document exceeds the submission byte budget")
+        raise LaboratoryRefusal("laboratory document exceeds the submission byte budget")
 
 
 def execute_laboratory_task(
@@ -122,7 +123,7 @@ def execute_laboratory_task(
             "result": result_body,
         }
     else:
-        raise ValueError("unsupported laboratory operation")
+        raise LaboratoryRefusal("unsupported laboratory operation")
     context.check_cancelled()
     context.publish_existing_artifact("history.jsonl")
     context.write_artifact("experiment.json", json.dumps(document, allow_nan=False, sort_keys=True))
@@ -160,7 +161,7 @@ def build_fit_jobs_router(context: StudioApiContext) -> APIRouter:
         """Validate the full fit and submit it without blocking the request."""
         try:
             if estimated_fit_steps(body) > MAX_JOB_FIT_STEPS:
-                raise ValueError("fit exceeds the background model-step estimate budget")
+                raise LaboratoryRefusal("fit exceeds the background model-step estimate budget")
             problem = fit_problem(body)
         except LABORATORY_REQUEST_ERRORS as exc:
             raise _error(exc) from exc
@@ -182,7 +183,9 @@ def build_fit_jobs_router(context: StudioApiContext) -> APIRouter:
         except LABORATORY_REQUEST_ERRORS as exc:
             raise _error(exc) from exc
         if estimated_fit_steps(fit) > MAX_JOB_FIT_STEPS:
-            raise _error(ValueError("fit replay exceeds the background model-step estimate budget"))
+            raise _error(
+                LaboratoryRefusal("fit replay exceeds the background model-step estimate budget")
+            )
         return submit("fit_replay", body.result, request)
 
     @router.post("/api/cohorts/jobs", status_code=202)

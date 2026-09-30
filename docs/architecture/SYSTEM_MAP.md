@@ -313,6 +313,13 @@ private audit.
 → Bitstreams, SC arithmetic, encoders, codecs, diagnostics. `exceptions` is the
 most-imported module (in-degree 10). **MAINTAINED.**
 
+Laboratory request validation uses `fitting/refusals.py:LaboratoryRefusal`, a
+`ValueError` subclass of the cycle-free `refusals.py:AuthoredRefusal` marker.
+Fitting, cohort and constraint admission raise it with deliberate caller-facing
+messages; Studio's laboratory HTTP boundary echoes only this domain type and
+replaces every other caught document fault with a fixed sentence. Neither module
+imports Studio or a numerical backend.
+
 ### B. Spike coding / DSP — *Core*
 `spike_codec` · `spike_dsp` · `spike_norm` · `spike_ode` · `spike_gnn`
 → BCI-grade compression, spike-train filtering, normalisation. **MAINTAINED**

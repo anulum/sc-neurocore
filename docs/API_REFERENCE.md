@@ -19980,6 +19980,17 @@ numpy.ndarray or None
 
 ---
 
+## Module `fitting.refusals`
+
+### Class `LaboratoryRefusal`
+A deliberate laboratory validation message safe for the caller to read.
+
+Generated conversion, schema and structural exceptions remain unmarked;
+the HTTP boundary replaces them with its fixed malformed-document message.
+
+
+---
+
 ## Module `formal.counterexample_replay`
 
 ### Class `RateBoundReplayResult`
@@ -35018,6 +35029,18 @@ spikes:
 
 ---
 
+## Module `refusals`
+
+### Class `AuthoredRefusal`
+A deliberate caller-facing refusal, compatible with ValueError handlers.
+
+Raise this type or a domain subclass only with text written for callers.
+Do not wrap generated exception text in it. HTTP boundaries should accept
+their own domain subclass and use a fixed message for every other fault.
+
+
+---
+
 ## Module `reservoir.auto_reservoir`
 
 ### Class `ReservoirMetrics`
@@ -38784,9 +38807,9 @@ exc:
 Returns
 -------
 str
-    The authored message of a ``ValueError``, or :data:`MALFORMED_DOCUMENT`
-    for a structural fault, whose text would echo the caller's key names or
-    Python type details.
+    The deliberate message of a ``LaboratoryRefusal``, or
+    :data:`MALFORMED_DOCUMENT` for every other exception, including
+    generated conversion and Pydantic validation errors.
 
 ### Function `fit_problem(request)`
 Validate a request into the replayable scientific fitting problem.

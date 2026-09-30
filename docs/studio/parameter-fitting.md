@@ -100,9 +100,14 @@ bounded before it starts: the number of model steps it can take is estimated
 as `population × parameters × (generations + 2) × training samples`, and a fit
 estimated above 3 000 000 steps is refused with HTTP 422, `fit_too_large` and
 the estimate. An invalid problem is refused with `invalid_fit` and the reason.
-A replay, background job or cohort document with a missing field or a wrong
-JSON type is refused with HTTP 422 and one fixed sentence ("a required field
-is missing or has the wrong JSON type"); responses never carry exception text.
+Laboratory validation marks deliberate caller-facing messages with
+`sc_neurocore.fitting.refusals.LaboratoryRefusal`, a subclass of `ValueError`
+and the shared `sc_neurocore.refusals.AuthoredRefusal`. These messages arrive
+verbatim. Every other caught document error, including numeric conversion and
+Pydantic validation during replay, is refused with HTTP 422 and one fixed
+sentence ("a required field is missing or has the wrong JSON type"). Generated
+exception text and its input values never enter these refusal messages. Outer
+request-shape validation still uses FastAPI's structured HTTP 422 field errors.
 With route policies enforced, both routes require an authenticated principal.
 
 ## What a fit does not establish

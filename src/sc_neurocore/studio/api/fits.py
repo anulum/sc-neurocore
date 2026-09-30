@@ -25,6 +25,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from sc_neurocore.fitting.refusals import LaboratoryRefusal
 from sc_neurocore.fitting.problem import FitProblem
 from sc_neurocore.studio.api.runtime import StudioApiContext
 
@@ -105,7 +106,7 @@ def estimated_fit_steps(request: FitRequest) -> int:
 
 def _schema(request: FitRequest) -> dict[str, Any]:
     if (request.catalogue_model is None) == (request.schema_document is None):
-        raise ValueError("name a catalogue model or send a schema, not both and not neither")
+        raise LaboratoryRefusal("name a catalogue model or send a schema, not both and not neither")
     if request.schema_document is not None:
         return request.schema_document
     from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
@@ -114,7 +115,9 @@ def _schema(request: FitRequest) -> dict[str, Any]:
     try:
         return load_schema(schema_for_class(str(request.catalogue_model)))
     except (ModelIdentityError, FileNotFoundError) as exc:
-        raise ValueError(f"{request.catalogue_model} has no canonical schema to fit") from exc
+        raise LaboratoryRefusal(
+            f"{request.catalogue_model} has no canonical schema to fit"
+        ) from exc
 
 
 MALFORMED_DOCUMENT = "a required field is missing or has the wrong JSON type"
@@ -138,13 +141,13 @@ def refusal_message(exc: Exception) -> str:
     Returns
     -------
     str
-        The authored message of a ``ValueError``, or :data:`MALFORMED_DOCUMENT`
-        for a structural fault, whose text would echo the caller's key names or
-        Python type details.
+        The deliberate message of a ``LaboratoryRefusal``, or
+        :data:`MALFORMED_DOCUMENT` for every other exception, including
+        generated conversion and Pydantic validation errors.
     """
-    if isinstance(exc, MALFORMED_DOCUMENT_ERRORS):
-        return MALFORMED_DOCUMENT
-    return str(exc)
+    if isinstance(exc, LaboratoryRefusal):
+        return str(exc)
+    return MALFORMED_DOCUMENT
 
 
 def _refuse(message: str) -> HTTPException:
@@ -224,11 +227,14 @@ def build_fits_router(context: StudioApiContext) -> APIRouter:
             )
         try:
             problem = fit_problem(request)
+        except LABORATORY_REQUEST_ERRORS as exc:
+            raise _refuse(refusal_message(exc)) from exc
+        try:
             return fit_parameters(
                 problem, generations=request.generations, population=request.population
             )
         except ValueError as exc:
-            raise _refuse(str(exc)) from exc
+            raise _refuse(refusal_message(exc)) from exc
 
     @router.post("/api/fits/replay")
     def api_fit_replay(request: ReplayRequest) -> dict[str, Any]:
@@ -238,7 +244,7 @@ def build_fits_router(context: StudioApiContext) -> APIRouter:
         try:
             replay_request = fit_replay_request(request.result)
             if estimated_fit_steps(replay_request) > MAX_SYNC_FIT_STEPS:
-                raise ValueError(
+                raise LaboratoryRefusal(
                     "replay exceeds the synchronous estimate budget; use /api/fits/replay/jobs"
                 )
             return replay_fit(request.result)

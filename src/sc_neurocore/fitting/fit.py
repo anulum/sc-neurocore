@@ -42,6 +42,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from sc_neurocore.fitting.refusals import LaboratoryRefusal
 from sc_neurocore.fitting.problem import (
     FitProblem,
     canonical_sha256,
@@ -253,7 +254,7 @@ def fit_parameters(
     from sc_neurocore import __version__
 
     if generations < 1 or population < 4:
-        raise ValueError("generations must be at least 1 and population at least 4")
+        raise LaboratoryRefusal("generations must be at least 1 and population at least 4")
     problem = problem_from_dict(json.loads(json.dumps(problem.to_public_dict(), allow_nan=False)))
     objective = _Objective(problem)
     history: list[dict[str, Any]] = []

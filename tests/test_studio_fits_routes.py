@@ -161,14 +161,51 @@ def test_a_malformed_replay_names_no_key_or_python_type(client: TestClient, resu
 
 
 def test_refusal_message_keeps_authored_reasons_and_hides_structural_faults() -> None:
-    """Only ``ValueError`` text is authored for callers; lookup and type faults are not."""
+    """Only explicitly marked laboratory messages are caller-facing."""
     from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT, refusal_message
 
-    assert refusal_message(ValueError("gain is not a parameter")) == "gain is not a parameter"
+    from sc_neurocore.fitting.refusals import LaboratoryRefusal
+
+    assert (
+        refusal_message(LaboratoryRefusal("gain is not a parameter")) == "gain is not a parameter"
+    )
     for fault in (
+        ValueError("gain is not a parameter"),
         KeyError("secret_key"),
         IndexError("list index out of range"),
         TypeError("'int' object is not subscriptable"),
         AttributeError("'int' object has no attribute 'get'"),
     ):
         assert refusal_message(fault) == MALFORMED_DOCUMENT
+
+
+@pytest.mark.parametrize("route", ["/api/fits/replay", "/api/fits/replay/jobs"])
+@pytest.mark.parametrize("fault", ["bound", "current", "generations"])
+def test_replay_hides_generated_conversion_and_validation_text(
+    client: TestClient, route: str, fault: str
+) -> None:
+    """Real HTTP replay refuses malformed exported values without echoing conversions."""
+    from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT
+
+    problem = _exported_problem()
+    provenance: dict[str, Any] = {"generations": 1, "population": 4}
+    if fault == "bound":
+        problem["domains"][0]["low"] = "caller-text-xyz"
+    elif fault == "current":
+        problem["train"][0]["current"] = ["caller-text-xyz"]
+    else:
+        provenance["generations"] = "caller-text-xyz"
+    response = client.post(route, json={"result": {"problem": problem, "provenance": provenance}})
+    assert response.status_code == 422
+    prefix = "the result cannot be replayed: " if route == "/api/fits/replay" else ""
+    assert response.json()["detail"]["message"] == prefix + MALFORMED_DOCUMENT
+    for phrase in (
+        "caller-text-xyz",
+        "could not convert",
+        "invalid literal",
+        "object has no attribute",
+        "is not subscriptable",
+        "validation error",
+        "errors.pydantic.dev",
+    ):
+        assert phrase not in response.text

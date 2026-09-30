@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from sc_neurocore.fitting.refusals import LaboratoryRefusal
 from sc_neurocore.fitting.constraints import ParameterConstraint, constraints_from_dict
 from sc_neurocore.fitting.problem import canonical_sha256
 
@@ -73,17 +74,19 @@ class CohortSample:
             or not self.group.strip()
             or self.split not in ("train", "holdout")
         ):
-            raise ValueError("samples need names, acquisition groups and train/holdout splits")
+            raise LaboratoryRefusal(
+                "samples need names, acquisition groups and train/holdout splits"
+            )
         if size < 2 or len(self.noise) != size or (self.spikes and len(self.spikes) != size):
-            raise ValueError("current, noise and spikes need equal lengths >= 2")
+            raise LaboratoryRefusal("current, noise and spikes need equal lengths >= 2")
         if not _finite(self.current + self.noise) or any(
             value not in (0, 1) for value in self.spikes
         ):
-            raise ValueError("input/noise must be finite and spikes binary")
+            raise LaboratoryRefusal("input/noise must be finite and spikes binary")
         if any(len(values) != size or not _finite(values) for values in self.observations.values()):
-            raise ValueError("observations need finite values at every step")
+            raise LaboratoryRefusal("observations need finite values at every step")
         if not _finite(self.effective_current):
-            raise ValueError("effective current must be finite")
+            raise LaboratoryRefusal("effective current must be finite")
 
     @property
     def effective_current(self) -> tuple[float, ...]:
@@ -114,11 +117,11 @@ class SweepDomain:
     def __post_init__(self) -> None:
         """Refuse nonfinite, duplicate or incorrectly typed values."""
         if not self.name.strip() or not self.values or not _finite(self.values):
-            raise ValueError("sweep domains need a name and finite values")
+            raise LaboratoryRefusal("sweep domains need a name and finite values")
         if len(set(self.values)) != len(self.values) or self.kind not in ("real", "integer"):
-            raise ValueError("sweep values must be unique with a real/integer kind")
+            raise LaboratoryRefusal("sweep values must be unique with a real/integer kind")
         if self.kind == "integer" and any(value != int(value) for value in self.values):
-            raise ValueError("integer domains cannot contain fractional values")
+            raise LaboratoryRefusal("integer domains cannot contain fractional values")
 
     def to_public_dict(self) -> dict[str, Any]:
         """Export every trial value without resampling a range."""
@@ -140,13 +143,13 @@ class CohortMetric:
     def __post_init__(self) -> None:
         """Require metric-specific units instead of mixing unlike errors."""
         if self.kind not in ("trace_rmse", "event_disagreement", "spike_count_error"):
-            raise ValueError("unsupported cohort metric")
+            raise LaboratoryRefusal("unsupported cohort metric")
         expected = {"event_disagreement": "fraction", "spike_count_error": "events"}
         if self.kind == "trace_rmse":
             if not self.observable.strip() or not self.unit.strip():
-                raise ValueError("trace RMSE needs an observable and physical unit")
+                raise LaboratoryRefusal("trace RMSE needs an observable and physical unit")
         elif self.observable or self.unit != expected[self.kind]:
-            raise ValueError("event metrics require their declared unit and no observable")
+            raise LaboratoryRefusal("event metrics require their declared unit and no observable")
 
     def to_public_dict(self) -> dict[str, str]:
         """Export the precise metric contract."""
@@ -172,24 +175,26 @@ class CohortModel:
         parameters = self.schema["parameters"]
         names = [domain.name for domain in self.domains]
         if not self.name.strip() or len(names) != len(set(names)) or set(names) & set(self.fixed):
-            raise ValueError("model names and disjoint unique swept/fixed parameters are required")
+            raise LaboratoryRefusal(
+                "model names and disjoint unique swept/fixed parameters are required"
+            )
         referenced = {
             *names,
             *self.fixed,
             *(name for c in self.constraints for name in c.coefficients),
         }
         if referenced - set(parameters) or not _finite(tuple(self.fixed.values())):
-            raise ValueError("unknown parameter or nonfinite fixed value")
+            raise LaboratoryRefusal("unknown parameter or nonfinite fixed value")
         constraint_names = [c.name for c in self.constraints]
         if len(set(constraint_names)) != len(constraint_names):
-            raise ValueError("constraint names must be unique")
+            raise LaboratoryRefusal("constraint names must be unique")
         if self.metric.kind == "trace_rmse":
             units = self.schema.get("profile", {}).get("units", {})
             if (
                 self.metric.observable not in self.schema["state"]
                 or units.get(self.metric.observable) != self.metric.unit
             ):
-                raise ValueError("trace metric must match the model's declared state unit")
+                raise LaboratoryRefusal("trace metric must match the model's declared state unit")
 
     @property
     def trial_count(self) -> int:
@@ -234,7 +239,7 @@ class ExperimentCohort:
             or not self.input_unit.strip()
             or not self.noise_provenance.strip()
         ):
-            raise ValueError(
+            raise LaboratoryRefusal(
                 "a cohort needs named models/samples, input units and noise provenance"
             )
         if (
@@ -243,19 +248,21 @@ class ExperimentCohort:
             or not self.time_unit.strip()
             or not 0 <= self.seed <= 2**53 - 1
         ):
-            raise ValueError("a cohort needs a positive dt, time unit and a safe nonnegative seed")
+            raise LaboratoryRefusal(
+                "a cohort needs a positive dt, time unit and a safe nonnegative seed"
+            )
         if len({s.name for s in self.samples}) != len(self.samples) or len(
             {m.name for m in self.models}
         ) != len(self.models):
-            raise ValueError("model and sample names must be unique")
+            raise LaboratoryRefusal("model and sample names must be unique")
         train, holdout = (
             tuple(s for s in self.samples if s.split == "train"),
             tuple(s for s in self.samples if s.split == "holdout"),
         )
         if not train or not holdout:
-            raise ValueError("a cohort needs both train and holdout samples")
+            raise LaboratoryRefusal("a cohort needs both train and holdout samples")
         if {s.group for s in train} & {s.group for s in holdout}:
-            raise ValueError("acquisition groups cannot cross splits")
+            raise LaboratoryRefusal("acquisition groups cannot cross splits")
 
         def data_hash(sample: CohortSample) -> str:
             return canonical_sha256(
@@ -267,23 +274,23 @@ class ExperimentCohort:
             )
 
         if {data_hash(s) for s in train} & {data_hash(s) for s in holdout}:
-            raise ValueError("recording data cannot cross splits")
+            raise LaboratoryRefusal("recording data cannot cross splits")
         for model in self.models:
             if (
                 model.schema["integration"]["dt"] != self.dt
                 or model.schema.get("profile", {}).get("time_unit") != self.time_unit
             ):
-                raise ValueError("all models must use the cohort's declared timebase")
+                raise LaboratoryRefusal("all models must use the cohort's declared timebase")
             if model.metric.kind != "trace_rmse" and any(
                 len(s.spikes) != len(s.current) for s in self.samples
             ):
-                raise ValueError("event metrics need recorded binary events at every step")
+                raise LaboratoryRefusal("event metrics need recorded binary events at every step")
             if model.metric.kind == "trace_rmse" and any(
                 model.metric.observable not in s.observations for s in self.samples
             ):
-                raise ValueError("a trace metric needs its observations in every sample")
+                raise LaboratoryRefusal("a trace metric needs its observations in every sample")
         if self.trial_count > MAX_COHORT_TRIALS or self.estimated_steps > MAX_COHORT_STEPS:
-            raise ValueError(
+            raise LaboratoryRefusal(
                 "cohort exceeds the declared trial/model-step budget; it is not shortened"
             )
 
@@ -319,29 +326,31 @@ def _fields(entry: Mapping[str, Any], required: set[str], optional: set[str] | N
         or required - set(entry)
         or set(entry) - required - (optional or set())
     ):
-        raise ValueError("cohort document has missing or unknown fields")
+        raise LaboratoryRefusal("cohort document has missing or unknown fields")
 
 
 def _number(value: Any) -> float:
     """Accept JSON numbers without rounding booleans or parsing text."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError("cohort samples and sweep values must be JSON numbers")
+        raise LaboratoryRefusal("cohort samples and sweep values must be JSON numbers")
     if isinstance(value, int) and abs(value) > 2**53 - 1:
-        raise ValueError("integer samples must round-trip exactly through JSON number readers")
+        raise LaboratoryRefusal(
+            "integer samples must round-trip exactly through JSON number readers"
+        )
     return float(value)
 
 
 def _text(value: Any) -> str:
     """Preserve textual identities without stringifying other document values."""
     if not isinstance(value, str):
-        raise ValueError("cohort names, groups and provenance must be strings")
+        raise LaboratoryRefusal("cohort names, groups and provenance must be strings")
     return value
 
 
 def cohort_from_dict(document: Mapping[str, Any]) -> ExperimentCohort:
     """Read a full cohort with strict version, field and numeric custody."""
     if document.get("schema_version") != COHORT_VERSION:
-        raise ValueError("unsupported cohort document version")
+        raise LaboratoryRefusal("unsupported cohort document version")
     _fields(
         document,
         {
@@ -399,7 +408,7 @@ def cohort_from_dict(document: Mapping[str, Any]) -> ExperimentCohort:
         )
     seed = document["seed"]
     if isinstance(seed, bool) or not isinstance(seed, int):
-        raise ValueError("cohort seed must be an integer")
+        raise LaboratoryRefusal("cohort seed must be an integer")
     return ExperimentCohort(
         _text(document["name"]),
         tuple(samples),

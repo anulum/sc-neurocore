@@ -32,6 +32,7 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from sc_neurocore.fitting.refusals import LaboratoryRefusal
 from sc_neurocore.fitting.constraints import ParameterConstraint, constraints_from_dict
 
 FIT_SCHEMA_VERSION = "sc-neurocore.fit.v1"
@@ -68,11 +69,11 @@ class ParameterDomain:
 
     def __post_init__(self) -> None:
         if self.scale not in ("linear", "log"):
-            raise ValueError(f"scale of {self.name} must be linear or log")
+            raise LaboratoryRefusal(f"scale of {self.name} must be linear or log")
         if not (math.isfinite(self.low) and math.isfinite(self.high)) or self.low >= self.high:
-            raise ValueError(f"domain of {self.name} must be finite with low < high")
+            raise LaboratoryRefusal(f"domain of {self.name} must be finite with low < high")
         if self.scale == "log" and self.low <= 0:
-            raise ValueError(f"a log domain of {self.name} must be positive")
+            raise LaboratoryRefusal(f"a log domain of {self.name} must be positive")
 
     def internal_bounds(self) -> tuple[float, float]:
         """Return the bounds in the space the optimiser searches."""
@@ -101,13 +102,13 @@ class Recording:
     def __post_init__(self) -> None:
         """Validate sample lengths, finiteness and optional acquisition custody."""
         if self.group is not None and (not isinstance(self.group, str) or not self.group.strip()):
-            raise ValueError("acquisition groups must be nonempty")
+            raise LaboratoryRefusal("acquisition groups must be nonempty")
         if len(self.current) != len(self.observed) or len(self.current) < 2:
-            raise ValueError(
+            raise LaboratoryRefusal(
                 f"recording {self.name} needs equal current and observed samples, >= 2"
             )
         if not all(math.isfinite(value) for value in (*self.current, *self.observed)):
-            raise ValueError(f"recording {self.name} must hold finite samples only")
+            raise LaboratoryRefusal(f"recording {self.name} must hold finite samples only")
 
     @property
     def data_sha256(self) -> str:
@@ -140,41 +141,43 @@ class FitProblem:
     def __post_init__(self) -> None:
         """Admit the model, parameter references, seed and leakage-safe split."""
         if type(self.seed) is not int or not 0 <= self.seed <= 2**32 - 1:
-            raise ValueError("fit seed must be an integer in 0..2**32-1")
+            raise LaboratoryRefusal("fit seed must be an integer in 0..2**32-1")
         state = self.schema.get("state")
         parameters = self.schema.get("parameters")
         if not isinstance(state, Mapping) or self.observable not in state:
-            raise ValueError(f"{self.observable!r} is not a state variable of the model")
+            raise LaboratoryRefusal(f"{self.observable!r} is not a state variable of the model")
         if not isinstance(parameters, Mapping):
-            raise ValueError("the model declares no parameters")
+            raise LaboratoryRefusal("the model declares no parameters")
         names = [domain.name for domain in self.domains]
         if not names or len(set(names)) != len(names):
-            raise ValueError("fit at least one parameter, each once")
+            raise LaboratoryRefusal("fit at least one parameter, each once")
         for name in (*names, *self.fixed):
             if name not in parameters:
-                raise ValueError(f"{name} is not a parameter of the model")
+                raise LaboratoryRefusal(f"{name} is not a parameter of the model")
         if set(names) & set(self.fixed):
-            raise ValueError("a parameter is either fitted or fixed, not both")
+            raise LaboratoryRefusal("a parameter is either fitted or fixed, not both")
         if not all(math.isfinite(value) for value in self.fixed.values()):
-            raise ValueError("fixed parameters must be finite")
+            raise LaboratoryRefusal("fixed parameters must be finite")
         labels = [constraint.name for constraint in self.constraints]
         if len(set(labels)) != len(labels):
-            raise ValueError("constraint names must be unique")
+            raise LaboratoryRefusal("constraint names must be unique")
         for constraint in self.constraints:
             if set(constraint.coefficients) - set(parameters):
-                raise ValueError("a constraint refers to an unknown parameter")
+                raise LaboratoryRefusal("a constraint refers to an unknown parameter")
         if not self.train or not self.holdout:
-            raise ValueError("a fit needs at least one training and one hold-out recording")
+            raise LaboratoryRefusal("a fit needs at least one training and one hold-out recording")
         labels = [recording.name for recording in (*self.train, *self.holdout)]
         if len(set(labels)) != len(labels):
-            raise ValueError("recording names must be unique across the cohort")
+            raise LaboratoryRefusal("recording names must be unique across the cohort")
         if {r.group for r in self.train if r.group is not None} & {
             r.group for r in self.holdout if r.group is not None
         }:
-            raise ValueError("acquisition groups cannot cross training and hold-out splits")
+            raise LaboratoryRefusal("acquisition groups cannot cross training and hold-out splits")
         shared = {r.data_sha256 for r in self.train} & {r.data_sha256 for r in self.holdout}
         if shared:
-            raise ValueError("a recording's data appears in both the training and the hold-out set")
+            raise LaboratoryRefusal(
+                "a recording's data appears in both the training and the hold-out set"
+            )
         from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
         UniversalNeuron.from_dict(dict(self.schema), parameter_overrides=dict(self.fixed))
@@ -210,10 +213,10 @@ def problem_from_dict(document: Mapping[str, Any]) -> FitProblem:
         valid problem.
     """
     if document.get("schema_version") not in (FIT_SCHEMA_VERSION, "sc-neurocore.fit.v2"):
-        raise ValueError(f"unsupported fit document {document.get('schema_version')!r}")
+        raise LaboratoryRefusal(f"unsupported fit document {document.get('schema_version')!r}")
 
     if document.get("schema_version") == FIT_SCHEMA_VERSION and document.get("constraints"):
-        raise ValueError("parameter constraints require a v2 fit document")
+        raise LaboratoryRefusal("parameter constraints require a v2 fit document")
 
     def recordings(entries: Sequence[Mapping[str, Any]]) -> tuple[Recording, ...]:
         return tuple(

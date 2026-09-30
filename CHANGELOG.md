@@ -10,6 +10,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Laboratory HTTP refusals preserve explicitly authored messages and hide generated numeric-conversion and replay-validation exception text.
+
 ### Changed
 - Align Ruff hooks, development declarations, and hash-locked CI environments
   on 0.16.9. The formatter retains its Python, stub, and notebook scope.

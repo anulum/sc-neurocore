@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5153
+    "test_files": 5155
   },
   "documentation": {
     "public_pages": [
@@ -5196,6 +5196,7 @@
       "tests/test_fisher_posner_contracts.py",
       "tests/test_fitting.py",
       "tests/test_fitting_cohorts.py",
+      "tests/test_fitting_refusals.py",
       "tests/test_fitzhugh_nagumo_backends_bit_exact.py",
       "tests/test_fitzhugh_nagumo_backends_dispatch_validation.py",
       "tests/test_fitzhugh_nagumo_backends_dynamics.py",
@@ -7109,6 +7110,7 @@
       "tests/test_reference_wang_buzsaki.py",
       "tests/test_reference_wilson_hr.py",
       "tests/test_reference_wong_wang.py",
+      "tests/test_refusals.py",
       "tests/test_registry.py",
       "tests/test_release_surface_consistency.py",
       "tests/test_reload_identity_guard.py",

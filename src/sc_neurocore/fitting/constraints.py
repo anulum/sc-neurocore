@@ -15,6 +15,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from sc_neurocore.fitting.refusals import LaboratoryRefusal
+
 
 @dataclass(frozen=True)
 class ParameterConstraint:
@@ -32,13 +34,13 @@ class ParameterConstraint:
     def __post_init__(self) -> None:
         """Refuse empty, nonfinite or reversed constraint definitions."""
         if not self.name.strip() or not self.coefficients:
-            raise ValueError("a constraint needs a name and coefficients")
+            raise LaboratoryRefusal("a constraint needs a name and coefficients")
         if not all(math.isfinite(value) for value in self.coefficients.values()):
-            raise ValueError("constraint coefficients must be finite")
+            raise LaboratoryRefusal("constraint coefficients must be finite")
         if not any(self.coefficients.values()):
-            raise ValueError("a constraint needs at least one nonzero coefficient")
+            raise LaboratoryRefusal("a constraint needs at least one nonzero coefficient")
         if not (math.isfinite(self.low) and math.isfinite(self.high)) or self.low >= self.high:
-            raise ValueError("constraint bounds must be finite with low < high")
+            raise LaboratoryRefusal("constraint bounds must be finite with low < high")
 
     def value(self, parameters: Mapping[str, float]) -> float:
         """Evaluate this combination without changing parameter units."""
@@ -64,12 +66,12 @@ def constraints_from_dict(entries: list[dict[str, Any]]) -> tuple[ParameterConst
     """Read exported constraints, preserving all coefficients and bounds."""
     for entry in entries:
         if set(entry) != {"name", "coefficients", "low", "high"}:
-            raise ValueError("constraint documents have missing or unknown fields")
+            raise LaboratoryRefusal("constraint documents have missing or unknown fields")
         if not isinstance(entry["name"], str) or not isinstance(entry["coefficients"], Mapping):
-            raise ValueError("constraints need a string name and named numeric coefficients")
+            raise LaboratoryRefusal("constraints need a string name and named numeric coefficients")
         values = [entry["low"], entry["high"], *entry["coefficients"].values()]
         if any(type(value) not in (int, float) for value in values):
-            raise ValueError("constraint coefficients and bounds must be JSON numbers")
+            raise LaboratoryRefusal("constraint coefficients and bounds must be JSON numbers")
     return tuple(
         ParameterConstraint(
             name=str(row["name"]),

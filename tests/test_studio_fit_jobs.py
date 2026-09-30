@@ -220,3 +220,33 @@ def test_malformed_lab_documents_are_refused_without_exception_text() -> None:
                 assert leaked not in response.text, (route, leaked)
         after = app.state.studio_job_manager.status().to_public_dict()
         assert after == before
+
+
+def test_cohort_refusals_keep_authored_text_and_hide_structural_faults() -> None:
+    """Both cohort HTTP families preserve deliberately authored number admission messages."""
+    from tests.test_fitting_cohorts import cohort
+
+    app = create_app()
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        before = app.state.studio_job_manager.status().to_public_dict()
+        for route in ("/api/cohorts/jobs", "/api/cohorts/replay"):
+            document = cohort().to_public_dict()
+            document["dt"] = "caller-text-xyz"
+            body = (
+                {"cohort": document} if route.endswith("jobs") else {"result": {"cohort": document}}
+            )
+            response = client.post(route, json=body)
+            assert response.status_code == 422
+            assert (
+                response.json()["detail"]["message"]
+                == "cohort samples and sweep values must be JSON numbers"
+            )
+            for phrase in (
+                "caller-text-xyz",
+                "could not convert",
+                "invalid literal",
+                "object has no attribute",
+                "is not subscriptable",
+            ):
+                assert phrase not in response.text
+        assert app.state.studio_job_manager.status().to_public_dict() == before
