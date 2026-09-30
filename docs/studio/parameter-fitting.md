@@ -245,7 +245,9 @@ without its own digest field using the public
 
 Contracts, resource units and scientific metric contracts must match exactly;
 duplicate, edited, synthetic, failed-trial or unrelated receipts yield no
-frontier and a reason. Comparable rows minimise held-out error, measured
+frontier and a reason. A structurally malformed result or receipt (a missing
+field, a wrong JSON type, no held-out samples) is refused with one fixed
+sentence; the response never carries exception text. Comparable rows minimise held-out error, measured
 latency, measured resources and measured energy; all supplied rows remain
 visible, with nondominated rows marked. Energy is never derived from operation
 counts.

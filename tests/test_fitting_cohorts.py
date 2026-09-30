@@ -343,7 +343,7 @@ def test_diverging_models_fail_in_full_cohort_and_have_no_training_selection() -
     ("change", "message"),
     [
         ({"cohort_sha256": "0" * 64}, "different cohort"),
-        ({"trial_sha256": "missing"}, "missing"),
+        ({"trial_sha256": "missing"}, "absent from the cohort result"),
         ({"latency_ms": float("inf")}, "finite nonnegative"),
         ({"energy_j": -1.0}, "finite nonnegative"),
         ({"resources": True}, "finite nonnegative"),
@@ -386,6 +386,53 @@ def test_measurement_contracts_duplicates_and_failed_trials_are_refused() -> Non
         {k: v for k, v in failed.items() if k != "result_sha256"}
     )
     assert "failed trials" in measured_pareto(failed, receipts(failed))["reason"]
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        lambda document: document.pop("contract"),
+        lambda document: document.update(contract=5),
+        lambda document: document.pop("latency_ms"),
+        lambda document: document.update(contract=None),
+    ],
+    ids=["contract-missing", "contract-integer", "latency-missing", "contract-null"],
+)
+def test_structural_receipt_faults_never_echo_exception_text(damage: Any) -> None:
+    """Remote callers see one fixed sentence, never a key name or Python type detail."""
+    result = run_cohort(cohort())
+    documents = receipts(result)
+    damage(documents[0])
+    documents[0]["receipt_sha256"] = cohort_sha256(
+        {k: v for k, v in documents[0].items() if k != "receipt_sha256"}
+    )
+    report = measured_pareto(result, documents)
+    assert report["comparable"] is False
+    assert report["rows"] == []
+    assert report["reason"] == "the cohort result or a measurement receipt is malformed"
+
+
+def test_malformed_cohort_result_is_refused_with_the_fixed_reason() -> None:
+    """A result without trials or with an empty holdout split is malformed, not a crash."""
+    result = run_cohort(cohort())
+    documents = receipts(result)
+    for field in ("trials", "provenance"):
+        broken = {k: v for k, v in result.items() if k != field}
+        broken["result_sha256"] = cohort_sha256(
+            {k: v for k, v in broken.items() if k != "result_sha256"}
+        )
+        assert measured_pareto(broken, documents)["reason"] == (
+            "the cohort result or a measurement receipt is malformed"
+        )
+    no_holdout = copy.deepcopy(result)
+    for trial in no_holdout["trials"]:
+        trial["samples"] = [s for s in trial["samples"] if s["split"] != "holdout"]
+    no_holdout["result_sha256"] = cohort_sha256(
+        {k: v for k, v in no_holdout.items() if k != "result_sha256"}
+    )
+    assert measured_pareto(no_holdout, receipts(no_holdout))["reason"] == (
+        "the cohort result or a measurement receipt is malformed"
+    )
 
 
 def test_trace_metrics_do_not_require_invented_spike_observations() -> None:

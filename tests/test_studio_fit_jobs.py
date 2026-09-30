@@ -53,7 +53,9 @@ def test_real_background_fit_and_replay() -> None:
 
 def test_cohort_process_and_replay_use_the_full_admitted_document() -> None:
     """Background sweeps execute and export all exact shared samples and failures."""
+    from sc_neurocore.fitting.cohort import cohort_sha256
     from tests.test_fitting_cohorts import cohort
+    from tests.test_fitting_cohorts import receipts as receipts_for
 
     with TestClient(create_app(), base_url="http://127.0.0.1") as client:
         document = cohort().to_public_dict()
@@ -69,6 +71,25 @@ def test_cohort_process_and_replay_use_the_full_admitted_document() -> None:
         report = client.post("/api/cohorts/measurements", json={"result": result, "receipts": []})
         assert report.status_code == 200
         assert report.json()["comparable"] is False
+        receipts = receipts_for(result)
+        del receipts[0]["latency_ms"]
+        receipts[0]["receipt_sha256"] = cohort_sha256(
+            {k: v for k, v in receipts[0].items() if k != "receipt_sha256"}
+        )
+        malformed = client.post(
+            "/api/cohorts/measurements", json={"result": result, "receipts": receipts}
+        )
+        assert malformed.status_code == 200, malformed.text
+        assert malformed.json()["reason"] == (
+            "the cohort result or a measurement receipt is malformed"
+        )
+        assert "latency_ms" not in malformed.text
+        compared = client.post(
+            "/api/cohorts/measurements", json={"result": result, "receipts": receipts_for(result)}
+        )
+        assert compared.status_code == 200, compared.text
+        assert compared.json()["comparable"] is True
+        assert compared.json()["reason"] is None
 
 
 def test_authenticated_users_cannot_observe_or_cancel_each_others_lab_jobs() -> None:

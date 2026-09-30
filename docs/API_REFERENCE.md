@@ -19910,7 +19910,9 @@ Returns
 -------
 dict
     Custody-labelled comparison; all four axes are minimised. Missing or
-    incomparable evidence yields no frontier and an explicit reason.
+    incomparable evidence yields no frontier and an explicit reason. The
+    reason is always one of this module's fixed refusal sentences, never
+    exception text, because the Studio returns it to remote callers.
 
 ---
 
