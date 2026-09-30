@@ -12,3 +12,8 @@
 # repository scanner is the compatibility gate.
 click==8.3.3
 mcp==1.29.0
+# PyJWT 2.13.0 carries ten advisories first patched in 2.14.0; Semgrep
+# (1.177.0 and 1.178.0) still declares pyjwt~=2.13.0, so the reviewed
+# security pin overrides it the way click is, and the scanner run in CI is
+# the compatibility gate.
+pyjwt==2.15.1
