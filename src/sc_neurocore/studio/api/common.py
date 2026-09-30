@@ -79,22 +79,26 @@ def _safe(fn: Callable[..., Any]) -> Any:
 
 
 def _json_safe(value: Any) -> Any:
-    """Replace non-finite floats by their text form so the error body stays JSON."""
+    """Render non-finite floats and unpaired surrogates as JSON-safe text."""
+    if isinstance(value, str):
+        return value.encode("utf-8", errors="backslashreplace").decode("utf-8")
     if isinstance(value, float) and not math.isfinite(value):
         return repr(value)
     if isinstance(value, dict):
-        return {str(key): _json_safe(item) for key, item in value.items()}
+        return {_json_safe(str(key)): _json_safe(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
     return value
 
 
 async def request_validation_error_handler(request: Request, exc: Exception) -> Response:
-    """Return HTTP 422 for a body-validation failure even when the body carried NaN or Inf.
+    """Return HTTP 422 even for non-finite numbers or unpaired Unicode surrogates.
 
     The default handler echoes the offending input inside the error detail; a
     non-finite float there makes the JSON encoder raise and turns a rejected
-    request into HTTP 500. This handler renders such inputs as text instead.
+    request into HTTP 500. Unpaired Unicode surrogates fail UTF-8 encoding in
+    the same way. Render non-finite numbers as text and unpaired surrogates as
+    literal backslash escapes, retaining valid Unicode and field-error details.
     """
     if not isinstance(exc, RequestValidationError):
         raise exc

@@ -130,6 +130,10 @@ step failures retain the model, backend, step index and simulated time without
 copying interpreter or library messages. Original exceptions remain chained
 locally for diagnosis. State-observation refusals still name the affected
 variable and its violated rule. FastAPI request-schema validation is retained.
+Its structured HTTP 422 field errors render non-finite numbers as text and
+unpaired Unicode surrogates as literal backslash escapes, including in nested
+inputs and object keys. Valid Unicode is preserved. Rejected requests therefore
+remain HTTP 422 even when their input cannot be encoded directly as JSON.
 Replay admission and unreadable JSON packs follow the same rule: generated
 exception text is never part of the public reason.
 
