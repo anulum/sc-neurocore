@@ -7,3 +7,4 @@
 # SC-NeuroCore — CPU PyTorch CI dependency profile
 
 torch==2.14.1+cpu
+setuptools==84.0.0

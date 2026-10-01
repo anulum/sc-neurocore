@@ -7,9 +7,15 @@
 # SC-NeuroCore — Source/config provenance header
 
 version: 2
+registries:
+  pytorch-cpu:
+    type: python-index
+    url: https://download.pytorch.org/whl/cpu
+    replaces-base: false
 updates:
   - package-ecosystem: pip
-    directory: /
+    directories: [/, /requirements]
+    registries: [pytorch-cpu]
     schedule:
       interval: weekly
     labels: [dependencies, python]
