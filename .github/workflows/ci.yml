@@ -150,12 +150,10 @@ jobs:
   test:
     name: test (${{ matrix.python-minor }})
     runs-on: ubuntu-latest
-    # Fail-fast backstop for a hung leg. The 3.12 leg alone runs the full suite
-    # under --cov (the coverage tracer roughly doubles wall-clock), so the cap is
-    # generous even with process-reclaiming file batches. Its job is
-    # to kill a genuine deadlock at the cap instead of letting it burn the shared
-    # runner for the 6h GitHub default — a hung job is worse than a clean red.
-    timeout-minutes: 240
+    # The primary coverage leg exceeded four hours while still progressing
+    # through the full-suite batches. Allow the hosted runner's six-hour limit
+    # for coverage and its exact gates; compatibility legs retain four hours.
+    timeout-minutes: ${{ matrix.primary && 360 || 240 }}
     strategy:
       fail-fast: false
       matrix:
