@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790850561772,
+  "lastUpdate": 1790886781021,
   "repoUrl": "https://github.com/anulum/sc-neurocore",
   "entries": {
     "Rust Criterion Benchmark": [
@@ -118438,6 +118438,1300 @@ window.BENCHMARK_DATA = {
           {
             "name": "taste_receptor_10k_steps",
             "value": 77489,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Miroslav Šotek",
+            "username": "anulum",
+            "email": "protoscience@anulum.li"
+          },
+          "committer": {
+            "name": "Miroslav Šotek",
+            "username": "anulum",
+            "email": "protoscience@anulum.li"
+          },
+          "id": "15030009bbe0ccf3e78e20b39730eae0ff5c2f1b",
+          "message": "fix(security): audit every Python dependency profile\n\nRetain every hashlocked pin and marker branch, validate actual scanner\ncoverage, and reject incomplete evidence in CI and release packets.\nCapture supported Mypy JSON and Pyright diagnostics with tool versions,\nexecution failures and explicit scope. Pin JupyterLab to patched 4.6.4.\n\nVerified with 119 focused tests, strict typing and source-bound scoped\ngates; all 402 changed production statements were exercised. Full suites\nremain CI-owned. Numerical kernels and backend parity are unaffected.\n\nAuthored by Anulum Fortis & Arcane Sapience (protoscience@anulum.li)\nSeat: 7e4a1",
+          "timestamp": "2026-10-01T19:22:14Z",
+          "url": "https://github.com/anulum/sc-neurocore/commit/15030009bbe0ccf3e78e20b39730eae0ff5c2f1b"
+        },
+        "date": 1790886779176,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "pack_u8_bits_to_u64_1m",
+            "value": 825900,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "packed_popcount/u64_count_ones/1048576",
+            "value": 3998,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "packed_popcount/simd_dispatch/1048576",
+            "value": 3946,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "packed_popcount/u64_count_ones/67108864",
+            "value": 254320,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "packed_popcount/simd_dispatch/67108864",
+            "value": 255690,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "packed_popcount/u64_count_ones/1073741824",
+            "value": 6354300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "packed_popcount/simd_dispatch/1073741824",
+            "value": 6184800,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pack_1m",
+            "value": 825140,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pack_fast_1m",
+            "value": 224990,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pack_dispatch_1m",
+            "value": 19089,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "popcount_portable_1m",
+            "value": 3999,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "popcount_simd_1m",
+            "value": 3995,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "encoder_64k_steps",
+            "value": 142680,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lif_10k_steps",
+            "value": 8738,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lif_100k_steps",
+            "value": 87188,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_stream_1024",
+            "value": 3608,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_stream_pack_1024",
+            "value": 4647,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_packed_1024",
+            "value": 3162,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_packed_fast_1024",
+            "value": 1185,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_packed_simd_1024",
+            "value": 287,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_packed_simd_xoshiro_1024",
+            "value": 289,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "fused_and_popcount_scalar_16w",
+            "value": 5,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "fused_and_popcount_dispatch_16w",
+            "value": 6,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dense_forward_64x32",
+            "value": 534120,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dense_forward_fast_64x32",
+            "value": 69146,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dense_forward_fast_flat_64x32_b",
+            "value": 69397,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dense_forward_fused_64x32",
+            "value": 276560,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bernoulli_encode_and_popcount_1024",
+            "value": 255,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dense_forward_batch_64x32_x100",
+            "value": 1475200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "prng_chacha_fill_1024",
+            "value": 260,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "prng_xoshiro_fill_1024",
+            "value": 266,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dense_forward_prepacked_64x32",
+            "value": 18923,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "mixed_dense_q88_q1616_64x32",
+            "value": 2729,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "block_floating_dense_q16_64x32",
+            "value": 10100,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "kuramoto_100_osc_1000_steps",
+            "value": 67581000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "attention_10x16_20x32",
+            "value": 26575,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gnn_20x8_forward",
+            "value": 27355,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "adex_1k_steps",
+            "value": 24712,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "adex_10k_steps",
+            "value": 247090,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "expif_1k_steps",
+            "value": 93127,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "expif_10k_steps",
+            "value": 930910,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lapicque_1k_steps",
+            "value": 1378,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lapicque_10k_steps",
+            "value": 13610,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pv_fs_1k_steps",
+            "value": 14024000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sst_1k_steps",
+            "value": 1883300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vip_1k_steps",
+            "value": 991580,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "chandelier_1k_steps",
+            "value": 4024499,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "basket_cerebellar_1k_steps",
+            "value": 4408100,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "martinotti_1k_steps",
+            "value": 1559200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "alpha_motor_1k_steps",
+            "value": 4993200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "upper_motor_1k_steps",
+            "value": 574550,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "motor_unit_10k_steps",
+            "value": 399940,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "renshaw_1k_steps",
+            "value": 4990300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gamma_motor_10k_steps",
+            "value": 93464,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ihc_10k_steps",
+            "value": 56007,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "rod_10k_steps",
+            "value": 442590,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "rgc_10k_steps",
+            "value": 1032000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "merkel_10k_steps",
+            "value": 95683,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pacinian_10k_steps",
+            "value": 188470,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "nociceptor_10k_steps",
+            "value": 32840,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "olfactory_10k_steps",
+            "value": 341970,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "granule_10k_steps",
+            "value": 6541700,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "golgi_1k_steps",
+            "value": 2748700,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stellate_1k_steps",
+            "value": 5581100,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lugaro_10k_steps",
+            "value": 100400,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ubc_10k_steps",
+            "value": 137830,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dcn_1k_steps",
+            "value": 2959200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "persistent_na_1k_steps",
+            "value": 4056199,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ih_1k_steps",
+            "value": 4322900,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ttype_ca_1k_steps",
+            "value": 4543000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "atype_k_1k_steps",
+            "value": 4091300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bk_1k_steps",
+            "value": 4178200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sk_1k_steps",
+            "value": 3734400,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "nmda_1k_steps",
+            "value": 86510,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "aihara_100k_steps",
+            "value": 2671600,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "nagumo_sato_100k_steps",
+            "value": 378720,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sc_adaptive_threshold_map_100k_steps",
+            "value": 2412300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ermentrout_kopell_100k_steps",
+            "value": 2479800,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "montbrio_100k_steps",
+            "value": 963160,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "brunel_100k_steps",
+            "value": 1484200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tum_100k_steps",
+            "value": 1702100,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "elboustani_100k_steps",
+            "value": 2154300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "graded_synapse_100k_steps",
+            "value": 539430,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gap_junction_100k_steps",
+            "value": 2186300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "fh_axon_1k_steps",
+            "value": 4451700,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "node_of_ranvier_1k_steps",
+            "value": 1084000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "myelinated_axon_1k_steps",
+            "value": 1092600,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cardiac_purkinje_1k_steps",
+            "value": 740410,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "smooth_muscle_1k_steps",
+            "value": 199780,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "beta_cell_1k_steps",
+            "value": 168440,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "brunel_wang_10k_steps",
+            "value": 168650,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "hh_1k_steps",
+            "value": 5774800,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "traub_miles_1k_steps",
+            "value": 2525500,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "wang_buzsaki_1k_steps",
+            "value": 3042700,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "connor_stevens_1k_steps",
+            "value": 60274000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "destexhe_1k_steps",
+            "value": 383940,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huber_braun_1k_steps",
+            "value": 38786,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "golomb_fs_1k_steps",
+            "value": 2249600,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pospischil_1k_steps",
+            "value": 1264000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "mainen_sejnowski_1k_steps",
+            "value": 2242900,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "de_schutter_purkinje_1k_steps",
+            "value": 1448800,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "plant_r15_1k_steps",
+            "value": 343000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "prescott_10k_steps",
+            "value": 1596000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "mihalas_niebur_10k_steps",
+            "value": 583240,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sc_scaled_reset_adaptive_if_10k_steps",
+            "value": 815180,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "glif_10k_steps",
+            "value": 653500,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gif_pop_10k_steps",
+            "value": 192130,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "avron_cardiac_1k_steps",
+            "value": 286790,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "durstewitz_1k_steps",
+            "value": 224390,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "hill_tononi_1k_steps",
+            "value": 663220,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bertram_phantom_1k_steps",
+            "value": 191270,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "yamada_1k_steps",
+            "value": 34810,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "fhn_10k_steps",
+            "value": 513730,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "morris_lecar_10k_steps",
+            "value": 2830900,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "hindmarsh_rose_10k_steps",
+            "value": 443820,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "resonate_and_fire_10k_steps",
+            "value": 92653,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "balanced_resonate_and_fire_10k_steps",
+            "value": 46348,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "fitzhugh_rinzel_10k_steps",
+            "value": 639850,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "mckean_10k_steps",
+            "value": 355470,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "terman_wang_10k_steps",
+            "value": 1279500,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "benda_herz_10k_steps",
+            "value": 668530,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "alpha_10k_steps",
+            "value": 49137,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "coba_lif_10k_steps",
+            "value": 585250,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gutkin_ermentrout_10k_steps",
+            "value": 1465300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "wilson_hr_10k_steps",
+            "value": 654390,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "chay_1k_steps",
+            "value": 667500,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "chay_keizer_1k_steps",
+            "value": 317250,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sherman_rinzel_keizer_1k_steps",
+            "value": 30544,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "butera_respiratory_1k_steps",
+            "value": 275850,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "eprop_alif_10k_steps",
+            "value": 12572,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "superspike_10k_steps",
+            "value": 7326,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "learnable_neuron_10k_steps",
+            "value": 135110,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pernarowski_10k_steps",
+            "value": 640870,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "qif_100k_steps",
+            "value": 4202400,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "theta_100k_steps",
+            "value": 10467000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "perfect_integrator_100k_steps",
+            "value": 122790,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gated_lif_100k_steps",
+            "value": 235510,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "nlif_10k_steps",
+            "value": 125150,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sfa_10k_steps",
+            "value": 91287,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "mat_10k_steps",
+            "value": 72858,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sc_resetting_mat_10k_steps",
+            "value": 406770,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "escape_rate_10k_steps",
+            "value": 640420,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "klif_100k_steps",
+            "value": 71888,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ilif_100k_steps",
+            "value": 139170,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "clif_100k_steps",
+            "value": 72962,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "plif_100k_steps",
+            "value": 276400,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "nrlif_10k_steps",
+            "value": 32019,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "atif_10k_steps",
+            "value": 30304,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sigma_delta_100k_steps",
+            "value": 708910,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "energy_lif_10k_steps",
+            "value": 962380,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "iqif_100k_steps",
+            "value": 248400,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cfc_100k_steps",
+            "value": 4211600,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stochastic_lif_10k_steps",
+            "value": 3119,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "poisson_100k_steps",
+            "value": 1848700,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "inhom_poisson_100k_steps",
+            "value": 218010,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "gamma_renewal_100k_steps",
+            "value": 2588200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stochastic_if_10k_steps",
+            "value": 285460,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "galves_locherbach_10k_steps",
+            "value": 79076,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "spike_response_10k_steps",
+            "value": 62946,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "glm_10k_steps",
+            "value": 789970,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "wilson_cowan_100k_steps",
+            "value": 16312000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "jansen_rit_100k_steps",
+            "value": 3809500,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "wong_wang_100k_steps",
+            "value": 11408000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ek_population_100k_steps",
+            "value": 609640,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "wendling_100k_steps",
+            "value": 2962000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "larter_breakspear_2003_rk4_100k_steps",
+            "value": 46669000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sc_decoupled_adaptation_ion_mass_100k_steps",
+            "value": 28196000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "sigmoid_rate_100k_steps",
+            "value": 186390,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "threshold_linear_100k_steps",
+            "value": 30841,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "astrocyte_10k_steps",
+            "value": 163490,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tsodyks_markram_10k_steps",
+            "value": 82269,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ltc_10k_steps",
+            "value": 146060,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "compte_wm_10k_steps",
+            "value": 707450,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parallel_spiking_10k_steps",
+            "value": 116900,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "fractional_lif_10k_steps",
+            "value": 538330,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "siegert_100k_steps",
+            "value": 32771000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "amari_field_10k_steps",
+            "value": 19913000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "leaky_compete_fire_10k_steps",
+            "value": 346270,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "loihi_cuba_100k_steps",
+            "value": 308920,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "loihi2_100k_steps",
+            "value": 340320,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "truenorth_100k_steps",
+            "value": 61577,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "brainscales_1k_steps",
+            "value": 45466,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "spinnaker_lif_10k_steps",
+            "value": 36357,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "spinnaker2_100k_steps",
+            "value": 94023,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dpi_100k_steps",
+            "value": 4185699,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "akida_100k_steps",
+            "value": 43812,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "neurogrid_1k_steps",
+            "value": 120490,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "multi_timescale_10k_steps",
+            "value": 61251,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "attention_gated_10k_steps",
+            "value": 136030,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "predictive_coding_10k_steps",
+            "value": 62029,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "self_referential_10k_steps",
+            "value": 309950,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "compositional_binding_10k_steps",
+            "value": 119860,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "differentiable_surrogate_10k_steps",
+            "value": 27740,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "continuous_attractor_10k_steps",
+            "value": 4426300,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "meta_plastic_10k_steps",
+            "value": 14301,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "arcane_10k_steps",
+            "value": 1102200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pinsky_rinzel_1k_steps",
+            "value": 341090,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "hay_l5_1k_steps",
+            "value": 1418800,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "marder_stg_1k_steps",
+            "value": 765190,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "rall_cable_1k_steps",
+            "value": 179730,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "booth_rinzel_1k_steps",
+            "value": 335690,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "dendrify_1k_steps",
+            "value": 17961,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "two_comp_lif_10k_steps",
+            "value": 66645,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "chialvo_100k_steps",
+            "value": 1451700,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "rulkov_100k_steps",
+            "value": 686270,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ibarz_tanaka_100k_steps",
+            "value": 434120,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "medvedev_100k_steps",
+            "value": 2713200,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cazelles_100k_steps",
+            "value": 573860,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "courage_nekorkin_100k_steps",
+            "value": 489710,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "outer_hair_cell_10k_steps",
+            "value": 87176,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cone_photoreceptor_10k_steps",
+            "value": 103190,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "taste_receptor_10k_steps",
+            "value": 80577,
             "range": "± 0",
             "unit": "ns/iter"
           }
