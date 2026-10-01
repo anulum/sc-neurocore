@@ -43,13 +43,16 @@ napoleon_numpy_docstring = True
 napoleon_use_ivar = True
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
+    "python": (
+        "https://docs.python.org/3.12/",
+        os.environ.get("SC_NEUROCORE_PYTHON_REFERENCE_INVENTORY"),
+    ),
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 html_theme = "furo"
-html_static_path = []
+html_static_path: list[str] = []
 html_title = "SC-NeuroCore API"

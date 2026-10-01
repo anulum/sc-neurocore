@@ -92,6 +92,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Use the SHA-256 verified official Python 3.12 reference inventory to keep
+  strict Sphinx documentation builds available during upstream outages.
+
 - Rust engine, standalone core crates and fuzz lockfiles use the maintained
   `chacha20 0.10.2`, replacing the yanked `0.10.0` with its SSE2 backend fix.
   The engine fuzz lock also includes the existing engine SHA-256 dependency.

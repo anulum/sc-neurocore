@@ -48,7 +48,15 @@ jobs:
       - name: Build MkDocs site
         run: mkdocs build --site-dir _site
 
+      - name: Prepare official Python reference inventory
+        run: |
+          bash .github/scripts/prepare_python_inventory.sh \
+            .github/python_reference_inventory.json \
+            "$RUNNER_TEMP/neurocore-python-reference"
+
       - name: Build Sphinx API documentation
+        env:
+          SC_NEUROCORE_PYTHON_REFERENCE_INVENTORY: ${{ runner.temp }}/neurocore-python-reference/python.inv
         run: sphinx-build -W --keep-going -b html docs/sphinx/source _site/sphinx
 
       # --- Rustdoc (Rust engine API) ---
