@@ -313,7 +313,18 @@ def run_rust_proptest(
 
 
 def build_artifact_index(*, output_dir: Path) -> dict[str, Any]:
-    """Rebuild the release artifact index after scanner artefacts are present."""
+    """Rebuild the release index and reject missing reports or invalid Python coverage.
+
+    Parameters
+    ----------
+    output_dir : Path
+        Packet root containing the completed scanner artifacts.
+
+    Returns
+    -------
+    dict
+        Release-index lane status, missing reports and invalid coverage identities.
+    """
     module = _load_module(
         "release_artifact_index_for_release_sweep",
         _script_root() / "tools" / "security_scan" / "release_security_artifact_index.py",
@@ -322,13 +333,16 @@ def build_artifact_index(*, output_dir: Path) -> dict[str, Any]:
     manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     index = cast(dict[str, Any], module.build_artifact_index(manifest_payload, root=output_dir))
     _write_json(output_dir / "release_security_artifact_index.json", index)
-    passed = not index.get("missing_required") and not index.get(
-        "missing_required_vulnerability_status"
+    passed = (
+        not index.get("missing_required")
+        and not index.get("missing_required_vulnerability_status")
+        and not index.get("invalid_vulnerability_status")
     )
     return {
         "schema_version": "sc-neurocore.release-artifact-index-run.v1",
         "passed": passed,
         "missing_required": index.get("missing_required", []),
+        "invalid_vulnerability_status": index.get("invalid_vulnerability_status", []),
         "missing_required_vulnerability_status": index.get(
             "missing_required_vulnerability_status", []
         ),

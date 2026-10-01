@@ -22,6 +22,22 @@ TOOL_PATH = REPO_ROOT / "tools" / "security_scan" / "ci_security_packet.py"
 RELEASE_SCHEMA_VERSION = "sc-neurocore.release-security-artifact-index.v1"
 
 
+def test_real_packet_cli_refuses_legacy_python_report(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The canonical manifest and plans cannot qualify a release-only Python report."""
+    tool = _load_tool()
+    security = tmp_path / "security"
+    security.mkdir()
+    (security / "pip_audit.json").write_text('{"dependencies":[],"fixes":[]}')
+    assert tool.main(["--output-dir", str(tmp_path), "--fail-on-missing-required"]) == 1
+    summary = json.loads(capsys.readouterr().out)
+    assert summary["missing_required"] == []
+    assert summary["invalid_vulnerability_status"] == ["pip_audit"]
+    index = json.loads((tmp_path / "release_security_artifact_index.json").read_text())
+    assert index["invalid_vulnerability_status"] == ["pip_audit"]
+
+
 def _load_tool() -> Any:
     spec = importlib.util.spec_from_file_location("ci_security_packet", TOOL_PATH)
     assert spec is not None

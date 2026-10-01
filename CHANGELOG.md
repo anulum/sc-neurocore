@@ -10,6 +10,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Pin the workstation notebook dependency JupyterLab to 4.6.4, fixing
+  GHSA-3jqq-pw4j-pqcj, GHSA-6966-vjj6-99xv and GHSA-3325-v43h-43rv.
+
+- Typing scanner reports use supported Mypy JSON diagnostics and retain actual
+  commands, versions and execution failures. Explicit file scopes are labelled;
+  stale reports and mismatched tools cannot qualify a successful scan.
+
+- Python dependency auditing covers every maintained hashlocked profile and
+  every marker branch. Reports retain original pins and hashes, explicitly
+  identify the official Torch CPU upstream advisory query, and fail on missing
+  dependencies or incomplete coverage. Release evidence rejects the former
+  release-tooling-only report as unqualified coverage.
+
 - Laboratory HTTP refusals preserve explicitly authored messages and hide generated numeric-conversion and replay-validation exception text.
 
 ### Changed

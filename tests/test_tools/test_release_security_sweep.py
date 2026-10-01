@@ -19,6 +19,22 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL_PATH = REPO_ROOT / "tools" / "security_scan" / "release_security_sweep.py"
 
 
+def test_real_release_index_rejects_incomplete_python_packet(tmp_path: Path) -> None:
+    """Build actual canonical packet assets and refuse an unqualified Python report."""
+    from tools.security_scan.ci_security_packet import main as build_packet
+
+    assert build_packet(["--output-dir", str(tmp_path), "--fail-on-missing-required"]) == 0
+    (tmp_path / "security/pip_audit.json").write_text(
+        '{"dependencies":[],"coverage_complete":true,"profiles":[],"errors":[]}'
+    )
+    summary = _load_tool().build_artifact_index(output_dir=tmp_path)
+    assert summary["passed"] is False
+    assert summary["missing_required"] == []
+    assert summary["invalid_vulnerability_status"] == ["pip_audit"]
+    index = json.loads((tmp_path / "release_security_artifact_index.json").read_text())
+    assert index["invalid_vulnerability_status"] == ["pip_audit"]
+
+
 def _load_tool() -> Any:
     spec = importlib.util.spec_from_file_location("release_security_sweep", TOOL_PATH)
     assert spec is not None

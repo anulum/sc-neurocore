@@ -60,11 +60,17 @@ def test_manifest_contains_required_security_scanners() -> None:
 
 
 def test_manifest_scanner_versions_match_governed_locks() -> None:
+    """Keep scanner declarations consistent with maintained requirement inputs."""
     tool = _load_tool()
     scanners = {scanner["name"]: scanner for scanner in tool.build_scanner_manifest()["scanners"]}
 
     assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
-    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.176.1"
+    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.177.0"
+    assert scanners["ruff"]["pinned_version"] == "ruff==0.16.9"
+    assert scanners["mypy"]["pinned_version"] == "mypy==2.3.1"
+    repo = Path(__file__).resolve().parents[2]
+    for name, source in (("semgrep", "semgrep.in"), ("ruff", "lint.in"), ("mypy", "lint.in")):
+        assert scanners[name]["pinned_version"] in (repo / "requirements" / source).read_text()
 
 
 def test_scanner_records_ownership_and_noise_fields() -> None:

@@ -20,7 +20,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-PYTHON_COMPLIANCE_SCHEMA_VERSION = "sc-neurocore.python-compliance-scanners.v1"
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from tools.security_scan.python_dependency_audit import run_dependency_audit
+
+PYTHON_COMPLIANCE_SCHEMA_VERSION = "sc-neurocore.python-compliance-scanners.v2"
 NON_BLOCKING_SCANNERS = frozenset({"reuse"})
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
@@ -94,49 +99,64 @@ def run_python_compliance_scanners(
     output_dir: Path,
     run_command: RunCommand = subprocess.run,
 ) -> dict[str, Any]:
+    """Run the complete Python profile audit and retain non-blocking REUSE evidence.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Repository whose maintained hashlocked profiles are audited.
+    output_dir : Path
+        Packet root for all scanner reports and logs.
+    run_command : callable
+        Executor for bounded scanner subprocesses, without a shell.
+
+    Returns
+    -------
+    dict
+        Compliance summary; incomplete dependency coverage or any known finding
+        fails the lane. REUSE's existing non-blocking policy remains explicit.
+    """
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
 
     pip_audit_output = security_dir / "pip_audit.json"
-    pip_audit = _run(
-        [
-            _resolve_tool("pip-audit"),
-            "--strict",
-            "--requirement",
-            "requirements/release.txt",
-            "--format",
-            "json",
-            "--progress-spinner",
-            "off",
-            "--output",
-            str(pip_audit_output),
-        ],
+    pip_audit = run_dependency_audit(
         repo_root=repo_root,
+        output_dir=output_dir,
         run_command=run_command,
-        timeout=240,
     )
 
     reuse_output = security_dir / "reuse.json"
-    reuse = _run(
-        [_resolve_tool("reuse"), "--root", ".", "lint", "--json"],
-        repo_root=repo_root,
-        run_command=run_command,
-        timeout=180,
-    )
-    _write_json(reuse_output, _normalise_output(reuse.stdout, reuse.stderr))
+    reuse_returncode: int | None = None
+    reuse_stderr = ""
+    try:
+        reuse = _run(
+            [_resolve_tool("reuse"), "--root", ".", "lint", "--json"],
+            repo_root=repo_root,
+            run_command=run_command,
+            timeout=180,
+        )
+        reuse_returncode = reuse.returncode
+        reuse_stderr = reuse.stderr
+        reuse_payload = _normalise_output(reuse.stdout, reuse.stderr)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        reuse_payload = {"execution_error": type(exc).__name__}
+    _write_json(reuse_output, reuse_payload)
 
     scanner_results = [
         {
             "name": "pip-audit",
             "artifact": str(pip_audit_output),
-            "returncode": pip_audit.returncode,
-            "stderr": pip_audit.stderr,
+            "returncode": 0 if pip_audit["passed"] else 1,
+            "coverage_complete": pip_audit["coverage_complete"],
+            "profile_count": len(pip_audit["profiles"]),
+            "errors": pip_audit["errors"],
         },
         {
             "name": "reuse",
             "artifact": str(reuse_output),
-            "returncode": reuse.returncode,
-            "stderr": reuse.stderr,
+            "returncode": reuse_returncode,
+            "stderr": reuse_stderr,
         },
     ]
     all_failed = [

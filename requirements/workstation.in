@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Full-fidelity workstation requirements
 # Full-fidelity local workstation overlay.
 # Package, developer, Julia, build, and maturin dependencies are compiled from
 # their canonical project inputs alongside this intentionally separate
@@ -6,3 +13,5 @@ jupyter>=1.1,<2
 matplotlib>=3.5
 pip>=26,<27
 pip-tools==7.6.1
+# JupyterLab 4.6.4 fixes GHSA-3jqq-pw4j-pqcj, GHSA-6966-vjj6-99xv and GHSA-3325-v43h-43rv.
+jupyterlab==4.6.4

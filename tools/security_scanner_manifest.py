@@ -23,6 +23,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from tools.security_scan.python_dependency_profiles import CONSTRAINT_INPUT, REQUIRED_PROFILES
 
 SCAN_MANIFEST_SCHEMA_VERSION = "sc-neurocore.security-scanner-manifest.v1"
 
@@ -59,13 +63,19 @@ _MANDATORY_SCANNERS = (
         cadence="on-push",
         blocking_policy="blocking",
         command=(
-            "pip-audit --strict --requirement requirements/release.txt "
-            "--format json --progress-spinner off --output security/pip_audit.json"
+            "python tools/security_scan/python_dependency_audit.py "
+            "--output-dir security/ci-security-packet"
         ),
-        inputs=(
+        inputs=tuple(
+            _input(path=path, purpose="Complete hashlocked Python profile audit")
+            for path in REQUIRED_PROFILES
+        )
+        + (
             _input(
-                path="requirements/release.txt",
-                purpose="Pinned dependencies and hashes for supply-chain audit",
+                path=CONSTRAINT_INPUT, purpose="Reviewed Semgrep constraints must match its lock"
+            ),
+            _input(
+                path="requirements", purpose="Additional Python profiles are audited automatically"
             ),
             _input(path="pyproject.toml", purpose="Dependency metadata reference", required=False),
         ),
@@ -89,8 +99,8 @@ _MANDATORY_SCANNERS = (
                 purpose="OSV-Scanner v2 exception and override policy",
             ),
             _input(
-                path="requirements/release.txt",
-                purpose="Python dependencies for vulnerability correlation",
+                path="studio/frontend/package-lock.json",
+                purpose="JavaScript dependency vulnerability matching; Python profiles use pip-audit",
             ),
             _input(path="Cargo.lock", purpose="Rust dependency lockfile", required=False),
         ),
@@ -178,7 +188,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.176.1",
+        pinned_version="semgrep==1.177.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -259,11 +269,15 @@ _MANDATORY_SCANNERS = (
         command="pyright --project pyrightconfig.json --outputjson",
         inputs=(
             _input(path="pyrightconfig.json", purpose="Type-check policy definition"),
+            _input(
+                path="tools/security_scan/run_typing_scanners.py",
+                purpose="Pinned typing report runner",
+            ),
             _input(path="src", purpose="Python static type surface"),
         ),
         owner="SC-NeuroCore typing owner",
         noise="low",
-        pinned_version="pyright==1.1.382",
+        pinned_version="pyright==1.1.414",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -271,14 +285,19 @@ _MANDATORY_SCANNERS = (
         ecosystem="python",
         cadence="on-push",
         blocking_policy="blocking",
-        command="mypy --strict --json-report security/mypy .",
+        command="python tools/security_scan/run_typing_scanners.py --output-dir .",
         inputs=(
             _input(path="pyproject.toml", purpose="Mypy config and source discovery"),
+            _input(
+                path="tools/security_scan/run_typing_scanners.py",
+                purpose="Strict JSON diagnostic capture",
+            ),
+            _input(path="requirements/lint.txt", purpose="Hashlocked Mypy version"),
             _input(path="src", purpose="Python typed surface"),
         ),
         owner="SC-NeuroCore typing owner",
         noise="low",
-        pinned_version="mypy==1.15.0",
+        pinned_version="mypy==2.3.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -312,7 +331,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore code quality owner",
         noise="low",
-        pinned_version="ruff==0.8.1",
+        pinned_version="ruff==0.16.9",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

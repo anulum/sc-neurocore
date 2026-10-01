@@ -13,6 +13,8 @@ from pathlib import Path
 import sys
 from typing import Any
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CANONICAL_MANIFEST = REPO_ROOT / "security" / "release_artifacts_manifest.json"
@@ -60,6 +62,55 @@ EXPECTED_VULNERABILITY_STATUS_IDS = {
     "pip_audit",
     "trivy_fs",
 }
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"dependencies": []},
+        {"dependencies": [], "coverage_complete": False},
+        {"dependencies": [], "coverage_complete": True, "profiles": [], "errors": []},
+    ],
+)
+def test_real_index_cli_rejects_unqualified_python_coverage(
+    tmp_path: Path, payload: object
+) -> None:
+    """Report presence or a bare green flag cannot qualify the maintained profiles."""
+    tool = _load_tool()
+    security = tmp_path / "security"
+    security.mkdir()
+    (security / "pip_audit.json").write_text(json.dumps(payload))
+    manifest = tmp_path / "manifest.json"
+    _write_manifest_with_vulnerability_status(
+        manifest,
+        [],
+        [
+            {
+                "id": "pip_audit",
+                "path": "security/pip_audit.json",
+                "required": False,
+                "scanner": "pip-audit",
+            },
+        ],
+    )
+    output = tmp_path / "index.json"
+    assert (
+        tool.main(
+            [
+                "--manifest",
+                str(manifest),
+                "--root",
+                str(tmp_path),
+                "--output",
+                str(output),
+                "--fail-on-missing-required",
+            ]
+        )
+        == 1
+    )
+    report = json.loads(output.read_text())
+    assert report["invalid_vulnerability_status"] == ["pip_audit"]
+    assert report["missing_optional_vulnerability_status"] == []
 
 
 def _load_tool() -> Any:

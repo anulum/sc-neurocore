@@ -163,6 +163,7 @@ def _build_artifact_paths(
 
 
 def _build_summary(output_dir: Path, artifact_index_payload: dict[str, Any]) -> dict[str, Any]:
+    """Carry artifact availability, invalid coverage and required-input refusals."""
     python_plan = _load_packet_plan(output_dir / "python_code_scanner_plan.json")
     rust_plan = _load_packet_plan(output_dir / "rust_supply_chain_scanner_plan.json")
     return {
@@ -176,6 +177,9 @@ def _build_summary(output_dir: Path, artifact_index_payload: dict[str, Any]) -> 
         ),
         "missing_optional_vulnerability_status": artifact_index_payload.get(
             "missing_optional_vulnerability_status", []
+        ),
+        "invalid_vulnerability_status": artifact_index_payload.get(
+            "invalid_vulnerability_status", []
         ),
         "missing_required_scanner_inputs": _missing_required_scanner_inputs(
             {
@@ -226,6 +230,19 @@ def _missing_required_scanner_inputs(plans: dict[str, dict[str, Any]]) -> list[d
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Build canonical packet plans and apply the requested completeness guard.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        CLI arguments; defaults to the process arguments.
+
+    Returns
+    -------
+    int
+        Nonzero on construction errors or guarded missing inputs/invalid coverage.
+        Scanner binaries are executed by their separate runners.
+    """
     args = build_parser().parse_args(argv)
 
     output_dir = args.output_dir
@@ -267,6 +284,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.fail_on_missing_required and (
         summary["missing_required"]
         or summary["missing_required_vulnerability_status"]
+        or summary["invalid_vulnerability_status"]
         or summary["missing_required_scanner_inputs"]
     ):
         return 1

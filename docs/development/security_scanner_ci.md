@@ -60,13 +60,32 @@ sequence.
   `security/cargo_deny.json`; their commands write JSON reports from stdout so
   `cargo audit --file` remains the lockfile input option, not a report path.
 - Optional Python compliance artefact slots include `security/pip_audit.json`
-  and `security/reuse.json`; `pip-audit` is pinned to an available release and
-  runs against the hashed `requirements/release.txt`.
+  and `security/reuse.json`. The pinned `pip-audit` runner audits every maintained
+  hashlocked Python profile and any additional `requirements/*.txt` lock.
+  The sole constraint-only file, `semgrep-overrides.txt`, must agree with the
+  audited Semgrep lock. Missing maintained profiles fail the lane.
+  Per-profile query inputs, raw reports and subprocess logs are retained under
+  `security/python_profiles/`; the aggregate records original lock SHA-256,
+  pinned versions, markers, hashes, query versions and `coverage_complete`.
+  Every marker branch is audited independently of the host platform, and
+  conflicting versions are queried separately. Exact report completeness,
+  skipped dependencies, malformed findings, timeouts and changed inputs are
+  checked independently of the scanner exit code. An incomplete or legacy
+  release-only report is invalid vulnerability evidence in the artifact index.
+  These are advisory checks, without installing packages or claiming binary
+  hash verification. Only the official `torch==<version>+cpu` profile from
+  `https://download.pytorch.org/whl/cpu` uses an explicit upstream public-version
+  advisory query: the original CPU version and hashes remain in the report,
+  and all upstream advisories remain blocking. PyPI does not publish local
+  versions ([PyPA version specification](https://packaging.python.org/en/latest/specifications/version-specifiers/#local-version-identifiers));
+  PyTorch documents its [CPU distribution index](https://docs.pytorch.org/get-started/previous-versions/).
+  This does not establish absence of build-specific or unknown vulnerabilities.
+  Unreviewed local builds fail closed.
 - OSV-Scanner v2 writes `security/osv_scanner.json` and
   `security/osv_scanner_summary.json`; the lane is blocking and runs with the
-  pinned Go `1.26.7` toolchain because OSV also evaluates Go standard-library
+  pinned Go `1.27.1` toolchain because OSV also evaluates Go standard-library
   vulnerability status from module metadata. The runner scans explicit
-  lockfile/requirements inputs with OSV's lockfile plugin rather than recursive
+  supported Rust and npm lockfiles with OSV's lockfile plugin rather than recursive
   source discovery so optional development manifests cannot mask the tracked
   dependency surfaces with resolver-side extraction failures. Transient OSV
   resolver service errors are retried before the lane reports failure; any
@@ -74,7 +93,23 @@ sequence.
 - Optional typing artefact slots include `security/pyright.json`,
   `security/mypy`, and `security/typing_scanner_summary.json`; the executable
   runner is available for baseline refreshes without enabling the lane in the
-  default workflow yet.
+  default workflow yet. Install Mypy `2.3.1` from the existing hashlocked lint
+  profile and Pyright `1.1.414` in a dedicated tool directory with
+  `npm install --prefix <tool-directory> --ignore-scripts pyright@1.1.414`.
+  Put that directory's `node_modules/.bin` and the active Python environment's
+  `bin` on PATH. The runner records each actual version check and rejects a
+  different version, even if that executable reports no typing errors.
+  Mypy uses its supported [`--output=json` format](https://mypy.readthedocs.io/en/stable/command_line.html#cmdoption-mypy-O);
+  current diagnostics, command and exit status are serialised into
+  `security/mypy/index.json`. Pyright's [JSON diagnostic report](https://github.com/microsoft/pyright/blob/main/docs/command-line.md#json-output)
+  retains its analysed-file and diagnostic counts. Both reports are rewritten
+  from the current run: startup failure, timeout, malformed output or an
+  inconsistent result fails the summary, rather than reusing old artefacts.
+  The public `validate_typing_output(scanner, stdout, returncode)` entry point
+  checks captured output offline using the same format checks as the runner.
+  `--paths <files...>` provides an explicitly labelled scoped run. Without it,
+  Pyright retains the project configuration and Mypy scans `.` under strict
+  mode; a scoped pass does not qualify the repository-wide typing baseline.
 - Syft/CycloneDX SBOM generation writes `security/sbom.cdx.json` and validates
   the output with `security/syft_cyclonedx_summary.json`.
 - The tag release sweep writes `security/semgrep.json` and

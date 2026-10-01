@@ -18,6 +18,11 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from tools.security_scan.python_dependency_profiles import REQUIRED_PROFILES
+
 RELEASE_ARTIFACT_INDEX_SCHEMA_VERSION = "sc-neurocore.release-security-artifact-index.v1"
 
 
@@ -157,6 +162,25 @@ def build_artifact_index(
     *,
     root: Path,
 ) -> dict[str, Any]:
+    """Index artifact presence, unresolved findings and Python profile coverage.
+
+    Parameters
+    ----------
+    manifest_payload : dict
+        Canonical artifact and vulnerability-status declarations.
+    root : Path
+        Packet root used to resolve report paths.
+
+    Returns
+    -------
+    dict
+        Missing reports, invalid Python coverage and retained vulnerability counts.
+
+    Raises
+    ------
+    ValueError
+        The artifact manifest does not satisfy its schema.
+    """
     if not isinstance(root, Path):
         root = Path(root)
 
@@ -212,6 +236,11 @@ def build_artifact_index(
         for entry in built_vulnerability_status
         if not entry["required"] and not entry["present"]
     ]
+    invalid_vulnerability_status = [
+        entry["id"]
+        for entry in built_vulnerability_status
+        if entry["present"] and entry.get("coverage_complete") is False
+    ]
 
     return {
         "schema_version": RELEASE_ARTIFACT_INDEX_SCHEMA_VERSION,
@@ -221,6 +250,7 @@ def build_artifact_index(
         "missing_optional": missing_optional,
         "missing_required_vulnerability_status": missing_required_vulnerability_status,
         "missing_optional_vulnerability_status": missing_optional_vulnerability_status,
+        "invalid_vulnerability_status": invalid_vulnerability_status,
         "artifacts": built_artifacts,
         "vulnerability_status": built_vulnerability_status,
         "vulnerability_summary": _vulnerability_summary(built_vulnerability_status),
@@ -228,6 +258,7 @@ def build_artifact_index(
 
 
 def _vulnerability_status_entry(raw_entry: dict[str, Any], *, root: Path) -> dict[str, Any]:
+    """Read a declared report and retain its findings and coverage qualification."""
     entry_id = str(raw_entry["id"])
     entry_path = str(raw_entry["path"])
     required = bool(raw_entry["required"])
@@ -235,6 +266,13 @@ def _vulnerability_status_entry(raw_entry: dict[str, Any], *, root: Path) -> dic
     resolved_path = _resolve_artifact_root_path(root, entry_path)
     present = resolved_path.exists()
     unresolved = _load_unresolved_vulnerability_summary(resolved_path) if present else {}
+    coverage_complete: bool | None = None
+    if present and scanner == "pip-audit":
+        try:
+            payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+            coverage_complete = _python_audit_complete(payload)
+        except (OSError, json.JSONDecodeError):
+            coverage_complete = False
 
     return {
         "id": entry_id,
@@ -242,9 +280,80 @@ def _vulnerability_status_entry(raw_entry: dict[str, Any], *, root: Path) -> dic
         "required": required,
         "scanner": scanner,
         "present": present,
+        "coverage_complete": coverage_complete,
         "unresolved_count": sum(unresolved.values()),
         "unresolved_by_severity": unresolved,
     }
+
+
+def _python_audit_complete(payload: object) -> bool:
+    """Check aggregate coverage against every mandatory profile and pinned identity.
+
+    Parameters
+    ----------
+    payload : object
+        Parsed aggregate report. Presence and a green flag alone are insufficient.
+
+    Returns
+    -------
+    bool
+        Whether all profiles, batches and dependency identities are complete.
+        This checks report consistency; packet provenance is validated separately.
+    """
+    if not isinstance(payload, dict) or payload.get("coverage_complete") is not True:
+        return False
+    profiles = payload.get("profiles")
+    dependencies = payload.get("dependencies")
+    if (
+        not isinstance(profiles, list)
+        or not isinstance(dependencies, list)
+        or payload.get("errors") != []
+    ):
+        return False
+    paths: set[str] = set()
+    expected: set[tuple[str, str]] = set()
+    for profile in profiles:
+        if not isinstance(profile, dict) or profile.get("coverage_complete") is not True:
+            return False
+        path = profile.get("path")
+        pins = profile.get("dependencies")
+        batches = profile.get("batches")
+        digest = profile.get("sha256")
+        if (
+            not isinstance(path, str)
+            or path in paths
+            or not isinstance(digest, str)
+            or len(digest) != 64
+        ):
+            return False
+        if not isinstance(pins, list) or not pins or not isinstance(batches, list) or not batches:
+            return False
+        if any(not isinstance(b, dict) or b.get("coverage_complete") is not True for b in batches):
+            return False
+        paths.add(path)
+        for pin in pins:
+            if (
+                not isinstance(pin, dict)
+                or not isinstance(pin.get("name"), str)
+                or not isinstance(pin.get("version"), str)
+            ):
+                return False
+            expected.add((pin["name"], pin["version"]))
+    actual: set[tuple[str, str]] = set()
+    for dep in dependencies:
+        if (
+            not isinstance(dep, dict)
+            or "skip_reason" in dep
+            or not isinstance(dep.get("name"), str)
+            or not isinstance(dep.get("version"), str)
+            or not isinstance(dep.get("vulns"), list)
+        ):
+            return False
+        key = (dep["name"], dep["version"])
+        if key in actual:
+            return False
+        actual.add(key)
+    return set(REQUIRED_PROFILES).issubset(paths) and expected == actual
 
 
 def _load_unresolved_vulnerability_summary(path: Path) -> dict[str, int]:
@@ -358,6 +467,18 @@ def _vulnerability_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Build the index, refusing missing required reports or invalid Python coverage.
+
+    Parameters
+    ----------
+    argv : sequence of str, optional
+        CLI arguments; defaults to the process arguments.
+
+    Returns
+    -------
+    int
+        Nonzero on invalid manifests or on requested artifact/coverage refusal.
+    """
     parser = build_parser()
     parser.add_argument(
         "--manifest",
@@ -409,6 +530,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.fail_on_missing_required and (
         artifact_index["missing_required"]
         or artifact_index["missing_required_vulnerability_status"]
+        or artifact_index["invalid_vulnerability_status"]
     ):
         return 1
     return 0

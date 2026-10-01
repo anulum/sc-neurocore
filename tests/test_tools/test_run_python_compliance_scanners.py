@@ -9,10 +9,26 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+
+def test_real_missing_repository_records_reuse_execution_error(tmp_path: Path) -> None:
+    """A real missing cwd is recorded and cannot reuse a stale compliance result."""
+    tool = _load_tool()
+    packet = tmp_path / "packet"
+    (packet / "security").mkdir(parents=True)
+    (packet / "security/reuse.json").write_text('{"non_compliant":false}')
+    summary = tool.run_python_compliance_scanners(
+        repo_root=tmp_path / "missing-repository", output_dir=packet
+    )
+    assert summary["passed"] is False
+    assert summary["failed_scanners"] == ["pip-audit"]
+    assert summary["non_blocking_failed_scanners"] == ["reuse"]
+    assert json.loads((packet / "security/reuse.json").read_text()) == {
+        "execution_error": "FileNotFoundError"
+    }
 
 
 def _load_tool() -> Any:
@@ -46,8 +62,8 @@ def test_manifest_python_compliance_commands_are_executable_and_pinned() -> None
 
     assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
     assert scanners["pip-audit"]["command"] == (
-        "pip-audit --strict --requirement requirements/release.txt "
-        "--format json --progress-spinner off --output security/pip_audit.json"
+        "python tools/security_scan/python_dependency_audit.py "
+        "--output-dir security/ci-security-packet"
     )
 
     assert scanners["reuse"]["pinned_version"] == "reuse==6.2.0"
@@ -56,99 +72,47 @@ def test_manifest_python_compliance_commands_are_executable_and_pinned() -> None
     assert isinstance(scanners["reuse"]["allowed_to_fail_rationale"], str)
 
 
-def test_runner_captures_pip_audit_output_file_and_reuse_stdout(tmp_path: Path) -> None:
+def test_runner_retains_inventory_failure_and_real_reuse_output(tmp_path: Path) -> None:
+    """Exercise the real runner; an empty repository has no auditable lock set."""
     tool = _load_tool()
-    calls: list[list[str]] = []
-
-    def fake_run(
-        command: list[str],
-        *,
-        cwd: Path,
-        capture_output: bool,
-        text: bool,
-        timeout: int,
-        check: bool,
-    ) -> subprocess.CompletedProcess[str]:
-        del cwd, capture_output, text, timeout, check
-        calls.append(command)
-        if Path(command[0]).name == "pip-audit":
-            Path(command[-1]).write_text('{"dependencies":[]}', encoding="utf-8")
-            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-        return subprocess.CompletedProcess(command, 0, stdout='{"summary":{}}', stderr="")
-
     summary = tool.run_python_compliance_scanners(
         repo_root=tmp_path,
         output_dir=tmp_path / "packet",
-        run_command=fake_run,
     )
-
-    assert [Path(call[0]).name for call in calls] == ["pip-audit", "reuse"]
-    assert summary["passed"] is True
-    assert summary["failed_scanners"] == []
-    assert json.loads(
-        (tmp_path / "packet" / "security" / "pip_audit.json").read_text(encoding="utf-8")
-    ) == {"dependencies": []}
-    assert json.loads(
-        (tmp_path / "packet" / "security" / "reuse.json").read_text(encoding="utf-8")
-    ) == {"summary": {}}
+    assert summary["passed"] is False
+    assert summary["failed_scanners"] == ["pip-audit"]
+    security = tmp_path / "packet" / "security"
+    audit = json.loads((security / "pip_audit.json").read_text())
+    assert audit["coverage_complete"] is False and audit["profiles"] == []
+    assert audit["errors"]
+    assert isinstance(json.loads((security / "reuse.json").read_text()), dict)
+    assert json.loads((security / "python_compliance_summary.json").read_text()) == summary
 
 
-def test_runner_fails_when_pip_audit_does_not_write_report(tmp_path: Path) -> None:
+def test_runner_overwrites_stale_dependency_report_on_invalid_inventory(tmp_path: Path) -> None:
+    """A prior green report cannot satisfy a later failed audit."""
     tool = _load_tool()
-
-    def fake_run(
-        command: list[str],
-        *,
-        cwd: Path,
-        capture_output: bool,
-        text: bool,
-        timeout: int,
-        check: bool,
-    ) -> subprocess.CompletedProcess[str]:
-        del cwd, capture_output, text, timeout, check
-        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
+    security = tmp_path / "packet" / "security"
+    security.mkdir(parents=True)
+    (security / "pip_audit.json").write_text('{"passed":true,"coverage_complete":true}')
     summary = tool.run_python_compliance_scanners(
-        repo_root=tmp_path,
-        output_dir=tmp_path / "packet",
-        run_command=fake_run,
+        repo_root=tmp_path, output_dir=tmp_path / "packet"
     )
-
     assert summary["passed"] is False
     assert "pip-audit" in summary["failed_scanners"]
+    assert json.loads((security / "pip_audit.json").read_text())["passed"] is False
 
 
-def test_reuse_failure_is_reported_without_failing_python_compliance_lane(
-    tmp_path: Path,
-) -> None:
+def test_real_reuse_failure_retains_its_non_blocking_policy(tmp_path: Path) -> None:
+    """Missing REUSE or an unlicensed empty root never becomes a blocking scanner."""
     tool = _load_tool()
-
-    def fake_run(
-        command: list[str],
-        *,
-        cwd: Path,
-        capture_output: bool,
-        text: bool,
-        timeout: int,
-        check: bool,
-    ) -> subprocess.CompletedProcess[str]:
-        del cwd, capture_output, text, timeout, check
-        if Path(command[0]).name == "pip-audit":
-            Path(command[-1]).write_text('{"dependencies":[]}', encoding="utf-8")
-            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-        return subprocess.CompletedProcess(
-            command, 1, stdout='{"summary":{"compliant":false}}', stderr=""
-        )
-
     summary = tool.run_python_compliance_scanners(
-        repo_root=tmp_path,
-        output_dir=tmp_path / "packet",
-        run_command=fake_run,
+        repo_root=tmp_path, output_dir=tmp_path / "packet"
     )
-
-    assert summary["passed"] is True
-    assert summary["failed_scanners"] == []
+    reuse = next(s for s in summary["scanners"] if s["name"] == "reuse")
+    assert reuse["returncode"] != 0
     assert summary["non_blocking_failed_scanners"] == ["reuse"]
+    assert "reuse" not in summary["failed_scanners"]
 
 
 def test_runner_resolves_tools_next_to_active_python(tmp_path: Path, monkeypatch: Any) -> None:
