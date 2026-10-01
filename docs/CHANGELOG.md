@@ -92,6 +92,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Rust engine, standalone core crates and fuzz lockfiles use the maintained
+  `chacha20 0.10.2`, replacing the yanked `0.10.0` with its SSE2 backend fix.
+  The engine fuzz lock also includes the existing engine SHA-256 dependency.
+
 - The install-profile audit recognises packaged dataset and conversion runtime
   resources, rejects broader native research patterns and missing runtime files,
   and records the current packaging contract in its derived report.
