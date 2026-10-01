@@ -166,10 +166,12 @@ class TestTheContractMatchesWhatTheGraphAccepts:
         issues = graph_issues(graph)
 
         assert [issue.field for issue in issues] == ["populations[0].params"]
-        assert "v_threshold must be greater than v_rest" in issues[0].message
+        assert issues[0].message == (
+            "Population p1 parameters: the model cannot accept these parameters"
+        )
         body = client.post("/api/graph/simulate", json=graph).json()
         assert body["success"] is False
-        assert any("v_threshold must be greater than v_rest" in error for error in body["errors"])
+        assert body["errors"] == [issues[0].message]
 
     def test_a_model_whose_timestep_range_excludes_the_graph_dt_is_refused(self) -> None:
         graph = graph_with({})
@@ -177,7 +179,9 @@ class TestTheContractMatchesWhatTheGraphAccepts:
         issues = graph_issues(graph)
 
         assert [issue.field for issue in issues] == ["populations[0].params"]
-        assert "dt must be within (0, 0.05] ms" in issues[0].message
+        assert issues[0].message == (
+            "Population p1 parameters: the model cannot accept these parameters"
+        )
 
 
 class TestAModelThatCannotFormAPopulation:

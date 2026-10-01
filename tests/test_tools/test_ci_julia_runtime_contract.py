@@ -49,13 +49,13 @@ def test_ci_pins_compatible_julia_before_package_installation() -> None:
     setup_matches = [
         (index, step) for index, step in enumerate(steps) if step.get("uses") == SETUP_JULIA
     ]
-    assert len(setup_matches) == 1
-    setup_index, setup_step = setup_matches[0]
-    assert setup_step["with"] == {
-        "version": JULIA_VERSION,
-        "show-versioninfo": "never",
-    }
-    assert setup_index < _step_index(steps, name="Install package")
+    assert len(setup_matches) == 2
+    for (setup_index, setup_step), (runtime_id, version) in zip(
+        setup_matches, (("julia-release", "1.13"), ("julia-1-11", JULIA_VERSION)), strict=True
+    ):
+        assert setup_step["id"] == runtime_id
+        assert setup_step["with"] == {"version": version, "show-versioninfo": "never"}
+        assert setup_index < _step_index(steps, name="Install package")
 
 
 def test_ci_fails_closed_on_wrong_julia_before_juliacall_import() -> None:
@@ -70,7 +70,7 @@ def test_ci_fails_closed_on_wrong_julia_before_juliacall_import() -> None:
     assert "set -euo pipefail" in run_text
     assert "julia --startup-file=no -e 'print(VERSION)'" in run_text
     assert f'= "{JULIA_VERSION}"' in run_text
-    assert "python -c \"import juliacall; juliacall.Main.seval('1+1')\"" in run_text
+    assert 'python tools/studio_event_runtime_environment.py --github-env "$GITHUB_ENV"' in run_text
     assert _step_index(steps, name="Install package") < warm_index
     assert warm_index < _step_index(steps, name="Test + coverage")
 

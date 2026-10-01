@@ -222,7 +222,9 @@ class TestObservationClockAndSnapshots:
             simulate(["dv/dt = v*v"], init={"v": 1e200}, dt=1.0, duration=3.0, current=0.0)
         assert info.value.model == "ode"
         assert info.value.step == 0
-        assert "non-finite" in info.value.diagnostic
+        assert info.value.backend == "python"
+        assert info.value.time_ms == 0.0
+        assert info.value.diagnostic == "equation step could not produce a finite result"
 
 
 class TestDisplayProjection:

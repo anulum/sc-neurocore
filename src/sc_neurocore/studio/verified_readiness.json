@@ -483,7 +483,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "AdaptiveThresholdIFNeuron__cosim__20260924T154859Z__adaptive_threshold_if.json",
+     "receipt": "AdaptiveThresholdIFNeuron__cosim__20260930T080514Z__adaptive_threshold_if.json",
      "status": "bound"
     },
     {
@@ -3461,7 +3461,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "BrunelWangNeuron__cosim__20260924T140143Z__brunel_wang.json",
+     "receipt": "BrunelWangNeuron__cosim__20260930T080519Z__brunel_wang.json",
      "status": "bound"
     },
     {
@@ -13565,7 +13565,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "LapicqueNeuron__cosim__20260924T140501Z__lapicque.json",
+     "receipt": "LapicqueNeuron__cosim__20260930T080524Z__lapicque.json",
      "status": "bound"
     },
     {
@@ -20395,7 +20395,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "ResonateAndFireNeuron__cosim__20260924T140310Z__resonate_fire.json",
+     "receipt": "ResonateAndFireNeuron__cosim__20260930T080528Z__resonate_fire.json",
      "status": "bound"
     },
     {

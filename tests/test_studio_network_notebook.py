@@ -179,8 +179,10 @@ def test_a_graph_that_fails_while_running_answers_the_failure(client: TestClient
     )
     assert response.status_code == 422
     detail = response.json()["detail"]
-    assert detail["error"] == "graph_execution_failed"
-    assert "non-finite" in detail["reason"]
+    assert detail == {
+        "error": "graph_execution_failed",
+        "reason": "graph execution could not produce a finite result",
+    }
 
 
 def test_a_constructor_value_without_an_exact_literal_is_refused() -> None:
