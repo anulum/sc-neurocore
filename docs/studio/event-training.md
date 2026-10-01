@@ -203,6 +203,16 @@ never select executable paths. See [dataset runtime configuration](../api/datase
 The Julia environment must already contain a PythonCall version matching
 JuliaCall, one thread and explicit signal handling. Missing or incompatible
 configured runtimes refuse the job instead of changing its backend silently.
+Before loading Torch, an admitted N-MNIST training worker initialises its
+selected decoder through the same automatic dispatcher using an empty recording.
+This preserves the measured backend order and Julia opt-in, and imports JuliaCall
+before Torch for both fresh training and restored checkpoints. Input admission
+and manifest verification precede initialisation; worker grants and resource
+limits remain in effect. The API verifies event custody without importing Torch
+or initialising a decoder. Direct in-process callers sharing a process with
+Torch must initialise their opted-in Julia decoder before importing Torch, as
+[JuliaCall recommends](https://juliapy.github.io/PythonCall.jl/stable/faq/#Heap-corruption-when-using-PyTorch).
+
 This decoding path retains recorded timestamp precision; it does not qualify
 other native dataset loaders, conversion to hardware or measured device power.
 

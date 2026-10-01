@@ -148,6 +148,9 @@ computation still emits `error`.
 `sc_neurocore.studio.training` remains the historical public facade. Its
 implementation is separated into bounded, one-way responsibilities:
 
+- `_event_training_runtime` verifies event custody without importing Torch and
+  initialises the selected recording decoder before worker training or weight
+  deserialisation. Runtime initialisation stays after worker grants and limits.
 - `_training_job` owns PyTorch discovery, the training loop, checkpoint
   publication, and worker-side live-attach application.
 - `_training_datasets` owns dataset construction and seeds the Python, NumPy,

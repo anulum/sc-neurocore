@@ -21,6 +21,7 @@ from sc_neurocore.studio.app import create_app
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _MODULE_PATHS = {
+    "_event_training_runtime": _REPO_ROOT / "src/sc_neurocore/studio/_event_training_runtime.py",
     "training": _REPO_ROOT / "src/sc_neurocore/studio/training.py",
     "_training_attach": _REPO_ROOT / "src/sc_neurocore/studio/_training_attach.py",
     "_training_control": _REPO_ROOT / "src/sc_neurocore/studio/_training_control.py",
@@ -34,6 +35,7 @@ _MODULE_PATHS = {
     "_training_evidence": _REPO_ROOT / "src/sc_neurocore/studio/_training_evidence.py",
 }
 _MODULE_LINE_CEILINGS = {
+    "_event_training_runtime": 90,
     "training": 375,
     "_training_attach": 225,
     "_training_control": 350,
@@ -47,6 +49,7 @@ _MODULE_LINE_CEILINGS = {
     "_training_evidence": 100,
 }
 _EXPECTED_DEPENDENCIES = {
+    "_event_training_runtime": set(),
     "training": {
         "_training_attach",
         "_training_control",
@@ -54,11 +57,12 @@ _EXPECTED_DEPENDENCIES = {
         "_training_stream",
         "_training_job",
     },
-    "_training_attach": {"_training_control", "_training_job"},
-    "_training_control": {"_training_events", "_training_job"},
+    "_training_attach": {"_training_control", "_training_job", "_event_training_runtime"},
+    "_training_control": {"_training_events", "_training_job", "_event_training_runtime"},
     "_training_stream": {"_training_control", "_training_events"},
     "_training_events": set(),
     "_training_job": {
+        "_event_training_runtime",
         "_training_conversion",
         "_training_events",
         "_training_datasets",
@@ -171,7 +175,9 @@ def test_training_modules_have_bounded_single_direction_dependencies() -> None:
 def test_every_training_module_is_under_the_guard() -> None:
     """A new training module cannot escape the size and dependency contract."""
     present = {
-        path.stem for path in (_REPO_ROOT / "src/sc_neurocore/studio").glob("_training_*.py")
+        path.stem
+        for pattern in ("_training_*.py", "_event_training_*.py")
+        for path in (_REPO_ROOT / "src/sc_neurocore/studio").glob(pattern)
     }
     assert present | {"training"} == set(_MODULE_PATHS)
 

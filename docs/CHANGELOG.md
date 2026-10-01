@@ -92,6 +92,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Event training initialises its selected N-MNIST decoder before Torch,
+  including warm starts and exact resumes. This avoids JuliaCall's unsafe
+  Torch-first import order; parent-process custody checks no longer import Torch.
 - The Studio's bifurcation sweep ran every point under a sine drive whatever
   the reader had chosen: its request schema had no protocol field, so the
   protocol the Studio sent was dropped. For the default catalogue model the

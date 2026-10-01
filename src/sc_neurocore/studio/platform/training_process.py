@@ -25,7 +25,7 @@ from sc_neurocore.studio.platform.training_weights import (
     materialize_training_weight_payload,
 )
 from sc_neurocore.studio.training import TRAINING_EVENT_LOG_ARTIFACT_PATH, TrainingJob
-from sc_neurocore.studio.training_contract import TrainingConfigError
+from sc_neurocore.studio.training_contract import TrainingConfigError, resolve_training_config
 from sc_neurocore.studio.training_resume import resume_state_from_payload
 
 TRAINING_PROCESS_TASK = "sc_neurocore.studio.platform.training_process:run_training_process_task"
@@ -124,6 +124,11 @@ def run_training_attach_process_task(
 
     metadata_payload = context.read_seed_input(TRAINING_ATTACH_SEED_METADATA_PATH)
     weights_payload = context.read_seed_input(TRAINING_ATTACH_SEED_WEIGHTS_PATH)
+    resolved = resolve_training_config(config)
+    if resolved.event_data is not None:
+        from sc_neurocore.studio._event_training_runtime import _prepare_event_training_runtime
+
+        _prepare_event_training_runtime(resolved.event_data, resolved.batch_size)
     materialization = materialize_training_weight_payload(
         restore_plan=restore_plan,
         metadata_payload=metadata_payload,

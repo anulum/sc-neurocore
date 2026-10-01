@@ -288,6 +288,11 @@ class TrainingJob:
             if self.resolved_config.event_data is None or not HAS_TORCH:
                 self._train_seeded(context)
                 return
+            from sc_neurocore.studio._event_training_runtime import _prepare_event_training_runtime
+
+            _prepare_event_training_runtime(
+                self.resolved_config.event_data, self.resolved_config.batch_size
+            )
             import torch
 
             previous_threads = torch.get_num_threads()

@@ -64,7 +64,7 @@ def _start_training_attach(
             "model_kind", "a qcfs_conversion run starts from fresh weights, never attached ones."
         )
     if resolved.event_data is not None:
-        from sc_neurocore.studio.event_training_data import verify_event_training_data
+        from sc_neurocore.studio._event_training_runtime import verify_event_training_data
 
         verify_event_training_data(resolved.event_data)
     config = dict(resolved.to_public_dict())

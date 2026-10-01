@@ -37990,6 +37990,36 @@ Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
 
 ---
 
+## Module `studio._event_training_runtime`
+
+### Function `verify_event_training_data(contract)`
+Verify dataset files and sample metadata against the declared manifest.
+
+Parameters
+----------
+contract:
+    Structurally resolved input declaration.
+
+Returns
+-------
+pathlib.Path
+    Absolute operator-configured root. It is never supplied by an HTTP
+    request or included in exported checkpoints.
+
+Raises
+------
+ValueError
+    If the operator has not configured a root, the expected files are
+    unavailable, or their digests, labels or groups differ.
+
+Notes
+-----
+Rebuilding the manifest checks sample metadata as well as file bytes.
+This is a content check, not an immutable filesystem snapshot; the
+operator must keep the dataset unchanged while training runs.
+
+---
+
 ## Module `studio._training_conversion`
 
 ### Class `ConversionOutcome`
@@ -39958,32 +39988,6 @@ part:
   - Return the number of samples in this plan part.
 - **__getitem__**(index)
   - Return one float spike tensor ``(timesteps,channels)`` and label.
-
-### Function `verify_event_training_data(contract)`
-Verify dataset files and sample metadata against the declared manifest.
-
-Parameters
-----------
-contract:
-    Structurally resolved input declaration.
-
-Returns
--------
-pathlib.Path
-    Absolute operator-configured root. It is never supplied by an HTTP
-    request or included in exported checkpoints.
-
-Raises
-------
-ValueError
-    If the operator has not configured a root, the expected files are
-    unavailable, or their digests, labels or groups differ.
-
-Notes
------
-Rebuilding the manifest checks sample metadata as well as file bytes.
-This is a content check, not an immutable filesystem snapshot; the
-operator must keep the dataset unchanged while training runs.
 
 ### Function `event_training_loaders(contract, batch_size)`
 Build lazy train/evaluation loaders after verifying the full manifest.
