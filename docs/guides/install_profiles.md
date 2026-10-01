@@ -42,13 +42,23 @@ The base path is enough for:
 
 ### Base install evidence
 
-The install-profile audit in `benchmarks/results/install_profile_audit.json` records the base boundary used for release evidence. The latest measured run installed the local
+The metadata audit separates packaged event-dataset and ANN/QCFS conversion
+runtime sources from source-only neuron research kernels. Its nine exact
+Julia, Go and Mojo runtime patterns follow the installed wheel contract;
+broader patterns, undeclared runtime patterns and missing matching files fail
+the audit. The report lists both the allowed patterns and their actual files.
+Shipping these sources does not install or qualify their external toolchains.
+
+The install-profile audit in `benchmarks/results/install_profile_audit.json`
+derives the current base boundary from metadata and packaged files. Its
+`install_measurement.measured` field is `false`; this report contains no fresh
+timed installation. The historical 2026-06-27 measured run installed the local
 `sc-neurocore` wheel with its declared base dependencies, imported the public
 package, and verified that PyTorch, JAX, Qiskit, PennyLane, Lava, FastAPI, MPI,
 NIR, HTTP client, plotting, GPU, and Studio stacks were not pulled into the base
 environment.
 
-Current measured evidence:
+Historical measured evidence (2026-06-27):
 
 | Field | Value |
 | --- | --- |

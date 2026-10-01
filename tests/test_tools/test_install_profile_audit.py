@@ -36,7 +36,9 @@ def _load_tool() -> Any:
 
 def _project_version(tool: Any) -> str:
     pyproject = (_repo_root() / "pyproject.toml").read_text(encoding="utf-8")
-    return tool.tomllib.loads(pyproject)["project"]["version"]
+    version = tool.tomllib.loads(pyproject)["project"]["version"]
+    assert isinstance(version, str)
+    return version
 
 
 def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
@@ -58,6 +60,11 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
     ]
     assert report["heavy_dependencies_in_base"] == []
     assert report["polyglot_research_sources_in_wheel"] == []
+    assert report["missing_polyglot_runtime_patterns"] == []
+    assert report["empty_polyglot_runtime_patterns"] == []
+    assert "accel/julia/datasets/shd_cli.jl" in report["polyglot_runtime_files"]
+    assert "accel/go/conversion/cshared/main.go" in report["polyglot_runtime_files"]
+    assert "accel/mojo/kernels/qcfs.mojo" in report["polyglot_runtime_files"]
     assert "full" in report["optional_extras"]
     assert "license" in report["optional_extras"]
     assert report["offline_hardware_profile"] == {
@@ -257,7 +264,7 @@ def test_conda_run_list_rejects_an_unparsable_requirement() -> None:
         tool.conda_run_dependencies(">=3.10", ["<<broken>>"])
 
 
-def _repo_overlay(destination: Path, *, replace: str) -> Path:
+def _repo_overlay(destination: Path, *, replace: str | None = None) -> Path:
     """Mirror the repository with symlinks, giving ``conda/`` a real copy.
 
     The audit reads several trees, so the overlay links them rather than
@@ -271,8 +278,9 @@ def _repo_overlay(destination: Path, *, replace: str) -> Path:
             continue
         (destination / entry.name).symlink_to(entry)
     shutil.copytree(source / "conda", destination / "conda")
-    recipe = destination / "conda" / "meta.yaml"
-    recipe.write_text(recipe.read_text(encoding="utf-8").replace(replace, ""), encoding="utf-8")
+    if replace is not None:
+        recipe = destination / "conda" / "meta.yaml"
+        recipe.write_text(recipe.read_text(encoding="utf-8").replace(replace, ""), encoding="utf-8")
     return destination
 
 
@@ -306,3 +314,108 @@ def test_committed_audit_report_matches_a_fresh_derivation() -> None:
 
     assert recorded["install_measurement"] == {"measured": False}
     assert recorded == fresh
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    ["accel/julia/neurons/*.jl", "accel/go/**/*.go", "accel/mojo/kernels/*.mojo"],
+)
+def test_audit_cli_refuses_research_and_broadened_runtime_patterns(
+    tmp_path: Path, pattern: str
+) -> None:
+    """Real metadata cannot extend the installed native boundary to model research."""
+    repo = _repo_overlay(tmp_path / "repo")
+    metadata = repo / "pyproject.toml"
+    text = metadata.read_text(encoding="utf-8")
+    metadata.unlink()
+    metadata.write_text(
+        text.replace('  "juliapkg.json",', f'  "juliapkg.json",\n  "{pattern}",'),
+        encoding="utf-8",
+    )
+    output = tmp_path / "audit.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(_repo_root() / "tools/install_profile_audit.py"),
+            "--repo",
+            str(repo),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    assert result.returncode == 1, result.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["passed"] is False
+    assert report["polyglot_research_sources_in_wheel"] == [pattern]
+    assert report["missing_polyglot_runtime_patterns"] == []
+
+
+def test_audit_cli_refuses_a_removed_runtime_pattern(tmp_path: Path) -> None:
+    """Removing an installed dataset dependency cannot produce a passing report."""
+    repo = _repo_overlay(tmp_path / "repo")
+    metadata = repo / "pyproject.toml"
+    text = metadata.read_text(encoding="utf-8")
+    metadata.unlink()
+    metadata.write_text(text.replace('  "accel/julia/datasets/*.jl",\n', ""), encoding="utf-8")
+    output = tmp_path / "audit.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(_repo_root() / "tools/install_profile_audit.py"),
+            "--repo",
+            str(repo),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    assert result.returncode == 1, result.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["missing_polyglot_runtime_patterns"] == ["accel/julia/datasets/*.jl"]
+    assert report["passed"] is False
+
+
+def test_audit_cli_refuses_missing_packaged_runtime_files(tmp_path: Path) -> None:
+    """An actual absent Julia dataset directory fails even with intact metadata."""
+    repo = _repo_overlay(tmp_path / "repo")
+    # Materialise only ancestors of the directory being removed; other source
+    # paths stay linked to the real checkout without changing its files.
+    for relative, omitted in [
+        ("src", "sc_neurocore"),
+        ("src/sc_neurocore", "accel"),
+        ("src/sc_neurocore/accel", "julia"),
+        ("src/sc_neurocore/accel/julia", "datasets"),
+    ]:
+        target = repo / relative
+        if target.is_symlink():
+            target.unlink()
+        target.mkdir(exist_ok=True)
+        for entry in (_repo_root() / relative).iterdir():
+            if entry.name != omitted:
+                (target / entry.name).symlink_to(entry)
+    output = tmp_path / "audit.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(_repo_root() / "tools/install_profile_audit.py"),
+            "--repo",
+            str(repo),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    assert result.returncode == 1, result.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["empty_polyglot_runtime_patterns"] == ["accel/julia/datasets/*.jl"]
+    assert report["passed"] is False

@@ -52,6 +52,21 @@ HEAVY_BASE_DEPENDENCIES = frozenset(
     }
 )
 POLYGLOT_PACKAGE_PREFIXES = ("accel/julia/", "accel/go/", "accel/mojo/")
+# These sources support installed dataset and conversion adapters. Model kernels
+# remain source-only; the real wheel resource test independently guards this set.
+POLYGLOT_RUNTIME_PATTERNS = frozenset(
+    {
+        "accel/julia/datasets/*.jl",
+        "accel/julia/conversion/*.jl",
+        "accel/go/go.mod",
+        "accel/go/conversion/*.go",
+        "accel/go/conversion/cshared/*.go",
+        "accel/go/conversion/cshared/*.h",
+        "accel/go/conversion/qcfscshared/*.go",
+        "accel/mojo/kernels/ann_to_snn*.mojo",
+        "accel/mojo/kernels/qcfs.mojo",
+    }
+)
 STATIC_PRIMITIVE_PATTERN = "hdl/primitives/*.v"
 EXPECTED_STATIC_PRIMITIVES = (
     "hdl/primitives/sc_bitstream_encoder.v",
@@ -156,6 +171,22 @@ def build_install_profile_audit(
     *,
     measure_install: bool = False,
 ) -> dict[str, Any]:
+    """Derive the base dependency, packaged runtime and offline HDL boundaries.
+
+    Parameters
+    ----------
+    repo : pathlib.Path
+        Source checkout whose committed metadata and resources are audited.
+    measure_install : bool
+        Whether to additionally install and import the package in a fresh venv.
+
+    Returns
+    -------
+    dict of str to Any
+        Deterministic metadata and resource findings, with ``passed`` false for
+        heavy base dependencies, unapproved native patterns, missing runtime
+        patterns or files, or misaligned offline HDL packaging.
+    """
     repo = repo.resolve()
     pyproject = tomllib.loads((repo / "pyproject.toml").read_text(encoding="utf-8"))
     project = pyproject["project"]
@@ -170,7 +201,14 @@ def build_install_profile_audit(
     dependency_names = {_normalise_requirement_name(dep) for dep in dependencies}
     heavy_base = sorted(name for name in dependency_names if name in HEAVY_BASE_DEPENDENCIES)
     polyglot_data = sorted(
-        item for item in package_data if item.startswith(POLYGLOT_PACKAGE_PREFIXES)
+        item
+        for item in package_data
+        if item.startswith(POLYGLOT_PACKAGE_PREFIXES) and item not in POLYGLOT_RUNTIME_PATTERNS
+    )
+    runtime_patterns = sorted(set(package_data) & POLYGLOT_RUNTIME_PATTERNS)
+    missing_runtime_patterns = sorted(POLYGLOT_RUNTIME_PATTERNS - set(package_data))
+    empty_runtime_patterns = sorted(
+        pattern for pattern in runtime_patterns if not _matched_package_data(repo, [pattern])
     )
     offline_hardware_profile = _build_offline_hardware_profile(
         repo=repo,
@@ -185,6 +223,8 @@ def build_install_profile_audit(
     passed = (
         not heavy_base
         and not polyglot_data
+        and not missing_runtime_patterns
+        and not empty_runtime_patterns
         and not offline_hardware_profile["missing_static_primitives"]
         and offline_hardware_profile["conda_recipe_aligned"]
         and offline_hardware_profile["docker_wheel_build_covers_static_primitives"]
@@ -204,6 +244,10 @@ def build_install_profile_audit(
         "optional_extra_count": len(extras),
         "packaged_data": package_data,
         "polyglot_research_sources_in_wheel": polyglot_data,
+        "polyglot_runtime_patterns": runtime_patterns,
+        "polyglot_runtime_files": sorted(_matched_package_data(repo, runtime_patterns)),
+        "missing_polyglot_runtime_patterns": missing_runtime_patterns,
+        "empty_polyglot_runtime_patterns": empty_runtime_patterns,
         "offline_hardware_profile": offline_hardware_profile,
         "install_measurement": install_measurement,
         "passed": passed and bool(install_measurement.get("passed", True)),

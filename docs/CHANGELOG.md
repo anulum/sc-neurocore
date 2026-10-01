@@ -92,6 +92,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The install-profile audit recognises packaged dataset and conversion runtime
+  resources, rejects broader native research patterns and missing runtime files,
+  and records the current packaging contract in its derived report.
 - Event training initialises its selected N-MNIST decoder before Torch,
   including warm starts and exact resumes. This avoids JuliaCall's unsafe
   Torch-first import order; parent-process custody checks no longer import Torch.
