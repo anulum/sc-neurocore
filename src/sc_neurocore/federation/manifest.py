@@ -33,7 +33,7 @@ from scpn_studio_platform.manifest import (
 
 from .verbs import NEUROCORE_VERBS, STUDIO_ID, evidence_schemas
 
-PLATFORM_SDK_RANGE = ">=0.9,<0.10"
+PLATFORM_SDK_RANGE = ">=0.11,<0.12"
 """The platform SDK SemVer range the studio builds on (matches the ``federation`` extra)."""
 
 PROTOCOL_VERSION = "1"
@@ -106,6 +106,7 @@ def build_manifest(*, studio_version: str = STUDIO_VERSION) -> CapabilityManifes
         The schema-A manifest, with a content digest over :func:`declared_surface`.
     """
     return CapabilityManifest(
+        contract_era="v2",
         studio=STUDIO_ID,
         studio_version=studio_version,
         platform_sdk=PLATFORM_SDK_RANGE,

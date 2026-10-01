@@ -19424,7 +19424,7 @@ where q is the sampling rate.
 ## Module `federation.attestation`
 
 ### Class `FpgaArtifact`
-A content-addressed FPGA evidence artifact backing a hardware claim.
+A content-addressed artifact backing a pre-silicon co-simulation claim.
 
 Parameters
 ----------
@@ -19440,19 +19440,19 @@ media_type
 Raises
 ------
 ValueError
-    If any field is blank.
+    If a field is blank or the digest is not a lowercase SHA-256 address.
 
 - **__post_init__**()
-  - Reject blank fields — every artifact must be addressable.
+  - Reject blank descriptions and malformed content addresses.
 - **to_dict**()
   - Return the JSON-serialisable mapping of the artifact.
 
 ### Function `regrade_sc_inference(unit)`
 Recompute the sc-inference grade from the signed unit.
 
-``reference-validated`` only when the accelerated backend is bit-identical to the
-NumPy floor (``max_abs_error == 0``); otherwise ``bounded-model``. Derived from the
-evidence, never read from a (forgeable) ``claim_status`` field.
+``reference-validated`` requires a complete measured unit, explicit source
+re-check and exact string zero error against NumPy. Missing, legacy or malformed
+evidence stays ``bounded-model``. The signed ``claim_status`` is not trusted.
 
 ### Function `seal_sc_inference(result)`
 Seal an sc-inference result in **recompute** mode (no attestation).
@@ -19463,6 +19463,9 @@ result
     The path-free stochastic-computing inference result.
 signer
     The studio's :class:`~scpn_studio_platform.seal.keys.Signer`.
+freshness
+    Actual source re-check status. Bit-identical results require
+    ``VERIFIED_AT_SOURCE``; the value is part of the signed unit.
 
 Returns
 -------
@@ -19470,20 +19473,24 @@ HonestyEnvelope
     A recompute-verifiable envelope: the WASM/NumPy kernel re-derives the result and
     its digest must match.
 
+Raises
+------
+ValueError
+    If bit-identical evidence has not been re-checked at source.
+
 ### Function `regrade_fpga(unit)`
 Recompute the FPGA grade from the signed unit.
 
-``reference-validated`` only when the co-simulation is bit-exact **and** a
-``cosim-transcript`` artifact backs that claim; otherwise ``validation-gap``. A
-bit-exact flag with no transcript to prove it does not earn the validated grade.
+``reference-validated`` requires source-rechecked, measured simulator evidence,
+valid report fields and an addressed co-simulation transcript. This grade is
+pre-silicon parity; no physical deployment or power claim is established.
 
 ### Function `attest_fpga_deployment(result, artifacts)`
-Seal an FPGA deployment in **attestation** mode with a signed result-pack.
+Seal pre-silicon co-simulation in **attestation** mode with a result pack.
 
-The FPGA run cannot be recomputed client-side, so the claim is verified by signature
-plus artifact-digest binding, not recompute. The result-pack reference content-
-addresses the real Vivado/cosim/bitstream artifacts and is studio-self-attested (the
-``provider_sig`` is the studio's detached signature over the pack digest).
+The producer signs the complete path-free unit, including source freshness and
+artifact addresses. Its detached signature vouches for the producer's report;
+physical device execution and hardware-rooted attestation remain separate.
 
 Parameters
 ----------
@@ -19494,16 +19501,19 @@ artifacts
     a ``cosim-transcript`` must be present for the claim to grade as validated.
 signer
     The studio's :class:`~scpn_studio_platform.seal.keys.Signer`.
+freshness
+    Actual source re-check status; bit-exact reports require
+    ``VERIFIED_AT_SOURCE`` before signing.
 
 Returns
 -------
 HonestyEnvelope
-    An attestation-verifiable envelope on the ``fpga`` substrate.
+    A studio-self-attested measurement on the ``simulator`` substrate.
 
 Raises
 ------
 ValueError
-    If no artifacts are supplied.
+    If artifacts are absent or bit-exact evidence lacks a source re-check.
 
 ### Function `verify_envelope(envelope, rendered_grade)`
 Verify a SC-NeuroCore honesty envelope, dispatching the regrade by schema.
@@ -19551,13 +19561,15 @@ result_digest
 Raises
 ------
 ValueError
-    If a count is non-positive, an error is negative, or a digest is empty.
+    If a count, error, backend or content address is invalid.
 
 - **__post_init__**()
-  - Validate counts, error sign, and digests.
+  - Validate finite measured inputs and their SHA-256 identities.
 
 ### Class `FpgaDeploymentResult`
-A path-free FPGA synthesis/deployment result.
+A path-free pre-silicon FPGA synthesis/co-simulation result.
+
+Target device identity and synthesis reports do not attest physical execution.
 
 Parameters
 ----------
@@ -19578,11 +19590,10 @@ result_digest
 Raises
 ------
 ValueError
-    If a resource count is negative, the clock is non-positive, or the digest
-    is empty.
+    If a resource count, co-simulation flag, clock, timing or digest is invalid.
 
 - **__post_init__**()
-  - Validate resource counts, clock, and digest.
+  - Validate finite report values and their SHA-256 identity.
 
 ### Function `sc_inference_evidence(result)`
 Build the ``studio.sc-inference.v1`` bundle (measured software result).
@@ -19599,6 +19610,9 @@ started, ended
     ISO-8601 start/end timestamps (passed in; no hidden clock).
 host
     Optional host descriptor the run executed on.
+freshness
+    Source re-check status supplied by the producer. A bit-identical result
+    requires ``VERIFIED_AT_SOURCE``; parity alone never establishes freshness.
 
 Returns
 -------
@@ -19606,12 +19620,17 @@ EvidenceBundle
     A ``measured`` bundle that renders as validated only when the accelerated
     backend is bit-identical to the NumPy floor.
 
-### Function `fpga_deployment_evidence(result)`
-Build the ``studio.fpga-deployment.v1`` bundle (hardware-validated silicon).
+Raises
+------
+ValueError
+    If a bit-identical result lacks a verified-at-source re-check.
 
-The synthesised RTL is co-simulated against the Q8.8 fixed-point reference on
-the ``fpga`` substrate. The claim is ``reference-validated`` only when that
-co-simulation is bit-exact; a mismatch degrades to ``validation-gap``.
+### Function `fpga_deployment_evidence(result)`
+Build the ``studio.fpga-deployment.v1`` pre-silicon measurement bundle.
+
+RTL is co-simulated against the Q8.8 fixed-point reference on the
+``simulator`` substrate. The claim is ``reference-validated`` only when that
+co-simulation is bit-exact and re-checked; a mismatch becomes ``validation-gap``.
 
 Parameters
 ----------
@@ -19625,11 +19644,19 @@ started, ended
     ISO-8601 start/end timestamps (passed in; no hidden clock).
 host
     Optional host descriptor the synthesis ran on.
+freshness
+    Source re-check status supplied by the producer. Bit-exact co-simulation
+    requires ``VERIFIED_AT_SOURCE``; a retained report alone is not a re-check.
 
 Returns
 -------
 EvidenceBundle
-    A ``hardware-validated`` bundle on the ``fpga`` substrate.
+    A ``measured`` bundle on the ``simulator`` substrate, without a board claim.
+
+Raises
+------
+ValueError
+    If a bit-exact co-simulation lacks a verified-at-source re-check.
 
 ---
 

@@ -23,6 +23,7 @@ from sc_neurocore import __version__ as SOURCE_VERSION  # noqa: E402
 from scpn_studio_platform.evidence import (  # noqa: E402
     ClaimStatus,
     EvidenceKind,
+    Freshness,
     Substrate,
     validate_studio_bundle,
 )
@@ -48,9 +49,10 @@ _TS2 = "2026-06-24T06:05:00Z"
 def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
     manifest = build_manifest(studio_version=SOURCE_VERSION)
 
+    assert manifest.contract_era == "v2"
     assert manifest.studio == STUDIO_ID == "sc-neurocore"
     assert manifest.studio_version == SOURCE_VERSION
-    assert manifest.platform_sdk == ">=0.9,<0.10"
+    assert manifest.platform_sdk == ">=0.11,<0.12"
     assert len(manifest.verbs) == len(NEUROCORE_VERBS) == 8
     assert tuple(manifest.evidence_types) == evidence_schemas()
     # content digest is over the declared surface, not git state — reproducible.
@@ -67,7 +69,7 @@ def test_verbs_split_core_spine_from_domain_distinctive() -> None:
     assert core | domain == {v.name for v in NEUROCORE_VERBS}
 
 
-def test_fpga_deployment_is_hardware_validated_and_federates() -> None:
+def test_fpga_cosimulation_federates_as_a_presilicon_measurement() -> None:
     bundle = fpga_deployment_evidence(
         FpgaDeploymentResult(
             device="xc7z020-1clg400",
@@ -76,15 +78,16 @@ def test_fpga_deployment_is_hardware_validated_and_federates() -> None:
             ff_used=848,
             worst_negative_slack_ns=4.048,
             clock_mhz=100.0,
-            result_digest="a" * 64,
+            result_digest="sha256:" + "a" * 64,
         ),
         operator="opaque:tenant-1",
         studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
+        freshness=Freshness.VERIFIED_AT_SOURCE,
     )
-    assert bundle.evidence_kind is EvidenceKind.HARDWARE_VALIDATED
-    assert bundle.substrate is Substrate.FPGA
+    assert bundle.evidence_kind is EvidenceKind.MEASURED
+    assert bundle.substrate is Substrate.SIMULATOR
     assert bundle.claim_boundary.status is ClaimStatus.REFERENCE_VALIDATED
 
     verdict = validate_studio_bundle(bundle.to_dict())
@@ -95,29 +98,31 @@ def test_fpga_deployment_is_hardware_validated_and_federates() -> None:
 
 def test_sc_inference_validated_only_when_bit_identical() -> None:
     identical = sc_inference_evidence(
-        ScInferenceResult("rust", "numpy", 0.0, 1024, "b" * 64, "c" * 64),
+        ScInferenceResult("rust", "numpy", 0.0, 1024, "sha256:" + "b" * 64, "sha256:" + "c" * 64),
         operator="o",
         studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
+        freshness=Freshness.VERIFIED_AT_SOURCE,
     )
     assert identical.evidence_kind is EvidenceKind.MEASURED
     assert identical.claim_boundary.status is ClaimStatus.REFERENCE_VALIDATED
     assert validate_studio_bundle(identical.to_dict()).admitted is True
 
     drifted = sc_inference_evidence(
-        ScInferenceResult("rust", "numpy", 1e-3, 1024, "b" * 64, "c" * 64),
+        ScInferenceResult("rust", "numpy", 1e-3, 1024, "sha256:" + "b" * 64, "sha256:" + "c" * 64),
         operator="o",
         studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
+        freshness=Freshness.VERIFIED_AT_SOURCE,
     )
     assert drifted.claim_boundary.status is ClaimStatus.BOUNDED_MODEL
 
 
 def test_cosim_mismatch_never_renders_validated() -> None:
     # The honesty invariant from SC-NeuroCore's own perspective: a hardware
-    # co-simulation MISMATCH must never federate as validated silicon.
+    # co-simulation MISMATCH must never federate as validated parity.
     mismatch = fpga_deployment_evidence(
         FpgaDeploymentResult(
             device="xc7z020-1clg400",
@@ -126,12 +131,13 @@ def test_cosim_mismatch_never_renders_validated() -> None:
             ff_used=1,
             worst_negative_slack_ns=-1.0,
             clock_mhz=100.0,
-            result_digest="d" * 64,
+            result_digest="sha256:" + "d" * 64,
         ),
         operator="o",
         studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
+        freshness=Freshness.VERIFIED_AT_SOURCE,
     )
     assert mismatch.claim_boundary.status is ClaimStatus.VALIDATION_GAP
     assert mismatch.claim_boundary.status is not ClaimStatus.REFERENCE_VALIDATED
@@ -151,3 +157,18 @@ def test_sc_inference_result_rejects_invalid(length: int, error: float) -> None:
 def test_fpga_result_rejects_empty_digest() -> None:
     with pytest.raises(ValueError):
         FpgaDeploymentResult("dev", True, 1, 1, 0.0, 100.0, "   ")
+
+
+@pytest.mark.parametrize("freshness", [None, Freshness.TRACEABLE_UNCHECKED, Freshness.UNTRACEABLE])
+def test_fpga_validation_requires_a_source_recheck(freshness: Freshness | None) -> None:
+    """Reject an unchecked synthesis contract despite its bit-exact flag."""
+    result = FpgaDeploymentResult("dev", True, 1, 1, 0.0, 100.0, "sha256:" + "a" * 64)
+    with pytest.raises(ValueError, match="requires evidence re-checked at source"):
+        fpga_deployment_evidence(
+            result,
+            operator="test:unchecked-synthesis",
+            studio_version=SOURCE_VERSION,
+            started=_TS1,
+            ended=_TS2,
+            freshness=freshness,
+        )

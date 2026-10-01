@@ -16,12 +16,13 @@ the public key. The two evidence surfaces carry the two verifiability modes:
 - :func:`seal_sc_inference` is **recompute-verifiable** — the stochastic-computing
   forward pass re-runs (in the browser via WASM, or anywhere) and its
   ``content_digest`` must match; no attestation is carried.
-- :func:`attest_fpga_deployment` is **attestation-verifiable** — an FPGA run cannot be
-  re-executed client-side, so the claim carries a signed result-pack over the
-  content-addressed Vivado/cosim/bitstream artifacts instead of a recompute. The pack
-  is studio-self-attested (the studio's signature vouches the artifacts are from a real
-  synthesis/co-simulation run — the honest floor until a hardware-rooted attestation
-  exists), and the grade still recomputes from the signed cosim evidence.
+- :func:`attest_fpga_deployment` is **attestation-verifiable** — the producer signs
+  a result pack binding its pre-silicon co-simulation and content-addressed
+  artifacts. This is studio self-attestation of a software experiment, without
+  hardware-rooted attestation or a claim that a physical FPGA executed it.
+
+Freshness is signed and regraded. Numeric wire values use exact decimal strings
+so a browser JSON roundtrip cannot invalidate an otherwise identical signature.
 
 Importing this module requires the optional ``federation`` extra (the platform SDK).
 """
@@ -33,6 +34,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from scpn_studio_platform.evidence import Freshness
 from scpn_studio_platform.seal import (
     HonestyEnvelope,
     Keyring,
@@ -43,11 +45,18 @@ from scpn_studio_platform.seal import (
     verify,
 )
 
-from .evidence import FpgaDeploymentResult, ScInferenceResult
+from .evidence import (
+    FpgaDeploymentResult,
+    ScInferenceResult,
+    _finite_number,
+    _require_source_recheck,
+    _valid_digest,
+    _wire_count,
+)
 from .verbs import FPGA_DEPLOYMENT_SCHEMA, SC_INFERENCE_SCHEMA, STUDIO_ID
 
 #: The grading code recorded in every envelope; its own error rate is WS-3's concern.
-GRADER: Mapping[str, str] = {"name": "sc-neurocore.federation", "version": "1"}
+GRADER: Mapping[str, str] = {"name": "sc-neurocore.federation", "version": "2"}
 
 _REFERENCE_VALIDATED = "reference-validated"
 _BOUNDED_MODEL = "bounded-model"
@@ -56,7 +65,7 @@ _VALIDATION_GAP = "validation-gap"
 
 @dataclass(frozen=True)
 class FpgaArtifact:
-    """A content-addressed FPGA evidence artifact backing a hardware claim.
+    """A content-addressed artifact backing a pre-silicon co-simulation claim.
 
     Parameters
     ----------
@@ -72,7 +81,7 @@ class FpgaArtifact:
     Raises
     ------
     ValueError
-        If any field is blank.
+        If a field is blank or the digest is not a lowercase SHA-256 address.
     """
 
     role: str
@@ -80,9 +89,13 @@ class FpgaArtifact:
     media_type: str
 
     def __post_init__(self) -> None:
-        """Reject blank fields — every artifact must be addressable."""
-        if not self.role.strip() or not self.digest.strip() or not self.media_type.strip():
+        """Reject blank descriptions and malformed content addresses."""
+        if not all(
+            isinstance(value, str) and value.strip() for value in (self.role, self.media_type)
+        ):
             raise ValueError("FpgaArtifact fields must be non-empty")
+        if not _valid_digest(self.digest):
+            raise ValueError("FpgaArtifact digest must be a lowercase SHA-256 content address")
 
     def to_dict(self) -> dict[str, str]:
         """Return the JSON-serialisable mapping of the artifact."""
@@ -94,16 +107,17 @@ def _sorted_artifacts(artifacts: Iterable[FpgaArtifact]) -> list[dict[str, str]]
     return [a.to_dict() for a in sorted(artifacts, key=lambda a: (a.role, a.digest))]
 
 
-def _sc_inference_unit(result: ScInferenceResult) -> dict[str, Any]:
+def _sc_inference_unit(result: ScInferenceResult, freshness: Freshness | None) -> dict[str, Any]:
     """Build the signed unit for an sc-inference result (recompute-verifiable)."""
     bit_identical = result.max_abs_error == 0.0
     return {
         "schema": SC_INFERENCE_SCHEMA,
         "studio": STUDIO_ID,
         "evidence_kind": "measured",
+        "freshness": freshness.value if freshness is not None else None,
         "active_backend": result.active_backend,
         "reference_backend": result.reference_backend,
-        "max_abs_error": result.max_abs_error,
+        "max_abs_error": "0.0" if bit_identical else repr(float(result.max_abs_error)),
         "bitstream_length": result.bitstream_length,
         "input_digest": result.input_digest,
         "result_digest": result.result_digest,
@@ -114,14 +128,31 @@ def _sc_inference_unit(result: ScInferenceResult) -> dict[str, Any]:
 def regrade_sc_inference(unit: Mapping[str, Any]) -> str:
     """Recompute the sc-inference grade from the signed unit.
 
-    ``reference-validated`` only when the accelerated backend is bit-identical to the
-    NumPy floor (``max_abs_error == 0``); otherwise ``bounded-model``. Derived from the
-    evidence, never read from a (forgeable) ``claim_status`` field.
+    ``reference-validated`` requires a complete measured unit, explicit source
+    re-check and exact string zero error against NumPy. Missing, legacy or malformed
+    evidence stays ``bounded-model``. The signed ``claim_status`` is not trusted.
     """
-    return _REFERENCE_VALIDATED if unit.get("max_abs_error") == 0.0 else _BOUNDED_MODEL
+    length = unit.get("bitstream_length")
+    valid = (
+        unit.get("schema") == SC_INFERENCE_SCHEMA
+        and unit.get("studio") == STUDIO_ID
+        and unit.get("evidence_kind") == "measured"
+        and unit.get("freshness") == Freshness.VERIFIED_AT_SOURCE.value
+        and unit.get("active_backend") in ("numpy", "rust")
+        and unit.get("reference_backend") == "numpy"
+        and _wire_count(length)
+        and length > 0
+        and _valid_digest(unit.get("input_digest"))
+        and _valid_digest(unit.get("result_digest"))
+        and isinstance(unit.get("max_abs_error"), str)
+        and unit.get("max_abs_error") in ("0", "0.0")
+    )
+    return _REFERENCE_VALIDATED if valid else _BOUNDED_MODEL
 
 
-def seal_sc_inference(result: ScInferenceResult, *, signer: Signer) -> HonestyEnvelope:
+def seal_sc_inference(
+    result: ScInferenceResult, *, signer: Signer, freshness: Freshness | None = None
+) -> HonestyEnvelope:
     """Seal an sc-inference result in **recompute** mode (no attestation).
 
     Parameters
@@ -130,15 +161,24 @@ def seal_sc_inference(result: ScInferenceResult, *, signer: Signer) -> HonestyEn
         The path-free stochastic-computing inference result.
     signer
         The studio's :class:`~scpn_studio_platform.seal.keys.Signer`.
+    freshness
+        Actual source re-check status. Bit-identical results require
+        ``VERIFIED_AT_SOURCE``; the value is part of the signed unit.
 
     Returns
     -------
     HonestyEnvelope
         A recompute-verifiable envelope: the WASM/NumPy kernel re-derives the result and
         its digest must match.
+
+    Raises
+    ------
+    ValueError
+        If bit-identical evidence has not been re-checked at source.
     """
+    _require_source_recheck(result.max_abs_error == 0.0, freshness)
     return seal(
-        _sc_inference_unit(result),
+        _sc_inference_unit(result, freshness),
         signer=signer,
         grader=GRADER,
         verifiability_mode="recompute",
@@ -146,41 +186,81 @@ def seal_sc_inference(result: ScInferenceResult, *, signer: Signer) -> HonestyEn
     )
 
 
-def _fpga_unit(result: FpgaDeploymentResult, artifacts: Iterable[FpgaArtifact]) -> dict[str, Any]:
+def _fpga_unit(
+    result: FpgaDeploymentResult, artifacts: Iterable[FpgaArtifact], freshness: Freshness | None
+) -> dict[str, Any]:
     """Build the signed unit for an FPGA deployment (attestation-verifiable)."""
-    return {
+    unit: dict[str, Any] = {
         "schema": FPGA_DEPLOYMENT_SCHEMA,
         "studio": STUDIO_ID,
-        "substrate": "fpga",
-        "evidence_kind": "hardware-validated",
+        "substrate": "simulator",
+        "evidence_kind": "measured",
+        "freshness": freshness.value if freshness is not None else None,
         "device": result.device,
         "cosim_bit_exact": result.cosim_bit_exact,
         "lut_used": result.lut_used,
         "ff_used": result.ff_used,
-        "worst_negative_slack_ns": result.worst_negative_slack_ns,
-        "clock_mhz": result.clock_mhz,
+        "worst_negative_slack_ns": repr(float(result.worst_negative_slack_ns)),
+        "clock_mhz": repr(float(result.clock_mhz)),
         "result_digest": result.result_digest,
         "artifacts": _sorted_artifacts(artifacts),
-        "claim_status": _REFERENCE_VALIDATED if result.cosim_bit_exact else _VALIDATION_GAP,
     }
+    unit["claim_status"] = regrade_fpga(unit)
+    return unit
 
 
 def _has_cosim_transcript(unit: Mapping[str, Any]) -> bool:
     """Whether a ``cosim-transcript`` artifact is present to back a bit-exactness claim."""
     artifacts = unit.get("artifacts", [])
-    return isinstance(artifacts, list) and any(
-        isinstance(a, Mapping) and a.get("role") == "cosim-transcript" for a in artifacts
+    return (
+        isinstance(artifacts, list)
+        and all(
+            isinstance(a, Mapping)
+            and isinstance(a.get("role"), str)
+            and bool(a["role"].strip())
+            and _valid_digest(a.get("digest"))
+            and isinstance(a.get("media_type"), str)
+            and bool(a["media_type"].strip())
+            for a in artifacts
+        )
+        and any(a.get("role") == "cosim-transcript" for a in artifacts)
     )
+
+
+def _finite_wire_number(value: object, *, positive: bool = False) -> bool:
+    """Recognise a bounded decimal-string scalar that survives browser transport."""
+    if not isinstance(value, str) or len(value) > 64:
+        return False
+    try:
+        number = float(value)
+    except ValueError:
+        return False
+    return _finite_number(number) and (not positive or number > 0.0)
 
 
 def regrade_fpga(unit: Mapping[str, Any]) -> str:
     """Recompute the FPGA grade from the signed unit.
 
-    ``reference-validated`` only when the co-simulation is bit-exact **and** a
-    ``cosim-transcript`` artifact backs that claim; otherwise ``validation-gap``. A
-    bit-exact flag with no transcript to prove it does not earn the validated grade.
+    ``reference-validated`` requires source-rechecked, measured simulator evidence,
+    valid report fields and an addressed co-simulation transcript. This grade is
+    pre-silicon parity; no physical deployment or power claim is established.
     """
-    if unit.get("cosim_bit_exact") is True and _has_cosim_transcript(unit):
+    valid = (
+        unit.get("schema") == FPGA_DEPLOYMENT_SCHEMA
+        and unit.get("studio") == STUDIO_ID
+        and unit.get("substrate") == "simulator"
+        and unit.get("evidence_kind") == "measured"
+        and unit.get("freshness") == Freshness.VERIFIED_AT_SOURCE.value
+        and isinstance(unit.get("device"), str)
+        and bool(unit["device"].strip())
+        and unit.get("cosim_bit_exact") is True
+        and all(_wire_count(unit.get(key)) for key in ("lut_used", "ff_used"))
+        and _finite_wire_number(unit.get("worst_negative_slack_ns"))
+        and _finite_wire_number(unit.get("clock_mhz"), positive=True)
+        and _valid_digest(unit.get("result_digest"))
+        and _has_cosim_transcript(unit)
+    )
+    if valid:
         return _REFERENCE_VALIDATED
     return _VALIDATION_GAP
 
@@ -190,13 +270,13 @@ def attest_fpga_deployment(
     artifacts: Iterable[FpgaArtifact],
     *,
     signer: Signer,
+    freshness: Freshness | None = None,
 ) -> HonestyEnvelope:
-    """Seal an FPGA deployment in **attestation** mode with a signed result-pack.
+    """Seal pre-silicon co-simulation in **attestation** mode with a result pack.
 
-    The FPGA run cannot be recomputed client-side, so the claim is verified by signature
-    plus artifact-digest binding, not recompute. The result-pack reference content-
-    addresses the real Vivado/cosim/bitstream artifacts and is studio-self-attested (the
-    ``provider_sig`` is the studio's detached signature over the pack digest).
+    The producer signs the complete path-free unit, including source freshness and
+    artifact addresses. Its detached signature vouches for the producer's report;
+    physical device execution and hardware-rooted attestation remain separate.
 
     Parameters
     ----------
@@ -207,24 +287,28 @@ def attest_fpga_deployment(
         a ``cosim-transcript`` must be present for the claim to grade as validated.
     signer
         The studio's :class:`~scpn_studio_platform.seal.keys.Signer`.
+    freshness
+        Actual source re-check status; bit-exact reports require
+        ``VERIFIED_AT_SOURCE`` before signing.
 
     Returns
     -------
     HonestyEnvelope
-        An attestation-verifiable envelope on the ``fpga`` substrate.
+        A studio-self-attested measurement on the ``simulator`` substrate.
 
     Raises
     ------
     ValueError
-        If no artifacts are supplied.
+        If artifacts are absent or bit-exact evidence lacks a source re-check.
     """
     materialised = list(artifacts)
     if not materialised:
         raise ValueError("attestation requires at least one content-addressed artifact")
-    unit = _fpga_unit(result, materialised)
-    pack_digest = content_digest({"artifacts": unit["artifacts"]})
+    _require_source_recheck(result.cosim_bit_exact, freshness)
+    unit = _fpga_unit(result, materialised, freshness)
+    pack_digest = content_digest(unit)
     attestation = {
-        "provider": f"vivado@{result.device}",
+        "provider": f"{STUDIO_ID}@{result.device}",
         "result_pack_digest": pack_digest,
         "provider_sig": base64.b64encode(signer.sign(pack_digest.encode("utf-8"))).decode("ascii"),
     }

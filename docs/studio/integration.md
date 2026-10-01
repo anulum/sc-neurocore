@@ -106,7 +106,9 @@ The optional Hub-facing federation surface lives under
 declares the schema-A capability manifest, the eight advertised verbs, and the
 evidence-bundle contracts consumed by SCPN Studio platform federation.
 
-Install the optional SDK before generating or checking the committed manifest:
+Federation requires Python 3.11+ and Platform `>=0.11,<0.12`. Its manifest
+declares contract era `v2`; consumers must support that era. Install the optional
+SDK before generating or checking the committed manifest:
 
 ```bash
 pip install "sc-neurocore[federation]"

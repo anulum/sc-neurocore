@@ -11,7 +11,8 @@ Install the optional platform contract before importing it:
 pip install "sc-neurocore[federation]"
 ```
 
-The extra pins `scpn-studio-platform>=0.9,<0.10`. Environments without that
+Federation requires Python **3.11 or newer** and pins
+`scpn-studio-platform>=0.11,<0.12`; the base library still supports Python 3.10. Environments without that
 platform SDK should not import this package; tests use `pytest.importorskip` so
 the base CI lane stays independent of the optional federation dependency.
 
@@ -27,6 +28,8 @@ manifest = build_manifest()
 assert manifest.studio == "sc-neurocore"
 ```
 
+The manifest declares contract era `v2`. A consumer that supports only `v1`
+refuses it; a dependency version alone does not establish era compatibility.
 The manifest advertises eight verbs:
 
 | Verb | Purpose | Evidence schema |
@@ -59,47 +62,98 @@ software evidence bundle. It renders as `reference-validated` only when the
 accelerated backend is bit-identical to the NumPy reference for the fixed seed.
 Otherwise the claim is bounded and rejected by the shared platform lattice.
 
-`fpga_deployment_evidence()` maps a synthesis/deployment result into a
-hardware-validated FPGA evidence bundle. It renders as reference-validated only
-when the RTL co-simulation is bit-exact; a mismatch becomes `validation-gap`.
+`fpga_deployment_evidence()` maps a pre-silicon synthesis/co-simulation result
+into a `measured` bundle on the `simulator` substrate. It renders as
+reference-validated only when the RTL co-simulation is bit-exact and re-checked
+at source; a mismatch becomes `validation-gap`. A named FPGA synthesis target
+does not establish that a bitstream executed on a physical board.
 
 ```python
+import hashlib
+from datetime import datetime, timezone
+
+import numpy as np
+from scpn_studio_platform.evidence import Freshness
+
+from sc_neurocore.accel import pack_bitstream, sc_forward
 from sc_neurocore.federation import (
     ScInferenceResult,
     sc_inference_evidence,
 )
 
+started = datetime.now(timezone.utc).isoformat()
+length, seed = 257, 173
+bits = np.random.default_rng(31).integers(0, 2, size=(2, 3, length), dtype=np.uint8)
+weights = np.stack([pack_bitstream(row) for row in bits.reshape(6, length)]).reshape(2, 3, -1)
+inputs = np.array([0.125, 0.5, 0.875], dtype=np.float64)
+reference = sc_forward(weights, inputs, length=length, seed=seed, backend="numpy")
+measured = sc_forward(weights, inputs, length=length, seed=seed, backend="rust")
+np.testing.assert_array_equal(measured, reference)
+source = weights.astype("<u8").tobytes() + inputs.astype("<f8").tobytes()
+source += seed.to_bytes(4, "little") + length.to_bytes(4, "little")
 result = ScInferenceResult(
     active_backend="rust",
     reference_backend="numpy",
-    max_abs_error=0.0,
-    bitstream_length=4096,
-    input_digest="sha256:" + "a" * 64,
-    result_digest="sha256:" + "b" * 64,
+    max_abs_error=float(np.max(np.abs(measured - reference))),
+    bitstream_length=length,
+    input_digest="sha256:" + hashlib.sha256(source).hexdigest(),
+    result_digest="sha256:" + hashlib.sha256(measured.astype("<f8").tobytes()).hexdigest(),
 )
 
 bundle = sc_inference_evidence(
     result,
     operator="opaque:tenant-1",
     studio_version="3.16.0",
-    started="2026-06-26T00:00:00Z",
-    ended="2026-06-26T00:00:01Z",
+    started=started,
+    ended=datetime.now(timezone.utc).isoformat(),
+    freshness=Freshness.VERIFIED_AT_SOURCE,
 )
 ```
+
+This example requires the Rust engine as well as the federation extra. It hashes
+the actual retained input encoding and output bytes after comparing both backends.
+
+Source freshness is explicit. Pass `Freshness.VERIFIED_AT_SOURCE` only after
+recomputing the result or checking the retained source artefacts against their
+digests. Bit-exact inference or co-simulation without that re-check is refused.
+An unchecked mismatch remains a boundary claim; it never acquires freshness
+automatically. Historical signed envelopes remain immutable: changing a digest
+or adding freshness requires authentic new producer evidence and a new seal.
+Published Platform 0.11.2 and the deployed consumer require separate
+verification; installing an SDK does not establish admission by a live Hub.
+In 0.11.2 the low-level manifest validator accepts explicit `supported_eras`,
+while its loader and aggregation command retain the default v1 policy. Full v2
+consumption requires a consumer that also exposes explicit era negotiation through
+those entry points and its deployment wrapper; no fallback changes the manifest.
 
 ## Verifiable-Honesty Envelopes
 
 The attestation helpers wrap platform seals so a rendered claim grade can be
 verified from signed evidence:
 
-- `seal_sc_inference()` uses recompute mode for bit-exact SC inference.
-- `attest_fpga_deployment()` uses attestation mode for FPGA result packs that
-  cannot be recomputed client-side.
+- `seal_sc_inference()` uses recompute mode for SC inference against NumPy.
+- `attest_fpga_deployment()` signs a pre-silicon result pack in attestation mode.
+  The signature identifies the producer; it is not hardware-rooted attestation.
 - `verify_envelope()` recomputes the grade by schema and detects stripped,
   forged, or mismatched rendered claims.
 
-`FpgaArtifact` entries must be content-addressed. A bit-exact FPGA claim earns
-the validated grade only when a `cosim-transcript` artifact backs it.
+Both seal functions take the same explicit `freshness` argument as the bundle
+mappers. A source-unchecked bit-exact result is refused before signing. Freshness
+is part of the signed unit and the regrader checks it; legacy envelopes without
+that declaration cannot acquire a validated grade by changing a rendered badge.
+Signed numeric scalars use exact decimal strings, preserving signatures across
+browser JSON transport. Boolean values cannot stand in for a numeric zero error.
+Wire counts must be integers in JavaScript's exact range `0..2^53−1`; bitstream
+length must also be positive. Larger integers are refused before signing and
+cannot earn a validated grade when received as raw wire data.
+
+`FpgaArtifact` entries require a complete lowercase `sha256:<64 hex characters>`
+address and non-empty role/media type. The caller checks actual artifact bytes
+before declaring source freshness. A pre-silicon parity claim earns the validated
+grade only when a `cosim-transcript` artifact backs it. Its result-pack digest binds
+the complete signed unit, including report fields, artifact addresses and freshness.
+Physical board execution, hardware latency and measured power need their own
+device evidence; the current co-simulation mapper does not assert them.
 
 ## Reference
 

@@ -19,18 +19,27 @@ reachable.
 the upstream library wrote and validated, not only hand-written fixtures;
 ``sonata`` adds libsonata, the reference reader the SONATA importer uses.
 
-``federation`` (scpn-studio-platform) is added only on Python >= 3.12, the
+``federation`` (scpn-studio-platform) is added only on Python >= 3.11, the
 platform SDK's floor: it makes the studio-federation conformance tests under
 ``tests/test_federation`` run (instead of ``pytest.importorskip``-skipping), so a
-schema-A manifest or evidence-bundle drift reds the (required) 3.12 test job.
+schema-A manifest or evidence-bundle drift reds the (required) 3.11+ test job.
 """
 
 import sys
 
-from ci_install_common import install_editable
+from ci_install_common import ROOT, _run, install_editable
 
 _EXTRAS = "dev,units,nir,neuroml,sonata,compression,training,research,bioware,studio,julia"
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 11):
+    _run(
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "--require-hashes",
+        "-r",
+        str(ROOT / "requirements" / "federation.txt"),
+    )
     _EXTRAS += ",federation"
 
 raise SystemExit(install_editable(_EXTRAS))

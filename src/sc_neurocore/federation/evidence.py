@@ -16,10 +16,11 @@ contract's honesty invariant from opposite ends of the evidence ladder:
   ``reference-validated`` only when the accelerated backend is bit-identical to the
   NumPy floor for a fixed seed; otherwise the claim degrades to ``bounded-model``
   and is not admitted.
-- :func:`fpga_deployment_evidence` is the ``hardware-validated`` silicon tier: the
-  synthesised RTL is co-simulated against the Q8.8 fixed-point reference, on the
-  ``fpga`` substrate. Its claim is ``reference-validated`` only when the
-  co-simulation is bit-exact; a mismatch degrades to ``validation-gap``.
+- :func:`fpga_deployment_evidence` records measured pre-silicon co-simulation
+  against the Q8.8 fixed-point reference, on the ``simulator`` substrate. Its
+  claim is ``reference-validated`` only when the co-simulation is bit-exact and
+  re-checked at source; a mismatch degrades to ``validation-gap``. Synthesis and
+  co-simulation do not establish that a bitstream ran on a physical board.
 
 Neither outcome is an SC-NeuroCore-private rule; each falls out of the shared
 :class:`scpn_studio_platform.evidence.ClaimBoundary` lattice and the orthogonal
@@ -30,7 +31,10 @@ is reproducible.
 
 from __future__ import annotations
 
+import math
+import re
 from dataclasses import dataclass
+from typing import TypeGuard
 
 from scpn_studio_platform.evidence import (
     AdmissionDecision,
@@ -40,6 +44,7 @@ from scpn_studio_platform.evidence import (
     EvidenceBundle,
     EvidenceKind,
     EvidenceLevel,
+    Freshness,
     NumericProvenance,
     PhysicalContract,
     ProvActivity,
@@ -50,6 +55,34 @@ from scpn_studio_platform.evidence import (
 )
 
 from .verbs import FPGA_DEPLOYMENT_SCHEMA, SC_INFERENCE_SCHEMA, STUDIO_ID
+
+
+def _valid_digest(value: object) -> bool:
+    """Recognise a complete, lowercase SHA-256 content address."""
+    return isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
+
+
+def _wire_count(value: object) -> TypeGuard[int]:
+    """Recognise a nonnegative integer preserved exactly by JavaScript JSON."""
+    return type(value) is int and 0 <= value <= 2**53 - 1
+
+
+def _finite_number(value: object) -> bool:
+    """Recognise a finite numeric scalar without accepting booleans."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def _require_source_recheck(bit_exact: bool, freshness: Freshness | None) -> None:
+    """Refuse source-unchecked parity and undeclared freshness values."""
+    if freshness is not None and not isinstance(freshness, Freshness):
+        raise ValueError("freshness must be a platform Freshness member")
+    if bit_exact and freshness is not Freshness.VERIFIED_AT_SOURCE:
+        raise ValueError("reference-validated parity requires evidence re-checked at source")
 
 
 @dataclass(frozen=True)
@@ -75,7 +108,7 @@ class ScInferenceResult:
     Raises
     ------
     ValueError
-        If a count is non-positive, an error is negative, or a digest is empty.
+        If a count, error, backend or content address is invalid.
     """
 
     active_backend: str
@@ -86,18 +119,26 @@ class ScInferenceResult:
     result_digest: str
 
     def __post_init__(self) -> None:
-        """Validate counts, error sign, and digests."""
-        if self.bitstream_length <= 0:
-            raise ValueError("ScInferenceResult.bitstream_length must be > 0")
-        if self.max_abs_error < 0.0:
-            raise ValueError("ScInferenceResult.max_abs_error must be >= 0")
-        if not self.input_digest.strip() or not self.result_digest.strip():
-            raise ValueError("ScInferenceResult digests must be non-empty")
+        """Validate finite measured inputs and their SHA-256 identities."""
+        if not _wire_count(self.bitstream_length) or self.bitstream_length == 0:
+            raise ValueError("ScInferenceResult.bitstream_length must be a positive safe integer")
+        if not _finite_number(self.max_abs_error) or self.max_abs_error < 0.0:
+            raise ValueError("ScInferenceResult.max_abs_error must be finite and >= 0")
+        if self.active_backend not in ("numpy", "rust") or self.reference_backend != "numpy":
+            raise ValueError(
+                "ScInferenceResult requires a supported backend and the NumPy reference"
+            )
+        if not _valid_digest(self.input_digest) or not _valid_digest(self.result_digest):
+            raise ValueError(
+                "ScInferenceResult digests must be lowercase SHA-256 content addresses"
+            )
 
 
 @dataclass(frozen=True)
 class FpgaDeploymentResult:
-    """A path-free FPGA synthesis/deployment result.
+    """A path-free pre-silicon FPGA synthesis/co-simulation result.
+
+    Target device identity and synthesis reports do not attest physical execution.
 
     Parameters
     ----------
@@ -118,8 +159,7 @@ class FpgaDeploymentResult:
     Raises
     ------
     ValueError
-        If a resource count is negative, the clock is non-positive, or the digest
-        is empty.
+        If a resource count, co-simulation flag, clock, timing or digest is invalid.
     """
 
     device: str
@@ -131,13 +171,23 @@ class FpgaDeploymentResult:
     result_digest: str
 
     def __post_init__(self) -> None:
-        """Validate resource counts, clock, and digest."""
-        if self.lut_used < 0 or self.ff_used < 0:
-            raise ValueError("FpgaDeploymentResult resource counts must be >= 0")
-        if self.clock_mhz <= 0.0:
-            raise ValueError("FpgaDeploymentResult.clock_mhz must be > 0")
-        if not self.result_digest.strip():
-            raise ValueError("FpgaDeploymentResult.result_digest must be non-empty")
+        """Validate finite report values and their SHA-256 identity."""
+        if not isinstance(self.device, str) or not self.device.strip():
+            raise ValueError("FpgaDeploymentResult.device must be non-empty")
+        if type(self.cosim_bit_exact) is not bool:
+            raise ValueError("FpgaDeploymentResult.cosim_bit_exact must be a boolean")
+        if not all(_wire_count(value) for value in (self.lut_used, self.ff_used)):
+            raise ValueError(
+                "FpgaDeploymentResult resource counts must be nonnegative safe integers"
+            )
+        if not _finite_number(self.clock_mhz) or self.clock_mhz <= 0.0:
+            raise ValueError("FpgaDeploymentResult.clock_mhz must be finite and > 0")
+        if not _finite_number(self.worst_negative_slack_ns):
+            raise ValueError("FpgaDeploymentResult timing must be finite")
+        if not _valid_digest(self.result_digest):
+            raise ValueError(
+                "FpgaDeploymentResult digest must be a lowercase SHA-256 content address"
+            )
 
 
 def sc_inference_evidence(
@@ -148,6 +198,7 @@ def sc_inference_evidence(
     started: str,
     ended: str,
     host: str | None = None,
+    freshness: Freshness | None = None,
 ) -> EvidenceBundle:
     """Build the ``studio.sc-inference.v1`` bundle (measured software result).
 
@@ -163,14 +214,23 @@ def sc_inference_evidence(
         ISO-8601 start/end timestamps (passed in; no hidden clock).
     host
         Optional host descriptor the run executed on.
+    freshness
+        Source re-check status supplied by the producer. A bit-identical result
+        requires ``VERIFIED_AT_SOURCE``; parity alone never establishes freshness.
 
     Returns
     -------
     EvidenceBundle
         A ``measured`` bundle that renders as validated only when the accelerated
         backend is bit-identical to the NumPy floor.
+
+    Raises
+    ------
+    ValueError
+        If a bit-identical result lacks a verified-at-source re-check.
     """
     bit_identical = result.max_abs_error == 0.0
+    _require_source_recheck(bit_identical, freshness)
     entity = ProvEntity(
         entity_id=f"{STUDIO_ID}/sc-inference/{result.result_digest}", digest=result.result_digest
     )
@@ -199,6 +259,7 @@ def sc_inference_evidence(
         evidence_level=EvidenceLevel.ENGINEERING_VERIFIED,
         evidence_kind=EvidenceKind.MEASURED,
         claim_boundary=claim,
+        freshness=freshness,
         numeric_provenance=numeric,
     )
 
@@ -211,12 +272,13 @@ def fpga_deployment_evidence(
     started: str,
     ended: str,
     host: str | None = None,
+    freshness: Freshness | None = None,
 ) -> EvidenceBundle:
-    """Build the ``studio.fpga-deployment.v1`` bundle (hardware-validated silicon).
+    """Build the ``studio.fpga-deployment.v1`` pre-silicon measurement bundle.
 
-    The synthesised RTL is co-simulated against the Q8.8 fixed-point reference on
-    the ``fpga`` substrate. The claim is ``reference-validated`` only when that
-    co-simulation is bit-exact; a mismatch degrades to ``validation-gap``.
+    RTL is co-simulated against the Q8.8 fixed-point reference on the
+    ``simulator`` substrate. The claim is ``reference-validated`` only when that
+    co-simulation is bit-exact and re-checked; a mismatch becomes ``validation-gap``.
 
     Parameters
     ----------
@@ -230,12 +292,21 @@ def fpga_deployment_evidence(
         ISO-8601 start/end timestamps (passed in; no hidden clock).
     host
         Optional host descriptor the synthesis ran on.
+    freshness
+        Source re-check status supplied by the producer. Bit-exact co-simulation
+        requires ``VERIFIED_AT_SOURCE``; a retained report alone is not a re-check.
 
     Returns
     -------
     EvidenceBundle
-        A ``hardware-validated`` bundle on the ``fpga`` substrate.
+        A ``measured`` bundle on the ``simulator`` substrate, without a board claim.
+
+    Raises
+    ------
+    ValueError
+        If a bit-exact co-simulation lacks a verified-at-source re-check.
     """
+    _require_source_recheck(result.cosim_bit_exact, freshness)
     entity = ProvEntity(
         entity_id=f"{STUDIO_ID}/fpga-deployment/{result.result_digest}", digest=result.result_digest
     )
@@ -266,9 +337,9 @@ def fpga_deployment_evidence(
         else AdmissionDecision.REJECTED,
         validity_domain=ValidityDomain(
             note=(
-                "Bit-exact Q8.8 reference vs synthesised RTL co-simulation on the named "
-                "device; hardware-validated for that fixed-point network, not a general "
-                "floating-point accuracy guarantee."
+                "Bit-exact Q8.8 reference vs RTL co-simulation for the named synthesis "
+                "target. Pre-silicon measurement only; physical device execution, power "
+                "and general floating-point accuracy are not established."
             )
         ),
     )
@@ -278,9 +349,10 @@ def fpga_deployment_evidence(
         activity=activity,
         agent=agent,
         evidence_level=EvidenceLevel.ENGINEERING_VERIFIED,
-        evidence_kind=EvidenceKind.HARDWARE_VALIDATED,
+        evidence_kind=EvidenceKind.MEASURED,
         claim_boundary=claim,
-        substrate=Substrate.FPGA,
+        freshness=freshness,
+        substrate=Substrate.SIMULATOR,
         cases=(cosim,),
         physical_contract=physical,
     )

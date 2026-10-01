@@ -16,11 +16,10 @@ the shared :data:`scpn_studio_platform.verbs.CORE_VERBS` spine (``simulate``,
 domain-distinctive (``encode`` — float → stochastic bitstream; ``deploy`` — load a
 synthesised bitstream onto FPGA silicon).
 
-``deploy`` is the verb that carries SC-NeuroCore's distinctive contribution to the
-contract: it produces ``hardware-validated`` evidence on the ``fpga`` substrate —
-a bit-exact co-simulation match between the Q8.8 fixed-point reference and the
-synthesised RTL, proven on a Zynq XC7Z020. That is the silicon-grade tier of the
-evidence ladder, distinct from a ``measured`` software benchmark.
+``deploy`` describes a physical hardware side effect and requires a device run
+before a physical claim can be made. The current synthesis/co-simulation evidence
+mapper produces ``measured`` evidence on the ``simulator`` substrate. Bit-exact
+RTL parity establishes a pre-silicon reference comparison, not board execution.
 """
 
 from __future__ import annotations
