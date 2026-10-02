@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import ast
 import hashlib
-import json
 import math
 import re
 from collections.abc import Mapping, Sequence
@@ -36,7 +35,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
 from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
+from sc_neurocore.studio.candidate_document import (
+    CandidateDocumentRefused,
+    encode_candidate_document,
+)
+from sc_neurocore.studio.candidate_expressions import validate_candidate_calls
 
 CANDIDATE_SCHEMA_VERSION = "sc-neurocore.studio.candidate.v1"
 """The one candidate schema this build reads and writes."""
@@ -79,8 +84,18 @@ class CandidateDiagnostic:
     message: str
 
     def to_public_dict(self) -> dict[str, str]:
-        """Return the diagnostic as the API reports it."""
-        return {"location": self.location, "message": self.message}
+        """Return a located diagnostic with JSON-safe Unicode text.
+
+        Returns
+        -------
+        dict[str, str]
+            The location and authored message. Lone surrogates are escaped;
+            valid Unicode and the stored diagnostic remain unchanged.
+        """
+        return {
+            key: value.encode("utf-8", errors="backslashreplace").decode("utf-8")
+            for key, value in (("location", self.location), ("message", self.message))
+        }
 
 
 @dataclass(frozen=True)
@@ -106,9 +121,24 @@ class CandidateValidation:
 
 
 def candidate_sha256(document: Mapping[str, Any]) -> str:
-    """Return the digest of a candidate's canonical JSON form."""
-    encoded = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+    """Return the digest of the candidate's finite canonical JSON form.
+
+    Parameters
+    ----------
+    document:
+        Candidate fields and attribution; the mapping is not modified.
+
+    Returns
+    -------
+    str
+        SHA-256 of sorted, compact UTF-8 JSON, preserving valid finite digests.
+
+    Raises
+    ------
+    CandidateDocumentRefused
+        If values cannot form finite JSON or text contains lone surrogates.
+    """
+    return hashlib.sha256(encode_candidate_document(document)).hexdigest()
 
 
 def _pointer(*parts: str | int) -> str:
@@ -137,10 +167,15 @@ class _Checker:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             self.fail(location, f"{what} must be a number")
             return None
-        if not math.isfinite(value):
+        try:
+            number = float(value)
+        except OverflowError:
             self.fail(location, f"{what} must be finite")
             return None
-        return float(value)
+        if not math.isfinite(number):
+            self.fail(location, f"{what} must be finite")
+            return None
+        return number
 
     def expression(self, value: object, location: str, known: frozenset[str]) -> None:
         text = self.text(value, location, "an expression")
@@ -148,16 +183,35 @@ class _Checker:
             return
         try:
             self._safety.validate(text)
-        except ValueError as exc:
+        except EquationRefusal as exc:
             self.fail(location, str(exc))
             return
+        except ValueError:
+            self.fail(location, "the expression cannot be read")
+            return
+        tree = ast.parse(text, mode="eval")
         unknown = sorted(
             node.id
-            for node in ast.walk(ast.parse(text, mode="eval"))
+            for node in ast.walk(tree)
             if isinstance(node, ast.Name) and node.id not in known
         )
         if unknown:
             self.fail(location, f"unknown symbol(s) {', '.join(unknown)}")
+            return
+        try:
+            validate_candidate_calls(tree)
+        except EquationRefusal as exc:
+            self.fail(location, str(exc))
+
+
+def _validation(check: _Checker, document: Mapping[str, Any]) -> CandidateValidation:
+    """Bind diagnostics to readable JSON, refusing invalid document encoding."""
+    try:
+        digest = candidate_sha256(document)
+    except CandidateDocumentRefused as exc:
+        check.fail("", str(exc))
+        digest = None
+    return CandidateValidation(tuple(check.diagnostics), digest)
 
 
 def validate_candidate(
@@ -196,7 +250,7 @@ def validate_candidate(
             _pointer("schema_version"),
             f"unsupported candidate schema {version!r}; this build reads {CANDIDATE_SCHEMA_VERSION}",
         )
-        return CandidateValidation(tuple(check.diagnostics), candidate_sha256(document))
+        return _validation(check, document)
     for field in sorted(set(document) - _TOP_LEVEL_FIELDS):
         check.fail(
             _pointer(field), "unknown field; a candidate carries no field this build ignores"
@@ -208,7 +262,7 @@ def validate_candidate(
     _check_reference_tests(check, document.get("reference_tests"))
     if not check.diagnostics:
         _check_admission(check, document["model"])
-    return CandidateValidation(tuple(check.diagnostics), candidate_sha256(document))
+    return _validation(check, document)
 
 
 def _check_identity(
@@ -223,7 +277,7 @@ def _check_identity(
             f"{name} is a catalogue model; a candidate is never listed as one",
         )
     parent = document.get("parent")
-    if parent is not None and parent not in catalogue:
+    if parent is not None and (not isinstance(parent, str) or parent not in catalogue):
         check.fail(_pointer("parent"), f"parent {parent!r} is not a catalogue model")
 
 
@@ -327,9 +381,11 @@ def _check_unit(check: _Checker, unit: object, location: str) -> None:
         pint.errors.UndefinedUnitError,
         pint.errors.DefinitionSyntaxError,
         tokenize.TokenError,
+        TypeError,
         ValueError,
-    ) as exc:
-        check.fail(location, f"{text!r} is not a unit: {exc}")
+        ArithmeticError,
+    ):
+        check.fail(location, f"{text!r} is not a unit")
 
 
 _REGISTRY: list[Any] = []
@@ -428,8 +484,13 @@ def _check_admission(check: _Checker, model: Mapping[str, Any]) -> None:
 
     try:
         UniversalNeuron.from_dict(dict(model))
-    except (ValueError, TypeError, KeyError) as exc:
+    except EquationRefusal as exc:
         check.fail(_pointer("model"), f"the Universal DSL refuses the model: {exc}")
+    except (ValueError, TypeError, KeyError, AttributeError, ArithmeticError):
+        check.fail(
+            _pointer("model"),
+            "the Universal DSL refuses the model: a model field is missing or invalid",
+        )
 
 
 __all__ = [

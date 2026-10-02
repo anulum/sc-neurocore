@@ -63,3 +63,6 @@ Dorp = "Dorp"     # Author name: van Dorp
 Collet = "Collet" # Author name: Pierre Collet
 # Cargo.lock / third-party crate descriptions
 THS = "THS"          # abbreviation in rand crate docs
+
+[default.extend-identifiers]
+nin = "nin"         # NumPy ufunc input-count attribute

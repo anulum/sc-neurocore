@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Candidate validation reports authored diagnostics for malformed units,
+  excessively deep expressions, unsupported function arguments and invalid
+  Unicode or JSON values. Unencodable documents have no candidate digest.
+  Expected equation-value failures report a failed simulation step instead of
+  leaking interpreter text; corrupt parent resources remain server errors.
+
 ### Added
 
 - A training request can declare a preregistered acceptance criterion

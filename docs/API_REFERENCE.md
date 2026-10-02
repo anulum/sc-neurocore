@@ -25011,6 +25011,64 @@ equation dimensions before runtime compilation.
 
 ---
 
+## Module `neurons.equation_evaluation`
+
+### Function `evaluate_scalar(code, globals_dict, environment)`
+Evaluate a sandbox-approved expression with its existing float conversion.
+
+Expected value failures raise EquationEvaluationFailure subclasses while
+retaining their standard exception categories; other faults propagate.
+
+Parameters
+----------
+code:
+    Compiled expression approved by ExpressionSafetyValidator.
+globals_dict:
+    The caller's restricted equation evaluation globals.
+environment:
+    Current numerical bindings, passed to the expression unchanged.
+
+Returns
+-------
+float
+    The expression value after the existing scalar conversion.
+
+Raises
+------
+EquationEvaluationFailure
+    If evaluation or conversion fails in an expected value category.
+EquationRefusal
+    If an existing authored function-domain guard refuses the value.
+
+### Function `evaluate_condition(code, globals_dict, environment)`
+Evaluate a sandbox-approved threshold with its existing bool conversion.
+
+The expression and its conversion share the scalar value error boundary.
+No state or random stream is advanced by this helper.
+
+Parameters
+----------
+code:
+    Compiled threshold approved by ExpressionSafetyValidator.
+globals_dict:
+    The caller's restricted equation evaluation globals.
+environment:
+    Current numerical bindings, passed to the expression unchanged.
+
+Returns
+-------
+bool
+    The expression value after the existing threshold conversion.
+
+Raises
+------
+EquationEvaluationFailure
+    If evaluation or conversion fails in an expected value category.
+EquationRefusal
+    If an existing authored function-domain guard refuses the value.
+
+---
+
 ## Module `neurons.equation_namespace`
 
 ### Function `build_eval_namespace()`
@@ -25020,6 +25078,50 @@ The returned dict is fresh on every call so a neuron may own its namespace
 without aliasing another's. The bindings are the exact functions the
 fixed-point emitter mirrors; keep them identical to preserve co-simulation
 bit-exactness (see the module docstring).
+
+---
+
+## Module `neurons.equation_refusals`
+
+### Class `EquationRefusal`
+An authored equation or profile refusal, compatible with ValueError.
+
+
+### Class `EquationStateFailure`
+An authored state failure, compatible with FloatingPointError.
+
+
+### Class `EquationEvaluationFailure`
+An authored failure confined to evaluating a compiled equation value.
+
+
+### Class `EquationDivisionFailure`
+Preserve division-by-zero compatibility without generated diagnostics.
+
+
+### Class `EquationOverflowFailure`
+Preserve numeric-overflow compatibility without generated diagnostics.
+
+
+### Class `EquationFloatingFailure`
+Preserve floating-point-error compatibility without generated diagnostics.
+
+
+### Class `EquationTypeFailure`
+Preserve invalid-value-type compatibility without generated diagnostics.
+
+
+### Class `EquationIndexFailure`
+Preserve invalid-index compatibility without generated diagnostics.
+
+
+### Class `EquationAttributeFailure`
+Preserve unavailable-attribute compatibility without generated diagnostics.
+
+
+### Class `EquationNameFailure`
+Preserve unavailable-symbol compatibility without generated diagnostics.
+
 
 ---
 
@@ -39633,13 +39735,66 @@ dict
 
 ---
 
+## Module `studio.candidate_document`
+
+### Class `CandidateDocumentRefused`
+A deliberately authored candidate JSON or Unicode refusal.
+
+
+### Function `encode_candidate_document(document)`
+Encode the candidate's canonical finite JSON representation.
+
+Parameters
+----------
+document:
+    Candidate fields and metadata, including Unicode attribution.
+
+Returns
+-------
+bytes
+    Sorted, compact UTF-8 JSON, preserving the established valid digest.
+
+Raises
+------
+CandidateDocumentRefused
+    When values cannot form finite JSON or text contains lone surrogates.
+
+---
+
+## Module `studio.candidate_expressions`
+
+### Function `validate_candidate_calls(tree)`
+Refuse a direct call that the equation namespace cannot accept.
+
+``tree`` must already have passed the equation safety gate. Unknown names
+are reported by candidate symbol validation before this check. Calls on
+attributes retain the sandbox's existing semantics.
+
+Parameters
+----------
+tree:
+    Candidate expression syntax tree approved by the equation safety gate.
+
+Returns
+-------
+None
+    No expression is evaluated and no state or random stream is advanced.
+
+Raises
+------
+EquationRefusal
+    If a direct callee is not a namespace function or its argument count
+    cannot be accepted by that function.
+
+---
+
 ## Module `studio.candidate_package`
 
 ### Class `CandidateDiagnostic`
 One problem with a candidate, located by a JSON pointer.
 
 - **to_public_dict**()
-  - Return the diagnostic as the API reports it.
+  - Return a located diagnostic with JSON-safe Unicode text.
 
 ### Class `CandidateValidation`
 The outcome of validating one candidate document.
@@ -39650,7 +39805,22 @@ The outcome of validating one candidate document.
   - Return the validation as the API reports it.
 
 ### Function `candidate_sha256(document)`
-Return the digest of a candidate's canonical JSON form.
+Return the digest of the candidate's finite canonical JSON form.
+
+Parameters
+----------
+document:
+    Candidate fields and attribution; the mapping is not modified.
+
+Returns
+-------
+str
+    SHA-256 of sorted, compact UTF-8 JSON, preserving valid finite digests.
+
+Raises
+------
+CandidateDocumentRefused
+    If values cannot form finite JSON or text contains lone surrogates.
 
 ### Function `validate_candidate(document)`
 Validate a candidate document and locate every problem.
@@ -39673,6 +39843,10 @@ CandidateValidation
 ---
 
 ## Module `studio.candidate_run`
+
+### Class `CandidateRunRefused`
+An authored candidate execution request refusal, compatible with ValueError.
+
 
 ### Class `CandidateRejected`
 The candidate is not valid, so it is not run.

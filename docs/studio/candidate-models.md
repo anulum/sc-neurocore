@@ -47,6 +47,13 @@ nothing the Studio did not check. A document with no field-level problem is
 finally handed to the Universal DSL, which admits or refuses the model under
 its own numerical profile; its refusal is reported at `/model`.
 
+Diagnostics use explanations written for authors. Numbers must be finite,
+text must be valid Unicode, and every value must be representable in JSON.
+If the document cannot be encoded, `candidate_sha256` is `null` and validation
+reports the encoding problem. Valid finite documents retain their canonical
+digest. Function calls are checked against the equation namespace's supported
+arguments before admission; validation does not advance the model or draw noise.
+
 ## Diff against the parent
 
 The diff compares the candidate with the canonical schema of its parent,
@@ -70,6 +77,11 @@ A candidate runs under its own declared profile — the method and timestep it
 states — with a constant current, for at most 100 000 steps; longer traces are
 returned at a stride of at most 5 000 samples per variable. A run whose state
 stops being finite reports the step and the reason instead of numbers.
+An expression that divides by zero, reads an unavailable value or cannot produce
+a scalar also reports the failed step with an authored reason and a `null`
+`final_state`. Its reference tests fail, and the review packet retains the
+candidate and digest so the author can repair that proposal. Corrupt canonical
+resources and internal engine faults remain server errors.
 
 The reference tests are the author's proposals. Running them shows that the
 candidate does what its author says; it is not an independent check against

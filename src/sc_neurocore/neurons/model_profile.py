@@ -43,6 +43,7 @@ from typing import Any, Literal
 
 from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
 from sc_neurocore.neurons.schema_contracts import stateless_event_kind
 
 PROFILE_CONTRACT = "sc-neurocore.model-profile.v1"
@@ -152,7 +153,7 @@ class ModelProfileError(ValueError):
     """Raised when a schema's profile contradicts the schema or the contract."""
 
 
-class ProfileAdmissionError(ModelProfileError):
+class ProfileAdmissionError(ModelProfileError, EquationRefusal):
     """Raised when an override or protocol is not admissible under a profile."""
 
 

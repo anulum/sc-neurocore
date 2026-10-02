@@ -67,7 +67,9 @@ from sc_neurocore.neurons._stochastic_threshold import (
     DEFAULT_LFSR16_SEED,
     Lfsr16Threshold,
 )
+from sc_neurocore.neurons.equation_evaluation import evaluate_condition, evaluate_scalar
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
+from sc_neurocore.neurons.equation_refusals import EquationRefusal, EquationStateFailure
 from sc_neurocore.neurons.equation_safety import EVAL_GLOBALS, ExpressionSafetyValidator
 from sc_neurocore.neurons.equation_units_runtime import (
     convert_runtime_value,
@@ -127,11 +129,13 @@ class EquationNeuron:
         trial passes its own seeded ``numpy.random.Generator``.
         """
         if units not in {"none", "strict"}:
-            raise ValueError("units must be 'none' or 'strict'")
+            raise EquationRefusal("units must be 'none' or 'strict'")
         if method not in SUPPORTED_METHODS:
-            raise ValueError(f"method must be one of {list(SUPPORTED_METHODS)}, got {method!r}")
+            raise EquationRefusal(
+                f"method must be one of {list(SUPPORTED_METHODS)}, got {method!r}"
+            )
         if detection not in _SUPPORTED_DETECTION:
-            raise ValueError(
+            raise EquationRefusal(
                 f"detection must be one of {sorted(_SUPPORTED_DETECTION)}, got {detection!r}"
             )
         # ``substeps`` advances the integrator this many inner steps per macro ``step()``
@@ -139,7 +143,7 @@ class EquationNeuron:
         # sub-stepping (e.g. 100 dt sub-steps per 1 ms macro step). Must be a positive
         # integer; the ``bool`` guard rejects ``True``/``False`` slipping through as 1/0.
         if isinstance(substeps, bool) or not isinstance(substeps, int) or substeps < 1:
-            raise ValueError(f"substeps must be a positive integer, got {substeps!r}")
+            raise EquationRefusal(f"substeps must be a positive integer, got {substeps!r}")
 
         self.equations = equations
         self.threshold_expr = threshold
@@ -153,21 +157,21 @@ class EquationNeuron:
         self._poisson_enabled = detection == "poisson" and probability_expression is not None
         self._stochastic_threshold_enabled = self._escape_rate_enabled or self._poisson_enabled
         if detection != "escape_rate" and rate_expression is not None:
-            raise ValueError("rate_expression is only valid with detection='escape_rate'")
+            raise EquationRefusal("rate_expression is only valid with detection='escape_rate'")
         if detection != "poisson" and probability_expression is not None:
-            raise ValueError("probability_expression is only valid with detection='poisson'")
+            raise EquationRefusal("probability_expression is only valid with detection='poisson'")
         if detection == "escape_rate" and rate_expression is None:
-            raise ValueError("escape_rate detection requires rate_expression")
+            raise EquationRefusal("escape_rate detection requires rate_expression")
         if detection == "poisson" and probability_expression is None:
-            raise ValueError("poisson detection requires probability_expression")
+            raise EquationRefusal("poisson detection requires probability_expression")
         if self._stochastic_threshold_enabled:
             if threshold not in (None, "stochastic"):
-                raise ValueError(
+                raise EquationRefusal(
                     f"{detection} detection cannot combine a stochastic expression "
                     "with a level threshold"
                 )
             if not math.isfinite(float(dt)) or float(dt) <= 0.0:
-                raise ValueError(f"{detection} dt must be finite and positive")
+                raise EquationRefusal(f"{detection} dt must be finite and positive")
             self.threshold_expr = None
             self._stochastic_rng: Lfsr16Threshold | None = Lfsr16Threshold(rng_seed)
         else:
@@ -196,7 +200,7 @@ class EquationNeuron:
         alias_collisions = sorted(previous_aliases & occupied_names)
         if alias_collisions:
             joined = ", ".join(alias_collisions)
-            raise ValueError(
+            raise EquationRefusal(
                 f"Names reserved for previous-state aliases cannot be declared: {joined}"
             )
 
@@ -295,7 +299,7 @@ class EquationNeuron:
         env.update(_previous_state_aliases(self.initial_state))
         env["I"] = 0.0
         # Bandit B307 justification: AST-whitelisted threshold expression (see step()).
-        return bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env))  # nosec B307
+        return evaluate_condition(self._compiled_threshold, self._EVAL_GLOBALS, env)
 
     def _build_jacobian(self) -> dict[str, Any]:
         """Compile the diagonal Jacobian ``∂f/∂x`` for each equation.
@@ -427,19 +431,21 @@ class EquationNeuron:
                 env_post = self._build_env(**kwargs)
                 env_post.update(_previous_state_aliases(previous_state))
                 if self._escape_rate_enabled:
-                    rate = float(eval(compiled_stochastic, self._EVAL_GLOBALS, env_post))
+                    rate = evaluate_scalar(compiled_stochastic, self._EVAL_GLOBALS, env_post)
                     hazard = rate * self.dt
                     if not math.isfinite(rate) or rate < 0.0:
-                        raise FloatingPointError("escape rate must remain finite and non-negative")
+                        raise EquationStateFailure(
+                            "escape rate must remain finite and non-negative"
+                        )
                     if not math.isfinite(hazard) or hazard < 0.0:
-                        raise FloatingPointError(
+                        raise EquationStateFailure(
                             "escape hazard must remain finite and non-negative"
                         )
                     probability = -math.expm1(-hazard)
                 else:
-                    probability = float(eval(compiled_stochastic, self._EVAL_GLOBALS, env_post))
+                    probability = evaluate_scalar(compiled_stochastic, self._EVAL_GLOBALS, env_post)
                 if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
-                    raise FloatingPointError(
+                    raise EquationStateFailure(
                         "stochastic spike probability must remain finite and bounded"
                     )
                 fired = stochastic_rng.trial(probability)
@@ -449,9 +455,7 @@ class EquationNeuron:
                     reset_env.update(_previous_state_aliases(previous_state))
                     for var, code in self._compiled_reset.items():
                         # Bandit B307 justification: AST-whitelisted compiled reset rule.
-                        self.state[var] = float(  # nosec B307
-                            eval(code, self._EVAL_GLOBALS, reset_env)  # nosec B307
-                        )
+                        self.state[var] = evaluate_scalar(code, self._EVAL_GLOBALS, reset_env)
             except Exception:
                 self.state = previous_state
                 stochastic_rng.restore(previous_rng)
@@ -460,7 +464,7 @@ class EquationNeuron:
             env_post = self._build_env(**kwargs)
             env_post.update(_previous_state_aliases(previous_state))
             # Bandit B307 justification: AST-whitelisted compiled threshold expression.
-            active = bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post))  # nosec B307
+            active = evaluate_condition(self._compiled_threshold, self._EVAL_GLOBALS, env_post)
             # ``crossing`` fires once on the inactive -> active transition (a rising
             # threshold crossing, matching the hand oscillator models' ``v >= thr and
             # v_prev < thr`` edge test); ``level`` fires on every step the condition
@@ -479,7 +483,7 @@ class EquationNeuron:
                 reset_env.update(_previous_state_aliases(previous_state))
                 for var, code in self._compiled_reset.items():
                     # Bandit B307 justification: AST-whitelisted compiled reset rule.
-                    self.state[var] = float(eval(code, self._EVAL_GLOBALS, reset_env))  # nosec B307
+                    self.state[var] = evaluate_scalar(code, self._EVAL_GLOBALS, reset_env)
 
         return spike
 
@@ -502,7 +506,7 @@ class EquationNeuron:
                 # the whitelisted maths/comparison nodes). The `eval` env has
                 # empty `__builtins__` so even reaching `eval` / `exec` /
                 # `__import__` is impossible.
-                derivatives[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
+                derivatives[var] = evaluate_scalar(code, self._EVAL_GLOBALS, env)
             for var in self.equations:
                 self.state[var] += derivatives[var] * self.dt
 
@@ -518,7 +522,7 @@ class EquationNeuron:
                 # Bandit B307 justification: `code` is a compiled expression that already passed
                 # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
                 # with empty `__builtins__` (see the euler branch comment for full rationale).
-                updates[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
+                updates[var] = evaluate_scalar(code, self._EVAL_GLOBALS, env)
             for var in self.equations:
                 self.state[var] = updates[var]
 
@@ -539,7 +543,7 @@ class EquationNeuron:
                     # Bandit B307 justification: AST-whitelisted compiled equation
                     # (see euler branch comment above for full sandbox
                     # rationale).
-                    var: float(eval(code, self._EVAL_GLOBALS, e))  # nosec B307
+                    var: evaluate_scalar(code, self._EVAL_GLOBALS, e)
                     for var, code in self._compiled_eqs.items()
                 }
 
@@ -569,7 +573,7 @@ class EquationNeuron:
                 # Bandit B307 justification: `code` is a compiled expression that already passed
                 # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
                 # with empty `__builtins__` (see the euler branch comment for full rationale).
-                derivative = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
+                derivative = evaluate_scalar(code, self._EVAL_GLOBALS, env)
                 self.state[var] += derivative * self.dt
                 env[var] = self.state[var]
 
@@ -585,8 +589,8 @@ class EquationNeuron:
             for var in self.equations:
                 # Bandit B307 justification: AST-whitelisted compiled equation / Jacobian
                 # (see the euler branch comment for the full sandbox rationale).
-                f_val = float(eval(self._compiled_eqs[var], self._EVAL_GLOBALS, env))  # nosec B307
-                a_val = float(eval(self._compiled_jacobian[var], self._EVAL_GLOBALS, env))  # nosec B307
+                f_val = evaluate_scalar(self._compiled_eqs[var], self._EVAL_GLOBALS, env)
+                a_val = evaluate_scalar(self._compiled_jacobian[var], self._EVAL_GLOBALS, env)
                 increments[var] = f_val * self.dt * float(exprel(a_val * self.dt))
             for var in self.equations:
                 self.state[var] += increments[var]
@@ -597,7 +601,7 @@ class EquationNeuron:
         # rather than silently propagate ``inf``/``nan`` into the threshold decision.
         for var, value in self.state.items():
             if not math.isfinite(value):
-                raise FloatingPointError(
+                raise EquationStateFailure(
                     f"{var!r} became non-finite ({value}) after a {self.method} step"
                 )
 
@@ -688,7 +692,9 @@ def from_equations(
             rhs = m.group(2).strip()
             equations[var_name] = rhs
         else:
-            raise ValueError(f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'")
+            raise EquationRefusal(
+                f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'"
+            )
 
     reset_rules = {}
     constant_values = constants.copy() if constants else {}

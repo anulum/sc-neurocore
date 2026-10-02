@@ -12,9 +12,9 @@ A candidate runs through the Universal DSL under its own declared numerical
 profile — the integration method and timestep it states — so what is
 simulated is what is proposed. Every run is bounded by
 :data:`~sc_neurocore.studio.candidate_package.MAX_CANDIDATE_STEPS`, and a run
-whose state stops being finite — which the equation engine refuses to carry
-on from — reports the step where it diverged and why, instead of returning
-numbers that mean nothing.
+whose state stops being finite or whose expression cannot produce a valid
+value reports the failed step and an authored reason. The expression boundary
+keeps arithmetic and value failures separate from internal engine faults.
 
 A reference test is the author's own proposal: a drive, a length and bounds on
 the spike count or on the final state. Running them shows that the candidate
@@ -32,6 +32,8 @@ import platform
 from collections.abc import Mapping
 from typing import Any
 
+from sc_neurocore.neurons.equation_refusals import EquationRefusal, EquationStateFailure
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.candidate_diff import diff_candidate
 from sc_neurocore.studio.candidate_package import (
     MAX_CANDIDATE_STEPS,
@@ -55,7 +57,11 @@ NOT_ESTABLISHED = (
 """What a review packet does not show, stated in every packet."""
 
 
-class CandidateRejected(ValueError):
+class CandidateRunRefused(AuthoredRefusal):
+    """An authored candidate execution request refusal, compatible with ValueError."""
+
+
+class CandidateRejected(CandidateRunRefused):
     """The candidate is not valid, so it is not run."""
 
     def __init__(self, validation: dict[str, Any]) -> None:
@@ -99,7 +105,16 @@ def _run(
             spiked = neuron.step(I=current)
         except FloatingPointError as exc:
             # The equation engine refuses a state that stops being finite.
-            diverged_at, divergence = step, str(exc)
+            diverged_at = step
+            divergence = (
+                str(exc)
+                if isinstance(exc, EquationStateFailure)
+                else "the candidate state could not remain finite"
+            )
+            break
+        except EquationRefusal as exc:
+            diverged_at = step
+            divergence = str(exc)
             break
         if spiked:
             spike_steps.append(step)
@@ -139,7 +154,7 @@ def simulate_candidate(
         When ``steps`` is outside 1 .. ``MAX_CANDIDATE_STEPS``.
     """
     if not 1 <= steps <= MAX_CANDIDATE_STEPS:
-        raise ValueError(f"steps must be from 1 to {MAX_CANDIDATE_STEPS}")
+        raise CandidateRunRefused(f"steps must be from 1 to {MAX_CANDIDATE_STEPS}")
     require_valid_candidate(document)
     run = _run(document["model"], current=current, steps=steps, keep_trace=True)
     return {
@@ -235,6 +250,7 @@ def review_packet(document: Mapping[str, Any]) -> dict[str, Any]:
 
 __all__ = [
     "CandidateRejected",
+    "CandidateRunRefused",
     "MAX_TRACE_POINTS",
     "NOT_ESTABLISHED",
     "REVIEW_PACKET_SCHEMA_VERSION",

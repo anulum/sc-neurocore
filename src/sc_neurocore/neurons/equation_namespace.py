@@ -24,6 +24,8 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
+
 
 def _sigmoid(x: float) -> Any:
     """Logistic sigmoid with clipping for numerical stability."""
@@ -33,7 +35,7 @@ def _sigmoid(x: float) -> Any:
 def _sqrt(x: Any) -> Any:
     """Square root that fails before NumPy warning machinery on invalid domains."""
     if np.any(np.asarray(x) < 0):
-        raise ValueError("sqrt domain error")
+        raise EquationRefusal("sqrt domain error")
     return np.sqrt(x)
 
 

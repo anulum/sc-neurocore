@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5184
+    "test_files": 5191
   },
   "documentation": {
     "public_pages": [
@@ -4933,6 +4933,7 @@
       "tests/test_equation_builder_contracts.py",
       "tests/test_equation_builder_equation_neuron.py",
       "tests/test_equation_builder_from_equations.py",
+      "tests/test_equation_builder_refusals.py",
       "tests/test_equation_compiler_cli.py",
       "tests/test_equation_compiler_compile_lif.py",
       "tests/test_equation_compiler_compile_multi_variable.py",
@@ -4943,6 +4944,7 @@
       "tests/test_equation_compiler_testbench_generator.py",
       "tests/test_equation_compiler_transcendental_functions.py",
       "tests/test_equation_compiler_verilog_syntax.py",
+      "tests/test_equation_evaluation.py",
       "tests/test_equation_namespace.py",
       "tests/test_equation_safety_acceptance.py",
       "tests/test_equation_safety_capabilities.py",
@@ -7664,9 +7666,14 @@
       "tests/test_studio_benchmark_contribution.py",
       "tests/test_studio_benchmark_refusals.py",
       "tests/test_studio_browser_sessions.py",
+      "tests/test_studio_candidate_api_refusals.py",
       "tests/test_studio_candidate_diff.py",
+      "tests/test_studio_candidate_diff_refusals.py",
+      "tests/test_studio_candidate_expressions.py",
       "tests/test_studio_candidate_package.py",
+      "tests/test_studio_candidate_package_refusals.py",
       "tests/test_studio_candidate_run.py",
+      "tests/test_studio_candidate_run_refusals.py",
       "tests/test_studio_catalogue_identity_classification.py",
       "tests/test_studio_catalogue_metadata_state.py",
       "tests/test_studio_catalogue_query.py",

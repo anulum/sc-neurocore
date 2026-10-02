@@ -32,6 +32,8 @@ from __future__ import annotations
 
 import ast
 
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
+
 _ALLOWED_AST_NODES = {
     ast.Expression,
     ast.BinOp,
@@ -132,7 +134,7 @@ _BLOCKED_NAMES = {
 }
 """Identifier and attribute names rejected regardless of AST position."""
 
-EVAL_GLOBALS = {
+EVAL_GLOBALS: dict[str, object] = {
     "__builtins__": {"__import__": __import__},
 }
 """Globals for the compiled-expression ``eval`` sites.
@@ -168,41 +170,45 @@ class ExpressionSafetyValidator:
         try:
             tree = ast.parse(expr, mode="eval")
         except SyntaxError as e:
-            raise ValueError(f"Invalid equation syntax: {expr!r}") from e
+            raise EquationRefusal(f"Invalid equation syntax: {expr!r}") from e
+        except RecursionError as exc:
+            raise EquationRefusal("Equation expression is too deep to parse") from exc
 
         # Reject excessively deep ASTs (stack exhaustion / obfuscation)
         max_depth = self._ast_depth(tree)
         if max_depth > self._max_depth:
-            raise ValueError(
+            raise EquationRefusal(
                 f"Equation AST depth {max_depth} exceeds limit {self._max_depth}: {expr!r}"
             )
 
         for node in ast.walk(tree):
             if type(node) not in _ALLOWED_AST_NODES:
-                raise ValueError(f"Unsafe AST node {type(node).__name__} in equation: {expr!r}")
+                raise EquationRefusal(
+                    f"Unsafe AST node {type(node).__name__} in equation: {expr!r}"
+                )
             if isinstance(node, ast.Name) and node.id in _BLOCKED_NAMES:
-                raise ValueError(f"Blocked function {node.id!r} in equation: {expr!r}")
+                raise EquationRefusal(f"Blocked function {node.id!r} in equation: {expr!r}")
             if isinstance(node, ast.Attribute):
                 # Block all double-underscore attribute access
                 if node.attr.startswith("__") and node.attr.endswith("__"):
-                    raise ValueError(
+                    raise EquationRefusal(
                         f"Dunder attribute access {node.attr!r} blocked in equation: {expr!r}"
                     )
                 if node.attr in _BLOCKED_NAMES:
-                    raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
+                    raise EquationRefusal(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
             if isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):
                 # Equations are numeric. A string constant carried a format
                 # string whose field names ('{0.__class__.__mro__}') read any
                 # attribute or index, dunders included, past every other rule
                 # here (CEO security review of CodeQL #484, 2026-09-30).
-                raise ValueError(f"Blocked string constant in equation: {expr!r}")
+                raise EquationRefusal(f"Blocked string constant in equation: {expr!r}")
             if (
                 isinstance(node, ast.Constant)
                 and isinstance(node.value, (int, float))
                 and not isinstance(node.value, bool)
                 and abs(node.value) > _MAX_CONSTANT_MAGNITUDE
             ):
-                raise ValueError(
+                raise EquationRefusal(
                     f"Numeric constant {node.value!r} exceeds magnitude limit "
                     f"{_MAX_CONSTANT_MAGNITUDE:g} in equation: {expr!r}"
                 )
@@ -214,7 +220,7 @@ class ExpressionSafetyValidator:
                     and not isinstance(exponent.value, bool)
                     and abs(exponent.value) > _MAX_POW_EXPONENT
                 ):
-                    raise ValueError(
+                    raise EquationRefusal(
                         f"Exponent {exponent.value!r} exceeds limit {_MAX_POW_EXPONENT} "
                         f"in equation: {expr!r}"
                     )
@@ -224,12 +230,17 @@ class ExpressionSafetyValidator:
                     isinstance(inner, ast.BinOp) and isinstance(inner.op, ast.Pow)
                     for inner in ast.walk(exponent)
                 ):
-                    raise ValueError(f"Nested exponentiation blocked (eval blow-up risk): {expr!r}")
+                    raise EquationRefusal(
+                        f"Nested exponentiation blocked (eval blow-up risk): {expr!r}"
+                    )
 
     @staticmethod
     def _ast_depth(node: ast.AST) -> int:
         """Return the maximum nesting depth of an AST."""
-        children = list(ast.iter_child_nodes(node))
-        if not children:
-            return 1
-        return 1 + max(ExpressionSafetyValidator._ast_depth(c) for c in children)
+        deepest = 1
+        pending = [(node, 1)]
+        while pending:
+            current, depth = pending.pop()
+            deepest = max(deepest, depth)
+            pending.extend((child, depth + 1) for child in ast.iter_child_nodes(current))
+        return deepest

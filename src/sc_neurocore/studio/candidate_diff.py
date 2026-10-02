@@ -35,6 +35,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
 
 DIFF_SCHEMA_VERSION = "sc-neurocore.studio.candidate-diff.v1"
 
@@ -42,7 +43,7 @@ _MAX_SIMPLIFY_OPS = 400
 """Largest difference, in SymPy operations, that is simplified in full."""
 
 
-class _NotSymbolic(ValueError):
+class _NotSymbolic(EquationRefusal):
     """The expression has no exact symbolic reading."""
 
 
@@ -242,7 +243,7 @@ def diff_candidate(document: Mapping[str, Any]) -> dict[str, Any]:
     try:
         schema_name = schema_for_class(str(parent))
         parent_model = load_schema(schema_name)
-    except (ModelIdentityError, FileNotFoundError, ValueError):
+    except (ModelIdentityError, FileNotFoundError):
         return {**base, "status": "parent_has_no_schema"}
     return {
         **base,

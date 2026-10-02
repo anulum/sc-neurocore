@@ -82,6 +82,7 @@ from typing import Any
 
 from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
 from sc_neurocore.neurons.model_profile import (
     AdmittedOverrides,
     ModelProfile,
@@ -296,7 +297,7 @@ class UniversalNeuron:
         rate_expression = threshold_config.get("rate_expression")
         probability_expression = threshold_config.get("probability_expression")
         if not dynamics and stateless_event_kind(self._schema) is None:
-            raise ValueError(
+            raise EquationRefusal(
                 "Schema must define at least one ODE in [dynamics], unless it is a "
                 "stateless Poisson probability schema or a stateless deterministic "
                 "level-threshold schema"

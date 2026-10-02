@@ -36,6 +36,8 @@ from typing import cast
 
 import sympy
 
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
+
 
 class exprel(  # noqa: N801 - DSL/print token
     sympy.Function  # type: ignore[misc,unused-ignore]
@@ -73,7 +75,7 @@ _BINOPS: dict[type[ast.operator], Callable[[sympy.Expr, sympy.Expr], sympy.Expr]
 _PLACEHOLDER_PREFIX = "_opaque_"
 
 
-class ExpressionDifferentiationError(ValueError):
+class ExpressionDifferentiationError(EquationRefusal):
     """Raised when an expression cannot be faithfully differentiated in-grammar."""
 
 
