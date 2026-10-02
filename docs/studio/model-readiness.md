@@ -18,6 +18,14 @@ A model's panel shows two kinds of tier, and they answer different questions.
   profile Studio compiles. Verified tiers show what has actually been executed
   and still holds.
 
+The catalogue query endpoint, `GET /api/models/query`, filters on these verified
+tiers through `min_verified_science` and `min_verified_silicon`. Each accepts a
+decimal integer from zero to five; zero leaves that axis unfiltered. Unicode
+decimal digits and leading zeroes are supported. Signs, spaces, fractions,
+nondecimal numeric characters and values above five receive HTTP 422 with an
+authored explanation in `detail.reason`. Long digit strings follow the same
+contract without exposing integer-conversion errors.
+
 ## When a model is called perfect
 
 A model is **perfect** when it reaches S5 and the terminal silicon tier that

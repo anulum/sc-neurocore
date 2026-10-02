@@ -39681,7 +39681,7 @@ produced them and what the packet does not establish, all under one digest.
 ## Module `studio.catalogue_query`
 
 ### Class `CatalogueQueryRejected`
-A query names a filter value the catalogue cannot hold.
+A source-authored query refusal, compatible with existing ValueError callers.
 
 
 ### Class `CatalogueQuery`

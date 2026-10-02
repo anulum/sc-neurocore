@@ -29,6 +29,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_catalogue import corpus_revision, list_models
 
 CATALOGUE_QUERY_SCHEMA_VERSION = "sc-neurocore.studio.catalogue-query.v1"
@@ -37,8 +38,8 @@ _SILICON_TIERS = 5
 _FACETS = ("family", "behavior", "identity_kind", "metadata_state")
 
 
-class CatalogueQueryRejected(ValueError):
-    """A query names a filter value the catalogue cannot hold."""
+class CatalogueQueryRejected(AuthoredRefusal):
+    """A source-authored query refusal, compatible with existing ValueError callers."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +58,20 @@ class CatalogueQuery:
     @classmethod
     def from_params(cls, params: Mapping[str, str]) -> CatalogueQuery:
         """Build a query from HTTP query parameters, refusing what cannot be one.
+
+        Readiness tiers accept Unicode decimal digits and leading zeroes.
+        Conversion keeps bounded integer state, independent of the interpreter's
+        limit on converting long strings to integers.
+
+        Parameters
+        ----------
+        params : Mapping[str, str]
+            Catalogue filter names and their HTTP string values.
+
+        Returns
+        -------
+        CatalogueQuery
+            Validated filters with readiness tiers between zero and five.
 
         Raises
         ------
@@ -83,10 +98,17 @@ class CatalogueQuery:
 
 
 def _tier(params: Mapping[str, str], name: str, highest: int) -> int:
+    """Read one decimal readiness tier without constructing an unbounded integer."""
     raw = params.get(name, "0")
-    if not raw.isdigit() or int(raw) > highest:
-        raise CatalogueQueryRejected(f"{name} must be an integer from 0 to {highest}")
-    return int(raw)
+    message = f"{name} must be an integer from 0 to {highest}"
+    if not raw.isdecimal():
+        raise CatalogueQueryRejected(message)
+    value = 0
+    for digit in raw:
+        value = value * 10 + int(digit)
+        if value > highest:
+            raise CatalogueQueryRejected(message)
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +127,7 @@ _index_cache: tuple[int, _CatalogueIndex] | None = None
 
 
 def _facet_values(model: Mapping[str, Any], facet: str) -> Iterable[str]:
+    """Return a model's scalar or multivalued entries for one catalogue facet."""
     if facet == "behavior":
         return [str(tag) for tag in model.get("behavior_tags", [])]
     return [str(model.get(facet, ""))]
@@ -183,6 +206,7 @@ def _silicon_at_least(index: _CatalogueIndex, name: str, floor: int) -> bool:
 
 
 def _counts(index: _CatalogueIndex, names: frozenset[str], facet: str) -> dict[str, int]:
+    """Count each populated facet value over the admitted model names."""
     return {
         value: len(members & names)
         for value, members in sorted(index.postings[facet].items())
@@ -191,6 +215,7 @@ def _counts(index: _CatalogueIndex, names: frozenset[str], facet: str) -> dict[s
 
 
 def _tier_counts(names: frozenset[str], tier_of: Callable[[str], int | None]) -> dict[str, int]:
+    """Count enrolled tiers and unenrolled models over the admitted names."""
     counts: Counter[str] = Counter()
     for name in names:
         tier = tier_of(name)
