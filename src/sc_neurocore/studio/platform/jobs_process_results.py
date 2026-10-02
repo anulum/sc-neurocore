@@ -15,7 +15,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
 
+from sc_neurocore.studio.platform.jobs_failures import authored_job_error
 from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact
+from sc_neurocore.studio.platform.jobs_worker_refusals import worker_job_error
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,23 +36,24 @@ def _load_process_result(result_path: Path) -> _ProcessWorkerResult:
         return _ProcessWorkerResult(
             status="failed",
             result={},
-            error="Studio process worker did not write a result.",
+            error=authored_job_error("Studio process worker did not write a result."),
             artifacts=(),
         )
     try:
         payload = json.loads(result_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        json.dumps(payload, allow_nan=False)
+    except (OSError, ValueError, RecursionError):
         return _ProcessWorkerResult(
             status="failed",
             result={},
-            error="Studio process worker wrote an invalid result.",
+            error=authored_job_error("Studio process worker wrote an invalid result."),
             artifacts=(),
         )
     if not isinstance(payload, dict):
         return _ProcessWorkerResult(
             status="failed",
             result={},
-            error="Studio process worker wrote an invalid result.",
+            error=authored_job_error("Studio process worker wrote an invalid result."),
             artifacts=(),
         )
     return _parse_process_result(payload)
@@ -70,7 +73,7 @@ def _parse_process_result(payload: dict[object, object]) -> _ProcessWorkerResult
     raw_result = payload.get("result")
     result = cast(dict[str, object], raw_result) if isinstance(raw_result, dict) else {}
     raw_error = payload.get("error")
-    error = raw_error if isinstance(raw_error, str) else None
+    error = worker_job_error(payload, diagnostic=raw_error) if isinstance(raw_error, str) else None
     artifacts = _parse_process_artifacts(payload.get("artifacts"))
     return _ProcessWorkerResult(
         status=status,

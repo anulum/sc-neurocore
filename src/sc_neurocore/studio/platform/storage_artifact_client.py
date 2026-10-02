@@ -17,12 +17,10 @@ from __future__ import annotations
 
 import secrets
 import socket
+from typing import cast
 
-from sc_neurocore.studio.platform.jobs_models import (
-    StudioJobArtifact,
-    StudioJobArtifactPayload,
-    StudioJobArtifactUnavailable,
-)
+from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobArtifactPayload
+from sc_neurocore.studio.platform.storage_artifact_chunks import receive_artifact_chunks
 from sc_neurocore.studio.platform.storage_artifact_protocol import (
     ARTIFACT_SCHEMA_VERSION,
     ArtifactRoute,
@@ -30,7 +28,7 @@ from sc_neurocore.studio.platform.storage_artifact_protocol import (
     decode_artifact_response,
     encode_artifact_message,
 )
-from sc_neurocore.studio.platform.storage_artifact_chunks import receive_artifact_chunks
+from sc_neurocore.studio.platform.storage_finish_protocol import FinishArtifact
 from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
@@ -110,9 +108,11 @@ def exchange_artifact(
         reply = read_verified_frame(
             channel, expected_uid=expected_service_uid, max_bytes=max_bytes, deadline=deadline
         )
-        declared = decode_artifact_response(reply, request=request, max_bytes=max_bytes).artifact
-        if declared is None:
-            raise StudioJobArtifactUnavailable("Studio job artifact declaration is absent.")
+        # The decoder returns only an answered read with a validated declaration.
+        declared = cast(
+            FinishArtifact,
+            decode_artifact_response(reply, request=request, max_bytes=max_bytes).artifact,
+        )
         payload = receive_artifact_chunks(
             channel,
             declared,

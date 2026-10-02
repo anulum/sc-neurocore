@@ -21,20 +21,21 @@ kept for a bounded number of later jobs, so a stream can read its last lines.
 
 from __future__ import annotations
 
-from collections import OrderedDict
-from collections.abc import Mapping
 import os
 import stat
 import threading
+from collections import OrderedDict
+from collections.abc import Mapping
 
 from sc_neurocore.studio.platform.jobs_models import (
     STUDIO_CONTROL_COMMAND_FILE,
     STUDIO_CONTROL_COMMAND_MAX_BYTES,
     STUDIO_CONTROL_DIR,
     STUDIO_CONTROL_SEED_DIR,
-    StudioJobArtifactUnavailable,
-    StudioJobRejected,
+    StudioJobArtifactRefused,
+    StudioJobRefused,
 )
+from sc_neurocore.studio.platform.jobs_refusals import artifact_refusal, job_refusal
 from sc_neurocore.studio.platform.storage_spool_staging import (
     CONTROL_SEED_MODE,
     FILE_MODE,
@@ -85,7 +86,7 @@ def _publish(directory: int, name: str, payload: bytes) -> None:
 
 
 class LiveSpools:
-    """This API generation's live worker directories, keyed by job."""
+    """Live worker directories held by this API generation, keyed by job."""
 
     def __init__(self, *, retain: int, max_seed_bytes: int) -> None:
         """Keep ``retain`` finished directories; bound each control seed."""
@@ -158,7 +159,7 @@ class LiveSpools:
         try:
             *directories, name = canonical_parts(relative_path)
         except ValueError as exc:
-            raise StudioJobArtifactUnavailable(str(exc)) from exc
+            raise artifact_refusal(exc, fallback="Studio live artifact path is invalid.") from exc
         work = self._held(job_id)
         if work is None:
             return b"", offset
@@ -170,13 +171,13 @@ class LiveSpools:
         except FileNotFoundError:
             return b"", offset
         except OSError as exc:
-            raise StudioJobArtifactUnavailable("Studio live artifact is unavailable.") from exc
+            raise StudioJobArtifactRefused("Studio live artifact is unavailable.") from exc
         finally:
             for descriptor in reversed(held):
                 os.close(descriptor)
         try:
             if not stat.S_ISREG(os.fstat(handle).st_mode):
-                raise StudioJobArtifactUnavailable("Studio live artifact is unavailable.")
+                raise StudioJobArtifactRefused("Studio live artifact is unavailable.")
             payload = os.pread(handle, max_bytes, offset)
         finally:
             os.close(handle)
@@ -194,18 +195,18 @@ class LiveSpools:
             A control directory is no longer the API's own.
         """
         if len(command) > STUDIO_CONTROL_COMMAND_MAX_BYTES:
-            raise StudioJobRejected("Studio job control command exceeds configured size limit.")
+            raise StudioJobRefused("Studio job control command exceeds configured size limit.")
         if any(len(payload) > self._max_seed_bytes for payload in seeds.values()):
-            raise StudioJobRejected("Studio job seed input exceeds configured size limit.")
+            raise StudioJobRefused("Studio job seed input exceeds configured size limit.")
         try:
             parts = {path: canonical_parts(path) for path in seeds}
         except ValueError as exc:
-            raise StudioJobRejected(str(exc)) from exc
+            raise job_refusal(exc, fallback="Studio job control seed path is invalid.") from exc
         with self._lock:
             live = self._live.get(job_id)
             work = None if live is None else os.dup(live)
         if work is None:
-            raise StudioJobRejected("Studio job work directory is unavailable.")
+            raise StudioJobRefused("Studio job work directory is unavailable.")
         try:
             for path, payload in seeds.items():
                 *directories, name = parts[path]

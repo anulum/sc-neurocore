@@ -38,7 +38,7 @@ class StorageRecordRequest(BaseModel):
     """Versioned read-only operation, keeping trace and requester separate."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.record.v2"]
+    schema_version: Literal["studio.storage.record.v3"]
     operation: Literal["record"]
     request_id: str | None
     job_id: _Name
@@ -53,7 +53,7 @@ class StorageRecordResponse(BaseModel):
     """Exact read outcome; success requires a complete domain snapshot."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.record.v2"]
+    schema_version: Literal["studio.storage.record.v3"]
     request_id: str | None
     status: Literal["ok", "forbidden", "not_found"]
     record: dict[str, object] | None

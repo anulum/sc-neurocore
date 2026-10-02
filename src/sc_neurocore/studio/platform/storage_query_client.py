@@ -16,11 +16,10 @@ item is refused, so a malformed authority cannot make the API loop.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import secrets
 import socket
 import time
-
+from collections.abc import Callable
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -34,7 +33,6 @@ from sc_neurocore.studio.platform.jobs_models import (
 )
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 from sc_neurocore.studio.platform.storage_peer import write_verified_frame
-from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 from sc_neurocore.studio.platform.storage_query_protocol import (
     QUERY_SCHEMA_VERSION,
     QueryView,
@@ -44,6 +42,8 @@ from sc_neurocore.studio.platform.storage_query_protocol import (
     encode_query_message,
 )
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
+from sc_neurocore.studio.platform.storage_snapshot import storage_job_record
+from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 
 
 def query_request(
@@ -168,7 +168,7 @@ class QueryReader:
         after: str | None = None
         while True:
             page = self._query("records", requester, limit=1000, after=after)
-            decoded = [decode_job_snapshot(item) for item in page.items]
+            decoded = [storage_job_record(decode_job_snapshot(item)) for item in page.items]
             if any(record.workspace != self._workspace for record in decoded):
                 raise ValueError("storage record page names another workspace")
             records.extend(decoded)

@@ -50,7 +50,8 @@ def test_snapshot_roundtrip_preserves_every_public_field() -> None:
     """Decode actual JSON without dropping custody, numeric types or Unicode."""
     record = _record()
     decoded = decode_job_snapshot(json.loads(json.dumps(record.to_public_dict())))
-    assert decoded == record
+    assert decoded == replace(record, error=record.public_error)
+    assert "retained diagnostic" not in json.dumps(record.to_public_dict())
     assert decoded.to_public_dict() == record.to_public_dict()
     assert decoded is not record
 
@@ -60,7 +61,9 @@ def test_training_snapshot_roundtrip_retains_validated_config() -> None:
     config = resolve_training_config({"epochs": 1, "hidden": [4]}).to_public_dict()
     record = replace(_record(), kind="training", training_config=config)
 
-    assert decode_job_snapshot(json.loads(json.dumps(record.to_public_dict()))) == record
+    assert decode_job_snapshot(json.loads(json.dumps(record.to_public_dict()))) == replace(
+        record, error=record.public_error
+    )
 
 
 def test_event_training_snapshot_preserves_the_full_large_declaration(tmp_path: Path) -> None:
@@ -69,7 +72,7 @@ def test_event_training_snapshot_preserves_the_full_large_declaration(tmp_path: 
     assert len(json.dumps(config).encode()) > 4096
     record = replace(_record(), kind="training", training_config=config)
     decoded = decode_job_snapshot(json.loads(json.dumps(record.to_public_dict())))
-    assert decoded == record
+    assert decoded == replace(record, error=record.public_error)
     assert decoded.training_config == config
     oversized = resolve_training_config({**config, "hidden": [1] * 2000}).to_public_dict()
     with pytest.raises(ValueError, match="configuration is invalid"):

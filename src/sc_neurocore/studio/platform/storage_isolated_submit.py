@@ -20,15 +20,16 @@ another generation owns is refused by the authority at registration.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
 import json
 import math
 import secrets
 import socket
 import threading
+from collections.abc import Callable, Mapping
 
-from sc_neurocore.studio.platform.jobs_models import StudioJobRejected, StudioProcessJobPayload
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused, StudioProcessJobPayload
 from sc_neurocore.studio.platform.jobs_process_protocol import _json_payload
+from sc_neurocore.studio.platform.jobs_refusals import job_refusal
 from sc_neurocore.studio.platform.storage_admission_client import (
     read_named_admission_result,
     send_named_admission_request,
@@ -168,17 +169,19 @@ def submit_named(
         with the same idempotency key is answered with the same job.
     """
     if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
-        raise StudioJobRejected("Studio job timeout must be finite and positive.")
+        raise StudioJobRefused("Studio job timeout must be finite and positive.")
     if workspace is not None and workspace != configuration.workspace:
-        raise StudioJobRejected("Studio isolated jobs run only in the configured workspace.")
+        raise StudioJobRefused("Studio isolated jobs run only in the configured workspace.")
     try:
         task = named_studio_task_for_path(task_path, authorized_route=delegation.route)
     except ValueError as exc:
-        raise StudioJobRejected(str(exc)) from exc
+        raise job_refusal(
+            exc, fallback="Studio process task is not available on this route."
+        ) from exc
     claim = delegation.requester
     expected_owner = task.owner_for(None if claim is None else claim.principal_id)
     if (task.kind, expected_owner) != (kind, owner):
-        raise StudioJobRejected("Studio job kind or owner differs from the reviewed task.")
+        raise StudioJobRefused("Studio job kind or owner differs from the reviewed task.")
     task.validate_admission(
         authorized_route=delegation.route,
         payload=payload,
@@ -191,7 +194,7 @@ def submit_named(
 
         resolved = resolve_training_config(training_config).to_public_dict()
         if kind != "training" or payload.get("config", payload) != resolved:
-            raise StudioJobRejected(
+            raise StudioJobRefused(
                 "Training configuration snapshot does not match the process payload."
             )
     request = StorageNamedAdmissionRequest(

@@ -16,6 +16,8 @@ import time
 from typing import Any, cast
 
 from sc_neurocore.studio.platform.jobs import StudioJobStatus
+from sc_neurocore.studio.platform.jobs_failures import public_job_error
+from sc_neurocore.studio.platform.jobs_worker_refusals import worker_job_error
 from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 TRAINING_EVENT_LOG_ARTIFACT_PATH = "training/events.jsonl"
@@ -54,19 +56,19 @@ def _event_from_platform_record(
         }
     if training_status == "interrupted":
         return {
-            "data": {"message": platform_error or "Training interrupted."},
+            "data": {"message": public_job_error(platform_error) or "Training interrupted."},
             "event": "interrupted",
             "timestamp": time.time(),
         }
     if training_status == "failed":
         return {
-            "data": {"message": platform_error or "Training failed."},
+            "data": {"message": public_job_error(platform_error) or "Training failed."},
             "event": "error",
             "timestamp": time.time(),
         }
     if training_status == "stopped":
         return {
-            "data": {"message": platform_error or "Training stopped."},
+            "data": {"message": public_job_error(platform_error) or "Training stopped."},
             "event": "stopped",
             "timestamp": time.time(),
         }
@@ -122,5 +124,18 @@ def _read_live_training_events(
         except json.JSONDecodeError:
             continue
         if isinstance(event, dict):
-            events.append(cast(dict[str, object], dict(event)))
+            copied = dict(event)
+            data = copied.get("data")
+            if copied.get("event") in {"error", "interrupted", "stopped"} and data != {}:
+                details = data if isinstance(data, dict) else {}
+                diagnostic = details.get("message")
+                message = worker_job_error(
+                    {
+                        "failure_schema": details.get("failure_schema"),
+                        "refusal_code": details.get("refusal_code"),
+                    },
+                    diagnostic=diagnostic if isinstance(diagnostic, str) else "",
+                )
+                copied["data"] = {"message": message.public_message}
+            events.append(cast(dict[str, object], copied))
     return events, new_offset, next_buffer

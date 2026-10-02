@@ -8,7 +8,7 @@
 
 """Strict wire contract for bounded read-only views of the storage authority.
 
-``studio.storage.query.v1`` carries one of three views, each governed by the
+``studio.storage.query.v2`` carries one of three views, each governed by the
 policy of the HTTP route it serves: ``records`` (a page of the workspace's job
 records in creation order), ``status`` (aggregate counts, admission occupancy
 and pending purges) and ``purges`` (the operator purge journal page). The
@@ -24,13 +24,13 @@ from __future__ import annotations
 
 import json
 from typing import Annotated, Final, Literal
-from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+from typing_extensions import Self
 
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
-QUERY_SCHEMA_VERSION: Final[Literal["studio.storage.query.v1"]] = "studio.storage.query.v1"
+QUERY_SCHEMA_VERSION: Final[Literal["studio.storage.query.v2"]] = "studio.storage.query.v2"
 
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
 _JobId = Annotated[str, Field(pattern=r"^sj_[0-9a-f]{16}$")]
@@ -49,7 +49,7 @@ class StorageQueryRequest(BaseModel):
     """One bounded read; ``status`` takes no cursor."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.query.v1"]
+    schema_version: Literal["studio.storage.query.v2"]
     operation: Literal["query"]
     request_id: _RequestId
     workspace: _Workspace
@@ -70,7 +70,7 @@ class StorageQueryResponse(BaseModel):
     """The authority's answer; items and summary belong to the requested view."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.query.v1"]
+    schema_version: Literal["studio.storage.query.v2"]
     operation: Literal["query"]
     request_id: _RequestId
     view: QueryView

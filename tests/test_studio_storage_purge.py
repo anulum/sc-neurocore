@@ -114,7 +114,7 @@ def test_policy_workspace_and_job_are_checked(ledger: StudioJobLedger) -> None:
 
 def _reply(request_id: str, changes: dict[str, object] | None = None) -> bytes:
     body: dict[str, object] = {
-        "schema_version": "studio.storage.purge.v1",
+        "schema_version": "studio.storage.purge.v2",
         "operation": "purge",
         "request_id": request_id,
         "job_id": JOB,
@@ -212,7 +212,7 @@ def test_a_record_of_another_job_is_refused(ledger: StudioJobLedger, tmp_path: P
             )
             sent = decode_purge_request(frame, max_bytes=FRAME)
             reply = StoragePurgeResponse(
-                schema_version="studio.storage.purge.v1",
+                schema_version="studio.storage.purge.v2",
                 operation="purge",
                 request_id=sent.request_id,
                 job_id=sent.job_id,

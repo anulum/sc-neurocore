@@ -8,7 +8,7 @@
 
 """Strict wire contract for purging one terminal job at the authority.
 
-``studio.storage.purge.v1`` asks the authority to purge one terminal,
+``studio.storage.purge.v2`` asks the authority to purge one terminal,
 unreserved job of the workspace with its sealed directory, for the requester
 the peer-verified API delegated, under the policy of the archive purge route,
 the one route that purges. The reply carries the purged record, or the
@@ -21,14 +21,14 @@ from __future__ import annotations
 
 import json
 from typing import Annotated, Final, Literal
-from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+from typing_extensions import Self
 
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
-PURGE_SCHEMA_VERSION: Final[Literal["studio.storage.purge.v1"]] = "studio.storage.purge.v1"
+PURGE_SCHEMA_VERSION: Final[Literal["studio.storage.purge.v2"]] = "studio.storage.purge.v2"
 PURGE_ROUTE: Final = ("POST", "/api/studio/audit/quarantine/archive/purge")
 
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
@@ -39,7 +39,7 @@ class StoragePurgeRequest(BaseModel):
     """Purge one terminal job of the configured workspace."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.purge.v1"]
+    schema_version: Literal["studio.storage.purge.v2"]
     operation: Literal["purge"]
     request_id: _RequestId
     workspace: Annotated[str, Field(min_length=1, max_length=256)]
@@ -51,7 +51,7 @@ class StoragePurgeResponse(BaseModel):
     """The purged record, a refusal text, or a fixed status."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.purge.v1"]
+    schema_version: Literal["studio.storage.purge.v2"]
     operation: Literal["purge"]
     request_id: _RequestId
     job_id: _JobId

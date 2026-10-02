@@ -23,6 +23,7 @@ from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
 
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE, StudioJobError
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
     StudioJobExecutionModel,
@@ -84,7 +85,14 @@ def record_from_row(row: sqlite3.Row) -> StudioJobRecord:
         created_at_utc=str(row["created_at_utc"]),
         started_at_utc=None if row["started_at_utc"] is None else str(row["started_at_utc"]),
         finished_at_utc=None if row["finished_at_utc"] is None else str(row["finished_at_utc"]),
-        error=None if row["error"] is None else str(row["error"]),
+        error=None
+        if row["error"] is None
+        else StudioJobError(
+            str(row["error"]),
+            public_message=GENERIC_JOB_FAILURE
+            if row["public_error"] is None
+            else str(row["public_error"]),
+        ),
         result=json_or_none(row["result"]),
         artifacts=artifacts_from_json(str(row["artifacts"])),
         workspace=str(row["workspace"]),

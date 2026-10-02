@@ -22,13 +22,13 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from typing import Annotated, Final, Literal
-from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+from typing_extensions import Self
 
 from sc_neurocore.studio.platform.jobs_paths import _relative_path_candidate
 
-FINISH_SCHEMA_VERSION: Final[Literal["studio.storage.finish.v2"]] = "studio.storage.finish.v2"
+FINISH_SCHEMA_VERSION: Final[Literal["studio.storage.finish.v3"]] = "studio.storage.finish.v3"
 
 _JobId = Annotated[str, Field(pattern=r"^sj_[0-9a-f]{16}$")]
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
@@ -73,7 +73,7 @@ class StorageFinishRequest(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.finish.v2"]
+    schema_version: Literal["studio.storage.finish.v3"]
     operation: Literal["finish"]
     request_id: _RequestId
     workspace: _Workspace
@@ -81,6 +81,7 @@ class StorageFinishRequest(BaseModel):
     outcome: FinishOutcome
     result: dict[str, JsonValue] | None
     error: Annotated[str, Field(min_length=1, max_length=1024)] | None
+    public_error: Annotated[str, Field(max_length=1024)] | None = None
     artifacts: tuple[FinishArtifact, ...]
     worker_reaped: bool
 
@@ -88,12 +89,16 @@ class StorageFinishRequest(BaseModel):
     def validate_outcome(self) -> Self:
         """Match result, error and reaping to the outcome; refuse duplicate paths."""
         completed = self.outcome == "completed"
-        if completed and (self.error is not None or not self.worker_reaped):
+        if completed and (
+            self.error is not None or self.public_error is not None or not self.worker_reaped
+        ):
             raise ValueError("a completed outcome carries no error and was reaped")
         if not completed and self.result is not None:
             raise ValueError("only a completed outcome carries a result")
         if self.outcome in ("failed", "timed_out") and self.error is None:
             raise ValueError("a failed or timed-out outcome carries an error")
+        if self.public_error is not None and self.error is None:
+            raise ValueError("a public failure message requires diagnostic custody")
         paths = [artifact.relative_path for artifact in self.artifacts]
         if len(set(paths)) != len(paths):
             raise ValueError("artefact paths must be unique")
@@ -108,7 +113,7 @@ class StorageFinishResponse(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.finish.v2"]
+    schema_version: Literal["studio.storage.finish.v3"]
     operation: Literal["finish"]
     request_id: _RequestId
     job_id: _JobId

@@ -140,7 +140,7 @@ def test_postcommit_stage_replacement_reports_pending_cleanup(
     expected = (
         ["RuntimeError", "commit acknowledgement lost"]
         if acknowledgement_error
-        else ["StudioJobRejected", "Studio purge cleanup remains pending recovery."]
+        else ["StudioJobRefused", "Studio purge cleanup remains pending recovery."]
     )
     assert result == {
         "job": result["job"],

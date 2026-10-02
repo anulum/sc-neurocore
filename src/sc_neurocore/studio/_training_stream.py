@@ -20,6 +20,7 @@ from sc_neurocore.studio._training_events import (
     _event_from_platform_record,
     _read_live_training_events,
 )
+from sc_neurocore.studio.platform.jobs_failures import public_job_error
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
@@ -46,7 +47,8 @@ def _event_from_proxy(job: object) -> dict[str, object]:
         }
     if status == "stopped":
         return {"event": "stopped", "data": {}, "timestamp": time.time()}
-    message = getattr(job, "error", None) or "Training failed."
+    error = getattr(job, "error", None)
+    message = (public_job_error(error) if isinstance(error, str) else None) or "Training failed."
     return {"event": "error", "data": {"message": message}, "timestamp": time.time()}
 
 

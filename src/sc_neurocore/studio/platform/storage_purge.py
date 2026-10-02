@@ -19,9 +19,9 @@ with the ledger's own message.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import socket
 import threading
+from pathlib import Path
 
 from pydantic import JsonValue
 
@@ -29,6 +29,7 @@ from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.platform.jobs_paths import _resolve_job_directory
 from sc_neurocore.studio.platform.jobs_purge import purge_terminal_job
+from sc_neurocore.studio.platform.jobs_refusals import job_refusal
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import Principal
 from sc_neurocore.studio.platform.policy_routes import build_default_studio_route_policy_registry
@@ -44,7 +45,6 @@ from sc_neurocore.studio.platform.storage_purge_protocol import (
     decode_purge_request,
     encode_purge_message,
 )
-
 from sc_neurocore.studio.platform.storage_view_content import send_view_content, view_content_limit
 
 
@@ -80,7 +80,8 @@ def apply_purge(
         except KeyError:
             status = "not_found"
         except StudioJobRejected as refused:
-            status, error = "refused", str(refused)[:512] or "refused"
+            status = "refused"
+            error = str(job_refusal(refused, fallback="Studio job purge was refused."))[:512]
         else:
             status = "ok"
             record = json.loads(json.dumps(purged.to_public_dict(), allow_nan=False))

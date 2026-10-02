@@ -27,6 +27,12 @@ import secrets
 import threading
 import time
 
+from sc_neurocore.studio.platform.jobs_failures import (
+    StudioJobError,
+    authored_job_error,
+    job_failure,
+    public_job_error,
+)
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
 from sc_neurocore.studio.platform.storage_finish_client import spool_finish_request
 from sc_neurocore.studio.platform.storage_finish_protocol import (
@@ -85,6 +91,7 @@ class GenerationSupervisor:
             outcome=outcome,
             result=None,
             error=error[:1024],
+            public_error=(public_job_error(error) or "")[:1024],
             artifacts=(),
             worker_reaped=reaped,
         )
@@ -118,9 +125,18 @@ class GenerationSupervisor:
                 worker_reaped=reaped,
             )
         except (OSError, ValueError) as exc:
-            refused = f"Studio worker output was refused: {exc}"
+            refused = job_failure(
+                exc,
+                fallback="Studio worker output was refused.",
+                prefix="Studio worker output was refused: ",
+            )
             return self._failed(
-                refused if error is None else f"{error} {refused}",
+                refused
+                if error is None
+                else StudioJobError(
+                    f"{error} {refused}",
+                    public_message=f"{public_job_error(error)} {refused.public_message}",
+                ),
                 reaped=reaped,
                 outcome=outcome or "failed",
             )
@@ -139,19 +155,27 @@ class GenerationSupervisor:
             if status is not None and status.state == "stopped":
                 return None, None, status.exit_status
             if status is not None and status.state == "absent":
-                return "failed", "Studio worker generation is unknown to its launcher.", None
+                return (
+                    "failed",
+                    authored_job_error("Studio worker generation is unknown to its launcher."),
+                    None,
+                )
             if self._cancel.is_set():
                 return "cancelled", None, None
             now = time.monotonic()
             if now >= deadline:
-                return "timed_out", "Studio job exceeded its timeout.", None
+                return "timed_out", authored_job_error("Studio job exceeded its timeout."), None
             if now >= renew_at:
                 renew_at = now + runtime.heartbeat_seconds
                 renewed = exchanges.heartbeat()
                 if renewed is not None and renewed.outcome == "cancelling":
                     return "cancelled", None, None
                 if renewed is not None and renewed.outcome == "refused":
-                    return "failed", f"Studio job lease was refused: {renewed.reason}.", None
+                    return (
+                        "failed",
+                        authored_job_error(f"Studio job lease was refused: {renewed.reason}."),
+                        None,
+                    )
             self._cancel.wait(runtime.poll_seconds)
 
     def _grant(self, endpoint: WorkerGrantEndpoint, pid: int, token: str) -> _Verdict | None:
@@ -166,7 +190,15 @@ class GenerationSupervisor:
         except StartRefused as refused:
             return refused.outcome, refused.error, None
         except (OSError, ValueError) as exc:
-            return "failed", f"Studio worker grant failed: {exc}", None
+            return (
+                "failed",
+                job_failure(
+                    exc,
+                    fallback="Studio worker grant failed.",
+                    prefix="Studio worker grant failed: ",
+                ),
+                None,
+            )
         return None
 
     def _supervise(self, staged: StagedGeneration) -> _Finish:
@@ -177,16 +209,25 @@ class GenerationSupervisor:
             endpoint.open()
         except (OSError, ValueError) as exc:
             return self._failed(
-                f"Studio worker could not start: grant endpoint: {exc}", reaped=True
+                job_failure(
+                    exc,
+                    fallback="Studio worker could not start: grant endpoint.",
+                    prefix="Studio worker could not start: grant endpoint: ",
+                ),
+                reaped=True,
             )
         try:
             launched = exchanges.launch()
             if launched is None:
                 # A launch may have happened; only a confirmed stop reaps it.
-                unanswered = "Studio worker could not start: launcher unanswered."
+                unanswered = authored_job_error(
+                    "Studio worker could not start: launcher unanswered."
+                )
                 return self._failed(unanswered, reaped=exchanges.stop() is not None)
             if launched.state == "refused":
-                refused = f"Studio worker could not start: launcher refused ({launched.reason})."
+                refused = authored_job_error(
+                    f"Studio worker could not start: launcher refused ({launched.reason})."
+                )
                 # A conflicting generation of this job may still be running.
                 return self._failed(refused, reaped=launched.reason != "conflict")
             verdict: _Verdict | None = None
@@ -199,7 +240,13 @@ class GenerationSupervisor:
         outcome, error, exit_status = verdict or self._watch()
         stopped = exchanges.stop()
         if stopped is None:
-            error = _UNREAPED if error is None else f"{error} {_UNREAPED}"
+            error = (
+                authored_job_error(_UNREAPED)
+                if error is None
+                else StudioJobError(
+                    f"{error} {_UNREAPED}", public_message=f"{public_job_error(error)} {_UNREAPED}"
+                )
+            )
             outcome = outcome or "failed"
         elif exit_status is None:
             exit_status = stopped.exit_status
@@ -240,7 +287,14 @@ class GenerationSupervisor:
                 group=runtime.worker_gid,
             )
         except (OSError, ValueError) as exc:
-            failed = self._failed(f"Studio worker could not start: spool: {exc}", reaped=True)
+            failed = self._failed(
+                job_failure(
+                    exc,
+                    fallback="Studio worker could not start: spool.",
+                    prefix="Studio worker could not start: spool: ",
+                ),
+                reaped=True,
+            )
             return self._exchanges.finish(*failed)
         runtime.live.attach(job.job_id, staged.work)
         try:

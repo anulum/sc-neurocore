@@ -18,6 +18,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
+
 
 @dataclass(frozen=True, slots=True)
 class NamedStudioTask:
@@ -45,7 +47,7 @@ class NamedStudioTask:
         if not self.requester_owned:
             return self.owner
         if not isinstance(principal_id, str) or not principal_id:
-            raise ValueError("requester-owned task requires authenticated identity")
+            raise StudioJobRefused("requester-owned task requires authenticated identity")
         return principal_id
 
     def validate_admission(
@@ -73,7 +75,9 @@ class NamedStudioTask:
             or not isinstance(admission, Mapping)
             or admission.get("laboratory_task") != operation
         ):
-            raise ValueError("laboratory operation and admission must match the authorized route")
+            raise StudioJobRefused(
+                "laboratory operation and admission must match the authorized route"
+            )
 
 
 _TASKS = (
@@ -230,10 +234,10 @@ def resolve_named_studio_task(name: str, *, authorized_route: str) -> NamedStudi
         Name, route or their exact pairing is not in the reviewed catalogue.
     """
     if not isinstance(name, str) or not isinstance(authorized_route, str):
-        raise ValueError("invalid named Studio task selection")
+        raise StudioJobRefused("invalid named Studio task selection")
     task = _BY_NAME.get(name)
     if task is None or authorized_route not in task.routes:
-        raise ValueError("named Studio task is not available on this route")
+        raise StudioJobRefused("named Studio task is not available on this route")
     return task
 
 
@@ -252,4 +256,4 @@ def named_studio_task_for_path(task_path: str, *, authorized_route: str) -> Name
     for task in _TASKS:
         if task.task_path == task_path and authorized_route in task.routes:
             return task
-    raise ValueError("named Studio task is not available on this route")
+    raise StudioJobRefused("named Studio task is not available on this route")

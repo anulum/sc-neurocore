@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import json
 from typing import Annotated, Final, Literal
-from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing_extensions import Self
 
-from sc_neurocore.studio.platform.jobs_models import StudioJobArtifactUnavailable
+from sc_neurocore.studio.platform.jobs_models import StudioJobArtifactRefused
 from sc_neurocore.studio.platform.storage_finish_protocol import FinishArtifact
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
@@ -150,7 +150,7 @@ def decode_artifact_response(
     if response.status == "not_found":
         raise KeyError(request.relative_path)
     if response.status == "unavailable":
-        raise StudioJobArtifactUnavailable("Studio job artifact is unavailable.")
+        raise StudioJobArtifactRefused("Studio job artifact is unavailable.")
     if response.artifact is None or response.artifact.relative_path != request.relative_path:
         raise ValueError("storage artefact response names another artefact")
     return response

@@ -19,13 +19,14 @@ never confirms it. Every loop is bounded by ``attempts``.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from dataclasses import dataclass
-from pathlib import Path
 import secrets
 import socket
 import time
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from pathlib import Path
 
+from sc_neurocore.studio.platform.jobs_failures import authored_job_error
 from sc_neurocore.studio.platform.storage_finish_client import exchange_finish
 from sc_neurocore.studio.platform.storage_finish_protocol import (
     FinishOutcome,
@@ -36,11 +37,11 @@ from sc_neurocore.studio.platform.storage_launcher_client import (
     exchange_launcher_request,
     new_launcher_request,
 )
-from sc_neurocore.studio.platform.storage_live_spool import LiveSpools
 from sc_neurocore.studio.platform.storage_launcher_protocol import (
     LauncherOperation,
     LauncherResponse,
 )
+from sc_neurocore.studio.platform.storage_live_spool import LiveSpools
 from sc_neurocore.studio.platform.storage_supervision_client import exchange_supervision
 from sc_neurocore.studio.platform.storage_supervision_protocol import (
     SUPERVISION_SCHEMA_VERSION,
@@ -200,8 +201,12 @@ class GenerationExchanges:
                 return
             if response.outcome == "cancelling":
                 raise StartRefused("cancelled", None)
-            raise StartRefused("failed", f"Studio worker could not start: {response.reason}.")
-        raise StartRefused("failed", "Studio worker could not start: registration unanswered.")
+            raise StartRefused(
+                "failed", authored_job_error(f"Studio worker could not start: {response.reason}.")
+            )
+        raise StartRefused(
+            "failed", authored_job_error("Studio worker could not start: registration unanswered.")
+        )
 
     def heartbeat(self) -> StorageSupervisionResponse | None:
         """Renew the delegated lease; ``None`` when the reply was lost."""

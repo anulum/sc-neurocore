@@ -14,14 +14,18 @@ import argparse
 import importlib
 import json
 import os
-import threading
 import sys
+import threading
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import cast
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
 from sc_neurocore.studio.platform.jobs_worker_limits import apply_worker_limits
+from sc_neurocore.studio.platform.jobs_worker_refusals import (
+    WORKER_FAILURE_SCHEMA,
+    worker_refusal_code,
+)
 
 _ProcessTask = Callable[[StudioJobContext, Mapping[str, object]], dict[str, object]]
 
@@ -39,9 +43,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     -------
     int
         ``0`` when the imported task completed and wrote a result; ``1`` when
-        the task failed and the result file contains the public error string.
+        the task failed and the result file retains private diagnostics with a
+        finite refusal code for the supervisor's public projection.
     """
-
     args = _parse_args(argv)
     result_path = Path(args.result)
     try:
@@ -102,7 +106,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             context=context,
         )
     except Exception as exc:  # noqa: BLE001 - persisted as job failure state.
-        _write_failure_result(result_path, type(exc).__name__)
+        _write_failure_result(result_path, str(exc), refusal_code=worker_refusal_code(exc))
         return 1
     return 0
 
@@ -135,6 +139,7 @@ def _load_payload(path: Path) -> Mapping[str, object]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Studio process payload must be a JSON object.")
+    json.dumps(payload, allow_nan=False)
     return cast(dict[str, object], payload)
 
 
@@ -147,13 +152,16 @@ def _load_task(task_path: str) -> _ProcessTask:
     return cast(_ProcessTask, task)
 
 
-def _write_failure_result(result_path: Path, error: str) -> None:
+def _write_failure_result(
+    result_path: Path, error: str, *, refusal_code: str | None = None
+) -> None:
     _write_result(
         result_path,
         status="failed",
         result={},
         error=error,
         context=None,
+        refusal_code=refusal_code,
     )
 
 
@@ -164,6 +172,7 @@ def _write_result(
     result: dict[str, object],
     error: str | None,
     context: StudioJobContext | None,
+    refusal_code: str | None = None,
 ) -> None:
     """Publish the result whole: a worker killed while writing leaves no result.
 
@@ -178,11 +187,14 @@ def _write_result(
                 if context is None
                 else [artifact.to_public_dict() for artifact in context.artifacts],
                 "error": error,
+                "failure_schema": WORKER_FAILURE_SCHEMA,
+                "refusal_code": refusal_code,
                 "result": result,
                 "status": status,
             },
             indent=2,
             sort_keys=True,
+            allow_nan=False,
         )
         + "\n",
         encoding="utf-8",

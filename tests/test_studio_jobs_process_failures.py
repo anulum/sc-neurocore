@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio job sandbox contract tests
 
+"""Exercise worker output compatibility and retained failure diagnostics."""
+
 from __future__ import annotations
 
 import json
@@ -24,6 +26,7 @@ from sc_neurocore.studio.platform import process_worker
 
 
 def test_studio_process_result_loader_handles_invalid_payloads(tmp_path: Path) -> None:
+    """Malformed retained process results produce bounded fallback records."""
     missing = jobs_module._load_process_result(tmp_path / "missing.json")
     invalid_json_path = tmp_path / "invalid.json"
     invalid_json_path.write_text("{", encoding="utf-8")
@@ -96,7 +99,6 @@ def test_studio_process_worker_environment_bootstraps_missing_pythonpath(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Process-worker environment sets PYTHONPATH when it is absent."""
-
     monkeypatch.delenv("PYTHONPATH", raising=False)
 
     environment = jobs_module._process_worker_environment()
@@ -106,6 +108,8 @@ def test_studio_process_worker_environment_bootstraps_missing_pythonpath(
 
 
 def test_studio_process_terminate_falls_back_to_kill() -> None:
+    """The existing termination adapter escalates after its wait timeout."""
+
     class BlockingProcess:
         def __init__(self) -> None:
             self.terminated = False
@@ -135,6 +139,7 @@ def test_studio_process_terminate_falls_back_to_kill() -> None:
 
 
 def test_studio_process_worker_main_writes_result_files(tmp_path: Path) -> None:
+    """The worker entry point writes a completed task and its artifact."""
     work_dir = tmp_path / "sj_worker"
     work_dir.mkdir()
     payload_path = tmp_path / "payload.json"
@@ -164,6 +169,7 @@ def test_studio_process_worker_main_writes_result_files(tmp_path: Path) -> None:
 
 
 def test_studio_process_worker_main_records_failure(tmp_path: Path) -> None:
+    """The worker keeps invalid input diagnostics without a refusal code."""
     work_dir = tmp_path / "sj_worker"
     work_dir.mkdir()
     payload_path = tmp_path / "payload.json"
@@ -188,10 +194,12 @@ def test_studio_process_worker_main_records_failure(tmp_path: Path) -> None:
 
     assert exit_code == 1
     assert payload["status"] == "failed"
-    assert payload["error"] == "ValueError"
+    assert payload["error"] == "Studio process payload must be a JSON object."
+    assert payload["refusal_code"] is None
 
 
 def test_studio_process_worker_main_rejects_non_callable_task(tmp_path: Path) -> None:
+    """An uncallable task is a private worker startup failure."""
     work_dir = tmp_path / "sj_worker"
     work_dir.mkdir()
     payload_path = tmp_path / "payload.json"
@@ -216,4 +224,5 @@ def test_studio_process_worker_main_rejects_non_callable_task(tmp_path: Path) ->
 
     assert exit_code == 1
     assert payload["status"] == "failed"
-    assert payload["error"] == "TypeError"
+    assert payload["error"] == "Studio process task import did not resolve to a callable."
+    assert payload["refusal_code"] is None

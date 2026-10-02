@@ -21,13 +21,13 @@ import pytest
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
+from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
+from sc_neurocore.studio.platform.storage_query_client import QueryReader
 from sc_neurocore.studio.platform.storage_record_client import read_storage_record
 from sc_neurocore.studio.platform.storage_record_protocol import (
     StorageRecordRequest,
     StorageRequester,
 )
-from sc_neurocore.studio.platform.storage_query_client import QueryReader
-from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
 from sc_neurocore.studio.platform.storage_view_content import StorageViewContent, send_view_content
 from tests.studio_storage_generation_support import Authority
 from tests.test_studio_training_config_storage import _configuration, _create
@@ -72,7 +72,7 @@ def test_public_record_reader_accepts_full_content_and_refuses_bad_authority_fra
 ) -> None:
     """Full records survive exact frames; corrupt peers cannot bypass snapshot checks."""
     request = StorageRecordRequest(
-        schema_version="studio.storage.record.v2",
+        schema_version="studio.storage.record.v3",
         operation="record",
         request_id="view-read",
         job_id=record.job_id,
@@ -80,7 +80,7 @@ def test_public_record_reader_accepts_full_content_and_refuses_bad_authority_fra
         requester=StorageRequester(principal_id="operator", roles=("studio.admin",)),
     )
     response: dict[str, object] = {
-        "schema_version": "studio.storage.record.v2",
+        "schema_version": "studio.storage.record.v3",
         "request_id": request.request_id,
         "status": "ok",
         "record": record.to_public_dict(),
@@ -90,7 +90,7 @@ def test_public_record_reader_accepts_full_content_and_refuses_bad_authority_fra
     payload = json.dumps(response, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     header = StorageViewContent(
         schema_version="studio.storage.view-content.v1",
-        content_schema="studio.storage.record.v2",
+        content_schema="studio.storage.record.v3",
         request_id=request.request_id,
         content_bytes=len(payload),
         content_sha256=hashlib.sha256(payload).hexdigest(),
@@ -98,12 +98,12 @@ def test_public_record_reader_accepts_full_content_and_refuses_bad_authority_fra
     if fault == "correlation":
         header = header.model_copy(update={"request_id": "another-request"})
     if fault == "schema":
-        header = header.model_copy(update={"content_schema": "studio.storage.query.v1"})
+        header = header.model_copy(update={"content_schema": "studio.storage.query.v2"})
     client, service = socket.socketpair()
     failures: list[BaseException] = []
 
     def serve() -> None:
-        """A real peer sends actual snapshot bytes or deliberately corrupt frames."""
+        """Send actual snapshot bytes or deliberately corrupt frames over a real peer."""
         try:
             with service:
                 deadline = time.monotonic() + 10
@@ -115,7 +115,7 @@ def test_public_record_reader_accepts_full_content_and_refuses_bad_authority_fra
                     send_view_content(
                         service,
                         content,
-                        content_schema="studio.storage.record.v2",
+                        content_schema="studio.storage.record.v3",
                         request_id=request.request_id,
                         expected_uid=os.getuid(),
                         frame_max_bytes=FRAME,
@@ -233,7 +233,7 @@ def test_query_reader_rejects_bad_trusted_limits_before_connecting(
 def test_inline_response_obeys_independent_content_budget(record: StudioJobRecord) -> None:
     """A large frame ceiling cannot override a smaller receiver content budget."""
     request = StorageRecordRequest(
-        schema_version="studio.storage.record.v2",
+        schema_version="studio.storage.record.v3",
         operation="record",
         request_id="inline",
         job_id=record.job_id,
@@ -242,7 +242,7 @@ def test_inline_response_obeys_independent_content_budget(record: StudioJobRecor
     )
     body = json.dumps(
         {
-            "schema_version": "studio.storage.record.v2",
+            "schema_version": "studio.storage.record.v3",
             "request_id": "inline",
             "status": "ok",
             "record": record.to_public_dict(),

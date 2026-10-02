@@ -18,19 +18,19 @@ from sc_neurocore.studio._training_events import (
 )
 from sc_neurocore.studio._training_job import TrainingJob
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
-from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.jobs import (
     StudioJobRecord,
     StudioJobRejected,
     StudioJobStatus,
 )
+from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 from sc_neurocore.studio.platform.training_checkpoint import (
     build_training_checkpoint,
     import_training_checkpoint_payload,
 )
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
 from sc_neurocore.studio.training_contract import resolve_training_config
-from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 _jobs: dict[str, TrainingJob] = {}
 _jobs_lock = threading.Lock()
@@ -292,7 +292,7 @@ def _status_from_platform_record(
     verdict = (platform_result or {}).get("preregistration_verdict")
     return _status_with_evidence_summary(
         {
-            "error": record.error,
+            "error": record.public_error,
             "final_metrics": final_metrics if isinstance(final_metrics, dict) else None,
             "job_id": record.job_id,
             "preregistration_verdict": verdict if isinstance(verdict, dict) else None,

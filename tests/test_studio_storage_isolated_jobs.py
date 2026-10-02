@@ -27,6 +27,7 @@ import time
 import pytest
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.platform.training_process import TRAINING_PROCESS_TASK
@@ -78,6 +79,7 @@ def _configuration(base: Path) -> StorageBoundaryConfiguration:
 
 @pytest.fixture
 def manager(base: Path, launcher: Launcher, authority: Authority) -> IsolatedJobManager:
+    """Bind the real authority and launcher to the public isolated jobs facade."""
     return IsolatedJobManager(
         api_runtime(base, authority),
         _configuration(base),
@@ -149,24 +151,64 @@ def test_nothing_is_done_for_nobody_or_outside_the_reviewed_contract(
     """No delegation, other kinds, owners, routes, workspaces or bad timeouts refuse."""
     with pytest.raises(PermissionError):
         _submit(manager, SIMULATE)
-    refusals: tuple[Callable[[], str], ...] = (
-        lambda: _submit(manager, SIMULATE, kind="compiler"),
-        lambda: _submit(manager, SIMULATE, owner="someone"),
-        lambda: _submit(manager, SIMULATE, task_path="os:system"),
-        lambda: _submit(manager, SIMULATE, workspace="elsewhere"),
-        lambda: _submit(manager, SIMULATE, timeout_seconds=float("nan")),
-        lambda: _submit(manager, SIMULATE, training_config={"epochs": 1}),
+    refusals: tuple[tuple[Callable[[], str], str], ...] = (
+        (
+            lambda: _submit(manager, SIMULATE, kind="compiler"),
+            "Studio job kind 'compiler' is not allowed.",
+        ),
+        (
+            lambda: _submit(manager, SIMULATE, owner="someone"),
+            "Studio job kind or owner differs from the reviewed task.",
+        ),
+        (
+            lambda: _submit(manager, SIMULATE, task_path="os:system"),
+            "named Studio task is not available on this route",
+        ),
+        (
+            lambda: _submit(manager, SIMULATE, workspace="elsewhere"),
+            "Studio isolated jobs run only in the configured workspace.",
+        ),
+        (
+            lambda: _submit(manager, SIMULATE, timeout_seconds=float("nan")),
+            "Studio job timeout must be finite and positive.",
+        ),
+        (
+            lambda: _submit(manager, SIMULATE, training_config={"epochs": 1}),
+            "Training configuration snapshot does not match the process payload.",
+        ),
     )
     with request_on(ANALYSIS):
-        for refused in refusals:
-            with pytest.raises(StudioJobRejected):
+        for refused, message in refusals:
+            with pytest.raises(StudioJobRejected) as caught:
                 refused()
-        with pytest.raises(StudioJobRejected):
+            assert isinstance(caught.value, AuthoredRefusal)
+            assert str(caught.value) == message
+        with pytest.raises(StudioJobRejected) as caught:
             manager.submit_process_task(
                 kind="unknown", owner="studio", request_id=None, task_path=TASK, payload={}
             )
+        assert isinstance(caught.value, AuthoredRefusal)
+        assert str(caught.value) == "Studio job kind 'unknown' is not allowed."
         with pytest.raises(ValueError):
             manager.wait("sj_" + "0" * 16, timeout_seconds=float("inf"))
+
+
+def test_control_refuses_a_pending_authority_job_without_changing_its_record(
+    manager: IsolatedJobManager, ledger: StudioJobLedger, authority: Authority
+) -> None:
+    """A real authority record cannot receive live control before its worker starts."""
+    admit(ledger, supervisor=supervisor_identity())
+    before = ledger.record(JOB)
+    assert before.status == "pending"
+    with request_on(ANALYSIS):
+        assert manager.record(JOB) == before
+        with pytest.raises(StudioJobRejected) as caught:
+            manager.send_control_command(JOB, command={"action": "pause"})
+    assert isinstance(caught.value, AuthoredRefusal)
+    assert str(caught.value) == "Studio job is not running."
+    assert ledger.record(JOB) == before
+    assert authority.seen == ["record", "record"]
+    assert manager.generation_failures == {}
 
 
 def test_a_running_job_takes_control_and_cancellation(

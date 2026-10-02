@@ -22,9 +22,11 @@ ended.
 
 from __future__ import annotations
 
+import json
 import socket
 import sqlite3
 
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE, StudioJobError
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_rows import artifacts_from_json
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
@@ -70,7 +72,7 @@ def _observe(ledger: StudioJobLedger, request: StorageFinishRequest) -> sqlite3.
     """Read status, ownership and registered worker in one snapshot."""
     with ledger.transaction() as connection:
         row: sqlite3.Row | None = connection.execute(
-            "SELECT j.status, j.lease_owner, j.artifacts, r.supervisor AS reserved, "
+            "SELECT j.status, j.lease_owner, j.artifacts, j.error, j.public_error, j.result, r.supervisor AS reserved, "
             "w.worker_identity FROM jobs j "
             "LEFT JOIN admission_reservations r ON r.job_id = j.job_id "
             "LEFT JOIN job_workers w ON w.job_id = j.job_id "
@@ -90,6 +92,23 @@ def _settled(row: sqlite3.Row | None, request: StorageFinishRequest) -> _Answer:
         row is not None
         and str(row["status"]) == request.outcome
         and artifacts_from_json(str(row["artifacts"])) == _declared(request)
+        and row["error"] == request.error
+        and json.dumps(
+            None if row["result"] is None else json.loads(str(row["result"])),
+            sort_keys=True,
+            allow_nan=False,
+        )
+        == json.dumps(request.result, sort_keys=True, allow_nan=False)
+        and (
+            None
+            if row["error"] is None
+            else (GENERIC_JOB_FAILURE if row["public_error"] is None else row["public_error"])
+        )
+        == (
+            None
+            if request.error is None
+            else (GENERIC_JOB_FAILURE if request.public_error is None else request.public_error)
+        )
     )
     return ("already_sealed", None) if identical else ("refused", "conflict")
 
@@ -162,7 +181,14 @@ def commit_finish(
                 request.outcome,
                 supervisor=supervisor,
                 finished_at_utc=ledger.timestamp(),
-                error=request.error,
+                error=None
+                if request.error is None
+                else StudioJobError(
+                    request.error,
+                    public_message=GENERIC_JOB_FAILURE
+                    if request.public_error is None
+                    else request.public_error,
+                ),
                 result=request.result,
                 artifacts=_declared(request),
                 connection=connection,

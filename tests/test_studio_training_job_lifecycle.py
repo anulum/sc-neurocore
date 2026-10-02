@@ -10,28 +10,35 @@
 
 from __future__ import annotations
 
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from tests.studio_training_support import *  # noqa: F403
 
 
 class TestJobLifecycle:
+    """Exercise training creation, control and terminal evidence compatibility."""
+
     def test_create_job(self) -> None:
+        """A newly constructed training job has no failure diagnostic."""
         job = TrainingJob({"epochs": 1, "dataset": "synthetic"})
         assert job.status == "pending"
         assert job.id.startswith("j")
         assert job.error is None
 
     def test_start_training_returns_job_id(self) -> None:
+        """Starting a legacy training run returns its stable identifier."""
         result = start_training({"epochs": 1, "dataset": "synthetic", "batch_size": 32})
         assert "job_id" in result
         assert result["status"] == "running"
 
     def test_job_appears_in_list(self) -> None:
+        """A started training job appears in the local registry."""
         result = start_training({"epochs": 1, "dataset": "synthetic"})
         jobs = list_jobs()
         ids = [j["job_id"] for j in jobs]
         assert result["job_id"] in ids
 
     def test_get_status_existing_job(self) -> None:
+        """The status reader reports the recorded training state."""
         result = start_training({"epochs": 1, "dataset": "synthetic"})
         status = get_training_status(result["job_id"])
         assert status["job_id"] == result["job_id"]
@@ -45,15 +52,18 @@ class TestJobLifecycle:
             assert status["error"]
 
     def test_get_status_nonexistent(self) -> None:
+        """Unknown training identifiers produce the missing-job response."""
         status = get_training_status("nonexistent_id")
         assert "error" in status
 
     def test_stop_training(self) -> None:
+        """A known legacy training job accepts a stop request."""
         result = start_training({"epochs": 50, "dataset": "synthetic"})
         stop_result = stop_training(result["job_id"])
         assert stop_result["status"] == "stopping"
 
     def test_stop_nonexistent(self) -> None:
+        """Unknown training identifiers cannot be stopped."""
         result = stop_training("nonexistent_id")
         assert "error" in result
 
@@ -168,7 +178,8 @@ class TestJobLifecycle:
             job.run_blocking(context)
 
         evidence = json.loads((tmp_path / "training" / "evidence.json").read_text())
-        assert evidence["error_message"] == "training boom"
+        assert evidence["error_message"] == GENERIC_JOB_FAILURE
+        assert job.error == "training boom"
         assert evidence["status"] == "failed"
 
     def test_blocking_training_stop_writes_cancelled_evidence(

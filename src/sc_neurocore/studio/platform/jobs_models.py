@@ -16,6 +16,9 @@ from dataclasses import dataclass, field
 from datetime import timezone
 from typing import TYPE_CHECKING, Literal, TypeAlias
 
+from sc_neurocore.refusals import AuthoredRefusal
+from sc_neurocore.studio.platform.jobs_failures import public_job_error
+
 if TYPE_CHECKING:
     from sc_neurocore.studio.platform.jobs_context import StudioJobContext
 
@@ -57,12 +60,20 @@ class StudioJobRejected(ValueError):
     """Raised when a Studio job request violates the local sandbox policy."""
 
 
+class StudioJobRefused(StudioJobRejected, AuthoredRefusal):
+    """A source-authored job policy refusal, compatible with legacy handlers."""
+
+
 class StudioJobCancelled(RuntimeError):
     """Raised inside a cooperative Studio job when cancellation is requested."""
 
 
 class StudioJobArtifactUnavailable(RuntimeError):
     """Raised when a declared Studio job artifact cannot be safely served."""
+
+
+class StudioJobArtifactRefused(StudioJobArtifactUnavailable, AuthoredRefusal):
+    """An authored artifact refusal that retains RuntimeError compatibility."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,7 +86,6 @@ class StudioJobArtifact:
 
     def to_public_dict(self) -> dict[str, int | str]:
         """Return a path-free JSON representation of this artifact."""
-
         return {
             "relative_path": self.relative_path,
             "sha256": self.sha256,
@@ -113,14 +123,18 @@ class StudioJobRecord:
     lease_expires_at_utc: str | None = None
     heartbeat_at_utc: str | None = None
 
+    @property
+    def public_error(self) -> str | None:
+        """Project qualified failure text without changing historical record fields."""
+        return public_job_error(self.error)
+
     def to_public_dict(self) -> dict[str, object]:
         """Return path-free job state suitable for operator APIs."""
-
         return {
             "admission": self.admission,
             "artifacts": [artifact.to_public_dict() for artifact in self.artifacts],
             "created_at_utc": self.created_at_utc,
-            "error": self.error,
+            "error": self.public_error,
             "execution_model": self.execution_model,
             "experiment_sha256": self.experiment_sha256,
             "finished_at_utc": self.finished_at_utc,
@@ -151,7 +165,6 @@ class StudioJobResourceProfile:
 
     def to_public_dict(self) -> dict[str, float | int | list[str] | str]:
         """Return a JSON-serializable, path-free resource profile."""
-
         return {
             "default_timeout_seconds": self.default_timeout_seconds,
             "execution_models": list(self.execution_models),
@@ -189,7 +202,6 @@ class StudioJobStatusSnapshot:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable, path-free status snapshot."""
-
         return {
             "active_count": self.active_count,
             "admission": self.admission,
@@ -219,7 +231,6 @@ class StudioJobListSnapshot:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return JSON-serializable job records without filesystem paths."""
-
         return {
             "jobs": [record.to_public_dict() for record in self.records],
             "schema_version": self.schema_version,

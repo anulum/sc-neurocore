@@ -21,6 +21,7 @@ from sc_neurocore.studio.platform.action_evidence import (
     write_studio_action_evidence_manifest,
 )
 from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE, public_job_error
 
 
 def seal_training_status(
@@ -68,7 +69,8 @@ def write_refused_evidence(context: StudioJobContext, message: str) -> None:
     context : StudioJobContext
         Job sandbox to write the status and evidence artifacts into.
     message : str
-        The refusal, as the caller will read it.
+        A qualified job error or legacy text. Only the explicit public projection
+        survives; unqualified text uses the fixed job-failure message.
 
     Notes
     -----
@@ -77,6 +79,7 @@ def write_refused_evidence(context: StudioJobContext, message: str) -> None:
     keeps the sandbox's account complete: every job that ends has an
     evidence artifact saying how.
     """
+    message = public_job_error(message) or GENERIC_JOB_FAILURE
     seal_training_status(
         context,
         {

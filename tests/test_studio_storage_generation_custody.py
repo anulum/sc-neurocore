@@ -66,6 +66,8 @@ def test_lost_launch_and_start_replies_are_resolved(
         relay.close()
         shutdown(running)
     assert ledger.record(JOB).status == "completed"
+    assert ledger.record(JOB).public_error is None
+    assert ledger.record(JOB).to_public_dict()["error"] is None
     assert relay.seen[:5] == ["launch", "status", "launch", "status", "status"]
     assert authority.seen[:2] == ["start", "start"]
     assert workers(ledger) == 1
@@ -86,6 +88,8 @@ def test_lost_finish_replies_are_repeated_identically(
     else:
         assert isinstance(response, TimeoutError)
     assert ledger.record(JOB).status == "completed"
+    assert ledger.record(JOB).public_error is None
+    assert ledger.record(JOB).to_public_dict()["error"] is None
     assert authority.seen.count("finish") == min(lost + 1, 3)
 
 
@@ -101,6 +105,8 @@ def test_unreachable_launcher_keeps_capacity_unreaped(
         "failed",
         "Studio worker could not start: launcher unanswered.",
     )
+    assert record.public_error == "Studio worker could not start: launcher unanswered."
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == ["unreaped"]
 
 
@@ -123,6 +129,8 @@ def test_a_restarted_launcher_leaves_the_generation_unreaped(
         "failed",
         f"Studio worker generation is unknown to its launcher. {UNREAPED}",
     )
+    assert record.public_error == f"Studio worker generation is unknown to its launcher. {UNREAPED}"
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == ["unreaped"]
 
 
@@ -165,6 +173,8 @@ def test_undeliverable_stop_keeps_the_live_worker_in_custody(
         response = running.wait()
         assert isinstance(response, TimeoutError), ledger.record(JOB)
         assert ledger.record(JOB).status == "running"
+        assert ledger.record(JOB).public_error is None
+        assert ledger.record(JOB).to_public_dict()["error"] is None
         assert reservations(ledger) == ["running"]
         assert authority.seen.count("finish") == 3
     finally:

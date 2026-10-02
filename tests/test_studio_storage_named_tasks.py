@@ -9,14 +9,19 @@
 """Check reviewed task selection against the actual Studio route policies."""
 
 import ast
+import json
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from sc_neurocore.studio.platform.policy_models import RouteVisibility
 from sc_neurocore.studio.platform.policy_routes import build_default_studio_route_policy_registry
-from sc_neurocore.studio.platform.storage_named_tasks import resolve_named_studio_task
+from sc_neurocore.refusals import AuthoredRefusal
+from sc_neurocore.studio.platform.storage_named_tasks import (
+    named_studio_task_for_path,
+    resolve_named_studio_task,
+)
+from tests.studio_seccomp_support import run_child
 
 
 _NAMED_ROUTES = {
@@ -89,7 +94,71 @@ def test_unknown_names_and_route_confusion_refuse(name: str, route: str) -> None
         resolve_named_studio_task(name, authorized_route=route)
 
 
-def test_nontext_task_selection_refuses() -> None:
-    """Non-string wire values cannot reach catalogue lookup."""
-    with pytest.raises(ValueError, match="invalid named"):
-        resolve_named_studio_task(cast(str, None), authorized_route="/api/analysis/jobs")
+@pytest.mark.parametrize("field", ["name", "route"])
+def test_nontext_task_selection_refuses(field: str) -> None:
+    """Actual untyped callers cannot resolve a nontext name or route."""
+    arguments = [None, "/api/analysis/jobs"] if field == "name" else ["analysis.run", None]
+    result = run_child(
+        "import json, sys\n"
+        "from sc_neurocore.refusals import AuthoredRefusal\n"
+        "from sc_neurocore.studio.platform.storage_named_tasks import resolve_named_studio_task\n"
+        "name, route = json.loads(sys.argv[1])\n"
+        "try:\n"
+        "    resolve_named_studio_task(name, authorized_route=route)\n"
+        "except ValueError as error:\n"
+        "    print(json.dumps({'authored': isinstance(error, AuthoredRefusal),\n"
+        "        'message': str(error)}))\n",
+        arguments=(json.dumps(arguments),),
+    )
+    assert result == {"authored": True, "message": "invalid named Studio task selection"}
+
+
+@pytest.mark.parametrize("principal", [None, ""])
+def test_laboratory_owner_requires_actual_requester_identity(principal: str | None) -> None:
+    """Requester-owned tasks refuse missing identity and preserve a real actor."""
+    task = resolve_named_studio_task("laboratory.run", authorized_route="/api/fits/jobs")
+    with pytest.raises(ValueError) as caught:
+        task.owner_for(principal)
+    assert isinstance(caught.value, AuthoredRefusal)
+    assert str(caught.value) == "requester-owned task requires authenticated identity"
+    assert task.owner_for("laboratory-operator") == "laboratory-operator"
+
+
+@pytest.mark.parametrize(
+    ("route", "operation"),
+    [
+        ("/api/fits/jobs", "fit"),
+        ("/api/fits/replay/jobs", "fit_replay"),
+        ("/api/cohorts/jobs", "cohort"),
+    ],
+)
+def test_laboratory_selection_binds_payload_and_admission(route: str, operation: str) -> None:
+    """Reviewed operations require matching route, payload and admission metadata."""
+    task = resolve_named_studio_task("laboratory.run", authorized_route=route)
+    task.validate_admission(
+        authorized_route=route,
+        payload={"operation": operation},
+        admission={"laboratory_task": operation},
+    )
+    for payload, admission in [
+        ({"operation": "foreign"}, {"laboratory_task": operation}),
+        ({"operation": operation}, None),
+        ({"operation": operation}, {"laboratory_task": "foreign"}),
+    ]:
+        with pytest.raises(ValueError) as caught:
+            task.validate_admission(authorized_route=route, payload=payload, admission=admission)
+        assert isinstance(caught.value, AuthoredRefusal)
+        assert (
+            str(caught.value)
+            == "laboratory operation and admission must match the authorized route"
+        )
+
+
+def test_import_path_selection_refuses_a_different_reviewed_route() -> None:
+    """An exact real task path cannot select an endpoint outside its registered routes."""
+    task = resolve_named_studio_task("model.scan", authorized_route="/api/models/scan/jobs")
+    assert named_studio_task_for_path(task.task_path, authorized_route=task.routes[0]) == task
+    with pytest.raises(ValueError) as caught:
+        named_studio_task_for_path(task.task_path, authorized_route="/api/analysis/jobs")
+    assert isinstance(caught.value, AuthoredRefusal)
+    assert str(caught.value) == "named Studio task is not available on this route"

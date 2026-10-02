@@ -17,6 +17,7 @@ import threading
 from collections.abc import Mapping
 from pathlib import Path
 
+from sc_neurocore.studio.platform.jobs_failures import job_failure
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
     STUDIO_CONTROL_COMMAND_FILE,
@@ -25,7 +26,7 @@ from sc_neurocore.studio.platform.jobs_models import (
     STUDIO_CONTROL_SEED_DIR,
     STUDIO_SEED_INPUT_DIR,
     StudioJobRecord,
-    StudioJobRejected,
+    StudioJobRefused,
     StudioProcessJobPayload,
 )
 from sc_neurocore.studio.platform.jobs_paths import (
@@ -36,6 +37,7 @@ from sc_neurocore.studio.platform.jobs_process_protocol import (
     _json_payload,
     _validate_process_task_path,
 )
+from sc_neurocore.studio.platform.jobs_refusals import job_refusal
 
 
 def _submit_process_job(
@@ -59,23 +61,22 @@ def _submit_process_job(
     An idempotency key already admitted for this actor and workspace returns
     the earlier job untouched, so no side effect is repeated.
     """
-
     if kind not in manager._allowed_kinds:
-        raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
+        raise StudioJobRefused(f"Studio job kind '{kind}' is not allowed.")
     timeout = manager._default_timeout_seconds if timeout_seconds is None else timeout_seconds
     if not math.isfinite(timeout) or timeout <= 0:
-        raise StudioJobRejected("Studio job timeout must be finite and positive.")
+        raise StudioJobRefused("Studio job timeout must be finite and positive.")
     _validate_process_task_path(task_path)
     payload_json = _json_payload(payload, "Studio process job payload must be JSON.")
     if training_config is not None:
         if kind != "training":
-            raise StudioJobRejected("Only training jobs may carry a training configuration.")
+            raise StudioJobRefused("Only training jobs may carry a training configuration.")
         from sc_neurocore.studio.training_contract import resolve_training_config
 
         resolved_config = resolve_training_config(training_config).to_public_dict()
         payload_config = payload.get("config", payload)
         if payload_config != resolved_config:
-            raise StudioJobRejected(
+            raise StudioJobRefused(
                 "Training configuration snapshot does not match the process payload."
             )
     job_id = f"sj_{secrets.token_hex(8)}"
@@ -132,7 +133,9 @@ def _submit_process_job(
         manager._update(
             job_id,
             status="failed",
-            error=f"Studio job could not start: {exc}",
+            error=job_failure(
+                exc, fallback="Studio job could not start.", prefix="Studio job could not start: "
+            ),
             finished_at_utc=manager._timestamp_utc(),
         )
         with manager._lock:
@@ -151,20 +154,19 @@ def _send_process_control_command(
     seed_inputs: Mapping[str, bytes] | None,
 ) -> None:
     """Atomically deliver a command and confined seeds to a running job."""
-
     record = manager._ledger.record(job_id)
     if record.status != "running":
-        raise StudioJobRejected("Studio job is not running.")
+        raise StudioJobRefused("Studio job is not running.")
     command_json = _json_payload(command, "Studio job control command must be JSON.")
     command_bytes = command_json.encode("utf-8")
     if len(command_bytes) > STUDIO_CONTROL_COMMAND_MAX_BYTES:
-        raise StudioJobRejected("Studio job control command exceeds configured size limit.")
+        raise StudioJobRefused("Studio job control command exceeds configured size limit.")
     try:
         work_dir = manager._job_work_dir(record.job_id)
     except ValueError as exc:
-        raise StudioJobRejected(str(exc)) from exc
+        raise job_refusal(exc, fallback="Studio job work directory is unavailable.") from exc
     if not work_dir.is_dir():
-        raise StudioJobRejected("Studio job work directory is unavailable.")
+        raise StudioJobRefused("Studio job work directory is unavailable.")
     manager._write_seed_inputs(work_dir, seed_inputs, seed_dir=STUDIO_CONTROL_SEED_DIR)
     control_dir = _resolve_confined_child(
         root=work_dir,
@@ -186,7 +188,6 @@ def _write_seed_inputs(
     seed_dir: str,
 ) -> None:
     """Write size-bounded binary seeds into one confined reserved directory."""
-
     if not seed_inputs:
         return
     try:
@@ -196,13 +197,13 @@ def _write_seed_inputs(
             error_message="Studio job seed-input path escapes the seed directory.",
         )
     except ValueError as exc:
-        raise StudioJobRejected(str(exc)) from exc
+        raise job_refusal(exc, fallback="Studio job seed-input path is invalid.") from exc
     seed_root.mkdir(parents=True, exist_ok=True)
     for relative_path, data in seed_inputs.items():
         if not isinstance(data, bytes | bytearray):
-            raise StudioJobRejected("Studio job seed input must be bytes.")
+            raise StudioJobRefused("Studio job seed input must be bytes.")
         if len(data) > manager._max_artifact_bytes:
-            raise StudioJobRejected("Studio job seed input exceeds configured size limit.")
+            raise StudioJobRefused("Studio job seed input exceeds configured size limit.")
         try:
             target_path = _resolve_confined_child(
                 root=seed_root,
@@ -210,6 +211,6 @@ def _write_seed_inputs(
                 error_message="Studio job seed-input path escapes the seed directory.",
             )
         except ValueError as exc:
-            raise StudioJobRejected(str(exc)) from exc
+            raise job_refusal(exc, fallback="Studio job seed-input path is invalid.") from exc
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_bytes(bytes(data))

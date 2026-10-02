@@ -114,7 +114,7 @@ def serve_record_read(
             policy, principal=principal, route=route, request_id=request.request_id
         )
         response: dict[str, object] = {
-            "schema_version": "studio.storage.record.v2",
+            "schema_version": "studio.storage.record.v3",
             "request_id": request.request_id,
             "status": "forbidden",
             "record": None,
@@ -140,7 +140,7 @@ def serve_record_read(
             json.dumps(response, allow_nan=False, sort_keys=True).encode("utf-8"),
             expected_uid=expected_api_uid,
             frame_max_bytes=max_bytes,
-            content_schema="studio.storage.record.v2",
+            content_schema="studio.storage.record.v3",
             request_id=request.request_id,
             max_content_bytes=max_content_bytes,
             deadline=deadline,

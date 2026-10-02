@@ -19,6 +19,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 
+from sc_neurocore.studio.platform.jobs_ledger_public_error import migrate_public_error
 from sc_neurocore.studio.platform.jobs_ledger_rows import (
     StudioJobLedgerCorrupt,
     artifacts_from_json,
@@ -31,9 +32,9 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobStatus,
 )
 
-JOB_LEDGER_SCHEMA_VERSION = "studio.job-ledger.v8"
+JOB_LEDGER_SCHEMA_VERSION = "studio.job-ledger.v9"
 LEDGER_FILENAME = "job_ledger.sqlite3"
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 #: A job in one of these states has finished and will never move again.
 TERMINAL_STATUSES: frozenset[StudioJobStatus] = frozenset(
@@ -91,6 +92,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     started_at_utc TEXT,
     finished_at_utc TEXT,
     error TEXT,
+    public_error TEXT,
     result TEXT,
     artifacts TEXT NOT NULL,
     lease_owner TEXT,
@@ -188,6 +190,7 @@ def migrate(connection: sqlite3.Connection) -> None:
             (JOB_LEDGER_SCHEMA_VERSION,),
         )
         migrate_training_event_data(connection)
+        migrate_public_error(connection)
         return
     stored = int(str(row["value"]))
     if stored > SCHEMA_VERSION:
@@ -217,26 +220,14 @@ def migrate(connection: sqlite3.Connection) -> None:
         )
 
         migrate_storage_admission_replay(connection)
-        connection.execute(
-            "UPDATE schema_meta SET value = ? WHERE key = 'schema_version'", (str(SCHEMA_VERSION),)
-        )
-        connection.execute(
-            "INSERT OR REPLACE INTO schema_meta(key,value) VALUES('schema_name',?)",
-            (JOB_LEDGER_SCHEMA_VERSION,),
-        )
     if stored < 7:
         columns = {str(row["name"]) for row in connection.execute("PRAGMA table_info(jobs)")}
         if "training_config" not in columns:
             connection.execute("ALTER TABLE jobs ADD COLUMN training_config TEXT")
-        connection.execute(
-            "UPDATE schema_meta SET value = ? WHERE key = 'schema_version'", (str(SCHEMA_VERSION),)
-        )
-        connection.execute(
-            "INSERT OR REPLACE INTO schema_meta(key,value) VALUES('schema_name',?)",
-            (JOB_LEDGER_SCHEMA_VERSION,),
-        )
     if stored < 8:
         migrate_training_event_data(connection)
+    if stored < 9:
+        migrate_public_error(connection)
         connection.execute(
             "UPDATE schema_meta SET value = ? WHERE key = 'schema_version'", (str(SCHEMA_VERSION),)
         )

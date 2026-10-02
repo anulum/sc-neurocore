@@ -11,7 +11,7 @@
 import hashlib
 import socket
 
-from sc_neurocore.studio.platform.jobs_models import StudioJobArtifactUnavailable
+from sc_neurocore.studio.platform.jobs_models import StudioJobArtifactRefused
 from sc_neurocore.studio.platform.storage_finish_protocol import FinishArtifact
 from sc_neurocore.studio.platform.storage_peer import read_verified_frame
 
@@ -60,7 +60,7 @@ def receive_artifact_chunks(
     if type(max_artifact_bytes) is not int or max_artifact_bytes <= 0:
         raise ValueError("invalid artifact content limit")
     if artifact.size_bytes > max_artifact_bytes:
-        raise StudioJobArtifactUnavailable("Studio job artifact exceeds the configured byte limit.")
+        raise StudioJobArtifactRefused("Studio job artifact exceeds the configured byte limit.")
     chunks: list[bytes] = []
     remaining = artifact.size_bytes
     while remaining:
@@ -71,10 +71,10 @@ def receive_artifact_chunks(
             deadline=deadline,
         )
         if len(chunk) != min(frame_max_bytes, remaining):
-            raise StudioJobArtifactUnavailable("Studio job artifact chunk size differs.")
+            raise StudioJobArtifactRefused("Studio job artifact chunk size differs.")
         chunks.append(chunk)
         remaining -= len(chunk)
     payload = b"".join(chunks)
     if hashlib.sha256(payload).hexdigest() != artifact.sha256:
-        raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
+        raise StudioJobArtifactRefused("Studio job artifact integrity check failed.")
     return payload

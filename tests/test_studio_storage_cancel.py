@@ -15,17 +15,18 @@ scheduled by the SQLite trace hook when the cancel begins its transaction.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 import json
 import os
-from pathlib import Path
 import socket
 import threading
 import time
+from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord, StudioJobStatus
@@ -49,6 +50,7 @@ USER = StorageRequester(principal_id="operator", roles=())
 
 @pytest.fixture
 def ledger(tmp_path: Path) -> Iterator[StudioJobLedger]:
+    """Provide the actual authority ledger and close its test-owned connection."""
     authority = StudioJobLedger(root=tmp_path / "authority", supervisor="storage:1:1")
     try:
         admit(authority, supervisor=supervisor_identity())
@@ -115,7 +117,8 @@ def test_a_job_ending_before_the_write_is_returned_settled(ledger: StudioJobLedg
     authority.before = lambda served: served.connection().set_trace_callback(trace)
     record = _cancel(authority)
     authority.join()
-    assert (ran, record.status, record.error) == ([True], "failed", "ended elsewhere")
+    assert (ran, record.status, record.error) == ([True], "failed", GENERIC_JOB_FAILURE)
+    assert ledger.record(JOB).error == "ended elsewhere"
 
 
 def test_policy_workspace_and_job_are_checked(ledger: StudioJobLedger) -> None:
@@ -139,7 +142,7 @@ def test_policy_workspace_and_job_are_checked(ledger: StudioJobLedger) -> None:
 
 def _response(**changes: object) -> bytes:
     body: dict[str, object] = {
-        "schema_version": "studio.storage.cancel.v1",
+        "schema_version": "studio.storage.cancel.v2",
         "operation": "cancel",
         "request_id": "a" * 32,
         "job_id": JOB,
@@ -243,7 +246,7 @@ def test_a_record_of_another_job_is_refused(ledger: StudioJobLedger) -> None:
             )
             request = decode_cancel_request(frame, max_bytes=FRAME)
             reply = StorageCancelResponse(
-                schema_version="studio.storage.cancel.v1",
+                schema_version="studio.storage.cancel.v2",
                 operation="cancel",
                 request_id=request.request_id,
                 job_id=request.job_id,

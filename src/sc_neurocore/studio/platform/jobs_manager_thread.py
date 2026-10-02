@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 import secrets
 import sqlite3
@@ -19,12 +20,13 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
+from sc_neurocore.studio.platform.jobs_failures import authored_job_error, job_failure
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobLedgerCorrupt
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobCancelled,
     StudioJobRecord,
-    StudioJobRejected,
+    StudioJobRefused,
     StudioJobTask,
 )
 from sc_neurocore.studio.platform.jobs_paths import _resolve_job_directory
@@ -54,10 +56,10 @@ def _submit_thread_job(
     arrives.
     """
     if kind not in manager._allowed_kinds:
-        raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
+        raise StudioJobRefused(f"Studio job kind '{kind}' is not allowed.")
     timeout = manager._default_timeout_seconds if timeout_seconds is None else timeout_seconds
     if not math.isfinite(timeout) or timeout <= 0:
-        raise StudioJobRejected("Studio job timeout must be finite and positive.")
+        raise StudioJobRefused("Studio job timeout must be finite and positive.")
     job_id = f"sj_{secrets.token_hex(8)}"
     # A slot first: a job that cannot run yet must not appear in the ledger as
     # one that did, and a refused submission never happened at all.
@@ -98,7 +100,9 @@ def _submit_thread_job(
         manager._update(
             job_id,
             status="failed",
-            error=f"Studio job could not start: {exc}",
+            error=job_failure(
+                exc, fallback="Studio job could not start.", prefix="Studio job could not start: "
+            ),
             finished_at_utc=manager._timestamp_utc(),
         )
         with manager._lock:
@@ -131,7 +135,9 @@ def _run_thread_supervised(
 
     def target() -> None:
         try:
-            result_box["result"] = task(context)
+            result = task(context)
+            json.dumps(result, allow_nan=False)
+            result_box["result"] = result
         except BaseException as exc:  # noqa: BLE001 - persisted as job failure state.
             error_box["error"] = exc
 
@@ -148,7 +154,11 @@ def _run_thread_supervised(
                 manager._update(
                     job_id,
                     status="failed",
-                    error=f"Studio worker could not start: {exc}",
+                    error=job_failure(
+                        exc,
+                        fallback="Studio worker could not start.",
+                        prefix="Studio worker could not start: ",
+                    ),
                     finished_at_utc=manager._timestamp_utc(),
                     artifacts=context.artifacts,
                 )
@@ -169,7 +179,12 @@ def _run_thread_supervised(
                 manager._update(
                     job_id,
                     status="failed",
-                    error=f"Studio cancellation observation failed: {exc}. Worker stopped: {stopped}.",
+                    error=job_failure(
+                        exc,
+                        fallback=f"Studio cancellation observation failed. Worker stopped: {stopped}.",
+                        prefix="Studio cancellation observation failed: ",
+                        suffix=f". Worker stopped: {stopped}.",
+                    ),
                     finished_at_utc=manager._timestamp_utc(),
                     artifacts=context.artifacts,
                 )
@@ -194,7 +209,7 @@ def _run_thread_supervised(
         manager._update(
             job_id,
             status="timed_out",
-            error=(
+            error=authored_job_error(
                 "Studio job exceeded its timeout."
                 if stopped
                 else (
@@ -220,7 +235,7 @@ def _run_thread_supervised(
         manager._update(
             job_id,
             status="failed",
-            error=str(error),
+            error=job_failure(error),
             finished_at_utc=manager._timestamp_utc(),
             artifacts=context.artifacts,
         )

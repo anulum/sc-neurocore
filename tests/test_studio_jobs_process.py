@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio job sandbox contract tests
 
+"""Exercise process-backed job records and their public failure projection."""
+
 from __future__ import annotations
 
 import os
@@ -18,14 +20,14 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 httpx = pytest.importorskip("httpx")
 
-import tests.studio_job_tasks as studio_job_tasks
-
 import sc_neurocore.studio.platform.jobs as jobs_module
+import tests.studio_job_tasks as studio_job_tasks
 from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
     StudioJobManager,
     StudioJobRejected,
 )
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.training_contract import resolve_training_config
 
 
@@ -53,6 +55,7 @@ def test_training_snapshot_must_match_worker_payload_before_admission(tmp_path: 
 
 
 def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path) -> None:
+    """A real worker seals its result and readable artifact manifest."""
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
@@ -81,7 +84,6 @@ def test_studio_process_worker_environment_prepends_source_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Process workers can import the repo package without shell PYTHONPATH state."""
-
     monkeypatch.setenv("PYTHONPATH", "existing")
 
     environment = jobs_module._process_worker_environment()
@@ -97,7 +99,6 @@ def test_studio_process_worker_environment_prepends_source_path(
 
 def test_studio_process_worker_sleep_task_uses_payload_seconds(tmp_path: Path) -> None:
     """Import-stable worker helper sleeps for the numeric payload seconds."""
-
     context = StudioJobContext(
         job_id="sj_sleep",
         work_dir=tmp_path / "job",
@@ -113,7 +114,6 @@ def test_studio_process_worker_sleep_task_uses_payload_seconds(tmp_path: Path) -
 
 def test_studio_process_worker_failure_task_raises_stable_error(tmp_path: Path) -> None:
     """Import-stable worker helper raises a redacted deterministic error."""
-
     context = StudioJobContext(
         job_id="sj_failure",
         work_dir=tmp_path / "job",
@@ -126,6 +126,7 @@ def test_studio_process_worker_failure_task_raises_stable_error(tmp_path: Path) 
 
 
 def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Path) -> None:
+    """The manager retains worker diagnostics and publishes a fixed failure."""
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
@@ -143,12 +144,13 @@ def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Pa
 
     assert completed.status == "failed"
     assert completed.execution_model == "process"
-    assert completed.error == "ValueError"
+    assert completed.error == "hidden local failure detail"
+    assert completed.public_error == GENERIC_JOB_FAILURE
+    assert completed.to_public_dict()["error"] == GENERIC_JOB_FAILURE
 
 
 def test_studio_job_status_counts_execution_models(tmp_path: Path) -> None:
     """Status snapshots expose thread/process coverage without local paths."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),

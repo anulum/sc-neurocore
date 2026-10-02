@@ -12,9 +12,40 @@ the per-job sandbox directories it describes. The records survive the process
 that made them, so a restarted API still knows what it ran, and a second API
 process over the same root sees the same jobs.
 
-Schema `studio.job-ledger.v8`. Single host by design: SQLite in WAL mode
+Schema `studio.job-ledger.v9`. Single host by design: SQLite in WAL mode
 serialises the writers sharing one root. A distributed worker contract is a
 separate obligation and is not implied here.
+
+Version 9 stores the selected public failure message separately from private
+exception diagnostics. Inspection routes expose that selected message, or
+`Studio job failed.` when an older error has no qualification. Migration keeps
+the original error and transition history intact. Python record `error` retains
+diagnostic text; `public_error` and `to_public_dict()` provide the public view.
+
+Thread jobs retain messages explicitly marked as authored refusals. Process
+jobs report known job-policy refusal codes through `studio.worker.failure.v1`;
+the supervisor supplies their source-owned wording. Unknown codes, legacy
+output and arbitrary worker error text use the fixed fallback. A worker's
+reported code describes its claimed reason; it does not prove the incident.
+Cross-domain process reasons outside this finite vocabulary remain diagnostic.
+
+Process payloads, thread/process task results, context event logs and consumed
+control commands require finite JSON numbers. NaN, infinity and numeric input
+that overflows to infinity are refused at the corresponding input or output
+boundary. A task result that cannot be encoded becomes a failed job rather than
+a completed record. Malformed worker result files, including invalid UTF-8,
+remain in private job custody while the supervisor records a failed outcome.
+
+Training status and failure SSE use the same public projection. Persisted failure
+events render only the source-selected message; structured diagnostic payloads
+and worker refusal metadata stay in the retained event file. Refused-training
+status/evidence files also use the fixed fallback for unqualified legacy text.
+
+Delegated completion uses `studio.storage.finish.v3`, carrying private and
+public messages separately from the verified API peer. Upgrade the API and
+storage authority together: earlier finish versions are refused. A completed
+outcome carries neither message; unsuccessful retries must agree with the
+sealed diagnostics, public projection, result and artifacts.
 
 Version 7 adds a nullable, validated training configuration snapshot to the
 job row. Training start and weight-restore attach store the resolved
@@ -29,7 +60,7 @@ authorize a separate-UID worker or cross-user access.
 The complete job-record snapshot also carries the nullable field; the storage
 record decoder refuses a malformed, oversized or wrong-kind configuration
 instead of dropping it in transit.
-The exact peer record wire contract is `studio.storage.record.v2`, and the
+The exact peer record wire contract is `studio.storage.record.v3`, and the
 operator list payload is `studio.jobs.list.v2`; a v1 peer must fail closed
 rather than accept a changed record shape under its old version.
 
@@ -356,6 +387,24 @@ is cached: a partial sweep is not a scan of the catalogue.
 migrations up to this build's version. A ledger written by a *newer* build is
 refused with `StudioJobLedgerCorrupt` rather than downgraded, because
 downgrading would silently drop columns. Upgrade the package instead.
+
+### Public error projection on storage reads
+
+Record v3, query v2, cancellation v2 and purge v2 carry the authority's public
+error projection. The API preserves that projection only after verifying the
+OS peer, current wire version, complete snapshot and request correlation.
+Generic snapshot decoding and historical admission replays remain unqualified;
+serialized text never becomes an `AuthoredRefusal`. The authority retains the
+private diagnostic, which is absent from these responses. Purge refusal text is
+selected from a typed source-authored refusal or a fixed fallback at the authority.
+
+An identical terminal finish retry preserves the sealed result. Result comparison
+retains JSON boolean, integer, float and signed-zero distinctions; Python numeric
+equality alone cannot make changed result bytes an identical retry.
+
+Upgrade storage and API peers together. Older read/query/cancel/purge versions
+could carry raw diagnostics and are refused, including inside chunked responses.
+The chunk envelope retains its framing version and binds the new inner version.
 
 Version 2 adds `admission_config` and `admission_reservations` inside the same
 ledger. The migration and version update are transactional: a failed migration

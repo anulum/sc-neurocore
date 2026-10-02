@@ -17,13 +17,20 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from contextlib import nullcontext
 from collections.abc import Mapping, Sequence
+from contextlib import nullcontext
 from typing import TYPE_CHECKING, Any
 
+from sc_neurocore.studio.platform.jobs_failures import (
+    GENERIC_JOB_FAILURE,
+    StudioJobError,
+    public_job_error,
+)
+from sc_neurocore.studio.platform.jobs_ledger_creation import (
+    _INSERT_TRANSITION,
+)
 from sc_neurocore.studio.platform.jobs_ledger_creation import (
     create_job as create_job,
-    _INSERT_TRANSITION,
 )
 from sc_neurocore.studio.platform.jobs_ledger_schema import (
     ALLOWED_TRANSITIONS,
@@ -34,7 +41,7 @@ from sc_neurocore.studio.platform.jobs_ledger_schema import (
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
     StudioJobRecord,
-    StudioJobRejected,
+    StudioJobRefused,
     StudioJobStatus,
 )
 
@@ -47,6 +54,7 @@ UPDATE jobs SET
     started_at_utc = COALESCE(?, started_at_utc),
     finished_at_utc = COALESCE(?, finished_at_utc),
     error = COALESCE(?, error),
+    public_error = CASE WHEN ? IS NOT NULL THEN ? ELSE public_error END,
     result = COALESCE(?, result),
     artifacts = COALESCE(?, artifacts),
     lease_owner = CASE WHEN ? THEN NULL ELSE lease_owner END,
@@ -117,8 +125,11 @@ def transition_job(
             raise KeyError(job_id)
         if expected_record is not None:
             observed = record_from_row(row)
-            if json.dumps(observed.to_public_dict(), sort_keys=True) != json.dumps(
-                expected_record.to_public_dict(), sort_keys=True
+            if json.dumps(
+                {**observed.to_public_dict(), "diagnostic_error": observed.error}, sort_keys=True
+            ) != json.dumps(
+                {**expected_record.to_public_dict(), "diagnostic_error": expected_record.error},
+                sort_keys=True,
             ):
                 return observed
         current: StudioJobStatus = str(row["status"])  # type: ignore[assignment]
@@ -128,7 +139,7 @@ def transition_job(
             to_status = "cancelling"
         unchanged = to_status == current
         if not unchanged and to_status not in ALLOWED_TRANSITIONS[current]:
-            raise StudioJobRejected(
+            raise StudioJobRefused(
                 f"Studio job {job_id} cannot move from '{current}' to '{to_status}'."
             )
         if current in TERMINAL_STATUSES:
@@ -136,6 +147,10 @@ def transition_job(
                 "started_at_utc": started_at_utc,
                 "finished_at_utc": finished_at_utc,
                 "error": error,
+                "public_error": error.public_message
+                if isinstance(error, StudioJobError)
+                and (row["public_error"] is not None or error.public_message != GENERIC_JOB_FAILURE)
+                else None,
                 "result": None if result is None else json.dumps(dict(result), sort_keys=True),
                 "artifacts": None if artifacts is None else artifacts_to_json(artifacts),
             }
@@ -143,7 +158,7 @@ def transition_job(
                 name for name, value in supplied.items() if value is not None and value != row[name]
             ]
             if changed:
-                raise StudioJobRejected(
+                raise StudioJobRefused(
                     f"Studio terminal job {job_id} cannot rewrite fields: {', '.join(changed)}."
                 )
             return record_from_row(row)
@@ -157,6 +172,8 @@ def transition_job(
                 started_at_utc,
                 finished_at_utc,
                 error,
+                error,
+                public_job_error(error),
                 None if result is None else json.dumps(dict(result), sort_keys=True),
                 None if artifacts is None else artifacts_to_json(artifacts),
                 terminal,
@@ -208,7 +225,7 @@ def heartbeat_job(ledger: StudioJobLedger, job_id: str, *, supervisor: str | Non
         if row is None or row["status"] in TERMINAL_STATUSES:
             return False
         if row["lease_owner"] != acting:
-            raise StudioJobRejected(f"Studio job {job_id} lease belongs to another supervisor.")
+            raise StudioJobRefused(f"Studio job {job_id} lease belongs to another supervisor.")
         connection.execute(
             "UPDATE jobs SET heartbeat_at_utc = ?, lease_expires_at_utc = ?, lease_owner = ?"
             " WHERE job_id = ?",
@@ -225,23 +242,21 @@ def require_purgeable(
     if row is None:
         raise KeyError(job_id)
     if str(row["status"]) not in TERMINAL_STATUSES:
-        raise StudioJobRejected(f"Studio job {job_id} is not terminal and cannot be purged.")
+        raise StudioJobRefused(f"Studio job {job_id} is not terminal and cannot be purged.")
     intent = connection.execute(
         "SELECT supervisor,state FROM job_purges WHERE job_id=?", (job_id,)
     ).fetchone()
     if intent is not None and (
         intent["supervisor"] != purge_supervisor or intent["state"] != "prepared"
     ):
-        raise StudioJobRejected(f"Studio job {job_id} has a pending purge requiring recovery.")
+        raise StudioJobRefused(f"Studio job {job_id} has a pending purge requiring recovery.")
     if (
         connection.execute(
             "SELECT 1 FROM admission_reservations WHERE job_id=?", (job_id,)
         ).fetchone()
         is not None
     ):
-        raise StudioJobRejected(
-            f"Studio job {job_id} retains worker capacity and cannot be purged."
-        )
+        raise StudioJobRefused(f"Studio job {job_id} retains worker capacity and cannot be purged.")
 
 
 def delete_job(

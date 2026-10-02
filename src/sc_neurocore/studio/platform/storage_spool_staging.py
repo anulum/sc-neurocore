@@ -32,12 +32,12 @@ write goes into a directory the API created and still owns.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass
 import json
 import os
-from pathlib import Path
 import stat
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 from types import TracebackType
 
 from sc_neurocore.studio.platform.jobs_models import (
@@ -149,12 +149,16 @@ def canonical_parts(relative_path: str) -> tuple[str, ...]:
         The path is not text, not printable, escapes, or is not canonical.
     """
     if not isinstance(relative_path, str) or not relative_path.isprintable():
-        raise ValueError("spool path must be printable text")
+        from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
+
+        raise StudioJobRefused("spool path must be printable text")
     candidate = _relative_path_candidate(
         relative_path, error_message="spool path escapes its directory"
     )
     if candidate.as_posix() != relative_path:
-        raise ValueError("spool path must be canonical")
+        from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
+
+        raise StudioJobRefused("spool path must be canonical")
     return candidate.parts
 
 

@@ -50,7 +50,7 @@ def classify_storage_operation(metadata: bytes) -> StorageOperation:
     if not isinstance(parsed, dict):
         raise ValueError("storage operation must be an object")
     version, operation = parsed.get("schema_version"), parsed.get("operation")
-    if version == "studio.storage.record.v2" and operation == "record":
+    if version == "studio.storage.record.v3" and operation == "record":
         return "record"
     if (
         version in {"studio.storage.admission.v1", "studio.storage.admission.v2"}
@@ -59,14 +59,14 @@ def classify_storage_operation(metadata: bytes) -> StorageOperation:
         return "admit_named"
     if version == "studio.storage.supervision.v1" and operation in ("start", "heartbeat"):
         return "supervision"
-    if version == "studio.storage.finish.v2" and operation == "finish":
+    if version == "studio.storage.finish.v3" and operation == "finish":
         return "finish"
-    if version == "studio.storage.query.v1" and operation == "query":
+    if version == "studio.storage.query.v2" and operation == "query":
         return "query"
-    if version == "studio.storage.cancel.v1" and operation == "cancel":
+    if version == "studio.storage.cancel.v2" and operation == "cancel":
         return "cancel"
     if version == "studio.storage.artifact.v2" and operation == "artifact":
         return "artifact"
-    if version == "studio.storage.purge.v1" and operation == "purge":
+    if version == "studio.storage.purge.v2" and operation == "purge":
         return "purge"
     raise ValueError("unsupported storage operation")

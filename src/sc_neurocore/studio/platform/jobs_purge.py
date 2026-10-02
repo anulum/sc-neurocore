@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from sc_neurocore.studio.platform.jobs_ledger_writes import delete_job, require_purgeable
-from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
-from sc_neurocore.studio.platform.jobs_purge_recovery import PurgeCustody, _matches, recover_purges
-from sc_neurocore.studio.platform.jobs_models import StudioJobRecord, StudioJobRejected
 from sc_neurocore.studio.platform import jobs_purge_paths
+from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
+from sc_neurocore.studio.platform.jobs_ledger_writes import delete_job, require_purgeable
+from sc_neurocore.studio.platform.jobs_models import StudioJobRecord, StudioJobRefused
+from sc_neurocore.studio.platform.jobs_purge_recovery import PurgeCustody, _matches, recover_purges
+from sc_neurocore.studio.platform.jobs_refusals import job_refusal
 
 
 def _forget_purged_job(manager: PurgeCustody, job_id: str) -> None:
@@ -34,23 +35,23 @@ def purge_terminal_job(manager: PurgeCustody, job_id: str) -> StudioJobRecord:
     """
     record = manager._ledger.record(job_id)
     if record.status not in TERMINAL_STATUSES:
-        raise StudioJobRejected("Studio active jobs cannot be purged.")
+        raise StudioJobRefused("Studio active jobs cannot be purged.")
     if (manager._root / record.job_id).is_symlink():
-        raise StudioJobRejected("Studio job purge target cannot be a symlink.")
+        raise StudioJobRefused("Studio job purge target cannot be a symlink.")
     try:
         work_dir = manager._job_work_dir(record.job_id)
     except ValueError as exc:
-        raise StudioJobRejected(str(exc)) from exc
+        raise job_refusal(exc, fallback="Studio job purge path is invalid.") from exc
     staged = work_dir.with_name(f".purge-{work_dir.name}")
     prepared = False
     try:
         with manager._ledger.transaction() as connection:
             require_purgeable(connection, job_id)
             if staged.exists() or staged.is_symlink():
-                raise StudioJobRejected("Studio job has a pending purge requiring recovery.")
+                raise StudioJobRefused("Studio job has a pending purge requiring recovery.")
             stat = work_dir.stat() if work_dir.exists() else None
             if work_dir.is_symlink() or (stat is not None and not work_dir.is_dir()):
-                raise StudioJobRejected("Studio job purge target is not a directory.")
+                raise StudioJobRefused("Studio job purge target is not a directory.")
             connection.execute(
                 "INSERT INTO job_purges VALUES(?,?,?,?, 'prepared')",
                 (
@@ -64,21 +65,21 @@ def purge_terminal_job(manager: PurgeCustody, job_id: str) -> StudioJobRecord:
         with manager._ledger.transaction() as connection:
             require_purgeable(connection, job_id, purge_supervisor=manager._ledger.supervisor)
             if staged.exists() or staged.is_symlink():
-                raise StudioJobRejected("Studio job has a pending purge requiring recovery.")
+                raise StudioJobRefused("Studio job has a pending purge requiring recovery.")
             if work_dir.exists():
                 if not work_dir.is_dir() or work_dir.is_symlink():
-                    raise StudioJobRejected("Studio job purge target is not a directory.")
+                    raise StudioJobRefused("Studio job purge target is not a directory.")
                 current = work_dir.stat()
                 if stat is None or (current.st_dev, current.st_ino) != (stat.st_dev, stat.st_ino):
-                    raise StudioJobRejected("Studio job purge directory identity changed.")
+                    raise StudioJobRefused("Studio job purge directory identity changed.")
                 if not jobs_purge_paths.move_without_replace(work_dir, staged):
-                    raise StudioJobRejected("Studio job has a pending purge requiring recovery.")
+                    raise StudioJobRefused("Studio job has a pending purge requiring recovery.")
                 if not _matches(staged, stat.st_dev, stat.st_ino):
-                    raise StudioJobRejected(
+                    raise StudioJobRefused(
                         "Studio job purge directory identity changed during move."
                     )
             elif stat is not None:
-                raise StudioJobRejected("Studio job purge directory disappeared.")
+                raise StudioJobRefused("Studio job purge directory disappeared.")
             jobs_purge_paths.sync_directory(work_dir.parent)
             delete_job(manager._ledger, job_id, connection=connection)
             connection.execute("UPDATE job_purges SET state='committed' WHERE job_id=?", (job_id,))
@@ -99,5 +100,5 @@ def purge_terminal_job(manager: PurgeCustody, job_id: str) -> StudioJobRecord:
             .fetchone()
         )
         if pending is not None:
-            raise StudioJobRejected("Studio purge cleanup remains pending recovery.")
+            raise StudioJobRefused("Studio purge cleanup remains pending recovery.")
     return record

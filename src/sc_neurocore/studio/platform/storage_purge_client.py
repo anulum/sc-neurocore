@@ -16,7 +16,6 @@ import socket
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 from sc_neurocore.studio.platform.storage_peer import write_verified_frame
-from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 from sc_neurocore.studio.platform.storage_purge_protocol import (
     PURGE_SCHEMA_VERSION,
     StoragePurgeRequest,
@@ -24,6 +23,8 @@ from sc_neurocore.studio.platform.storage_purge_protocol import (
     encode_purge_message,
 )
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
+from sc_neurocore.studio.platform.storage_snapshot import storage_job_record
+from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 
 
 def purge_request(
@@ -95,7 +96,7 @@ def exchange_purge(
     record = decode_job_snapshot(response.record or {})
     if record.job_id != request.job_id or record.workspace != request.workspace:
         raise ValueError("storage purge record does not match the request")
-    return record
+    return storage_job_record(record)
 
 
 __all__ = ["exchange_purge", "purge_request"]

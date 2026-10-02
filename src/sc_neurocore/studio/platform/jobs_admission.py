@@ -24,13 +24,13 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass
 
-from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
 
 DEFAULT_MAX_CONCURRENT_JOBS = 4
 DEFAULT_MAX_QUEUED_JOBS = 32
 
 
-class StudioJobQueueFull(StudioJobRejected):
+class StudioJobQueueFull(StudioJobRefused):
     """Raised when both the running slots and the queue behind them are full.
 
     Attributes

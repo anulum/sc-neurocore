@@ -15,11 +15,12 @@ from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
 from sc_neurocore.studio.platform.storage_connection import connect_storage_authority
 from sc_neurocore.studio.platform.storage_peer import write_verified_frame
-from sc_neurocore.studio.platform.storage_view_content import read_view_content
 from sc_neurocore.studio.platform.storage_record_protocol import (
     StorageRecordRequest,
     decode_record_response,
 )
+from sc_neurocore.studio.platform.storage_snapshot import storage_job_record
+from sc_neurocore.studio.platform.storage_view_content import read_view_content
 
 
 def read_storage_record(
@@ -87,12 +88,12 @@ def read_storage_record(
             channel,
             expected_uid=expected_service_uid,
             frame_max_bytes=max_bytes,
-            content_schema="studio.storage.record.v2",
+            content_schema="studio.storage.record.v3",
             request_id=request.request_id,
             max_content_bytes=max_content_bytes,
             deadline=deadline,
         )
-        return decode_record_response(response, request=request)
+        return storage_job_record(decode_record_response(response, request=request))
 
 
 def read_storage_record_at_endpoint(

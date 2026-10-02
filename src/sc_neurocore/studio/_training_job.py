@@ -21,19 +21,30 @@ from typing import Any, Protocol, cast
 
 from sc_neurocore.studio._training_conversion import train_qcfs_conversion
 from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic, _seed_everything
+from sc_neurocore.studio._training_events import (
+    TRAINING_EVENT_LOG_ARTIFACT_PATH,
+    _json_event_payload,
+)
 from sc_neurocore.studio._training_evidence import seal_training_status, write_refused_evidence
 from sc_neurocore.studio._training_live_attach import poll_live_attach
-from sc_neurocore.studio.event_training_budget import admit_event_training_input
 from sc_neurocore.studio._training_weight_capture import (
     CapturedWeightCheckpoint,
     capture_weight_checkpoint,
 )
-from sc_neurocore.studio.training_resume import (
-    TrainingResumeState,
-    TrainingResumeMismatch,
-    apply_resume_state,
-    capture_resume_state,
-    dataset_fingerprint,
+from sc_neurocore.studio.event_training_budget import admit_event_training_input
+from sc_neurocore.studio.platform.action_evidence import EvidenceStatus
+from sc_neurocore.studio.platform.evidence_bundle import JsonValue
+from sc_neurocore.studio.platform.jobs import (
+    StudioJobCancelled,
+    StudioJobContext,
+)
+from sc_neurocore.studio.platform.jobs_failures import job_failure, public_job_error
+from sc_neurocore.studio.platform.jobs_worker_refusals import (
+    WORKER_FAILURE_SCHEMA,
+    worker_refusal_code,
+)
+from sc_neurocore.studio.platform.training_weights import (
+    write_training_weight_checkpoint,
 )
 from sc_neurocore.studio.training_contract import (
     SUPPORTED_CELL_TYPES,
@@ -41,18 +52,12 @@ from sc_neurocore.studio.training_contract import (
     TrainingConfigError,
     resolve_training_config,
 )
-from sc_neurocore.studio._training_events import (
-    TRAINING_EVENT_LOG_ARTIFACT_PATH,
-    _json_event_payload,
-)
-from sc_neurocore.studio.platform.action_evidence import EvidenceStatus
-from sc_neurocore.studio.platform.evidence_bundle import JsonValue
-from sc_neurocore.studio.platform.jobs import (
-    StudioJobCancelled,
-    StudioJobContext,
-)
-from sc_neurocore.studio.platform.training_weights import (
-    write_training_weight_checkpoint,
+from sc_neurocore.studio.training_resume import (
+    TrainingResumeMismatch,
+    TrainingResumeState,
+    apply_resume_state,
+    capture_resume_state,
+    dataset_fingerprint,
 )
 
 # Whether PyTorch is installed, found without importing it: every process that
@@ -199,8 +204,15 @@ class TrainingJob:
         try:
             self._train(context)
         except Exception as exc:
-            self.error = str(exc)
-            self._emit("error", {"message": str(exc)})
+            self.error = job_failure(exc)
+            self._emit(
+                "error",
+                {
+                    "message": public_job_error(self.error),
+                    "failure_schema": WORKER_FAILURE_SCHEMA,
+                    "refusal_code": worker_refusal_code(exc),
+                },
+            )
             self.status = "failed"
             self._write_terminal_artifacts(context, evidence_status="failed")
             raise
@@ -229,7 +241,10 @@ class TrainingJob:
             context.publish_existing_artifact(TRAINING_EVENT_LOG_ARTIFACT_PATH)
         self._publish_weight_checkpoint(context)
         seal_training_status(
-            context, self._public_status(), status=evidence_status, error_message=self.error
+            context,
+            self._public_status(),
+            status=evidence_status,
+            error_message=public_job_error(self.error),
         )
 
     def _emit(self, event_type: str, data: dict[str, Any]) -> None:
@@ -254,8 +269,15 @@ class TrainingJob:
         try:
             self._train()
         except Exception as exc:
-            self.error = str(exc)
-            self._emit("error", {"message": str(exc)})
+            self.error = job_failure(exc)
+            self._emit(
+                "error",
+                {
+                    "message": public_job_error(self.error),
+                    "failure_schema": WORKER_FAILURE_SCHEMA,
+                    "refusal_code": worker_refusal_code(exc),
+                },
+            )
             self.status = "failed"
 
     def _stop_requested(self) -> bool:
@@ -274,7 +296,7 @@ class TrainingJob:
     def _public_status(self) -> dict[str, Any]:
         """Return the path-free public status for this training job."""
         return {
-            "error": self.error,
+            "error": public_job_error(self.error),
             "final_metrics": self.final_metrics,
             "job_id": self.id,
             "preregistration_verdict": self.preregistration_verdict,
@@ -328,8 +350,8 @@ class TrainingJob:
         import torch
 
         from sc_neurocore.training import (
-            SpikingNet,
             SpikeMonitor,
+            SpikingNet,
             auto_device,
             model_info,
             spike_count_loss,

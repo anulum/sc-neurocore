@@ -17,14 +17,14 @@ import time
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
-from sc_neurocore.studio.platform.jobs_purge import purge_terminal_job
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
     StudioJobArtifactPayload,
-    StudioJobArtifactUnavailable,
+    StudioJobArtifactRefused,
     StudioJobListSnapshot,
     StudioJobRecord,
+    StudioJobRefused,
     StudioJobRejected,
     StudioJobResourceProfile,
     StudioJobStatus,
@@ -37,6 +37,8 @@ from sc_neurocore.studio.platform.jobs_paths import (
     _relative_path_candidate,
     _resolve_confined_child,
 )
+from sc_neurocore.studio.platform.jobs_purge import purge_terminal_job
+from sc_neurocore.studio.platform.jobs_refusals import artifact_refusal
 
 
 def _cancel_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord:
@@ -214,11 +216,11 @@ def _read_declared_artifact(
             error_message="Studio job artifact path escapes the job directory.",
         )
     except ValueError as exc:
-        raise StudioJobArtifactUnavailable(str(exc)) from exc
+        raise artifact_refusal(exc, fallback="Studio job artifact is unavailable.") from exc
     if not artifact_path.is_file():
-        raise StudioJobArtifactUnavailable("Studio job artifact is unavailable.")
+        raise StudioJobArtifactRefused("Studio job artifact is unavailable.")
     if artifact.size_bytes < 0:
-        raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
+        raise StudioJobArtifactRefused("Studio job artifact integrity check failed.")
     # Bind allocation to the retained declaration, not the current file size.
     # A reopened manager may legitimately have a lower write limit than the
     # original producer; that does not invalidate previously sealed artifacts.
@@ -226,7 +228,7 @@ def _read_declared_artifact(
         payload = handle.read(artifact.size_bytes + 1)
     digest = hashlib.sha256(payload).hexdigest()
     if len(payload) != artifact.size_bytes or digest != artifact.sha256:
-        raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
+        raise StudioJobArtifactRefused("Studio job artifact integrity check failed.")
     return StudioJobArtifactPayload(artifact=artifact, payload=payload)
 
 
@@ -254,10 +256,10 @@ def _read_live_artifact(
         resolved_root = os.path.realpath(os.fspath(work_dir))
         resolved_artifact_path = os.path.realpath(os.path.join(resolved_root, os.fspath(candidate)))
         if not _is_confined_path(root=resolved_root, child=resolved_artifact_path):
-            raise ValueError("Studio job artifact path escapes the job directory.")
+            raise StudioJobRefused("Studio job artifact path escapes the job directory.")
         artifact_path = Path(resolved_artifact_path)
     except ValueError as exc:
-        raise StudioJobArtifactUnavailable(str(exc)) from exc
+        raise artifact_refusal(exc, fallback="Studio live artifact is unavailable.") from exc
     if not artifact_path.is_file():
         return b"", offset
     with artifact_path.open("rb") as handle:

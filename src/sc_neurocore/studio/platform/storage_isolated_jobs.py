@@ -18,9 +18,9 @@ created and nothing falls back to embedded storage.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 import math
 import time
+from collections.abc import Mapping
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -30,7 +30,7 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobListSnapshot,
     StudioJobPurgeSnapshot,
     StudioJobRecord,
-    StudioJobRejected,
+    StudioJobRefused,
     StudioJobStatusSnapshot,
     StudioProcessJobPayload,
 )
@@ -46,7 +46,6 @@ from sc_neurocore.studio.platform.storage_query_client import QueryReader
 from sc_neurocore.studio.platform.storage_record_client import read_storage_record
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRecordRequest
 from sc_neurocore.studio.platform.storage_requester import Delegation, current_delegation
-
 
 _ARTIFACT_ROUTE: TypeAdapter[ArtifactRoute] = TypeAdapter(ArtifactRoute)
 
@@ -105,7 +104,7 @@ class IsolatedJobManager:
     ) -> StudioJobRecord:
         """Admit a named process job and supervise its launched worker here."""
         if kind not in self._allowed_kinds:
-            raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
+            raise StudioJobRefused(f"Studio job kind '{kind}' is not allowed.")
         job = submit_named(
             self._configuration,
             _delegation(),
@@ -142,7 +141,7 @@ class IsolatedJobManager:
     def record(self, job_id: str) -> StudioJobRecord:
         """Return one record of the configured workspace."""
         request = StorageRecordRequest(
-            schema_version="studio.storage.record.v2",
+            schema_version="studio.storage.record.v3",
             operation="record",
             request_id=_delegation().request_id,
             job_id=job_id,
@@ -262,7 +261,7 @@ class IsolatedJobManager:
             )
             signal_worker = record.status in TERMINAL_STATUSES or record.status == "cancelling"
             if not signal_worker:
-                raise StudioJobRejected(
+                raise StudioJobRefused(
                     f"Studio job {job_id} cannot move from '{record.status}' to 'cancelling'."
                 )
         except (KeyError, PermissionError):
@@ -312,7 +311,7 @@ class IsolatedJobManager:
     ) -> None:
         """Deliver a command and control seeds to a running job supervised here."""
         if self.record(job_id).status != "running":
-            raise StudioJobRejected("Studio job is not running.")
+            raise StudioJobRefused("Studio job is not running.")
         encoded = _json_payload(command, "Studio job control command must be JSON.")
         self._runtime.live.deliver(job_id, encoded.encode("utf-8"), dict(seed_inputs or {}))
 

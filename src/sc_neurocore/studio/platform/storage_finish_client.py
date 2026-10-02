@@ -29,6 +29,8 @@ from collections.abc import Sequence
 
 from pydantic import JsonValue
 
+from sc_neurocore.studio.platform.jobs_failures import authored_job_error, public_job_error
+from sc_neurocore.studio.platform.jobs_worker_refusals import worker_job_error
 from sc_neurocore.studio.platform.storage_finish_protocol import (
     FINISH_SCHEMA_VERSION,
     FinishArtifact,
@@ -94,8 +96,8 @@ def _open_parent(relative_path: str, job: int) -> tuple[int, str]:
 
 def _exit_message(exit_status: int | None) -> str:
     if exit_status is None:
-        return "Studio process worker has no recorded exit status."
-    return f"Studio process worker exited with {exit_status}."
+        return authored_job_error("Studio process worker has no recorded exit status.")
+    return authored_job_error(f"Studio process worker exited with {exit_status}.")
 
 
 def spool_finish_request(
@@ -190,9 +192,13 @@ def spool_finish_request(
     message = error
     if message is None and verdict == "failed":
         valid = isinstance(worker_error, str) and 0 < len(worker_error) <= 1024
-        message = worker_error if valid else _exit_message(exit_status)
+        message = (
+            worker_job_error(raw, diagnostic=worker_error)
+            if valid and isinstance(worker_error, str)
+            else _exit_message(exit_status)
+        )
     elif message is None and verdict == "timed_out":
-        message = "Studio job exceeded its timeout."
+        message = authored_job_error("Studio job exceeded its timeout.")
     result = raw.get("result")
     request = StorageFinishRequest(
         schema_version=FINISH_SCHEMA_VERSION,
@@ -203,6 +209,7 @@ def spool_finish_request(
         outcome=verdict,
         result=_result(result) if verdict == "completed" else None,
         error=message,
+        public_error=public_job_error(message),
         artifacts=tuple(artifacts),
         worker_reaped=worker_reaped,
     )

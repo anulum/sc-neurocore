@@ -25,8 +25,9 @@ from sc_neurocore.studio.platform.jobs_models import (
     STUDIO_SEED_INPUT_DIR,
     JsonValue,
     StudioJobArtifact,
-    StudioJobArtifactUnavailable,
+    StudioJobArtifactRefused,
     StudioJobCancelled,
+    StudioJobRefused,
 )
 from sc_neurocore.studio.platform.jobs_paths import (
     _resolve_confined_child,
@@ -46,7 +47,6 @@ class StudioJobContext:
         max_artifact_bytes: int,
     ) -> None:
         """Bind one job identifier to its confined task resources."""
-
         self.job_id = job_id
         self._work_dir = work_dir
         self._cancel_event = cancel_event
@@ -56,28 +56,24 @@ class StudioJobContext:
     @property
     def cancelled(self) -> bool:
         """Return whether the manager requested cooperative cancellation."""
-
         return self._cancel_event.is_set()
 
     @property
     def artifacts(self) -> tuple[StudioJobArtifact, ...]:
         """Return artifacts written through this context."""
-
         return tuple(self._artifacts)
 
     def check_cancelled(self) -> None:
         """Raise when the manager requested cooperative cancellation."""
-
         if self.cancelled:
             raise StudioJobCancelled("Studio job was cancelled.")
 
     def write_artifact(self, relative_path: str, payload: bytes | str) -> StudioJobArtifact:
         """Write one size-bounded artifact below the job directory."""
-
         target_path = self._artifact_path(relative_path)
         data = payload.encode("utf-8") if isinstance(payload, str) else payload
         if len(data) > self._max_artifact_bytes:
-            raise ValueError("Studio job artifact exceeds configured size limit.")
+            raise StudioJobRefused("Studio job artifact exceeds configured size limit.")
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_bytes(data)
         artifact = StudioJobArtifact(
@@ -94,30 +90,28 @@ class StudioJobContext:
         payload: Mapping[str, object],
     ) -> None:
         """Append one size-bounded JSON event to a confined live log."""
-
         target_path = self._artifact_path(relative_path)
         try:
-            line = json.dumps(dict(payload), sort_keys=True) + "\n"
+            line = json.dumps(dict(payload), sort_keys=True, allow_nan=False) + "\n"
         except (TypeError, ValueError) as exc:
-            raise ValueError("Studio job event payload must be JSON.") from exc
+            raise StudioJobRefused("Studio job event payload must be JSON.") from exc
         data = line.encode("utf-8")
         current_size = target_path.stat().st_size if target_path.exists() else 0
         if current_size + len(data) > self._max_artifact_bytes:
-            raise ValueError("Studio job event log exceeds configured size limit.")
+            raise StudioJobRefused("Studio job event log exceeds configured size limit.")
         target_path.parent.mkdir(parents=True, exist_ok=True)
         with target_path.open("ab") as handle:
             handle.write(data)
 
     def publish_existing_artifact(self, relative_path: str) -> StudioJobArtifact:
         """Validate and declare an existing confined artifact in the manifest."""
-
         target_path = self._artifact_path(relative_path)
         if not target_path.is_file():
-            raise ValueError("Studio job artifact is unavailable.")
+            raise StudioJobRefused("Studio job artifact is unavailable.")
         with target_path.open("rb") as handle:
             data = handle.read(self._max_artifact_bytes + 1)
         if len(data) > self._max_artifact_bytes:
-            raise ValueError("Studio job artifact exceeds configured size limit.")
+            raise StudioJobRefused("Studio job artifact exceeds configured size limit.")
         artifact = StudioJobArtifact(
             relative_path=relative_path,
             size_bytes=len(data),
@@ -133,7 +127,6 @@ class StudioJobContext:
 
     def read_seed_input(self, relative_path: str) -> bytes:
         """Read one confined, size-bounded submission seed payload."""
-
         target_path = _resolve_confined_nested_child(
             root=self._work_dir,
             subdirectory=STUDIO_SEED_INPUT_DIR,
@@ -141,16 +134,15 @@ class StudioJobContext:
             error_message="Studio job seed-input path escapes the seed directory.",
         )
         if not target_path.is_file():
-            raise StudioJobArtifactUnavailable("Studio job seed input is unavailable.")
+            raise StudioJobArtifactRefused("Studio job seed input is unavailable.")
         with target_path.open("rb") as handle:
             data = handle.read(self._max_artifact_bytes + 1)
         if len(data) > self._max_artifact_bytes:
-            raise ValueError("Studio job seed input exceeds configured size limit.")
+            raise StudioJobRefused("Studio job seed input exceeds configured size limit.")
         return data
 
     def poll_control_command(self) -> dict[str, JsonValue] | None:
         """Consume one pending JSON control command exactly once."""
-
         command_path = self._work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE
         try:
             with command_path.open("rb") as handle:
@@ -159,18 +151,18 @@ class StudioJobContext:
             return None
         command_path.unlink(missing_ok=True)
         if len(raw) > STUDIO_CONTROL_COMMAND_MAX_BYTES:
-            raise ValueError("Studio job control command exceeds configured size limit.")
+            raise StudioJobRefused("Studio job control command exceeds configured size limit.")
         try:
             decoded = json.loads(raw.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ValueError("Studio job control command is not valid JSON.") from exc
+            json.dumps(decoded, allow_nan=False)
+        except ValueError as exc:
+            raise StudioJobRefused("Studio job control command is not valid JSON.") from exc
         if not isinstance(decoded, dict):
-            raise ValueError("Studio job control command must be a JSON object.")
+            raise StudioJobRefused("Studio job control command must be a JSON object.")
         return cast(dict[str, JsonValue], decoded)
 
     def read_control_seed(self, relative_path: str) -> bytes:
         """Read one confined, size-bounded control seed payload."""
-
         target_path = _resolve_confined_nested_child(
             root=self._work_dir,
             subdirectory=STUDIO_CONTROL_SEED_DIR,
@@ -178,16 +170,15 @@ class StudioJobContext:
             error_message="Studio job control-seed path escapes the control-seed directory.",
         )
         if not target_path.is_file():
-            raise StudioJobArtifactUnavailable("Studio job control seed is unavailable.")
+            raise StudioJobArtifactRefused("Studio job control seed is unavailable.")
         with target_path.open("rb") as handle:
             data = handle.read(self._max_artifact_bytes + 1)
         if len(data) > self._max_artifact_bytes:
-            raise ValueError("Studio job control seed exceeds configured size limit.")
+            raise StudioJobRefused("Studio job control seed exceeds configured size limit.")
         return data
 
     def _artifact_path(self, relative_path: str) -> Path:
         """Resolve one artifact path below the job directory."""
-
         return _resolve_confined_child(
             root=self._work_dir,
             relative_path=relative_path,

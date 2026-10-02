@@ -79,8 +79,9 @@ def _reply(request_id: str, changes: dict[str, object] | None = None) -> bytes:
             ValueError,
         ),
         ({"request_id": "0" * 32}, None, ValueError),
+        ({"artifact": None}, None, ValidationError),
     ],
-    ids=["other-bytes", "other-artefact", "other-request"],
+    ids=["other-bytes", "other-artefact", "other-request", "absent-artefact"],
 )
 def test_the_api_refuses_what_it_did_not_ask_for(
     changes: dict[str, object], payload: bytes | None, error: type[Exception]
@@ -155,6 +156,7 @@ def test_malformed_or_foreign_route_requests_are_refused(raw: bytes) -> None:
 
 @pytest.fixture
 def ledger(tmp_path: Path) -> Iterator[StudioJobLedger]:
+    """Yield the real authority ledger used by the socket handler."""
     authority = StudioJobLedger(root=tmp_path / "authority", supervisor="storage:1:1")
     try:
         yield authority

@@ -26,7 +26,7 @@ from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobSubmission, record_from_row
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_is_alive
 from sc_neurocore.studio.platform.jobs_ledger_writes import create_job
-from sc_neurocore.studio.platform.jobs_models import StudioJobRejected, StudioJobExecutionModel
+from sc_neurocore.studio.platform.jobs_models import StudioJobExecutionModel, StudioJobRefused
 
 
 class SharedJobAdmission:
@@ -86,7 +86,7 @@ class SharedJobAdmission:
         if supervisor is not None and not supervisor:
             raise ValueError("A delegated supervisor identity must be nonempty.")
         if supervisor is not None and supervisor_is_alive(supervisor) is not True:
-            raise StudioJobRejected("Delegated Studio supervisor is not provably live.")
+            raise StudioJobRefused("Delegated Studio supervisor is not provably live.")
         owner = self._ledger.supervisor if supervisor is None else supervisor
         if replay is not None:
             replay.validate()
@@ -101,7 +101,7 @@ class SharedJobAdmission:
         try:
             while True:
                 if supervisor is not None and supervisor_is_alive(owner) is not True:
-                    raise StudioJobRejected("Delegated Studio supervisor exited during admission.")
+                    raise StudioJobRefused("Delegated Studio supervisor exited during admission.")
                 refusal: StudioJobQueueFull | None = None
                 with self._ledger.transaction() as connection:
                     if replay is not None:
@@ -131,7 +131,7 @@ class SharedJobAdmission:
                             # Replay and idempotency keys are exclusive, so no replay here.
                             return StudioJobSubmission(record_from_row(prior), duplicate=True)
                     if supervisor is not None and supervisor_is_alive(owner) is not True:
-                        raise StudioJobRejected(
+                        raise StudioJobRefused(
                             "Delegated Studio supervisor exited during admission."
                         )
                     connection.execute(
@@ -146,16 +146,14 @@ class SharedJobAdmission:
                         self._max_concurrent,
                         self._max_queued,
                     ):
-                        raise StudioJobRejected("Studio job root has different admission limits.")
+                        raise StudioJobRefused("Studio job root has different admission limits.")
                     running, waiting = self._counts(connection)
                     existing = connection.execute(
                         "SELECT state,supervisor FROM admission_reservations WHERE job_id=?",
                         (job_id,),
                     ).fetchone()
                     if existing is not None and not queued:
-                        raise StudioJobRejected(
-                            "Studio reservation identifier is already occupied."
-                        )
+                        raise StudioJobRefused("Studio reservation identifier is already occupied.")
                     first = connection.execute(
                         "SELECT job_id FROM admission_reservations WHERE state='queued' ORDER BY ticket LIMIT 1"
                     ).fetchone()

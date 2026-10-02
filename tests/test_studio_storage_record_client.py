@@ -21,6 +21,7 @@ from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import InMemoryAuditSink
+from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
 from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
 from sc_neurocore.studio.platform.storage_record import serve_record_read
 from sc_neurocore.studio.platform.storage_record_client import (
@@ -28,13 +29,12 @@ from sc_neurocore.studio.platform.storage_record_client import (
     read_storage_record_at_endpoint,
 )
 from sc_neurocore.studio.platform.storage_record_protocol import decode_record_request
-from tests.studio_storage_listener_support import boundary
 
 
 def _request(roles: list[str] | None = None, *, missing: bool = False) -> bytes:
     return json.dumps(
         {
-            "schema_version": "studio.storage.record.v2",
+            "schema_version": "studio.storage.record.v3",
             "operation": "record",
             "request_id": "client-trace",
             "job_id": "sj_0000000000000002" if missing else "sj_0000000000000001",
@@ -151,7 +151,7 @@ def test_client_refuses_inconsistent_or_incomplete_authority_response(fault: str
         created_at_utc="2026-09-12T00:00:00Z",
     ).to_public_dict()
     response: dict[str, object] = {
-        "schema_version": "studio.storage.record.v2",
+        "schema_version": "studio.storage.record.v3",
         "request_id": request.request_id,
         "status": "ok",
         "record": record,
@@ -246,14 +246,31 @@ def test_client_refuses_before_sending_request(fault: str) -> None:
 
 def test_endpoint_reads_refuse_another_workspace_before_connecting(tmp_path: Path) -> None:
     """The configured workspace binds the request before any endpoint is reached."""
-    config, ledger, _gateway = boundary(tmp_path)
-    ledger.close()
+    config = StorageBoundaryConfiguration(
+        storage_uid=os.getuid(),
+        api_uid=os.getuid() + 1,
+        worker_uid=os.getuid() + 2,
+        authority_root=tmp_path / "authority",
+        spool_root=tmp_path / "spool",
+        socket_path=tmp_path / "endpoint" / "storage.sock",
+        workspace="default",
+        frame_max_bytes=8192,
+        max_metadata_bytes=4096,
+        max_seed_bytes=8192,
+        max_seed_entries=16,
+        max_manifest_bytes=1024,
+        max_artifact_bytes=65536,
+        max_artifact_entries=16,
+        transfer_timeout_seconds=0.25,
+        max_connections=2,
+    )
     request = decode_record_request(_request(["studio.admin"])).model_copy(
         update={"workspace": "elsewhere"}
     )
     with pytest.raises(ValueError, match="configured workspace"):
         read_storage_record_at_endpoint(config, request=request)
     assert not config.socket_path.exists()
+    assert not config.authority_root.exists() and not config.socket_path.parent.exists()
 
 
 @pytest.mark.parametrize("frame", [b"", b"x" * 8193])

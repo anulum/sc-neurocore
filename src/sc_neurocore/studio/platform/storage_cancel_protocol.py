@@ -8,7 +8,7 @@
 
 """Strict wire contract for recording a cancellation request at the authority.
 
-``studio.storage.cancel.v1`` asks the authority to record that one job of the
+``studio.storage.cancel.v2`` asks the authority to record that one job of the
 workspace should stop, for the requester the peer-verified API delegated,
 under the policy of ``POST /api/training/stop`` by default. An explicit
 ``authorized_route`` can select the actor-owned laboratory cancellation
@@ -24,13 +24,13 @@ from __future__ import annotations
 
 import json
 from typing import Annotated, Final, Literal
-from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+from typing_extensions import Self
 
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 
-CANCEL_SCHEMA_VERSION: Final[Literal["studio.storage.cancel.v1"]] = "studio.storage.cancel.v1"
+CANCEL_SCHEMA_VERSION: Final[Literal["studio.storage.cancel.v2"]] = "studio.storage.cancel.v2"
 CANCEL_ROUTE: Final = ("POST", "/api/training/stop")
 
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
@@ -41,7 +41,7 @@ class StorageCancelRequest(BaseModel):
     """Record that one job of the configured workspace should stop."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.cancel.v1"]
+    schema_version: Literal["studio.storage.cancel.v2"]
     operation: Literal["cancel"]
     request_id: _RequestId
     workspace: Annotated[str, Field(min_length=1, max_length=256)]
@@ -56,7 +56,7 @@ class StorageCancelResponse(BaseModel):
     """The job's record after the request, or a fixed refusal."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    schema_version: Literal["studio.storage.cancel.v1"]
+    schema_version: Literal["studio.storage.cancel.v2"]
     operation: Literal["cancel"]
     request_id: _RequestId
     job_id: _JobId

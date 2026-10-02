@@ -325,7 +325,7 @@ ledger. Reading the recovered record does not rerun training or promote
 uncommitted output to a result. Exact resume requires a retained sealed
 checkpoint and explicitly starts a new job.
 
-Worker output uses `studio.storage.finish.v2`: each declared artifact travels
+Worker output uses `studio.storage.finish.v3`: each declared artifact travels
 in full frames followed by its final remainder. Individual frames retain the
 configured byte ceiling and all artifacts retain the aggregate budget. The
 storage authority checks exact chunk sizes and the complete SHA-256 before

@@ -107,6 +107,20 @@ def test_unsuccessful_outcome_carries_its_error() -> None:
     assert request.error == "worker failed" and len(request.artifacts) == 2
 
 
+def test_finish_v3_separates_diagnostics_and_public_projection() -> None:
+    """Private diagnostics cross only the verified API/storage finish contract."""
+    request = _request(
+        outcome="failed", error="private diagnostic", public_error="Studio job failed.", result=None
+    )
+    assert decode_finish_request(encode_finish_message(request), max_bytes=4096) == request
+    with pytest.raises(ValidationError):
+        _request(public_error="wrong for completed")
+    with pytest.raises(ValidationError):
+        _request(outcome="cancelled", result=None, public_error="without diagnostic")
+    with pytest.raises(ValidationError):
+        _request(schema_version="studio.storage.finish.v2")
+
+
 @pytest.mark.parametrize("error", [None, "workers were not reaped"])
 def test_cancellation_error_is_optional_and_reaping_may_be_unconfirmed(
     error: str | None,

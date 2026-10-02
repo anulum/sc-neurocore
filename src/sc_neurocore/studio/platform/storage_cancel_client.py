@@ -23,8 +23,9 @@ from sc_neurocore.studio.platform.storage_cancel_protocol import (
     encode_cancel_message,
 )
 from sc_neurocore.studio.platform.storage_peer import write_verified_frame
-from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
+from sc_neurocore.studio.platform.storage_snapshot import storage_job_record
+from sc_neurocore.studio.platform.storage_view_content import read_view_content, view_content_limit
 
 
 def cancel_request(
@@ -99,7 +100,7 @@ def exchange_cancel(
     record = decode_job_snapshot(response.record or {})
     if record.job_id != request.job_id or record.workspace != request.workspace:
         raise ValueError("storage cancel record does not match the request")
-    return record
+    return storage_job_record(record)
 
 
 __all__ = ["cancel_request", "exchange_cancel"]

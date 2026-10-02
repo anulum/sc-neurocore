@@ -10,29 +10,29 @@
 
 import json
 import os
-from pathlib import Path
 import socket
 import subprocess
 import sys
 import threading
 import time
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
-from sc_neurocore.studio.platform.storage_record_protocol import decode_record_request
-from sc_neurocore.studio.platform.storage_record import serve_record_read
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import AuditEvent, AuditSinkError, InMemoryAuditSink
 from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
+from sc_neurocore.studio.platform.storage_record import serve_record_read
+from sc_neurocore.studio.platform.storage_record_protocol import decode_record_request
 from sc_neurocore.studio.training_contract import resolve_training_config
 
 
 def _request() -> dict[str, object]:
     return {
-        "schema_version": "studio.storage.record.v2",
+        "schema_version": "studio.storage.record.v3",
         "operation": "record",
         "request_id": "trace",
         "job_id": "sj_0000000000000001",
@@ -190,7 +190,7 @@ def test_policy_denial_returns_no_record(ledger: StudioJobLedger, principal: obj
     assert errors == []
     assert response is not None
     assert json.loads(response) == {
-        "schema_version": "studio.storage.record.v2",
+        "schema_version": "studio.storage.record.v3",
         "request_id": "trace",
         "status": "forbidden",
         "record": None,

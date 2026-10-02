@@ -16,12 +16,12 @@ admission stages its seeds in a real held authority directory.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 import os
-from pathlib import Path
 import socket
 import threading
 import time
+from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
@@ -59,6 +59,7 @@ JOB = "sj_" + "5" * 16
 
 @pytest.fixture
 def ledger(tmp_path: Path) -> Iterator[StudioJobLedger]:
+    """Provide the private authority ledger used by real dispatch exchanges."""
     authority = StudioJobLedger(root=tmp_path / "authority", supervisor="storage:1:1")
     (tmp_path / "authority").chmod(0o700)
     try:
@@ -135,7 +136,7 @@ def test_a_record_read_is_dispatched_to_the_record_handler(ledger: StudioJobLedg
     _admit(ledger)
     client, failures, thread = _serving(_services(ledger))
     request = StorageRecordRequest(
-        schema_version="studio.storage.record.v2",
+        schema_version="studio.storage.record.v3",
         operation="record",
         request_id="trace",
         job_id=JOB,
@@ -152,6 +153,33 @@ def test_a_record_read_is_dispatched_to_the_record_handler(ledger: StudioJobLedg
         )
     thread.join(timeout=10)
     assert failures == [] and record == ledger.record(JOB)
+
+
+def test_an_unsupported_purge_operation_closes_without_mutating_the_job(
+    ledger: StudioJobLedger,
+) -> None:
+    """A peer-verified frame with the wrong operation never reaches authority work."""
+    _admit(ledger)
+    original = ledger.record(JOB)
+    history = ledger.transitions(JOB)
+    client, failures, thread = _serving(_services(ledger))
+    try:
+        with client:
+            write_verified_frame(
+                client,
+                b'{"schema_version":"studio.storage.purge.v2","operation":"record"}',
+                expected_uid=os.getuid(),
+                max_bytes=FRAME,
+                deadline=time.monotonic() + 10,
+            )
+            client.settimeout(10)
+            assert client.recv(1) == b""
+    finally:
+        thread.join(timeout=10)
+    assert not thread.is_alive()
+    assert [type(failure) for failure in failures] == [ValueError]
+    assert [str(failure) for failure in failures] == ["unsupported storage operation"]
+    assert ledger.record(JOB) == original and ledger.transitions(JOB) == history
 
 
 def test_operations_without_their_collaborator_are_refused(ledger: StudioJobLedger) -> None:

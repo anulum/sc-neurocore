@@ -25,8 +25,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_is_alive
+from sc_neurocore.studio.platform.jobs_failures import authored_job_error
 from sc_neurocore.studio.platform.jobs_ledger_schema import record_from_row
+from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_is_alive
 from sc_neurocore.studio.platform.jobs_models import UTC, StudioJobStatus
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle only matters to type checkers
@@ -128,7 +129,7 @@ def reconcile_ledger(ledger: StudioJobLedger) -> tuple[StudioJobReconciliation, 
                     actor=ledger.supervisor,
                     reason=reason,
                     finished_at_utc=ledger.timestamp() if target == "interrupted" else None,
-                    error=f"Studio job did not finish: {reason}."
+                    error=authored_job_error(f"Studio job did not finish: {reason}.")
                     if target == "interrupted"
                     else None,
                     expected_record=expected,

@@ -51,6 +51,7 @@ def test_a_worker_that_exited_before_its_grant_fails_the_unstarted_job(
     relay = LauncherRelay(base / "sock" / "relay.sock", running.socket_path)
 
     def exited(response: LauncherResponse) -> None:
+        """Wait for the actual bootstrap to exit before dropping its reply."""
         assert response.pid is not None
         deadline = time.monotonic() + 60.0
         while not process_exited(response.pid):
@@ -69,6 +70,8 @@ def test_a_worker_that_exited_before_its_grant_fails_the_unstarted_job(
         shutdown(running)
     record = ledger.record(JOB)
     assert (record.status, record.error) == ("failed", "Studio process worker exited with 2.")
+    assert record.public_error == "Studio process worker exited with 2."
+    assert record.to_public_dict()["error"] == record.public_error
     assert (record.started_at_utc, workers(ledger), reservations(ledger)) == (None, 0, [])
 
 
@@ -83,6 +86,8 @@ def test_a_worker_that_never_asks_for_its_grant_fails(
     record = ledger.record(JOB)
     assert record.status == "failed"
     assert record.error is not None and record.error.startswith("Studio worker grant failed:")
+    assert record.public_error == "Studio worker grant failed."
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == []
 
 
@@ -119,6 +124,7 @@ def test_a_worker_the_authority_does_not_start_never_gets_its_grant(
     assert response.reply == reply
     record = ledger.record(JOB)
     assert (record.status, record.error) == (status, None)
+    assert record.public_error is None and record.to_public_dict()["error"] is None
     assert workers(ledger) == 0
     assert authority.seen[:2] == ["start", "finish"]
 
@@ -139,6 +145,8 @@ def test_unanswered_registration_fails_after_the_worker_is_stopped(
         "failed",
         "Studio worker could not start: registration unanswered.",
     )
+    assert record.public_error == "Studio worker could not start: registration unanswered."
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == []
 
 
@@ -156,6 +164,8 @@ def test_refused_launch_fails_the_unstarted_job(
         "failed",
         "Studio worker could not start: launcher refused (spool).",
     )
+    assert record.public_error == "Studio worker could not start: launcher refused (spool)."
+    assert record.to_public_dict()["error"] == record.public_error
     assert (record.started_at_utc, reservations(ledger)) == (None, [])
 
 
@@ -175,4 +185,7 @@ def test_staging_and_endpoint_failures_fail_before_any_launch(
     assert record.status == "failed" and record.error is not None
     expected = "spool:" if fault == "missing-spool" else "grant endpoint:"
     assert record.error.startswith(f"Studio worker could not start: {expected}")
+    public = "spool." if fault == "missing-spool" else "grant endpoint."
+    assert record.public_error == f"Studio worker could not start: {public}"
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == []

@@ -21,19 +21,27 @@ import threading
 import time
 from pathlib import Path
 
-from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
-from sc_neurocore.studio.platform.jobs_worker_registration import start_worker_registration
+from sc_neurocore.studio.platform.jobs_failures import authored_job_error, job_failure
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobLedgerCorrupt
+from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
-    StudioJobRejected,
+    StudioJobRefused,
     StudioProcessJobPayload,
 )
 from sc_neurocore.studio.platform.jobs_process_results import (
-    _ProcessWorkerResult as _ProcessWorkerResult,
-    _load_process_result as _load_process_result,
     _load_process_artifacts as _load_process_artifacts,
-    _parse_process_result as _parse_process_result,
+)
+from sc_neurocore.studio.platform.jobs_process_results import (
+    _load_process_result as _load_process_result,
+)
+from sc_neurocore.studio.platform.jobs_process_results import (
     _parse_process_artifacts as _parse_process_artifacts,
+)
+from sc_neurocore.studio.platform.jobs_process_results import (
+    _parse_process_result as _parse_process_result,
+)
+from sc_neurocore.studio.platform.jobs_process_results import (
+    _ProcessWorkerResult as _ProcessWorkerResult,
 )
 from sc_neurocore.studio.platform.jobs_reaper import (
     DEFAULT_KILL_GRACE_SECONDS,
@@ -42,6 +50,7 @@ from sc_neurocore.studio.platform.jobs_reaper import (
     _terminate_direct_child,
     reap_process_group,
 )
+from sc_neurocore.studio.platform.jobs_worker_registration import start_worker_registration
 
 
 def _process_worker_environment() -> dict[str, str]:
@@ -65,19 +74,19 @@ def _validate_process_task_path(task_path: str) -> None:
     """Validate one ``module:function`` process-task import path."""
     module_path, separator, function_name = task_path.partition(":")
     if separator != ":" or not module_path.strip() or not function_name.strip():
-        raise StudioJobRejected("Studio process task path must use module:function form.")
+        raise StudioJobRefused("Studio process task path must use module:function form.")
     if any(part == "" or not part.isidentifier() for part in module_path.split(".")):
-        raise StudioJobRejected("Studio process task module path is invalid.")
+        raise StudioJobRefused("Studio process task module path is invalid.")
     if not function_name.isidentifier():
-        raise StudioJobRejected("Studio process task function name is invalid.")
+        raise StudioJobRefused("Studio process task function name is invalid.")
 
 
 def _json_payload(payload: StudioProcessJobPayload, error_message: str) -> str:
     """Serialize a mapping or raise the stable job-rejection contract."""
     try:
-        return json.dumps(dict(payload), sort_keys=True)
+        return json.dumps(dict(payload), sort_keys=True, allow_nan=False)
     except (TypeError, ValueError) as exc:
-        raise StudioJobRejected(error_message) from exc
+        raise StudioJobRefused(error_message) from exc
 
 
 def _terminate_process(process: subprocess.Popen[bytes]) -> None:
@@ -97,7 +106,7 @@ def _terminate_process(process: subprocess.Popen[bytes]) -> None:
 
 def _unreaped_error(report: ReapReport) -> str:
     """Describe a worker group that survived its reap, so nobody assumes it did not."""
-    return (
+    return authored_job_error(
         f"The worker process group was not reaped after "
         f"{report.duration_seconds:.1f}s; {len(report.survivors)} process(es) may still be running."
     )
@@ -156,7 +165,12 @@ def _run_process_supervised(
             manager._update(
                 job_id,
                 status="failed",
-                error=f"Studio worker could not start: {exc}{cleanup}",
+                error=job_failure(
+                    exc,
+                    fallback=f"Studio worker could not start.{cleanup}",
+                    prefix="Studio worker could not start: ",
+                    suffix=cleanup,
+                ),
                 finished_at_utc=manager._timestamp_utc(),
             )
         finally:
@@ -174,9 +188,13 @@ def _run_process_supervised(
                 manager._update(
                     job_id,
                     status="failed",
-                    error=(
-                        f"Studio cancellation observation failed: {exc}. "
-                        + ("Worker reaped." if report.reaped else _unreaped_error(report))
+                    error=job_failure(
+                        exc,
+                        fallback="Studio cancellation observation failed. "
+                        + ("Worker reaped." if report.reaped else _unreaped_error(report)),
+                        prefix="Studio cancellation observation failed: ",
+                        suffix=". "
+                        + ("Worker reaped." if report.reaped else _unreaped_error(report)),
                     ),
                     finished_at_utc=manager._timestamp_utc(),
                     artifacts=_load_process_artifacts(result_path),
@@ -206,7 +224,7 @@ def _run_process_supervised(
             manager._update(
                 job_id,
                 status="timed_out",
-                error=(
+                error=authored_job_error(
                     "Studio job exceeded its timeout."
                     if report.reaped
                     else f"Studio job exceeded its timeout. {_unreaped_error(report)}"
@@ -246,7 +264,8 @@ def _run_process_supervised(
         manager._update(
             job_id,
             status="failed",
-            error=result.error or f"Studio process worker exited with {process.returncode}.",
+            error=result.error
+            or authored_job_error(f"Studio process worker exited with {process.returncode}."),
             finished_at_utc=manager._timestamp_utc(),
             artifacts=result.artifacts,
         )

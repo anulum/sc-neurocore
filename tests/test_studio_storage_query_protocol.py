@@ -24,7 +24,7 @@ from sc_neurocore.studio.platform.storage_query_protocol import (
 )
 
 _REQUEST: dict[str, object] = {
-    "schema_version": "studio.storage.query.v1",
+    "schema_version": "studio.storage.query.v2",
     "operation": "query",
     "request_id": "a" * 32,
     "workspace": "default",
@@ -41,7 +41,7 @@ def _request(**changes: object) -> StorageQueryRequest:
 
 def _response(**changes: object) -> dict[str, object]:
     body: dict[str, object] = {
-        "schema_version": "studio.storage.query.v1",
+        "schema_version": "studio.storage.query.v2",
         "operation": "query",
         "request_id": "a" * 32,
         "view": "records",

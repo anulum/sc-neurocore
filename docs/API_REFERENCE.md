@@ -38117,7 +38117,8 @@ Parameters
 context : StudioJobContext
     Job sandbox to write the status and evidence artifacts into.
 message : str
-    The refusal, as the caller will read it.
+    A qualified job error or legacy text. Only the explicit public projection
+    survives; unqualified text uses the fixed job-failure message.
 
 Notes
 -----
@@ -43120,6 +43121,79 @@ Execution context passed to one local Studio job task.
 
 ---
 
+## Module `studio.platform.jobs_failures`
+
+### Class `StudioJobError`
+A private diagnostic paired with a deliberately selected public message.
+
+This is compatible with existing string-valued ledger APIs. Only reviewed
+producers may supply ``public_message``; decoding an untrusted string does
+not confer this qualification. The ledger stores both values separately.
+
+Parameters
+----------
+diagnostic : str
+    Original private diagnostic retained in the ledger's error column.
+public_message : str
+    Deliberately selected caller-facing text, independent of diagnostics.
+
+- **__new__**(cls, diagnostic)
+  - Bind retained diagnostic text to a caller-facing message.
+- **public_message**()
+  - Return the message the producer explicitly qualified for callers.
+- **__getnewargs_ex__**()
+  - Preserve both messages through existing record pickle transport.
+
+### Function `authored_job_error(message)`
+Qualify a deliberate job supervisor message, never generated fault text.
+
+Parameters
+----------
+message : str
+    Source-owned lifecycle or policy message, with no generated exception text.
+
+Returns
+-------
+StudioJobError
+    Identical diagnostic and public messages with explicit qualification.
+
+### Function `job_failure(error)`
+Retain the fault; expose its text only when its type marks authored refusal.
+
+``fallback``, ``prefix`` and ``suffix`` are source-authored context. Prefix
+and suffix retain diagnostic lifecycle facts without qualifying fault text.
+
+Parameters
+----------
+error : BaseException
+    Original fault. Its message is public only for AuthoredRefusal.
+fallback : str
+    Fixed caller-facing reason when the original type is unmarked.
+prefix : str
+    Private diagnostic context prepended to the original fault.
+suffix : str
+    Private diagnostic lifecycle or cleanup facts appended to the fault.
+
+Returns
+-------
+StudioJobError
+    Original diagnostic paired with the independently selected public message.
+
+### Function `public_job_error(error)`
+Project a qualified error or a fixed fallback for unqualified diagnostics.
+
+Parameters
+----------
+error : str or None
+    Retained error; a plain or historical string carries no public provenance.
+
+Returns
+-------
+str or None
+    Explicit public message, the fixed failure fallback, or no error.
+
+---
+
 ## Module `studio.platform.jobs_ledger`
 
 ### Class `StudioJobLedger`
@@ -43220,6 +43294,27 @@ Returns
 -------
 StudioJobSubmission
     The stored record and whether it was already there.
+
+---
+
+## Module `studio.platform.jobs_ledger_public_error`
+
+### Function `migrate_public_error(connection)`
+Add a nullable public projection without changing legacy diagnostics.
+
+Old error text has no authored provenance. Its new projection stays absent,
+and public readers use their fixed fallback. The owning migration transaction
+commits the column and schema version together.
+
+Parameters
+----------
+connection : sqlite3.Connection
+    Owning schema transaction with named rows and an existing jobs table.
+
+Raises
+------
+sqlite3.Error
+    Schema inspection or column creation failed; the caller rolls back.
 
 ---
 
@@ -43538,12 +43633,20 @@ holds no state of its own.
 Raised when a Studio job request violates the local sandbox policy.
 
 
+### Class `StudioJobRefused`
+A source-authored job policy refusal, compatible with legacy handlers.
+
+
 ### Class `StudioJobCancelled`
 Raised inside a cooperative Studio job when cancellation is requested.
 
 
 ### Class `StudioJobArtifactUnavailable`
 Raised when a declared Studio job artifact cannot be safely served.
+
+
+### Class `StudioJobArtifactRefused`
+An authored artifact refusal that retains RuntimeError compatibility.
 
 
 ### Class `StudioJobArtifact`
@@ -43555,6 +43658,8 @@ Path-free manifest entry for one Studio job artifact.
 ### Class `StudioJobRecord`
 Immutable public state for one local Studio job.
 
+- **public_error**()
+  - Project qualified failure text without changing historical record fields.
 - **to_public_dict**()
   - Return path-free job state suitable for operator APIs.
 
@@ -43723,6 +43828,40 @@ ReapReport
 
 ---
 
+## Module `studio.platform.jobs_refusals`
+
+### Function `job_refusal(error)`
+Translate a validation fault, preserving only explicitly authored messages.
+
+Parameters
+----------
+error : ValueError
+    Original validation fault; its text is public only for AuthoredRefusal.
+fallback : str
+    Source-owned job refusal used for every unmarked fault.
+
+Returns
+-------
+StudioJobRefused
+    Caller-facing refusal; the raising caller retains ``error`` as its cause.
+
+### Function `artifact_refusal(error)`
+Translate artifact validation with the same explicit provenance boundary.
+
+Parameters
+----------
+error : ValueError
+    Original path-validation fault whose authored type may preserve its text.
+fallback : str
+    Source-owned artifact reason used for an unmarked validation fault.
+
+Returns
+-------
+StudioJobArtifactRefused
+    Authored refusal compatible with existing artifact-unavailable handlers.
+
+---
+
 ## Module `studio.platform.jobs_shared_admission`
 
 ### Class `SharedJobAdmission`
@@ -43855,6 +43994,43 @@ process metadata retain capacity. A live group with a reused ID also stays
 occupied; this probe never signals it. A member counts as stopped only when
 every one of its threads has exited: zombies cannot execute or spawn work,
 but a zombie thread-group leader can still have running threads.
+
+---
+
+## Module `studio.platform.jobs_worker_refusals`
+
+### Function `worker_refusal_code(error)`
+Encode only a typed authored refusal in the reviewed job-policy vocabulary.
+
+Parameters
+----------
+error : BaseException
+    Source-produced exception, whose type and exact authored wording are checked.
+
+Returns
+-------
+str or None
+    Finite refusal code, or no code for an unmarked or cross-domain fault.
+
+### Function `worker_job_error(payload)`
+Retain worker diagnostics and render a known code from the versioned contract.
+
+A code conveys a worker's reported reason, not proof of the incident. Public
+text is always a source-owned constant, even if the worker forges the code.
+A worker ``public_error`` field is deliberately ignored.
+
+Parameters
+----------
+payload : dict
+    Untrusted worker fields. Only the expected schema and a known code select
+    source-owned wording; their presence does not prove the incident.
+diagnostic : str
+    Retained original diagnostic, absent from the public projection.
+
+Returns
+-------
+StudioJobError
+    Private diagnostic paired with finite source wording or the fixed fallback.
 
 ---
 
@@ -44153,7 +44329,8 @@ Returns
 -------
 int
     ``0`` when the imported task completed and wrote a result; ``1`` when
-    the task failed and the result file contains the public error string.
+    the task failed and the result file retains private diagnostics with a
+    finite refusal code for the supervisor's public projection.
 
 ---
 
@@ -45732,7 +45909,7 @@ this class does not claim a deployed isolated profile.
 ## Module `studio.platform.storage_live_spool`
 
 ### Class `LiveSpools`
-This API generation's live worker directories, keyed by job.
+Live worker directories held by this API generation, keyed by job.
 
 - **__init__**()
   - Keep ``retain`` finished directories; bound each control seed.
@@ -46796,6 +46973,31 @@ Returns
 -------
 int
     ``0`` after an orderly stop. Startup refusal raises instead.
+
+---
+
+## Module `studio.platform.storage_snapshot`
+
+### Function `storage_job_record(record)`
+Qualify the storage authority's public error without inventing diagnostics.
+
+Call only after OS peer verification and complete validation of record v3,
+query v2, cancel v2 or purge v2. Those producers export qualified public
+messages; the old versions could export raw diagnostics and are refused.
+This projection does not mark serialized text as an AuthoredRefusal or
+authenticate a record. Generic snapshot and legacy replay decoding remain
+unqualified. The authority retains diagnostics; they never enter this view.
+
+Parameters
+----------
+record : StudioJobRecord
+    Complete decoded and correlated snapshot from the verified storage peer.
+
+Returns
+-------
+StudioJobRecord
+    Snapshot retaining the authority's public message without an authored
+    exception marker. Its error contains no additional private diagnostic.
 
 ---
 

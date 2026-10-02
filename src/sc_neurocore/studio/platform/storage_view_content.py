@@ -21,10 +21,10 @@ from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write
 from sc_neurocore.studio.platform.training_config_storage import EVENT_DATA_MAX_BYTES
 
 ViewSchema = Literal[
-    "studio.storage.record.v2",
-    "studio.storage.query.v1",
-    "studio.storage.cancel.v1",
-    "studio.storage.purge.v1",
+    "studio.storage.record.v3",
+    "studio.storage.query.v2",
+    "studio.storage.cancel.v2",
+    "studio.storage.purge.v2",
 ]
 
 

@@ -16,7 +16,7 @@ from sc_neurocore.studio.platform.storage_operation import classify_storage_oper
 @pytest.mark.parametrize(
     "metadata,expected",
     [
-        (b'{"schema_version":"studio.storage.record.v2","operation":"record"}', "record"),
+        (b'{"schema_version":"studio.storage.record.v3","operation":"record"}', "record"),
         (
             b'{"schema_version":"studio.storage.admission.v1","operation":"admit_named"}',
             "admit_named",
@@ -26,11 +26,11 @@ from sc_neurocore.studio.platform.storage_operation import classify_storage_oper
             b'{"schema_version":"studio.storage.supervision.v1","operation":"heartbeat"}',
             "supervision",
         ),
-        (b'{"schema_version":"studio.storage.finish.v2","operation":"finish"}', "finish"),
-        (b'{"schema_version":"studio.storage.query.v1","operation":"query"}', "query"),
-        (b'{"schema_version":"studio.storage.cancel.v1","operation":"cancel"}', "cancel"),
+        (b'{"schema_version":"studio.storage.finish.v3","operation":"finish"}', "finish"),
+        (b'{"schema_version":"studio.storage.query.v2","operation":"query"}', "query"),
+        (b'{"schema_version":"studio.storage.cancel.v2","operation":"cancel"}', "cancel"),
         (b'{"schema_version":"studio.storage.artifact.v2","operation":"artifact"}', "artifact"),
-        (b'{"schema_version":"studio.storage.purge.v1","operation":"purge"}', "purge"),
+        (b'{"schema_version":"studio.storage.purge.v2","operation":"purge"}', "purge"),
     ],
 )
 def test_exact_versioned_operations_dispatch(metadata: bytes, expected: str) -> None:
@@ -45,7 +45,7 @@ def test_exact_versioned_operations_dispatch(metadata: bytes, expected: str) -> 
         (b"{", "invalid storage operation JSON"),
         (b'[{"operation":"record"}]', "storage operation must be an object"),
         (
-            b'{"schema_version":"studio.storage.record.v2","operation":"admit_named"}',
+            b'{"schema_version":"studio.storage.record.v3","operation":"admit_named"}',
             "unsupported storage operation",
         ),
         (
@@ -53,11 +53,31 @@ def test_exact_versioned_operations_dispatch(metadata: bytes, expected: str) -> 
             "unsupported storage operation",
         ),
         (
+            b'{"schema_version":"studio.storage.record.v2","operation":"record"}',
+            "unsupported storage operation",
+        ),
+        (
+            b'{"schema_version":"studio.storage.query.v1","operation":"query"}',
+            "unsupported storage operation",
+        ),
+        (
+            b'{"schema_version":"studio.storage.cancel.v1","operation":"cancel"}',
+            "unsupported storage operation",
+        ),
+        (
+            b'{"schema_version":"studio.storage.purge.v1","operation":"purge"}',
+            "unsupported storage operation",
+        ),
+        (
             b'{"schema_version":"studio.storage.supervision.v1","operation":"complete"}',
             "unsupported storage operation",
         ),
         (
-            b'{"schema_version":"studio.storage.finish.v2","operation":"start"}',
+            b'{"schema_version":"studio.storage.finish.v3","operation":"start"}',
+            "unsupported storage operation",
+        ),
+        (
+            b'{"schema_version":"studio.storage.finish.v2","operation":"finish"}',
             "unsupported storage operation",
         ),
         (
@@ -73,15 +93,15 @@ def test_exact_versioned_operations_dispatch(metadata: bytes, expected: str) -> 
             "unsupported storage operation",
         ),
         (
-            b'{"schema_version":"studio.storage.record.v2","operation":"record","operation":"admit_named"}',
+            b'{"schema_version":"studio.storage.record.v3","operation":"record","operation":"admit_named"}',
             "duplicate storage operation field",
         ),
         (
-            b'{"schema_version":"studio.storage.record.v2","operation":"record","payload":{"a":1,"a":2}}',
+            b'{"schema_version":"studio.storage.record.v3","operation":"record","payload":{"a":1,"a":2}}',
             "duplicate storage operation field",
         ),
         (
-            b'{"schema_version":"studio.storage.record.v2","operation":"record","payload":NaN}',
+            b'{"schema_version":"studio.storage.record.v3","operation":"record","payload":NaN}',
             "nonfinite storage operation constant",
         ),
     ],

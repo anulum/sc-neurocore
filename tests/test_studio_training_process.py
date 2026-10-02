@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.training_process import run_training_process_task
 from sc_neurocore.studio.platform.training_weights import (
     TRAINING_WEIGHT_ARTIFACT_PATH,
@@ -162,4 +163,4 @@ def test_training_process_task_writes_failed_evidence(tmp_path: Path) -> None:
         (tmp_path / "sj_training_process_failed" / "training" / "evidence.json").read_text()
     )
     assert evidence_payload["status"] == "failed"
-    assert "batch_size" in evidence_payload["error_message"]
+    assert evidence_payload["error_message"] == GENERIC_JOB_FAILURE

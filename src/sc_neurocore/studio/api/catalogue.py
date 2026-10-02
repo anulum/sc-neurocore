@@ -22,7 +22,6 @@ from sc_neurocore.studio.api.schemas import (
     BenchmarkRunRequest,
     DclsEvaluateRequest,
 )
-from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.benchmark_contribution import (
     ALLOWED_ENVIRONMENT_KEYS,
     FORBIDDEN_KEYS,
@@ -31,26 +30,27 @@ from sc_neurocore.studio.benchmark_contribution import (
     run_local_benchmark,
     store_contribution,
 )
+from sc_neurocore.studio.catalogue_query import (
+    CatalogueQuery,
+    CatalogueQueryRejected,
+    query_catalogue,
+)
 from sc_neurocore.studio.dcls import (
     dcls_benchmark,
     dcls_forward_parity,
     dcls_kernel_info,
     dcls_tent_profile,
 )
-from sc_neurocore.studio.model_scan import scan_all_models
 from sc_neurocore.studio.model_capabilities import model_capabilities
-from sc_neurocore.studio.catalogue_query import (
-    CatalogueQuery,
-    CatalogueQueryRejected,
-    query_catalogue,
-)
 from sc_neurocore.studio.model_catalogue import ModelDocumentationUnavailable
+from sc_neurocore.studio.model_scan import scan_all_models
 from sc_neurocore.studio.models import (
     get_model_detail,
     list_models,
     model_documentation,
     model_facets,
 )
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused, StudioJobRejected
 from sc_neurocore.studio.templates import get_template, list_templates
 
 
@@ -112,7 +112,12 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
                 payload={"current": current, "duration": duration},
             )
         except StudioJobRejected as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from None
+            detail = (
+                str(exc)
+                if isinstance(exc, StudioJobRefused)
+                else "Studio job request was rejected."
+            )
+            raise HTTPException(status_code=422, detail=detail) from None
         public = record.to_public_dict()
         return {
             "execution_mode": "async_job",

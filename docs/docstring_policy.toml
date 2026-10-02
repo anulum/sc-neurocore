@@ -14,7 +14,47 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 550
+expected_file_count = 560
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
+rationale = "Public error projection only after current-version storage validation and actual OS peer verification; legacy snapshots remain unqualified."
+
+[[file]]
+path = "tests/test_studio_jobs_failure_storage.py"
+rationale = "Actual thread failure through chunked peer-verified record, list, cancellation, terminal purge and historical record pickle."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_failures.py"
+rationale = "Private diagnostic retention and explicit caller-facing failure projection without generated exception disclosure."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_refusals.py"
+rationale = "Typed job and artifact validation boundaries that preserve authored refusals and retain generated faults as causes."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_worker_refusals.py"
+rationale = "Finite source-owned worker refusal codes with untrusted text and legacy-output fallback."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_public_error.py"
+rationale = "Transactional nullable public-error migration that preserves original diagnostic and transition custody."
+
+[[file]]
+path = "tests/studio_jobs_failure_tasks.py"
+rationale = "Importable workloads exercising actual production artifact writes from supervised interpreters."
+
+[[file]]
+path = "tests/test_studio_jobs_refusals.py"
+rationale = "Actual thread, filesystem, HTTP inspection and restart failure custody with authored admission reasons."
+
+[[file]]
+path = "tests/test_studio_jobs_failure_migration.py"
+rationale = "Actual SQLite legacy schema migration and terminal error-projection immutability."
+
+[[file]]
+path = "tests/test_studio_jobs_failure_process.py"
+rationale = "Public process supervision and verified storage finish across untrusted failure metadata."
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_namespace.py"

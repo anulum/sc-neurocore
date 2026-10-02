@@ -23,6 +23,7 @@ import threading
 
 import pytest
 
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
 from sc_neurocore.studio.platform.storage_finish_protocol import StorageFinishResponse
@@ -55,6 +56,7 @@ def test_completed_job_is_sealed_with_its_result(
     assert record.status == "completed", record.error
     assert record.result is not None and record.result["evidence_receipt"]
     assert (record.error, reservations(ledger), workers(ledger)) == (None, [], 1)
+    assert record.public_error is None and record.to_public_dict()["error"] is None
     spool = base / "spool" / JOB / supervisor.generation
     result = spool / JOB / ".studio_process_result.json"
     assert result.is_file()
@@ -77,9 +79,11 @@ def test_worker_failure_is_recorded_like_the_embedded_supervisor(
     record = ledger.record(JOB)
     assert (record.status, record.error, record.result) == (
         "failed",
-        "AnalysisJobValidationError",
+        "invalid_analysis_payload",
         None,
     )
+    assert record.public_error == GENERIC_JOB_FAILURE
+    assert record.to_public_dict()["error"] == GENERIC_JOB_FAILURE
     assert reservations(ledger) == []
 
 
@@ -99,6 +103,7 @@ def test_cancellation_stops_the_worker(
     sealed(running.wait())
     record = ledger.record(JOB)
     assert (record.status, record.error, record.result) == ("cancelled", None, None)
+    assert record.public_error is None and record.to_public_dict()["error"] is None
     assert reservations(ledger) == []
     if route == "ledger":
         assert "heartbeat" in authority.seen
@@ -123,6 +128,8 @@ def test_deadline_times_out_through_lost_status_and_heartbeat_replies(
         shutdown(running)
     record = ledger.record(JOB)
     assert (record.status, record.error) == ("timed_out", "Studio job exceeded its timeout.")
+    assert record.public_error == "Studio job exceeded its timeout."
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == []
     assert authority.seen.count("heartbeat") > 2 and relay.seen.count("status") > 2
 
@@ -140,6 +147,8 @@ def test_a_job_ended_elsewhere_is_answered_from_its_record(
     assert isinstance(response, StorageFinishResponse)
     assert (response.reply, response.reason) == ("refused", "conflict")
     assert ledger.record(JOB).status == "cancelled"
+    assert ledger.record(JOB).public_error is None
+    assert ledger.record(JOB).to_public_dict()["error"] is None
 
 
 def test_output_the_api_cannot_read_fails_a_job_that_ended_by_itself(
@@ -154,6 +163,8 @@ def test_output_the_api_cannot_read_fails_a_job_that_ended_by_itself(
     assert record.error == (
         "Studio worker output was refused: spool entry is not a bounded regular file"
     )
+    assert record.public_error == "Studio worker output was refused."
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == []
 
 
@@ -172,4 +183,6 @@ def test_unreadable_output_keeps_the_api_verdict(
     assert record.status == "cancelled"
     assert record.error is not None
     assert record.error.startswith("Studio worker output was refused: Unterminated string")
+    assert record.public_error == "Studio worker output was refused."
+    assert record.to_public_dict()["error"] == record.public_error
     assert reservations(ledger) == []

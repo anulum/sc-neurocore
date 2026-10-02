@@ -16,8 +16,8 @@ and the child is killed there with SIGKILL.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import signal
+from pathlib import Path
 
 import pytest
 
@@ -55,6 +55,8 @@ def test_a_completed_write_replaces_the_partial_file(tmp_path: Path) -> None:
     assert json.loads(target.read_text()) == {
         "artifacts": [],
         "error": None,
+        "failure_schema": "studio.worker.failure.v1",
+        "refusal_code": None,
         "result": {"x": 1},
         "status": "completed",
     }

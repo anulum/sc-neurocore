@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobSubmission
-from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -70,14 +70,14 @@ def read_admission_replay(
     if row is None:
         return None
     if row["payload_sha256"] != replay.payload_sha256:
-        raise StudioJobRejected("Storage mutation identity was reused with changed content.")
+        raise StudioJobRefused("Storage mutation identity was reused with changed content.")
     if row["outcome"] == "admitted" and row["record_json"] is not None:
         try:
             record = decode_job_snapshot(json.loads(str(row["record_json"])))
         except (ValueError, TypeError) as exc:
-            raise StudioJobRejected("Stored admission replay is invalid.") from exc
+            raise StudioJobRefused("Stored admission replay is invalid.") from exc
         if record.workspace != workspace:
-            raise StudioJobRejected("Stored admission replay workspace is invalid.")
+            raise StudioJobRefused("Stored admission replay workspace is invalid.")
         return StudioJobSubmission(record, duplicate=True)
     if row["outcome"] == "refused" and all(
         row[name] is not None for name in ("running", "queued", "queue_limit")
@@ -87,7 +87,7 @@ def read_admission_replay(
             queued=int(row["queued"]),
             limit=int(row["queue_limit"]),
         )
-    raise StudioJobRejected("Stored admission replay is invalid.")
+    raise StudioJobRefused("Stored admission replay is invalid.")
 
 
 def write_admission_replay(
