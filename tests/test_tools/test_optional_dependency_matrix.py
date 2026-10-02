@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Optional dependency matrix contract tests
 
+"""Check optional-profile documentation against package and CI contracts."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -27,6 +29,15 @@ class DependencyRow(NamedTuple):
 
 
 EXPECTED_ROWS = (
+    DependencyRow(
+        import_name="torchhd",
+        distribution="torch-hd==5.8.4",
+        declared_extra="hdc-reference",
+        test_paths=(
+            "tests/test_hdc/test_hdc_torchhd_reference.py",
+            ".github/workflows/hdc-reference.yml",
+        ),
+    ),
     DependencyRow(
         import_name="gdsfactory",
         distribution="gdsfactory>=9.0",
@@ -101,20 +112,17 @@ EXPECTED_ROWS = (
 
 def _repo_root() -> Path:
     """Return the repository root."""
-
     return Path(__file__).resolve().parents[2]
 
 
 def _optional_dependencies() -> dict[str, list[str]]:
     """Load optional dependency groups from project metadata."""
-
     pyproject = tomllib.loads((_repo_root() / "pyproject.toml").read_text(encoding="utf-8"))
     return cast(dict[str, list[str]], pyproject["project"]["optional-dependencies"])
 
 
 def _matrix_text() -> str:
     """Return the public optional-dependency matrix text."""
-
     return (_repo_root() / "docs" / "guides" / "optional_dependency_matrix.md").read_text(
         encoding="utf-8"
     )
@@ -122,7 +130,6 @@ def _matrix_text() -> str:
 
 def _normalized_requirements(extra: str) -> set[str]:
     """Return requirement strings without environment markers for one extra."""
-
     optional = _optional_dependencies()
     requirements = optional[extra]
     return {requirement.split(";", maxsplit=1)[0].strip() for requirement in requirements}
@@ -130,7 +137,6 @@ def _normalized_requirements(extra: str) -> set[str]:
 
 def test_optional_dependency_matrix_covers_audit_targets() -> None:
     """Ensure every audited optional dependency appears in docs with evidence."""
-
     text = _matrix_text()
 
     for row in EXPECTED_ROWS:
@@ -142,7 +148,6 @@ def test_optional_dependency_matrix_covers_audit_targets() -> None:
 
 def test_declared_optional_dependencies_match_pyproject() -> None:
     """Ensure documented declared extras match current project metadata."""
-
     text = _matrix_text()
 
     for row in EXPECTED_ROWS:
@@ -156,7 +161,6 @@ def test_declared_optional_dependencies_match_pyproject() -> None:
 
 def test_matrix_is_linked_from_install_profiles_and_nav() -> None:
     """Keep the optional matrix reachable from public install docs and MkDocs."""
-
     install_profiles = (_repo_root() / "docs" / "guides" / "install_profiles.md").read_text(
         encoding="utf-8"
     )

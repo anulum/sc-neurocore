@@ -10,6 +10,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add the pinned `hdc-reference` test extra and a required CPU CI comparison
+  against TorchHD BSC binding, odd bundling and cyclic permutation semantics.
+
 - Pin the workstation Jupyter Notebook dependency to 7.6.3, fixing
   GHSA-6966-vjj6-99xv while retaining JupyterLab 4.6.4.
 

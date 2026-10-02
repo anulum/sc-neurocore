@@ -81,12 +81,48 @@ the endpoints approach orthogonality. `encode_level` clips into
 ## Relation to external VSA references
 
 The binary {0, 1}/XOR/majority algebra is the classical binary spatter
-code (Kanerva). `torchhd`'s BSC model implements the same bind and
-majority-bundle semantics over its MAP/BSC tensors; the executed
-cross-check in `tests/test_hdc/test_hdc_torchhd_reference.py` compares
-bind, bundle (odd counts, where no tie policy is involved), and
-permutation against `torchhd` over multiple seeds and dimensions when
-that package is installed, and skips cleanly where it is not.
+code (Kanerva). The `hdc-reference` extra pins
+[`torch-hd==5.8.4`](https://pypi.org/project/torch-hd/5.8.4/), imported as
+`torchhd`. Its BSC model supplies the independent oracle in
+`tests/test_hdc/test_hdc_torchhd_reference.py`: identical input vectors
+are compared for bind, odd-cardinality bundle (including one vector),
+and negative, zero, positive and wrapped permutation shifts, across
+seeds 3/41 and dimensions 256/1024.
+
+The required `test-hdc-reference` job in the main CI calls
+`.github/workflows/hdc-reference.yml`; the package build depends on its
+success. The reference workflow installs a complete hash-pinned CPU
+profile, builds and installs the package, checks both reference versions
+and runs the whole `tests/test_hdc/` directory. It sets
+`SC_NEUROCORE_REQUIRE_TORCHHD=1`, so an absent reference is a collection
+error. A second reference run excludes the root source-path bootstrap with
+`--confcutdir=tests/test_hdc --import-mode=importlib`, exercising the installed
+wheel with the same oracle tests. Outside this promised profile, only genuine TorchHD absence skips
+the reference module; a broken installed reference or missing transitive
+dependency fails normally.
+
+To reproduce that profile on Linux with Python 3.12:
+
+```bash
+python -m pip install --require-hashes --only-binary :all: \
+  -r requirements/ci-torch-cpu.txt -r requirements/ci-hdc-reference.txt
+python -m pip check
+python -m build --wheel --no-isolation
+python -m installer dist/sc_neurocore-*.whl
+SC_NEUROCORE_REQUIRE_TORCHHD=1 SC_NEUROCORE_PERF=1 \
+  python -m pytest tests/test_hdc/ -q -rs
+SC_NEUROCORE_REQUIRE_TORCHHD=1 python -m pytest \
+  tests/test_hdc/test_hdc_torchhd_reference.py \
+  --confcutdir=tests/test_hdc --import-mode=importlib -q
+```
+
+The reference lock is generated from `pyproject.toml`'s `hdc-reference`
+extra and `requirements/ci-hdc-reference.in`, constrained by the maintained
+runtime and CPU Torch locks. Its recorded generator command omits only
+Torch's duplicate entry; `ci-torch-cpu.txt` supplies the exact CPU build
+and hashes. Both files are required for a complete install. This is a
+test profile; ordinary HDC runtime use does not import TorchHD.
+
 Deliberate differences from `torchhd` defaults:
 
 - default even-count tie handling is the deterministic `"zeros"` bias,
@@ -94,7 +130,10 @@ Deliberate differences from `torchhd` defaults:
   unbiased convention;
 - vectors are `uint8` {0, 1} arrays, not torch tensors; the adapter in
   the cross-check test maps between the two rather than weakening
-  either semantic.
+  either semantic;
+- encoder randomness uses NumPy's seeded generator. The reference compares
+  operations on identical supplied vectors, without claiming identical
+  random streams from NumPy and PyTorch or identical cleanup-memory APIs.
 
 ## Enforcement map
 
@@ -104,5 +143,5 @@ Deliberate differences from `torchhd` defaults:
 | Tie policies, level encoding, item memory | `tests/test_hdc/test_hdc_encoder_determinism_and_levels.py` |
 | Centroid classifier semantics | `tests/test_hdc/test_hdc_centroid_classifier.py` |
 | Retrieval accuracy, collision rate, dimension sweep | `tests/test_hdc/test_hdc_retrieval_regressions.py` |
-| `torchhd` reference cross-check (optional dependency) | `tests/test_hdc/test_hdc_torchhd_reference.py` |
+| Pinned `torchhd` reference cross-check (required CI profile) | `tests/test_hdc/test_hdc_torchhd_reference.py`, `.github/workflows/hdc-reference.yml` |
 | Legacy base behaviour | `tests/test_hdc/test_base.py` |

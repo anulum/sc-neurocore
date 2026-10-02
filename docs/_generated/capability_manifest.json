@@ -969,9 +969,9 @@
     ]
   },
   "counts": {
-    "github_workflows": 20,
+    "github_workflows": 21,
     "model_documentation_pages": 200,
-    "optional_extras": 30,
+    "optional_extras": 31,
     "public_api_exports": 45,
     "public_documentation_pages": 640,
     "python_model_classes": 183,
@@ -3215,6 +3215,7 @@
       "federation",
       "full",
       "gpu",
+      "hdc-reference",
       "hdl",
       "jax",
       "julia",
@@ -3285,6 +3286,7 @@
       ".github/workflows/docker.yml",
       ".github/workflows/docs.yml",
       ".github/workflows/fuzz.yml",
+      ".github/workflows/hdc-reference.yml",
       ".github/workflows/mlir-circt.yml",
       ".github/workflows/nir-canary.yml",
       ".github/workflows/pre-commit.yml",

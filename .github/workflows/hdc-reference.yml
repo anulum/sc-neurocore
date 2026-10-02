@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Pinned HDC reference validation
+
+name: HDC reference
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    env:
+      SC_NEUROCORE_REQUIRE_TORCHHD: "1"
+      SC_NEUROCORE_PERF: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+          cache: pip
+          cache-dependency-path: |
+            requirements/ci-torch-cpu.txt
+            requirements/ci-hdc-reference.txt
+
+      - name: Install hash-pinned hdc-reference profile
+        run: |
+          python -m pip install --require-hashes --only-binary :all: \
+            -r requirements/ci-torch-cpu.txt -r requirements/ci-hdc-reference.txt
+          python -m pip check
+
+      - name: Install built package
+        run: |
+          python -m build --wheel --no-isolation
+          python -m installer dist/sc_neurocore-*.whl
+
+      - name: Check reference identity
+        run: |
+          python -c "import importlib.metadata, torch; assert importlib.metadata.version('torch-hd') == '5.8.4'; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
+
+      - name: HDC semantic and pinned reference comparisons
+        run: python -m pytest tests/test_hdc/ -q -rs
+
+      - name: Installed reference comparisons
+        run: |
+          python -m pytest tests/test_hdc/test_hdc_torchhd_reference.py \
+            --confcutdir=tests/test_hdc --import-mode=importlib -q
