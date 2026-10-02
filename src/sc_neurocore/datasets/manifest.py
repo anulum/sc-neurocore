@@ -30,6 +30,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.datasets.refusals import DatasetRefusal
+
 MANIFEST_SCHEMA = "sc-neurocore.event-dataset.v1"
 
 _CHUNK = 1 << 20
@@ -287,7 +289,7 @@ def _description(name: str) -> DatasetDescription:
     try:
         return DATASETS[name]
     except KeyError:
-        raise ValueError(
+        raise DatasetRefusal(
             f"unknown event dataset {name!r}; supported: {', '.join(sorted(DATASETS))}"
         ) from None
 
@@ -337,7 +339,7 @@ def _shd_samples(root: Path) -> list[SampleRecord]:
             labels = handle["labels"][:]
             speakers = handle["extra"]["speaker"][:]
             if len(speakers) != len(labels):
-                raise ValueError(f"{file}: {len(labels)} labels but {len(speakers)} speakers")
+                raise DatasetRefusal(f"{file}: {len(labels)} labels but {len(speakers)} speakers")
             samples.extend(
                 SampleRecord(
                     split=split,
@@ -377,11 +379,11 @@ def build_manifest(name: str, root: str | Path, *, version: str) -> EventDataset
     """
     description = _description(name)
     if not version.strip():
-        raise ValueError("the dataset version must be stated")
+        raise DatasetRefusal("the dataset version must be stated")
     base = Path(root)
     paths = _layout_files(name, base)
     if not paths:
-        raise ValueError(f"{base} holds no {description.title} files in the expected layout")
+        raise DatasetRefusal(f"{base} holds no {description.title} files in the expected layout")
     files = tuple(
         FileRecord(path=_relative(base, path), bytes=path.stat().st_size, sha256=_sha256(path))
         for path in sorted(paths, key=lambda item: _relative(base, item))
@@ -398,7 +400,7 @@ def build_manifest(name: str, root: str | Path, *, version: str) -> EventDataset
             )
     bad = sorted({s.label for s in samples if not 0 <= s.label < description.classes})
     if bad:
-        raise ValueError(f"labels {bad} are outside the {description.classes} classes")
+        raise DatasetRefusal(f"labels {bad} are outside the {description.classes} classes")
     return EventDatasetManifest(
         dataset=description, version=version, files=files, samples=tuple(samples)
     )
@@ -441,7 +443,7 @@ def verify_manifest(manifest: EventDatasetManifest, root: str | Path) -> Manifes
 def _require_keys(value: Any, keys: set[str], where: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping) or set(value) != keys:
         found = sorted(value) if isinstance(value, Mapping) else type(value).__name__
-        raise ValueError(f"{where} must have exactly the fields {sorted(keys)}; found {found}")
+        raise DatasetRefusal(f"{where} must have exactly the fields {sorted(keys)}; found {found}")
     return value
 
 
@@ -466,12 +468,12 @@ def manifest_from_dict(data: Mapping[str, Any]) -> EventDatasetManifest:
     """
     top = _require_keys(data, {"schema", "dataset", "version", "files", "samples"}, "manifest")
     if top["schema"] != MANIFEST_SCHEMA:
-        raise ValueError(f"manifest schema {top['schema']!r} is not {MANIFEST_SCHEMA!r}")
+        raise DatasetRefusal(f"manifest schema {top['schema']!r} is not {MANIFEST_SCHEMA!r}")
     dataset_data = top["dataset"]
     name = dataset_data.get("name") if isinstance(dataset_data, Mapping) else None
     description = _description(str(name))
     if dataset_data != description.to_dict():
-        raise ValueError(
+        raise DatasetRefusal(
             f"the manifest describes {name!r} differently from this version of SC-NeuroCore"
         )
     files = tuple(

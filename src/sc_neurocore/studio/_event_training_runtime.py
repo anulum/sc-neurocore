@@ -17,6 +17,7 @@ from sc_neurocore.accel.event_recordings import decode_nmnist_recording
 from sc_neurocore.datasets.manifest import build_manifest
 from sc_neurocore.studio.event_training_budget import admit_event_training_input
 from sc_neurocore.studio.event_training_contract import EventTrainingContract
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 
 DATASET_ROOT_ENV = "SC_NEUROCORE_STUDIO_DATASET_ROOT"
 
@@ -49,24 +50,24 @@ def verify_event_training_data(contract: EventTrainingContract) -> Path:
     """
     configured = os.environ.get(DATASET_ROOT_ENV)
     if not configured:
-        raise ValueError("the operator has not configured a local event dataset root")
+        raise TrainingRefusal("the operator has not configured a local event dataset root")
     root = Path(configured).resolve()
     if not root.is_dir():
-        raise ValueError("the configured event dataset root is unavailable")
+        raise TrainingRefusal("the configured event dataset root is unavailable")
     for record in contract.manifest.files:
         if not (root / record.path).resolve().is_relative_to(root):
-            raise ValueError("event dataset file lies outside the configured root")
+            raise TrainingRefusal("event dataset file lies outside the configured root")
     try:
         actual = build_manifest(
             contract.manifest.dataset.name, root, version=contract.manifest.version
         )
     except (OSError, ValueError, KeyError) as exc:
-        raise ValueError("the configured event dataset could not be verified") from exc
+        raise TrainingRefusal("the configured event dataset could not be verified") from exc
     if actual.digest != contract.manifest.digest:
-        raise ValueError("event dataset files or sample metadata differ from the manifest")
+        raise TrainingRefusal("event dataset files or sample metadata differ from the manifest")
     for record in actual.files:
         if not (root / record.path).resolve().is_relative_to(root):
-            raise ValueError("event dataset file lies outside the configured root")
+            raise TrainingRefusal("event dataset file lies outside the configured root")
     return root
 
 

@@ -14,6 +14,7 @@ import os
 import sys
 
 from sc_neurocore.studio.event_training_contract import EventTrainingContract
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 
 EVENT_INPUT_LIMIT_ENV = "SC_NEUROCORE_STUDIO_EVENT_INPUT_MAX_BYTES"
 DEFAULT_EVENT_INPUT_MAX_BYTES = 64 * 1024 * 1024
@@ -52,22 +53,24 @@ def admit_event_training_input(
     limits. No tensor is allocated to calculate this receipt.
     """
     if isinstance(batch_size, bool) or not isinstance(batch_size, int):
-        raise ValueError("event batch size must be a positive integer")
+        raise TrainingRefusal("event batch size must be a positive integer")
     if not 0 < batch_size <= sys.maxsize:
-        raise ValueError("event batch size is outside the loader's integer range")
+        raise TrainingRefusal("event batch size is outside the loader's integer range")
     configured = os.environ.get(EVENT_INPUT_LIMIT_ENV)
     try:
         limit = DEFAULT_EVENT_INPUT_MAX_BYTES if configured is None else int(configured)
     except ValueError as exc:
-        raise ValueError(f"operator {EVENT_INPUT_LIMIT_ENV} must be a positive integer") from exc
+        raise TrainingRefusal(
+            f"operator {EVENT_INPUT_LIMIT_ENV} must be a positive integer"
+        ) from exc
     if limit <= 0:
-        raise ValueError(f"operator {EVENT_INPUT_LIMIT_ENV} must be a positive integer")
+        raise TrainingRefusal(f"operator {EVENT_INPUT_LIMIT_ENV} must be a positive integer")
     samples = max(
         len(contract.split.assignment[contract.train_split]),
         len(contract.split.assignment[contract.evaluation_split]),
     )
     if samples == 0:
-        raise ValueError("event training input parts must not be empty")
+        raise TrainingRefusal("event training input parts must not be empty")
     effective_batch = min(batch_size, samples)
     sample_elements = contract.encoder.n_steps * contract.encoder.channels
     sample_tensors = 4 * effective_batch * sample_elements
@@ -75,7 +78,7 @@ def admit_event_training_input(
     encoding = sample_elements
     accounted = sample_tensors + collation + encoding
     if accounted > limit:
-        raise ValueError(
+        raise TrainingRefusal(
             f"event input buffers require {accounted} bytes, exceeding the operator "
             f"limit of {limit}; reduce batch_size or timesteps, or ask the operator "
             f"to configure {EVENT_INPUT_LIMIT_ENV}"

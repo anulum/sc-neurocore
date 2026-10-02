@@ -114,9 +114,8 @@ def _stream_metrics(
                 return
         except queue.Empty:
             if job.status in ("completed", "stopped", "failed", "interrupted"):
-                # A proxy without a manager already handed its end over. With
-                # one, the proxy can finish before the record seals: returning
-                # silently left the browser's run "running" for good.
+                # Wait for the durable record: a proxy can finish before it seals,
+                # leaving the browser running if this stream ends silently.
                 finished_polls += 1
                 if job_manager is not None and finished_polls <= PROXY_TERMINAL_GRACE_POLLS:
                     continue

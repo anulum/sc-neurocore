@@ -26,6 +26,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from sc_neurocore.datasets.refusals import DatasetRefusal
+
 from .manifest import EventDatasetManifest
 
 SPLIT_SCHEMA = "sc-neurocore.event-dataset-split.v1"
@@ -123,21 +125,21 @@ def group_split(
     names = list(fractions)
     shares = [float(fractions[name]) for name in names]
     if len(names) < 2:
-        raise ValueError("a split needs at least two parts")
+        raise DatasetRefusal("a split needs at least two parts")
     if not all(math.isfinite(share) and share > 0 for share in shares):
-        raise ValueError(f"every share must be positive and finite; got {dict(fractions)}")
+        raise DatasetRefusal(f"every share must be positive and finite; got {dict(fractions)}")
     if not math.isclose(sum(shares), 1.0, rel_tol=0.0, abs_tol=1e-9):
-        raise ValueError(f"the shares sum to {sum(shares)}, not 1")
+        raise DatasetRefusal(f"the shares sum to {sum(shares)}, not 1")
     members: dict[str, list[int]] = {}
     for position, sample in enumerate(manifest.samples):
         if sample.split == source_split:
             members.setdefault(sample.group, []).append(position)
     if not members:
-        raise ValueError(
+        raise DatasetRefusal(
             f"the manifest has no {source_split!r} samples; its splits are {manifest.splits()}"
         )
     if len(members) < len(names):
-        raise ValueError(
+        raise DatasetRefusal(
             f"{len(members)} groups cannot fill {len(names)} splits without cutting a group"
         )
     total = sum(len(positions) for positions in members.values())
@@ -192,7 +194,7 @@ def leaked_groups(manifest: EventDatasetManifest, plan: SplitPlan) -> tuple[str,
         When the plan was drawn from another manifest.
     """
     if plan.manifest_digest != manifest.digest:
-        raise ValueError("the plan was drawn from another manifest")
+        raise DatasetRefusal("the plan was drawn from another manifest")
     seen: dict[str, set[str]] = {}
     for name, positions in plan.assignment.items():
         for position in positions:
@@ -252,18 +254,18 @@ def split_plan_from_dict(data: Mapping[str, Any]) -> SplitPlan:
         "groups",
     }
     if not isinstance(data, Mapping) or set(data) != keys:
-        raise ValueError(f"a split plan has exactly the fields {sorted(keys)}")
+        raise DatasetRefusal(f"a split plan has exactly the fields {sorted(keys)}")
     if data["schema"] != SPLIT_SCHEMA:
-        raise ValueError(f"split schema {data['schema']!r} is not {SPLIT_SCHEMA!r}")
+        raise DatasetRefusal(f"split schema {data['schema']!r} is not {SPLIT_SCHEMA!r}")
     digest = _split_text(data["manifest_digest"], "manifest_digest")
     if not digest.startswith("sha256:") or len(digest) != 71:
-        raise ValueError("manifest_digest must be a sha256 digest")
+        raise DatasetRefusal("manifest_digest must be a sha256 digest")
     if any(character not in "0123456789abcdef" for character in digest[7:]):
-        raise ValueError("manifest_digest must be a sha256 digest")
+        raise DatasetRefusal("manifest_digest must be a sha256 digest")
     source = _split_text(data["source_split"], "source_split")
     seed = data["seed"]
     if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed < 2**32:
-        raise ValueError("seed must be an integer in [0, 2**32)")
+        raise DatasetRefusal("seed must be an integer in [0, 2**32)")
     fractions = _split_fractions(data["fractions"])
     names = {name for name, _ in fractions}
     assignments = _split_mapping(data["assignment"], names, "assignment")
@@ -275,15 +277,15 @@ def split_plan_from_dict(data: Mapping[str, Any]) -> SplitPlan:
         positions: list[int] = []
         for position in assignments[name]:
             if isinstance(position, bool) or not isinstance(position, int) or position < 0:
-                raise ValueError("sample positions must be non-negative integers")
+                raise DatasetRefusal("sample positions must be non-negative integers")
             if position in seen:
-                raise ValueError("each sample position must appear exactly once")
+                raise DatasetRefusal("each sample position must appear exactly once")
             seen.add(position)
             positions.append(position)
         assignment[name] = tuple(positions)
         labels = tuple(_split_text(group, "group") for group in declared_groups[name])
         if len(set(labels)) != len(labels):
-            raise ValueError("group declarations must not contain duplicates")
+            raise DatasetRefusal("group declarations must not contain duplicates")
         groups[name] = labels
     return SplitPlan(digest, source, seed, fractions, assignment, groups)
 
@@ -312,68 +314,68 @@ def validate_split_plan(manifest: EventDatasetManifest, plan: SplitPlan) -> None
     """
     checked = split_plan_from_dict(plan.to_dict())
     if checked.manifest_digest != manifest.digest:
-        raise ValueError("the plan was drawn from another manifest")
+        raise DatasetRefusal("the plan was drawn from another manifest")
     source = {
         position
         for position, sample in enumerate(manifest.samples)
         if sample.split == checked.source_split
     }
     if not source:
-        raise ValueError("the manifest has no samples in the plan's source split")
+        raise DatasetRefusal("the manifest has no samples in the plan's source split")
     selected = {position for positions in checked.assignment.values() for position in positions}
     if selected != source:
-        raise ValueError("the plan must contain every source sample once and no other samples")
+        raise DatasetRefusal("the plan must contain every source sample once and no other samples")
     for name, positions in checked.assignment.items():
         if not positions:
-            raise ValueError("every split must contain samples")
+            raise DatasetRefusal("every split must contain samples")
         actual = {manifest.samples[position].group for position in positions}
         if actual != set(checked.groups[name]):
-            raise ValueError("declared groups must match the assigned samples")
+            raise DatasetRefusal("declared groups must match the assigned samples")
     if leaked_groups(manifest, checked):
-        raise ValueError("a sample group occurs in more than one split")
+        raise DatasetRefusal("a sample group occurs in more than one split")
 
 
 def _split_text(value: object, field: str) -> str:
     if not isinstance(value, str) or not value or not value.strip():
-        raise ValueError(f"{field} must be a non-empty string")
+        raise DatasetRefusal(f"{field} must be a non-empty string")
     return value
 
 
 def _split_fractions(value: object) -> tuple[tuple[str, float], ...]:
     if not isinstance(value, list) or len(value) < 2:
-        raise ValueError("fractions must declare at least two splits")
+        raise DatasetRefusal("fractions must declare at least two splits")
     result: list[tuple[str, float]] = []
     names: set[str] = set()
     for pair in value:
         if not isinstance(pair, list) or len(pair) != 2:
-            raise ValueError("each fraction must contain a split name and share")
+            raise DatasetRefusal("each fraction must contain a split name and share")
         name = _split_text(pair[0], "split name")
         share = pair[1]
         if name in names:
-            raise ValueError("split names must be unique")
+            raise DatasetRefusal("split names must be unique")
         if isinstance(share, bool) or not isinstance(share, (int, float)):
-            raise ValueError("every share must be a positive finite number")
+            raise DatasetRefusal("every share must be a positive finite number")
         try:
             number = float(share)
         except OverflowError as exc:
-            raise ValueError("every share must be a positive finite number") from exc
+            raise DatasetRefusal("every share must be a positive finite number") from exc
         if not math.isfinite(number) or number <= 0:
-            raise ValueError("every share must be a positive finite number")
+            raise DatasetRefusal("every share must be a positive finite number")
         names.add(name)
         result.append((name, number))
     if not math.isclose(sum(share for _, share in result), 1.0, rel_tol=0.0, abs_tol=1e-9):
-        raise ValueError("the shares must sum to one")
+        raise DatasetRefusal("the shares must sum to one")
     return tuple(result)
 
 
 def _split_mapping(value: object, names: set[str], field: str) -> dict[str, list[object]]:
     if not isinstance(value, Mapping) or set(value) != names:
-        raise ValueError(f"{field} must have exactly the declared split names")
+        raise DatasetRefusal(f"{field} must have exactly the declared split names")
     result: dict[str, list[object]] = {}
     for name in names:
         items = value[name]
         if not isinstance(items, list):
-            raise ValueError(f"{field} entries must be lists")
+            raise DatasetRefusal(f"{field} entries must be lists")
         result[name] = items
     return result
 

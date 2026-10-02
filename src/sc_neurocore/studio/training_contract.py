@@ -26,20 +26,22 @@ so the two cannot disagree.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-import math
 from typing import Any
 
+from sc_neurocore.datasets.refusals import DatasetRefusal
+from sc_neurocore.studio.event_training_budget import admit_event_training_input
 from sc_neurocore.studio.event_training_contract import (
     EventTrainingContract,
     resolve_event_training_contract,
 )
-from sc_neurocore.studio.event_training_budget import admit_event_training_input
 from sc_neurocore.studio.training_preregistration import (
     TrainingPreregistration,
     resolve_training_preregistration,
 )
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 
 #: Contract version. Widening the supported sets is backwards compatible;
 #: changing what a field means is not.
@@ -105,7 +107,7 @@ _DEFAULTS: Mapping[str, object] = {
 }
 
 
-class TrainingConfigError(ValueError):
+class TrainingConfigError(TrainingRefusal):
     """Raised when a training request names something the Studio cannot run.
 
     Attributes
@@ -119,6 +121,7 @@ class TrainingConfigError(ValueError):
     """
 
     def __init__(self, field: str, reason: str, supported: Sequence[str] = ()) -> None:
+        reason = reason.encode("utf-8", "backslashreplace").decode("utf-8")
         detail = f"{field}: {reason}"
         if supported:
             detail = f"{detail} Supported: {', '.join(supported)}."
@@ -287,16 +290,24 @@ def resolve_training_config(payload: Mapping[str, Any]) -> ResolvedTrainingConfi
                 payload.get("event_data"), dataset=dataset, timesteps=timesteps
             )
             admit_event_training_input(event_data, batch_size)
-        except (ValueError, KeyError, TypeError, OverflowError) as exc:
+        except (TrainingRefusal, DatasetRefusal) as exc:
             raise TrainingConfigError("event_data", str(exc)) from exc
+        except (ValueError, KeyError, TypeError, OverflowError) as exc:
+            raise TrainingConfigError(
+                "event_data", "the event data declaration is malformed."
+            ) from exc
     elif payload.get("event_data") is not None:
         raise TrainingConfigError(
             "event_data", "static datasets do not accept event data contracts."
         )
     try:
         preregistration = resolve_training_preregistration(payload.get("preregistration"))
-    except ValueError as exc:
+    except TrainingRefusal as exc:
         raise TrainingConfigError("preregistration", str(exc)) from exc
+    except (ValueError, KeyError, TypeError, OverflowError) as exc:
+        raise TrainingConfigError(
+            "preregistration", "the criterion declaration is malformed."
+        ) from exc
     if model_kind != "qcfs_conversion" and (
         preregistration is not None and preregistration.metric == "conversion_accuracy_drop"
     ):
@@ -439,10 +450,14 @@ def _positive_int(payload: Mapping[str, Any], key: str) -> int:
 
 
 def _positive_float(payload: Mapping[str, Any], key: str) -> float:
+    """Return a positive finite float, refusing unrepresentable numeric inputs."""
     value = _value(payload, key)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TrainingConfigError(key, f"must be a number, got {type(value).__name__}.")
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError as exc:
+        raise TrainingConfigError(key, "must be a positive finite number.") from exc
     if not math.isfinite(number) or number <= 0.0:
         raise TrainingConfigError(key, f"must be a positive finite number, got {value!r}.")
     return number
@@ -458,7 +473,10 @@ def _non_negative_float(payload: Mapping[str, Any], key: str) -> float:
     value = _value(payload, key)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TrainingConfigError(key, f"must be a number, got {type(value).__name__}.")
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError as exc:
+        raise TrainingConfigError(key, "must be a finite number at or above 0.") from exc
     if not math.isfinite(number) or number < 0.0:
         raise TrainingConfigError(key, f"must be a finite number at or above 0, got {value!r}.")
     return number

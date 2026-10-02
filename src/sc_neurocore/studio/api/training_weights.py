@@ -10,17 +10,22 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Callable
+from functools import wraps
+from typing import ParamSpec, TypeVar
+
 from fastapi import APIRouter, HTTPException, Request
 
 from sc_neurocore.studio.api.runtime import StudioApiContext
-from sc_neurocore.studio.api.training_weight_jobs import (
-    RESTORE_METADATA_SEED,
-    RESTORE_WEIGHTS_SEED,
-)
 from sc_neurocore.studio.api.schemas import (
     StudioTrainingWeightAttachRequest,
     StudioTrainingWeightLiveAttachRequest,
     StudioTrainingWeightRestoreRequest,
+)
+from sc_neurocore.studio.api.training_weight_jobs import (
+    RESTORE_METADATA_SEED,
+    RESTORE_WEIGHTS_SEED,
 )
 from sc_neurocore.studio.platform import (
     STUDIO_TRAINING_WEIGHT_RESTORE_OWNER,
@@ -29,11 +34,38 @@ from sc_neurocore.studio.platform import (
     StudioJobArtifactUnavailable,
     build_training_weight_restore_plan,
 )
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
 from sc_neurocore.studio.training import (
     get_training_status,
     request_live_training_weight_attach,
     start_training_attach,
 )
+from sc_neurocore.studio.training_refusals import TrainingRefusal
+
+_LOGGER = logging.getLogger(__name__)
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+def _training_request(function: Callable[_P, _R]) -> Callable[_P, _R]:
+    """Preserve deliberate refusals and keep generated diagnostics server-side."""
+
+    @wraps(function)
+    def invoke(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        """Run a lifecycle request through its typed refusal boundary."""
+        try:
+            return function(*args, **kwargs)
+        except HTTPException:
+            raise
+        except (TrainingRefusal, StudioJobRefused) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from None
+        except (ValueError, TypeError, KeyError):
+            raise HTTPException(status_code=422, detail="Invalid input") from None
+        except Exception:
+            _LOGGER.exception("Training weight lifecycle request failed")
+            raise HTTPException(status_code=500, detail="Internal error") from None
+
+    return invoke
 
 
 def build_training_weights_router(context: StudioApiContext) -> APIRouter:
@@ -43,6 +75,7 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
     studio_job_manager = context.studio_job_manager
 
     @router.post("/api/studio/training/weight-restore")
+    @_training_request
     def api_studio_training_weight_restore(
         restore_request: StudioTrainingWeightRestoreRequest,
         request: Request,
@@ -70,15 +103,12 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
         source_status = status_payload.get("status")
         if not isinstance(source_status, str) or not source_status:
             raise HTTPException(status_code=409, detail="training_status_unavailable")
-        try:
-            restore_plan = build_training_weight_restore_plan(
-                source_job_id=source_job_id,
-                source_status=source_status,
-                weight_checkpoint=weight_checkpoint,
-                expected_config_sha256=restore_request.expected_config_sha256,
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        restore_plan = build_training_weight_restore_plan(
+            source_job_id=source_job_id,
+            source_status=source_status,
+            weight_checkpoint=weight_checkpoint,
+            expected_config_sha256=restore_request.expected_config_sha256,
+        )
         try:
             metadata_payload = studio_job_manager.read_artifact(
                 source_job_id,
@@ -131,6 +161,7 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
         raise HTTPException(status_code=500, detail="studio_job_failed")
 
     @router.post("/api/studio/training/weight-restore/attach")
+    @_training_request
     def api_studio_training_weight_restore_attach(
         attach_request: StudioTrainingWeightAttachRequest,
     ) -> dict[str, object]:
@@ -148,16 +179,13 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
         worker writes a path-free ``studio.training.weight-restore-attach.v1``
         evidence artifact; the deserialized tensors never reach the response.
         """
-        try:
-            result = start_training_attach(
-                attach_request.source_job_id,
-                dict(attach_request.config),
-                studio_job_manager,
-                expected_config_sha256=attach_request.expected_config_sha256,
-                mode=attach_request.mode,
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        result = start_training_attach(
+            attach_request.source_job_id,
+            dict(attach_request.config),
+            studio_job_manager,
+            expected_config_sha256=attach_request.expected_config_sha256,
+            mode=attach_request.mode,
+        )
         error = result.get("error")
         if error == "training_job_not_found":
             raise HTTPException(status_code=404, detail=error)
@@ -174,6 +202,7 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
         return result
 
     @router.post("/api/studio/training/weight-restore/attach/live")
+    @_training_request
     def api_studio_training_weight_restore_attach_live(
         attach_request: StudioTrainingWeightLiveAttachRequest,
     ) -> dict[str, object]:
@@ -187,15 +216,12 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
         artifact. An incompatible attach is rejected without interrupting the
         running job. The response is returned immediately on delivery.
         """
-        try:
-            result = request_live_training_weight_attach(
-                attach_request.target_job_id,
-                attach_request.source_job_id,
-                studio_job_manager,
-                expected_config_sha256=attach_request.expected_config_sha256,
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        result = request_live_training_weight_attach(
+            attach_request.target_job_id,
+            attach_request.source_job_id,
+            studio_job_manager,
+            expected_config_sha256=attach_request.expected_config_sha256,
+        )
         error = result.get("error")
         if error in {"training_job_not_found", "source_job_not_found"}:
             raise HTTPException(status_code=404, detail=error)

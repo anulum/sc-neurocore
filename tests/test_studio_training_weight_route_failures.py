@@ -33,13 +33,11 @@ class _RestorePlan:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a valid path-free restore-plan payload."""
-
         return {}
 
 
 def _build_client(tmp_path: Path) -> TestClient:
     """Return a TestClient backed by an isolated Studio job root."""
-
     application = create_app(
         StudioRuntimeSettings(
             audit_log_path=str(tmp_path / "audit" / "studio.jsonl"),
@@ -52,7 +50,6 @@ def _build_client(tmp_path: Path) -> TestClient:
 
 def _patch_restore_prerequisites(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch source metadata so restore tests reach artifact or worker handling."""
-
     monkeypatch.setattr(
         training_weights,
         "get_training_status",
@@ -70,7 +67,6 @@ def test_weight_restore_rejects_missing_source_status(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A malformed stored status maps to a stable conflict response."""
-
     monkeypatch.setattr(
         training_weights,
         "get_training_status",
@@ -104,7 +100,6 @@ def test_weight_restore_maps_artifact_read_failures(
     expected_detail: str,
 ) -> None:
     """Confined artifact failures never leak internal paths or exception text."""
-
     _patch_restore_prerequisites(monkeypatch)
 
     def _read_artifact(
@@ -142,7 +137,6 @@ def test_weight_restore_maps_worker_terminal_failures(
     expected_detail: str,
 ) -> None:
     """Every non-success worker terminal state has a stable HTTP mapping."""
-
     _patch_restore_prerequisites(monkeypatch)
 
     def _read_artifact(
@@ -234,7 +228,7 @@ def test_warm_attach_maps_backend_failures(
 @pytest.mark.parametrize(
     ("result", "raises_value_error", "expected_status", "expected_detail"),
     [
-        ({}, True, 422, "invalid_expected_digest"),
+        ({}, True, 422, "Invalid input"),
         (
             {"error": "training_weight_artifact_not_found"},
             False,

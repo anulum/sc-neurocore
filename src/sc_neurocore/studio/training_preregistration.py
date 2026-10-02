@@ -24,6 +24,8 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from sc_neurocore.studio.training_refusals import TrainingRefusal
+
 PREREGISTRATION_SCHEMA_VERSION = "studio.training-preregistration.v1"
 
 #: Judged metrics and the direction in which each one passes.
@@ -152,36 +154,36 @@ def resolve_training_preregistration(value: object) -> TrainingPreregistration |
     if value is None:
         return None
     if not isinstance(value, Mapping):
-        raise ValueError("a preregistered criterion must be an object.")
+        raise TrainingRefusal("a preregistered criterion must be an object.")
     unknown = sorted(str(key) for key in set(value) - _FIELDS)
     if unknown:
-        raise ValueError(f"unknown preregistration field(s) {', '.join(unknown)}.")
+        raise TrainingRefusal(f"unknown preregistration field(s) {', '.join(unknown)}.")
     version = value.get("schema_version", PREREGISTRATION_SCHEMA_VERSION)
     if version != PREREGISTRATION_SCHEMA_VERSION:
-        raise ValueError(f"{version!r} is not the preregistration contract this build reads.")
+        raise TrainingRefusal(f"{version!r} is not the preregistration contract this build reads.")
     metric = value.get("metric")
     if not isinstance(metric, str) or metric not in PREREGISTERED_METRICS:
-        raise ValueError(
+        raise TrainingRefusal(
             f"metric must be one of {', '.join(PREREGISTERED_METRICS)}, got {metric!r}."
         )
     threshold = value.get("threshold")
     if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
-        raise ValueError("threshold must be a number.")
+        raise TrainingRefusal("threshold must be a number.")
     bound = float(threshold)
     if not math.isfinite(bound) or bound < 0.0 or (metric in _FRACTION_METRICS and bound > 1.0):
-        raise ValueError(
+        raise TrainingRefusal(
             "threshold must be finite, in [0, 1] for val_accuracy and "
             "conversion_accuracy_drop and non-negative for val_loss."
         )
     rationale = value.get("rationale", "")
     if not isinstance(rationale, str) or len(rationale) > RATIONALE_MAX_CHARACTERS:
-        raise ValueError(
+        raise TrainingRefusal(
             f"rationale must be text of at most {RATIONALE_MAX_CHARACTERS} characters."
         )
     resolved = TrainingPreregistration(metric=metric, threshold=bound, rationale=rationale)
     declared = value.get("sha256")
     if declared is not None and declared != resolved.sha256:
-        raise ValueError("the stored preregistration digest does not match its criterion.")
+        raise TrainingRefusal("the stored preregistration digest does not match its criterion.")
     return resolved
 
 

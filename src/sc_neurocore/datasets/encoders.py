@@ -28,6 +28,8 @@ from typing import Any, Literal
 import numpy as np
 import numpy.typing as npt
 
+from sc_neurocore.datasets.refusals import DatasetRefusal
+
 from .encoding import latency_encode, poisson_encode
 
 ENCODER_SCHEMA = "sc-neurocore.input-encoder.v1"
@@ -40,12 +42,12 @@ def _digest(declaration: dict[str, Any]) -> str:
 
 def _positive_int(name: str, value: int) -> None:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
-        raise ValueError(f"{name} must be a positive integer; got {value!r}")
+        raise DatasetRefusal(f"{name} must be a positive integer; got {value!r}")
 
 
 def _positive_finite(name: str, value: float) -> None:
     if not (math.isfinite(value) and value > 0):
-        raise ValueError(f"{name} must be positive and finite; got {value!r}")
+        raise DatasetRefusal(f"{name} must be positive and finite; got {value!r}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +85,7 @@ class EventBinning:
         _positive_int("width", self.width)
         _positive_int("height", self.height)
         if self.polarity not in ("separate", "merge"):
-            raise ValueError(f"polarity must be 'separate' or 'merge'; got {self.polarity!r}")
+            raise DatasetRefusal(f"polarity must be 'separate' or 'merge'; got {self.polarity!r}")
 
     @property
     def channels(self) -> int:
@@ -135,21 +137,21 @@ class EventBinning:
         """
         array = np.asarray(events, dtype=np.float64)
         if array.ndim != 2 or array.shape[1] != 4:
-            raise ValueError(f"events must have shape (N, 4); got {array.shape}")
+            raise DatasetRefusal(f"events must have shape (N, 4); got {array.shape}")
         spikes = np.zeros((self.n_steps, self.channels), dtype=bool)
         if array.shape[0] == 0:
             return spikes
         x, y, polarity, time_ms = array.T
         if not np.all(np.isfinite(array)):
-            raise ValueError("events hold a non-finite value")
+            raise DatasetRefusal("events hold a non-finite value")
         if np.any(x != np.floor(x)) or np.any(y != np.floor(y)):
-            raise ValueError("pixel addresses must be whole numbers")
+            raise DatasetRefusal("pixel addresses must be whole numbers")
         if np.any((x < 0) | (x >= self.width) | (y < 0) | (y >= self.height)):
-            raise ValueError(f"an event lies outside the {self.width} x {self.height} sensor")
+            raise DatasetRefusal(f"an event lies outside the {self.width} x {self.height} sensor")
         if np.any((polarity != 0) & (polarity != 1)):
-            raise ValueError("polarity must be 0 or 1")
+            raise DatasetRefusal("polarity must be 0 or 1")
         if np.any(time_ms < 0):
-            raise ValueError("an event has a negative time")
+            raise DatasetRefusal("an event has a negative time")
         step = np.floor(time_ms / self.dt_ms).astype(np.int64)
         inside = step < self.n_steps
         channel = y.astype(np.int64) * self.width + x.astype(np.int64)
@@ -273,7 +275,9 @@ def encoder_from_declaration(declaration: dict[str, Any]) -> InputEncoder:
         exactly what the rebuilt encoder declares.
     """
     if declaration.get("schema") != ENCODER_SCHEMA:
-        raise ValueError(f"encoder schema {declaration.get('schema')!r} is not {ENCODER_SCHEMA!r}")
+        raise DatasetRefusal(
+            f"encoder schema {declaration.get('schema')!r} is not {ENCODER_SCHEMA!r}"
+        )
     kind = declaration.get("encoder")
     encoder: InputEncoder
     if kind == "event-binning":
@@ -295,9 +299,9 @@ def encoder_from_declaration(declaration: dict[str, Any]) -> InputEncoder:
             n_steps=int(declaration["n_steps"]), tau=float(declaration["tau"])
         )
     else:
-        raise ValueError(f"unknown encoder {kind!r}")
+        raise DatasetRefusal(f"unknown encoder {kind!r}")
     if encoder.declaration() != declaration:
-        raise ValueError(
+        raise DatasetRefusal(
             "the declaration does not match what this version of the encoder does; "
             "it cannot be rebuilt faithfully"
         )

@@ -442,6 +442,12 @@ Returns:
 `GET /api/training/status/{job_id}` reports `preregistration_verdict` for a
 completed run that declared a criterion, and `null` otherwise.
 
+Invalid configurations are refused before a job is allocated. The `422` detail
+identifies the field and preserves deliberately written validation reasons.
+Generated conversion and parser diagnostics become a fixed malformed-declaration
+reason. Numeric values too large to represent as finite learning-rate or
+gradient-clipping settings are configuration refusals as well.
+
 ### GET /api/training/checkpoint/{job_id}
 
 Returns a `studio.training.checkpoint.v1` payload:
@@ -548,7 +554,12 @@ job ID and artifacts:
 
 Error responses: `404` when the source job is unknown, `409` when the job
 published no weight checkpoint, and `422` when the restore plan or config digest
-is invalid. The evidence object can be supplied to
+is invalid. These lifecycle routes preserve deliberately written training
+refusals; unmarked input faults return `422` with `Invalid input`. Unreadable
+stored ledger data returns `500` with `Internal error`, retaining the data for
+operator repair. HTTP field validation retains its normal FastAPI error shape.
+Worker failures keep the fixed `studio_job_failed` response.
+The evidence object can be supplied to
 `POST /api/studio/evidence/bundle` under `weight_restore_results` to preserve it
 in an evidence bundle.
 
@@ -591,6 +602,8 @@ beta/threshold flags), so warm-start compatibility is independent of the
 learning rate, epoch count, batch size, or timestep count. Error responses:
 `404` when the source job is unknown, `409` when it published no weight
 checkpoint, and `422` when the restore plan or config digest is invalid. The
+same authored-refusal and generic input/server-error policy as weight restore
+applies, including to event-manifest and preregistration admission. The
 attach evidence can be supplied to `POST /api/studio/evidence/bundle` under
 `weight_restore_attach_results`.
 
@@ -636,7 +649,8 @@ immediately on delivery:
 Error responses: `404` when the target or source job is unknown, `409` when the
 target is not running, the source published no weight checkpoint, or the
 architectures are incompatible, and `422` when the restore plan or config digest
-is invalid. Because the attach is applied asynchronously at the next epoch
+is invalid. The same authored-refusal and generic input/server-error policy
+applies. Because the attach is applied asynchronously at the next epoch
 boundary, the outcome is surfaced through the training metric stream (`attach`
 or `attach_rejected` events) and the resulting evidence artifact rather than the
 immediate response.

@@ -32,6 +32,7 @@ from sc_neurocore.studio.platform import (
     training_architecture_fingerprint,
     write_training_weight_checkpoint,
 )
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.training_process import run_training_process_task
 from sc_neurocore.studio.training_contract import resolve_training_config
 
@@ -175,10 +176,13 @@ def test_attach_incompatible_architecture_fails_closed(tmp_path: Path) -> None:
     assert response.status_code == 200, response.text
     attach_job_id = response.json()["job_id"]
     completed = manager.wait(attach_job_id, timeout_seconds=120.0)
-    # The strict load fails the job before training; the path-free record redacts
-    # the detail to the exception type, so no attach evidence is written.
     assert completed.status == "failed"
-    assert completed.error == "ValueError"
+    assert completed.error is not None
+    assert "incompatible with the target architecture" in completed.error
+    public_status = client.get(f"/api/training/status/{attach_job_id}")
+    assert public_status.status_code == 200, public_status.text
+    assert public_status.json()["error"] == GENERIC_JOB_FAILURE
+    assert completed.to_public_dict()["error"] == GENERIC_JOB_FAILURE
     with pytest.raises(KeyError):
         manager.read_artifact(attach_job_id, "training/weight-restore-attach.json")
 

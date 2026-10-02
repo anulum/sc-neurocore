@@ -1,8 +1,8 @@
 # Neuromorphic Datasets
 
 **Module:** `sc_neurocore.datasets`
-**Source:** `src/sc_neurocore/datasets/` — 6 files, 1593 lines
-**Status (v3.16.0):** 18 public symbols; 98 tests across the dataset and
+**Source:** `src/sc_neurocore/datasets/` — 8 files, 1832 lines
+**Status (v3.16.0):** 18 package-level public symbols; 153 collected tests across the dataset and
 `dataset` CLI test files; NumPy and h5py I/O with optional native decoding of
 N-MNIST binary records through Go, Rust, Mojo or Julia, no synaptic kinetics. The "Poisson" encoder is actually
 Bernoulli (§3.1, same wording issue as `network/stimulus.PoissonInput`).
@@ -37,6 +37,13 @@ enough to rebuild them (§3.3).
 
 Each loader accepts `synthetic=True` to bypass disk reads — useful
 for unit tests and for CI where the real archives are not stored.
+
+Deliberate manifest, split and encoder validation messages raise
+`sc_neurocore.datasets.refusals.DatasetRefusal`, a `ValueError` subclass.
+Existing `except ValueError` callers remain compatible. Conversion and decoder
+faults retain their original types. Studio training admission preserves only
+marked validation reasons and maps unmarked parser faults to a fixed refusal;
+Python-generated exception text is not included in HTTP responses.
 
 ---
 

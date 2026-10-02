@@ -60,26 +60,19 @@ from sc_neurocore.studio.training_resume import (
     dataset_fingerprint,
 )
 
-# Whether PyTorch is installed, found without importing it: every process that
-# imports the Studio routers imports this module, and importing Torch there
-# starts its thread pools and maps its libraries. An analysis worker runs under
-# an address-space limit it would then spend on a library it never calls.
+# Router imports must not load Torch: its pools and mappings spend the address-space
+# budget of analysis workers that never use it.
 HAS_TORCH = importlib.util.find_spec("torch") is not None
 
 
-# One owner for the supported vocabularies: the contract that refuses an
-# unsupported choice is the same list the capability routes advertise, so the
-# Studio cannot offer a name its runner would reject.
+# Capability routes and request admission share the supported vocabulary.
 _SURROGATES = SUPPORTED_SURROGATES
 _CELL_TYPES = SUPPORTED_CELL_TYPES
 
 _PERSISTED_TRAINING_EVENT_TYPES = frozenset({"config", "epoch", "completed", "stopped", "error"})
 
-# Python, NumPy and Torch generators are process-global. Two training runs in
-# one process that draw from them at the same time disturb each other, and
-# neither can then be replayed or resumed exactly, so a process trains one job
-# at a time. The process-backed Studio route runs each job in its own process
-# and never waits here; the legacy in-process thread and direct callers do.
+# Process-global generators make concurrent legacy runs unreplayable. Serialize
+# them; process-backed Studio jobs already have independent runtimes.
 _GLOBAL_GENERATORS = threading.Lock()
 
 
@@ -135,9 +128,7 @@ class TrainingJob:
         initial_state_dict: Mapping[str, object] | None = None,
         resume_state: TrainingResumeState | None = None,
     ) -> None:
-        # Resolved here so an unrunnable job cannot be constructed at all: a
-        # refusal after the artifact machinery has started produces a second,
-        # confusing error about a missing artifact instead of the real one.
+        # Refuse unrunnable configuration before artifact machinery can mask its reason.
         self._resume_state = resume_state
         self.resolved_config = resolve_training_config(config)
         if self.resolved_config.model_kind != "spiking" and (

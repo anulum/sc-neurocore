@@ -20,6 +20,7 @@ from typing import cast
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.jobs import StudioJobArtifact, StudioJobContext
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 
 STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION = "studio.training.weight-checkpoint.v1"
 STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION = "studio.training.weight-restore-plan.v1"
@@ -77,7 +78,6 @@ class StudioTrainingWeightCheckpoint:
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return a path-free JSON-compatible checkpoint summary."""
-
         return {
             "architecture": self.architecture,
             "config_sha256": self.config_sha256,
@@ -138,7 +138,6 @@ class StudioTrainingWeightRestorePlan:
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return a JSON-compatible restore plan without local paths."""
-
         return {
             "architecture": self.architecture,
             "artifact_route_template": self.artifact_route_template,
@@ -197,7 +196,6 @@ class StudioTrainingWeightMaterialization:
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return path-free materialization metadata without tensor payloads."""
-
         return {
             "architecture": self.architecture,
             "config_sha256": self.config_sha256,
@@ -249,11 +247,10 @@ def write_training_weight_checkpoint(
         If the payload is empty, metadata is not portable JSON, or the context
         rejects either artifact.
     """
-
     if not weights_payload:
-        raise ValueError("Training weight checkpoint payload is empty.")
+        raise TrainingRefusal("Training weight checkpoint payload is empty.")
     if parameter_count < 0:
-        raise ValueError("Training weight checkpoint parameter count is invalid.")
+        raise TrainingRefusal("Training weight checkpoint parameter count is invalid.")
     config_payload = _json_object(config, "Training weight checkpoint config must be JSON.")
     metrics_payload = (
         None
@@ -321,7 +318,6 @@ def build_training_weight_restore_plan(
     ValueError
         If source metadata is missing or the weight checkpoint is invalid.
     """
-
     metadata = validate_training_weight_checkpoint_metadata(
         weight_checkpoint,
         expected_config_sha256=expected_config_sha256,
@@ -376,7 +372,6 @@ def materialize_training_weight_payload(
         If the restore plan, metadata payload, artifact digests, artifact
         sizes, or loader output is invalid.
     """
-
     plan = _validate_restore_plan(restore_plan)
     metadata_artifact = _required_artifact_dict(plan, "metadata_artifact")
     weights_artifact = _required_artifact_dict(plan, "weights_artifact")
@@ -393,7 +388,7 @@ def materialize_training_weight_payload(
     if _required_artifact_dict(metadata, "metadata_artifact") != metadata_artifact:
         raise ValueError("Training weight metadata artifact does not match restore plan.")
     if _required_artifact_dict(metadata, "weights_artifact") != weights_artifact:
-        raise ValueError("Training weight artifact does not match restore plan.")
+        raise TrainingRefusal("Training weight artifact does not match restore plan.")
 
     state_dict = _loaded_state_dict(trusted_loader(weights_payload))
     return StudioTrainingWeightMaterialization(
@@ -441,7 +436,6 @@ def build_training_weight_restore_evidence(
     ValueError
         If ``source_status`` is empty.
     """
-
     return {
         "schema_version": STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION,
         "evidence_classification": STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION,
@@ -473,17 +467,16 @@ def validate_training_weight_restore_evidence(
         If the schema, classification, status, source identifiers, or embedded
         materialization summary are invalid.
     """
-
     evidence = _json_object(payload, "Training weight restore evidence must be JSON.")
     if evidence.get("schema_version") != STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION:
-        raise ValueError("Training weight restore evidence schema is unsupported.")
+        raise TrainingRefusal("Training weight restore evidence schema is unsupported.")
     if (
         evidence.get("evidence_classification")
         != STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION
     ):
-        raise ValueError("Training weight restore evidence classification is invalid.")
+        raise TrainingRefusal("Training weight restore evidence classification is invalid.")
     if evidence.get("status") != "completed":
-        raise ValueError("Training weight restore evidence must be completed.")
+        raise TrainingRefusal("Training weight restore evidence must be completed.")
     _required_json_string(evidence, "source_job_id")
     _required_json_string(evidence, "source_status")
     _validate_materialization_summary(evidence.get("materialization"))
@@ -511,7 +504,6 @@ def training_architecture_fingerprint(config: Mapping[str, object]) -> str:
     str
         SHA-256 hex digest of the canonical architecture field projection.
     """
-
     raw_hidden = config.get("hidden", [128])
     # An empty list is the direct input-to-output network, not the default width.
     hidden: list[JsonValue] = (
@@ -581,13 +573,12 @@ def build_training_weight_restore_attach_evidence(
     ValueError
         If the mode, target identifiers, or fingerprint are invalid.
     """
-
     if mode not in STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES:
-        raise ValueError("Training weight restore attach mode is unsupported.")
+        raise TrainingRefusal("Training weight restore attach mode is unsupported.")
     if target_parameter_count < 0:
-        raise ValueError("Training weight restore attach parameter count is invalid.")
+        raise TrainingRefusal("Training weight restore attach parameter count is invalid.")
     if not _SHA256_HEX_PATTERN.fullmatch(architecture_fingerprint):
-        raise ValueError("Training weight restore attach fingerprint is invalid.")
+        raise TrainingRefusal("Training weight restore attach fingerprint is invalid.")
     return {
         "schema_version": STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION,
         "evidence_classification": STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION,
@@ -625,53 +616,53 @@ def validate_training_weight_restore_attach_evidence(
         If the schema, classification, status, mode, target identifiers,
         fingerprint, or embedded materialization summary are invalid.
     """
-
     evidence = _json_object(payload, "Training weight restore attach evidence must be JSON.")
     if evidence.get("schema_version") != STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION:
-        raise ValueError("Training weight restore attach evidence schema is unsupported.")
+        raise TrainingRefusal("Training weight restore attach evidence schema is unsupported.")
     if (
         evidence.get("evidence_classification")
         != STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION
     ):
-        raise ValueError("Training weight restore attach evidence classification is invalid.")
+        raise TrainingRefusal("Training weight restore attach evidence classification is invalid.")
     if evidence.get("status") != "completed":
-        raise ValueError("Training weight restore attach evidence must be completed.")
+        raise TrainingRefusal("Training weight restore attach evidence must be completed.")
     if evidence.get("mode") not in STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES:
-        raise ValueError("Training weight restore attach evidence mode is unsupported.")
+        raise TrainingRefusal("Training weight restore attach evidence mode is unsupported.")
     _required_json_string(evidence, "source_job_id")
     _required_json_string(evidence, "target_job_id")
     _required_json_string(evidence, "target_architecture")
     fingerprint = evidence.get("architecture_fingerprint")
     if not isinstance(fingerprint, str) or not _SHA256_HEX_PATTERN.fullmatch(fingerprint):
-        raise ValueError("Training weight restore attach fingerprint is invalid.")
+        raise TrainingRefusal("Training weight restore attach fingerprint is invalid.")
     target_parameter_count = evidence.get("target_parameter_count")
     if not isinstance(target_parameter_count, int) or target_parameter_count < 0:
-        raise ValueError("Training weight restore attach parameter count is invalid.")
+        raise TrainingRefusal("Training weight restore attach parameter count is invalid.")
     _validate_materialization_summary(evidence.get("materialization"))
     return evidence
 
 
 def _validate_materialization_summary(materialization: object) -> dict[str, JsonValue]:
     """Validate an embedded path-free weight materialization summary."""
-
     if not isinstance(materialization, Mapping):
-        raise ValueError("Training weight restore evidence requires materialization.")
+        raise TrainingRefusal("Training weight restore evidence requires materialization.")
     summary = _json_object(
         materialization,
         "Training weight restore materialization must be JSON.",
     )
     if summary.get("schema_version") != "studio.training.weight-materialization.v1":
-        raise ValueError("Training weight restore materialization schema is unsupported.")
+        raise TrainingRefusal("Training weight restore materialization schema is unsupported.")
     config_sha256 = summary.get("config_sha256")
     if not isinstance(config_sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(config_sha256):
-        raise ValueError("Training weight restore materialization config digest is invalid.")
+        raise TrainingRefusal("Training weight restore materialization config digest is invalid.")
     for digest_field in ("weights_sha256", "metadata_sha256"):
         digest = summary.get(digest_field)
         if not isinstance(digest, str) or not _SHA256_HEX_PATTERN.fullmatch(digest):
-            raise ValueError(f"Training weight restore materialization {digest_field} is invalid.")
+            raise TrainingRefusal(
+                f"Training weight restore materialization {digest_field} is invalid."
+            )
     loaded_key_count = summary.get("loaded_key_count")
     if not isinstance(loaded_key_count, int) or loaded_key_count < 0:
-        raise ValueError("Training weight restore materialization key count is invalid.")
+        raise TrainingRefusal("Training weight restore materialization key count is invalid.")
     return summary
 
 
@@ -702,28 +693,27 @@ def validate_training_weight_checkpoint_metadata(
         If the schema, framework, format, config digest, artifact paths,
         artifact sizes, artifact hashes, or metadata payload are invalid.
     """
-
     metadata = _json_object(
         payload,
         "Training weight checkpoint metadata must be JSON.",
     )
     if metadata.get("schema_version") != STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION:
-        raise ValueError("Training weight checkpoint schema is unsupported.")
+        raise TrainingRefusal("Training weight checkpoint schema is unsupported.")
     if metadata.get("framework") != "pytorch":
-        raise ValueError("Training weight checkpoint framework is unsupported.")
+        raise TrainingRefusal("Training weight checkpoint framework is unsupported.")
     if metadata.get("format") != "torch_state_dict":
-        raise ValueError("Training weight checkpoint format is unsupported.")
+        raise TrainingRefusal("Training weight checkpoint format is unsupported.")
     architecture = metadata.get("architecture")
     if not isinstance(architecture, str) or not architecture:
-        raise ValueError("Training weight checkpoint requires architecture.")
+        raise TrainingRefusal("Training weight checkpoint requires architecture.")
     parameter_count = metadata.get("parameter_count")
     if not isinstance(parameter_count, int) or parameter_count < 0:
-        raise ValueError("Training weight checkpoint parameter count is invalid.")
+        raise TrainingRefusal("Training weight checkpoint parameter count is invalid.")
     config_sha256 = metadata.get("config_sha256")
     if not isinstance(config_sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(config_sha256):
-        raise ValueError("Training weight checkpoint config digest is invalid.")
+        raise TrainingRefusal("Training weight checkpoint config digest is invalid.")
     if expected_config_sha256 is not None and config_sha256 != expected_config_sha256:
-        raise ValueError("Training weight checkpoint config digest mismatch.")
+        raise TrainingRefusal("Training weight checkpoint config digest mismatch.")
     _validate_artifact_metadata(
         metadata.get("weights_artifact"),
         expected_path=TRAINING_WEIGHT_ARTIFACT_PATH,
@@ -736,20 +726,19 @@ def validate_training_weight_checkpoint_metadata(
     )
     final_metrics = metadata.get("final_metrics")
     if final_metrics is not None and not isinstance(final_metrics, dict):
-        raise ValueError("Training weight checkpoint metrics must be an object.")
+        raise TrainingRefusal("Training weight checkpoint metrics must be an object.")
     return metadata
 
 
 def _validate_restore_plan(payload: Mapping[str, object]) -> dict[str, JsonValue]:
     """Return a validated weight restore plan."""
-
     plan = _json_object(payload, "Training weight restore plan must be JSON.")
     if plan.get("schema_version") != STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION:
-        raise ValueError("Training weight restore plan schema is unsupported.")
+        raise TrainingRefusal("Training weight restore plan schema is unsupported.")
     if plan.get("loader_policy") != "download_from_authenticated_artifact_route_and_verify_sha256":
-        raise ValueError("Training weight restore plan loader policy is unsupported.")
+        raise TrainingRefusal("Training weight restore plan loader policy is unsupported.")
     if plan.get("artifact_route_template") != TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE:
-        raise ValueError("Training weight restore plan route template is unsupported.")
+        raise TrainingRefusal("Training weight restore plan route template is unsupported.")
     for field_name in (
         "source_job_id",
         "source_status",
@@ -760,14 +749,14 @@ def _validate_restore_plan(payload: Mapping[str, object]) -> dict[str, JsonValue
     ):
         _required_json_string(plan, field_name)
     if not _SHA256_HEX_PATTERN.fullmatch(_required_json_string(plan, "config_sha256")):
-        raise ValueError("Training weight restore plan config digest is invalid.")
+        raise TrainingRefusal("Training weight restore plan config digest is invalid.")
     parameter_count = plan.get("parameter_count")
     if not isinstance(parameter_count, int) or parameter_count < 0:
-        raise ValueError("Training weight restore plan parameter count is invalid.")
+        raise TrainingRefusal("Training weight restore plan parameter count is invalid.")
     if plan.get("framework") != "pytorch":
-        raise ValueError("Training weight restore plan framework is unsupported.")
+        raise TrainingRefusal("Training weight restore plan framework is unsupported.")
     if plan.get("format") != "torch_state_dict":
-        raise ValueError("Training weight restore plan format is unsupported.")
+        raise TrainingRefusal("Training weight restore plan format is unsupported.")
     _validate_artifact_metadata(
         plan.get("weights_artifact"),
         expected_path=TRAINING_WEIGHT_ARTIFACT_PATH,
@@ -787,28 +776,26 @@ def _verify_artifact_payload(
     field_name: str,
 ) -> None:
     """Verify one artifact payload against its path-free manifest entry."""
-
     size_bytes = artifact.get("size_bytes")
     if not isinstance(size_bytes, int) or size_bytes <= 0:
         raise ValueError(f"Training weight {field_name} size is invalid.")
     if len(payload) != size_bytes:
-        raise ValueError(f"Training weight {field_name} size mismatch.")
+        raise TrainingRefusal(f"Training weight {field_name} size mismatch.")
     sha256 = artifact.get("sha256")
     if not isinstance(sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(sha256):
         raise ValueError(f"Training weight {field_name} digest is invalid.")
     if _sha256_bytes(payload) != sha256:
-        raise ValueError(f"Training weight {field_name} digest mismatch.")
+        raise TrainingRefusal(f"Training weight {field_name} digest mismatch.")
 
 
 def _metadata_payload_object(payload: bytes) -> dict[str, JsonValue]:
     """Decode a portable weight metadata payload."""
-
     try:
         decoded = json.loads(payload.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError("Training weight metadata payload is invalid JSON.") from exc
+        raise TrainingRefusal("Training weight metadata payload is invalid JSON.") from exc
     if not isinstance(decoded, dict):
-        raise ValueError("Training weight metadata payload must be a JSON object.")
+        raise TrainingRefusal("Training weight metadata payload must be a JSON object.")
     return _json_object(
         cast(Mapping[str, object], decoded),
         "Training weight metadata payload must be JSON.",
@@ -817,23 +804,20 @@ def _metadata_payload_object(payload: bytes) -> dict[str, JsonValue]:
 
 def _loaded_state_dict(payload: Mapping[str, object]) -> Mapping[str, object]:
     """Validate trusted loader output as a state dictionary."""
-
     state_dict = dict(payload)
     for key in state_dict:
         if not isinstance(key, str) or not key:
-            raise ValueError("Training weight loader returned an invalid state key.")
+            raise TrainingRefusal("Training weight loader returned an invalid state key.")
     return state_dict
 
 
 def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:
     """Return a JSON object after recursively validating portable values."""
-
     return cast(dict[str, JsonValue], _json_value(dict(payload), error_message))
 
 
 def _artifact_public_dict(artifact: StudioJobArtifact) -> dict[str, JsonValue]:
     """Return a JSON-compatible public artifact manifest entry."""
-
     return cast(dict[str, JsonValue], artifact.to_public_dict())
 
 
@@ -842,7 +826,6 @@ def _required_artifact_dict(
     field_name: str,
 ) -> dict[str, JsonValue]:
     """Return one validated artifact metadata object from a checkpoint."""
-
     value = metadata.get(field_name)
     if not isinstance(value, dict):
         raise ValueError(f"Training weight checkpoint requires {field_name}.")
@@ -856,30 +839,28 @@ def _validate_artifact_metadata(
     field_name: str,
 ) -> None:
     """Validate one path-free artifact manifest entry."""
-
     if not isinstance(value, dict):
-        raise ValueError(f"Training weight checkpoint requires {field_name}.")
+        raise TrainingRefusal(f"Training weight checkpoint requires {field_name}.")
     artifact = _json_object(value, f"Training weight checkpoint {field_name} must be JSON.")
     if artifact.get("relative_path") != expected_path:
-        raise ValueError(f"Training weight checkpoint {field_name} path is invalid.")
+        raise TrainingRefusal(f"Training weight checkpoint {field_name} path is invalid.")
     size_bytes = artifact.get("size_bytes")
     if not isinstance(size_bytes, int) or size_bytes <= 0:
-        raise ValueError(f"Training weight checkpoint {field_name} size is invalid.")
+        raise TrainingRefusal(f"Training weight checkpoint {field_name} size is invalid.")
     sha256 = artifact.get("sha256")
     if not isinstance(sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(sha256):
-        raise ValueError(f"Training weight checkpoint {field_name} digest is invalid.")
+        raise TrainingRefusal(f"Training weight checkpoint {field_name} digest is invalid.")
 
 
 def _json_value(value: object, error_message: str) -> JsonValue:
     """Return a portable JSON value or raise ``ValueError``."""
-
     if value is None or isinstance(value, str | bool):
         return value
     if isinstance(value, int):
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
-            raise ValueError(error_message)
+            raise TrainingRefusal(error_message)
         return value
     if isinstance(value, list | tuple):
         return [_json_value(item, error_message) for item in value]
@@ -887,39 +868,35 @@ def _json_value(value: object, error_message: str) -> JsonValue:
         result: dict[str, JsonValue] = {}
         for key, item in value.items():
             if not isinstance(key, str):
-                raise ValueError(error_message)
+                raise TrainingRefusal(error_message)
             result[key] = _json_value(item, error_message)
         return result
-    raise ValueError(error_message)
+    raise TrainingRefusal(error_message)
 
 
 def _sha256_json(payload: Mapping[str, JsonValue]) -> str:
     """Return the SHA-256 digest of a canonical JSON object."""
-
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
 def _sha256_bytes(payload: bytes) -> str:
     """Return the SHA-256 digest of a byte payload."""
-
     return hashlib.sha256(payload).hexdigest()
 
 
 def _required_json_string(payload: Mapping[str, JsonValue], field_name: str) -> str:
     """Return a required non-empty string from a JSON object."""
-
     value = payload.get(field_name)
     if not isinstance(value, str) or not value:
-        raise ValueError(f"Training weight restore plan requires {field_name}.")
+        raise TrainingRefusal(f"Training weight restore plan requires {field_name}.")
     return value
 
 
 def _required_non_empty_string(value: str, field_name: str) -> str:
     """Return a required non-empty string value."""
-
     if not value:
-        raise ValueError(f"Training weight checkpoint requires {field_name}.")
+        raise TrainingRefusal(f"Training weight checkpoint requires {field_name}.")
     return value
 
 

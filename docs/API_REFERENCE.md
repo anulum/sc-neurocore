@@ -16139,6 +16139,18 @@ ValueError
 
 ---
 
+## Module `datasets.refusals`
+
+### Class `DatasetRefusal`
+A dataset validation message written for callers.
+
+This remains a ValueError for library callers. Generated conversion and
+decoder faults keep their original types; consumers must not promote their
+text to this marker.
+
+
+---
+
 ## Module `datasets.splits`
 
 ### Class `SplitPlan`
@@ -50240,6 +50252,18 @@ ValueError
     Unknown fields, an unknown metric, a bound outside the metric's range,
     an over-long rationale, another schema version, or a stored digest that
     does not match the criterion it accompanies.
+
+---
+
+## Module `studio.training_refusals`
+
+### Class `TrainingRefusal`
+A training validation message that may cross the HTTP boundary.
+
+Producers raise this only with source-owned messages. Generated parser,
+conversion and worker diagnostic text must not be used as the marker's
+message. Existing ValueError handlers remain compatible.
+
 
 ---
 
