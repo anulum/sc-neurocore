@@ -48539,6 +48539,10 @@ Return the route-facing catalogue of preset action identifiers.
 
 ## Module `studio.project`
 
+### Class `ProjectNameRefused`
+An authored refusal of a name outside the local project namespace.
+
+
 ### Function `save_project(name, state)`
 Save full Studio state as a new immutable revision.
 
@@ -48662,8 +48666,12 @@ Raises
 ------
 KeyError
     The workspace or the revision does not exist.
-ValueError
+WorkspaceReviewRefused
     The comment is empty or too long, or replies to a comment on another revision.
+ProjectNameRefused
+    The project name cannot address one local workspace.
+WorkspaceReviewStorageError
+    Saved review or revision data cannot be read safely.
 
 ### Function `export_project(name)`
 Return one revision as a self-contained document for transfer.
@@ -50534,6 +50542,18 @@ ValueError
 
 ## Module `studio.workspace_review`
 
+### Class `WorkspaceReviewRefused`
+An authored explanation of invalid comment text or a reply target.
+
+
+### Class `WorkspaceReviewMissing`
+The requested workspace or revision is absent, rather than unreadable.
+
+
+### Class `WorkspaceReviewStorageError`
+Stored review or revision data cannot support a trustworthy comment.
+
+
 ### Class `ReviewComment`
 One comment on one revision.
 
@@ -50543,19 +50563,23 @@ Append a comment on ``name`` at ``revision``.
 
 Raises
 ------
-KeyError
+WorkspaceReviewMissing
     The workspace or the revision does not exist.
-ValueError
-    The body is empty or longer than :data:`MAX_COMMENT_CHARS`, or
-    ``reply_to`` is not a comment on the same revision.
+WorkspaceReviewRefused
+    The body is empty or longer than :data:`MAX_COMMENT_CHARS`, comment
+    text or author is not UTF-8, or the reply is not on the same revision.
+WorkspaceReviewStorageError
+    Persisted review or revision data is unreadable; nothing is appended.
 
 ### Function `list_comments(store, name)`
 Return a workspace's comments, each checked against its revision.
 
 Raises
 ------
-KeyError
+WorkspaceReviewMissing
     The workspace does not exist.
+WorkspaceReviewStorageError
+    Existing review records or their saved revisions cannot be read safely.
 
 ---
 

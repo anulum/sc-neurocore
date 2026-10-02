@@ -26,6 +26,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.project_manifest import build_project_save_manifest
 from sc_neurocore.studio.synthesis import EdaProcessLimits
 from sc_neurocore.studio.workspace_lock import DEFAULT_LOCK_TIMEOUT
@@ -55,6 +56,10 @@ _IDENTIFIER_MAPPING_CONTEXTS = {
     "parameters": "parameter name",
     "params": "parameter name",
 }
+
+
+class ProjectNameRefused(AuthoredRefusal):
+    """An authored refusal of a name outside the local project namespace."""
 
 
 def _validate_hdl_identifiers(payload: Any) -> None:
@@ -108,7 +113,7 @@ def _projects_root() -> Path:
 def _safe_name(name: str) -> str:
     """Validate a project name that maps to one JSON file in the project root."""
     if not isinstance(name, str):
-        raise ValueError("Invalid project name")
+        raise ProjectNameRefused("Invalid project name")
     raw = name.strip()
     if (
         not raw
@@ -118,11 +123,8 @@ def _safe_name(name: str) -> str:
         or Path(raw).is_absolute()
         or ".." in Path(raw).parts
     ):
-        raise ValueError("Invalid project name")
-    base = os.path.basename(raw)
-    if not base or base in (".", ".."):
-        raise ValueError("Invalid project name")
-    return base
+        raise ProjectNameRefused("Invalid project name")
+    return raw
 
 
 def _safe_path(name: str) -> Path:
@@ -400,8 +402,12 @@ def comment_on_revision(
     ------
     KeyError
         The workspace or the revision does not exist.
-    ValueError
+    WorkspaceReviewRefused
         The comment is empty or too long, or replies to a comment on another revision.
+    ProjectNameRefused
+        The project name cannot address one local workspace.
+    WorkspaceReviewStorageError
+        Saved review or revision data cannot be read safely.
     """
     from dataclasses import asdict
 

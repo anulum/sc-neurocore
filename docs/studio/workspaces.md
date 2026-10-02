@@ -185,6 +185,20 @@ it applied to something else. The **Review** view shows the comments on the
 revision the editor opened or last saved, threads replies under the comment
 they answer, and adds comments and replies.
 
+An empty or oversized comment, invalid UTF-8 text, invalid project name or
+reply to another revision receives HTTP 422 with the refusal's explanation.
+A missing workspace or requested revision receives HTTP 404. An unreadable
+review file, malformed stored comment or unreadable saved revision receives
+HTTP 500 with `{"detail":"Internal error"}`. Corrupt storage is preserved for
+recovery; a new comment is not appended to it. A writer that cannot acquire
+the workspace lock receives the retryable `workspace_busy` HTTP 503 response.
+
+Library callers can distinguish `WorkspaceReviewRefused` and
+`ProjectNameRefused` (both `ValueError` subclasses), `WorkspaceReviewMissing`
+(`KeyError`) and `WorkspaceReviewStorageError` (`RuntimeError`). Only the
+deliberate refusals become explanatory HTTP 422 responses; decoder and
+filesystem diagnostics remain internal.
+
 ## Deleting and restoring
 
 `DELETE /api/project/{name}` moves the workspace, with its whole history, into

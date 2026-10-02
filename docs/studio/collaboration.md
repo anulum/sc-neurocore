@@ -90,6 +90,12 @@ on an imported copy, the comments are on the reviewer's workspace. Send them
 back with the revision number and `state_sha256` they are bound to, so that the
 author can match them to their own revision.
 
+If a review cannot be read because its stored records or saved revision are
+damaged, the API reports `Internal error` and retains the files for recovery.
+It does not present corrupt history as an empty review or a missing revision.
+Correctable comment and reply refusals retain their explanation; see the
+[workspace error contract](workspaces.md#reviewing-a-revision).
+
 A useful review names the revision and digest, gives the replay command and its
 exit code, the verdict and tolerance, and any runtime drift reported. Each
 objection should point to a block of the experiment (model, parameters,
