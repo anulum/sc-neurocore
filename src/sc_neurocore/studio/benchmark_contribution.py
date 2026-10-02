@@ -35,6 +35,7 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.scpn.dcls_tent_kernel import dcls_max_forward_batch_q88
 from sc_neurocore.studio.dcls import probe_backends
 
@@ -55,9 +56,17 @@ _DATABANK_FILE = (
 )
 
 
+class BenchmarkSubmissionRefused(AuthoredRefusal):
+    """An authored schema/privacy refusal, compatible with ValueError callers.
+
+    Only deliberate contribution diagnostics use this type. Generated parsing
+    or storage exceptions retain their original type and the HTTP boundary's
+    generic response. Refusal text never includes submitted key names or values.
+    """
+
+
 def safe_environment() -> dict[str, Any]:
     """Collect only the privacy-safe, aggregatable host facts."""
-
     cpu = "unknown"
     cpuinfo = Path("/proc/cpuinfo")
     if cpuinfo.is_file():
@@ -99,7 +108,6 @@ def run_local_benchmark(
     :data:`sc_neurocore.studio.dcls.IN_PROCESS_REFUSED_BACKENDS`) and is reported
     as parity-verified offline rather than timed live.
     """
-
     n_channels = max(16, min(8192, n_channels))
     n_taps = max(4, min(256, n_taps))
     repeats = max(3, min(50, repeats))
@@ -162,7 +170,6 @@ def run_local_benchmark(
 
 def _find_forbidden(node: Any) -> str | None:
     """Walk a payload and return the first machine-identifying key found."""
-
     if isinstance(node, dict):
         for key, value in node.items():
             if str(key).lower() in FORBIDDEN_KEYS:
@@ -178,9 +185,13 @@ def _find_forbidden(node: Any) -> str | None:
     return None
 
 
-def validate_submission(payload: Any) -> list[str]:
-    """Return a list of schema/privacy violations; empty means the payload is OK."""
+def validate_submission(payload: object) -> list[str]:
+    """Return ordered authored schema/privacy violations without submitted text.
 
+    An empty list means the payload satisfies this contribution contract.
+    Diagnostics can name the declared schema, kernel and fields, but never
+    interpolate a submitted key or value. Validation performs no writes.
+    """
     errors: list[str] = []
     if not isinstance(payload, dict):
         return ["submission must be an object"]
@@ -209,7 +220,7 @@ def validate_submission(payload: Any) -> list[str]:
     else:
         extra = set(environment) - ALLOWED_ENVIRONMENT_KEYS
         if extra:
-            errors.append(f"environment carries disallowed keys: {sorted(extra)}")
+            errors.append("environment may only carry cpu, os, python, numpy and toolchains")
     if payload.get("hardware_measurement_claimed") not in (True, False):
         errors.append("hardware_measurement_claimed must be a boolean")
     handle = (
@@ -221,22 +232,30 @@ def validate_submission(payload: Any) -> list[str]:
         errors.append("contributor.handle must be <=40 chars of letters/digits/space/.-_")
     forbidden = _find_forbidden(payload)
     if forbidden is not None:
-        errors.append(f"submission must not carry machine-identifying key {forbidden!r}")
+        errors.append("submission must not carry machine-identifying keys")
     return errors
 
 
 def store_contribution(payload: dict[str, Any], handle: str = "") -> dict[str, Any]:
     """Validate and append a submission to the local databank (opt-in path).
 
-    Raises ``ValueError`` with the joined violations if the payload fails schema
-    or privacy validation, so an invalid or identifying submission never lands.
-    """
+    The caller's payload is not changed. The handle is trimmed and limited to
+    40 characters before validation. A rejected submission creates no databank
+    directory or file and appends no record.
 
+    Raises
+    ------
+    BenchmarkSubmissionRefused
+        Joined authored violations when schema or privacy validation fails.
+        This remains compatible with existing ``ValueError`` handlers.
+    OSError
+        The validated submission could not be appended to the databank.
+    """
     payload = dict(payload)
     payload["contributor"] = {"handle": handle.strip()[:40]}
     errors = validate_submission(payload)
     if errors:
-        raise ValueError("; ".join(errors))
+        raise BenchmarkSubmissionRefused("; ".join(errors))
     _DATABANK_FILE.parent.mkdir(parents=True, exist_ok=True)
     with _DATABANK_FILE.open("a", encoding="utf-8") as handle_file:
         handle_file.write(json.dumps(payload, separators=(",", ":")) + "\n")
@@ -245,7 +264,6 @@ def store_contribution(payload: dict[str, Any], handle: str = "") -> dict[str, A
 
 def load_databank() -> list[dict[str, Any]]:
     """Return every stored contribution (already free of identifying fields)."""
-
     if not _DATABANK_FILE.is_file():
         return []
     rows: list[dict[str, Any]] = []
@@ -258,7 +276,6 @@ def load_databank() -> list[dict[str, Any]]:
 
 def databank_leaderboard() -> dict[str, Any]:
     """Aggregate the databank into a per-CPU, per-backend speed-up leaderboard."""
-
     rows = load_databank()
     entries: list[dict[str, Any]] = []
     for row in rows:

@@ -9,6 +9,30 @@ spiking neural network workflow: model design, network building, surrogate
 gradient training, SystemVerilog compilation, and FPGA synthesis evidence.
 Physical deployment requires separate board validation.
 
+## Benchmark contributions
+
+`POST /api/benchmarks/run` measures the DCLS kernel locally and returns a
+`scpn.benchmark.submission.v1` document. Inspect that document before choosing
+to submit it with `POST /api/benchmarks/contribute`; running a benchmark alone
+does not contribute anything. `GET /api/benchmarks/schema` lists the permitted
+environment fields and forbidden identifying keys. `GET /api/benchmarks/databank`
+returns the leaderboard of stored contributions.
+
+Schema and privacy refusals return HTTP 400 with an authored sentence in
+`detail`. Several violations are joined in validation order with `; `.
+The explanation names the permitted fields or rule, without copying submitted
+key names, values or filesystem paths. A refused contribution creates no
+databank file and appends nothing to an existing one. Fix the reported fields
+and submit again only when you still intend to contribute.
+
+Python callers receive `BenchmarkSubmissionRefused`, a `ValueError` subclass,
+for these deliberate refusals. The validator's ordered messages and persisted
+v1 document shape remain compatible. Other input exceptions use the shared
+HTTP 422 `Invalid input` response; unexpected internal failures use HTTP 500
+`Internal error`. Request-body validation retains its separate HTTP 422 field
+details. Environment collection, timing, backend selection and parity rules
+are unchanged.
+
 ## Share links
 
 **Share link** copies a link carrying the selected model, the current, the duration

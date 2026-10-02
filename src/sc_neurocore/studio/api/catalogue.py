@@ -24,6 +24,7 @@ from sc_neurocore.studio.api.schemas import (
 )
 from sc_neurocore.studio.benchmark_contribution import (
     ALLOWED_ENVIRONMENT_KEYS,
+    BenchmarkSubmissionRefused,
     FORBIDDEN_KEYS,
     SUBMISSION_SCHEMA_VERSION,
     databank_leaderboard,
@@ -199,11 +200,13 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/benchmarks/contribute")
     def api_benchmark_contribute(contribute_request: BenchmarkContributeRequest) -> Any:
+        """Persist an opt-in contribution, preserving only authored domain refusals."""
+
         def _contribute() -> dict[str, Any]:
             try:
                 return store_contribution(contribute_request.submission, contribute_request.handle)
-            except ValueError as exc:
-                raise HTTPException(400, str(exc)) from exc
+            except BenchmarkSubmissionRefused as exc:
+                raise HTTPException(400, str(exc)) from None
 
         return _safe(_contribute)
 

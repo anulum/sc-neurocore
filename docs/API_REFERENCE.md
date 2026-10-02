@@ -39434,6 +39434,14 @@ Return the recorded behaviour tags for a model (empty if unrecorded).
 
 ## Module `studio.benchmark_contribution`
 
+### Class `BenchmarkSubmissionRefused`
+An authored schema/privacy refusal, compatible with ValueError callers.
+
+Only deliberate contribution diagnostics use this type. Generated parsing
+or storage exceptions retain their original type and the HTTP boundary's
+generic response. Refusal text never includes submitted key names or values.
+
+
 ### Function `safe_environment()`
 Collect only the privacy-safe, aggregatable host facts.
 
@@ -39447,13 +39455,26 @@ Julia is never run in the server process (see
 as parity-verified offline rather than timed live.
 
 ### Function `validate_submission(payload)`
-Return a list of schema/privacy violations; empty means the payload is OK.
+Return ordered authored schema/privacy violations without submitted text.
+
+An empty list means the payload satisfies this contribution contract.
+Diagnostics can name the declared schema, kernel and fields, but never
+interpolate a submitted key or value. Validation performs no writes.
 
 ### Function `store_contribution(payload, handle)`
 Validate and append a submission to the local databank (opt-in path).
 
-Raises ``ValueError`` with the joined violations if the payload fails schema
-or privacy validation, so an invalid or identifying submission never lands.
+The caller's payload is not changed. The handle is trimmed and limited to
+40 characters before validation. A rejected submission creates no databank
+directory or file and appends no record.
+
+Raises
+------
+BenchmarkSubmissionRefused
+    Joined authored violations when schema or privacy validation fails.
+    This remains compatible with existing ``ValueError`` handlers.
+OSError
+    The validated submission could not be appended to the databank.
 
 ### Function `load_databank()`
 Return every stored contribution (already free of identifying fields).
