@@ -15,3 +15,4 @@ pip>=26,<27
 pip-tools==7.6.1
 # JupyterLab 4.6.4 fixes GHSA-3jqq-pw4j-pqcj, GHSA-6966-vjj6-99xv and GHSA-3325-v43h-43rv.
 jupyterlab==4.6.4
+notebook==7.6.3

@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Pin the workstation Jupyter Notebook dependency to 7.6.3, fixing
+  GHSA-6966-vjj6-99xv while retaining JupyterLab 4.6.4.
+
 - Candidate validation reports authored diagnostics for malformed units,
   excessively deep expressions, unsupported function arguments and invalid
   Unicode or JSON values. Unencodable documents have no candidate digest.
