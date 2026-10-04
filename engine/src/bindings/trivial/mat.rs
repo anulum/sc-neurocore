@@ -6,11 +6,12 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — source MAT* PyO3 binding
 
-use numpy::{IntoPyArray, PyReadonlyArray1};
+use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+use crate::fixed_point_lif_binding::array_allocation::zeros_1d;
 use crate::neurons;
 
 /// Python-owned complete source MAT* neuron.
@@ -131,24 +132,41 @@ fn py_mat_simulate<'py>(
         return Err(PyValueError::new_err("invalid MAT state or configuration"));
     }
     let inputs = currents.as_slice()?;
-    let mut voltages = Vec::with_capacity(inputs.len());
-    let mut theta1_trace = Vec::with_capacity(inputs.len());
-    let mut theta2_trace = Vec::with_capacity(inputs.len());
-    let mut refractory_trace = Vec::with_capacity(inputs.len());
-    let mut events = Vec::with_capacity(inputs.len());
-    for &current in inputs {
-        events.push(neuron.try_step(current).map_err(PyValueError::new_err)?);
-        voltages.push(neuron.v);
-        theta1_trace.push(neuron.theta1);
-        theta2_trace.push(neuron.theta2);
-        refractory_trace.push(neuron.refractory_remaining);
+    let voltages = zeros_1d::<f64>(py, inputs.len())?;
+    let theta1_trace = zeros_1d::<f64>(py, inputs.len())?;
+    let theta2_trace = zeros_1d::<f64>(py, inputs.len())?;
+    let refractory_trace = zeros_1d::<f64>(py, inputs.len())?;
+    let events = zeros_1d::<i32>(py, inputs.len())?;
+    // SAFETY: These fresh contiguous arrays own disjoint writable storage.
+    // The owners outlive the slices and no external aliases are exposed.
+    let (
+        voltages_values,
+        theta1_trace_values,
+        theta2_trace_values,
+        refractory_trace_values,
+        events_values,
+    ) = unsafe {
+        (
+            voltages.as_slice_mut()?,
+            theta1_trace.as_slice_mut()?,
+            theta2_trace.as_slice_mut()?,
+            refractory_trace.as_slice_mut()?,
+            events.as_slice_mut()?,
+        )
+    };
+    for (index, &current) in inputs.iter().enumerate() {
+        events_values[index] = neuron.try_step(current).map_err(PyValueError::new_err)?;
+        voltages_values[index] = neuron.v;
+        theta1_trace_values[index] = neuron.theta1;
+        theta2_trace_values[index] = neuron.theta2;
+        refractory_trace_values[index] = neuron.refractory_remaining;
     }
     let result = PyDict::new(py);
-    result.set_item("voltages", voltages.into_pyarray(py))?;
-    result.set_item("theta1", theta1_trace.into_pyarray(py))?;
-    result.set_item("theta2", theta2_trace.into_pyarray(py))?;
-    result.set_item("refractory", refractory_trace.into_pyarray(py))?;
-    result.set_item("events", events.into_pyarray(py))?;
+    result.set_item("voltages", voltages)?;
+    result.set_item("theta1", theta1_trace)?;
+    result.set_item("theta2", theta2_trace)?;
+    result.set_item("refractory", refractory_trace)?;
+    result.set_item("events", events)?;
     result.set_item("v_final", neuron.v)?;
     result.set_item("theta1_final", neuron.theta1)?;
     result.set_item("theta2_final", neuron.theta2)?;

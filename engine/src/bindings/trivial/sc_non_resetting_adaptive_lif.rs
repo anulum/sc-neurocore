@@ -4,14 +4,17 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained adaptive LIF Python class and batch interface
 
 //! PyO3 exposure for the retained SC adaptive-LIF contract.
 
 use crate::neurons;
-use numpy::{IntoPyArray, PyReadonlyArray1};
+use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+
+use crate::fixed_point_lif_binding::array_allocation::zeros_1d;
 
 /// Python-owned retained project neuron.
 #[pyclass(
@@ -63,8 +66,8 @@ impl PySCNonResettingAdaptiveLIFNeuron {
         self.inner.try_step(current).map_err(PyValueError::new_err)
     }
     /// Reset dynamic state while retaining configuration.
-    fn reset(&mut self) {
-        self.inner.reset();
+    fn reset(&mut self) -> PyResult<()> {
+        self.inner.try_reset().map_err(PyValueError::new_err)
     }
     /// Return both dynamic state fields.
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -109,18 +112,27 @@ fn py_sc_non_resetting_adaptive_lif_simulate<'py>(
         ));
     }
     let inputs = currents.as_slice()?;
-    let mut voltages = Vec::with_capacity(inputs.len());
-    let mut thresholds = Vec::with_capacity(inputs.len());
-    let mut events = Vec::with_capacity(inputs.len());
-    for &current in inputs {
-        events.push(neuron.try_step(current).map_err(PyValueError::new_err)?);
-        voltages.push(neuron.v);
-        thresholds.push(neuron.theta);
+    let voltages = zeros_1d::<f64>(py, inputs.len())?;
+    let thresholds = zeros_1d::<f64>(py, inputs.len())?;
+    let events = zeros_1d::<i32>(py, inputs.len())?;
+    // SAFETY: These fresh contiguous arrays own disjoint writable storage.
+    // The owners outlive the slices and no external aliases are exposed.
+    let (voltage_values, threshold_values, event_values) = unsafe {
+        (
+            voltages.as_slice_mut()?,
+            thresholds.as_slice_mut()?,
+            events.as_slice_mut()?,
+        )
+    };
+    for (index, &current) in inputs.iter().enumerate() {
+        event_values[index] = neuron.try_step(current).map_err(PyValueError::new_err)?;
+        voltage_values[index] = neuron.v;
+        threshold_values[index] = neuron.theta;
     }
     let result = PyDict::new(py);
-    result.set_item("voltages", voltages.into_pyarray(py))?;
-    result.set_item("theta", thresholds.into_pyarray(py))?;
-    result.set_item("events", events.into_pyarray(py))?;
+    result.set_item("voltages", voltages)?;
+    result.set_item("theta", thresholds)?;
+    result.set_item("events", events)?;
     result.set_item("v_final", neuron.v)?;
     result.set_item("theta_final", neuron.theta)?;
     Ok(result.into_any().unbind())

@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — native Rust declaration identity parser
+
+[package]
+name = "sc_neurocore_rustdoc_symbols"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.98.1"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[workspace]
+
+[dependencies]
+proc-macro2 = { version = "=1.0.106", features = ["span-locations"] }
+quote = "=1.0.44"
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.149"
+sha2 = "=0.11.0"
+syn = { version = "=2.0.114", features = ["full"] }

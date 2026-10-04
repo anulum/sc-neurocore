@@ -4,6 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source and binary-bound five-runtime neuron benchmarks
 
 """Shared source/binary-bound benchmark runner for the Model 50 identity pair."""
 
@@ -226,6 +227,18 @@ def _version(command: list[str], *, cwd: Path | None = None) -> str:
     return lines[0] if lines else f"exit {completed.returncode}"
 
 
+def _julia_runtime_version() -> str:
+    """Return the Julia version loaded by the measured neuron backend."""
+    runtime = importlib.import_module("sc_neurocore.accel.julia.neurons._runtime")
+    return f"julia version {runtime.JULIA_MAIN.seval('string(VERSION)')}"
+
+
+def _go_library_version(library: Path) -> str:
+    """Read the compiler version embedded in the measured Go shared library."""
+    line = _version(_toolchain_command("go", "version", "-m", str(library)), cwd=GO_MODULE)
+    return line.rsplit(": ", 1)[-1]
+
+
 def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
     """Execute all five real runtimes and write evidence only after parity."""
     parser = argparse.ArgumentParser(description=spec.benchmark)
@@ -272,8 +285,10 @@ def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
         "binary_hashes": _binary_hashes(spec),
         "tool_versions": {
             "rustc": _version(_toolchain_command("rustc", "--version")),
-            "go": _version(_toolchain_command("go", "version"), cwd=GO_MODULE),
-            "julia": _version(_toolchain_command("julia", "--version")),
+            "go": _go_library_version(REPOSITORY / spec.go_library),
+            "go_cli": _version(_toolchain_command("go", "version"), cwd=GO_MODULE),
+            "julia": _julia_runtime_version(),
+            "julia_cli": _version(_toolchain_command("julia", "--version")),
             "mojo": _version(_mojo_command()),
         },
     }

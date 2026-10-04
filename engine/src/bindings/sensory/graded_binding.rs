@@ -8,6 +8,7 @@
 
 macro_rules! py_sensory_graded {
     ($pylit:literal, $pyname:ident, $rust:ty $(, state $sname:ident)*) => {
+        /// Python class for one default-constructed graded sensory neuron model.
         #[pyclass(name = $pylit, module = "sc_neurocore_engine.sc_neurocore_engine")]
         #[derive(Clone)]
         pub struct $pyname { inner: $rust }

@@ -5,6 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Five-runtime source and binary-bound SigmaDelta benchmark
 """Source/binary-bound five-runtime sampled APSDM benchmark."""
 
 from benchmarks._sigma_delta_benchmark import BenchmarkSpec, REPOSITORY, run
@@ -12,8 +13,11 @@ from sc_neurocore.accel import sigma_delta as backends
 
 SOURCE_PATHS = (
     "benchmarks/_sigma_delta_benchmark.py",
+    "benchmarks/_non_resetting_lif_benchmark.py",
     "benchmarks/bench_model_sigma_delta.py",
     "engine/src/bindings/trivial/sigma_delta.rs",
+    "engine/src/bindings/fixed_point_lif.rs",
+    "engine/src/bindings/fixed_point_lif/array_allocation.rs",
     "engine/src/neurons/trivial/sigma_delta.rs",
     "src/sc_neurocore/accel/sigma_delta.py",
     "src/sc_neurocore/accel/go/sigma_delta/sigma_delta.go",

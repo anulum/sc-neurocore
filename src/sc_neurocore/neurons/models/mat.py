@@ -6,10 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Kobayashi 2009 MAT* adaptive-threshold neuron
 
+"""Non-resetting MAT* dynamics with complete state and reset admission."""
+
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing_extensions import Self
 
 _VOLTAGE_MIN = -200.0
@@ -51,18 +53,18 @@ class MATNeuron:
 
     @classmethod
     def regular_spiking(cls, **overrides: float) -> Self:
-        """Construct the paper's regular-spiking example profile."""
+        """Construct the paper's regular-spiking profile with validated field overrides."""
         return cls(**overrides)
 
     @classmethod
     def intrinsically_bursting(cls, **overrides: float) -> Self:
-        """Construct the paper's intrinsically-bursting example profile."""
-        return cls(omega=26.0, alpha_1=1.7, alpha_2=2.0, **overrides)
+        """Construct the paper's bursting profile with validated field overrides."""
+        return cls(**{"omega": 26.0, "alpha_1": 1.7, "alpha_2": 2.0, **overrides})
 
     @classmethod
     def fast_spiking(cls, **overrides: float) -> Self:
-        """Construct the paper's fast-spiking example profile."""
-        return cls(omega=11.0, alpha_1=10.0, alpha_2=0.002, **overrides)
+        """Construct the paper's fast-spiking profile with validated field overrides."""
+        return cls(**{"omega": 11.0, "alpha_1": 10.0, "alpha_2": 0.002, **overrides})
 
     @property
     def threshold(self) -> float:
@@ -152,8 +154,13 @@ class MATNeuron:
         return int(spike)
 
     def reset(self) -> None:
-        """Restore zero-rest voltage, spike history, and refractory state."""
-        self.v = 0.0
-        self.theta1 = 0.0
-        self.theta2 = 0.0
-        self.refractory_remaining = 0.0
+        """Restore zero-rest dynamics after validating the retained configuration.
+
+        Invalid configuration raises ``ValueError`` without mutation. A valid
+        profile can recover corrupted dynamic state through the reset candidate.
+        """
+        candidate = replace(self, v=0.0, theta1=0.0, theta2=0.0, refractory_remaining=0.0)
+        self.v = candidate.v
+        self.theta1 = candidate.theta1
+        self.theta2 = candidate.theta2
+        self.refractory_remaining = candidate.refractory_remaining

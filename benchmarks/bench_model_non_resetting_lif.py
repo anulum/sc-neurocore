@@ -5,6 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source MAT(1) five-runtime benchmark
 
 """Source-bound five-runtime Kobayashi MAT(1) benchmark."""
 
@@ -18,6 +19,8 @@ SOURCE_PATHS = (
     "benchmarks/bench_model_non_resetting_lif.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/trivial/non_resetting_lif.rs",
+    "engine/src/bindings/fixed_point_lif.rs",
+    "engine/src/bindings/fixed_point_lif/array_allocation.rs",
     "engine/src/neurons/trivial/non_resetting_lif.rs",
     "src/sc_neurocore/accel/non_resetting_lif.py",
     "src/sc_neurocore/accel/go/non_resetting_lif/non_resetting_lif.go",

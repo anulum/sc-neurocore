@@ -7,29 +7,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Rust documentation debt may fall, never rise
 
-"""A ratchet on the engine crate's undocumented items.
+"""Protect the engine library's original source cohort and individual doc debt.
 
-The owner directive of 2026-09-06 requires that documentation debt be enforced
-so it *cannot grow*, with the ratchet set at the measured ceiling. The obvious
-way to do that in Rust — ``#![warn(missing_docs)]`` at the crate root — is not
-available here, and the reason is worth stating rather than discovering: CI
-runs ``cargo clippy -- -D warnings`` on this crate, so a crate-level warning
-lint would turn 3873 warnings into 3873 errors and break every seat's build on
-the first commit.
-
-So the lint is run deliberately, by this tool, and compared against a committed
-ceiling. Debt may fall and the ceiling follows it down; debt may not rise, and
-the ceiling cannot be raised by the tool at all. Raising it is an edit someone
-has to make on purpose, in a diff a reviewer can see.
-
-The directive's other half — *deny at zero* — is served per module: a module
-whose debt reaches zero declares ``#![deny(missing_docs)]`` and is closed
-permanently, rather than being held open by a number somebody has to keep
-re-checking.
-
-Measuring Rust is this tool's job. The rule about the ceiling — that it may
-fall and may not rise — is every language's, and lives in
-``tools/doc_debt_ceiling.py`` so the languages cannot come to disagree about it.
+Fresh Cargo JSON diagnostics identify missing documentation. The native syntax
+parser resolves qualified declarations independently of warning color or line
+positions. The lint is forced during this dedicated measurement so local lint
+attributes and cap-lints cannot hide debt. Original immutable Git source is
+compiled independently; candidate ceilings may only retain or reduce original
+individual allowances. The default build configuration is measured, while
+other targets and platform cfgs require qualification. An undocumented
+macro-generated declaration is refused in the current source; in the original
+baseline it counts as debt under an expansion identity.
 """
 
 from __future__ import annotations
@@ -37,13 +25,14 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
-import subprocess
 from pathlib import Path
 
 from tools.doc_debt_ceiling import RatchetError, Verdict, read_ceiling
 from tools.doc_debt_ceiling import compare as _compare
 from tools.doc_debt_ceiling import write_ceiling as _write_ceiling
-from tools.documentation_debt import read_rustc_stderr
+from tools.rust_doc_measurement import RustMeasurementError, measure_rust_findings
+from tools.rust_doc_symbols import RustSymbolError, build_parser
+from tools.rust_doc_history import INDIVIDUAL_SCHEMA, protect_rust_debt
 
 __all__ = [
     "RUST_DOC_CEILING_SCHEMA_VERSION",
@@ -100,29 +89,17 @@ def measure(root: Path, manifest: str) -> tuple[int, int, str]:
     Raises
     ------
     RatchetError
-        Cargo is not installed, so nothing was measured. A check that cannot
-        run must say so rather than report zero.
+        Cargo is unavailable, compilation fails or the compiler version cannot
+        be obtained. No failed producer can supply a zero measurement or lower
+        an existing ceiling.
     """
     if shutil.which("cargo") is None:
         raise RatchetError("cargo is not installed, so no measurement was taken")
-    completed = subprocess.run(  # noqa: S603 - fixed argv, no shell
-        ["cargo", "rustc", "--lib", "--manifest-path", manifest, "--", "-W", "missing_docs"],
-        capture_output=True,
-        text=True,
-        cwd=root,
-        timeout=3600,
-        check=False,
-    )
-    undocumented, files = read_rustc_stderr(completed.stderr)
-    version = subprocess.run(  # noqa: S603 - fixed argv, no shell
-        ["rustc", "--version"],
-        capture_output=True,
-        text=True,
-        cwd=root,
-        timeout=120,
-        check=False,
-    ).stdout.strip()
-    return undocumented, files, version
+    try:
+        measured = measure_rust_findings(root, manifest)
+    except RustMeasurementError as exc:
+        raise RatchetError(str(exc)) from exc
+    return measured.undocumented, measured.files, measured.rustc_version
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -138,43 +115,47 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     try:
-        undocumented, files, version = measure(args.repo.resolve(), args.manifest)
-    except RatchetError as error:
-        print(f"error: {error}")
-        return 2
-    if args.update:
-        sha = subprocess.run(  # noqa: S603 - fixed argv, no shell
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            cwd=args.repo,
-            timeout=120,
-            check=False,
-        ).stdout.strip()
-        try:
-            write_ceiling(
+        if shutil.which("cargo") is None:
+            raise RatchetError("cargo is not installed, so no measurement was taken")
+        root = args.repo.resolve()
+        native = build_parser()
+        measured = measure_rust_findings(root, args.manifest, parser=native)
+        protected = protect_rust_debt(
+            root, measured, args.ceiling, allow_create=args.update, parser=native
+        )
+        ceiling = (
+            read_ceiling(args.ceiling) if args.ceiling.exists() else protected.original.undocumented
+        )
+        verdict = compare(measured.undocumented, ceiling)
+        if args.update:
+            if not verdict.ok:
+                raise RatchetError("refusing to raise: " + verdict.summary())
+            measured.verify(root)
+            _write_ceiling(
                 args.ceiling,
-                undocumented=undocumented,
-                files=files,
+                undocumented=measured.undocumented,
+                files=measured.files,
+                note=CEILING_NOTE,
+                schema_version=INDIVIDUAL_SCHEMA,
                 provenance={
-                    "argv": f"cargo rustc --lib --manifest-path {args.manifest} -- -W missing_docs",
-                    "rustc": version,
-                    "source_sha256": sha,
+                    "argv": list(measured.argv),
+                    "rustc": measured.rustc_version,
+                    "source_sha256": protected.revision,
+                    "manifest": measured.manifest,
+                    "debt_cases": [case.to_public_dict() for case in sorted(measured.cases)],
+                    "measurement": measured.to_public_dict(),
+                    "original_baseline": protected.to_public_dict(),
                 },
             )
-        except RatchetError as error:
-            print(f"error: {error}")
-            return 2
-        print(f"Ceiling now {undocumented} undocumented items in {files} files.")
-        return 0
-    try:
-        ceiling = read_ceiling(args.ceiling)
-    except (RatchetError, json.JSONDecodeError) as error:
+            print(
+                f"Ceiling now {measured.undocumented} undocumented items in {measured.files} files."
+            )
+            return 0
+        print(verdict.summary())
+        return 0 if verdict.ok else 1
+    except (RatchetError, RustMeasurementError, RustSymbolError, json.JSONDecodeError) as error:
         print(f"error: {error}")
         return 2
-    verdict = compare(undocumented, ceiling)
-    print(verdict.summary())
-    return 0 if verdict.ok else 1
 
 
 if __name__ == "__main__":

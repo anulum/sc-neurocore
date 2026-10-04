@@ -4432,7 +4432,7 @@
         "hardware_measurement_claimed": false,
         "production_speed_claim": false,
         "repeats": 5,
-        "steps": 20000
+        "steps": 200000
       },
       "id": "sc-normalized-energy-lif-multibackend-local-regression",
       "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],

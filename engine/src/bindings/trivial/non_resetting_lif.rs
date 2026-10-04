@@ -4,14 +4,16 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Source MAT(1) native Python binding
 
 //! PyO3 exposure for the complete source MAT(1) contract.
 
-use numpy::{IntoPyArray, PyReadonlyArray1};
+use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+use crate::fixed_point_lif_binding::array_allocation::zeros_1d;
 use crate::neurons;
 
 /// Python-owned complete source MAT(1) neuron.
@@ -79,7 +81,7 @@ impl PyNonResettingLIFNeuron {
     }
 }
 
-/// Simulate one configured MAT(1) trace without Python per-step overhead.
+/// Simulate MAT(1) into owned arrays, propagating input and allocation errors.
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
 #[pyo3(signature=(v,theta,refractory_remaining,omega,tau_m,tau_theta,alpha,resistance,refractory_period,dt,currents))]
@@ -115,21 +117,31 @@ fn py_non_resetting_lif_simulate<'py>(
         ));
     }
     let inputs = currents.as_slice()?;
-    let mut voltages = Vec::with_capacity(inputs.len());
-    let mut thresholds = Vec::with_capacity(inputs.len());
-    let mut refractory = Vec::with_capacity(inputs.len());
-    let mut events = Vec::with_capacity(inputs.len());
-    for &current in inputs {
-        events.push(neuron.try_step(current).map_err(PyValueError::new_err)?);
-        voltages.push(neuron.v);
-        thresholds.push(neuron.theta);
-        refractory.push(neuron.refractory_remaining);
+    let voltages = zeros_1d::<f64>(py, inputs.len())?;
+    let thresholds = zeros_1d::<f64>(py, inputs.len())?;
+    let refractory = zeros_1d::<f64>(py, inputs.len())?;
+    let events = zeros_1d::<i32>(py, inputs.len())?;
+    // SAFETY: The four freshly allocated arrays are contiguous and have no
+    // external aliases. Their owners outlive these disjoint writable slices.
+    let (voltage_values, threshold_values, refractory_values, event_values) = unsafe {
+        (
+            voltages.as_slice_mut()?,
+            thresholds.as_slice_mut()?,
+            refractory.as_slice_mut()?,
+            events.as_slice_mut()?,
+        )
+    };
+    for (index, &current) in inputs.iter().enumerate() {
+        event_values[index] = neuron.try_step(current).map_err(PyValueError::new_err)?;
+        voltage_values[index] = neuron.v;
+        threshold_values[index] = neuron.theta;
+        refractory_values[index] = neuron.refractory_remaining;
     }
     let result = PyDict::new(py);
-    result.set_item("voltages", voltages.into_pyarray(py))?;
-    result.set_item("theta", thresholds.into_pyarray(py))?;
-    result.set_item("refractory", refractory.into_pyarray(py))?;
-    result.set_item("events", events.into_pyarray(py))?;
+    result.set_item("voltages", voltages)?;
+    result.set_item("theta", thresholds)?;
+    result.set_item("refractory", refractory)?;
+    result.set_item("events", events)?;
     result.set_item("v_final", neuron.v)?;
     result.set_item("theta_final", neuron.theta)?;
     result.set_item("refractory_final", neuron.refractory_remaining)?;

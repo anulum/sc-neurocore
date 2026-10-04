@@ -160,11 +160,22 @@ impl SCResettingMATNeuron {
         i32::from(spike)
     }
 
-    /// Reset dynamic state while preserving configuration.
+    /// Validate the complete resting candidate before changing any state.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let mut candidate = self.clone();
+        candidate.v = candidate.v_rest;
+        candidate.theta1 = 0.0;
+        candidate.theta2 = 0.0;
+        if !candidate.validate() {
+            return Err("invalid SC resetting-MAT reset state or configuration");
+        }
+        *self = candidate;
+        Ok(())
+    }
+
+    /// Reset valid resting state, preserving all fields when reset is refused.
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.theta1 = 0.0;
-        self.theta2 = 0.0;
+        let _ = self.try_reset();
     }
 }
 
@@ -190,11 +201,42 @@ mod tests {
         let currents = std::iter::repeat_n(0.0, 32)
             .chain(std::iter::repeat_n(50.0, 96))
             .chain((0..128).map(|index| if index % 2 == 0 { 20.0 } else { 60.0 }));
-        assert_eq!(currents.map(|current| neuron.step(current)).sum::<i32>(), 13);
+        assert_eq!(
+            currents.map(|current| neuron.step(current)).sum::<i32>(),
+            13
+        );
         assert_eq!(neuron.theta1, 5.262_135_955_944_077);
         assert_eq!(neuron.theta2, 21.149_478_444_493_045);
         let before = neuron.clone();
         assert_eq!(neuron.step(f64::NAN), -1);
         assert_eq!(neuron, before);
+    }
+
+    #[test]
+    fn reset_refusal_is_atomic_and_valid_rest_recovers_dynamic_state() {
+        for rest in [-500.0, 500.0] {
+            let mut neuron = SCResettingMATNeuron {
+                v: -65.0,
+                theta1: 2.0,
+                theta2: 3.0,
+                v_rest: rest,
+                ..SCResettingMATNeuron::new()
+            };
+            let before = neuron.clone();
+            assert_eq!(
+                neuron.try_reset(),
+                Err("invalid SC resetting-MAT reset state or configuration")
+            );
+            assert_eq!(neuron, before);
+            neuron.reset();
+            assert_eq!(neuron, before);
+            neuron.v_rest = -65.0;
+            neuron.v = f64::NAN;
+            neuron.theta1 = f64::INFINITY;
+            neuron.theta2 = f64::NEG_INFINITY;
+            assert_eq!(neuron.try_reset(), Ok(()));
+            assert_eq!((neuron.v, neuron.theta1, neuron.theta2), (-65.0, 0.0, 0.0));
+            assert_eq!(neuron.step(0.0), 0);
+        }
     }
 }

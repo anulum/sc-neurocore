@@ -53,6 +53,13 @@ All profiles retain `tau_m=5 ms`, `R=50 MOhm`, `tau_1=10 ms`,
 overridden. These are named examples from the paper, not universal cortical-cell
 calibrations.
 
+Each named factory accepts all thirteen state and parameter overrides, including
+`omega`, `alpha_1` and `alpha_2`. Explicit values replace the named profile's
+defaults and pass through the complete constructor validation. Unsupported
+field names raise `TypeError`; invalid configured values raise `ValueError`.
+For example, `MATNeuron.fast_spiking(alpha_1=7.0, dt=0.05)` keeps the FS baseline
+and slow increment while replacing the fast increment and timestep.
+
 ```python
 from sc_neurocore.neurons.models.mat import MATNeuron
 
@@ -79,6 +86,32 @@ print(sum(events), rs.v, rs.threshold)
 fastest available complete runtime. Explicitly requesting an unavailable or
 unknown backend fails; it never substitutes a surrogate.
 
+The configured native `py_mat_simulate` accepts all thirteen state and parameter
+fields and a contiguous, aligned, native-endian `float64` input vector.
+Read-only vectors are supported. Voltage, both adaptation histories,
+refractory history and `int32` events are independently owned output arrays.
+Unsupported layouts raise `TypeError` before output allocation. A real
+allocation failure raises Python `MemoryError` and releases partial outputs;
+the input vector remains unchanged and a subsequent valid call can recover.
+
+The Go and Mojo `mat_simulate_c` exports validate all thirteen fields before
+writing any caller output, including an empty batch. Status `1` refuses a
+negative length or any null pointer; status `2` refuses invalid configuration
+or a failed transition. An empty valid call writes only its four initial final
+values. A later transition failure retains the accepted trace prefix, leaving
+the suffix and all final buffers untouched. The Python facades expose outputs
+only after status `0`. Go's state `Validate()` checks the complete profile
+without mutation.
+
+`reset()` restores zero-rest voltage, both history terms and refractory state
+only after validating the retained configuration. Python raises `ValueError`
+and Julia raises `ArgumentError` on refusal without changing any field. Rust
+`try_reset()` and Go `TryReset()` report refusal; their legacy void resets leave
+the refused state unchanged. A valid profile can recover corrupted dynamics.
+Julia validates even an empty current vector and commits caller state only
+after the complete vector succeeds. Its constant-current overload rejects a
+negative count, nonfinite current or invalid timestep before simulation.
+
 ## Reproducibility and hardware boundary
 
 The independent 10,272-step source receipt is
@@ -97,6 +130,7 @@ claimed.
 
 The five-runtime 200,000-step result is
 `benchmarks/results/bench_mat.json`. It is loaded-host local regression evidence,
-not a production-speed or hardware-performance claim.
+with retained functional trajectories. Its timing values cannot qualify
+performance acceptance.
 
 See [source and runtime fidelity evidence](../../validation/mat_source_fidelity.md).

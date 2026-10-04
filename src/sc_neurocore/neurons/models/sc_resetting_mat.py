@@ -6,10 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — project resetting MAT modification
 
+"""Preserved project RK4/reset recurrence with checked complete resting state."""
+
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 _VOLTAGE_MIN = -200.0
 _VOLTAGE_MAX = 100.0
@@ -146,7 +148,8 @@ class SCResettingMATNeuron:
         return 0
 
     def reset(self) -> None:
-        """Restore voltage and adaptive thresholds to the SC resting state."""
-        self.v = self.v_rest
-        self.theta1 = 0.0
-        self.theta2 = 0.0
+        """Validate the complete resting candidate before restoring all dynamic values."""
+        candidate = replace(self, v=self.v_rest, theta1=0.0, theta2=0.0)
+        self.v = candidate.v
+        self.theta1 = candidate.theta1
+        self.theta2 = candidate.theta2

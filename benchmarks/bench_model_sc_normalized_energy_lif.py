@@ -5,6 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Retained normalized energy-LIF benchmark
 """Source/binary-bound five-runtime retained SC EnergyLIF benchmark."""
 
 from benchmarks._energy_lif_benchmark import BenchmarkSpec, REPOSITORY, run
@@ -14,6 +15,8 @@ SOURCE_PATHS = (
     "benchmarks/_energy_lif_benchmark.py",
     "benchmarks/_non_resetting_lif_benchmark.py",
     "benchmarks/bench_model_sc_normalized_energy_lif.py",
+    "engine/src/bindings/fixed_point_lif.rs",
+    "engine/src/bindings/fixed_point_lif/array_allocation.rs",
     "engine/src/bindings/trivial/sc_normalized_energy_lif.rs",
     "engine/src/neurons/trivial/sc_normalized_energy_lif.rs",
     "src/sc_neurocore/accel/sc_normalized_energy_lif.py",

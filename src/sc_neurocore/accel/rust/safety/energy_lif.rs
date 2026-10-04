@@ -133,20 +133,25 @@ impl EnergyLIFNeuron {
         .all(f64::is_finite)
             && (V_MIN..=V_MAX).contains(&self.v)
             && (V_MIN..=V_MAX).contains(&self.v_reset)
+            && (V_MIN..=V_MAX).contains(&self.e_0)
             && self.epsilon.is_finite()
             && (0.0..=ENERGY_MAX).contains(&self.epsilon)
-            && [self.epsilon_0, self.epsilon_c, self.delta]
+            && [self.epsilon_c, self.delta]
                 .into_iter()
                 .all(|x| x.is_finite() && x >= 0.0)
             && [
                 self.capacitance,
                 self.g_leak,
                 self.alpha,
+                self.epsilon_0,
                 self.tau_e,
                 self.dt,
             ]
             .into_iter()
             .all(|x| x.is_finite() && x > 0.0)
+            && (self.alpha * self.epsilon_0).is_finite()
+            && self.alpha * self.epsilon_0 > 0.0
+            && self.alpha * self.epsilon_0 <= ENERGY_MAX
             && self.e_d != self.e_f
             && self.v_threshold > self.v_reset
             && self.dt <= 1.0

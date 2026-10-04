@@ -23,6 +23,18 @@ from pathlib import Path
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def local_git_fixture_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep private native Git fixtures separate from the hosting job's checkout identity.
+
+    Individual CI-event tests supply their own explicit event context after
+    this fixture. Real Git sources and native producer executions are retained.
+    """
+    for name in ("GITHUB_ACTIONS", "GITHUB_SHA", "GITHUB_EVENT_PATH", "GITHUB_EVENT_NAME"):
+        monkeypatch.delenv(name, raising=False)
+
+
 from tools.doc_debt_ceiling import RatchetError
 from tools.documentation_debt import go_scope, measure_go, measure_go_coverage
 from tools.go_doc_ratchet import (
@@ -31,10 +43,6 @@ from tools.go_doc_ratchet import (
     main,
     measure,
     write_ceiling,
-)
-
-pytestmark = pytest.mark.skipif(
-    shutil.which("go") is None, reason="the Go toolchain is not installed"
 )
 
 PROVENANCE = {
@@ -69,6 +77,8 @@ def go_repository(root: Path, files: dict[str, str]) -> Path:
     directory would produce an empty scope and a test that proves nothing.
     """
     root.mkdir(parents=True, exist_ok=True)
+    assert shutil.which("go") is not None, "Native Go is required for these contracts"
+    (root / ".gitignore").write_text(".venv/\n", encoding="utf-8")
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.email", "t@example.invalid"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
@@ -83,7 +93,10 @@ def go_repository(root: Path, files: dict[str, str]) -> Path:
 
 
 class TestTheMeasurementComesFromTheParser:
+    """Require native package and declaration parsing, including syntax refusal."""
+
     def test_a_documented_package_and_function_leave_no_debt(self, tmp_path: Path) -> None:
+        """Documentation on the actual package and exported function yields zero debt."""
         root = go_repository(tmp_path / "clean", {"sample/sample.go": DOCUMENTED})
 
         undocumented, files, version = measure(root)
@@ -93,6 +106,7 @@ class TestTheMeasurementComesFromTheParser:
         assert version.startswith("go version")
 
     def test_an_undocumented_exported_function_is_found(self, tmp_path: Path) -> None:
+        """An undocumented exported function contributes one native finding."""
         root = go_repository(tmp_path / "one", {"sample/sample.go": UNDOCUMENTED_FUNC})
 
         undocumented, files, _ = measure(root)
@@ -101,6 +115,7 @@ class TestTheMeasurementComesFromTheParser:
         assert files == 1
 
     def test_an_unexported_function_is_not_debt(self, tmp_path: Path) -> None:
+        """A private function does not enter the exported declaration count."""
         source = (
             "// Package sample is documented.\npackage sample\n\nfunc answer() int { return 42 }\n"
         )
@@ -117,6 +132,7 @@ class TestTheMeasurementComesFromTheParser:
         assert measure(root)[0] == 1
 
     def test_a_documented_group_documents_the_names_inside_it(self, tmp_path: Path) -> None:
+        """A group comment covers both exported constant specifications."""
         source = (
             "// Package sample is documented.\npackage sample\n\n"
             "// Limits are the bounds.\nconst (\n\tLow = 1\n\tHigh = 2\n)\n"
@@ -133,7 +149,9 @@ class TestTheMeasurementComesFromTheParser:
             measure(root)
 
 
-class TestTheScopeIsEveryTrackedFile:
+class TestTheScopeIncludesNewOwnedFiles:
+    """Measure native Git source discovery with explicit environment exclusion."""
+
     def test_a_new_file_nobody_registered_is_measured(self, tmp_path: Path) -> None:
         """The hole a list-shaped scope leaves: enforcement is the default here."""
         root = go_repository(tmp_path / "grow", {"sample/sample.go": DOCUMENTED})
@@ -145,17 +163,17 @@ class TestTheScopeIsEveryTrackedFile:
 
         assert measure(root)[0] == 2
 
-    def test_an_untracked_file_is_outside_the_scope(self, tmp_path: Path) -> None:
-        """Stated because it bounds the claim: git's index is what is measured."""
+    def test_a_nonignored_untracked_file_is_inside_the_scope(self, tmp_path: Path) -> None:
+        """New source contributes debt before it enters the Git index."""
         root = go_repository(tmp_path / "untracked", {"sample/sample.go": DOCUMENTED})
         (root / "loose.go").write_text(
             "package loose\n\nfunc X() int { return 0 }\n", encoding="utf-8"
         )
 
-        assert measure(root)[0] == 0
+        assert measure(root)[0] == 2
 
     def test_the_scope_is_taken_from_git_not_from_a_walk(self, tmp_path: Path) -> None:
-        """A walk of this tree reaches a vendored toolchain; git's index does not."""
+        """An explicitly ignored virtual environment remains outside native discovery."""
         root = go_repository(tmp_path / "walk", {"sample/sample.go": DOCUMENTED})
         vendored = root / ".venv" / "lib" / "go"
         vendored.mkdir(parents=True)
@@ -169,7 +187,10 @@ class TestTheScopeIsEveryTrackedFile:
 
 
 class TestTheRatchetOnlyTurnsOneWay:
+    """Preserve decreasing aggregate ceilings and their serialized provenance."""
+
     def test_a_rise_fails_and_says_by_how_much(self) -> None:
+        """A scalar increase reports the exact excess above the ceiling."""
         verdict = compare(1533, 1532)
 
         assert verdict.ok is False
@@ -177,12 +198,14 @@ class TestTheRatchetOnlyTurnsOneWay:
         assert "+1" in verdict.summary()
 
     def test_a_fall_passes_and_asks_for_an_update(self) -> None:
+        """A lower figure requests the persistent ratchet update."""
         verdict = compare(1500, 1532)
 
         assert verdict.ok is True
         assert "--update" in verdict.summary()
 
     def test_it_refuses_to_raise_a_recorded_ceiling(self, tmp_path: Path) -> None:
+        """The shared record writer preserves an existing lower ceiling."""
         path = tmp_path / "ceiling.json"
         write_ceiling(path, undocumented=10, files=2, provenance=PROVENANCE)
 
@@ -190,6 +213,7 @@ class TestTheRatchetOnlyTurnsOneWay:
             write_ceiling(path, undocumented=11, files=2, provenance=PROVENANCE)
 
     def test_the_record_carries_its_contract_and_what_produced_it(self, tmp_path: Path) -> None:
+        """A legacy aggregate record retains the caller's explicit provenance."""
         path = tmp_path / "ceiling.json"
         write_ceiling(path, undocumented=10, files=2, provenance=PROVENANCE)
 
@@ -200,9 +224,12 @@ class TestTheRatchetOnlyTurnsOneWay:
 
 
 class TestTheCommandLine:
+    """Run the production command against native Git originals and private ceilings."""
+
     def test_it_fails_when_debt_rose_above_the_ceiling(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """The CLI refuses native debt above a narrower custom scalar ceiling."""
         root = go_repository(tmp_path / "cli-rise", {"sample/sample.go": UNDOCUMENTED_FUNC})
         ceiling = tmp_path / "ceiling.json"
         write_ceiling(ceiling, undocumented=0, files=0, provenance=PROVENANCE)
@@ -211,6 +238,7 @@ class TestTheCommandLine:
         assert "rose" in capsys.readouterr().out
 
     def test_it_passes_when_debt_is_at_the_ceiling(self, tmp_path: Path) -> None:
+        """An unchanged original declaration is accepted at its measured ceiling."""
         root = go_repository(tmp_path / "cli-level", {"sample/sample.go": UNDOCUMENTED_FUNC})
         ceiling = tmp_path / "ceiling.json"
         write_ceiling(ceiling, undocumented=1, files=1, provenance=PROVENANCE)
@@ -220,12 +248,14 @@ class TestTheCommandLine:
     def test_a_missing_ceiling_stops_the_check_rather_than_passing_it(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """A missing allowance record cannot produce a successful comparison."""
         root = go_repository(tmp_path / "cli-absent", {"sample/sample.go": DOCUMENTED})
 
         assert main(["--repo", str(root), "--ceiling", str(tmp_path / "absent.json")]) == 2
         assert "no ceiling record" in capsys.readouterr().out
 
     def test_update_lowers_the_ceiling_and_records_the_source(self, tmp_path: Path) -> None:
+        """A private update records native source proof and the current Git revision."""
         root = go_repository(tmp_path / "cli-update", {"sample/sample.go": DOCUMENTED})
         ceiling = tmp_path / "ceiling.json"
         write_ceiling(ceiling, undocumented=5, files=1, provenance=PROVENANCE)
@@ -237,7 +267,10 @@ class TestTheCommandLine:
 
 
 class TestTheDebtReportNoLongerCallsGoUnmeasurable:
+    """Require real Go figures and the declared native protocol in debt reports."""
+
     def test_go_is_measured_with_a_figure_and_a_named_tool(self, tmp_path: Path) -> None:
+        """The report names the actual parser and its installed toolchain version."""
         root = go_repository(tmp_path / "report", {"sample/sample.go": UNDOCUMENTED_FUNC})
 
         measurement = measure_go(root)
@@ -248,10 +281,11 @@ class TestTheDebtReportNoLongerCallsGoUnmeasurable:
         assert measurement.tool_version is not None
 
     def test_the_summary_carries_the_contract_it_claims(self, tmp_path: Path) -> None:
+        """The native summary identifies measured packages and retained declarations."""
         root = go_repository(tmp_path / "schema", {"sample/sample.go": DOCUMENTED})
 
         summary = measure_go_coverage(root, go_scope(root))
 
-        assert summary["schema_version"] == "sc-neurocore.go-doc-coverage.v1"
+        assert summary["schema_version"] == "sc-neurocore.go-doc-coverage.v3"
         # The fixture package and the coverage tool's own package: it measures itself.
         assert summary["packages_total"] == 2

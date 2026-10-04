@@ -27,6 +27,28 @@ Defaults are `sigma=0`, `reconstruction=0`, `delta=1`,
 transition are validated before mutation. `reset()` clears the two states while
 preserving configuration.
 
+## Native Python contract
+
+The native `sc_neurocore_engine.SigmaDeltaNeuron` accepts the same five fields,
+positionally or by keyword. Its scalar step returns an integer event and
+`get_state()` returns a detached dictionary containing `sigma` and
+`reconstruction`. Invalid configuration or a refused candidate raises
+`ValueError` before changing either state; reset retains the configured
+quantum, time constant and sample interval. Native instances refuse pickle
+and copy, while the class retains its global module identity.
+
+The direct `py_sigma_delta_simulate` entry point takes those five fields and
+a one-dimensional, aligned, contiguous native-endian `float64` NumPy input.
+Readonly inputs are accepted. It returns independent, writable NumPy owners:
+`sigma` and `reconstruction` as `float64`, and `events` as `int32`, plus both
+final state values. Empty input retains the supplied initial states.
+Configuration and input layout are checked before output allocation. An
+allocation failure raises `MemoryError`, releases partial outputs and permits
+a subsequent valid call; input data remains unchanged. Dedicated Linux
+address-space-pressure tests exercise all three allocation failures and
+layout refusal under the same memory limit. This evidence covers the named
+Linux wheel profile; other platforms retain their own installation gates.
+
 ## Identity boundary
 
 The former signed, one-quantum-per-sample accumulator is preserved exactly as

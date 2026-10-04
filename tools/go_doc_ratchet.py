@@ -7,40 +7,39 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Go documentation debt may fall, never rise
 
-"""A ratchet on the undocumented exported declarations in this repository's Go.
+"""Protect original Go documentation debt with actual native declaration identities.
 
-Go was recorded as *not measured* here, for the stated reason that no Go
-documentation linter is installed. That reason was true of the linters and
-false of the language: ``go/parser`` is the front end those linters are built
-on, it ships with the toolchain, and the toolchain is present. The measurement
-is therefore taken by ``tools/godoc_coverage``, which parses the same way the
-compiler does; the first figure it produced was 1532 undocumented declarations
-across 420 files.
+Native Git discovers tracked and nonignored untracked Go source. Go's parser
+measures those exact bytes and emits package, file and receiver identities.
+An independently parsed immutable Git baseline protects the original cohort,
+individual unresolved declarations and scalar ceiling. Documenting one case
+cannot authorize a new undocumented declaration with the same aggregate count.
 
-The scope is **every tracked ``.go`` file**, taken from ``git ls-files`` rather
-than from a list of directories or a walk of the tree. Both alternatives were
-tried and both were wrong in a way that matters: a list is silently blind to
-any file nobody adds to it, and a filesystem walk of the Go tree found 18 057
-files because a virtual environment lives inside it, so the figure would have
-described a Go toolchain rather than this project.
-
-Debt may fall and the ceiling follows it down; debt may not rise, and this tool
-cannot raise the ceiling at all. The rule itself is shared with every other
-language in ``tools/doc_debt_ceiling.py``.
+``--update`` may lower the scalar and individual allowances. It records the
+current native source manifest and original source evidence. Explicitly ignored
+and external source ownership requires separate qualification.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import shutil
-import subprocess
+from collections.abc import Mapping
 from pathlib import Path
 
 from tools.doc_debt_ceiling import RatchetError, Verdict, read_ceiling
 from tools.doc_debt_ceiling import compare as _compare
 from tools.doc_debt_ceiling import write_ceiling as _write_ceiling
-from tools.documentation_debt import GO_COVERAGE_TOOL, go_scope, measure_go_coverage
+from tools.docstring_policy_git import git_bytes
+from tools.docstring_policy_scope import PolicyError
+from tools.go_doc_measurement import (
+    GO_COVERAGE_TOOL,
+    GoDocMeasurement,
+    GoMeasurementError,
+    qualify_repository,
+)
+from tools.go_doc_findings import measure_findings
+from tools.go_doc_history import INDIVIDUAL_CEILING_SCHEMA, protect_debt
 
 #: Contract version of the ceiling record.
 GO_DOC_CEILING_SCHEMA_VERSION = "sc-neurocore.go-doc-ceiling.v1"
@@ -48,14 +47,15 @@ GO_DOC_CEILING_SCHEMA_VERSION = "sc-neurocore.go-doc-ceiling.v1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 #: Where the committed ceiling lives, beside the tool that maintains it.
 #:
-#: Not beside the code it constrains, because that scope is every tracked
+#: Not beside the code it constrains, because its scope is Git-discovered
 #: ``.go`` file in the repository and has no single directory to sit in.
 DEFAULT_CEILING = REPO_ROOT / "tools" / "go_doc_ceiling.json"
 #: What the record means, written for whoever opens the file before the tool.
 CEILING_NOTE = (
-    "Undocumented exported declarations in every tracked .go file, measured "
-    "with Go's own parser through tools/godoc_coverage. This ceiling may fall "
-    "and may not rise: see tools/go_doc_ratchet.py."
+    "Undocumented exported declarations in tracked and nonignored untracked "
+    ".go files, measured with Go's parser through tools/godoc_coverage. Original "
+    "individual cases are protected. This ceiling may fall and may not rise: "
+    "see tools/go_doc_ratchet.py."
 )
 
 
@@ -64,7 +64,9 @@ def compare(measured: int, ceiling: int) -> Verdict:
     return _compare(measured, ceiling, language="Go")
 
 
-def write_ceiling(path: Path, *, undocumented: int, files: int, provenance: dict[str, str]) -> None:
+def write_ceiling(
+    path: Path, *, undocumented: int, files: int, provenance: Mapping[str, object]
+) -> None:
     """Write the Go ceiling record, refusing to raise an existing one.
 
     Raises
@@ -78,7 +80,9 @@ def write_ceiling(path: Path, *, undocumented: int, files: int, provenance: dict
         undocumented=undocumented,
         files=files,
         note=CEILING_NOTE,
-        schema_version=GO_DOC_CEILING_SCHEMA_VERSION,
+        schema_version=INDIVIDUAL_CEILING_SCHEMA
+        if "debt_cases" in provenance
+        else GO_DOC_CEILING_SCHEMA_VERSION,
         provenance=provenance,
     )
 
@@ -93,24 +97,15 @@ def measure(root: Path) -> tuple[int, int, str]:
         cannot run must say so rather than report zero: an unreadable scope and
         a documented one are the same number and opposite facts.
     """
-    if shutil.which("go") is None:
-        raise RatchetError("go is not installed, so no measurement was taken")
-    paths = go_scope(root)
-    if not paths:
-        raise RatchetError("no tracked .go files were found, so nothing was measured")
+    qualified = _measurement(root)
+    return qualified.undocumented, qualified.files, qualified.version
+
+
+def _measurement(root: Path) -> GoDocMeasurement:
     try:
-        summary = measure_go_coverage(root, paths)
-    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as error:
+        return qualify_repository(root)
+    except GoMeasurementError as error:
         raise RatchetError(f"the Go coverage tool did not produce a figure: {error}") from error
-    version = subprocess.run(  # noqa: S603 - fixed argv, no shell
-        ["go", "version"],
-        capture_output=True,
-        text=True,
-        cwd=root,
-        timeout=120,
-        check=False,
-    ).stdout.strip()
-    return summary["undocumented"], summary["files_with_findings"], version
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -126,31 +121,48 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = args.repo.resolve()
     try:
-        undocumented, files, version = measure(root)
-    except RatchetError as error:
+        qualified = _measurement(root)
+        individual = measure_findings(root, qualified.source.paths)
+        if individual.measurement.summary != qualified.summary:
+            raise GoMeasurementError(
+                "The current Go summary changed during individual measurement."
+            )
+        protected = protect_debt(root, individual, args.ceiling, allow_create=args.update)
+        qualified.verify(root, tracked=True)
+        undocumented, files, version = qualified.undocumented, qualified.files, qualified.version
+    except (RatchetError, GoMeasurementError) as error:
         print(f"error: {error}")
         return 2
     if args.update:
-        sha = subprocess.run(  # noqa: S603 - fixed argv, no shell
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            cwd=root,
-            timeout=120,
-            check=False,
-        ).stdout.strip()
         try:
+            sha = git_bytes(root, "rev-parse", "HEAD^{commit}").decode("ascii").strip()
+            qualified.verify(root, tracked=True)
             write_ceiling(
                 args.ceiling,
                 undocumented=undocumented,
                 files=files,
                 provenance={
-                    "argv": f"git ls-files -- '*.go' | go run {GO_COVERAGE_TOOL}",
+                    "argv": ["go", "run", GO_COVERAGE_TOOL],
+                    "scope_argv": [
+                        "git",
+                        "ls-files",
+                        "--cached",
+                        "--others",
+                        "--exclude-standard",
+                        "-z",
+                        "--",
+                        "*.go",
+                    ],
                     "go": version,
                     "source_sha256": sha,
+                    "git_revision": sha,
+                    "measurement": qualified.to_public_dict(),
+                    "individual_measurement": individual.to_public_dict(),
+                    "original_baseline": protected.to_public_dict(),
+                    "debt_cases": [case.to_public_dict() for case in sorted(individual.cases)],
                 },
             )
-        except RatchetError as error:
+        except (RatchetError, GoMeasurementError, PolicyError, UnicodeError) as error:
             print(f"error: {error}")
             return 2
         print(f"Ceiling now {undocumented} undocumented declarations in {files} files.")

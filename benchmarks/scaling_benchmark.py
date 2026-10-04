@@ -6,9 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Scaling Benchmark — SC-NeuroCore vs Brian2 vs NEST
 
-"""
-Scaling Benchmark — SC-NeuroCore vs Brian2 vs NEST
-===================================================
+"""Measure Brunel network scaling across SC-NeuroCore and optional simulators.
 
 Brunel balanced network (80% exc, 20% inh, Poisson drive) at 4 dynamical
 regimes (Brunel 2000, Table 1).  Measures wall-clock, memory, synaptic
@@ -40,9 +38,40 @@ import platform
 import time
 import tracemalloc
 from dataclasses import asdict, dataclass, field
+from importlib import import_module
 from pathlib import Path
+from typing import TYPE_CHECKING, Mapping, Protocol, TypedDict
 
 import numpy as np
+from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from torch import Tensor
+
+
+class _PoissonDistribution(Protocol):
+    """Describe the optional Torch sampler used by the GPU consumers."""
+
+    def sample(self, sample_shape: tuple[int, ...]) -> Tensor:
+        """Draw a tensor with the requested sample dimensions."""
+        ...
+
+
+class _BrunelRegime(TypedDict):
+    """Type the numerical regime parameters separately from their labels."""
+
+    g_inh: float
+    eta: float
+    label: str
+
+
+class _ExtendedMetrics(TypedDict):
+    """Retain the integer event count and floating-point summary metrics."""
+
+    rate: float
+    syn_events: int
+    syn_per_s: float
+    sparsity: float
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +79,30 @@ import numpy as np
 # ---------------------------------------------------------------------------
 @dataclass
 class RunMetrics:
+    """Record one simulator run using its actual timing and memory counters.
+
+    Attributes
+    ----------
+    wall_time_s : float
+        Elapsed time in seconds within the simulator's measured region.
+    peak_rss_mb : float
+        Backend-reported memory peak in MiB. Python lanes use tracemalloc;
+        CUDA lanes use device allocation counters, not process RSS.
+    total_spikes : int
+        Total emitted spikes over the configured population and duration.
+    mean_rate_hz : float
+        Population-mean firing rate in spikes per neuron per second.
+    synaptic_events : int
+        Estimated events from spike count and the lane's fan-out convention.
+    synaptic_events_per_s : float
+        Estimated events divided by the measured elapsed time.
+    activation_sparsity : float
+        Mean silent-neuron fraction where the lane supplies step counts.
+        Lanes without those counts retain their documented zero value.
+    gpu_mem_mb : float
+        Peak CUDA allocation in MiB, or zero for a non-CUDA lane.
+    """
+
     wall_time_s: float
     peak_rss_mb: float
     total_spikes: int
@@ -62,6 +115,24 @@ class RunMetrics:
 
 @dataclass
 class ScalePoint:
+    """Group completed runs for one population, simulator and Brunel regime.
+
+    Attributes
+    ----------
+    n_neurons : int
+        Configured population size.
+    simulator : str
+        Key identifying the simulator in SIMULATORS.
+    regime : str
+        Key identifying the drive and inhibition in BRUNEL_REGIMES.
+    n_synapses : int
+        Connectivity estimate retained by the scaling runner, rather than a
+        recount of each simulator's realised connectivity.
+    runs : list of RunMetrics
+        Successfully returned repetitions; failed or unavailable runs do
+        not contribute to the aggregate properties.
+    """
+
     n_neurons: int
     simulator: str
     regime: str
@@ -70,43 +141,51 @@ class ScalePoint:
 
     @property
     def wall_mean(self) -> float:
+        """Return the arithmetic mean of completed elapsed times in seconds."""
         return float(np.mean([r.wall_time_s for r in self.runs]))
 
     @property
     def wall_std(self) -> float:
+        """Return the sample time deviation, or zero with fewer than two runs."""
         return (
             float(np.std([r.wall_time_s for r in self.runs], ddof=1)) if len(self.runs) > 1 else 0.0
         )
 
     @property
     def wall_min(self) -> float:
+        """Return the shortest elapsed time, requiring at least one run."""
         return float(np.min([r.wall_time_s for r in self.runs]))
 
     @property
     def peak_rss_mb(self) -> float:
+        """Return the largest backend memory peak, requiring at least one run."""
         return float(np.max([r.peak_rss_mb for r in self.runs]))
 
     @property
     def spikes_mean(self) -> float:
+        """Return the arithmetic mean of completed population spike counts."""
         return float(np.mean([r.total_spikes for r in self.runs]))
 
     @property
     def rate_mean(self) -> float:
+        """Return the arithmetic mean of completed firing rates in Hz."""
         return float(np.mean([r.mean_rate_hz for r in self.runs]))
 
     @property
     def syn_events_per_s_mean(self) -> float:
+        """Return the mean estimated event throughput across completed runs."""
         return float(np.mean([r.synaptic_events_per_s for r in self.runs]))
 
     @property
     def sparsity_mean(self) -> float:
+        """Return the mean of the completed lanes' silent-neuron fractions."""
         return float(np.mean([r.activation_sparsity for r in self.runs]))
 
 
 # ---------------------------------------------------------------------------
 # Brunel regimes — Brunel 2000, Table 1
 # ---------------------------------------------------------------------------
-BRUNEL_REGIMES = {
+BRUNEL_REGIMES: dict[str, _BrunelRegime] = {
     "SR": {"g_inh": 3.0, "eta": 2.0, "label": "synchronous regular"},
     "SI": {"g_inh": 6.0, "eta": 4.0, "label": "synchronous irregular"},
     "AI": {"g_inh": 5.0, "eta": 2.0, "label": "asynchronous irregular"},
@@ -116,6 +195,41 @@ BRUNEL_REGIMES = {
 
 @dataclass
 class BrunelConfig:
+    """Configure a balanced population and its numerical simulator inputs.
+
+    Attributes
+    ----------
+    n_neurons : int
+        Population size, partitioned into 80% excitatory and the remainder
+        inhibitory neurons by the integer-valued properties below.
+    regime : str
+        SR, SI, AI or AR key selecting inhibition and external-drive ratios.
+    sim_ms : float
+        Requested simulation duration in milliseconds.
+    dt : float
+        Integration timestep in milliseconds.
+    conn_prob : float
+        Bernoulli connection probability used by the connectivity builders.
+    weight_exc : float
+        Excitatory voltage increment before backend-specific quantisation.
+    v_threshold : float
+        Spike threshold in the simulator's voltage units.
+    v_reset : float
+        Voltage restored after a spike in lanes using this configuration.
+    v_rest : float
+        Resting voltage for leak and initial-state calculations.
+    tau_mem : float
+        Membrane time constant in milliseconds.
+    seed : int
+        Seed supplied to the lane's random generator.
+
+    Notes
+    -----
+    This dataclass stores inputs without domain validation. Simulator lanes
+    retain their own discretisation, availability and applicability limits;
+    storing the same configuration does not prove dynamics parity.
+    """
+
     n_neurons: int
     regime: str = "AI"
     sim_ms: float = 500.0
@@ -130,18 +244,22 @@ class BrunelConfig:
 
     @property
     def n_exc(self) -> int:
+        """Return the integer truncation of 80% of the population size."""
         return int(self.n_neurons * 0.8)
 
     @property
     def n_inh(self) -> int:
+        """Return the population remaining after its excitatory partition."""
         return self.n_neurons - self.n_exc
 
     @property
     def g_inh(self) -> float:
+        """Return the selected regime's inhibitory-to-excitatory weight ratio."""
         return BRUNEL_REGIMES[self.regime]["g_inh"]
 
     @property
     def weight_inh(self) -> float:
+        """Return the inhibitory weight magnitude before its sign is applied."""
         return self.g_inh * self.weight_exc
 
     @property
@@ -152,7 +270,11 @@ class BrunelConfig:
     @property
     def external_rate_hz(self) -> float:
         """Per-connection external Poisson rate (nu_ext = eta * nu_thr).
-        Total external spikes per neuron per second = c_ext * external_rate_hz."""
+
+        Total external spikes per neuron per second equal
+        c_ext * external_rate_hz. The threshold-rate fallback is 20 Hz when
+        the configured external connection count is nonpositive.
+        """
         ce = self.c_ext
         nu_thr = self.v_threshold / (self.weight_exc * ce * self.tau_mem * 1e-3) if ce > 0 else 20.0
         eta = BRUNEL_REGIMES[self.regime]["eta"]
@@ -175,8 +297,9 @@ def _tracemalloc_peak_mb() -> float:
 # ---------------------------------------------------------------------------
 # System info
 # ---------------------------------------------------------------------------
-def _system_info() -> dict:
-    info = {
+def _system_info() -> dict[str, str | int | None]:
+    """Record the host and any available Torch GPU identification."""
+    info: dict[str, str | int | None] = {
         "platform": platform.platform(),
         "python": platform.python_version(),
         "cpu": platform.processor() or "unknown",
@@ -204,7 +327,10 @@ def _system_info() -> dict:
 # ---------------------------------------------------------------------------
 # Shared Brunel weight-matrix builder
 # ---------------------------------------------------------------------------
-def _build_weights_dense(cfg: BrunelConfig, rng: np.random.Generator):
+def _build_weights_dense(
+    cfg: BrunelConfig, rng: np.random.Generator
+) -> tuple[NDArray[np.float32], int]:
+    """Build signed float32 connectivity and count its nonzero synapses."""
     n = cfg.n_neurons
     conn_mask = rng.random((n, n)) < cfg.conn_prob
     np.fill_diagonal(conn_mask, False)
@@ -221,14 +347,14 @@ def _compute_extended_metrics(
     n_synapses: int,
     wall: float,
     step_spike_counts: list[int],
-) -> dict:
+) -> _ExtendedMetrics:
+    """Summarize spike counts with the configured duration and connectivity."""
     rate = spike_count / (sim_ms / 1000.0) / n if n > 0 else 0.0
     # fan_out ≈ n_synapses / n (average post-synaptic targets per neuron)
     fan_out = n_synapses / n if n > 0 else 0.0
     syn_events = int(spike_count * fan_out)
     syn_per_s = syn_events / wall if wall > 0 else 0.0
     # activation sparsity: fraction of neurons silent per step (averaged)
-    steps = len(step_spike_counts) if step_spike_counts else 1
     sparsity = (
         float(np.mean([1.0 - sc / n for sc in step_spike_counts])) if step_spike_counts else 1.0
     )
@@ -244,6 +370,19 @@ def _compute_extended_metrics(
 # Simulator: Vectorized NumPy dense
 # ---------------------------------------------------------------------------
 def run_numpy(cfg: BrunelConfig) -> RunMetrics:
+    """Measure the dense float32 NumPy network with independent Poisson drive.
+
+    Parameters
+    ----------
+    cfg : BrunelConfig
+        Population, seeded connectivity, drive, reset and integration inputs.
+
+    Returns
+    -------
+    RunMetrics
+        Elapsed loop time, tracemalloc peak and spike-derived metrics. The
+        dense weights are prepared before the measured region.
+    """
     rng = np.random.default_rng(cfg.seed)
     n = cfg.n_neurons
     weights, n_synapses = _build_weights_dense(cfg, rng)
@@ -293,6 +432,24 @@ def run_numpy(cfg: BrunelConfig) -> RunMetrics:
 # Simulator: Sparse NumPy (CSR)
 # ---------------------------------------------------------------------------
 def run_numpy_sparse(cfg: BrunelConfig) -> RunMetrics:
+    """Measure NumPy recurrence through a SciPy CSR connectivity matrix.
+
+    Parameters
+    ----------
+    cfg : BrunelConfig
+        Population, seeded connectivity, drive, reset and integration inputs.
+
+    Returns
+    -------
+    RunMetrics
+        Elapsed loop time, tracemalloc peak and spike-derived metrics. Dense
+        connectivity construction and CSR conversion precede measurement.
+
+    Raises
+    ------
+    ImportError
+        If the required SciPy sparse implementation is unavailable.
+    """
     from scipy import sparse
 
     rng = np.random.default_rng(cfg.seed)
@@ -347,6 +504,7 @@ def run_numpy_sparse(cfg: BrunelConfig) -> RunMetrics:
 # Simulator: PyTorch CUDA (dense)
 # ---------------------------------------------------------------------------
 def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the dense Torch network when a CUDA device is available."""
     try:
         import torch
 
@@ -369,7 +527,7 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
     # Hoisted constants — avoid per-step GPU tensor creation
     v_reset_t = torch.full((n,), cfg.v_reset, dtype=torch.float32, device=device)
     poisson_rate = torch.tensor(cfg.ext_poisson_lambda, device=device)
-    poisson_dist = torch.distributions.Poisson(poisson_rate)
+    poisson_dist: _PoissonDistribution = torch.distributions.Poisson(poisson_rate)
     spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
 
     torch.matmul(prev_spikes, w)
@@ -413,6 +571,7 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
 # Simulator: PyTorch CUDA (sparse CSR)
 # ---------------------------------------------------------------------------
 def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the sparse Torch network when a CUDA device is available."""
     try:
         import torch
 
@@ -444,7 +603,7 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
 
     v_reset_t = torch.full((n,), cfg.v_reset, dtype=torch.float32, device=device)
     poisson_rate = torch.tensor(cfg.ext_poisson_lambda, device=device)
-    poisson_dist = torch.distributions.Poisson(poisson_rate)
+    poisson_dist: _PoissonDistribution = torch.distributions.Poisson(poisson_rate)
     spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
 
     # warmup
@@ -491,11 +650,12 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
 _brian2_warmed_up = False
 
 
-def _brian2_warmup():
+def _brian2_warmup() -> None:
+    """Compile the optional Brian2 simulator once before timed runs."""
     global _brian2_warmed_up
     if _brian2_warmed_up:
         return
-    import brian2
+    brian2 = import_module("brian2")
 
     brian2.start_scope()
     G = brian2.NeuronGroup(
@@ -507,8 +667,9 @@ def _brian2_warmup():
 
 
 def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the optional Brian2 network after its compilation warmup."""
     try:
-        import brian2
+        brian2 = import_module("brian2")
     except ImportError:
         return None
 
@@ -541,7 +702,8 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
     # Poisson process with c_ext sources at external_rate_hz each.
     # PoissonInput (not PoissonGroup+connect) avoids shared-source correlation.
     c_ext_int = max(1, int(cfg.c_ext))
-    P_ext = brian2.PoissonInput(  # noqa: F841
+    # Keep the input alive in the local namespace for Brian's magic network.
+    _external_input = brian2.PoissonInput(
         G, "v", N=c_ext_int, rate=cfg.external_rate_hz * brian2.Hz, weight=cfg.weight_exc
     )
 
@@ -576,8 +738,9 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
 # Simulator: NEST
 # ---------------------------------------------------------------------------
 def run_nest(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the optional NEST network with the configured seed and timestep."""
     try:
-        import nest
+        nest = import_module("nest")
     except ImportError:
         return None
 
@@ -749,12 +912,13 @@ def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
 # Simulator: Rust Brunel (fused CSR spike-scatter network)
 # ---------------------------------------------------------------------------
 def run_rust_brunel(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the installed fixed-point CSR network with the configured drive."""
     try:
         import sc_neurocore_engine as eng
     except ImportError:
         return None
 
-    if not hasattr(eng, "BrunelNetwork"):
+    if not hasattr(eng, "FixedPointBrunelNetwork"):
         return None
 
     from scipy import sparse as sp
@@ -779,7 +943,7 @@ def run_rust_brunel(cfg: BrunelConfig) -> RunMetrics | None:
     tracemalloc.start()
     t0 = time.perf_counter()
 
-    net = eng.BrunelNetwork(
+    net = eng.FixedPointBrunelNetwork(
         n_neurons=n,
         w_indptr=w_csr.indptr.astype(np.int64),
         w_indices=w_csr.indices.astype(np.int64),
@@ -820,9 +984,11 @@ def run_rust_brunel(cfg: BrunelConfig) -> RunMetrics | None:
 # Simulator: Norse (PyTorch-based SNN)
 # ---------------------------------------------------------------------------
 def run_norse(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the optional Norse CUDA network with the configured drive."""
     try:
         import torch
-        import norse.torch as norse  # noqa: F811
+
+        norse = import_module("norse.torch")
 
         if not torch.cuda.is_available():
             return None
@@ -848,7 +1014,9 @@ def run_norse(cfg: BrunelConfig) -> RunMetrics | None:
         i=torch.zeros(n, device=device),
     )
 
-    poisson_dist = torch.distributions.Poisson(torch.tensor(cfg.ext_poisson_lambda, device=device))
+    poisson_dist: _PoissonDistribution = torch.distributions.Poisson(
+        torch.tensor(cfg.ext_poisson_lambda, device=device)
+    )
     spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
     torch.cuda.synchronize()
 
@@ -887,9 +1055,11 @@ def run_norse(cfg: BrunelConfig) -> RunMetrics | None:
 # Simulator: snnTorch (PyTorch-based SNN)
 # ---------------------------------------------------------------------------
 def run_snntorch(cfg: BrunelConfig) -> RunMetrics | None:
+    """Measure the optional snnTorch CUDA network with the configured drive."""
     try:
         import torch
-        import snntorch as snn
+
+        snn = import_module("snntorch")
 
         if not torch.cuda.is_available():
             return None
@@ -914,7 +1084,9 @@ def run_snntorch(cfg: BrunelConfig) -> RunMetrics | None:
     mem = torch.full((n,), cfg.v_rest, dtype=torch.float32, device=device)
     prev_spk = torch.zeros(n, dtype=torch.float32, device=device)
 
-    poisson_dist = torch.distributions.Poisson(torch.tensor(cfg.ext_poisson_lambda, device=device))
+    poisson_dist: _PoissonDistribution = torch.distributions.Poisson(
+        torch.tensor(cfg.ext_poisson_lambda, device=device)
+    )
     spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
     torch.cuda.synchronize()
 
@@ -975,6 +1147,33 @@ def run_scaling(
     regimes: list[str],
     simulators: list[str] | None = None,
 ) -> list[ScalePoint]:
+    """Collect successful simulator repetitions for the requested scale grid.
+
+    Parameters
+    ----------
+    scales : list of int
+        Population sizes visited in the supplied order.
+    sim_ms : float
+        Duration in milliseconds used for each BrunelConfig.
+    repeats : int
+        Requested repetitions per simulator, size and regime.
+    regimes : list of str
+        BRUNEL_REGIMES keys visited in the supplied order.
+    simulators : list of str or None
+        SIMULATORS keys, or all registered lanes when absent or empty.
+
+    Returns
+    -------
+    list of ScalePoint
+        Points with at least one completed run. A failed or unavailable
+        repetition stops that point; earlier completed runs remain. Dense
+        NumPy and CUDA lanes exceeding the 8 GB matrix estimate are omitted.
+
+    Notes
+    -----
+    Progress and per-lane failures are printed. Partial repetition counts
+    remain visible and do not establish complete benchmark qualification.
+    """
     targets = simulators or list(SIMULATORS.keys())
     results: list[ScalePoint] = []
 
@@ -1032,7 +1231,8 @@ def run_scaling(
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-def _serialize(obj):
+def _serialize(obj: object) -> int | float:
+    """Convert NumPy numerical scalars for the JSON encoder."""
     if isinstance(obj, (np.integer,)):
         return int(obj)
     if isinstance(obj, (np.floating,)):
@@ -1040,7 +1240,12 @@ def _serialize(obj):
     raise TypeError(f"{type(obj).__name__} not serializable")
 
 
-def to_json(results: list[ScalePoint], sys_info: dict, params: dict) -> dict:
+def to_json(
+    results: list[ScalePoint],
+    sys_info: Mapping[str, str | int | None],
+    params: Mapping[str, object],
+) -> dict[str, object]:
+    """Encode measured runs with host and benchmark configuration fields."""
     data = []
     for sp in results:
         data.append(
@@ -1070,6 +1275,20 @@ def to_json(results: list[ScalePoint], sys_info: dict, params: dict) -> dict:
 
 
 def format_markdown(results: list[ScalePoint]) -> str:
+    """Render measured scale points and their conditional Brian2 rate ratios.
+
+    Parameters
+    ----------
+    results : list of ScalePoint
+        Completed scale points with their actual successful repetitions.
+
+    Returns
+    -------
+    str
+        Markdown tables of measured means. The speedup table marks the
+        firing-rate ratio interval 0.75–1.25; this marker alone does not
+        qualify trajectory parity, host isolation or measured energy.
+    """
     lines = [
         "# SC-NeuroCore Scaling Benchmark",
         "",
@@ -1135,6 +1354,15 @@ def format_markdown(results: list[ScalePoint]) -> str:
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
+    """Run the configured scaling CLI and print or save its measured records.
+
+    Notes
+    -----
+    Arguments select scales, durations, repetitions, regimes and simulator
+    lanes. JSON includes host identification, raw successful runs and the
+    retained parameters; Markdown reports their aggregates. This entry point
+    executes timed workloads and requires a suitable reserved benchmark host.
+    """
     ap = argparse.ArgumentParser(description="Scaling benchmark: SC-NeuroCore vs Brian2 vs NEST")
     ap.add_argument(
         "--scales", type=int, nargs="+", default=[1000, 2000, 5000, 10000, 20000, 50000]

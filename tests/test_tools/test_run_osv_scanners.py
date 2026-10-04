@@ -5,6 +5,8 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
+"""Preserve additional OSV scanner commands and blocking failure decisions."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -14,17 +16,19 @@ import sys
 from pathlib import Path
 from typing import Any
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ImportError:  # pragma: no cover - Python < 3.11 compatibility
-    import tomli as tomllib  # type: ignore[no-redef]
+else:
+    import tomli as tomllib
 
 
 def _repo_root() -> Path:
+    """Locate the checkout containing the scanner policy and source."""
     return Path(__file__).resolve().parents[2]
 
 
 def _load_tool() -> Any:
+    """Load the production OSV packet module from the checkout."""
     tool_path = _repo_root() / "tools" / "security_scan" / "run_osv_scanners.py"
     spec = importlib.util.spec_from_file_location("run_osv_scanners", tool_path)
     assert spec is not None
@@ -36,6 +40,7 @@ def _load_tool() -> Any:
 
 
 def _load_manifest_tool() -> Any:
+    """Load the scanner catalogue used by the security packet builder."""
     tool_path = _repo_root() / "tools" / "security_scanner_manifest.py"
     spec = importlib.util.spec_from_file_location("security_scanner_manifest", tool_path)
     assert spec is not None
@@ -47,6 +52,7 @@ def _load_manifest_tool() -> Any:
 
 
 def test_manifest_osv_command_uses_packet_runner_and_v2_pin() -> None:
+    """Keep the security catalogue bound to the OSV v2 packet entry point."""
     manifest_tool = _load_manifest_tool()
     manifest = manifest_tool.build_scanner_manifest()
     scanners = {scanner["name"]: scanner for scanner in manifest["scanners"]}
@@ -60,6 +66,7 @@ def test_manifest_osv_command_uses_packet_runner_and_v2_pin() -> None:
 
 
 def test_osv_config_has_no_vulnerability_exceptions() -> None:
+    """Require the committed OSV configuration to contain no suppressions."""
     config = tomllib.loads(
         (_repo_root() / "tools" / "security_scan" / "osv-scanner.toml").read_text(encoding="utf-8")
     )
@@ -94,6 +101,7 @@ def test_semgrep_hash_lock_materializes_security_overrides() -> None:
 
 
 def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
+    """Retain scanner JSON and bind commands to every supported tracked lock."""
     tool = _load_tool()
     calls: list[list[str]] = []
 
@@ -106,6 +114,7 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
         timeout: int,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
+        """Supply the retained scanner response for this process contract."""
         del cwd, capture_output, text, timeout, check
         calls.append(command)
         output_path = Path(command[command.index("--output-file") + 1])
@@ -134,6 +143,14 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
         run_command=fake_run,
     )
 
+    from tools.security_scan.locked_dependency_inventory import inventory_locks
+
+    expected_locks = [
+        value
+        for lock in inventory_locks(_repo_root())
+        if lock.ecosystem in {"rust", "npm", "go"}
+        for value in ("--lockfile", lock.path)
+    ]
     assert calls == [
         [
             "osv-scanner",
@@ -144,31 +161,15 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
             "--format",
             "json",
             "--all-packages",
+            "--all-vulns",
+            "--no-call-analysis",
+            "go",
             "--output-file",
             f"{tmp_path / 'packet' / 'security' / 'osv_scanner.json'}",
             "--experimental-no-default-plugins",
             "--experimental-plugins",
             "lockfile",
-            "--lockfile",
-            "Cargo.lock",
-            "--lockfile",
-            "fuzz/Cargo.lock",
-            "--lockfile",
-            "crates/tinysc_riscv/Cargo.lock",
-            "--lockfile",
-            "crates/evo_substrate_core/Cargo.lock",
-            "--lockfile",
-            "crates/stochastic_doctor_core/Cargo.lock",
-            "--lockfile",
-            "crates/autonomous_learning/Cargo.lock",
-            "--lockfile",
-            "crates/core_engine/Cargo.lock",
-            "--lockfile",
-            "crates/neuro_symbolic/Cargo.lock",
-            "--lockfile",
-            "src/sc_neurocore/accel/rust/Cargo.lock",
-            "--lockfile",
-            "studio/frontend/package-lock.json",
+            *expected_locks,
         ]
     ]
     assert summary["passed"] is True
@@ -186,6 +187,7 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
 
 
 def test_runner_fails_when_osv_report_is_missing(tmp_path: Path) -> None:
+    """Reject successful process exits when the audit artifact is absent."""
     tool = _load_tool()
 
     def fake_run(
@@ -197,6 +199,7 @@ def test_runner_fails_when_osv_report_is_missing(tmp_path: Path) -> None:
         timeout: int,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
+        """Supply the retained scanner response for this process contract."""
         del cwd, capture_output, text, timeout, check
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
@@ -211,6 +214,7 @@ def test_runner_fails_when_osv_report_is_missing(tmp_path: Path) -> None:
 
 
 def test_runner_counts_vulnerabilities_as_blocking(tmp_path: Path) -> None:
+    """Keep reported advisories blocking regardless of scanner exit status."""
     tool = _load_tool()
 
     def fake_run(
@@ -222,6 +226,7 @@ def test_runner_counts_vulnerabilities_as_blocking(tmp_path: Path) -> None:
         timeout: int,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
+        """Supply the retained scanner response for this process contract."""
         del cwd, capture_output, text, timeout, check
         output_path = Path(command[command.index("--output-file") + 1])
         output_path.write_text(
@@ -256,6 +261,7 @@ def test_runner_counts_vulnerabilities_as_blocking(tmp_path: Path) -> None:
 
 
 def test_runner_retries_transient_osv_resolver_failure(tmp_path: Path) -> None:
+    """Accept a retry only after a successful scanner exit and audited results."""
     tool = _load_tool()
     calls = 0
     sleeps: list[float] = []
@@ -269,6 +275,7 @@ def test_runner_retries_transient_osv_resolver_failure(tmp_path: Path) -> None:
         timeout: int,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
+        """Supply the retained scanner response for this process contract."""
         del cwd, capture_output, text, timeout, check
         nonlocal calls
         calls += 1

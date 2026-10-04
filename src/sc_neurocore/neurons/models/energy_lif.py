@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 _VOLTAGE_MIN = -200.0
 _VOLTAGE_MAX = 100.0
@@ -62,16 +62,23 @@ class EnergyLIFNeuron:
             raise ValueError("v must be inside the voltage safety envelope")
         if not _VOLTAGE_MIN <= self.v_reset <= _VOLTAGE_MAX:
             raise ValueError("v_reset must be inside the voltage safety envelope")
-        for field in ("epsilon", "epsilon_0", "epsilon_c", "delta"):
+        if not _VOLTAGE_MIN <= self.e_0 <= _VOLTAGE_MAX:
+            raise ValueError("e_0 must be inside the voltage safety envelope")
+        for field in ("epsilon", "epsilon_c", "delta"):
             value = getattr(self, field)
             if not math.isfinite(value) or value < 0.0:
                 raise ValueError(f"{field} must be finite and non-negative")
         if self.epsilon > _ENERGY_MAX:
             raise ValueError("epsilon must be inside the energy safety envelope")
-        for field in ("capacitance", "g_leak", "alpha", "tau_e", "dt"):
+        for field in ("capacitance", "g_leak", "alpha", "epsilon_0", "tau_e", "dt"):
             value = getattr(self, field)
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{field} must be finite and positive")
+        equilibrium_energy = self.alpha * self.epsilon_0
+        if not math.isfinite(equilibrium_energy) or not 0.0 < equilibrium_energy <= _ENERGY_MAX:
+            raise ValueError(
+                "alpha * epsilon_0 must be positive and inside the energy safety envelope"
+            )
         if self.e_d == self.e_f:
             raise ValueError("e_d must differ from e_f")
         if self.v_threshold <= self.v_reset:
@@ -114,11 +121,21 @@ class EnergyLIFNeuron:
         )
 
     def step(self, current: float) -> int:
-        """Advance one source RK4 sample and return the sampled spike event."""
+        """Advance one source RK4 sample and return the sampled spike event.
+
+        Raises
+        ------
+        ValueError
+            Configuration, current or candidate state is outside the enrolled
+            envelope. Both dynamic states remain unchanged on refusal.
+        """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_state()
-        v_candidate, epsilon_candidate = self._rk4_candidate(current)
+        try:
+            v_candidate, epsilon_candidate = self._rk4_candidate(current)
+        except OverflowError:
+            raise ValueError("energy-LIF RK4 candidate left the safety envelope") from None
         if not (
             math.isfinite(v_candidate)
             and _VOLTAGE_MIN <= v_candidate <= _VOLTAGE_MAX
@@ -138,6 +155,13 @@ class EnergyLIFNeuron:
         return 0
 
     def reset(self) -> None:
-        """Restore the source equilibrium-oriented reset state."""
-        self.v = self.e_0
-        self.epsilon = self.alpha * self.epsilon_0
+        """Restore equilibrium after validation, leaving state unchanged on failure.
+
+        Raises
+        ------
+        ValueError
+            The current configuration cannot produce a valid reset state.
+        """
+        candidate = replace(self, v=self.e_0, epsilon=self.alpha * self.epsilon_0)
+        self.v = candidate.v
+        self.epsilon = candidate.epsilon

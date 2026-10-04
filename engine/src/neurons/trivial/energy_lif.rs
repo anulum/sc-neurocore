@@ -98,20 +98,25 @@ impl EnergyLIFNeuron {
         .all(f64::is_finite)
             && (V_MIN..=V_MAX).contains(&self.v)
             && (V_MIN..=V_MAX).contains(&self.v_reset)
+            && (V_MIN..=V_MAX).contains(&self.e_0)
             && self.epsilon.is_finite()
             && (0.0..=ENERGY_MAX).contains(&self.epsilon)
-            && [self.epsilon_0, self.epsilon_c, self.delta]
+            && [self.epsilon_c, self.delta]
                 .into_iter()
                 .all(|x| x.is_finite() && x >= 0.0)
             && [
                 self.capacitance,
                 self.g_leak,
                 self.alpha,
+                self.epsilon_0,
                 self.tau_e,
                 self.dt,
             ]
             .into_iter()
             .all(|x| x.is_finite() && x > 0.0)
+            && (self.alpha * self.epsilon_0).is_finite()
+            && self.alpha * self.epsilon_0 > 0.0
+            && self.alpha * self.epsilon_0 <= ENERGY_MAX
             && self.e_d != self.e_f
             && self.v_threshold > self.v_reset
             && self.dt <= 1.0
@@ -145,14 +150,27 @@ impl EnergyLIFNeuron {
         Ok(0)
     }
 
+    /// Advance atomically, returning `-1` when the transition is refused.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(-1)
     }
 
-    /// Restore the source equilibrium-oriented reset state.
+    /// Validate and restore equilibrium without changing state on failure.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let mut candidate = self.clone();
+        candidate.v = self.e_0;
+        candidate.epsilon = self.alpha * self.epsilon_0;
+        if !candidate.valid() {
+            return Err("invalid EnergyLIF reset state or configuration");
+        }
+        self.v = candidate.v;
+        self.epsilon = candidate.epsilon;
+        Ok(())
+    }
+
+    /// Restore equilibrium, retaining state when the configuration is invalid.
     pub fn reset(&mut self) {
-        self.v = self.e_0;
-        self.epsilon = self.alpha * self.epsilon_0;
+        let _ = self.try_reset();
     }
 }
 

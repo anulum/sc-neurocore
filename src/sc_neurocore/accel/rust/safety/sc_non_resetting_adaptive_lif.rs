@@ -4,6 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained adaptive LIF safety state transitions
 
 //! Fail-closed Rust safety implementation of the retained SC recurrence.
 
@@ -90,10 +91,21 @@ impl SCNonResettingAdaptiveLIFNeuron {
             && self.tau_theta > 0.0
             && self.dt > 0.0
     }
-    /// Restore configured rest state.
+    /// Validate and commit both configured resting values atomically.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let mut candidate = self.clone();
+        candidate.v = candidate.v_rest;
+        candidate.theta = candidate.theta_rest;
+        if !candidate.valid() {
+            return Err("invalid SC adaptive LIF reset state or configuration");
+        }
+        *self = candidate;
+        Ok(())
+    }
+
+    /// Restore valid rests without committing an invalid candidate.
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.theta = self.theta_rest;
+        let _ = self.try_reset();
     }
 }
 

@@ -23,10 +23,12 @@ else:
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCSTRING_POLICY = REPO_ROOT / "docs" / "docstring_policy.toml"
+_DocumentedNode = ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
 
 
-def _public_definitions(tree: ast.Module) -> list[tuple[str, ast.AST]]:
-    definitions: list[tuple[str, ast.AST]] = []
+def _public_definitions(tree: ast.Module) -> list[tuple[str, _DocumentedNode]]:
+    """Collect top-level public declarations and direct public class methods."""
+    definitions: list[tuple[str, _DocumentedNode]] = []
 
     for node in tree.body:
         if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
@@ -69,7 +71,7 @@ def test_scoped_public_python_files_have_maintained_docstrings() -> None:
         for name, node in _public_definitions(tree):
             if name in allowed_missing:
                 continue
-            doc = ast.get_docstring(node)  # type: ignore[arg-type]
+            doc = ast.get_docstring(node)
             if doc is None or len(doc.strip()) < min_chars:
                 violations.append(f"{entry['path']}: {name}")
 
@@ -77,26 +79,56 @@ def test_scoped_public_python_files_have_maintained_docstrings() -> None:
 
 
 def test_scoped_public_files_pass_numpy_docstring_rules() -> None:
-    """Policy-listed files must satisfy ruff `D` rules under the NumPy convention.
+    """Policy-listed files must satisfy NumPy docstrings and readable-input checks.
 
     This promotes the scoped policy from a minimum-length floor to enforcing the
     NumPy-convention docstring rules mandated by the 2026-06-17 strict-typing and
     docstring broadcast. The enforced surface is exactly ``docs/docstring_policy.toml``;
     the file list grows package-by-package until ``D`` can be promoted to the global
-    ruff ``select``.
+    ruff ``select``. E902 also rejects unreadable files in this native tool
+    invocation instead of accepting a warning from a D-only selector.
     """
     policy = tomllib.loads(DOCSTRING_POLICY.read_text(encoding="utf-8"))
     files = [entry["path"] for entry in policy["file"]]
 
     completed = subprocess.run(
-        [sys.executable, "-m", "ruff", "check", "--select", "D", "--no-cache", *files],
+        [
+            sys.executable,
+            "-m",
+            "ruff",
+            "check",
+            "--isolated",
+            "--config",
+            'lint.pydocstyle.convention = "numpy"',
+            "--ignore-noqa",
+            "--select",
+            "D,E902",
+            "--no-cache",
+            *files,
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
         check=False,
+        timeout=60,
     )
 
     assert completed.returncode == 0, (
         "ruff NumPy-convention docstring violations in policy-scoped files:\n"
         f"{completed.stdout}\n{completed.stderr}"
+    )
+
+
+def test_policy_preserves_trusted_rules_and_enrolls_changed_python() -> None:
+    """Require immutable original scope and every changed maintained Python file."""
+    completed = subprocess.run(
+        [sys.executable, "-m", "tools.docstring_policy_guard", "--repo", str(REPO_ROOT)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+    assert completed.returncode == 0, (
+        f"Docstring policy scope or provenance refusal:\n{completed.stdout}\n{completed.stderr}"
     )

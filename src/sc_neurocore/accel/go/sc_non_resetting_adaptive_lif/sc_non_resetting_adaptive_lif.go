@@ -4,6 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained adaptive LIF C batch interface
 
 // Package main exports the retained SC adaptive-LIF trace contract.
 package main
@@ -24,6 +25,9 @@ func sc_non_resetting_adaptive_lif_simulate_c(stepsC C.int, vC, thetaC, vRestC, 
 		return 1
 	}
 	state := services.SCNonResettingAdaptiveLIFNeuronState{V: float64(vC), Theta: float64(thetaC), VRest: float64(vRestC), ThetaRest: float64(thetaRestC), DeltaTheta: float64(deltaThetaC), TauM: float64(tauMC), TauTheta: float64(tauThetaC), RM: float64(rMC), Dt: float64(dtC)}
+	if !state.Valid() {
+		return 2
+	}
 	currents := unsafe.Slice((*C.double)(currentsPtr), steps)
 	voltages := unsafe.Slice((*C.double)(voltagesPtr), steps)
 	thresholds := unsafe.Slice((*C.double)(thetaPtr), steps)

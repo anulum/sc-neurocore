@@ -23,13 +23,11 @@ DOCSTRING_TEST = "tests/test_public_docstring_policy.py"
 
 def _read(relative_path: str) -> str:
     """Return repository text for a committed policy surface."""
-
     return (REPO_ROOT / relative_path).read_text(encoding="utf-8")
 
 
 def _toml_section(text: str, header: str) -> str:
     """Extract one top-level TOML section by exact header."""
-
     lines = text.splitlines()
     try:
         start = lines.index(header)
@@ -46,20 +44,17 @@ def _toml_section(text: str, header: str) -> str:
 
 def _file_entries(policy_text: str) -> list[str]:
     """Return file paths listed in the scoped docstring policy."""
-
     return re.findall(r'^path = "([^"]+)"$', policy_text, flags=re.MULTILINE)
 
 
 def test_toml_section_reports_missing_headers() -> None:
     """Surface malformed policy files with a clear missing-section failure."""
-
     with pytest.raises(AssertionError, match=r"missing TOML section \[tool\.mypy\]"):
         _toml_section("[tool.ruff]\nline-length = 100\n", "[tool.mypy]")
 
 
 def test_strict_mypy_policy_is_global_and_ci_gated() -> None:
     """Keep the repository-wide strict Mypy gate aligned with the broadcast."""
-
     pyproject = _read("pyproject.toml")
     mypy_section = _toml_section(pyproject, "[tool.mypy]")
     ci_workflow = _read(".github/workflows/ci.yml")
@@ -85,7 +80,6 @@ def test_strict_mypy_policy_is_global_and_ci_gated() -> None:
 
 def test_numpy_docstring_policy_is_scoped_and_enforced() -> None:
     """Lock NumPy-convention docstring enforcement to its maintained surface."""
-
     pyproject = _read("pyproject.toml")
     pydocstyle_section = _toml_section(pyproject, "[tool.ruff.lint.pydocstyle]")
     policy = _read(DOCSTRING_POLICY)
@@ -97,7 +91,16 @@ def test_numpy_docstring_policy_is_scoped_and_enforced() -> None:
     assert "tests/test_public_docstring_policy.py" in pyproject
     assert "ruff check --select D" in pyproject
     assert f'["python", "-m", "pytest", "{DOCSTRING_TEST}", "-q"]' in preflight
-    assert '"--select", "D", "--no-cache", *files' in policy_test
+    for required_argument in ('"--isolated"', '"--ignore-noqa"', '"D,E902"', '"--no-cache"'):
+        assert required_argument in policy_test
+    assert 'lint.pydocstyle.convention = "numpy"' in policy_test
+    assert '"tools.docstring_policy_guard"' in policy_test
+    assert "python -m tools.docstring_policy_guard" in _read(".github/workflows/ci.yml")
+    hook = _read(".pre-commit-config.yaml")
+    assert "id: docstring-policy-scope" in hook
+    assert "entry: python -m tools.docstring_policy_guard" in hook
+    assert "always_run: true" in hook
+    assert "fetch-depth: 0" in _read(".github/workflows/pre-commit.yml")
     assert "docs/docstring_policy.toml" in policy_test
 
     file_entries = _file_entries(policy)
@@ -112,7 +115,6 @@ def test_numpy_docstring_policy_is_scoped_and_enforced() -> None:
 
 def test_maintenance_docs_describe_typing_docstring_boundary() -> None:
     """Keep public maintenance docs aligned with the current enforcement model."""
-
     docs = _read("docs/development/maintenance_tools.md")
 
     assert "Strict typing and docstring policy" in docs

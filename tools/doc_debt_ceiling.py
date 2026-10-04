@@ -28,6 +28,8 @@ while looking exactly like a ratchet that does.
 from __future__ import annotations
 
 import json
+import subprocess
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -101,6 +103,37 @@ def read_ceiling(path: Path) -> int:
     return ceiling
 
 
+def source_revision(root: Path) -> str:
+    """Return the native Git revision required before updating a ceiling.
+
+    The revision identifies repository history. It does not independently bind
+    uncommitted source bytes, the measured cohort or all native producer inputs.
+
+    Raises
+    ------
+    RatchetError
+        Git cannot complete successfully or returns no usable source revision.
+        Callers must preserve the existing ceiling in either case.
+    """
+    try:
+        completed = subprocess.run(  # noqa: S603 - fixed argv, no shell
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=root,
+            timeout=120,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RatchetError(f"source revision could not be obtained: {error}") from error
+    if completed.returncode != 0 or not completed.stdout.strip():
+        raise RatchetError(
+            f"source revision could not be obtained: Git exited {completed.returncode}: "
+            f"{completed.stderr.strip()}"
+        )
+    return completed.stdout.strip()
+
+
 def write_ceiling(
     path: Path,
     *,
@@ -108,7 +141,7 @@ def write_ceiling(
     files: int,
     note: str,
     schema_version: str,
-    provenance: dict[str, str],
+    provenance: Mapping[str, object],
 ) -> None:
     """Write a ceiling record, refusing to raise an existing one.
 
@@ -124,8 +157,8 @@ def write_ceiling(
         What the record means, written for whoever opens the file first.
     schema_version : str
         The contract version of this record.
-    provenance : dict of str to str
-        Tool version, argv and source digest, so the figure can be re-taken.
+    provenance : mapping of str to object
+        Tool version, argv and source evidence, so the figure can be re-taken.
 
     Raises
     ------

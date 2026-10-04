@@ -42,6 +42,9 @@ func mat_simulate_c(
 		Alpha1: float64(alpha1C), Alpha2: float64(alpha2C), Resistance: float64(resistanceC),
 		RefractoryPeriod: float64(refractoryPeriodC), Dt: float64(dtC),
 	}
+	if state.Validate() != nil {
+		return 2
+	}
 	currents := unsafe.Slice((*C.double)(currentsPtr), steps)
 	voltages := unsafe.Slice((*C.double)(voltagesPtr), steps)
 	theta1Trace := unsafe.Slice((*C.double)(theta1Ptr), steps)

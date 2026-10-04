@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 560
+expected_file_count = 672
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -2255,3 +2255,527 @@ rationale = "Pickle-free file form of a converted network whose reload is refuse
 [[file]]
 path = "src/sc_neurocore/hardware/experiment.py"
 rationale = "Preregistered hardware experiment protocol and a recomputable receipt that refuses uninstrumented energy."
+
+
+[[file]]
+path = "benchmarks/bench_model_non_resetting_lif.py"
+rationale = "Documented benchmark configuration, runtime and measured-record contracts; these checks execute no timed workload."
+
+
+[[file]]
+path = "benchmarks/bench_model_sc_non_resetting_adaptive_lif.py"
+rationale = "Documented benchmark configuration, runtime and measured-record contracts; these checks execute no timed workload."
+
+
+[[file]]
+path = "benchmarks/scaling_benchmark.py"
+rationale = "Documented benchmark configuration, runtime and measured-record contracts; these checks execute no timed workload."
+
+
+[[file]]
+path = "bridge/sc_neurocore_engine/__init__.py"
+rationale = "Explicit engine re-exports with preserved installed identity, availability and producer-consumer boundary."
+
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/energy_lif.py"
+rationale = "Complete neuron configuration, finite-state admission, candidate-first transitions and recovery contracts."
+
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/mat.py"
+rationale = "Complete neuron configuration, finite-state admission, candidate-first transitions and recovery contracts."
+
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py"
+rationale = "Complete neuron configuration, finite-state admission, candidate-first transitions and recovery contracts."
+
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py"
+rationale = "Complete neuron configuration, finite-state admission, candidate-first transitions and recovery contracts."
+
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_resetting_mat.py"
+rationale = "Complete neuron configuration, finite-state admission, candidate-first transitions and recovery contracts."
+
+
+[[file]]
+path = "tests/energy_lif_contract_support.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_brunel_fixed_point_engine_binding.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_brunel_fixed_point_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_brunel_wang_engine_binding.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_default_neuron_engine_binding.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_energy_lif_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_energy_lif_c_abi.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_energy_lif_engine_binding.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_energy_lif_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_energy_lif_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_fixed_point_lif_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_fixed_point_lif_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_fixed_point_lif_engine_binding_wide_difference.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_mat_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_mat_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_mat_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_mat_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_mat_family_c_abi.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_mckean_source_engine_binding.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_model_energy_lif_state_contracts.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_model_mat_state_contracts.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_model_sc_non_resetting_adaptive_lif_state_contracts.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_model_sc_normalized_energy_lif_state_contracts.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_model_sc_resetting_mat_state_contracts.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_non_resetting_lif_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_non_resetting_lif_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_non_resetting_lif_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_non_resetting_lif_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_non_resetting_lif_engine_binding_serialization.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_public_docstring_policy.py"
+rationale = "Actual maintained documentation policy gate with native failure propagation and readable-input checks."
+
+
+[[file]]
+path = "tests/test_sc_non_resetting_adaptive_lif_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_non_resetting_adaptive_lif_c_abi.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_non_resetting_adaptive_lif_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_non_resetting_adaptive_lif_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_non_resetting_adaptive_lif_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_non_resetting_adaptive_lif_engine_binding_serialization.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_normalized_energy_lif_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_normalized_energy_lif_c_abi.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_normalized_energy_lif_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_normalized_energy_lif_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_normalized_energy_lif_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_normalized_energy_lif_engine_binding_serialization.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_resetting_mat_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_resetting_mat_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_resetting_mat_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_resetting_mat_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_sigma_delta_accumulator_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_sigma_delta_accumulator_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_sigma_delta_accumulator_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_sigma_delta_accumulator_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sc_sigma_delta_accumulator_engine_binding_serialization.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_scaling_benchmark_rust_brunel.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sigma_delta_backend_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sigma_delta_engine_binding_allocation.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sigma_delta_engine_binding_configuration.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sigma_delta_engine_binding_inputs.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_sigma_delta_engine_binding_serialization.py"
+rationale = "Actual source/native state, extraction, empty-input, allocation, serialization and ABI consumer regression contracts."
+
+
+[[file]]
+path = "tests/test_tools/test_engine_abi_contracts.py"
+rationale = "Real inventory producer and evidence-contract admission with malformed and incomplete input refusal."
+
+
+[[file]]
+path = "tests/test_tools/test_engine_abi_inventory.py"
+rationale = "Real inventory producer and evidence-contract admission with malformed and incomplete input refusal."
+
+
+[[file]]
+path = "tests/test_tools/test_engine_abi_inventory_capture_admission.py"
+rationale = "Real inventory producer and evidence-contract admission with malformed and incomplete input refusal."
+
+
+[[file]]
+path = "tools/engine_abi_contracts.py"
+rationale = "Actual engine ABI capture and default-consumer inventory with provenance and failure admission."
+
+
+[[file]]
+path = "tools/engine_abi_inventory.py"
+rationale = "Actual engine ABI capture and default-consumer inventory with provenance and failure admission."
+
+
+[[file]]
+path = "tools/preflight.py"
+rationale = "Single preflight gate dispatch refuses unavailable Cargo and non-directory engine prerequisites on every call."
+
+
+[[file]]
+path = "tests/test_tools/test_preflight_native_requirements.py"
+rationale = "Actual isolated single-gate API and native Cargo process prerequisite, success, nonzero-exit and stale-state regression contracts."
+
+
+[[file]]
+path = "tests/test_tools/test_strict_typing_docstring_policy.py"
+rationale = "Maintained strict-type and documentation policy wiring requires readable-input E902 together with NumPy D rules."
+
+[[file]]
+path = "tests/test_tools/test_rust_doc_ratchet_native.py"
+rationale = "Actual dependency-free Cargo compilation through the public CLI, with private ceilings preserved on missing manifests and compiler failures."
+
+[[file]]
+path = "tests/test_tools/test_documentation_debt_native.py"
+rationale = "Actual Ruff, Cargo, ESLint and Go parser controls distinguish documented zero, missing documentation, unavailable tools and invalid sources."
+
+[[file]]
+path = "tests/test_tools_rust_doc_ratchet.py"
+rationale = "Complete Rust ratchet regression contracts with explicit native Git provenance for legacy controlled-measurement CLI update tests; native producer refusal is exercised separately."
+
+[[file]]
+path = "tools/docstring_policy_scope.py"
+rationale = "Native Git documentation scope, threshold and CI provenance contracts."
+
+[[file]]
+path = "tools/docstring_policy_git.py"
+rationale = "Native Git documentation scope, threshold and CI provenance contracts."
+
+[[file]]
+path = "tools/docstring_policy_guard.py"
+rationale = "Native Git documentation scope, threshold and CI provenance contracts."
+
+[[file]]
+path = "tests/docstring_policy_guard_support.py"
+rationale = "Native Git documentation scope, threshold and CI provenance contracts."
+
+[[file]]
+path = "tests/test_tools/test_docstring_policy_guard_native.py"
+rationale = "Native Git documentation scope, threshold and CI provenance contracts."
+
+[[file]]
+path = "tests/test_tools/test_docstring_policy_guard_ci_native.py"
+rationale = "Native Git documentation scope, threshold and CI provenance contracts."
+
+[[file]]
+path = "tools/go_doc_measurement.py"
+require_module_docstring = true
+
+[[file]]
+path = "tests/test_tools/test_go_doc_measurement_native.py"
+require_module_docstring = true
+
+[[file]]
+path = "tools/go_doc_findings.py"
+require_module_docstring = true
+
+[[file]]
+path = "tools/go_doc_history.py"
+require_module_docstring = true
+
+[[file]]
+path = "tests/test_tools/test_go_doc_history_native.py"
+require_module_docstring = true
+
+[[file]]
+path = "tests/test_tools/test_godoc_coverage_native.py"
+require_module_docstring = true
+
+[[file]]
+path = "tests/test_tools_go_doc_ratchet.py"
+require_module_docstring = true
+
+[[file]]
+path = "tools/rust_doc_symbols.py"
+rationale = "Native Rust syntax producer inputs, actual Cargo executable and exact parser-byte identities."
+
+[[file]]
+path = "tests/test_tools/test_rustdoc_symbols_native.py"
+rationale = "Real compiled Rust syntax CLI and adapter identity, source-byte and refusal contracts."
+
+[[file]]
+path = "tools/rust_doc_measurement.py"
+rationale = "Actual Cargo JSON missing-doc diagnostics bound to native syntax, selected library and observed Git source inputs."
+
+[[file]]
+path = "tests/test_tools/test_rust_doc_measurement_native.py"
+rationale = "Actual compiler suppression, cached replay, declaration identity and unavailable-input contracts."
+
+[[file]]
+path = "tools/rust_doc_history.py"
+rationale = "Immutable original Git Rust source, independently compiled debt and individual allowance protection."
+
+[[file]]
+path = "tests/test_tools/test_rust_doc_history_native.py"
+rationale = "Actual original Git Rust debt, protected declaration ownership and public ratchet CLI contracts."
+
+[[file]]
+path = "tests/test_hdc_python_bit_stream_tensor_inputs.py"
+require_module_docstring = true
+rationale = "Installed native packed storage, ordinary refusal, atomicity and allocation contracts."
+
+[[file]]
+path = "tests/test_hdc_python_bit_stream_tensor_memory.py"
+require_module_docstring = true
+rationale = "Actual installed HDC process memory limits, output refusal, intact inputs and live retries."
+
+[[file]]
+path = "tools/security_scan/locked_dependency_inventory.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tools/security_scan/locked_dependency_reports.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tools/security_scan/locked_dependency_audit.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tools/security_scan/run_osv_scanners.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tests/test_tools/test_locked_dependency_audit_policy.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tests/test_tools/test_locked_dependency_inventory_cli.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tests/test_tools/test_run_osv_scanners.py"
+rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
+
+[[file]]
+path = "tools/security_scan/locked_native_reports.py"
+rationale = "Exact registry identities and complete native scanner response validation reject silently omitted npm packages and filtered Rust audits."
+
+[[file]]
+path = "tests/test_tools/test_locked_native_reports.py"
+rationale = "Public native response and npm lock parser contracts reject untrusted counters, incomplete identities and narrowed advisory coverage."
+
+[[file]]
+path = "tests/test_tools/test_locked_npm_cli.py"
+rationale = "Real Git and maintained frontend lock refusal through the public audit CLI before an incomplete identity can be silently omitted."
+
+[[file]]
+path = "tests/test_tools/test_locked_go_cli.py"
+rationale = "Actual Go parser and public audit CLI refusal for replacements, unavailable standard-library versions and malformed checksum identities."
+
+[[file]]
+path = "tests/test_tools/test_locked_rust_cli.py"
+rationale = "Real Cargo configuration source custody and CLI refusal of disabled freshness, stale acceptance and unreviewed advisory database overrides."
+
+[[file]]
+path = "tests/test_tools/test_locked_osv_transport.py"
+rationale = "Actual OSV HTTP refusal and operating-system connection failure retain request, response and transport evidence through public audit entry points."
+
+[[file]]
+path = "tests/test_tools/test_locked_audit_custody_drift.py"
+rationale = "Real mid-request lock change, unknown ecosystem and unbounded Pixi lock refusals through the public audit API and CLI."

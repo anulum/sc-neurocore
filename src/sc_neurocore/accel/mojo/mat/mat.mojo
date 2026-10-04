@@ -44,8 +44,30 @@ def mat_simulate_c(
     refractory_final_addr: Int,
 ) -> Int:
     """Run a complete configured non-resetting MAT* batch."""
-    if steps < 0:
+    if (
+        steps < 0 or currents_addr == 0 or voltages_addr == 0
+        or theta1_addr == 0 or theta2_addr == 0 or refractory_addr == 0
+        or events_addr == 0 or v_final_addr == 0 or theta1_final_addr == 0
+        or theta2_final_addr == 0 or refractory_final_addr == 0
+    ):
         return 1
+    if not (
+        _finite(v_init) and v_init >= -200.0 and v_init <= 200.0
+        and _finite(theta1_init) and theta1_init >= 0.0 and theta1_init <= 1.0e9
+        and _finite(theta2_init) and theta2_init >= 0.0 and theta2_init <= 1.0e9
+        and _finite(omega) and omega >= -1.0e9 and omega <= 1.0e9
+        and _finite(refractory_init) and refractory_init >= 0.0
+        and _finite(tau_m) and tau_m > 0.0
+        and _finite(tau_1) and tau_1 > 0.0
+        and _finite(tau_2) and tau_2 > 0.0
+        and _finite(alpha_1) and alpha_1 >= 0.0 and alpha_1 <= 1.0e9
+        and _finite(alpha_2) and alpha_2 >= 0.0 and alpha_2 <= 1.0e9
+        and _finite(resistance) and resistance > 0.0
+        and _finite(refractory_period) and refractory_period >= 0.0
+        and refractory_init <= refractory_period
+        and _finite(dt) and dt > 0.0
+    ):
+        return 2
     var currents = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=currents_addr)
     var voltages = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=voltages_addr)
     var theta1_trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=theta1_addr)
@@ -62,22 +84,7 @@ def mat_simulate_c(
     var refractory = refractory_init
     for index in range(steps):
         var current = currents[index]
-        if not (
-            _finite(v) and v >= -200.0 and v <= 200.0
-            and _finite(theta1) and theta1 >= 0.0 and theta1 <= 1.0e9
-            and _finite(theta2) and theta2 >= 0.0 and theta2 <= 1.0e9
-            and _finite(refractory) and refractory >= 0.0
-            and _finite(current) and _finite(omega)
-            and _finite(tau_m) and tau_m > 0.0
-            and _finite(tau_1) and tau_1 > 0.0
-            and _finite(tau_2) and tau_2 > 0.0
-            and _finite(alpha_1) and alpha_1 >= 0.0
-            and _finite(alpha_2) and alpha_2 >= 0.0
-            and _finite(resistance) and resistance > 0.0
-            and _finite(refractory_period) and refractory_period >= 0.0
-            and refractory <= refractory_period
-            and _finite(dt) and dt > 0.0
-        ):
+        if not _finite(current):
             return 2
         var next_v = v + dt * (-v + resistance * current) / tau_m
         var next_theta1 = theta1 * exp(-dt / tau_1)

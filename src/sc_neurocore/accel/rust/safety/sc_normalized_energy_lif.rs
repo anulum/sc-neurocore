@@ -96,6 +96,7 @@ impl SCNormalizedEnergyLIFNeuron {
             && self.epsilon_0 >= 0.0
             && (0.0..=self.epsilon_0).contains(&self.epsilon)
             && self.v_rest.is_finite()
+            && (V_MIN..=V_MAX).contains(&self.v_rest)
             && self.v_reset.is_finite()
             && (V_MIN..=V_MAX).contains(&self.v_reset)
             && self.v_threshold.is_finite()

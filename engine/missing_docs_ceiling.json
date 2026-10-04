@@ -1,11 +1,11 @@
 {
   "note": "Undocumented items in the engine crate, measured with rustc's own missing_docs lint. This ceiling may fall and may not rise: see tools/rust_doc_ratchet.py.",
   "provenance": {
-    "argv": "cargo rustc --lib --manifest-path engine/Cargo.toml -- -W missing_docs",
+    "argv": "cargo rustc --locked --lib --manifest-path engine/Cargo.toml --message-format=json -- --force-warn missing_docs",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
-    "source_sha256": "a3b4ac381f78d74a20a396ca99e0137df216959f"
+    "source_sha256": "3c68918e47c94ce347078fce4fccf362372268fe"
   },
   "schema_version": "sc-neurocore.rust-doc-ceiling.v1",
-  "undocumented": 3873,
-  "undocumented_files": 297
+  "undocumented": 3646,
+  "undocumented_files": 292
 }

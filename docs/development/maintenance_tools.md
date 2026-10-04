@@ -156,8 +156,25 @@ through two committed gates:
 - `pytest tests/test_public_docstring_policy.py -q` validates the audited
   public Python files listed in `docs/docstring_policy.toml`.
 
+The required `python -m tools.docstring_policy_guard` command preserves the
+original Git policy cohort and documentation floor. Every added or modified
+tracked Python file and every nonignored untracked Python file must be enrolled,
+including tests, tooling and source roots outside the main package. Removing a
+file while lowering its declared count, reducing the minimum length or adding
+missing-symbol allowances fails the guard. Policy sources must exist inside the
+repository. Scope acceptance is separate from native documentation acceptance.
+
+Locally the baseline is committed `HEAD`. GitHub Actions uses the push event's
+original `before` commit or the pull request's `base.sha`; manual runs use the
+current commit's first parent. The checkout must match the triggering commit.
+Missing history, unavailable native Git or malformed event inputs fail the
+guard. New-ref pushes without an established original baseline need an explicit
+baseline migration before qualification. The local hook runs on every commit;
+the CI lint job and the public policy tests run the same guard.
+
 The docstring policy uses Ruff `D` rules with the NumPy-convention pydocstyle
-setting. The maintained file list grows package-by-package as public surfaces
+setting, an isolated configuration and disabled inline suppressions. The
+maintained file list grows package-by-package as public surfaces
 are audited. Add a file to `docs/docstring_policy.toml` only after its public
 module, class, function, method, and property docstrings have been reviewed for
 accuracy. Keep the scoped policy passing until `D` can be promoted to the global
@@ -168,8 +185,92 @@ configuration, or CI/preflight quality commands:
 
 ```bash
 PYTHONPATH=src:. python -m mypy --strict src/sc_neurocore/
+python -m tools.docstring_policy_guard
 PYTHONPATH=src:. python -m pytest tests/test_public_docstring_policy.py -q
 PYTHONPATH=src:. python -m pytest tests/test_tools/test_strict_typing_docstring_policy.py -q
+```
+
+### Go documentation measurement
+
+`python -m tools.go_doc_ratchet` compares tracked and nonignored untracked Go
+with its original Git ceiling and individual declaration allowances. Native
+Git, Go and parser failures stop the check. The
+submitted paths must be unique relative Go paths without control characters,
+leading or trailing whitespace, traversal or symbolic links. This prevents the
+parser's line-delimited input from substituting a different file. Its summary
+must match the submitted file count, schema and finding totals. Protocol v3
+includes all retained exported identities and SHA-256 of the exact bytes passed to the parser and distinguishes
+methods by receiver. A documented old case cannot excuse a new undocumented
+case with the same aggregate count. Original undocumented declarations must
+remain; deleting them does not repay documentation debt.
+
+The measured source files, parser and present root Go module/workspace files
+are hashed before and after measurement. The Git-discovered cohort and native Go
+version must also remain unchanged. The documentation report and `--update`
+records include this source manifest and its SHA-256 alongside the exact argv.
+The legacy outer `source_sha256` field remains a Git revision; the nested
+`measurement.source_sha256` binds observed file bytes. External compiler and
+standard-library bytes are outside this capsule. The ratchet independently
+parses the original Git sources selected by local HEAD or the actual CI event
+and refuses cohort removal, scalar inflation and new individual debt. A private
+`--update` migrates the allowance to ceiling protocol v2 and may lower it.
+Ignored, generated and external-source ownership still require explicit mapping.
+
+The lint and pre-commit CI jobs pin Go 1.27.1. Lint runs the native ratchet,
+`go vet`, formatting and strict Python adapter/documentation checks; the normal
+test matrix exercises the module-specific native contracts below.
+
+Run the module-specific real-parser contracts after changing this measurement:
+
+```bash
+python -m pytest tests/test_tools/test_go_doc_measurement_native.py tests/test_tools/test_go_doc_history_native.py tests/test_tools/test_godoc_coverage_native.py tests/test_tools_go_doc_ratchet.py -q
+```
+
+### Rust documentation measurement
+
+`python -m tools.rust_doc_ratchet` protects the engine library's original Git
+source cohort, compiler debt and individual declaration identities. The actual
+compiler produces Cargo JSON diagnostics with `--force-warn missing_docs`;
+warning color, lint attributes and cap-lints cannot turn missing docs into zero.
+A source/config digest is passed in the compiler invocation so another source
+image cannot share an identical measurement argument set. A separate invocation
+identifier forces the selected library to compile again, and its Cargo artifact
+must confirm that the compiler ran. A cached artifact cannot supply this proof.
+Unrecognized compiler stdout stops measurement on every invocation, including
+output from procedural macros; it cannot become an accepted zero through caching.
+
+The locked native `tools/rustdoc_symbols` parser resolves item and member
+ownership from Rust syntax, with hashes of the exact parsed UTF-8 bytes. Native
+declaration ranges must stay inside those bytes and preserve UTF-8 boundaries.
+Relative compiler source paths resolve against the Cargo workspace root in
+which the compiler ran, which is the package directory for a standalone package
+and the workspace directory for a member such as the engine. A same-name file at
+the repository root cannot take a nested package's diagnostic.
+Missing or ambiguous compiler spans, compilation failure and changed inputs
+stop measurement. Identical field or method names in different types are
+separate cases. Original undocumented declarations must remain in the source
+cohort; documenting them reduces debt, deleting them does not repay it.
+A declaration that exists only after macro expansion has no syntax identity. In
+the current source it is refused until the macro documents it. In the original
+baseline it counts as debt under an identity built from the macro name, the
+invocation text and the definition text; its retention cannot be checked.
+
+The ratchet independently compiles immutable original Git sources and checks
+original ceiling/version reproduction. `--update` records individual v2
+allowances and may only lower them. The legacy outer `source_sha256` remains a
+Git revision; nested source pins are byte hashes. The selected default library
+configuration is measured. Other targets, platform cfgs and external
+compiler/dependency inputs need their own qualification. The engine ceiling
+is kept in the aggregate v1 form; a v2 record of the whole engine is about
+10 MB and its adoption is a separate decision.
+
+The `rust-documentation` CI job pins Rust 1.98.1, runs the native parser's
+format/build/Clippy checks, strict adapter checks and real native contracts,
+then runs the original engine ratchet. The build job depends on this check;
+the Rust pre-commit hook uses the same ratchet.
+
+```bash
+python -m pytest tests/test_tools/test_rustdoc_symbols_native.py tests/test_tools/test_rust_doc_measurement_native.py tests/test_tools/test_rust_doc_history_native.py tests/test_tools/test_rust_doc_ratchet_native.py tests/test_tools_rust_doc_ratchet.py -q
 ```
 
 ### SHD Vertex corrected-selection summary

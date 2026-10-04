@@ -4,6 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained non-resetting adaptive LIF state transitions
 
 //! Retained SC exact-relaxation adaptive LIF recurrence.
 
@@ -101,10 +102,21 @@ impl SCNonResettingAdaptiveLIFNeuron {
         self.try_step(current).unwrap_or(0)
     }
 
-    /// Restore voltage and threshold to configured rests.
+    /// Validate and commit the complete resting candidate atomically.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let mut candidate = self.clone();
+        candidate.v = candidate.v_rest;
+        candidate.theta = candidate.theta_rest;
+        if !candidate.validate() {
+            return Err("invalid SC non-resetting adaptive LIF reset state or configuration");
+        }
+        *self = candidate;
+        Ok(())
+    }
+
+    /// Restore valid rests; an invalid configuration leaves both states intact.
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.theta = self.theta_rest;
+        let _ = self.try_reset();
     }
 }
 

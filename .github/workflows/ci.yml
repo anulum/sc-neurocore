@@ -61,6 +61,11 @@ jobs:
           python-version: "3.12.14"
           cache: pip
 
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27.1"
+          cache: false
+
       - name: Install tools
         run: |
           pip install --require-hashes \
@@ -68,6 +73,31 @@ jobs:
             -r requirements/runtime.txt \
             -r requirements/hub.txt \
             -r requirements/hdl.txt
+
+      - name: Documentation policy scope
+        run: python -m tools.docstring_policy_guard
+
+      - name: Go documentation producer
+        run: |
+          go vet tools/godoc_coverage/main.go
+          test -z "$(gofmt -l tools/godoc_coverage/main.go)"
+          python -m tools.go_doc_ratchet
+
+      - name: Go documentation adapter types and documentation
+        env:
+          MYPYPATH: src:bridge:.
+        run: |
+          files=(
+            tools/go_doc_measurement.py tools/go_doc_findings.py
+            tools/go_doc_history.py tools/go_doc_ratchet.py tools/documentation_debt.py
+            tests/test_tools/test_go_doc_measurement_native.py
+            tests/test_tools/test_go_doc_history_native.py
+            tests/test_tools/test_godoc_coverage_native.py tests/test_tools_go_doc_ratchet.py
+          )
+          python -m mypy --strict --explicit-package-bases "${files[@]}"
+          ruff check "${files[@]}"
+          ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' --select D,E902 --ignore-noqa --no-cache "${files[@]}"
+          ruff format --check "${files[@]}"
 
       - name: Capability manifest drift
         run: python tools/capability_manifest.py --check
@@ -95,6 +125,56 @@ jobs:
 
       - name: mypy
         run: mypy --strict src/sc_neurocore/
+
+  rust-documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CARGO_BUILD_JOBS: "2"
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/rust-documentation
+      MYPYPATH: src:bridge:.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+        with:
+          toolchain: "1.98.1"
+          components: rustfmt, clippy
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+      - name: Install locked native-adapter test and lint dependencies
+        run: |
+          python -m pip install --require-hashes -r requirements/ci-dev.txt -r requirements/lint.txt
+      - name: Rust syntax producer strict gates
+        run: |
+          cargo fmt --check --manifest-path tools/rustdoc_symbols/Cargo.toml
+          cargo clippy --locked --all-targets --manifest-path tools/rustdoc_symbols/Cargo.toml -- -D warnings
+          cargo build --locked --manifest-path tools/rustdoc_symbols/Cargo.toml
+      - name: Rust documentation adapter types and documentation
+        run: |
+          files=(
+            tools/rust_doc_ratchet.py tools/rust_doc_measurement.py
+            tools/rust_doc_symbols.py tools/rust_doc_history.py tools/documentation_debt.py
+            tests/test_tools/test_rustdoc_symbols_native.py
+            tests/test_tools/test_rust_doc_measurement_native.py
+            tests/test_tools/test_rust_doc_history_native.py
+            tests/test_tools/test_rust_doc_ratchet_native.py
+          )
+          python -m mypy --strict --explicit-package-bases "${files[@]}"
+          ruff check "${files[@]}"
+          ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' --select D,E902 --ignore-noqa --no-cache "${files[@]}"
+          ruff format --check "${files[@]}"
+      - name: Real native Rust documentation contracts
+        run: |
+          python -m pytest -q \
+            tests/test_tools/test_rustdoc_symbols_native.py \
+            tests/test_tools/test_rust_doc_measurement_native.py \
+            tests/test_tools/test_rust_doc_history_native.py \
+            tests/test_tools/test_rust_doc_ratchet_native.py
+      - name: Original engine Rust documentation debt
+        run: python -m tools.rust_doc_ratchet
 
   frontend:
     runs-on: ubuntu-latest
@@ -446,6 +526,32 @@ jobs:
           for manifest in src/sc_neurocore/accel/rust/safety/*_native/Cargo.toml; do
             cargo fetch --locked --manifest-path "$manifest"
           done
+
+      - name: Engine ABI proof tool exact branch coverage
+        if: matrix.primary
+        shell: bash
+        env:
+          COVERAGE_RCFILE: ${{ runner.temp }}/engine-abi-coverage.ini
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          configuration = Path(os.environ["COVERAGE_RCFILE"])
+          configuration.write_text(
+              "[run]\nbranch = True\nparallel = True\npatch = subprocess\n"
+              f"data_file = {configuration.parent / '.coverage-engine-abi'}\n"
+              "include =\n    */tools/engine_abi_inventory.py\n"
+              "    */tools/engine_abi_contracts.py\n"
+              "[report]\nfail_under = 100\nshow_missing = True\nexclude_lines =\n"
+          )
+          PY
+          python -m coverage run -m pytest --no-cov -q \
+            tests/test_tools/test_engine_abi_inventory.py \
+            tests/test_tools/test_engine_abi_contracts.py \
+            tests/test_tools/test_engine_abi_inventory_capture_admission.py
+          python -m coverage combine --keep "${{ runner.temp }}"
+          python -m coverage report --show-missing
 
       - name: Test + coverage
         shell: bash
@@ -929,7 +1035,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test, test-hdc-reference, spdx-guard]
+    needs: [lint, test, test-hdc-reference, spdx-guard, rust-documentation]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

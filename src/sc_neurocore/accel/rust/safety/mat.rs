@@ -132,12 +132,28 @@ impl MATNeuron {
         i32::from(spike)
     }
 
-    /// Reset all dynamic state while retaining configuration.
+    /// Restore zero-rest dynamics after validating the retained configuration.
+    ///
+    /// Invalid configuration returns an error without mutation. A valid profile
+    /// can recover corrupted dynamics through the complete reset candidate.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let candidate = Self {
+            v: 0.0,
+            theta1: 0.0,
+            theta2: 0.0,
+            refractory_remaining: 0.0,
+            ..self.clone()
+        };
+        if !candidate.validate() {
+            return Err("invalid MAT reset state or configuration");
+        }
+        *self = candidate;
+        Ok(())
+    }
+
+    /// Reset dynamic state; invalid configuration leaves the state unchanged.
     pub fn reset(&mut self) {
-        self.v = 0.0;
-        self.theta1 = 0.0;
-        self.theta2 = 0.0;
-        self.refractory_remaining = 0.0;
+        let _ = self.try_reset();
     }
 }
 

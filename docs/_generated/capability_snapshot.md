@@ -11,10 +11,10 @@
 | Python model classes | 183 |
 | Studio catalogue models | 185 |
 | Model documentation pages | 200 |
-| Rust PyO3 model wrappers | 207 |
+| Rust PyO3 model wrappers | 208 |
 | Optional extras | 31 |
-| Python test files | 5191 |
-| Public documentation pages | 640 |
-| GitHub Actions workflows | 21 |
+| Python test files | 5271 |
+| Public documentation pages | 641 |
+| GitHub Actions workflows | 22 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.

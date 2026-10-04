@@ -9,6 +9,7 @@
 /// Define the common PyO3 class surface for a default-constructible neuron.
 macro_rules! py_neuron_default {
     ($pylit:literal, $pyname:ident, $rust:ty $(, state $sname:ident)*) => {
+        /// Python class for one default-constructed neuron model.
         #[pyclass(name = $pylit, module = "sc_neurocore_engine.sc_neurocore_engine")]
         #[derive(Clone)]
         pub struct $pyname {

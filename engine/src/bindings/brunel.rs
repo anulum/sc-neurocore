@@ -21,9 +21,10 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 }
 
 #[pyclass(
-    name = "BrunelNetwork",
+    name = "FixedPointBrunelNetwork",
     module = "sc_neurocore_engine.sc_neurocore_engine"
 )]
+/// Fixed-point CSR network with owned connectivity and seeded Poisson drive.
 pub struct PyBrunelNetwork {
     inner: brunel::BrunelNetwork,
 }
@@ -76,8 +77,20 @@ impl PyBrunelNetwork {
             .as_slice()
             .map_err(|e| PyValueError::new_err(format!("Cannot read w_data: {e}")))?;
 
-        let row_offsets: Vec<usize> = indptr.iter().map(|&v| v as usize).collect();
-        let col_indices: Vec<usize> = indices.iter().map(|&v| v as usize).collect();
+        let row_offsets: Vec<usize> = indptr
+            .iter()
+            .map(|&value| {
+                usize::try_from(value)
+                    .map_err(|_| PyValueError::new_err("w_indptr values must be nonnegative"))
+            })
+            .collect::<PyResult<_>>()?;
+        let col_indices: Vec<usize> = indices
+            .iter()
+            .map(|&value| {
+                usize::try_from(value)
+                    .map_err(|_| PyValueError::new_err("w_indices values must be nonnegative"))
+            })
+            .collect::<PyResult<_>>()?;
         let values: Vec<i16> = data.to_vec();
 
         let inner = brunel::BrunelNetwork::new(
@@ -102,6 +115,7 @@ impl PyBrunelNetwork {
         Ok(Self { inner })
     }
 
+    /// Advance the seeded network and return owned per-step spike counts.
     fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> Bound<'py, PyArray1<u32>> {
         let counts = self.inner.run(n_steps);
         counts.into_pyarray(py)

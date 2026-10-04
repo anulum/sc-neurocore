@@ -17,6 +17,9 @@ const matVMin = -200.0
 const matVMax = 200.0
 const matThetaMax = 1.0e9
 
+// ErrMATInvalidReset reports a refused zero-rest reset with no state mutation.
+var ErrMATInvalidReset = errors.New("invalid MAT reset state or configuration")
+
 // MATNeuronState contains the complete non-resetting MAT* state and profile.
 // Voltage is relative to rest. Units are millivolts, milliseconds, nanoamps,
 // and megaohms. Defaults select the paper's regular-spiking example.
@@ -48,7 +51,8 @@ func NewMATNeuron() *MATNeuronState {
 
 func matFinite(value float64) bool { return !math.IsNaN(value) && !math.IsInf(value, 0) }
 
-func (s *MATNeuronState) validate() error {
+// Validate checks the complete source MAT state and profile without mutation.
+func (s *MATNeuronState) Validate() error {
 	for _, value := range []float64{s.V, s.Theta1, s.Theta2, s.RefractoryRemaining, s.Omega, s.TauM, s.Tau1, s.Tau2, s.Alpha1, s.Alpha2, s.Resistance, s.RefractoryPeriod, s.Dt} {
 		if !matFinite(value) {
 			return errors.New("MAT state and configuration must be finite")
@@ -75,7 +79,7 @@ func (s *MATNeuronState) validate() error {
 // Voltage uses forward Euler and is never reset; threshold memories use exact
 // exponential decay. Invalid input/state returns -1 without mutation.
 func (s *MATNeuronState) Step(current float64) int {
-	if !matFinite(current) || s.validate() != nil {
+	if !matFinite(current) || s.Validate() != nil {
 		return -1
 	}
 	v := s.V + s.Dt*(-s.V+s.Resistance*current)/s.TauM
@@ -101,9 +105,22 @@ func (s *MATNeuronState) Step(current float64) int {
 	return 0
 }
 
-// Reset clears dynamic state while preserving the configured profile.
+// TryReset validates a complete zero-rest candidate before committing it.
+// Invalid configuration leaves every field unchanged; valid configuration can
+// recover corrupted dynamic fields while retaining the configured profile.
+func (s *MATNeuronState) TryReset() error {
+	candidate := *s
+	candidate.V, candidate.Theta1, candidate.Theta2, candidate.RefractoryRemaining = 0.0, 0.0, 0.0, 0.0
+	if candidate.Validate() != nil {
+		return ErrMATInvalidReset
+	}
+	*s = candidate
+	return nil
+}
+
+// Reset clears dynamics; invalid configuration leaves every field unchanged.
 func (s *MATNeuronState) Reset() {
-	s.V, s.Theta1, s.Theta2, s.RefractoryRemaining = 0.0, 0.0, 0.0, 0.0
+	_ = s.TryReset()
 }
 
 // SimulateMATNeuron runs a constant-current source MAT* trace.

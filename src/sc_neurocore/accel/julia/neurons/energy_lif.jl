@@ -44,6 +44,8 @@ function valid(s::EnergyLIFNeuronState)
     values = (s.v, s.epsilon, s.capacitance, s.g_leak, s.e_0, s.e_u, s.e_d, s.e_f,
               s.v_threshold, s.v_reset, s.alpha, s.epsilon_0, s.epsilon_c, s.delta, s.tau_e, s.dt)
     return all(isfinite, values) && -200 <= s.v <= 100 && -200 <= s.v_reset <= 100 &&
+           -200 <= s.e_0 <= 100 && isfinite(s.alpha * s.epsilon_0) &&
+           0 < s.alpha * s.epsilon_0 <= 5 &&
            0 <= s.epsilon <= 5 && s.capacitance > 0 && s.g_leak > 0 && s.alpha > 0 &&
            s.epsilon_0 > 0 && s.epsilon_c >= 0 && s.delta >= 0 && s.tau_e > 0 &&
            0 < s.dt <= min(1.0, s.tau_e) && s.e_d != s.e_f && s.v_threshold > s.v_reset
@@ -64,11 +66,17 @@ function step!(s::EnergyLIFNeuronState, current::Float64=0.0)
     return 0
 end
 
-"""Simulate a complete current trace from an explicitly supplied state."""
+"""Simulate a current trace, throwing ArgumentError on invalid configuration or transition.
+
+Configuration is validated even for an empty trace. Each refused transition
+leaves its pre-step state intact; earlier successful steps remain committed.
+"""
 function simulate(currents::AbstractVector{<:Real}; state::EnergyLIFNeuronState=EnergyLIFNeuronState())
+    valid(state) || throw(ArgumentError("invalid EnergyLIF state or configuration"))
     voltages = zeros(length(currents)); epsilon = zeros(length(currents)); events = zeros(Int, length(currents))
     for i in eachindex(currents)
         events[i] = step!(state, Float64(currents[i]))
+        events[i] >= 0 || throw(ArgumentError("EnergyLIF transition outside safety envelope"))
         voltages[i] = state.v
         epsilon[i] = state.epsilon
     end

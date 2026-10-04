@@ -73,6 +73,8 @@ func (s *EnergyLIFNeuronState) Valid() bool {
 		}
 	}
 	return s.V >= -200 && s.V <= 100 && s.VReset >= -200 && s.VReset <= 100 &&
+		s.E0 >= -200 && s.E0 <= 100 && isFiniteEnergyLIF(s.Alpha*s.Epsilon0) &&
+		s.Alpha*s.Epsilon0 > 0 && s.Alpha*s.Epsilon0 <= 5 &&
 		s.Epsilon >= 0 && s.Epsilon <= 5 && s.Capacitance > 0 && s.GLeak > 0 &&
 		s.Alpha > 0 && s.Epsilon0 > 0 && s.EpsilonC >= 0 && s.Delta >= 0 &&
 		s.TauE > 0 && s.Dt > 0 && s.Dt <= 1 && s.Dt <= s.TauE && s.ED != s.EF && s.VThreshold > s.VReset

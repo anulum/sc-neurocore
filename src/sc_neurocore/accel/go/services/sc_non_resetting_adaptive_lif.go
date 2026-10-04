@@ -4,6 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained adaptive LIF service state transitions
 
 package services
 
@@ -56,8 +57,19 @@ func (s *SCNonResettingAdaptiveLIFNeuronState) Step(current float64) (int, error
 	return spike, nil
 }
 
-// Reset restores voltage and threshold to configured rests.
-func (s *SCNonResettingAdaptiveLIFNeuronState) Reset() { s.V, s.Theta = s.VRest, s.ThetaRest }
+// TryReset validates the complete resting candidate before committing both states.
+func (s *SCNonResettingAdaptiveLIFNeuronState) TryReset() error {
+	candidate := *s
+	candidate.V, candidate.Theta = candidate.VRest, candidate.ThetaRest
+	if !candidate.Valid() {
+		return ErrSCNonResettingAdaptiveLIFInvalidState
+	}
+	*s = candidate
+	return nil
+}
+
+// Reset restores valid rests and preserves both states on invalid configuration.
+func (s *SCNonResettingAdaptiveLIFNeuronState) Reset() { _ = s.TryReset() }
 
 var (
 	// ErrSCNonResettingAdaptiveLIFInvalidState reports invalid project state, configuration, or input.

@@ -6,10 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — retained project non-resetting adaptive LIF recurrence
 
+"""Retain the configured non-resetting voltage and adaptive-threshold recurrence."""
+
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass
@@ -65,9 +67,10 @@ class SCNonResettingAdaptiveLIFNeuron:
         return int(spike)
 
     def reset(self) -> None:
-        """Restore voltage and adaptive threshold to their configured rests."""
-        self.v = self.v_rest
-        self.theta = self.theta_rest
+        """Validate the resting candidate before restoring both dynamic values."""
+        candidate = replace(self, v=self.v_rest, theta=self.theta_rest)
+        self.v = candidate.v
+        self.theta = candidate.theta
 
     def _exact_relaxation(self, state: float, steady_state: float, tau: float) -> float:
         """Return the exact affine relaxation over one configured sample."""

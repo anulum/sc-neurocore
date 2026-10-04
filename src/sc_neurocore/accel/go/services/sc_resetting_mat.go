@@ -8,11 +8,17 @@
 
 package services
 
-import "math"
+import (
+	"errors"
+	"math"
+)
 
 const scResettingMATVMin = -200.0
 const scResettingMATVMax = 100.0
 const scResettingMATThetaMax = 1.0e9
+
+// ErrSCResettingMATInvalidReset reports an invalid complete resting candidate.
+var ErrSCResettingMATInvalidReset = errors.New("invalid SC resetting-MAT reset state or configuration")
 
 // SCResettingMATNeuronState contains the historical SC RK4/reset recurrence.
 type SCResettingMATNeuronState struct {
@@ -44,7 +50,8 @@ func scResettingMATFinite(value float64) bool {
 	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
-func (s *SCResettingMATNeuronState) validate() bool {
+// Validate checks the complete SC state and profile without mutation.
+func (s *SCResettingMATNeuronState) Validate() bool {
 	for _, value := range []float64{s.V, s.Theta1, s.Theta2, s.VRest, s.VReset, s.VThresholdBase, s.TauM, s.Tau1, s.Tau2, s.H1, s.H2, s.Resistance, s.Dt} {
 		if !scResettingMATFinite(value) {
 			return false
@@ -77,7 +84,7 @@ func (s *SCResettingMATNeuronState) candidate(current float64) (float64, float64
 // Step advances one atomic candidate-first RK4/reset step.
 // Invalid input or state returns -1 without mutation.
 func (s *SCResettingMATNeuronState) Step(current float64) int {
-	if !scResettingMATFinite(current) || !s.validate() {
+	if !scResettingMATFinite(current) || !s.Validate() {
 		return -1
 	}
 	v, theta1, theta2 := s.candidate(current)
@@ -100,10 +107,19 @@ func (s *SCResettingMATNeuronState) Step(current float64) int {
 	return 0
 }
 
-// Reset clears dynamic state while preserving configuration.
-func (s *SCResettingMATNeuronState) Reset() {
-	s.V, s.Theta1, s.Theta2 = s.VRest, 0.0, 0.0
+// TryReset validates the complete resting candidate before changing dynamic state.
+func (s *SCResettingMATNeuronState) TryReset() error {
+	candidate := *s
+	candidate.V, candidate.Theta1, candidate.Theta2 = candidate.VRest, 0.0, 0.0
+	if !candidate.Validate() {
+		return ErrSCResettingMATInvalidReset
+	}
+	*s = candidate
+	return nil
 }
+
+// Reset restores valid rests and preserves every field on invalid configuration.
+func (s *SCResettingMATNeuronState) Reset() { _ = s.TryReset() }
 
 // SimulateSCResettingMATNeuron runs a constant-current SC trace.
 func SimulateSCResettingMATNeuron(nSteps int, current float64) ([]float64, int) {

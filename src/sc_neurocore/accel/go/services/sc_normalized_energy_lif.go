@@ -62,7 +62,7 @@ func (s *SCNormalizedEnergyLIFNeuronState) Valid() bool {
 			return false
 		}
 	}
-	return s.V >= -200 && s.V <= 100 && s.VReset >= -200 && s.VReset <= 100 && s.Epsilon >= 0 &&
+	return s.V >= -200 && s.V <= 100 && s.VRest >= -200 && s.VRest <= 100 && s.VReset >= -200 && s.VReset <= 100 && s.Epsilon >= 0 &&
 		s.Epsilon <= s.Epsilon0 && s.TauM > 0 && s.TauE > 0 && s.Alpha >= 0 && s.Epsilon0 >= 0 &&
 		s.Resistance > 0 && s.Dt > 0 && s.Dt <= s.TauM && s.Dt <= s.TauE &&
 		s.VThreshold > s.VRest && s.VThreshold > s.VReset

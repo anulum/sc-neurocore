@@ -35,12 +35,42 @@ events = [neuron.step(20.0) for _ in range(200_000)]
 print(sum(events), neuron.v, neuron.theta)
 ```
 
+## Configuration and failure contracts
+
+The constructor accepts `v`, `theta`, `v_rest`, `theta_rest`, `delta_theta`,
+`tau_m`, `tau_theta`, `r_m`, and `dt`. All must be finite; `delta_theta` and
+`r_m` are non-negative, while both time constants and `dt` are positive.
+Finite voltages have no additional bound and `dt` may exceed either time
+constant. Reset validates the complete resting candidate before updating
+voltage or threshold, and valid configuration can recover invalid dynamic state.
+
+The native Python batch requires an aligned, contiguous, one-dimensional
+`float64` current array; readonly inputs are accepted. Its independent owning
+outputs are `float64` voltage and threshold arrays and `int32` events. Invalid
+configuration is rejected even for an empty batch. Allocation failures raise
+`MemoryError`; refused steps leave both dynamic values unchanged.
+
+Julia's constant-current `simulate(n_steps; current, dt)` also validates current
+and timestep for zero samples. Valid empty calls return an empty voltage trace
+and zero events; nonempty calls preserve the vector simulation's full trajectory.
+
+Go and Mojo C batches return `1` for a negative count or any null buffer, `2`
+for invalid configuration or a refused transition, and `0` on success. A valid
+empty batch writes only its initial final state. A late transition refusal
+retains the accepted trace prefix and leaves later entries and both final-state
+buffers untouched. Mojo uses the scalar system `libm` exponential to preserve
+the recurrence over the entire accepted timestep range.
+
 ## Evidence boundary
 
 Python, the modular Rust engine and PyO3 batch surface, independent Rust safety,
 Julia, Go, and Mojo preserve the complete configured trajectory. Rust, Julia,
-and Go are byte-identical to Python over the committed 200,000-step benchmark;
+and Go are byte-identical to Python over the recorded 200,000-step benchmark;
 Mojo remains within `2.92e-13`, with the same 577 events.
+
+The five-runtime benchmark uses five full repetitions at 200,000 steps. Its
+record binds the actual source and native-library hashes; timings are local
+regression measurements without CPU isolation or production speed claims.
 
 The frozen pre-split 256-step receipt records five events, final state
 `[-32.61772042832371, -27.97424372241646]`, and trace SHA-256

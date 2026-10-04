@@ -113,36 +113,53 @@ function step!(state::SCResettingMATNeuronState, current::Float64=0.0)::Int
     return Int(spike)
 end
 
-"""Reset dynamic state while preserving configuration."""
+"""Validate the complete resting candidate before changing dynamic state."""
 function reset!(state::SCResettingMATNeuronState)::Nothing
-    state.v = state.v_rest
-    state.theta1 = 0.0
-    state.theta2 = 0.0
+    candidate = SCResettingMATNeuronState(
+        state.v_rest, 0.0, 0.0, state.v_rest, state.v_reset, state.v_threshold_base,
+        state.tau_m, state.tau_1, state.tau_2, state.h1, state.h2, state.resistance, state.dt,
+    )
+    if !valid_state(candidate)
+        throw(ArgumentError("invalid SC resetting-MAT reset state or configuration"))
+    end
+    state.v = candidate.v
+    state.theta1 = candidate.theta1
+    state.theta2 = candidate.theta2
     return nothing
 end
 
-"""Run a complete current trace and return all state traces and events."""
+"""Run a complete trace, committing caller state only after every step succeeds."""
 function simulate(currents::AbstractVector{<:Real}; state::SCResettingMATNeuronState=SCResettingMATNeuronState())
+    if !valid_state(state)
+        throw(ArgumentError("invalid SC resetting-MAT state or configuration"))
+    end
     steps = length(currents)
     voltages = Vector{Float64}(undef, steps)
     theta1 = Vector{Float64}(undef, steps)
     theta2 = Vector{Float64}(undef, steps)
     events = Vector{Int}(undef, steps)
+    working = deepcopy(state)
     for index in eachindex(currents)
-        event = step!(state, Float64(currents[index]))
+        event = step!(working, Float64(currents[index]))
         if event < 0
             throw(ArgumentError("invalid SC resetting-MAT step at index $index"))
         end
-        voltages[index] = state.v
-        theta1[index] = state.theta1
-        theta2[index] = state.theta2
+        voltages[index] = working.v
+        theta1[index] = working.theta1
+        theta2[index] = working.theta2
         events[index] = event
     end
+    state.v = working.v
+    state.theta1 = working.theta1
+    state.theta2 = working.theta2
     return (; voltages, theta1, theta2, events, state)
 end
 
 """Run `n_steps` under constant current; retained for service compatibility."""
 function simulate(n_steps::Int=1000; I_ext::Float64=50.0, dt::Float64=1.0)
+    if !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
+        throw(ArgumentError("invalid SC resetting-MAT current or timestep"))
+    end
     state = SCResettingMATNeuronState()
     state.dt = dt
     result = simulate(fill(I_ext, n_steps); state=state)

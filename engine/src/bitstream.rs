@@ -15,6 +15,8 @@ use rand::{Rng, RngExt};
 
 use crate::simd;
 
+mod hdc;
+
 /// Packed bitstream tensor with original bit length metadata.
 #[derive(Clone, Debug)]
 pub struct BitStreamTensor {
@@ -46,32 +48,16 @@ impl BitStreamTensor {
 
     /// HDC BIND: XOR returning a new tensor.
     pub fn xor(&self, other: &BitStreamTensor) -> BitStreamTensor {
-        assert_eq!(
-            self.length, other.length,
-            "Bitstream lengths must match for XOR."
-        );
-        let data = self
-            .data
-            .iter()
-            .zip(other.data.iter())
-            .map(|(&a, &b)| a ^ b)
-            .collect();
-        BitStreamTensor {
-            data,
-            length: self.length,
-        }
+        self.try_xor(other)
+            .expect("cannot allocate packed XOR output")
     }
 
     /// HDC PERMUTE: Cyclic right rotation by `shift` bits.
     ///
     /// Rotates the entire logical bitstream, handling cross-word boundaries.
     pub fn rotate_right(&mut self, shift: usize) {
-        if self.length == 0 || shift.is_multiple_of(self.length) {
-            return;
-        }
-        let mut bits = unpack(self);
-        bits.rotate_right(shift % self.length);
-        *self = pack(&bits);
+        self.try_rotate_right(shift)
+            .expect("cannot allocate packed rotation output");
     }
 
     /// HDC SIMILARITY: Normalized Hamming distance (0.0 = identical, 1.0 = opposite).
@@ -89,45 +75,7 @@ impl BitStreamTensor {
     /// Bit is 1 if a strict majority (> N/2) of inputs have it set.
     /// Optimized bitwise implementation using full adders.
     pub fn bundle(vectors: &[&BitStreamTensor]) -> BitStreamTensor {
-        assert!(!vectors.is_empty(), "Cannot bundle zero vectors.");
-        let length = vectors[0].length;
-        let words = vectors[0].data.len();
-
-        if vectors.len() == 1 {
-            return vectors[0].clone();
-        }
-
-        // Bitwise majority vote for N inputs.
-        // For N=3, maj(a,b,c) = (a&b) | (b&c) | (a&c)
-        // For general N, we use a bit-counting approach (bitwise full adders).
-        let mut data = vec![0u64; words];
-
-        if vectors.len() == 3 {
-            for (i, item) in data.iter_mut().enumerate().take(words) {
-                let a = vectors[0].data[i];
-                let b = vectors[1].data[i];
-                let c = vectors[2].data[i];
-                *item = (a & b) | (b & c) | (a & c);
-            }
-        } else {
-            // General N: Slow fallback for now, but still per-word.
-            let threshold = vectors.len() / 2;
-            for (i, item) in data.iter_mut().enumerate().take(words) {
-                for bit in 0..64 {
-                    let mut count = 0;
-                    for v in vectors {
-                        if (v.data[i] >> bit) & 1 == 1 {
-                            count += 1;
-                        }
-                    }
-                    if count > threshold {
-                        *item |= 1u64 << bit;
-                    }
-                }
-            }
-        }
-
-        BitStreamTensor { data, length }
+        Self::try_bundle(vectors).expect("cannot allocate packed bundle output")
     }
 }
 
@@ -240,9 +188,27 @@ pub fn bernoulli_stream<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
 /// This is bit-identical to `pack(&bernoulli_stream(...)).data` for the same
 /// RNG state while avoiding the intermediate `Vec<u8>` allocation.
 pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
+    try_bernoulli_packed(prob, length, rng).expect("cannot allocate packed bitstream")
+}
+
+/// Generate a packed Bernoulli bitstream with fallible storage allocation.
+///
+/// Sampling, clamping and RNG consumption match [`bernoulli_packed`]. Empty
+/// streams remain valid. Allocation failure returns before consuming RNG state.
+///
+/// # Errors
+///
+/// Returns the allocator's reservation error when the packed words cannot fit.
+pub fn try_bernoulli_packed<R: Rng + ?Sized>(
+    prob: f64,
+    length: usize,
+    rng: &mut R,
+) -> Result<Vec<u64>, std::collections::TryReserveError> {
     let p = prob.clamp(0.0, 1.0);
     let words = length.div_ceil(64);
-    let mut data = vec![0_u64; words];
+    let mut data = Vec::new();
+    data.try_reserve_exact(words)?;
+    data.resize(words, 0_u64);
     for (word_idx, word) in data.iter_mut().enumerate() {
         let bits_in_word = std::cmp::min(64, length.saturating_sub(word_idx * 64));
         for bit in 0..bits_in_word {
@@ -251,7 +217,7 @@ pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
             }
         }
     }
-    data
+    Ok(data)
 }
 
 /// Fast packed Bernoulli generation using byte-threshold comparison.

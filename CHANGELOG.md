@@ -42,6 +42,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   on 0.16.9. The formatter retains its Python, stub, and notebook scope.
 
 ### Fixed
+- MAT IB and FS factories accept explicit baseline and history-increment
+  overrides through complete constructor validation, preserving named defaults.
+- Source `MATNeuron` reset validates retained configuration before committing
+  zero-rest dynamics. Checked Rust and Go resets report refusal; legacy void
+  resets preserve refused states. Julia validates empty inputs and preserves
+  caller state on any batch failure, with complete constant-current admission.
+- MAT Go and Mojo C ABIs reject invalid complete profiles even for empty
+  batches and refuse null pointers before output writes. Mojo enforces the
+  source threshold envelopes and retains SC resetting-MAT derivative arithmetic
+  order, preventing a false event for large finite cancelling terms.
+- `SCResettingMATNeuron` validates its complete resting candidate before
+  changing state. Checked Rust and Go resets preserve invalid configurations;
+  Julia rejects invalid empty inputs and preserves caller state when a later
+  batch sample fails. Native source MAT and SC resetting-MAT batches use owning
+  arrays and propagate allocation failures as Python `MemoryError`, releasing
+  partial outputs.
+- `SCNonResettingAdaptiveLIFNeuron` validates its complete resting candidate
+  before reset commits either dynamic value. Its native batch propagates
+  allocation failures as Python `MemoryError` and releases partial outputs.
+  Julia's constant-current simulator rejects invalid current or timestep even
+  for zero samples; valid empty calls retain their established result.
 - The published Studio OpenAPI reference matches the running application again.
   Three landed changes never reached it: `GET /api/graph/models/{name}` was
   absent entirely, and `/api/export/svg` and `/api/graph/validate` carried

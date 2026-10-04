@@ -27677,7 +27677,7 @@ DOI 10.1371/journal.pcbi.1008503.
 - **step**(current)
   - Advance one source RK4 sample and return the sampled spike event.
 - **reset**()
-  - Restore the source equilibrium-oriented reset state.
+  - Restore equilibrium after validation, leaving state unchanged on failure.
 
 ---
 
@@ -28841,17 +28841,17 @@ Computational Neuroscience 3:9 (2009), doi:10.3389/neuro.10.009.2009.
 - **__post_init__**()
   - Validate the complete source-model contract before first use.
 - **regular_spiking**(cls)
-  - Construct the paper's regular-spiking example profile.
+  - Construct the paper's regular-spiking profile with validated field overrides.
 - **intrinsically_bursting**(cls)
-  - Construct the paper's intrinsically-bursting example profile.
+  - Construct the paper's bursting profile with validated field overrides.
 - **fast_spiking**(cls)
-  - Construct the paper's fast-spiking example profile.
+  - Construct the paper's fast-spiking profile with validated field overrides.
 - **threshold**()
   - Return the instantaneous adaptive threshold in millivolts.
 - **step**(current)
   - Advance one paper-MAT* step and return ``1`` on a spike.
 - **reset**()
-  - Restore zero-rest voltage, spike history, and refractory state.
+  - Restore zero-rest dynamics after validating the retained configuration.
 
 ---
 
@@ -29870,7 +29870,7 @@ paper attribution. Use :class:`NonResettingLIFNeuron` for source MAT(1).
 - **step**(current)
   - Advance one exact-relaxation sample with atomic failure.
 - **reset**()
-  - Restore voltage and adaptive threshold to their configured rests.
+  - Validate the resting candidate before restoring both dynamic values.
 
 ---
 
@@ -29884,7 +29884,7 @@ Retain the project's normalized two-state energy-gated LIF exactly.
 - **step**(current)
   - Advance one retained exact-flow sample and return its event.
 - **reset**()
-  - Restore the retained normalized resting state.
+  - Restore a validated resting candidate without partial state mutation.
 
 ---
 
@@ -29902,7 +29902,7 @@ non-resetting MAT* equations of Kobayashi et al. (2009).
 - **step**(current)
   - Advance one SC resetting-MAT step and return ``1`` on a spike.
 - **reset**()
-  - Restore voltage and adaptive thresholds to the SC resting state.
+  - Validate the complete resting candidate before restoring all dynamic values.
 
 ---
 

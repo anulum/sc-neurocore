@@ -1,5 +1,9 @@
 # BrunelNetwork
 
+This class is the mean-field population model. For the fixed-point CSR network
+used by the Rust scaling benchmark, select `FixedPointBrunelNetwork` instead;
+see the [engine bridge contracts](../../guides/engine_bridge_contracts.md#model-compatibility-and-migration).
+
 **Module:** `engine/src/neurons/population/brunel_network.rs` (Rust) / `sc_neurocore_engine.BrunelNetwork` (PyO3)
 **Reference:** Brunel, N. (2000). Dynamics of sparsely connected networks of excitatory and inhibitory spiking neurons. *J. Comput. Neurosci.* 8, 183–208.
 **Family:** Population mean-field — balanced E/I rate model

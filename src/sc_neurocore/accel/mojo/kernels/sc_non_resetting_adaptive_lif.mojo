@@ -4,9 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Retained adaptive LIF exact-relaxation kernel
 
-# Retained SC exact-relaxation helpers. No publication attribution is made.
-from std.math import exp
+from std.ffi import external_call
 
 
 def _sc_nralif_finite(value: Float64) -> Bool:
@@ -56,16 +56,16 @@ def sc_non_resetting_adaptive_lif_candidate_v(
     r_m: Float64,
     dt: Float64,
 ) -> Float64:
-    """Return the exact affine membrane relaxation."""
-    var decay = exp(-dt / tau_m)
+    """Return exact affine relaxation using scalar libm across the accepted range."""
+    var decay = external_call["exp", Float64](-dt / tau_m)
     return decay * v + (1.0 - decay) * (v_rest + r_m * current)
 
 
 def sc_non_resetting_adaptive_lif_candidate_theta(
     theta: Float64, theta_rest: Float64, tau_theta: Float64, dt: Float64
 ) -> Float64:
-    """Return the exact affine threshold relaxation."""
-    var decay = exp(-dt / tau_theta)
+    """Return exact threshold relaxation using the scalar libm exponential."""
+    var decay = external_call["exp", Float64](-dt / tau_theta)
     return decay * theta + (1.0 - decay) * theta_rest
 
 

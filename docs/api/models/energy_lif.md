@@ -18,6 +18,20 @@ depsilon/dt = ((1 - epsilon / (alpha * epsilon_0))^3
 
 The pinned profile starts at `V=-61 mV`, `epsilon=0.32` with `C_m=100 pF`, `g_L=9 nS`, `E_0=-62.5 mV`, `E_u=-58.5 mV`, `E_d=-40 mV`, `E_f=-62 mV`, `V_th=-59 mV`, `V_reset=-62 mV`, `alpha=1`, `epsilon_0=0.5`, `epsilon_c=0.18`, `delta=0.01`, and `tau_e=200 ms`.
 
+The enrolled implementation envelope requires `epsilon_0 > 0`, a finite
+`0 < alpha * epsilon_0 <= 5`, and `E_0` in `[-200, 100] mV`. Both state
+variables and the spike-reset voltage must also remain within their existing
+voltage/energy envelopes. These are numerical runtime bounds; they do not
+restrict `alpha` to one or establish physical validity of every accepted
+configuration. Every batch validates configuration even when the input is
+empty. Python and native reset restore `(E_0, alpha * epsilon_0)` only after
+validating that target; a refused reset leaves the pre-reset state unchanged.
+Python reset can recover invalid dynamic state when the configuration is valid.
+Rust exposes `try_reset` for explicit refusal; its existing `reset` method
+retains state on refusal. A Julia batch throws `ArgumentError` for a refused
+transition, preserving the state preceding that sample and any earlier
+successful samples.
+
 Python, the Rust engine and safety lane, Julia, Go shared library, and Mojo shared library expose the same complete state/configuration contract. The 512-step mixed-current receipt records eight events and SHA-256 `fc0aa0c…23d3`; native traces remain within `2e-12` of Python. Paired TOML/JSON schemas, a signed-Q32.32 pinned-profile RTL co-simulation, Yosys synthesis, and a bounded reset proof close the declared H1 evidence rung. These do not claim transition-property formal proof, universal binary64 equivalence, timing, PPA, or device validation.
 
 The previous normalized exact-flow recurrence is preserved separately as [`SCNormalizedEnergyLIFNeuron`](sc_normalized_energy_lif.md). It is not attributed to Fardet and Levina and does not add a source-catalogue count.

@@ -115,39 +115,64 @@ function step!(state::MATNeuronState, current::Float64=0.0)::Int
     return Int(spike)
 end
 
-"""Reset dynamic state while preserving the configured profile."""
+"""
+Restore zero-rest dynamics after validating the retained configuration.
+
+Invalid configuration throws `ArgumentError` without mutation. Valid
+configuration can recover corrupted dynamics through the reset candidate.
+"""
 function reset!(state::MATNeuronState)::Nothing
-    state.v = 0.0
-    state.theta1 = 0.0
-    state.theta2 = 0.0
-    state.refractory_remaining = 0.0
+    candidate = MATNeuronState(
+        0.0, 0.0, 0.0, 0.0, state.omega, state.tau_m, state.tau_1,
+        state.tau_2, state.alpha_1, state.alpha_2, state.resistance,
+        state.refractory_period, state.dt,
+    )
+    valid_state(candidate) || throw(ArgumentError("invalid MAT reset state or configuration"))
+    state.v = candidate.v
+    state.theta1 = candidate.theta1
+    state.theta2 = candidate.theta2
+    state.refractory_remaining = candidate.refractory_remaining
     return nothing
 end
 
-"""Run a complete current trace and return all state traces and event outputs."""
+"""
+Run a complete current trace and return state traces and event outputs.
+
+Validate the complete initial state even for an empty trace. Commit the caller's
+dynamic state only after every step succeeds; refusal leaves it unchanged.
+"""
 function simulate(currents::AbstractVector{<:Real}; state::MATNeuronState=MATNeuronState())
+    valid_state(state) || throw(ArgumentError("invalid MAT initial state or configuration"))
+    candidate = deepcopy(state)
     steps = length(currents)
     voltages = Vector{Float64}(undef, steps)
     theta1 = Vector{Float64}(undef, steps)
     theta2 = Vector{Float64}(undef, steps)
     refractory = Vector{Float64}(undef, steps)
     events = Vector{Int}(undef, steps)
-    for index in eachindex(currents)
-        event = step!(state, Float64(currents[index]))
+    for (index, current) in enumerate(currents)
+        event = step!(candidate, Float64(current))
         if event < 0
             throw(ArgumentError("invalid MAT step at index $index"))
         end
-        voltages[index] = state.v
-        theta1[index] = state.theta1
-        theta2[index] = state.theta2
-        refractory[index] = state.refractory_remaining
+        voltages[index] = candidate.v
+        theta1[index] = candidate.theta1
+        theta2[index] = candidate.theta2
+        refractory[index] = candidate.refractory_remaining
         events[index] = event
     end
+    state.v = candidate.v
+    state.theta1 = candidate.theta1
+    state.theta2 = candidate.theta2
+    state.refractory_remaining = candidate.refractory_remaining
     return (; voltages, theta1, theta2, refractory, events, state)
 end
 
 """Run `n_steps` under constant current; retained for service compatibility."""
 function simulate(n_steps::Int=1000; I_ext::Float64=0.5, dt::Float64=0.001)
+    n_steps >= 0 || throw(ArgumentError("MAT step count must be nonnegative"))
+    isfinite(I_ext) || throw(ArgumentError("MAT current must be finite"))
+    isfinite(dt) && dt > 0.0 || throw(ArgumentError("MAT timestep must be finite and positive"))
     state = MATNeuronState()
     state.dt = dt
     result = simulate(fill(I_ext, n_steps); state=state)

@@ -5,6 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Retained adaptive LIF five-runtime benchmark
 
 """Source-bound five-runtime retained SC adaptive-LIF benchmark."""
 
@@ -18,6 +19,8 @@ SOURCE_PATHS = (
     "benchmarks/bench_model_sc_non_resetting_adaptive_lif.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/trivial/sc_non_resetting_adaptive_lif.rs",
+    "engine/src/bindings/fixed_point_lif.rs",
+    "engine/src/bindings/fixed_point_lif/array_allocation.rs",
     "engine/src/neurons/trivial/sc_non_resetting_adaptive_lif.rs",
     "src/sc_neurocore/accel/sc_non_resetting_adaptive_lif.py",
     "src/sc_neurocore/accel/go/sc_non_resetting_adaptive_lif/sc_non_resetting_adaptive_lif.go",

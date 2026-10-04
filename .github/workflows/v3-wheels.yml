@@ -59,7 +59,7 @@ jobs:
       - name: Build wheel
         run: |
           cd bridge
-          maturin build --release --out ../dist/
+          maturin build --locked --release --out ../dist/
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -98,7 +98,7 @@ jobs:
           # Target the exact matrix interpreter rather than --find-interpreter:
           # the latter also discovers the runner's free-threaded pythonX.Yt, which
           # PyO3 0.29 rejects for CPython < 3.14 (free-threaded unsupported).
-          maturin build --release --target aarch64-unknown-linux-gnu \
+          maturin build --locked --release --target aarch64-unknown-linux-gnu \
             --interpreter python${{ matrix.python-version }} --out ../dist/
 
       - name: Upload wheel artifact
@@ -137,6 +137,37 @@ jobs:
         run: |
           pip install dist/*.whl
           pip install --require-hashes -r requirements/wheels-test.txt
+
+      - name: Capture installed engine ABI
+        shell: bash
+        run: |
+          consumer_dir="$RUNNER_TEMP/engine-abi-consumer"
+          mkdir -p "$consumer_dir"
+          cd "$consumer_dir"
+          python "$GITHUB_WORKSPACE/tools/engine_abi_inventory.py" capture \
+            --require-installed --output "$GITHUB_WORKSPACE/engine-abi-installed.json"
+
+      - name: Upload installed ABI evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: engine-abi-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: engine-abi-installed.json
+          if-no-files-found: error
+
+      - name: Compare qualified default ABI reference
+        if: runner.os == 'Linux' && runner.arch == 'X64' && matrix.python-version == '3.12'
+        shell: bash
+        run: |
+          python tools/engine_abi_inventory.py compare \
+            --before tests/fixtures/engine_abi_default.json \
+            --after engine-abi-installed.json
+
+      - name: Default-neuron installed runtime contracts
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/engine-abi-consumer"
+          python "$GITHUB_WORKSPACE/tests/test_default_neuron_engine_binding.py" -v
 
       - name: Smoke test
         run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"

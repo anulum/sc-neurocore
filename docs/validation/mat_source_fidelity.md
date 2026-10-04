@@ -43,12 +43,40 @@ unknown/unavailable runtimes. Executed tests compare every voltage, threshold,
 refractory (source MAT), and event sample; events are exact and float states are
 bounded by `2e-12`.
 
-The source-bound 200,000-step benchmark records 11 source-MAT events under a
+The retained 200,000-step benchmark snapshot records 11 source-MAT events under a
 constant 0.7 nA drive. Python, Rust, Julia, and Go produce the same trace hash;
 Mojo differs only by `7.11e-15` while preserving all events. The separate SC
 benchmark records 8,620 events at current 50; Mojo's maximum state difference is
 `1.43e-14`. Both artifacts record source and loaded-binary hashes and explicitly
 deny production-speed and hardware-measurement claims.
+
+Those measurements bind their recorded source and binaries. Their loaded-host
+timings are ineligible for performance acceptance, and later reset, allocation
+and C-ABI repairs require fresh binary builds and qualified measurements.
+
+Configured runtime tests additionally compare full state and event traces,
+empty final states, immutable inputs and large finite cancellation. Raw Go and
+Mojo C-ABI tests cover all thirteen fields, every null pointer, negative counts,
+first and later transition refusal, candidate envelopes and post-event threshold
+overflow. Invalid complete configurations refuse before writing outputs even
+with zero samples. A raw later refusal retains only its accepted prefix and
+does not write final buffers. SC Mojo retains the source derivative's arithmetic
+order through all RK4 stages; combining equilibrium terms first can create an
+extra event under finite cancellation.
+
+Source MAT reset validates a complete zero-rest candidate before committing
+any dynamic field. Invalid retained configuration preserves all thirteen
+fields; valid configuration permits recovery from corrupted dynamics. The
+checked Rust and Go reset surfaces report refusal, while their legacy void
+surfaces preserve the refused state. Julia validates empty-vector admission
+and commits caller state only after a complete successful batch. These
+contracts preserve the paper profiles and the original stepping equations.
+
+Named RS, IB and FS Python factories merge explicit overrides after their
+profile defaults and apply complete constructor validation. Configured runtime
+tests carry each of the thirteen overridden fields through the five actual
+backends, comparing every dynamic state and exact event as well as empty final
+state. The default paper profiles and enrolled source receipt remain unchanged.
 
 ## Schema and silicon closure
 
@@ -74,7 +102,15 @@ device, or binary64-equivalence evidence is enrolled.
 - `tests/test_model_sc_resetting_mat_compatibility.py`
 - `tests/test_mat_backend_dispatch.py`
 - `tests/test_sc_resetting_mat_backend_dispatch.py`
+- `tests/test_mat_backend_configuration.py`
+- `tests/test_sc_resetting_mat_backend_configuration.py`
+- `tests/test_mat_family_c_abi.py`
 - `tests/test_mat_engine_binding.py`
+- `tests/test_model_mat_state_contracts.py`
+- `tests/test_mat_engine_binding_configuration.py`
+- `engine/tests/mat_configuration.rs`
+- `src/sc_neurocore/accel/go/services/mat_configuration_test.go`
+- `src/sc_neurocore/accel/julia/tests/mat_configuration.jl`
 - `tests/test_mat_schema_parity.py`
 - `tests/test_sc_resetting_mat_schema_parity.py`
 - `tests/test_reference_mat.py`

@@ -80,6 +80,16 @@ print(sum(events), neuron.v, neuron.threshold)
 complete batch contract. Unknown or unavailable explicitly requested backends
 fail; they are not silently replaced.
 
+The direct native `py_non_resetting_lif_simulate` requires an aligned,
+contiguous, native-endian one-dimensional `float64` input. Readonly and
+contiguous offset views are accepted. Its three state traces are `float64`
+and its event trace is `int32`; each output owns writable NumPy storage and
+shares no memory with the input or other outputs. Configuration and input
+layout are checked before output allocation. NumPy allocation failures
+propagate as `MemoryError`, release partially allocated outputs and leave the
+input unchanged. Real allocation-pressure recovery is exercised on Linux;
+the allocation-pressure protocol does not qualify other operating systems.
+
 ## Reproducibility and hardware boundary
 
 The independent 10,272-step direct-equation receipt records one event at index

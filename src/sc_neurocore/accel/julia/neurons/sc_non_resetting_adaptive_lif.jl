@@ -4,6 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Retained adaptive LIF Julia state transitions
 
 """Retained SC non-resetting exact-relaxation adaptive LIF recurrence."""
 module SCNonResettingAdaptiveLifAccel
@@ -43,13 +44,20 @@ function step!(s::SCNonResettingAdaptiveLIFNeuronState, current::Float64=0.0; dt
     return spike ? 1 : 0
 end
 
-"""Restore voltage and threshold to configured rests."""
+"""Validate the resting candidate before committing both dynamic values."""
 function reset!(s::SCNonResettingAdaptiveLIFNeuronState)::Nothing
+    candidate = SCNonResettingAdaptiveLIFNeuronState(s.v_rest, s.theta_rest, s.v_rest, s.theta_rest, s.delta_theta, s.tau_m, s.tau_theta, s.r_m, s.dt)
+    if !valid(candidate)
+        throw(DomainError((s.v_rest, s.theta_rest), "invalid SC adaptive LIF reset state or configuration"))
+    end
     s.v = s.v_rest; s.theta = s.theta_rest; return nothing
 end
 
 """Simulate a configured project current vector and return complete traces."""
 function simulate(currents::AbstractVector{<:Real}; state::SCNonResettingAdaptiveLIFNeuronState=SCNonResettingAdaptiveLIFNeuronState())
+    if !valid(state)
+        throw(DomainError((state.v, state.theta), "invalid SC adaptive LIF state, configuration, current, or timestep"))
+    end
     voltages = Vector{Float64}(undef, length(currents))
     thresholds = similar(voltages)
     events = Vector{Int64}(undef, length(currents))
@@ -63,7 +71,11 @@ end
 
 """Simulate a constant-current retained-project trace."""
 function simulate(n_steps::Int=1000; current::Float64=20.0, dt::Float64=0.1)
-    s = SCNonResettingAdaptiveLIFNeuronState(); trace = zeros(n_steps); spikes = 0
+    s = SCNonResettingAdaptiveLIFNeuronState()
+    if !isfinite(current) || !isfinite(dt) || dt <= 0.0
+        throw(DomainError((s.v, s.theta, current, dt), "invalid SC adaptive LIF state, configuration, current, or timestep"))
+    end
+    trace = zeros(n_steps); spikes = 0
     for index in eachindex(trace)
         spikes += step!(s, current; dt=dt); trace[index] = s.v
     end

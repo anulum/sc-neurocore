@@ -52,3 +52,20 @@ graph.add_encode(0, 1024, 0xACE1)
 graph.verify()
 sv_code = graph.emit_sv()
 ```
+
+## Installed-wheel interface evidence
+
+The [engine bridge contracts](../guides/engine_bridge_contracts.md#capturing-the-installed-interface)
+document `tools/engine_abi_inventory.py`, which captures the facade and compiled
+module after wheel installation. Its installed-origin guard refuses a checkout
+facade; retained captures include module hashes, complete interface metadata and
+exact alias identities. Compare inventories under an equal Python/NumPy/feature
+profile, then use per-binding behavioral tests for input layouts, exception and
+mutation contracts, numerical goldens and supported pickle state.
+
+The qualified default interface reference is
+`tests/fixtures/engine_abi_default.json`, for Linux x86-64, CPython 3.12 and
+NumPy 2.2.3 with default engine features. Its matching wheel job compares all
+interface fields; other runtime profiles retain separate measured captures.
+See [model compatibility and migration](../guides/engine_bridge_contracts.md#model-compatibility-and-migration)
+for canonical source models and their explicit retained project profiles.

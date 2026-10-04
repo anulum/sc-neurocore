@@ -43,6 +43,41 @@ neuron = SCResettingMATNeuron()
 events = [neuron.step(50.0) for _ in range(256)]
 ```
 
+## Reset and native batch contracts
+
+`reset()` validates the complete resting candidate `(v_rest, 0, 0)` with
+the retained configuration before changing any field. An invalid candidate
+raises `ValueError` and preserves the previous state. A valid candidate can
+recover corrupted dynamic values. A finite `v_rest` outside `[-200, 100]` remains
+constructor-admissible, but cannot become the resting voltage through reset.
+
+The configured native `py_sc_resetting_mat_simulate` accepts all thirteen fields
+and a contiguous, aligned, native-endian `float64` input vector. Read-only input
+is supported. It returns independently owned voltage, two adaptation and
+`int32` event arrays, together with the final dynamic state. Invalid state is
+rejected even for an empty vector; unsupported layouts raise `TypeError` before
+output allocation. Allocation failure raises Python `MemoryError` and releases
+any partial output arrays.
+
+Julia's vector simulator commits caller state only after the whole trace
+succeeds. An invalid later sample preserves the caller's complete state. Its
+constant-current overload validates current and timestep even for zero samples.
+Go exposes checked `TryReset`; Rust exposes checked `try_reset`. Their existing
+reset methods preserve all fields when a resting candidate is refused.
+
+The Go and Mojo `sc_resetting_mat_simulate_c` exports validate all thirteen
+fields before any output write, including an empty batch. Status `1` refuses
+a negative length or any null pointer; status `2` refuses invalid configuration
+or a failed transition. A valid empty call writes only its three initial final
+values. A later failure retains the accepted trace prefix and preserves the
+remaining outputs and all final buffers. Python facades expose outputs only
+after status `0`; Go's state `Validate()` checks the profile without mutation.
+
+Mojo evaluates each voltage derivative as `(-(v - v_rest) + resistance * current)
+/ tau_m`, retaining the source arithmetic order through all four RK4 stages.
+This matters for admitted large finite terms that cancel: forming the combined
+equilibrium first can introduce a voltage drift and an extra event.
+
 ## Compatibility anchor and runtimes
 
 The committed 256-step receipt uses 32 zero samples, 96 samples at 50, then 64
@@ -54,7 +89,8 @@ Python, Rust engine, Rust safety, Julia, Go shared library, and Mojo shared
 library implement the complete recurrence. The five accelerated paths preserve
 the event vector exactly and complete states within `2e-12`. The 200,000-step
 loaded-host benchmark is `benchmarks/results/bench_sc_resetting_mat.json`; it is
-local regression evidence only.
+retained functional trace evidence. Its timing values cannot qualify performance
+acceptance.
 
 ## Hardware and catalogue boundary
 

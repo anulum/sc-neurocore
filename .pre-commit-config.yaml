@@ -45,6 +45,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: docstring-policy-scope
+        name: documentation policy scope
+        entry: python -m tools.docstring_policy_guard
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: capability-manifest-drift
         name: capability manifest drift
         entry: python tools/capability_manifest.py --check
@@ -68,7 +74,13 @@ repos:
         entry: python -m tools.go_doc_ratchet
         language: system
         pass_filenames: false
-        files: '^(\.pre-commit-config\.yaml|.*\.go|tools/(go_doc_ratchet\.py|doc_debt_ceiling\.py|go_doc_ceiling\.json|godoc_coverage/.*))$'
+        files: '^(\.pre-commit-config\.yaml|.*\.go|tools/(go_doc_ratchet\.py|go_doc_measurement\.py|go_doc_findings\.py|go_doc_history\.py|docstring_policy_git\.py|docstring_policy_scope\.py|documentation_debt\.py|doc_debt_ceiling\.py|go_doc_ceiling\.json|godoc_coverage/.*))$'
+      - id: rust-doc-ratchet
+        name: Rust original documentation debt ratchet
+        entry: python -m tools.rust_doc_ratchet
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|.*\.rs|.*Cargo\.(toml|lock)|engine/missing_docs_ceiling\.json|tools/(rust_doc_(ratchet|measurement|symbols|history)\.py|rustdoc_symbols/.*|docstring_policy_git\.py|docstring_policy_scope\.py|documentation_debt\.py|doc_debt_ceiling\.py))$'
       - id: api-reference-drift
         name: API reference drift
         entry: python scripts/generate_docs.py --check

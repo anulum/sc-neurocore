@@ -24,6 +24,9 @@ func energy_lif_simulate_c(stepsC C.int, vC, eC, cC, gC, e0C, euC, edC, efC, vth
 		return 1
 	}
 	s := services.EnergyLIFNeuronState{V: float64(vC), Epsilon: float64(eC), Capacitance: float64(cC), GLeak: float64(gC), E0: float64(e0C), EU: float64(euC), ED: float64(edC), EF: float64(efC), VThreshold: float64(vthC), VReset: float64(vresetC), Alpha: float64(alphaC), Epsilon0: float64(epsilon0C), EpsilonC: float64(epsilonCC), Delta: float64(deltaC), TauE: float64(tauEC), Dt: float64(dtC)}
+	if !s.Valid() {
+		return 2
+	}
 	currents := unsafe.Slice((*C.double)(currentsPtr), steps)
 	voltages := unsafe.Slice((*C.double)(voltagesPtr), steps)
 	energies := unsafe.Slice((*C.double)(energiesPtr), steps)

@@ -4,12 +4,14 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained normalized energy-gated exact-flow model
 
 //! Retained normalized energy-gated exact-flow SC model.
 
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 100.0;
 
+/// Complete retained exact-flow state and reset configuration.
 #[derive(Clone, Debug)]
 pub struct SCNormalizedEnergyLIFNeuron {
     pub v: f64,
@@ -26,6 +28,7 @@ pub struct SCNormalizedEnergyLIFNeuron {
 }
 
 impl SCNormalizedEnergyLIFNeuron {
+    /// Construct the frozen project defaults.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -41,6 +44,7 @@ impl SCNormalizedEnergyLIFNeuron {
             dt: 1.0,
         }
     }
+    /// Check both the current state and the configured resting state.
     pub fn valid(&self) -> bool {
         [
             self.v,
@@ -58,6 +62,7 @@ impl SCNormalizedEnergyLIFNeuron {
         .into_iter()
         .all(f64::is_finite)
             && (V_MIN..=V_MAX).contains(&self.v)
+            && (V_MIN..=V_MAX).contains(&self.v_rest)
             && (V_MIN..=V_MAX).contains(&self.v_reset)
             && (0.0..=self.epsilon_0).contains(&self.epsilon)
             && self.epsilon_0 >= 0.0
@@ -71,6 +76,7 @@ impl SCNormalizedEnergyLIFNeuron {
             && self.v_threshold > self.v_rest
             && self.v_threshold > self.v_reset
     }
+    /// Commit one valid exact-flow candidate or refuse without mutation.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.valid() || !current.is_finite() {
             return Err("invalid SC normalized EnergyLIF state, configuration, or current");
@@ -105,12 +111,25 @@ impl SCNormalizedEnergyLIFNeuron {
         self.epsilon = epsilon;
         Ok(0)
     }
+    /// Advance the retained sentinel-returning Rust interface.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(-1)
     }
+    /// Validate a resting candidate before replacing either dynamic value.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let mut candidate = self.clone();
+        candidate.v = candidate.v_rest;
+        candidate.epsilon = candidate.epsilon_0;
+        if !candidate.valid() {
+            return Err("invalid SC normalized EnergyLIF reset state or configuration");
+        }
+        self.v = candidate.v;
+        self.epsilon = candidate.epsilon;
+        Ok(())
+    }
+    /// Retain the void reset interface while refusing an invalid configuration.
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.epsilon = self.epsilon_0;
+        let _ = self.try_reset();
     }
 }
 impl Default for SCNormalizedEnergyLIFNeuron {

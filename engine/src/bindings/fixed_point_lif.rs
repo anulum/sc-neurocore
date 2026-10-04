@@ -15,6 +15,15 @@ use pyo3::types::PyDict;
 
 use crate::neuron;
 
+#[path = "fixed_point_lif/array_allocation.rs"]
+pub(crate) mod array_allocation;
+use array_allocation::{zeros_1d, zeros_2d};
+
+/// Owned vector outputs in the established spike/voltage order.
+type VectorOutputs<'py> = (Bound<'py, PyArray1<i32>>, Bound<'py, PyArray1<i16>>);
+/// Owned matrix outputs in neuron-major order.
+type MatrixOutputs<'py> = (Bound<'py, PyArray2<i32>>, Bound<'py, PyArray2<i16>>);
+
 /// Register fixed-point LIF batch kernels with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<FixedPointLif>()?;
@@ -24,6 +33,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+/// Signed 16-bit fixed-point neuron with checked native configuration.
 #[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
 pub struct FixedPointLif {
     inner: neuron::FixedPointLif,
@@ -31,6 +41,7 @@ pub struct FixedPointLif {
 
 #[pymethods]
 impl FixedPointLif {
+    /// Refuse unsupported widths, fractions and refractory periods with ValueError.
     #[new]
     #[pyo3(signature = (
         data_width=16,
@@ -47,17 +58,18 @@ impl FixedPointLif {
         v_reset: i16,
         v_threshold: i16,
         refractory_period: i32,
-    ) -> Self {
-        Self {
-            inner: neuron::FixedPointLif::new(
+    ) -> PyResult<Self> {
+        Ok(Self {
+            inner: neuron::FixedPointLif::try_new(
                 data_width,
                 fraction,
                 v_rest,
                 v_reset,
                 v_threshold,
                 refractory_period,
-            ),
-        }
+            )
+            .map_err(PyValueError::new_err)?,
+        })
     }
 
     #[pyo3(signature = (leak_k, gain_k, i_t, noise_in=0))]
@@ -84,6 +96,7 @@ impl FixedPointLif {
 /// Run a LIF neuron for N steps with constant inputs.
 ///
 /// Returns (spikes: ndarray[i32], voltages: ndarray[i16]).
+/// Invalid configurations and NumPy allocation failures propagate as Python errors.
 #[pyfunction]
 #[pyo3(signature = (
     n_steps,
@@ -112,17 +125,18 @@ fn batch_lif_run<'py>(
     v_reset: i16,
     v_threshold: i16,
     refractory_period: i32,
-) -> (Bound<'py, PyArray1<i32>>, Bound<'py, PyArray1<i16>>) {
-    let mut lif = neuron::FixedPointLif::new(
+) -> PyResult<VectorOutputs<'py>> {
+    let mut lif = neuron::FixedPointLif::try_new(
         data_width,
         fraction,
         v_rest,
         v_reset,
         v_threshold,
         refractory_period,
-    );
-    let spikes_arr = PyArray1::<i32>::zeros(py, n_steps, false);
-    let voltages_arr = PyArray1::<i16>::zeros(py, n_steps, false);
+    )
+    .map_err(PyValueError::new_err)?;
+    let spikes_arr = zeros_1d::<i32>(py, n_steps)?;
+    let voltages_arr = zeros_1d::<i16>(py, n_steps)?;
 
     // SAFETY: Arrays are newly allocated and contiguous.
     let spikes_slice = unsafe {
@@ -143,13 +157,14 @@ fn batch_lif_run<'py>(
         voltages_slice[i] = v;
     }
 
-    (spikes_arr, voltages_arr)
+    Ok((spikes_arr, voltages_arr))
 }
 
 /// Run N independent LIF neurons in parallel, each with its own constant input.
 ///
 /// Returns (spikes: ndarray[i32, (n_neurons, n_steps)],
 ///          voltages: ndarray[i16, (n_neurons, n_steps)]).
+/// Checks configuration even for empty output and propagates NumPy errors.
 #[pyfunction]
 #[pyo3(signature = (
     n_neurons,
@@ -165,7 +180,6 @@ fn batch_lif_run<'py>(
     refractory_period=2
 ))]
 #[allow(clippy::too_many_arguments)]
-#[allow(clippy::type_complexity)]
 fn batch_lif_run_multi<'py>(
     py: Python<'py>,
     n_neurons: usize,
@@ -179,7 +193,7 @@ fn batch_lif_run_multi<'py>(
     v_reset: i16,
     v_threshold: i16,
     refractory_period: i32,
-) -> PyResult<(Bound<'py, PyArray2<i32>>, Bound<'py, PyArray2<i16>>)> {
+) -> PyResult<MatrixOutputs<'py>> {
     use rayon::prelude::*;
 
     let curr_slice = currents
@@ -193,8 +207,17 @@ fn batch_lif_run_multi<'py>(
         )));
     }
 
-    let spikes_arr = PyArray2::<i32>::zeros(py, [n_neurons, n_steps], false);
-    let voltages_arr = PyArray2::<i16>::zeros(py, [n_neurons, n_steps], false);
+    let initial = neuron::FixedPointLif::try_new(
+        data_width,
+        fraction,
+        v_rest,
+        v_reset,
+        v_threshold,
+        refractory_period,
+    )
+    .map_err(PyValueError::new_err)?;
+    let spikes_arr = zeros_2d::<i32>(py, n_neurons, n_steps)?;
+    let voltages_arr = zeros_2d::<i16>(py, n_neurons, n_steps)?;
 
     if n_neurons == 0 || n_steps == 0 {
         return Ok((spikes_arr, voltages_arr));
@@ -218,14 +241,7 @@ fn batch_lif_run_multi<'py>(
         .zip(voltages_flat.par_chunks_mut(n_steps))
         .zip(curr_slice.par_iter().copied())
         .for_each(|((spike_row, voltage_row), i_t)| {
-            let mut lif = neuron::FixedPointLif::new(
-                data_width,
-                fraction,
-                v_rest,
-                v_reset,
-                v_threshold,
-                refractory_period,
-            );
+            let mut lif = initial.clone();
             for step in 0..n_steps {
                 let (s, v) = lif.step(leak_k, gain_k, i_t, 0);
                 spike_row[step] = s;
@@ -237,6 +253,7 @@ fn batch_lif_run_multi<'py>(
 }
 
 /// Run a LIF neuron for N steps with per-step current and optional noise arrays.
+/// Preserve input layout/length refusals before checking the configuration.
 #[pyfunction]
 #[pyo3(signature = (
     leak_k,
@@ -251,7 +268,6 @@ fn batch_lif_run_multi<'py>(
     refractory_period=2
 ))]
 #[allow(clippy::too_many_arguments)]
-#[allow(clippy::type_complexity)]
 fn batch_lif_run_varying<'py>(
     py: Python<'py>,
     leak_k: i16,
@@ -264,7 +280,7 @@ fn batch_lif_run_varying<'py>(
     v_reset: i16,
     v_threshold: i16,
     refractory_period: i32,
-) -> PyResult<(Bound<'py, PyArray1<i32>>, Bound<'py, PyArray1<i16>>)> {
+) -> PyResult<VectorOutputs<'py>> {
     let curr_slice = currents
         .as_slice()
         .map_err(|e| PyValueError::new_err(format!("Cannot read currents: {e}")))?;
@@ -287,16 +303,17 @@ fn batch_lif_run_varying<'py>(
         }
     }
 
-    let mut lif = neuron::FixedPointLif::new(
+    let mut lif = neuron::FixedPointLif::try_new(
         data_width,
         fraction,
         v_rest,
         v_reset,
         v_threshold,
         refractory_period,
-    );
-    let spikes_arr = PyArray1::<i32>::zeros(py, n_steps, false);
-    let voltages_arr = PyArray1::<i16>::zeros(py, n_steps, false);
+    )
+    .map_err(PyValueError::new_err)?;
+    let spikes_arr = zeros_1d::<i32>(py, n_steps)?;
+    let voltages_arr = zeros_1d::<i16>(py, n_steps)?;
 
     // SAFETY: Arrays are newly allocated and contiguous.
     let spikes_slice = unsafe {

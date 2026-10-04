@@ -4,11 +4,13 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Source EnergyLIF native Python binding
 
 //! PyO3 exposure for source-faithful Fardet-Levina eLIF.
 
+use crate::fixed_point_lif_binding::array_allocation::zeros_1d;
 use crate::neurons;
-use numpy::{IntoPyArray, PyReadonlyArray1};
+use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -73,8 +75,8 @@ impl PyEnergyLIFNeuron {
     fn step(&mut self, current: f64) -> PyResult<i32> {
         self.inner.try_step(current).map_err(PyValueError::new_err)
     }
-    fn reset(&mut self) {
-        self.inner.reset();
+    fn reset(&mut self) -> PyResult<()> {
+        self.inner.try_reset().map_err(PyValueError::new_err)
     }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
@@ -87,6 +89,7 @@ impl PyEnergyLIFNeuron {
 #[pyfunction]
 #[pyo3(signature=(v,epsilon,capacitance,g_leak,e_0,e_u,e_d,e_f,v_threshold,v_reset,alpha,epsilon_0,epsilon_c,delta,tau_e,dt,currents))]
 #[allow(clippy::too_many_arguments)]
+/// Run a validated cell into owned NumPy outputs or propagate an allocation error.
 fn py_energy_lif_simulate<'py>(
     py: Python<'py>,
     v: f64,
@@ -130,18 +133,28 @@ fn py_energy_lif_simulate<'py>(
             "invalid EnergyLIF state or configuration",
         ));
     }
-    let mut voltages = Vec::with_capacity(currents.len()?);
-    let mut energies = Vec::with_capacity(currents.len()?);
-    let mut events = Vec::with_capacity(currents.len()?);
-    for &current in currents.as_slice()? {
-        events.push(n.try_step(current).map_err(PyValueError::new_err)?);
-        voltages.push(n.v);
-        energies.push(n.epsilon);
+    let currents = currents.as_slice()?;
+    let voltages = zeros_1d::<f64>(py, currents.len())?;
+    let energies = zeros_1d::<f64>(py, currents.len())?;
+    let events = zeros_1d::<i32>(py, currents.len())?;
+    // SAFETY: The three freshly allocated arrays are contiguous and have no
+    // external aliases. Their owners outlive these disjoint writable slices.
+    let (voltage_values, energy_values, event_values) = unsafe {
+        (
+            voltages.as_slice_mut()?,
+            energies.as_slice_mut()?,
+            events.as_slice_mut()?,
+        )
+    };
+    for (index, &current) in currents.iter().enumerate() {
+        event_values[index] = n.try_step(current).map_err(PyValueError::new_err)?;
+        voltage_values[index] = n.v;
+        energy_values[index] = n.epsilon;
     }
     let d = PyDict::new(py);
-    d.set_item("voltages", voltages.into_pyarray(py))?;
-    d.set_item("epsilon", energies.into_pyarray(py))?;
-    d.set_item("events", events.into_pyarray(py))?;
+    d.set_item("voltages", voltages)?;
+    d.set_item("epsilon", energies)?;
+    d.set_item("events", events)?;
     d.set_item("v_final", n.v)?;
     d.set_item("epsilon_final", n.epsilon)?;
     Ok(d.into_any().unbind())

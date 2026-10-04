@@ -27,12 +27,29 @@ All gates must pass before merge.
 | rust-test | `v3-engine.yml` | `cargo test` on Ubuntu + Windows |
 | bridge-build | `v3-engine.yml` | Maturin build + v3 integration tests |
 | wheels | `v3-wheels.yml` | Cross-platform wheel builds (Linux, macOS, Windows) |
+| installed engine ABI | `v3-wheels.yml` | Capture facade/extension identities from site-packages outside the checkout and retain the measured inventory |
+| default ABI reference | `v3-wheels.yml` | Compare every interface field with the qualified Linux x86-64 / CPython 3.12 / NumPy 2.2.3 default-feature reference |
+| ABI proof tool coverage | `ci.yml` | 100% statement and branch coverage of inventory/comparison tools, including actual CLI subprocesses |
 | pre-commit | `pre-commit.yml` | Trailing whitespace, YAML/TOML, typos, ruff format |
 | codeql | `codeql.yml` | GitHub CodeQL security analysis |
 | scorecard | `scorecard.yml` | OpenSSF Scorecard supply-chain audit |
 | docs | `docs.yml` | MkDocs build verification |
 
 ## Coverage Policy
+
+Engine interface capture and comparison have dedicated tests under
+`tests/test_tools/test_engine_abi_inventory*.py` and
+`tests/test_tools/test_engine_abi_contracts.py`. These exercise the real CLI,
+live global pickle identities, editable-installation refusal and damaged
+inventory rejection. [Engine bridge contracts](docs/guides/engine_bridge_contracts.md)
+describe the evidence scope and the additional per-binding behavioral proof.
+
+`tests/test_mckean_source_engine_binding.py` exercises the canonical installed
+McKean class and complete native batch: numerical traces, array dtype/layout,
+input preservation, atomic failure, configured reset, instance-pickle refusal
+and the public Rust dispatcher. `tests/test_mckean_engine_binding.py` covers the
+distinct retained SC triangular profile. These contracts keep both model
+identities explicit; they do not substitute for the other binding owners.
 
 - Threshold: 100% (enforced by `pytest --cov-fail-under=100`)
 - Omitted modules (documented in `pyproject.toml [tool.coverage.run] omit`):

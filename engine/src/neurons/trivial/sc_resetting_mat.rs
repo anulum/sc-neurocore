@@ -167,11 +167,22 @@ impl SCResettingMATNeuron {
         self.try_step(current).unwrap_or(0)
     }
 
-    /// Reset dynamic state while preserving configuration.
+    /// Validate the complete resting candidate before changing any state.
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        let mut candidate = self.clone();
+        candidate.v = candidate.v_rest;
+        candidate.theta1 = 0.0;
+        candidate.theta2 = 0.0;
+        if !candidate.validate() {
+            return Err("invalid SC resetting-MAT reset state or configuration");
+        }
+        *self = candidate;
+        Ok(())
+    }
+
+    /// Reset valid resting state, preserving all fields when reset is refused.
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.theta1 = 0.0;
-        self.theta2 = 0.0;
+        let _ = self.try_reset();
     }
 }
 

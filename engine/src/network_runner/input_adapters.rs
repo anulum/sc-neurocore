@@ -14,18 +14,23 @@ use crate::neurons::*;
 /// Define an adapter for a model whose step accepts one additional input.
 macro_rules! wrap_2arg_f64 {
     ($name:ident, $inner:ty, $v:ident, $extra:expr) => {
+        /// Runner adapter that supplies the model's fixed additional input.
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
+            /// Construct the adapter around a freshly constructed model.
             pub fn new() -> Self {
                 Self(<$inner>::new())
             }
+            /// Advance the model by one runner step and return its spike value.
             pub fn step(&mut self, current: f64) -> i32 {
                 self.0.step(current, $extra)
             }
+            /// Restore the wrapped model to its initial state.
             pub fn reset(&mut self) {
                 self.0.reset();
             }
+            /// Report the wrapped model's membrane variable as `f64`.
             pub fn v(&self) -> f64 {
                 self.0.$v as f64
             }
@@ -41,18 +46,23 @@ macro_rules! wrap_2arg_f64 {
 /// Define an adapter for a model whose step accepts two additional inputs.
 macro_rules! wrap_3arg {
     ($name:ident, $inner:ty, $v:ident, $e2:expr, $e3:expr) => {
+        /// Runner adapter that supplies the model's two fixed additional inputs.
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
+            /// Construct the adapter around a freshly constructed model.
             pub fn new() -> Self {
                 Self(<$inner>::new())
             }
+            /// Advance the model by one runner step and return its spike value.
             pub fn step(&mut self, current: f64) -> i32 {
                 self.0.step(current, $e2, $e3)
             }
+            /// Restore the wrapped model to its initial state.
             pub fn reset(&mut self) {
                 self.0.reset();
             }
+            /// Report the wrapped model's membrane variable as `f64`.
             pub fn v(&self) -> f64 {
                 self.0.$v as f64
             }
@@ -68,18 +78,23 @@ macro_rules! wrap_3arg {
 /// Define an adapter from the runner's floating input to an integer-input model.
 macro_rules! wrap_i32_input {
     ($name:ident, $inner:ty, $v:ident, $ctor:expr) => {
+        /// Runner adapter that converts the floating drive to the model's integer input.
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
+            /// Construct the adapter around a freshly constructed model.
             pub fn new() -> Self {
                 Self($ctor)
             }
+            /// Advance the model with the truncated drive and return its spike value.
             pub fn step(&mut self, current: f64) -> i32 {
                 self.0.step(current as i32)
             }
+            /// Restore the wrapped model to its initial state.
             pub fn reset(&mut self) {
                 self.0.reset();
             }
+            /// Report the wrapped model's membrane variable as `f64`.
             pub fn v(&self) -> f64 {
                 self.0.$v as f64
             }
@@ -95,12 +110,15 @@ macro_rules! wrap_i32_input {
 /// Define an adapter that thresholds a graded output into a spike value.
 macro_rules! wrap_graded {
     ($name:ident, $inner:ty, $v:ident, $threshold:expr) => {
+        /// Runner adapter that thresholds the model's graded output into a spike value.
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
+            /// Construct the adapter around a freshly constructed model.
             pub fn new() -> Self {
                 Self(<$inner>::new())
             }
+            /// Advance the model and return 1 when its output exceeds the threshold.
             pub fn step(&mut self, current: f64) -> i32 {
                 let out = self.0.step(current);
                 if out > $threshold {
@@ -109,9 +127,11 @@ macro_rules! wrap_graded {
                     0
                 }
             }
+            /// Restore the wrapped model to its initial state.
             pub fn reset(&mut self) {
                 self.0.reset();
             }
+            /// Report the wrapped model's membrane variable as `f64`.
             pub fn v(&self) -> f64 {
                 self.0.$v as f64
             }

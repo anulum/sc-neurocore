@@ -6,17 +6,23 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Fixed-point leaky-integrate-and-fire neuron
 
-/// Mask and sign-interpret an integer to `width` bits (branchless).
+/// Mask and sign-interpret an integer to `width` bits, then narrow to `i16`.
+///
+/// Widths above 16 retain the low 16 bits in this public narrow-value helper.
 #[inline]
 pub fn mask(value: i32, width: u32) -> i16 {
+    mask_wide(value, width) as i16
+}
+
+/// Interpret a wide intermediate without narrowing before fractional scaling.
+#[inline]
+fn mask_wide(value: i32, width: u32) -> i32 {
     assert!(
         width > 0 && width <= 32,
         "mask width must be 1..=32, got {width}"
     );
-    let mask = (1_i64 << width) - 1;
-    let value = (value as i64) & mask;
-    let shift = 64 - width;
-    ((value << shift) >> shift) as i16
+    let shift = 32 - width;
+    value.wrapping_shl(shift) >> shift
 }
 
 /// Fixed-point leaky-integrate-and-fire neuron state and parameters.
@@ -33,6 +39,11 @@ pub struct FixedPointLif {
 }
 
 impl FixedPointLif {
+    /// Construct a neuron with valid native fixed-point parameters.
+    ///
+    /// # Panics
+    ///
+    /// Panics for invalid parameters. Use [`Self::try_new`] for fallible input.
     pub fn new(
         data_width: u32,
         fraction: u32,
@@ -41,7 +52,41 @@ impl FixedPointLif {
         v_threshold: i16,
         refractory_period: i32,
     ) -> Self {
-        Self {
+        Self::try_new(
+            data_width,
+            fraction,
+            v_rest,
+            v_reset,
+            v_threshold,
+            refractory_period,
+        )
+        .expect("invalid fixed-point LIF configuration")
+    }
+
+    /// Construct a neuron without accepting configurations that cannot run.
+    ///
+    /// # Errors
+    ///
+    /// Rejects widths outside the native `i16` range, fractions at or above the
+    /// state width, and negative refractory periods before constructing state.
+    pub fn try_new(
+        data_width: u32,
+        fraction: u32,
+        v_rest: i16,
+        v_reset: i16,
+        v_threshold: i16,
+        refractory_period: i32,
+    ) -> Result<Self, &'static str> {
+        if !(1..=16).contains(&data_width) {
+            return Err("data_width must be in [1, 16]");
+        }
+        if fraction >= data_width {
+            return Err("fraction must be less than data_width");
+        }
+        if refractory_period < 0 {
+            return Err("refractory_period must be nonnegative");
+        }
+        Ok(Self {
             v: v_rest,
             refractory_counter: 0,
             data_width,
@@ -50,9 +95,10 @@ impl FixedPointLif {
             v_reset,
             v_threshold,
             refractory_period,
-        }
+        })
     }
 
+    /// Advance one fixed-point step and return the spike and masked voltage.
     #[allow(non_snake_case)]
     pub fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
         let width = self.data_width;
@@ -62,7 +108,7 @@ impl FixedPointLif {
             return (0, mask(self.v_rest as i32, width));
         }
 
-        let diff = mask((self.v_rest as i32) - (self.v as i32), 2 * width) as i32;
+        let diff = mask_wide((self.v_rest as i32) - (self.v as i32), 2 * width);
         let dv_leak = mask((diff * (leak_k as i32)) >> self.fraction, self.data_width);
         let dv_in = mask(
             ((i_t as i32) * (gain_k as i32)) >> self.fraction,
@@ -83,6 +129,7 @@ impl FixedPointLif {
         }
     }
 
+    /// Restore resting voltage and clear the refractory counter.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;
@@ -90,56 +137,4 @@ impl FixedPointLif {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{mask, FixedPointLif};
-
-    #[test]
-    fn branchless_mask_matches_signed_reference() {
-        for &width in &[16_u32, 32] {
-            for value in [
-                -32768_i32,
-                -1,
-                0,
-                1,
-                32767,
-                65535,
-                -65536,
-                i16::MAX as i32,
-                i16::MIN as i32,
-            ] {
-                let result = mask(value, width);
-                let bit_mask = (1_i64 << width) - 1;
-                let mut expected = (value as i64) & bit_mask;
-                if expected >= (1_i64 << (width - 1)) {
-                    expected -= 1_i64 << width;
-                }
-                let expected = if width >= 32 {
-                    expected as i32 as i16
-                } else {
-                    expected as i16
-                };
-                assert_eq!(result, expected, "value={value}, width={width}");
-            }
-        }
-    }
-
-    #[test]
-    fn refractory_period_enforces_two_silent_steps() {
-        let mut neuron = FixedPointLif::new(16, 8, 0, 0, 256, 2);
-        let spikes: Vec<_> = (0..30).map(|_| neuron.step(1, 256, 50, 0).0).collect();
-        assert!(spikes.iter().sum::<i32>() > 0);
-        for (index, &spike) in spikes.iter().enumerate() {
-            if spike == 1 && index + 2 < spikes.len() {
-                assert_eq!(spikes[index + 1], 0);
-                assert_eq!(spikes[index + 2], 0);
-            }
-        }
-    }
-
-    #[test]
-    fn zero_refractory_period_allows_repeated_firing() {
-        let mut neuron = FixedPointLif::new(16, 8, 0, 0, 256, 0);
-        let spikes: i32 = (0..20).map(|_| neuron.step(1, 256, 50, 0).0).sum();
-        assert!(spikes > 0);
-    }
-}
+mod tests;

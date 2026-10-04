@@ -41,6 +41,9 @@ func sc_resetting_mat_simulate_c(
 		TauM: float64(tauMC), Tau1: float64(tau1C), Tau2: float64(tau2C),
 		H1: float64(h1C), H2: float64(h2C), Resistance: float64(resistanceC), Dt: float64(dtC),
 	}
+	if !state.Validate() {
+		return 2
+	}
 	currents := unsafe.Slice((*C.double)(currentsPtr), steps)
 	voltages := unsafe.Slice((*C.double)(voltagesPtr), steps)
 	theta1Trace := unsafe.Slice((*C.double)(theta1Ptr), steps)

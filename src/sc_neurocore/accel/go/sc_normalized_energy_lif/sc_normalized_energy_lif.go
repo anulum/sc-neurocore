@@ -4,6 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Retained normalized energy-LIF C ABI
 package main
 
 /*
@@ -24,6 +25,9 @@ func sc_normalized_energy_lif_simulate_c(stepsC C.int, vC, eC, vrestC, vresetC, 
 		return 1
 	}
 	s := services.SCNormalizedEnergyLIFNeuronState{V: float64(vC), Epsilon: float64(eC), VRest: float64(vrestC), VReset: float64(vresetC), VThreshold: float64(vthC), TauM: float64(tauMC), TauE: float64(tauEC), Alpha: float64(alphaC), Epsilon0: float64(epsilon0C), Resistance: float64(resistanceC), Dt: float64(dtC)}
+	if !s.Valid() {
+		return 2
+	}
 	currents := unsafe.Slice((*C.double)(currentsPtr), steps)
 	voltages := unsafe.Slice((*C.double)(voltagesPtr), steps)
 	energies := unsafe.Slice((*C.double)(energiesPtr), steps)

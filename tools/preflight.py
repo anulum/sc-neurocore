@@ -17,10 +17,10 @@ import tempfile
 from collections.abc import Callable
 from typing import cast
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
-    import tomli as tomllib  # type: ignore[no-redef]
+else:
+    import tomli as tomllib
 
 SPDX_DIRS = ["src", "tests", "engine/src", "engine/tests", "engine/benches", "hdl", "bridge"]
 SPDX_EXTS = {".py", ".rs", ".v"}
@@ -33,6 +33,7 @@ BENCHMARK_EVIDENCE_REPORT = (
 
 
 def _coverage_fail_under() -> int:
+    """Read the configured coverage floor, retaining 100 when configuration is unavailable."""
     pyproject = pathlib.Path("pyproject.toml")
     if not pyproject.exists():
         return 100
@@ -53,6 +54,28 @@ GATES = [
             "--all-targets",
             "--manifest-path",
             "engine/Cargo.toml",
+            "--",
+            "-D",
+            "warnings",
+        ],
+    ),
+    (
+        "rust-doc-ratchet",
+        ["python", "-m", "tools.rust_doc_ratchet"],
+    ),
+    (
+        "cargo-rustdoc-symbols-fmt",
+        ["cargo", "fmt", "--check", "--manifest-path", "tools/rustdoc_symbols/Cargo.toml"],
+    ),
+    (
+        "cargo-rustdoc-symbols-clippy",
+        [
+            "cargo",
+            "clippy",
+            "--locked",
+            "--all-targets",
+            "--manifest-path",
+            "tools/rustdoc_symbols/Cargo.toml",
             "--",
             "-D",
             "warnings",
@@ -129,6 +152,14 @@ SPDX_SKIP_PARTS = {
 
 
 def check_spdx() -> bool:
+    """Check maintained files beneath the working directory for direct SPDX headers.
+
+    Returns
+    -------
+    bool
+        Whether the shared repository header checker reports no missing paths.
+        Missing paths are printed for repair; checker failures propagate.
+    """
     try:
         module = importlib.import_module("spdx_header_audit")
     except ModuleNotFoundError:
@@ -144,27 +175,39 @@ def check_spdx() -> bool:
 
 
 def _has_cargo() -> bool:
+    """Require a real, successful Cargo version probe within ten seconds."""
     try:
-        subprocess.run(["cargo", "--version"], capture_output=True, check=True)
+        subprocess.run(["cargo", "--version"], capture_output=True, check=True, timeout=10)
         return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
 
 
-_CARGO_AVAILABLE: bool | None = None
-
-
 def run_gate(name: str, cmd: list[str] | None) -> bool:
-    global _CARGO_AVAILABLE
+    """Execute one gate and report its actual success or prerequisite refusal.
+
+    Parameters
+    ----------
+    name : str
+        Gate label. Labels beginning with ``cargo-`` require a successful Cargo
+        probe and an actual ``engine`` directory on every invocation.
+    cmd : list[str] or None
+        Command arguments for an external gate. ``spdx-guard`` and ``pytest``
+        use their internal dispatch instead; other absent commands are refused.
+
+    Returns
+    -------
+    bool
+        Whether the selected check succeeds. Missing Cargo prerequisites return
+        False. Missing external commands and nonzero exit statuses also return False.
+    """
     print(f"\n{'=' * 60}")
     print(f"  GATE: {name}")
     print(f"{'=' * 60}")
     if name.startswith("cargo-"):
-        if _CARGO_AVAILABLE is None:
-            _CARGO_AVAILABLE = _has_cargo() and ENGINE_DIR.exists()
-        if not _CARGO_AVAILABLE:
-            print(f"  SKIP: {name} (cargo or engine/ not found)")
-            return True
+        if not _has_cargo() or not ENGINE_DIR.is_dir():
+            print(f"  FAIL: {name} (Cargo unavailable or engine/ is not a directory)")
+            return False
     if name == "spdx-guard":
         ok = check_spdx()
     elif name == "pytest":
@@ -186,12 +229,18 @@ def run_gate(name: str, cmd: list[str] | None) -> bool:
     elif cmd is not None:
         ok = subprocess.run(cmd).returncode == 0
     else:
-        ok = True
+        ok = False
     print(f"  {'PASS' if ok else 'FAIL'}: {name}")
     return ok
 
 
 def main() -> int:
+    """Run the requested preflight gates and return one if any gate fails.
+
+    The command runs all configured gates by default. ``--no-tests`` explicitly
+    excludes the pytest gate; ``--coverage`` preserves the default coverage run.
+    This entry point can execute the complete local suite.
+    """
     parser = argparse.ArgumentParser(description="SC-NeuroCore preflight checks")
     parser.add_argument("--no-tests", action="store_true", help="Skip pytest (fast lint-only mode)")
     parser.add_argument(

@@ -33,7 +33,7 @@ end
 function valid(s::SCNormalizedEnergyLIFNeuronState)
     values = (s.v, s.epsilon, s.v_rest, s.v_reset, s.v_threshold, s.tau_m, s.tau_e,
               s.alpha, s.epsilon_0, s.resistance, s.dt)
-    return all(isfinite, values) && -200 <= s.v <= 100 && -200 <= s.v_reset <= 100 &&
+    return all(isfinite, values) && -200 <= s.v <= 100 && -200 <= s.v_rest <= 100 && -200 <= s.v_reset <= 100 &&
            0 <= s.epsilon <= s.epsilon_0 && s.tau_m > 0 && s.tau_e > 0 && s.alpha >= 0 &&
            s.epsilon_0 >= 0 && s.resistance > 0 && 0 < s.dt <= min(s.tau_m, s.tau_e) &&
            s.v_threshold > s.v_rest && s.v_threshold > s.v_reset
@@ -52,6 +52,7 @@ end
 
 """Simulate a complete current trace from an explicitly supplied state."""
 function simulate(currents::AbstractVector{<:Real}; state::SCNormalizedEnergyLIFNeuronState=SCNormalizedEnergyLIFNeuronState())
+    valid(state) || throw(ArgumentError("invalid SC normalized EnergyLIF"))
     voltages = zeros(length(currents)); epsilon = zeros(length(currents)); events = zeros(Int, length(currents))
     for i in eachindex(currents)
         events[i] = step!(state, Float64(currents[i]))

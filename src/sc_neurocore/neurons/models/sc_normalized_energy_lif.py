@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 _VOLTAGE_MIN = -200.0
 _VOLTAGE_MAX = 100.0
@@ -57,6 +57,8 @@ class SCNormalizedEnergyLIFNeuron:
             raise ValueError("epsilon must not exceed epsilon_0")
         if not _VOLTAGE_MIN <= self.v <= _VOLTAGE_MAX:
             raise ValueError("v must be inside the voltage safety envelope")
+        if not _VOLTAGE_MIN <= self.v_rest <= _VOLTAGE_MAX:
+            raise ValueError("v_rest must be inside the voltage safety envelope")
         if not _VOLTAGE_MIN <= self.v_reset <= _VOLTAGE_MAX:
             raise ValueError("v_reset must be inside the voltage safety envelope")
         if self.dt > self.tau_m or self.dt > self.tau_e:
@@ -106,6 +108,13 @@ class SCNormalizedEnergyLIFNeuron:
         return 0
 
     def reset(self) -> None:
-        """Restore the retained normalized resting state."""
-        self.v = self.v_rest
-        self.epsilon = self.epsilon_0
+        """Restore a validated resting candidate without partial state mutation.
+
+        Raises
+        ------
+        ValueError
+            The edited configuration cannot produce a valid resting state.
+        """
+        candidate = replace(self, v=self.v_rest, epsilon=self.epsilon_0)
+        self.v = candidate.v
+        self.epsilon = candidate.epsilon

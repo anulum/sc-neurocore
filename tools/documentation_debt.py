@@ -41,13 +41,23 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import subprocess
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from tools.go_doc_measurement import (
+    GO_COVERAGE_SCHEMA_VERSION as GO_COVERAGE_SCHEMA_VERSION,
+    GO_COVERAGE_TOOL as GO_COVERAGE_TOOL,
+    GoMeasurementError,
+    go_scope as go_scope,
+    measure_go_coverage as measure_go_coverage,
+    qualify_repository,
+)
+from tools.rust_doc_measurement import RustMeasurementError, measure_rust_findings
+
 
 #: Contract version of the measurement artefact.
 DOCUMENTATION_DEBT_SCHEMA_VERSION = "sc-neurocore.documentation-debt.v1"
@@ -77,6 +87,8 @@ class Measurement:
         The paths the figure covers.
     not_measured_reason : str
         Empty when measured; otherwise why no figure exists.
+    provenance : dict of str to object
+        Native source evidence when the language producer qualifies its inputs.
     """
 
     language: str
@@ -87,10 +99,11 @@ class Measurement:
     files: int | None
     scopes: list[str] = field(default_factory=list)
     not_measured_reason: str = ""
+    provenance: dict[str, object] = field(default_factory=dict)
 
     def to_public_dict(self) -> dict[str, Any]:
         """Return the JSON form recorded in the artefact."""
-        return {
+        result: dict[str, object] = {
             "argv": list(self.argv),
             "files": self.files,
             "language": self.language,
@@ -100,6 +113,9 @@ class Measurement:
             "tool_version": self.tool_version,
             "undocumented": self.undocumented,
         }
+        if self.provenance:
+            result["provenance"] = dict(self.provenance)
+        return result
 
 
 def _run(
@@ -116,6 +132,8 @@ def _version(argv: Sequence[str], *, cwd: Path) -> str | None:
     try:
         completed = _run(argv, cwd=cwd, timeout=120.0)
     except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
         return None
     text = (completed.stdout or completed.stderr).strip().splitlines()
     return text[0] if text else None
@@ -198,52 +216,57 @@ def read_rustc_stderr(stderr: str) -> tuple[int, int]:
     tuple of (int, int)
         How many items carry no documentation, and in how many files.
     """
-    lines = stderr.splitlines()
-    warnings = [line for line in lines if line.startswith("warning: missing documentation")]
-    locations = [line.strip()[4:] for line in lines if line.strip().startswith("--> ")]
-    return len(warnings), len({location.split(":", 1)[0] for location in locations})
+    undocumented = 0
+    files: set[str] = set()
+    awaiting_location = False
+    for line in stderr.splitlines():
+        if line.startswith("warning:"):
+            awaiting_location = line.startswith("warning: missing documentation")
+            if awaiting_location:
+                undocumented += 1
+        elif awaiting_location and line.strip().startswith("--> "):
+            location = line.strip()[4:]
+            files.add(location.rsplit(":", 2)[0])
+            awaiting_location = False
+    return undocumented, len(files)
 
 
-#: The Go program that takes the measurement, relative to the repository root.
-GO_COVERAGE_TOOL = "tools/godoc_coverage/main.go"
-#: Contract version the coverage tool stamps on its summary.
-GO_COVERAGE_SCHEMA_VERSION = "sc-neurocore.go-doc-coverage.v1"
+@dataclass(frozen=True, slots=True)
+class _Attempt:
+    """An attempted native command and the provenance retained if it cannot measure.
 
-
-def go_scope(root: Path) -> list[str]:
-    """Return every tracked ``.go`` file, as git lists them.
-
-    The scope is a query rather than a list because a list is silently blind to
-    a file nobody adds to it, and rather than a filesystem walk because a walk
-    of the Go tree here reaches 18 057 files: a virtual environment lives
-    inside it, and its vendored toolchain would drown the project's own surface.
+    Attributes
+    ----------
+    language : str
+        Language whose declared source cohort was submitted.
+    tool : str
+        Native measurement tool required for that cohort.
+    argv : list of str
+        Command arguments for the attempted or refused invocation.
+    scopes : list of str
+        Declared source roots or manifest paths.
+    tool_version : str or None
+        Successful version-probe output, or None when it was unavailable.
     """
-    completed = _run(["git", "ls-files", "-z", "--", "*.go"], cwd=root, timeout=120.0)
-    return [path for path in completed.stdout.split("\0") if path]
 
+    language: str
+    tool: str
+    argv: list[str]
+    scopes: list[str]
+    tool_version: str | None
 
-def measure_go_coverage(root: Path, paths: Sequence[str]) -> dict[str, Any]:
-    """Return the coverage tool's summary for one set of Go files.
-
-    Raises
-    ------
-    json.JSONDecodeError
-        The tool wrote something other than its summary, which happens when it
-        refused to measure. Its stderr names the file it could not parse.
-    """
-    completed = subprocess.run(  # noqa: S603 - fixed argv, no shell
-        ["go", "run", GO_COVERAGE_TOOL],
-        input="\n".join(paths),
-        capture_output=True,
-        text=True,
-        cwd=root,
-        timeout=1800,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise json.JSONDecodeError(completed.stderr.strip() or "the tool failed", "", 0)
-    summary: dict[str, Any] = json.loads(completed.stdout)
-    return summary
+    def failure(self, reason: str) -> Measurement:
+        """Retain the attempted command while refusing any numeric debt figure."""
+        return Measurement(
+            language=self.language,
+            tool=self.tool,
+            tool_version=self.tool_version,
+            argv=self.argv,
+            undocumented=None,
+            files=None,
+            scopes=self.scopes,
+            not_measured_reason=reason,
+        )
 
 
 def measure_go(root: Path) -> Measurement:
@@ -255,7 +278,7 @@ def measure_go(root: Path) -> Measurement:
     which exported declarations carry no doc comment. That is a tool which
     understands the language, not a grep for a comment above an export.
     """
-    scopes = ["*.go (tracked)"]
+    scopes = ["*.go (tracked and nonignored untracked)"]
     argv = ["go", "run", GO_COVERAGE_TOOL]
     version = _version(["go", "version"], cwd=root)
     if version is None:
@@ -265,17 +288,9 @@ def measure_go(root: Path) -> Measurement:
             "the Go toolchain is not installed, so its parser could not be run",
             scopes,
         )
-    paths = go_scope(root)
-    if not paths:
-        return unmeasured(
-            "go",
-            "go/parser via tools/godoc_coverage",
-            "git listed no tracked .go files, so there was nothing to measure",
-            scopes,
-        )
     try:
-        summary = measure_go_coverage(root, paths)
-    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as error:
+        qualified = qualify_repository(root)
+    except GoMeasurementError as error:
         return unmeasured(
             "go",
             "go/parser via tools/godoc_coverage",
@@ -285,34 +300,45 @@ def measure_go(root: Path) -> Measurement:
     return Measurement(
         language="go",
         tool="go/parser via tools/godoc_coverage",
-        tool_version=version,
+        tool_version=qualified.version,
         argv=argv,
-        undocumented=int(summary["undocumented"]),
-        files=int(summary["files_with_findings"]),
+        undocumented=qualified.undocumented,
+        files=qualified.files,
         scopes=scopes,
+        provenance=qualified.to_public_dict(),
     )
 
 
 def measure_python(root: Path, scopes: Sequence[str]) -> Measurement:
     """Measure Python with ruff's pydocstyle rules for missing documentation.
 
-    Only the ``D1xx`` rules are counted: they are the ones that say a
-    declaration carries no docstring at all. Style rules about an existing
-    docstring's shape are real, and they are not this figure.
+    Only successful native reports containing ``D1xx`` findings are counted.
+    Missing inputs, syntax errors, unavailable tools and empty native cohorts
+    remain unmeasured. Style rules about existing docstrings are a separate
+    quality obligation.
     """
-    rules = "D100,D101,D102,D103,D104,D105,D106,D107"
+    rules = "D100,D101,D102,D103,D104,D105,D106,D107,E902"
+    interpreter = [sys.executable]
+    if sys.flags.isolated:
+        interpreter.append("-I")
+    else:
+        if sys.flags.ignore_environment:
+            interpreter.append("-E")
+        if sys.flags.no_user_site:
+            interpreter.append("-s")
     argv = [
-        sys.executable,
+        *interpreter,
         "-m",
         "ruff",
         "check",
         "--select",
         rules,
         "--output-format",
-        "concise",
+        "json",
         *scopes,
     ]
-    version = _version([sys.executable, "-m", "ruff", "--version"], cwd=root)
+    version = _version([*interpreter, "-m", "ruff", "--version"], cwd=root)
+    attempt = _Attempt("python", "ruff (D1xx)", argv, list(scopes), version)
     if version is None:
         return Measurement(
             language="python",
@@ -324,8 +350,32 @@ def measure_python(root: Path, scopes: Sequence[str]) -> Measurement:
             scopes=list(scopes),
             not_measured_reason="ruff is not importable in this interpreter",
         )
-    completed = _run(argv, cwd=root)
-    undocumented, files = read_ruff_concise(completed.stdout)
+    if not scopes:
+        return attempt.failure("no Python scopes were specified")
+    try:
+        source_query = _run(
+            [*interpreter, "-m", "ruff", "check", "--show-files", *scopes], cwd=root
+        )
+        completed = _run(argv, cwd=root)
+    except (OSError, subprocess.SubprocessError) as error:
+        return attempt.failure(f"Ruff could not complete: {error}")
+    if source_query.returncode != 0 or not source_query.stdout.strip():
+        return attempt.failure("Ruff found no complete Python source cohort")
+    if completed.returncode not in (0, 1):
+        return attempt.failure(f"Ruff exited {completed.returncode}: {completed.stderr.strip()}")
+    try:
+        report: list[dict[str, Any]] = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return attempt.failure("Ruff produced no JSON report")
+    if not isinstance(report, list) or any(not isinstance(row, dict) for row in report):
+        return attempt.failure("Ruff produced an invalid report shape")
+    invalid = [row for row in report if row.get("code") not in rules.split(",")[:-1]]
+    if invalid:
+        return attempt.failure(
+            f"Ruff refused an input: {invalid[0].get('code')}: {invalid[0].get('message')}"
+        )
+    undocumented = len(report)
+    files = len({row["filename"] for row in report})
     return Measurement(
         language="python",
         tool="ruff (D1xx)",
@@ -358,7 +408,17 @@ def measure_typescript(root: Path, config: str) -> Measurement:
             not_measured_reason=f"measurement config {config} is not present",
         )
     version = _version(["npx", "eslint", "--version"], cwd=frontend)
-    completed = _run(argv, cwd=frontend)
+    attempt = _Attempt(
+        "typescript", "eslint + eslint-plugin-jsdoc", argv, ["studio/frontend"], version
+    )
+    if version is None:
+        return attempt.failure("eslint could not report its version")
+    try:
+        completed = _run(argv, cwd=frontend)
+    except (OSError, subprocess.SubprocessError) as error:
+        return attempt.failure(f"eslint could not complete: {error}")
+    if completed.returncode not in (0, 1):
+        return attempt.failure(f"eslint exited {completed.returncode}: {completed.stderr.strip()}")
     try:
         report = json.loads(completed.stdout)
     except json.JSONDecodeError:
@@ -372,6 +432,12 @@ def measure_typescript(root: Path, config: str) -> Measurement:
             scopes=["studio/frontend"],
             not_measured_reason="eslint produced no JSON report",
         )
+    if not isinstance(report, list) or any(not isinstance(row, dict) for row in report):
+        return attempt.failure("eslint produced an invalid report shape")
+    if not report:
+        return attempt.failure("eslint measured no source files")
+    if any(message.get("fatal", False) for row in report for message in row.get("messages", [])):
+        return attempt.failure("eslint reported a fatal source error")
     undocumented, files = read_eslint_report(report)
     return Measurement(
         language="typescript",
@@ -391,29 +457,28 @@ def measure_rust(root: Path, manifest: str) -> Measurement:
     against a target directory of the caller's choosing to keep it out of a
     shared one.
     """
-    argv = ["cargo", "rustc", "--lib", "--manifest-path", manifest, "--", "-W", "missing_docs"]
-    if shutil.which("cargo") is None:
+    try:
+        measured = measure_rust_findings(root, manifest)
+    except RustMeasurementError as error:
         return Measurement(
             language="rust",
-            tool="rustc -W missing_docs",
+            tool="rustc --force-warn missing_docs",
             tool_version=None,
-            argv=argv,
+            argv=[],
             undocumented=None,
             files=None,
             scopes=[manifest],
-            not_measured_reason="cargo is not installed",
+            not_measured_reason=str(error),
         )
-    version = _version(["rustc", "--version"], cwd=root)
-    completed = _run(argv, cwd=root)
-    undocumented, files = read_rustc_stderr(completed.stderr)
     return Measurement(
         language="rust",
-        tool="rustc -W missing_docs",
-        tool_version=version,
-        argv=argv,
-        undocumented=undocumented,
-        files=files,
-        scopes=[manifest],
+        tool="rustc --force-warn missing_docs",
+        tool_version=measured.rustc_version,
+        argv=list(measured.argv),
+        undocumented=measured.undocumented,
+        files=measured.files,
+        scopes=list(measured.paths),
+        provenance=measured.to_public_dict(),
     )
 
 

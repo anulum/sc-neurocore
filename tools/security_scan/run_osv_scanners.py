@@ -14,33 +14,26 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from tools.security_scan.locked_dependency_inventory import inventory_locks
+
 OSV_SCANNER_SCHEMA_VERSION = "sc-neurocore.osv-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 SleepCommand = Callable[[float], None]
-# Only lockfiles OSV's lockfile plugin can extract. Root requirements.txt is an
-# unpinned pointer (remote resolve flakes). Hashed requirements/*.txt are not
-# supported extractors ("could not determine extractor suitable") and fail the
-# lane with returncode 127 even when vulnerability_count is zero.
-OSV_LOCKFILE_INPUTS = (
-    "Cargo.lock",
-    "fuzz/Cargo.lock",
-    "crates/tinysc_riscv/Cargo.lock",
-    "crates/evo_substrate_core/Cargo.lock",
-    "crates/stochastic_doctor_core/Cargo.lock",
-    "crates/autonomous_learning/Cargo.lock",
-    "crates/core_engine/Cargo.lock",
-    "crates/neuro_symbolic/Cargo.lock",
-    "src/sc_neurocore/accel/rust/Cargo.lock",
-    "studio/frontend/package-lock.json",
-)
+# Python profiles, Julia and Pixi have dedicated complete-audit adapters in
+# locked_dependency_audit. This additional OSV lane uses supported extractors.
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser for the additional OSV security packet producer."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--repo-root",
@@ -122,16 +115,21 @@ def _validate_osv_report(path: Path) -> tuple[list[str], int, int, list[str]]:
     if not isinstance(payload, dict):
         return ["OSV report root must be an object"], 0, 0, []
 
+    if not isinstance(payload.get("results"), list) or not payload["results"]:
+        return ["OSV report has no audited package results"], 0, 0, []
+
     packages = _iter_packages(payload)
+    if not packages:
+        return ["OSV report has no audited packages"], 0, 0, []
     vulnerability_ids = _vulnerability_ids(packages)
     return [], len(packages), len(vulnerability_ids), vulnerability_ids
 
 
 def _lockfile_arguments(repo_root: Path) -> list[str]:
     args: list[str] = []
-    for relative_path in OSV_LOCKFILE_INPUTS:
-        if (repo_root / relative_path).exists():
-            args.extend(("--lockfile", relative_path))
+    for lock in inventory_locks(repo_root):
+        if lock.ecosystem in {"rust", "npm", "go"}:
+            args.extend(("--lockfile", lock.path))
     return args
 
 
@@ -153,6 +151,25 @@ def run_osv_scanner(
     run_command: RunCommand = subprocess.run,
     sleep: SleepCommand = time.sleep,
 ) -> dict[str, Any]:
+    """Run all supported tracked locks and retain blocking scanner decisions.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Checkout defining the tracked dependency inventory.
+    output_dir : Path
+        Security packet directory for the native JSON and summary.
+    run_command : callable
+        Bounded subprocess executor; defaults to the real scanner invocation.
+    sleep : callable
+        Backoff wait between retriable service failures.
+
+    Returns
+    -------
+    dict
+        Report custody and pass status. Nonzero tool exits always fail, even
+        when partial or empty JSON contains no vulnerability records.
+    """
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
     report_path = security_dir / "osv_scanner.json"
@@ -165,6 +182,9 @@ def run_osv_scanner(
         "--format",
         "json",
         "--all-packages",
+        "--all-vulns",
+        "--no-call-analysis",
+        "go",
         "--output-file",
         str(report_path),
         "--experimental-no-default-plugins",
@@ -175,6 +195,7 @@ def run_osv_scanner(
     attempts = 0
     result: subprocess.CompletedProcess[str] | None = None
     for attempts in range(1, 4):
+        report_path.unlink(missing_ok=True)
         result = _run(command, repo_root=repo_root, run_command=run_command, timeout=360)
         if not _is_transient_osv_failure(result):
             break
@@ -183,11 +204,8 @@ def run_osv_scanner(
     validation_errors, package_count, vulnerability_count, vulnerability_ids = _validate_osv_report(
         report_path
     )
-    # osv-scanner returns non-zero for both real findings and transient RPC
-    # resolution errors. When the JSON report validates with zero vulns, treat
-    # residual service-unavailable noise as non-blocking (already retried).
     clean_report = not validation_errors and vulnerability_count == 0
-    process_ok = result.returncode == 0 or (clean_report and _is_transient_osv_failure(result))
+    process_ok = result.returncode == 0
     summary = {
         "schema_version": OSV_SCANNER_SCHEMA_VERSION,
         "passed": process_ok and clean_report,
@@ -211,6 +229,20 @@ def main(
     *,
     runner: Callable[..., dict[str, Any]] = run_osv_scanner,
 ) -> int:
+    """Run the OSV packet CLI and propagate incomplete or vulnerable audits.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Arguments for the repository and output directory.
+    runner : callable
+        Packet producer, using the real scanner by default.
+
+    Returns
+    -------
+    int
+        Zero only after the scanner succeeds and its report is clean.
+    """
     args = build_parser().parse_args(argv)
     summary = runner(repo_root=args.repo_root, output_dir=args.output_dir)
     print(json.dumps(summary, indent=2, sort_keys=True))
