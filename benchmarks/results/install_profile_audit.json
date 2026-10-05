@@ -62,7 +62,7 @@
     "static_primitive_pattern": "hdl/primitives/*.v",
     "vivado_required_for_baseline": false
   },
-  "optional_extra_count": 30,
+  "optional_extra_count": 31,
   "optional_extras": [
     "accel",
     "annealing",
@@ -76,6 +76,7 @@
     "federation",
     "full",
     "gpu",
+    "hdc-reference",
     "hdl",
     "jax",
     "julia",

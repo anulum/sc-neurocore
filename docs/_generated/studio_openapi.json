@@ -3416,6 +3416,7 @@
     },
     "/api/benchmarks/contribute": {
       "post": {
+        "description": "Persist an opt-in contribution, preserving only authored domain refusals.",
         "operationId": "api_benchmark_contribute_api_benchmarks_contribute_post",
         "requestBody": {
           "content": {
