@@ -26,6 +26,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobRecord,
     StudioJobTask,
 )
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio._training_events import _json_event_payload
 from sc_neurocore.studio.training import (
     TRAINING_EVENT_LOG_ARTIFACT_PATH,
@@ -88,7 +89,7 @@ def test_platform_record_stream_maps_every_terminal_event_shape(tmp_path: Path) 
         raise RuntimeError
 
     def failed_message(_context: StudioJobContext) -> dict[str, object]:
-        raise RuntimeError("operator-visible failure")
+        raise RuntimeError("unmarked fault text")
 
     def cancelled(_context: StudioJobContext) -> dict[str, object]:
         raise StudioJobCancelled("cancelled")
@@ -150,8 +151,9 @@ def test_platform_record_stream_maps_every_terminal_event_shape(tmp_path: Path) 
     assert events["completed"]["event"] == "completed"
     assert events["completed"]["data"] == {"train_accuracy": 0.75}
     assert events["completed_empty"]["data"] == {}
-    assert events["failed_empty"]["data"] == {"message": "Training failed."}
-    assert events["failed_message"]["data"] == {"message": "operator-visible failure"}
+    # An unmarked fault, with or without text, reaches the stream as the fixed fallback.
+    assert events["failed_empty"]["data"] == {"message": GENERIC_JOB_FAILURE}
+    assert events["failed_message"]["data"] == {"message": GENERIC_JOB_FAILURE}
     assert events["cancelled"]["data"] == {"message": "Training stopped."}
     assert events["timed_out"]["data"] == {"message": "Studio job exceeded its timeout."}
     assert events["running"] == {"event": "heartbeat"}

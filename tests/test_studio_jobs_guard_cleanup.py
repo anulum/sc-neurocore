@@ -29,6 +29,7 @@ import time
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobManager
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
 from sc_neurocore.studio.platform.jobs_process_protocol import _process_worker_environment
 from sc_neurocore.studio.platform.jobs_process_state import group_survivors
@@ -76,6 +77,7 @@ class GuardInterrupter(threading.Thread):
         self.guard: int | None = None
 
     def run(self) -> None:
+        """Signal the first lifetime guard that appears under the worker."""
         deadline = time.monotonic() + 30.0
         while not self._halt.is_set() and time.monotonic() < deadline:
             owner = self._parent()
@@ -86,6 +88,7 @@ class GuardInterrupter(threading.Thread):
                     return
 
     def finish(self) -> None:
+        """Stop looking for a guard and wait for the thread to end."""
         self._halt.set()
         self.join(timeout=10.0)
 
@@ -192,7 +195,10 @@ def test_supervisor_reaps_after_guard_start_failure(tmp_path: Path) -> None:
                 module.with_suffix(".imported").unlink()
                 continue
             assert record.status == "failed"
-            assert record.error == "RuntimeError"
+            # The fault's own text is the record's private diagnostic; the
+            # public view is the fixed fallback.
+            assert record.error == "Worker lifetime guard readiness timed out."
+            assert record.public_error == GENERIC_JOB_FAILURE
             assert not module.with_suffix(".imported").exists()
             assert interrupter.guard is not None and _guard_gone(interrupter.guard)
             assert not group_survivors(workers[0])

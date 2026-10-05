@@ -18,6 +18,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform import (
     AuditEvent,
     JsonlAuditSink,
@@ -41,7 +42,6 @@ def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
     tmp_path: Path,
 ) -> None:
     """Admin quarantine archive route writes confined archive artifacts."""
-
     audit_path = tmp_path / "audit" / "studio.jsonl"
     audit_path.parent.mkdir()
     audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
@@ -100,7 +100,6 @@ def test_studio_audit_quarantine_archive_retention_route_lists_archive_jobs(
     tmp_path: Path,
 ) -> None:
     """Admin retention route returns path-free archive disposition."""
-
     audit_path = tmp_path / "audit" / "studio.jsonl"
     audit_path.parent.mkdir()
     audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
@@ -152,7 +151,6 @@ def test_studio_audit_quarantine_archive_purge_route_removes_prune_candidates(
     tmp_path: Path,
 ) -> None:
     """Admin purge route deletes only archive jobs outside retention."""
-
     audit_path = tmp_path / "audit" / "studio.jsonl"
     audit_path.parent.mkdir()
     audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
@@ -209,7 +207,6 @@ def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     tmp_path: Path,
 ) -> None:
     """Admin validation route accepts archive and manifest payloads."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
     client = TestClient(app, base_url="http://127.0.0.1")
@@ -232,7 +229,6 @@ def test_studio_audit_quarantine_archive_restore_route_writes_job_artifacts(
     tmp_path: Path,
 ) -> None:
     """Admin restore route writes confined restore artifacts."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     app = create_app(
         StudioRuntimeSettings(
@@ -276,7 +272,6 @@ def test_studio_audit_quarantine_archive_restore_route_rejects_invalid_archive(
     tmp_path: Path,
 ) -> None:
     """Admin restore route returns validation errors without creating a job."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     manifest_payload["archive_id"] = "saqa_other"
     app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
@@ -298,7 +293,6 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
     tmp_path: Path,
 ) -> None:
     """Quarantine archive routes are denied without the admin role."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(
@@ -364,7 +358,11 @@ def test_quarantine_worker_rejects_malformed_envelope(tmp_path: Path, operation:
         )
         completed = manager.wait(job.job_id, 25.0)
         assert completed.status == "failed", completed.error
-        assert completed.error == "ValidationError"
+        # The validator's generated text stays a private diagnostic of the
+        # record; the public view is the fixed fallback.
+        assert completed.public_error == GENERIC_JOB_FAILURE
+        assert completed.error is not None
+        assert f"for _{operation.capitalize()}Request" in completed.error
         assert completed.result is None
         assert completed.artifacts == ()
         assert not (tmp_path / job.job_id / "evidence").exists()

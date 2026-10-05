@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 803
+expected_file_count = 810
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3303,3 +3303,31 @@ rationale = "Kernel resource limits of Studio workers and the durable record of 
 [[file]]
 path = "src/sc_neurocore/studio/_training_datasets.py"
 rationale = "Training data loaders and the owned refusal of an MNIST run without torchvision."
+
+[[file]]
+path = "tests/test_studio_audit_quarantine_routes.py"
+rationale = "Audit quarantine archive routes and the private diagnostic of a refused worker envelope."
+
+[[file]]
+path = "tests/test_studio_jobs_guard_cleanup.py"
+rationale = "Supervisor reaping after worker guard failures and the record's private fault text."
+
+[[file]]
+path = "tests/test_studio_model_scan_process.py"
+rationale = "Model scan process task, refused envelopes and non-finite payloads refused at submission."
+
+[[file]]
+path = "tests/test_studio_storage_worker_bootstrap.py"
+rationale = "Confined worker bootstrap after grant and the private result of a refused task."
+
+[[file]]
+path = "tests/test_studio_storage_worker_grant_process.py"
+rationale = "Socket grant before task import and the private result of incomplete grant options."
+
+[[file]]
+path = "tests/test_studio_storage_worker_launcher.py"
+rationale = "Worker launcher generations, capacity, retry and the private result of a launched task."
+
+[[file]]
+path = "tests/test_studio_training_events.py"
+rationale = "Training event stream shapes, including the fixed fallback for unmarked faults."

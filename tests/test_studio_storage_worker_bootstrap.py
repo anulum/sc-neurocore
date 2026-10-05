@@ -317,4 +317,5 @@ def test_bootstrap_confines_itself_then_runs_the_named_task_after_grant(spool: S
     assert child.returncode == 1, stderr.decode()
     evidence = json.loads((spool.work / ".studio_process_result.json").read_text())
     assert evidence["status"] == "failed"
-    assert evidence["error"] == "AnalysisJobValidationError"
+    # The worker's result file is private custody and keeps the fault's own text.
+    assert evidence["error"] == "invalid_analysis_payload"

@@ -56,7 +56,7 @@ def base() -> Iterator[Path]:
 
 @pytest.fixture
 def launcher(base: Path) -> Iterator[Launcher]:
-    """A running same-identity launcher; stopped with SIGTERM afterwards."""
+    """Yield a running same-identity launcher and stop it with SIGTERM afterwards."""
     running = start(base)
     try:
         yield running
@@ -89,7 +89,8 @@ def test_launched_generation_runs_the_named_task_after_grant(launcher: Launcher)
         f"{supervisor_identity().split(':')[0]}:{started.pid}:{started.start_token}"
     ]
     evidence = json.loads((directory / JOB_A / ".studio_process_result.json").read_text())
-    assert evidence["error"] == "AnalysisJobValidationError"
+    # The worker's result file is private custody and keeps the fault's own text.
+    assert evidence["error"] == "invalid_analysis_payload"
 
 
 def test_retry_and_status_resolve_a_lost_launch_reply(launcher: Launcher) -> None:

@@ -13,7 +13,9 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.studio.model_scan import scan_all_models
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.jobs_manager import StudioJobManager
+from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
 
 TASK = "sc_neurocore.studio.api.model_scan_jobs:execute_model_scan_process_task"
 
@@ -50,8 +52,6 @@ def test_process_preserves_complete_scan_results_and_digests(tmp_path: Path) -> 
     [
         {"current": 10.0},
         {"current": 10.0, "duration": 0.0},
-        {"current": 10.0, "duration": float("inf")},
-        {"current": float("nan"), "duration": 1.0},
         {"current": True, "duration": 1.0},
         {"current": "10", "duration": 1.0},
         {"current": 10.0, "duration": 1.0, "models": ["AdExNeuron"]},
@@ -69,10 +69,37 @@ def test_worker_refuses_invalid_scan_envelopes(tmp_path: Path, payload: dict[str
         result = manager.wait(job.job_id, 30.0)
         assert result.status == "failed", result.error
         assert result.result is None
-        assert result.error == "ValidationError"
+        # The validator's generated text stays a private diagnostic of the
+        # record; the public view is the fixed fallback.
+        assert result.public_error == GENERIC_JOB_FAILURE
+        assert result.error is not None and "for _ScanRequest" in result.error
     finally:
         for record in manager.list_records():
             if record.status not in {"completed", "failed", "timed_out", "cancelled"}:
                 manager.cancel(record.job_id)
                 manager.wait(record.job_id, 15.0)
+        manager._ledger.close()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"current": 10.0, "duration": float("inf")},
+        {"current": float("nan"), "duration": 1.0},
+    ],
+)
+def test_submission_refuses_non_finite_scan_envelopes(
+    tmp_path: Path, payload: dict[str, object]
+) -> None:
+    """A non-finite number is refused at submission, before any worker or record exists."""
+    manager = StudioJobManager(
+        root=tmp_path, allowed_kinds=frozenset({"model_scan"}), default_timeout_seconds=30.0
+    )
+    try:
+        with pytest.raises(StudioJobRefused, match="payload must be JSON"):
+            manager.submit_process_task(
+                kind="model_scan", owner="studio", request_id=None, task_path=TASK, payload=payload
+            )
+        assert manager.list_records() == ()
+    finally:
         manager._ledger.close()

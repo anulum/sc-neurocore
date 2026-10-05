@@ -181,7 +181,8 @@ def test_process_worker_imports_task_only_after_socket_grant(
     if granted:
         assert evidence["result"] == {"granted_execution": 7}
     else:
-        assert evidence["error"] == "RuntimeError"
+        # The worker's result file is private custody and keeps the fault's own text.
+        assert evidence["error"] == "Worker registration was not confirmed."
 
 
 @pytest.mark.parametrize(
@@ -206,5 +207,18 @@ def test_process_worker_refuses_incomplete_socket_grant_options(
         assert reap_process_group(child, owned_group_id=child.pid).reaped
     assert child.returncode == 1, stderr
     evidence = json.loads((path / "result.json").read_text())
-    assert evidence == {"artifacts": [], "error": "ValueError", "result": {}, "status": "failed"}
+    # The result file is private custody: it keeps the fault's own text and the
+    # versioned failure fields, with no refusal code for an unmarked fault.
+    assert evidence == {
+        "artifacts": [],
+        "error": (
+            "A socket grant needs both its endpoint and server identity."
+            if supervisor
+            else "A socket grant requires a named supervisor."
+        ),
+        "failure_schema": "studio.worker.failure.v1",
+        "refusal_code": None,
+        "result": {},
+        "status": "failed",
+    }
     assert not module.with_suffix(".imported").exists()
