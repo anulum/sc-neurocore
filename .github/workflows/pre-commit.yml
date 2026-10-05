@@ -23,6 +23,10 @@ concurrency:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    env:
+      # The Rust documentation hook builds the engine twice, current and original;
+      # one shared target directory lets the second build reuse the dependencies.
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/pre-commit
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

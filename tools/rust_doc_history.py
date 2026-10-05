@@ -121,7 +121,9 @@ def _source_image(root: Path, revision: str, names: list[str], image: Path) -> N
             path = image / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(source.read())
-    (image / ".gitignore").write_text("native-target/\n")
+    # Cargo writes build outputs, including generated Rust, below the image unless
+    # the caller redirects them; neither default nor test location is source.
+    (image / ".gitignore").write_text("native-target/\ntarget/\n")
     commands = [
         ["git", "init", "-q", "--initial-branch=main"],
         ["git", "add", "--", "."],

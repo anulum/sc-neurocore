@@ -183,6 +183,65 @@ def test_original_macro_generated_debt_is_counted_and_repaid_only_by_documentati
     assert lowered.returncode == 0, lowered.stdout + lowered.stderr
 
 
+def test_original_image_ignores_generated_sources_of_the_default_target(tmp_path: Path) -> None:
+    """Build outputs of the original image never enter its source cohort.
+
+    Without a redirected target directory Cargo builds inside the checked-out
+    image. A real build script generates Rust there, as dependencies of the
+    engine do. The generated file must not count as a changed measurement input.
+    The user's global Git excludes are switched off, as on a hosted runner, so
+    that only the image's own ignore rules decide.
+    """
+    root = rust_project(tmp_path / "repo", OLD)
+    (root / "build.rs").write_text(
+        "fn main() {\n"
+        '    let out = std::env::var("OUT_DIR").unwrap();\n'
+        '    let path = std::path::Path::new(&out).join("generated.rs");\n'
+        '    std::fs::write(path, "pub fn generated() {}\\n").unwrap();\n'
+        "}\n"
+    )
+    (root / ".gitignore").write_text("native-target/\ntarget/\n")
+    ceiling = root / "ceiling.json"
+    ceiling.write_text(json.dumps({"schema_version": LEGACY_SCHEMA, "undocumented": 1}))
+    _git(root, "add", "--", "build.rs", ".gitignore", "ceiling.json")
+    _git(
+        root,
+        "-c",
+        "user.name=Native contract",
+        "-c",
+        "user.email=native@example.invalid",
+        "commit",
+        "-qm",
+        "original crate with a generating build script",
+    )
+    env = os.environ.copy()
+    env.pop("CARGO_TARGET_DIR", None)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "tools.rust_doc_ratchet",
+            "--repo",
+            str(root),
+            "--manifest",
+            "Cargo.toml",
+            "--ceiling",
+            str(ceiling),
+        ],
+        cwd=REPO,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=180,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "unchanged at 1" in result.stdout
+    assert list((root / "target").rglob("generated.rs"))
+
+
 @pytest.mark.parametrize("kind", ["function", "receiver", "field"])
 def test_same_count_cannot_trade_individual_debt(
     parser: NativeParser, tmp_path: Path, kind: str
