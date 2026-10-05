@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 672
+expected_file_count = 793
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -2779,3 +2779,487 @@ rationale = "Actual OSV HTTP refusal and operating-system connection failure ret
 [[file]]
 path = "tests/test_tools/test_locked_audit_custody_drift.py"
 rationale = "Real mid-request lock change, unknown ecosystem and unbounded Pixi lock refusals through the public audit API and CLI."
+
+[[file]]
+path = "benchmarks/bench_verilog_compiler.py"
+rationale = "Verilog compiler benchmark bound to its source and input digests."
+
+[[file]]
+path = "src/sc_neurocore/datasets/refusals.py"
+rationale = "Authored dataset refusal boundary and its public contract."
+
+[[file]]
+path = "src/sc_neurocore/federation/__init__.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "src/sc_neurocore/federation/attestation.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "src/sc_neurocore/federation/evidence.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "src/sc_neurocore/federation/manifest.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "src/sc_neurocore/federation/verbs.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_evaluation.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_namespace.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_refusals.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_safety.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/neurons/expression_derivative.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/_event_training_runtime.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_control.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_events.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_job.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/_training_stream.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/design.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/training_weights.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/benchmark_contribution.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_diff.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_document.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_expressions.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_package.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_run.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/catalogue_query.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/event_training_budget.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/event_training_contract.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_admission_replay.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_context.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_rows.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_manager_access.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_manager_process.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_manager_thread.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_models.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_paths.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_process_protocol.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_process_results.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_purge.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_shared_admission.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/process_worker.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_artifact_chunks.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_artifact_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_artifact_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_cancel_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_cancel_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_finish.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_finish_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_finish_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_generation_exchanges.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_generation_supervisor.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_isolated_jobs.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_isolated_submit.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_live_spool.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_named_tasks.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_operation.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_purge.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_purge_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_purge_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_query_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_query_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_spool_staging.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_view_content.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/training_weights.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/training_refusals.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/workspace_review.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_datasets_refusals.py"
+rationale = "Authored dataset refusal boundary and its public contract."
+
+[[file]]
+path = "tests/test_equation_builder_refusals.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_equation_evaluation.py"
+rationale = "Equation builder evaluation, namespace, safety and derivative surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_federation/test_attestation.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "tests/test_federation/test_federation_freshness.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "tests/test_federation/test_federation_vertical.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "tests/test_federation/test_studio_manifest_artifact.py"
+rationale = "Federation manifest, verbs, evidence and attestation envelopes with their grading and freshness contracts."
+
+[[file]]
+path = "tests/test_hdc/test_hdc_torchhd_reference.py"
+rationale = "Pinned TorchHD reference validation of the HDC operations."
+
+[[file]]
+path = "tests/test_studio_benchmark_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_candidate_api_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_candidate_diff_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_candidate_expressions.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_candidate_package_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_candidate_run_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_catalogue_query_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_studio_jobs_artifact_refusals.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_kernel_refusals.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_ledger_refusals.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_observation_refusals.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_process.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_process_failures.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_purge_conflicts.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_purge_preparation.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_replay_refusals.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_snapshot.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_jobs_submission_refusals.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_process_worker_result.py"
+rationale = "Studio job admission, ledger, process results and purge custody."
+
+[[file]]
+path = "tests/test_studio_storage_artifact_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_cancel.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_dispatch.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_finish_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_generation_custody.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_generation_registration.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_generation_startup.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_generation_supervisor.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_isolated_jobs.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_named_tasks.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_operation.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_purge.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_query_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_query_protocol.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_record.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_record_client.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_storage_view_content.py"
+rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "tests/test_studio_training_job_lifecycle.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_process.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_refusals.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_sse.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_weight_attach.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_weight_refusals.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_weight_route_failures.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_training_weight_validation_refusals.py"
+rationale = "Studio training control, events, weights and authored training refusals."
+
+[[file]]
+path = "tests/test_studio_workspace_review_refusals.py"
+rationale = "Studio candidate, catalogue, benchmark and review surfaces with authored refusals."
+
+[[file]]
+path = "tests/test_tools/test_optional_dependency_matrix.py"
+rationale = "CI development installation and the optional dependency matrix it must satisfy."
+
+[[file]]
+path = "tools/ci_install_dev.py"
+rationale = "CI development installation and the optional dependency matrix it must satisfy."

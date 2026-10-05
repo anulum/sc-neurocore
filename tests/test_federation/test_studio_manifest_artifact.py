@@ -49,6 +49,7 @@ def _load_emitter() -> Any:
 
 
 def test_committed_artifact_matches_the_producer() -> None:
+    """The committed manifest artefact equals a fresh render of its producer."""
     emitter = _load_emitter()
     assert emitter._ARTIFACT.exists(), "run `python tools/emit_studio_manifest.py`"
     committed = json.loads(emitter._ARTIFACT.read_text(encoding="utf-8"))
@@ -59,10 +60,12 @@ def test_committed_artifact_matches_the_producer() -> None:
 
 
 def test_manifest_default_version_matches_source_package() -> None:
+    """The manifest default version equals the source package version."""
     assert STUDIO_VERSION == SOURCE_VERSION
 
 
 def test_artifact_is_schema_a_envelope_well_formed() -> None:
+    """The committed envelope carries the schema, verbs, evidence types and architecture map."""
     envelope = json.loads(
         (_repo_root() / "docs" / "_generated" / "studio_manifest.json").read_text()
     )

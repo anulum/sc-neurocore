@@ -47,6 +47,7 @@ _TS2 = "2026-06-24T06:05:00Z"
 
 
 def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
+    """The manifest declares the studio surface and a reproducible content digest."""
     manifest = build_manifest(studio_version=SOURCE_VERSION)
 
     assert manifest.contract_era == "v2"
@@ -61,6 +62,7 @@ def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
 
 
 def test_verbs_split_core_spine_from_domain_distinctive() -> None:
+    """Core verbs belong to the platform spine and the two domain verbs do not."""
     core = {v.name for v in core_verbs()}
     domain = {v.name for v in domain_verbs()}
     assert core <= set(CORE_VERBS)  # every "core" verb is in the platform spine
@@ -70,6 +72,7 @@ def test_verbs_split_core_spine_from_domain_distinctive() -> None:
 
 
 def test_fpga_cosimulation_federates_as_a_presilicon_measurement() -> None:
+    """A bit-exact co-simulation federates as a measured simulator result."""
     bundle = fpga_deployment_evidence(
         FpgaDeploymentResult(
             device="xc7z020-1clg400",
@@ -97,6 +100,7 @@ def test_fpga_cosimulation_federates_as_a_presilicon_measurement() -> None:
 
 
 def test_sc_inference_validated_only_when_bit_identical() -> None:
+    """Inference evidence is reference-validated only at zero backend error."""
     identical = sc_inference_evidence(
         ScInferenceResult("rust", "numpy", 0.0, 1024, "sha256:" + "b" * 64, "sha256:" + "c" * 64),
         operator="o",
@@ -121,6 +125,7 @@ def test_sc_inference_validated_only_when_bit_identical() -> None:
 
 
 def test_cosim_mismatch_never_renders_validated() -> None:
+    """A co-simulation mismatch never federates as validated parity."""
     # The honesty invariant from SC-NeuroCore's own perspective: a hardware
     # co-simulation MISMATCH must never federate as validated parity.
     mismatch = fpga_deployment_evidence(
@@ -150,11 +155,13 @@ def test_cosim_mismatch_never_renders_validated() -> None:
     [(0, 0.0), (-1, 0.0), (1024, -0.1)],
 )
 def test_sc_inference_result_rejects_invalid(length: int, error: float) -> None:
+    """An inference result with an invalid length or error is refused."""
     with pytest.raises(ValueError):
         ScInferenceResult("rust", "numpy", error, length, "b" * 64, "c" * 64)
 
 
 def test_fpga_result_rejects_empty_digest() -> None:
+    """An FPGA result with a blank digest is refused."""
     with pytest.raises(ValueError):
         FpgaDeploymentResult("dev", True, 1, 1, 0.0, 100.0, "   ")
 

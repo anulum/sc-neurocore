@@ -104,6 +104,7 @@ def _artifacts(*, with_transcript: bool = True) -> list[FpgaArtifact]:
 
 @pytest.mark.parametrize("error", [0.0, -0.0])
 def test_sc_inference_recompute_envelope_verifies(error: float) -> None:
+    """A sealed bit-true inference verifies in recompute mode without an attestation."""
     signer, keyring = _signer_and_keyring()
     env = seal_sc_inference(
         replace(_bit_true_inference(), max_abs_error=error),
@@ -116,6 +117,7 @@ def test_sc_inference_recompute_envelope_verifies(error: float) -> None:
 
 
 def test_sc_inference_forged_grade_is_caught() -> None:
+    """A rendered grade above what the signed unit earns is reported as forged."""
     signer, keyring = _signer_and_keyring()
     env = seal_sc_inference(
         _bit_true_inference(), signer=signer, freshness=Freshness.VERIFIED_AT_SOURCE
@@ -125,6 +127,7 @@ def test_sc_inference_forged_grade_is_caught() -> None:
 
 
 def test_sc_inference_non_bit_identical_grades_bounded() -> None:
+    """A drifting backend earns the bounded-model grade and not reference validation."""
     signer, keyring = _signer_and_keyring()
     drifting = ScInferenceResult(
         active_backend="rust",
@@ -145,6 +148,7 @@ def test_sc_inference_non_bit_identical_grades_bounded() -> None:
 
 
 def test_fpga_attestation_envelope_verifies_and_carries_result_pack() -> None:
+    """An FPGA attestation names its provider, result pack digest and signature."""
     signer, keyring = _signer_and_keyring()
     env = attest_fpga_deployment(
         _cosim_contract_result(),
@@ -161,6 +165,7 @@ def test_fpga_attestation_envelope_verifies_and_carries_result_pack() -> None:
 
 
 def test_fpga_cosim_mismatch_grades_validation_gap() -> None:
+    """A co-simulation mismatch earns the validation-gap grade only."""
     signer, keyring = _signer_and_keyring()
     env = attest_fpga_deployment(
         _cosim_contract_result(cosim_bit_exact=False),
@@ -173,6 +178,7 @@ def test_fpga_cosim_mismatch_grades_validation_gap() -> None:
 
 
 def test_fpga_bit_exact_without_transcript_does_not_earn_validated() -> None:
+    """A bit-exact flag without a co-simulation transcript is not validated."""
     # The honesty rule: a bit-exact flag needs a cosim-transcript artefact to back it.
     signer, keyring = _signer_and_keyring()
     env = attest_fpga_deployment(
@@ -186,6 +192,7 @@ def test_fpga_bit_exact_without_transcript_does_not_earn_validated() -> None:
 
 
 def test_fpga_attestation_requires_artifacts() -> None:
+    """An attestation without any artefact is refused."""
     signer, _ = _signer_and_keyring()
     with pytest.raises(ValueError, match="at least one"):
         attest_fpga_deployment(_cosim_contract_result(), [], signer=signer)
@@ -193,6 +200,7 @@ def test_fpga_attestation_requires_artifacts() -> None:
 
 @pytest.mark.parametrize("blank", ["", "   "])
 def test_fpga_artifact_rejects_blank_fields(blank: str) -> None:
+    """An artefact with a blank name is refused."""
     with pytest.raises(ValueError, match="non-empty"):
         FpgaArtifact(blank, "sha256:" + "1" * 64, "text/plain")
 
@@ -201,16 +209,19 @@ def test_fpga_artifact_rejects_blank_fields(blank: str) -> None:
 
 
 def test_absent_envelope_with_rendered_grade_is_stripped() -> None:
+    """A rendered grade without an envelope is reported as stripped."""
     _, keyring = _signer_and_keyring()
     assert verify_envelope(None, "reference-validated", keyring=keyring) is Verdict.STRIPPED
 
 
 def test_absent_envelope_without_grade_is_ungraded() -> None:
+    """No envelope and no rendered grade is reported as ungraded."""
     _, keyring = _signer_and_keyring()
     assert verify_envelope(None, None, keyring=keyring) is Verdict.UNGRADED
 
 
 def test_tampered_unit_is_forged() -> None:
+    """A changed result digest inside a sealed unit is reported as forged."""
     signer, keyring = _signer_and_keyring()
     env: dict[str, Any] = seal_sc_inference(
         _bit_true_inference(), signer=signer, freshness=Freshness.VERIFIED_AT_SOURCE
@@ -222,6 +233,7 @@ def test_tampered_unit_is_forged() -> None:
 
 
 def test_foreign_key_is_forged() -> None:
+    """An envelope signed by a key outside the keyring is reported as forged."""
     signer, _ = _signer_and_keyring()
     env = attest_fpga_deployment(
         _cosim_contract_result(),
@@ -237,6 +249,7 @@ def test_foreign_key_is_forged() -> None:
 
 
 def test_verify_dispatches_regrade_by_schema() -> None:
+    """The public verifier regrades an FPGA envelope with the FPGA rule."""
     # An fpga envelope verified through the public entry point uses the fpga regrade
     # (validation-gap on cosim fail), proving schema dispatch, not the sc-inference grade.
     signer, keyring = _signer_and_keyring()
