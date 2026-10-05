@@ -134,7 +134,9 @@ def audit_osv_queries(queries: tuple[dict[str, Any], ...], output_dir: Path) -> 
         receipt_path = output_dir / f"response-{number}-receipt.json"
         try:
             try:
-                response = urllib.request.urlopen(request, timeout=30)
+                response = urllib.request.urlopen(  # nosec B310 - fixed https OSV_ENDPOINT
+                    request, timeout=30
+                )
             except urllib.error.HTTPError as error:
                 response = error
             with response:
