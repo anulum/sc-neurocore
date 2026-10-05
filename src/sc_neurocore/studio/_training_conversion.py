@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 
 #: Artifact holding the measured source-to-converted comparison.
 CONVERSION_REPORT_ARTIFACT_PATH = "training/conversion_report.json"
@@ -65,7 +66,13 @@ class ConversionOutcome:
 
 
 def _evaluate(model: Any, loader: Any, device: Any) -> tuple[float, float, Any, Any]:
-    """Return source loss and accuracy on a loader, with the samples it served."""
+    """Return source loss and accuracy on a loader, with the samples it served.
+
+    Raises
+    ------
+    TrainingRefusal
+        The loader served no samples, so there is nothing to judge a conversion on.
+    """
     import torch
 
     model.eval()
@@ -79,7 +86,7 @@ def _evaluate(model: Any, loader: Any, device: Any) -> tuple[float, float, Any, 
             inputs.append(data)
             labels.append(targets.cpu())
     if not labels:
-        raise RuntimeError(
+        raise TrainingRefusal(
             "The validation split served no samples at this batch size; a conversion "
             "cannot be judged on none. Choose a smaller batch size."
         )

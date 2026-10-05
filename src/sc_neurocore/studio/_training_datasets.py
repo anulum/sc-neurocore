@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from sc_neurocore.studio.training_refusals import TrainingRefusal
+
 
 def _seed_everything(seed: int) -> None:
     """Seed Python, NumPy and Torch before building data or model state.
@@ -70,7 +72,7 @@ def _load_mnist(batch_size: int, *, rates: bool = False) -> tuple[Any, Any, int,
 
     Raises
     ------
-    RuntimeError
+    TrainingRefusal
         torchvision is not installed. No other data is substituted: a run that
         asked for MNIST and trained on something else would carry the name of
         a dataset it never saw.
@@ -80,7 +82,7 @@ def _load_mnist(batch_size: int, *, rates: bool = False) -> tuple[Any, Any, int,
     try:
         from torchvision import datasets, transforms
     except ImportError as exc:
-        raise RuntimeError(
+        raise TrainingRefusal(
             "The MNIST dataset needs torchvision, which is not installed here; "
             "install it or choose the synthetic dataset. No other data was substituted."
         ) from exc

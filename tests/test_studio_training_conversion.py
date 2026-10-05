@@ -28,13 +28,19 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioJobManager, StudioRuntimeSettings
-from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 from sc_neurocore.studio.training_contract import (
     TrainingConfigError,
     resolve_training_config,
 )
 
 torch = pytest.importorskip("torch")
+
+#: Source-owned refusal of a conversion run whose validation split is empty.
+EMPTY_VALIDATION_REFUSAL = (
+    "The validation split served no samples at this batch size; a conversion "
+    "cannot be judged on none. Choose a smaller batch size."
+)
 
 _RUN = {
     "model_kind": "qcfs_conversion",
@@ -256,11 +262,12 @@ class TestHttpRoute:
         assert status["preregistration_verdict"]["passed"] is False
 
     def test_an_empty_validation_split_fails_with_its_reason(self, client: TestClient) -> None:
-        """An empty validation split fails the run; the status carries the fixed fallback."""
+        """An empty validation split fails the run and the status says why."""
         started = client.post("/api/training/start", json={**_RUN, "epochs": 1, "batch_size": 200})
         status = _finish(client, started.json()["job_id"])
-        # The public record carries the fixed fallback; the diagnostic stays in custody.
-        assert status["status"] == "failed" and status["error"] == GENERIC_JOB_FAILURE
+        # The worker reports the reason as a finite code; the supervisor renders
+        # this source-owned text for it, so it reaches the caller whole.
+        assert status["status"] == "failed" and status["error"] == EMPTY_VALIDATION_REFUSAL
 
     def test_a_sandboxed_run_seals_its_report(self, tmp_path: Path) -> None:
         """A sandboxed run writes its conversion and target reports as artefacts."""
@@ -288,7 +295,7 @@ class TestHttpRoute:
         }
 
     def test_an_empty_validation_split_seals_its_reason(self, tmp_path: Path) -> None:
-        """The raised fault states the empty split; the sealed status keeps the fixed fallback."""
+        """The refusal names the empty split and the sealed status repeats it."""
         import threading
 
         from sc_neurocore.studio.platform import StudioJobContext
@@ -301,11 +308,11 @@ class TestHttpRoute:
             max_artifact_bytes=1 << 20,
         )
         job = TrainingJob({**_RUN, "epochs": 1, "batch_size": 200}, job_id=context.job_id)
-        with pytest.raises(RuntimeError, match="validation split served no samples"):
+        with pytest.raises(TrainingRefusal, match="validation split served no samples"):
             job.run_blocking(context)
         sealed = json.loads((tmp_path / "training" / "status.json").read_text())
         assert sealed["status"] == "failed"
-        assert sealed["error"] == GENERIC_JOB_FAILURE
+        assert sealed["error"] == EMPTY_VALIDATION_REFUSAL
         assert not (tmp_path / "training" / "conversion_report.json").exists()
 
     def test_a_conversion_run_refuses_a_warm_start(self, client: TestClient) -> None:

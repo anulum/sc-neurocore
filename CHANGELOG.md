@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Show the reason again when a Studio training run cannot start on its data:
+  a missing torchvision for MNIST and a validation split that serves no samples
+  are owned training refusals, so the job status and the sealed status carry
+  their text instead of the fixed fallback. A process worker reports each as a
+  finite code and the supervisor renders the source-owned wording.
+
 - Add the pinned `hdc-reference` test extra and a required CPU CI comparison
   against TorchHD BSC binding, odd bundling and cyclic permutation semantics.
 

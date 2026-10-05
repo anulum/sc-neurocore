@@ -28,6 +28,9 @@ the supervisor supplies their source-owned wording. Unknown codes, legacy
 output and arbitrary worker error text use the fixed fallback. A worker's
 reported code describes its claimed reason; it does not prove the incident.
 Cross-domain process reasons outside this finite vocabulary remain diagnostic.
+The vocabulary also holds two training reasons that tell the caller how to
+start the run again: MNIST without torchvision, and a conversion run whose
+validation split serves no samples.
 
 Process payloads, thread/process task results, context event logs and consumed
 control commands require finite JSON numbers. NaN, infinity and numeric input

@@ -24,7 +24,12 @@ from typing import cast
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobCancelled, StudioJobContext
-from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
+from sc_neurocore.studio.platform.jobs_worker_refusals import (
+    WORKER_FAILURE_SCHEMA,
+    worker_job_error,
+    worker_refusal_code,
+)
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 from sc_neurocore.studio.platform.training_process import run_training_process_task
 from sc_neurocore.studio.platform.training_weights import (
     TRAINING_WEIGHT_ARTIFACT_PATH,
@@ -297,15 +302,24 @@ def test_mnist_without_torchvision_fails_instead_of_training_on_other_data(
 
     with monkeypatch.context() as patch:
         patch.setitem(sys.modules, "torchvision", None)
-        with pytest.raises(RuntimeError, match="needs torchvision") as failure:
+        with pytest.raises(TrainingRefusal, match="needs torchvision") as failure:
             job.run_blocking(context)
 
     assert "No other data was substituted" in str(failure.value)
     assert job.status == "failed"
     status = json.loads((tmp_path / context.job_id / "training" / "status.json").read_text())
     assert status["status"] == "failed"
-    # The reason stays with the raised fault; the readable status is the fixed fallback.
-    assert status["error"] == GENERIC_JOB_FAILURE
+    # The reason is an owned training refusal, so the readable status repeats it whole.
+    assert status["error"] == str(failure.value)
+    assert "needs torchvision" in status["error"]
+    # A process worker reports this reason as a finite code and the supervisor
+    # renders the same source-owned text for it.
+    assert worker_refusal_code(failure.value) == "training_mnist_torchvision"
+    rendered = worker_job_error(
+        {"failure_schema": WORKER_FAILURE_SCHEMA, "refusal_code": "training_mnist_torchvision"},
+        diagnostic="private",
+    )
+    assert rendered.public_message == str(failure.value)
     assert not (tmp_path / context.job_id / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH).exists()
 
 

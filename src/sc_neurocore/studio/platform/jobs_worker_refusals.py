@@ -10,8 +10,10 @@
 
 Workers may select a finite code; its public wording belongs to this source.
 Unknown codes, legacy output and arbitrary text never acquire authored status.
-Cross-domain failures outside this job-policy vocabulary use the fixed fallback
-while their diagnostic text remains in custody.
+Cross-domain failures outside this vocabulary use the fixed fallback while
+their diagnostic text remains in custody. Two training reasons that tell the
+caller how to start the run again are part of the vocabulary; no other
+training reason crosses the process boundary.
 """
 
 from sc_neurocore.refusals import AuthoredRefusal
@@ -38,12 +40,20 @@ _MESSAGES = {
     "control_seed_path": "Studio job control-seed path escapes the control-seed directory.",
     "job_path": "Studio job path escapes the job root.",
     "relative_path": "Path must be a confined relative path.",
+    "training_mnist_torchvision": (
+        "The MNIST dataset needs torchvision, which is not installed here; "
+        "install it or choose the synthetic dataset. No other data was substituted."
+    ),
+    "training_validation_empty": (
+        "The validation split served no samples at this batch size; a conversion "
+        "cannot be judged on none. Choose a smaller batch size."
+    ),
 }
 _CODES = {message: code for code, message in _MESSAGES.items()}
 
 
 def worker_refusal_code(error: BaseException) -> str | None:
-    """Encode only a typed authored refusal in the reviewed job-policy vocabulary.
+    """Encode only a typed authored refusal in the reviewed worker vocabulary.
 
     Parameters
     ----------

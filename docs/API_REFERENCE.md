@@ -44207,7 +44207,7 @@ but a zombie thread-group leader can still have running threads.
 ## Module `studio.platform.jobs_worker_refusals`
 
 ### Function `worker_refusal_code(error)`
-Encode only a typed authored refusal in the reviewed job-policy vocabulary.
+Encode only a typed authored refusal in the reviewed worker vocabulary.
 
 Parameters
 ----------
