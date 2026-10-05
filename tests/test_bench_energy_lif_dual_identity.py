@@ -24,7 +24,7 @@ ROOT = Path(__file__).parents[1]
             bench_model_sc_normalized_energy_lif,
             "bench_sc_normalized_energy_lif.json",
             "SCNormalizedEnergyLIFNeuron",
-            153,
+            1500,
         ),
     ],
 )
