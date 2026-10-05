@@ -177,7 +177,7 @@ dependency matrix and research-only boundaries.
 
 ### Rust Engine and Benchmark Evidence
 
-The optional Rust engine provides SIMD-accelerated simulation, 207 Rust PyO3
+The optional Rust engine provides SIMD-accelerated simulation, 208 Rust PyO3
 model wrappers, a 180-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
@@ -404,7 +404,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>207 Rust PyO3 wrappers · 180-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>208 Rust PyO3 wrappers · 180-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -705,9 +705,9 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (207 PyO3 Wrappers, 180-Model NetworkRunner)
+## Rust Engine (208 PyO3 Wrappers, 180-Model NetworkRunner)
 
-The `sc_neurocore_engine` crate provides 207 Rust PyO3 model wrappers callable
+The `sc_neurocore_engine` crate provides 208 Rust PyO3 model wrappers callable
 from Python (including ArcaneNeuron), a 180-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
@@ -727,7 +727,7 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 207 PyO3 model wrappers; 180 canonical models wired into NetworkRunner |
+| Neurons | 208 PyO3 model wrappers; 180 canonical models wired into NetworkRunner |
 | NetworkRunner | 180-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |

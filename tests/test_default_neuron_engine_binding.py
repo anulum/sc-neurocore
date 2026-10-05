@@ -11,16 +11,30 @@
 from __future__ import annotations
 
 import copy
+import importlib
 from pathlib import Path
 import pickle
 import re
 import sys
+from types import ModuleType
 from typing import Protocol, cast
 import unittest
 
 import numpy as np
 
-from tests.engine_requirement import require_engine
+try:
+    from tests.engine_requirement import require_engine
+except ModuleNotFoundError as _outside_checkout:
+    # The wheel matrix runs this file from an external consumer directory,
+    # where the repository's test package does not exist and the installed
+    # engine is required. Any other missing module stays an error.
+    if _outside_checkout.name != "tests":
+        raise
+
+    def require_engine(module: str = "sc_neurocore_engine.sc_neurocore_engine") -> ModuleType:
+        """Import the installed engine extension; a wheel consumer never skips."""
+        return importlib.import_module(module)
+
 
 _NATIVE = require_engine()
 _NAMESPACE = "sc_neurocore_engine.sc_neurocore_engine"

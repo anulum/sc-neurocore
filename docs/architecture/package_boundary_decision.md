@@ -65,6 +65,7 @@ they satisfy the same promotion gate:
 | `core` | core package | Alias for the base dependency set; it adds no package beyond the base wheel. |
 | `dev` | contributor extra | Contributor lint, type, test, audit, and documentation tooling. |
 | `dev-full` | contributor extra | Full contributor research stack for local validation, not a user install profile. |
+| `hdc-reference` | contributor extra | Pinned TorchHD reference for the required CPU comparison of the hyperdimensional primitives; a test dependency, not a user install profile. |
 | `accel` | optional extra | Numba acceleration for local CPU experiments. |
 | `gpu` | optional extra | CuPy CUDA profile; depends on local driver and hardware compatibility. |
 | `hdl` | optional extra | Unit-aware HDL workflows and packaged RTL resource access. |

@@ -1,7 +1,7 @@
-# Neuron Model Reference — 180 Python Classes / 207 Rust PyO3 Wrappers
+# Neuron Model Reference — 180 Python Classes / 208 Rust PyO3 Wrappers
 
 SC-NeuroCore currently exposes 183 lazy-loaded Python model classes across 176
-Python model source modules in `src/sc_neurocore/neurons/models/`, plus 207 Rust PyO3 model wrappers in the
+Python model source modules in `src/sc_neurocore/neurons/models/`, plus 208 Rust PyO3 model wrappers in the
 optional engine. The historical Kilinc-Bhatt module is alias-only and does not
 add a scientific catalogue model. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
@@ -39,7 +39,7 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 207 Rust PyO3 model wrappers,
+`HodgkinHuxleyNeuron`). The Rust engine provides 208 Rust PyO3 model wrappers,
 with 180 runtime identities wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
