@@ -181,8 +181,14 @@ def consumer_environment(
     if os.environ.get("COVERAGE_PROCESS_CONFIG"):
         for startup in dependencies.glob("*coverage.pth"):
             shutil.copyfile(startup, site_packages / startup.name)
+    # Dependencies come after the consumer's own site-packages. On PYTHONPATH they
+    # would come first, and an engine installed beside them, as in a wheel-testing
+    # job, would be loaded instead of the copy this environment exists to admit.
+    (site_packages / "000_consumer_dependencies.pth").write_text(
+        str(dependencies) + "\n", encoding="utf-8"
+    )
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(dependencies)
+    env.pop("PYTHONPATH", None)
     return python, package, env
 
 
