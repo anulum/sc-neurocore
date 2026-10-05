@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 794
+expected_file_count = 797
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3267,3 +3267,15 @@ rationale = "CI development installation and the optional dependency matrix it m
 [[file]]
 path = "tests/test_bench_energy_lif_dual_identity.py"
 rationale = "Committed energy-LIF benchmark records bound to measured sources, five-backend parity and event counts."
+
+[[file]]
+path = "tests/engine_requirement.py"
+rationale = "Engine import gate and the resolver of the installed engine files that isolated consumers load."
+
+[[file]]
+path = "tests/test_engine_requirement_gate.py"
+rationale = "Engine import gate behaviour, gate dominance sweep and the pinned inventory of gated binding tests."
+
+[[file]]
+path = "tests/test_coverage_gate_contract.py"
+rationale = "Hosted coverage lanes, batched full-suite runner and the test job's time budget."

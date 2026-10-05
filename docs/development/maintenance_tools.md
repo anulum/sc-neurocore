@@ -217,8 +217,10 @@ and refuses cohort removal, scalar inflation and new individual debt. A private
 Ignored, generated and external-source ownership still require explicit mapping.
 
 The lint and pre-commit CI jobs pin Go 1.27.1. Lint runs the native ratchet,
-`go vet`, formatting and strict Python adapter/documentation checks; the normal
-test matrix exercises the module-specific native contracts below.
+`go vet`, formatting and strict Python adapter/documentation checks; the native
+documentation job, which installs the test dependencies, type-checks the
+contract tests, and the normal test matrix exercises the module-specific native
+contracts below.
 
 Run the module-specific real-parser contracts after changing this measurement:
 

@@ -24,28 +24,24 @@ _ROOT = Path(__file__).resolve().parents[1]
 
 def _cov_thresholds(path: Path) -> tuple[int, ...]:
     """Return explicit pytest-cov thresholds from one owned command surface."""
-
     text = path.read_text(encoding="utf-8")
     return tuple(int(value) for value in re.findall(r"--cov-fail-under(?:=|\s+)(\d+)", text))
 
 
 def test_python_coverage_threshold_is_exact_closure() -> None:
     """The canonical config drives preflight and must reject any missing statement."""
-
     data = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert data["tool"]["coverage"]["report"]["fail_under"] == 100
 
 
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     """Makefile and primary hosted CI must not weaken the canonical threshold."""
-
     assert _cov_thresholds(_ROOT / "Makefile") == (100,)
     assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100,)
 
 
 def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     """Run every matrix leg in bounded batches without weakening coverage."""
-
     workflow_path = _ROOT / ".github/workflows/ci.yml"
     workflow_text = workflow_path.read_text(encoding="utf-8")
     start = workflow_text.index("- name: Test + coverage")
@@ -64,12 +60,12 @@ def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
 
         pytest.skip("PyYAML is not installed")
     workflow = yaml.safe_load(workflow_text)
-    assert workflow["jobs"]["test"]["timeout-minutes"] == 240
+    # Compatibility legs keep four hours; the coverage-bearing primary leg has six.
+    assert workflow["jobs"]["test"]["timeout-minutes"] == "${{ matrix.primary && 360 || 240 }}"
 
 
 def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> None:
     """The OOM repair must retain complete discovery and the exact coverage gate."""
-
     runner = (_ROOT / "tools/run_full_cov.sh").read_text(encoding="utf-8")
     assert "find tests -type f" in runner
     assert "-name 'test_*.py'" in runner
@@ -85,7 +81,6 @@ def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> No
 
 def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
     """Both preserved map identities need branch and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index(
         "- name: Nagumo-Sato and SC adaptive-map exact coverage and backend parity"
@@ -108,7 +103,6 @@ def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
 
 def test_ih_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted channel model needs an explicit branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: Ih exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -124,7 +118,6 @@ def test_ih_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_persistent_na_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted INaP model needs an explicit branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: PersistentNa exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -140,7 +133,6 @@ def test_persistent_na_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_nmda_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted NMDA channel model needs an explicit branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: NMDA exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -156,7 +148,6 @@ def test_nmda_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_sk_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted SK channel model needs an explicit branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: SK exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -172,7 +163,6 @@ def test_sk_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_ttype_ca_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted T-type model needs an explicit branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: TTypeCa exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -188,7 +178,6 @@ def test_ttype_ca_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_glm_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted GLM model needs an explicit branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: GLM exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -204,7 +193,6 @@ def test_glm_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_mainen_sejnowski_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted two-compartment model needs a branch gate and backend custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: MainenSejnowski exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -220,7 +208,6 @@ def test_mainen_sejnowski_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The TC-LIF family (canonical + both SC identities) needs branch custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: TwoCompartmentLIF exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -238,7 +225,6 @@ def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The sliding PSN family (canonical + SC identity) needs branch custody."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: ParallelSpiking exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
@@ -255,7 +241,6 @@ def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_hdc_exact_coverage_is_hosted() -> None:
     """The rebuilt HDC surface needs an explicit branch gate."""
-
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     start = workflow.index("- name: HDC exact coverage")
     end = workflow.index("\n      - name:", start + 1)
@@ -270,10 +255,12 @@ def test_hdc_exact_coverage_is_hosted() -> None:
 
 
 def test_exactly_one_primary_matrix_leg_carries_the_exact_coverage_lanes() -> None:
-    """Every exact-coverage lane rides `if: matrix.primary`; losing the single
-    `primary: true` matrix entry would silently disable all of them on every
-    leg, so the matrix must always declare exactly one primary interpreter."""
+    """Require exactly one primary interpreter in the test matrix.
 
+    Every exact-coverage lane rides `if: matrix.primary`; losing the single
+    `primary: true` matrix entry would silently disable all of them on every
+    leg.
+    """
     try:
         import yaml
     except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.

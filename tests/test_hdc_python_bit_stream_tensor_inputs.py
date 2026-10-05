@@ -16,6 +16,10 @@ from array import array
 from typing import Generic, TypeVar
 
 import pytest
+
+from tests.engine_requirement import require_engine
+
+require_engine()
 from sc_neurocore_engine import BitStreamTensor, HDCVector
 
 

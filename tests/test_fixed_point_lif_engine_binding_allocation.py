@@ -10,8 +10,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import importlib
 import json
 import os
 import subprocess
@@ -20,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.engine_requirement import require_engine
+from tests.engine_requirement import installed_engine_origins, require_engine
 
 require_engine()
 
@@ -110,12 +108,7 @@ def test_allocation_failure_raises_and_all_interfaces_remain_usable(
     mode: str, tmp_path: Path
 ) -> None:
     """Real C API errors are catchable without aborting an installed consumer."""
-    origins = {}
-    for name in ("sc_neurocore_engine", "sc_neurocore_engine.sc_neurocore_engine"):
-        module = importlib.import_module(name)
-        assert module.__file__ is not None
-        path = Path(module.__file__).resolve()
-        origins[name] = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    origins = installed_engine_origins()
     environment = os.environ.copy()
     environment.pop("PYTHONPATH", None)
     environment["OPENBLAS_NUM_THREADS"] = "1"

@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import copy
-import importlib
 from pathlib import Path
 import pickle
 import re
@@ -21,7 +20,9 @@ import unittest
 
 import numpy as np
 
-_NATIVE = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+from tests.engine_requirement import require_engine
+
+_NATIVE = require_engine()
 _NAMESPACE = "sc_neurocore_engine.sc_neurocore_engine"
 _DEFAULT_NEURONS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("ATypeKNeuron", ("v", "h", "n", "a", "b")),

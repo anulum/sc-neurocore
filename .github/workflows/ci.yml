@@ -87,14 +87,19 @@ jobs:
         env:
           MYPYPATH: src:bridge:.
         run: |
-          files=(
+          # This job installs no test framework, so the contract tests are
+          # type-checked in the native documentation job, where it is installed.
+          adapters=(
             tools/go_doc_measurement.py tools/go_doc_findings.py
             tools/go_doc_history.py tools/go_doc_ratchet.py tools/documentation_debt.py
+          )
+          files=(
+            "${adapters[@]}"
             tests/test_tools/test_go_doc_measurement_native.py
             tests/test_tools/test_go_doc_history_native.py
             tests/test_tools/test_godoc_coverage_native.py tests/test_tools_go_doc_ratchet.py
           )
-          python -m mypy --strict --explicit-package-bases "${files[@]}"
+          python -m mypy --strict --explicit-package-bases "${adapters[@]}"
           ruff check "${files[@]}"
           ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' --select D,E902 --ignore-noqa --no-cache "${files[@]}"
           ruff format --check "${files[@]}"
@@ -166,6 +171,12 @@ jobs:
           ruff check "${files[@]}"
           ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' --select D,E902 --ignore-noqa --no-cache "${files[@]}"
           ruff format --check "${files[@]}"
+      - name: Go documentation contract test types
+        run: |
+          python -m mypy --strict --explicit-package-bases \
+            tests/test_tools/test_go_doc_measurement_native.py \
+            tests/test_tools/test_go_doc_history_native.py \
+            tests/test_tools/test_godoc_coverage_native.py tests/test_tools_go_doc_ratchet.py
       - name: Real native Rust documentation contracts
         run: |
           python -m pytest -q \

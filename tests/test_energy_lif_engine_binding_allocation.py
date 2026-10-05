@@ -10,8 +10,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import importlib
 import json
 import os
 from pathlib import Path
@@ -20,7 +18,7 @@ import sys
 
 import pytest
 
-from tests.engine_requirement import require_engine
+from tests.engine_requirement import installed_engine_origins, require_engine
 
 require_engine()
 
@@ -114,12 +112,7 @@ print(json.dumps(result), flush=True)
 @pytest.mark.parametrize("budget_mib", [2, 10, 18])
 def test_allocation_pressure_refuses_and_runtime_recovers(budget_mib: int, tmp_path: Path) -> None:
     """Catch each real output allocation failure and retry with preserved inputs."""
-    origins = {}
-    for name in ("sc_neurocore_engine", "sc_neurocore_engine.sc_neurocore_engine"):
-        module = importlib.import_module(name)
-        assert module.__file__ is not None
-        path = Path(module.__file__).resolve()
-        origins[name] = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    origins = installed_engine_origins()
     environment = os.environ.copy()
     environment.pop("PYTHONPATH", None)
     environment["OPENBLAS_NUM_THREADS"] = "1"

@@ -27,9 +27,13 @@ behind a green wall of skips.
 
 from __future__ import annotations
 
+import hashlib
 import importlib
+from importlib.machinery import PathFinder
 import importlib.util
 import os
+from pathlib import Path
+import sysconfig
 from types import ModuleType
 
 import pytest
@@ -67,3 +71,41 @@ def require_engine(module: str = ENGINE_EXTENSION_MODULE) -> ModuleType:
             allow_module_level=True,
         )
     return importlib.import_module(module)
+
+
+def installed_engine_origins() -> dict[str, dict[str, str]]:
+    """Resolve the engine files an isolated interpreter imports, with their digests.
+
+    The repository's root ``conftest.py`` puts the checkout's ``bridge``
+    directory first on ``sys.path``, so the test process itself may load the
+    package wrapper from the source tree. A consumer started with ``-I`` sees
+    only the interpreter's own installation directories, so the files it is
+    expected to load are resolved there and never through ``sys.path``.
+
+    Returns
+    -------
+    dict[str, dict[str, str]]
+        The resolved ``path`` and ``sha256`` of the package wrapper and of the
+        compiled extension, keyed by module name.
+
+    Raises
+    ------
+    AssertionError
+        The engine is not installed in the interpreter's installation
+        directories, as with an editable or source-tree layout.
+    """
+    package = ENGINE_EXTENSION_MODULE.split(".")[0]
+    roots = list(dict.fromkeys(sysconfig.get_path(name) for name in ("purelib", "platlib")))
+    wrapper = PathFinder.find_spec(package, roots)
+    assert wrapper is not None and wrapper.origin is not None, (
+        f"{package!r} is not installed in the interpreter's installation directories {roots}"
+    )
+    extension = PathFinder.find_spec(ENGINE_EXTENSION_MODULE, [str(Path(wrapper.origin).parent)])
+    assert extension is not None and extension.origin is not None, (
+        f"{ENGINE_EXTENSION_MODULE!r} is not installed beside {wrapper.origin}"
+    )
+    origins = {}
+    for name, origin in ((package, wrapper.origin), (ENGINE_EXTENSION_MODULE, extension.origin)):
+        path = Path(origin).resolve()
+        origins[name] = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    return origins

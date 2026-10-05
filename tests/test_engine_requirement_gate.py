@@ -40,6 +40,8 @@ _GUARDED_BINDING_FILES = (
     "tests/test_adc_to_spike_engine_binding.py",
     "tests/test_adex_engine_binding.py",
     "tests/test_bitstream_engine_binding.py",
+    "tests/test_brunel_fixed_point_engine_binding.py",
+    "tests/test_brunel_fixed_point_engine_binding_inputs.py",
     "tests/test_brunel_wang_engine_binding.py",
     "tests/test_cazelles_map_engine_binding.py",
     "tests/test_chialvo_map_engine_binding.py",
@@ -49,7 +51,11 @@ _GUARDED_BINDING_FILES = (
     "tests/test_cortical_inject_engine_binding.py",
     "tests/test_courage_nekorkin_map_engine_binding.py",
     "tests/test_dcls_engine_binding.py",
+    "tests/test_default_neuron_engine_binding.py",
     "tests/test_ei_network_engine_binding.py",
+    "tests/test_energy_lif_engine_binding.py",
+    "tests/test_energy_lif_engine_binding_allocation.py",
+    "tests/test_energy_lif_engine_binding_inputs.py",
     "tests/test_engine_v3_thread_pool_configuration.py",
     "tests/test_ermentrout_kopell_map_engine_binding.py",
     "tests/test_escape_rate_engine_binding.py",
@@ -59,7 +65,11 @@ _GUARDED_BINDING_FILES = (
     "tests/test_fitzhugh_nagumo_engine_binding.py",
     "tests/test_fitzhugh_rinzel_engine_binding.py",
     "tests/test_fixed_point_lif_engine_binding.py",
+    "tests/test_fixed_point_lif_engine_binding_allocation.py",
+    "tests/test_fixed_point_lif_engine_binding_inputs.py",
+    "tests/test_fixed_point_lif_engine_binding_wide_difference.py",
     "tests/test_glif_engine_binding.py",
+    "tests/test_hdc_python_bit_stream_tensor_inputs.py",
     "tests/test_hindmarsh_rose_engine_binding.py",
     "tests/test_ibarz_tanaka_map_engine_binding.py",
     "tests/test_iqif_engine_binding.py",
@@ -68,13 +78,21 @@ _GUARDED_BINDING_FILES = (
     "tests/test_lapicque_engine_binding.py",
     "tests/test_lgssm_engine_binding.py",
     "tests/test_mat_engine_binding.py",
+    "tests/test_mat_engine_binding_allocation.py",
+    "tests/test_mat_engine_binding_configuration.py",
+    "tests/test_mat_engine_binding_inputs.py",
     "tests/test_mckean_engine_binding.py",
+    "tests/test_mckean_source_engine_binding.py",
     "tests/test_medvedev_map_engine_binding.py",
     "tests/test_mihalas_niebur_engine_binding.py",
     "tests/test_mixed_dense_engine_binding.py",
     "tests/test_network_runner_engine_binding.py",
     "tests/test_nmda_neuron_backends.py",
     "tests/test_non_resetting_lif_engine_binding.py",
+    "tests/test_non_resetting_lif_engine_binding_allocation.py",
+    "tests/test_non_resetting_lif_engine_binding_configuration.py",
+    "tests/test_non_resetting_lif_engine_binding_inputs.py",
+    "tests/test_non_resetting_lif_engine_binding_serialization.py",
     "tests/test_ollivier_ricci_engine_binding.py",
     "tests/test_optimizer/test_engine_bindings.py",
     "tests/test_partition_engine_binding.py",
@@ -87,10 +105,30 @@ _GUARDED_BINDING_FILES = (
     "tests/test_sc_clipped_logistic_bursting_map_engine_binding.py",
     "tests/test_sc_clipped_rational_recovery_map_engine_binding.py",
     "tests/test_sc_four_state_glif_engine_binding.py",
+    "tests/test_sc_inference_engine_binding.py",
+    "tests/test_sc_non_resetting_adaptive_lif_engine_binding_allocation.py",
+    "tests/test_sc_non_resetting_adaptive_lif_engine_binding_configuration.py",
+    "tests/test_sc_non_resetting_adaptive_lif_engine_binding_inputs.py",
+    "tests/test_sc_non_resetting_adaptive_lif_engine_binding_serialization.py",
+    "tests/test_sc_normalized_energy_lif_engine_binding_allocation.py",
+    "tests/test_sc_normalized_energy_lif_engine_binding_configuration.py",
+    "tests/test_sc_normalized_energy_lif_engine_binding_inputs.py",
+    "tests/test_sc_normalized_energy_lif_engine_binding_serialization.py",
+    "tests/test_sc_resetting_mat_engine_binding_allocation.py",
+    "tests/test_sc_resetting_mat_engine_binding_configuration.py",
+    "tests/test_sc_resetting_mat_engine_binding_inputs.py",
     "tests/test_sc_resetting_wilson_hr_engine_binding.py",
     "tests/test_sc_scaled_reset_adaptive_if_engine_binding.py",
+    "tests/test_sc_sigma_delta_accumulator_engine_binding_allocation.py",
+    "tests/test_sc_sigma_delta_accumulator_engine_binding_configuration.py",
+    "tests/test_sc_sigma_delta_accumulator_engine_binding_inputs.py",
+    "tests/test_sc_sigma_delta_accumulator_engine_binding_serialization.py",
     "tests/test_sc_upward_crossing_rulkov_map_engine_binding.py",
-    "tests/test_sc_inference_engine_binding.py",
+    "tests/test_scaling_benchmark_rust_brunel.py",
+    "tests/test_sigma_delta_engine_binding_allocation.py",
+    "tests/test_sigma_delta_engine_binding_configuration.py",
+    "tests/test_sigma_delta_engine_binding_inputs.py",
+    "tests/test_sigma_delta_engine_binding_serialization.py",
     "tests/test_terman_wang_engine_binding.py",
     "tests/test_wilson_cowan_engine_binding.py",
     "tests/test_wilson_hr_engine_binding.py",
@@ -331,6 +369,7 @@ def _module_level_engine_analysis(path: Path) -> tuple[int | None, int | None]:
 
 
 def test_require_engine_returns_the_compiled_extension_when_present() -> None:
+    """An installed engine yields the compiled extension module itself."""
     module = require_engine()
     assert module.__name__ == ENGINE_EXTENSION_MODULE
 
@@ -352,6 +391,7 @@ def test_require_engine_skips_when_the_extension_is_genuinely_absent(
 def test_require_engine_skips_when_the_package_itself_is_absent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A missing engine package skips the calling module outside hosted CI."""
     monkeypatch.delenv("SC_NEUROCORE_REQUIRE_ENGINE", raising=False)
     with pytest.raises(pytest.skip.Exception):
         require_engine("fake_engine_pkg_that_does_not_exist.fake_extension")
@@ -393,6 +433,7 @@ def test_require_engine_hard_fails_on_a_broken_transitive_dependency(
 def test_require_engine_hard_fails_when_ci_requires_the_engine(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The hosted requirement turns genuine absence into an import error."""
     monkeypatch.setenv("SC_NEUROCORE_REQUIRE_ENGINE", "1")
     with pytest.raises(ModuleNotFoundError):
         require_engine("fake_engine_pkg_that_does_not_exist.fake_extension")
@@ -406,7 +447,7 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
     """Dominance: an unconditional module-body gate precedes every import."""
-    assert len(_GUARDED_BINDING_FILES) == 57
+    assert len(_GUARDED_BINDING_FILES) == 95
     for relative in _GUARDED_BINDING_FILES:
         analysis = _analyse(_ROOT / relative)
         assert analysis.require_engine_gate_line is not None, (
