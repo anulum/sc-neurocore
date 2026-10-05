@@ -4,6 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Committed energy-LIF benchmark identity contracts
+"""Bind the committed energy-LIF benchmark records to their sources and parity."""
+
 from __future__ import annotations
 import json
 from pathlib import Path
@@ -31,6 +34,19 @@ ROOT = Path(__file__).parents[1]
 def test_committed_energy_lif_benchmark_is_bound_and_parity_clean(
     module: ModuleType, artifact: str, model: str, events: int
 ) -> None:
+    """Every backend of a committed record matches Python and its measured sources.
+
+    Parameters
+    ----------
+    module : ModuleType
+        Benchmark module that owns the parity tolerances.
+    artifact : str
+        Committed result file under ``benchmarks/results``.
+    model : str
+        Model identity the record must name.
+    events : int
+        Event count every backend must report at the committed step count.
+    """
     payload = json.loads((ROOT / "benchmarks/results" / artifact).read_text())
     assert payload["model"] == model
     assert payload["production_speed_claim"] is False
