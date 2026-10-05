@@ -22,6 +22,7 @@ anecdote rather than a measurement.
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -45,6 +46,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestAnUnmeasuredLanguage:
+    """A language without its tool is recorded as a stated gap, never as a number."""
+
     def test_it_carries_no_number_at_all(self) -> None:
         """A plausible figure from the wrong instrument reads as evidence."""
         entry = unmeasured("go", "revive", "no linter installed", ["a/b"])
@@ -54,6 +57,7 @@ class TestAnUnmeasuredLanguage:
         assert entry.tool_version is None
 
     def test_it_states_the_reason_rather_than_leaving_it_blank(self) -> None:
+        """The stated reason survives into the public record unchanged."""
         entry = unmeasured("julia", "Aqua.jl", "not in the shared environment", ["x"])
 
         assert entry.not_measured_reason == "not in the shared environment"
@@ -65,7 +69,10 @@ class TestAnUnmeasuredLanguage:
 
 
 class TestTheArtefact:
+    """The report states what was measured, against which source, and how to repeat it."""
+
     def test_it_records_what_the_figure_was_taken_against(self) -> None:
+        """The schema version and the source digest travel with every report."""
         report = build_report(
             [unmeasured("go", "revive", "no linter installed", ["a"])],
             source_sha="0" * 40,
@@ -99,6 +106,7 @@ class TestTheArtefact:
         }
 
     def test_every_entry_carries_its_argv_so_it_can_be_re_taken(self) -> None:
+        """The exact command line of a measurement is kept so it can be repeated."""
         report = build_report(
             [
                 Measurement(
@@ -118,6 +126,8 @@ class TestTheArtefact:
 
 
 class TestPython:
+    """Ruff itself measures a real module written for the case."""
+
     def test_it_counts_only_the_missing_documentation_rules(self, tmp_path: Path) -> None:
         """Style rules about an existing docstring are real, and are not this figure."""
         module = tmp_path / "sample.py"
@@ -134,6 +144,7 @@ class TestPython:
         assert "D103" in " ".join(entry.argv) or "D100" in " ".join(entry.argv)
 
     def test_a_documented_module_measures_zero(self, tmp_path: Path) -> None:
+        """A module whose public names all carry docstrings has no debt."""
         module = tmp_path / "sample.py"
         module.write_text(
             '"""Module docstring."""\n\n\ndef documented() -> int:\n    """Return one."""\n    return 1\n',
@@ -144,7 +155,10 @@ class TestPython:
 
 
 class TestToolsThatAreNotThere:
+    """A measurement whose tool or input is missing says so instead of guessing."""
+
     def test_a_missing_eslint_config_is_reported_not_guessed(self, tmp_path: Path) -> None:
+        """A missing ESLint configuration is named in the reason, with no figure."""
         (tmp_path / "studio" / "frontend").mkdir(parents=True)
 
         entry = measure_typescript(tmp_path, "absent.config.js")
@@ -155,16 +169,30 @@ class TestToolsThatAreNotThere:
     def test_a_missing_cargo_is_reported_not_guessed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr("tools.documentation_debt.shutil.which", lambda _name: None)
+        """A real crate with no compiler on the path is refused, with no figure."""
+        root = _rust_crate(tmp_path / "repo")
+        git = shutil.which("git")
+        assert git is not None
+        commands = tmp_path / "git-only"
+        commands.mkdir()
+        (commands / "git").symlink_to(git)
+        monkeypatch.setenv("PATH", str(commands))
 
-        entry = measure_rust(tmp_path, "engine/Cargo.toml")
+        entry = measure_rust(root, "Cargo.toml")
 
         assert entry.undocumented is None
-        assert entry.not_measured_reason == "cargo is not installed"
+        assert entry.files is None
+        assert entry.tool_version is None
+        assert entry.not_measured_reason == (
+            "Native Rust documentation findings could not be qualified."
+        )
 
 
 class TestTheCommandLine:
+    """The command writes one artefact that accounts for every language."""
+
     def test_it_writes_an_artefact_naming_every_language(self, tmp_path: Path) -> None:
+        """Every language appears in the artefact even when its measurement is skipped."""
         target = tmp_path / "debt.json"
 
         assert (
@@ -213,6 +241,7 @@ class TestTheCommandLine:
         assert skipped["not_measured_reason"] == "skipped in this run"
 
     def test_the_report_names_the_source_it_was_taken_against(self, tmp_path: Path) -> None:
+        """The artefact carries the forty-character identity of the measured source."""
         target = tmp_path / "debt.json"
         main(
             [
@@ -234,7 +263,10 @@ class TestTheCommandLine:
 
 
 class TestReadingRuffOutput:
+    """Only the missing-docstring rules of Ruff count towards the figure."""
+
     def test_it_counts_one_line_per_missing_docstring(self) -> None:
+        """Three missing docstrings in two files read as three findings in two files."""
         output = (
             "src/a.py:1:1: D100 Missing docstring in public module\n"
             "src/a.py:4:1: D103 Missing docstring in public function\n"
@@ -254,17 +286,22 @@ class TestReadingRuffOutput:
         assert read_ruff_concise(output) == (1, 1)
 
     def test_a_message_that_merely_mentions_a_code_is_not_counted(self) -> None:
+        """A rule code quoted inside another message is not a finding."""
         # The naive filter was `": D1" in line`, which this defeats.
         output = "src/a.py:3:1: E501 line too long (mentions D103 in a comment)\n"
 
         assert read_ruff_concise(output) == (0, 0)
 
     def test_no_findings_reads_as_zero_rather_than_failing(self) -> None:
+        """Empty Ruff output is a clean surface, not an error."""
         assert read_ruff_concise("") == (0, 0)
 
 
 class TestReadingEslintOutput:
+    """Only the missing-docblock rule of ESLint counts towards the figure."""
+
     def test_it_counts_only_the_missing_docblock_rule(self) -> None:
+        """Other JSDoc rules in the same report are left out of the count."""
         report = [
             {
                 "filePath": "/x/a.ts",
@@ -279,6 +316,7 @@ class TestReadingEslintOutput:
         assert read_eslint_report(report) == (2, 2)
 
     def test_a_clean_file_is_not_counted_as_a_file(self) -> None:
+        """A file with no messages does not raise the number of affected files."""
         report = [
             {"filePath": "/x/a.ts", "messages": []},
             {"filePath": "/x/b.ts", "messages": [{"ruleId": "jsdoc/require-jsdoc"}]},
@@ -287,11 +325,15 @@ class TestReadingEslintOutput:
         assert read_eslint_report(report) == (1, 1)
 
     def test_an_entry_without_messages_does_not_raise(self) -> None:
+        """A report entry that lacks a message list reads as no findings."""
         assert read_eslint_report([{"filePath": "/x/a.ts"}]) == (0, 0)
 
 
 class TestReadingRustcOutput:
+    """Compiler text is read for missing-documentation warnings and their files."""
+
     def test_it_counts_warnings_and_takes_files_from_the_location_lines(self) -> None:
+        """Three warnings across two source files read as three findings in two files."""
         stderr = (
             "warning: missing documentation for a struct field\n"
             "   --> engine/src/wong_wang.rs:217:5\n"
@@ -304,6 +346,7 @@ class TestReadingRustcOutput:
         assert read_rustc_stderr(stderr) == (3, 2)
 
     def test_an_unrelated_warning_is_not_counted(self) -> None:
+        """A warning about something other than documentation is not a finding."""
         stderr = (
             "warning: unused variable: `x`\n"
             "   --> engine/src/lib.rs:3:9\n"
@@ -314,7 +357,28 @@ class TestReadingRustcOutput:
         assert read_rustc_stderr(stderr)[0] == 1
 
     def test_a_clean_build_reads_as_zero(self) -> None:
+        """Compiler output without warnings is a clean surface."""
         assert read_rustc_stderr("    Finished `dev` profile\n") == (0, 0)
+
+
+def _rust_crate(root: Path) -> Path:
+    """Create a real Git-owned Cargo library with one undocumented public function."""
+    (root / "src").mkdir(parents=True)
+    (root / ".gitignore").write_text("native-target/\n", encoding="utf-8")
+    (root / "Cargo.toml").write_text(
+        '[package]\nname = "debt_sample"\nversion = "0.0.0"\nedition = "2021"\n',
+        encoding="utf-8",
+    )
+    (root / "src/lib.rs").write_text("//! Sample crate.\npub fn old() {}\n", encoding="utf-8")
+    for argv in (
+        ["git", "init", "-q", "--initial-branch=main"],
+        ["cargo", "generate-lockfile", "--offline"],
+        ["git", "add", "--", "."],
+        ["git", "-c", "user.name=Debt sample", "-c", "user.email=debt@example.invalid"]
+        + ["commit", "-qm", "original source"],
+    ):
+        subprocess.run(argv, cwd=root, capture_output=True, check=True, timeout=30)
+    return root
 
 
 def _completed(stdout: str = "", stderr: str = "") -> subprocess.CompletedProcess[str]:
@@ -328,6 +392,7 @@ class TestTheRunnersAssembleWhatTheReadersReturn:
     def test_typescript_reports_the_figure_eslint_gave(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """The entry carries the count, the files and the version the runner returned."""
         (tmp_path / "studio" / "frontend").mkdir(parents=True)
         (tmp_path / "studio" / "frontend" / "eslint.measure.js").write_text("", encoding="utf-8")
         monkeypatch.setattr("tools.documentation_debt._version", lambda *_a, **_k: "v10.10.0")
@@ -362,29 +427,23 @@ class TestTheRunnersAssembleWhatTheReadersReturn:
         assert entry.undocumented is None
         assert entry.not_measured_reason == "eslint produced no JSON report"
 
-    def test_rust_reports_the_figure_rustc_gave(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setattr("tools.documentation_debt.shutil.which", lambda _n: "/usr/bin/cargo")
-        monkeypatch.setattr("tools.documentation_debt._version", lambda *_a, **_k: "rustc 1.98.1")
-        monkeypatch.setattr(
-            "tools.documentation_debt._run",
-            lambda *_a, **_k: _completed(
-                stderr=(
-                    "warning: missing documentation for a function\n   --> engine/src/lib.rs:10:1\n"
-                )
-            ),
-        )
+    def test_rust_reports_the_figure_rustc_gave(self, tmp_path: Path) -> None:
+        """The real compiler's count, files, version and provenance reach the entry."""
+        root = _rust_crate(tmp_path / "repo")
 
-        entry = measure_rust(tmp_path, "engine/Cargo.toml")
+        entry = measure_rust(root, "Cargo.toml")
 
         assert entry.undocumented == 1
         assert entry.files == 1
-        assert entry.tool_version == "rustc 1.98.1"
+        assert entry.tool_version is not None and entry.tool_version.startswith("rustc ")
+        assert entry.scopes == ["src/lib.rs"]
+        assert entry.not_measured_reason == ""
+        assert entry.to_public_dict()["provenance"]["undocumented"] == 1
 
     def test_python_says_so_when_ruff_cannot_run(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Without an importable Ruff the entry states the reason and carries no figure."""
         monkeypatch.setattr("tools.documentation_debt._version", lambda *_a, **_k: None)
 
         entry = measure_python(tmp_path, ["src"])
@@ -395,6 +454,7 @@ class TestTheRunnersAssembleWhatTheReadersReturn:
     def test_a_tool_that_cannot_be_launched_has_no_version(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A tool that cannot start yields no version instead of an exception."""
         from tools.documentation_debt import _version
 
         def raise_oserror(*_a: object, **_k: object) -> object:
@@ -407,6 +467,7 @@ class TestTheRunnersAssembleWhatTheReadersReturn:
     def test_a_tool_that_prints_nothing_has_no_version(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A tool that prints nothing yields no version."""
         from tools.documentation_debt import _version
 
         monkeypatch.setattr("tools.documentation_debt._run", lambda *_a, **_k: _completed())
@@ -415,9 +476,12 @@ class TestTheRunnersAssembleWhatTheReadersReturn:
 
 
 class TestTheRunPrintsWhatItFound:
+    """The printed summary names each language and whether it was measured."""
+
     def test_it_names_every_language_measured_and_not(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Skipped languages are printed as not measured beside the measured ones."""
         main(
             [
                 "--repo",

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 797
+expected_file_count = 798
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3279,3 +3279,7 @@ rationale = "Engine import gate behaviour, gate dominance sweep and the pinned i
 [[file]]
 path = "tests/test_coverage_gate_contract.py"
 rationale = "Hosted coverage lanes, batched full-suite runner and the test job's time budget."
+
+[[file]]
+path = "tests/test_tools_documentation_debt.py"
+rationale = "Per-language documentation debt report: stated gaps, repeatable argv and real Rust measurement of a sample crate."
