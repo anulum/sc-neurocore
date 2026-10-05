@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 810
+expected_file_count = 811
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3331,3 +3331,7 @@ rationale = "Worker launcher generations, capacity, retry and the private result
 [[file]]
 path = "tests/test_studio_training_events.py"
 rationale = "Training event stream shapes, including the fixed fallback for unmarked faults."
+
+[[file]]
+path = "tests/test_studio_storage_finish.py"
+rationale = "Storage finish exchange: sealing, refusals and the ordering of an early refusal."

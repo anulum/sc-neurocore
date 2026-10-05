@@ -119,11 +119,17 @@ def test_foreign_missing_or_unstarted_jobs_are_refused(
 
 
 def test_bytes_that_differ_from_the_manifest_are_not_sealed(ledger: StudioJobLedger) -> None:
-    """A frame whose digest differs from its declaration seals nothing."""
+    """A frame whose digest differs from its declaration seals nothing.
+
+    The client is held after the bad frame until the authority has answered.
+    Unheld, the authority may close between the client's check for an answer
+    and its next write; the client then meets a broken pipe, which its contract
+    reports as an exchange of unknown outcome, not as this refusal.
+    """
     stop(started(ledger))
     declared = request(FILES)
     wrong = [b'{"ok": false}'[: len(FILES["reports/summary.json"])], *list(FILES.values())[1:]]
-    response = finish(ledger, declared, wrong)
+    response = finish(ledger, declared, wrong, hold_after_first_payload=True)
     assert (response.reply, response.reason) == ("refused", "bytes")
     assert ledger.record(JOB).status == "running"
     assert not (ledger.path.parent / JOB).exists()
