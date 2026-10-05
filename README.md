@@ -501,8 +501,13 @@ output = layer.forward(input_values)  # GPU if CuPy available, else CPU
 
 ## Hardware-Software Co-Simulation
 
-The co-sim flow verifies bit-exact equivalence between the Python model and
-Verilog RTL:
+The co-sim flow checks bit-exact equivalence between the bit-true fixed-point
+Python model (`FixedPointLIFNeuron`) and the hand-written Verilog RTL
+`hdl/sc_lif_neuron.v` over 1000 seeded steps. It covers that one neuron and that
+stimulus. The Studio co-simulation panel compares a different boundary, the
+generated RTL against the generated bit-true C kernel (see
+[model readiness](docs/studio/model-readiness.md)). Neither is a statement about
+a model's scientific fidelity.
 
 ```bash
 # 1. Generate stimuli + expected results (Python golden model)
