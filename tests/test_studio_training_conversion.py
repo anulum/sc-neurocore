@@ -28,6 +28,7 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioJobManager, StudioRuntimeSettings
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.training_contract import (
     TrainingConfigError,
     resolve_training_config,
@@ -49,7 +50,7 @@ _RUN = {
 
 @pytest.fixture(scope="module")
 def client(tmp_path_factory: pytest.TempPathFactory) -> TestClient:
-    """A Studio client backed by its own durable job root."""
+    """Return a Studio client backed by its own durable job root."""
     root = tmp_path_factory.mktemp("conversion-studio")
     settings = StudioRuntimeSettings(
         job_root_path=str(root / "jobs"),
@@ -79,7 +80,10 @@ def _artifact(client: TestClient, job_id: str, path: str) -> bytes:
 
 
 class TestContract:
+    """A conversion request resolves to one recorded contract or is refused by field."""
+
     def test_a_conversion_request_records_its_kind_and_not_cell_settings(self) -> None:
+        """The resolved conversion request names its kind and omits spiking-cell settings."""
         resolved = resolve_training_config(_RUN)
         assert resolved.model_kind == "qcfs_conversion"
         public = resolved.to_public_dict()
@@ -88,6 +92,7 @@ class TestContract:
         assert resolve_training_config(public) == resolved
 
     def test_a_spiking_request_records_what_it_always_did(self) -> None:
+        """An explicit spiking request has the same public form as the default one."""
         explicit = resolve_training_config({"model_kind": "spiking"}).to_public_dict()
         assert explicit == resolve_training_config({}).to_public_dict()
         assert "model_kind" not in explicit
@@ -110,11 +115,13 @@ class TestContract:
     def test_a_request_the_route_would_not_honour_is_refused(
         self, change: dict[str, Any], field: str
     ) -> None:
+        """Each setting the conversion route cannot honour is refused with its field."""
         with pytest.raises(TrainingConfigError) as refusal:
             resolve_training_config({**_RUN, **change})
         assert refusal.value.field == field
 
     def test_a_target_profile_is_resolved_to_its_registered_name(self) -> None:
+        """A target profile is stored under its registered lower-case name."""
         resolved = resolve_training_config({**_RUN, "target_profile": "LOIHI2"})
         assert resolved.target_profile == "loihi2"
         public = resolved.to_public_dict()
@@ -133,11 +140,13 @@ class TestContract:
     def test_a_target_the_run_cannot_calibrate_for_is_refused(
         self, request_body: dict[str, Any], reason: str
     ) -> None:
+        """A target outside the conversion route or the registry is refused with a reason."""
         with pytest.raises(TrainingConfigError) as refusal:
             resolve_training_config(request_body)
         assert refusal.value.field == "target_profile" and reason in refusal.value.reason
 
     def test_the_accuracy_drop_criterion_belongs_to_the_conversion_route(self) -> None:
+        """The accuracy-drop criterion is accepted for conversion and refused for spiking."""
         criterion = {"metric": "conversion_accuracy_drop", "threshold": 0.05}
         assert resolve_training_config({**_RUN, "preregistration": criterion}).preregistration
         with pytest.raises(TrainingConfigError) as refusal:
@@ -145,6 +154,7 @@ class TestContract:
         assert refusal.value.field == "preregistration"
 
     def test_a_conversion_job_never_takes_attached_weights(self) -> None:
+        """A conversion job refuses initial weights and resume state alike."""
         from sc_neurocore.studio.training import TrainingJob
         from sc_neurocore.studio.training_resume import TrainingResumeState
 
@@ -164,7 +174,10 @@ class TestContract:
 
 
 class TestHttpRoute:
+    """Real conversion runs are started, finished and read through the Studio routes."""
+
     def test_a_finished_run_is_judged_on_its_converted_network(self, client: TestClient) -> None:
+        """The final metrics and the sealed report describe the converted network."""
         from sc_neurocore.conversion.loss_report import (
             LOSS_REPORT_SCHEMA_VERSION,
             data_sha256,
@@ -209,6 +222,7 @@ class TestHttpRoute:
         assert data_sha256(inputs, labels) == report["data_sha256"]
 
     def test_every_listed_target_profile_resolves(self, client: TestClient) -> None:
+        """Every hardware profile the route lists is accepted by the contract."""
         from sc_neurocore.compiler.platforms import get_profile, list_profiles
 
         listed = client.get("/api/training/target-profiles").json()
@@ -218,6 +232,7 @@ class TestHttpRoute:
         assert loihi["q_format"] == "Q11.12" and loihi["signed"] is True
 
     def test_a_named_target_seals_its_calibration(self, client: TestClient) -> None:
+        """A run with a target seals a target report bound to its conversion report."""
         started = client.post("/api/training/start", json={**_RUN, "target_profile": "ecp5"})
         assert started.status_code == 200, started.text
         job_id = started.json()["job_id"]
@@ -233,6 +248,7 @@ class TestHttpRoute:
         assert status["final_metrics"]["target_accuracy"] == round(target["quantized_accuracy"], 4)
 
     def test_a_criterion_on_the_converted_accuracy_can_be_missed(self, client: TestClient) -> None:
+        """A criterion the converted accuracy misses is recorded as not passed."""
         criterion = {"metric": "val_accuracy", "threshold": 1.0}
         started = client.post("/api/training/start", json={**_RUN, "preregistration": criterion})
         status = _finish(client, started.json()["job_id"])
@@ -240,12 +256,14 @@ class TestHttpRoute:
         assert status["preregistration_verdict"]["passed"] is False
 
     def test_an_empty_validation_split_fails_with_its_reason(self, client: TestClient) -> None:
+        """An empty validation split fails the run; the status carries the fixed fallback."""
         started = client.post("/api/training/start", json={**_RUN, "epochs": 1, "batch_size": 200})
         status = _finish(client, started.json()["job_id"])
-        # The public record names only the exception class; the sandbox says why.
-        assert status["status"] == "failed" and status["error"] == "RuntimeError"
+        # The public record carries the fixed fallback; the diagnostic stays in custody.
+        assert status["status"] == "failed" and status["error"] == GENERIC_JOB_FAILURE
 
     def test_a_sandboxed_run_seals_its_report(self, tmp_path: Path) -> None:
+        """A sandboxed run writes its conversion and target reports as artefacts."""
         import threading
 
         from sc_neurocore.studio.platform import StudioJobContext
@@ -270,6 +288,7 @@ class TestHttpRoute:
         }
 
     def test_an_empty_validation_split_seals_its_reason(self, tmp_path: Path) -> None:
+        """The raised fault states the empty split; the sealed status keeps the fixed fallback."""
         import threading
 
         from sc_neurocore.studio.platform import StudioJobContext
@@ -286,10 +305,11 @@ class TestHttpRoute:
             job.run_blocking(context)
         sealed = json.loads((tmp_path / "training" / "status.json").read_text())
         assert sealed["status"] == "failed"
-        assert "validation split served no samples" in sealed["error"]
+        assert sealed["error"] == GENERIC_JOB_FAILURE
         assert not (tmp_path / "training" / "conversion_report.json").exists()
 
     def test_a_conversion_run_refuses_a_warm_start(self, client: TestClient) -> None:
+        """The weight-restore route refuses a conversion configuration."""
         response = client.post(
             "/api/studio/training/weight-restore/attach",
             json={"source_job_id": "sj_absent", "config": _RUN},
@@ -298,6 +318,7 @@ class TestHttpRoute:
         assert "fresh weights" in response.json()["detail"]
 
     def test_a_running_conversion_run_refuses_live_weights(self, client: TestClient) -> None:
+        """A running conversion job refuses a live weight attach as incompatible."""
         manager = cast(StudioJobManager, cast(Any, client.app).state.studio_job_manager)
         config = resolve_training_config(_RUN).to_public_dict()
         target = manager.submit_process_task(
@@ -321,6 +342,8 @@ class TestHttpRoute:
 
 
 class TestStops:
+    """In-process conversion runs end as completed or stopped, never half reported."""
+
     def _run(self, config: dict[str, Any], cancelled: Any) -> Any:
         from sc_neurocore.studio.training import TrainingJob
 
@@ -333,6 +356,7 @@ class TestStops:
         return job
 
     def test_an_in_process_run_completes_without_a_sandbox(self) -> None:
+        """A run outside the sandbox completes with the full conversion metric set."""
         # A zero clipping norm skips clipping entirely, as on the spiking route.
         job = self._run({**_RUN, "epochs": 1, "max_grad_norm": 0.0}, cancelled=None)
         assert job.status == "completed", job.error
@@ -347,10 +371,12 @@ class TestStops:
         assert job.preregistration_verdict is None
 
     def test_a_stop_during_training_ends_the_run_without_a_report(self) -> None:
+        """A stop requested during training ends the run with no final metrics."""
         job = self._run(_RUN, cancelled=lambda: True)
         assert job.status == "stopped" and job.final_metrics is None
 
     def test_a_stop_after_the_last_epoch_ends_it_before_conversion(self) -> None:
+        """A stop at the last batch boundary ends the run before conversion starts."""
         # 409 synthetic training samples in batches of 32 give 12 batch boundaries
         # per epoch; the probe answers yes only at the boundary after the last one.
         calls = {"count": 0}
@@ -365,6 +391,7 @@ class TestStops:
 
 
 def test_the_report_artifact_path_is_under_the_training_prefix() -> None:
+    """The conversion report is published under the training artefact prefix."""
     from sc_neurocore.studio._training_conversion import CONVERSION_REPORT_ARTIFACT_PATH
 
     assert Path(CONVERSION_REPORT_ARTIFACT_PATH).parts[0] == "training"

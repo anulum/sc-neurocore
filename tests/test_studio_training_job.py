@@ -24,6 +24,7 @@ from typing import cast
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobCancelled, StudioJobContext
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.training_process import run_training_process_task
 from sc_neurocore.studio.platform.training_weights import (
     TRAINING_WEIGHT_ARTIFACT_PATH,
@@ -303,7 +304,8 @@ def test_mnist_without_torchvision_fails_instead_of_training_on_other_data(
     assert job.status == "failed"
     status = json.loads((tmp_path / context.job_id / "training" / "status.json").read_text())
     assert status["status"] == "failed"
-    assert "needs torchvision" in status["error"]
+    # The reason stays with the raised fault; the readable status is the fixed fallback.
+    assert status["error"] == GENERIC_JOB_FAILURE
     assert not (tmp_path / context.job_id / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH).exists()
 
 

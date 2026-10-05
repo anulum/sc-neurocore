@@ -68,7 +68,9 @@ def test_allocation_over_limit_fails_without_success_result(tmp_path: Path) -> N
     result = manager.wait(record.job_id, timeout_seconds=15)
 
     assert result.status == "failed"
-    assert result.error == "MemoryError"
+    # The kernel's refusal raises without a message, so the worker leaves no
+    # fault text and the record keeps the supervisor's exit report.
+    assert result.error == "Studio process worker exited with 1."
     assert result.result is None
 
 

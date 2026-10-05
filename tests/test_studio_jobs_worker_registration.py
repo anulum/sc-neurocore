@@ -174,8 +174,11 @@ def test_managed_worker_registers_before_task_import(tmp_path: Path, case: str) 
         evidence = json.loads(result.read_text())
         assert evidence["status"] == ("completed" if valid else "failed")
         if case in {"early-guard-exit", "partial-limits"}:
+            # The result file is private custody and keeps the fault's own text.
             assert evidence["error"] == (
-                "RuntimeError" if case == "early-guard-exit" else "ValueError"
+                "Worker lifetime guard exited before task startup."
+                if case == "early-guard-exit"
+                else "Studio worker resource limits must be supplied together."
             )
         assert module.with_suffix(".imported").exists() is valid
         assert module.with_suffix(".executed").exists() is valid

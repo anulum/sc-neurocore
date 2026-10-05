@@ -15,9 +15,12 @@ from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from tests.studio_seccomp_support import run_child
 from tests.studio_training_support import *  # noqa: F403
 
+#: Source-owned training refusal raised when a recording changes under the run.
+DATASET_REFUSAL = "event dataset files or sample metadata differ from the manifest"
 
-def test_drained_legacy_stream_keeps_a_real_dataset_failure_private(tmp_path: Path) -> None:
-    """A public legacy run retains its safe fallback after its error queue is drained."""
+
+def test_drained_legacy_stream_keeps_the_owned_dataset_refusal(tmp_path: Path) -> None:
+    """A public legacy run repeats its owned refusal, and no path, after its queue is drained."""
     result = run_child(
         "import json, os, sys, threading, time\n"
         "from pathlib import Path\n"
@@ -66,14 +69,14 @@ def test_drained_legacy_stream_keeps_a_real_dataset_failure_private(tmp_path: Pa
     assert result["changed"] == [True]
     status = result["status"]
     assert isinstance(status, dict) and status["status"] == "failed"
-    assert status["error"] == GENERIC_JOB_FAILURE
+    assert status["error"] == DATASET_REFUSAL
     initial = result["initial"]
     assert isinstance(initial, list) and initial[-1]["event"] == "error"
-    assert initial[-1]["data"]["message"] == GENERIC_JOB_FAILURE
+    assert initial[-1]["data"]["message"] == DATASET_REFUSAL
     replayed = result["replayed"]
     assert isinstance(replayed, list) and len(replayed) == 1
     assert replayed[0]["event"] == "error"
-    assert replayed[0]["data"] == {"message": GENERIC_JOB_FAILURE}
+    assert replayed[0]["data"] == {"message": DATASET_REFUSAL}
     assert result["durable_records"] == 0
     assert str(tmp_path) not in json.dumps(result)
 

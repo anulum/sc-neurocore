@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 798
+expected_file_count = 802
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3283,3 +3283,19 @@ rationale = "Hosted coverage lanes, batched full-suite runner and the test job's
 [[file]]
 path = "tests/test_tools_documentation_debt.py"
 rationale = "Per-language documentation debt report: stated gaps, repeatable argv and real Rust measurement of a sample crate."
+
+[[file]]
+path = "tests/test_studio_jobs_worker_registration.py"
+rationale = "Managed worker registration before task import and the private fault text of refused starts."
+
+[[file]]
+path = "tests/test_studio_training_conversion.py"
+rationale = "Conversion training contract, routes, sealed reports and the fixed public failure fallback."
+
+[[file]]
+path = "tests/test_studio_training_job.py"
+rationale = "Training job lifecycle, weight artefacts and the readable status of a failed run."
+
+[[file]]
+path = "tests/test_studio_worker_limits.py"
+rationale = "Kernel resource limits of Studio workers and the durable record of a refused allocation."
