@@ -21,6 +21,8 @@ from sc_neurocore.studio.app import create_app
 from tests.studio_candidate_support import adex_candidate
 
 _DEEP_EXPRESSION = " + ".join(["v"] * 1100)
+#: Refusal raised when the interpreter's parser itself gives up on the expression.
+TOO_DEEP_TO_PARSE = "Equation expression is too deep to parse"
 
 
 @pytest.fixture
@@ -51,7 +53,7 @@ def candidate_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterato
             ("model", "dynamics", "v"),
             " + ".join(["v"] * 10000),
             "/model/dynamics/v",
-            "Equation expression is too deep to parse",
+            TOO_DEEP_TO_PARSE,
         ),
         (
             ("model", "dynamics", "v"),
@@ -107,7 +109,18 @@ def test_candidate_routes_refuse_real_parser_and_encoding_faults(
         assert body["detail"]["reason"] == "invalid_candidate"
         validation = body["detail"]["validation"]
     assert validation["valid"] is False
-    assert {"location": location, "message": message} in validation["diagnostics"]
+    if message == TOO_DEEP_TO_PARSE:
+        # Which gate refuses a ten-thousand-term sum depends on the interpreter:
+        # the parser's own recursion limit, or the validator's depth limit where
+        # the parser accepts it. Both are authored refusals at this location.
+        located = [
+            row["message"] for row in validation["diagnostics"] if row["location"] == location
+        ]
+        assert any(
+            text == TOO_DEEP_TO_PARSE or text.startswith("Equation AST depth ") for text in located
+        )
+    else:
+        assert {"location": location, "message": message} in validation["diagnostics"]
     assert "TokenInfo" not in response.text
     assert "unexpected EOF" not in response.text
     assert "invalid literal" not in response.text

@@ -227,9 +227,13 @@ def test_stronger_original_floor_and_individual_allowances_are_preserved(tmp_pat
 
 
 def test_native_path_encoding_failure_and_cli_return_values(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Reject undecodable native paths and expose real CLI success/refusal results."""
+    # The command reads the process environment; a hosting job's own event
+    # must not choose the baseline of this private fixture repository.
+    for name in ("GITHUB_ACTIONS", "GITHUB_SHA", "GITHUB_EVENT_PATH", "GITHUB_EVENT_NAME"):
+        monkeypatch.delenv(name, raising=False)
     root = repository_fixture(tmp_path)
     assert main(["--repo", str(root)]) == 0
     assert "Docstring scope accepted" in capsys.readouterr().out

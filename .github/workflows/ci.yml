@@ -393,6 +393,18 @@ jobs:
       - name: Verify HDL simulator versions
         run: python tools/check_icarus_verilog.py --minimum-major 12
 
+      # The documentation-debt contracts measure TypeScript with the frontend's
+      # own locked ESLint; they refuse to run without that installation.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+        with:
+          node-version: "26.9.0"
+          cache: npm
+          cache-dependency-path: studio/frontend/package-lock.json
+
+      - name: Install the frontend's locked lint tools
+        working-directory: studio/frontend
+        run: npm ci
+
       - name: Install package
         run: |
           python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
