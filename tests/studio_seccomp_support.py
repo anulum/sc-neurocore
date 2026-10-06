@@ -24,6 +24,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import signal
 import struct
 import subprocess
 import sys
@@ -121,6 +122,10 @@ def install_refusals(refusals: list[Refusal]) -> None:
             raise OSError(error, os.strerror(error))
 
 
+#: Time limit of one child interpreter started by :func:`run_child`.
+CHILD_TIMEOUT_SECONDS = 120.0
+
+
 def run_child(
     source: str, *, arguments: tuple[str, ...] = (), expected_returncode: int = 0
 ) -> dict[str, object]:
@@ -128,25 +133,41 @@ def run_child(
 
     The child imports the repository's ``src`` and ``tests`` packages;
     ``sys.argv[1:]`` holds ``arguments``. A child expected to die with a
-    signal or exit code returns ``{}`` after the code is checked.
+    signal or exit code returns ``{}`` after the code is checked. A child that
+    exceeds :data:`CHILD_TIMEOUT_SECONDS` is aborted and its thread stacks are
+    reported in the failure.
     """
     environment = {
         **os.environ,
         "PYTHONPATH": os.pathsep.join((str(REPOSITORY / "src"), str(REPOSITORY))),
     }
-    completed = subprocess.run(
-        [sys.executable, "-c", source, *arguments],
-        capture_output=True,
-        check=False,
+    child = subprocess.Popen(
+        [sys.executable, "-X", "faulthandler", "-c", source, *arguments],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         cwd=REPOSITORY,
         env=environment,
         text=True,
-        timeout=120.0,
     )
-    assert completed.returncode == expected_returncode, completed.stderr
+    try:
+        stdout, stderr = child.communicate(timeout=CHILD_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        # A bare timeout says nothing about where the child stands. The abort
+        # signal makes the interpreter write every thread's stack before it ends.
+        child.send_signal(signal.SIGABRT)
+        try:
+            stdout, stderr = child.communicate(timeout=10.0)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            stdout, stderr = child.communicate()
+        raise AssertionError(
+            f"child did not finish within {CHILD_TIMEOUT_SECONDS:g} s; "
+            f"output tail:\n{stdout[-2000:]}\nthread stacks and stderr tail:\n{stderr[-8000:]}"
+        ) from None
+    assert child.returncode == expected_returncode, stderr
     if expected_returncode != 0:
         return {}
-    result = json.loads(completed.stdout.splitlines()[-1])
+    result = json.loads(stdout.splitlines()[-1])
     assert isinstance(result, dict)
     return result
 

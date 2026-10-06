@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 811
+expected_file_count = 812
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3335,3 +3335,7 @@ rationale = "Training event stream shapes, including the fixed fallback for unma
 [[file]]
 path = "tests/test_studio_storage_finish.py"
 rationale = "Storage finish exchange: sealing, refusals and the ordering of an early refusal."
+
+[[file]]
+path = "tests/studio_seccomp_support.py"
+rationale = "Child interpreters with system-call refusals, and the thread stacks of a child that exceeds its time limit."
