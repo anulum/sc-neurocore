@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5271
+    "test_files": 5272
   },
   "documentation": {
     "public_pages": [
@@ -4495,6 +4495,7 @@
       "tests/test_cli_studio.py",
       "tests/test_cli_synthesis.py",
       "tests/test_cli_train.py",
+      "tests/test_cli_train_in_process.py",
       "tests/test_clopath_stdp.py",
       "tests/test_cmos_profile_modularisation.py",
       "tests/test_coba_lif_backend_loading.py",
