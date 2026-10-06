@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5272
+    "test_files": 5275
   },
   "documentation": {
     "public_pages": [
@@ -3816,10 +3816,12 @@
       "tests/test_accel_coverage_closure.py",
       "tests/test_accel_dvs_backends.py",
       "tests/test_accel_dvs_named_fields.py",
+      "tests/test_accel_dvs_native_refusals.py",
       "tests/test_accel_dvs_path_bytes.py",
       "tests/test_accel_dvs_platform.py",
       "tests/test_accel_dvs_protocol.py",
       "tests/test_accel_dvs_recordings.py",
+      "tests/test_accel_event_recording_refusals.py",
       "tests/test_accel_event_recordings.py",
       "tests/test_accel_go_dvs_failures.py",
       "tests/test_accel_go_dvs_lifecycle.py",
@@ -3863,6 +3865,7 @@
       "tests/test_accel_rust_dvs_literals.py",
       "tests/test_accel_rust_if_abi.py",
       "tests/test_accel_rust_shd.py",
+      "tests/test_accel_shd_recording_refusals.py",
       "tests/test_accel_shd_recordings.py",
       "tests/test_adapter_ecosystem_adapter_discovery.py",
       "tests/test_adapter_ecosystem_registry_wiring.py",

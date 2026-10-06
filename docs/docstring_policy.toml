@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 813
+expected_file_count = 816
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3343,3 +3343,15 @@ rationale = "Child interpreters with system-call refusals, and the thread stacks
 [[file]]
 path = "tests/test_cli_train_in_process.py"
 rationale = "The train command called in the measured process: exit statuses of completed, failed, refused and unreadable requests."
+
+[[file]]
+path = "tests/test_accel_event_recording_refusals.py"
+rationale = "N-MNIST and Julia recording decoders: refusals raised by real unusable libraries and runtime settings."
+
+[[file]]
+path = "tests/test_accel_dvs_native_refusals.py"
+rationale = "An interrupted native DVS read kills and reaps its reader."
+
+[[file]]
+path = "tests/test_accel_shd_recording_refusals.py"
+rationale = "SHD recording readers: refusals of unusable settings, protocol violations and non-numeric vectors."
