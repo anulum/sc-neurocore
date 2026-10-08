@@ -95,7 +95,7 @@ def julia_queries(raw: bytes) -> tuple[dict[str, Any], ...]:
     Parameters
     ----------
     raw : bytes
-        Complete committed Julia Manifest.toml, with all dependency entries.
+        Complete Julia Manifest.toml in format 2.0 or 2.1, with all entries.
 
     Returns
     -------
@@ -110,7 +110,7 @@ def julia_queries(raw: bytes) -> tuple[dict[str, Any], ...]:
     """
     manifest = tomllib.loads(raw.decode("utf-8"))
     dependencies = manifest.get("deps")
-    if manifest.get("manifest_format") != "2.0" or not isinstance(dependencies, dict):
+    if manifest.get("manifest_format") not in ("2.0", "2.1") or not isinstance(dependencies, dict):
         raise ValueError("Julia audit requires a version-2 dependency manifest.")
     queries: list[dict[str, Any]] = []
     for name, entries in sorted(dependencies.items()):

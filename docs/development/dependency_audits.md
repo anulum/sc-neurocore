@@ -16,7 +16,7 @@ inventory. Project dependencies are neither installed nor rewritten by audits.
 | Rust | Every `Cargo.lock` | `cargo audit --file … --format json --deny warnings --url https://github.com/RustSec/advisory-db` |
 | npm | Every `package-lock.json` | Exact registry identity validation, then `npm audit --package-lock-only --include=dev --include=optional --include=peer --registry=https://registry.npmjs.org --json` |
 | Go | Every `go.mod` and associated `go.sum` | OSV queries for standard library, module pins and checksum-only versions |
-| Julia | Every version-2 `Manifest.toml` | OSV queries for every exact package version, including build suffixes |
+| Julia | Every format-2.0 or format-2.1 `Manifest.toml` | OSV queries for every exact package version, including build suffixes |
 | Pixi | Every `pixi.lock` | Pinned pixi-audit, with complete JSON coverage validation |
 
 Run an ecosystem without running a test suite:
@@ -36,6 +36,12 @@ each request has a 30-second timeout. Go call analysis does not filter advisory
 results. Julia package versions are not converted to Python or generic upstream
 versions.
 
+Julia 1.13 writes format 2.1 manifests with registry metadata. Both supported
+formats retain every dependency entry; path, Git and unversioned dependencies
+remain refused. The native manifest regression resolves the maintained FFTW
+project with the installed Julia 1.13 runtime and compares every generated
+package/version identity with the audit queries.
+
 npm silently omits unversioned packages from advisory submission. Before running
 it, the adapter validates every installation entry in a version-2 or version-3
 lock, retaining its path, registry name and exact semantic version. Linked,
@@ -43,6 +49,27 @@ unversioned, nonregistry and empty dependency inventories fail. These require a
 reviewed advisory adapter before they can enter a passing audit. The response
 must cover the complete validated package count, with integer counters for all
 severities. A zero exit status or a clean-looking total alone is insufficient.
+
+The Studio lock selects `source-map-js` 1.2.2 for
+[GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q).
+The update retains the remaining dependency graph. Its npm audit still includes
+development, optional and peer dependencies; a passing npm result does not
+qualify the other ecosystem jobs or the whole security packet.
+
+The installed native-wheel profile is generated from `requirements/wheels-test.in`
+with the development lock as its constraint. Its universal resolution retains
+the Python 3.10 and 3.11 NumPy branches and the platform-specific pytest
+dependencies. Regenerate it with:
+
+```bash
+uv pip compile --universal --python-version 3.10 --generate-hashes \
+  --constraint requirements/ci-dev.txt \
+  --output-file requirements/wheels-test.txt requirements/wheels-test.in
+```
+
+This profile includes the framework and shared-fixture dependency used by the
+installed batch-encoding contracts. It remains part of the blocking Python
+lock audit, including every marker branch.
 
 Rust report validation requires explicit unfiltered settings, all supported
 informational warning categories, consistent typed finding counters and zero

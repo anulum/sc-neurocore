@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 817
+expected_file_count = 818
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3358,3 +3358,6 @@ rationale = "SHD recording readers: refusals of unusable settings, protocol viol
 [[file]]
 path = "tests/test_sc_aer_encoder.py"
 rationale = "Real canonical RTL priority, every population address, coalescing, reset and observed service-cycle contracts at N4 and N128."
+[[file]]
+path = "tests/test_tools/test_locked_julia_manifest_native.py"
+rationale = "Actual Julia 1.13 manifest generation retains every package identity in the dependency audit."

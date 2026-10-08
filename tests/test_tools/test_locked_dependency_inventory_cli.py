@@ -194,8 +194,9 @@ def test_julia_queries_retain_registry_build_versions() -> None:
         "package": {"ecosystem": "Julia", "name": "MbedTLS_jll"},
         "version": "2.28.6+0",
     } in queries
-    with pytest.raises(ValueError, match="version-2"):
-        julia_queries(b'manifest_format = "1.0"\n')
+    for unsupported in ("1.0", "2.2", "3.0"):
+        with pytest.raises(ValueError, match="version-2"):
+            julia_queries(f'manifest_format = "{unsupported}"\n[deps]\n'.encode())
     with pytest.raises(ValueError, match="exact registry"):
         julia_queries(
             b'manifest_format = "2.0"\n[[deps.Local]]\npath = "local"\nversion = "1.0.0"\n'
