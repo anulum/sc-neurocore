@@ -1965,6 +1965,7 @@ maximum_bytes : int
     HDF5 input vectors, IPC bytes and temporary copies are additional memory.
 backend : {"auto", "numpy", "rust", "go", "julia", "mojo"}
     Auto uses measured ``shd-recording`` order, otherwise Rust, Go, Julia, Mojo then NumPy.
+    NumPy reads the recording after every unconfigured native reader is exhausted.
     Rust uses ``SC_NEUROCORE_SHD_RUST_LIBRARY`` or installed
     ``rust/safety/libshd.so``; Go requires an existing
     ``SC_NEUROCORE_SHD_GO_LIBRARY`` absolute path

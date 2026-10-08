@@ -215,6 +215,9 @@ addopts = ["-p", "no:nengo"]
 
 [tool.coverage.run]
 source = ["sc_neurocore"]
+source_dirs = ["src/sc_neurocore"]
+patch = ["subprocess", "_exit"]
+parallel = true
 omit = [
     # --- Requires external hardware/services ---
     "*/quantum/hardware_bridge.py",     # IBM Quantum hardware

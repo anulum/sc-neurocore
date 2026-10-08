@@ -34,6 +34,14 @@ def test_python_coverage_threshold_is_exact_closure() -> None:
     assert data["tool"]["coverage"]["report"]["fail_under"] == 100
 
 
+def test_python_coverage_keeps_isolated_workers_and_watchdog_exits() -> None:
+    """Native Python workers and immediate watchdog exits retain process-specific data."""
+    data = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert set(data["tool"]["coverage"]["run"]["patch"]) >= {"subprocess", "_exit"}
+    assert data["tool"]["coverage"]["run"]["parallel"] is True
+    assert "src/sc_neurocore" in data["tool"]["coverage"]["run"]["source_dirs"]
+
+
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     """Makefile and primary hosted CI must not weaken the canonical threshold."""
     assert _cov_thresholds(_ROOT / "Makefile") == (100,)

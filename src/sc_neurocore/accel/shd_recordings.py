@@ -221,6 +221,7 @@ def read_shd_recording(
         HDF5 input vectors, IPC bytes and temporary copies are additional memory.
     backend : {"auto", "numpy", "rust", "go", "julia", "mojo"}
         Auto uses measured ``shd-recording`` order, otherwise Rust, Go, Julia, Mojo then NumPy.
+        NumPy reads the recording after every unconfigured native reader is exhausted.
         Rust uses ``SC_NEUROCORE_SHD_RUST_LIBRARY`` or installed
         ``rust/safety/libshd.so``; Go requires an existing
         ``SC_NEUROCORE_SHD_GO_LIBRARY`` absolute path
@@ -263,7 +264,7 @@ def read_shd_recording(
     if backend not in ("auto", "numpy", "rust", "go", "julia", "mojo") or "\x00" in str(path):
         raise ValueError("invalid SHD backend or recording path")
     order = (
-        select_backend_order("shd-recording", static=("rust", "go", "julia", "mojo", "numpy"))
+        select_backend_order("shd-recording", static=("rust", "go", "julia", "mojo", "numpy"))[:-1]
         if backend == "auto"
         else (backend,)
     )
@@ -283,4 +284,4 @@ def read_shd_recording(
                 return _read_native(path, index, maximum_bytes, library, selected)
             if backend != "auto":
                 raise RuntimeError(f"{backend.title()} SHD reader is unavailable")
-    raise RuntimeError("no supported SHD reader is available")
+    return _read_numpy(path, index, maximum_bytes)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 852
+expected_file_count = 855
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3494,3 +3494,14 @@ rationale = "Installed attention shape admission, empty-query laziness, real col
 [[file]]
 path = "tests/test_stochastic_graph_engine_binding_runtime.py"
 rationale = "Installed dense, CSR and automatic graph worker refusal with serial SC behavior, unchanged weights and input recovery."
+[[file]]
+path = "src/sc_neurocore/accel/shd_recordings.py"
+rationale = "Supervised public SHD dispatch, explicit NumPy fallback, typed result ownership and recording admission."
+
+[[file]]
+path = "tests/test_accel_shd_recordings.py"
+rationale = "Actual HDF5 nonempty and empty automatic fallback, native parity, refusal, manifest and bounded-lifetime reads."
+
+[[file]]
+path = "tests/test_accel_shd_worker.py"
+rationale = "Real Go SHD ABI-result mutations, ownership release and isolated FIFO reader watchdog lifetimes."

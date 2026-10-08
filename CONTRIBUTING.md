@@ -85,6 +85,18 @@ and must not create duplicate scientific provenance.
 - All new Python APIs must have pytest coverage in `tests/`.
 - SIMD paths must include portable fallback — never assume AVX-512 or AVX2 availability.
 
+Python coverage includes isolated worker processes through the configured
+`subprocess` patch and source directory, including scripts that run without
+importing the package. The `_exit` patch saves watchdog observations before an
+immediate process exit. Each process writes separate data; pytest-cov combines
+it into the current batch, and `--cov-append` retains earlier batches. Keep both
+patches and the parallel setting when changing the coverage runner.
+
+Installed-wheel CI runs `tests/test_engine_global_pickle.py` from an external
+consumer directory. It round-trips every public native class/function global
+through every supported pickle protocol and verifies object identity. Binding
+tests separately exercise instance persistence or refusal, inputs and mutation.
+
 ### Commit Messages
 
 Follow conventional commit format:

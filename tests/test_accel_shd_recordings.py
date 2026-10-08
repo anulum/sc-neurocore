@@ -57,6 +57,20 @@ def test_public_native_and_numpy_rows_match_and_reach_manifest_reader(
     np.testing.assert_array_equal(read_event_sample(recording_file.parent, "shd", sample), expected)
 
 
+@pytest.mark.parametrize("index", [0, 1])
+def test_auto_reader_preserves_numpy_floor_without_operator_selection(
+    recording_file: Path, monkeypatch: pytest.MonkeyPatch, index: int
+) -> None:
+    """Automatic selection preserves exact nonempty and empty rows without native settings."""
+    for setting in ("RUST_LIBRARY", "GO_LIBRARY", "JULIA_EXE", "MOJO_EXE"):
+        monkeypatch.delenv(f"SC_NEUROCORE_SHD_{setting}", raising=False)
+    expected, label = read_shd_recording(recording_file, index, backend="numpy")
+    actual, actual_label = read_shd_recording(recording_file, index)
+    np.testing.assert_array_equal(actual, expected)
+    assert actual.dtype == np.float64 and actual.flags.writeable
+    assert actual_label == label
+
+
 @pytest.mark.parametrize("backend", ["go", "numpy"])
 @pytest.mark.parametrize("index,budget", [(-1, 64), (2, 64), (0, -1), (0, 63), (True, 64)])
 def test_public_shd_refuses_indices_and_result_budgets(
