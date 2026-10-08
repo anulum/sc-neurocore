@@ -1160,7 +1160,38 @@ Return whether ``error`` is the maintained Julia bridge exception.
 ## Module `accel.julia.neurons.adaptive_threshold_if`
 
 ### Function `simulate_adaptive_threshold_if(v_init, theta_init, v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt, current)`
-Run the Julia exact-relaxation recurrence with typed failure translation.
+Run the Julia exact-relaxation batch with typed failure translation.
+
+Parameters
+----------
+v_init, theta_init : float
+    Initial membrane potential and adaptive threshold.
+v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt : float
+    Complete finite numerical configuration, validated by the Julia kernel.
+current : ArrayLike
+    Finite one-dimensional drive, converted to contiguous float64 without
+    changing caller storage.
+
+Returns
+-------
+dict
+    Complete voltage, threshold and spike traces, both final states and
+    spike count. Empty batches retain their supplied initial states.
+
+Raises
+------
+ValueError
+    If the drive or native configuration is invalid.
+FloatingPointError
+    If an exact-relaxation candidate is non-finite.
+MemoryError
+    If NumPy output allocation or Julia trace allocation fails. A real
+    Julia OutOfMemoryError becomes an authored Python MemoryError while
+    preserving the input and allowing a later valid batch.
+ImportError
+    If the Julia bridge is unavailable.
+FileNotFoundError
+    If the maintained Julia kernel source is unavailable.
 
 ---
 

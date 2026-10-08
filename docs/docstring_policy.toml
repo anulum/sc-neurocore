@@ -17,6 +17,50 @@ min_docstring_chars = 20
 expected_file_count = 855
 
 [[file]]
+path = "tests/test_bitstream_batch_encode.py"
+rationale = "Measured scalar and SIMD seeded encoding words, exact tails and clamping, readonly inputs, owning output, empty shapes and typed/capacity/layout refusal."
+
+[[file]]
+path = "tests/test_bitstream_pack.py"
+rationale = "Public generic sequence and byte-buffer packing, exact rows, normalization and conversion refusal; typed word boundaries, owning output and dtype, rank and layout admission."
+
+[[file]]
+path = "tests/test_bitstream_unpack.py"
+rationale = "Actual public unpacking bit order, empty and nested shapes, storage and capacity refusal, dtype and layout admission and independent output."
+
+[[file]]
+path = "src/sc_neurocore/utils/bitstreams.py"
+rationale = "Public stochastic encoders and checked sliding-window estimator construction and binary-sample refusal."
+
+[[file]]
+path = "tests/test_bitstream_averager.py"
+rationale = "Actual Python/native partial and wrapping traces, constructor and sample refusal, serialization and nonconsuming continuation."
+
+[[file]]
+path = "tests/test_brunel_fixed_point_engine_binding_allocation.py"
+rationale = "Real installed Brunel constructor and simulation allocation refusal with preserved input bytes, restored process limits and seeded continuation."
+
+[[file]]
+path = "tests/test_sc_aer_encoder.py"
+rationale = "Real canonical RTL priority, every population address, coalescing, reset and observed service-cycle contracts at N4 and N128."
+
+[[file]]
+path = "tests/test_engine_global_pickle.py"
+rationale = "Actual complete facade and native public class/function pickle identities for every supported protocol in installed wheels."
+
+[[file]]
+path = "src/sc_neurocore/accel/shd_recordings.py"
+rationale = "Supervised public SHD dispatch, explicit NumPy fallback, typed result ownership and recording admission."
+
+[[file]]
+path = "tests/test_accel_shd_recordings.py"
+rationale = "Actual HDF5 nonempty and empty automatic fallback, native parity, refusal, manifest and bounded-lifetime reads."
+
+[[file]]
+path = "tests/test_accel_shd_worker.py"
+rationale = "Real Go SHD ABI-result mutations, ownership release and isolated FIFO reader watchdog lifetimes."
+
+[[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
 rationale = "Public error projection only after current-version storage validation and actual OS peer verification; legacy snapshots remain unqualified."
 
@@ -2749,6 +2793,10 @@ path = "tests/test_tools/test_locked_dependency_inventory_cli.py"
 rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
 
 [[file]]
+path = "tests/test_tools/test_locked_julia_manifest_native.py"
+rationale = "Actual Julia 1.13 manifest generation retains every package identity in the dependency audit."
+
+[[file]]
 path = "tests/test_tools/test_run_osv_scanners.py"
 rationale = "Committed dependency audit input custody, complete advisory coverage and blocking CLI or policy refusal contracts."
 
@@ -3355,109 +3403,6 @@ rationale = "An interrupted native DVS read kills and reaps its reader."
 [[file]]
 path = "tests/test_accel_shd_recording_refusals.py"
 rationale = "SHD recording readers: refusals of unusable settings, protocol violations and non-numeric vectors."
-[[file]]
-path = "tests/test_sc_aer_encoder.py"
-rationale = "Real canonical RTL priority, every population address, coalescing, reset and observed service-cycle contracts at N4 and N128."
-[[file]]
-path = "tests/test_tools/test_locked_julia_manifest_native.py"
-rationale = "Actual Julia 1.13 manifest generation retains every package identity in the dependency audit."
-[[file]]
-path = "src/sc_neurocore/layers/sc_dense_layer.py"
-rationale = "Recorded binary spikes, accumulated duration and Hz units, shared noiseless traces, current-tail clamping and reset without RNG reseeding."
-
-[[file]]
-path = "src/sc_neurocore/layers/vectorized_layer.py"
-rationale = "Actual packed channel-sum output semantics; no firing-fraction or channel-normalization promise."
-
-[[file]]
-path = "src/sc_neurocore/utils/lds_decorrelation.py"
-rationale = "Distinct LDS dimensions, actual finite covariance boundary and retained thresholding/output semantics. No statistical-independence guarantee. "
-
-[[file]]
-path = "tests/test_layers/test_vectorized_layer_mac_outputs.py"
-rationale = "Full public exported-weight dense/CSR endpoint dot products and bias, partial-word lengths, and unchanged readonly caller arrays."
-
-[[file]]
-path = "tests/test_lds_decorrelation_generate_decorrelated_bitstreams.py"
-rationale = "Complete public matrix shapes, endpoints, finite seeded raw covariance counterexamples and unchanged readonly probabilities. "
-[[file]]
-path = "src/sc_neurocore/accel/go/adaptive_threshold_if/__init__.py"
-rationale = "Typed configured Go batch returns and native resource-status translation with authored MemoryError and caller-storage preservation."
-
-[[file]]
-path = "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.py"
-rationale = "Typed configured Julia batch results and genuine OutOfMemoryError translation without changing numerical or configuration-error semantics."
-
-[[file]]
-path = "src/sc_neurocore/utils/bitstreams.py"
-rationale = "Public stochastic encoders and checked sliding-window estimator construction and binary-sample refusal."
-
-[[file]]
-path = "tests/test_adaptive_threshold_if_engine_binding.py"
-rationale = "Configured adaptive-threshold full Python golden traces, readonly dtype/rank/byteorder/layout contracts, typed finite/configuration/candidate errors and real trace allocation refusal with process recovery."
-
-[[file]]
-path = "tests/test_adaptive_threshold_if_go_allocation.py"
-rationale = "Real public Go C ABI and Python facade resource refusals for all three reservations, complete caller-byte preservation and numerical recovery."
-
-[[file]]
-path = "tests/test_adaptive_threshold_if_julia_allocation.py"
-rationale = "Real Julia batch allocation exhaustion translated through the maintained Python facade with read-only drive preservation and complete golden recovery."
-[[file]]
-path = "tests/test_bitstream_averager.py"
-rationale = "Actual Python/native partial and wrapping traces, constructor and sample refusal, serialization and nonconsuming continuation."
-
-[[file]]
-path = "tests/test_bitstream_batch_encode.py"
-rationale = "Measured scalar and SIMD seeded encoding words, exact tails and clamping, readonly inputs, owning output, empty shapes and typed/capacity/layout refusal."
-
-[[file]]
-path = "tests/test_bitstream_pack.py"
-rationale = "Public generic sequence and byte-buffer packing, exact rows, normalization and conversion refusal; typed word boundaries, owning output and dtype, rank and layout admission."
-
-[[file]]
-path = "tests/test_bitstream_unpack.py"
-rationale = "Actual public unpacking bit order, empty and nested shapes, storage and capacity refusal, dtype and layout admission and independent output."
-
-[[file]]
-path = "tests/test_brunel_fixed_point_engine_binding_allocation.py"
-rationale = "Real installed Brunel constructor and simulation allocation refusal with preserved input bytes, restored process limits and seeded continuation."
-
-[[file]]
-path = "tests/test_causality_engine_binding_runtime.py"
-rationale = "Installed serial Granger and fitted VAR layouts, bin/order/shape refusal, no-fit fallback, full spectral formulas and real cold/warm worker recovery."
-
-[[file]]
-path = "tests/test_cortical_injection_engine_binding_runtime.py"
-rationale = "Installed single and fused cortical CSR row validation, output atomicity at the chunk boundary and actual worker recovery."
-
-[[file]]
-path = "tests/test_covariance_engine_binding_runtime.py"
-rationale = "Installed covariance legacy empty/one-bin shapes, ragged readonly input, real NumPy output allocation and worker refusal with full independent covariance recovery."
-
-[[file]]
-path = "tests/test_decoding_engine_binding_runtime.py"
-rationale = "Installed population and statistical decoding prefixes, missing-direction/prior defaults, single-class/empty laziness, serial naive Bayes and real worker recovery."
-
-[[file]]
-path = "tests/test_dense_layer_engine_binding_runtime.py"
-rationale = "Installed dense constructor dimensions, cold-worker refusal, seeded recovery and unchanged scalar, threshold, batch and prepacked outputs."
-
-[[file]]
-path = "tests/test_differentiable_dense_engine_binding_runtime.py"
-rationale = "Installed native and NumPy-facade constructor refusal, same-seed recovery and all four parsed surrogate gradient/cache/update formulas."
-
-[[file]]
-path = "tests/test_dna_hybridization_engine_binding_runtime.py"
-rationale = "Installed strand-pair worker refusal and same-input recovery with independently computed substring scores."
-
-[[file]]
-path = "tests/test_engine_global_pickle.py"
-rationale = "Actual complete facade and native public class/function pickle identities for every supported protocol in installed wheels."
-
-[[file]]
-path = "tests/test_evolution_engine_binding_runtime.py"
-rationale = "Installed population mutation/fitness/crossover/diversity/novelty worker refusal, unchanged ragged prefixes and serial tournament empty-population validation/recovery."
 
 [[file]]
 path = "tests/test_kuramoto_engine_binding_runtime.py"
@@ -3468,40 +3413,101 @@ path = "tests/test_network_runner_engine_binding_runtime.py"
 rationale = "Installed network worker admission before current and state mutation, empty-population laziness and serial-control recovery."
 
 [[file]]
-path = "tests/test_neural_decoders_engine_binding_runtime.py"
-rationale = "Installed neural-decoder array layout, checked used dimensions, lazy empty results, complete numerical outputs and real cold/warm worker recovery."
-
-[[file]]
-path = "tests/test_pareto_engine_binding_runtime.py"
-rationale = "Installed Pareto column admission, empty-work laziness and frontier recovery after worker refusal."
-
-[[file]]
-path = "tests/test_patterns_engine_binding_runtime.py"
-rationale = "Installed serial directionality, antisymmetric ordering and full cumulant outputs, lazy zero dimensions and actual checked NumPy/worker refusal and recovery."
-
-[[file]]
-path = "tests/test_photonic_engine_binding_runtime.py"
-rationale = "Installed routing, WDM, power and geometric-pair resource admission, lazy/serial boundaries and complete independent formula recovery."
-
-[[file]]
-path = "tests/test_quantum_annealing_engine_binding_runtime.py"
-rationale = "Installed Ising energy, annealing and gauge worker recovery, active coupling validation and lazy empty operations."
-
-[[file]]
 path = "tests/test_stochastic_attention_engine_binding_runtime.py"
 rationale = "Installed attention shape admission, empty-query laziness, real cold-worker refusal and deterministic same-instance recovery."
 
 [[file]]
 path = "tests/test_stochastic_graph_engine_binding_runtime.py"
 rationale = "Installed dense, CSR and automatic graph worker refusal with serial SC behavior, unchanged weights and input recovery."
-[[file]]
-path = "src/sc_neurocore/accel/shd_recordings.py"
-rationale = "Supervised public SHD dispatch, explicit NumPy fallback, typed result ownership and recording admission."
 
 [[file]]
-path = "tests/test_accel_shd_recordings.py"
-rationale = "Actual HDF5 nonempty and empty automatic fallback, native parity, refusal, manifest and bounded-lifetime reads."
+path = "tests/test_cortical_injection_engine_binding_runtime.py"
+rationale = "Installed single and fused cortical CSR row validation, output atomicity at the chunk boundary and actual worker recovery."
 
 [[file]]
-path = "tests/test_accel_shd_worker.py"
-rationale = "Real Go SHD ABI-result mutations, ownership release and isolated FIFO reader watchdog lifetimes."
+path = "tests/test_dense_layer_engine_binding_runtime.py"
+rationale = "Installed dense constructor dimensions, cold-worker refusal, seeded recovery and unchanged scalar, threshold, batch and prepacked outputs."
+
+[[file]]
+path = "tests/test_pareto_engine_binding_runtime.py"
+rationale = "Installed Pareto column admission, empty-work laziness and frontier recovery after worker refusal."
+
+[[file]]
+path = "tests/test_dna_hybridization_engine_binding_runtime.py"
+rationale = "Installed strand-pair worker refusal and same-input recovery with independently computed substring scores."
+
+[[file]]
+path = "tests/test_quantum_annealing_engine_binding_runtime.py"
+rationale = "Installed Ising energy, annealing and gauge worker recovery, active coupling validation and lazy empty operations."
+
+[[file]]
+path = "tests/test_photonic_engine_binding_runtime.py"
+rationale = "Installed routing, WDM, power and geometric-pair resource admission, lazy/serial boundaries and complete independent formula recovery."
+
+[[file]]
+path = "tests/test_differentiable_dense_engine_binding_runtime.py"
+rationale = "Installed native and NumPy-facade constructor refusal, same-seed recovery and all four parsed surrogate gradient/cache/update formulas."
+
+[[file]]
+path = "tests/test_evolution_engine_binding_runtime.py"
+rationale = "Installed population mutation/fitness/crossover/diversity/novelty worker refusal, unchanged ragged prefixes and serial tournament empty-population validation/recovery."
+
+[[file]]
+path = "src/sc_neurocore/utils/lds_decorrelation.py"
+rationale = "Distinct LDS dimensions, actual finite covariance boundary and retained thresholding/output semantics. No statistical-independence guarantee. "
+
+[[file]]
+path = "tests/test_lds_decorrelation_generate_decorrelated_bitstreams.py"
+rationale = "Complete public matrix shapes, endpoints, finite seeded raw covariance counterexamples and unchanged readonly probabilities. "
+
+[[file]]
+path = "src/sc_neurocore/layers/vectorized_layer.py"
+rationale = "Actual packed channel-sum output semantics; no firing-fraction or channel-normalization promise."
+
+[[file]]
+path = "tests/test_layers/test_vectorized_layer_mac_outputs.py"
+rationale = "Full public exported-weight dense/CSR endpoint dot products and bias, partial-word lengths, and unchanged readonly caller arrays."
+
+[[file]]
+path = "src/sc_neurocore/layers/sc_dense_layer.py"
+rationale = "Recorded binary spikes, accumulated duration and Hz units, shared noiseless traces, current-tail clamping and reset without RNG reseeding."
+
+[[file]]
+path = "tests/test_neural_decoders_engine_binding_runtime.py"
+rationale = "Installed neural-decoder array layout, checked used dimensions, lazy empty results, complete numerical outputs and real cold/warm worker recovery."
+
+[[file]]
+path = "tests/test_decoding_engine_binding_runtime.py"
+rationale = "Installed population and statistical decoding prefixes, missing-direction/prior defaults, single-class/empty laziness, serial naive Bayes and real worker recovery."
+
+[[file]]
+path = "tests/test_causality_engine_binding_runtime.py"
+rationale = "Installed serial Granger and fitted VAR layouts, bin/order/shape refusal, no-fit fallback, full spectral formulas and real cold/warm worker recovery."
+
+[[file]]
+path = "tests/test_covariance_engine_binding_runtime.py"
+rationale = "Installed covariance legacy empty/one-bin shapes, ragged readonly input, real NumPy output allocation and worker refusal with full independent covariance recovery."
+
+[[file]]
+path = "tests/test_patterns_engine_binding_runtime.py"
+rationale = "Installed serial directionality, antisymmetric ordering and full cumulant outputs, lazy zero dimensions and actual checked NumPy/worker refusal and recovery."
+
+[[file]]
+path = "tests/test_adaptive_threshold_if_engine_binding.py"
+rationale = "Configured adaptive-threshold full Python golden traces, readonly dtype/rank/byteorder/layout contracts, typed finite/configuration/candidate errors and real trace allocation refusal with process recovery."
+
+[[file]]
+path = "src/sc_neurocore/accel/go/adaptive_threshold_if/__init__.py"
+rationale = "Typed configured Go batch returns and native resource-status translation with authored MemoryError and caller-storage preservation."
+
+[[file]]
+path = "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.py"
+rationale = "Typed configured Julia batch results and genuine OutOfMemoryError translation without changing numerical or configuration-error semantics."
+
+[[file]]
+path = "tests/test_adaptive_threshold_if_go_allocation.py"
+rationale = "Real public Go C ABI and Python facade resource refusals for all three reservations, complete caller-byte preservation and numerical recovery."
+
+[[file]]
+path = "tests/test_adaptive_threshold_if_julia_allocation.py"
+rationale = "Real Julia batch allocation exhaustion translated through the maintained Python facade with read-only drive preservation and complete golden recovery."

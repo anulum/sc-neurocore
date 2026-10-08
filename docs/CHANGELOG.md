@@ -5,6 +5,82 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Describe vectorized SC outputs as channel sums with optional bias. Preserve
+  unclipped MAC values above one and signed outputs; they are not firing fractions.
+
+- Correct LDS documentation: finite Sobol and Halton bitstreams can have nonzero
+  covariance, even when probabilities use distinct sequence dimensions. Retain
+  the existing sampler, scrambling and thresholding behavior. Remove the same
+  unsupported independence claim from the RTL barrel-shifter comments.
+
+- Make global Rayon startup retryable after worker creation fails. Preserve
+  the shared pool and thread configuration, and return catchable worker-resource
+  refusals from batch encoding, fixed-point batch simulation, Kuramoto stepping
+  and network execution. Preserve validation precedence and neuron state on
+  worker refusal, and leave empty network and zero-step Kuramoto work lazy.
+  Validate attention shapes and admit workers before encoding, keeping empty
+  queries lazy across linear, softmax, stochastic and multi-head paths.
+  Admit graph rate-mode workers after feature validation while retaining serial
+  stochastic graph execution. Validate all cortical CSR blocks before output
+  mutation and worker startup, including malformed final rows.
+  Validate dense-layer dimensions before fallible worker startup in the
+  constructor. Check Pareto columns before worker admission, retain lazy DNA
+  comparisons for fewer than two strands, and leave empty quantum operations
+  lazy. Refuse active annealing couplings with an out-of-range neighbor before
+  starting workers; retain zero-read and zero-sweep behavior.
+  Admit differentiable dense constructors before weight allocation. Keep empty
+  photonic operations and serial MZI/bank analysis lazy, and validate routing
+  adjacency storage before starting workers. Preserve zipped column prefixes.
+  Admit workers before evolutionary population operations and leave empty work
+  lazy. Refuse nonzero tournament selection from an empty population; retain
+  serial seeded sampling and ragged gene-vector prefix behavior.
+
+- Exclude Python interpreter caches from native wheel and source distributions,
+  and reject cached bytecode before wheel artifacts are uploaded by CI.
+
+- Grow generic bitstream and HDC input storage from actual sequence items,
+  avoiding aborts or false allocation refusals from inaccurate length hints.
+
+- Allocate batch-encoded NumPy matrices before sampling and fill their rows
+  directly with the retained parallel Xoshiro/SIMD trace. Make scalar batch
+  word reservation and Python outputs fallible, preserving ChaCha8 draws,
+  empty shapes and exact seeded words.
+
+- Allocate typed packed-bitstream NumPy output fallibly before SIMD packing,
+  preserving nonzero-byte semantics and bit order. Return an owning output
+  and remove intermediate packed-word and partial-tail allocations.
+  Check generic packing input copies, Python output lists and word allocation,
+  retaining byte buffers, nested sequences and conversion refusals.
+
+- Accept empty unpacked bitstreams and refuse truncated packed storage or
+  unrepresentable lengths with Python exceptions. Allocate unpacked bytes
+  and NumPy outputs fallibly, preserving input words and valid bit order.
+
+- Reject empty bitstream-averager windows and unallocatable native buffers
+  with catchable exceptions. Refuse nonbinary samples before changing the
+  native sliding-window state, matching Python's binary-sample contract.
+  Keep Python's running sum in integer arithmetic for large windows and
+  NumPy integer samples.
+
+- Update the Studio's locked `source-map-js` dependency to 1.2.2, fixing
+  GHSA-68fv-2mgg-jv7q without changing the remaining dependency graph.
+
+- Refuse fixed-point Brunel constructor and simulation allocation with
+  `MemoryError`. Allocate the NumPy output before changing network state,
+  preserving inputs and seeded continuation after failure.
+
+- Audit Julia manifest formats 2.0 and 2.1, retaining every exact dependency
+  version and refusing unsupported formats or local replacements.
+
+- Clear the currently selected pending address in the clocked AER encoder,
+  preventing duplicate events from simultaneous spike pulses. Add actual RTL
+  mask, address, coalescing, timestamp-wrap and reset regressions, with current
+  generic synthesis and optimization-equivalence observations.
+
+- Measure isolated SHD workers in subprocess coverage and make the automatic
+  NumPy fallback explicit. Installed-wheel CI now round-trips every public
+  engine class/function global through all supported pickle protocols.
+
 - Show the reason again when a Studio training run cannot start on its data:
   a missing torchvision for MNIST and a validation split that serves no samples
   are owned training refusals, so the job status and the sealed status carry
