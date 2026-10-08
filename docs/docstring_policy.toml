@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 818
+expected_file_count = 823
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3361,3 +3361,22 @@ rationale = "Real canonical RTL priority, every population address, coalescing, 
 [[file]]
 path = "tests/test_tools/test_locked_julia_manifest_native.py"
 rationale = "Actual Julia 1.13 manifest generation retains every package identity in the dependency audit."
+[[file]]
+path = "src/sc_neurocore/layers/sc_dense_layer.py"
+rationale = "Recorded binary spikes, accumulated duration and Hz units, shared noiseless traces, current-tail clamping and reset without RNG reseeding."
+
+[[file]]
+path = "src/sc_neurocore/layers/vectorized_layer.py"
+rationale = "Actual packed channel-sum output semantics; no firing-fraction or channel-normalization promise."
+
+[[file]]
+path = "src/sc_neurocore/utils/lds_decorrelation.py"
+rationale = "Distinct LDS dimensions, actual finite covariance boundary and retained thresholding/output semantics. No statistical-independence guarantee. "
+
+[[file]]
+path = "tests/test_layers/test_vectorized_layer_mac_outputs.py"
+rationale = "Full public exported-weight dense/CSR endpoint dot products and bias, partial-word lengths, and unchanged readonly caller arrays."
+
+[[file]]
+path = "tests/test_lds_decorrelation_generate_decorrelated_bitstreams.py"
+rationale = "Complete public matrix shapes, endpoints, finite seeded raw covariance counterexamples and unchanged readonly probabilities. "

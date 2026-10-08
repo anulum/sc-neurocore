@@ -8,13 +8,14 @@
 //
 // Addresses SSC (Stochastic Sequence Correlation) by circular-shifting
 // N parallel stochastic bitstreams by distinct, configurable offsets.
-// Allows sharing a single high-quality RNG (LFSR / Sobol) across
-// neuron groups whilst maintaining bitstream independence.
+// Shares one source across neuron groups with deterministic phase offsets.
+// Rotations preserve each word's population count; they do not guarantee
+// statistical independence or zero correlation between output streams.
 //
 // Architecture:
 //   - N input streams fed through N barrel shifters with unique rotation
 //   - Shift amounts derived from a counter XOR'd with a per-stream
-//     constant, producing pseudo-independent phase offsets
+//     constant, producing deterministic phase offsets
 //   - Zero latency: combinational shuffling, registered output
 //
 // Usage:

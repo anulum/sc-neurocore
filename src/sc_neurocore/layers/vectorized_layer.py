@@ -4,12 +4,15 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Vectorized Hamming-weight popcount across rows of a
+# SC-NeuroCore — Packed stochastic multiply-accumulate layers
+
+"""Estimate dense or sparse stochastic channel sums with optional output bias."""
 
 from __future__ import annotations
 from typing import Any
 from dataclasses import dataclass, field
 import numpy as np
+import numpy.typing as npt
 from collections.abc import Mapping, Sequence
 
 from ..accel.vector_ops import pack_bitstream, vec_and, vec_xnor
@@ -95,7 +98,7 @@ class VectorizedSCLayer:
     >>> out = layer.forward(np.random.rand(8))
     >>> out.shape
     (4,)
-    >>> (out >= 0).all() and (out <= 1).all()
+    >>> (out >= 0).all() and (out <= layer.n_inputs).all()
     True
     """
 
@@ -111,6 +114,7 @@ class VectorizedSCLayer:
     _rng: np.random.Generator | None = field(init=False, repr=False, default=None)
 
     def __post_init__(self) -> None:
+        """Validate dimensions and encoding, then initialize packed weights and optional bias."""
         if self.n_inputs < 1:
             raise ValueError(f"n_inputs must be >= 1, got {self.n_inputs}")
         if self.n_neurons < 1:
@@ -277,8 +281,13 @@ class VectorizedSCLayer:
 
     # -- Forward ---------------------------------------------------------------
 
-    def forward(self, input_values: Sequence[float]) -> np.ndarray[Any, Any]:
-        """Compute output firing rates for the layer."""
+    def forward(self, input_values: npt.ArrayLike) -> np.ndarray[Any, Any]:
+        """Compute SC multiply-accumulate estimates across input channels.
+
+        Sum the per-input stochastic product estimates, then add the optional
+        bias. Outputs are not normalized across channels and are not neuron
+        firing fractions.
+        """
         in_probs = np.asarray(input_values, dtype=np.float64)
         if in_probs.ndim != 1 or in_probs.shape[0] != self.n_inputs:
             raise ValueError(

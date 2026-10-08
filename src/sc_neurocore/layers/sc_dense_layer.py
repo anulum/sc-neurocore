@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Stochastic-computing dense layer of LIF neurons
 
+"""Record LIF spike trains driven by realised stochastic current traces."""
+
 from __future__ import annotations
 from typing import Any, Optional
 from dataclasses import dataclass
@@ -36,8 +38,10 @@ class SCDenseLayer:
     """
     Stochastic-computing dense layer of LIF neurons.
 
-    Each neuron receives SC dot-product input current and produces independent
-    spike trains. ``weight_values`` may be either a single shared vector of
+    Each neuron receives SC input current and records a binary spike train.
+    Different seeds do not establish statistical independence. Identical neurons
+    receiving the same current with zero noise produce identical spike trains.
+    ``weight_values`` may be either a single shared vector of
     length ``n_inputs`` or a dense matrix shaped ``(n_neurons, n_inputs)``.
     Software-only but fully SC-driven at the input/synapse level.
 
@@ -69,6 +73,7 @@ class SCDenseLayer:
     sc_mode: str = "unipolar"
 
     def __post_init__(self) -> None:
+        """Validate weight shapes and construct current sources, neurons and recorders."""
         if self.n_neurons < 0:
             raise ValueError("n_neurons must be non-negative.")
         self._weight_matrix, self._shared_source = self._normalise_weight_values()
@@ -112,7 +117,6 @@ class SCDenseLayer:
         self.neurons: List[StochasticLIFNeuron] = []
         self.recorders: List[BitstreamSpikeRecorder] = []
         for i in range(self.n_neurons):
-            # Give each neuron its own seed so they don't behave identically
             seed = None
             if self.base_seed is not None:
                 seed = self.base_seed + NEURON_SEED_OFFSET + i
@@ -131,6 +135,7 @@ class SCDenseLayer:
             self.recorders.append(BitstreamSpikeRecorder(dt_ms=self.dt_ms))
 
     def _normalise_weight_values(self) -> tuple[np.ndarray[Any, Any], bool]:
+        """Return finite shared or per-neuron weights with their source-sharing flag."""
         weights = np.asarray(self.weight_values, dtype=np.float64)
         n_inputs = len(self.x_inputs)
         if weights.ndim == 1:
@@ -161,6 +166,11 @@ class SCDenseLayer:
         )
 
     def reset(self) -> None:
+        """Rewind current cursors and clear membrane, refractory and recording state.
+
+        The realised current traces and each neuron's RNG state are retained.
+        Reset therefore does not guarantee replay of a noisy spike train.
+        """
         for source in self.sources:
             source.reset()
         for neuron, rec in zip(self.neurons, self.recorders):
@@ -169,10 +179,18 @@ class SCDenseLayer:
 
     def run(self, T: int) -> None:
         """
-        Run the layer for T time steps, updating all neurons.
+        Append T time steps to the recording, updating all neurons.
 
         A 1-D weight vector produces one shared SC current source for all
         neurons. A 2-D weight matrix produces one SC current source per neuron.
+        Exhausted sources keep returning their final realised current sample.
+
+        Parameters
+        ----------
+        T : int
+            Additional steps to record. Zero and negative counts leave state
+            unchanged, as in ``range(T)``. Recorded duration is the accumulated
+            sample count multiplied by ``dt_ms``, independently of ``length``.
         """
         if self._shared_source:
             for _ in range(T):
@@ -190,7 +208,13 @@ class SCDenseLayer:
 
     def get_spike_trains(self) -> np.ndarray[Any, Any]:
         """
-        Return spike matrix of shape (n_neurons, T).
+        Return all accumulated spike samples as a neuron-by-time matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            A ``uint8`` matrix with shape ``(n_neurons, recorded_steps)``. With
+            no neurons, the returned shape is ``(0, 0)``.
         """
         if not self.recorders:
             return np.zeros((0, 0), dtype=np.uint8)
@@ -203,7 +227,14 @@ class SCDenseLayer:
 
     def summary(self) -> Dict[str, Any]:
         """
-        Return firing statistics for each neuron.
+        Return counts and firing rates over the complete accumulated recording.
+
+        Returns
+        -------
+        dict
+            Neuron count, per-neuron spike totals and firing rates in hertz,
+            and the average rate. Each rate divides its spike count by the
+            recorded duration in seconds. Empty recordings return zero rates.
         """
         stats = []
         for i, rec in enumerate(self.recorders):

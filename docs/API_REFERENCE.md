@@ -22377,8 +22377,10 @@ Example
 ### Class `SCDenseLayer`
 Stochastic-computing dense layer of LIF neurons.
 
-Each neuron receives SC dot-product input current and produces independent
-spike trains. ``weight_values`` may be either a single shared vector of
+Each neuron receives SC input current and records a binary spike train.
+Different seeds do not establish statistical independence. Identical neurons
+receiving the same current with zero noise produce identical spike trains.
+``weight_values`` may be either a single shared vector of
 length ``n_inputs`` or a dense matrix shaped ``(n_neurons, n_inputs)``.
 Software-only but fully SC-driven at the input/synapse level.
 
@@ -22394,13 +22396,15 @@ Example
 (4, 100)
 
 - **__post_init__**()
+  - Validate weight shapes and construct current sources, neurons and recorders.
 - **reset**()
+  - Rewind current cursors and clear membrane, refractory and recording state.
 - **run**(T)
-  - Run the layer for T time steps, updating all neurons.
+  - Append T time steps to the recording, updating all neurons.
 - **get_spike_trains**()
-  - Return spike matrix of shape (n_neurons, T).
+  - Return all accumulated spike samples as a neuron-by-time matrix.
 - **summary**()
-  - Return firing statistics for each neuron.
+  - Return counts and firing rates over the complete accumulated recording.
 
 ---
 
@@ -22436,14 +22440,15 @@ Example
 >>> out = layer.forward(np.random.rand(8))
 >>> out.shape
 (4,)
->>> (out >= 0).all() and (out <= 1).all()
+>>> (out >= 0).all() and (out <= layer.n_inputs).all()
 True
 
 - **__post_init__**()
+  - Validate dimensions and encoding, then initialize packed weights and optional bias.
 - **from_exported_weights**(cls, exported_layer)
   - Build a packed SC inference layer from ``to_sc_weights()`` output.
 - **forward**(input_values)
-  - Compute output firing rates for the layer.
+  - Compute SC multiply-accumulate estimates across input channels.
 
 ---
 
@@ -52620,10 +52625,11 @@ Here we implement a simple saturating counter.
 ## Module `utils.lds_decorrelation`
 
 ### Function `generate_decorrelated_bitstreams(probabilities, length, method, seed)`
-Generate decorrelated bitstreams for a probability matrix.
+Threshold distinct LDS dimensions for a probability matrix.
 
-Each element of the probability matrix gets its own LDS dimension,
-ensuring zero correlation between any pair of bitstreams.
+Each matrix element uses its own sequence dimension. Finite thresholded
+streams can remain correlated; dimension assignment gives no exact
+zero-covariance or statistical-independence guarantee.
 
 Parameters
 ----------
