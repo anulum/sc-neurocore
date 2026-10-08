@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 816
+expected_file_count = 817
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_snapshot.py"
@@ -3355,3 +3355,6 @@ rationale = "An interrupted native DVS read kills and reaps its reader."
 [[file]]
 path = "tests/test_accel_shd_recording_refusals.py"
 rationale = "SHD recording readers: refusals of unusable settings, protocol violations and non-numeric vectors."
+[[file]]
+path = "tests/test_sc_aer_encoder.py"
+rationale = "Real canonical RTL priority, every population address, coalescing, reset and observed service-cycle contracts at N4 and N128."

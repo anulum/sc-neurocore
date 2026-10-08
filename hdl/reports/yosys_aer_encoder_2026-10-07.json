@@ -1,0 +1,93 @@
+{
+  "schema_version": "sc-neurocore.yosys-synthesis.v1",
+  "date": "2026-10-07",
+  "tool": "Yosys 0.33 (git sha1 2584903a060)",
+  "top": "sc_aer_encoder",
+  "source": "hdl/sc_aer_encoder.v",
+  "source_sha256": "0b2ab4c58f7d889c1f33973562dcde7e213515849d59bc2e1a35d019210cf959",
+  "parameters": {
+    "N_NEURONS": 128,
+    "NEURON_ID_WIDTH": 7,
+    "TIMESTAMP_WIDTH": 16
+  },
+  "target": "Generic gate-level synthesis, no technology library",
+  "command": "read_verilog hdl/sc_aer_encoder.v; hierarchy -check -top sc_aer_encoder; synth -top sc_aer_encoder -flatten; check -assert; stat -json",
+  "result": "pass",
+  "resources": {
+    "num_wires": 1678,
+    "num_wire_bits": 2132,
+    "num_pub_wires": 13,
+    "num_pub_wire_bits": 467,
+    "num_memories": 0,
+    "num_memory_bits": 0,
+    "num_processes": 0,
+    "num_cells": 1953,
+    "num_cells_by_type": {
+      "$_ANDNOT_": 553,
+      "$_DFFE_PN0P_": 23,
+      "$_DFF_PN0_": 129,
+      "$_NAND_": 2,
+      "$_NOR_": 34,
+      "$_ORNOT_": 160,
+      "$_OR_": 1052
+    }
+  },
+  "same_tool_before_correction": {
+    "source_reference": "737a49268e92533141fa8ddf8f8544a482852dec:hdl/sc_aer_encoder.v",
+    "source_sha256": "bf628bee872f13212bf9b95004b48442c63922861b3cce82fb98040425bd3933",
+    "resources": {
+      "num_wires": 1684,
+      "num_wire_bits": 2138,
+      "num_pub_wires": 13,
+      "num_pub_wire_bits": 467,
+      "num_memories": 0,
+      "num_memory_bits": 0,
+      "num_processes": 0,
+      "num_cells": 1959,
+      "num_cells_by_type": {
+        "$_ANDNOT_": 554,
+        "$_DFFE_PN0P_": 23,
+        "$_DFF_PN0_": 129,
+        "$_NAND_": 1,
+        "$_NOR_": 33,
+        "$_NOT_": 5,
+        "$_ORNOT_": 35,
+        "$_OR_": 1179
+      }
+    },
+    "semantic_result": "The original encoder duplicates pending addresses; this baseline is a resource comparison, not a qualified functional implementation."
+  },
+  "resource_delta": {
+    "cells": -6,
+    "wire_bits": -6
+  },
+  "source_regression": {
+    "neurons": [
+      4,
+      128
+    ],
+    "timestamp_widths": [
+      8,
+      16
+    ],
+    "population_cases": {
+      "4": 24,
+      "128": 148
+    },
+    "scope": "Exhaustive low-four-bit masks, every address, full population, concurrent merge/coalescing, timestamp wrap and asynchronous reset."
+  },
+  "optimized_netlist_simulation": {
+    "neurons": 128,
+    "full_burst_events": 128,
+    "service_cycles": 128,
+    "capture_cycles": 1,
+    "population_cases": 148
+  },
+  "optimization_equivalence": {
+    "result": "pass",
+    "proven_equivalence_cells": 186,
+    "unproven": 0,
+    "scope": "Corrected transition system before/after optimization with async2sync/dffunmap normalization; equivalent at two-step induction."
+  },
+  "claim_boundary": "Generic synthesis and RTL/netlist simulation observations only; board timing and rail energy require device measurements."
+}

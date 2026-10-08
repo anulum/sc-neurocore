@@ -35,7 +35,7 @@ build/
     sc_lif_neuron.v      Q8.8 LIF core
     sc_bitstream_encoder.v  LFSR encoder
     sc_dense_layer_core.v   Dense layer pipeline
-    sc_aer_encoder.v     Event-driven AER encoder
+    sc_aer_encoder.v     Clocked priority AER encoder with coalesced pending bits
     sc_event_neuron.v    Event-triggered LIF
     ...
   Makefile               Yosys build script (ice40/ecp5)

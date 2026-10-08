@@ -110,11 +110,17 @@ in hardware:
 
 | Module | Function | Benefit |
 |--------|----------|---------|
-| `aer_encoder.v` | Converts parallel spikes to AER packets | Only active neurons generate traffic |
-| `event_neuron.v` | Updates membrane only on input events | Zero power when idle |
-| `spike_router.v` | Routes AER packets to target neurons | Bandwidth proportional to activity |
+| `sc_aer_encoder.v` | Emits one lowest-index pending address per clock | Each captured pending bit is served once |
+| `sc_event_neuron.v` | Integrates input events and applies periodic leak | Event/leak-conditioned membrane arithmetic |
+| `sc_aer_router.v` | Routes AER packets to target neurons | Traffic follows routed activity |
 
-Measured power savings vs clock-driven RTL:
+The encoder stores one coalesced pending bit per neuron. Clearing the served
+bit wins over a simultaneous spike on that bit, and the emitted timestamp
+records its service clock. Its outputs need a downstream queue that accepts
+one event per clock. Current [synthesis and cycle observations](../hardware/SYNTHESIS_RESULTS.md)
+cover the encoder correction.
+
+Historical reported switching reductions versus clock-driven RTL:
 
 | Activity Rate | Clock-Driven Toggles | Event-Driven Toggles | Reduction |
 |--------------|---------------------|---------------------|-----------|
@@ -122,7 +128,11 @@ Measured power savings vs clock-driven RTL:
 | 1% | baseline | 15× fewer | 93% |
 | 0.1% | baseline | 39× fewer | 97% |
 
-These are measured toggle counts from RTL simulation, not estimates.
+The retained figures need their source-bound stimulus and toggle-count receipts
+before qualifying a current implementation. The encoder observations above
+measure addresses, service cycles and generic resource counts; they do not
+measure power. Clocked leak counters and clock distribution remain active even
+when no input spike arrives.
 
 ## When to Use Event-Driven vs Clock-Driven
 

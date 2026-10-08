@@ -4,13 +4,15 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Source/config provenance header
+// SC-NeuroCore — Clocked priority AER encoder with coalesced pending bits
 
 // SC-NeuroCore — AER spike encoder: neuron spike → address-event packet
 //
 // Converts spike outputs from a population of N neurons into
-// Address-Event Representation (AER) packets. Only active neurons
-// generate events — idle neurons consume zero switching power.
+// Address-Event Representation (AER) packets. Idle inputs produce no events.
+// One lowest-index pending bit is served per cycle; overlapping spikes on an
+// already pending bit coalesce. Clearing the served bit takes precedence over
+// a simultaneous spike on that bit. The timestamp records the service cycle.
 //
 // AER packet format: {valid, neuron_id, timestamp}
 //   - valid: 1-bit flag
@@ -28,7 +30,7 @@ module sc_aer_encoder #(
 )(
     input  wire                         clk,
     input  wire                         rst_n,
-    input  wire [N_NEURONS-1:0]         spike_vector,  // one-hot spike flags
+    input  wire [N_NEURONS-1:0]         spike_vector,  // per-neuron spike flags
     input  wire [TIMESTAMP_WIDTH-1:0]   timestamp,     // global timestamp
 
     // AER output (single event per cycle, priority-encoded)
@@ -36,7 +38,7 @@ module sc_aer_encoder #(
     output reg  [NEURON_ID_WIDTH-1:0]   event_neuron_id,
     output reg  [TIMESTAMP_WIDTH-1:0]   event_timestamp,
 
-    // Backpressure: high when multiple spikes need multiple cycles
+    // High while at least one previously captured spike remains pending
     output wire                         busy
 );
 
@@ -45,15 +47,15 @@ module sc_aer_encoder #(
     wire [N_NEURONS-1:0] next_pending;
     wire has_pending;
 
-    // Latch new spikes on each cycle, clear served ones
-    assign next_pending = (pending | spike_vector) & ~(has_pending ? (1 << event_neuron_id) : 0);
-    assign has_pending  = |pending;
-    assign busy         = has_pending;
-
     // Priority encoder: find lowest set bit
     integer i;
     reg [NEURON_ID_WIDTH-1:0] lowest_id;
     reg found;
+
+    // Latch new spikes on each cycle, clear served ones
+    assign next_pending = (pending | spike_vector) & ~(has_pending ? (1 << lowest_id) : 0);
+    assign has_pending  = |pending;
+    assign busy         = has_pending;
 
     always @(*) begin
         lowest_id = 0;

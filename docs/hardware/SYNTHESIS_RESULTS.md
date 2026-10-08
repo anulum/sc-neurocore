@@ -1,6 +1,7 @@
 # Yosys Synthesis Results
 
-Gate-level synthesis of SC-NeuroCore Verilog RTL modules using Yosys 0.63.
+Gate-level synthesis of SC-NeuroCore Verilog RTL modules. The original rows use
+Yosys 0.63; the current AER encoder observation uses Yosys 0.33 as detailed below.
 
 **Synthesized**: 2026-03-25
 **Yosys version**: 0.63+173 (OSS CAD Suite)
@@ -14,9 +15,30 @@ Gate-level synthesis of SC-NeuroCore Verilog RTL modules using Yosys 0.63.
 | `sc_bitstream_encoder.v` | 115 | 181 | LFSR-16 + comparator (bit-true with Python PredictiveSpikeCodec LFSR mode) |
 | `sc_cordiv.v` | 2 | 6 | CORDIV stochastic division (1 AND + 1 MUX per bit) |
 | `sc_dotproduct_to_current.v` | 448 | 515 | AND accumulation + popcount for dense layer |
-| `sc_aer_encoder.v` | 1,423 | 1,602 | Priority encoder for AER event generation from spike vector |
+| `sc_aer_encoder.v` | 1,953 | 2,132 | Corrected pending-bit priority encoder; Yosys 0.33, 2026-10-07 |
 | `sc_event_neuron.v` | 2,135 | 2,202 | Event-driven LIF with async spike I/O |
 | `sc_lif_neuron.v` | 3,134 | 3,216 | Q8.8 fixed-point LIF (integrate + fire + reset) |
+
+## Current AER encoder observation — 2026-10-07
+
+The corrected default encoder (`N_NEURONS=128`, seven-bit addresses and
+16-bit timestamps) uses 1,953 generic cells and 2,132 wire bits with Yosys
+0.33 (`2584903a060`). Repeating the same synthesis on the previous source
+produced 1,959 cells and 2,138 wire bits: both counts decrease by six. The old
+1,423-cell observation used Yosys 0.63 and a different source; it is historical
+and cannot establish this comparison.
+
+Actual RTL regressions cover all low-four-neuron masks, every address,
+full-population bursts, simultaneous merge/coalescing, timestamp wrap and reset
+at populations of four and 128 with eight- and 16-bit timestamps. The optimized
+default netlist passes the same 148-case population trace. Its full burst emits
+128 addresses over 128 service clocks after one capture clock. Yosys proves all
+186 source/optimized equivalence cells after reset normalization.
+
+The [source-bound report](../../hdl/reports/yosys_aer_encoder_2026-10-07.json)
+records the commands, counts and scope. These are generic synthesis and
+simulation observations; board clock limits and rail energy need device
+measurements.
 
 ## BCI Codec Hardware Estimates
 

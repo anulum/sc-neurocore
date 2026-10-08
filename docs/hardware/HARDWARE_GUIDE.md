@@ -122,10 +122,18 @@ SNN execution:
 
 | Module | Purpose |
 |--------|---------|
-| `sc_aer_encoder.v` | Converts spike vector to AER (Address-Event Representation) packets. Only active neurons generate events. |
-| `sc_event_neuron.v` | Q8.8 LIF that computes only on input events or periodic leak ticks. Idle neurons consume zero switching power. |
+| `sc_aer_encoder.v` | Captures a coalesced spike mask and emits each lowest-index pending address once, with its service-cycle timestamp. |
+| `sc_event_neuron.v` | Q8.8 LIF with membrane integration on input events and decay on periodic leak ticks. |
 | `sc_aer_router.v` | Distributes AER events to target neurons using BRAM connectivity lookup. Sparse fanout serialized. |
 | `sc_aer_priority_queue.v` | Strict-priority AER queue for downstream backpressure, FIFO ties within priority, sticky drop traps, and critical-event deadline traps. |
+
+The clocked encoder emits one address per clock while pending bits remain.
+Repeated spikes on an already pending bit coalesce; clearing the served bit
+takes precedence over a simultaneous spike on that bit. Its `busy` output
+reports captured pending bits. Connect its event outputs to a queue that can
+accept this cadence; the encoder has no output-ready input. See the dated
+[AER synthesis and simulation observations](SYNTHESIS_RESULTS.md) for the
+current source, resource counts and cycle measurements.
 
 For a 1000-neuron network firing at 10 Hz with 1 MHz clock:
 - **Clock-driven**: 1000 neurons × 1M cycles/s = 1 billion operations/s

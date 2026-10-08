@@ -186,6 +186,11 @@ The predictive codec maps to on-implant ASIC with minimal gate count:
 Verilog building blocks in `hdl/`: `sc_aer_encoder.v`, `sc_lif_neuron.v`,
 `sc_bitstream_encoder.v`.
 
+The clocked `sc_aer_encoder.v` serves each lowest-index pending address once,
+with a service-cycle timestamp. Pending spike bits coalesce, and clearing the
+served bit takes precedence over a simultaneous spike on that bit. A downstream
+queue must accept the encoder's one-event-per-clock cadence.
+
 ## Next Steps
 
 - [Spike Codec Library Guide](../guides/bci_codec.md) — architecture details, parameter tuning

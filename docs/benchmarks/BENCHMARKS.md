@@ -742,16 +742,25 @@ All above Neuralink 200x target.
 
 ### Yosys Synthesis (gate counts)
 
-Generic gate-level synthesis via Yosys 0.63:
+Generic gate-level synthesis via Yosys 0.63, except the current AER row,
+reobserved with Yosys 0.33 on 2026-10-07:
 
 | Verilog Module | Cells | Function |
 |---------------|------:|----------|
 | `sc_bitstream_encoder.v` | 115 | LFSR predictor (bit-true with Python/Rust) |
 | `sc_cordiv.v` | 2 | Stochastic division |
 | `sc_dotproduct_to_current.v` | 448 | AND accumulation + popcount |
-| `sc_aer_encoder.v` | 1,423 | Priority encoder for AER |
+| `sc_aer_encoder.v` | 1,953 | Corrected AER pending-bit priority encoder (Yosys 0.33) |
 | `sc_event_neuron.v` | 2,135 | Event-driven LIF |
 | `sc_lif_neuron.v` | 3,134 | Q8.8 fixed-point LIF |
+
+For the default 128-neuron AER encoder, the same-tool source comparison is
+1,959 → 1,953 cells and 2,138 → 2,132 wire bits. The optimized netlist emits
+128 addresses in 128 service cycles after one capture cycle and passes the
+148-case trace; all 186 optimization-equivalence cells are proven. See the
+[dated synthesis observations](../hardware/SYNTHESIS_RESULTS.md) and
+[source-bound report](../../hdl/reports/yosys_aer_encoder_2026-10-07.json).
+Board frequency and energy are outside these generic synthesis observations.
 
 1024-channel codec estimate: ~406K gates, ~0.02 mm^2 at 7nm.
 

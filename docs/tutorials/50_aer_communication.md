@@ -97,7 +97,11 @@ Connect multiple FPGAs via standard Ethernet switches:
 FPGA_A (layer 1) → Ethernet switch → FPGA_B (layer 2) → FPGA_C (readout)
 ```
 
-Each FPGA runs `aer_encoder.v` (output) and `spike_router.v` (input):
+Each FPGA uses `sc_aer_encoder.v` (output) and `sc_aer_router.v` (input).
+The clocked encoder emits one lowest-index pending address per cycle and records
+the service-cycle timestamp. Already pending spike bits coalesce, with clearing
+the served bit taking precedence over a simultaneous spike on that bit. A queue
+between the encoder and transport owns downstream flow control.
 
 ```python
 # FPGA A: encode output spikes as AER-over-UDP
@@ -117,7 +121,8 @@ Events/second: 10,000 × 0.01 × 1000 Hz = 100,000 events/s
 Bandwidth: 100,000 × 8 bytes = 800 KB/s (0.6% of Gigabit Ethernet)
 ```
 
-Gigabit Ethernet can sustain ~125 million events/second — enough for
+The raw Gigabit Ethernet line-rate ceiling for eight-byte events is
+15.625 million events/second before framing and protocol overhead — enough for
 a multi-million neuron distributed system.
 
 ## Hardware-in-the-Loop
