@@ -57,10 +57,15 @@ surface.
 
 ## Evidence Bundles
 
-`sc_inference_evidence()` maps a stochastic inference result into a measured
-software evidence bundle. It renders as `reference-validated` only when the
-accelerated backend is bit-identical to the NumPy reference for the fixed seed.
-Otherwise the claim is bounded and rejected by the shared platform lattice.
+`sc_inference_evidence()` maps a stochastic inference result into a `measured`
+software parity bundle on the `numerical-model` substrate. The activity is
+`simulate`: the scientific subject is the numerical forward-pass model. It
+renders as `reference-validated` only when the accelerated backend is
+bit-identical to the NumPy reference for the fixed seed and re-checked at source.
+This establishes implementation parity; it does not establish physical or
+independent scientific validation of the model. Otherwise the claim is bounded
+and rejected by the shared platform lattice. Older bundles without a substrate
+retain their original bytes and do not acquire this axis retrospectively.
 
 `fpga_deployment_evidence()` maps a pre-silicon synthesis/co-simulation result
 into a `measured` bundle on the `simulator` substrate. It renders as

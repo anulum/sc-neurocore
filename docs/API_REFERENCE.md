@@ -19608,7 +19608,7 @@ ValueError
   - Validate finite report values and their SHA-256 identity.
 
 ### Function `sc_inference_evidence(result)`
-Build the ``studio.sc-inference.v1`` bundle (measured software result).
+Build measured software parity evidence on a numerical model.
 
 Parameters
 ----------
@@ -19629,8 +19629,10 @@ freshness
 Returns
 -------
 EvidenceBundle
-    A ``measured`` bundle that renders as validated only when the accelerated
-    backend is bit-identical to the NumPy floor.
+    A ``studio.sc-inference.v1`` measured bundle on ``numerical-model`` that
+    renders as validated only when the accelerated backend is bit-identical
+    to the NumPy floor. The comparison establishes implementation parity,
+    without physical or independent scientific validation of the model.
 
 Raises
 ------

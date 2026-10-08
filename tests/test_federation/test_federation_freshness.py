@@ -61,6 +61,9 @@ def test_rechecked_inference_federates_with_explicit_freshness(
     )
     wire = bundle.to_dict()
     assert wire["freshness"] == "verified-at-source"
+    assert wire["substrate"] == "numerical-model"
+    assert wire["evidence_kind"] == "measured"
+    assert wire["prov"]["activity"]["verb"] == "simulate"
     assert wire["prov"]["entity"]["digest"] == inference_result.result_digest
     verdict = validate_studio_bundle(wire)
     assert verdict.admitted and verdict.mode == "validated"
@@ -95,6 +98,7 @@ def test_unchecked_mismatch_remains_a_boundary(inference_result: ScInferenceResu
     verdict = validate_studio_bundle(bundle.to_dict())
     assert verdict.admitted and verdict.mode == "boundary"
     assert bundle.to_dict()["freshness"] == "traceable-unchecked"
+    assert bundle.to_dict()["substrate"] == "numerical-model"
 
 
 def test_manifest_requires_a_consumer_with_the_same_era() -> None:

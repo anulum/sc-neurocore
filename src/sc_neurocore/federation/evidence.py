@@ -12,10 +12,11 @@ Maps SC-NeuroCore's provenance-graded result surfaces onto the locked platform
 :class:`scpn_studio_platform.evidence.EvidenceBundle`. Two mappers exercise the
 contract's honesty invariant from opposite ends of the evidence ladder:
 
-- :func:`sc_inference_evidence` is a ``measured`` software result. Its claim is
-  ``reference-validated`` only when the accelerated backend is bit-identical to the
-  NumPy floor for a fixed seed; otherwise the claim degrades to ``bounded-model``
-  and is not admitted.
+- :func:`sc_inference_evidence` records measured software parity on the
+  ``numerical-model`` substrate. Its claim is ``reference-validated`` only when
+  the accelerated backend is bit-identical to the NumPy floor for a fixed seed;
+  otherwise the claim degrades to ``bounded-model`` and is not admitted. This
+  comparison does not establish physical or independent validation of the model.
 - :func:`fpga_deployment_evidence` records measured pre-silicon co-simulation
   against the Q8.8 fixed-point reference, on the ``simulator`` substrate. Its
   claim is ``reference-validated`` only when the co-simulation is bit-exact and
@@ -200,7 +201,7 @@ def sc_inference_evidence(
     host: str | None = None,
     freshness: Freshness | None = None,
 ) -> EvidenceBundle:
-    """Build the ``studio.sc-inference.v1`` bundle (measured software result).
+    """Build measured software parity evidence on a numerical model.
 
     Parameters
     ----------
@@ -221,8 +222,10 @@ def sc_inference_evidence(
     Returns
     -------
     EvidenceBundle
-        A ``measured`` bundle that renders as validated only when the accelerated
-        backend is bit-identical to the NumPy floor.
+        A ``studio.sc-inference.v1`` measured bundle on ``numerical-model`` that
+        renders as validated only when the accelerated backend is bit-identical
+        to the NumPy floor. The comparison establishes implementation parity,
+        without physical or independent scientific validation of the model.
 
     Raises
     ------
@@ -258,6 +261,7 @@ def sc_inference_evidence(
         agent=agent,
         evidence_level=EvidenceLevel.ENGINEERING_VERIFIED,
         evidence_kind=EvidenceKind.MEASURED,
+        substrate=Substrate.NUMERICAL_MODEL,
         claim_boundary=claim,
         freshness=freshness,
         numeric_provenance=numeric,
