@@ -11,6 +11,10 @@
 
 #include <stdint.h>
 
+/* Status: 0 success, 1 count/buffer, 2 configuration, 3 current,
+ * 4 non-finite candidate, 5 trace allocation failure.
+ * All refusals preserve caller-owned traces and final receipts. */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

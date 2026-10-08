@@ -15,7 +15,7 @@ use numpy::{
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-use crate::layer;
+use crate::{layer, runtime_control_binding::ensure_parallel_runtime};
 
 /// Register the stochastic-computing dense layer with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -32,10 +32,21 @@ pub struct DenseLayer {
 impl DenseLayer {
     #[new]
     #[pyo3(signature = (n_inputs, n_neurons, length=1024, seed=24301))]
-    fn new(n_inputs: usize, n_neurons: usize, length: usize, seed: u64) -> Self {
-        Self {
-            inner: layer::DenseLayer::new(n_inputs, n_neurons, length, seed),
+    /// Validate dimensions and admit workers before creating packed weights.
+    fn new(n_inputs: usize, n_neurons: usize, length: usize, seed: u64) -> PyResult<Self> {
+        if length == 0 {
+            return Err(PyValueError::new_err("bitstream length must be > 0"));
         }
+        if n_inputs == 0 {
+            return Err(PyValueError::new_err("n_inputs must be > 0"));
+        }
+        if n_neurons == 0 {
+            return Err(PyValueError::new_err("n_neurons must be > 0"));
+        }
+        ensure_parallel_runtime()?;
+        Ok(Self {
+            inner: layer::DenseLayer::new(n_inputs, n_neurons, length, seed),
+        })
     }
 
     fn get_weights(&self) -> Vec<Vec<f64>> {

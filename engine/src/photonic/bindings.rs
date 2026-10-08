@@ -25,6 +25,15 @@ fn py_ph_route_waveguides<'py>(
     pitch_um: f64,
     loss_db_per_cm: f64,
 ) -> PyResult<Py<PyAny>> {
+    if n >= 2 {
+        let required = n.checked_mul(n).and_then(|size| size.checked_sub(1));
+        if required.is_none_or(|size| adjacency_flat.len() < size) {
+            return Err(pyo3::exceptions::PyValueError::new_err(
+                "adjacency storage must cover every off-diagonal entry",
+            ));
+        }
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     let result = photonic::route_waveguides(&adjacency_flat, n, pitch_um, loss_db_per_cm);
 
     let dict = PyDict::new(py);
@@ -67,6 +76,13 @@ fn py_ph_analyze_crosstalk<'py>(
     powers: Vec<f64>,
     adjacent_xt_db: f64,
 ) -> PyResult<Py<PyAny>> {
+    if !channel_ids.is_empty()
+        && !wavelengths.is_empty()
+        && !bandwidths.is_empty()
+        && !powers.is_empty()
+    {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     let channels: Vec<(usize, f64, f64, f64)> = channel_ids
         .into_iter()
         .zip(wavelengths)
@@ -102,6 +118,9 @@ fn py_ph_analyze_power_budget<'py>(
     laser_power_dbm: f64,
     detector_sensitivity_dbm: f64,
 ) -> PyResult<Py<PyAny>> {
+    if !wg_sources.is_empty() && !wg_targets.is_empty() && !wg_losses.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     let wgs: Vec<(usize, usize, f64)> = wg_sources
         .into_iter()
         .zip(wg_targets)
@@ -184,6 +203,9 @@ fn py_ph_analyze_crosstalk_pairs<'py>(
         return Err(pyo3::exceptions::PyValueError::new_err(
             "pairs_a, pairs_b, gaps_nm, lengths_um must be equal length",
         ));
+    }
+    if n != 0 {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
     }
     let pairs: Vec<(usize, usize, f64, f64)> = pairs_a
         .into_iter()

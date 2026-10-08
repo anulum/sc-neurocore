@@ -14,6 +14,7 @@ use pyo3::prelude::*;
 use crate::{
     graph,
     matrix_inputs_binding::{extract_matrix_f64, reshape_flat_to_rows},
+    runtime_control_binding::ensure_parallel_runtime,
 };
 
 /// Register the stochastic graph layer with the extension module.
@@ -96,6 +97,7 @@ impl PyStochasticGraphLayer {
         self.inner.is_sparse()
     }
 
+    /// Aggregate graph features after shape validation and worker admission.
     fn forward(&self, node_features: &Bound<'_, PyAny>) -> PyResult<Vec<Vec<f64>>> {
         let (x_flat, x_rows, x_cols) = extract_matrix_f64(node_features, "node_features")?;
         if x_rows != self.inner.n_nodes || x_cols != self.inner.n_features {
@@ -103,6 +105,9 @@ impl PyStochasticGraphLayer {
                 "Expected node_features shape ({}, {}), got ({}, {}).",
                 self.inner.n_nodes, self.inner.n_features, x_rows, x_cols
             )));
+        }
+        if self.inner.n_nodes != 0 {
+            ensure_parallel_runtime()?;
         }
         let out = self.inner.forward(&x_flat).map_err(PyValueError::new_err)?;
         Ok(reshape_flat_to_rows(

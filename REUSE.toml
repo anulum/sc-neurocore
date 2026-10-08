@@ -107,3 +107,23 @@ path = ["tests/fixtures/nir_interop/*.nir"]
 precedence = "override"
 SPDX-FileCopyrightText = "2023 NIR Team"
 SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = ["bridge/vendor/rayon-core/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2010 The Rust Project Developers"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+[[annotations]]
+path = [
+  "bridge/vendor/rayon-core/Cargo.toml",
+  "bridge/vendor/rayon-core/src/registry.rs",
+  "bridge/vendor/rayon-core/src/sleep/README.md",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2010 The Rust Project Developers",
+  "1996-2026 Miroslav Šotek (concepts)",
+  "2020-2026 Miroslav Šotek (modifications)",
+]
+SPDX-License-Identifier = "AGPL-3.0-or-later AND (MIT OR Apache-2.0)"

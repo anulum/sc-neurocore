@@ -14,6 +14,7 @@ use pyo3::prelude::*;
 use crate::{
     attention,
     matrix_inputs_binding::{extract_matrix_f64, reshape_flat_to_rows},
+    runtime_control_binding::ensure_parallel_runtime,
 };
 
 /// Register stochastic attention with the extension module.
@@ -43,6 +44,7 @@ impl PyStochasticAttention {
         }
     }
 
+    /// Compute softmax attention after shape and worker admission.
     fn forward_softmax(
         &self,
         q: &Bound<'_, PyAny>,
@@ -52,6 +54,13 @@ impl PyStochasticAttention {
         let (q_data, q_rows, q_cols) = extract_matrix_f64(q, "Q")?;
         let (k_data, k_rows, k_cols) = extract_matrix_f64(k, "K")?;
         let (v_data, v_rows, v_cols) = extract_matrix_f64(v, "V")?;
+        attention::validate_shapes(
+            &q_data, q_rows, q_cols, &k_data, k_rows, k_cols, &v_data, v_rows, v_cols,
+        )
+        .map_err(PyValueError::new_err)?;
+        if q_rows != 0 {
+            ensure_parallel_runtime()?;
+        }
 
         let out = self
             .inner
@@ -64,6 +73,7 @@ impl PyStochasticAttention {
     }
 
     #[pyo3(signature = (q, k, v, n_heads))]
+    /// Compute softmax heads after validating all head and matrix dimensions.
     fn forward_multihead_softmax(
         &self,
         q: &Bound<'_, PyAny>,
@@ -74,6 +84,13 @@ impl PyStochasticAttention {
         let (q_data, q_rows, q_cols) = extract_matrix_f64(q, "Q")?;
         let (k_data, k_rows, k_cols) = extract_matrix_f64(k, "K")?;
         let (v_data, v_rows, v_cols) = extract_matrix_f64(v, "V")?;
+        attention::validate_multihead_shapes(
+            &q_data, q_rows, q_cols, &k_data, k_rows, k_cols, &v_data, v_rows, v_cols, n_heads,
+        )
+        .map_err(PyValueError::new_err)?;
+        if q_rows != 0 {
+            ensure_parallel_runtime()?;
+        }
 
         let out = self
             .inner
@@ -86,6 +103,7 @@ impl PyStochasticAttention {
         Ok(reshape_flat_to_rows(out, q_rows, out_cols))
     }
 
+    /// Compute linear attention with recoverable worker startup.
     fn forward(
         &self,
         q: &Bound<'_, PyAny>,
@@ -95,6 +113,13 @@ impl PyStochasticAttention {
         let (q_data, q_rows, q_cols) = extract_matrix_f64(q, "Q")?;
         let (k_data, k_rows, k_cols) = extract_matrix_f64(k, "K")?;
         let (v_data, v_rows, v_cols) = extract_matrix_f64(v, "V")?;
+        attention::validate_shapes(
+            &q_data, q_rows, q_cols, &k_data, k_rows, k_cols, &v_data, v_rows, v_cols,
+        )
+        .map_err(PyValueError::new_err)?;
+        if q_rows != 0 {
+            ensure_parallel_runtime()?;
+        }
 
         let out = self
             .inner
@@ -107,6 +132,7 @@ impl PyStochasticAttention {
     }
 
     #[pyo3(signature = (q, k, v, length=1024, seed=44257))]
+    /// Encode stochastic attention only after input and worker admission.
     fn forward_sc(
         &self,
         q: &Bound<'_, PyAny>,
@@ -118,6 +144,16 @@ impl PyStochasticAttention {
         let (q_data, q_rows, q_cols) = extract_matrix_f64(q, "Q")?;
         let (k_data, k_rows, k_cols) = extract_matrix_f64(k, "K")?;
         let (v_data, v_rows, v_cols) = extract_matrix_f64(v, "V")?;
+        attention::validate_shapes(
+            &q_data, q_rows, q_cols, &k_data, k_rows, k_cols, &v_data, v_rows, v_cols,
+        )
+        .map_err(PyValueError::new_err)?;
+        if length == 0 {
+            return Err(PyValueError::new_err("length must be > 0 for SC mode."));
+        }
+        if q_rows != 0 {
+            ensure_parallel_runtime()?;
+        }
 
         let out = self
             .inner
@@ -131,6 +167,7 @@ impl PyStochasticAttention {
     }
 
     #[pyo3(signature = (q, k, v, n_heads))]
+    /// Compute linear heads with recoverable worker startup.
     fn forward_multihead(
         &self,
         q: &Bound<'_, PyAny>,
@@ -141,6 +178,13 @@ impl PyStochasticAttention {
         let (q_data, q_rows, q_cols) = extract_matrix_f64(q, "Q")?;
         let (k_data, k_rows, k_cols) = extract_matrix_f64(k, "K")?;
         let (v_data, v_rows, v_cols) = extract_matrix_f64(v, "V")?;
+        attention::validate_multihead_shapes(
+            &q_data, q_rows, q_cols, &k_data, k_rows, k_cols, &v_data, v_rows, v_cols, n_heads,
+        )
+        .map_err(PyValueError::new_err)?;
+        if q_rows != 0 {
+            ensure_parallel_runtime()?;
+        }
 
         let out = self
             .inner

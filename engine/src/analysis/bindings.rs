@@ -8,6 +8,13 @@
 
 //! Python bindings for spike-train and neural-signal analysis.
 
+mod arrays;
+mod causality;
+mod covariance;
+mod decoding;
+mod neural_decoders;
+mod patterns;
+
 use crate::analysis;
 use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2, PyUntypedArrayMethods,
@@ -34,17 +41,16 @@ pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_hurst_exponent, m)?)?;
     m.add_function(wrap_pyfunction!(py_approximate_entropy, m)?)?;
     m.add_function(wrap_pyfunction!(py_sample_entropy, m)?)?;
+    covariance::register(m)?;
     // correlation
     m.add_function(wrap_pyfunction!(py_cross_correlation, m)?)?;
     m.add_function(wrap_pyfunction!(py_pairwise_correlation, m)?)?;
     m.add_function(wrap_pyfunction!(py_event_synchronization, m)?)?;
     m.add_function(wrap_pyfunction!(py_spike_train_coherence, m)?)?;
     m.add_function(wrap_pyfunction!(py_spike_time_tiling_coefficient, m)?)?;
-    m.add_function(wrap_pyfunction!(py_covariance_matrix, m)?)?;
     m.add_function(wrap_pyfunction!(py_autocorrelation_time, m)?)?;
     m.add_function(wrap_pyfunction!(py_noise_correlation, m)?)?;
     m.add_function(wrap_pyfunction!(py_signal_correlation, m)?)?;
-    m.add_function(wrap_pyfunction!(py_spike_count_covariance, m)?)?;
     m.add_function(wrap_pyfunction!(py_joint_psth, m)?)?;
     m.add_function(wrap_pyfunction!(py_coincidence_index, m)?)?;
     // distance
@@ -69,24 +75,9 @@ pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_noise_entropy, m)?)?;
     m.add_function(wrap_pyfunction!(py_stimulus_specific_information, m)?)?;
     m.add_function(wrap_pyfunction!(py_kozachenko_leonenko_mi, m)?)?;
-    // causality
-    m.add_function(wrap_pyfunction!(py_pairwise_granger_causality, m)?)?;
-    m.add_function(wrap_pyfunction!(py_conditional_granger_causality, m)?)?;
-    m.add_function(wrap_pyfunction!(py_spectral_granger_causality, m)?)?;
-    m.add_function(wrap_pyfunction!(py_partial_directed_coherence, m)?)?;
-    m.add_function(wrap_pyfunction!(py_directed_transfer_function, m)?)?;
-    // decoding
-    m.add_function(wrap_pyfunction!(py_population_vector_decode, m)?)?;
-    m.add_function(wrap_pyfunction!(py_bayesian_decode, m)?)?;
-    m.add_function(wrap_pyfunction!(py_maximum_likelihood_decode, m)?)?;
-    m.add_function(wrap_pyfunction!(py_linear_discriminant_decode, m)?)?;
-    m.add_function(wrap_pyfunction!(py_naive_bayes_decode, m)?)?;
-    // neural_decoders (P1)
-    m.add_function(wrap_pyfunction!(py_tokenise_spikes, m)?)?;
-    m.add_function(wrap_pyfunction!(py_sinusoidal_position_encode, m)?)?;
-    m.add_function(wrap_pyfunction!(py_scaled_dot_product_attention, m)?)?;
-    m.add_function(wrap_pyfunction!(py_gaussian_attention, m)?)?;
-    m.add_function(wrap_pyfunction!(py_infonce_loss, m)?)?;
+    causality::register(m)?;
+    decoding::register(m)?;
+    neural_decoders::register(m)?;
     // network
     m.add_function(wrap_pyfunction!(py_functional_connectivity, m)?)?;
     m.add_function(wrap_pyfunction!(py_unitary_events, m)?)?;
@@ -106,10 +97,8 @@ pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_first_spike_latency, m)?)?;
     m.add_function(wrap_pyfunction!(py_response_onset, m)?)?;
     m.add_function(wrap_pyfunction!(py_change_point_detection, m)?)?;
+    patterns::register(m)?;
     // patterns
-    m.add_function(wrap_pyfunction!(py_spike_directionality, m)?)?;
-    m.add_function(wrap_pyfunction!(py_spike_train_order, m)?)?;
-    m.add_function(wrap_pyfunction!(py_cubic_higher_order, m)?)?;
     // spectral
     m.add_function(wrap_pyfunction!(py_power_spectrum, m)?)?;
     // waveform
@@ -387,26 +376,6 @@ fn py_spike_time_tiling_coefficient(
 }
 
 #[pyfunction]
-#[pyo3(signature = (trains, bin_size=10))]
-fn py_covariance_matrix(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    bin_size: usize,
-) -> Py<PyArray2<f64>> {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let mat = analysis::correlation::covariance_matrix(&refs, bin_size);
-    let n = mat.len();
-    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
-    numpy::PyArray2::from_vec2(py, &rows)
-        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
-        .into()
-}
-
-#[pyfunction]
 #[pyo3(signature = (binary_train, dt=0.001, max_lag_ms=100.0))]
 fn py_autocorrelation_time(
     binary_train: PyReadonlyArray1<'_, i32>,
@@ -450,26 +419,6 @@ fn py_signal_correlation(
         .collect();
     let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
     let mat = analysis::correlation::signal_correlation(&refs, bin_size);
-    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
-    let n = rows.len();
-    numpy::PyArray2::from_vec2(py, &rows)
-        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
-        .into()
-}
-
-#[pyfunction]
-#[pyo3(signature = (trains, window=50))]
-fn py_spike_count_covariance(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    window: usize,
-) -> Py<PyArray2<f64>> {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let mat = analysis::correlation::spike_count_covariance(&refs, window);
     let rows: Vec<Vec<f64>> = mat.into_iter().collect();
     let n = rows.len();
     numpy::PyArray2::from_vec2(py, &rows)
@@ -790,250 +739,6 @@ fn py_kozachenko_leonenko_mi(
     analysis::information::kozachenko_leonenko_mi(xd, yd, k)
 }
 
-// ── Causality PyO3 wrappers (P0-A: spike_stats/causality) ───────
-
-#[pyfunction]
-#[pyo3(signature = (source, target, bin_size=10, order=5))]
-fn py_pairwise_granger_causality(
-    source: PyReadonlyArray1<'_, i32>,
-    target: PyReadonlyArray1<'_, i32>,
-    bin_size: usize,
-    order: usize,
-) -> f64 {
-    let s = source.as_slice().unwrap();
-    let t = target.as_slice().unwrap();
-    analysis::causality::pairwise_granger_causality(s, t, bin_size, order)
-}
-
-#[pyfunction]
-#[pyo3(signature = (source, target, condition, bin_size=10, order=5))]
-fn py_conditional_granger_causality(
-    source: PyReadonlyArray1<'_, i32>,
-    target: PyReadonlyArray1<'_, i32>,
-    condition: PyReadonlyArray1<'_, i32>,
-    bin_size: usize,
-    order: usize,
-) -> f64 {
-    let s = source.as_slice().unwrap();
-    let t = target.as_slice().unwrap();
-    let c = condition.as_slice().unwrap();
-    analysis::causality::conditional_granger_causality(s, t, c, bin_size, order)
-}
-
-#[pyfunction]
-#[pyo3(signature = (trains, bin_size=10, order=5, n_freqs=64))]
-fn py_spectral_granger_causality(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    bin_size: usize,
-    order: usize,
-    n_freqs: usize,
-) -> (Py<PyArray1<f64>>, usize, usize) {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let (gc, d) = analysis::causality::spectral_granger_causality(&refs, bin_size, order, n_freqs);
-    (gc.into_pyarray(py).into(), d, n_freqs)
-}
-
-#[pyfunction]
-#[pyo3(signature = (trains, bin_size=10, order=5, n_freqs=64))]
-fn py_partial_directed_coherence(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    bin_size: usize,
-    order: usize,
-    n_freqs: usize,
-) -> (Py<PyArray1<f64>>, usize, usize) {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let (pdc, d) = analysis::causality::partial_directed_coherence(&refs, bin_size, order, n_freqs);
-    (pdc.into_pyarray(py).into(), d, n_freqs)
-}
-
-#[pyfunction]
-#[pyo3(signature = (trains, bin_size=10, order=5, n_freqs=64))]
-fn py_directed_transfer_function(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    bin_size: usize,
-    order: usize,
-    n_freqs: usize,
-) -> (Py<PyArray1<f64>>, usize, usize) {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let (dtf, d) = analysis::causality::directed_transfer_function(&refs, bin_size, order, n_freqs);
-    (dtf.into_pyarray(py).into(), d, n_freqs)
-}
-
-// ── Decoding PyO3 wrappers (P0-A: spike_stats/decoding) ─────────
-
-#[pyfunction]
-#[pyo3(signature = (trains, preferred_directions, window=50))]
-fn py_population_vector_decode(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    preferred_directions: PyReadonlyArray1<'_, f64>,
-    window: usize,
-) -> Py<PyArray1<f64>> {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let dirs = preferred_directions.as_slice().unwrap();
-    analysis::decoding::population_vector_decode(&refs, dirs, window)
-        .into_pyarray(py)
-        .into()
-}
-
-#[pyfunction]
-#[pyo3(signature = (spike_counts, tuning_rates, n_stimuli, n_neurons, prior=None))]
-fn py_bayesian_decode(
-    spike_counts: PyReadonlyArray1<'_, f64>,
-    tuning_rates: PyReadonlyArray1<'_, f64>,
-    n_stimuli: usize,
-    n_neurons: usize,
-    prior: Option<PyReadonlyArray1<'_, f64>>,
-) -> usize {
-    let counts = spike_counts.as_slice().unwrap();
-    let rates = tuning_rates.as_slice().unwrap();
-    let p: Vec<f64> = prior
-        .map(|p| p.as_slice().unwrap().to_vec())
-        .unwrap_or_default();
-    analysis::decoding::bayesian_decode(counts, rates, n_stimuli, n_neurons, &p)
-}
-
-#[pyfunction]
-fn py_maximum_likelihood_decode(
-    spike_counts: PyReadonlyArray1<'_, f64>,
-    tuning_rates: PyReadonlyArray1<'_, f64>,
-    n_stimuli: usize,
-    n_neurons: usize,
-) -> usize {
-    let counts = spike_counts.as_slice().unwrap();
-    let rates = tuning_rates.as_slice().unwrap();
-    analysis::decoding::maximum_likelihood_decode(counts, rates, n_stimuli, n_neurons)
-}
-
-#[pyfunction]
-fn py_linear_discriminant_decode(
-    train_data: PyReadonlyArray1<'_, f64>,
-    n_samples: usize,
-    n_features: usize,
-    labels: PyReadonlyArray1<'_, i64>,
-    test_point: PyReadonlyArray1<'_, f64>,
-) -> i64 {
-    let data = train_data.as_slice().unwrap();
-    let lbl = labels.as_slice().unwrap();
-    let tp = test_point.as_slice().unwrap();
-    analysis::decoding::linear_discriminant_decode(data, n_samples, n_features, lbl, tp)
-}
-
-#[pyfunction]
-fn py_naive_bayes_decode(
-    train_data: PyReadonlyArray1<'_, f64>,
-    n_samples: usize,
-    n_features: usize,
-    labels: PyReadonlyArray1<'_, i64>,
-    test_point: PyReadonlyArray1<'_, f64>,
-) -> i64 {
-    let data = train_data.as_slice().unwrap();
-    let lbl = labels.as_slice().unwrap();
-    let tp = test_point.as_slice().unwrap();
-    analysis::decoding::naive_bayes_decode(data, n_samples, n_features, lbl, tp)
-}
-
-// ── Neural decoder PyO3 wrappers (P1: neural_decoders) ─────────
-
-#[pyfunction]
-#[pyo3(signature = (trains, dt=1.0))]
-fn py_tokenise_spikes(
-    py: Python<'_>,
-    trains: Vec<PyReadonlyArray1<'_, i32>>,
-    dt: f64,
-) -> (Py<PyArray1<i64>>, Py<PyArray1<f64>>) {
-    let vecs: Vec<Vec<i32>> = trains
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let tokens = analysis::neural_decoders::tokenise_spikes(&refs, dt);
-    let uids: Vec<i64> = tokens.iter().map(|t| t.0 as i64).collect();
-    let times: Vec<f64> = tokens.iter().map(|t| t.1).collect();
-    (uids.into_pyarray(py).into(), times.into_pyarray(py).into())
-}
-
-#[pyfunction]
-fn py_sinusoidal_position_encode(
-    py: Python<'_>,
-    timestamps: PyReadonlyArray1<'_, f64>,
-    d_model: usize,
-) -> Py<PyArray1<f64>> {
-    let ts = timestamps.as_slice().unwrap();
-    analysis::neural_decoders::sinusoidal_position_encode(ts, d_model)
-        .into_pyarray(py)
-        .into()
-}
-
-#[pyfunction]
-fn py_scaled_dot_product_attention(
-    py: Python<'_>,
-    queries: PyReadonlyArray1<'_, f64>,
-    keys: PyReadonlyArray1<'_, f64>,
-    values: PyReadonlyArray1<'_, f64>,
-    nq: usize,
-    nk: usize,
-    d: usize,
-) -> Py<PyArray1<f64>> {
-    let q = queries.as_slice().unwrap();
-    let k = keys.as_slice().unwrap();
-    let v = values.as_slice().unwrap();
-    analysis::neural_decoders::scaled_dot_product_attention(q, k, v, nq, nk, d)
-        .into_pyarray(py)
-        .into()
-}
-
-#[pyfunction]
-fn py_gaussian_attention(
-    py: Python<'_>,
-    queries: PyReadonlyArray1<'_, f64>,
-    keys: PyReadonlyArray1<'_, f64>,
-    values: PyReadonlyArray1<'_, f64>,
-    nq: usize,
-    nk: usize,
-    d: usize,
-    sigma: f64,
-) -> Py<PyArray1<f64>> {
-    let q = queries.as_slice().unwrap();
-    let k = keys.as_slice().unwrap();
-    let v = values.as_slice().unwrap();
-    analysis::neural_decoders::gaussian_attention(q, k, v, nq, nk, d, sigma)
-        .into_pyarray(py)
-        .into()
-}
-
-#[pyfunction]
-fn py_infonce_loss(
-    anchors: PyReadonlyArray1<'_, f64>,
-    positives: PyReadonlyArray1<'_, f64>,
-    n: usize,
-    d: usize,
-    temperature: f64,
-) -> f64 {
-    let a = anchors.as_slice().unwrap();
-    let p = positives.as_slice().unwrap();
-    analysis::neural_decoders::infonce_loss(a, p, n, d, temperature)
-}
-
 // ── Network PyO3 wrappers (P0-A: spike_stats/network) ───────────
 
 #[pyfunction]
@@ -1269,56 +974,6 @@ fn py_change_point_detection(
 }
 
 // ── Patterns PyO3 wrappers (P0-A: spike_stats/patterns) ─────────
-
-#[pyfunction]
-#[pyo3(signature = (times_a, times_b, t_start=0.0, t_end=1.0))]
-fn py_spike_directionality(
-    times_a: PyReadonlyArray1<'_, f64>,
-    times_b: PyReadonlyArray1<'_, f64>,
-    t_start: f64,
-    t_end: f64,
-) -> f64 {
-    let a = times_a.as_slice().unwrap();
-    let b = times_b.as_slice().unwrap();
-    analysis::patterns::spike_directionality(a, b, t_start, t_end)
-}
-
-#[pyfunction]
-#[pyo3(signature = (times_list, t_start=0.0, t_end=1.0))]
-fn py_spike_train_order(
-    py: Python<'_>,
-    times_list: Vec<PyReadonlyArray1<'_, f64>>,
-    t_start: f64,
-    t_end: f64,
-) -> Py<PyArray2<f64>> {
-    let vecs: Vec<Vec<f64>> = times_list
-        .iter()
-        .map(|t| t.as_slice().unwrap().to_vec())
-        .collect();
-    let refs: Vec<&[f64]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let mat = analysis::patterns::spike_train_order(&refs, t_start, t_end);
-    let n = refs.len();
-    let rows: Vec<Vec<f64>> = mat.chunks(n).map(|c| c.to_vec()).collect();
-    numpy::PyArray2::from_vec2(py, &rows)
-        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
-        .into()
-}
-
-#[pyfunction]
-#[pyo3(signature = (binary_train, dt=0.001, max_lag=20))]
-fn py_cubic_higher_order(
-    py: Python<'_>,
-    binary_train: PyReadonlyArray1<'_, i32>,
-    dt: f64,
-    max_lag: usize,
-) -> Py<PyArray2<f64>> {
-    let data = binary_train.as_slice().unwrap();
-    let c3 = analysis::patterns::cubic_higher_order(data, dt, max_lag);
-    let rows: Vec<Vec<f64>> = c3.chunks(max_lag).map(|c| c.to_vec()).collect();
-    numpy::PyArray2::from_vec2(py, &rows)
-        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [max_lag, max_lag], false))
-        .into()
-}
 
 // ── Spectral PyO3 wrappers (P0-A: spike_stats/spectral) ─────────
 

@@ -1,0 +1,227 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Rayon source patch provenance
+
+package = "rayon-core"
+version = "1.13.0"
+path = "vendor/rayon-core"
+upstream_registry = "https://github.com/rust-lang/crates.io-index"
+upstream_repository = "https://github.com/rayon-rs/rayon"
+upstream_commit = "7af20d7692d5decbcb4adcaa079cd607e3e50814"
+upstream_archive_sha256 = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
+upstream_license = "MIT OR Apache-2.0"
+patch_license = "AGPL-3.0-or-later"
+patch = "retry-global-startup"
+patch_description = "Publish the global registry only after construction succeeds; serialize retry attempts and retain completed initialization. Remove inherited trailing whitespace from the sleep documentation."
+modified_files = ["Cargo.toml", "src/registry.rs", "src/sleep/README.md"]
+added_license = "LICENSE-AGPL"
+excluded_upstream_dev_lock = "Cargo.lock"
+
+[[files]]
+path = ".cargo_vcs_info.json"
+upstream_sha256 = "c6bfcaeeeb689844bb154055fe696ced313b9b5f3523528346dbbe46806c35dd"
+source_sha256 = "c6bfcaeeeb689844bb154055fe696ced313b9b5f3523528346dbbe46806c35dd"
+
+[[files]]
+path = "Cargo.toml"
+upstream_sha256 = "ab50ad4709436f6bda04e5345444f1197b1eda2bd3b49f9412c0cb318111b5a2"
+source_sha256 = "89f0dfe862fb39c4e0584edbb7043bbe5113c73c6c74c776b312ed7152730e95"
+
+[[files]]
+path = "Cargo.toml.orig"
+upstream_sha256 = "2fb5b9f5a2ec91a1e3f2d9c26cf611bb5a9eeb30fcccb68cf6d087ad522176ab"
+source_sha256 = "2fb5b9f5a2ec91a1e3f2d9c26cf611bb5a9eeb30fcccb68cf6d087ad522176ab"
+
+[[files]]
+path = "LICENSE-APACHE"
+upstream_sha256 = "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+source_sha256 = "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+
+[[files]]
+path = "LICENSE-MIT"
+upstream_sha256 = "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+source_sha256 = "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+
+[[files]]
+path = "README.md"
+upstream_sha256 = "37a9a028cb507dbaebe7bb60fce9194f0f5b51fb3a52b2ac616969cf6ff4ef95"
+source_sha256 = "37a9a028cb507dbaebe7bb60fce9194f0f5b51fb3a52b2ac616969cf6ff4ef95"
+
+[[files]]
+path = "build.rs"
+upstream_sha256 = "fa31cb198b772600d100a7c403ddedccef637d2e6b2da431fa7f02ca41307fc6"
+source_sha256 = "fa31cb198b772600d100a7c403ddedccef637d2e6b2da431fa7f02ca41307fc6"
+
+[[files]]
+path = "src/broadcast/mod.rs"
+upstream_sha256 = "850859640276aefefba3493ad6f07a3122b869c64fd617212f2c1e178f3c39ee"
+source_sha256 = "850859640276aefefba3493ad6f07a3122b869c64fd617212f2c1e178f3c39ee"
+
+[[files]]
+path = "src/broadcast/test.rs"
+upstream_sha256 = "fe50fc868e67d855a9f71e078b0c3a7780e789652abb4b586accb4ccf035e872"
+source_sha256 = "fe50fc868e67d855a9f71e078b0c3a7780e789652abb4b586accb4ccf035e872"
+
+[[files]]
+path = "src/compile_fail/mod.rs"
+upstream_sha256 = "4d70256295bd64691a8c1994b323559cda1888e85f0b45ca55711541c257dcb6"
+source_sha256 = "4d70256295bd64691a8c1994b323559cda1888e85f0b45ca55711541c257dcb6"
+
+[[files]]
+path = "src/compile_fail/quicksort_race1.rs"
+upstream_sha256 = "35f498cda38f4eb6e00117f78ed68e0fe5a3fa61c25303d9c08a19bda345bc6c"
+source_sha256 = "35f498cda38f4eb6e00117f78ed68e0fe5a3fa61c25303d9c08a19bda345bc6c"
+
+[[files]]
+path = "src/compile_fail/quicksort_race2.rs"
+upstream_sha256 = "cbb40030c7867cae34bb373b6ec5d97c2ac6de39bc917f47879b30eb423924bc"
+source_sha256 = "cbb40030c7867cae34bb373b6ec5d97c2ac6de39bc917f47879b30eb423924bc"
+
+[[files]]
+path = "src/compile_fail/quicksort_race3.rs"
+upstream_sha256 = "8403643e64c969306b1a9b1243378e6ccdd313b57e1878dbd31393618082fd35"
+source_sha256 = "8403643e64c969306b1a9b1243378e6ccdd313b57e1878dbd31393618082fd35"
+
+[[files]]
+path = "src/compile_fail/rc_return.rs"
+upstream_sha256 = "197894803d8df58fc8005d90c86b90cd98f1972f1a4b57438516a565df35903f"
+source_sha256 = "197894803d8df58fc8005d90c86b90cd98f1972f1a4b57438516a565df35903f"
+
+[[files]]
+path = "src/compile_fail/rc_upvar.rs"
+upstream_sha256 = "42d110429621f407ef0dada1306dab116583d2c782a99894204dd8e0ccd2312f"
+source_sha256 = "42d110429621f407ef0dada1306dab116583d2c782a99894204dd8e0ccd2312f"
+
+[[files]]
+path = "src/compile_fail/scope_join_bad.rs"
+upstream_sha256 = "892959949f77cadfc07458473e7a290301182027ca64428df5a8ce887be0892b"
+source_sha256 = "892959949f77cadfc07458473e7a290301182027ca64428df5a8ce887be0892b"
+
+[[files]]
+path = "src/job.rs"
+upstream_sha256 = "06de0c2add2e303b6383bf11f5f0d75775c1efe6aa7bc16de3992117f1012f09"
+source_sha256 = "06de0c2add2e303b6383bf11f5f0d75775c1efe6aa7bc16de3992117f1012f09"
+
+[[files]]
+path = "src/join/mod.rs"
+upstream_sha256 = "0d1d6ba860c65fd991a81459110dfb9ca03e590d830b515e5afc9c7b6bae6b08"
+source_sha256 = "0d1d6ba860c65fd991a81459110dfb9ca03e590d830b515e5afc9c7b6bae6b08"
+
+[[files]]
+path = "src/join/test.rs"
+upstream_sha256 = "b853c3b99a1cca585069c0ccc9eb3f962533d5b3c7875dba6b905aae3880c473"
+source_sha256 = "b853c3b99a1cca585069c0ccc9eb3f962533d5b3c7875dba6b905aae3880c473"
+
+[[files]]
+path = "src/latch.rs"
+upstream_sha256 = "e749d6d15e685ca164cd7f2dcad6b2701ae04bc53cb5144be0c43f012406eddd"
+source_sha256 = "e749d6d15e685ca164cd7f2dcad6b2701ae04bc53cb5144be0c43f012406eddd"
+
+[[files]]
+path = "src/lib.rs"
+upstream_sha256 = "5da845890b55010d8f5e243ac9d112c60c710a0f412dce8ebf6f8b6987bd261c"
+source_sha256 = "5da845890b55010d8f5e243ac9d112c60c710a0f412dce8ebf6f8b6987bd261c"
+
+[[files]]
+path = "src/private.rs"
+upstream_sha256 = "152f6d65ce4741616a1dec796b9442f78a018d38bb040f76c4cd85008333a3bb"
+source_sha256 = "152f6d65ce4741616a1dec796b9442f78a018d38bb040f76c4cd85008333a3bb"
+
+[[files]]
+path = "src/registry.rs"
+upstream_sha256 = "61674f4cdf39edb26df75435de6925d54c5f864f9e1dcd0fb114ad2cc553a1d7"
+source_sha256 = "3cdf310ff667745eff7304577fd9ab62fc5177279c5db22e4341565cf64c2d93"
+
+[[files]]
+path = "src/scope/mod.rs"
+upstream_sha256 = "b7720b853328173764b33e2d866c33c49148d777254a8d4a51e766b692537914"
+source_sha256 = "b7720b853328173764b33e2d866c33c49148d777254a8d4a51e766b692537914"
+
+[[files]]
+path = "src/scope/test.rs"
+upstream_sha256 = "f358307efb3c0f5dbd8a7f7380aaf23603aae946bf2eb01f8adc35122e6b46d0"
+source_sha256 = "f358307efb3c0f5dbd8a7f7380aaf23603aae946bf2eb01f8adc35122e6b46d0"
+
+[[files]]
+path = "src/sleep/README.md"
+upstream_sha256 = "8790c7795d1a37e0c3016d4ac220ff2fc37f3995d2b5f251bbcb2216362fb9cd"
+source_sha256 = "7d7cf88c333569d5b662cbf45dc0878b1e7e1ee98f7f8c0c7a3107581ec72913"
+
+[[files]]
+path = "src/sleep/counters.rs"
+upstream_sha256 = "3e7880534822abbbd59210c378ca611b75759e8b566b167263fd843cd638dd22"
+source_sha256 = "3e7880534822abbbd59210c378ca611b75759e8b566b167263fd843cd638dd22"
+
+[[files]]
+path = "src/sleep/mod.rs"
+upstream_sha256 = "937bf9fc0610bf526522e6ef2efeca9b75f65d87cfaf69375277e161a4130e5e"
+source_sha256 = "937bf9fc0610bf526522e6ef2efeca9b75f65d87cfaf69375277e161a4130e5e"
+
+[[files]]
+path = "src/spawn/mod.rs"
+upstream_sha256 = "3520ce5822787a592e5c7da9d0dd8a4a4d9eb08235e598ab63a50bf43fef56f4"
+source_sha256 = "3520ce5822787a592e5c7da9d0dd8a4a4d9eb08235e598ab63a50bf43fef56f4"
+
+[[files]]
+path = "src/spawn/test.rs"
+upstream_sha256 = "b4850681aa5ff607d927b1d3f4ba2b4a3199ddaa283a95ea44547b997cf17e61"
+source_sha256 = "b4850681aa5ff607d927b1d3f4ba2b4a3199ddaa283a95ea44547b997cf17e61"
+
+[[files]]
+path = "src/test.rs"
+upstream_sha256 = "b82d95f84314305ff3268d341f731851e4d33fc895c34219ed8ff08b8d864575"
+source_sha256 = "b82d95f84314305ff3268d341f731851e4d33fc895c34219ed8ff08b8d864575"
+
+[[files]]
+path = "src/thread_pool/mod.rs"
+upstream_sha256 = "f071a1bc766cde10ec844cc3b53e53479c3f1ade97ceaff1cc9e3f9913ade9f3"
+source_sha256 = "f071a1bc766cde10ec844cc3b53e53479c3f1ade97ceaff1cc9e3f9913ade9f3"
+
+[[files]]
+path = "src/thread_pool/test.rs"
+upstream_sha256 = "e9377afa0d5727a9f6874b5abf4589403d8dc8938e4e2c5dc26be4106daa77b9"
+source_sha256 = "e9377afa0d5727a9f6874b5abf4589403d8dc8938e4e2c5dc26be4106daa77b9"
+
+[[files]]
+path = "src/unwind.rs"
+upstream_sha256 = "7baa4511467d008b14856ea8de7ced92b9251c9df4854f69c81f7efc3cf0cd6c"
+source_sha256 = "7baa4511467d008b14856ea8de7ced92b9251c9df4854f69c81f7efc3cf0cd6c"
+
+[[files]]
+path = "tests/double_init_fail.rs"
+upstream_sha256 = "8c208ce45e83ab1dfc5890353d5b2f06fc8005684ae622827a65d05abb35a072"
+source_sha256 = "8c208ce45e83ab1dfc5890353d5b2f06fc8005684ae622827a65d05abb35a072"
+
+[[files]]
+path = "tests/init_zero_threads.rs"
+upstream_sha256 = "5c7f7e0e13e9ead3733253e30d6b52ac5ee66fd6c105999d096bdf31cfccaf95"
+source_sha256 = "5c7f7e0e13e9ead3733253e30d6b52ac5ee66fd6c105999d096bdf31cfccaf95"
+
+[[files]]
+path = "tests/scope_join.rs"
+upstream_sha256 = "56f570c4b6a01704aacf93e7f17f89fe0f40f46ed6f9ede517abfe9adaf91f83"
+source_sha256 = "56f570c4b6a01704aacf93e7f17f89fe0f40f46ed6f9ede517abfe9adaf91f83"
+
+[[files]]
+path = "tests/scoped_threadpool.rs"
+upstream_sha256 = "24d1293fe65ad5f194bbff9d1ef0486c3440d0a3783f04eaaaae4929adef5cb8"
+source_sha256 = "24d1293fe65ad5f194bbff9d1ef0486c3440d0a3783f04eaaaae4929adef5cb8"
+
+[[files]]
+path = "tests/simple_panic.rs"
+upstream_sha256 = "916d40d36c1a0fad3e1dfb31550f0672641feab4b03d480f039143dbe2f2445f"
+source_sha256 = "916d40d36c1a0fad3e1dfb31550f0672641feab4b03d480f039143dbe2f2445f"
+
+[[files]]
+path = "tests/stack_overflow_crash.rs"
+upstream_sha256 = "87b962c66f301ac44f808d992d4e8b861305db0c282f256761a5075c9f018243"
+source_sha256 = "87b962c66f301ac44f808d992d4e8b861305db0c282f256761a5075c9f018243"
+
+[[files]]
+path = "tests/use_current_thread.rs"
+upstream_sha256 = "552ec922f123aafdaeafef8f31c802781ebed16bf35cb5eac128bef0c29199cc"
+source_sha256 = "552ec922f123aafdaeafef8f31c802781ebed16bf35cb5eac128bef0c29199cc"

@@ -13,7 +13,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
-use crate::network_runner;
+use crate::{network_runner, runtime_control_binding::ensure_parallel_runtime};
 
 /// Register network execution surfaces with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -60,6 +60,7 @@ impl PyNetworkRunner {
         self.inner.add_projection(proj);
     }
 
+    /// Step one population after input and worker admission, preserving refusals.
     fn step_population<'py>(
         &mut self,
         py: Python<'py>,
@@ -67,6 +68,12 @@ impl PyNetworkRunner {
         currents: PyReadonlyArray1<'py, f64>,
     ) -> PyResult<Py<PyAny>> {
         let currents = currents.as_slice()?;
+        self.inner
+            .validate_population_currents(pop_index, currents)
+            .map_err(PyValueError::new_err)?;
+        if !currents.is_empty() {
+            ensure_parallel_runtime()?;
+        }
         let (spikes, voltages) = self
             .inner
             .step_population_with_currents(pop_index, currents)
@@ -77,7 +84,11 @@ impl PyNetworkRunner {
         Ok(dict.into_any().unbind())
     }
 
+    /// Run the network after worker admission; empty work leaves the pool lazy.
     fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> PyResult<Py<PyAny>> {
+        if n_steps != 0 && self.inner.populations.iter().any(|pop| !pop.is_empty()) {
+            ensure_parallel_runtime()?;
+        }
         let results = self.inner.run(n_steps);
         let dict = PyDict::new(py);
         let spike_counts: Vec<u64> = results.spike_counts.iter().map(|&c| c as u64).collect();

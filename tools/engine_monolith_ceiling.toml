@@ -59,7 +59,7 @@ max_lines = 127
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/bitstream_averager.rs"]
-max_lines = 141
+max_lines = 112
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/dendritic_neuron.rs"]
@@ -71,7 +71,7 @@ max_lines = 209
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/fixed_point_lif.rs"]
-max_lines = 145
+max_lines = 140
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/homeostatic_lif.rs"]

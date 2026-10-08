@@ -40,6 +40,43 @@ use rayon::prelude::*;
 /// gives ~3× speedup at scale=0.1 and scales further at larger N.
 const CHUNK_SIZE: usize = 512;
 
+/// Validate every used CSR row before any output element can be changed.
+pub(crate) fn validate_csr_rows(
+    indptr: &[i32],
+    indices: &[i32],
+    data: &[f64],
+    x: &[f64],
+    n_rows: usize,
+) -> Result<(), &'static str> {
+    if n_rows == 0 {
+        return Ok(());
+    }
+    if indptr.len() <= n_rows {
+        return Err("CSR row offsets do not cover the output vector");
+    }
+    let required = n_rows + 1;
+    for row in indptr[..required].windows(2) {
+        let start = usize::try_from(row[0])
+            .map_err(|_| "CSR row offsets must be non-negative and nondecreasing")?;
+        let end = usize::try_from(row[1])
+            .map_err(|_| "CSR row offsets must be non-negative and nondecreasing")?;
+        if end < start {
+            return Err("CSR row offsets must be non-negative and nondecreasing");
+        }
+        if end > indices.len() || end > data.len() {
+            return Err("CSR row bounds exceed indices or data storage");
+        }
+        for &column in &indices[start..end] {
+            let column = usize::try_from(column).map_err(|_| "CSR column index out of range")?;
+            if column >= x.len() {
+                return Err("CSR column index out of range");
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Add the per-row sparse product without changing the order of reductions.
 pub fn parallel_csr_spmv_add(
     indptr: &[i32],
     indices: &[i32],
@@ -47,6 +84,9 @@ pub fn parallel_csr_spmv_add(
     x: &[f64],
     y: &mut [f64],
 ) {
+    if y.is_empty() {
+        return;
+    }
     y.par_chunks_mut(CHUNK_SIZE)
         .enumerate()
         .for_each(|(chunk_idx, chunk)| {
@@ -87,6 +127,16 @@ pub fn parallel_csr_multi_spmv_add(
     debug_assert_eq!(n_blocks, indices_blocks.len());
     debug_assert_eq!(n_blocks, data_blocks.len());
     debug_assert_eq!(n_blocks, x_blocks.len());
+
+    if y.is_empty() {
+        return;
+    }
+    if n_blocks == 0 {
+        for value in y {
+            *value += 0.0;
+        }
+        return;
+    }
 
     y.par_chunks_mut(CHUNK_SIZE)
         .enumerate()

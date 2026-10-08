@@ -40,9 +40,29 @@ pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
 /// # Safety
 /// Caller must ensure the current CPU supports `avx512f` and `avx512bw`.
 pub unsafe fn pack_avx512(bits: &[u8]) -> Vec<u64> {
+    let mut data = vec![0_u64; bits.len().div_ceil(64)];
+    // SAFETY: The caller guarantees both AVX-512 features and valid borrowed
+    // slices with exclusive output ownership; the kernel checks output length.
+    unsafe { pack_avx512_into(bits, &mut data) }.expect("packed output length matches input");
+    data
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f,avx512bw")]
+/// Pack into caller-owned words with AVX-512, without intermediate allocations.
+///
+/// Refuse a destination other than `ceil(bits.len() / 64)` words before mutation.
+/// Full words use one 64-byte unaligned load; the partial tail is portable.
+///
+/// # Safety
+/// Caller must ensure the CPU supports `avx512f` and `avx512bw`. Rust slice
+/// validity and exclusive output ownership must hold throughout the call.
+pub unsafe fn pack_avx512_into(bits: &[u8], data: &mut [u64]) -> Result<(), &'static str> {
     let length = bits.len();
     let words = length.div_ceil(64);
-    let mut data = vec![0_u64; words];
+    if data.len() != words {
+        return Err("packed output length must equal ceil(input length / 64)");
+    }
     let full_words = length / 64;
     let zero = _mm512_setzero_si512();
 
@@ -64,11 +84,10 @@ pub unsafe fn pack_avx512(bits: &[u8]) -> Vec<u64> {
 
     if full_words < words {
         let tail_start = full_words * 64;
-        let tail = crate::bitstream::pack_fast(&bits[tail_start..]);
-        data[full_words] = tail.data.first().copied().unwrap_or(0);
+        crate::bitstream::pack_fast_into(&bits[tail_start..], &mut data[full_words..])?;
     }
 
-    data
+    Ok(())
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -181,6 +200,17 @@ pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
 /// This function is marked unsafe for API parity with the AVX-512 variant.
 pub unsafe fn pack_avx512(bits: &[u8]) -> Vec<u64> {
     crate::bitstream::pack_fast(bits).data
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+/// Pack into caller-owned words on architectures without AVX-512.
+///
+/// Output-length refusal and tail clearing match the AVX-512 implementation.
+///
+/// # Safety
+/// Marked unsafe for API parity; this implementation only uses safe slice access.
+pub unsafe fn pack_avx512_into(bits: &[u8], data: &mut [u64]) -> Result<(), &'static str> {
+    crate::bitstream::pack_fast_into(bits, data)
 }
 
 #[cfg(not(target_arch = "x86_64"))]

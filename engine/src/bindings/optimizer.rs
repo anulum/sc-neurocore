@@ -8,6 +8,7 @@
 
 //! Python bindings for stochastic-computing hardware design-space optimisation.
 
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -84,6 +85,7 @@ fn simulated_annealing_search<'py>(
 }
 
 /// Extract the non-dominated points from resource and score arrays.
+/// Validate every indexed column before admitting parallel workers.
 #[pyfunction(name = "py_opt_extract_pareto")]
 fn extract_pareto_frontier<'py>(
     py: Python<'py>,
@@ -91,6 +93,14 @@ fn extract_pareto_frontier<'py>(
     power: Vec<f64>,
     score: Vec<f64>,
 ) -> PyResult<Py<PyAny>> {
+    if power.len() < luts.len() || score.len() < luts.len() {
+        return Err(PyValueError::new_err(
+            "power and score must cover every LUT entry",
+        ));
+    }
+    if !luts.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     let indices = crate::optimizer::extract_pareto(&luts, &power, &score);
     let dictionary = PyDict::new(py);
     let pareto_luts: Vec<i64> = indices.iter().map(|&index| luts[index]).collect();

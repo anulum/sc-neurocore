@@ -8,26 +8,81 @@
 
 //! Python bindings for packing, unpacking, counting, and encoding bitstreams.
 
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1};
-use pyo3::exceptions::PyValueError;
+use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray1};
+use pyo3::conversion::FromPyObjectOwned;
+use pyo3::exceptions::{PyMemoryError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::IntoPyObject;
+use pyo3::types::{PyBytes, PyList};
+use pyo3::Borrowed;
 
-use crate::{bitstream, encoder, neuron, simd};
+use crate::{encoder, neuron, simd};
+
+#[path = "bitstream/packing.rs"]
+mod packing;
+
+#[path = "bitstream/encoding.rs"]
+mod encoding;
+
+/// Preserve the packed input sequence protocol while reserving nested storage fallibly.
+struct PackedSequence<T>(Vec<T>);
+
+impl<'py, T: FromPyObjectOwned<'py>> FromPyObject<'_, 'py> for PackedSequence<T> {
+    type Error = PyErr;
+
+    fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+        crate::hdc_binding::extract_sequence(obj, "cannot allocate packed input sequence").map(Self)
+    }
+}
+
+/// Refuse an output dimension that cannot fit Python or NumPy storage.
+fn validate_unpack_length(length: usize) -> PyResult<()> {
+    if length > isize::MAX as usize {
+        return Err(PyMemoryError::new_err(
+            "unpacked bitstream cannot be allocated",
+        ));
+    }
+    Ok(())
+}
+
+/// Refuse unrepresentable output dimensions and truncated packed storage before allocation.
+fn validate_unpack(words: usize, length: usize) -> PyResult<()> {
+    validate_unpack_length(length)?;
+    if words < length.div_ceil(64) {
+        return Err(PyValueError::new_err(
+            "packed words do not cover original_length",
+        ));
+    }
+    Ok(())
+}
+
+/// Unpack directly into fallibly allocated Python bytes without intermediate native storage.
+fn unpack_bytes<'py>(
+    py: Python<'py>,
+    words: &[u64],
+    length: usize,
+) -> PyResult<Bound<'py, PyBytes>> {
+    validate_unpack(words.len(), length)?;
+    PyBytes::new_with(py, length, |bits| {
+        for (index, bit) in bits.iter_mut().enumerate() {
+            *bit = ((words[index / 64] >> (index % 64)) & 1) as u8;
+        }
+        Ok(())
+    })
+}
 
 /// Register bitstream bindings without adding implementation code to the crate root.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<Lfsr16>()?;
     module.add_class::<BitstreamEncoder>()?;
     module.add_class::<PyBitstreamAverager>()?;
-    module.add_function(wrap_pyfunction!(pack_bitstream, module)?)?;
+    module.add_function(wrap_pyfunction!(packing::pack_bitstream, module)?)?;
     module.add_function(wrap_pyfunction!(unpack_bitstream, module)?)?;
     module.add_function(wrap_pyfunction!(popcount, module)?)?;
-    module.add_function(wrap_pyfunction!(pack_bitstream_numpy, module)?)?;
+    module.add_function(wrap_pyfunction!(packing::pack_bitstream_numpy, module)?)?;
     module.add_function(wrap_pyfunction!(popcount_numpy, module)?)?;
     module.add_function(wrap_pyfunction!(unpack_bitstream_numpy, module)?)?;
-    module.add_function(wrap_pyfunction!(batch_encode, module)?)?;
-    module.add_function(wrap_pyfunction!(batch_encode_numpy, module)?)?;
+    module.add_function(wrap_pyfunction!(encoding::batch_encode, module)?)?;
+    module.add_function(wrap_pyfunction!(encoding::batch_encode_numpy, module)?)?;
     Ok(())
 }
 
@@ -43,14 +98,16 @@ pub struct PyBitstreamAverager {
 impl PyBitstreamAverager {
     #[new]
     #[pyo3(signature = (window=1024))]
-    fn new(window: usize) -> Self {
-        Self {
-            inner: neuron::BitstreamAverager::new(window),
+    fn new(window: usize) -> PyResult<Self> {
+        if window == 0 {
+            return Err(PyValueError::new_err("window must be > 0"));
         }
+        let inner = neuron::BitstreamAverager::try_new(window).map_err(PyMemoryError::new_err)?;
+        Ok(Self { inner })
     }
 
-    fn push(&mut self, bit: u8) {
-        self.inner.push(bit);
+    fn push(&mut self, bit: u8) -> PyResult<()> {
+        self.inner.try_push(bit).map_err(PyValueError::new_err)
     }
 
     fn estimate(&self) -> f64 {
@@ -159,29 +216,6 @@ impl BitstreamEncoder {
     }
 }
 
-/// Pack a one- or two-dimensional Python bit sequence into 64-bit words.
-#[pyfunction]
-fn pack_bitstream(py: Python<'_>, bits: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-    if let Ok(rows) = bits.extract::<Vec<Vec<u8>>>() {
-        let packed_rows: Vec<Vec<u64>> = rows.iter().map(|row| bitstream::pack(row).data).collect();
-        return Ok(packed_rows
-            .into_pyobject(py)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?
-            .into_any()
-            .unbind());
-    }
-
-    let flat = bits
-        .extract::<Vec<u8>>()
-        .map_err(|_| PyValueError::new_err("Expected a 1-D or 2-D array of uint8 bits."))?;
-    Ok(bitstream::pack(&flat)
-        .data
-        .into_pyobject(py)
-        .map_err(|e| PyValueError::new_err(e.to_string()))?
-        .into_any()
-        .unbind())
-}
-
 /// Unpack 64-bit words into their original one- or two-dimensional bit shape.
 #[pyfunction]
 #[pyo3(signature = (packed, original_length, original_shape=None))]
@@ -191,7 +225,13 @@ fn unpack_bitstream(
     original_length: usize,
     original_shape: Option<(usize, usize)>,
 ) -> PyResult<Py<PyAny>> {
-    if let Ok(rows) = packed.extract::<Vec<Vec<u64>>>() {
+    let rows = packed.extract::<PackedSequence<PackedSequence<u64>>>();
+    if let Err(error) = &rows {
+        if error.is_instance_of::<PyMemoryError>(py) {
+            return Err(error.clone_ref(py));
+        }
+    }
+    if let Ok(PackedSequence(rows)) = rows {
         let batch = rows.len();
         let per_batch_len = if let Some((expected_batch, length)) = original_shape {
             if expected_batch != batch {
@@ -205,26 +245,25 @@ fn unpack_bitstream(
             original_length.checked_div(batch).unwrap_or(0)
         };
 
-        let unpacked_rows: Vec<Vec<u8>> = rows
-            .into_iter()
-            .map(|row| {
-                bitstream::unpack(&bitstream::BitStreamTensor::from_words(row, per_batch_len))
-            })
-            .collect();
-        return Ok(unpacked_rows
-            .into_pyobject(py)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?
-            .into_any()
-            .unbind());
+        validate_unpack_length(per_batch_len)?;
+        for row in &rows {
+            validate_unpack(row.0.len(), per_batch_len)?;
+        }
+        let output = PyList::empty(py);
+        for row in rows {
+            output.append(unpack_bytes(py, &row.0, per_batch_len)?)?;
+        }
+        return Ok(output.into_any().unbind());
     }
 
-    let words = packed.extract::<Vec<u64>>().map_err(|_| {
-        PyValueError::new_err("Expected packed uint64 words as 1-D or 2-D sequence.")
+    let words = packed.extract::<PackedSequence<u64>>().map_err(|error| {
+        if error.is_instance_of::<PyMemoryError>(py) {
+            error
+        } else {
+            PyValueError::new_err("Expected packed uint64 words as 1-D or 2-D sequence.")
+        }
     })?;
-    let tensor = bitstream::BitStreamTensor::from_words(words, original_length);
-    Ok(bitstream::unpack(&tensor)
-        .into_pyobject(py)
-        .map_err(|e| PyValueError::new_err(e.to_string()))?
+    Ok(unpack_bytes(py, &words.0, original_length)?
         .into_any()
         .unbind())
 }
@@ -253,20 +292,6 @@ fn popcount(packed: &Bound<'_, PyAny>) -> PyResult<u64> {
     Ok(simd::popcount_dispatch(&words))
 }
 
-/// Pack a 1-D numpy uint8 array into packed u64 words, returning a numpy array.
-/// Zero-copy input, single-allocation output.
-#[pyfunction]
-fn pack_bitstream_numpy<'py>(
-    py: Python<'py>,
-    bits: PyReadonlyArray1<'py, u8>,
-) -> PyResult<Bound<'py, PyArray1<u64>>> {
-    let slice = bits
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
-    let tensor = simd::pack_dispatch(slice);
-    Ok(tensor.data.into_pyarray(py))
-}
-
 /// Popcount on a numpy uint64 array — zero-copy input.
 #[pyfunction]
 fn popcount_numpy(packed: PyReadonlyArray1<'_, u64>) -> PyResult<u64> {
@@ -286,81 +311,13 @@ fn unpack_bitstream_numpy<'py>(
     let words = packed
         .as_slice()
         .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
-    let tensor = bitstream::BitStreamTensor::from_words(words.to_vec(), original_length);
-    let bits = bitstream::unpack(&tensor);
-    Ok(bits.into_pyarray(py))
-}
-
-/// Bernoulli-encode a numpy float64 array into packed bitstream words.
-///
-/// Returns nested packed words with shape (n_probs, ceil(length / 64)).
-#[pyfunction]
-#[pyo3(signature = (probs, length=1024, seed=0xACE1))]
-fn batch_encode<'py>(
-    _py: Python<'py>,
-    probs: PyReadonlyArray1<'py, f64>,
-    length: usize,
-    seed: u64,
-) -> PyResult<Vec<Vec<u64>>> {
-    let prob_slice = probs
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("Cannot read probs: {e}")))?;
-    let words = length.div_ceil(64);
-
-    use rand::SeedableRng;
-    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
-
-    let packed: Vec<Vec<u64>> = prob_slice
-        .iter()
-        .map(|&p| {
-            let mut data = bitstream::bernoulli_packed(p, length, &mut rng);
-            data.resize(words, 0);
-            data
-        })
-        .collect();
-
-    Ok(packed)
-}
-
-/// Bernoulli-encode a numpy float64 array into a 2-D numpy uint64 array.
-///
-/// Returns shape `(n_probs, ceil(length / 64))`.
-#[pyfunction]
-#[pyo3(signature = (probs, length=1024, seed=0xACE1))]
-fn batch_encode_numpy<'py>(
-    py: Python<'py>,
-    probs: PyReadonlyArray1<'py, f64>,
-    length: usize,
-    seed: u64,
-) -> PyResult<Bound<'py, PyArray2<u64>>> {
-    use rayon::prelude::*;
-
-    let prob_slice = probs
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("Cannot read probs: {e}")))?;
-    let words = length.div_ceil(64);
-    let n_probs = prob_slice.len();
-
-    let rows: Vec<Vec<u64>> = prob_slice
-        .par_iter()
-        .enumerate()
-        .map(|(idx, &p)| {
-            use rand::SeedableRng;
-
-            let prob_seed = seed.wrapping_add(idx as u64);
-            let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(prob_seed);
-            let mut row = bitstream::bernoulli_packed_simd(p, length, &mut rng);
-            row.resize(words, 0);
-            row
-        })
-        .collect();
-
-    let mut flat = Vec::with_capacity(n_probs * words);
-    for row in &rows {
-        flat.extend_from_slice(row);
+    validate_unpack(words.len(), original_length)?;
+    let output =
+        crate::fixed_point_lif_binding::array_allocation::zeros_1d::<u8>(py, original_length)?;
+    let mut writable = output.readwrite();
+    for (index, bit) in writable.as_slice_mut()?.iter_mut().enumerate() {
+        *bit = ((words[index / 64] >> (index % 64)) & 1) as u8;
     }
-
-    let arr = ndarray::Array2::from_shape_vec((n_probs, words), flat)
-        .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
-    Ok(arr.into_pyarray(py))
+    drop(writable);
+    Ok(output)
 }

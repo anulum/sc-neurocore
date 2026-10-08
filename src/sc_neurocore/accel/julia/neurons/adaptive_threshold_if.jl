@@ -16,6 +16,7 @@ export AdaptiveThresholdIFCandidateError,
     exact_relaxation,
     is_candidate_error,
     is_configuration_error,
+    is_memory_error,
     reset!,
     simulate,
     simulate_adaptive_threshold_if_b,
@@ -38,6 +39,9 @@ Base.showerror(io::IO, error::AdaptiveThresholdIFCandidateError) = print(io, err
 
 is_configuration_error(error)::Bool = error isa AdaptiveThresholdIFConfigurationError
 is_candidate_error(error)::Bool = error isa AdaptiveThresholdIFCandidateError
+
+"""Classify real Julia allocation exhaustion for the Python MemoryError boundary."""
+is_memory_error(error)::Bool = error isa OutOfMemoryError
 
 mutable struct AdaptiveThresholdIFNeuronState
     v::Float64

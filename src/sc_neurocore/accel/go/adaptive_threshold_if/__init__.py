@@ -55,7 +55,38 @@ def simulate_adaptive_threshold_if(
     dt: float,
     current: npt.ArrayLike,
 ) -> AdaptiveThresholdIFResult:
-    """Run the Go implementation of the complete exact-relaxation recurrence."""
+    """Run the Go exact-relaxation batch without changing the caller's drive.
+
+    Parameters
+    ----------
+    v_init, theta_init : float
+        Initial membrane potential and adaptive threshold.
+    v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt : float
+        Complete finite configuration, validated by the native batch.
+    current : ArrayLike
+        Finite one-dimensional current vector, converted to contiguous float64.
+
+    Returns
+    -------
+    dict
+        Independent complete voltage, threshold and spike traces, both final
+        states and the spike count. Empty input retains the initial states.
+
+    Raises
+    ------
+    ValueError
+        If the drive, configuration or signed-32-bit count is invalid.
+    FloatingPointError
+        If an exact-relaxation candidate is non-finite.
+    MemoryError
+        If NumPy output storage or native atomic trace storage cannot be allocated.
+        The native resource refusal uses an authored message and leaves inputs
+        unchanged; a later valid batch remains usable.
+    ImportError
+        If the maintained Go shared library is unavailable.
+    RuntimeError
+        If the native library returns an unrecognised status code.
+    """
     logical = np.asarray(current)
     if logical.ndim != 1:
         raise ValueError(f"current must be one-dimensional: got shape {logical.shape}")
@@ -108,6 +139,8 @@ def simulate_adaptive_threshold_if(
         raise ValueError("adaptive_threshold_if_simulate_c rejected configuration")
     if status == 3:
         raise ValueError("adaptive_threshold_if_simulate_c rejected current")
+    if status == 5:
+        raise MemoryError("adaptive-threshold trace buffers cannot be allocated")
     if status != 0:
         raise RuntimeError(f"adaptive_threshold_if_simulate_c rejected code {status}")
     return {

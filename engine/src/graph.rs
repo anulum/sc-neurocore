@@ -283,6 +283,9 @@ impl StochasticGraphLayer {
     /// Rate-mode graph forward pass.
     pub fn forward(&self, node_features: &[f64]) -> Result<Vec<f64>, String> {
         self.validate_features(node_features)?;
+        if self.n_nodes == 0 {
+            return Ok(Vec::new());
+        }
 
         let mut agg = vec![0.0_f64; self.n_nodes * self.n_features];
 

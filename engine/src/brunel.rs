@@ -16,6 +16,10 @@ use crate::neuron::{mask, FixedPointLif};
 use rand::SeedableRng;
 use rand_distr::{Distribution, Poisson};
 use rand_xoshiro::Xoshiro256PlusPlus;
+use std::collections::TryReserveError;
+
+/// Shared allocation-refusal message for the Rust and Python entry points.
+pub(crate) const ALLOCATION_ERROR: &str = "Brunel simulation buffers cannot be allocated";
 
 /// Brunel balanced network with CSR connectivity and Poisson drive.
 pub struct BrunelNetwork {
@@ -46,6 +50,7 @@ impl BrunelNetwork {
     /// spike-count range, widths outside `1..=16`, fractions outside the width,
     /// negative refractory periods, and invalid Poisson means. Zero drive is
     /// accepted; positive means must fit `Poisson::<f64>::MAX_LAMBDA`.
+    /// Refuses neuron or spike-buffer allocation with the shared allocation message.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         n_neurons: usize,
@@ -116,22 +121,29 @@ impl BrunelNetwork {
         } else {
             None
         };
-        let neurons: Vec<FixedPointLif> = (0..n_neurons)
-            .map(|_| {
-                FixedPointLif::new(
-                    data_width,
-                    fraction,
-                    v_rest,
-                    v_reset,
-                    v_threshold,
-                    refractory_period,
-                )
-            })
-            .collect();
+        let mut neurons = Vec::new();
+        neurons
+            .try_reserve_exact(n_neurons)
+            .map_err(|_| ALLOCATION_ERROR.to_string())?;
+        let mut prev_spikes = Vec::new();
+        prev_spikes
+            .try_reserve_exact(n_neurons)
+            .map_err(|_| ALLOCATION_ERROR.to_string())?;
+        prev_spikes.resize(n_neurons, false);
+        for _ in 0..n_neurons {
+            neurons.push(FixedPointLif::new(
+                data_width,
+                fraction,
+                v_rest,
+                v_reset,
+                v_threshold,
+                refractory_period,
+            ));
+        }
 
         Ok(Self {
             neurons,
-            prev_spikes: vec![false; n_neurons],
+            prev_spikes,
             w_row_offsets,
             w_col_indices,
             w_values,
@@ -149,12 +161,43 @@ impl BrunelNetwork {
     ///
     /// Signed currents wrap before width masking. Means below 30 retain the
     /// seeded Knuth stream; larger means use `rand_distr` rejection sampling.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the working buffers cannot be allocated. Use [`Self::try_run`]
+    /// to handle capacity and allocation failures without changing state.
     pub fn run(&mut self, n_steps: usize) -> Vec<u32> {
-        let n = self.n_neurons;
-        let mut i_syn = vec![0i32; n];
-        let mut counts = Vec::with_capacity(n_steps);
+        self.try_run(n_steps).expect(ALLOCATION_ERROR)
+    }
 
-        for _ in 0..n_steps {
+    /// Run with fallible output and synaptic-buffer allocation.
+    ///
+    /// All working buffers are reserved before neuron, spike or RNG state is
+    /// changed. A zero-step call needs no working allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the allocator's reservation error when an output capacity is
+    /// unrepresentable or either working buffer cannot be allocated.
+    pub fn try_run(&mut self, n_steps: usize) -> Result<Vec<u32>, TryReserveError> {
+        let mut counts = Vec::new();
+        counts.try_reserve_exact(n_steps)?;
+        counts.resize(n_steps, 0);
+        self.try_run_into(&mut counts)?;
+        Ok(counts)
+    }
+
+    /// Fill an admitted output slice after reserving synaptic working storage.
+    pub(crate) fn try_run_into(&mut self, counts: &mut [u32]) -> Result<(), TryReserveError> {
+        if counts.is_empty() {
+            return Ok(());
+        }
+        let n = self.n_neurons;
+        let mut i_syn = Vec::new();
+        i_syn.try_reserve_exact(n)?;
+        i_syn.resize(n, 0i32);
+
+        for count in counts {
             // 1. CSR spike-scatter: for each fired pre-synaptic neuron,
             //    scatter its outgoing weights to post-synaptic current buffer.
             i_syn.iter_mut().for_each(|x| *x = 0);
@@ -189,9 +232,9 @@ impl BrunelNetwork {
                     step_spikes += 1;
                 }
             }
-            counts.push(step_spikes);
+            *count = step_spikes;
         }
-        counts
+        Ok(())
     }
 
     pub fn total_spikes(&self, counts: &[u32]) -> u64 {

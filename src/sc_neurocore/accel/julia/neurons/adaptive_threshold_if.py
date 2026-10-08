@@ -58,7 +58,39 @@ def simulate_adaptive_threshold_if(
     dt: float,
     current: npt.ArrayLike,
 ) -> dict[str, npt.NDArray[np.float64] | float | int]:
-    """Run the Julia exact-relaxation recurrence with typed failure translation."""
+    """Run the Julia exact-relaxation batch with typed failure translation.
+
+    Parameters
+    ----------
+    v_init, theta_init : float
+        Initial membrane potential and adaptive threshold.
+    v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt : float
+        Complete finite numerical configuration, validated by the Julia kernel.
+    current : ArrayLike
+        Finite one-dimensional drive, converted to contiguous float64 without
+        changing caller storage.
+
+    Returns
+    -------
+    dict
+        Complete voltage, threshold and spike traces, both final states and
+        spike count. Empty batches retain their supplied initial states.
+
+    Raises
+    ------
+    ValueError
+        If the drive or native configuration is invalid.
+    FloatingPointError
+        If an exact-relaxation candidate is non-finite.
+    MemoryError
+        If NumPy output allocation or Julia trace allocation fails. A real
+        Julia OutOfMemoryError becomes an authored Python MemoryError while
+        preserving the input and allowing a later valid batch.
+    ImportError
+        If the Julia bridge is unavailable.
+    FileNotFoundError
+        If the maintained Julia kernel source is unavailable.
+    """
     drive = _as_input(current)
     module = _ensure_loaded()
     v_out = np.empty(drive.size, dtype=np.float64)
@@ -84,6 +116,8 @@ def simulate_adaptive_threshold_if(
         if not is_julia_error(exc):
             raise
         julia_exception = getattr(exc, "exception", None)
+        if module.is_memory_error(julia_exception):
+            raise MemoryError("adaptive-threshold trace buffers cannot be allocated") from exc
         if module.is_configuration_error(julia_exception):
             raise ValueError(str(exc)) from exc
         if module.is_candidate_error(julia_exception):

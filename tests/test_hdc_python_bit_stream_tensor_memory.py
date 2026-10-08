@@ -138,7 +138,7 @@ def test_real_process_memory_refusal_keeps_the_consumer_alive(operation: str, me
     """Compare a real successful operation with its allocation refusal and retry."""
     for mode in ("control", "pressure"):
         completed = subprocess.run(
-            [sys.executable, "-I", "-c", MEMORY_CONSUMER, operation, mode],
+            [sys.executable, "-I", "-B", "-c", MEMORY_CONSUMER, operation, mode],
             capture_output=True,
             text=True,
             timeout=30,

@@ -48,6 +48,16 @@ impl PyDifferentiableDenseLayer {
         k: Option<f32>,
     ) -> PyResult<Self> {
         let surrogate = parse_surrogate(surrogate, k)?;
+        if length == 0 {
+            return Err(PyValueError::new_err("bitstream length must be > 0"));
+        }
+        if n_inputs == 0 {
+            return Err(PyValueError::new_err("n_inputs must be > 0"));
+        }
+        if n_neurons == 0 {
+            return Err(PyValueError::new_err("n_neurons must be > 0"));
+        }
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
         Ok(Self {
             inner: grad::DifferentiableDenseLayer::new(
                 n_inputs, n_neurons, length, seed, surrogate,

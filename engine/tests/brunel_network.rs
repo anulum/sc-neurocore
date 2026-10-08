@@ -276,3 +276,15 @@ fn empty_csr_zero_drive_and_width_boundaries_are_valid() {
         assert_eq!(network.run(8), vec![0; 8]);
     }
 }
+
+#[test]
+fn allocation_refusal_preserves_seeded_continuation() {
+    let mut network = Parameters::default().build().unwrap();
+    let prefix = network.try_run(23).unwrap();
+    let impossible = isize::MAX as usize / std::mem::size_of::<u32>() + 1;
+    assert!(network.try_run(impossible).is_err());
+    assert!(network.try_run(0).unwrap().is_empty());
+    let mut reference = Parameters::default().build().unwrap();
+    assert_eq!(prefix, reference.run(23));
+    assert_eq!(network.try_run(41).unwrap(), reference.run(41));
+}

@@ -222,6 +222,7 @@ fn batch_lif_run_multi<'py>(
     if n_neurons == 0 || n_steps == 0 {
         return Ok((spikes_arr, voltages_arr));
     }
+    crate::runtime_control_binding::ensure_parallel_runtime()?;
 
     // SAFETY: Arrays are newly allocated and contiguous.
     let spikes_flat = unsafe {

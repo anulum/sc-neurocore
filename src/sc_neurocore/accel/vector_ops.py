@@ -90,44 +90,68 @@ def unpack_bitstream(
     original_length: int,
     original_shape: Optional[tuple[Any, ...]] = None,
 ) -> np.ndarray[Any, Any]:
-    """
-    Unpacks uint64 array back to uint8 bitstream.
+    """Unpack uint64 words into a uint8 bitstream, including empty streams.
 
-    Args:
-        packed: Packed uint64 array (1D or 2D)
-        original_length: Total number of bits to extract
-        original_shape: Optional tuple for reshaping output (batch, length)
+    Parameters
+    ----------
+    packed : numpy.ndarray
+        One- or two-dimensional packed words, least significant bit first.
+    original_length : int
+        Number of bits in a flat stream, or total bits across the batch.
+    original_shape : tuple of int, optional
+        Batch count and bits per row. This overrides the inferred row length.
 
     Returns
     -------
-        Unpacked bitstream of shape (original_length,) or original_shape
+    numpy.ndarray
+        Unpacked uint8 bits with the requested flat or per-row length.
+
+    Raises
+    ------
+    ValueError
+        If rank, batch count or length is invalid, or storage is too short.
+    MemoryError
+        If the requested row length cannot fit numpy.intp or allocation fails.
     """
+    if packed.ndim not in (1, 2):
+        raise ValueError(f"Expected 1D or 2D packed array, got {packed.ndim}D")
+    length = original_length
+    if packed.ndim == 2:
+        batch_size = packed.shape[0]
+        if original_shape is not None:
+            if original_shape[0] != batch_size:
+                raise ValueError(
+                    f"original_shape batch {original_shape[0]} does not match packed batch {batch_size}."
+                )
+            length = original_shape[1]
+        else:
+            length = original_length // batch_size if batch_size else 0
+    if length < 0:
+        raise ValueError("original_length must be nonnegative")
+    if length > int(np.iinfo(np.intp).max):
+        raise MemoryError("unpacked bitstream cannot be allocated")
+    available_words = packed.shape[-1]
+    if (packed.ndim == 1 or packed.shape[0]) and available_words < (length + 63) // 64:
+        raise ValueError("packed words do not cover original_length")
+
     if packed.ndim == 1:
         # 1D packed array
         bits = ((packed[:, None] & (1 << np.arange(64, dtype=np.uint64))) > 0).astype(np.uint8)
         unpacked = bits.flatten()
-        result: np.ndarray[Any, Any] = unpacked[:original_length]
+        result: np.ndarray[Any, Any] = unpacked[:length]
         return result
 
-    elif packed.ndim == 2:
+    else:
         # 2D packed array: (batch, num_chunks)
         batch_size, num_chunks = packed.shape
         # Extract bits: (batch, num_chunks, 64)
         bits = ((packed[:, :, None] & (1 << np.arange(64, dtype=np.uint64))) > 0).astype(np.uint8)
         # Reshape to (batch, num_chunks * 64)
-        unpacked = bits.reshape(batch_size, -1)
-
-        if original_shape is not None:
-            result_2d: np.ndarray[Any, Any] = unpacked[:, : original_shape[1]]
-            return result_2d
-        else:
-            # Assume original_length is per-batch
-            per_batch_len = original_length // batch_size
-            result_batch: np.ndarray[Any, Any] = unpacked[:, :per_batch_len]
-            return result_batch
-
-    else:
-        raise ValueError(f"Expected 1D or 2D packed array, got {packed.ndim}D")
+        unpacked = bits.reshape(batch_size, num_chunks * 64)
+        if batch_size == 0:
+            return np.empty((0, length), dtype=np.uint8)
+        result_batch: np.ndarray[Any, Any] = unpacked[:, :length]
+        return result_batch
 
 
 def vec_and(a_packed: np.ndarray[Any, Any], b_packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:

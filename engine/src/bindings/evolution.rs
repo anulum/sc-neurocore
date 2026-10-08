@@ -8,6 +8,7 @@
 
 //! Python bindings for population-level evolutionary operators.
 
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 /// Register the evolutionary-substrate functions with the extension module.
@@ -30,9 +31,12 @@ fn batch_mutate_weights(
     mutation_rate: f64,
     mutation_scale: f64,
     seed: u64,
-) -> Vec<Vec<f64>> {
+) -> PyResult<Vec<Vec<f64>>> {
+    if !genomes.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     crate::evo::batch_mutate_weights(&mut genomes, mutation_rate, mutation_scale, seed);
-    genomes
+    Ok(genomes)
 }
 
 /// Evaluate population fitness in one Rust call.
@@ -42,8 +46,13 @@ fn batch_evaluate_fitness(
     genomes: Vec<Vec<f64>>,
     inputs: Vec<f64>,
     target: f64,
-) -> Vec<f64> {
-    crate::evo::batch_evaluate_fitness(&genomes, &inputs, target)
+) -> PyResult<Vec<f64>> {
+    if !genomes.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
+    Ok(crate::evo::batch_evaluate_fitness(
+        &genomes, &inputs, target,
+    ))
 }
 
 /// Apply uniform crossover to paired parent populations.
@@ -54,14 +63,20 @@ fn batch_crossover(
     parents_a: Vec<Vec<f64>>,
     parents_b: Vec<Vec<f64>>,
     seed: u64,
-) -> Vec<Vec<f64>> {
-    crate::evo::batch_crossover(&parents_a, &parents_b, seed)
+) -> PyResult<Vec<Vec<f64>>> {
+    if !parents_a.is_empty() && !parents_b.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
+    Ok(crate::evo::batch_crossover(&parents_a, &parents_b, seed))
 }
 
 /// Return mean pairwise L2 distance for a population.
 #[pyfunction(name = "py_evo_diversity")]
-fn population_diversity(_py: Python<'_>, genomes: Vec<Vec<f64>>) -> f64 {
-    crate::evo::population_diversity(&genomes)
+fn population_diversity(_py: Python<'_>, genomes: Vec<Vec<f64>>) -> PyResult<f64> {
+    if genomes.len() >= 2 {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
+    Ok(crate::evo::population_diversity(&genomes))
 }
 
 /// Score population novelty against an archive.
@@ -72,8 +87,11 @@ fn novelty_scores(
     genomes: Vec<Vec<f64>>,
     archive: Vec<Vec<f64>>,
     k_nearest: usize,
-) -> Vec<f64> {
-    crate::evo::novelty_scores(&genomes, &archive, k_nearest)
+) -> PyResult<Vec<f64>> {
+    if !genomes.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
+    Ok(crate::evo::novelty_scores(&genomes, &archive, k_nearest))
 }
 
 /// Select population indices by seeded tournaments.
@@ -85,6 +103,16 @@ fn tournament_select(
     n_select: usize,
     tournament_size: usize,
     seed: u64,
-) -> Vec<usize> {
-    crate::evo::tournament_select(&fitness, n_select, tournament_size, seed)
+) -> PyResult<Vec<usize>> {
+    if n_select != 0 && fitness.is_empty() {
+        return Err(PyValueError::new_err(
+            "fitness must be nonempty when selecting winners",
+        ));
+    }
+    Ok(crate::evo::tournament_select(
+        &fitness,
+        n_select,
+        tournament_size,
+        seed,
+    ))
 }

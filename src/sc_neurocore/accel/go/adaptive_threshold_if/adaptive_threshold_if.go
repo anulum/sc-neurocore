@@ -10,6 +10,14 @@ package main
 
 /*
 #include <stdint.h>
+#include <stdlib.h>
+
+// C.malloc is special-cased by cgo to abort on failure. An ordinary C
+// function preserves libc's NULL result. Static inline keeps this helper
+// local to each translation unit generated for the exported Go function.
+static inline void *scn_try_allocate_trace(size_t bytes) {
+    return malloc(bytes);
+}
 */
 import "C"
 
@@ -76,6 +84,11 @@ func exactRelaxation(state, steadyState, tau, dt float64) (float64, bool) {
 	return candidate, finite(candidate)
 }
 
+// adaptive_threshold_if_simulate_c writes complete traces only after a successful batch.
+// Caller-owned Float64 input, three traces and three scalar receipts must be disjoint.
+// Statuses are 0 success, 1 buffer/count, 2 configuration, 3 current, 4 candidate,
+// and 5 trace allocation failure. Every refusal preserves all caller output bytes.
+//
 //export adaptive_threshold_if_simulate_c
 func adaptive_threshold_if_simulate_c(
 	n C.int32_t,
@@ -143,9 +156,27 @@ func adaptive_threshold_if_simulate_c(
 		}
 	}
 
-	vTrace := make([]float64, steps)
-	thetaTrace := make([]float64, steps)
-	spikeTrace := make([]float64, steps)
+	// makeRegion already checked the byte count against uintptr capacity.
+	// C allocation reports failure instead of terminating the Go runtime.
+	traceBytes := C.size_t(uintptr(steps) * unsafe.Sizeof(C.double(0)))
+	vStorage := C.scn_try_allocate_trace(traceBytes)
+	if vStorage == nil {
+		return 5
+	}
+	defer C.free(vStorage)
+	thetaStorage := C.scn_try_allocate_trace(traceBytes)
+	if thetaStorage == nil {
+		return 5
+	}
+	defer C.free(thetaStorage)
+	spikeStorage := C.scn_try_allocate_trace(traceBytes)
+	if spikeStorage == nil {
+		return 5
+	}
+	defer C.free(spikeStorage)
+	vTrace := unsafe.Slice((*C.double)(vStorage), steps)
+	thetaTrace := unsafe.Slice((*C.double)(thetaStorage), steps)
+	spikeTrace := unsafe.Slice((*C.double)(spikeStorage), steps)
 	v, theta := configuration[0], configuration[1]
 	vRestF, vResetF := configuration[2], configuration[3]
 	thetaRestF, deltaThetaF := configuration[4], configuration[5]
@@ -172,16 +203,16 @@ func adaptive_threshold_if_simulate_c(
 		} else {
 			v, theta = nextV, nextTheta
 		}
-		vTrace[index], thetaTrace[index], spikeTrace[index] = v, theta, spike
+		vTrace[index], thetaTrace[index], spikeTrace[index] = C.double(v), C.double(theta), C.double(spike)
 	}
 
 	vOut := unsafe.Slice((*C.double)(vOutPtr), steps)
 	thetaOut := unsafe.Slice((*C.double)(thetaOutPtr), steps)
 	spikesOut := unsafe.Slice((*C.double)(spikesOutPtr), steps)
 	for index := 0; index < steps; index++ {
-		vOut[index] = C.double(vTrace[index])
-		thetaOut[index] = C.double(thetaTrace[index])
-		spikesOut[index] = C.double(spikeTrace[index])
+		vOut[index] = vTrace[index]
+		thetaOut[index] = thetaTrace[index]
+		spikesOut[index] = spikeTrace[index]
 	}
 	*vFinal = C.double(v)
 	*thetaFinal = C.double(theta)

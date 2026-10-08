@@ -65,6 +65,18 @@ impl NetworkRunner {
         self.projections.push(proj);
     }
 
+    /// Validate population selection and current shape before worker admission.
+    pub(crate) fn validate_population_currents(
+        &self,
+        pop_idx: usize,
+        currents: &[f64],
+    ) -> Result<(), String> {
+        self.populations
+            .get(pop_idx)
+            .ok_or_else(|| format!("population index {pop_idx} out of range"))?
+            .validate_currents(currents)
+    }
+
     pub fn step_population_with_currents(
         &mut self,
         pop_idx: usize,

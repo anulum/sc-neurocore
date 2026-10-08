@@ -8,6 +8,7 @@
 
 //! Python bindings for the quantum annealing acceleration primitives.
 
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -38,6 +39,7 @@ fn py_qa_ising_energy(
 }
 
 /// Batch compute Ising energies for many configurations.
+/// Empty configuration batches leave worker startup lazy.
 #[pyfunction]
 #[pyo3(signature = (h_indices, h_values, j_i, j_j, j_values, configs, offset=0.0))]
 fn py_qa_batch_ising_energy(
@@ -49,15 +51,19 @@ fn py_qa_batch_ising_energy(
     j_values: Vec<f64>,
     configs: Vec<Vec<i8>>,
     offset: f64,
-) -> Vec<f64> {
+) -> PyResult<Vec<f64>> {
+    if !configs.is_empty() {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
     let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
-    quantum::batch_ising_energy(&h, &j, &configs, offset)
+    Ok(quantum::batch_ising_energy(&h, &j, &configs, offset))
 }
 
 /// Run simulated annealing on an Ising model (Rust-accelerated).
 ///
 /// Returns dict with best_spins, best_energy, energies, samples.
+/// Validate active coupling indices and admit workers before generating samples.
 #[pyfunction]
 #[pyo3(signature = (h_indices, h_values, j_i, j_j, j_values, n_qubits, offset=0.0, n_sweeps=1000, num_reads=10, beta_start=0.1, beta_end=10.0, seed=42))]
 fn py_qa_simulated_annealing<'py>(
@@ -77,6 +83,18 @@ fn py_qa_simulated_annealing<'py>(
 ) -> PyResult<Py<PyAny>> {
     let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
     let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
+
+    if num_reads != 0 {
+        if n_sweeps != 0
+            && j.iter()
+                .any(|&((i, k), _)| (i < n_qubits) != (k < n_qubits))
+        {
+            return Err(PyValueError::new_err(
+                "Ising coupling references an out-of-range qubit",
+            ));
+        }
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
 
     let (best_spins, best_energy, all_energies, all_samples) = quantum::simulated_annealing(
         &h, &j, n_qubits, offset, n_sweeps, num_reads, beta_start, beta_end, seed,
@@ -111,6 +129,7 @@ fn py_qa_gauge_transform(
 }
 
 /// Generate random gauge vectors.
+/// Zero gauges leave worker startup lazy.
 #[pyfunction]
 #[pyo3(signature = (n_qubits, n_gauges=10, seed=42))]
 fn py_qa_generate_gauges(
@@ -118,8 +137,11 @@ fn py_qa_generate_gauges(
     n_qubits: usize,
     n_gauges: usize,
     seed: u64,
-) -> Vec<Vec<i8>> {
-    quantum::generate_gauges(n_qubits, n_gauges, seed)
+) -> PyResult<Vec<Vec<i8>>> {
+    if n_gauges != 0 {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
+    Ok(quantum::generate_gauges(n_qubits, n_gauges, seed))
 }
 
 /// Greedy graph partitioning for problem decomposition.

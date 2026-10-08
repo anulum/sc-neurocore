@@ -8,11 +8,12 @@
 
 //! Python binding for the fixed-point Brunel network simulator.
 
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
-use pyo3::exceptions::PyValueError;
+use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray1};
+use pyo3::exceptions::{PyMemoryError, PyValueError};
 use pyo3::prelude::*;
 
 use crate::brunel;
+use crate::fixed_point_lif_binding::array_allocation::zeros_1d;
 
 /// Register the fixed-point Brunel network with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -77,21 +78,22 @@ impl PyBrunelNetwork {
             .as_slice()
             .map_err(|e| PyValueError::new_err(format!("Cannot read w_data: {e}")))?;
 
-        let row_offsets: Vec<usize> = indptr
-            .iter()
-            .map(|&value| {
+        let mut row_offsets = reserved_buffer(indptr.len())?;
+        for &value in indptr {
+            row_offsets.push(
                 usize::try_from(value)
-                    .map_err(|_| PyValueError::new_err("w_indptr values must be nonnegative"))
-            })
-            .collect::<PyResult<_>>()?;
-        let col_indices: Vec<usize> = indices
-            .iter()
-            .map(|&value| {
+                    .map_err(|_| PyValueError::new_err("w_indptr values must be nonnegative"))?,
+            );
+        }
+        let mut col_indices = reserved_buffer(indices.len())?;
+        for &value in indices {
+            col_indices.push(
                 usize::try_from(value)
-                    .map_err(|_| PyValueError::new_err("w_indices values must be nonnegative"))
-            })
-            .collect::<PyResult<_>>()?;
-        let values: Vec<i16> = data.to_vec();
+                    .map_err(|_| PyValueError::new_err("w_indices values must be nonnegative"))?,
+            );
+        }
+        let mut values = reserved_buffer(data.len())?;
+        values.extend_from_slice(data);
 
         let inner = brunel::BrunelNetwork::new(
             n_neurons,
@@ -110,14 +112,43 @@ impl PyBrunelNetwork {
             ext_weight_fp,
             seed,
         )
-        .map_err(PyValueError::new_err)?;
+        .map_err(|error| {
+            if error == brunel::ALLOCATION_ERROR {
+                PyMemoryError::new_err(error)
+            } else {
+                PyValueError::new_err(error)
+            }
+        })?;
 
         Ok(Self { inner })
     }
 
-    /// Advance the seeded network and return owned per-step spike counts.
-    fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> Bound<'py, PyArray1<u32>> {
-        let counts = self.inner.run(n_steps);
-        counts.into_pyarray(py)
+    /// Allocate all output and working storage before advancing the seeded network.
+    fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> PyResult<Bound<'py, PyArray1<u32>>> {
+        if n_steps > isize::MAX as usize / std::mem::size_of::<u32>() {
+            return Err(PyMemoryError::new_err(brunel::ALLOCATION_ERROR));
+        }
+        let output = zeros_1d::<u32>(py, n_steps).map_err(|error| {
+            if error.is_instance_of::<PyMemoryError>(py) {
+                PyMemoryError::new_err(brunel::ALLOCATION_ERROR)
+            } else {
+                error
+            }
+        })?;
+        let mut borrowed = output.try_readwrite()?;
+        self.inner
+            .try_run_into(borrowed.as_slice_mut()?)
+            .map_err(|_| PyMemoryError::new_err(brunel::ALLOCATION_ERROR))?;
+        drop(borrowed);
+        Ok(output)
     }
+}
+
+/// Reserve an owned CSR copy before copying borrowed Python values.
+fn reserved_buffer<T>(length: usize) -> PyResult<Vec<T>> {
+    let mut buffer = Vec::new();
+    buffer
+        .try_reserve_exact(length)
+        .map_err(|_| PyMemoryError::new_err(brunel::ALLOCATION_ERROR))?;
+    Ok(buffer)
 }

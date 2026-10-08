@@ -51,6 +51,9 @@ pub fn batch_ising_energy(
     configs: &[Vec<i8>],
     offset: f64,
 ) -> Vec<f64> {
+    if configs.is_empty() {
+        return Vec::new();
+    }
     configs
         .par_iter()
         .map(|spins| ising_energy(h, j, spins, offset))
@@ -111,6 +114,9 @@ pub fn simulated_annealing(
     beta_end: f64,
     seed: u64,
 ) -> (Vec<i8>, f64, Vec<f64>, Vec<Vec<i8>>) {
+    if num_reads == 0 {
+        return (vec![1i8; n_qubits], f64::INFINITY, Vec::new(), Vec::new());
+    }
     let j_index = build_j_index(j, n_qubits);
 
     // Parallelized multi-read SA
@@ -205,6 +211,9 @@ pub fn gauge_transform(
 
 /// Generate n_gauges random gauge vectors.
 pub fn generate_gauges(n_qubits: usize, n_gauges: usize, seed: u64) -> Vec<Vec<i8>> {
+    if n_gauges == 0 {
+        return Vec::new();
+    }
     (0..n_gauges)
         .into_par_iter()
         .map(|g| {

@@ -25,6 +25,8 @@ pub enum AdaptiveThresholdIFError {
     NonFiniteInput,
     /// The exact-relaxation candidate is not finite.
     NonFiniteCandidate,
+    /// One of the complete batch trace buffers cannot be reserved.
+    TraceAllocation,
 }
 
 impl fmt::Display for AdaptiveThresholdIFError {
@@ -40,6 +42,7 @@ impl fmt::Display for AdaptiveThresholdIFError {
             Self::NonFiniteCandidate => {
                 "adaptive-threshold exact-relaxation candidate must remain finite"
             }
+            Self::TraceAllocation => "adaptive-threshold trace buffers cannot be allocated",
         };
         formatter.write_str(message)
     }
@@ -212,6 +215,15 @@ pub struct AdaptiveThresholdIFTrace {
     pub spike_count: usize,
 }
 
+/// Reserve one complete trace without aborting on capacity or memory exhaustion.
+fn trace_buffer(length: usize) -> Result<Vec<f64>, AdaptiveThresholdIFError> {
+    let mut trace = Vec::new();
+    trace
+        .try_reserve_exact(length)
+        .map_err(|_| AdaptiveThresholdIFError::TraceAllocation)?;
+    Ok(trace)
+}
+
 /// Simulate a complete caller-owned piecewise-constant current vector atomically.
 #[allow(clippy::too_many_arguments)]
 pub fn simulate(
@@ -240,9 +252,9 @@ pub fn simulate(
     if !current.iter().all(|value| value.is_finite()) {
         return Err(AdaptiveThresholdIFError::NonFiniteInput);
     }
-    let mut v_trace = Vec::with_capacity(current.len());
-    let mut theta_trace = Vec::with_capacity(current.len());
-    let mut spikes = Vec::with_capacity(current.len());
+    let mut v_trace = trace_buffer(current.len())?;
+    let mut theta_trace = trace_buffer(current.len())?;
+    let mut spikes = trace_buffer(current.len())?;
     let mut spike_count = 0usize;
     for drive in current {
         let spike = neuron.try_step(*drive)?;
@@ -263,6 +275,18 @@ pub fn simulate(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unrepresentable_trace_capacity_is_a_resource_error() {
+        assert_eq!(
+            trace_buffer(usize::MAX).unwrap_err(),
+            AdaptiveThresholdIFError::TraceAllocation
+        );
+        assert_eq!(
+            AdaptiveThresholdIFError::TraceAllocation.to_string(),
+            "adaptive-threshold trace buffers cannot be allocated"
+        );
+    }
 
     #[test]
     fn defaults_match_catalogue_model_family() {

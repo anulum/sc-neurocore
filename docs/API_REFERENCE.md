@@ -2129,16 +2129,28 @@ numpy.ndarray of shape (ceil(N / 64),) or (Batch, ceil(N / 64)), uint64
     The packed 64-bit words.
 
 ### Function `unpack_bitstream(packed, original_length, original_shape)`
-Unpacks uint64 array back to uint8 bitstream.
+Unpack uint64 words into a uint8 bitstream, including empty streams.
 
-Args:
-    packed: Packed uint64 array (1D or 2D)
-    original_length: Total number of bits to extract
-    original_shape: Optional tuple for reshaping output (batch, length)
+Parameters
+----------
+packed : numpy.ndarray
+    One- or two-dimensional packed words, least significant bit first.
+original_length : int
+    Number of bits in a flat stream, or total bits across the batch.
+original_shape : tuple of int, optional
+    Batch count and bits per row. This overrides the inferred row length.
 
 Returns
 -------
-    Unpacked bitstream of shape (original_length,) or original_shape
+numpy.ndarray
+    Unpacked uint8 bits with the requested flat or per-row length.
+
+Raises
+------
+ValueError
+    If rank, batch count or length is invalid, or storage is too short.
+MemoryError
+    If the requested row length cannot fit numpy.intp or allocation fails.
 
 ### Function `vec_and(a_packed, b_packed)`
 Bitwise-AND two packed arrays, realising stochastic multiplication.
@@ -52362,8 +52374,8 @@ Manages Progressive Precision / Early Exit for SC.
 ## Module `utils.bitstreams`
 
 ### Class `BitstreamEncoder`
-Helper for encoding continuous scalar values into SC bitstreams
-using linear unipolar mapping.
+Encode continuous scalar values into SC bitstreams using linear mapping.
+
 Example
 -------
 encoder = BitstreamEncoder(x_min=0.0, x_max=0.1, length=1024, seed=123)
@@ -52372,6 +52384,7 @@ p_hat = bitstream_to_probability(bitstream)
 x_rec = encoder.decode(bitstream)
 
 - **__post_init__**()
+  - Create the RNG required by the selected mode or reject an unknown mode.
 - **encode**(x)
   - Encode one scalar into a stochastic bitstream.
 - **decode**(bitstream)
@@ -52379,6 +52392,18 @@ x_rec = encoder.decode(bitstream)
 
 ### Class `BitstreamAverager`
 Sliding-window probability estimator for bitstreams.
+
+Parameters
+----------
+window : int
+    Positive number of samples retained in the sliding window.
+
+Raises
+------
+SCEncodingError
+    If the window is zero or negative.
+MemoryError
+    If storage for the window cannot be allocated.
 
 Example
 -------
@@ -52392,6 +52417,7 @@ Example
 True
 
 - **__post_init__**()
+  - Validate the window and allocate its initially empty sample storage.
 - **push**(bit)
   - Add one binary sample to the sliding window.
 - **estimate**()
@@ -52400,9 +52426,11 @@ True
   - Clear all buffered samples and reset the estimator state.
 
 ### Function `generate_bernoulli_bitstream(p, length, rng)`
-Generate a Bernoulli bitstream of given length with probability p of '1'.
+Generate a Bernoulli bitstream with probability p of a one.
+
 This is the core SC primitive: a sequence of 0/1 bits where the
 proportion of 1s ~ p.
+
 Parameters
 ----------
 p : float
@@ -52411,6 +52439,7 @@ length : int
     Number of bits in the stream.
 rng : RNG, optional
     RNG instance. If None, a fresh RNG is created.
+
 Returns
 -------
 np.ndarray
@@ -52418,6 +52447,7 @@ np.ndarray
 
 ### Function `generate_sobol_bitstream(p, length, seed)`
 Generate a bitstream using a Sobol sequence (Low Discrepancy Sequence).
+
 LDS provides faster convergence than random Bernoulli sequences (O(1/N) vs O(1/sqrt(N))).
 
 Parameters
@@ -52436,6 +52466,7 @@ np.ndarray
 
 ### Function `bitstream_to_probability(bitstream)`
 Decode a unipolar bitstream back into a probability estimate.
+
 p_hat = (# of ones) / length
 
 ### Function `generate_bipolar_bitstream(x, length, rng)`
@@ -52459,12 +52490,14 @@ p = (x + 1) / 2. This p is then used with standard Bernoulli generation.
 
 ### Function `value_to_unipolar_prob(x, x_min, x_max, clip)`
 Map a scalar x from &#91;x_min, x_max&#93; into a unipolar probability &#91;0,1&#93;.
+
 Linear mapping:
     p = (x - x_min) / (x_max - x_min)
 If clip=True, x is clipped into &#91;x_min, x_max&#93;.
 
 ### Function `unipolar_prob_to_value(p, x_min, x_max)`
 Map a unipolar probability p in &#91;0,1&#93; back to a scalar in &#91;x_min, x_max&#93;.
+
 Inverse of value_to_unipolar_prob.
 
 ### Function `adaptive_length(p, epsilon, confidence, method, min_length, max_length)`

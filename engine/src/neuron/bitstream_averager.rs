@@ -18,18 +18,53 @@ pub struct BitstreamAverager {
 }
 
 impl BitstreamAverager {
+    /// Create a positive sliding window, panicking on invalid size or allocation failure.
+    ///
+    /// Use [`Self::try_new`] for fallible construction.
     pub fn new(window: usize) -> Self {
         assert!(window > 0, "window must be > 0");
-        Self {
-            buffer: vec![0; window],
+        Self::try_new(window).expect("cannot allocate bitstream averager buffer")
+    }
+
+    /// Create a positive sliding window with fallible buffer allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns `window must be > 0` for an empty window, or
+    /// `Bitstream averager buffer cannot be allocated` for capacity or allocation failure.
+    pub fn try_new(window: usize) -> Result<Self, &'static str> {
+        if window == 0 {
+            return Err("window must be > 0");
+        }
+        let mut buffer = Vec::new();
+        buffer
+            .try_reserve_exact(window)
+            .map_err(|_| "Bitstream averager buffer cannot be allocated")?;
+        buffer.resize(window, 0);
+        Ok(Self {
+            buffer,
             index: 0,
             filled: false,
             running_sum: 0,
-        }
+        })
     }
 
+    /// Add a binary sample, panicking before mutation for another byte value.
+    ///
+    /// Use [`Self::try_push`] for nonconsuming input refusal.
     pub fn push(&mut self, bit: u8) {
-        debug_assert!(bit <= 1, "bit must be 0 or 1");
+        self.try_push(bit).expect("bit must be 0 or 1");
+    }
+
+    /// Add a binary sample without changing state when the byte is invalid.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Bit must be 0 or 1.` for a byte greater than one.
+    pub fn try_push(&mut self, bit: u8) -> Result<(), &'static str> {
+        if bit > 1 {
+            return Err("Bit must be 0 or 1.");
+        }
         let old = self.buffer[self.index];
         self.buffer[self.index] = bit;
 
@@ -44,8 +79,10 @@ impl BitstreamAverager {
             self.index = 0;
             self.filled = true;
         }
+        Ok(())
     }
 
+    /// Estimate the probability using only observed samples until the window fills.
     pub fn estimate(&self) -> f64 {
         if !self.filled {
             if self.index == 0 {
@@ -56,6 +93,7 @@ impl BitstreamAverager {
         self.running_sum as f64 / self.buffer.len() as f64
     }
 
+    /// Discard all observations while retaining the allocated window.
     pub fn reset(&mut self) {
         self.buffer.fill(0);
         self.index = 0;
@@ -63,79 +101,12 @@ impl BitstreamAverager {
         self.running_sum = 0;
     }
 
+    /// Return the number of samples retained after the window fills.
     pub fn window(&self) -> usize {
         self.buffer.len()
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::BitstreamAverager;
-
-    #[test]
-    fn all_ones_estimate_one() {
-        let mut avg = BitstreamAverager::new(100);
-        for _ in 0..100 {
-            avg.push(1);
-        }
-        assert!((avg.estimate() - 1.0).abs() < 1e-12);
-    }
-
-    #[test]
-    fn all_zeros_estimate_zero() {
-        let mut avg = BitstreamAverager::new(50);
-        for _ in 0..50 {
-            avg.push(0);
-        }
-        assert!(avg.estimate().abs() < 1e-12);
-    }
-
-    #[test]
-    fn alternating_bits_estimate_half() {
-        let mut avg = BitstreamAverager::new(100);
-        for i in 0..100 {
-            avg.push((i % 2) as u8);
-        }
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-    }
-
-    #[test]
-    fn sliding_window_replaces_oldest_bits() {
-        let mut avg = BitstreamAverager::new(4);
-        for &bit in &[1_u8, 1, 0, 0] {
-            avg.push(bit);
-        }
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-
-        avg.push(1);
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-        avg.push(1);
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-        avg.push(1);
-        assert!((avg.estimate() - 0.75).abs() < 1e-12);
-    }
-
-    #[test]
-    fn partial_window_uses_observed_count() {
-        let mut avg = BitstreamAverager::new(100);
-        avg.push(1);
-        avg.push(0);
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-    }
-
-    #[test]
-    fn empty_window_estimate_is_zero() {
-        let avg = BitstreamAverager::new(10);
-        assert!(avg.estimate().abs() < 1e-12);
-    }
-
-    #[test]
-    fn reset_clears_window_state() {
-        let mut avg = BitstreamAverager::new(10);
-        for _ in 0..10 {
-            avg.push(1);
-        }
-        avg.reset();
-        assert!(avg.estimate().abs() < 1e-12);
-    }
-}
+#[path = "bitstream_averager/tests.rs"]
+mod tests;

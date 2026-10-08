@@ -22,7 +22,7 @@ pub(crate) fn zeros_1d<T: Element>(
 }
 
 /// Allocate a zeroed contiguous matrix while preserving NumPy errors.
-pub(super) fn zeros_2d<T: Element>(
+pub(crate) fn zeros_2d<T: Element>(
     py: Python<'_>,
     rows: usize,
     columns: usize,

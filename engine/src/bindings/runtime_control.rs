@@ -8,8 +8,22 @@
 
 //! Python bindings for runtime SIMD discovery and Rayon thread-pool control.
 
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyMemoryError, PyValueError};
 use pyo3::prelude::*;
+use std::error::Error;
+
+/// Admit the existing global pool or return a recoverable worker-startup refusal.
+pub(crate) fn ensure_parallel_runtime() -> PyResult<()> {
+    match rayon::ThreadPoolBuilder::new().build_global() {
+        Ok(()) => Ok(()),
+        // The default builder cannot request use_current_thread, so the only
+        // source-free error here is an already initialized global pool.
+        Err(error) if error.source().is_none() => Ok(()),
+        Err(_) => Err(PyMemoryError::new_err(
+            "parallel execution resources cannot be allocated",
+        )),
+    }
+}
 
 /// Register engine runtime-control functions with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -49,7 +63,10 @@ fn simd_tier() -> &'static str {
 /// Set the number of threads in the global rayon thread pool.
 ///
 /// Must be called before any parallel operation.
-/// Passing 0 uses rayon's default (number of CPU cores).
+/// Passing 0 leaves lazy default worker selection unchanged.
+/// A worker-startup resource failure raises MemoryError without fixing the
+/// global configuration; the caller may retry after resources are restored.
+/// An already initialized pool retains its original ValueError refusal.
 #[pyfunction]
 fn set_num_threads(n: usize) -> PyResult<()> {
     if n == 0 {
@@ -58,5 +75,11 @@ fn set_num_threads(n: usize) -> PyResult<()> {
     rayon::ThreadPoolBuilder::new()
         .num_threads(n)
         .build_global()
-        .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
+        .map_err(|error| {
+            if error.source().is_some() {
+                PyMemoryError::new_err("parallel execution resources cannot be allocated")
+            } else {
+                PyValueError::new_err(format!("Cannot set thread pool: {error}"))
+            }
+        })
 }

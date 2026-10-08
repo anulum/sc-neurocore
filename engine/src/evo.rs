@@ -68,6 +68,9 @@ pub fn batch_mutate_weights(
     mutation_scale: f64,
     seed: u64,
 ) {
+    if genomes.is_empty() {
+        return;
+    }
     genomes.par_iter_mut().enumerate().for_each(|(i, genome)| {
         let mut rng = Xoshiro256pp::new(seed.wrapping_add(i as u64));
         for w in genome.iter_mut() {
@@ -86,6 +89,9 @@ pub fn batch_mutate_weights(
 /// Fitness = -MSE(genome_weights, target_outputs) for each genome
 /// applied to a simple linear evaluation: output = sum(w_i * input_i).
 pub fn batch_evaluate_fitness(genomes: &[Vec<f64>], inputs: &[f64], target: f64) -> Vec<f64> {
+    if genomes.is_empty() {
+        return Vec::new();
+    }
     genomes
         .par_iter()
         .map(|genome| {
@@ -100,6 +106,9 @@ pub fn batch_evaluate_fitness(genomes: &[Vec<f64>], inputs: &[f64], target: f64)
 
 /// Uniform crossover between two parent genomes (parallelized batch).
 pub fn batch_crossover(parents_a: &[Vec<f64>], parents_b: &[Vec<f64>], seed: u64) -> Vec<Vec<f64>> {
+    if parents_a.is_empty() || parents_b.is_empty() {
+        return Vec::new();
+    }
     parents_a
         .par_iter()
         .zip(parents_b.par_iter())
@@ -150,6 +159,9 @@ pub fn population_diversity(genomes: &[Vec<f64>]) -> f64 {
 
 /// Compute novelty score for each genome against an archive.
 pub fn novelty_scores(genomes: &[Vec<f64>], archive: &[Vec<f64>], k_nearest: usize) -> Vec<f64> {
+    if genomes.is_empty() {
+        return Vec::new();
+    }
     let combined: Vec<&Vec<f64>> = archive.iter().chain(genomes.iter()).collect();
 
     genomes

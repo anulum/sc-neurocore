@@ -35,24 +35,28 @@ fn py_dna_design_orthogonal_set(
         .collect()
 }
 
+/// Check real strand pairs only after admitting workers; fewer than two stays lazy.
 #[pyfunction]
 fn py_dna_check_cross_hybridization<'py>(
     py: Python<'py>,
     sequences: Vec<String>,
     threshold: usize,
 ) -> PyResult<Py<PyAny>> {
+    if sequences.len() >= 2 {
+        crate::runtime_control_binding::ensure_parallel_runtime()?;
+    }
     let seqs: Vec<Vec<u8>> = sequences.into_iter().map(|s| s.into_bytes()).collect();
     let flags = dna::check_cross_hybridization(&seqs, threshold);
     let result: Vec<Py<PyAny>> = flags
         .into_iter()
         .map(|(i, j, score)| {
             let d = PyDict::new(py);
-            d.set_item("strand_a", i).unwrap();
-            d.set_item("strand_b", j).unwrap();
-            d.set_item("score", score).unwrap();
-            d.into_any().unbind()
+            d.set_item("strand_a", i)?;
+            d.set_item("strand_b", j)?;
+            d.set_item("score", score)?;
+            Ok(d.into_any().unbind())
         })
-        .collect();
+        .collect::<PyResult<_>>()?;
     Ok(result.into_pyobject(py)?.into())
 }
 

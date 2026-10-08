@@ -22,29 +22,38 @@ pub mod sve;
 /// Pack u8 bits into u64 words using the best available SIMD path.
 pub fn pack_dispatch(bits: &[u8]) -> crate::bitstream::BitStreamTensor {
     let length = bits.len();
+    let mut data = vec![0_u64; length.div_ceil(64)];
+    pack_dispatch_into(bits, &mut data).expect("packed output length matches input");
+    crate::bitstream::BitStreamTensor { data, length }
+}
+
+/// Pack into caller-owned storage using the available SIMD backend.
+///
+/// The output must contain exactly `ceil(bits.len() / 64)` words; a mismatch
+/// is refused before mutation. No intermediate storage is allocated. Nonzero
+/// input bytes set bits in little-endian bit order, including the partial tail.
+pub fn pack_dispatch_into(bits: &[u8], data: &mut [u64]) -> Result<(), &'static str> {
+    if data.len() != bits.len().div_ceil(64) {
+        return Err("packed output length must equal ceil(input length / 64)");
+    }
 
     #[cfg(target_arch = "x86_64")]
     {
-        if is_x86_feature_detected!("avx512bw") {
-            // SAFETY: Guarded by runtime feature detection.
-            let data = unsafe { avx512::pack_avx512(bits) };
-            return crate::bitstream::BitStreamTensor { data, length };
+        if is_x86_feature_detected!("avx512f") && is_x86_feature_detected!("avx512bw") {
+            // SAFETY: Both target features are detected; the kernel checks
+            // destination length before accessing either borrowed slice.
+            return unsafe { avx512::pack_avx512_into(bits, data) };
         }
         if is_x86_feature_detected!("avx2") {
-            // SAFETY: Guarded by runtime feature detection.
-            let data = unsafe { avx2::pack_avx2(bits) };
-            return crate::bitstream::BitStreamTensor { data, length };
+            // SAFETY: AVX2 is detected; the kernel checks destination length
+            // before accessing either borrowed slice.
+            return unsafe { avx2::pack_avx2_into(bits, data) };
         }
     }
 
-    #[cfg(all(target_arch = "aarch64", target_feature = "sve"))]
-    {
-        // SAFETY: SVE target feature is compile-time guaranteed.
-        let data = unsafe { sve::pack_sve(bits) };
-        return crate::bitstream::BitStreamTensor { data, length };
-    }
-
-    crate::bitstream::pack_fast(bits)
+    // pack_sve currently delegates to the portable kernel as well. Preserve
+    // that implementation without allocating its returned Vec.
+    crate::bitstream::pack_fast_into(bits, data)
 }
 
 /// Count set bits in packed `u64` words using the best available SIMD path.

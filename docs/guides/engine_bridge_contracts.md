@@ -10,6 +10,78 @@ Stable engine consumers should use explicit wrapper modules under
 `bridge/sc_neurocore_engine/`, not the top-level `sc_neurocore_engine`
 namespace as a generic export bag.
 
+Native distributions exclude `__pycache__`, `.pyc` and `.pyo` files. Interpreter
+caches are created locally from the installed Python source when required.
+Wheel CI checks the archive before uploading it and rejects cached bytecode;
+installed contract checks retain the originating source and extension digests.
+
+Batch NumPy encoding, fixed-point batch simulation, network population stepping
+and Kuramoto baseline/SSGF stepping share the existing global Rayon pool.
+Worker creation failures raise `MemoryError` with
+`parallel execution resources cannot be allocated`; restoring resources permits
+another initialization attempt in the same process. `set_num_threads(0)` leaves
+lazy default selection unchanged. A successful explicit thread configuration
+remains fixed, and another configuration attempt retains its `ValueError`.
+Kuramoto validates the timestep and SSGF matrices before starting workers. A
+worker refusal leaves its phases unchanged; restoring resources permits the
+same operation to be retried. Zero-step baseline and SSGF runs validate their
+inputs and return empty results without initialising the pool.
+Network stepping validates the population index and current-vector length
+before worker admission. A worker refusal occurs before copying currents,
+resetting populations or propagating projections. Zero-step runs and empty
+populations return their normal empty results without initialising the pool.
+Attention validates matrix and head dimensions before worker admission,
+including the K/V row count for multi-head calls. A zero-row query returns its
+normal empty result after validation without starting workers; stochastic mode
+still rejects a zero bitstream length. Linear, softmax and stochastic methods
+retain their numerical kernels and permit retry on the same object after a
+worker-resource refusal.
+Graph rate-mode aggregation admits workers after checking feature shape for
+dense and CSR storage. A zero-node graph stays lazy. Its stochastic forward
+path remains serial and does not initialise the global Rayon pool.
+Cortical CSR injection checks every used row offset, storage bound and column
+index in every block before changing the output. Short row pointers, negative
+or decreasing offsets, out-of-range columns and mismatched block lists raise
+`ValueError` before worker admission. Unused trailing CSR storage remains
+accepted. Empty outputs stay lazy; an empty multi-block sum retains its
+original `y += 0.0` floating-point behavior without starting workers.
+Dense layer construction validates its positive bitstream length, input count
+and neuron count, then admits the shared pool before packing random weights.
+Worker refusal raises the same recoverable `MemoryError` and permits a fresh
+construction with the original seed. Its existing scalar and parallel forward
+thresholds are unchanged; a successfully constructed layer already has an
+initialised shared pool.
+Pareto extraction checks that power and score columns cover every LUT entry
+before worker admission, retaining unused trailing values. DNA pair scoring
+starts workers only for at least two strands. Ising energy batches, annealing
+reads and gauge generation admit workers for nonempty work; their empty results
+stay lazy. Active annealing refuses a coupling with exactly one endpoint outside
+the qubit range before sampling, while wholly out-of-range ignored edges and
+zero-read results retain their existing behavior.
+Differentiable dense construction parses the surrogate first, validates positive
+layer dimensions, then admits workers before allocating weights. Successful
+construction fixes the shared pool for forward, backward and weight refresh;
+invalid backward or update shapes retain the existing cache and weights.
+Photonic routing checks storage for every used off-diagonal entry before worker
+admission; the unused final diagonal and trailing storage are not required.
+Zero- and one-node routes stay lazy. WDM, power and geometric-pair calculations
+admit workers only for nonempty effective input. WDM and power retain zipped
+column-prefix semantics, while geometric pair columns must have equal lengths.
+Empty inputs, MZI operations and uniform-bank analysis do not start workers.
+Evolutionary mutation, fitness, crossover, diversity and novelty admit workers
+before touching native output or random draws. Empty populations, unpaired
+crossover inputs and fewer than two genomes for diversity retain lazy results.
+Ragged gene vectors retain their common-prefix arithmetic and crossover lengths.
+Tournament selection remains serial; a positive selection count with an empty
+fitness population raises `ValueError`. Zero selections remain valid, and zero
+or one tournament round retains the same original single-candidate sampling.
+
+The native project carries the narrow Rayon registry startup patch in
+`bridge/vendor/rayon-core`, with upstream source hashes and patch ownership in
+`bridge/rayon_source_patch.toml`. Its Cargo path override preserves the locked
+upstream package identity and dependency graph for advisory scanning. Native
+source distributions include the override and its source and licence files.
+
 Current maintained wrapper surfaces:
 
 - `sc_neurocore_engine.network`
@@ -34,6 +106,195 @@ Rule:
 - top-level re-exports remain compatibility surface, not the preferred
   implementation contract
 
+## Neural-decoder arrays and workers
+
+The five native neural-decoder functions retain their registered `py_` names
+and flat outputs. Tokenisation accepts contiguous one-dimensional `int32`
+trains; position encoding, attention and InfoNCE accept contiguous
+one-dimensional `float64` buffers, including readonly and aliased inputs.
+Noncontiguous arrays raise `ValueError` naming the input. Attention and InfoNCE
+check every used buffer prefix before starting workers; unused tails remain
+accepted. Unrepresentable matrix dimensions raise `MemoryError` with
+`requested matrix is too large`.
+
+Empty token trains, empty or zero-width position encodings, zero-query or
+zero-width attention, and zero-row or zero-width InfoNCE return empty arrays
+or zero loss without starting workers. Attention with no keys retains its
+zero output. Nonempty computations use the same global Rayon pool and its
+recoverable worker-resource refusal. Refusals leave caller arrays unchanged;
+restoring resources permits a retry with the same inputs. Numerical kernels,
+stable token ordering and supplied timestep, sigma and temperature values
+remain unchanged.
+
+## Population and statistical decoding
+
+Population decoding accepts contiguous `int32` trains and `float64` preferred
+directions in radians. It uses complete windows from the shortest train;
+missing directions retain zero radians. Zero windows and no complete bins
+return empty output without starting workers.
+
+MAP and maximum-likelihood decoding accept contiguous `float64` counts and
+flat row-major tuning rates. Counts must contain the used neuron prefix and
+rates the full stimulus-by-neuron prefix. Extra tails remain accepted. Empty
+priors remain uniform; short nonempty priors retain the missing-entry floor.
+Zero dimensions return zero without starting workers.
+
+Fisher and Gaussian naive Bayes accept contiguous `float64` features and
+points with contiguous `int64` labels. Used prefixes are checked before
+computation. Fisher returns a sole used class without reading feature prefixes
+or starting workers. Multi-class Fisher checks scatter capacity and admits
+workers. Naive Bayes retains serial execution, including under worker-startup
+pressure. Refusals leave caller arrays unchanged. Restoration permits the same
+parallel operation to be retried with the original data and numerical kernels.
+
+## Causality
+
+Causality functions accept contiguous `int32` trains and positive bin sizes.
+Pairwise and conditional Granger retain serial execution and common-bin
+truncation. Zero order and insufficient common bins return zero. Spectral
+Granger, PDC and directed transfer fit VAR using the first train's binned
+length. During a fit, order must be positive and every other train must contain
+that used prefix; longer tails remain accepted. Short first-train data retain
+the original serial fallback. Zero frequency count still fits VAR; empty
+train lists return empty output and retain their frequency metadata.
+All used matrix capacities are checked before computation or worker admission.
+Refusals leave inputs unchanged and worker-resource restoration permits retry.
+
+## Covariance and spike-pattern matrices
+
+Both covariance functions retain shape `(1, 0)` for no trains and shape
+`(1, 1)` for one empty train. Short trains contribute one sum bin; multiple
+trains use their common complete-bin prefix. A single train stays serial.
+Positive bin size is required when a train is present. Multiple rows admit
+the shared workers after checking input layout and allocating final output.
+
+Directionality retains serial inclusive time filtering and its original
+nearest-before/after rule. Train ordering preserves the upper-pair statistic
+and its negation below the diagonal. Empty and single-train order matrices
+stay lazy. Cubic cumulants retain the full sample mean, valid-lag denominator
+and unused timestep parameter. Zero lag width and empty samples return zero
+matrices without workers. Final covariance/order/cumulant NumPy output
+allocation is checked before worker admission; failure preserves inputs and
+lazy pool configuration. Restoring resources permits the same call to recover.
+
+## Sliding-window bitstream estimator
+
+`BitstreamAverager` retains a positive sliding window and estimates the mean
+over observed samples until that window fills. Reset discards observations
+without changing the window size. Python and the native class retain the same
+partial-window, wrapping and reset traces for binary samples.
+The Python estimator converts NumPy integer samples and buffered bytes to
+Python integers for the running sum, so large windows do not overflow `uint8`.
+
+A zero window raises `ValueError` before an estimator is created. The Python
+reference uses its `SCEncodingError` subclass of `ValueError`. Native buffer
+capacity or allocation failure raises `MemoryError` with
+`Bitstream averager buffer cannot be allocated`; Python translates NumPy's
+allocation failure to the same message. A failed construction leaves existing
+estimators usable.
+
+Native `push` retains unsigned-byte extraction. Bytes other than zero or one
+raise `ValueError` with `Bit must be 0 or 1.` before changing buffered samples,
+the running sum or the next write position. The Python reference retains its
+`SCEncodingError` for the same binary-sample refusal. Rust callers can use
+`neuron::BitstreamAverager::try_new` and `try_push` for fallible admission;
+the existing `new` and `push` convenience methods retain their signatures
+and panic on refused inputs or construction allocation failure.
+
+## Bitstream packing
+
+`pack_bitstream_numpy` borrows a contiguous one-dimensional `uint8` array,
+including read-only input, and returns an independent, owning, writable,
+contiguous `uint64` NumPy array. An empty input produces shape `(0,)`.
+Every nonzero byte sets one bit, least significant bit first; unused high
+bits in the final word are zero. Other ranks and dtypes retain their typed
+refusal, and a noncontiguous input raises `ValueError` before output allocation.
+
+The result is allocated through NumPy's checked allocator before packing.
+Allocation failure propagates `MemoryError` without modifying input. AVX-512
+and AVX2 selection and full-word instructions remain in use; a partial word
+uses the portable byte-packing loop without allocating a temporary vector.
+The existing SVE packing implementation is a portable fallback.
+
+Rust callers can use `bitstream::pack_fast_into` or `simd::pack_dispatch_into`
+to fill an existing buffer without allocating intermediate storage. The
+buffer must contain exactly `ceil(input_length / 64)` words. A mismatch
+returns an error before mutation; success overwrites every word. Existing
+vector-returning Rust APIs retain their signatures and allocator behavior.
+`pack_bitstream` retains a flat Python word list for one-dimensional sequences
+and a list of word lists for nested sequences, including ragged and empty rows.
+Its unsigned-byte extraction still accepts byte buffers and index-based Python
+sequences. Byte-buffer subclasses retain PyO3's raw-buffer conversion; mutable
+bytearrays are copied under a Python critical section before packing.
+Input copies reserve native storage fallibly. Output lists and each Python
+word are allocated through checked Python constructors, without intermediate
+packed vectors. A capacity or allocation refusal propagates `MemoryError`;
+other unsupported inputs retain `ValueError` with
+`Expected a 1-D or 2-D array of uint8 bits.` The caller's input is unchanged.
+
+Generic input storage grows from successfully converted sequence items.
+An inaccurate or unavailable `__len__` hint does not reserve storage or replace
+the actual contents. Probing a flat input as possible nested rows therefore
+does not allocate a row container before its first element is admitted.
+
+## Packed Bernoulli batch encoding
+
+Both batch encoders accept aligned, contiguous one-dimensional `float64`
+probabilities, including read-only arrays. Zero bit length and zero rows are
+valid. Output rows contain `ceil(length / 64)` words with zero unused high bits.
+Other ranks and dtypes retain `TypeError`; unreadable layout retains `ValueError`
+with the `Cannot read probs` prefix. Unrepresentable total word storage raises
+`MemoryError` with `encoded bitstreams cannot be allocated` before sampling.
+
+`batch_encode` returns Python word lists and uses one sequential ChaCha8 stream
+across all rows, with one `float64` draw per bit. Its native word reservation and
+Python list/integer output constructors are fallible.
+
+`batch_encode_numpy` returns an independent, owning, writable, contiguous NumPy
+`uint64` matrix. It allocates the final matrix through NumPy before sampling and
+fills disjoint rows in parallel, without row vectors or a flattening copy. Each
+row retains Xoshiro's wrapping `seed + row_index` seed and byte-threshold SIMD
+comparison. The 1024-byte batches, full-word remainders and partial-tail draws
+remain unchanged. Scalar and NumPy encoders have distinct seeded traces;
+clamped endpoints and NaN retain each encoder's sampling behavior.
+
+The measured seeded fixtures exercise both entry points at bit-word and SIMD
+batch boundaries, including wrapping seeds and nonfinite probabilities. Rust
+callers can fill existing buffers with `bernoulli_packed_into` and
+`bernoulli_packed_simd_into`; a wrong word count changes neither output nor RNG
+state. Existing vector-returning Rust interfaces retain their signatures.
+
+Installed-wheel CI runs the batch contracts against the installed extension
+before adding the checkout's test imports. It checks the wrapper and extension
+paths and hashes again after the run, without loading the checkout's root test
+bootstrap. The wheel-test dependency lock retains the supported Python version
+markers and uses the same dependency pins as the development lock.
+
+## Bitstream unpacking
+
+`unpack_bitstream` retains bytes for a flat word sequence and a list of bytes
+for nested sequences. A bare empty sequence retains its empty-list result;
+a nonempty flat sequence with zero requested bits returns empty bytes.
+`unpack_bitstream_numpy` accepts contiguous one-dimensional `uint64` input
+and returns an independent, owning, writable `uint8` NumPy array, including
+an empty array for zero length. Its input can be read-only.
+
+Nested `original_shape=(batch, length)` checks the batch count and selects the
+per-row length. Without it, the per-row length is `original_length // batch`;
+an empty batch remains empty. Extra packed words and unused high bits retain
+their existing ignored-tail behavior. Insufficient storage raises `ValueError`
+with `packed words do not cover original_length` before output is published.
+An output dimension exceeding `numpy.intp` raises `MemoryError` with
+`unpacked bitstream cannot be allocated`. The NumPy reference follows the
+same row-length and storage rules, including empty batches.
+
+Packed input copies grow native storage fallibly from converted words while
+retaining Python's sequence protocol and unsigned-word conversion. Length hints
+do not reserve storage for speculative nested rows. Capacity or allocation refusal
+raises `MemoryError`. Flat output is allocated directly as Python bytes;
+typed output uses NumPy's checked allocator. A refused unpack leaves its input
+unchanged and permits subsequent valid calls in the same interpreter.
+
 ## Packed HDC vector inputs
 
 `BitStreamTensor` and the `HDCVector` facade accept positive logical lengths.
@@ -44,13 +305,13 @@ input words; the `data` property also returns a detached copy. Malformed storage
 raises `ValueError` before admitting a vector. It is neither truncated nor padded.
 
 Packed-word and bundle inputs retain Python's sequence protocol, including
-tuples, arrays, buffer views and custom sequences. Their length hints reserve
-storage fallibly; iteration still determines the actual elements. Missing or
-inaccurate hints do not replace those elements. An impossible reservation raises
+tuples, arrays, buffer views and custom sequences. Storage grows fallibly from
+the actual converted elements; length hints neither reserve storage nor replace
+those elements. An impossible reservation for the actual input raises
 `MemoryError` instead of aborting the interpreter. Strings and non-sequences
 retain their conversion errors, as do unsigned-word overflow and invalid tensor
-elements. Sequence conversion and bundle-reference storage both reserve before
-writing their complete inputs.
+elements. Each converted item is appended only after its storage is reserved;
+the completed bundle-reference array is also reserved before it is populated.
 
 XOR, bundling, rotation and the detached `data` copy reserve their native output
 storage fallibly too. Failure raises `MemoryError`; rotation commits its packed
@@ -92,6 +353,48 @@ The source-to-class table is checked against the current binding producers, so
 adding a producer also requires adding its actual runtime contract. This shared
 binding gate does not establish model equations or cross-language numerical
 parity; those require the model's own reference and backend tests.
+
+## Configured adaptive-threshold batches
+
+The default-only native `AdaptiveThresholdIFNeuron` class uses the core's
+fallible step. Non-finite scalar current raises `ValueError` with
+`current must be finite`; a finite-entry relaxation overflow raises
+`FloatingPointError` with `exact relaxation candidate must be finite`.
+Both match the Python model and preserve the preceding state. Finite valid
+stepping, detached state dictionaries, reset, global pickle identity and
+instance-persistence refusal retain their existing contracts. The configured
+batch has its separately documented complete-parameter interface below.
+
+`py_adaptive_threshold_if_simulate` accepts nine finite configuration scalars
+and a contiguous, aligned, native-endian one-dimensional `float64` current
+array. Read-only arrays are accepted without changing their storage. Wrong
+dtype, rank or byte order raises `TypeError`; strided and misaligned storage
+raises `TypeError` before simulation. The configured batch remains distinct
+from the default-only `AdaptiveThresholdIFNeuron` constructor.
+
+All three state/event traces cover the complete input, with final voltage,
+threshold and spike count returned separately. Empty input preserves the two
+initial states. Invalid finite configuration or non-finite drive raises
+`ValueError`; a non-finite numerical candidate raises `FloatingPointError`.
+Trace storage is reserved before stepping. Capacity or memory exhaustion
+raises `MemoryError` with `adaptive-threshold trace buffers cannot be allocated`
+and leaves caller input unchanged. A subsequent valid batch remains usable.
+The native Rust `simulate` reports the same resource failure through
+`AdaptiveThresholdIFError::TraceAllocation`.
+
+`tests/test_adaptive_threshold_if_engine_binding.py` compares every result
+field with the Python exact-relaxation implementation and exercises the
+installed native allocation refusal and recovery under real Linux pressure.
+
+The configured Go C ABI reports failed temporary trace allocation as status
+`5`, without writing any caller trace or final receipt. Its Python facade maps
+that status to the same authored `MemoryError`. The temporary storage uses a
+plain C allocator wrapper; cgo's special `C.malloc` would abort on exhaustion.
+Every allocated prefix is freed on failure or successful completion. Julia's
+real `OutOfMemoryError` is translated to the same Python resource error by its
+facade. Its temporary traces remain private until successful completion.
+The Mojo C batch instead validates the whole recurrence before writing its
+caller-owned buffers and has no internal trace allocation to translate.
 
 ## Configurable Brunel-Wang contracts
 
@@ -308,6 +611,32 @@ parameters, and `run(n_steps)` returns a one-dimensional `uint32` array of spike
 counts. The scaling benchmark uses this explicit fixed-point class. The two
 classes have distinct native names and global serialization identities.
 
+`FixedPointBrunelNetwork` instances refuse pickle with `TypeError` for every
+protocol supported by Python. A refused serialization leaves the network's
+next spike-count trace unchanged; the class itself still round-trips as a
+global reference.
+
+Simulation allocates an owned, writable, contiguous NumPy spike-count array
+and reserves the synaptic-current buffer before advancing neurons or drawing
+external events. A capacity or allocation failure raises `MemoryError` and
+preserves the next seeded trace. Editing returned counts does not change the
+network. Rust callers use
+`BrunelNetwork::try_run` for the same fallible admission; the existing `run`
+convenience method retains its `Vec<u32>` return type and documented panic on
+allocation failure. Zero-step calls return an empty array without allocating a
+synaptic-current buffer.
+
+The constructor uses fallible allocation for its owned CSR copies, neurons
+and previous-spike storage. Allocation refusal raises `MemoryError` without
+changing the caller's arrays; a subsequent small construction remains usable.
+The Linux profiles in
+`tests/test_brunel_fixed_point_engine_binding_allocation.py` exercise real
+address-space limits for CSR copies, neuron storage, output and synaptic working
+storage, restoring the limit and comparing seeded continuation after refusal.
+The working-storage profile retains real matching-size buffers to occupy
+allocator storage freed by its warm-up calls before applying the limit.
+These profiles do not qualify allocation pressure on another operating system.
+
 The fixed-point constructor copies contiguous one-dimensional CSR arrays:
 `w_indptr` and `w_indices` have dtype `int64`, and `w_data` has dtype `int16`.
 Read-only arrays are accepted. Offsets start at zero, are nondecreasing and end
@@ -437,6 +766,28 @@ five-runtime traces have dedicated contracts. Events remain exact and the
 floating envelope stays `2e-12`, including accepted timesteps larger than the
 time constants. See the [retained model reference](../api/models/sc_non_resetting_adaptive_lif.md)
 for the recurrence and the Go/Mojo caller-buffer failure contract.
+
+## Cortical CSR output borrowing
+
+`py_parallel_csr_spmv_add` and `py_parallel_csr_multi_spmv_add` accept
+one-dimensional `int32` row offsets/column indices and `float64` data,
+input vectors and output. Inputs may be readonly. A nonempty output must
+be writable and contiguous, and must not overlap any input array. An
+unavailable input borrow or overlapping/readonly output raises `ValueError`
+before any output changes or parallel worker startup.
+
+An empty output is a no-op, including when it is the same empty array as
+an input. Multi-block lists must still have matching lengths. With no
+blocks and a nonempty output, the existing serial addition of zero is
+retained, including its conversion of negative zero to positive zero.
+
+Every used CSR row is checked before execution. Unused trailing indices
+and data do not enter the calculation. Worker allocation failure leaves
+the output and caller inputs unchanged so the same call can be retried.
+
+Attention and dense graph matrix inputs retain their existing refusal of
+zero-row matrices; these inputs do not become successful empty operations.
+Configuration and shape refusals precede parallel worker startup.
 
 An inventory must retain these differences. Qualify each Python/NumPy, operating
 system and engine-feature profile used for comparison; inherited Python protocol

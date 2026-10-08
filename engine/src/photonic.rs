@@ -45,6 +45,9 @@ pub fn route_waveguides(
     pitch_um: f64,
     loss_db_per_cm: f64,
 ) -> Vec<WaveguideResult> {
+    if n < 2 {
+        return Vec::new();
+    }
     let grid_size = ((n as f64).sqrt().ceil() as usize).max(1);
 
     let pairs: Vec<(usize, usize)> = (0..n)
@@ -149,6 +152,9 @@ pub fn analyze_crosstalk(
     channels: &[(usize, f64, f64, f64)],
     adjacent_xt_db: f64,
 ) -> Vec<CrosstalkResult> {
+    if channels.is_empty() {
+        return Vec::new();
+    }
     channels
         .par_iter()
         .map(|&(ch_id, wl, bw, power)| {
@@ -193,6 +199,9 @@ pub fn analyze_power_budget(
     laser_power_dbm: f64,
     detector_sensitivity_dbm: f64,
 ) -> Vec<PowerBudgetResult> {
+    if waveguides.is_empty() {
+        return Vec::new();
+    }
     waveguides
         .par_iter()
         .map(|&(src, tgt, wg_loss)| {
@@ -355,6 +364,9 @@ pub fn analyze_crosstalk_pairs(
     core_index: f64,
     cladding_index: f64,
 ) -> Vec<CrosstalkPairResult> {
+    if pairs.is_empty() {
+        return Vec::new();
+    }
     pairs
         .par_iter()
         .map(|&(a, b, gap, len)| {

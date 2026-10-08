@@ -26,28 +26,36 @@ where
 
     /// Preserve PyO3 sequence and element conversion while reserving fallibly.
     fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-        if obj.is_instance_of::<PyString>() {
-            return Err(PyTypeError::new_err("Can't extract `str` to `Vec`"));
-        }
-        // SAFETY: the attached Python borrow keeps the inspected object alive.
-        if unsafe { pyo3::ffi::PySequence_Check(obj.as_ptr()) } == 0 {
-            return Err(CastError::new(obj, PySequence::type_object(obj.py()).into_any()).into());
-        }
-        let mut values = Vec::new();
-        values
-            .try_reserve_exact(obj.len().unwrap_or(0))
-            .map_err(|_| PyMemoryError::new_err("cannot allocate HDC input sequence"))?;
-        for item in obj.try_iter()? {
-            let value = item?.extract::<T>().map_err(Into::into)?;
-            if values.len() == values.capacity() {
-                values
-                    .try_reserve(1)
-                    .map_err(|_| PyMemoryError::new_err("cannot allocate HDC input sequence"))?;
-            }
-            values.push(value);
-        }
-        Ok(Self(values))
+        extract_sequence(obj, "cannot allocate HDC input sequence").map(Self)
     }
+}
+
+/// Copy actual sequence items with fallible growth, preserving PyO3 element conversion.
+pub(crate) fn extract_sequence<'py, T>(
+    obj: Borrowed<'_, 'py, PyAny>,
+    allocation_message: &'static str,
+) -> PyResult<Vec<T>>
+where
+    T: FromPyObjectOwned<'py>,
+{
+    if obj.is_instance_of::<PyString>() {
+        return Err(PyTypeError::new_err("Can't extract `str` to `Vec`"));
+    }
+    // SAFETY: the attached Python borrow keeps the inspected object alive.
+    if unsafe { pyo3::ffi::PySequence_Check(obj.as_ptr()) } == 0 {
+        return Err(CastError::new(obj, PySequence::type_object(obj.py()).into_any()).into());
+    }
+    let mut values = Vec::new();
+    for item in obj.try_iter()? {
+        let value = item?.extract::<T>().map_err(Into::into)?;
+        if values.len() == values.capacity() {
+            values
+                .try_reserve(1)
+                .map_err(|_| PyMemoryError::new_err(allocation_message))?;
+        }
+        values.push(value);
+    }
+    Ok(values)
 }
 
 /// Register the HDC/VSA binding with the extension module.

@@ -92,6 +92,31 @@ def test_empty_run_and_conversion_refusal_do_not_advance_state() -> None:
     np.testing.assert_array_equal(network.run(32), _network().run(32))
 
 
+def test_output_capacity_refusal_preserves_seeded_continuation() -> None:
+    """An impossible output buffer refuses before advancing neurons or Poisson draws."""
+    network = _network()
+    prefix = network.run(23)
+    impossible = int(np.iinfo(np.intp).max) // np.dtype(np.uint32).itemsize + 1
+    with pytest.raises(MemoryError, match="^Brunel simulation buffers cannot be allocated$"):
+        network.run(impossible)
+    assert network.run(0).shape == (0,)
+    reference = _network()
+    np.testing.assert_array_equal(prefix, reference.run(23))
+    np.testing.assert_array_equal(network.run(41), reference.run(41))
+
+
+def test_returned_counts_are_owned_and_do_not_mutate_the_network() -> None:
+    """Changing returned storage leaves subsequent recurrent and Poisson steps unchanged."""
+    network = _network()
+    reference = _network()
+    counts = network.run(23)
+    np.testing.assert_array_equal(counts, reference.run(23))
+    assert counts.flags.owndata and counts.flags.writeable
+    assert counts.flags.c_contiguous and counts.flags.aligned
+    counts.fill(np.iinfo(np.uint32).max)
+    np.testing.assert_array_equal(network.run(41), reference.run(41))
+
+
 def test_readonly_connectivity_is_copied_before_caller_mutation() -> None:
     """The constructor owns CSR bytes independently of the caller's arrays."""
     indptr = np.array([0, 1, 2, 3, 4], dtype=np.int64)
@@ -121,11 +146,18 @@ def test_malformed_csr_lengths_are_rejected_at_construction() -> None:
         )
 
 
-def test_instance_pickle_refusal_preserves_the_following_trace() -> None:
-    """Unsupported instance serialization refuses without consuming network state."""
+@pytest.mark.parametrize("protocol", range(pickle.HIGHEST_PROTOCOL + 1))
+def test_instance_pickle_refusal_preserves_the_following_trace(protocol: int) -> None:
+    """Unsupported instance serialization refuses without consuming network state.
+
+    Parameters
+    ----------
+    protocol : int
+        Pickle protocol supported by the running Python interpreter.
+    """
     network = _network()
     with pytest.raises(TypeError, match="cannot pickle.*FixedPointBrunelNetwork"):
-        pickle.dumps(network, protocol=4)
+        pickle.dumps(network, protocol=protocol)
     np.testing.assert_array_equal(network.run(32), _network().run(32))
 
 

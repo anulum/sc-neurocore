@@ -11,7 +11,10 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-use crate::{matrix_inputs_binding::extract_matrix_f64, scpn};
+use crate::{
+    matrix_inputs_binding::extract_matrix_f64, runtime_control_binding::ensure_parallel_runtime,
+    scpn,
+};
 
 /// Register the Kuramoto solver with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -125,14 +128,20 @@ impl PyKuramotoSolver {
     }
 
     #[pyo3(signature = (dt, seed=0))]
+    /// Advance one Euler step, refusing worker startup before changing phases.
     fn step(&mut self, dt: f64, seed: u64) -> PyResult<f64> {
         validate_kuramoto_dt(dt)?;
+        ensure_parallel_runtime()?;
         Ok(self.inner.step(dt, seed))
     }
 
     #[pyo3(signature = (n_steps, dt, seed=0))]
+    /// Run baseline steps; zero steps do not initialise the global worker pool.
     fn run(&mut self, n_steps: usize, dt: f64, seed: u64) -> PyResult<Vec<f64>> {
         validate_kuramoto_dt(dt)?;
+        if n_steps != 0 {
+            ensure_parallel_runtime()?;
+        }
         Ok(self.inner.run(n_steps, dt, seed))
     }
 
@@ -153,6 +162,7 @@ impl PyKuramotoSolver {
         pgbo_weight=0.0,
     ))]
     #[allow(non_snake_case)]
+    /// Advance one SSGF step after validating inputs and admitting workers.
     fn step_ssgf(
         &mut self,
         dt: f64,
@@ -181,6 +191,7 @@ impl PyKuramotoSolver {
         validate_kuramoto_matrix_shape("h_munu", h_flat.len(), h_rows, h_cols, self.inner.n)?;
         validate_kuramoto_finite("w_flat", &w_flat)?;
         validate_kuramoto_finite("h_flat", &h_flat)?;
+        ensure_parallel_runtime()?;
         Ok(self
             .inner
             .step_ssgf(dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight))
@@ -196,6 +207,7 @@ impl PyKuramotoSolver {
         pgbo_weight=0.0,
     ))]
     #[allow(clippy::too_many_arguments, non_snake_case)]
+    /// Run SSGF steps without changing phases when worker startup is refused.
     fn run_ssgf(
         &mut self,
         n_steps: usize,
@@ -225,6 +237,9 @@ impl PyKuramotoSolver {
         validate_kuramoto_matrix_shape("h_munu", h_flat.len(), h_rows, h_cols, self.inner.n)?;
         validate_kuramoto_finite("w_flat", &w_flat)?;
         validate_kuramoto_finite("h_flat", &h_flat)?;
+        if n_steps != 0 {
+            ensure_parallel_runtime()?;
+        }
         Ok(self
             .inner
             .run_ssgf(n_steps, dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight))

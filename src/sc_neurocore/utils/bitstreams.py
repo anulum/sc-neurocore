@@ -4,12 +4,14 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Generate a Bernoulli bitstream of given length with
+# SC-NeuroCore — Bitstream encoders and sliding-window probability estimation
+
+"""Encode and decode stochastic bitstreams and estimate their sample probabilities."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, SupportsInt
 
 import numpy as np
 
@@ -24,9 +26,11 @@ def generate_bernoulli_bitstream(
     rng: Optional[RNG] = None,
 ) -> np.ndarray[Any, Any]:
     """
-    Generate a Bernoulli bitstream of given length with probability p of '1'.
+    Generate a Bernoulli bitstream with probability p of a one.
+
     This is the core SC primitive: a sequence of 0/1 bits where the
     proportion of 1s ~ p.
+
     Parameters
     ----------
     p : float
@@ -35,6 +39,7 @@ def generate_bernoulli_bitstream(
         Number of bits in the stream.
     rng : RNG, optional
         RNG instance. If None, a fresh RNG is created.
+
     Returns
     -------
     np.ndarray
@@ -55,6 +60,7 @@ def generate_sobol_bitstream(
 ) -> np.ndarray[Any, Any]:
     """
     Generate a bitstream using a Sobol sequence (Low Discrepancy Sequence).
+
     LDS provides faster convergence than random Bernoulli sequences (O(1/N) vs O(1/sqrt(N))).
 
     Parameters
@@ -103,6 +109,7 @@ def generate_sobol_bitstream(
 def bitstream_to_probability(bitstream: np.ndarray[Any, Any]) -> float:
     """
     Decode a unipolar bitstream back into a probability estimate.
+
     p_hat = (# of ones) / length
     """
     if bitstream.size == 0:
@@ -157,6 +164,7 @@ def value_to_unipolar_prob(
 ) -> float:
     """
     Map a scalar x from [x_min, x_max] into a unipolar probability [0,1].
+
     Linear mapping:
         p = (x - x_min) / (x_max - x_min)
     If clip=True, x is clipped into [x_min, x_max].
@@ -176,6 +184,7 @@ def unipolar_prob_to_value(
 ) -> float:
     """
     Map a unipolar probability p in [0,1] back to a scalar in [x_min, x_max].
+
     Inverse of value_to_unipolar_prob.
     """
     if not 0.0 <= p <= 1.0:
@@ -298,8 +307,8 @@ def sc_divide(
 @dataclass
 class BitstreamEncoder:
     """
-    Helper for encoding continuous scalar values into SC bitstreams
-    using linear unipolar mapping.
+    Encode continuous scalar values into SC bitstreams using linear mapping.
+
     Example
     -------
     encoder = BitstreamEncoder(x_min=0.0, x_max=0.1, length=1024, seed=123)
@@ -318,6 +327,7 @@ class BitstreamEncoder:
     mode: str = "bernoulli"  # "bernoulli", "sobol", "bipolar", or "chaotic"
 
     def __post_init__(self) -> None:
+        """Create the RNG required by the selected mode or reject an unknown mode."""
         if self.mode in ("bernoulli", "bipolar"):
             self._rng = RNG(self.seed)
         elif self.mode == "chaotic":
@@ -359,6 +369,18 @@ class BitstreamAverager:
     """
     Sliding-window probability estimator for bitstreams.
 
+    Parameters
+    ----------
+    window : int
+        Positive number of samples retained in the sliding window.
+
+    Raises
+    ------
+    SCEncodingError
+        If the window is zero or negative.
+    MemoryError
+        If storage for the window cannot be allocated.
+
     Example
     -------
     >>> avg = BitstreamAverager(window=100)
@@ -378,23 +400,41 @@ class BitstreamAverager:
     _running_sum: int = 0
 
     def __post_init__(self) -> None:
-        self._buffer = np.zeros(self.window, dtype=np.uint8)
+        """Validate the window and allocate its initially empty sample storage."""
+        if self.window <= 0:
+            raise SCEncodingError("window must be > 0")
+        try:
+            self._buffer = np.zeros(self.window, dtype=np.uint8)
+        except MemoryError as error:
+            raise MemoryError("Bitstream averager buffer cannot be allocated") from error
         self._running_sum = 0
 
-    def push(self, bit: int) -> None:
-        """Add one binary sample to the sliding window."""
+    def push(self, bit: SupportsInt) -> None:
+        """Add one binary sample to the sliding window.
+
+        Parameters
+        ----------
+        bit : int or SupportsInt
+            A zero or one sample, including NumPy integer scalars.
+
+        Raises
+        ------
+        SCEncodingError
+            If the sample is not zero or one; buffered observations are unchanged.
+        """
         if bit not in (0, 1):
             raise SCEncodingError("Bit must be 0 or 1.")
+        sample = int(bit)
 
         assert self._buffer is not None
         # Remove old bit from sum if buffer is wrapping around
-        old_bit = self._buffer[self._index]
-        self._buffer[self._index] = bit
+        old_bit = int(self._buffer[self._index])
+        self._buffer[self._index] = sample
 
         if self._filled:
-            self._running_sum = self._running_sum - old_bit + bit
+            self._running_sum = int(self._running_sum) - old_bit + sample
         else:
-            self._running_sum += bit
+            self._running_sum += sample
 
         self._index = (self._index + 1) % self.window
         if self._index == 0:

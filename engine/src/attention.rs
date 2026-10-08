@@ -49,6 +49,9 @@ impl StochasticAttention {
         v_cols: usize,
     ) -> Result<Vec<f64>, String> {
         validate_shapes(q, q_rows, q_cols, k, k_rows, k_cols, v, v_rows, v_cols)?;
+        if q_rows == 0 {
+            return Ok(Vec::new());
+        }
         let inv_temp = if self.temperature > 0.0 {
             1.0 / self.temperature
         } else {
@@ -111,6 +114,9 @@ impl StochasticAttention {
             v_total_cols,
             n_heads,
         )?;
+        if q_rows == 0 {
+            return Ok(Vec::new());
+        }
 
         let dk = q_total_cols / n_heads;
         let dv = v_total_cols / n_heads;
@@ -159,6 +165,9 @@ impl StochasticAttention {
         v_cols: usize,
     ) -> Result<Vec<f64>, String> {
         validate_shapes(q, q_rows, q_cols, k, k_rows, k_cols, v, v_rows, v_cols)?;
+        if q_rows == 0 {
+            return Ok(Vec::new());
+        }
 
         let score_rows: Vec<Vec<f64>> = (0..q_rows)
             .into_par_iter()
@@ -217,6 +226,9 @@ impl StochasticAttention {
         validate_shapes(q, q_rows, q_cols, k, k_rows, k_cols, v, v_rows, v_cols)?;
         if length == 0 {
             return Err("length must be > 0 for SC mode.".to_string());
+        }
+        if q_rows == 0 {
+            return Ok(Vec::new());
         }
 
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
@@ -314,6 +326,9 @@ impl StochasticAttention {
             v_total_cols,
             n_heads,
         )?;
+        if q_rows == 0 {
+            return Ok(Vec::new());
+        }
 
         let dk = q_total_cols / n_heads;
         let dv = v_total_cols / n_heads;
@@ -342,8 +357,9 @@ impl StochasticAttention {
     }
 }
 
+/// Check all head and matrix dimensions before parallel head execution.
 #[allow(clippy::too_many_arguments)]
-fn validate_multihead_shapes(
+pub(crate) fn validate_multihead_shapes(
     q: &[f64],
     q_rows: usize,
     q_total_cols: usize,
@@ -396,11 +412,18 @@ fn validate_multihead_shapes(
             dk, dk_k
         ));
     }
+    if k_rows != v_rows {
+        return Err(format!(
+            "K/V row mismatch: k_rows={}, v_rows={}.",
+            k_rows, v_rows
+        ));
+    }
     Ok(())
 }
 
+/// Check matrix shapes without encoding data or starting parallel workers.
 #[allow(clippy::too_many_arguments)]
-fn validate_shapes(
+pub(crate) fn validate_shapes(
     q: &[f64],
     q_rows: usize,
     q_cols: usize,

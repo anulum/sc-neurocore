@@ -38,7 +38,11 @@ impl PopulationRunner {
         self.neurons.is_empty()
     }
 
+    /// Advance neurons in parallel; an empty population does not start workers.
     pub fn step_all(&mut self) {
+        if self.is_empty() {
+            return;
+        }
         let neurons = &mut self.neurons;
         let spikes = &mut self.spikes;
         let currents = &self.currents;
@@ -67,7 +71,15 @@ impl PopulationRunner {
         self.currents.fill(0.0);
     }
 
+    /// Replace matching currents, refusing a length mismatch before mutation.
     pub fn set_currents(&mut self, currents: &[f64]) -> Result<(), String> {
+        self.validate_currents(currents)?;
+        self.currents.copy_from_slice(currents);
+        Ok(())
+    }
+
+    /// Check the current-vector shape without changing population state.
+    pub(crate) fn validate_currents(&self, currents: &[f64]) -> Result<(), String> {
         if currents.len() != self.currents.len() {
             return Err(format!(
                 "current vector length mismatch: got {}, expected {}",
@@ -75,7 +87,6 @@ impl PopulationRunner {
                 self.currents.len()
             ));
         }
-        self.currents.copy_from_slice(currents);
         Ok(())
     }
 

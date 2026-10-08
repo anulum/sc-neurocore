@@ -99,10 +99,26 @@ pub fn pack_fast(bits: &[u8]) -> BitStreamTensor {
     let length = bits.len();
     let words = length.div_ceil(64);
     let mut data = vec![0_u64; words];
+    pack_fast_into(bits, &mut data).expect("packed output length matches input");
+
+    BitStreamTensor { data, length }
+}
+
+/// Pack into caller-owned words without allocating intermediate storage.
+///
+/// Every nonzero byte becomes one set bit, least-significant bit first.
+/// The output must have exactly `ceil(bits.len() / 64)` words. A mismatched
+/// length returns an error before any output is changed. Successful packing
+/// overwrites every word and clears unused high bits in a partial final word.
+pub fn pack_fast_into(bits: &[u8], data: &mut [u64]) -> Result<(), &'static str> {
+    if data.len() != bits.len().div_ceil(64) {
+        return Err("packed output length must equal ceil(input length / 64)");
+    }
 
     for (word_idx, word) in data.iter_mut().enumerate() {
         let base = word_idx * 64;
-        let chunk = &bits[base..std::cmp::min(base + 64, length)];
+        let chunk = &bits[base..std::cmp::min(base + 64, bits.len())];
+        *word = 0;
 
         for (byte_idx, byte_chunk) in chunk.chunks(8).enumerate() {
             let mut packed_byte: u8 = 0;
@@ -113,7 +129,7 @@ pub fn pack_fast(bits: &[u8]) -> BitStreamTensor {
         }
     }
 
-    BitStreamTensor { data, length }
+    Ok(())
 }
 
 /// Unpack a packed tensor back into a `0/1` byte vector.
@@ -204,12 +220,32 @@ pub fn try_bernoulli_packed<R: Rng + ?Sized>(
     length: usize,
     rng: &mut R,
 ) -> Result<Vec<u64>, std::collections::TryReserveError> {
-    let p = prob.clamp(0.0, 1.0);
     let words = length.div_ceil(64);
     let mut data = Vec::new();
     data.try_reserve_exact(words)?;
     data.resize(words, 0_u64);
+    bernoulli_packed_into(prob, length, rng, &mut data)
+        .expect("packed output length matches requested bits");
+    Ok(data)
+}
+
+/// Sample scalar Bernoulli bits into caller-owned words without allocating.
+///
+/// Clamp probabilities to `[0, 1]` and retain one f64 draw per logical bit,
+/// including clamped endpoints and NaN. Overwrite every word and clear high
+/// tail bits. A mismatched word count is refused before output or RNG mutation.
+pub fn bernoulli_packed_into<R: Rng + ?Sized>(
+    prob: f64,
+    length: usize,
+    rng: &mut R,
+    data: &mut [u64],
+) -> Result<(), &'static str> {
+    if data.len() != length.div_ceil(64) {
+        return Err("packed output length must equal ceil(input length / 64)");
+    }
+    let p = prob.clamp(0.0, 1.0);
     for (word_idx, word) in data.iter_mut().enumerate() {
+        *word = 0;
         let bits_in_word = std::cmp::min(64, length.saturating_sub(word_idx * 64));
         for bit in 0..bits_in_word {
             if rng.random::<f64>() < p {
@@ -217,7 +253,7 @@ pub fn try_bernoulli_packed<R: Rng + ?Sized>(
             }
         }
     }
-    Ok(data)
+    Ok(())
 }
 
 /// Fast packed Bernoulli generation using byte-threshold comparison.
@@ -268,19 +304,40 @@ pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
 /// vectorizing the threshold comparison for full 64-bit words.
 pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
     let words = length.div_ceil(64);
+    let mut data = vec![0_u64; words];
+    bernoulli_packed_simd_into(prob, length, rng, &mut data)
+        .expect("packed output length matches requested bits");
+    data
+}
+
+/// Sample SIMD byte-threshold Bernoulli bits into caller-owned words.
+///
+/// Retain the 1024-byte batches, 64-byte remainder words, partial-tail draws
+/// and clamped endpoint behavior of [`bernoulli_packed_simd`]. Empty streams
+/// are valid. Refuse a mismatched word count before output or RNG mutation.
+pub fn bernoulli_packed_simd_into<R: Rng + ?Sized>(
+    prob: f64,
+    length: usize,
+    rng: &mut R,
+    data: &mut [u64],
+) -> Result<(), &'static str> {
+    let words = length.div_ceil(64);
+    if data.len() != words {
+        return Err("packed output length must equal ceil(input length / 64)");
+    }
     if prob <= 0.0 {
-        return vec![0_u64; words];
+        data.fill(0);
+        return Ok(());
     }
     if prob >= 1.0 {
-        let mut data = vec![u64::MAX; words];
+        data.fill(u64::MAX);
         let trailing = length % 64;
         if trailing > 0 {
             data[words - 1] = (1_u64 << trailing) - 1;
         }
-        return data;
+        return Ok(());
     }
     let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
-    let mut data = vec![0_u64; words];
     let full_words = length / 64;
     let mut buf = [0_u8; 1024];
     let (chunks, remainder) = data[..full_words].as_chunks_mut::<16>();
@@ -308,7 +365,7 @@ pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
         data[full_words] = tail;
     }
 
-    data
+    Ok(())
 }
 
 /// Fused encode+AND+popcount without materializing encoded input words.

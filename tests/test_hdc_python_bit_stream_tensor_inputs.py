@@ -187,14 +187,14 @@ else:
 assert BitStreamTensor.from_packed([1], 1).popcount() == 1
 """
     completed = subprocess.run(
-        [sys.executable, "-I", "-c", program], capture_output=True, text=True, timeout=30
+        [sys.executable, "-I", "-B", "-c", program], capture_output=True, text=True, timeout=30
     )
     assert completed.returncode == 0, completed.stderr
 
 
 @pytest.mark.parametrize("operation", ["packed", "bundle"])
-def test_sequence_extraction_reports_real_capacity_failure(operation: str) -> None:
-    """An impossible Python sequence hint cannot abort the native consumer."""
+def test_empty_sequence_hint_preserves_domain_refusal(operation: str) -> None:
+    """Refuse actual empty data by its domain rules, regardless of a huge hint."""
     program = """
 import sys
 from sc_neurocore_engine import BitStreamTensor
@@ -206,14 +206,16 @@ try:
         BitStreamTensor.from_packed(EmptySequence(), 1)
     else:
         BitStreamTensor.bundle(EmptySequence())
-except MemoryError as error:
-    assert str(error) == 'cannot allocate HDC input sequence'
+except ValueError as error:
+    expected = ('packed word count must equal ceil(length / 64)' if sys.argv[1] == 'packed'
+                else 'Cannot bundle zero vectors.')
+    assert str(error) == expected
 else:
-    raise AssertionError('impossible sequence allocation was accepted')
+    raise AssertionError('empty input was accepted')
 assert BitStreamTensor.from_packed([1], 1).popcount() == 1
 """
     completed = subprocess.run(
-        [sys.executable, "-I", "-c", program, operation],
+        [sys.executable, "-I", "-B", "-c", program, operation],
         capture_output=True,
         text=True,
         timeout=30,
@@ -221,7 +223,7 @@ assert BitStreamTensor.from_packed([1], 1).popcount() == 1
     assert completed.returncode == 0, completed.stderr
 
 
-@pytest.mark.parametrize("declared_length", [0, 1, 2, None])
+@pytest.mark.parametrize("declared_length", [0, 1, 2, None, sys.maxsize])
 def test_sequence_length_hint_does_not_replace_actual_words(declared_length: int | None) -> None:
     """Short, excess and unavailable hints retain actual sequence iteration."""
     sequence = HDCInputSequence((1, 1), declared_length)
@@ -243,7 +245,7 @@ def test_standard_word_sequences_keep_their_packed_bits(container: object) -> No
     assert tensor.data == [1, 1] and tensor.length == 65
 
 
-@pytest.mark.parametrize("declared_length", [0, 1, 2, None])
+@pytest.mark.parametrize("declared_length", [0, 1, 2, None, sys.maxsize])
 def test_bundle_length_hint_does_not_replace_actual_tensors(declared_length: int | None) -> None:
     """Tensor sequence iteration preserves majority algebra independently of its hint."""
     first = BitStreamTensor.from_packed([1, 1], 65)

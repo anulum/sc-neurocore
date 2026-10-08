@@ -7,20 +7,32 @@
 // SC-NeuroCore — Adaptive-threshold PyO3 exact-relaxation batch binding
 
 use numpy::{IntoPyArray, PyReadonlyArray1};
-use pyo3::exceptions::{PyFloatingPointError, PyValueError};
+use pyo3::exceptions::{PyFloatingPointError, PyMemoryError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use crate::neurons;
 use crate::neurons::trivial::adaptive_threshold_if::{self, AdaptiveThresholdIFError};
 
-py_neuron_default!("AdaptiveThresholdIFNeuron", PyAdaptiveThresholdIFNeuron, neurons::AdaptiveThresholdIFNeuron, state v, state theta);
+py_neuron_default!("AdaptiveThresholdIFNeuron", PyAdaptiveThresholdIFNeuron, neurons::AdaptiveThresholdIFNeuron, fallible try_step, map map_adaptive_threshold_if_scalar_error, state v, state theta);
+
+/// Match Python scalar refusal text while retaining other typed native errors.
+fn map_adaptive_threshold_if_scalar_error(error: AdaptiveThresholdIFError) -> PyErr {
+    match error {
+        AdaptiveThresholdIFError::NonFiniteInput => PyValueError::new_err("current must be finite"),
+        AdaptiveThresholdIFError::NonFiniteCandidate => {
+            PyFloatingPointError::new_err("exact relaxation candidate must be finite")
+        }
+        _ => map_adaptive_threshold_if_error(error),
+    }
+}
 
 fn map_adaptive_threshold_if_error(error: AdaptiveThresholdIFError) -> PyErr {
     match error {
         AdaptiveThresholdIFError::NonFiniteCandidate => {
             PyFloatingPointError::new_err(error.to_string())
         }
+        AdaptiveThresholdIFError::TraceAllocation => PyMemoryError::new_err(error.to_string()),
         _ => PyValueError::new_err(error.to_string()),
     }
 }
