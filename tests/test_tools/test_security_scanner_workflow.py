@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Security Scanner Workflow CI Wiring
 
+"""Check scanner triggers, pinned tools, required lanes and retained evidence."""
+
 from __future__ import annotations
 
 import re
@@ -16,6 +18,7 @@ import yaml
 
 
 def _load_workflow() -> dict[str, Any]:
+    """Parse the tracked security scanner workflow for contract checks."""
     workflow_path = (
         Path(__file__).resolve().parents[2] / ".github" / "workflows" / "security-scanners.yml"
     )
@@ -24,6 +27,7 @@ def _load_workflow() -> dict[str, Any]:
 
 
 def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
+    """Normalize the YAML event key before checking workflow triggers."""
     raw_events = workflow.get("on")
     if raw_events is None:
         raw_events = cast(dict[Any, Any], workflow).get(True, {})
@@ -31,6 +35,7 @@ def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
 
 
 def test_security_scanner_workflow_triggers_and_scope() -> None:
+    """Retain dispatch, scheduled scans and the declared source trigger scope."""
     workflow = _load_workflow()
     on = _workflow_events(workflow)
 
@@ -54,6 +59,7 @@ def test_security_scanner_workflow_triggers_and_scope() -> None:
 
 
 def test_security_scanner_workflow_invokes_packet_builder() -> None:
+    """Build and validate the security packet before running its scanner lanes."""
     workflow = _load_workflow()
     jobs = workflow["jobs"]
     assert jobs
@@ -74,6 +80,7 @@ def test_security_scanner_workflow_invokes_packet_builder() -> None:
 
 
 def test_security_scanner_workflow_runs_lightweight_scanner_lane() -> None:
+    """Run the lightweight scanners and require their summary artifact."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -87,6 +94,7 @@ def test_security_scanner_workflow_runs_lightweight_scanner_lane() -> None:
 
 
 def test_security_scanner_workflow_runs_rust_scanner_lane() -> None:
+    """Run Rust security scanners within the required packet job."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -99,6 +107,7 @@ def test_security_scanner_workflow_runs_rust_scanner_lane() -> None:
 
 
 def test_security_scanner_workflow_runs_python_compliance_lane() -> None:
+    """Audit Python compliance profiles and require the compliance summary."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -112,6 +121,7 @@ def test_security_scanner_workflow_runs_python_compliance_lane() -> None:
 
 
 def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
+    """Run the blocking OSV lane using the patched Go toolchain."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -122,7 +132,7 @@ def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
         if isinstance(step, dict) and str(step.get("uses", "")).startswith("actions/setup-go@")
     ]
 
-    assert "1.27.1" in setup_go_versions
+    assert "1.27.2" in setup_go_versions
     assert "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8" in run_text
     assert "tools/security_scan/run_osv_scanners.py" in run_text
     assert "security/ci-security-packet/security/osv_scanner.json" in run_text
@@ -130,6 +140,7 @@ def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
 
 
 def test_security_scanner_workflow_retries_every_go_scanner_install() -> None:
+    """Bound retries for every version-pinned Go scanner installation."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
     install_step = next(
@@ -150,6 +161,7 @@ def test_security_scanner_workflow_retries_every_go_scanner_install() -> None:
 
 
 def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
+    """Produce and retain the CycloneDX software inventory."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -162,6 +174,7 @@ def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
 
 
 def test_security_scanner_workflow_runs_source_policy_scanner_lanes() -> None:
+    """Run the source policy scanners and require their packet artifacts."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -187,6 +200,7 @@ def test_security_scanner_workflow_runs_source_policy_scanner_lanes() -> None:
 
 
 def test_security_scanner_workflow_avoids_unpinned_pip_and_curl_installers() -> None:
+    """Keep scanner installation on pinned, hashlocked inputs."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -199,6 +213,7 @@ def test_security_scanner_workflow_avoids_unpinned_pip_and_curl_installers() -> 
 
 
 def test_security_scanner_workflow_runs_cargo_fuzz_on_schedule_or_full_dispatch() -> None:
+    """Reserve bounded native fuzzing for schedules and explicit full dispatch."""
     workflow = _load_workflow()
     dispatch = _workflow_events(workflow)["workflow_dispatch"]
     assert dispatch["inputs"]["include_scheduled_jobs"]["default"] is False
@@ -230,6 +245,7 @@ def test_security_scanner_workflow_runs_cargo_fuzz_on_schedule_or_full_dispatch(
 
 
 def test_security_scanner_workflow_runs_benchmark_on_schedule_or_full_dispatch() -> None:
+    """Reserve benchmark regression scans for schedules and explicit full dispatch."""
     workflow = _load_workflow()
     jobs = workflow["jobs"]
     benchmark_job = jobs["nightly-benchmark-regression"]
@@ -253,6 +269,7 @@ def test_security_scanner_workflow_runs_benchmark_on_schedule_or_full_dispatch()
 
 
 def test_security_scanner_workflow_checks_manifest_consistency_if_present() -> None:
+    """Validate supplied scanner manifests without introducing optional typing lanes."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 
@@ -274,6 +291,7 @@ def test_security_scanner_workflow_checks_manifest_consistency_if_present() -> N
 
 
 def test_security_scanner_workflow_uploads_artifact() -> None:
+    """Preserve scanner packet artifacts for inspection after failed checks."""
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
 

@@ -212,11 +212,14 @@ The legacy outer `source_sha256` field remains a Git revision; the nested
 `measurement.source_sha256` binds observed file bytes. External compiler and
 standard-library bytes are outside this capsule. The ratchet independently
 parses the original Git sources selected by local HEAD or the actual CI event
-and refuses cohort removal, scalar inflation and new individual debt. A private
+and refuses cohort removal, scalar inflation and new individual debt. Historical
+source images use the compiler release recorded in their immutable ceiling,
+including a version recheck, while current source uses the CI toolchain. Updating
+the current compiler therefore retains reproducible original debt evidence. A private
 `--update` migrates the allowance to ceiling protocol v2 and may lower it.
 Ignored, generated and external-source ownership still require explicit mapping.
 
-The lint and pre-commit CI jobs pin Go 1.27.1. Lint runs the native ratchet,
+The lint and pre-commit CI jobs pin Go 1.27.2. Lint runs the native ratchet,
 `go vet`, formatting and strict Python adapter/documentation checks; the native
 documentation job, which installs the test dependencies, type-checks the
 contract tests, and the normal test matrix exercises the module-specific native
@@ -332,3 +335,11 @@ ruff check tools tests/test_tools
 ruff format --check tools tests/test_tools
 mypy tools/audit_model_docs.py tools/summarise_shd_vertex_runs.py tools/eda_toolchain_versions.py
 ```
+
+## SHD platform coverage
+
+The main CI workflow runs the public SHD executable-reader refusal on an actual
+Windows runner. Linux runs the recording and worker tests, including watchdog
+exits. The primary coverage job combines both native platform records using
+relative source paths before enforcing the unchanged 100% aggregate gate.
+The Windows refusal tests skip on Linux and do not replace the OS identity.

@@ -112,6 +112,23 @@ def test_original_declarations_and_source_bytes_are_preserved(tmp_path: Path) ->
     assert _cli(root, ceiling).returncode == 0
 
 
+def test_security_toolchain_update_reproduces_original_with_recorded_go(tmp_path: Path) -> None:
+    """The real legacy parser reproduces original debt while the current CLI uses patched Go."""
+    root, ceiling = _baseline(tmp_path / "repo")
+    legacy = measure_findings(root, go_scope(root), toolchain="go1.27.1")
+    data = json.loads(ceiling.read_text())
+    data["provenance"]["go"] = legacy.measurement.version
+    ceiling.write_text(json.dumps(data))
+    _git(root, "add", "--", "ceiling.json")
+    _git(root, "commit", "-qm", "record actual legacy producer")
+    current = measure_findings(root, go_scope(root), toolchain="go1.27.2")
+    assert current.measurement.version != legacy.measurement.version
+    protected = protect_debt(root, current, ceiling)
+    assert protected.original.measurement.version == legacy.measurement.version
+    assert protected.original.cases == current.cases
+    assert _cli(root, ceiling).returncode == 0
+
+
 @pytest.mark.parametrize("case", ["function", "receiver", "package"])
 def test_same_count_cannot_trade_original_debt(tmp_path: Path, case: str) -> None:
     """Equal aggregate counts cannot authorize a different function, receiver or package."""

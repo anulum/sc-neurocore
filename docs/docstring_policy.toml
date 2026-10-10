@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 855
+expected_file_count = 857
 
 [[file]]
 path = "tests/test_bitstream_batch_encode.py"
@@ -3511,3 +3511,13 @@ rationale = "Real public Go C ABI and Python facade resource refusals for all th
 [[file]]
 path = "tests/test_adaptive_threshold_if_julia_allocation.py"
 rationale = "Real Julia batch allocation exhaustion translated through the maintained Python facade with read-only drive preservation and complete golden recovery."
+
+[[file]]
+path = "tests/test_accel_shd_platform.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_tools/test_security_scanner_workflow.py"
+require_module_docstring = true
+allow_missing = []

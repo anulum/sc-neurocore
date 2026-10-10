@@ -83,7 +83,7 @@ sequence.
   Unreviewed local builds fail closed.
 - OSV-Scanner v2 writes `security/osv_scanner.json` and
   `security/osv_scanner_summary.json`; the lane is blocking and runs with the
-  pinned Go `1.27.1` toolchain because OSV also evaluates Go standard-library
+  pinned Go `1.27.2` toolchain because OSV also evaluates Go standard-library
   vulnerability status from module metadata. The runner scans explicit
   supported Rust and npm lockfiles with OSV's lockfile plugin rather than recursive
   source discovery so optional development manifests cannot mask the tracked

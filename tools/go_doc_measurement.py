@@ -14,6 +14,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import subprocess
 import re
@@ -62,6 +63,7 @@ class GoDocMeasurement:
     summary: dict[str, object]
     version: str
     source: SourceSnapshot
+    toolchain: str | None = None
 
     @property
     def undocumented(self) -> int:
@@ -76,7 +78,7 @@ class GoDocMeasurement:
     def verify(self, root: Path, *, tracked: bool = False) -> None:
         """Recheck source bytes, native Go version and optional Git-discovered scope."""
         self.source.verify(root)
-        if _run(root, ["go", "version"]).strip() != self.version:
+        if _run(root, ["go", "version"], toolchain=self.toolchain).strip() != self.version:
             raise GoMeasurementError("The Go toolchain version changed during native measurement.")
         if tracked:
             if tuple(go_scope(root)) != self.source.paths:
@@ -95,6 +97,7 @@ class GoDocMeasurement:
             "schema_version": GO_MEASUREMENT_SCHEMA_VERSION,
             "argv": ["go", "run", GO_COVERAGE_TOOL],
             "go": self.version,
+            "toolchain": self.toolchain,
             "paths": list(self.source.paths),
             "source_pins": dict(self.source.pins),
             "source_sha256": self.source.source_sha256,
@@ -110,7 +113,9 @@ def _digest(value: object) -> str:
     ).hexdigest()
 
 
-def _run(root: Path, argv: list[str], *, input_text: str | None = None) -> str:
+def _run(
+    root: Path, argv: list[str], *, input_text: str | None = None, toolchain: str | None = None
+) -> str:
     try:
         result = subprocess.run(
             argv,
@@ -118,6 +123,7 @@ def _run(root: Path, argv: list[str], *, input_text: str | None = None) -> str:
             input=input_text,
             capture_output=True,
             text=True,
+            env={**os.environ, "GOTOOLCHAIN": toolchain} if toolchain else None,
             check=False,
             timeout=120 if input_text is None else 1800,
         )

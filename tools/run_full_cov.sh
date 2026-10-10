@@ -138,6 +138,9 @@ echo "  Modules run: $ran"
 echo "  Batches run: $batch_count"
 
 if $coverage; then
+    if [[ -n "${SCN_EXTRA_COVERAGE_DIR:-}" ]]; then
+        python -m coverage combine --append --keep "$SCN_EXTRA_COVERAGE_DIR"
+    fi
     python -m coverage report --skip-empty --show-missing --precision=2 --fail-under="$cov_fail_under"
     python -m coverage xml -o coverage.xml
     if $write_html; then

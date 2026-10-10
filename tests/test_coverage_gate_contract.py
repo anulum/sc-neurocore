@@ -40,6 +40,40 @@ def test_python_coverage_keeps_isolated_workers_and_watchdog_exits() -> None:
     assert set(data["tool"]["coverage"]["run"]["patch"]) >= {"subprocess", "_exit"}
     assert data["tool"]["coverage"]["run"]["parallel"] is True
     assert "src/sc_neurocore" in data["tool"]["coverage"]["run"]["source_dirs"]
+    assert data["tool"]["coverage"]["run"]["relative_files"] is True
+
+
+def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
+    """The aggregate cannot pass without the actual Windows test job and its data."""
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    native = workflow["jobs"]["shd-non-linux-refusal"]
+    assert native["runs-on"] == "windows-latest"
+    assert any(
+        "tests/test_accel_shd_platform.py" in step.get("run", "") for step in native["steps"]
+    )
+    upload = next(
+        step
+        for step in native["steps"]
+        if step.get("uses", "").startswith("actions/upload-artifact@")
+    )
+    assert upload["with"]["if-no-files-found"] == "error"
+    assert upload["with"]["include-hidden-files"] is True
+    test = workflow["jobs"]["test"]
+    assert "shd-non-linux-refusal" in test["needs"]
+    download = next(
+        step
+        for step in test["steps"]
+        if step.get("name") == "Retrieve actual Windows refusal coverage"
+    )
+    assert download["if"] == "matrix.primary"
+    assert download["with"]["name"] == upload["with"]["name"]
+    aggregate = next(step for step in test["steps"] if step.get("name") == "Test + coverage")
+    assert aggregate["env"]["SCN_EXTRA_COVERAGE_DIR"] == download["with"]["path"]
+    runner = (_ROOT / "tools/run_full_cov.sh").read_text()
+    assert 'coverage combine --append --keep "$SCN_EXTRA_COVERAGE_DIR"' in runner
+    assert runner.index("coverage combine --append") < runner.index("coverage report --skip-empty")
 
 
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:

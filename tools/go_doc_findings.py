@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import subprocess
 import tempfile
@@ -141,20 +142,33 @@ def parse_findings(
 
 
 def measure_findings(
-    root: Path, paths: Sequence[str], *, producer_root: Path | None = None
+    root: Path,
+    paths: Sequence[str],
+    *,
+    producer_root: Path | None = None,
+    toolchain: str | None = None,
 ) -> FindingMeasurement:
     """Run the real Go parser with a separate immutable source image when requested.
 
     The producer remains explicitly observed and hashed. Native source hashes
     identify the exact bytes passed to the Go parser, including during input
     changes that before/after filesystem observations alone cannot exclude.
+    ``toolchain`` selects the recorded Go release for historical reproduction;
+    current measurements use the caller's configured toolchain.
     """
     before = capture_source(root, paths)
     producer = ((producer_root or root) / GO_COVERAGE_TOOL).resolve()
+    environment = {**os.environ, "GOTOOLCHAIN": toolchain} if toolchain else None
     try:
         producer_sha = hashlib.sha256(producer.read_bytes()).hexdigest()
         version = subprocess.run(
-            ["go", "version"], cwd=root, capture_output=True, text=True, check=False, timeout=120
+            ["go", "version"],
+            cwd=root,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
         )
         if version.returncode != 0 or not version.stdout.strip().startswith("go version go"):
             raise GoMeasurementError("The native Go version could not be qualified.")
@@ -164,6 +178,7 @@ def measure_findings(
             result = subprocess.run(
                 argv,
                 cwd=root,
+                env=environment,
                 input="\n".join(paths),
                 capture_output=True,
                 text=True,
@@ -185,7 +200,7 @@ def measure_findings(
         raise GoMeasurementError("Native Go individual findings could not be read.") from exc
     if summary["source_sha256"] != {path: before.pins[path] for path in paths}:
         raise GoMeasurementError("The native Go findings parsed different source bytes.")
-    measurement = GoDocMeasurement(summary, version.stdout.strip(), before)
+    measurement = GoDocMeasurement(summary, version.stdout.strip(), before, toolchain)
     measurement.verify(root)
     try:
         final_producer_sha = hashlib.sha256(producer.read_bytes()).hexdigest()

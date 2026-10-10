@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import tarfile
 import tempfile
@@ -153,10 +154,23 @@ def protect_debt(
             else None
         )
         original_document = _ceiling_document(original_raw) if original_raw is not None else None
+        original_toolchain = None
+        if original_document is not None:
+            provenance = original_document.get("provenance")
+            if isinstance(provenance, dict) and "go" in provenance:
+                recorded = provenance["go"]
+                match = re.fullmatch(
+                    r"go version (go[0-9]+\.[0-9]+\.[0-9]+) [a-z0-9]+/[a-z0-9]+", str(recorded)
+                )
+                if match is None:
+                    raise GoMeasurementError("The original Go producer version is invalid.")
+                original_toolchain = match.group(1)
         with tempfile.TemporaryDirectory(prefix="go-doc-original-") as folder:
             image = Path(folder)
             _original_source(root, revision, paths + sorted(_CONFIGS & set(names)), image)
-            original = measure_findings(image, paths, producer_root=root)
+            original = measure_findings(
+                image, paths, producer_root=root, toolchain=original_toolchain
+            )
     except (PolicyError, OSError, UnicodeError, tarfile.TarError, KeyError) as exc:
         raise GoMeasurementError("The original Go source revision could not be qualified.") from exc
     original_ceiling: int | None = None
