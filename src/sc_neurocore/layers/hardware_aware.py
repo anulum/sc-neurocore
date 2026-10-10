@@ -84,7 +84,7 @@ class HardwareAwareSCLayer:
 
     def forward(self, input_values: list[float] | np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Run a forward pass through the defect-injected stochastic layer."""
-        return self._layer.forward(input_values)  # type: ignore[arg-type]
+        return self._layer.forward(input_values)
 
     def update_weights(self, gradient: np.ndarray[Any, Any], lr: float = 0.01) -> None:
         """Update weights with gradient, respecting stuck-at mask.

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Pre-configured SC Network for MNIST-like Digit
 
+"""Preconfigured stochastic digit and MFCC keyword classifiers."""
+
 from typing import Any
 import numpy as np
 
@@ -14,12 +16,10 @@ from ..layers.vectorized_layer import VectorizedSCLayer
 
 
 class SCDigitClassifier:
-    """
-    Pre-configured SC Network for MNIST-like Digit Classification.
-    Uses: Conv Layer -> Vectorized Dense Layer
-    """
+    """Classify digit images with stochastic convolution and a dense output layer."""
 
     def __init__(self) -> None:
+        """Build the four-filter convolution and ten-output dense classifier."""
         # 1. Convolutional Front-End (Feature Extraction)
         # Input: 28x28, 1 Channel
         self.conv = SCConv2DLayer(
@@ -31,8 +31,17 @@ class SCDigitClassifier:
         self.dense = VectorizedSCLayer(n_inputs=676, n_neurons=10, length=1024)  # 10 Digits
 
     def forward(self, image: np.ndarray[Any, Any]) -> int:
-        """
-        Classify a 28x28 image.
+        """Classify a digit image.
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            Pixel probabilities with shape (28, 28) or (1, 28, 28).
+
+        Returns
+        -------
+        int
+            Index of the largest dense output, from zero to nine.
         """
         # Ensure correct shape (1, 28, 28)
         if image.ndim == 2:
@@ -53,7 +62,7 @@ class SCDigitClassifier:
         flat_probs = flat_features / norm_factor
         flat_probs = np.clip(flat_probs, 0, 1)
 
-        outputs = self.dense.forward(flat_probs)  # type: ignore[arg-type]
+        outputs = self.dense.forward(flat_probs)
 
         # Argmax
         return int(np.argmax(outputs))
@@ -68,7 +77,26 @@ class SCKeywordSpotter:
     """
 
     def __init__(self, n_keywords: int = 2) -> None:
+        """Build a dense classifier over sixteen MFCC inputs.
+
+        Parameters
+        ----------
+        n_keywords : int, optional
+            Number of keyword output neurons.
+        """
         self.classifier = VectorizedSCLayer(n_inputs=16, n_neurons=n_keywords)
 
     def predict(self, mfcc_features: np.ndarray[Any, Any]) -> int:
-        return int(np.argmax(self.classifier.forward(mfcc_features)))  # type: ignore[arg-type]
+        """Return the keyword index with the largest dense output.
+
+        Parameters
+        ----------
+        mfcc_features : numpy.ndarray
+            Sixteen normalized MFCC feature values.
+
+        Returns
+        -------
+        int
+            Index of the largest keyword output.
+        """
+        return int(np.argmax(self.classifier.forward(mfcc_features)))

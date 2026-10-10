@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Advanced Demo
 
+"""Demonstrate weight loading, multimodal fusion and stochastic inference."""
+
 import numpy as np
 import time
 import sys
@@ -23,6 +25,7 @@ from sc_neurocore.dashboard.text_dashboard import SCDashboard
 
 
 def run_advanced_demo() -> None:
+    """Run ten fusion steps and display the stochastic layer outputs."""
     print("Initializing SC-NeuroCore Advanced Features...")
 
     # 1. Bridge: Mock loading weights
@@ -71,7 +74,7 @@ def run_advanced_demo() -> None:
         def run_layer_step() -> Any:
             # In a real adaptive loop, we would increment 'length'
             # Here we simulate the result of a forward pass
-            res = layer.forward(fused_input)  # type: ignore[arg-type]
+            res = layer.forward(fused_input)
             # return mean firing rate or confidence as metric?
             # actually adaptive usually runs *inside* forward.
             # We'll just call forward here.

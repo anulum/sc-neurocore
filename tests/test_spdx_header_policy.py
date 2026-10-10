@@ -13,6 +13,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from tools import spdx_header_audit
+
 
 SOURCE_EXTENSIONS = (".py", ".rs")
 """Tracked source extensions covered by the S001/S002 audit items."""
@@ -45,12 +47,14 @@ def _has_spdx_header(path: Path) -> bool:
 
 
 def test_tracked_python_and_rust_sources_have_spdx_headers() -> None:
-    """Every tracked Python and Rust source file carries an SPDX header."""
+    """Owned sources carry headers; upstream sources retain REUSE licence metadata."""
     root = _repo_root()
     missing = [
         path.relative_to(root).as_posix()
         for path in _tracked_source_files(root)
-        if not _has_spdx_header(path)
+        if spdx_header_audit.classify_path(root, path.relative_to(root).as_posix()).kind
+        is not spdx_header_audit.CoverageKind.REUSE_METADATA
+        and not _has_spdx_header(path)
     ]
 
     assert missing == []

@@ -13,7 +13,8 @@ repos:
       - id: trailing-whitespace
         exclude: '\.rpt$'
       - id: end-of-file-fixer
-        exclude: '\.rpt$'
+        # Keep the upstream crate's provenance metadata byte-for-byte.
+        exclude: '\.rpt$|^bridge/vendor/rayon-core/\.cargo_vcs_info\.json$'
       - id: check-yaml
         args: [--unsafe]
         exclude: "^conda/"

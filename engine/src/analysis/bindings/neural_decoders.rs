@@ -14,6 +14,8 @@ use pyo3::prelude::*;
 use super::arrays::{contiguous, matrix_size, readonly, require_prefix};
 use crate::{analysis::neural_decoders, runtime_control_binding::ensure_parallel_runtime};
 
+type SpikeTokenArrays = (Py<PyArray1<i64>>, Py<PyArray1<f64>>);
+
 /// Register the existing five neural-decoder functions without changing their names.
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(py_tokenise_spikes, module)?)?;
@@ -33,7 +35,7 @@ fn py_tokenise_spikes(
     py: Python<'_>,
     trains: Vec<Bound<'_, PyArray1<i32>>>,
     dt: f64,
-) -> PyResult<(Py<PyArray1<i64>>, Py<PyArray1<f64>>)> {
+) -> PyResult<SpikeTokenArrays> {
     let borrowed: Vec<_> = trains
         .iter()
         .map(|train| readonly(train, "trains"))

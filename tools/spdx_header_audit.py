@@ -91,6 +91,17 @@ GENERATED_OR_DATA_GLOBS = (
 )
 """Tracked generated/data surfaces intentionally not rewritten in-place."""
 
+UPSTREAM_REUSE_GLOBS = ("bridge/vendor/rayon-core/**",)
+"""Upstream files retaining their licence through REUSE.toml annotations."""
+
+MODIFIED_UPSTREAM_PATHS = {
+    "bridge/vendor/rayon-core/Cargo.toml",
+    "bridge/vendor/rayon-core/src/registry.rs",
+    "bridge/vendor/rayon-core/src/sleep/README.md",
+}
+"""Locally modified upstream files retain the repository's direct-header rules."""
+
+
 SKIP_PARTS = {
     ".git",
     ".mypy_cache",
@@ -128,7 +139,6 @@ class SpdxRecord:
 
 def tracked_files(root: Path) -> list[str]:
     """Return tracked files from ``git ls-files`` under ``root``."""
-
     completed = subprocess.run(
         ["git", "ls-files"],
         cwd=root,
@@ -141,25 +151,21 @@ def tracked_files(root: Path) -> list[str]:
 
 def _is_generated_or_data(path: str) -> bool:
     """Return true when ``path`` is generated evidence or data."""
-
     return any(fnmatch.fnmatch(path, pattern) for pattern in GENERATED_OR_DATA_GLOBS)
 
 
 def _has_skipped_part(path: str) -> bool:
     """Return true when ``path`` lives below a local build/cache tree."""
-
     return any(part in SKIP_PARTS for part in Path(path).parts)
 
 
 def _direct_header_prefix(path: str) -> str | None:
     """Return the comment prefix used for direct headers, if any."""
-
     return DIRECT_HEADER_PREFIX_BY_EXTENSION.get(Path(path).suffix.lower())
 
 
 def direct_header_text(path: str) -> str:
     """Return the seven-line direct header for ``path``."""
-
     prefix = _direct_header_prefix(path)
     if prefix is None:
         raise ValueError(f"no direct-header style for {path}")
@@ -168,7 +174,6 @@ def direct_header_text(path: str) -> str:
 
 def has_direct_header(root: Path, path: str) -> bool:
     """Return true when ``path`` carries the direct SPDX header near the top."""
-
     try:
         leading = (root / path).read_text(encoding="utf-8").splitlines()[:HEADER_WINDOW_LINES]
     except OSError:
@@ -179,11 +184,14 @@ def has_direct_header(root: Path, path: str) -> bool:
 
 def classify_path(root: Path, path: str) -> SpdxRecord:
     """Classify SPDX coverage for one tracked path."""
-
     if _has_skipped_part(path):
         return SpdxRecord(path, CoverageKind.UNCHECKED, False, "local cache/build path")
     if _is_generated_or_data(path):
         return SpdxRecord(path, CoverageKind.GENERATED_OR_DATA, False, "generated/data artifact")
+    if path not in MODIFIED_UPSTREAM_PATHS and any(
+        fnmatch.fnmatch(path, pattern) for pattern in UPSTREAM_REUSE_GLOBS
+    ):
+        return SpdxRecord(path, CoverageKind.REUSE_METADATA, False, "upstream REUSE annotation")
     if _direct_header_prefix(path) is not None:
         missing = not has_direct_header(root, path)
         return SpdxRecord(path, CoverageKind.DIRECT_HEADER, missing, "comment-safe source/config")
@@ -196,14 +204,12 @@ def classify_path(root: Path, path: str) -> SpdxRecord:
 
 def collect_records(root: Path, paths: Iterable[str] | None = None) -> list[SpdxRecord]:
     """Collect SPDX coverage records for tracked or supplied files."""
-
     selected = tracked_files(root) if paths is None else list(paths)
     return [classify_path(root, path) for path in selected]
 
 
 def missing_direct_header_paths(root: Path, paths: Iterable[str] | None = None) -> list[str]:
     """Return direct-header policy targets missing the seven-line header."""
-
     return [
         record.path
         for record in collect_records(root, paths)
@@ -213,7 +219,6 @@ def missing_direct_header_paths(root: Path, paths: Iterable[str] | None = None) 
 
 def _insertion_index(lines: list[str]) -> int:
     """Return the line index where a direct header can be inserted."""
-
     index = 0
     if lines and lines[0].startswith("#!"):
         index = 1
@@ -224,7 +229,6 @@ def _insertion_index(lines: list[str]) -> int:
 
 def _strip_comment_prefix(line: str, prefix: str) -> str | None:
     """Return comment body for ``line`` when it uses ``prefix``."""
-
     stripped = line.lstrip()
     if not stripped.startswith(prefix):
         return None
@@ -233,7 +237,6 @@ def _strip_comment_prefix(line: str, prefix: str) -> str | None:
 
 def _drop_legacy_metadata(lines: list[str], index: int, prefix: str) -> list[str]:
     """Remove old partial SPDX metadata at the insertion point."""
-
     rewritten = [*lines[:index]]
     cursor = index
     while cursor < len(lines):
@@ -248,7 +251,6 @@ def _drop_legacy_metadata(lines: list[str], index: int, prefix: str) -> list[str
 
 def apply_direct_header(root: Path, path: str) -> bool:
     """Insert the direct header into ``path`` if it is missing."""
-
     if has_direct_header(root, path):
         return False
 
@@ -270,7 +272,6 @@ def apply_direct_header(root: Path, path: str) -> bool:
 
 def fix_missing_headers(root: Path, paths: Iterable[str] | None = None) -> list[str]:
     """Apply direct headers to all missing direct-header targets."""
-
     repaired: list[str] = []
     for path in missing_direct_header_paths(root, paths):
         if apply_direct_header(root, path):
@@ -280,7 +281,6 @@ def fix_missing_headers(root: Path, paths: Iterable[str] | None = None) -> list[
 
 def _print_summary(records: Sequence[SpdxRecord]) -> None:
     """Print a stable SPDX coverage summary."""
-
     for kind in CoverageKind:
         count = sum(1 for record in records if record.kind is kind)
         print(f"{kind.value}: {count}")
@@ -290,7 +290,6 @@ def _print_summary(records: Sequence[SpdxRecord]) -> None:
 
 def _parser() -> argparse.ArgumentParser:
     """Build the command-line parser."""
-
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="repository root")
     parser.add_argument("--fix", action="store_true", help="insert missing direct headers")
@@ -301,7 +300,6 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the SPDX header audit CLI."""
-
     args = _parser().parse_args(argv)
     root = args.root.resolve()
 

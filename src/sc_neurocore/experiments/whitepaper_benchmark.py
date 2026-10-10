@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Whitepaper Benchmark
 
+"""Measure stochastic layer timing and estimate energy from operation counts."""
+
 import numpy as np
 import time
 import sys
@@ -19,6 +21,7 @@ from sc_neurocore.accel.jit_kernels import HAS_NUMBA
 
 
 def run_whitepaper_benchmark() -> None:
+    """Print layer throughput, latency and operation-based energy estimates."""
     print("--- SC-NEUROCORE FOUNDATIONAL BENCHMARK ---")
 
     # Configuration
@@ -39,11 +42,11 @@ def run_whitepaper_benchmark() -> None:
     layer = VectorizedSCLayer(n_inputs=N_INPUTS, n_neurons=N_NEURONS, length=LENGTH)
 
     # Warmup
-    _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore[arg-type]
+    _ = layer.forward(np.random.random(N_INPUTS))
 
     start_time = time.time()
     for _ in range(TRIALS):
-        _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore[arg-type]
+        _ = layer.forward(np.random.random(N_INPUTS))
     end_time = time.time()
 
     total_time = end_time - start_time

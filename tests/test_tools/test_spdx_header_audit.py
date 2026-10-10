@@ -11,13 +11,18 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 from tools import spdx_header_audit
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 
 def _write(root: Path, relative: str, text: str) -> None:
     """Write a test file below ``root``."""
-
     target = root / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
@@ -25,7 +30,6 @@ def _write(root: Path, relative: str, text: str) -> None:
 
 def test_classifies_comment_safe_source_as_direct_header(tmp_path: Path) -> None:
     """Comment-safe source files require a direct seven-line header."""
-
     path = "studio/frontend/src/App.tsx"
     _write(tmp_path, path, "export default function App() { return null; }\n")
 
@@ -37,7 +41,6 @@ def test_classifies_comment_safe_source_as_direct_header(tmp_path: Path) -> None
 
 def test_classifies_json_and_generated_artifacts_without_rewriting(tmp_path: Path) -> None:
     """JSON data and generated evidence are separated from direct headers."""
-
     schema_path = "src/sc_neurocore/neurons/model_schemas/lif.json"
     generated_path = "benchmarks/results/bench_lif.json"
     _write(tmp_path, schema_path, '{"type": "object"}\n')
@@ -54,7 +57,6 @@ def test_classifies_json_and_generated_artifacts_without_rewriting(tmp_path: Pat
 
 def test_apply_direct_header_preserves_shebang(tmp_path: Path) -> None:
     """Shell scripts keep the interpreter line before the SPDX header."""
-
     path = "scripts/run_lane.sh"
     _write(tmp_path, path, "#!/usr/bin/env bash\nset -euo pipefail\n")
 
@@ -68,7 +70,6 @@ def test_apply_direct_header_preserves_shebang(tmp_path: Path) -> None:
 
 def test_apply_direct_header_preserves_typescript_reference(tmp_path: Path) -> None:
     """TypeScript reference directives remain before the inserted header."""
-
     path = "studio/frontend/src/vite-env.d.ts"
     _write(tmp_path, path, '/// <reference types="vite/client" />\n')
 
@@ -81,7 +82,6 @@ def test_apply_direct_header_preserves_typescript_reference(tmp_path: Path) -> N
 
 def test_missing_direct_header_paths_ignores_reuse_and_generated_files(tmp_path: Path) -> None:
     """The missing list contains only direct-header policy targets."""
-
     _write(tmp_path, "src/demo.go", "package demo\n")
     _write(tmp_path, "src/schema.json", "{}\n")
     _write(tmp_path, "sc_shd_pynq/generated.v", "module generated; endmodule\n")
@@ -92,3 +92,31 @@ def test_missing_direct_header_paths_ignores_reuse_and_generated_files(tmp_path:
     )
 
     assert missing == ["src/demo.go"]
+
+
+def test_vendored_rayon_licence_scope_matches_committed_reuse_annotations() -> None:
+    """Real upstream files use MIT/Apache metadata while local modifications require headers."""
+    root = Path(__file__).resolve().parents[2]
+    annotations = tomllib.loads((root / "REUSE.toml").read_text())["annotations"]
+    upstream = next(
+        item for item in annotations if item["path"] == list(spdx_header_audit.UPSTREAM_REUSE_GLOBS)
+    )
+    assert upstream["SPDX-License-Identifier"] == "MIT OR Apache-2.0"
+    modified = next(
+        item
+        for item in annotations
+        if set(item["path"]) == spdx_header_audit.MODIFIED_UPSTREAM_PATHS
+    )
+    assert modified["SPDX-License-Identifier"] == "AGPL-3.0-or-later AND (MIT OR Apache-2.0)"
+    sources = list((root / "bridge/vendor/rayon-core").rglob("*.rs"))
+    assert sources
+    for source in sources:
+        path = source.relative_to(root).as_posix()
+        record = spdx_header_audit.classify_path(root, path)
+        expected = (
+            spdx_header_audit.CoverageKind.DIRECT_HEADER
+            if path in spdx_header_audit.MODIFIED_UPSTREAM_PATHS
+            else spdx_header_audit.CoverageKind.REUSE_METADATA
+        )
+        assert record.kind is expected, path
+        assert not record.missing_direct_header, path

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 857
+expected_file_count = 863
 
 [[file]]
 path = "tests/test_bitstream_batch_encode.py"
@@ -3521,3 +3521,27 @@ allow_missing = []
 path = "tests/test_tools/test_security_scanner_workflow.py"
 require_module_docstring = true
 allow_missing = []
+
+[[file]]
+path = "src/sc_neurocore/models/zoo.py"
+rationale = "Digit and MFCC classifier construction and predictions."
+
+[[file]]
+path = "src/sc_neurocore/experiments/advanced_demo.py"
+rationale = "Stochastic layer, multimodal fusion and dashboard demonstration."
+
+[[file]]
+path = "src/sc_neurocore/experiments/whitepaper_benchmark.py"
+rationale = "Timed stochastic layer benchmark and operation-based energy estimates."
+
+[[file]]
+path = "tests/test_spdx_header_policy.py"
+rationale = "Tracked owned source headers and licensed upstream metadata."
+
+[[file]]
+path = "tests/test_tools/test_spdx_header_audit.py"
+rationale = "Source header classification and actual Rayon REUSE annotation boundaries."
+
+[[file]]
+path = "tools/spdx_header_audit.py"
+rationale = "Tracked source provenance audit, owned modifications and upstream licence metadata."

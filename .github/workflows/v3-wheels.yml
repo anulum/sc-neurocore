@@ -62,6 +62,7 @@ jobs:
           maturin build --locked --release --out ../dist/
 
       - name: Reject interpreter caches in wheels
+        shell: bash
         run: |
           python -I -B - <<'PY'
           """Reject interpreter-specific cache files in every built wheel."""
@@ -122,6 +123,7 @@ jobs:
             --interpreter python${{ matrix.python-version }} --out ../dist/
 
       - name: Reject interpreter caches in wheels
+        shell: bash
         run: |
           python -I -B - <<'PY'
           """Reject interpreter-specific cache files in every built wheel."""
