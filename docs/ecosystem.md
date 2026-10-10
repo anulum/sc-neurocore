@@ -20,7 +20,9 @@ intended destinations; implementation and release status are separate from namin
 
 ![SC Neuromorphic Computing Systems: development workbench, timing instrument, 13 specialized repositories and 25 supporting tools. Full functions and status follow below.](assets/sc_neurocore_group_map.svg)
 
-[Open the full-size schematic](assets/sc_neurocore_group_map.svg).
+[Open the full-size SVG](assets/sc_neurocore_group_map.svg),
+[download PNG](assets/sc_neurocore_group_map.png), or
+[download JPG](assets/sc_neurocore_group_map.jpg) (3200 × 3740 pixels).
 The map groups responsibilities for navigation; its connecting lines do not
 specify package dependencies or an extraction order.
 
