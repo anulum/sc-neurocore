@@ -26,7 +26,7 @@ Start here if you need to understand what the software is for:
 | Consuming APIs | [API Reference Index](api/API_REFERENCE.md) | Prefer public package surfaces first; source-only research modules require a checkout. |
 
 !!! note "Stable release and repository plan"
-    This repository remains the supported development parent while Studio, the High Fidelity model catalogue, and every retained component reach an evidenced STABLE gate. The public package metadata remains at beta maturity. A later extraction into focused repositories depends on reviewed API, dependency, packaging, and migration contracts and approved repository boundaries; no split date or final layout is set.
+    SC-NeuroCore remains the development workbench for the SC Neuromorphic Computing Systems group. The [group and project map](ecosystem.md) introduces the 13 specialized repositories, 25 supporting tools and LOOP-TIMING-WITNESS. Extraction depends on evidenced stability gates and reviewed API, dependency, packaging and migration contracts. The public package remains at beta maturity; no split date is announced.
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch -> quantise to Q8.8 -> simulate with stochastic bitstreams -> compile to SystemVerilog -> synthesise for FPGA. The optional Rust engine accelerates selected stages when installed.*

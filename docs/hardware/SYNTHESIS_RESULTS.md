@@ -35,7 +35,7 @@ default netlist passes the same 148-case population trace. Its full burst emits
 128 addresses over 128 service clocks after one capture clock. Yosys proves all
 186 source/optimized equivalence cells after reset normalization.
 
-The [source-bound report](../../hdl/reports/yosys_aer_encoder_2026-10-07.json)
+The [source-bound report](https://github.com/anulum/sc-neurocore/blob/main/hdl/reports/yosys_aer_encoder_2026-10-07.json)
 records the commands, counts and scope. These are generic synthesis and
 simulation observations; board clock limits and rail energy need device
 measurements.

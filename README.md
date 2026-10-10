@@ -49,6 +49,22 @@ It is useful when a team needs to answer practical questions such as:
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
+## Development Workbench and Upcoming Split
+
+**SC-NeuroCore remains the development workbench** for the **SC Neuromorphic
+Computing Systems** group. We are preparing focused repositories for modelling,
+learning, data, acceleration, analysis, compilation, hardware and verification,
+with dedicated Studio, research and benchmark projects. Supporting tools will
+cover data quality, numerical comparisons, measurement, provenance and deployment.
+
+The [group and project map](docs/ecosystem.md) presents all 13 specialized
+repositories, 25 supporting tools and LOOP-TIMING-WITNESS, with their functions
+and current status. The split is upcoming: the current package and installation
+instructions remain the starting point, and migration guides will accompany
+future releases.
+
+[![SC Neuromorphic Computing Systems repository map](docs/assets/sc_neurocore_group_map.svg)](docs/ecosystem.md)
+
 ## Who It Is For
 
 | Audience | Primary value |
@@ -102,7 +118,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Rust PyO3 model wrappers | 208 |
 | Optional extras | 31 |
 | Python test files | 5305 |
-| Public documentation pages | 641 |
+| Public documentation pages | 642 |
 | GitHub Actions workflows | 22 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.

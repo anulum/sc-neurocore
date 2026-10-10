@@ -759,7 +759,7 @@ For the default 128-neuron AER encoder, the same-tool source comparison is
 128 addresses in 128 service cycles after one capture cycle and passes the
 148-case trace; all 186 optimization-equivalence cells are proven. See the
 [dated synthesis observations](../hardware/SYNTHESIS_RESULTS.md) and
-[source-bound report](../../hdl/reports/yosys_aer_encoder_2026-10-07.json).
+[source-bound report](https://github.com/anulum/sc-neurocore/blob/main/hdl/reports/yosys_aer_encoder_2026-10-07.json).
 Board frequency and energy are outside these generic synthesis observations.
 
 1024-channel codec estimate: ~406K gates, ~0.02 mm^2 at 7nm.

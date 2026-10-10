@@ -89,6 +89,7 @@ plugins:
 nav:
   - Home: index.md
   - Product Overview: product_overview.md
+  - Group and Project Map: ecosystem.md
   - Applications and Market: applications_and_market.md
   - Learning Path: LEARNING_PATH.md
   - Competitive Landscape: COMPETITIVE_LANDSCAPE.md
