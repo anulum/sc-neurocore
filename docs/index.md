@@ -26,7 +26,7 @@ Start here if you need to understand what the software is for:
 | Consuming APIs | [API Reference Index](api/API_REFERENCE.md) | Prefer public package surfaces first; source-only research modules require a checkout. |
 
 !!! note "Stable release and repository plan"
-    SC-NeuroCore remains the development workbench for the SC Neuromorphic Computing Systems group. The [group and project map](ecosystem.md) introduces the 13 specialized repositories, 25 supporting tools and LOOP-TIMING-WITNESS. Extraction depends on evidenced stability gates and reviewed API, dependency, packaging and migration contracts. The public package remains at beta maturity; no split date is announced.
+    SC-NeuroCore will remain a public, open-source development workbench for the SC Neuromorphic Computing Systems group. The [group and project map](ecosystem.md) explains the unpublished 4.0.0 roadmap, 13 specialized repositories, 25 supporting tools and LOOP-TIMING-WITNESS. Future component licensing remains under discussion and will be announced individually; several tools will stay public. Extraction depends on evidenced stability and reviewed migration contracts. The current public package remains at beta maturity; no split date is announced.
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch -> quantise to Q8.8 -> simulate with stochastic bitstreams -> compile to SystemVerilog -> synthesise for FPGA. The optional Rust engine accelerates selected stages when installed.*

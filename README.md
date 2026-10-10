@@ -49,21 +49,50 @@ It is useful when a team needs to answer practical questions such as:
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
-## Development Workbench and Upcoming Split
+## Public Development Workbench and the 4.0.0 Roadmap
 
-**SC-NeuroCore remains the development workbench** for the **SC Neuromorphic
-Computing Systems** group. We are preparing focused repositories for modelling,
-learning, data, acceleration, analysis, compilation, hardware and verification,
-with dedicated Studio, research and benchmark projects. Supporting tools will
-cover data quality, numerical comparisons, measurement, provenance and deployment.
+**SC-NeuroCore will remain a public, open-source development workbench** for the
+**SC Neuromorphic Computing Systems** group. It brings together a connected
+engineering workflow: model neural behaviour, encode and process events, train
+and simulate networks, compile selected computations for hardware, and inspect
+the resulting evidence. Its breadth lets researchers and engineers develop and
+test the interfaces between those stages in one place.
+
+The workbench supports experimentation, comparisons across runtimes and
+integration of the complete workflow. Focused repositories give teams clearer
+entry points and smaller dependency boundaries when they need one part of it.
+SC-NeuroCore continues as the place to bring those parts together.
+
+The split architecture is prepared for the **unpublished 4.0.0 roadmap**.
+Repository names and responsibilities are established; implementation and release
+status are described separately in the map. The current public package remains
+at the version shown above, with its existing installation instructions.
+
+| Part of the map | Repositories and purpose |
+| --- | --- |
+| Foundation and execution | **SC-NC-CORE**, **SC-NC-CATALOGUE**, **SC-NC-ENGINE** and **SC-NC-BRIDGES**: numerical primitives, models, accelerated execution and interchange. |
+| Learning and data | **SC-NC-LEARN**, **SC-NC-DATA** and **SC-NC-ANALYSIS**: training and adaptation, datasets and encodings, spike analysis and visualisation. |
+| Silicon and verification | **SC-NC-COMPILER**, **SC-NC-HARDWARE** and **SC-NC-VERIFY**: RTL generation, target integration, formal checks and fault analysis. |
+| Workspace and research | **SC-NC-STUDIO**, **SC-NC-RESEARCH** and **SC-NC-BENCH**: visual workflows, experimental work and workload-specific benchmarks. |
+| Supporting tools and instrumentation | **LOOP-TIMING-WITNESS** and **25 tools**: timing measurements, data quality, numerical conformance, provenance, deployment and assurance evidence. |
+
+Future components may be open-source or proprietary products. Their boundaries
+and licensing remain under discussion with investors and IP partners, and will
+be announced per project. **Several supporting tools will remain public.** This
+roadmap does not change the current repository's open-source license or its
+continuing public workbench role.
 
 The [group and project map](docs/ecosystem.md) presents all 13 specialized
 repositories, 25 supporting tools and LOOP-TIMING-WITNESS, with their functions
-and current status. The split is upcoming: the current package and installation
-instructions remain the starting point, and migration guides will accompany
-future releases.
+and current status. Read it as a map of responsibilities and implementation
+status; future licensing decisions will be announced separately. Migration
+guides will accompany component releases.
 
 [![SC Neuromorphic Computing Systems repository map](docs/assets/sc_neurocore_group_map.svg)](docs/ecosystem.md)
+
+[Full-size SVG](docs/assets/sc_neurocore_group_map.svg) ·
+[PNG](docs/assets/sc_neurocore_group_map.png) ·
+[JPG](docs/assets/sc_neurocore_group_map.jpg)
 
 ## Who It Is For
 

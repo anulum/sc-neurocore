@@ -8,7 +8,7 @@
 
 # Group and Project Map
 
-**SC-NeuroCore remains the development workbench** for the
+**SC-NeuroCore will remain a public, open-source development workbench** for the
 **SC Neuromorphic Computing Systems** group. The upcoming split gives focused
 repositories clear responsibilities, smaller installation boundaries and
 versioned interfaces. The workbench continues to bring those parts together for
@@ -17,6 +17,21 @@ experimentation, research-to-hardware workflows and integration.
 The group comprises the workbench, LOOP-TIMING-WITNESS, 13 specialized SC-NC
 repositories and 25 supporting tools. The repository names below identify the
 intended destinations; implementation and release status are separate from naming.
+
+The split architecture is prepared for the **unpublished 4.0.0 roadmap**.
+The current public package remains at its documented version and maturity;
+component releases and migration guides will accompany the transition.
+
+## Public workbench and future products
+
+SC-NeuroCore keeps its public workbench role and current open-source license.
+Future specialized components may become open-source or proprietary products.
+Their licensing and commercial boundaries remain under discussion with investors
+and IP partners and will be announced individually. Several supporting tools
+will remain public, with their own documented licensing and release status.
+
+The map below describes responsibilities and implementation status. Future
+licensing decisions will be announced separately for each project.
 
 ![SC Neuromorphic Computing Systems: development workbench, timing instrument, 13 specialized repositories and 25 supporting tools. Full functions and status follow below.](assets/sc_neurocore_group_map.svg)
 
