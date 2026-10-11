@@ -141,27 +141,36 @@ def test_base_wheel_does_not_package_polyglot_research_sources(tmp_path: Path) -
     )
     wheels = list(tmp_path.glob("sc_neurocore-*.whl"))
     assert len(wheels) == 1
-    # Installed SHD/dataset loaders and ANN conversion adapters resolve these
-    # resources at runtime. Other neuron/research native trees stay source-only.
+    # Installed dataset, conversion and adaptive-threshold adapters own these
+    # runtime resources. Other neuron/research native trees stay source-only.
     runtime_assets = (
         "accel/julia/datasets/*.jl",
         "accel/julia/conversion/*.jl",
+        "accel/julia/neurons/adaptive_threshold_if.jl",
         "accel/go/go.mod",
+        "accel/go/adaptive_threshold_if/*.go",
+        "accel/go/adaptive_threshold_if/*.h",
         "accel/go/conversion/*.go",
         "accel/go/conversion/cshared/*.go",
         "accel/go/conversion/cshared/*.h",
         "accel/go/conversion/qcfscshared/*.go",
         "accel/mojo/kernels/ann_to_snn*.mojo",
         "accel/mojo/kernels/qcfs.mojo",
+        "accel/mojo/kernels/adaptive_threshold_if.mojo",
+        "accel/mojo/adaptive_threshold_if/*.mojo",
     )
     required = {
         "accel/julia/datasets/shd_cli.jl",
         "accel/julia/conversion/ann_to_snn_native.jl",
+        "accel/julia/neurons/adaptive_threshold_if.jl",
         "accel/go/go.mod",
+        "accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
         "accel/go/conversion/cshared/main.go",
         "accel/go/conversion/qcfscshared/main.go",
         "accel/mojo/kernels/ann_to_snn_native.mojo",
         "accel/mojo/kernels/qcfs.mojo",
+        "accel/mojo/kernels/adaptive_threshold_if.mojo",
+        "accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
     }
     with ZipFile(wheels[0]) as wheel:
         native = {

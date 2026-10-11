@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Public claim, maturity and measured-evidence contracts
+
+"""Bind public capability and maturity claims to repository metadata and evidence."""
 
 from __future__ import annotations
 
@@ -451,6 +454,7 @@ def test_public_maturity_classifier_stays_beta_until_stable_gate() -> None:
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     bounded_surfaces = [
         root / "docs" / "index.md",
+        root / "docs" / "ecosystem.md",
         root / "docs" / "architecture" / "architecture.md",
         root / "docs" / "architecture" / "AUTONOMOUS_LEARNING_ZENITH.md",
         root / "src" / "sc_neurocore" / "__init__.py",
@@ -463,10 +467,14 @@ def test_public_maturity_classifier_stays_beta_until_stable_gate() -> None:
     assert "Development Status :: 4 - Beta" in classifiers
     assert "Development Status :: 5 - Production/Stable" not in classifiers
     assert "Development Status :: 5 - Production/Stable" not in pyproject
-    assert "supported development parent" in compact
-    assert "evidenced stable gate" in compact
-    assert "reviewed api, dependency, packaging, and migration contracts" in compact
-    assert "no split date or final layout is set" in compact
+    assert "public, open-source development workbench" in compact
+    assert "unpublished 4.0.0 roadmap" in compact
+    assert "evidenced stability gates" in compact
+    assert (
+        "reviewed api, dependency boundary, packaging contract, compatibility checks "
+        "and a migration guide" in compact
+    )
+    assert "no announced split date or migration deadline" in compact
     assert "beta maturity" in compact
     assert "beta package surface" in compact
     assert "production-ready" not in compact

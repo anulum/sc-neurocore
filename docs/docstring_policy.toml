@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 868
+expected_file_count = 870
+
+[[file]]
+path = "tests/test_public_api_packaged_resources.py"
+rationale = "Real wheel confines native source assets to declared installed runtime resources and verifies canonical resource bytes alongside HDL and schema contracts."
+
+[[file]]
+path = "tests/test_public_claims_metrics.py"
+rationale = "Public inventory, measured-evidence and beta maturity claims stay bound to repository metadata and the approved public development workbench transition contract."
 
 [[file]]
 path = "src/sc_neurocore/neurons/models/adex.py"
