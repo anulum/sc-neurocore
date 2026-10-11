@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Update the pinned Pixi advisory scanner to 0.2.0 and validate its renamed
+  report fields. Continue refusing every advisory match, ignored rule,
+  unaudited package and incomplete or inconsistent response.
+
 - Refresh the complete compatible Mojo support environment to Python 3.15.0
   and binutils 2.46.1 while retaining Mojo 1.0.0. Include the matching shared
   `libpython` required by Mojo's Python interoperability, and retain SQLite's

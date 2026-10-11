@@ -203,9 +203,7 @@ def test_julia_queries_retain_registry_build_versions() -> None:
         )
 
 
-@pytest.mark.parametrize(
-    "section", ["vulnerabilities", "ignored", "unchecked", "unmatched_ignores"]
-)
+@pytest.mark.parametrize("section", ["matches", "ignored", "not_audited", "unused_ignores"])
 def test_pixi_refuses_findings_and_unanswered_packages(section: str) -> None:
     """Any advisory, suppression or unanswered channel blocks complete-lock acceptance.
 
@@ -215,20 +213,20 @@ def test_pixi_refuses_findings_and_unanswered_packages(section: str) -> None:
         Report section whose presence invalidates a clean complete audit.
     """
     report: dict[str, Any] = {
-        "vulnerabilities": [],
+        "matches": [],
         "ignored": [],
-        "unchecked": [],
-        "unmatched_ignores": [],
-        "summary": {"audited": 1, "vulnerable": 0, "ignored": 0, "unchecked": 0},
+        "not_audited": [],
+        "unused_ignores": [],
+        "summary": {"audited": 1, "vulnerable": 0, "ignored": 0, "not_audited": 0},
     }
     assert pixi_report_passed(report, 1) is True
     report[section] = [{"package": "example", "id": "EXAMPLE-ADVISORY"}]
-    counter = {"vulnerabilities": "vulnerable", "ignored": "ignored", "unchecked": "unchecked"}.get(
+    counter = {"matches": "vulnerable", "ignored": "ignored", "not_audited": "not_audited"}.get(
         section
     )
     if counter is not None:
         report["summary"][counter] = 1
-    if section == "unchecked":
+    if section == "not_audited":
         report["summary"]["audited"] = 0
     assert pixi_report_passed(report, 1) is False
 
@@ -240,11 +238,11 @@ def test_pixi_refuses_missing_and_inconsistent_coverage() -> None:
     with pytest.raises(ValueError, match="lists"):
         pixi_report_passed({}, 1)
     report = {
-        "vulnerabilities": [],
+        "matches": [],
         "ignored": [],
-        "unchecked": [],
-        "unmatched_ignores": [],
-        "summary": {"audited": 0, "vulnerable": 0, "ignored": 0, "unchecked": 0},
+        "not_audited": [],
+        "unused_ignores": [],
+        "summary": {"audited": 0, "vulnerable": 0, "ignored": 0, "not_audited": 0},
     }
     with pytest.raises(ValueError, match="complete lock"):
         pixi_report_passed(report, 1)
@@ -364,10 +362,10 @@ def test_pixi_refuses_unavailable_coverage_counters(value: object) -> None:
         Summary section that is not a mapping of counters.
     """
     report: dict[str, Any] = {
-        "vulnerabilities": [],
+        "matches": [],
         "ignored": [],
-        "unchecked": [],
-        "unmatched_ignores": [],
+        "not_audited": [],
+        "unused_ignores": [],
         "summary": value,
     }
     with pytest.raises(ValueError, match="counters are unavailable"):
@@ -384,17 +382,17 @@ def test_pixi_refuses_invalid_coverage_counters(value: object) -> None:
         Invalid replacement for the audited package counter.
     """
     report: dict[str, Any] = {
-        "vulnerabilities": [],
+        "matches": [],
         "ignored": [],
-        "unchecked": [],
-        "unmatched_ignores": [],
-        "summary": {"audited": value, "vulnerable": 0, "ignored": 0, "unchecked": 0},
+        "not_audited": [],
+        "unused_ignores": [],
+        "summary": {"audited": value, "vulnerable": 0, "ignored": 0, "not_audited": 0},
     }
     with pytest.raises(ValueError, match="counter is invalid"):
         pixi_report_passed(report, 1)
 
 
-@pytest.mark.parametrize("counter", ["vulnerable", "ignored", "unchecked"])
+@pytest.mark.parametrize("counter", ["vulnerable", "ignored", "not_audited"])
 def test_pixi_refuses_counters_that_disagree_with_their_lists(counter: str) -> None:
     """A counter cannot report a finding or omission that its list does not show.
 
@@ -403,15 +401,15 @@ def test_pixi_refuses_counters_that_disagree_with_their_lists(counter: str) -> N
     counter : str
         Summary counter raised without a matching list entry.
     """
-    summary = {"audited": 1, "vulnerable": 0, "ignored": 0, "unchecked": 0}
+    summary = {"audited": 1, "vulnerable": 0, "ignored": 0, "not_audited": 0}
     summary[counter] = 1
-    if counter == "unchecked":
+    if counter == "not_audited":
         summary["audited"] = 0
     report: dict[str, Any] = {
-        "vulnerabilities": [],
+        "matches": [],
         "ignored": [],
-        "unchecked": [],
-        "unmatched_ignores": [],
+        "not_audited": [],
+        "unused_ignores": [],
         "summary": summary,
     }
     with pytest.raises(ValueError, match="disagree with their counters"):

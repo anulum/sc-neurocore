@@ -85,8 +85,10 @@ report explicitly records both identities. Other local version suffixes are
 refused. This checks upstream package advisories; it does not attest that a
 particular CPU wheel has no build-specific vulnerability.
 
-The current Pixi beta covers conda-forge and PyPI. Modular packages reported as
-unchecked cannot establish a passing complete-lock audit. A Pixi lock without a
+The pinned Pixi audit 0.2.0 covers conda-forge and PyPI. Its `matches`, `ignored`,
+`not_audited` and `unused_ignores` lists must agree with typed counters and cover
+every locked package. Modular packages reported as `not_audited` cannot establish
+a passing complete-lock audit. A Pixi lock without a
 readable package record list is refused before the scanner starts. No blanket waiver
 or automatic `--fix` is applied. Advisory remediation needs reviewed fixed
 versions and ordinary integration validation before changing the lock.

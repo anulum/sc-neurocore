@@ -21,12 +21,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_every_head_requires_all_dependency_ecosystems() -> None:
     """Require six unconditional audit lanes and a failure-propagating aggregate."""
-    workflow = cast(
-        dict[str, Any],
-        yaml.load(
-            (ROOT / ".github/workflows/dependency-audit.yml").read_text(), Loader=yaml.BaseLoader
-        ),
-    )
+    loader = yaml.BaseLoader((ROOT / ".github/workflows/dependency-audit.yml").read_text())
+    try:
+        workflow = cast(dict[str, Any], loader.get_single_data())
+    finally:
+        loader.dispose()
     assert workflow["permissions"] == {"contents": "read"}
     assert workflow["on"]["push"] == ""
     assert workflow["on"]["pull_request"] == {"branches": ["main"]}
@@ -94,7 +93,7 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
         "--include=peer",
         "--registry=https://registry.npmjs.org",
         "--json",
-        "pixi-audit==0.1.1=ha35fb5c_30",
+        "pixi-audit==0.2.0=ha35fb5c_45",
     } <= literals
     assert not literals.intersection(
         {
@@ -115,4 +114,4 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
     assert "run_dependency_audit(repo_root=repo_root, output_dir=output_dir)" in source
     report_source = (ROOT / "tools/security_scan/locked_dependency_reports.py").read_text()
     assert 'OSV_ENDPOINT = "https://api.osv.dev/v1/querybatch"' in report_source
-    assert '"ignored", "unchecked", "unmatched_ignores"' in report_source
+    assert '"ignored", "not_audited", "unused_ignores"' in report_source

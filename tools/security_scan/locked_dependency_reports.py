@@ -187,29 +187,27 @@ def pixi_report_passed(payload: object, package_count: int) -> bool:
     ------
     ValueError
         Required response lists, counters or package coverage are invalid.
-        Unsupported channels are unchecked and cannot qualify as audited.
+        Unsupported channels are not audited and cannot qualify as covered.
     """
-    if not isinstance(payload, dict) or package_count <= 0:
+    if not isinstance(payload, dict) or type(package_count) is not int or package_count <= 0:
         raise ValueError("Pixi audit report is invalid.")
-    for key in ("vulnerabilities", "ignored", "unchecked", "unmatched_ignores"):
+    for key in ("matches", "ignored", "not_audited", "unused_ignores"):
         if not isinstance(payload.get(key), list):
             raise ValueError("Pixi audit coverage lists are unavailable.")
     summary = payload.get("summary")
     if not isinstance(summary, dict):
         raise ValueError("Pixi audit coverage counters are unavailable.")
-    for key in ("audited", "vulnerable", "ignored", "unchecked"):
+    for key in ("audited", "vulnerable", "ignored", "not_audited"):
         value = summary.get(key)
         if isinstance(value, bool) or not isinstance(value, int) or value < 0:
             raise ValueError("Pixi audit coverage counter is invalid.")
-    if summary["audited"] + summary["unchecked"] != package_count:
+    if summary["audited"] + summary["not_audited"] != package_count:
         raise ValueError("Pixi audit does not cover the complete lock.")
     counters = (
-        ("vulnerable", "vulnerabilities"),
+        ("vulnerable", "matches"),
         ("ignored", "ignored"),
-        ("unchecked", "unchecked"),
+        ("not_audited", "not_audited"),
     )
     if any(summary[counter] != len(payload[section]) for counter, section in counters):
         raise ValueError("Pixi audit coverage lists disagree with their counters.")
-    return not any(
-        payload[key] for key in ("vulnerabilities", "ignored", "unchecked", "unmatched_ignores")
-    )
+    return not any(payload[key] for key in ("matches", "ignored", "not_audited", "unused_ignores"))

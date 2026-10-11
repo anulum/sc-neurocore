@@ -143,7 +143,7 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
             "pixi",
             "exec",
             "--spec",
-            "pixi-audit==0.1.1=ha35fb5c_30",
+            "pixi-audit==0.2.0=ha35fb5c_45",
             "--channel",
             "https://prefix.dev/prefix-dev/prefix-labs",
             "--channel",

@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 877
+expected_file_count = 878
+
+[[file]]
+path = "tests/test_tools/test_pixi_audit_cli.py"
+rationale = "Real stable Pixi scanner and committed-lock CLI qualification bind complete package coverage and refuse malformed or suppressed responses."
 
 [[file]]
 path = "scripts/cosim_gen_and_check.py"
