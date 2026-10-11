@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 863
+expected_file_count = 864
 
 [[file]]
 path = "tests/test_bitstream_batch_encode.py"
@@ -3545,3 +3545,7 @@ rationale = "Source header classification and actual Rayon REUSE annotation boun
 [[file]]
 path = "tools/spdx_header_audit.py"
 rationale = "Tracked source provenance audit, owned modifications and upstream licence metadata."
+
+[[file]]
+path = "tests/test_accel_model_coverage_closure.py"
+rationale = "Maintained acceleration facade error classification and source admission regression contracts."

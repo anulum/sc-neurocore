@@ -355,6 +355,10 @@ def test_original_scope_and_producer_must_reproduce(
         )
     result = _cli(root, ceiling, manifest=manifest)
     assert result.returncode == 2, result.stdout + result.stderr
+    if fault == "original_scalar":
+        assert "measured=1, recorded=0" in result.stdout
+        assert "revision=" + _git(root, "rev-parse", "HEAD") in result.stdout
+        assert data["provenance"]["rustc"] in result.stdout
 
 
 @pytest.mark.parametrize(
@@ -558,3 +562,35 @@ def test_original_engine_ceiling_cannot_be_bypassed_with_an_alternate_candidate(
     assert (
         candidate.read_bytes() == retained and original_ceiling.read_bytes() == ceiling.read_bytes()
     )
+
+
+def test_legacy_ceiling_survives_committed_documentation_repayment(
+    parser: NativeParser, tmp_path: Path
+) -> None:
+    """A retained aggregate upper bound cannot forbid documentation-only progress."""
+    root, ceiling = _baseline(tmp_path / "repo", parser)
+    source = root / "src/lib.rs"
+    source.write_text(
+        "//! Native original crate.\n/// Documented original function.\npub fn old() {}\n"
+    )
+    _git(root, "add", "--", "src/lib.rs")
+    _git(
+        root,
+        "-c",
+        "user.name=Native contract",
+        "-c",
+        "user.email=native@example.invalid",
+        "commit",
+        "-qm",
+        "document the original function without raising the ceiling",
+    )
+    original_record = ceiling.read_bytes()
+    result = _cli(root, ceiling)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "0 undocumented items, ceiling 1" in result.stdout
+    assert ceiling.read_bytes() == original_record
+    source.write_text(source.read_text() + "pub fn added() {}\n")
+    result = _cli(root, ceiling)
+    assert result.returncode == 2
+    assert "New undocumented Rust declarations" in result.stdout
+    assert ceiling.read_bytes() == original_record

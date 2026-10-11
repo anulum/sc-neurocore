@@ -18522,6 +18522,8 @@ Route subthreshold LIF integration against the analytical solution.
 ## Module `experiments.advanced_demo`
 
 ### Function `run_advanced_demo()`
+Run ten fusion steps and display the stochastic layer outputs.
+
 ---
 
 ## Module `experiments.agent_synergy_demo`
@@ -18765,6 +18767,8 @@ Orchestrates TCBO consciousness detection scenarios.
 ## Module `experiments.whitepaper_benchmark`
 
 ### Function `run_whitepaper_benchmark()`
+Print layer throughput, latency and operation-based energy estimates.
+
 ---
 
 ## Module `explain.spike_explain`
@@ -23559,12 +23563,12 @@ FileNotFoundError
 ## Module `models.zoo`
 
 ### Class `SCDigitClassifier`
-Pre-configured SC Network for MNIST-like Digit Classification.
-Uses: Conv Layer -> Vectorized Dense Layer
+Classify digit images with stochastic convolution and a dense output layer.
 
 - **__init__**()
+  - Build the four-filter convolution and ten-output dense classifier.
 - **forward**(image)
-  - Classify a 28x28 image.
+  - Classify a digit image.
 
 ### Class `SCKeywordSpotter`
 Dense MFCC keyword spotter (e.g. "Yes"/"No").
@@ -23574,7 +23578,9 @@ vectorized SC dense layer. This is the feed-forward baseline; a recurrent
 variant for variable-length audio sequences is not yet implemented.
 
 - **__init__**(n_keywords)
+  - Build a dense classifier over sixteen MFCC inputs.
 - **predict**(mfcc_features)
+  - Return the keyword index with the largest dense output.
 
 ---
 

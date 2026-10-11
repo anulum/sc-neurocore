@@ -178,7 +178,8 @@ jobs:
         shell: bash
         run: |
           pip install dist/*.whl
-          pip install --require-hashes -r requirements/wheels-test.txt
+          pip install --require-hashes -r requirements/wheels-test.txt -r requirements/build.txt -r requirements/runtime.txt
+          pip install --no-deps --no-build-isolation .
 
       - name: Capture installed engine ABI
         shell: bash
@@ -231,6 +232,7 @@ jobs:
           import sys
 
           import pytest
+          import sc_neurocore
           import sc_neurocore_engine as engine
           from sc_neurocore_engine import sc_neurocore_engine as native
           from sc_neurocore_engine import scpn
@@ -241,6 +243,7 @@ jobs:
 
           checkout = pathlib.Path(sys.argv[1]).resolve()
           names = (
+              "sc_neurocore",
               "sc_neurocore_engine",
               "sc_neurocore_engine.sc_neurocore_engine",
               "sc_neurocore_engine.scpn",
@@ -251,7 +254,7 @@ jobs:
           )
           origins = {}
           for name, module in zip(
-              names, (engine, native, scpn, attention, graphs, grad, photonics), strict=True
+              names, (sc_neurocore, engine, native, scpn, attention, graphs, grad, photonics), strict=True
           ):
               assert sys.modules[name] is module
               filename = module.__file__

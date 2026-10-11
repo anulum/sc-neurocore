@@ -189,6 +189,11 @@ def protect_rust_debt(
     such identity: an undocumented macro-generated declaration is refused there,
     so that original debt can only be repaid by documenting the macro. The syntax
     parser cannot see expanded declarations, so their retention is not checked.
+
+    Legacy aggregate ceilings are upper bounds: documentation-only commits
+    can reduce findings without rewriting that bound. New debt is still checked
+    against the independently measured original cases. Individual-case records
+    must reproduce their recorded counts and declaration identities exactly.
     """
     try:
         revision = baseline_commit(root, os.environ)
@@ -237,9 +242,14 @@ def protect_rust_debt(
         cast(int, original_document["undocumented"]) if original_document is not None else None
     )
     if original_document is not None:
-        if original.undocumented != original_ceiling:
+        if original.undocumented > cast(int, original_ceiling) or (
+            original_document.get("schema_version") == INDIVIDUAL_SCHEMA
+            and original.undocumented != original_ceiling
+        ):
             raise RustMeasurementError(
-                "The original Rust native measurement does not reproduce its ceiling."
+                "The original Rust native measurement does not reproduce its ceiling: "
+                f"measured={original.undocumented}, recorded={original_ceiling}, "
+                f"revision={revision}, compiler={original.rustc_version}."
             )
         original_cases = _cases(original_document)
         if original_cases is not None and original_cases != original.cases:

@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
+import ctypes
 import importlib
+import importlib.util
+import os
 import inspect
 import math
 import sys
 from types import ModuleType
+from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel import (
@@ -50,7 +55,6 @@ def test_model_accelerator_import_falls_back_without_rust_engine(
     monkeypatch: pytest.MonkeyPatch, module_name: str, engine_field: str
 ) -> None:
     """Import-time Rust absence leaves a deterministic unavailable marker."""
-
     original_import = importlib.import_module
     module = original_import(module_name)
 
@@ -72,19 +76,18 @@ def test_coba_loaders_fail_closed_at_every_external_boundary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """COBA Julia, Go, and Mojo discovery never exposes partial runtimes."""
-
     monkeypatch.setattr(coba_lif, "_julia_module", None)
-    monkeypatch.setattr(coba_lif.importlib_util, "find_spec", lambda _name: None)
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _name: None)
     assert coba_lif.ensure_julia_loaded() is False
-    monkeypatch.setattr(coba_lif.importlib_util, "find_spec", lambda _name: object())
-    monkeypatch.setattr(coba_lif.os.path, "isfile", lambda _path: False)
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _name: object())
+    monkeypatch.setattr(os.path, "isfile", lambda _path: False)
     assert coba_lif.ensure_julia_loaded() is False
-    monkeypatch.setattr(coba_lif.os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(os.path, "isfile", lambda _path: True)
 
     def fail_import(_name: str) -> ModuleType:
         raise RuntimeError("Julia load failed")
 
-    monkeypatch.setattr(coba_lif.importlib, "import_module", fail_import)
+    monkeypatch.setattr(importlib, "import_module", fail_import)
     assert coba_lif.ensure_julia_loaded() is False
     assert coba_lif._configure_c_library(object(), "missing", mojo=False) is None
 
@@ -93,14 +96,14 @@ def test_coba_loaders_fail_closed_at_every_external_boundary(
         ("_mojo_lib", "ensure_mojo_loaded"),
     ):
         monkeypatch.setattr(coba_lif, state_name, None)
-        monkeypatch.setattr(coba_lif.os.path, "isfile", lambda _path: False)
+        monkeypatch.setattr(os.path, "isfile", lambda _path: False)
         assert getattr(coba_lif, loader_name)() is False
-        monkeypatch.setattr(coba_lif.os.path, "isfile", lambda _path: True)
+        monkeypatch.setattr(os.path, "isfile", lambda _path: True)
 
         def fail_cdll(_path: str) -> object:
             raise OSError("shared object rejected")
 
-        monkeypatch.setattr(coba_lif.ctypes, "CDLL", fail_cdll)
+        monkeypatch.setattr(ctypes, "CDLL", fail_cdll)
         assert getattr(coba_lif, loader_name)() is False
 
 
@@ -143,7 +146,6 @@ def test_remaining_native_facades_reject_unavailable_backends(
     state_name: str,
 ) -> None:
     """Direct model facades check availability before touching arguments."""
-
     monkeypatch.setattr(module, state_name, None)
     function = getattr(module, function_name)
     arguments = [0 for _ in inspect.signature(function).parameters]
@@ -156,7 +158,6 @@ def test_model_backend_inventory_handles_absent_julia_and_unknown_names(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Model availability probes convert known runtime absence to false."""
-
     monkeypatch.setattr(
         adaptive_threshold_if,
         "_ensure_julia_loaded",
@@ -173,7 +174,7 @@ def test_model_backend_inventory_handles_absent_julia_and_unknown_names(
     def fail_import(_name: str) -> ModuleType:
         raise ImportError("missing")
 
-    monkeypatch.setattr(ermentrout_kopell_pop.importlib, "import_module", fail_import)
+    monkeypatch.setattr(importlib, "import_module", fail_import)
     assert ermentrout_kopell_pop.backend_available("julia") is False
     assert iqif.backend_available("unknown") is False
     assert mcculloch_pitts.backend_available("unknown") is False
@@ -181,7 +182,6 @@ def test_model_backend_inventory_handles_absent_julia_and_unknown_names(
 
 def test_adaptive_and_resonate_receipts_reject_nonfinite_and_missing_finals() -> None:
     """Trace receipts require finite final state and an explicit spike count."""
-
     adaptive = {
         "v": [],
         "theta": [],
@@ -244,14 +244,14 @@ def test_iqif_result_rejects_malformed_native_receipts(
     trace: object, spikes: object, final_v: object, match: str
 ) -> None:
     """IQIF requires integral bounded state, count, and final receipts."""
-
     with pytest.raises(FloatingPointError, match=match):
-        iqif.normalise_result(trace, spikes, final_v, n_steps=1, v_min=-10, v_max=10)
+        iqif.normalise_result(
+            cast(npt.ArrayLike, trace), spikes, final_v, n_steps=1, v_min=-10, v_max=10
+        )
 
 
 def test_mcculloch_pitts_rejects_non_numeric_output() -> None:
     """Binary event results cannot contain non-numeric trace or count objects."""
-
     with pytest.raises(FloatingPointError, match="non-numeric"):
         mcculloch_pitts.normalise_result(([object()], object()), expected_length=1)
 
@@ -259,7 +259,6 @@ def test_mcculloch_pitts_rejects_non_numeric_output() -> None:
 @pytest.mark.parametrize("module", (go_alpha, mojo_alpha))
 def test_alpha_native_facades_reject_mismatched_inhibitory_drive(module: ModuleType) -> None:
     """Alpha facades require scalar or exact-length inhibitory current."""
-
     with pytest.raises(ValueError, match="scalar or match"):
         module.simulate_alpha(*([0.0] * 11), [], [1.0])
 
@@ -267,7 +266,6 @@ def test_alpha_native_facades_reject_mismatched_inhibitory_drive(module: ModuleT
 @pytest.mark.parametrize("module", (go_wong_wang, mojo_wong_wang))
 def test_wong_wang_native_facades_reject_wrong_noise_length(module: ModuleType) -> None:
     """Wong-Wang facades require two noise samples per model step."""
-
     with pytest.raises(ValueError, match="xi length"):
         module._inputs([], [], [1.0])
     with pytest.raises(ValueError, match="stim1 and stim2 length mismatch"):
@@ -279,7 +277,6 @@ def test_wilson_cowan_native_facades_reject_invalid_public_contracts(
     monkeypatch: pytest.MonkeyPatch, module: ModuleType
 ) -> None:
     """Wilson-Cowan facades reject drive, weight, time, and state violations."""
-
     with pytest.raises(ValueError, match="finite values"):
         module._as_ext_input([math.nan])
     monkeypatch.setattr(module, "_MAX_STEPS", 0)
@@ -300,7 +297,6 @@ def test_julia_model_facades_reject_missing_runtime_source_and_bad_input(
     monkeypatch: pytest.MonkeyPatch, module: ModuleType
 ) -> None:
     """Julia facades reject missing runtime/source and malformed input arrays."""
-
     monkeypatch.setattr(module, "_jl", None)
     with pytest.raises(ImportError, match="juliacall"):
         module._ensure_loaded()
@@ -327,10 +323,23 @@ def test_julia_alpha_rejects_mismatched_drive_lengths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The Julia alpha facade validates paired drive lengths before allocation."""
-
     monkeypatch.setattr(julia_alpha, "_ensure_loaded", lambda: object())
     with pytest.raises(ValueError, match="inh_current length mismatch"):
-        julia_alpha.simulate_alpha(*([0.0] * 11), [], [0.0])
+        julia_alpha.simulate_alpha(
+            v_init=0.0,
+            a_exc_init=0.0,
+            i_exc_init=0.0,
+            a_inh_init=0.0,
+            i_inh_init=0.0,
+            v_rest=0.0,
+            v_threshold=0.0,
+            tau_v=0.0,
+            tau_exc=0.0,
+            tau_inh=0.0,
+            dt=0.0,
+            exc_current=[],
+            inh_current=[0.0],
+        )
 
 
 @pytest.mark.parametrize(
@@ -355,6 +364,8 @@ def test_julia_model_facades_translate_only_classified_failures(
         def __getattr__(self, name: str) -> object:
             if name == native_name:
                 return lambda *_args: (_ for _ in ()).throw(RuntimeError("native failure"))
+            if name == "is_memory_error":
+                return lambda _exc: False
             if name == "is_configuration_error":
                 return lambda _exc: failure_kind == "configuration"
             if name == "is_candidate_error":
@@ -374,7 +385,6 @@ def test_julia_model_facades_translate_only_classified_failures(
 
 def test_gpu_runtime_failure_is_latched_and_warned(monkeypatch: pytest.MonkeyPatch) -> None:
     """One CUDA runtime failure permanently selects the safe CPU path."""
-
     monkeypatch.setattr(gpu_backend, "_GPU_RUNTIME_BROKEN", False)
     with pytest.warns(UserWarning, match="falling back to NumPy"):
         gpu_backend._mark_gpu_runtime_broken(RuntimeError("CUDA unavailable"))
