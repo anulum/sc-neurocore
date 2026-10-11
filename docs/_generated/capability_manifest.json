@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5306
+    "test_files": 5308
   },
   "documentation": {
     "public_pages": [
@@ -3451,6 +3451,7 @@
       "tests/encoding_zoo_support.py",
       "tests/energy_accounting_support.py",
       "tests/energy_lif_contract_support.py",
+      "tests/engine_gate_provenance.py",
       "tests/engine_requirement.py",
       "tests/engine_v3_bitstream_kernels_support.py",
       "tests/engine_v3_dense_kernels_support.py",
@@ -4938,6 +4939,7 @@
       "tests/test_energy_lif_engine_binding_allocation.py",
       "tests/test_energy_lif_engine_binding_inputs.py",
       "tests/test_energy_lif_schema_parity.py",
+      "tests/test_engine_gate_provenance.py",
       "tests/test_engine_global_pickle.py",
       "tests/test_engine_lif_vector_run.py",
       "tests/test_engine_probability_array_encoding.py",

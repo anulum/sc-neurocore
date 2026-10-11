@@ -51,6 +51,9 @@ class _BindingWrites(ast.NodeVisitor):
 
     def __init__(self) -> None:
         self.names: set[str] = set()
+        self.global_names: set[str] = set()
+        self.attribute_names: set[str] = set()
+        self.module_names: set[str] = set()
 
     def visit_Name(self, node: ast.Name) -> None:
         """Record module assignment and deletion targets."""
@@ -60,8 +63,14 @@ class _BindingWrites(ast.NodeVisitor):
     def visit_Attribute(self, node: ast.Attribute) -> None:
         """Invalidate a namespace whose attributes are replaced or deleted."""
         if isinstance(node.ctx, (ast.Store, ast.Del)):
-            self.names.add(_expression_name(node).split(".")[0])
+            name = _expression_name(node).split(".")[0]
+            self.names.add(name)
+            self.attribute_names.add(name)
         self.generic_visit(node)
+
+    def visit_Global(self, node: ast.Global) -> None:
+        """Identify class-body stores that bind the enclosing module namespace."""
+        self.global_names.update(node.names)
 
     def visit_Import(self, node: ast.Import) -> None:
         """Record the actual namespace names bound by an import."""
@@ -108,12 +117,20 @@ class _BindingWrites(ast.NodeVisitor):
             self.visit(returns)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        """Record the class name without confusing class-local bindings."""
+        """Keep class-local names separate from global and namespace mutations."""
         self.names.add(node.name)
         for expression in [*node.decorator_list, *node.bases]:
             self.visit(expression)
         for keyword in node.keywords:
             self.visit(keyword.value)
+        writes = _BindingWrites()
+        for statement in node.body:
+            writes.visit(statement)
+        module_names = (
+            (writes.names & writes.global_names) | writes.attribute_names | writes.module_names
+        )
+        self.names.update(module_names)
+        self.module_names.update(module_names)
 
     def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
         """Invalidate exception-bound names and visit their executed handlers."""

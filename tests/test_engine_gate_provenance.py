@@ -154,3 +154,137 @@ def test_real_repository_sweeps_accept_maintained_gate_import_forms(
     result = _run_source_sweeps(tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "2 passed" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("prefix", "call", "accepted"),
+    [
+        ("del require_engine", "require_engine()", False),
+        ("from math import *", "require_engine()", False),
+        (
+            "import tests.engine_requirement as gates\ngates.require_engine = lambda: None",
+            "gates.require_engine()",
+            False,
+        ),
+        ("", "object().require_engine()", False),
+        (
+            "async def configure(value=(require_engine := lambda: None)):\n    pass",
+            "require_engine()",
+            False,
+        ),
+        (
+            "configure = lambda value=(require_engine := lambda: None): value",
+            "require_engine()",
+            False,
+        ),
+        (
+            "@((require_engine := lambda value: value))\ndef configure():\n    pass",
+            "require_engine()",
+            False,
+        ),
+        (
+            "try:\n    raise ValueError\nexcept ValueError as require_engine:\n    pass",
+            "require_engine()",
+            False,
+        ),
+        ("", 'require_engine(target="sc_neurocore_engine.sc_neurocore_engine")', False),
+        ("", 'require_engine("sc_neurocore_engine.sc_neurocore_engine", "math")', False),
+        (
+            "from tests.engine_requirement import ENGINE_EXTENSION_MODULE",
+            'require_engine(ENGINE_EXTENSION_MODULE + "")',
+            False,
+        ),
+        (
+            "@staticmethod\n"
+            "def configure(a: int = 1, /, *args: float, b: int = 2, c: int, **kwargs: str) -> int:\n"
+            "    global require_engine\n    require_engine = lambda: None\n    return a\n"
+            "async def configure_async():\n    require_engine = lambda: None\n"
+            "configure_lambda = lambda: None\n"
+            "class Configuration(int, metaclass=type):\n    require_engine = None\n"
+            "try:\n    pass\nexcept ValueError:\n    pass",
+            "require_engine()",
+            True,
+        ),
+        (
+            "import tests.engine_requirement as gates\n"
+            "class Configuration((gates := object())):\n    pass",
+            "gates.require_engine()",
+            False,
+        ),
+        pytest.param(
+            "class Configuration:\n    global require_engine\n    require_engine = lambda: None",
+            "require_engine()",
+            False,
+            id="class-global-store",
+        ),
+        pytest.param(
+            "import tests.engine_requirement as gates\n"
+            "class Configuration:\n    gates.require_engine = lambda: None",
+            "gates.require_engine()",
+            False,
+            id="class-namespace-store",
+        ),
+        pytest.param(
+            "class Configuration:\n    class Nested:\n"
+            "        global require_engine\n        require_engine = lambda: None",
+            "require_engine()",
+            False,
+            id="nested-class-global-store",
+        ),
+    ],
+)
+def test_real_repository_sweeps_track_import_time_binding_changes(
+    tmp_path: Path, prefix: str, call: str, accepted: bool
+) -> None:
+    """Distinguish module binding changes from local scopes in real test sources.
+
+    Parameters
+    ----------
+    tmp_path
+        Private complete copy of the maintained engine test inventory.
+    prefix
+        Source inserted before the actual binding module's engine gate.
+    call
+        Actual top-level gate expression subjected to the repository sweeps.
+    accepted
+        Whether the maintained binding and compiled-module target survive.
+    """
+    _copy_engine_inventory(tmp_path)
+    target = tmp_path / "tests/test_bitstream_averager.py"
+    text = target.read_text()
+    target.write_text(text.replace("\nrequire_engine()\n", f"\n{prefix}\n{call}\n", 1))
+    result = _run_source_sweeps(tmp_path)
+    combined = result.stdout + result.stderr
+    assert result.returncode == (0 if accepted else 1), combined
+    assert ("2 passed" if accepted else "require_engine-guarded set drifted") in combined
+    if not accepted:
+        assert "engine imports not dominated by an unconditional gate" in combined
+        assert "2 failed" in combined
+
+
+def test_real_repository_sweeps_accept_explicit_pytest_gate_inventory_change(
+    tmp_path: Path,
+) -> None:
+    """Accept a maintained pytest engine gate only with the matching inventory edit.
+
+    Parameters
+    ----------
+    tmp_path
+        Complete copied source inventory retaining every other engine consumer.
+    """
+    _copy_engine_inventory(tmp_path)
+    target = tmp_path / "tests/test_bitstream_averager.py"
+    target.write_text(
+        target.read_text().replace(
+            "\nrequire_engine()\n",
+            '\npytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")\n',
+            1,
+        )
+    )
+    inventory = tmp_path / "tests/test_engine_requirement_gate.py"
+    inventory.write_text(
+        inventory.read_text().replace('    "tests/test_bitstream_averager.py",\n', "", 1)
+    )
+    result = _run_source_sweeps(tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "2 passed" in result.stdout
