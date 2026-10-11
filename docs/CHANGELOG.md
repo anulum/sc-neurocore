@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Report Julia as selected bundled sources requiring JuliaCall, including the
+  adaptive-threshold kernel already shipped in the wheel. Verify installed
+  kernel trajectories and final states against Python while retaining explicit
+  refusal for Julia models whose sources are absent. Go and Mojo still need
+  built shared libraries.
+
 - Describe vectorized SC outputs as channel sums with optional bias. Preserve
   unclipped MAC values above one and signed outputs; they are not firing fractions.
 

@@ -257,10 +257,16 @@ def verify_installed_replays(installed: Path, workspace: Path) -> None:
                 generator(spec, pack["request"]), encoding="utf-8"
             )
     probe = """
-import contextlib, io, json, runpy, sys
+import contextlib, importlib.util, io, json, runpy, site, sys
 from pathlib import Path
+assert sys.flags.isolated and sys.flags.no_site
+# PythonCall initializes builtins.help even when -S suppresses site startup.
+isolated_paths = tuple(sys.path)
+site.sethelper()
+assert tuple(sys.path) == isolated_paths
 installed = Path(sys.argv[1])
 sys.path[:0] = [str(installed), sys.argv[2]]
+packs = json.load(sys.stdin)
 import sc_neurocore
 assert Path(sc_neurocore.__file__).is_relative_to(installed)
 from sc_neurocore.studio.model_catalogue import model_documentation
@@ -295,14 +301,34 @@ from sc_neurocore.runtime_lanes import ACCEL_ROOT, lane_statuses
 assert ACCEL_ROOT.is_relative_to(installed)
 lanes = {status.lane: status for status in lane_statuses()}
 assert lanes["python"].resources_present
-# The wheel ships no Julia model kernels and no built Go or Mojo libraries,
-# even where juliacall itself is importable: its dense IF conversion and
-# event-dataset Julia sources are not model kernels.
-assert not any(lanes[lane].resources_present for lane in ("julia", "go", "mojo")), lanes
+# The wheel ships one Julia model source, but no built Go or Mojo libraries.
+assert (ACCEL_ROOT / "julia/neurons/adaptive_threshold_if.jl").is_file()
+assert not (ACCEL_ROOT / "julia/neurons/alpha.jl").exists()
+assert lanes["julia"].distribution == "bundled-source"
+assert lanes["julia"].resources_present == (importlib.util.find_spec("juliacall") is not None)
+assert not any(lanes[lane].resources_present for lane in ("go", "mojo")), lanes
 # Each lane the installation offers runs; a lane it lacks is refused, never
 # silently replaced by Python.
 import numpy as np
+from sc_neurocore.accel.adaptive_threshold_if import simulate_adaptive_threshold_if
 from sc_neurocore.accel.alpha import simulate_alpha
+adaptive_drive = [0.0] * 40 + [80.0] * 40
+adaptive_reference = simulate_adaptive_threshold_if(current=adaptive_drive, backend="python")
+assert adaptive_reference["spike_count"] > 0
+if lanes["julia"].resources_present:
+    adaptive_native = simulate_adaptive_threshold_if(current=adaptive_drive, backend="julia")
+    assert adaptive_native.keys() == adaptive_reference.keys()
+    for key in ("v", "theta", "v_final", "theta_final"):
+        np.testing.assert_allclose(adaptive_native[key], adaptive_reference[key], rtol=0.0, atol=1e-12)
+    np.testing.assert_array_equal(adaptive_native["spikes"], adaptive_reference["spikes"])
+    assert adaptive_native["spike_count"] == adaptive_reference["spike_count"]
+else:
+    try:
+        simulate_adaptive_threshold_if(current=adaptive_drive, backend="julia")
+    except RuntimeError as refusal:
+        assert "unavailable" in str(refusal)
+    else:
+        raise AssertionError("the Julia kernel ran without its runtime")
 drive = [0.3] * 40 + [1.4] * 40
 reference = simulate_alpha(exc_current=drive, backend="python")
 assert int(np.sum(reference["spikes"])) > 0
@@ -310,9 +336,9 @@ if lanes["rust"].resources_present:
     native = simulate_alpha(exc_current=drive, backend="rust")
     np.testing.assert_allclose(native["v"], reference["v"], rtol=0.0, atol=1e-12)
     np.testing.assert_array_equal(native["spikes"], reference["spikes"])
-    refused = ("go", "mojo")
+    refused = ("julia", "go", "mojo")
 else:
-    refused = ("rust", "go", "mojo")
+    refused = ("rust", "julia", "go", "mojo")
 for lane in refused:
     try:
         simulate_alpha(exc_current=drive, backend=lane)
@@ -320,7 +346,6 @@ for lane in refused:
         assert "unavailable" in str(refusal)
     else:
         raise AssertionError(f"the {lane} lane ran without its resources")
-packs = json.load(sys.stdin)
 for index, pack in enumerate(packs):
     name = pack["request"]["name"]
     assert load_descriptor(name) is not None, name

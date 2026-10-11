@@ -37,11 +37,11 @@ def _installed(module: str) -> bool:
 
 
 def test_the_contract_names_every_lane_once_with_its_distribution() -> None:
-    """Python is bundled, Rust is a separate package, the rest need a checkout."""
+    """Julia ships selected sources; Rust needs a package and Go/Mojo need builds."""
     assert [(contract.lane, contract.distribution) for contract in CONTRACT] == [
         ("python", "bundled"),
         ("rust", "optional-package"),
-        ("julia", "source-checkout"),
+        ("julia", "bundled-source"),
         ("go", "source-checkout"),
         ("mojo", "source-checkout"),
     ]
@@ -100,7 +100,7 @@ def test_wheel_conversion_and_dataset_julia_sources_are_not_model_kernels(
     assert julia.resources_present == (model_kernel is not None and _installed("juliacall"))
     if model_kernel is None:
         assert "Julia kernel sources" in julia.detail
-        assert "not the model kernel sources" in julia.detail
+        assert "Conversion and dataset sources alone do not provide a model kernel" in julia.detail
 
 
 def test_this_checkout_reports_the_resources_it_holds() -> None:

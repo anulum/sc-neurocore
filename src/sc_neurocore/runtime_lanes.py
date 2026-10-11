@@ -9,12 +9,12 @@
 """What each execution lane needs, and whether this installation has it.
 
 The published wheel is pure Python. It always carries the Python reference
-implementations; the Rust engine is a separate optional package; the Julia,
-Go and Mojo lanes run only from a source checkout, because the wheel ships
-neither their model kernel sources nor libraries built from them. The wheel
-does carry the dense IF conversion and event-dataset native sources that those
-public APIs load or build on their own; they are not model kernels and do not
-make a lane present. A lane's
+implementations; the Rust engine is a separate optional package. The wheel
+ships the adaptive-threshold Julia model source, which needs JuliaCall, and
+selected Go and Mojo sources, which need built shared libraries. The wider
+native model catalogue needs a source checkout. Dense IF conversion and
+event-dataset sources serve their own public APIs and do not by themselves
+make a model lane present. A lane's
 availability is therefore read from the installation itself -- the importable
 packages and the files beside this module -- never inferred from a checkout
 the code happens to sit next to. A lane whose resources are present can still
@@ -30,7 +30,7 @@ import sys
 from typing import Literal
 
 Lane = Literal["python", "rust", "julia", "go", "mojo"]
-Distribution = Literal["bundled", "optional-package", "source-checkout"]
+Distribution = Literal["bundled", "bundled-source", "optional-package", "source-checkout"]
 
 ACCEL_ROOT = Path(__file__).resolve().parent / "accel"
 """The installed ``sc_neurocore.accel`` directory, read as files: importing the
@@ -50,8 +50,10 @@ class LaneContract:
     lane:
         The lane's name, as the kernels' ``backend`` arguments use it.
     distribution:
-        ``bundled`` ships in every distribution, ``optional-package`` needs a
-        separately installed package, ``source-checkout`` needs a checkout.
+        ``bundled`` ships ready to use, ``bundled-source`` ships selected kernel
+        sources needing an optional runtime, ``optional-package`` needs a
+        separately installed package, and ``source-checkout`` needs built
+        artefacts from a checkout.
     requirement:
         What an installation needs for the lane, in words a user can act on.
     """
@@ -97,22 +99,24 @@ CONTRACT: tuple[LaneContract, ...] = (
     ),
     LaneContract(
         "julia",
-        "source-checkout",
-        "Run from a source checkout with juliacall installed (the `julia` extra): "
-        "the wheel ships only the dense IF conversion and event-dataset Julia sources, "
-        "not the model kernel sources.",
+        "bundled-source",
+        "Install juliacall (the `julia` extra) for the wheel's adaptive-threshold "
+        "Julia model source. The rest of the model catalogue needs a source checkout; "
+        "each model checks its own source. Conversion and dataset sources alone "
+        "do not provide a model kernel.",
     ),
     LaneContract(
         "go",
         "source-checkout",
         "Build the Go shared libraries in a source checkout; the wheel ships no built "
-        "libraries and only the dense IF conversion Go sources.",
+        "libraries, but includes adaptive-threshold and dense IF conversion Go sources.",
     ),
     LaneContract(
         "mojo",
         "source-checkout",
         "Build the Mojo shared libraries with the Mojo toolchain in a source checkout; "
-        "the wheel ships no built libraries and only the dense IF conversion Mojo sources.",
+        "the wheel ships no built libraries, but includes adaptive-threshold and "
+        "dense IF conversion Mojo sources.",
     ),
 )
 
@@ -131,8 +135,7 @@ def _has_files(directory: Path, pattern: str) -> bool:
 
 
 def _has_model_kernels(julia_root: Path) -> bool:
-    # Only the wheel's own conversion/dataset subsets may be present in an
-    # installation; any other Julia source means the checkout's model kernels.
+    # Conversion and dataset sources serve other APIs, not neuron-model kernels.
     return julia_root.is_dir() and any(
         path.is_file() and path.relative_to(julia_root).parts[0] not in WHEEL_JULIA_SUBSETS
         for path in julia_root.rglob("*.jl")

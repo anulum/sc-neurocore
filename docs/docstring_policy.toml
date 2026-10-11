@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 870
+expected_file_count = 871
+
+[[file]]
+path = "tests/test_runtime_lanes.py"
+rationale = "Installed resource reporting distinguishes packaged Julia model sources, optional runtimes, source-checkout builds and per-model availability."
 
 [[file]]
 path = "tests/test_public_api_packaged_resources.py"

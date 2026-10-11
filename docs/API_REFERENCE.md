@@ -35420,8 +35420,10 @@ Parameters
 lane:
     The lane's name, as the kernels' ``backend`` arguments use it.
 distribution:
-    ``bundled`` ships in every distribution, ``optional-package`` needs a
-    separately installed package, ``source-checkout`` needs a checkout.
+    ``bundled`` ships ready to use, ``bundled-source`` ships selected kernel
+    sources needing an optional runtime, ``optional-package`` needs a
+    separately installed package, and ``source-checkout`` needs built
+    artefacts from a checkout.
 requirement:
     What an installation needs for the lane, in words a user can act on.
 

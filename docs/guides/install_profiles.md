@@ -128,21 +128,25 @@ The published wheel is pure Python. What each execution lane needs:
 | --- | --- | --- |
 | Python | every distribution | nothing further |
 | Rust | the separate `sc_neurocore_engine` package | installing that package |
-| Julia | a source checkout | the Julia model kernel sources, which the wheel does not ship, and JuliaCall (the `julia` extra) |
+| Julia | selected sources in every distribution | JuliaCall (the `julia` extra) for the packaged adaptive-threshold model; a source checkout for the wider model catalogue |
 | Go | a source checkout | shared libraries built from the Go sources |
 | Mojo | a source checkout | shared libraries built with the Mojo toolchain |
 
 The wheel does carry the dense IF conversion sources for Rust, Go, Mojo and
 Julia and the event-dataset Julia sources, which those public APIs load or
 build on their own (see [ANN-to-SNN conversion](../api/conversion.md)). They
-are not model kernels, so they do not make the Julia, Go or Mojo lane present.
+are not model kernels, so they do not by themselves make a model lane present.
+Adaptive-threshold model sources are also packaged for Julia, Go and Mojo.
+Go and Mojo still require built shared libraries; the wheel contains none.
 
-Installing the `julia` extra into a wheel installation adds JuliaCall only;
-the Julia model-kernel lane still needs a source checkout. `sc-neurocore info` reports, for
+Installing the `julia` extra enables the wheel's adaptive-threshold Julia model.
+It does not supply the remaining catalogue sources: explicitly requesting a
+missing model kernel, such as Alpha, is refused. `sc-neurocore info` reports, for
 each lane, whether this installation holds its resources and, when it does
 not, what is missing. The report reads the installed files; it does not start
 Julia or load a native library, and an individual kernel still checks its own
-artefact before use.
+artefact before use. A present Julia lane therefore means some model resources
+are available, not that every model can run there.
 
 ## Rust engine
 
