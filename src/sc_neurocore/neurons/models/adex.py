@@ -4,7 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Adaptive Exponential Integrate-and-Fire. Brette &
+# SC-NeuroCore — Adaptive exponential integrate-and-fire neuron
+
+"""Adaptive exponential neuron dynamics and checked simulation backend dispatch."""
 
 from __future__ import annotations
 
@@ -170,8 +172,8 @@ class AdExNeuron:
       AdEx ODEs
 
     ``simulate`` exposes the baseline-Euler Python, Rust, Julia, Go and Mojo
-    paths. ``auto`` follows the committed measured order Rust, Julia, Go,
-    Mojo, then Python.
+    paths. ``auto`` checks availability in the fixed order Rust, Julia, Go,
+    Mojo, then Python, independently of individual benchmark timing rankings.
     """
 
     v: float = -65.0
@@ -190,6 +192,14 @@ class AdExNeuron:
     integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler"
 
     def __post_init__(self) -> None:
+        """Validate the initial state, model parameters and integrator selection.
+
+        Raises
+        ------
+        ValueError
+            If the integrator is unsupported, a state or parameter is non-finite,
+            or a slope, time constant, capacitance or timestep is non-positive.
+        """
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for AdExNeuron: {self.integrator}")
         for field in ("v", "w", "v_rest", "v_reset", "v_threshold", "v_rh", "a", "b"):
@@ -215,6 +225,23 @@ class AdExNeuron:
         ``Vr=EL``.  This implementation stores ``tau=C/gL``.  ``dt`` and the
         integrator are explicit numerical choices because the paper defines a
         continuous-time model, not a discrete timestep.
+
+        Parameters
+        ----------
+        dt
+            Finite positive integration timestep in milliseconds.
+        integrator
+            Numerical integration method: baseline Euler, RK4 or Rosenbrock.
+
+        Returns
+        -------
+        AdExNeuron
+            Neuron initialised at the published resting voltage with zero adaptation.
+
+        Raises
+        ------
+        ValueError
+            If the timestep is non-finite or non-positive, or the integrator is unsupported.
         """
         capacitance = 281.0
         leak_conductance = 30.0
@@ -237,6 +264,29 @@ class AdExNeuron:
         )
 
     def step(self, current: float) -> int:
+        """Advance one configured integration step and commit its event/reset state.
+
+        Parameters
+        ----------
+        current
+            Finite injected current in the configured model's current units.
+
+        Returns
+        -------
+        int
+            One when the candidate voltage reaches the event threshold, otherwise zero.
+
+        Raises
+        ------
+        ValueError
+            If the current, runtime state, integration candidate or event adaptation
+            update is non-finite. These checks precede state assignment.
+
+        Notes
+        -----
+        An event sets voltage to ``v_reset`` and adds ``b`` to the candidate
+        adaptation. A non-event commits both integrator candidates directly.
+        """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
@@ -365,6 +415,31 @@ class AdExNeuron:
         has succeeded and its packet has passed shape, finiteness, event-domain,
         and final-state validation.  A rejected later step therefore cannot
         leave a partially advanced neuron.
+
+        Parameters
+        ----------
+        n_steps
+            Non-negative number of integrator updates; zero returns empty traces.
+        current
+            Finite constant injected current in the configured model's current units.
+        backend
+            Python, Rust, Julia, Go, Mojo or the fixed availability-based ``auto`` policy.
+            The compiled model-specific backends require baseline Euler.
+
+        Returns
+        -------
+        tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.uint8]]
+            Voltage, adaptation and binary event vectors, each of length ``n_steps``.
+            Successful nonempty batches also advance the receiving neuron to the final state.
+
+        Raises
+        ------
+        ValueError
+            If the step count, current, backend name or validated runtime state is invalid.
+        RuntimeError
+            If a requested backend is unavailable or incompatible with the integrator.
+        FloatingPointError
+            If a native batch rejects the contract or returns an invalid packet.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
@@ -620,5 +695,12 @@ class AdExNeuron:
         )
 
     def reset(self) -> None:
+        """Restore resting voltage and zero adaptation without changing parameters.
+
+        Notes
+        -----
+        Assigns ``v = v_rest`` and ``w = 0.0`` in place. The timestep,
+        integrator and configured model parameters remain unchanged.
+        """
         self.v = self.v_rest
         self.w = 0.0

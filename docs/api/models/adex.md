@@ -109,8 +109,9 @@ Compiled model-specific lanes reject RK4 or Rosenbrock rather than silently
 changing the configured integrator. Those integrators remain available in the
 Python model and in the separate generic polyglot RK4 dispatcher.
 
-For baseline Euler, `backend="auto"` follows the measured order recorded by the
-committed benchmark: Rust, Julia, Go, Mojo, then Python. Alternative
+For baseline Euler, `backend="auto"` checks availability in the fixed order
+Rust, Julia, Go, Mojo, then Python. This dispatcher preference is independent
+of individual benchmark timing rankings. Alternative
 integrators use Python. Explicit backend requests fail closed when their runtime
 or shared library is unavailable.
 
@@ -153,16 +154,18 @@ feature receipt remains supplementary evidence rather than the primary oracle.
 governor, host load, exact event-vector parity, final states, complete packet
 digests, and both voltage/adaptation trace errors.
 
-The committed single-logical-CPU run uses 100,000 steps, seven repeats, and
-`I=500`. Its median call times are:
+The [report committed on 31 August 2026](https://github.com/anulum/sc-neurocore/blob/b574fef5e5fdebf305babb1772aef05f84904af3/benchmarks/results/bench_adex.json)
+uses 100,000 steps, seven repeats, and `I=500`, pinned to one logical CPU.
+The table quotes that historical report with its recorded source hashes;
+later source revisions require their own measurement. Its median call times are:
 
 | Backend | Median call time | Speed-up vs Python | Events |
 |---|---:|---:|---:|
-| Rust | `3.065 ms` | `253.45x` | `1065` |
-| Julia | `3.454 ms` | `224.88x` | `1065` |
-| Go | `5.700 ms` | `136.28x` | `1065` |
-| Mojo | `7.120 ms` | `109.10x` | `1065` |
-| Python | `776.794 ms` | `1.00x` | `1065` |
+| Rust | `3.853 ms` | `351.61x` | `1065` |
+| Julia | `4.636 ms` | `292.23x` | `1065` |
+| Mojo | `8.350 ms` | `162.24x` | `1065` |
+| Go | `8.863 ms` | `152.85x` | `1065` |
+| Python | `1354.682 ms` | `1.00x` | `1065` |
 
 The run used a powersave governor on a non-isolated, loaded workstation. These
 numbers are local source-regression evidence for this workload, not a hardware

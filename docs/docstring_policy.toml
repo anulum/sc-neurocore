@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 867
+expected_file_count = 868
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/adex.py"
+rationale = "AdEx initialisation, published fit, step and reset mutation contracts, complete backend batches and availability preference independent of historical benchmark timing rankings."
 
 [[file]]
 path = "tests/test_engine_gate_provenance.py"
