@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Update the Mojo environment's locked OpenSSL dependency from 3.6.2 to 3.6.5,
+  retaining the Mojo compiler and every other locked package.
+
 - Report Julia as selected bundled sources requiring JuliaCall, including the
   adaptive-threshold kernel already shipped in the wheel. Verify installed
   kernel trajectories and final states against Python while retaining explicit
