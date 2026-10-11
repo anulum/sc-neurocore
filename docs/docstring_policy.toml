@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 864
+expected_file_count = 865
+
+[[file]]
+path = "tests/test_tools/test_python_dependency_profiles.py"
+rationale = "Complete hashlock inventory and real hosted consumer matrix marker compatibility with Python runtime, build backend and fixture dependencies."
 
 [[file]]
 path = "tests/test_bitstream_batch_encode.py"

@@ -11,10 +11,21 @@
 from __future__ import annotations
 
 import hashlib
+import shlex
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
+import yaml
+from packaging.markers import Marker, default_environment
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 from tools.security_scan.python_dependency_profiles import (
     CPU_INDEX,
@@ -25,6 +36,80 @@ from tools.security_scan.python_dependency_profiles import (
 )
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+def _wheel_consumer_matrix() -> list[tuple[str, str]]:
+    """Read the actual hosted consumer matrix and its excluded combinations."""
+    workflow = yaml.safe_load((REPO / ".github/workflows/v3-wheels.yml").read_text())
+    matrix = workflow["jobs"]["test-wheels"]["strategy"]["matrix"]
+    return [
+        (os_name, version)
+        for os_name in matrix["os"]
+        for version in matrix["python-version"]
+        if {"os": os_name, "python-version": version} not in matrix.get("exclude", [])
+    ]
+
+
+@pytest.mark.parametrize("os_name,python_version", _wheel_consumer_matrix())
+def test_hosted_wheel_profile_supplies_compatible_runtime_and_build_dependencies(
+    os_name: str, python_version: str
+) -> None:
+    """Resolve real hosted lock markers against package and build requirements.
+
+    Reject conflicting active pins before installation on every supported
+    consumer platform/interpreter. All branches remain hashlocked and audited.
+    """
+    workflow = yaml.safe_load((REPO / ".github/workflows/v3-wheels.yml").read_text())
+    commands = [
+        line
+        for step in workflow["jobs"]["test-wheels"]["steps"]
+        for line in step.get("run", "").replace("\\\n", " ").splitlines()
+        if "pip install" in line and "requirements/" in line
+    ]
+    assert commands, "Wheel consumer must install a maintained hashlocked profile"
+    profiles: list[str] = []
+    for command in commands:
+        arguments = shlex.split(command)
+        assert "--require-hashes" in arguments
+        profiles.extend(
+            arguments[index + 1]
+            for index, argument in enumerate(arguments[:-1])
+            if argument == "-r"
+        )
+    assert profiles
+    environment = {key: str(value) for key, value in default_environment().items()}
+    platform = {
+        "ubuntu-latest": ("Linux", "linux", "posix"),
+        "windows-latest": ("Windows", "win32", "nt"),
+        "macos-latest": ("Darwin", "darwin", "posix"),
+    }[os_name]
+    environment.update(
+        python_version=python_version,
+        python_full_version=f"{python_version}.0",
+        platform_system=platform[0],
+        sys_platform=platform[1],
+        os_name=platform[2],
+    )
+    selected: dict[str, set[str]] = {}
+    for profile in profiles:
+        for dependency in read_dependency_profile(REPO, profile).dependencies:
+            if dependency.marker is None or Marker(dependency.marker).evaluate(environment):
+                selected.setdefault(dependency.name, set()).add(dependency.version)
+    assert all(len(versions) == 1 for versions in selected.values()), selected
+    metadata = tomllib.loads((REPO / "pyproject.toml").read_text())
+    requirements = metadata["project"]["dependencies"] + metadata["build-system"]["requires"]
+    requirements.extend(
+        line
+        for line in (REPO / "requirements/wheels-test.in").read_text().splitlines()
+        if line.strip() and not line.startswith(("#", "-r"))
+    )
+    for text in requirements:
+        requirement = Requirement(text)
+        if requirement.marker is not None and not requirement.marker.evaluate(environment):
+            continue
+        name = canonicalize_name(requirement.name)
+        assert name in selected, (os_name, python_version, text)
+        assert next(iter(selected[name])) in requirement.specifier, (name, selected[name], text)
 
 
 def test_all_real_maintained_locks_and_additional_profiles_are_inventoried() -> None:
