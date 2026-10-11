@@ -95,6 +95,8 @@ module tb_sc_lif_neuron;
         // Hold reset for 2 cycles
         @(posedge clk);
         @(posedge clk);
+        // Avoid consuming the first stimulus on the reset-release rising edge.
+        @(negedge clk);
         rst_n = 1;
 
         // Process each stimulus line

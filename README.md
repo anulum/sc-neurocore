@@ -146,7 +146,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 208 |
 | Optional extras | 31 |
-| Python test files | 5308 |
+| Python test files | 5309 |
 | Public documentation pages | 642 |
 | GitHub Actions workflows | 22 |
 
@@ -553,6 +553,14 @@ stimulus. The Studio co-simulation panel compares a different boundary, the
 generated RTL against the generated bit-true C kernel (see
 [model readiness](docs/studio/model-readiness.md)). Neither is a statement about
 a model's scientific fidelity.
+
+The checker requires exactly one result row per requested step, with a binary
+spike and a signed decimal membrane potential. Missing, empty, truncated, extra
+or malformed rows fail with a nonzero exit status. `--steps` must be positive;
+use the same step count and seed for generation and checking, and set the
+testbench's `NUM_STEPS` to match when changing the default 1000 steps.
+The testbench releases reset on a falling edge, applies each input once and
+samples the result after the following rising edge.
 
 ```bash
 # 1. Generate stimuli + expected results (Python golden model)

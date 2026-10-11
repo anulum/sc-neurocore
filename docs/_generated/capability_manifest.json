@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5308
+    "test_files": 5309
   },
   "documentation": {
     "public_pages": [
@@ -4663,6 +4663,7 @@
       "tests/test_cosim_fitzhugh_nagumo_catalogue.py",
       "tests/test_cosim_fitzhugh_rinzel_q1616_precision.py",
       "tests/test_cosim_fitzhugh_rinzel_tier_b_model_cosim.py",
+      "tests/test_cosim_gen_and_check.py",
       "tests/test_cosim_glif_q1616_precision.py",
       "tests/test_cosim_glif_q3232.py",
       "tests/test_cosim_glif_tier_b_model_cosim.py",

@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 875
+expected_file_count = 877
+
+[[file]]
+path = "scripts/cosim_gen_and_check.py"
+rationale = "Public fixed-point LIF CLI requires complete ASCII decimal RTL traces and refuses malformed, missing or mismatched observations."
+
+[[file]]
+path = "tests/test_cosim_gen_and_check.py"
+rationale = "Actual handwritten LIF RTL simulation exercises the advertised CLI and refusal of corrupted, incomplete or unreadable result files."
 
 [[file]]
 path = "tools/install_profile_audit.py"

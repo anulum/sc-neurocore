@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refuse incomplete or malformed fixed-point LIF co-simulation traces instead
+  of reporting a false bit-exact match. Require a nonempty reference, exactly
+  one two-field decimal RTL row per step, positive step counts and nonnegative
+  seeds; report unreadable traces without a traceback. Release testbench reset
+  on a falling edge so the first stimulus is consumed exactly once.
+
 - Update the Mojo environment's locked Expat to 2.8.5, SQLite to 3.54.0,
   libuuid to 2.42.4 and Tornado to 6.5.10. Retain SQLite's ICU support,
   Python 3.14.4 and Mojo 1.0.0.
