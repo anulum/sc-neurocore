@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 865
+expected_file_count = 867
+
+[[file]]
+path = "tests/test_engine_gate_provenance.py"
+rationale = "Real copied repository sweeps reject replaced, shadowed and wrong-target gates while accepting maintained import aliases and reviewed installed consumer paths."
+
+[[file]]
+path = "tests/engine_gate_provenance.py"
+rationale = "Actual repository engine-gate binding provenance and reviewed standalone consumer prefixes, including replacement and shadowing refusal."
 
 [[file]]
 path = "tests/test_tools/test_python_dependency_profiles.py"

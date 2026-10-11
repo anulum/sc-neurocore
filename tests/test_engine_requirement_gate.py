@@ -30,6 +30,7 @@ import pytest
 import yaml
 
 from tests.engine_requirement import ENGINE_EXTENSION_MODULE, require_engine
+from tests.engine_gate_provenance import gate_has_trusted_binding
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -348,7 +349,7 @@ def _statement_unconditional_gate(statement: ast.stmt) -> tuple[bool, bool]:
 class _DominanceAnalysis:
     """Dominance-ordered module analysis of gates and engine imports."""
 
-    def __init__(self, tree: ast.Module) -> None:
+    def __init__(self, tree: ast.Module, source_path: Path | None = None) -> None:
         self.gate_index: int | None = None
         self.gate_line: int | None = None
         self.require_engine_gate_line: int | None = None
@@ -356,6 +357,9 @@ class _DominanceAnalysis:
         self.unguarded: list[tuple[int, int]] = []
         for index, statement in enumerate(tree.body):
             is_gate, is_require = _statement_unconditional_gate(statement)
+            if is_gate and source_path is not None:
+                is_gate = gate_has_trusted_binding(tree, index, source_path)
+                is_require = is_require and is_gate
             if is_gate and self.gate_index is None:
                 self.gate_index = index
                 self.gate_line = statement.lineno
@@ -383,7 +387,7 @@ class _DominanceAnalysis:
 
 def _analyse(path: Path) -> _DominanceAnalysis:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    return _DominanceAnalysis(tree)
+    return _DominanceAnalysis(tree, source_path=path)
 
 
 def _module_level_engine_analysis(path: Path) -> tuple[int | None, int | None]:
