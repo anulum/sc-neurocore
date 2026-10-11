@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Update the Mojo environment's locked Expat to 2.8.5, SQLite to 3.54.0,
+  libuuid to 2.42.4 and Tornado to 6.5.10. Retain SQLite's ICU support,
+  Python 3.14.4 and Mojo 1.0.0.
+
 - Update the Mojo environment's locked OpenSSL dependency from 3.6.2 to 3.6.5,
   retaining the Mojo compiler and every other locked package.
 
