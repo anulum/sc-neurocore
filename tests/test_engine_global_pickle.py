@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+from collections.abc import Callable
 from pathlib import Path
 import pickle
 import sys
@@ -19,14 +20,39 @@ from types import ModuleType
 from typing import cast
 import unittest
 
+_CHECKOUT_GATE: Callable[[], ModuleType] | None
 try:
-    from tests.engine_requirement import require_engine
+    from tests.engine_requirement import require_engine as _checkout_require_engine
 except ModuleNotFoundError as _outside_checkout:
     if _outside_checkout.name != "tests":
         raise
-    _NATIVE = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+    _CHECKOUT_GATE = None
 else:
-    _NATIVE = require_engine()
+    _CHECKOUT_GATE = _checkout_require_engine
+
+
+def require_engine() -> ModuleType:
+    """Require the real extension through the checkout or installed consumer gate.
+
+    Returns
+    -------
+    ModuleType
+        The loaded compiled engine used by the serialization contracts.
+
+    Raises
+    ------
+    ImportError
+        An installed extension or dependency fails to load. Outside the
+        checkout, genuine absence is also a hard failure. Inside the checkout,
+        the maintained gate preserves the optional-profile collection policy
+        and the hosted-CI requirement. No engine errors are caught here.
+    """
+    if _CHECKOUT_GATE is None:
+        return importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+    return _CHECKOUT_GATE()
+
+
+_NATIVE = require_engine()
 
 _FACADE = importlib.import_module("sc_neurocore_engine")
 
