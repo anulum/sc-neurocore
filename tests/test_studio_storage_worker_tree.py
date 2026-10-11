@@ -62,14 +62,15 @@ def test_setsid_double_fork_escape_stays_under_subreaper_leader() -> None:
     child = leader(
         "become_child_subreaper()\n"
         "read, write = os.pipe()\n"
-        "if os.fork() == 0:\n"
+        "helper = os.fork()\n"
+        "if helper == 0:\n"
         "    os.setsid()\n"
         "    grand = os.fork()\n"
         "    if grand == 0:\n"
         "        time.sleep(60); os._exit(0)\n"
         "    os.write(write, str(grand).encode()); os._exit(0)\n"
         "grand = int(os.read(read, 32))\n"
-        "time.sleep(0.2)\n"
+        "assert os.waitpid(helper, 0) == (helper, 0)\n"
         "print(json.dumps([grand]), flush=True)\n"
         "time.sleep(60)\n"
     )

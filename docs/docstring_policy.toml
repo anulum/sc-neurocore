@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 871
+expected_file_count = 873
+
+[[file]]
+path = "tests/test_studio_model_scan_budget.py"
+rationale = "Real model-scan HTTP jobs retain the complete default catalogue, production execution limit and explicit cancellation and timeout checks."
+
+[[file]]
+path = "tests/test_studio_storage_worker_tree.py"
+rationale = "Real forked worker trees retain session escape, subreaper adoption, descendant custody and bounded stop assertions."
 
 [[file]]
 path = "tests/test_runtime_lanes.py"

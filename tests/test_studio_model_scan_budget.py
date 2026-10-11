@@ -27,11 +27,13 @@ from sc_neurocore.studio.platform.jobs_manager import StudioJobManager
 
 @pytest.fixture
 def model_scan_client(tmp_path: Path, request: pytest.FixtureRequest) -> Iterator[TestClient]:
-    """Own the real scan runtime through completion or failed-test cleanup."""
+    """Own real scans with production limits and explicit stop-case overrides."""
     app = create_app(
         StudioRuntimeSettings(
             max_sync_analysis_simulations=2,
-            job_default_timeout_seconds=float(getattr(request, "param", 30.0)),
+            job_default_timeout_seconds=float(
+                getattr(request, "param", StudioRuntimeSettings().job_default_timeout_seconds)
+            ),
             job_root_path=str(tmp_path),
         )
     )
@@ -113,7 +115,6 @@ def test_model_scan_rejected_over_catalogue_budget_before_scan_runs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Oversized model catalogues fail at the route guard with path-free detail."""
-
     monkeypatch.setattr(
         catalogue_routes,
         "list_models",
@@ -162,7 +163,6 @@ def test_model_scan_within_catalogue_budget_runs_scan(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A bounded model catalogue still uses the production scan route."""
-
     monkeypatch.setattr(
         catalogue_routes,
         "list_models",
@@ -208,8 +208,7 @@ def test_model_scan_within_catalogue_budget_runs_scan(
 def test_model_scan_job_route_polls_to_completed_with_model_scan_schema(
     model_scan_client: TestClient,
 ) -> None:
-    """model_scan jobs must complete with studio.model-scan.v1 evidence class."""
-
+    """Complete the default catalogue scan within its reported production limit."""
     import time
 
     client = model_scan_client
@@ -225,8 +224,17 @@ def test_model_scan_job_route_polls_to_completed_with_model_scan_schema(
     status_route = payload["status_route"]
     assert status_route == f"/api/studio/jobs/{payload['job_id']}"
 
-    # Observe the configured execution deadline, not the former mock's latency.
-    deadline = time.monotonic() + 31.0
+    health = client.get("/api/studio/jobs/status")
+    assert health.status_code == 200
+    scan_profile = next(
+        profile for profile in health.json()["resource_profiles"] if profile["kind"] == "model_scan"
+    )
+    assert (
+        scan_profile["default_timeout_seconds"]
+        == StudioRuntimeSettings().job_default_timeout_seconds
+    )
+    # Observe the reported production deadline; the full default scan is retained.
+    deadline = time.monotonic() + float(scan_profile["default_timeout_seconds"]) + 1.0
     last: dict[str, Any] = {}
     while time.monotonic() < deadline:
         job_response = client.get(status_route)
