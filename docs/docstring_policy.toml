@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 873
+expected_file_count = 875
+
+[[file]]
+path = "tools/install_profile_audit.py"
+rationale = "Public install-profile audit CLI derives dependency and bounded installed adapter resources, rejects broad research patterns and reports missing runtime inputs."
+
+[[file]]
+path = "tests/test_tools/test_install_profile_audit.py"
+rationale = "Real install-profile CLI reports bind committed metadata and reject broadened resources, missing adapter patterns and absent runtime files."
 
 [[file]]
 path = "tests/test_studio_model_scan_budget.py"

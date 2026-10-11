@@ -42,11 +42,12 @@ The base path is enough for:
 
 ### Base install evidence
 
-The metadata audit separates packaged event-dataset and ANN/QCFS conversion
-runtime sources from source-only neuron research kernels. Its nine exact
-Julia, Go and Mojo runtime patterns follow the installed wheel contract;
-broader patterns, undeclared runtime patterns and missing matching files fail
-the audit. The report lists both the allowed patterns and their actual files.
+The metadata audit identifies packaged event-dataset, ANN/QCFS conversion and
+adaptive-threshold neuron adapter resources. Its fourteen bounded Julia, Go
+and Mojo runtime patterns follow the installed wheel contract; other native
+neuron research sources remain outside that boundary. Broader native patterns,
+undeclared runtime patterns and missing matching files fail the audit. The
+report lists both the allowed patterns and their actual files.
 Shipping these sources does not install or qualify their external toolchains.
 
 The install-profile audit in `benchmarks/results/install_profile_audit.json`

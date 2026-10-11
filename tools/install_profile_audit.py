@@ -52,19 +52,24 @@ HEAVY_BASE_DEPENDENCIES = frozenset(
     }
 )
 POLYGLOT_PACKAGE_PREFIXES = ("accel/julia/", "accel/go/", "accel/mojo/")
-# These sources support installed dataset and conversion adapters. Model kernels
-# remain source-only; the real wheel resource test independently guards this set.
+# Installed dataset, conversion and adaptive-threshold adapters require these
+# resources; the real wheel resource test independently guards the boundary.
 POLYGLOT_RUNTIME_PATTERNS = frozenset(
     {
         "accel/julia/datasets/*.jl",
         "accel/julia/conversion/*.jl",
+        "accel/julia/neurons/adaptive_threshold_if.jl",
         "accel/go/go.mod",
+        "accel/go/adaptive_threshold_if/*.go",
+        "accel/go/adaptive_threshold_if/*.h",
         "accel/go/conversion/*.go",
         "accel/go/conversion/cshared/*.go",
         "accel/go/conversion/cshared/*.h",
         "accel/go/conversion/qcfscshared/*.go",
         "accel/mojo/kernels/ann_to_snn*.mojo",
         "accel/mojo/kernels/qcfs.mojo",
+        "accel/mojo/kernels/adaptive_threshold_if.mojo",
+        "accel/mojo/adaptive_threshold_if/*.mojo",
     }
 )
 STATIC_PRIMITIVE_PATTERN = "hdl/primitives/*.v"
@@ -155,6 +160,13 @@ EXPECTED_HUB_DEPENDENCY_MIRRORS = (
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Create the install-profile audit command parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Repository, JSON output and optional installation measurement arguments.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--output", type=Path)
@@ -508,6 +520,18 @@ def _parse_pip_list(payload: str) -> list[tuple[str, str]]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Write the derived install-profile report and return its gate outcome.
+
+    Parameters
+    ----------
+    argv : list of str or None
+        Audit arguments, or the process arguments when omitted.
+
+    Returns
+    -------
+    int
+        Zero for a passing dependency and resource boundary, otherwise one.
+    """
     args = build_parser().parse_args(argv)
     report = build_install_profile_audit(args.repo, measure_install=args.measure_install)
     payload = json.dumps(report, indent=2, sort_keys=True) + "\n"

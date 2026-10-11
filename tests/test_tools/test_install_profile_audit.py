@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Installed resource and dependency boundary tests
+
+"""Exercise install-profile audit reports and CLI admission boundaries."""
 
 from __future__ import annotations
 
@@ -42,6 +45,7 @@ def _project_version(tool: Any) -> str:
 
 
 def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
+    """Base dependencies and declared installed adapters pass the public audit."""
     tool = _load_tool()
 
     report = tool.build_install_profile_audit(_repo_root())
@@ -65,6 +69,13 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
     assert "accel/julia/datasets/shd_cli.jl" in report["polyglot_runtime_files"]
     assert "accel/go/conversion/cshared/main.go" in report["polyglot_runtime_files"]
     assert "accel/mojo/kernels/qcfs.mojo" in report["polyglot_runtime_files"]
+    assert {
+        "accel/julia/neurons/adaptive_threshold_if.jl",
+        "accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
+        "accel/go/adaptive_threshold_if/libadaptive_threshold_if.h",
+        "accel/mojo/kernels/adaptive_threshold_if.mojo",
+        "accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
+    } <= set(report["polyglot_runtime_files"])
     assert "full" in report["optional_extras"]
     assert "license" in report["optional_extras"]
     assert report["offline_hardware_profile"] == {
@@ -113,6 +124,7 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
 
 
 def test_conda_recipe_tracks_base_install_contract() -> None:
+    """The offline recipe preserves base dependencies and HDL resource checks."""
     tool = _load_tool()
 
     recipe = tool._read_conda_recipe(_repo_root())
@@ -131,6 +143,7 @@ def test_conda_recipe_tracks_base_install_contract() -> None:
 
 
 def test_install_profile_audit_cli_writes_json(tmp_path: Path) -> None:
+    """The real audit CLI writes JSON without claiming a measured installation."""
     output = tmp_path / "install_profile_audit.json"
     result = subprocess.run(
         [
@@ -157,6 +170,7 @@ def test_install_measurement_uses_base_install_and_records_diagnostics(
     monkeypatch: Any,
     tmp_path: Path,
 ) -> None:
+    """Installer diagnostics retain command output and a failed import outcome."""
     tool = _load_tool()
     commands: list[list[str]] = []
 
@@ -354,13 +368,24 @@ def test_audit_cli_refuses_research_and_broadened_runtime_patterns(
     assert report["missing_polyglot_runtime_patterns"] == []
 
 
-def test_audit_cli_refuses_a_removed_runtime_pattern(tmp_path: Path) -> None:
-    """Removing an installed dataset dependency cannot produce a passing report."""
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "accel/julia/datasets/*.jl",
+        "accel/julia/neurons/adaptive_threshold_if.jl",
+        "accel/go/adaptive_threshold_if/*.go",
+        "accel/go/adaptive_threshold_if/*.h",
+        "accel/mojo/kernels/adaptive_threshold_if.mojo",
+        "accel/mojo/adaptive_threshold_if/*.mojo",
+    ],
+)
+def test_audit_cli_refuses_a_removed_runtime_pattern(tmp_path: Path, pattern: str) -> None:
+    """Removing a required installed adapter pattern makes the real CLI refuse."""
     repo = _repo_overlay(tmp_path / "repo")
     metadata = repo / "pyproject.toml"
     text = metadata.read_text(encoding="utf-8")
     metadata.unlink()
-    metadata.write_text(text.replace('  "accel/julia/datasets/*.jl",\n', ""), encoding="utf-8")
+    metadata.write_text(text.replace(f'  "{pattern}",\n', ""), encoding="utf-8")
     output = tmp_path / "audit.json"
     result = subprocess.run(
         [
@@ -378,7 +403,7 @@ def test_audit_cli_refuses_a_removed_runtime_pattern(tmp_path: Path) -> None:
     )
     assert result.returncode == 1, result.stderr
     report = json.loads(output.read_text(encoding="utf-8"))
-    assert report["missing_polyglot_runtime_patterns"] == ["accel/julia/datasets/*.jl"]
+    assert report["missing_polyglot_runtime_patterns"] == [pattern]
     assert report["passed"] is False
 
 
