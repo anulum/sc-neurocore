@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 878
+expected_file_count = 880
+
+[[file]]
+path = "tools/security_scan/advisory_exceptions.py"
+rationale = "Per-finding advisory exceptions are accepted only while a live channel or package-content check re-establishes their recorded reason."
+
+[[file]]
+path = "tests/test_tools/test_advisory_exceptions.py"
+rationale = "Real containers, index bodies and a real TLS server prove that an advisory exception holds only while its evidence does."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"

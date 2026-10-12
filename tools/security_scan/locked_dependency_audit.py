@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,12 @@ from typing import Any
 
 import yaml
 
+from tools.security_scan.advisory_exceptions import (
+    EXCEPTION_FILE,
+    fetch,
+    load_exceptions,
+    pixi_lock_decision,
+)
 from tools.security_scan.locked_dependency_inventory import (
     cargo_audit_configuration,
     go_queries,
@@ -164,7 +171,24 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
             json.dumps(npm_packages, indent=2) + "\n", encoding="utf-8"
         )
         return npm_report_passed(payload, len(npm_packages)) and rc == 0
-    return pixi_report_passed(payload, pixi_packages) and rc == 0
+    # Validate the complete report first; a clean report needs no exception.
+    pixi_report_passed(payload, pixi_packages)
+    if not isinstance(payload, dict):
+        raise ValueError("Pixi audit report is invalid.")
+    exceptions_raw = (repo_root / EXCEPTION_FILE).read_bytes()
+    decision = pixi_lock_decision(
+        payload,
+        rc,
+        relative,
+        yaml.safe_load(lock.read_bytes())["packages"],
+        load_exceptions(exceptions_raw),
+        fetch,
+    )
+    decision["exception_file_sha256"] = hashlib.sha256(exceptions_raw).hexdigest()
+    (directory / "exceptions.json").write_text(
+        json.dumps(decision, indent=2) + "\n", encoding="utf-8"
+    )
+    return decision["passed"] is True
 
 
 def run_locked_audit(repo_root: Path, output_dir: Path, ecosystem: str) -> dict[str, Any]:

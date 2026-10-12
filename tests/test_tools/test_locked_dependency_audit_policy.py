@@ -115,3 +115,18 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
     report_source = (ROOT / "tools/security_scan/locked_dependency_reports.py").read_text()
     assert 'OSV_ENDPOINT = "https://api.osv.dev/v1/querybatch"' in report_source
     assert '"ignored", "not_audited", "unused_ignores"' in report_source
+    exception_source = (ROOT / "tools/security_scan/advisory_exceptions.py").read_text()
+    assert (
+        'REASONS = ("no_fixed_version_in_channel", "component_not_in_package")' in exception_source
+    )
+    assert '("ignored", "not_audited", "unused_ignores")' in exception_source
+    exception_names = {
+        node.id for node in ast.walk(ast.parse(exception_source)) if isinstance(node, ast.Name)
+    } | {
+        node.value
+        for node in ast.walk(ast.parse(exception_source))
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and " " not in node.value
+    }
+    assert not exception_names.intersection(
+        {"severity", "confidence", "match_confidence", "cvss_base_score", "epss", "expires"}
+    )

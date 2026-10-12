@@ -93,6 +93,28 @@ readable package record list is refused before the scanner starts. No blanket wa
 or automatic `--fix` is applied. Advisory remediation needs reviewed fixed
 versions and ordinary integration validation before changing the lock.
 
+### Advisory exceptions
+
+A Pixi finding can be accepted only through one table of
+`tools/security_scan/advisory_exceptions.toml`, naming the lock, the package
+version and the advisory, with one of two reasons that the audit re-establishes
+on every run:
+
+- `no_fixed_version_in_channel` — the locked version is the newest one the
+  channel publishes for the platform. The check reads the channel index; any
+  newer version fails it, so a published fix turns the audit red by itself.
+- `component_not_in_package` — the advisory concerns a program the locked
+  package does not ship. The check downloads the exact locked artefact,
+  verifies it against the lock digest and requires that none of its declared
+  paths matches the listed patterns.
+
+There is no severity, confidence or reachability filter and no wildcard. A
+finding without a table, a table whose check fails or cannot be completed, and
+a table that matches no finding all fail the audit. Packages the scanner
+cannot audit are never covered by an exception. Each run writes the accepted
+findings with their evidence to `exceptions.json` in the audit packet: an
+accepted finding is a known, recorded limitation, not an absence of findings.
+
 The additional security-packet OSV runner also treats every nonzero scanner
 exit as failure. A partially written report cannot turn a service error green.
 Audit evidence does not itself establish a release, hosted CI success or

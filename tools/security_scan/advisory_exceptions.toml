@@ -1,0 +1,174 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Advisory exceptions re-verified by the lock audit on every run
+
+# One table per advisory and locked package version. The audit accepts a finding
+# only while the machine check of its reason holds (tools/security_scan/
+# advisory_exceptions.py): "no_fixed_version_in_channel" fails when the channel
+# publishes any newer version; "component_not_in_package" fails when the locked
+# artefact ships a file matching one of the declared paths. A table that matches
+# no finding fails the audit, so nothing here outlives its finding.
+
+# MIT Kerberos: the two NegoEx parsing defects are fixed upstream in 1.22.3,
+# which the channel does not publish yet.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "krb5"
+version = "1.22.2"
+advisory = "CVE-2026-40355"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-40355"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "krb5"
+version = "1.22.2"
+advisory = "CVE-2026-40356"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-40356"
+
+# The 2007 records concern programs that this package does not ship: the
+# gssftp ftpd server, and sudo when it is linked with Kerberos.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "krb5"
+version = "1.22.2"
+advisory = "CVE-2007-5894"
+reason = "component_not_in_package"
+component = "gssftp ftpd"
+absent = ["*ftpd*", "*gssftp*"]
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2007-5894"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "krb5"
+version = "1.22.2"
+advisory = "CVE-2007-3149"
+reason = "component_not_in_package"
+component = "sudo"
+absent = ["sudo", "*/sudo", "*/sudoedit"]
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2007-3149"
+
+# zlib: the non-blocking gzwrite overflow affects 1.3.1.2 through 1.3.2; every
+# dependant in the lock requires at least 1.3.2 and no later release exists.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "libzlib"
+version = "1.3.2"
+advisory = "CVE-2026-85091"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-85091"
+
+# util-linux: the record concerns login(1); the package ships the UUID library only.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "libuuid"
+version = "2.42.4"
+advisory = "CVE-2026-3184"
+reason = "component_not_in_package"
+component = "login"
+absent = ["login", "*/login"]
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-3184"
+
+# binutils: the package ships the linker only. Two records concern readelf; the
+# three XCOFF linker records have no fixed version in the advisory data.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "ld_impl_linux-64"
+version = "2.46.1"
+advisory = "CVE-2026-6844"
+reason = "component_not_in_package"
+component = "readelf"
+absent = ["*readelf*"]
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-6844"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "ld_impl_linux-64"
+version = "2.46.1"
+advisory = "CVE-2026-6845"
+reason = "component_not_in_package"
+component = "readelf"
+absent = ["*readelf*"]
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-6845"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "ld_impl_linux-64"
+version = "2.46.1"
+advisory = "CVE-2026-3441"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-3441"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "ld_impl_linux-64"
+version = "2.46.1"
+advisory = "CVE-2026-3442"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-3442"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "ld_impl_linux-64"
+version = "2.46.1"
+advisory = "CVE-2026-4647"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://www.cve.org/CVERecord?id=CVE-2026-4647"
+
+# ICU: an open fuzzing record without a fixed revision.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "icu"
+version = "78.3"
+advisory = "OSV-2023-1328"
+reason = "no_fixed_version_in_channel"
+channel = "conda-forge"
+subdir = "linux-64"
+recorded = "2026-10-12"
+source = "https://osv.dev/vulnerability/OSV-2023-1328"

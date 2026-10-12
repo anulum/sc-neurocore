@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Pixi lock audit accepts a finding only through a recorded exception whose
+  reason it re-verifies on every run: no newer version in the channel, or the
+  affected program absent from the locked artefact. Unrecorded findings, failed
+  checks, stale records and unaudited packages still fail.
+
 - Wheel consumer jobs build the checkout into a wheel and install that file,
   so every `pip install` of the job consumes a hash-locked profile or a local
   artefact.
