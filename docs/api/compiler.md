@@ -315,10 +315,18 @@ from a checked tree to a program (`equation_program.py`), the numpy evaluation
 namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 (`equation_namespace.py`), and the strict pint-backed unit runtime
 (`equation_units_runtime.py`). A program costs more per evaluation than
-interpreter bytecode did; on the development host an expression took between
-0.9 and 2.0 times as long and a whole neuron step between 1 % and 22 % longer,
-the largest figure for a four-stage Runge-Kutta step of a two-variable model.
-The numerical results are identical. Each sibling owns its own test surface;
+interpreter bytecode did. One measurement on a loaded development host, which
+no committed benchmark reproduces yet, gave 0.9 to 2.0 times the time per
+expression and 1 % to 22 % more per neuron step, the largest figure for a
+four-stage Runge-Kutta step of a two-variable model. The numerical results are
+identical.
+
+The grammar bounds the form of an expression, not what its bindings allow. An
+expression can call every bound function with positional arguments and index
+every bound value. Some bound numerical functions take an output array as a
+positional argument, so an expression can overwrite an array a caller binds;
+the callers in this package bind scalars. Sequence repetition and nested
+powers can still request very large values. Each sibling owns its own test surface;
 the combined focused verification gate is:
 
 ```bash

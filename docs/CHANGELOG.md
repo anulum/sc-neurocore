@@ -18,9 +18,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   neuron is built.
 - `evaluate_scalar` and `evaluate_condition` take a program and the bindings;
   the evaluation-globals argument and `EVAL_GLOBALS` are removed.
-- Numerical results are unchanged. A program costs more than bytecode: 0.9 to
-  2.0 times per expression and 1 % to 22 % per neuron step on the development
-  host.
+- Numerical results are unchanged. A program costs more than bytecode. One
+  measurement on a loaded development host, not yet reproduced by a committed
+  benchmark, gave 0.9 to 2.0 times per expression and 1 % to 22 % per neuron
+  step.
 
 - Vendor-record exceptions are bound more tightly after an outside review.
   The vendor identifiers of a channel are a constant of the audit code keyed

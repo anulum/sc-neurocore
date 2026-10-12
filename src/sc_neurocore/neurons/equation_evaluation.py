@@ -21,7 +21,7 @@ code.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import SupportsFloat, SupportsIndex, TypeVar
 
 from sc_neurocore.neurons.equation_program import EquationProgram
@@ -44,7 +44,7 @@ _ScalarInput = str | bytes | bytearray | SupportsFloat | SupportsIndex
 
 def evaluate_scalar(
     program: EquationProgram,
-    environment: Mapping[str, object],
+    environment: dict[str, object],
 ) -> float:
     """Run a checked expression program with its existing float conversion.
 
@@ -75,7 +75,7 @@ def evaluate_scalar(
 
 def evaluate_condition(
     program: EquationProgram,
-    environment: Mapping[str, object],
+    environment: dict[str, object],
 ) -> bool:
     """Run a checked threshold program with its existing bool conversion.
 
@@ -106,7 +106,7 @@ def evaluate_condition(
 
 def _evaluate_value(
     program: EquationProgram,
-    environment: Mapping[str, object],
+    environment: dict[str, object],
     convert: Callable[[_ScalarInput], _Converted],
 ) -> _Converted:
     """Run a checked expression program and mark expected value failures.

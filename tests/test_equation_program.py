@@ -119,6 +119,7 @@ def test_sequences_indexing_and_slices_follow_the_language() -> None:
     [
         "missing",
         "missing + missing",
+        "v + missing",
         "missing + 1",
         "1 + missing",
         "missing + (v + 1)",
@@ -198,6 +199,11 @@ class _WideGate(ExpressionSafetyValidator):
         ("~v", "cannot be evaluated"),
         ("v << 2", "cannot be evaluated"),
         ("v is w", "cannot be evaluated"),
+        ("'{0.__class__}'", "string constant"),
+        ("'a' * 3", "string constant"),
+        ("b'%d' % v", "string constant"),
+        ("v + 'a'", "string constant"),
+        ("(v + 1) + 'a'", "string constant"),
         ("v in w", "cannot be evaluated"),
     ],
 )

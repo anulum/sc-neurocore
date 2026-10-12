@@ -23,8 +23,19 @@ what evaluating the expression returned and raises the same exception
 categories. A name that the bindings do not hold raises :class:`NameError`.
 
 The translators do not rely on the gate alone: a call whose target is not a
-plain name, a keyword argument and an attribute outside the gate's list are
-refused here as well, so a weaker gate cannot widen what a program does.
+plain name, a keyword argument, an attribute outside the gate's list and a
+string or bytes constant are refused here as well, so a weaker gate cannot
+widen what a program does.
+
+What a program can reach is bounded by its bindings, not only by its grammar.
+The author of an expression is untrusted; the code that builds the bindings is
+trusted. An expression can call every function the bindings hold, with
+positional arguments it builds, and can index and read ``real``/``imag`` of
+every bound value. Some bound numerical functions accept an output array as a
+positional argument, so an expression can overwrite an array that the
+bindings hold; the callers in this package bind scalars. Sequence repetition
+and nested powers can still ask for very large values. Bindings are a plain
+``dict``: a mapping that invents missing keys would invent names.
 
 Arithmetic on a plain name or a literal is the bulk of every equation, so the
 binary translator reads such operands in place instead of calling a program
@@ -41,7 +52,7 @@ from typing import Any
 from sc_neurocore.neurons.equation_refusals import EquationRefusal
 from sc_neurocore.neurons.equation_safety import _ALLOWED_ATTRIBUTES, ExpressionSafetyValidator
 
-EquationProgram = Callable[[Mapping[str, object]], Any]
+EquationProgram = Callable[[dict[str, object]], Any]
 """A translated expression: called with the bindings, it returns the value."""
 
 _BINARY: dict[type[ast.operator], Callable[[Any, Any], Any]] = {
@@ -108,7 +119,7 @@ def _operator(table: Mapping[type, Callable[..., Any]], node: ast.AST) -> Callab
 def _translate(node: ast.expr) -> EquationProgram:
     """Translate one checked node; every admitted node type has one branch."""
     if isinstance(node, ast.Constant):
-        return _constant(node.value)
+        return _constant(_literal(node))
     if isinstance(node, ast.Name):
         return _name(node.id)
     if isinstance(node, ast.BinOp):
@@ -149,8 +160,16 @@ def _translate(node: ast.expr) -> EquationProgram:
     raise EquationRefusal(f"Equation construct {type(node).__name__} cannot be evaluated")
 
 
+def _literal(node: ast.expr) -> Any:
+    """Return the value of a constant node, refusing text: equations are numeric."""
+    value = node.value  # type: ignore[attr-defined]
+    if isinstance(value, (str, bytes)):
+        raise EquationRefusal("A string constant is not part of the equation grammar")
+    return value
+
+
 def _constant(value: object) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return value
 
     return run
@@ -162,7 +181,7 @@ def _undefined(name: object) -> NameError:
 
 
 def _name(name: str) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         try:
             return bindings[name]
         except KeyError:
@@ -185,19 +204,23 @@ def _binary(apply: Callable[[Any, Any], Any], left: ast.expr, right: ast.expr) -
 
     if left_name is not None and right_name is not None:
 
-        def run_names(bindings: Mapping[str, object]) -> Any:
+        def run_names(bindings: dict[str, object]) -> Any:
             try:
-                first, second = bindings[left_name], bindings[right_name]
-            except KeyError as missing:
-                raise _undefined(missing.args[0]) from None
+                first = bindings[left_name]
+            except KeyError:
+                raise _undefined(left_name) from None
+            try:
+                second = bindings[right_name]
+            except KeyError:
+                raise _undefined(right_name) from None
             return apply(first, second)
 
         return run_names
 
     if left_name is not None and right_literal:
-        literal = right.value  # type: ignore[attr-defined]
+        literal = _literal(right)
 
-        def run_name_literal(bindings: Mapping[str, object]) -> Any:
+        def run_name_literal(bindings: dict[str, object]) -> Any:
             try:
                 first = bindings[left_name]
             except KeyError:
@@ -207,9 +230,9 @@ def _binary(apply: Callable[[Any, Any], Any], left: ast.expr, right: ast.expr) -
         return run_name_literal
 
     if left_literal and right_name is not None:
-        literal = left.value  # type: ignore[attr-defined]
+        literal = _literal(left)
 
-        def run_literal_name(bindings: Mapping[str, object]) -> Any:
+        def run_literal_name(bindings: dict[str, object]) -> Any:
             try:
                 second = bindings[right_name]
             except KeyError:
@@ -221,7 +244,7 @@ def _binary(apply: Callable[[Any, Any], Any], left: ast.expr, right: ast.expr) -
     if left_name is not None:
         right_program = _translate(right)
 
-        def run_name_program(bindings: Mapping[str, object]) -> Any:
+        def run_name_program(bindings: dict[str, object]) -> Any:
             try:
                 first = bindings[left_name]
             except KeyError:
@@ -233,7 +256,7 @@ def _binary(apply: Callable[[Any, Any], Any], left: ast.expr, right: ast.expr) -
     left_program = _translate(left)
     if right_name is not None:
 
-        def run_program_name(bindings: Mapping[str, object]) -> Any:
+        def run_program_name(bindings: dict[str, object]) -> Any:
             first = left_program(bindings)
             try:
                 second = bindings[right_name]
@@ -244,23 +267,23 @@ def _binary(apply: Callable[[Any, Any], Any], left: ast.expr, right: ast.expr) -
         return run_program_name
 
     if right_literal:
-        literal = right.value  # type: ignore[attr-defined]
+        literal = _literal(right)
 
-        def run_program_literal(bindings: Mapping[str, object]) -> Any:
+        def run_program_literal(bindings: dict[str, object]) -> Any:
             return apply(left_program(bindings), literal)
 
         return run_program_literal
 
     right_program = _translate(right)
 
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return apply(left_program(bindings), right_program(bindings))
 
     return run
 
 
 def _unary(apply: Callable[[Any], Any], operand: EquationProgram) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return apply(operand(bindings))
 
     return run
@@ -274,12 +297,12 @@ def _comparison(
     if len(operators) == 1:
         compare, second = operators[0], others[0]
 
-        def run_one(bindings: Mapping[str, object]) -> Any:
+        def run_one(bindings: dict[str, object]) -> Any:
             return compare(first(bindings), second(bindings))
 
         return run_one
 
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         # A chain compares neighbours left to right, evaluates each operand
         # once and stops at the first comparison that does not hold.
         left = first(bindings)
@@ -296,7 +319,7 @@ def _comparison(
 
 
 def _choice(conjunction: bool, values: tuple[EquationProgram, ...]) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         # ``and`` returns the first operand that is false, ``or`` the first
         # that is true; either returns the last operand otherwise.
         outcome: Any = None
@@ -312,7 +335,7 @@ def _choice(conjunction: bool, values: tuple[EquationProgram, ...]) -> EquationP
 def _conditional(
     test: EquationProgram, chosen: EquationProgram, otherwise: EquationProgram
 ) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return chosen(bindings) if test(bindings) else otherwise(bindings)
 
     return run
@@ -323,7 +346,7 @@ def _call(name: str, arguments: tuple[EquationProgram, ...]) -> EquationProgram:
     if len(arguments) == 1:
         only = arguments[0]
 
-        def run_one(bindings: Mapping[str, object]) -> Any:
+        def run_one(bindings: dict[str, object]) -> Any:
             try:
                 target = bindings[name]
             except KeyError:
@@ -332,7 +355,7 @@ def _call(name: str, arguments: tuple[EquationProgram, ...]) -> EquationProgram:
 
         return run_one
 
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         try:
             target = bindings[name]
         except KeyError:
@@ -345,14 +368,14 @@ def _call(name: str, arguments: tuple[EquationProgram, ...]) -> EquationProgram:
 def _attribute(value: EquationProgram, attribute: str) -> EquationProgram:
     read = operator.attrgetter(attribute)
 
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return read(value(bindings))
 
     return run
 
 
 def _subscript(value: EquationProgram, index: EquationProgram) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return value(bindings)[index(bindings)]
 
     return run
@@ -361,7 +384,7 @@ def _subscript(value: EquationProgram, index: EquationProgram) -> EquationProgra
 def _slice(
     lower: EquationProgram | None, upper: EquationProgram | None, step: EquationProgram | None
 ) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return slice(*(None if part is None else part(bindings) for part in (lower, upper, step)))
 
     return run
@@ -370,7 +393,7 @@ def _slice(
 def _sequence(
     build: Callable[[list[Any]], Any], items: tuple[EquationProgram, ...]
 ) -> EquationProgram:
-    def run(bindings: Mapping[str, object]) -> Any:
+    def run(bindings: dict[str, object]) -> Any:
         return build([item(bindings) for item in items])
 
     return run
