@@ -40,7 +40,8 @@ Two bounds are applied to values, where a rule on the shape of the text can be
 walked around. Wherever an operand of ``*`` or ``+`` could be a tuple or list
 that the expression itself built, the operation refuses such an operand, so a
 sequence cannot be repeated or concatenated to a size the expression chooses.
-Wherever the base of ``**`` is itself computed with ``**``, an integer result
+Wherever the base of ``**`` is itself computed with ``**``, or its exponent is
+anything but a numeric literal (whose size the gate limits), an integer result
 longer than :data:`MAX_INTEGER_BITS` is refused before it is computed. Both
 refusals are raised when the program runs. Operations that cannot meet these
 cases use the plain operators and pay nothing.
@@ -104,6 +105,28 @@ def _holds(node: ast.AST, kinds: tuple[type[ast.AST], ...]) -> bool:
     return any(isinstance(inner, kinds) for inner in ast.walk(node))
 
 
+def _holds_power(node: ast.AST) -> bool:
+    """Tell whether a subtree computes a power."""
+    return any(
+        isinstance(inner, ast.BinOp) and isinstance(inner.op, ast.Pow) for inner in ast.walk(node)
+    )
+
+
+def _plain_number(node: ast.AST) -> bool:
+    """Tell whether a node is a numeric literal, with or without a sign.
+
+    The gate limits the magnitude of such an exponent, so a power with one
+    cannot grow past the bound unless its base is itself a power.
+    """
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        node = node.operand
+    return (
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, (int, float))
+        and not isinstance(node.value, bool)
+    )
+
+
 def _binary_operator(node: ast.BinOp) -> Callable[[Any, Any], Any]:
     """Choose the function of a binary operation, guarded only where its operands need it."""
     apply = _operator(_BINARY, node.op)
@@ -111,14 +134,7 @@ def _binary_operator(node: ast.BinOp) -> Callable[[Any, Any], Any]:
         _holds(node.left, (ast.Tuple, ast.List)) or _holds(node.right, (ast.Tuple, ast.List))
     ):
         return _guarded_sequence(apply)
-    if (
-        isinstance(node.op, ast.Pow)
-        and isinstance(node.left, ast.expr)
-        and any(
-            isinstance(inner, ast.BinOp) and isinstance(inner.op, ast.Pow)
-            for inner in ast.walk(node.left)
-        )
-    ):
+    if isinstance(node.op, ast.Pow) and (_holds_power(node.left) or not _plain_number(node.right)):
         return _guarded_power
     return apply
 

@@ -318,7 +318,7 @@ namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 bytecode. `benchmarks/bench_equation_program.py` times six expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 2.0 and 2.8 times the function,
+development host, puts a program at between 1.9 and 2.7 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
@@ -329,8 +329,9 @@ of the equation namespace cannot be handed an output array: a positional
 argument after its inputs must be the literal `None`. A tuple or list that
 the expression built cannot be repeated or concatenated, however it is
 wrapped: the operation itself refuses such an operand when the program runs.
-An integer power of a power longer than 4,096 bits is refused before it is
-computed. The last two bounds are applied to values, not to the shape of the
+An integer power longer than 4,096 bits is refused before it is computed,
+wherever its base is itself a power or its exponent is anything but a
+numeric literal. The last two bounds are applied to values, not to the shape of the
 text, and only operations that could meet such a value carry the check.
 
 The grammar bounds the form of an expression, not what its bindings allow. An

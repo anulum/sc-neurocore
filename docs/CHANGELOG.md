@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The integer-power bound of equation programs also covers a computed
+  exponent. A re-reading showed that `2 ** (60 * 60 * 60)` passed, because
+  the bound was applied only where the base was itself a power.
+
 - Two bounds of the expression gate moved from the shape of the text to the
   values, after an outside review showed that a slice, a choice or a call
   around a literal carried it past the rule. `*` and `+` refuse a tuple or
@@ -37,7 +41,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The cost of equation programs has a committed benchmark,
   `benchmarks/bench_equation_program.py`. Its receipt
   `benchmarks/results/bench_equation_program.json` (loaded development host)
-  puts a program at between 2.0 and 2.8 times the same arithmetic written as
+  puts a program at between 1.9 and 2.7 times the same arithmetic written as
   a Python function.
 
 - Published claims are bound to their sources after an outside review. The

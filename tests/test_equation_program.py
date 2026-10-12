@@ -262,6 +262,12 @@ def test_a_sequence_the_expression_built_cannot_be_repeated_however_it_is_wrappe
         "abs(2 ** 64) ** 64",
         "((2 ** 64) ** 64) ** 2",
         "(((2 ** 60) + 0) ** 60) ** 60",
+        "2 ** (60 * 60 * 60)",
+        "2 ** (big * 100000)",
+        "2 ** (1000000 + 0)",
+        "(2 * 1) ** (40000 * 1)",
+        "2 ** big_exponent",
+        "two ** (4097 + 0)",
     ],
 )
 def test_an_integer_power_of_a_power_is_bounded_however_it_is_wrapped(expression: str) -> None:
@@ -274,12 +280,12 @@ def test_an_integer_power_of_a_power_is_bounded_however_it_is_wrapped(expression
     """
     program = compile_expression(expression)
     with pytest.raises(EquationRefusal, match="integer power exceeds"):
-        program(_bindings())
+        program(_bindings(big=3, big_exponent=5000, two=2))
 
 
 def test_the_value_bounds_leave_ordinary_arithmetic_alone() -> None:
     """Elements of a sequence, small integer towers and float towers compute as before."""
-    bindings = _bindings(a=3.0, b=2.0, table=[1.0, 2.0])
+    bindings = _bindings(a=3.0, b=2.0, n=10, table=[1.0, 2.0])
     for expression, expected in (
         ("(v, w)[0] * 2", V * 2),
         ("min([v, 0]) * 2 + max([w, 0])", V * 2 + W),
@@ -289,6 +295,13 @@ def test_the_value_bounds_leave_ordinary_arithmetic_alone() -> None:
         ("(a ** b) ** 2", 81.0),
         ("(2 ** 3) ** -1", 0.125),
         ("(a ** 2) ** 64 > 0", True),
+        ("2 ** (3 + 1)", 16),
+        ("2 ** n", 1024),
+        ("a ** n", 59049.0),
+        ("2 ** (0 - n)", 2**-10),
+        ("v ** 2", V**2),
+        ("a ** -2", 3.0**-2),
+        ("2 ** +3", 8),
         ("table * 2", [1.0, 2.0, 1.0, 2.0]),
     ):
         assert compile_expression(expression)(bindings) == expected, expression
