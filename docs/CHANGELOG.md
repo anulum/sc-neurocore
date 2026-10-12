@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The expression gate bounds three more things. An array function of the
+  equation namespace cannot be handed an output array: a positional argument
+  after its inputs must be the literal `None`. A tuple or list
+  literal cannot be repeated or concatenated. A power of a power needs literal
+  exponents whose product is at most 64; `(a**2)**3` stays valid.
+- The cost of equation programs has a committed benchmark,
+  `benchmarks/bench_equation_program.py`. Its receipt
+  `benchmarks/results/bench_equation_program.json` (loaded development host)
+  puts a program at between 2.2 and 3.3 times the same arithmetic written as
+  a Python function.
+
 - Published claims are bound to their sources after an outside review. The
   simulator-comparison gate enforces the 5 % the README states (it allowed
   10 %), the README says what the recording is and that no test reruns it,

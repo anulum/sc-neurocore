@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5315
+    "test_files": 5316
   },
   "documentation": {
     "public_pages": [
@@ -4085,6 +4085,7 @@
       "tests/test_bench_dna_mapper_import.py",
       "tests/test_bench_dpi_neuron.py",
       "tests/test_bench_energy_lif_dual_identity.py",
+      "tests/test_bench_equation_program.py",
       "tests/test_bench_ermentrout_kopell_pop.py",
       "tests/test_bench_escape_rate.py",
       "tests/test_bench_expif.py",

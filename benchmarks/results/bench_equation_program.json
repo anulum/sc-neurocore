@@ -1,0 +1,257 @@
+{
+  "schema_version": "sc-neurocore.equation-program-benchmark.v1",
+  "generated_at": "2026-10-12T20:59:21.715147+00:00",
+  "evidence_class": "local_regression",
+  "production_speed_claimed": false,
+  "interpretation": "Loaded-host local-regression evidence. The reference is the same arithmetic as a Python function, not the removed eval path.",
+  "configuration": {
+    "calls": 200000,
+    "steps": 20000,
+    "repeats": 7
+  },
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "affinity": [
+      10
+    ],
+    "load_average": [
+      8.82861328125,
+      9.56787109375,
+      13.34423828125
+    ]
+  },
+  "source_sha256": {
+    "benchmarks/bench_equation_program.py": "f3368443e87f3da68a5557eafb069710e87fbdcee7e9d53f5d2b4dbb5302437b",
+    "src/sc_neurocore/neurons/equation_builder.py": "1ca25a5aa0d14e036b6baf0e282f92973492edc9be63399cdad122c033b1a5a9",
+    "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
+    "src/sc_neurocore/neurons/equation_namespace.py": "2861f0717f52480cd3d46ecbaf93763795020414dbc23b337a4638fab8db641f",
+    "src/sc_neurocore/neurons/equation_program.py": "eb1c5fbba444eac902c34dba27fb577ac09e04d28be6b6607a47deb97fe7d856",
+    "src/sc_neurocore/neurons/equation_safety.py": "5c27025e9388001276f875fcb107dc535702dc66d552ca496fb32d3d0e103522"
+  },
+  "expressions": {
+    "leaky_integrator": {
+      "expression": "(-(v - E_L) + R * I) / tau",
+      "value": "1.0",
+      "program_ns": [
+        301.8997050821781,
+        336.357174674049,
+        349.02960411272943,
+        551.1889909394085,
+        493.9934948924929,
+        639.8322992026806,
+        563.4690797887743
+      ],
+      "reference_ns": [
+        138.05152964778244,
+        215.28514451347291,
+        213.32866977900267,
+        234.10887457430363,
+        226.46238445304334,
+        155.4488844703883,
+        238.75718470662832
+      ],
+      "program_min_ns": 301.8997050821781,
+      "reference_min_ns": 138.05152964778244,
+      "program_median_ns": 493.9934948924929,
+      "reference_median_ns": 215.28514451347291,
+      "ratio_of_minima": 2.186862440803296
+    },
+    "adaptive_exponential": {
+      "expression": "(-g_L*(v-E_L) + g_L*delta_T*exp((v-V_T)/delta_T) - w + I)/C",
+      "value": "np.float64(-0.527386915231512)",
+      "program_ns": [
+        1636.4277002867311,
+        1705.829055281356,
+        1669.7300551459193,
+        1549.1739753633738,
+        1292.8301456850022,
+        1328.0072051566094,
+        1754.7769995871931
+      ],
+      "reference_ns": [
+        731.1888050753623,
+        553.6204355303198,
+        525.7605900987983,
+        691.9810047838837,
+        812.5980850309134,
+        599.971970077604,
+        566.7240102775395
+      ],
+      "program_min_ns": 1292.8301456850022,
+      "reference_min_ns": 525.7605900987983,
+      "program_median_ns": 1636.4277002867311,
+      "reference_median_ns": 599.971970077604,
+      "ratio_of_minima": 2.458971193413451
+    },
+    "gating_variable": {
+      "expression": "0.1*(v+40.0)/(1.0-exp(-(v+40.0)/10.0))*(1.0-m) - 4.0*exp(-(v+65.0)/18.0)*m",
+      "value": "np.float64(0.14589049554497144)",
+      "program_ns": [
+        2666.4671197067946,
+        2225.559010403231,
+        2282.8930453397334,
+        1979.243189562112,
+        1685.677085770294,
+        1750.7436301093549,
+        1648.3470401726663
+      ],
+      "reference_ns": [
+        716.3538492750376,
+        702.3787254001945,
+        691.653200192377,
+        688.169514760375,
+        749.4814903475344,
+        1017.3404752276838,
+        1036.2990549765527
+      ],
+      "program_min_ns": 1648.3470401726663,
+      "reference_min_ns": 688.169514760375,
+      "program_median_ns": 1979.243189562112,
+      "reference_median_ns": 716.3538492750376,
+      "ratio_of_minima": 2.395263092621345
+    },
+    "mean_field_rate": {
+      "expression": "delta/(3.141592653589793*tau**2) + 2.0*r*v/tau",
+      "value": "-2.396816901138162",
+      "program_ns": [
+        735.0675202906132,
+        637.7437093760818,
+        659.0711092576385,
+        835.4316395707428,
+        602.0567752420902,
+        629.381415201351,
+        594.499030848965
+      ],
+      "reference_ns": [
+        189.0490553341806,
+        338.0221105180681,
+        194.32519562542439,
+        339.3512952607125,
+        216.83282451704144,
+        314.5467198919505,
+        227.90236049331725
+      ],
+      "program_min_ns": 594.499030848965,
+      "reference_min_ns": 189.0490553341806,
+      "program_median_ns": 637.7437093760818,
+      "reference_median_ns": 227.90236049331725,
+      "ratio_of_minima": 3.1446813092933663
+    },
+    "threshold": {
+      "expression": "v >= v_th",
+      "value": "False",
+      "program_ns": [
+        241.23629555106163,
+        141.6808890644461,
+        245.08835398592055,
+        183.0376300495118,
+        178.72206517495215,
+        246.17620510980487,
+        171.03819991461933
+      ],
+      "reference_ns": [
+        117.99852014519274,
+        119.15950570255518,
+        106.27429466694593,
+        62.7774849999696,
+        61.90484971739352,
+        107.90783446282148,
+        109.82314590364695
+      ],
+      "program_min_ns": 141.6808890644461,
+      "reference_min_ns": 61.90484971739352,
+      "program_median_ns": 183.0376300495118,
+      "reference_median_ns": 107.90783446282148,
+      "ratio_of_minima": 2.288688038356351
+    },
+    "conditional": {
+      "expression": "v + 1 if v < 10 else -v",
+      "value": "-59.0",
+      "program_ns": [
+        316.74480997025967,
+        419.9916741345078,
+        444.65550570748746,
+        376.9120399374515,
+        393.9507401082665,
+        341.58175461925566,
+        346.85613005422056
+      ],
+      "reference_ns": [
+        100.12957500293851,
+        103.00133493728936,
+        106.09562508761883,
+        98.97925425320864,
+        123.61768982373178,
+        95.44805041514337,
+        134.10637970082462
+      ],
+      "program_min_ns": 316.74480997025967,
+      "reference_min_ns": 95.44805041514337,
+      "program_median_ns": 376.9120399374515,
+      "reference_median_ns": 103.00133493728936,
+      "ratio_of_minima": 3.3185047635085727
+    }
+  },
+  "neurons": {
+    "leaky_integrator_euler": {
+      "method": "euler",
+      "step_ns": [
+        9386.030200403184,
+        8057.895803358406,
+        8165.924297645688,
+        8437.633095309138,
+        8600.295498035848,
+        8379.797148518264,
+        8259.253355208784
+      ],
+      "step_min_ns": 8057.895803358406,
+      "step_median_ns": 8379.797148518264,
+      "final_state": {
+        "v": -65.0
+      }
+    },
+    "adaptive_exponential_euler": {
+      "method": "euler",
+      "step_ns": [
+        9283.314750064164,
+        10894.253954757005,
+        8910.436904989183,
+        9839.969000313431,
+        14488.074649125338,
+        9466.590953525156,
+        7684.7309013828635
+      ],
+      "step_min_ns": 7684.7309013828635,
+      "step_median_ns": 9466.590953525156,
+      "final_state": {
+        "v": -55.773965789570646,
+        "w": 59.304136841712285
+      }
+    },
+    "adaptive_exponential_rk4": {
+      "method": "rk4",
+      "step_ns": [
+        28636.090049985796,
+        32250.859099440277,
+        32992.789102718234,
+        36636.5764522925,
+        31938.619655556977,
+        30380.711250472814,
+        35527.244908735156
+      ],
+      "step_min_ns": 28636.090049985796,
+      "step_median_ns": 32250.859099440277,
+      "final_state": {
+        "v": -55.773965789570646,
+        "w": 59.304136841712285
+      }
+    }
+  },
+  "ratio_of_minima_range": [
+    2.186862440803296,
+    3.3185047635085727
+  ],
+  "all_values_equal_reference": true
+}

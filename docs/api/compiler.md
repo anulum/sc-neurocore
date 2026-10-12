@@ -315,18 +315,26 @@ from a checked tree to a program (`equation_program.py`), the numpy evaluation
 namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 (`equation_namespace.py`), and the strict pint-backed unit runtime
 (`equation_units_runtime.py`). A program costs more per evaluation than
-interpreter bytecode did. One measurement on a loaded development host, which
-no committed benchmark reproduces yet, gave 0.9 to 2.0 times the time per
-expression and 1 % to 22 % more per neuron step, the largest figure for a
-four-stage Runge-Kutta step of a two-variable model. The numerical results are
-identical.
+bytecode. `benchmarks/bench_equation_program.py` times six expressions as
+programs and as the same arithmetic written as Python functions; its committed
+receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
+development host, puts a program at between 2.2 and 3.3 times the function,
+and records the time of whole neuron steps for three configurations. The
+interpreter path that programs replaced can no longer be measured; one
+measurement made while both existed gave 1 % to 22 % more per neuron step.
+The numerical results are identical.
+
+Three rules bound what an accepted expression can request. An array function
+of the equation namespace cannot be handed an output array: a positional
+argument after its inputs must be the literal `None`. A tuple or list literal
+cannot be repeated or concatenated. A power of a power needs literal
+exponents whose product is at most 64.
 
 The grammar bounds the form of an expression, not what its bindings allow. An
 expression can call every bound function with positional arguments and index
-every bound value. Some bound numerical functions take an output array as a
-positional argument, so an expression can overwrite an array a caller binds;
-the callers in this package bind scalars. Sequence repetition and nested
-powers can still request very large values. Each sibling owns its own test surface;
+every bound value. A function that a caller binds under its own name is called
+as written, with whatever arguments the expression builds; the gate guards
+the output position of the array functions of the equation namespace only. Each sibling owns its own test surface;
 the combined focused verification gate is:
 
 ```bash

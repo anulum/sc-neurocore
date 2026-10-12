@@ -25,7 +25,12 @@ The earlier rules stay in force and report first: builtins and escape names
 are refused by name, string constants are refused (a format string's field
 names reach any attribute or index, dunders included, where no node check
 sees them), and deep trees, giant constants and large or nested exponents are
-refused before they can exhaust the evaluator.
+refused before they can exhaust the evaluator. Three further rules bound what
+an accepted expression can ask for: an array function of the namespace cannot
+be handed an output array (a positional argument after its inputs must be the
+literal ``None``), a tuple or list literal cannot be repeated or concatenated,
+and a power of a power needs literal exponents whose product stays within the
+exponent limit.
 """
 
 from __future__ import annotations
@@ -78,6 +83,25 @@ _ALLOWED_ATTRIBUTES = frozenset({"real", "imag"})
 Any other attribute of a bound object is outside the grammar. Numeric scalars
 and unit quantities carry attributes that return their class, their unit
 registry and methods that write to disk; none of them is equation arithmetic.
+"""
+
+_INPUT_ARGUMENTS = {
+    "exp": 1,
+    "log": 1,
+    "sin": 1,
+    "cos": 1,
+    "tanh": 1,
+    "cosh": 1,
+    "sinh": 1,
+    "clip": 3,
+}
+"""Number of input arguments of each array function of the equation namespace.
+
+These functions accept one further positional argument naming an output array,
+which would let an expression overwrite an array that its bindings hold. A
+positional argument after the inputs must be the literal ``None``, the value
+that means "no output array". How many inputs a call must supply is left to
+the function itself and to the callers' own signature checks.
 """
 
 _DEFAULT_MAX_AST_DEPTH = 20
@@ -259,7 +283,61 @@ class ExpressionSafetyValidator:
                 raise EquationRefusal(
                     f"Only a function under a plain name can be called in an equation: {expr!r}"
                 )
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                inputs = _INPUT_ARGUMENTS.get(node.func.id)
+                if inputs is not None and any(
+                    not (isinstance(extra, ast.Constant) and extra.value is None)
+                    for extra in node.args[inputs:]
+                ):
+                    raise EquationRefusal(
+                        f"Function {node.func.id!r} cannot be given an output argument "
+                        f"in an equation: {expr!r}"
+                    )
+            if (
+                isinstance(node, ast.BinOp)
+                and isinstance(node.op, (ast.Mult, ast.Add))
+                and isinstance(node.left, (ast.Tuple, ast.List))
+                | isinstance(node.right, (ast.Tuple, ast.List))
+            ):
+                raise EquationRefusal(
+                    f"A tuple or list cannot be repeated or concatenated in an equation: {expr!r}"
+                )
+            if (
+                isinstance(node, ast.BinOp)
+                and isinstance(node.op, ast.Pow)
+                and isinstance(node.left, ast.BinOp)
+                and isinstance(node.left.op, ast.Pow)
+            ):
+                # A power of a power multiplies its exponents: bound the product.
+                product = 1.0
+                tower: ast.expr = node
+                while isinstance(tower, ast.BinOp) and isinstance(tower.op, ast.Pow):
+                    magnitude = self._literal_magnitude(tower.right)
+                    if magnitude is None:
+                        raise EquationRefusal(
+                            f"A power of a power needs literal exponents in an equation: {expr!r}"
+                        )
+                    product *= magnitude
+                    tower = tower.left
+                if product > _MAX_POW_EXPONENT:
+                    raise EquationRefusal(
+                        f"Combined exponent {product:g} exceeds limit {_MAX_POW_EXPONENT} "
+                        f"in equation: {expr!r}"
+                    )
         return tree
+
+    @staticmethod
+    def _literal_magnitude(node: ast.expr) -> float | None:
+        """Return the magnitude of a numeric literal, signed or not, else ``None``."""
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+            node = node.operand
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, (int, float))
+            and not isinstance(node.value, bool)
+        ):
+            return float(abs(node.value))
+        return None
 
     @staticmethod
     def _ast_depth(node: ast.AST) -> int:

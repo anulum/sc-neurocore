@@ -31,3 +31,60 @@ def test_oversized_numeric_constant_is_rejected() -> None:
     """A literal whose magnitude overflows the sandbox ceiling is refused."""
     with pytest.raises(ValueError, match="exceeds magnitude limit"):
         ExpressionSafetyValidator().validate("1e400")
+
+
+@pytest.mark.parametrize(
+    "expression",
+    ["exp(v, w)", "log(v, table)", "clip(v, 0, 1, w)", "tanh(v, None, w)", "sin(v, [0.0])"],
+)
+def test_an_array_function_cannot_be_given_an_output_argument(expression: str) -> None:
+    """No value but the literal ``None`` reaches the output-array parameter of an array function.
+
+    Parameters
+    ----------
+    expression : str
+        Call that passes a value after the inputs of a namespace array function.
+    """
+    with pytest.raises(ValueError, match="cannot be given an output argument"):
+        ExpressionSafetyValidator().validate(expression)
+    validator = ExpressionSafetyValidator()
+    for accepted in (
+        "clip(exp(v), 0, max(v, w, 1))",
+        "exp(1, None)",
+        "clip(v, None, 0, None)",
+        "clip(v)",
+        "user_function(v, w, 1)",
+        "sqrt(v, w)",
+    ):
+        validator.validate(accepted)
+
+
+@pytest.mark.parametrize(
+    "expression", ["[0.0] * 4", "n * (v,)", "(v,) + (w,)", "[v] + table", "table + [v]"]
+)
+def test_a_sequence_literal_cannot_be_repeated_or_concatenated(expression: str) -> None:
+    """Repetition and concatenation of a literal sequence are refused.
+
+    Parameters
+    ----------
+    expression : str
+        Expression that would build a sequence whose size the expression chooses.
+    """
+    with pytest.raises(ValueError, match="cannot be repeated or concatenated"):
+        ExpressionSafetyValidator().validate(expression)
+    ExpressionSafetyValidator().validate("min([v, 0]) + (v, w)[0] * 2")
+
+
+def test_a_power_of_a_power_is_bounded_by_the_product_of_its_exponents() -> None:
+    """Small nested bases stay valid; a tower whose exponents multiply past the limit is refused."""
+    validator = ExpressionSafetyValidator()
+    validator.validate("(a**2)**3")
+    validator.validate("((a**2)**4)**8")
+    validator.validate("(a**0.5)**-2 + (b**2)**2")
+    with pytest.raises(ValueError, match="Combined exponent 8192 exceeds limit 64"):
+        validator.validate("((2 ** 64) ** 64) ** 2")
+    with pytest.raises(ValueError, match="Combined exponent 128 exceeds limit"):
+        validator.validate("((a**2)**8)**8")
+    for expression in ("(a**b)**2", "(a**2)**b", "(a**True)**2"):
+        with pytest.raises(ValueError, match="needs literal exponents"):
+            validator.validate(expression)

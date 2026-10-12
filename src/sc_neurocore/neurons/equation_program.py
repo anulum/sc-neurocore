@@ -31,11 +31,10 @@ What a program can reach is bounded by its bindings, not only by its grammar.
 The author of an expression is untrusted; the code that builds the bindings is
 trusted. An expression can call every function the bindings hold, with
 positional arguments it builds, and can index and read ``real``/``imag`` of
-every bound value. Some bound numerical functions accept an output array as a
-positional argument, so an expression can overwrite an array that the
-bindings hold; the callers in this package bind scalars. Sequence repetition
-and nested powers can still ask for very large values. Bindings are a plain
-``dict``: a mapping that invents missing keys would invent names.
+every bound value. The gate lets nothing but the literal ``None`` reach the
+output-array position of the array functions of the equation namespace; a
+function a caller binds under its own name is called as written. Bindings are
+a plain ``dict``: a mapping that invents missing keys would invent names.
 
 Arithmetic on a plain name or a literal is the bulk of every equation, so the
 binary translator reads such operands in place instead of calling a program

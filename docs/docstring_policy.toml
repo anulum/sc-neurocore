@@ -14,7 +14,19 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 890
+expected_file_count = 893
+
+[[file]]
+path = "benchmarks/bench_equation_program.py"
+rationale = "The cost of running checked expressions is measured against the same arithmetic as plain functions, with values compared before anything is timed."
+
+[[file]]
+path = "tests/test_bench_equation_program.py"
+rationale = "A real short run, the refusal of a disagreeing reference, the source binding of the receipt and the figures cited in the documentation."
+
+[[file]]
+path = "tests/test_equation_safety_numeric_limits.py"
+rationale = "Exponent, constant, argument-count and sequence rules bound what an accepted expression can request."
 
 [[file]]
 path = "tools/coverage_scope.py"
