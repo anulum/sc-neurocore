@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 881
+expected_file_count = 882
+
+[[file]]
+path = "tests/test_sc_compte_wm_julia_network.py"
+rationale = "The Julia network lane must keep a lock without a package manager or network library and receipts bound to its committed sources."
 
 [[file]]
 path = "tests/test_tools/test_release_metadata_versions.py"

@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Julia SC Compte network lane depends on the `FFTW_jll` transform binary
+  alone and calls it through the C interface. The 1,000-step state digests of
+  the lane are unchanged. Its lock falls from 42 to 10 packages and no longer
+  names the package manager, the downloader or their network libraries, which
+  carried all 77 Julia advisory findings. The `SHA` standard library the
+  module already used is now declared. The three receipts bound to the changed
+  sources are regenerated.
+
 - A package the Pixi scanner cannot audit is accepted only through a
   `vendor_records_reviewed` exception. The audit requires the vendor channel
   to list the locked file with the lock's digest, and the vulnerability

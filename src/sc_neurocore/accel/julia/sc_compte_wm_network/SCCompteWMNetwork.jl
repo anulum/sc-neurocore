@@ -18,7 +18,7 @@ bump or distractor resistance.
 """
 module SCCompteWMNetwork
 
-using FFTW
+using FFTW_jll: libfftw3
 using SHA
 
 export N_EXCITATORY, N_INHIBITORY, DT_MS
@@ -41,6 +41,10 @@ const STREAM_MIX = UInt64(0x94d049bb133111eb)
 const V_MIN = -200.0
 const V_MAX = 100.0
 const GATE_MAX = 1.0e6
+const FFTW_FORWARD = Cint(-1)
+const FFTW_BACKWARD = Cint(1)
+const FFTW_ESTIMATE = Cuint(1) << 6
+const FFTW_PLANNER = ReentrantLock()
 
 """
 Frozen configuration for the Julia v1 network transition.
@@ -275,8 +279,36 @@ end
 
 @inline mg_block(voltage::Float64) = 1.0 / (1.0 + exp(clamp(-0.062 * voltage, -700.0, 700.0)) / 3.57)
 
+"""
+Unnormalised complex discrete Fourier transform through the FFTW C library.
+
+The plan is estimated for exactly these two arrays, executed once and
+destroyed. The FFTW planner is not reentrant, so planning and destruction hold
+`FFTW_PLANNER`. The library is called directly so that the package depends on
+the FFTW binary alone and not on a package manager or a network stack.
+"""
+function transform(input::Vector{ComplexF64}, direction::Cint)
+    output = Vector{ComplexF64}(undef, length(input))
+    plan = lock(FFTW_PLANNER) do
+        ccall((:fftw_plan_dft_1d, libfftw3), Ptr{Cvoid},
+              (Cint, Ptr{ComplexF64}, Ptr{ComplexF64}, Cint, Cuint),
+              length(input), input, output, direction, FFTW_ESTIMATE)
+    end
+    plan == C_NULL && error("FFTW refused to plan a transform of length $(length(input))")
+    try
+        GC.@preserve input output ccall((:fftw_execute, libfftw3), Cvoid, (Ptr{Cvoid},), plan)
+    finally
+        lock(FFTW_PLANNER) do
+            ccall((:fftw_destroy_plan, libfftw3), Cvoid, (Ptr{Cvoid},), plan)
+        end
+    end
+    output
+end
+
+fft(values::Vector{Float64}) = transform(ComplexF64.(values), FFTW_FORWARD)
+
 function circular_sum(source::Vector{Float64}, spectrum::Vector{ComplexF64})
-    real.(ifft(fft(source) .* spectrum))
+    real.(transform(fft(source) .* spectrum, FFTW_BACKWARD)) .* (1.0 / length(source))
 end
 
 function aggregates(runtime::SCCompteWMNetworkRuntime, nmda, gabaa)

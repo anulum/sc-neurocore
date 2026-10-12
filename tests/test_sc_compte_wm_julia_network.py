@@ -33,15 +33,35 @@ NATIVE_TEST = JULIA_ROOT / "test_sc_compte_wm_network.jl"
 BENCHMARK = JULIA_ROOT / "bench_sc_compte_wm_network.jl"
 RESULT = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network_julia.toml"
 JULIA = require_executable("julia")
+NETWORK_STACK = frozenset(
+    {
+        "Downloads",
+        "FFTW",
+        "LazyArtifacts",
+        "LibCURL",
+        "LibCURL_jll",
+        "LibGit2",
+        "LibGit2_jll",
+        "LibSSH2_jll",
+        "MKL_jll",
+        "MbedTLS_jll",
+        "Pkg",
+        "Zlib_jll",
+        "nghttp2_jll",
+        "p7zip_jll",
+    }
+)
 
 
 def _environment() -> dict[str, str]:
+    """Return the process environment with the repository-local Julia depot."""
     environment = os.environ.copy()
     environment["JULIA_DEPOT_PATH"] = str(REPOSITORY / ".venv/julia_depot")
     return environment
 
 
 def test_julia_network_native_parity_suite() -> None:
+    """Run the native Julia suite of the lane with the locked project and require it to pass."""
     executed = subprocess.run(
         [str(JULIA), f"--project={PROJECT.parent}", str(NATIVE_TEST)],
         cwd=REPOSITORY,
@@ -57,11 +77,21 @@ def test_julia_network_native_parity_suite() -> None:
 
 
 def test_julia_dependency_and_native_docs_are_explicit() -> None:
+    """Bind the declared dependencies, the narrow lock and the documented public symbols."""
     project = tomllib.loads(PROJECT.read_text(encoding="utf-8"))
     manifest = tomllib.loads(MANIFEST.read_text(encoding="utf-8"))
-    assert project["deps"]["FFTW"] == "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
-    assert "FFTW" in manifest["deps"]
+    assert project["deps"] == {
+        "FFTW_jll": "f5851436-0d7a-5f13-b9de-f02708fd171a",
+        "SHA": "ea8e919c-243c-51af-8825-aaa63cd721ce",
+    }
+    assert manifest["julia_version"] == "1.11.9"
+    assert "FFTW_jll" in manifest["deps"]
+    # The transform binary is called directly. The lock therefore names no
+    # package manager, no downloader and none of their network libraries.
+    assert NETWORK_STACK.isdisjoint(manifest["deps"])
     source = SOURCE.read_text(encoding="utf-8")
+    assert "using FFTW_jll: libfftw3" in source
+    assert "using FFTW\n" not in source
     for symbol in (
         "SCCompteWMNetworkSpec",
         "SCCompteWMNetworkState",
@@ -75,6 +105,7 @@ def test_julia_dependency_and_native_docs_are_explicit() -> None:
 
 
 def test_julia_benchmark_receipt_is_source_bound() -> None:
+    """Require the committed benchmark receipt to carry the digests of its committed sources."""
     payload = tomllib.loads(RESULT.read_text(encoding="utf-8"))
     assert payload["model"] == "SC-COMPTE-WM-NETWORK"
     assert payload["execution_path"] == "julia-midpoint-rk2-fftw"
@@ -94,6 +125,7 @@ def test_julia_benchmark_receipt_is_source_bound() -> None:
 
 
 def test_julia_1000_step_event_receipt_matches_python() -> None:
+    """Compare the Julia input and spike digests of 1,000 steps with the Python receipt."""
     julia = tomllib.loads(RESULT.read_text(encoding="utf-8"))
     python = json.loads(
         (REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network.json").read_text(

@@ -88,8 +88,9 @@ unrelated legacy modules and is not represented as a clean project-wide gate.
 
 `accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl` is the complete Julia
 runtime for the same separately named network. It owns all nine state arrays,
-uses the declared `FFTW.jl` dependency for circular E-to-E and optional tuned
-E-to-I reductions, implements the counter-addressed Poisson streams, supports
+calls the declared `FFTW_jll` transform binary directly for circular E-to-E and
+optional tuned E-to-I reductions, so its lock names no package manager and no
+network library, implements the counter-addressed Poisson streams, supports
 explicit event-count co-simulation, and returns step/window/run receipts. Its
 native suite binds Julia to the Python/Rust counter fixture, the preserved
 Julia scalar Compte cell, and the non-trivial recurrent dense-oracle anchor;

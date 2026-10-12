@@ -187,12 +187,12 @@ def test_julia_queries_retain_registry_build_versions() -> None:
     manifest = ROOT / "src/sc_neurocore/accel/julia/sc_compte_wm_network/Manifest.toml"
     queries = julia_queries(manifest.read_bytes())
     assert {
-        "package": {"ecosystem": "Julia", "name": "LibCURL_jll"},
-        "version": "8.6.0+0",
+        "package": {"ecosystem": "Julia", "name": "FFTW_jll"},
+        "version": "3.3.12+0",
     } in queries
     assert {
-        "package": {"ecosystem": "Julia", "name": "MbedTLS_jll"},
-        "version": "2.28.6+0",
+        "package": {"ecosystem": "Julia", "name": "JLLWrappers"},
+        "version": "1.8.0",
     } in queries
     for unsupported in ("1.0", "2.2", "3.0"):
         with pytest.raises(ValueError, match="version-2"):

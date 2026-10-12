@@ -42,6 +42,13 @@ remain refused. The native manifest regression resolves the maintained FFTW
 project with the installed Julia 1.13 runtime and compares every generated
 package/version identity with the audit queries.
 
+The Julia network lane depends on the `FFTW_jll` binary and calls it directly.
+Depending on `FFTW.jl` instead adds the package manager and the downloader to
+the lock through the optional MKL provider, together with the curl, Git, SSH
+and TLS libraries of the Julia distribution. The lane test refuses those
+entries. The Julia distribution itself still ships these libraries; a manifest
+records the packages a project loads, not the runtime that loads them.
+
 npm silently omits unversioned packages from advisory submission. Before running
 it, the adapter validates every installation entry in a version-2 or version-3
 lock, retaining its path, registry name and exact semantic version. Linked,
