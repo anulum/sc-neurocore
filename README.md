@@ -49,6 +49,37 @@ It is useful when a team needs to answer practical questions such as:
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
+## Quick Start
+
+```bash
+pip install sc-neurocore
+sc-neurocore info
+sc-neurocore --help
+```
+
+The CLI presents Model, Hardware, Studio, and Maintain workflows at the top
+level; use `sc-neurocore COMMAND --help` for command-specific options. The
+complete command guide is in [Command-Line Interface](docs/api/cli.md).
+
+What runs today, with the base package and nothing else, is on one page:
+[Supported workflows](docs/guides/supported_workflows.md) gives four examples —
+a stochastic neuron, a bitstream product, a neuron defined by its equation and
+that neuron lowered to Verilog — each with the output it prints. The same
+blocks are run by the tests, from the source tree and from an installed wheel.
+
+For biological closed-loop BCI implementations (experimental), install the bioware optional dependencies:
+```bash
+pip install "sc-neurocore[bioware]"
+```
+
+```python
+from sc_neurocore import StochasticLIFNeuron
+
+neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, noise_std=0.0)
+spikes = sum(neuron.step(0.8) for _ in range(500))
+print(f"{spikes} spikes in 500 steps")
+```
+
 ## Public Development Workbench and the 4.0.0 Roadmap
 
 **SC-NeuroCore will remain a public, open-source development workbench** for the
@@ -146,8 +177,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 208 |
 | Optional extras | 31 |
-| Python test files | 5318 |
-| Public documentation pages | 642 |
+| Python test files | 5319 |
+| Public documentation pages | 643 |
 | GitHub Actions workflows | 23 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -159,30 +190,7 @@ classes in `src/sc_neurocore/neurons/models/*.py`; **Public documentation
 pages** counts Markdown under `docs/` after excluding `docs/internal/` and
 `docs/_generated/`.
 
-## Quick Start
-
-```bash
-pip install sc-neurocore
-sc-neurocore info
-sc-neurocore --help
-```
-
-The CLI presents Model, Hardware, Studio, and Maintain workflows at the top
-level; use `sc-neurocore COMMAND --help` for command-specific options. The
-complete command guide is in [Command-Line Interface](docs/api/cli.md).
-
-For biological closed-loop BCI implementations (experimental), install the bioware optional dependencies:
-```bash
-pip install "sc-neurocore[bioware]"
-```
-
-```python
-from sc_neurocore import StochasticLIFNeuron
-
-neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, noise_std=0.0)
-spikes = sum(neuron.step(0.8) for _ in range(500))
-print(f"{spikes} spikes in 500 steps")
-```
+## More Ways In
 
 ### Zenith Quickstart
 

@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `docs/guides/supported_workflows.md` gives four workflows of the base
+  package with the output each prints, and says what each way of installing
+  provides and which subpackages only a source checkout has. The tests run
+  every block from the source tree and from a built wheel installed outside
+  the repository. The README's quick start now stands before the roadmap and
+  points to that page.
+
 - The Brunel comparison can be rerun and judged. Each repetition of
   `benchmarks/scaling_benchmark.py` now has its own seed, the Brian2
   reference is seeded, and the spread of rates across seeds is recorded.

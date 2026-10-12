@@ -524,6 +524,45 @@ def _with_built_ui(source: Path) -> Path:
     return ui
 
 
+def test_the_documented_workflows_run_from_an_installed_wheel(
+    distribution_source: Path, tmp_path: Path
+) -> None:
+    """Each block of the supported-workflows page prints its documented output from a wheel.
+
+    The wheel is built from the tracked sources, extracted, and imported by a
+    separate environment whose working directory is outside the repository, so
+    the blocks cannot reach a module that the wheel does not ship.
+
+    Parameters
+    ----------
+    distribution_source : Path
+        Disposable copy of the real build inputs.
+    tmp_path : Path
+        Workspace for the wheel, the extracted package and the environment.
+    """
+    from tests.test_supported_workflows import documented_workflows, run_workflow
+
+    result = build_distribution(distribution_source, "build_wheel", tmp_path / "wheel")
+    assert result.returncode == 0, result.stdout + result.stderr
+    (wheel_path,) = (tmp_path / "wheel").glob("*.whl")
+    installed = tmp_path / "installed"
+    with zipfile.ZipFile(wheel_path) as wheel:
+        wheel.extractall(installed)
+    python = installation_environment(installed, tmp_path / "environment")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    located = run_workflow(
+        str(python), "import sc_neurocore; print(sc_neurocore.__file__)", outside
+    )
+    assert Path(located.stdout.strip()).is_relative_to(installed), located.stderr
+    workflows = documented_workflows()
+    assert len(workflows) == 4
+    for name, (code, expected) in workflows.items():
+        ran = run_workflow(str(python), code, outside)
+        assert ran.returncode == 0, (name, ran.stderr)
+        assert ran.stdout == expected, name
+
+
 def test_a_built_ui_ships_in_the_wheel_and_is_served_installed(
     distribution_source: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

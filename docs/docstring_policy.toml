@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 896
+expected_file_count = 897
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -39,6 +39,10 @@ rationale = "The committed recording, altered copies at the tolerance boundary, 
 [[file]]
 path = "tests/test_scaling_benchmark_seeds.py"
 rationale = "Repetitions of the scaling benchmark must be different random networks whose spread is recorded."
+
+[[file]]
+path = "tests/test_supported_workflows.py"
+rationale = "Every documented workflow must print the output its page shows, and the page must name what the wheel leaves out."
 
 [[file]]
 path = "tools/coverage_scope.py"

@@ -973,12 +973,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 31,
     "public_api_exports": 45,
-    "public_documentation_pages": 642,
+    "public_documentation_pages": 643,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5318
+    "test_files": 5319
   },
   "documentation": {
     "public_pages": [
@@ -1444,6 +1444,7 @@
       "docs/guides/stochastic_backprop.md",
       "docs/guides/stochastic_source_emitters.md",
       "docs/guides/studio.md",
+      "docs/guides/supported_workflows.md",
       "docs/guides/surrogate_execution_paths.md",
       "docs/guides/thermal_deployment.md",
       "docs/guides/universal_coverage_api_reference.md",
@@ -8144,6 +8145,7 @@
       "tests/test_studio_workspace_revisions.py",
       "tests/test_studio_workspace_routes.py",
       "tests/test_supply_chain_audit.py",
+      "tests/test_supported_workflows.py",
       "tests/test_surrogate_python_differentiable_dense_layer.py",
       "tests/test_surrogate_python_surrogate_lif.py",
       "tests/test_sva_gen.py",
