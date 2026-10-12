@@ -969,7 +969,7 @@
     ]
   },
   "counts": {
-    "github_workflows": 22,
+    "github_workflows": 23,
     "model_documentation_pages": 200,
     "optional_extras": 31,
     "public_api_exports": 45,
@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5316
+    "test_files": 5318
   },
   "documentation": {
     "public_pages": [
@@ -3289,6 +3289,7 @@
     "github_workflows": [
       ".github/workflows/audit-cadence.yml",
       ".github/workflows/benchmark.yml",
+      ".github/workflows/brunel-parity.yml",
       ".github/workflows/ci.yml",
       ".github/workflows/codeql.yml",
       ".github/workflows/compiler-e2e.yml",
@@ -7394,6 +7395,7 @@
       "tests/test_sc_upward_crossing_rulkov_map_backends.py",
       "tests/test_sc_upward_crossing_rulkov_map_engine_binding.py",
       "tests/test_scaling_benchmark_rust_brunel.py",
+      "tests/test_scaling_benchmark_seeds.py",
       "tests/test_schema_module_aliases.py",
       "tests/test_schema_validator_error_rendering.py",
       "tests/test_schema_validator_file_discovery.py",
@@ -8212,6 +8214,7 @@
       "tests/test_tools/test_audit_cadence_contract.py",
       "tests/test_tools/test_audit_model_docs.py",
       "tests/test_tools/test_benchmark_evidence_gate.py",
+      "tests/test_tools/test_brunel_parity_check.py",
       "tests/test_tools/test_build_accel_backends_commands_and_build.py",
       "tests/test_tools/test_build_accel_backends_discover_and_paths.py",
       "tests/test_tools/test_build_accel_backends_main_cli.py",

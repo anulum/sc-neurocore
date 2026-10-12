@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Brunel comparison can be rerun and judged. Each repetition of
+  `benchmarks/scaling_benchmark.py` now has its own seed, the Brian2
+  reference is seeded, and the spread of rates across seeds is recorded.
+  `tools/brunel_parity_check.py` judges a recording by the published 5 %,
+  and the weekly `brunel-parity.yml` workflow reruns both lanes on current
+  code with eight seeds and one second simulated. A rerun of 2026-10-12 is
+  committed: rate ratios 1.015 and 0.996 at 1,000 and 5,000 neurons.
+
 - The expression gate bounds three more things. An array function of the
   equation namespace cannot be handed an output array: a positional argument
   after its inputs must be the literal `None`. A tuple or list

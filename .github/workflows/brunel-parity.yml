@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Brunel parity rerun: the published rate agreement, measured on current code
+
+name: Brunel parity rerun
+
+# The committed scaling recording is checked on every push by a test that runs
+# nothing. This job runs the dense NumPy lane and the Brian2 reference again,
+# with a seed per repetition, and fails when their mean rates differ by more
+# than the published tolerance. One second is simulated with eight seeds: the
+# rate of one seed varies by a few percent, so three short repetitions would
+# judge noise. Its timings come from a shared runner and are not published;
+# only the rate agreement is judged.
+on:
+  schedule:
+    - cron: "30 5 * * 1" # Mondays 05:30 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "benchmarks/scaling_benchmark.py"
+      - "tools/brunel_parity_check.py"
+      - ".github/workflows/brunel-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  brunel-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the package and the Brian2 reference
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip install brian2
+          python -c "import brian2; print('brian2', brian2.__version__)"
+
+      - name: Run both lanes with a seed per repetition
+        run: |
+          python benchmarks/scaling_benchmark.py \
+            --scales 1000 5000 --sim-ms 1000 --repeats 8 --regimes AI \
+            --simulators sc_numpy_dense brian2 --no-gpu \
+            --json "$RUNNER_TEMP/brunel_parity.json"
+
+      - name: Judge the rate agreement by the published tolerance
+        run: python -m tools.brunel_parity_check "$RUNNER_TEMP/brunel_parity.json" --minimum-sizes 2
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: brunel-parity-recording
+          path: ${{ runner.temp }}/brunel_parity.json
+          if-no-files-found: error

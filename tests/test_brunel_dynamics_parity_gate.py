@@ -25,6 +25,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from tools.brunel_parity_check import RATE_TOLERANCE
+
 _ROOT = Path(__file__).resolve().parents[1]
 _ARTEFACT = _ROOT / "benchmarks/results/rust_scaling_benchmark.json"
 
@@ -35,9 +37,10 @@ _PARITY_SIMULATORS = frozenset({"sc_numpy_dense"})
 # track the Brian2 rates — never a wording change alone.
 _NON_PARITY_SIMULATORS = frozenset({"sc_rust_engine"})
 
-# The one value behind the published sentence and behind this gate: the README
-# says "rates within 5% of Brian2", and a parity row further off fails.
-_RATE_TOLERANCE = 0.05
+# The one value behind the published sentence, this gate and the scheduled
+# rerun: the README says "rates within 5% of Brian2", and a parity row further
+# off fails here and in tools/brunel_parity_check.py alike.
+_RATE_TOLERANCE = RATE_TOLERANCE
 _PUBLIC_CLAIM_FILES = (
     "README.md",
     "docs/COMPETITIVE_LANDSCAPE.md",

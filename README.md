@@ -146,9 +146,9 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 208 |
 | Optional extras | 31 |
-| Python test files | 5316 |
+| Python test files | 5318 |
 | Public documentation pages | 642 |
-| GitHub Actions workflows | 22 |
+| GitHub Actions workflows | 23 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
 <!-- capability-snapshot:end -->
@@ -253,7 +253,13 @@ and 0.75x (slower than Brian2) at 10,000. The artefact is one recording
 (2026-03-08, one host, 300 ms simulated, two repetitions with one seed) and
 compares mean firing rates only.
 `tests/test_brunel_dynamics_parity_gate.py` checks that this text matches the
-artefact; it does not rerun the simulation.
+artefact; it does not rerun the simulation. The `brunel-parity.yml` workflow
+reruns both lanes weekly on current code, with a seed per repetition, and
+fails when the rates differ by more than the same tolerance. A rerun of that
+kind on 2026-10-12 (one loaded host, 1 s simulated, eight seeds per lane,
+`benchmarks/results/brunel_parity_rerun_2026-10-12.json`) gave rate ratios of
+1.015 at 1,000 neurons and 0.996 at 5,000; the rate of a single seed varied
+by about 1 to 4 %. Its timings are not a published comparison.
 
 The AdEx model also exposes source-bound baseline-Euler simulation through
 Python, the Rust engine, Julia, Go, and Mojo. Its committed
@@ -644,7 +650,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-22 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
+23 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -659,6 +665,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **pypi-downloads.yml** | Daily PyPI download history on the serialized `metrics` branch |
 | **release.yml** | Build sdist/SBOM/security packet, support tagged-release backfills, and attach release assets to GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
+| **brunel-parity.yml** | Weekly rerun of the dense NumPy Brunel lane against Brian2; fails when mean rates differ by more than the published 5% |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
 | **dependency-audit.yml** | Complete audit of every committed dependency lock, per ecosystem |
 | **hdc-reference.yml** | Hyperdimensional-computing reference comparison |

@@ -37,7 +37,7 @@ import os
 import platform
 import time
 import tracemalloc
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING, Mapping, Protocol, TypedDict
@@ -131,6 +131,10 @@ class ScalePoint:
     runs : list of RunMetrics
         Successfully returned repetitions; failed or unavailable runs do
         not contribute to the aggregate properties.
+    seeds : list of int
+        Seed of each completed repetition, in run order. Each repetition
+        uses its own seed, so the spread across runs includes the spread
+        across random networks and inputs, not only across timings.
     """
 
     n_neurons: int
@@ -138,6 +142,16 @@ class ScalePoint:
     regime: str
     n_synapses: int
     runs: list[RunMetrics] = field(default_factory=list)
+    seeds: list[int] = field(default_factory=list)
+
+    @property
+    def rate_std(self) -> float:
+        """Return the sample deviation of the mean rate across runs, or zero for one run."""
+        return (
+            float(np.std([r.mean_rate_hz for r in self.runs], ddof=1))
+            if len(self.runs) > 1
+            else 0.0
+        )
 
     @property
     def wall_mean(self) -> float:
@@ -675,6 +689,8 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
 
     _brian2_warmup()
     brian2.start_scope()
+    # Seed the reference as well: without it a repetition could not be repeated.
+    brian2.seed(cfg.seed)
 
     eqs = "dv/dt = -v / (tau * ms) : 1\ntau : 1"
     G = brian2.NeuronGroup(
@@ -1203,10 +1219,11 @@ def run_scaling(
                 )
                 print(f"    {label}...", end=" ", flush=True)
 
-                for _ in range(repeats):
+                for repeat in range(repeats):
                     gc.collect()
+                    run_cfg = replace(cfg, seed=cfg.seed + repeat)
                     try:
-                        result = fn(cfg)
+                        result = fn(run_cfg)
                     except Exception as e:
                         print(f"ERROR: {e}")
                         break
@@ -1214,6 +1231,7 @@ def run_scaling(
                         print("SKIP (not installed)")
                         break
                     sp.runs.append(result)
+                    sp.seeds.append(run_cfg.seed)
 
                 if sp.runs:
                     print(
@@ -1260,6 +1278,8 @@ def to_json(
                 "peak_rss_mb": round(sp.peak_rss_mb, 1),
                 "spikes_mean": round(sp.spikes_mean, 1),
                 "rate_mean_hz": round(sp.rate_mean, 2),
+                "rate_std_hz": round(sp.rate_std, 3),
+                "seeds": list(sp.seeds),
                 "syn_events_per_s": round(sp.syn_events_per_s_mean, 2),
                 "activation_sparsity": round(sp.sparsity_mean, 4),
                 "n_runs": len(sp.runs),

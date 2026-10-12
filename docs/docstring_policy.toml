@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 893
+expected_file_count = 896
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -27,6 +27,18 @@ rationale = "A real short run, the refusal of a disagreeing reference, the sourc
 [[file]]
 path = "tests/test_equation_safety_numeric_limits.py"
 rationale = "Exponent, constant, argument-count and sequence rules bound what an accepted expression can request."
+
+[[file]]
+path = "tools/brunel_parity_check.py"
+rationale = "The published rate agreement of the Brunel comparison is judged by one tolerance, on the committed recording and on a fresh rerun alike."
+
+[[file]]
+path = "tests/test_tools/test_brunel_parity_check.py"
+rationale = "The committed recording, altered copies at the tolerance boundary, unusable recordings and the cited rerun are judged by the real checker."
+
+[[file]]
+path = "tests/test_scaling_benchmark_seeds.py"
+rationale = "Repetitions of the scaling benchmark must be different random networks whose spread is recorded."
 
 [[file]]
 path = "tools/coverage_scope.py"
