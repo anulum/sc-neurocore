@@ -659,7 +659,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261005T014619Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261012T213518Z__adaptive_threshold_if.json",
           "validators": [
             {
               "facet": "cosim",
@@ -2257,7 +2257,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "BrunelWangNeuron__cosim__20261005T014624Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20261012T213522Z__brunel_wang.json",
           "validators": [
             {
               "facet": "cosim",
@@ -9229,7 +9229,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__cosim__20261005T014629Z__lapicque.json",
+          "receipt": "LapicqueNeuron__cosim__20261012T213526Z__lapicque.json",
           "validators": [
             {
               "facet": "cosim",
@@ -13724,7 +13724,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "ResonateAndFireNeuron__cosim__20261005T014634Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20261012T213529Z__resonate_fire.json",
           "validators": [
             {
               "facet": "cosim",
