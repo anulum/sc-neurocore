@@ -147,3 +147,25 @@ def test_the_committed_validation_document_states_the_current_scope() -> None:
         assert f"| `{pattern}` |" in block
     for stale in ("drivers/", "ccw_bridge", "sleep/"):
         assert stale not in block
+
+
+def test_in_a_work_tree_only_tracked_files_are_counted(tmp_path: Path) -> None:
+    """A build product or leftover beside the tracked sources does not change the scope.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Root of the small package, made a Git work tree for this test.
+    """
+    root = _tree(tmp_path)
+    untracked = read_scope(root)
+    subprocess.run(["git", "init", "--quiet", str(root)], check=True, timeout=30)
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/pkg/core.py", "src/pkg/cli.py", "src/pkg/heavy"],
+        check=True,
+        timeout=30,
+    )
+    (root / "src/pkg/generated.py").write_text("g = 1\n" * 50, encoding="utf-8")
+    tracked = read_scope(root)
+    assert (tracked.files, tracked.lines) == (untracked.files, untracked.lines) == (4, 16)
+    assert tracked.omissions == untracked.omissions

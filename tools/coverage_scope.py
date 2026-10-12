@@ -26,6 +26,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from fnmatch import fnmatchcase
 from pathlib import Path
+import subprocess
 import sys
 
 if sys.version_info >= (3, 11):
@@ -88,8 +89,7 @@ def read_scope(root: Path) -> Scope:
         raise ValueError("Coverage configuration must name exactly one source directory.")
     if not isinstance(patterns, list) or not all(isinstance(item, str) for item in patterns):
         raise ValueError("Coverage configuration has no omission list.")
-    source = root / directories[0]
-    files = sorted(path for path in source.rglob("*.py") if "__pycache__" not in path.parts)
+    files = source_files(root, directories[0])
     if not files:
         raise ValueError("Coverage source directory holds no Python file.")
     sizes = {
@@ -108,6 +108,38 @@ def read_scope(root: Path) -> Scope:
         omitted_files=len(omitted),
         omitted_lines=sum(sizes[name] for name in omitted),
         omissions=tuple(rows),
+    )
+
+
+def source_files(root: Path, directory: str) -> list[Path]:
+    """List the Python source files of the package that belong to the repository.
+
+    Parameters
+    ----------
+    root : Path
+        Repository root.
+    directory : str
+        Source directory of the package, relative to the root.
+
+    Returns
+    -------
+    list of Path
+        In a Git work tree, the tracked ``.py`` files under the directory, so
+        that build products and local leftovers do not change the counts
+        between one checkout and another. Outside a work tree, every ``.py``
+        file under the directory except interpreter caches.
+    """
+    listed = subprocess.run(
+        ["git", "-C", str(root), "ls-files", "-z", "--", directory],
+        capture_output=True,
+        check=False,
+        timeout=60,
+    )
+    if listed.returncode == 0 and listed.stdout:
+        names = listed.stdout.decode("utf-8").rstrip("\0").split("\0")
+        return sorted(root / name for name in names if name.endswith(".py"))
+    return sorted(
+        path for path in (root / directory).rglob("*.py") if "__pycache__" not in path.parts
     )
 
 
