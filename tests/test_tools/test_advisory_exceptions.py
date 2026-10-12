@@ -30,15 +30,17 @@ import yaml
 from tools.security_scan.advisory_exceptions import (
     CHANNEL_INDEX,
     EXCEPTION_FILE,
-    channel_versions,
+    channel_files,
     conda_package_paths,
     decide_matches,
     fetch,
     load_exceptions,
     locked_conda_artefact,
-    newest_version_is,
+    locked_channel,
+    newest_file_is,
     numeric_version,
     pixi_lock_decision,
+    require_known_locks,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,11 +76,28 @@ def _conda(paths: list[str]) -> bytes:
     return buffer.getvalue()
 
 
-def _index(versions: list[str], subdir: str = "linux-64") -> bytes:
-    """Build a channel index record in the shape the public index serves."""
-    return json.dumps(
-        {"files": [{"version": version, "attrs": {"subdir": subdir}} for version in versions]}
-    ).encode()
+ARTEFACT = "https://conda.anaconda.org/channel/linux-64/tool-1.0-h0_0.conda"
+NO_FIX = (
+    'package = "tool"\nversion = "1.0"\nadvisory = "{}"\nreason = "no_fixed_version_in_channel"\n'
+)
+ABSENT = (
+    'package = "tool"\nversion = "1.0"\nadvisory = "{}"\nreason = "component_not_in_package"\n'
+    'component = "reader"\nabsent = ["*reader*"]\n'
+)
+
+
+def _index(files: list[tuple[str, int, str]], subdir: str = "linux-64") -> bytes:
+    """Build a channel index record from version, build number and digest per file."""
+    rows = [
+        {
+            "version": version,
+            "basename": f"{subdir}/tool-{version}-h0_{number}.conda",
+            "sha256": digest,
+            "attrs": {"subdir": subdir, "build_number": number},
+        }
+        for version, number, digest in files
+    ]
+    return json.dumps({"files": rows}).encode()
 
 
 def _table(extra: str) -> bytes:
@@ -87,33 +106,29 @@ def _table(extra: str) -> bytes:
 
 
 def test_the_committed_record_names_real_locked_artefacts() -> None:
-    """Every committed exception binds one artefact of the lock it names."""
+    """Every committed exception binds one artefact of a lock the audit reads."""
     exceptions = load_exceptions((ROOT / EXCEPTION_FILE).read_bytes())
     assert exceptions
+    require_known_locks(exceptions, {LOCK})
     for item in exceptions:
         packages = yaml.safe_load((ROOT / item.lock).read_bytes())["packages"]
         address, digest = locked_conda_artefact(packages, item.package, item.version)
-        assert address.startswith("https://") and len(digest) == 64
-        assert item.ecosystem == "pixi" and item.recorded and item.source.startswith("https://")
+        assert locked_channel(address)[:2] == ("conda-forge", "linux-64") and len(digest) == 64
+        assert item.recorded and item.source.startswith("https://")
 
 
 @pytest.mark.parametrize(
     "extra",
     [
         'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\nreason = "trust_me"\n',
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\nreason = "no_fixed_version_in_channel"\n',
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\nreason = "no_fixed_version_in_channel"\n'
-        'channel = "c"\nsubdir = "linux-64"\nseverity = "low"\n',
-        'package = "*"\nversion = "1.0"\nadvisory = "CVE-1"\nreason = "no_fixed_version_in_channel"\n'
-        'channel = "c"\nsubdir = "linux-64"\n',
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-*"\nreason = "no_fixed_version_in_channel"\n'
-        'channel = "c"\nsubdir = "linux-64"\n',
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\nreason = "component_not_in_package"\n'
-        'component = "x"\nabsent = []\n',
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\nreason = "component_not_in_package"\n'
-        'component = "x"\nabsent = ["*"]\n',
-        'package = "tool"\nversion = ""\nadvisory = "CVE-1"\nreason = "no_fixed_version_in_channel"\n'
-        'channel = "c"\nsubdir = "linux-64"\n',
+        NO_FIX.format("CVE-1") + 'channel = "conda-forge"\n',
+        NO_FIX.format("CVE-1") + 'severity = "low"\n',
+        NO_FIX.format("CVE-1").replace('"tool"', '"*"'),
+        NO_FIX.format("CVE-*"),
+        NO_FIX.format("CVE-1").replace('"1.0"', '""'),
+        ABSENT.format("CVE-1").replace('["*reader*"]', "[]"),
+        ABSENT.format("CVE-1").replace('["*reader*"]', '["*"]'),
+        ABSENT.format("CVE-1").replace('component = "reader"\n', ""),
     ],
 )
 def test_an_underspecified_or_blanket_exception_is_refused(extra: str) -> None:
@@ -128,32 +143,73 @@ def test_an_underspecified_or_blanket_exception_is_refused(extra: str) -> None:
         load_exceptions(_table(extra))
 
 
-def test_a_repeated_exception_and_an_unknown_table_are_refused() -> None:
-    """One finding has one record, and the file holds exception tables only."""
-    once = _table(
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\n'
-        'reason = "no_fixed_version_in_channel"\nchannel = "c"\nsubdir = "linux-64"\n'
-    )
+def test_repeated_foreign_and_unbound_exceptions_are_refused() -> None:
+    """One finding has one record, of the audited ecosystem, for a lock the audit reads."""
+    once = _table(NO_FIX.format("CVE-1"))
     assert len(load_exceptions(once)) == 1
     with pytest.raises(ValueError, match="twice"):
         load_exceptions(once + b"\n" + once)
     with pytest.raises(ValueError, match="top-level"):
         load_exceptions(b'[settings]\nallow = "all"\n')
+    for other in ("PIXI", "uv", "pixi "):
+        with pytest.raises(ValueError):
+            load_exceptions(once.replace(b'ecosystem = "pixi"', f'ecosystem = "{other}"'.encode()))
+    require_known_locks(load_exceptions(once), {LOCK, "other/pixi.lock"})
+    with pytest.raises(ValueError, match="not audited"):
+        require_known_locks(load_exceptions(once), {LOCK + ".old"})
+    require_known_locks((), set())
 
 
-def test_versions_are_ordered_numerically_or_not_at_all() -> None:
-    """A newer channel version ends the exception; an unorderable one cannot be judged."""
+def test_the_channel_is_read_from_the_lock_and_only_a_plain_address_counts() -> None:
+    """Channel and platform come from the locked address; anything else cannot be verified."""
+    assert locked_channel(ARTEFACT) == ("channel", "linux-64", "tool-1.0-h0_0.conda")
+    for address in (
+        ARTEFACT.replace("https://", "http://"),
+        ARTEFACT.replace("conda.anaconda.org", "conda.example"),
+        ARTEFACT + "?x=1",
+        ARTEFACT + "#x",
+        ARTEFACT.replace("/channel/", "/channel/extra/"),
+        ARTEFACT.replace("/channel/", "/../"),
+        ARTEFACT.replace("/channel/", "/chan nel/"),
+        "https://conda.anaconda.org/tool-1.0-h0_0.conda",
+    ):
+        with pytest.raises(ValueError, match="recognised channel"):
+            locked_channel(address)
+
+
+def test_newest_means_newest_version_and_newest_build_of_the_locked_file() -> None:
+    """A newer version, a newer build, a missing file and a foreign digest all end the exception."""
+    name = "linux-64/tool-1.0-h0_0.conda"
+    files = channel_files(_index([("0.9", 0, "x"), ("1.0", 0, "d")]), "linux-64")
+    assert newest_file_is(files, "1.0", name, "d") is True
     assert numeric_version("1.22.10") > numeric_version("1.22.2")
-    assert newest_version_is(("1.21.3", "1.22.2"), "1.22.2") is True
-    assert newest_version_is(("1.22.2", "1.22.3"), "1.22.2") is False
-    assert newest_version_is(("1.22.3",), "1.22.2") is False
+    newer_version = channel_files(_index([("1.0", 0, "d"), ("1.1", 0, "x")]), "linux-64")
+    assert newest_file_is(newer_version, "1.0", name, "d") is False
+    newer_build = channel_files(_index([("1.0", 0, "d"), ("1.0", 1, "x")]), "linux-64")
+    assert newest_file_is(newer_build, "1.0", name, "d") is False
+    assert newest_file_is(newer_build, "1.0", "linux-64/tool-1.0-h0_1.conda", "x") is True
+    assert newest_file_is(files, "1.0", name, "other-digest") is False
+    assert newest_file_is(files, "0.9", name, "d") is False
+    assert newest_file_is(files, "1.0", "linux-64/tool-1.0-h9_0.conda", "d") is False
     with pytest.raises(ValueError):
-        newest_version_is(("1.22.2", "1.23rc1"), "1.22.2")
-    assert channel_versions(_index(["1.0", "1.1"]), "linux-64") == ("1.0", "1.1")
+        newest_file_is(
+            channel_files(_index([("1.0", 0, "d"), ("1.1rc1", 0, "x")]), "linux-64"),
+            "1.0",
+            name,
+            "d",
+        )
     with pytest.raises(ValueError):
-        channel_versions(_index(["1.0"], "osx-64"), "linux-64")
+        channel_files(_index([("1.0", 0, "d")], "osx-64"), "linux-64")
     with pytest.raises(ValueError):
-        channel_versions(b"[]", "linux-64")
+        channel_files(b"[]", "linux-64")
+    for broken in (
+        {"version": 1, "basename": name, "attrs": {"subdir": "linux-64", "build_number": 0}},
+        {"version": "1.0", "attrs": {"subdir": "linux-64", "build_number": 0}},
+        {"version": "1.0", "basename": name, "attrs": {"subdir": "linux-64", "build_number": True}},
+        {"version": "1.0", "basename": name, "attrs": {"subdir": "linux-64", "build_number": "0"}},
+    ):
+        with pytest.raises(ValueError, match="incomplete"):
+            channel_files(json.dumps({"files": [broken, "text"]}).encode(), "linux-64")
 
 
 def test_both_container_formats_yield_their_declared_paths() -> None:
@@ -170,26 +226,24 @@ def test_both_container_formats_yield_their_declared_paths() -> None:
         conda_package_paths("tool-1.0-h0_0.conda", _conda([]))
 
 
-def _case(paths: list[str], versions: list[str]) -> tuple[list[Any], dict[str, bytes], bytes]:
-    """Return a one-package lock, the bodies its checks fetch, and its exception record."""
+def _case(
+    paths: list[str], files: list[tuple[str, int, str]]
+) -> tuple[list[Any], dict[str, bytes], bytes]:
+    """Return a one-package lock, the bodies its checks fetch, and its exception record.
+
+    The digest ``LOCKED`` in a file row is replaced by the digest of the built artefact.
+    """
     artefact = _conda(paths)
-    address = "https://conda.example/channel/linux-64/tool-1.0-h0_0.conda"
-    lock = [{"conda": address, "sha256": hashlib.sha256(artefact).hexdigest()}]
+    digest = hashlib.sha256(artefact).hexdigest()
+    lock = [{"conda": ARTEFACT, "sha256": digest}]
+    listed = [
+        (version, number, digest if mark == "LOCKED" else mark) for version, number, mark in files
+    ]
     bodies = {
-        address: artefact,
-        CHANNEL_INDEX.format(channel="channel", package="tool"): _index(versions),
+        ARTEFACT: artefact,
+        CHANNEL_INDEX.format(channel="channel", package="tool"): _index(listed),
     }
-    record = (
-        _table(
-            'package = "tool"\nversion = "1.0"\nadvisory = "CVE-1"\n'
-            'reason = "no_fixed_version_in_channel"\nchannel = "channel"\nsubdir = "linux-64"\n'
-        )
-        + b"\n"
-        + _table(
-            'package = "tool"\nversion = "1.0"\nadvisory = "CVE-2"\n'
-            'reason = "component_not_in_package"\ncomponent = "reader"\nabsent = ["*reader*"]\n'
-        )
-    )
+    record = _table(NO_FIX.format("CVE-1")) + b"\n" + _table(ABSENT.format("CVE-2"))
     return lock, bodies, record
 
 
@@ -201,24 +255,31 @@ MATCHES = [
 
 def test_a_finding_is_accepted_only_while_its_evidence_holds() -> None:
     """Each reason is re-established from the fetched bodies, and fails when they change."""
-    lock, bodies, record = _case(["bin/tool"], ["0.9", "1.0"])
+    lock, bodies, record = _case(["bin/tool"], [("0.9", 0, "x"), ("1.0", 0, "LOCKED")])
     exceptions = load_exceptions(record)
     held = decide_matches(MATCHES, exceptions, lock, lambda address, limit: bodies[address])
     assert [len(held[key]) for key in ("accepted", "blocked", "unused")] == [2, 0, 0]
+    assert held["accepted"][0]["evidence"]["channel"] == "channel"
+    assert held["accepted"][0]["evidence"]["builds_of_locked_version"] == [0]
     assert held["accepted"][1]["evidence"]["declared_paths"] == 1
 
-    lock, bodies, record = _case(["bin/tool", "bin/reader"], ["0.9", "1.0", "1.1"])
-    changed = decide_matches(
-        MATCHES, load_exceptions(record), lock, lambda address, limit: bodies[address]
-    )
-    assert changed["accepted"] == []
-    assert [row["why"] for row in changed["blocked"]] == ["reason no longer holds"] * 2
-    assert changed["blocked"][1]["evidence"]["present"] == ["bin/reader"]
+    for files in (
+        [("1.0", 0, "LOCKED"), ("1.1", 0, "x")],
+        [("1.0", 0, "LOCKED"), ("1.0", 1, "x")],
+        [("1.0", 0, "another-digest")],
+    ):
+        lock, bodies, record = _case(["bin/tool", "bin/reader"], files)
+        changed = decide_matches(
+            MATCHES, load_exceptions(record), lock, lambda address, limit: bodies[address]
+        )
+        assert changed["accepted"] == []
+        assert [row["why"] for row in changed["blocked"]] == ["reason no longer holds"] * 2
+        assert changed["blocked"][1]["evidence"]["present"] == ["bin/reader"]
 
 
 def test_missing_altered_and_unrecorded_evidence_all_block() -> None:
-    """No record, a failed transfer, a foreign artefact and a malformed match are refusals."""
-    lock, bodies, record = _case(["bin/tool"], ["1.0"])
+    """No record, a failed transfer, a foreign artefact, an absent package and a malformed match."""
+    lock, bodies, record = _case(["bin/tool"], [("1.0", 0, "LOCKED")])
     exceptions = load_exceptions(record)
     unrecorded = decide_matches(
         [{"package": "tool", "version": "1.0", "id": "CVE-9"}, "CVE-1", {"package": "tool"}],
@@ -240,16 +301,29 @@ def test_missing_altered_and_unrecorded_evidence_all_block() -> None:
         row["why"] for row in decide_matches(MATCHES, exceptions, lock, unreachable)["blocked"]
     ] == ["check failed: OSError"] * 2
     foreign = dict(bodies)
-    foreign[lock[0]["conda"]] = _conda(["bin/other"])
+    foreign[ARTEFACT] = _conda(["bin/other"])
     swapped = decide_matches(
         MATCHES[1:], exceptions[1:], lock, lambda address, limit: foreign[address]
     )
     assert swapped["blocked"][0]["why"] == "check failed: ValueError"
+    for packages in (
+        [],
+        [
+            {
+                "conda": ARTEFACT.replace("conda.anaconda.org", "mirror.example"),
+                "sha256": lock[0]["sha256"],
+            }
+        ],
+    ):
+        absent = decide_matches(
+            MATCHES[:1], exceptions[:1], packages, lambda address, limit: bodies[address]
+        )
+        assert absent["blocked"][0]["why"] == "check failed: ValueError"
 
 
 def test_a_lock_passes_only_with_every_match_excepted_and_nothing_else_open() -> None:
     """Unaudited packages, scanner ignores, stale records and a wrong exit status all fail."""
-    lock, bodies, record = _case(["bin/tool"], ["1.0"])
+    lock, bodies, record = _case(["bin/tool"], [("1.0", 0, "LOCKED")])
     exceptions = load_exceptions(record)
     calls: list[str] = []
 
@@ -385,11 +459,8 @@ def test_evidence_is_fetched_over_verified_tls_with_a_size_bound(tmp_path: Path)
 
 def test_two_findings_on_one_package_share_one_download() -> None:
     """Evidence fetched for one finding is reused for the next within a lock decision."""
-    lock, bodies, record = _case(["bin/tool"], ["1.0"])
-    record += b"\n" + _table(
-        'package = "tool"\nversion = "1.0"\nadvisory = "CVE-3"\n'
-        'reason = "no_fixed_version_in_channel"\nchannel = "channel"\nsubdir = "linux-64"\n'
-    )
+    lock, bodies, record = _case(["bin/tool"], [("1.0", 0, "LOCKED")])
+    record += b"\n" + _table(NO_FIX.format("CVE-3"))
     calls: list[str] = []
 
     def fetcher(address: str, limit: int) -> bytes:

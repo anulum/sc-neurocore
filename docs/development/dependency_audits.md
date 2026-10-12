@@ -100,17 +100,24 @@ A Pixi finding can be accepted only through one table of
 version and the advisory, with one of two reasons that the audit re-establishes
 on every run:
 
-- `no_fixed_version_in_channel` — the locked version is the newest one the
-  channel publishes for the platform. The check reads the channel index; any
-  newer version fails it, so a published fix turns the audit red by itself.
+- `no_fixed_version_in_channel` — the locked artefact is the newest version
+  and the newest build its channel publishes for its platform. Channel and
+  platform are read from the lock, not from the table. The check reads the
+  channel index and requires the locked file to be listed there with the
+  lock's digest; a newer version, or a newer build of the same version, fails
+  it, so a published fix turns the audit red by itself.
 - `component_not_in_package` — the advisory concerns a program the locked
   package does not ship. The check downloads the exact locked artefact,
   verifies it against the lock digest and requires that none of its declared
   paths matches the listed patterns.
 
 There is no severity, confidence or reachability filter and no wildcard. A
-finding without a table, a table whose check fails or cannot be completed, and
-a table that matches no finding all fail the audit. Packages the scanner
+finding without a table, a table whose check fails or cannot be completed, a
+table that matches no finding, and a table that names another ecosystem or a
+lock the audit does not read all fail the audit. Whether the listed paths
+describe the affected program is not something a machine can check; it is
+reviewed with each table, and the evidence records how many paths the
+artefact declares. Packages the scanner
 cannot audit are never covered by an exception. Each run writes the accepted
 findings with their evidence to `exceptions.json` in the audit packet: an
 accepted finding is a known, recorded limitation, not an absence of findings.

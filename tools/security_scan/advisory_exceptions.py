@@ -12,9 +12,11 @@ An exception names one package version and one advisory. It carries one of two
 reasons, and the audit re-establishes that reason from live sources each time:
 
 ``no_fixed_version_in_channel``
-    The locked version is the newest one its channel publishes. The check
-    fails as soon as the channel offers any newer version, so a published fix
-    turns the audit red without anyone editing this record.
+    The locked artefact is the newest version and the newest build its own
+    channel publishes for its platform; channel and platform are read from
+    the lock, never from this record. The check fails as soon as the channel
+    offers a newer version or a newer build of the same version, so a
+    published fix turns the audit red without anyone editing this record.
 
 ``component_not_in_package``
     The advisory concerns a program that the locked package does not ship. The
@@ -38,6 +40,7 @@ import http.client
 import io
 import json
 from pathlib import Path
+import re
 import ssl
 import subprocess
 import tarfile
@@ -53,8 +56,11 @@ INDEX_LIMIT = 32 * 1024 * 1024
 ARTEFACT_LIMIT = 64 * 1024 * 1024
 REDIRECT_LIMIT = 5
 _COMMON = {"ecosystem", "lock", "package", "version", "advisory", "reason", "recorded", "source"}
-_BY_REASON = {
-    "no_fixed_version_in_channel": {"channel", "subdir"},
+ECOSYSTEM = "pixi"
+CHANNEL_HOST = "conda.anaconda.org"
+_PLAIN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
+_BY_REASON: dict[str, set[str]] = {
+    "no_fixed_version_in_channel": set(),
     "component_not_in_package": {"component", "absent"},
 }
 
@@ -73,8 +79,6 @@ class AdvisoryException:
     reason: str
     recorded: str
     source: str
-    channel: str = ""
-    subdir: str = ""
     component: str = ""
     absent: tuple[str, ...] = ()
 
@@ -96,8 +100,9 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
     ------
     ValueError
         A table has an unknown or missing key, an empty value, an unknown
-        reason, a wildcard package, version or advisory, an empty or blanket
-        path list, or repeats an earlier lock, package, version and advisory.
+        reason or ecosystem, a wildcard package, version or advisory, an
+        empty or blanket path list, or repeats an earlier lock, package,
+        version and advisory.
     """
     document = tomllib.loads(raw.decode("utf-8"))
     if set(document) - {"exception"} or not isinstance(document.get("exception", []), list):
@@ -114,6 +119,8 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
         texts = [value for key, value in table.items() if key != "absent"]
         if not all(isinstance(value, str) and value.strip() == value and value for value in texts):
             raise ValueError("Advisory exception values must be non-empty text.")
+        if table["ecosystem"] != ECOSYSTEM:
+            raise ValueError("Advisory exceptions exist for the Pixi ecosystem only.")
         if any(
             "*" in table[key] or "?" in table[key] for key in ("package", "version", "advisory")
         ):
@@ -157,8 +164,8 @@ def numeric_version(text: str) -> tuple[int, ...]:
     return tuple(int(part) for part in parts)
 
 
-def channel_versions(raw: bytes, subdir: str) -> tuple[str, ...]:
-    """List the versions a channel publishes for one platform.
+def channel_files(raw: bytes, subdir: str) -> tuple[dict[str, Any], ...]:
+    """List the files a channel publishes for one platform.
 
     Parameters
     ----------
@@ -169,54 +176,119 @@ def channel_versions(raw: bytes, subdir: str) -> tuple[str, ...]:
 
     Returns
     -------
-    tuple of str
-        Distinct versions with at least one file for that platform, sorted.
+    tuple of dict
+        One row per file of that platform, with ``version``, ``basename``,
+        ``build_number`` and ``sha256`` as the index states them.
 
     Raises
     ------
     ValueError
-        The record is not the expected object or lists no file for the platform.
+        The record is not the expected object, lists no file for the
+        platform, or a file of the platform lacks a version, a name or an
+        integer build number.
     """
     payload = json.loads(raw)
     files = payload.get("files") if isinstance(payload, dict) else None
     if not isinstance(files, list):
         raise ValueError("Channel index record has no file list.")
-    versions = {
-        row["version"]
+    rows = [
+        row
         for row in files
         if isinstance(row, dict)
-        and isinstance(row.get("version"), str)
         and isinstance(row.get("attrs"), dict)
         and row["attrs"].get("subdir") == subdir
-    }
-    if not versions:
+    ]
+    if not rows:
         raise ValueError("Channel index lists no file for the platform.")
-    return tuple(sorted(versions))
+    listed: list[dict[str, Any]] = []
+    for row in rows:
+        number = row["attrs"].get("build_number")
+        if (
+            not isinstance(row.get("version"), str)
+            or not isinstance(row.get("basename"), str)
+            or isinstance(number, bool)
+            or not isinstance(number, int)
+        ):
+            raise ValueError("Channel index file record is incomplete.")
+        listed.append(
+            {
+                "version": row["version"],
+                "basename": row["basename"],
+                "build_number": number,
+                "sha256": row.get("sha256"),
+            }
+        )
+    return tuple(listed)
 
 
-def newest_version_is(versions: tuple[str, ...], locked: str) -> bool:
-    """Tell whether the locked version is published and nothing newer is.
+def newest_file_is(
+    files: tuple[dict[str, Any], ...], version: str, basename: str, digest: str
+) -> bool:
+    """Tell whether the locked file is the newest version and the newest build.
 
     Parameters
     ----------
-    versions : tuple of str
-        Versions the channel publishes for the platform.
-    locked : str
+    files : tuple of dict
+        Files the channel publishes for the platform.
+    version : str
         Version recorded in the lock.
+    basename : str
+        Platform directory and file name of the locked artefact.
+    digest : str
+        SHA-256 the lock records for that artefact.
 
     Returns
     -------
     bool
-        True only if the locked version is listed and is the greatest.
+        True only if the index lists the locked file with the lock's digest,
+        no listed version is greater than the locked one, and no file of the
+        locked version has a greater build number than the locked file.
 
     Raises
     ------
     ValueError
         A listed version cannot be ordered numerically.
     """
-    if locked not in versions:
+    locked = [row for row in files if row["basename"] == basename]
+    if len(locked) != 1 or locked[0]["version"] != version or locked[0]["sha256"] != digest:
         return False
-    return max(numeric_version(version) for version in versions) == numeric_version(locked)
+    if max(numeric_version(row["version"]) for row in files) != numeric_version(version):
+        return False
+    builds = [row["build_number"] for row in files if row["version"] == version]
+    return bool(max(builds) == locked[0]["build_number"])
+
+
+def locked_channel(address: str) -> tuple[str, str, str]:
+    """Read channel, platform and file name from the address a lock installs from.
+
+    Parameters
+    ----------
+    address : str
+        Download address of a locked conda artefact.
+
+    Returns
+    -------
+    tuple of str
+        Channel, platform directory and file name.
+
+    Raises
+    ------
+    ValueError
+        The address is not ``https://conda.anaconda.org/<channel>/<platform>/<file>``
+        with plain names; an exception cannot be verified for any other source.
+    """
+    parts = urllib.parse.urlsplit(address)
+    segments = parts.path.strip("/").split("/")
+    if (
+        parts.scheme != "https"
+        or parts.hostname != CHANNEL_HOST
+        or parts.query
+        or parts.fragment
+        or len(segments) != 3
+        or not all(_PLAIN.fullmatch(segment) for segment in segments)
+    ):
+        raise ValueError("Locked artefact does not come from a recognised channel address.")
+    return segments[0], segments[1], segments[2]
 
 
 def conda_package_paths(name: str, artefact: bytes) -> tuple[str, ...]:
@@ -382,7 +454,8 @@ def verify_exception(
     -------
     dict
         ``holds`` and the evidence it rests on: for a channel check the
-        address, body digest and versions seen; for a content check the
+        channel and platform read from the lock, the index address, its body
+        digest, the versions seen and the build numbers of the locked version; for a content check the
         artefact address, its digest, the number of declared paths and the
         paths that matched. Nothing here is a judgement of severity.
 
@@ -392,17 +465,24 @@ def verify_exception(
         Evidence is unavailable, oversized, unverifiable or malformed. The
         caller treats every such error as an exception that does not hold.
     """
-    if exception.reason == "no_fixed_version_in_channel":
-        address = CHANNEL_INDEX.format(channel=exception.channel, package=exception.package)
-        raw = fetcher(address, INDEX_LIMIT)
-        versions = channel_versions(raw, exception.subdir)
-        return {
-            "holds": newest_version_is(versions, exception.version),
-            "index": address,
-            "index_sha256": hashlib.sha256(raw).hexdigest(),
-            "newest_versions": list(versions[-5:]),
-        }
     address, digest = locked_conda_artefact(lock_packages, exception.package, exception.version)
+    if exception.reason == "no_fixed_version_in_channel":
+        channel, subdir, name = locked_channel(address)
+        index = CHANNEL_INDEX.format(channel=channel, package=exception.package)
+        raw = fetcher(index, INDEX_LIMIT)
+        files = channel_files(raw, subdir)
+        versions = sorted({row["version"] for row in files}, key=numeric_version)
+        return {
+            "holds": newest_file_is(files, exception.version, f"{subdir}/{name}", digest),
+            "channel": channel,
+            "platform": subdir,
+            "index": index,
+            "index_sha256": hashlib.sha256(raw).hexdigest(),
+            "newest_versions": versions[-5:],
+            "builds_of_locked_version": sorted(
+                row["build_number"] for row in files if row["version"] == exception.version
+            ),
+        }
     artefact = fetcher(address, ARTEFACT_LIMIT)
     if hashlib.sha256(artefact).hexdigest() != digest:
         raise ValueError("Downloaded artefact does not match the lock digest.")
@@ -531,3 +611,23 @@ def pixi_lock_decision(
         and returncode == (1 if matches else 0)
     )
     return decision
+
+
+def require_known_locks(exceptions: tuple[AdvisoryException, ...], audited: set[str]) -> None:
+    """Refuse an exception record that names a lock the audit does not read.
+
+    Parameters
+    ----------
+    exceptions : tuple of AdvisoryException
+        Every recorded exception.
+    audited : set of str
+        Repository paths of the committed locks of the ecosystem.
+
+    Raises
+    ------
+    ValueError
+        A table names a lock that is not among them. Such a table would
+        never be compared with a finding and so could never become unused.
+    """
+    if any(item.lock not in audited for item in exceptions):
+        raise ValueError("Advisory exception names a lock that is not audited.")

@@ -27,6 +27,7 @@ from tools.security_scan.advisory_exceptions import (
     fetch,
     load_exceptions,
     pixi_lock_decision,
+    require_known_locks,
 )
 from tools.security_scan.locked_dependency_inventory import (
     cargo_audit_configuration,
@@ -176,13 +177,12 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
     if not isinstance(payload, dict):
         raise ValueError("Pixi audit report is invalid.")
     exceptions_raw = (repo_root / EXCEPTION_FILE).read_bytes()
+    exceptions = load_exceptions(exceptions_raw)
+    require_known_locks(
+        exceptions, {item.path for item in inventory_locks(repo_root) if item.ecosystem == "pixi"}
+    )
     decision = pixi_lock_decision(
-        payload,
-        rc,
-        relative,
-        yaml.safe_load(lock.read_bytes())["packages"],
-        load_exceptions(exceptions_raw),
-        fetch,
+        payload, rc, relative, yaml.safe_load(lock.read_bytes())["packages"], exceptions, fetch
     )
     decision["exception_file_sha256"] = hashlib.sha256(exceptions_raw).hexdigest()
     (directory / "exceptions.json").write_text(

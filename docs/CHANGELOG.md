@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Advisory exceptions are bound to the lock: channel and platform come from
+  the locked artefact's address, a newer build of the locked version ends an
+  exception, and a table for another ecosystem or an unread lock fails.
+
 - A test binds the version in `.zenodo.json` and `CITATION.cff` to the package
   and engine versions. Releases 3.13.4 to 3.16.0 were archived under the stale
   label 3.13.3 because nothing checked it.
