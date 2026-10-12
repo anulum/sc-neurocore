@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Report full-suite coverage for the repository source tree only. Wheel copies
+  that distribution tests run from temporary directories no longer abort the
+  final report; the 100 % threshold and the measured sources are unchanged.
+
 - Update the pinned Pixi advisory scanner to 0.2.0 and validate its renamed
   report fields. Continue refusing every advisory match, ignored rule,
   unaudited package and incomplete or inconsistent response.

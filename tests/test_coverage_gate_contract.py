@@ -34,6 +34,19 @@ def test_python_coverage_threshold_is_exact_closure() -> None:
     assert data["tool"]["coverage"]["report"]["fail_under"] == 100
 
 
+def test_python_coverage_reports_repository_source_only() -> None:
+    """Extracted wheel copies measured in child interpreters are not part of the gate.
+
+    The copies are recorded under temporary paths by package name. Reporting them
+    fails once their directory is gone, and their lines are not repository source.
+    """
+    data = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert data["tool"]["coverage"]["run"]["source"] == ["sc_neurocore"]
+    assert data["tool"]["coverage"]["report"]["include"] == ["src/sc_neurocore/*"]
+    assert "omit" not in data["tool"]["coverage"]["report"]
+    assert "ignore_errors" not in data["tool"]["coverage"]["report"]
+
+
 def test_python_coverage_keeps_isolated_workers_and_watchdog_exits() -> None:
     """Native Python workers and immediate watchdog exits retain process-specific data."""
     data = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))

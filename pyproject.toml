@@ -286,6 +286,11 @@ omit = [
 
 [tool.coverage.report]
 fail_under = 100  # Exact retained aggregate: 65,373/65,373 statements at tip 2e6118ba5.
+# Report the repository source tree only. Distribution acceptance tests import an
+# extracted wheel copy of the package from a temporary directory. Subprocess
+# measurement records those copies by package name; they are not repository source
+# and no longer exist when the full-suite union is reported.
+include = ["src/sc_neurocore/*"]
 exclude_lines = [
     "pragma: no cover",
     "if __name__",
