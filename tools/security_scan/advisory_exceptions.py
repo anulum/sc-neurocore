@@ -30,9 +30,14 @@ each time:
     from, so the audit reads the vendor's records itself. The check requires
     that the vendor channel still lists the locked file with the lock digest,
     that the vulnerability records bound to the vendor's product identifiers
-    are exactly the reviewed ones, and that none of them names a package of
-    the lock as its product. A new vendor record turns the audit red until it
-    is reviewed. Records that carry no product identifier yet are not seen.
+    are exactly the reviewed ones, each with exactly the products it named
+    when it was reviewed, and that none of them names a package of the lock
+    as its product. Which vendor identifiers belong to a channel is fixed in
+    this module (:data:`VENDOR_IDENTIFIERS`), keyed by the host and channel
+    read from the lock; a table cannot choose them, and a package from a
+    channel without an entry cannot be excepted. A new vendor record, or a
+    reviewed record whose product list changed, turns the audit red until it
+    is read again. Records that carry no product identifier yet are not seen.
 
 There is no severity, confidence or reachability filter, no wildcard and no
 expiry by date: an exception lives exactly as long as its evidence does. An
@@ -55,6 +60,7 @@ import re
 import ssl
 import subprocess
 import tarfile
+import time
 import tomllib
 from typing import Any
 import urllib.parse
@@ -74,13 +80,30 @@ _COMMON = {"ecosystem", "lock", "package", "version", "reason", "recorded", "sou
 ECOSYSTEM = "pixi"
 CHANNEL_HOST = "conda.anaconda.org"
 _PLAIN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
-_VENDOR = re.compile(r"[a-z0-9][a-z0-9_]*")
+VENDOR_IDENTIFIERS: dict[tuple[str, str], tuple[str, ...]] = {
+    ("conda.modular.com", "max"): ("modular",),
+}
+"""Vendor parts of product identifiers, per channel host and channel name.
+
+The vulnerability database files a vendor's records under these strings. The
+mapping is the one reviewed place that says whose records speak for a channel;
+a second spelling of a vendor is added here, with its test.
+"""
+RETRY_PAUSES = (2.0, 6.0)
+"""Seconds to wait before the second and the third attempt at a busy source."""
+_BUSY = frozenset({403, 408, 429, 500, 502, 503, 504})
 _RECORD = re.compile(r"CVE-[0-9]{4}-[0-9]{4,}")
+_PRODUCT = re.compile(r"\S+")
 _BY_REASON: dict[str, set[str]] = {
     "no_fixed_version_in_channel": {"advisory"},
     "component_not_in_package": {"advisory", "component", "absent"},
-    "vendor_records_reviewed": {"vendor", "reviewed"},
+    "vendor_records_reviewed": {"reviewed"},
 }
+
+
+class EvidenceUnavailable(OSError):
+    """A source of exception evidence did not answer; the reason is neither held nor refuted."""
+
 
 Fetch = Callable[[str, int], bytes]
 
@@ -89,9 +112,9 @@ Fetch = Callable[[str, int], bytes]
 class AdvisoryException:
     """One reviewed exception for one locked package version.
 
-    A finding exception names its ``advisory``. A coverage exception names the
-    ``vendor`` whose records the audit reads and the records already
-    ``reviewed``; it has no advisory.
+    A finding exception names its ``advisory``. A coverage exception lists the
+    vendor records already ``reviewed``, each with the products it named at
+    review; it has no advisory.
     """
 
     ecosystem: str
@@ -104,8 +127,7 @@ class AdvisoryException:
     advisory: str = ""
     component: str = ""
     absent: tuple[str, ...] = ()
-    vendor: str = ""
-    reviewed: tuple[str, ...] = ()
+    reviewed: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
 
 def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
@@ -126,9 +148,9 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
     ValueError
         A table has an unknown or missing key, an empty value, an unknown
         reason or ecosystem, a wildcard package, version or advisory, an
-        empty or blanket path list, a vendor that is not a plain identifier,
-        a reviewed list that is not a list of distinct record names, or
-        repeats an earlier lock, package, version and advisory.
+        empty or blanket path list, a reviewed list that is not a list of
+        distinct records each with its distinct products, or repeats an
+        earlier lock, package, version and advisory.
     """
     document = tomllib.loads(raw.decode("utf-8"))
     if set(document) - {"exception"} or not isinstance(document.get("exception", []), list):
@@ -159,13 +181,8 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
             or not all(isinstance(item, str) and item.strip("*/? ") for item in absent)
         ):
             raise ValueError("Advisory exception needs concrete absent paths.")
-        if reason == COVERAGE_REASON and (
-            not _VENDOR.fullmatch(table["vendor"])
-            or not isinstance(reviewed, list)
-            or not all(isinstance(item, str) and _RECORD.fullmatch(item) for item in reviewed)
-            or len(set(reviewed)) != len(reviewed)
-        ):
-            raise ValueError("Advisory exception needs a plain vendor and distinct record names.")
+        if reason == COVERAGE_REASON:
+            reviewed = reviewed_records(reviewed)
         identity = (table["lock"], table["package"], table["version"], advisory)
         if identity in seen:
             raise ValueError("Advisory exception is recorded twice.")
@@ -174,6 +191,75 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
             AdvisoryException(**{**table, "absent": tuple(absent), "reviewed": tuple(reviewed)})
         )
     return tuple(exceptions)
+
+
+def reviewed_records(rows: object) -> list[tuple[str, tuple[str, ...]]]:
+    """Read the reviewed vendor records of one coverage exception.
+
+    Parameters
+    ----------
+    rows : object
+        Value of the ``reviewed`` key: a list of tables, each with ``record``
+        and ``products``.
+
+    Returns
+    -------
+    list of tuple
+        Record name and its sorted products, in table order.
+
+    Raises
+    ------
+    ValueError
+        The value is not a list of such tables, a record name is not a
+        database record name or repeats, or a product list is empty, repeats
+        a product or holds anything but plain words.
+    """
+    if not isinstance(rows, list):
+        raise ValueError("Reviewed vendor records must be a list of tables.")
+    records: list[tuple[str, tuple[str, ...]]] = []
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {"record", "products"}:
+            raise ValueError("A reviewed vendor record needs a record name and its products.")
+        name, products = row["record"], row["products"]
+        if (
+            not isinstance(name, str)
+            or not _RECORD.fullmatch(name)
+            or name in {seen for seen, _ in records}
+            or not isinstance(products, list)
+            or not products
+            or not all(isinstance(item, str) and _PRODUCT.fullmatch(item) for item in products)
+            or len(set(products)) != len(products)
+        ):
+            raise ValueError("A reviewed vendor record is not distinct and fully specified.")
+        records.append((name, tuple(sorted(products))))
+    return records
+
+
+def channel_vendors(address: str) -> tuple[str, ...]:
+    """Read the vendor identifiers that speak for the channel of a locked address.
+
+    Parameters
+    ----------
+    address : str
+        Download address of a locked conda artefact.
+
+    Returns
+    -------
+    tuple of str
+        Vendor parts of the product identifiers recorded for that channel.
+
+    Raises
+    ------
+    ValueError
+        The channel host and name have no entry in :data:`VENDOR_IDENTIFIERS`;
+        a package from such a channel cannot be excepted by vendor records.
+    """
+    parts = urllib.parse.urlsplit(address)
+    channel = parts.path.strip("/").split("/")[0]
+    vendors = VENDOR_IDENTIFIERS.get((parts.hostname or "", channel))
+    if not vendors:
+        raise ValueError("No vendor identifiers are recorded for the channel of the artefact.")
+    return vendors
 
 
 def numeric_version(text: str) -> tuple[int, ...]:
@@ -561,7 +647,7 @@ def locked_conda_artefact(lock_packages: list[Any], package: str, version: str) 
 
 
 def fetch(address: str, limit: int, context: ssl.SSLContext | None = None) -> bytes:
-    """Download one body over verified TLS with a size bound.
+    """Download one body over verified TLS with a size bound and a bounded retry.
 
     Parameters
     ----------
@@ -579,12 +665,27 @@ def fetch(address: str, limit: int, context: ssl.SSLContext | None = None) -> by
 
     Raises
     ------
+    EvidenceUnavailable
+        The source refused the connection, timed out or answered that it is
+        busy on every attempt. This says nothing about the reason itself.
     ValueError, OSError
-        An address on the way is not HTTPS, the transfer fails, the source
-        redirects too often or answers without the body, or the body exceeds
-        the limit.
+        An address on the way is not HTTPS, the certificate is not trusted,
+        the source redirects too often or answers without the body, or the
+        body exceeds the limit. None of these is retried.
     """
     trust = context or ssl.create_default_context()
+    pauses = list(RETRY_PAUSES)
+    while True:
+        try:
+            return _fetch_once(address, limit, trust)
+        except (ConnectionError, TimeoutError) as exc:
+            if not pauses:
+                raise EvidenceUnavailable("Exception evidence source did not answer.") from exc
+            time.sleep(pauses.pop(0))
+
+
+def _fetch_once(address: str, limit: int, trust: ssl.SSLContext) -> bytes:
+    """Make one attempt; a busy source raises ConnectionError so the caller may retry."""
     for _ in range(REDIRECT_LIMIT + 1):
         parts = urllib.parse.urlsplit(address)
         if parts.scheme != "https" or not parts.hostname:
@@ -599,6 +700,8 @@ def fetch(address: str, limit: int, context: ssl.SSLContext | None = None) -> by
             if response.status in (301, 302, 303, 307, 308):
                 address = urllib.parse.urljoin(address, response.getheader("Location") or "")
                 continue
+            if response.status in _BUSY:
+                raise ConnectionError("Exception evidence source is busy.")
             if response.status != 200:
                 raise ValueError("Exception evidence source did not return the body.")
             body = response.read(limit + 1)
@@ -633,8 +736,9 @@ def verify_exception(
         version; for a content check the artefact address, its digest, the
         number of declared paths and the paths that matched; for a vendor
         check both addresses and body digests, the digest the vendor lists,
-        the vendor's records with their products, and the records that are
-        unreviewed, withdrawn or name a locked package. Nothing here is a
+        the vendor identifiers of the channel, the vendor's records with
+        their products, and the records that are unreviewed, withdrawn,
+        changed since review or name a locked package. Nothing here is a
         judgement of severity.
 
     Raises
@@ -648,24 +752,35 @@ def verify_exception(
         index, name = locked_index(address)
         listing = fetcher(index, INDEX_LIMIT)
         listed = listed_digest(listing, name)
-        source = VENDOR_RECORDS.format(vendor=exception.vendor)
-        answer = fetcher(source, INDEX_LIMIT)
-        records = vendor_records(answer, exception.vendor)
+        vendors = channel_vendors(address)
+        records: dict[str, tuple[str, ...]] = {}
+        sources: dict[str, str] = {}
+        for vendor in vendors:
+            source = VENDOR_RECORDS.format(vendor=vendor)
+            answer = fetcher(source, INDEX_LIMIT)
+            sources[source] = hashlib.sha256(answer).hexdigest()
+            for name, products in vendor_records(answer, vendor).items():
+                records[name] = tuple(sorted({*records.get(name, ()), *products}))
+        expected = dict(exception.reviewed)
         names = locked_names(lock_packages)
         naming = sorted(name for name, products in records.items() if names & set(products))
-        unreviewed = sorted(set(records) - set(exception.reviewed))
-        withdrawn = sorted(set(exception.reviewed) - set(records))
+        unreviewed = sorted(set(records) - set(expected))
+        withdrawn = sorted(set(expected) - set(records))
+        changed = sorted(
+            name for name in records if name in expected and records[name] != expected[name]
+        )
         return {
-            "holds": listed == digest and not naming and not unreviewed and not withdrawn,
+            "holds": listed == digest and not (naming or unreviewed or withdrawn or changed),
             "index": index,
             "index_sha256": hashlib.sha256(listing).hexdigest(),
             "listed_sha256": listed,
-            "records": source,
-            "records_sha256": hashlib.sha256(answer).hexdigest(),
+            "vendors": list(vendors),
+            "records_sha256": sources,
             "vendor_records": {name: list(products) for name, products in records.items()},
             "naming_a_locked_package": naming,
             "unreviewed": unreviewed,
             "withdrawn": withdrawn,
+            "changed_since_review": changed,
         }
     if exception.reason == "no_fixed_version_in_channel":
         channel, subdir, name = locked_channel(address)
@@ -731,7 +846,9 @@ def decide_matches(
         ``unused`` (exceptions that matched no finding). The lock is
         acceptable only when ``blocked`` and ``unused`` are both empty.
         A match without an exception, a malformed match and an exception
-        whose check fails or errors are all blocked.
+        whose check fails or errors are all blocked. A source that did not
+        answer blocks with the reason ``source unavailable``, apart from a
+        reason that no longer holds.
     """
     by_identity = {(item.package, item.version, item.advisory): item for item in exceptions}
     used: set[tuple[str, str, str]] = set()
@@ -754,6 +871,10 @@ def decide_matches(
         used.add(identity)
         try:
             evidence = verify_exception(exception, lock_packages, fetcher)
+        except EvidenceUnavailable:
+            # An outage is not a changed reason: say so, and still block.
+            blocked.append({"match": list(identity), "why": "source unavailable"})
+            continue
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
             blocked.append({"match": list(identity), "why": f"check failed: {type(exc).__name__}"})
             continue

@@ -123,6 +123,9 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
     # Scanner ignores are never excepted; an unaudited package is decided row by row.
     assert '("ignored", "unused_ignores")' in exception_source
     assert 'decide_matches(payload["not_audited"], coverage' in exception_source
+    # Whose records speak for a channel is one constant in code, never a table key.
+    assert '("conda.modular.com", "max"): ("modular",)' in exception_source
+    assert '"vendor_records_reviewed": {"reviewed"}' in exception_source
     exception_names = {
         node.id for node in ast.walk(ast.parse(exception_source)) if isinstance(node, ast.Name)
     } | {

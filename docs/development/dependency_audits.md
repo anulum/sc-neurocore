@@ -38,8 +38,8 @@ versions.
 
 Julia 1.13 writes format 2.1 manifests with registry metadata. Both supported
 formats retain every dependency entry; path, Git and unversioned dependencies
-remain refused. The native manifest regression resolves the maintained FFTW
-project with the installed Julia 1.13 runtime and compares every generated
+remain refused. The native manifest regression resolves the project of the
+maintained network lane with the installed Julia 1.13 runtime and compares every generated
 package/version identity with the audit queries.
 
 The Julia network lane depends on the `FFTW_jll` binary and calls it directly.
@@ -123,10 +123,14 @@ advisory and the third reason:
   channel, so the audit reads the vendor's records itself. The check reads
   the platform index beside the locked file and requires the file to be
   listed with the lock's digest. It then asks the National Vulnerability
-  Database for every record bound to a product identifier of the named
-  vendor. The records must be exactly those listed as reviewed, and none may
-  name a package of the lock as its product. A new record, a withdrawn
-  record and a withdrawn file all fail the check.
+  Database for every record bound to a product identifier of the channel's
+  vendor. The vendor identifiers of a channel are a constant of the audit
+  code, keyed by the host and channel read from the lock; a table cannot name
+  them, and a package from a channel without an entry cannot be excepted.
+  The records must be exactly those listed as reviewed, each with exactly
+  the products it named at review, and none may name a package of the lock
+  as its product. A new record, a withdrawn record, a record whose product
+  list changed and a withdrawn file all fail the check.
 
 There is no severity, confidence or reachability filter and no wildcard. A
 finding without a table, a table whose check fails or cannot be completed, a
@@ -138,7 +142,11 @@ artefact declares. The vendor check has two limits of the same kind. It sees
 only records that already carry a product identifier, and the database
 assigns those some time after publication. Whether a reviewed record that
 names another product of the vendor also affects a locked package is reviewed
-with the table. Each run writes the accepted findings and packages with their
+with the table; fixing the products of each reviewed record makes the audit
+ask for that reading again when the database revises a record. A source that
+is busy or unreachable is asked three times; the lock is then blocked with
+the reason `source unavailable`, which is distinct from a reason that no
+longer holds. Each run writes the accepted findings and packages with their
 evidence to `exceptions.json` in the audit packet: an accepted finding is a
 known, recorded limitation, not an absence of findings, and a package accepted
 by its vendor records has not been audited by the scanner.

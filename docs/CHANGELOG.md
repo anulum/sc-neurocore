@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Vendor-record exceptions are bound more tightly after an outside review.
+  The vendor identifiers of a channel are a constant of the audit code keyed
+  by the host and channel read from the lock, so a table can no longer choose
+  whose records are read, and a package from a channel without an entry is
+  never excepted. Each reviewed record carries the products it named at
+  review; a changed product list fails the check. A busy source is asked
+  three times and then blocks with `source unavailable`.
+
 - The Julia SC Compte network lane depends on the `FFTW_jll` transform binary
   alone and calls it through the C interface. The 1,000-step state digests of
   the lane are unchanged. Its lock falls from 42 to 10 packages and no longer

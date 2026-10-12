@@ -27,11 +27,15 @@ import zipfile
 import pytest
 import yaml
 
+from tools.security_scan import advisory_exceptions
 from tools.security_scan.advisory_exceptions import (
     CHANNEL_INDEX,
     EXCEPTION_FILE,
+    VENDOR_IDENTIFIERS,
     VENDOR_RECORDS,
+    EvidenceUnavailable,
     channel_files,
+    channel_vendors,
     conda_package_paths,
     decide_matches,
     fetch,
@@ -89,11 +93,12 @@ ABSENT = (
     'package = "tool"\nversion = "1.0"\nadvisory = "{}"\nreason = "component_not_in_package"\n'
     'component = "reader"\nabsent = ["*reader*"]\n'
 )
-VENDOR_ARTEFACT = "https://packages.example/max/linux-64/kit-2.0-release.conda"
-VENDOR_INDEX = "https://packages.example/max/linux-64/repodata.json"
+VENDOR_ARTEFACT = "https://conda.modular.com/max/linux-64/kit-2.0-release.conda"
+VENDOR_INDEX = "https://conda.modular.com/max/linux-64/repodata.json"
+ENTRY = '{ record = "CVE-2025-1000", products = ["server"] }'
 REVIEWED = (
     'package = "kit"\nversion = "2.0"\nreason = "vendor_records_reviewed"\n'
-    'vendor = "maker"\nreviewed = ["CVE-2025-1000"]\n'
+    "reviewed = [" + ENTRY + "]\n"
 )
 
 
@@ -127,10 +132,11 @@ def test_the_committed_record_names_real_locked_artefacts() -> None:
         assert len(digest) == 64
         if item.reason == "vendor_records_reviewed":
             assert locked_index(address)[0].startswith("https://conda.modular.com/max/")
-            assert item.vendor == "modular" and item.advisory == ""
+            assert channel_vendors(address) == ("modular",) and item.advisory == ""
+            assert item.reviewed == (("CVE-2025-60455", ("max",)),)
         else:
             assert locked_channel(address)[:2] == ("conda-forge", "linux-64")
-            assert item.advisory and not item.vendor and not item.reviewed
+            assert item.advisory and not item.reviewed
         assert item.recorded and item.source.startswith("https://")
 
 
@@ -148,10 +154,17 @@ def test_the_committed_record_names_real_locked_artefacts() -> None:
         ABSENT.format("CVE-1").replace('component = "reader"\n', ""),
         NO_FIX.format("CVE-1").replace('advisory = "CVE-1"\n', ""),
         REVIEWED + 'advisory = "CVE-2025-1000"\n',
-        REVIEWED.replace('"maker"', '"Maker Inc"'),
-        REVIEWED.replace('["CVE-2025-1000"]', '["CVE-2025-1000", "CVE-2025-1000"]'),
-        REVIEWED.replace('["CVE-2025-1000"]', '["any record"]'),
-        REVIEWED.replace('["CVE-2025-1000"]', '"CVE-2025-1000"'),
+        REVIEWED + 'vendor = "modular"\n',
+        REVIEWED.replace(ENTRY, ENTRY + ", " + ENTRY),
+        REVIEWED.replace(ENTRY, '"CVE-2025-1000"'),
+        REVIEWED.replace("[" + ENTRY + "]", ENTRY),
+        REVIEWED.replace('"CVE-2025-1000"', '"any record"'),
+        REVIEWED.replace('"CVE-2025-1000"', "7"),
+        REVIEWED.replace('["server"]', "[]"),
+        REVIEWED.replace('["server"]', '"server"'),
+        REVIEWED.replace('["server"]', '["server", "server"]'),
+        REVIEWED.replace('["server"]', '["two words"]'),
+        REVIEWED.replace('products = ["server"]', 'products = ["server"], note = "fine"'),
         REVIEWED.replace('"kit"', '"k?t"'),
     ],
 )
@@ -406,14 +419,23 @@ def test_malformed_containers_and_ambiguous_locks_are_refused() -> None:
             locked_conda_artefact(packages, "tool", "1.0")
 
 
-def test_evidence_is_fetched_over_verified_tls_with_a_size_bound(tmp_path: Path) -> None:
+def test_evidence_is_fetched_over_verified_tls_with_a_size_bound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A real TLS server is trusted only through its certificate, and only up to the limit.
+
+    A busy source is asked three times and then reported as unavailable, which
+    is a different outcome from an answer without the body.
 
     Parameters
     ----------
     tmp_path : Path
         Directory for the server's certificate and key.
+    monkeypatch : pytest.MonkeyPatch
+        Sets the pauses between attempts to zero for the duration of the test.
     """
+    monkeypatch.setattr(advisory_exceptions, "RETRY_PAUSES", (0.0, 0.0))
+    asked: dict[str, int] = {}
     openssl = shutil.which("openssl")
     assert openssl is not None, "The TLS transport test needs the openssl program."
     certificate, key = tmp_path / "server.pem", tmp_path / "server.key"
@@ -433,7 +455,12 @@ def test_evidence_is_fetched_over_verified_tls_with_a_size_bound(tmp_path: Path)
         def do_GET(self) -> None:  # noqa: N802 - name fixed by the standard library
             """Answer by path: the body, a redirect to it, a loop, or a plain-HTTP target."""
             targets = {"/moved": "/body.bin?x=1", "/loop": "/loop", "/plain": "http://localhost/a"}
-            if self.path.startswith("/body.bin"):
+            asked[self.path] = asked.get(self.path, 0) + 1
+            if self.path == "/busy" or (self.path == "/recovering" and asked[self.path] < 3):
+                self.send_response(503)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+            elif self.path.startswith("/body.bin") or self.path == "/recovering":
                 self.send_response(200)
                 self.send_header("Content-Length", str(len(evidence)))
                 self.end_headers()
@@ -471,8 +498,15 @@ def test_evidence_is_fetched_over_verified_tls_with_a_size_bound(tmp_path: Path)
             fetch(base + "/plain", 1024, trusting)
         with pytest.raises(ValueError, match="did not return"):
             fetch(base + "/absent", 1024, trusting)
-        with pytest.raises(OSError):
+        assert asked["/absent"] == 1, "an answer without the body is not asked for again"
+        assert fetch(base + "/recovering", 1024, trusting) == evidence
+        assert asked["/recovering"] == 3
+        with pytest.raises(EvidenceUnavailable):
+            fetch(base + "/busy", 1024, trusting)
+        assert asked["/busy"] == 3
+        with pytest.raises(OSError) as untrusted:
             fetch(base + "/body.bin", 1024)
+        assert not isinstance(untrusted.value, EvidenceUnavailable)
         with pytest.raises(ValueError, match="HTTPS only"):
             fetch(base.replace("https://", "http://") + "/body.bin", 1024, trusting)
     finally:
@@ -530,12 +564,12 @@ def _vendor_case(
     index = {"packages": {}, "packages.conda": {"kit-2.0-release.conda": table}}
     bodies = {
         VENDOR_INDEX: json.dumps(index).encode(),
-        VENDOR_RECORDS.format(vendor="maker"): _records(rows),
+        VENDOR_RECORDS.format(vendor="modular"): _records(rows),
     }
     return lock, bodies
 
 
-OTHER_PRODUCT = {"CVE-2025-1000": ["cpe:2.3:a:maker:server:*:*:*:*:*:*:*:*"]}
+OTHER_PRODUCT = {"CVE-2025-1000": ["cpe:2.3:a:modular:server:*:*:*:*:*:*:*:*"]}
 UNAUDITED = [{"package": "kit", "version": "2.0", "ecosystem": "max", "environments": ["default"]}]
 
 
@@ -546,7 +580,7 @@ def test_the_vendor_index_and_the_vendor_records_are_read_as_they_are() -> None:
         VENDOR_ARTEFACT.replace("https://", "http://"),
         VENDOR_ARTEFACT + "?token=1",
         VENDOR_ARTEFACT + "#part",
-        "https://packages.example/linux-64/kit-2.0-release.conda",
+        "https://conda.modular.com/linux-64/kit-2.0-release.conda",
         "https:///max/linux-64/kit-2.0-release.conda",
         VENDOR_ARTEFACT.replace("/max/", "/m x/"),
     ):
@@ -604,7 +638,9 @@ def test_the_vendor_index_and_the_vendor_records_are_read_as_they_are() -> None:
 def test_an_unaudited_package_is_accepted_only_through_its_vendor_records() -> None:
     """The file must stay listed and the vendor's records must be the reviewed ones."""
     exceptions = load_exceptions(_table(REVIEWED))
-    assert exceptions[0].reviewed == ("CVE-2025-1000",) and exceptions[0].advisory == ""
+    assert exceptions[0].reviewed == (("CVE-2025-1000", ("server",)),)
+    assert exceptions[0].advisory == ""
+    assert load_exceptions(_table(REVIEWED.replace(ENTRY, "")))[0].reviewed == ()
     report: dict[str, Any] = {
         "matches": [],
         "ignored": [],
@@ -631,7 +667,18 @@ def test_an_unaudited_package_is_accepted_only_through_its_vendor_records() -> N
             "unreviewed",
         ),
         ({}, "LOCKED", "withdrawn"),
-        ({"CVE-2025-1000": ["cpe:2.3:a:maker:kit:*:*:*:*:*:*:*:*"]}, "LOCKED", "naming"),
+        ({"CVE-2025-1000": ["cpe:2.3:a:modular:kit:*:*:*:*:*:*:*:*"]}, "LOCKED", "naming"),
+        ({"CVE-2025-1000": ["cpe:2.3:a:modular:kit_sdk:*:*:*:*:*:*:*:*"]}, "LOCKED", "changed"),
+        (
+            {
+                "CVE-2025-1000": [
+                    "cpe:2.3:a:modular:server:*:*:*:*:*:*:*:*",
+                    "cpe:2.3:a:modular:agent:*:*:*:*:*:*:*:*",
+                ]
+            },
+            "LOCKED",
+            "changed",
+        ),
         (OTHER_PRODUCT, "f" * 64, "listed"),
         (OTHER_PRODUCT, None, "listed"),
     ]
@@ -648,6 +695,7 @@ def test_an_unaudited_package_is_accepted_only_through_its_vendor_records() -> N
             "unreviewed": found["unreviewed"] == ["CVE-2026-2000"],
             "withdrawn": found["withdrawn"] == ["CVE-2025-1000"],
             "naming": found["naming_a_locked_package"] == ["CVE-2025-1000"],
+            "changed": found["changed_since_review"] == ["CVE-2025-1000"],
             "listed": found["listed_sha256"] != lock[0]["sha256"],
         }[cause]
 
@@ -666,9 +714,56 @@ def test_an_unaudited_package_is_accepted_only_through_its_vendor_records() -> N
         {**report, "not_audited": other_version}, 0, LOCK, lock, exceptions, served
     )
     assert moved["passed"] is False and len(moved["blocked"]) == len(moved["unused"]) == 1
-    bodies[VENDOR_RECORDS.format(vendor="maker")] = _records(OTHER_PRODUCT, total=2001)
+    bodies[VENDOR_RECORDS.format(vendor="modular")] = _records(OTHER_PRODUCT, total=2001)
     partial = pixi_lock_decision(report, 0, LOCK, lock, exceptions, served)
     assert partial["blocked"][0]["why"] == "check failed: ValueError"
+
+    def silent(address: str, limit: int) -> bytes:
+        raise EvidenceUnavailable("no answer")
+
+    outage = pixi_lock_decision(report, 0, LOCK, lock, exceptions, silent)
+    assert outage["passed"] is False and outage["blocked"][0]["why"] == "source unavailable"
+
+
+def test_the_vendor_of_a_channel_is_fixed_in_code_and_cannot_be_chosen_by_a_table() -> None:
+    """A package from a channel without recorded vendor identifiers is never excepted.
+
+    These are the cases of the outside review of fd3e0de51: a table could
+    name a vendor without records, for a vendor package or for a package of
+    another channel, and pass on the index alone.
+    """
+    assert VENDOR_IDENTIFIERS == {("conda.modular.com", "max"): ("modular",)}
+    assert channel_vendors(VENDOR_ARTEFACT) == ("modular",)
+    for address in (
+        ARTEFACT,
+        VENDOR_ARTEFACT.replace("/max/", "/other/"),
+        VENDOR_ARTEFACT.replace("conda.modular.com", "conda.modular.com.example"),
+        "https:///max/linux-64/kit-2.0-release.conda",
+    ):
+        with pytest.raises(ValueError, match="No vendor identifiers"):
+            channel_vendors(address)
+
+    report: dict[str, Any] = {
+        "matches": [],
+        "ignored": [],
+        "not_audited": [{"package": "tool", "version": "1.0"}],
+        "unused_ignores": [],
+    }
+    digest = hashlib.sha256(b"tool").hexdigest()
+    lock = [{"conda": ARTEFACT, "sha256": digest}]
+    index = {"packages": {}, "packages.conda": {"tool-1.0-h0_0.conda": {"sha256": digest}}}
+    bodies = {
+        "https://conda.anaconda.org/channel/linux-64/repodata.json": json.dumps(index).encode(),
+        VENDOR_RECORDS.format(vendor="modular"): _records({}),
+    }
+    table = _table(
+        'package = "tool"\nversion = "1.0"\nreason = "vendor_records_reviewed"\nreviewed = []\n'
+    )
+    foreign = pixi_lock_decision(
+        report, 0, LOCK, lock, load_exceptions(table), lambda address, limit: bodies[address]
+    )
+    assert foreign["passed"] is False and foreign["accepted"] == []
+    assert foreign["blocked"][0]["why"] == "check failed: ValueError"
 
 
 def test_a_finding_exception_and_a_coverage_exception_do_not_stand_in_for_each_other() -> None:
