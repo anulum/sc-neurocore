@@ -179,7 +179,10 @@ jobs:
         run: |
           pip install dist/*.whl
           pip install --require-hashes -r requirements/wheels-test.txt
-          pip install --no-deps --no-build-isolation .
+          # Build the checkout into a wheel and install that file: the install
+          # step then consumes a local artefact and resolves nothing from an index.
+          pip wheel --no-deps --no-build-isolation --wheel-dir source-wheel .
+          pip install --no-deps source-wheel/*.whl
 
       - name: Capture installed engine ABI
         shell: bash

@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Wheel consumer jobs build the checkout into a wheel and install that file,
+  so every `pip install` of the job consumes a hash-locked profile or a local
+  artefact.
+
 - Report full-suite coverage for the repository source tree only. Wheel copies
   that distribution tests run from temporary directories no longer abort the
   final report; the 100 % threshold and the measured sources are unchanged.
