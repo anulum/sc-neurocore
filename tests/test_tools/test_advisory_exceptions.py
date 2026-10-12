@@ -354,7 +354,8 @@ def test_evidence_is_fetched_over_verified_tls_with_a_size_bound(tmp_path: Path)
             """Keep the test output free of request lines."""
 
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    served = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    served = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    served.minimum_version = ssl.TLSVersion.TLSv1_2
     served.load_cert_chain(str(certificate), str(key))
     server.socket = served.wrap_socket(server.socket, server_side=True)
     thread = threading.Thread(target=server.serve_forever, daemon=True)

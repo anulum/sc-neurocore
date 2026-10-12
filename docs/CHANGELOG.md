@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A test binds the version in `.zenodo.json` and `CITATION.cff` to the package
+  and engine versions. Releases 3.13.4 to 3.16.0 were archived under the stale
+  label 3.13.3 because nothing checked it.
+
 - The Pixi lock audit accepts a finding only through a recorded exception whose
   reason it re-verifies on every run: no newer version in the channel, or the
   affected program absent from the locked artefact. Unrecorded findings, failed
