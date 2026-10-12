@@ -115,6 +115,30 @@ def test_unrepresentable_lengths_are_catchable_before_output_allocation() -> Non
     assert engine.unpack_bitstream([1], 1) == b"\x01"
 
 
+def test_negative_lengths_are_refused_before_any_output_exists() -> None:
+    """Refuse a negative bit count in the reference and in the engine, each in its own way.
+
+    The reference names the argument. The engine takes an unsigned count, so a
+    negative one is refused at its boundary as an overflow before any work.
+    """
+    words = np.array([0], dtype=np.uint64)
+    before = words.tobytes()
+    with pytest.raises(ValueError, match="^original_length must be nonnegative$"):
+        reference_unpack(words, -1)
+    with pytest.raises(ValueError, match="^original_length must be nonnegative$"):
+        reference_unpack(np.zeros((1, 1), dtype=np.uint64), 0, original_shape=(1, -1))
+    with pytest.raises(ValueError, match="^original_length must be nonnegative$"):
+        reference_unpack(np.zeros((2, 1), dtype=np.uint64), -2)
+    with pytest.raises(OverflowError):
+        engine.unpack_bitstream_numpy(words, -1)
+    with pytest.raises(OverflowError):
+        engine.unpack_bitstream([0], -1)
+    with pytest.raises(OverflowError):
+        engine.unpack_bitstream([[0]], 0, original_shape=(1, -1))
+    assert words.tobytes() == before
+    assert engine.unpack_bitstream([1], 1) == b"\x01"
+
+
 def test_generic_strided_words_remain_supported_and_typed_layout_refuses() -> None:
     """Preserve generic sequence conversion and typed contiguous-input requirements."""
     words = np.array([1, 2, 3, 4], dtype=np.uint64)[::2]
