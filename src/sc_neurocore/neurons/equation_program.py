@@ -36,6 +36,15 @@ output-array position of the array functions of the equation namespace; a
 function a caller binds under its own name is called as written. Bindings are
 a plain ``dict``: a mapping that invents missing keys would invent names.
 
+Two bounds are applied to values, where a rule on the shape of the text can be
+walked around. Wherever an operand of ``*`` or ``+`` could be a tuple or list
+that the expression itself built, the operation refuses such an operand, so a
+sequence cannot be repeated or concatenated to a size the expression chooses.
+Wherever the base of ``**`` is itself computed with ``**``, an integer result
+longer than :data:`MAX_INTEGER_BITS` is refused before it is computed. Both
+refusals are raised when the program runs. Operations that cannot meet these
+cases use the plain operators and pay nothing.
+
 Arithmetic on a plain name or a literal is the bulk of every equation, so the
 binary translator reads such operands in place instead of calling a program
 for each. The operand order and the operator are unchanged.
@@ -63,6 +72,57 @@ _BINARY: dict[type[ast.operator], Callable[[Any, Any], Any]] = {
     ast.Mod: operator.mod,
     ast.FloorDiv: operator.floordiv,
 }
+MAX_INTEGER_BITS = 4096
+"""Longest integer, in bits, that a power of a power may produce."""
+
+
+def _guarded_sequence(apply: Callable[[Any, Any], Any]) -> Callable[[Any, Any], Any]:
+    """Return ``apply`` with a refusal of tuple and list operands."""
+
+    def run(first: Any, second: Any) -> Any:
+        if isinstance(first, (tuple, list)) or isinstance(second, (tuple, list)):
+            raise EquationRefusal("A tuple or list cannot be repeated or concatenated")
+        return apply(first, second)
+
+    return run
+
+
+def _guarded_power(base: Any, exponent: Any) -> Any:
+    """Raise ``base`` to ``exponent``, refusing an integer result beyond the bit bound."""
+    if (
+        type(base) is int
+        and type(exponent) is int
+        and exponent > 0
+        and base.bit_length() * exponent > MAX_INTEGER_BITS
+    ):
+        raise EquationRefusal("An integer power exceeds the size an equation may compute")
+    return operator.pow(base, exponent)
+
+
+def _holds(node: ast.AST, kinds: tuple[type[ast.AST], ...]) -> bool:
+    """Tell whether a subtree holds a node of one of the given kinds."""
+    return any(isinstance(inner, kinds) for inner in ast.walk(node))
+
+
+def _binary_operator(node: ast.BinOp) -> Callable[[Any, Any], Any]:
+    """Choose the function of a binary operation, guarded only where its operands need it."""
+    apply = _operator(_BINARY, node.op)
+    if isinstance(node.op, (ast.Mult, ast.Add)) and (
+        _holds(node.left, (ast.Tuple, ast.List)) or _holds(node.right, (ast.Tuple, ast.List))
+    ):
+        return _guarded_sequence(apply)
+    if (
+        isinstance(node.op, ast.Pow)
+        and isinstance(node.left, ast.expr)
+        and any(
+            isinstance(inner, ast.BinOp) and isinstance(inner.op, ast.Pow)
+            for inner in ast.walk(node.left)
+        )
+    ):
+        return _guarded_power
+    return apply
+
+
 _UNARY: dict[type[ast.unaryop], Callable[[Any], Any]] = {
     ast.USub: operator.neg,
     ast.UAdd: operator.pos,
@@ -122,7 +182,7 @@ def _translate(node: ast.expr) -> EquationProgram:
     if isinstance(node, ast.Name):
         return _name(node.id)
     if isinstance(node, ast.BinOp):
-        return _binary(_operator(_BINARY, node.op), node.left, node.right)
+        return _binary(_binary_operator(node), node.left, node.right)
     if isinstance(node, ast.UnaryOp):
         return _unary(_operator(_UNARY, node.op), _translate(node.operand))
     if isinstance(node, ast.Compare):

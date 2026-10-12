@@ -23,6 +23,7 @@ on:
     paths:
       - "benchmarks/scaling_benchmark.py"
       - "tools/brunel_parity_check.py"
+      - "requirements/brunel-parity.txt"
       - ".github/workflows/brunel-parity.yml"
 
 permissions:
@@ -39,15 +40,18 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: requirements/brunel-parity.txt
 
-      - name: Install the package and the Brian2 reference
+      # The package runs from the checkout (PYTHONPATH below); only its runtime
+      # and the reference simulator are installed, each pinned by hash.
+      - name: Install the hash-pinned runtime and the Brian2 reference
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e '.[dev]'
-          python -m pip install brian2
+          python -m pip install --require-hashes -r requirements/brunel-parity.txt
           python -c "import brian2; print('brian2', brian2.__version__)"
 
       - name: Run both lanes with a seed per repetition
+        env:
+          PYTHONPATH: src
         run: |
           python benchmarks/scaling_benchmark.py \
             --scales 1000 5000 --sim-ms 1000 --repeats 8 --regimes AI \

@@ -73,18 +73,3 @@ def test_a_sequence_literal_cannot_be_repeated_or_concatenated(expression: str) 
     with pytest.raises(ValueError, match="cannot be repeated or concatenated"):
         ExpressionSafetyValidator().validate(expression)
     ExpressionSafetyValidator().validate("min([v, 0]) + (v, w)[0] * 2")
-
-
-def test_a_power_of_a_power_is_bounded_by_the_product_of_its_exponents() -> None:
-    """Small nested bases stay valid; a tower whose exponents multiply past the limit is refused."""
-    validator = ExpressionSafetyValidator()
-    validator.validate("(a**2)**3")
-    validator.validate("((a**2)**4)**8")
-    validator.validate("(a**0.5)**-2 + (b**2)**2")
-    with pytest.raises(ValueError, match="Combined exponent 8192 exceeds limit 64"):
-        validator.validate("((2 ** 64) ** 64) ** 2")
-    with pytest.raises(ValueError, match="Combined exponent 128 exceeds limit"):
-        validator.validate("((a**2)**8)**8")
-    for expression in ("(a**b)**2", "(a**2)**b", "(a**True)**2"):
-        with pytest.raises(ValueError, match="needs literal exponents"):
-            validator.validate(expression)

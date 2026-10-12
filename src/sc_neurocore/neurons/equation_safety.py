@@ -28,9 +28,10 @@ sees them), and deep trees, giant constants and large or nested exponents are
 refused before they can exhaust the evaluator. Three further rules bound what
 an accepted expression can ask for: an array function of the namespace cannot
 be handed an output array (a positional argument after its inputs must be the
-literal ``None``), a tuple or list literal cannot be repeated or concatenated,
-and a power of a power needs literal exponents whose product stays within the
-exponent limit.
+literal ``None``), and a tuple or list literal cannot be repeated or
+concatenated. A sequence reached through a slice, a choice or a call, and an
+integer power of a power, are bounded where the values are known, by the
+operations of the program (:mod:`sc_neurocore.neurons.equation_program`).
 """
 
 from __future__ import annotations
@@ -302,42 +303,7 @@ class ExpressionSafetyValidator:
                 raise EquationRefusal(
                     f"A tuple or list cannot be repeated or concatenated in an equation: {expr!r}"
                 )
-            if (
-                isinstance(node, ast.BinOp)
-                and isinstance(node.op, ast.Pow)
-                and isinstance(node.left, ast.BinOp)
-                and isinstance(node.left.op, ast.Pow)
-            ):
-                # A power of a power multiplies its exponents: bound the product.
-                product = 1.0
-                tower: ast.expr = node
-                while isinstance(tower, ast.BinOp) and isinstance(tower.op, ast.Pow):
-                    magnitude = self._literal_magnitude(tower.right)
-                    if magnitude is None:
-                        raise EquationRefusal(
-                            f"A power of a power needs literal exponents in an equation: {expr!r}"
-                        )
-                    product *= magnitude
-                    tower = tower.left
-                if product > _MAX_POW_EXPONENT:
-                    raise EquationRefusal(
-                        f"Combined exponent {product:g} exceeds limit {_MAX_POW_EXPONENT} "
-                        f"in equation: {expr!r}"
-                    )
         return tree
-
-    @staticmethod
-    def _literal_magnitude(node: ast.expr) -> float | None:
-        """Return the magnitude of a numeric literal, signed or not, else ``None``."""
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
-            node = node.operand
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, (int, float))
-            and not isinstance(node.value, bool)
-        ):
-            return float(abs(node.value))
-        return None
 
     @staticmethod
     def _ast_depth(node: ast.AST) -> int:

@@ -221,3 +221,74 @@ def test_the_translator_refuses_what_a_wider_gate_would_let_through(
     """
     with pytest.raises(EquationRefusal, match=reason):
         compile_expression(expression, _WideGate())
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "[0.0][:] * 4",
+        "4 * [0.0][:]",
+        "(v, w)[0:2] * one",
+        "([0.0] if 1 else [0.0]) * 4",
+        "max([0.0], [0.0]) * 4",
+        "(v, w)[0:1] + (v, w)[1:2]",
+        "min([[0.0]]) + min([[1.0]])",
+    ],
+)
+def test_a_sequence_the_expression_built_cannot_be_repeated_however_it_is_wrapped(
+    expression: str,
+) -> None:
+    """A slice, a choice or a call around a literal sequence does not carry it past the bound.
+
+    These are the forms of the outside review of 2f778166f: a rule on the
+    shape of the text accepted each of them, and each repeated or joined a
+    sequence.
+
+    Parameters
+    ----------
+    expression : str
+        Expression whose ``*`` or ``+`` receives a tuple or list at run time.
+    """
+    program = compile_expression(expression)
+    with pytest.raises(EquationRefusal, match="cannot be repeated or concatenated"):
+        program(_bindings(one=1))
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "((2 ** 64) * 1) ** 64",
+        "(-(2 ** 64)) ** 64",
+        "abs(2 ** 64) ** 64",
+        "((2 ** 64) ** 64) ** 2",
+        "(((2 ** 60) + 0) ** 60) ** 60",
+    ],
+)
+def test_an_integer_power_of_a_power_is_bounded_however_it_is_wrapped(expression: str) -> None:
+    """A product, a sign or a call around the inner power does not carry it past the bit bound.
+
+    Parameters
+    ----------
+    expression : str
+        Expression whose integer result would be longer than the bound.
+    """
+    program = compile_expression(expression)
+    with pytest.raises(EquationRefusal, match="integer power exceeds"):
+        program(_bindings())
+
+
+def test_the_value_bounds_leave_ordinary_arithmetic_alone() -> None:
+    """Elements of a sequence, small integer towers and float towers compute as before."""
+    bindings = _bindings(a=3.0, b=2.0, table=[1.0, 2.0])
+    for expression, expected in (
+        ("(v, w)[0] * 2", V * 2),
+        ("min([v, 0]) * 2 + max([w, 0])", V * 2 + W),
+        ("(2 ** 3) ** 2", 64),
+        ("(2 ** 64) ** 2", 2**128),
+        ("(a ** 2) ** 3", 729.0),
+        ("(a ** b) ** 2", 81.0),
+        ("(2 ** 3) ** -1", 0.125),
+        ("(a ** 2) ** 64 > 0", True),
+        ("table * 2", [1.0, 2.0, 1.0, 2.0]),
+    ):
+        assert compile_expression(expression)(bindings) == expected, expression

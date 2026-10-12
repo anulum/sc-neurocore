@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Two bounds of the expression gate moved from the shape of the text to the
+  values, after an outside review showed that a slice, a choice or a call
+  around a literal carried it past the rule. `*` and `+` refuse a tuple or
+  list that the expression built, and an integer power of a power longer than
+  4,096 bits is refused before it is computed. The rule that a power of a
+  power needs literal exponents is withdrawn; `(a**b)**2` is valid again.
+- The parity rerun workflow installs a hash-pinned profile
+  (`requirements/brunel-parity.txt`) and runs the package from the checkout.
+
 - `docs/guides/supported_workflows.md` gives four workflows of the base
   package with the output each prints, and says what each way of installing
   provides and which subpackages only a source checkout has. The tests run
@@ -28,7 +37,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The cost of equation programs has a committed benchmark,
   `benchmarks/bench_equation_program.py`. Its receipt
   `benchmarks/results/bench_equation_program.json` (loaded development host)
-  puts a program at between 2.2 and 3.3 times the same arithmetic written as
+  puts a program at between 2.0 and 2.8 times the same arithmetic written as
   a Python function.
 
 - Published claims are bound to their sources after an outside review. The
