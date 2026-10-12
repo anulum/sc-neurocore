@@ -13,6 +13,12 @@
 # locked version; "component_not_in_package" fails when the locked
 # artefact ships a file matching one of the declared paths. A table that matches
 # no finding fails the audit, so nothing here outlives its finding.
+#
+# A package the scanner cannot audit has one table without an advisory.
+# "vendor_records_reviewed" fails when the vendor channel no longer lists the
+# locked file with the lock digest, when the vulnerability records bound to the
+# vendor's product identifiers differ from the reviewed list, or when one of
+# them names a package of the lock as its product.
 
 # MIT Kerberos: the two NegoEx parsing defects are fixed upstream in 1.22.3,
 # which the channel does not publish yet.
@@ -159,3 +165,51 @@ advisory = "OSV-2023-1328"
 reason = "no_fixed_version_in_channel"
 recorded = "2026-10-12"
 source = "https://osv.dev/vulnerability/OSV-2023-1328"
+
+# Modular: the scanner has no advisory data for the vendor channel. The one
+# vendor record concerns the kvcache agent of MAX Serve before 25.6; the lock
+# holds the Mojo toolchain and its formatter, not the MAX serving package.
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "mojo"
+version = "1.0.0"
+reason = "vendor_records_reviewed"
+vendor = "modular"
+reviewed = ["CVE-2025-60455"]
+recorded = "2026-10-12"
+source = "https://nvd.nist.gov/vuln/detail/CVE-2025-60455"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "mojo-compiler"
+version = "1.0.0"
+reason = "vendor_records_reviewed"
+vendor = "modular"
+reviewed = ["CVE-2025-60455"]
+recorded = "2026-10-12"
+source = "https://nvd.nist.gov/vuln/detail/CVE-2025-60455"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "mojo-python"
+version = "1.0.0"
+reason = "vendor_records_reviewed"
+vendor = "modular"
+reviewed = ["CVE-2025-60455"]
+recorded = "2026-10-12"
+source = "https://nvd.nist.gov/vuln/detail/CVE-2025-60455"
+
+[[exception]]
+ecosystem = "pixi"
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "mblack"
+version = "26.5.0"
+reason = "vendor_records_reviewed"
+vendor = "modular"
+reviewed = ["CVE-2025-60455"]
+recorded = "2026-10-12"
+source = "https://nvd.nist.gov/vuln/detail/CVE-2025-60455"

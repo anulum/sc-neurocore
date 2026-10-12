@@ -8,8 +8,10 @@
 
 """Accept one advisory finding only while a machine check of its reason still holds.
 
-An exception names one package version and one advisory. It carries one of two
-reasons, and the audit re-establishes that reason from live sources each time:
+An exception names one package version. For a scanner finding it also names the
+advisory and carries one of two reasons; for a package the scanner cannot audit
+it carries the third. The audit re-establishes the reason from live sources
+each time:
 
 ``no_fixed_version_in_channel``
     The locked artefact is the newest version and the newest build its own
@@ -23,10 +25,19 @@ reasons, and the audit re-establishes that reason from live sources each time:
     check downloads the exact locked artefact, verifies its digest against the
     lock and requires that no file of the package matches the declared paths.
 
+``vendor_records_reviewed``
+    The scanner has no advisory data for the vendor channel the package comes
+    from, so the audit reads the vendor's records itself. The check requires
+    that the vendor channel still lists the locked file with the lock digest,
+    that the vulnerability records bound to the vendor's product identifiers
+    are exactly the reviewed ones, and that none of them names a package of
+    the lock as its product. A new vendor record turns the audit red until it
+    is reviewed. Records that carry no product identifier yet are not seen.
+
 There is no severity, confidence or reachability filter, no wildcard and no
 expiry by date: an exception lives exactly as long as its evidence does. An
-exception that no longer matches a finding is itself a failure, so the record
-cannot outlive the finding it was written for.
+exception that no longer matches a finding or an unaudited package is itself
+a failure, so the record cannot outlive what it was written for.
 """
 
 from __future__ import annotations
@@ -49,19 +60,26 @@ from typing import Any
 import urllib.parse
 import zipfile
 
-REASONS = ("no_fixed_version_in_channel", "component_not_in_package")
+REASONS = ("no_fixed_version_in_channel", "component_not_in_package", "vendor_records_reviewed")
+COVERAGE_REASON = "vendor_records_reviewed"
 EXCEPTION_FILE = Path("tools/security_scan/advisory_exceptions.toml")
 CHANNEL_INDEX = "https://api.anaconda.org/package/{channel}/{package}"
 INDEX_LIMIT = 32 * 1024 * 1024
 ARTEFACT_LIMIT = 64 * 1024 * 1024
 REDIRECT_LIMIT = 5
-_COMMON = {"ecosystem", "lock", "package", "version", "advisory", "reason", "recorded", "source"}
+VENDOR_RECORDS = (
+    "https://services.nvd.nist.gov/rest/json/cves/2.0?virtualMatchString=cpe:2.3:a:{vendor}:*"
+)
+_COMMON = {"ecosystem", "lock", "package", "version", "reason", "recorded", "source"}
 ECOSYSTEM = "pixi"
 CHANNEL_HOST = "conda.anaconda.org"
 _PLAIN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
+_VENDOR = re.compile(r"[a-z0-9][a-z0-9_]*")
+_RECORD = re.compile(r"CVE-[0-9]{4}-[0-9]{4,}")
 _BY_REASON: dict[str, set[str]] = {
-    "no_fixed_version_in_channel": set(),
-    "component_not_in_package": {"component", "absent"},
+    "no_fixed_version_in_channel": {"advisory"},
+    "component_not_in_package": {"advisory", "component", "absent"},
+    "vendor_records_reviewed": {"vendor", "reviewed"},
 }
 
 Fetch = Callable[[str, int], bytes]
@@ -69,18 +87,25 @@ Fetch = Callable[[str, int], bytes]
 
 @dataclass(frozen=True)
 class AdvisoryException:
-    """One reviewed exception for one advisory against one locked package version."""
+    """One reviewed exception for one locked package version.
+
+    A finding exception names its ``advisory``. A coverage exception names the
+    ``vendor`` whose records the audit reads and the records already
+    ``reviewed``; it has no advisory.
+    """
 
     ecosystem: str
     lock: str
     package: str
     version: str
-    advisory: str
     reason: str
     recorded: str
     source: str
+    advisory: str = ""
     component: str = ""
     absent: tuple[str, ...] = ()
+    vendor: str = ""
+    reviewed: tuple[str, ...] = ()
 
 
 def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
@@ -101,8 +126,9 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
     ValueError
         A table has an unknown or missing key, an empty value, an unknown
         reason or ecosystem, a wildcard package, version or advisory, an
-        empty or blanket path list, or repeats an earlier lock, package,
-        version and advisory.
+        empty or blanket path list, a vendor that is not a plain identifier,
+        a reviewed list that is not a list of distinct record names, or
+        repeats an earlier lock, package, version and advisory.
     """
     document = tomllib.loads(raw.decode("utf-8"))
     if set(document) - {"exception"} or not isinstance(document.get("exception", []), list):
@@ -116,13 +142,15 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
         if set(table) != _COMMON | _BY_REASON[reason]:
             raise ValueError("Advisory exception keys do not match its reason.")
         absent = table.get("absent", [])
-        texts = [value for key, value in table.items() if key != "absent"]
+        reviewed = table.get("reviewed", [])
+        texts = [value for key, value in table.items() if key not in ("absent", "reviewed")]
         if not all(isinstance(value, str) and value.strip() == value and value for value in texts):
             raise ValueError("Advisory exception values must be non-empty text.")
         if table["ecosystem"] != ECOSYSTEM:
             raise ValueError("Advisory exceptions exist for the Pixi ecosystem only.")
+        advisory = table.get("advisory", "")
         if any(
-            "*" in table[key] or "?" in table[key] for key in ("package", "version", "advisory")
+            "*" in text or "?" in text for text in (table["package"], table["version"], advisory)
         ):
             raise ValueError("Advisory exception identity cannot contain a wildcard.")
         if reason == "component_not_in_package" and (
@@ -131,11 +159,20 @@ def load_exceptions(raw: bytes) -> tuple[AdvisoryException, ...]:
             or not all(isinstance(item, str) and item.strip("*/? ") for item in absent)
         ):
             raise ValueError("Advisory exception needs concrete absent paths.")
-        identity = (table["lock"], table["package"], table["version"], table["advisory"])
+        if reason == COVERAGE_REASON and (
+            not _VENDOR.fullmatch(table["vendor"])
+            or not isinstance(reviewed, list)
+            or not all(isinstance(item, str) and _RECORD.fullmatch(item) for item in reviewed)
+            or len(set(reviewed)) != len(reviewed)
+        ):
+            raise ValueError("Advisory exception needs a plain vendor and distinct record names.")
+        identity = (table["lock"], table["package"], table["version"], advisory)
         if identity in seen:
             raise ValueError("Advisory exception is recorded twice.")
         seen.add(identity)
-        exceptions.append(AdvisoryException(**{**table, "absent": tuple(absent)}))
+        exceptions.append(
+            AdvisoryException(**{**table, "absent": tuple(absent), "reviewed": tuple(reviewed)})
+        )
     return tuple(exceptions)
 
 
@@ -289,6 +326,143 @@ def locked_channel(address: str) -> tuple[str, str, str]:
     ):
         raise ValueError("Locked artefact does not come from a recognised channel address.")
     return segments[0], segments[1], segments[2]
+
+
+def locked_index(address: str) -> tuple[str, str]:
+    """Read the platform index address and the file name from a locked address.
+
+    Parameters
+    ----------
+    address : str
+        Download address of a locked conda artefact on any channel host.
+
+    Returns
+    -------
+    tuple of str
+        Address of ``repodata.json`` beside the artefact, and the file name.
+
+    Raises
+    ------
+    ValueError
+        The address is not ``https://<host>/<channel...>/<platform>/<file>``
+        with plain names and without query or fragment.
+    """
+    parts = urllib.parse.urlsplit(address)
+    segments = parts.path.strip("/").split("/")
+    if (
+        parts.scheme != "https"
+        or not parts.hostname
+        or parts.query
+        or parts.fragment
+        or len(segments) < 3
+        or not all(_PLAIN.fullmatch(segment) for segment in segments)
+    ):
+        raise ValueError("Locked artefact does not come from a plain channel address.")
+    return address.rsplit("/", 1)[0] + "/repodata.json", segments[-1]
+
+
+def listed_digest(raw: bytes, name: str) -> str | None:
+    """Read the digest a platform index states for one file.
+
+    Parameters
+    ----------
+    raw : bytes
+        ``repodata.json`` of the platform, exactly as received.
+    name : str
+        File name of the locked artefact.
+
+    Returns
+    -------
+    str or None
+        SHA-256 the index states for the file, or None if the index does not
+        list the file, for example after the vendor withdrew it.
+
+    Raises
+    ------
+    ValueError
+        The index is not an object with package tables.
+    """
+    payload = json.loads(raw)
+    if not isinstance(payload, dict):
+        raise ValueError("Channel platform index has no package tables.")
+    for key in ("packages", "packages.conda"):
+        table = payload.get(key)
+        if not isinstance(table, dict):
+            raise ValueError("Channel platform index has no package tables.")
+        row = table.get(name)
+        if isinstance(row, dict) and isinstance(row.get("sha256"), str):
+            return str(row["sha256"])
+    return None
+
+
+def vendor_records(raw: bytes, vendor: str) -> dict[str, tuple[str, ...]]:
+    """Read every vulnerability record bound to a vendor and the products it names.
+
+    Parameters
+    ----------
+    raw : bytes
+        Answer of the vulnerability database to a query for all records whose
+        product identifiers carry the vendor.
+    vendor : str
+        Vendor part of the product identifiers.
+
+    Returns
+    -------
+    dict
+        Record name to the sorted products of that vendor the record names.
+
+    Raises
+    ------
+    ValueError
+        The answer is not the complete result (it is paginated or malformed),
+        a record has no name, or a record names no product of the vendor.
+    """
+    payload = json.loads(raw)
+    rows = payload.get("vulnerabilities") if isinstance(payload, dict) else None
+    if not isinstance(rows, list) or payload.get("totalResults") != len(rows):
+        raise ValueError("Vendor record answer is not one complete result.")
+    records: dict[str, tuple[str, ...]] = {}
+    for row in rows:
+        record = row.get("cve") if isinstance(row, dict) else None
+        if not isinstance(record, dict):
+            raise ValueError("Vendor record is malformed.")
+        name, configurations = record.get("id"), record.get("configurations")
+        if not isinstance(name, str) or not isinstance(configurations, list):
+            raise ValueError("Vendor record is malformed.")
+        products: set[str] = set()
+        for configuration in configurations:
+            for node in configuration.get("nodes", []):
+                for match in node.get("cpeMatch", []):
+                    fields = str(match.get("criteria", "")).split(":")
+                    if len(fields) > 4 and fields[3] == vendor:
+                        products.add(fields[4])
+        if not products:
+            raise ValueError("Vendor record names no product of the vendor.")
+        records[name] = tuple(sorted(products))
+    return records
+
+
+def locked_names(lock_packages: list[Any]) -> frozenset[str]:
+    """List the package names of a lock in the spelling of product identifiers.
+
+    Parameters
+    ----------
+    lock_packages : list
+        Package records of the parsed Pixi lock.
+
+    Returns
+    -------
+    frozenset of str
+        Lower-case names with hyphens and dots as underscores. A conda file
+        name is ``<name>-<version>-<build>``, so the name is everything before
+        the last two hyphens.
+    """
+    names = set()
+    for row in lock_packages:
+        if isinstance(row, dict) and isinstance(row.get("conda"), str):
+            stem = row["conda"].rsplit("/", 1)[-1].rsplit("-", 2)[0]
+            names.add(re.sub(r"[-.]", "_", stem.lower()))
+    return frozenset(names)
 
 
 def conda_package_paths(name: str, artefact: bytes) -> tuple[str, ...]:
@@ -455,9 +629,13 @@ def verify_exception(
     dict
         ``holds`` and the evidence it rests on: for a channel check the
         channel and platform read from the lock, the index address, its body
-        digest, the versions seen and the build numbers of the locked version; for a content check the
-        artefact address, its digest, the number of declared paths and the
-        paths that matched. Nothing here is a judgement of severity.
+        digest, the versions seen and the build numbers of the locked
+        version; for a content check the artefact address, its digest, the
+        number of declared paths and the paths that matched; for a vendor
+        check both addresses and body digests, the digest the vendor lists,
+        the vendor's records with their products, and the records that are
+        unreviewed, withdrawn or name a locked package. Nothing here is a
+        judgement of severity.
 
     Raises
     ------
@@ -466,6 +644,29 @@ def verify_exception(
         caller treats every such error as an exception that does not hold.
     """
     address, digest = locked_conda_artefact(lock_packages, exception.package, exception.version)
+    if exception.reason == COVERAGE_REASON:
+        index, name = locked_index(address)
+        listing = fetcher(index, INDEX_LIMIT)
+        listed = listed_digest(listing, name)
+        source = VENDOR_RECORDS.format(vendor=exception.vendor)
+        answer = fetcher(source, INDEX_LIMIT)
+        records = vendor_records(answer, exception.vendor)
+        names = locked_names(lock_packages)
+        naming = sorted(name for name, products in records.items() if names & set(products))
+        unreviewed = sorted(set(records) - set(exception.reviewed))
+        withdrawn = sorted(set(exception.reviewed) - set(records))
+        return {
+            "holds": listed == digest and not naming and not unreviewed and not withdrawn,
+            "index": index,
+            "index_sha256": hashlib.sha256(listing).hexdigest(),
+            "listed_sha256": listed,
+            "records": source,
+            "records_sha256": hashlib.sha256(answer).hexdigest(),
+            "vendor_records": {name: list(products) for name, products in records.items()},
+            "naming_a_locked_package": naming,
+            "unreviewed": unreviewed,
+            "withdrawn": withdrawn,
+        }
     if exception.reason == "no_fixed_version_in_channel":
         channel, subdir, name = locked_channel(address)
         index = CHANNEL_INDEX.format(channel=channel, package=exception.package)
@@ -504,19 +705,24 @@ def decide_matches(
     exceptions: tuple[AdvisoryException, ...],
     lock_packages: list[Any],
     fetcher: Fetch,
+    key: str = "id",
 ) -> dict[str, Any]:
-    """Decide every scanner match of one lock against its recorded exceptions.
+    """Decide every scanner row of one kind against its recorded exceptions.
 
     Parameters
     ----------
     matches : list
-        Scanner match rows of one lock, each with package, version and id.
+        Scanner rows of one lock: matches, each with package, version and id,
+        or unaudited packages, each with package and version.
     exceptions : tuple of AdvisoryException
-        Exceptions recorded for that lock and ecosystem.
+        Exceptions of that kind recorded for that lock and ecosystem.
     lock_packages : list
         Package records of the parsed lock.
     fetcher : callable
         Transport used by the live checks.
+    key : str
+        Row field that holds the advisory name; empty for unaudited packages,
+        which have none.
 
     Returns
     -------
@@ -533,7 +739,7 @@ def decide_matches(
     blocked: list[dict[str, Any]] = []
     for match in matches:
         fields = (
-            [match.get("package"), match.get("version"), match.get("id")]
+            [match.get("package"), match.get("version"), match.get(key) if key else ""]
             if isinstance(match, dict)
             else []
         )
@@ -589,9 +795,10 @@ def pixi_lock_decision(
     -------
     dict
         The decision of ``decide_matches`` plus ``passed``. A lock passes only
-        if nothing is ignored, unaudited or blocked, no exception is unused
-        and the exit status agrees with the presence of matches. Packages the
-        scanner could not audit are never covered by an exception.
+        if nothing is ignored or blocked, no exception is unused and the exit
+        status agrees with the presence of matches. A package the scanner
+        could not audit is blocked unless a vendor-record exception for
+        exactly that package version holds.
     """
     cache: dict[str, bytes] = {}
 
@@ -601,9 +808,14 @@ def pixi_lock_decision(
         return cache[address]
 
     mine = tuple(item for item in exceptions if (item.ecosystem, item.lock) == ("pixi", relative))
+    findings = tuple(item for item in mine if item.reason != COVERAGE_REASON)
+    coverage = tuple(item for item in mine if item.reason == COVERAGE_REASON)
     matches = payload["matches"]
-    decision = decide_matches(matches, mine, lock_packages, once)
-    uncovered = any(payload[key] for key in ("ignored", "not_audited", "unused_ignores"))
+    decision = decide_matches(matches, findings, lock_packages, once)
+    unaudited = decide_matches(payload["not_audited"], coverage, lock_packages, once, key="")
+    for part in ("accepted", "blocked", "unused"):
+        decision[part] += unaudited[part]
+    uncovered = any(payload[key] for key in ("ignored", "unused_ignores"))
     decision["passed"] = (
         not uncovered
         and not decision["blocked"]

@@ -50,7 +50,9 @@ def test_pixi_native_cli_and_complete_lock_gate(tmp_path: Path) -> None:
         count = pixi_package_count((ROOT / row["path"]).read_bytes())
         decision = json.loads((directory / "exceptions.json").read_text())
         assert row["passed"] is decision["passed"]
-        assert len(decision["accepted"]) + len(decision["blocked"]) == len(payload["matches"])
+        assert len(decision["accepted"]) + len(decision["blocked"]) == len(
+            payload["matches"]
+        ) + len(payload["not_audited"])
         if pixi_report_passed(payload, count) and receipt["returncode"] == 0:
             assert row["passed"] is (decision["unused"] == [])
         for accepted in decision["accepted"]:

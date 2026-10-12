@@ -30,17 +30,22 @@ import yaml
 from tools.security_scan.advisory_exceptions import (
     CHANNEL_INDEX,
     EXCEPTION_FILE,
+    VENDOR_RECORDS,
     channel_files,
     conda_package_paths,
     decide_matches,
     fetch,
+    listed_digest,
     load_exceptions,
     locked_conda_artefact,
     locked_channel,
+    locked_index,
+    locked_names,
     newest_file_is,
     numeric_version,
     pixi_lock_decision,
     require_known_locks,
+    vendor_records,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -84,6 +89,12 @@ ABSENT = (
     'package = "tool"\nversion = "1.0"\nadvisory = "{}"\nreason = "component_not_in_package"\n'
     'component = "reader"\nabsent = ["*reader*"]\n'
 )
+VENDOR_ARTEFACT = "https://packages.example/max/linux-64/kit-2.0-release.conda"
+VENDOR_INDEX = "https://packages.example/max/linux-64/repodata.json"
+REVIEWED = (
+    'package = "kit"\nversion = "2.0"\nreason = "vendor_records_reviewed"\n'
+    'vendor = "maker"\nreviewed = ["CVE-2025-1000"]\n'
+)
 
 
 def _index(files: list[tuple[str, int, str]], subdir: str = "linux-64") -> bytes:
@@ -113,7 +124,13 @@ def test_the_committed_record_names_real_locked_artefacts() -> None:
     for item in exceptions:
         packages = yaml.safe_load((ROOT / item.lock).read_bytes())["packages"]
         address, digest = locked_conda_artefact(packages, item.package, item.version)
-        assert locked_channel(address)[:2] == ("conda-forge", "linux-64") and len(digest) == 64
+        assert len(digest) == 64
+        if item.reason == "vendor_records_reviewed":
+            assert locked_index(address)[0].startswith("https://conda.modular.com/max/")
+            assert item.vendor == "modular" and item.advisory == ""
+        else:
+            assert locked_channel(address)[:2] == ("conda-forge", "linux-64")
+            assert item.advisory and not item.vendor and not item.reviewed
         assert item.recorded and item.source.startswith("https://")
 
 
@@ -129,6 +146,13 @@ def test_the_committed_record_names_real_locked_artefacts() -> None:
         ABSENT.format("CVE-1").replace('["*reader*"]', "[]"),
         ABSENT.format("CVE-1").replace('["*reader*"]', '["*"]'),
         ABSENT.format("CVE-1").replace('component = "reader"\n', ""),
+        NO_FIX.format("CVE-1").replace('advisory = "CVE-1"\n', ""),
+        REVIEWED + 'advisory = "CVE-2025-1000"\n',
+        REVIEWED.replace('"maker"', '"Maker Inc"'),
+        REVIEWED.replace('["CVE-2025-1000"]', '["CVE-2025-1000", "CVE-2025-1000"]'),
+        REVIEWED.replace('["CVE-2025-1000"]', '["any record"]'),
+        REVIEWED.replace('["CVE-2025-1000"]', '"CVE-2025-1000"'),
+        REVIEWED.replace('"kit"', '"k?t"'),
     ],
 )
 def test_an_underspecified_or_blanket_exception_is_refused(extra: str) -> None:
@@ -476,3 +500,201 @@ def test_two_findings_on_one_package_share_one_download() -> None:
     decision = pixi_lock_decision(report, 1, LOCK, lock, load_exceptions(record), fetcher)
     assert decision["passed"] is True and len(decision["accepted"]) == 3
     assert len(calls) == 2
+
+
+def _records(rows: dict[str, list[str]], total: int | None = None) -> bytes:
+    """Build a database answer from record names and the product identifiers they carry."""
+    listed = [
+        {
+            "cve": {
+                "id": name,
+                "configurations": [
+                    {"nodes": [{"cpeMatch": [{"criteria": item} for item in criteria]}]}
+                ],
+            }
+        }
+        for name, criteria in rows.items()
+    ]
+    return json.dumps(
+        {"totalResults": len(listed) if total is None else total, "vulnerabilities": listed}
+    ).encode()
+
+
+def _vendor_case(
+    rows: dict[str, list[str]], listed: str | None = "LOCKED"
+) -> tuple[list[Any], dict[str, bytes]]:
+    """Return a lock with one vendor package and the two bodies its check fetches."""
+    digest = hashlib.sha256(b"kit").hexdigest()
+    lock = [{"conda": VENDOR_ARTEFACT, "sha256": digest}, {"conda": ARTEFACT, "sha256": "a" * 64}]
+    table = {} if listed is None else {"sha256": digest if listed == "LOCKED" else listed}
+    index = {"packages": {}, "packages.conda": {"kit-2.0-release.conda": table}}
+    bodies = {
+        VENDOR_INDEX: json.dumps(index).encode(),
+        VENDOR_RECORDS.format(vendor="maker"): _records(rows),
+    }
+    return lock, bodies
+
+
+OTHER_PRODUCT = {"CVE-2025-1000": ["cpe:2.3:a:maker:server:*:*:*:*:*:*:*:*"]}
+UNAUDITED = [{"package": "kit", "version": "2.0", "ecosystem": "max", "environments": ["default"]}]
+
+
+def test_the_vendor_index_and_the_vendor_records_are_read_as_they_are() -> None:
+    """Index address, listed digest, record products and lock names come from the data."""
+    assert locked_index(VENDOR_ARTEFACT) == (VENDOR_INDEX, "kit-2.0-release.conda")
+    for address in (
+        VENDOR_ARTEFACT.replace("https://", "http://"),
+        VENDOR_ARTEFACT + "?token=1",
+        VENDOR_ARTEFACT + "#part",
+        "https://packages.example/linux-64/kit-2.0-release.conda",
+        "https:///max/linux-64/kit-2.0-release.conda",
+        VENDOR_ARTEFACT.replace("/max/", "/m x/"),
+    ):
+        with pytest.raises(ValueError, match="plain channel"):
+            locked_index(address)
+
+    name = "kit-2.0-release.conda"
+    modern = json.dumps({"packages": {}, "packages.conda": {name: {"sha256": "d"}}}).encode()
+    legacy = json.dumps({"packages": {name: {"sha256": "e"}}, "packages.conda": {}}).encode()
+    assert listed_digest(modern, name) == "d" and listed_digest(legacy, name) == "e"
+    assert listed_digest(modern, "kit-2.1-release.conda") is None
+    unsigned = json.dumps({"packages": {name: {}}, "packages.conda": {name: "text"}}).encode()
+    assert listed_digest(unsigned, name) is None
+    for broken in (b"[]", b'{"packages": {}}', b'{"packages": [], "packages.conda": {}}'):
+        with pytest.raises(ValueError, match="package tables"):
+            listed_digest(broken, name)
+
+    answer = _records(
+        {
+            "CVE-2025-1000": [
+                "cpe:2.3:a:maker:server:*:*:*:*:*:*:*:*",
+                "cpe:2.3:a:maker:agent:1.0:*:*:*:*:*:*:*",
+                "cpe:2.3:o:other:system:*:*:*:*:*:*:*:*",
+                "short",
+            ],
+            "CVE-2026-2000": ["cpe:2.3:a:maker:kit:*:*:*:*:*:*:*:*"],
+        }
+    )
+    assert vendor_records(answer, "maker") == {
+        "CVE-2025-1000": ("agent", "server"),
+        "CVE-2026-2000": ("kit",),
+    }
+    assert vendor_records(_records({}), "maker") == {}
+    for broken in (
+        b"[]",
+        b'{"vulnerabilities": "none"}',
+        _records(OTHER_PRODUCT, total=2001),
+        json.dumps({"totalResults": 1, "vulnerabilities": ["text"]}).encode(),
+        json.dumps({"totalResults": 1, "vulnerabilities": [{"cve": {"id": 7}}]}).encode(),
+        json.dumps({"totalResults": 1, "vulnerabilities": [{"cve": {"id": "CVE-1"}}]}).encode(),
+        _records({"CVE-2025-1000": ["cpe:2.3:a:other:server:*:*:*:*:*:*:*:*"]}),
+    ):
+        with pytest.raises(ValueError):
+            vendor_records(broken, "maker")
+
+    rows = [
+        {"conda": "https://c.example/linux-64/ld_impl_linux-64-2.46.1-h0_0.conda"},
+        {"conda": "https://c.example/noarch/Ruamel.Yaml-0.18-py_0.conda"},
+        {"pypi": "https://files.example/wheel.whl"},
+        "text",
+    ]
+    assert locked_names(rows) == {"ld_impl_linux_64", "ruamel_yaml"}
+
+
+def test_an_unaudited_package_is_accepted_only_through_its_vendor_records() -> None:
+    """The file must stay listed and the vendor's records must be the reviewed ones."""
+    exceptions = load_exceptions(_table(REVIEWED))
+    assert exceptions[0].reviewed == ("CVE-2025-1000",) and exceptions[0].advisory == ""
+    report: dict[str, Any] = {
+        "matches": [],
+        "ignored": [],
+        "not_audited": UNAUDITED,
+        "unused_ignores": [],
+    }
+    lock, bodies = _vendor_case(OTHER_PRODUCT)
+    calls: list[str] = []
+
+    def fetcher(address: str, limit: int) -> bytes:
+        calls.append(address)
+        return bodies[address]
+
+    held = pixi_lock_decision(report, 0, LOCK, lock, exceptions, fetcher)
+    assert held["passed"] is True and sorted(calls) == sorted(bodies)
+    evidence = held["accepted"][0]["evidence"]
+    assert evidence["vendor_records"] == {"CVE-2025-1000": ["server"]}
+    assert evidence["listed_sha256"] == lock[0]["sha256"] and evidence["index"] == VENDOR_INDEX
+
+    changes: list[tuple[dict[str, list[str]], str | None, str]] = [
+        (
+            {**OTHER_PRODUCT, "CVE-2026-2000": OTHER_PRODUCT["CVE-2025-1000"]},
+            "LOCKED",
+            "unreviewed",
+        ),
+        ({}, "LOCKED", "withdrawn"),
+        ({"CVE-2025-1000": ["cpe:2.3:a:maker:kit:*:*:*:*:*:*:*:*"]}, "LOCKED", "naming"),
+        (OTHER_PRODUCT, "f" * 64, "listed"),
+        (OTHER_PRODUCT, None, "listed"),
+    ]
+    for rows, listed, cause in changes:
+        lock, changed = _vendor_case(rows, listed)
+        decision = pixi_lock_decision(
+            report, 0, LOCK, lock, exceptions, lambda address, limit: changed[address]
+        )
+        assert decision["passed"] is False and decision["accepted"] == []
+        blocked = decision["blocked"][0]
+        assert blocked["why"] == "reason no longer holds" and blocked["match"] == ["kit", "2.0", ""]
+        found = blocked["evidence"]
+        assert {
+            "unreviewed": found["unreviewed"] == ["CVE-2026-2000"],
+            "withdrawn": found["withdrawn"] == ["CVE-2025-1000"],
+            "naming": found["naming_a_locked_package"] == ["CVE-2025-1000"],
+            "listed": found["listed_sha256"] != lock[0]["sha256"],
+        }[cause]
+
+    lock, bodies = _vendor_case(OTHER_PRODUCT)
+
+    def served(address: str, limit: int) -> bytes:
+        return bodies[address]
+
+    unrecorded = pixi_lock_decision(report, 0, LOCK, lock, (), served)
+    assert unrecorded["passed"] is False
+    assert unrecorded["blocked"][0]["why"] == "no exception recorded"
+    audited = pixi_lock_decision({**report, "not_audited": []}, 0, LOCK, lock, exceptions, served)
+    assert audited["passed"] is False and len(audited["unused"]) == 1
+    other_version = [{**UNAUDITED[0], "version": "2.1"}]
+    moved = pixi_lock_decision(
+        {**report, "not_audited": other_version}, 0, LOCK, lock, exceptions, served
+    )
+    assert moved["passed"] is False and len(moved["blocked"]) == len(moved["unused"]) == 1
+    bodies[VENDOR_RECORDS.format(vendor="maker")] = _records(OTHER_PRODUCT, total=2001)
+    partial = pixi_lock_decision(report, 0, LOCK, lock, exceptions, served)
+    assert partial["blocked"][0]["why"] == "check failed: ValueError"
+
+
+def test_a_finding_exception_and_a_coverage_exception_do_not_stand_in_for_each_other() -> None:
+    """An unaudited package needs its own reason, and so does a finding on that package."""
+    lock, bodies = _vendor_case(OTHER_PRODUCT)
+    finding = _table(NO_FIX.format("CVE-1").replace('"tool"', '"kit"').replace('"1.0"', '"2.0"'))
+
+    def served(address: str, limit: int) -> bytes:
+        return bodies[address]
+
+    report: dict[str, Any] = {
+        "matches": [],
+        "ignored": [],
+        "not_audited": UNAUDITED,
+        "unused_ignores": [],
+    }
+    crossed = pixi_lock_decision(report, 0, LOCK, lock, load_exceptions(finding), served)
+    assert crossed["passed"] is False
+    assert [row["why"] for row in crossed["blocked"]] == ["no exception recorded"]
+    assert len(crossed["unused"]) == 1
+    matched = {
+        **report,
+        "matches": [{"package": "kit", "version": "2.0", "id": "CVE-2025-1000"}],
+        "not_audited": [],
+    }
+    reverse = pixi_lock_decision(matched, 1, LOCK, lock, load_exceptions(_table(REVIEWED)), served)
+    assert reverse["passed"] is False
+    assert [row["why"] for row in reverse["blocked"]] == ["no exception recorded"]
+    assert len(reverse["unused"]) == 1

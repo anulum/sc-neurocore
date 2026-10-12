@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A package the Pixi scanner cannot audit is accepted only through a
+  `vendor_records_reviewed` exception. The audit requires the vendor channel
+  to list the locked file with the lock's digest, and the vulnerability
+  records bound to the vendor's product identifiers to be exactly the reviewed
+  ones, none naming a package of the lock. The four Modular packages of the
+  Mojo lock are recorded this way.
+
 - Advisory exceptions are bound to the lock: channel and platform come from
   the locked artefact's address, a newer build of the locked version ends an
   exception, and a table for another ecosystem or an unread lock fails.

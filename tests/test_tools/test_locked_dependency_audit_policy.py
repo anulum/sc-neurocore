@@ -117,9 +117,12 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
     assert '"ignored", "not_audited", "unused_ignores"' in report_source
     exception_source = (ROOT / "tools/security_scan/advisory_exceptions.py").read_text()
     assert (
-        'REASONS = ("no_fixed_version_in_channel", "component_not_in_package")' in exception_source
+        'REASONS = ("no_fixed_version_in_channel", "component_not_in_package", '
+        '"vendor_records_reviewed")' in exception_source
     )
-    assert '("ignored", "not_audited", "unused_ignores")' in exception_source
+    # Scanner ignores are never excepted; an unaudited package is decided row by row.
+    assert '("ignored", "unused_ignores")' in exception_source
+    assert 'decide_matches(payload["not_audited"], coverage' in exception_source
     exception_names = {
         node.id for node in ast.walk(ast.parse(exception_source)) if isinstance(node, ast.Name)
     } | {

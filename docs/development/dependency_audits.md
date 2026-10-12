@@ -87,8 +87,9 @@ particular CPU wheel has no build-specific vulnerability.
 
 The pinned Pixi audit 0.2.0 covers conda-forge and PyPI. Its `matches`, `ignored`,
 `not_audited` and `unused_ignores` lists must agree with typed counters and cover
-every locked package. Modular packages reported as `not_audited` cannot establish
-a passing complete-lock audit. A Pixi lock without a
+every locked package. A package reported as `not_audited` blocks the lock
+unless a vendor-record exception for exactly that package version holds. A Pixi
+lock without a
 readable package record list is refused before the scanner starts. No blanket waiver
 or automatic `--fix` is applied. Advisory remediation needs reviewed fixed
 versions and ordinary integration validation before changing the lock.
@@ -98,7 +99,8 @@ versions and ordinary integration validation before changing the lock.
 A Pixi finding can be accepted only through one table of
 `tools/security_scan/advisory_exceptions.toml`, naming the lock, the package
 version and the advisory, with one of two reasons that the audit re-establishes
-on every run:
+on every run. A package the scanner cannot audit has one table without an
+advisory and the third reason:
 
 - `no_fixed_version_in_channel` — the locked artefact is the newest version
   and the newest build its channel publishes for its platform. Channel and
@@ -110,6 +112,14 @@ on every run:
   package does not ship. The check downloads the exact locked artefact,
   verifies it against the lock digest and requires that none of its declared
   paths matches the listed patterns.
+- `vendor_records_reviewed` — the scanner has no advisory data for the vendor
+  channel, so the audit reads the vendor's records itself. The check reads
+  the platform index beside the locked file and requires the file to be
+  listed with the lock's digest. It then asks the National Vulnerability
+  Database for every record bound to a product identifier of the named
+  vendor. The records must be exactly those listed as reviewed, and none may
+  name a package of the lock as its product. A new record, a withdrawn
+  record and a withdrawn file all fail the check.
 
 There is no severity, confidence or reachability filter and no wildcard. A
 finding without a table, a table whose check fails or cannot be completed, a
@@ -117,10 +127,14 @@ table that matches no finding, and a table that names another ecosystem or a
 lock the audit does not read all fail the audit. Whether the listed paths
 describe the affected program is not something a machine can check; it is
 reviewed with each table, and the evidence records how many paths the
-artefact declares. Packages the scanner
-cannot audit are never covered by an exception. Each run writes the accepted
-findings with their evidence to `exceptions.json` in the audit packet: an
-accepted finding is a known, recorded limitation, not an absence of findings.
+artefact declares. The vendor check has two limits of the same kind. It sees
+only records that already carry a product identifier, and the database
+assigns those some time after publication. Whether a reviewed record that
+names another product of the vendor also affects a locked package is reviewed
+with the table. Each run writes the accepted findings and packages with their
+evidence to `exceptions.json` in the audit packet: an accepted finding is a
+known, recorded limitation, not an absence of findings, and a package accepted
+by its vendor records has not been audited by the scanner.
 
 The additional security-packet OSV runner also treats every nonzero scanner
 exit as failure. A partially written report cannot turn a service error green.
