@@ -12,9 +12,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import tomllib
+import sys
 
 import yaml
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 

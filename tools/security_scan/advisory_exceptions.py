@@ -59,12 +59,17 @@ from pathlib import Path
 import re
 import ssl
 import subprocess
+import sys
 import tarfile
 import time
-import tomllib
 from typing import Any
 import urllib.parse
 import zipfile
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 REASONS = ("no_fixed_version_in_channel", "component_not_in_package", "vendor_records_reviewed")
 COVERAGE_REASON = "vendor_records_reviewed"

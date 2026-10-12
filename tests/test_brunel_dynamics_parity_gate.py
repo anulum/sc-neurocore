@@ -14,6 +14,10 @@ presented as a like-for-like comparison; the fixed-point Rust lane is an
 unconnected LIF layer whose rate does not scale with the network, so it is
 pinned here as a non-parity lane and the public pages must say so wherever
 they cite its wall-clock ratios.
+
+These are checks of the committed artefact and of the text that cites it. No
+simulation runs here: a passing test says the published sentences agree with
+the recording, not that the current code reproduces it.
 """
 
 from __future__ import annotations
@@ -31,7 +35,9 @@ _PARITY_SIMULATORS = frozenset({"sc_numpy_dense"})
 # track the Brian2 rates — never a wording change alone.
 _NON_PARITY_SIMULATORS = frozenset({"sc_rust_engine"})
 
-_RATE_TOLERANCE = 0.10
+# The one value behind the published sentence and behind this gate: the README
+# says "rates within 5% of Brian2", and a parity row further off fails.
+_RATE_TOLERANCE = 0.05
 _PUBLIC_CLAIM_FILES = (
     "README.md",
     "docs/COMPETITIVE_LANDSCAPE.md",
@@ -40,20 +46,19 @@ _PUBLIC_CLAIM_FILES = (
 
 
 def _rows() -> dict[tuple[str, int], dict[str, float]]:
+    """Return the artefact rows keyed by simulator lane and network size."""
     payload = json.loads(_ARTEFACT.read_text(encoding="utf-8"))
     return {(row["simulator"], row["n_neurons"]): row for row in payload["data"]}
 
 
 def test_artefact_classifies_every_simulator_lane() -> None:
     """Every recorded lane is explicitly parity, non-parity, or the reference."""
-
     simulators = {simulator for simulator, _ in _rows()}
     assert simulators == {"brian2"} | _PARITY_SIMULATORS | _NON_PARITY_SIMULATORS
 
 
 def test_parity_lane_tracks_brian2_rates_at_matched_sizes() -> None:
-    """The parity lane must reproduce the Brian2 rate envelope within 10%."""
-
+    """The parity lane must reproduce the Brian2 mean rate within the published tolerance."""
     rows = _rows()
     for simulator in sorted(_PARITY_SIMULATORS):
         matched = 0
@@ -71,7 +76,6 @@ def test_parity_lane_tracks_brian2_rates_at_matched_sizes() -> None:
 
 def test_non_parity_lane_remains_documented_as_non_parity() -> None:
     """The unconnected fixed-point lane must not silently become a parity claim."""
-
     rows = _rows()
     for simulator in sorted(_NON_PARITY_SIMULATORS):
         for (candidate, n_neurons), row in rows.items():
@@ -87,7 +91,6 @@ def test_non_parity_lane_remains_documented_as_non_parity() -> None:
 
 def test_public_pages_bind_the_speed_claim_to_the_parity_boundary() -> None:
     """Every public 39-202x citation must carry the non-parity disclaimer."""
-
     for relative in _PUBLIC_CLAIM_FILES:
         text = (_ROOT / relative).read_text(encoding="utf-8")
         assert "39-202x" in text, f"{relative} no longer cites the artefact ratios"
@@ -100,3 +103,35 @@ def test_public_pages_bind_the_speed_claim_to_the_parity_boundary() -> None:
         "README presents the non-parity wall-clock ratio as a bare Brian2 comparison"
     )
     assert "2.4x" in readme, "README omits the parity-validated speed numbers"
+
+
+def test_the_published_tolerance_and_speed_ratios_are_those_of_the_artefact() -> None:
+    """The README states the enforced tolerance and the ratios the artefact holds."""
+    readme = (_ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"rates within {_RATE_TOLERANCE:.0%} of Brian2" in readme
+    rows = _rows()
+    ratios = {
+        n_neurons: rows[("brian2", n_neurons)]["wall_mean_s"] / row["wall_mean_s"]
+        for (simulator, n_neurons), row in rows.items()
+        if simulator == "sc_numpy_dense" and ("brian2", n_neurons) in rows
+    }
+    assert sorted(ratios) == [1000, 5000, 10000]
+    assert f"{ratios[1000]:.1f}x faster at 1,000 neurons" in readme
+    assert f"{ratios[5000]:.1f}x at 5,000" in readme
+    assert f"{ratios[10000]:.2f}x (slower than Brian2) at 10,000" in readme
+
+
+def test_the_readme_states_what_the_recording_is() -> None:
+    """Duration, repetitions and the absence of a rerun are said where the numbers are."""
+    payload = json.loads(_ARTEFACT.read_text(encoding="utf-8"))
+    readme = " ".join((_ROOT / "README.md").read_text(encoding="utf-8").split())
+    assert payload["params"] == {
+        "sim_ms": 300.0,
+        "repeats": 2,
+        "regimes": ["AI"],
+        "conn_prob": 0.1,
+        "weight_exc": 0.1,
+    }
+    assert payload["timestamp"].startswith("2026-03-08")
+    assert "2026-03-08, one host, 300 ms simulated, two repetitions with one seed" in readme
+    assert "it does not rerun the simulation" in readme

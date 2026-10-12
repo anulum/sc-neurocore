@@ -14,7 +14,23 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 886
+expected_file_count = 890
+
+[[file]]
+path = "tools/coverage_scope.py"
+rationale = "The validation document's statement of what the coverage gate measures is generated from the coverage configuration and checked on every commit."
+
+[[file]]
+path = "tests/test_tools/test_coverage_scope.py"
+rationale = "A real source tree and real omission patterns prove the counts, and the committed document is bound to the current configuration."
+
+[[file]]
+path = "tests/test_tools/test_readme_workflow_table.py"
+rationale = "The workflow count and table of the README must be those of the workflow directory."
+
+[[file]]
+path = "tests/test_brunel_dynamics_parity_gate.py"
+rationale = "The published simulator comparison must state the tolerance the gate enforces, the ratios the artefact holds and what the recording is."
 
 [[file]]
 path = "tests/test_equation_program.py"

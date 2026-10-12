@@ -82,6 +82,12 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.pre-commit-config\.yaml|.*\.rs|.*Cargo\.(toml|lock)|engine/missing_docs_ceiling\.json|tools/(rust_doc_(ratchet|measurement|symbols|history)\.py|rustdoc_symbols/.*|docstring_policy_git\.py|docstring_policy_scope\.py|documentation_debt\.py|doc_debt_ceiling\.py))$'
+      - id: coverage-scope-drift
+        name: coverage scope drift
+        entry: python -m tools.coverage_scope --check
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|pyproject\.toml|VALIDATION\.md|src/.*\.py|tools/coverage_scope\.py)$'
       - id: api-reference-drift
         name: API reference drift
         entry: python scripts/generate_docs.py --check

@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Published claims are bound to their sources after an outside review. The
+  simulator-comparison gate enforces the 5 % the README states (it allowed
+  10 %), the README says what the recording is and that no test reruns it,
+  both workflow counts and the workflow table follow the workflow directory,
+  and `VALIDATION.md` states what the coverage gate measures and omits from a
+  block generated from the coverage configuration (`tools/coverage_scope.py`,
+  checked on every commit). The README row on five-runtime completion no
+  longer carries the heading "High-fidelity".
+- Four co-simulation receipts are recorded again. The equation-program change
+  altered two of their subject files, which withdrew the verified RTL label of
+  four models.
+- The audit module and one test import the TOML reader in the form Python 3.10
+  has, and the distribution build's refusal of a missing comparison script
+  has its test.
+
 - Equation expressions are no longer executed by the interpreter. The safety
   gate returns the checked tree and a new translator turns it into a program
   of plain function calls; `EquationNeuron`, the strict-units check and the

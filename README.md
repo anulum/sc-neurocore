@@ -125,7 +125,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Hardware evidence | Committed synthesis and report artefacts exist for selected flows, including the bounded SC Compte ring-connectivity representative; power/energy and physical-device claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
 | Polyglot surfaces | Source-checkout research and parity surfaces, not default user install requirements. |
-| High-fidelity neurons | 57 of 160 catalogue models meet the strict five-runtime polyglot-completion bar; see the [per-model evidence table](docs/api/model_fidelity_status.md). |
+| Polyglot-complete neurons | 57 of 160 catalogue models meet the strict five-runtime polyglot-completion bar. That is agreement between implementations; it is not by itself agreement with the source model, with RTL or with a device. The [per-model evidence table](docs/api/model_fidelity_status.md) states each of those separately. |
 | Regulated deployment | Readiness tooling and evidence categories only; no certification or field approval claim. |
 
 ## Version and Capability Snapshot
@@ -146,7 +146,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 208 |
 | Optional extras | 31 |
-| Python test files | 5313 |
+| Python test files | 5315 |
 | Public documentation pages | 642 |
 | GitHub Actions workflows | 22 |
 
@@ -249,8 +249,11 @@ recurrent Brunel network, so they are not a dynamics-parity result (their
 firing rates sit 1.4-17x above Brian2's at matched sizes). The
 dynamics-parity comparison in the same artefact is the NumPy dense lane
 (rates within 5% of Brian2): 2.4x faster at 1,000 neurons, 1.3x at 5,000,
-and 0.75x (slower than Brian2) at 10,000.
-`tests/test_brunel_dynamics_parity_gate.py` enforces both boundaries.
+and 0.75x (slower than Brian2) at 10,000. The artefact is one recording
+(2026-03-08, one host, 300 ms simulated, two repetitions with one seed) and
+compares mean firing rates only.
+`tests/test_brunel_dynamics_parity_gate.py` checks that this text matches the
+artefact; it does not rerun the simulation.
 
 The AdEx model also exposes source-bound baseline-Euler simulation through
 Python, the Rust engine, Julia, Go, and Mojo. Its committed
@@ -414,7 +417,7 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 
 | Tier | Modules | Ships in wheel | Status |
 |------|---------|:--------------:|--------|
-| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 100%. |
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 100% of the measured files. [What the gate measures and omits](VALIDATION.md) is generated from the coverage configuration. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
 | **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
 | **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
@@ -641,7 +644,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-20 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
+22 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -657,6 +660,8 @@ bridge install. For source-tree runs against local bridge code, use
 | **release.yml** | Build sdist/SBOM/security packet, support tagged-release backfills, and attach release assets to GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
+| **dependency-audit.yml** | Complete audit of every committed dependency lock, per ecosystem |
+| **hdc-reference.yml** | Hyperdimensional-computing reference comparison |
 | **fuzz.yml** | Rust engine fuzzing with nightly cargo-fuzz targets |
 | **mlir-circt.yml** | MLIR/CIRCT canary for compiler lowering paths |
 | **nir-canary.yml** | Latest NIR compatibility canary |

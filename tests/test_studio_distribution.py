@@ -419,6 +419,29 @@ def test_build_refuses_missing_model_pages(distribution_source: Path, tmp_path: 
     assert "No model reference pages" in result.stdout + result.stderr
 
 
+def test_build_refuses_a_missing_conversion_benchmark_source(
+    distribution_source: Path, tmp_path: Path
+) -> None:
+    """A source tree without one comparison script fails instead of shipping a broken command.
+
+    Parameters
+    ----------
+    distribution_source : Path
+        Disposable copy of the real build inputs.
+    tmp_path : Path
+        Workspace for the altered copy and the refused build.
+    """
+    source = tmp_path / "source"
+    shutil.copytree(
+        distribution_source, source, ignore=shutil.ignore_patterns("build", "*.egg-info")
+    )
+    (source / CONVERSION_BENCHMARK[1]).unlink()
+    result = build_distribution(source, "build_wheel", tmp_path / "wheel")
+    assert result.returncode != 0
+    assert "Missing conversion benchmark source" in result.stdout + result.stderr
+    assert not list((tmp_path / "wheel").glob("*.whl"))
+
+
 def test_rebuild_replaces_modified_and_removed_pages(
     distribution_source: Path, tmp_path: Path
 ) -> None:
