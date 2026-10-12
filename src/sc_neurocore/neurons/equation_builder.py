@@ -70,7 +70,8 @@ from sc_neurocore.neurons._stochastic_threshold import (
 from sc_neurocore.neurons.equation_evaluation import evaluate_condition, evaluate_scalar
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
 from sc_neurocore.neurons.equation_refusals import EquationRefusal, EquationStateFailure
-from sc_neurocore.neurons.equation_safety import EVAL_GLOBALS, ExpressionSafetyValidator
+from sc_neurocore.neurons.equation_program import compile_expression
+from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
 from sc_neurocore.neurons.equation_units_runtime import (
     convert_runtime_value,
     prepare_strict_runtime,
@@ -247,22 +248,25 @@ class EquationNeuron:
         for expr in all_exprs:
             self._safety.validate(expr)
 
+        # Each expression becomes a program of plain function calls built from
+        # the tree the safety gate checked; nothing is compiled or evaluated
+        # by the interpreter.
         self._compiled_eqs = {
-            var: compile(expr, f"<eq:{var}>", "eval") for var, expr in self.equations.items()
+            var: compile_expression(expr, self._safety) for var, expr in self.equations.items()
         }
         self._compiled_threshold = (
-            compile(self.threshold_expr, "<threshold>", "eval") if self.threshold_expr else None
+            compile_expression(self.threshold_expr, self._safety) if self.threshold_expr else None
         )
         self._compiled_rate = (
-            compile(self.rate_expression, "<escape-rate>", "eval") if self.rate_expression else None
+            compile_expression(self.rate_expression, self._safety) if self.rate_expression else None
         )
         self._compiled_probability = (
-            compile(self.probability_expression, "<poisson-probability>", "eval")
+            compile_expression(self.probability_expression, self._safety)
             if self.probability_expression
             else None
         )
         self._compiled_reset = {
-            var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
+            var: compile_expression(expr, self._safety) for var, expr in self.reset_rules.items()
         }
         self.jacobian_expressions: dict[str, str] = {}
         self._compiled_jacobian = self._build_jacobian() if self.method == "exp_euler" else {}
@@ -299,7 +303,7 @@ class EquationNeuron:
         env.update(_previous_state_aliases(self.initial_state))
         env["I"] = 0.0
         # Bandit B307 justification: AST-whitelisted threshold expression (see step()).
-        return evaluate_condition(self._compiled_threshold, self._EVAL_GLOBALS, env)
+        return evaluate_condition(self._compiled_threshold, env)
 
     def _build_jacobian(self) -> dict[str, Any]:
         """Compile the diagonal Jacobian ``∂f/∂x`` for each equation.
@@ -332,15 +336,9 @@ class EquationNeuron:
         compiled: dict[str, Any] = {}
         for var, expr in self.equations.items():
             derivative = differentiate(expr, var)
-            self._safety.validate(derivative)
+            compiled[var] = compile_expression(derivative, self._safety)
             self.jacobian_expressions[var] = derivative
-            compiled[var] = compile(derivative, f"<jac:{var}>", "eval")
         return compiled
-
-    # The compiled-expression ``eval`` sites below run with this empty-builtins
-    # sandbox; the AST allowlist that makes every targeted B307 suppression sound lives in
-    # :class:`~sc_neurocore.neurons.equation_safety.ExpressionSafetyValidator`.
-    _EVAL_GLOBALS = EVAL_GLOBALS
 
     def _draw_noise(self) -> float:
         """Draw one standard-normal diffusion-noise sample from the run's generator."""
@@ -431,7 +429,7 @@ class EquationNeuron:
                 env_post = self._build_env(**kwargs)
                 env_post.update(_previous_state_aliases(previous_state))
                 if self._escape_rate_enabled:
-                    rate = evaluate_scalar(compiled_stochastic, self._EVAL_GLOBALS, env_post)
+                    rate = evaluate_scalar(compiled_stochastic, env_post)
                     hazard = rate * self.dt
                     if not math.isfinite(rate) or rate < 0.0:
                         raise EquationStateFailure(
@@ -443,7 +441,7 @@ class EquationNeuron:
                         )
                     probability = -math.expm1(-hazard)
                 else:
-                    probability = evaluate_scalar(compiled_stochastic, self._EVAL_GLOBALS, env_post)
+                    probability = evaluate_scalar(compiled_stochastic, env_post)
                 if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
                     raise EquationStateFailure(
                         "stochastic spike probability must remain finite and bounded"
@@ -455,7 +453,7 @@ class EquationNeuron:
                     reset_env.update(_previous_state_aliases(previous_state))
                     for var, code in self._compiled_reset.items():
                         # Bandit B307 justification: AST-whitelisted compiled reset rule.
-                        self.state[var] = evaluate_scalar(code, self._EVAL_GLOBALS, reset_env)
+                        self.state[var] = evaluate_scalar(code, reset_env)
             except Exception:
                 self.state = previous_state
                 stochastic_rng.restore(previous_rng)
@@ -464,7 +462,7 @@ class EquationNeuron:
             env_post = self._build_env(**kwargs)
             env_post.update(_previous_state_aliases(previous_state))
             # Bandit B307 justification: AST-whitelisted compiled threshold expression.
-            active = evaluate_condition(self._compiled_threshold, self._EVAL_GLOBALS, env_post)
+            active = evaluate_condition(self._compiled_threshold, env_post)
             # ``crossing`` fires once on the inactive -> active transition (a rising
             # threshold crossing, matching the hand oscillator models' ``v >= thr and
             # v_prev < thr`` edge test); ``level`` fires on every step the condition
@@ -483,7 +481,7 @@ class EquationNeuron:
                 reset_env.update(_previous_state_aliases(previous_state))
                 for var, code in self._compiled_reset.items():
                     # Bandit B307 justification: AST-whitelisted compiled reset rule.
-                    self.state[var] = evaluate_scalar(code, self._EVAL_GLOBALS, reset_env)
+                    self.state[var] = evaluate_scalar(code, reset_env)
 
         return spike
 
@@ -506,7 +504,7 @@ class EquationNeuron:
                 # the whitelisted maths/comparison nodes). The `eval` env has
                 # empty `__builtins__` so even reaching `eval` / `exec` /
                 # `__import__` is impossible.
-                derivatives[var] = evaluate_scalar(code, self._EVAL_GLOBALS, env)
+                derivatives[var] = evaluate_scalar(code, env)
             for var in self.equations:
                 self.state[var] += derivatives[var] * self.dt
 
@@ -522,7 +520,7 @@ class EquationNeuron:
                 # Bandit B307 justification: `code` is a compiled expression that already passed
                 # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
                 # with empty `__builtins__` (see the euler branch comment for full rationale).
-                updates[var] = evaluate_scalar(code, self._EVAL_GLOBALS, env)
+                updates[var] = evaluate_scalar(code, env)
             for var in self.equations:
                 self.state[var] = updates[var]
 
@@ -543,7 +541,7 @@ class EquationNeuron:
                     # Bandit B307 justification: AST-whitelisted compiled equation
                     # (see euler branch comment above for full sandbox
                     # rationale).
-                    var: evaluate_scalar(code, self._EVAL_GLOBALS, e)
+                    var: evaluate_scalar(code, e)
                     for var, code in self._compiled_eqs.items()
                 }
 
@@ -573,7 +571,7 @@ class EquationNeuron:
                 # Bandit B307 justification: `code` is a compiled expression that already passed
                 # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
                 # with empty `__builtins__` (see the euler branch comment for full rationale).
-                derivative = evaluate_scalar(code, self._EVAL_GLOBALS, env)
+                derivative = evaluate_scalar(code, env)
                 self.state[var] += derivative * self.dt
                 env[var] = self.state[var]
 
@@ -589,8 +587,8 @@ class EquationNeuron:
             for var in self.equations:
                 # Bandit B307 justification: AST-whitelisted compiled equation / Jacobian
                 # (see the euler branch comment for the full sandbox rationale).
-                f_val = evaluate_scalar(self._compiled_eqs[var], self._EVAL_GLOBALS, env)
-                a_val = evaluate_scalar(self._compiled_jacobian[var], self._EVAL_GLOBALS, env)
+                f_val = evaluate_scalar(self._compiled_eqs[var], env)
+                a_val = evaluate_scalar(self._compiled_jacobian[var], env)
                 increments[var] = f_val * self.dt * float(exprel(a_val * self.dt))
             for var in self.equations:
                 self.state[var] += increments[var]

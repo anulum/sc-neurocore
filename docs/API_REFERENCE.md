@@ -24724,11 +24724,112 @@ fires, while both still consume one RNG sample.
 ## Module `neurons._units`
 
 ### Function `require_pint()`
+Refuse strict-units work when the optional pint package is missing.
+
+Raises
+------
+SCDependencyError
+    pint is not installed.
+
 ### Function `is_quantity(value)`
+Tell whether a value is a pint quantity.
+
+Parameters
+----------
+value : Any
+    Value to inspect.
+
+Returns
+-------
+bool
+    True only if pint is installed and the value is one of its quantities.
+
 ### Function `require_quantity(value, label)`
+Return a value unchanged if it is a pint quantity, and refuse it otherwise.
+
+Parameters
+----------
+value : Any
+    Value that strict-units mode requires to carry a unit.
+label : str
+    Name used in the refusal.
+
+Returns
+-------
+Any
+    The same quantity.
+
+Raises
+------
+SCDependencyError
+    pint is not installed.
+ValueError
+    The value carries no unit.
+
 ### Function `quantity_to_base(value)`
+Convert a pint quantity to the base units of the registry.
+
+Parameters
+----------
+value : Any
+    Quantity to convert.
+
+Returns
+-------
+Any
+    The quantity expressed in base units.
+
+Raises
+------
+SCDependencyError
+    pint is not installed.
+
 ### Function `build_quantity_namespace()`
+Return the unit-aware functions an expression may call in strict-units mode.
+
+Returns
+-------
+dict
+    The names of the numerical equation namespace, bound to versions
+    that require dimensionless arguments where the mathematics does.
+
+Raises
+------
+SCDependencyError
+    pint is not installed.
+
 ### Function `validate_quantity_expression(expr, env)`
+Run one expression with unit-carrying values and check the unit of its result.
+
+Parameters
+----------
+expr : str
+    Authored expression. It passes the equation safety gate before it runs.
+env : dict
+    Unit-carrying bindings and the functions of the quantity namespace.
+expected_quantity : Any, optional
+    Quantity whose unit the result must be convertible to; no unit check
+    when omitted.
+label : str
+    Name of the expression used in refusals.
+
+Returns
+-------
+Any
+    The value of the expression.
+
+Raises
+------
+SCDependencyError
+    pint is not installed.
+EquationRefusal
+    The safety gate refuses the expression.
+ValueError
+    A symbol is unknown or the expression cannot be evaluated.
+DimensionalError
+    The units of the expression are inconsistent or differ from the
+    expected unit.
+
 ---
 
 ## Module `neurons.base`
@@ -25070,18 +25171,16 @@ equation dimensions before runtime compilation.
 
 ## Module `neurons.equation_evaluation`
 
-### Function `evaluate_scalar(code, globals_dict, environment)`
-Evaluate a sandbox-approved expression with its existing float conversion.
+### Function `evaluate_scalar(program, environment)`
+Run a checked expression program with its existing float conversion.
 
 Expected value failures raise EquationEvaluationFailure subclasses while
 retaining their standard exception categories; other faults propagate.
 
 Parameters
 ----------
-code:
-    Compiled expression approved by ExpressionSafetyValidator.
-globals_dict:
-    The caller's restricted equation evaluation globals.
+program:
+    Program translated from an expression that ExpressionSafetyValidator checked.
 environment:
     Current numerical bindings, passed to the expression unchanged.
 
@@ -25097,18 +25196,16 @@ EquationEvaluationFailure
 EquationRefusal
     If an existing authored function-domain guard refuses the value.
 
-### Function `evaluate_condition(code, globals_dict, environment)`
-Evaluate a sandbox-approved threshold with its existing bool conversion.
+### Function `evaluate_condition(program, environment)`
+Run a checked threshold program with its existing bool conversion.
 
 The expression and its conversion share the scalar value error boundary.
 No state or random stream is advanced by this helper.
 
 Parameters
 ----------
-code:
-    Compiled threshold approved by ExpressionSafetyValidator.
-globals_dict:
-    The caller's restricted equation evaluation globals.
+program:
+    Program translated from a threshold that ExpressionSafetyValidator checked.
 environment:
     Current numerical bindings, passed to the expression unchanged.
 
@@ -25135,6 +25232,31 @@ The returned dict is fresh on every call so a neuron may own its namespace
 without aliasing another's. The bindings are the exact functions the
 fixed-point emitter mirrors; keep them identical to preserve co-simulation
 bit-exactness (see the module docstring).
+
+---
+
+## Module `neurons.equation_program`
+
+### Function `compile_expression(expression, validator)`
+Validate an expression and translate it into a program.
+
+Parameters
+----------
+expression : str
+    Authored equation, threshold, reset or rate expression.
+validator : ExpressionSafetyValidator, optional
+    Gate that checks the expression; the default gate when omitted.
+
+Returns
+-------
+EquationProgram
+    Callable taking the bindings and returning the expression value.
+
+Raises
+------
+EquationRefusal
+    The validator refuses the expression, or the checked tree holds a
+    construct that no translator of this module covers.
 
 ---
 
@@ -25188,16 +25310,19 @@ Preserve unavailable-symbol compatibility without generated diagnostics.
 Validate equation expression strings against the AST allowlist.
 
 Holds the allowed node set, the blocked-name set, and the maximum AST depth,
-and exposes :meth:`validate`, which raises :class:`ValueError` on any
-disallowed construct. The same validator instance is reused for a neuron's
-dynamics, threshold, reset rules, and (for exponential Euler) its symbolic
-Jacobian, so every expression that reaches an ``eval`` site has passed the
-same gate.
+and exposes :meth:`validate` and :meth:`checked_tree`, which raise
+:class:`ValueError` on any disallowed construct. The same validator instance
+is reused for a neuron's dynamics, threshold, reset rules, and (for
+exponential Euler) its symbolic Jacobian. A program is only ever built from
+the tree that :meth:`checked_tree` returns, so no expression is evaluated
+without having passed this gate.
 
 - **__init__**()
   - Create a validator with the given maximum AST depth.
 - **validate**(expr)
   - Validate an expression against the AST whitelist.
+- **checked_tree**(expr)
+  - Parse an expression, apply every rule and return the checked tree.
 
 ---
 

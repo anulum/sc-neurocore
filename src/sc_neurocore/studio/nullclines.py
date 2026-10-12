@@ -157,13 +157,11 @@ def nullclines_2d(
                 env = dict(base_env)
                 env[v0] = float(X[i, j])
                 env[v1] = float(Y[i, j])
-                for component, code in enumerate(compiled):
+                for component, program in enumerate(compiled):
                     try:
-                        # Bandit B307 justification: the compiled expressions come from
-                        # EquationNeuron._compiled_eqs, which already passed the AST
-                        # whitelist of the equation safety validator; empty __builtins__
-                        # blocks the residual escape vectors.
-                        value = float(eval(code, {"__builtins__": {}}, env))  # nosec B307
+                        # The programs come from EquationNeuron._compiled_eqs: plain
+                        # function calls translated from trees the safety gate checked.
+                        value = float(program(env))
                     except NameError as exc:
                         raise _input_error(
                             "equations", "equations reference an unknown symbol"

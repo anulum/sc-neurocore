@@ -8,20 +8,23 @@
 
 """Separate expected expression-value failures from errors in the engine itself.
 
-Only the compiled expression and its existing float/bool conversion run inside
+Only the equation program and its existing float/bool conversion run inside
 this boundary. State updates, RNG handling, storage and integration bookkeeping
 remain outside it. Expected value failures preserve their standard exception
 categories and carry fixed authored reasons; their generated causes stay private.
 Existing authored domain guards pass through unchanged. No equation, conversion,
-namespace, evaluation globals or numerical operation is substituted.
+namespace or numerical operation is substituted. A program is a translation of
+a checked expression tree into plain function calls
+(:mod:`sc_neurocore.neurons.equation_program`); this module runs no dynamic
+code.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from types import CodeType
 from typing import SupportsFloat, SupportsIndex, TypeVar
 
+from sc_neurocore.neurons.equation_program import EquationProgram
 from sc_neurocore.neurons.equation_refusals import (
     EquationAttributeFailure,
     EquationDivisionFailure,
@@ -40,21 +43,18 @@ _ScalarInput = str | bytes | bytearray | SupportsFloat | SupportsIndex
 
 
 def evaluate_scalar(
-    code: CodeType,
-    globals_dict: dict[str, object],
+    program: EquationProgram,
     environment: Mapping[str, object],
 ) -> float:
-    """Evaluate a sandbox-approved expression with its existing float conversion.
+    """Run a checked expression program with its existing float conversion.
 
     Expected value failures raise EquationEvaluationFailure subclasses while
     retaining their standard exception categories; other faults propagate.
 
     Parameters
     ----------
-    code:
-        Compiled expression approved by ExpressionSafetyValidator.
-    globals_dict:
-        The caller's restricted equation evaluation globals.
+    program:
+        Program translated from an expression that ExpressionSafetyValidator checked.
     environment:
         Current numerical bindings, passed to the expression unchanged.
 
@@ -70,25 +70,22 @@ def evaluate_scalar(
     EquationRefusal
         If an existing authored function-domain guard refuses the value.
     """
-    return _evaluate_value(code, globals_dict, environment, float)
+    return _evaluate_value(program, environment, float)
 
 
 def evaluate_condition(
-    code: CodeType,
-    globals_dict: dict[str, object],
+    program: EquationProgram,
     environment: Mapping[str, object],
 ) -> bool:
-    """Evaluate a sandbox-approved threshold with its existing bool conversion.
+    """Run a checked threshold program with its existing bool conversion.
 
     The expression and its conversion share the scalar value error boundary.
     No state or random stream is advanced by this helper.
 
     Parameters
     ----------
-    code:
-        Compiled threshold approved by ExpressionSafetyValidator.
-    globals_dict:
-        The caller's restricted equation evaluation globals.
+    program:
+        Program translated from a threshold that ExpressionSafetyValidator checked.
     environment:
         Current numerical bindings, passed to the expression unchanged.
 
@@ -104,28 +101,25 @@ def evaluate_condition(
     EquationRefusal
         If an existing authored function-domain guard refuses the value.
     """
-    return _evaluate_value(code, globals_dict, environment, bool)
+    return _evaluate_value(program, environment, bool)
 
 
 def _evaluate_value(
-    code: CodeType,
-    globals_dict: dict[str, object],
+    program: EquationProgram,
     environment: Mapping[str, object],
     convert: Callable[[_ScalarInput], _Converted],
 ) -> _Converted:
-    """Evaluate compiled sandbox-approved code and mark expected value failures.
+    """Run a checked expression program and mark expected value failures.
 
-    Callers must validate the authored expression with ExpressionSafetyValidator
-    before compilation, and supply the equation sandbox globals. The sole eval
-    site retains the previous caller's globals and locals unchanged. Exceptions
-    outside the listed value categories are propagated without a public marker.
+    A program exists only for an expression that passed
+    ExpressionSafetyValidator, because the translator takes the tree from the
+    gate itself. Exceptions outside the listed value categories are propagated
+    without a public marker.
 
     Parameters
     ----------
-    code:
-        Compiled expression that passed the equation safety gate.
-    globals_dict:
-        The caller's restricted equation evaluation globals.
+    program:
+        Program translated from an expression that passed the safety gate.
     environment:
         The caller's current numerical namespace, inputs and state.
     convert:
@@ -145,11 +139,7 @@ def _evaluate_value(
         When an existing authored function-domain guard refuses the value.
     """
     try:
-        # B307: EquationNeuron compiles only AST-allowlisted expressions. Its
-        # restricted EVAL_GLOBALS and original numerical environment arrive
-        # unchanged; uploaded strings never reach this helper directly.
-        value = eval(code, globals_dict, environment)  # nosec B307
-        return convert(value)
+        return convert(program(environment))
     except EquationRefusal:
         raise
     except ZeroDivisionError as exc:

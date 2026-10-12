@@ -14,7 +14,23 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 882
+expected_file_count = 886
+
+[[file]]
+path = "tests/test_equation_program.py"
+rationale = "Programs must return what the written-out arithmetic returns, keep the language's short-circuit and error categories, and refuse everything outside the closed grammar even behind a wider gate."
+
+[[file]]
+path = "tests/test_equation_safety_capabilities.py"
+rationale = "The gate must refuse escape names, every attribute outside its list and every call whose target is not a plain name, and no equation module may execute dynamic code."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_program.py"
+rationale = "Equation expressions run as programs translated from the checked tree; the translators are the whole of what an expression can do."
+
+[[file]]
+path = "src/sc_neurocore/neurons/_units.py"
+rationale = "Strict-units checking runs authored expressions and must state its gate, its refusals and its dependency on the optional unit package."
 
 [[file]]
 path = "tests/test_sc_compte_wm_julia_network.py"
@@ -290,7 +306,7 @@ rationale = "Public neuron package lazy facade that exposes core models and opti
 
 [[file]]
 path = "src/sc_neurocore/neurons/equation_builder.py"
-rationale = "Public arbitrary-equation neuron builder with audited sandbox, strict-unit validation, and compiler-facing factory contracts."
+rationale = "Public arbitrary-equation neuron builder with a closed expression grammar, strict-unit validation, and compiler-facing factory contracts."
 
 [[file]]
 path = "src/sc_neurocore/model_zoo/pretrained.py"

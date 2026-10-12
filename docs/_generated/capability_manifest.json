@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5312
+    "test_files": 5313
   },
   "documentation": {
     "public_pages": [
@@ -4993,6 +4993,7 @@
       "tests/test_equation_compiler_verilog_syntax.py",
       "tests/test_equation_evaluation.py",
       "tests/test_equation_namespace.py",
+      "tests/test_equation_program.py",
       "tests/test_equation_safety_acceptance.py",
       "tests/test_equation_safety_capabilities.py",
       "tests/test_equation_safety_numeric_limits.py",

@@ -56,6 +56,7 @@ SOURCE_PATHS = (
     "src/sc_neurocore/neurons/equation_builder.py",
     "src/sc_neurocore/neurons/equation_evaluation.py",
     "src/sc_neurocore/neurons/equation_namespace.py",
+    "src/sc_neurocore/neurons/equation_program.py",
     "src/sc_neurocore/neurons/equation_refusals.py",
     "src/sc_neurocore/neurons/equation_safety.py",
     "src/sc_neurocore/neurons/equation_units_runtime.py",

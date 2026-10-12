@@ -6,6 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Optional pint helpers for strict dimensional checking
 
+"""Check equation expressions for dimensional consistency with pint quantities.
+
+Strict-units mode evaluates each authored expression once with unit-carrying
+values and compares the unit of the result with the unit the equation must
+have. The expression is run as a checked program of plain function calls
+(:mod:`sc_neurocore.neurons.equation_program`), never by the interpreter.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -13,7 +21,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.exceptions import SCDependencyError
-from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
+from sc_neurocore.neurons.equation_program import compile_expression
 
 try:
     import pint
@@ -36,6 +44,13 @@ DimensionalError = _DIMENSIONAL_ERROR
 
 
 def require_pint() -> None:
+    """Refuse strict-units work when the optional pint package is missing.
+
+    Raises
+    ------
+    SCDependencyError
+        pint is not installed.
+    """
     if not HAS_PINT:
         raise SCDependencyError(
             "pint is not available. Install with: pip install sc-neurocore[units]"
@@ -43,10 +58,43 @@ def require_pint() -> None:
 
 
 def is_quantity(value: Any) -> bool:
+    """Tell whether a value is a pint quantity.
+
+    Parameters
+    ----------
+    value : Any
+        Value to inspect.
+
+    Returns
+    -------
+    bool
+        True only if pint is installed and the value is one of its quantities.
+    """
     return HAS_PINT and isinstance(value, pint.Quantity)
 
 
 def require_quantity(value: Any, label: str) -> Any:
+    """Return a value unchanged if it is a pint quantity, and refuse it otherwise.
+
+    Parameters
+    ----------
+    value : Any
+        Value that strict-units mode requires to carry a unit.
+    label : str
+        Name used in the refusal.
+
+    Returns
+    -------
+    Any
+        The same quantity.
+
+    Raises
+    ------
+    SCDependencyError
+        pint is not installed.
+    ValueError
+        The value carries no unit.
+    """
     require_pint()
     if not is_quantity(value):
         raise ValueError(f"{label} must be a pint Quantity when units='strict'")
@@ -54,6 +102,23 @@ def require_quantity(value: Any, label: str) -> Any:
 
 
 def quantity_to_base(value: Any) -> Any:
+    """Convert a pint quantity to the base units of the registry.
+
+    Parameters
+    ----------
+    value : Any
+        Quantity to convert.
+
+    Returns
+    -------
+    Any
+        The quantity expressed in base units.
+
+    Raises
+    ------
+    SCDependencyError
+        pint is not installed.
+    """
     require_pint()
     return value.to_base_units()
 
@@ -119,6 +184,19 @@ def _clip(value: Any, low: Any, high: Any) -> Any:
 
 
 def build_quantity_namespace() -> dict[str, Any]:
+    """Return the unit-aware functions an expression may call in strict-units mode.
+
+    Returns
+    -------
+    dict
+        The names of the numerical equation namespace, bound to versions
+        that require dimensionless arguments where the mathematics does.
+
+    Raises
+    ------
+    SCDependencyError
+        pint is not installed.
+    """
     require_pint()
     return {
         "exp": _exp,
@@ -145,16 +223,45 @@ def validate_quantity_expression(
     expected_quantity: Any | None = None,
     label: str,
 ) -> Any:
+    """Run one expression with unit-carrying values and check the unit of its result.
+
+    Parameters
+    ----------
+    expr : str
+        Authored expression. It passes the equation safety gate before it runs.
+    env : dict
+        Unit-carrying bindings and the functions of the quantity namespace.
+    expected_quantity : Any, optional
+        Quantity whose unit the result must be convertible to; no unit check
+        when omitted.
+    label : str
+        Name of the expression used in refusals.
+
+    Returns
+    -------
+    Any
+        The value of the expression.
+
+    Raises
+    ------
+    SCDependencyError
+        pint is not installed.
+    EquationRefusal
+        The safety gate refuses the expression.
+    ValueError
+        A symbol is unknown or the expression cannot be evaluated.
+    DimensionalError
+        The units of the expression are inconsistent or differ from the
+        expected unit.
+    """
     require_pint()
-    # The same AST allowlist as every other equation eval site, applied here
-    # at the sink: the strict-units check runs in EquationNeuron's constructor
-    # before the neuron's own validator is built, so without this an
-    # expression reached eval unvalidated (CodeQL py/code-injection #483).
-    ExpressionSafetyValidator().validate(expr)
-    code = compile(expr, f"<units:{label}>", "eval")
+    # The strict-units check runs in EquationNeuron's constructor before the
+    # neuron's own validator is built. The translator takes the tree from the
+    # safety gate itself, so the expression is checked here as well, and it
+    # is run as a program of plain calls, never by the interpreter.
+    program = compile_expression(expr)
     try:
-        # Bandit B307 justification: AST-allowlisted just above.
-        result = eval(code, {"__builtins__": {}}, env)  # nosec B307
+        result = program(env)
     except NameError as exc:
         raise ValueError(f"Unknown symbol in {label}: {exc}") from exc
     except DimensionalError:

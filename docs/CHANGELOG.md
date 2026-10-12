@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Equation expressions are no longer executed by the interpreter. The safety
+  gate returns the checked tree and a new translator turns it into a program
+  of plain function calls; `EquationNeuron`, the strict-units check and the
+  Studio nullcline service run that program. The three `eval` sites and their
+  suppressions are gone (code scanning alerts 483 and 487).
+- The expression grammar is closed. Only a function under a plain name can be
+  called, and only the attributes `real` and `imag` can be read. Method calls
+  and other attributes were admitted before whenever their name was not on a
+  block list; numeric scalars and unit quantities carry methods that write
+  files. An expression that used such a construct is now refused when the
+  neuron is built.
+- `evaluate_scalar` and `evaluate_condition` take a program and the bindings;
+  the evaluation-globals argument and `EVAL_GLOBALS` are removed.
+- Numerical results are unchanged. A program costs more than bytecode: 0.9 to
+  2.0 times per expression and 1 % to 22 % per neuron step on the development
+  host.
+
 - Vendor-record exceptions are bound more tightly after an outside review.
   The vendor identifiers of a channel are a constant of the audit code keyed
   by the host and channel read from the lock, so a table can no longer choose

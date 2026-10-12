@@ -28,7 +28,7 @@ from sc_neurocore.refusals import AuthoredRefusal
         ("exp(1000)", FloatingPointError, "the equation arithmetic could not remain finite"),
         ("[v]", TypeError, "the equation value has an invalid type"),
         ("[v][2]", IndexError, "the equation index is outside its value"),
-        ("v.missing", AttributeError, "the equation reads an unavailable attribute"),
+        ("[v].real", AttributeError, "the equation reads an unavailable attribute"),
         ("missing", NameError, "the equation reads an unavailable symbol"),
         ("min([])", ValueError, "the equation value is invalid"),
     ],

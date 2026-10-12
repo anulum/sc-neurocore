@@ -4,28 +4,28 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Equation expression safety — the eval sandbox gate
+# SC-NeuroCore — Equation expression safety — the gate before evaluation
 
-"""AST-level safety validation for equation strings — the eval sandbox gate.
+"""AST-level safety validation for equation strings — the gate before evaluation.
 
-Equation-defined neurons compile user-supplied expression strings and evaluate
-them with :func:`eval`. Before an expression is ever compiled it is validated
-here against an AST allowlist: only the whitelisted maths/comparison node types
-survive, dangerous builtins and sandbox-escape dunder chains are rejected by
-name, string constants are refused (a format string's field names reach any
-attribute or index, dunders included, where no node check sees them), and
-pathologically deep trees are refused. :data:`EVAL_GLOBALS` gives the
-``eval`` a minimal ``__builtins__`` holding only ``__import__`` — which CPython's
-own ``eval`` machinery dereferences while evaluating some otherwise-safe
-expressions (numpy overflow/warning paths), so it must remain present — yet the
-AST allowlist already rejects the ``__import__`` identifier and every
-sandbox-escape dunder by name, so ``eval``/``exec``/``import`` stay unreachable
-from inside a compiled expression. Together these are the security boundary that
-makes the ``# nosec B307`` eval sites at the runtime call sites sound.
+Equation-defined neurons accept authored expression strings. Each one is parsed
+and checked here, and the checked tree is then translated into a program of
+plain function calls by :mod:`sc_neurocore.neurons.equation_program`. No
+expression reaches the interpreter's ``compile`` or ``eval``.
 
-Extracting the validator into its own module makes the sandbox independently
-testable and keeps the rationale for every ``nosec`` co-located with the gate it
-depends on.
+The gate admits a closed grammar: the listed arithmetic, comparison and choice
+nodes; names; calls of a function under a plain name; the attributes in
+:data:`_ALLOWED_ATTRIBUTES`; indexing; tuples and lists. Everything else is
+refused. Calling the result of an attribute, an index or another call is
+refused, because the objects an expression can hold (array scalars, unit
+quantities, the supplied functions) carry methods that write files and expose
+their classes. Reading any other attribute is refused for the same reason.
+
+The earlier rules stay in force and report first: builtins and escape names
+are refused by name, string constants are refused (a format string's field
+names reach any attribute or index, dunders included, where no node check
+sees them), and deep trees, giant constants and large or nested exponents are
+refused before they can exhaust the evaluator.
 """
 
 from __future__ import annotations
@@ -71,6 +71,14 @@ _ALLOWED_AST_NODES = {
     ast.List,
 }
 """AST node types an equation expression may contain."""
+
+_ALLOWED_ATTRIBUTES = frozenset({"real", "imag"})
+"""Attributes an expression may read: the two parts of a numeric value.
+
+Any other attribute of a bound object is outside the grammar. Numeric scalars
+and unit quantities carry attributes that return their class, their unit
+registry and methods that write to disk; none of them is equation arithmetic.
+"""
 
 _DEFAULT_MAX_AST_DEPTH = 20
 """Maximum expression AST nesting depth (stack-exhaustion / obfuscation guard)."""
@@ -134,31 +142,17 @@ _BLOCKED_NAMES = {
 }
 """Identifier and attribute names rejected regardless of AST position."""
 
-EVAL_GLOBALS: dict[str, object] = {
-    "__builtins__": {"__import__": __import__},
-}
-"""Globals for the compiled-expression ``eval`` sites.
-
-``__builtins__`` is deliberately restricted to the single entry ``__import__``:
-CPython's ``eval`` internals dereference ``__builtins__['__import__']`` while
-evaluating some otherwise-safe expressions (e.g. numpy overflow/warning handling
-of ``exp(v + 710.0)``), so emptying it breaks safe-expression eval rather than
-hardening the sandbox. It is *not* an attacker vector — the AST allowlist
-(:data:`_BLOCKED_NAMES` with :class:`ExpressionSafetyValidator`) rejects the
-``__import__`` identifier and all dunder access before an expression is compiled,
-so no compiled expression can name or reach it.
-"""
-
 
 class ExpressionSafetyValidator:
     """Validate equation expression strings against the AST allowlist.
 
     Holds the allowed node set, the blocked-name set, and the maximum AST depth,
-    and exposes :meth:`validate`, which raises :class:`ValueError` on any
-    disallowed construct. The same validator instance is reused for a neuron's
-    dynamics, threshold, reset rules, and (for exponential Euler) its symbolic
-    Jacobian, so every expression that reaches an ``eval`` site has passed the
-    same gate.
+    and exposes :meth:`validate` and :meth:`checked_tree`, which raise
+    :class:`ValueError` on any disallowed construct. The same validator instance
+    is reused for a neuron's dynamics, threshold, reset rules, and (for
+    exponential Euler) its symbolic Jacobian. A program is only ever built from
+    the tree that :meth:`checked_tree` returns, so no expression is evaluated
+    without having passed this gate.
     """
 
     def __init__(self, *, max_depth: int = _DEFAULT_MAX_AST_DEPTH) -> None:
@@ -167,6 +161,26 @@ class ExpressionSafetyValidator:
 
     def validate(self, expr: str) -> None:
         """Validate an expression against the AST whitelist."""
+        self.checked_tree(expr)
+
+    def checked_tree(self, expr: str) -> ast.Expression:
+        """Parse an expression, apply every rule and return the checked tree.
+
+        Parameters
+        ----------
+        expr : str
+            Authored expression.
+
+        Returns
+        -------
+        ast.Expression
+            The parsed tree, returned only after every rule accepted it.
+
+        Raises
+        ------
+        EquationRefusal
+            The expression does not parse or breaks a rule of the gate.
+        """
         try:
             tree = ast.parse(expr, mode="eval")
         except SyntaxError as e:
@@ -233,6 +247,19 @@ class ExpressionSafetyValidator:
                     raise EquationRefusal(
                         f"Nested exponentiation blocked (eval blow-up risk): {expr!r}"
                     )
+
+        # The closed grammar. These rules run after the rules above so that a
+        # blocked name or a dunder keeps its specific refusal.
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr not in _ALLOWED_ATTRIBUTES:
+                raise EquationRefusal(
+                    f"Attribute {node.attr!r} is not part of the equation grammar: {expr!r}"
+                )
+            if isinstance(node, ast.Call) and not isinstance(node.func, ast.Name):
+                raise EquationRefusal(
+                    f"Only a function under a plain name can be called in an equation: {expr!r}"
+                )
+        return tree
 
     @staticmethod
     def _ast_depth(node: ast.AST) -> int:

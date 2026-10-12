@@ -300,12 +300,26 @@ and `method="map"`. It rejects other integrators rather than attaching a
 bit-identity claim to a recurrence it does not lower.
 
 The equation builder validates every equation, threshold, and reset expression
-through an AST allowlist before compilation. Three focused responsibilities are
-split into sibling modules that `EquationNeuron` composes: the AST sandbox gate
-(`equation_safety.py`), the numpy evaluation namespace with clipped `sigmoid`,
-`exprel`, and checked `sqrt` (`equation_namespace.py`), and the strict
-pint-backed unit runtime (`equation_units_runtime.py`). Each sibling owns its own
-test surface; the combined focused verification gate is:
+through an AST allowlist and runs the checked tree as a program of plain
+function calls. No authored expression is passed to the interpreter's
+`compile` or `eval`. The grammar is closed: arithmetic, comparison and choice;
+names; calls of a function under a plain name; the attributes `real` and
+`imag`; indexing; tuples and lists. Calling the result of an attribute, an
+index or another call, and reading any other attribute, are refused: the
+values an expression holds (array scalars, unit quantities, the supplied
+functions) carry methods that write files and expose their classes.
+
+Four focused responsibilities are split into sibling modules that
+`EquationNeuron` composes: the AST gate (`equation_safety.py`), the translator
+from a checked tree to a program (`equation_program.py`), the numpy evaluation
+namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
+(`equation_namespace.py`), and the strict pint-backed unit runtime
+(`equation_units_runtime.py`). A program costs more per evaluation than
+interpreter bytecode did; on the development host an expression took between
+0.9 and 2.0 times as long and a whole neuron step between 1 % and 22 % longer,
+the largest figure for a four-stage Runge-Kutta step of a two-variable model.
+The numerical results are identical. Each sibling owns its own test surface;
+the combined focused verification gate is:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null \
@@ -322,13 +336,16 @@ PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null \
     tests/test_equation_safety_structure.py \
     tests/test_equation_safety_capabilities.py \
     tests/test_equation_safety_numeric_limits.py \
+    tests/test_equation_program.py \
+    tests/test_equation_evaluation.py \
     tests/test_equation_units_runtime.py -q
 PYTHONPATH=src .venv/bin/python -m coverage report --rcfile=/dev/null \
-    --include='src/sc_neurocore/neurons/equation_builder.py,src/sc_neurocore/neurons/equation_namespace.py,src/sc_neurocore/neurons/equation_safety.py,src/sc_neurocore/neurons/equation_units_runtime.py' \
+    --include='src/sc_neurocore/neurons/equation_builder.py,src/sc_neurocore/neurons/equation_namespace.py,src/sc_neurocore/neurons/equation_program.py,src/sc_neurocore/neurons/equation_safety.py,src/sc_neurocore/neurons/equation_units_runtime.py' \
     --fail-under=100 -m
 PYTHONPATH=src .venv/bin/python -m mypy --strict \
     src/sc_neurocore/neurons/equation_builder.py \
     src/sc_neurocore/neurons/equation_namespace.py \
+    src/sc_neurocore/neurons/equation_program.py \
     src/sc_neurocore/neurons/equation_safety.py \
     src/sc_neurocore/neurons/equation_units_runtime.py \
     tests/test_equation_builder_coverage_contracts.py \
