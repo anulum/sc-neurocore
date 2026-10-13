@@ -35,6 +35,7 @@ from sc_neurocore.neurons.readiness import (
     readiness_report,
     summarise,
     verify_receipt,
+    verify_model,
 )
 
 
@@ -62,6 +63,22 @@ def test_tracked_ledger_is_current() -> None:
     """The generated ledger equals a fresh render of the live verifier."""
     tool = _load_tool()
     assert tool.ledger_problems(_repo_root()) == []
+
+
+def test_recorded_cosim_profiles_keep_their_verified_labels() -> None:
+    """The four established co-simulation profiles retain fresh executable receipts."""
+    profiles = {
+        "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
+        "BrunelWangNeuron": "brunel_wang",
+        "LapicqueNeuron": "lapicque",
+        "ResonateAndFireNeuron": "resonate_fire",
+    }
+    lost = {
+        name: record.facet("cosim").to_public_dict()
+        for name, profile in profiles.items()
+        if (record := verify_model(name, profile=profile)).facet("cosim").status != "bound"
+    }
+    assert not lost, f"co-simulation receipts lost their current source binding: {lost}"
 
 
 def test_ledger_payload_mirrors_the_verifier() -> None:

@@ -76,10 +76,11 @@ changes; they are not signatures, independent scientific review or proof of
 the recorder's identity. A receipt covers its declared inputs and validated
 domain, not arbitrary imported dependencies or all possible operating points.
 
-A receipt records one execution of the evidence command:
+A receipt records one execution of the evidence command. Use the publication
+command to record it and refresh every catalogue view together:
 
 ```
-python tools/facet_receipt.py record --model LapicqueNeuron --facet cosim --profile lapicque \
+python tools/record_readiness_receipt.py record --model LapicqueNeuron --facet cosim --profile lapicque \
     -- python -m pytest "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound"
 ```
 
@@ -94,6 +95,31 @@ recorder refuses to overwrite, and the verifier reads the newest receipt per
 class it is read for, carries every required subject kind, ended with
 `outcome = "passed"`, exit code 0, at least one passed check and no failed,
 errored or skipped check, and states the claim scope the facet requires.
+
+The publication command also creates the receipt's adjacent `.json.license`
+ownership sidecar and refreshes the model profile ledger, readiness evidence
+ledger and packaged Studio readiness seal. It refreshes those views for failed
+or uncreditable runs too, so an older verified label cannot conceal a newer
+failed validator. It returns zero only after a creditable run and all three
+updates; an uncreditable run returns one, and a publication failure returns two.
+Stage the receipt, its sidecar and the three generated files in the same commit.
+
+If updating the views fails, the immutable receipt remains. Repair the reported
+problem and refresh the views without running the validator again:
+
+```
+python tools/record_readiness_receipt.py refresh
+```
+
+All three views are rendered and staged before replacement; each individual
+file is replaced atomically. The low-level `tools/facet_receipt.py` recorder
+remains available for archive-only receipt directories. Those directories do
+not feed the catalogue and are refused by the publication command.
+
+The fast readiness regression checks that the established AdaptiveThresholdIF,
+BrunelWang, Lapicque and ResonateAndFire co-simulation profiles retain their
+source-bound receipts. A shared compiler change therefore exposes withdrawn
+labels before the longer distribution checks run.
 
 ## Statuses
 

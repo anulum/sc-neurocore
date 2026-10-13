@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 897
+expected_file_count = 902
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3681,3 +3681,23 @@ rationale = "Tracked source provenance audit, owned modifications and upstream l
 [[file]]
 path = "tests/test_accel_model_coverage_closure.py"
 rationale = "Maintained acceleration facade error classification and source admission regression contracts."
+
+[[file]]
+path = "tools/record_readiness_receipt.py"
+rationale = "Run descriptor-bound evidence, retain its ownership and publish every catalogue view from the same receipt store."
+
+[[file]]
+path = "tools/readiness_artifact_refresh.py"
+rationale = "Stage the profile ledger, readiness ledger and Studio seal before replacement, and refuse unusable destinations."
+
+[[file]]
+path = "tests/test_record_readiness_receipt.py"
+rationale = "Execute real reference validators in complete detached checkouts and verify publication, non-executed results and archive-store refusal."
+
+[[file]]
+path = "tests/test_readiness_artifact_refresh.py"
+rationale = "Exercise recovery and filesystem refusal through the real command, preserve sidecars and detect compiler-induced loss of co-simulation credit."
+
+[[file]]
+path = "tests/test_readiness_evidence_ledger.py"
+rationale = "Bind generated evidence to the live verifier and prevent withdrawal of the four established profile-specific co-simulation receipts."

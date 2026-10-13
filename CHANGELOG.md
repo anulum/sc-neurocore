@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Record facet evidence and refresh the profile ledger, readiness ledger and
+  Studio seal with one command, including failed validator outcomes. Preserve
+  immutable receipts and detect loss of the established co-simulation labels.
+
 - Describe vectorized SC outputs as channel sums with optional bias. Preserve
   unclipped MAC values above one and signed outputs; they are not firing fractions.
 
