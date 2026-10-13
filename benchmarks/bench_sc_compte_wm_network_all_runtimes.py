@@ -17,8 +17,10 @@ import json
 import os
 from pathlib import Path
 import platform
+import shutil
 import statistics
 import subprocess
+import sys
 import time
 from typing import Any
 
@@ -27,6 +29,7 @@ from sc_neurocore.network import (
     run_sc_compte_wm_network,
     sc_compte_wm_backend_status,
 )
+from sc_neurocore.accel.mojo.sc_compte_wm_network import LIBRARY_PATH
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network_all_runtimes.json"
@@ -51,13 +54,18 @@ SOURCE_PATHS = (
 
 
 def _sha256(path: Path) -> str:
+    """Digest the exact source or loaded-library bytes in a recording."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _version(command: list[str]) -> str:
+def _version(
+    command: list[str], *, cwd: Path = REPOSITORY, env: dict[str, str] | None = None
+) -> str:
+    """Ask a resolved executable in the directory and environment used by dispatch."""
     executed = subprocess.run(
         command,
-        cwd=REPOSITORY,
+        cwd=cwd,
+        env=env,
         check=True,
         capture_output=True,
         text=True,
@@ -66,13 +74,68 @@ def _version(command: list[str]) -> str:
     return (executed.stdout or executed.stderr).strip()
 
 
-def _environment() -> dict[str, Any]:
+class BenchmarkRuntimeUnavailable(RuntimeError):
+    """A required command runtime is absent from the dispatch PATH."""
+
+
+def _required_tool(name: str) -> str:
+    """Resolve a command through PATH, refusing a missing runtime."""
+    executable = shutil.which(name)
+    if executable is None:
+        raise BenchmarkRuntimeUnavailable(f"required {name} runtime is not on PATH")
+    return executable
+
+
+def collect_environment() -> dict[str, object]:
+    """Observe dispatch tools and the library used by the in-process Mojo lane.
+
+    Returns
+    -------
+    dict of str to object
+        PATH-resolved commands and versions, Go's module-selected toolchain,
+        loaded-library identity and current host context. Absent standalone
+        compiler commands are represented by ``None``. Cargo selects the Rust
+        compiler, and the Mojo lane loads a library; a current compiler
+        observation does not prove that library's builder.
+
+    Raises
+    ------
+    BenchmarkRuntimeUnavailable
+        If a required Rust, Julia or Go command is absent from PATH.
+    """
+    cargo, julia, go = (_required_tool(name) for name in ("cargo", "julia", "go"))
+    rustc = shutil.which("rustc")
+    mojo = shutil.which("mojo")
+    go_home = REPOSITORY / ".venv/go"
+    go_environment = {
+        **os.environ,
+        "GOTOOLCHAIN": "auto",
+        "GOPATH": str(go_home),
+        "GOMODCACHE": str(go_home / "pkg/mod"),
+        "GOCACHE": str(go_home / "cache"),
+    }
     return {
         "python": platform.python_version(),
-        "rust": _version([str(REPOSITORY / ".venv/bin/rustc"), "--version"]),
-        "julia": _version([str(REPOSITORY / ".venv/bin/julia"), "--version"]),
-        "go": _version([str(REPOSITORY / ".venv/bin/go"), "version"]),
-        "mojo": _version([str(REPOSITORY / ".venv/bin/mojo"), "--version"]),
+        "rust": None if rustc is None else _version([rustc, "--version"]),
+        "cargo": _version([cargo, "--version"]),
+        "julia": _version([julia, "--version"]),
+        "go": _version(
+            [go, "version"], cwd=REPOSITORY / "src/sc_neurocore/accel/go", env=go_environment
+        ),
+        "mojo": None if mojo is None else _version([mojo, "--version"]),
+        "runtime_commands": {
+            "rustc": rustc,
+            "cargo": cargo,
+            "julia": julia,
+            "go": go,
+            "mojo": mojo,
+        },
+        "go_toolchain_selection": "auto in src/sc_neurocore/accel/go",
+        "mojo_library": {
+            "path": LIBRARY_PATH.relative_to(REPOSITORY).as_posix(),
+            "sha256": _sha256(LIBRARY_PATH) if LIBRARY_PATH.is_file() else None,
+            "build_compiler_verified": False,
+        },
         "platform": platform.platform(),
         "processor": platform.processor() or "unknown",
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else [],
@@ -81,13 +144,35 @@ def _environment() -> dict[str, Any]:
 
 
 def build_payload(steps: int, repeats: int) -> dict[str, Any]:
-    """Execute every selected runtime and return exact parity evidence."""
+    """Execute all five runtimes and compare their input, spike and count custody.
+
+    Parameters
+    ----------
+    steps : int
+        Positive number of network steps at the frozen 0.02 ms timestep.
+    repeats : int
+        Positive number of fresh measured runs per backend, after warmup.
+
+    Returns
+    -------
+    dict of str to Any
+        Source-bound local regression recording with all five routes, actual
+        timing samples, repeat determinism and cross-runtime custody checks.
+
+    Raises
+    ------
+    ValueError
+        If steps or repeats are not positive.
+    RuntimeError
+        If any explicit backend is unavailable or fails; no fallback is used.
+    """
     if steps <= 0 or repeats <= 0:
         raise ValueError("steps and repeats must be positive")
     statuses = {status.backend: status for status in sc_compte_wm_backend_status()}
     unavailable = [backend for backend in BACKENDS if not statuses[backend].available]
     if unavailable:
         raise RuntimeError("unavailable SC Compte backends: " + ", ".join(unavailable))
+    environment = collect_environment()
     results: dict[str, Any] = {}
     for backend in BACKENDS:
         run_sc_compte_wm_network(
@@ -158,7 +243,10 @@ def build_payload(steps: int, repeats: int) -> dict[str, Any]:
             "repeats": repeats,
             "seed": 42,
         },
-        "environment": _environment(),
+        "command": [sys.executable, *sys.argv],
+        "isolation": {"isolated": False, "method": "shared workstation, no reserved core"},
+        "load_average_after": list(os.getloadavg()) if hasattr(os, "getloadavg") else [],
+        "environment": environment,
         "source_sha256": {relative: _sha256(REPOSITORY / relative) for relative in SOURCE_PATHS},
         "backends": results,
         "all_backends_available": not unavailable,
@@ -169,12 +257,27 @@ def build_payload(steps: int, repeats: int) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Write the full recording or print its runtime environment without simulation.
+
+    Returns
+    -------
+    int
+        Zero for an environment report or passing five-runtime recording, one
+        for unequal custody. Missing command runtimes produce argparse exit 2.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=N_STEPS)
     parser.add_argument("--repeats", type=int, default=N_REPEATS)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--show-environment", action="store_true")
     args = parser.parse_args()
-    payload = build_payload(args.steps, args.repeats)
+    try:
+        if args.show_environment:
+            print(json.dumps(collect_environment(), indent=2))
+            return 0
+        payload = build_payload(args.steps, args.repeats)
+    except BenchmarkRuntimeUnavailable as error:
+        parser.error(str(error))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(payload, indent=2))

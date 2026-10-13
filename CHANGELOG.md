@@ -10,6 +10,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Report the SC Compte benchmark's actual PATH-resolved tools and module-selected
+  Go version, with loaded Mojo library identity separate from compiler observations.
+
 - Record facet evidence and refresh the profile ledger, readiness ledger and
   Studio seal with one command, including failed validator outcomes. Preserve
   immutable receipts and detect loss of the established co-simulation labels.

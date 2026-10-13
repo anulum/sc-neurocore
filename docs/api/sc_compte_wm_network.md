@@ -139,10 +139,11 @@ currents, window statistics, and canonical receipts; it never substitutes the
 Python network recurrence. Native comments document every ABI address, scalar,
 status, ownership, and invalid-output boundary.
 
-The committed shared library is built with the repository-local
-`.venv/bin/mojo` 0.26.2 toolchain and the portable `x86-64-v3` target. The
-source/binary-bound three-repeat 1,000-step receipt exactly matches the
-Python, Rust, Julia, and Go input digest, spike digest, and population spike
+The lane loads the shared library present beside its Python facade. Each new
+five-runtime benchmark records that file's SHA-256 separately from any Mojo
+compiler currently on `PATH`; a compiler version observation does not establish
+the library's build provenance. The source-bound three-repeat 1,000-step receipt
+exactly matches the Python, Rust, Julia, and Go input digest, spike digest, and population spike
 counts. Its binary64 final-state digest is runtime-specific because FFT
 reduction orders differ. The timing is local regression evidence only and
 does not establish persistent-bump behavior, distractor resistance, hardware
@@ -154,9 +155,10 @@ performance, or production throughput.
 runtime routes under the explicit backend names `python`, `rust`, `julia`,
 `go`, and `mojo`. `sc_compte_wm_backend_status()` reports their availability
 and execution mode before a run. Python and Mojo execute in process; Rust,
-Julia, and Go use documented repository-native JSON adapters. Their toolchains,
-package stores, and build caches resolve through `.venv`. Native v1 dispatch
-accepts the frozen constants plus `seed`, `structured_ei`, `modulated`, and
+Julia, and Go use documented repository-native JSON adapters. Their command
+tools resolve through `PATH`; package stores and build caches resolve through
+`.venv`. Native v1 dispatch accepts the frozen constants plus `seed`,
+`structured_ei`, `modulated`, and
 `allow_recurrent_autapses`; unrepresented configuration changes fail before
 launch.
 
@@ -173,6 +175,26 @@ Final binary64 state hashes remain per-runtime custody rather than an asserted
 bit identity across FFT reductions. The recorded medians are local loaded-host
 regression measurements; Julia's command route includes JIT compilation in
 its reported interval. They are not production, hardware, or behavior claims.
+
+The benchmark resolves version probes through the same `PATH` as dispatch and
+asks Go inside its accelerator module with `GOTOOLCHAIN=auto` and the same
+repository caches. It reports resolved Rust compiler/Cargo, Julia and Go
+commands, and identifies the loaded Mojo library. The optional Mojo compiler
+observation describes the current installation; its absence does not prevent
+an already built library from running. Library build-compiler verification
+remains explicitly unclaimed.
+
+Inspect that environment without simulation:
+
+```
+PYTHONPATH=src python benchmarks/bench_sc_compte_wm_network_all_runtimes.py --show-environment
+```
+
+Reproduce the complete five-runtime recording:
+
+```
+PYTHONPATH=src python benchmarks/bench_sc_compte_wm_network_all_runtimes.py --steps 1000 --repeats 3
+```
 
 Run-input receipts encode Poisson counts exactly and direct currents as
 little-endian integers at `1e-9 pA` resolution. This custody quantization makes

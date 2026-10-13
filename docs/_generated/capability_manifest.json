@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5321
+    "test_files": 5322
   },
   "documentation": {
     "public_pages": [
@@ -7303,6 +7303,7 @@
       "tests/test_sc_clipped_rational_recovery_map_engine_binding.py",
       "tests/test_sc_compte_wm_backends.py",
       "tests/test_sc_compte_wm_behavior.py",
+      "tests/test_sc_compte_wm_benchmark.py",
       "tests/test_sc_compte_wm_drive.py",
       "tests/test_sc_compte_wm_go_network.py",
       "tests/test_sc_compte_wm_julia_network.py",
