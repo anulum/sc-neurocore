@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 904
+expected_file_count = 905
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3709,3 +3709,7 @@ rationale = "Measure all five SC Compte routes with dispatch-selected command pr
 [[file]]
 path = "tests/test_sc_compte_wm_benchmark.py"
 rationale = "Exercise real PATH aliases, module-selected Go, library-only Mojo execution metadata and missing-runtime CLI refusal."
+
+[[file]]
+path = "tests/test_studio_candidate_diff.py"
+rationale = "Exercise admitted symbolic comparisons and explicit equation-gate refusals through the public candidate diff API."

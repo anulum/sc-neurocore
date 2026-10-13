@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Align candidate API and symbolic comparison tests with equation admission:
+  reject unavailable attributes and module-qualified calls before simulation,
+  while retaining authored diagnostics for failures of admitted expressions.
+
 - Report the SC Compte benchmark's actual PATH-resolved tools and module-selected
   Go version, with loaded Mojo library identity separate from compiler observations.
 

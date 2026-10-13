@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Actual candidate API diagnostic provenance
 
-"""Exercise candidate refusal bodies through the real installed API router."""
+"""Exercise candidate refusal bodies through the real Studio API router."""
 
 from __future__ import annotations
 
@@ -27,7 +27,20 @@ TOO_DEEP_TO_PARSE = "Equation expression is too deep to parse"
 
 @pytest.fixture
 def candidate_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
-    """Run the actual API with isolated job and audit storage."""
+    """Run the actual API with isolated job and audit storage.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned directory for jobs and audit records.
+    monkeypatch : pytest.MonkeyPatch
+        Restore the storage environment after the client closes.
+
+    Yields
+    ------
+    starlette.testclient.TestClient
+        Live in-process client with the application's lifespan active.
+    """
     monkeypatch.setenv("SC_NEUROCORE_STUDIO_JOB_ROOT", str(tmp_path / "jobs"))
     monkeypatch.setenv("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH", str(tmp_path / "audit.jsonl"))
     with TestClient(create_app(), base_url="http://127.0.0.1") as client:
@@ -62,6 +75,18 @@ def candidate_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterato
             "function 'sqrt' does not accept 0 positional arguments",
         ),
         (
+            ("model", "dynamics", "v"),
+            "v.missing",
+            "/model/dynamics/v",
+            "Attribute 'missing' is not part of the equation grammar: 'v.missing'",
+        ),
+        (
+            ("model", "dynamics", "v"),
+            "math.exp(v)",
+            "/model/dynamics/v",
+            "Only a function under a plain name can be called in an equation: 'math.exp(v)'",
+        ),
+        (
             ("model", "integration", "substeps"),
             "caller-text-xyz",
             "/model",
@@ -90,7 +115,23 @@ def test_candidate_routes_refuse_real_parser_and_encoding_faults(
     location: str,
     message: str,
 ) -> None:
-    """Keep located invalid-candidate responses free of generated diagnostics."""
+    """Keep located admission refusals free of interpreter diagnostics.
+
+    Parameters
+    ----------
+    candidate_client : starlette.testclient.TestClient
+        Actual candidate API with isolated storage.
+    route : str
+        Validation, comparison, simulation or review-packet endpoint.
+    path : tuple of str
+        Nested candidate field changed before admission.
+    value : object
+        Invalid unit, expression, model field or attribution text.
+    location : str
+        JSON pointer expected in the authored diagnostic.
+    message : str
+        Exact refusal text, including the parser-depth alternative.
+    """
     document = adex_candidate()
     target = document
     for part in path[:-1]:
@@ -130,7 +171,13 @@ def test_candidate_routes_refuse_real_parser_and_encoding_faults(
 def test_unicode_attribution_survives_valid_simulation_and_review(
     candidate_client: TestClient,
 ) -> None:
-    """Retain Unicode attribution in an actual positive candidate round trip."""
+    """Retain Unicode attribution in an actual positive candidate round trip.
+
+    Parameters
+    ----------
+    candidate_client : starlette.testclient.TestClient
+        Actual candidate API with isolated storage.
+    """
     document = adex_candidate()
     document["source"]["citation"] += " — Šotek"
     validation = candidate_client.post("/api/candidates/validate", json={"candidate": document})
@@ -155,7 +202,7 @@ def test_unicode_attribution_survives_valid_simulation_and_review(
         ("1 / 0", "the equation divides by zero"),
         ("min(v)", "the equation value has an invalid type"),
         ("v[0]", "the equation value has an invalid type"),
-        ("v.missing", "the equation reads an unavailable attribute"),
+        ("[v].real", "the equation reads an unavailable attribute"),
         ("[v]", "the equation value has an invalid type"),
         ("v + exp", "the equation value has an invalid type"),
     ],
@@ -163,7 +210,19 @@ def test_unicode_attribution_survives_valid_simulation_and_review(
 def test_real_expression_failure_reports_a_failed_run_without_interpreter_text(
     candidate_client: TestClient, route: str, expression: str, reason: str
 ) -> None:
-    """Report an actual failed calculation while preserving review packet binding."""
+    """Report a failed admitted calculation while preserving review packet binding.
+
+    Parameters
+    ----------
+    candidate_client : starlette.testclient.TestClient
+        Actual candidate API with isolated storage.
+    route : str
+        Simulation or review-packet endpoint.
+    expression : str
+        Admitted expression that fails when evaluated against the model state.
+    reason : str
+        Authored runtime failure without Python's exception wording.
+    """
     document = adex_candidate()
     document["model"]["dynamics"]["v"] = expression
     response = candidate_client.post(f"/api/candidates/{route}", json={"candidate": document})
