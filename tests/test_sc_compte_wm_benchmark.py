@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -26,7 +27,9 @@ RECORDING = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network_all_runt
 TOOLS = ("rustc", "cargo", "julia", "go", "mojo")
 
 
-def benchmark_environment(directory: Path, omitted: str | None = None) -> dict[str, str]:
+def benchmark_environment(
+    directory: Path, omitted: str | None = None, *, mojo_via_pixi: bool = False
+) -> dict[str, str]:
     """Expose real installed runtimes through a distinct PATH, optionally omitting one.
 
     Parameters
@@ -35,6 +38,8 @@ def benchmark_environment(directory: Path, omitted: str | None = None) -> dict[s
         Owned test allocation for executable aliases and process temporaries.
     omitted : str, optional
         Actual executable deliberately absent from the child PATH.
+    mojo_via_pixi : bool, optional
+        Invoke the installed compiler through the hosted Pixi wrapper.
 
     Returns
     -------
@@ -49,6 +54,19 @@ def benchmark_environment(directory: Path, omitted: str | None = None) -> dict[s
         installed = shutil.which(name)
         assert installed is not None, f"this real-runtime test requires installed {name}"
         (binaries / name).symlink_to(installed)
+    pixi = shutil.which("pixi")
+    if pixi is not None:
+        (binaries / "pixi").symlink_to(pixi)
+    if mojo_via_pixi:
+        assert pixi is not None, "the hosted Mojo wrapper requires installed pixi"
+        manifest = REPOSITORY / "src/sc_neurocore/accel/mojo/pixi.toml"
+        wrapper = binaries / "mojo"
+        wrapper.unlink()
+        wrapper.write_text(
+            f'#!/bin/sh\nexec pixi run --manifest-path {shlex.quote(str(manifest))} mojo "$@"\n',
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
     return {
         **os.environ,
         "PATH": str(binaries) + os.pathsep + os.defpath,
@@ -61,12 +79,26 @@ def benchmark_environment(directory: Path, omitted: str | None = None) -> dict[s
     }
 
 
-@pytest.mark.parametrize("omitted", [None, "mojo", "rustc"])
+@pytest.mark.parametrize(
+    ("omitted", "mojo_via_pixi"),
+    [(None, False), ("mojo", False), ("rustc", False), (None, True)],
+    ids=["native", "no-mojo-command", "no-rustc-command", "hosted-pixi-wrapper"],
+)
 def test_environment_report_uses_dispatch_path_and_module(
-    tmp_path: Path, omitted: str | None
+    tmp_path: Path, omitted: str | None, mojo_via_pixi: bool
 ) -> None:
-    """Report actual PATH aliases and module-selected Go without requiring a Mojo compiler."""
-    environment = benchmark_environment(tmp_path, omitted)
+    """Report actual aliases, module-selected Go and the hosted Mojo launcher.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Owned directory for executable aliases and process temporaries.
+    omitted : str or None
+        Standalone compiler command deliberately absent from PATH.
+    mojo_via_pixi : bool
+        Use the real Pixi compiler wrapper installed by hosted CI.
+    """
+    environment = benchmark_environment(tmp_path, omitted, mojo_via_pixi=mojo_via_pixi)
     output = tmp_path / "unused-recording.json"
     result = subprocess.run(
         [sys.executable, str(BENCHMARK), "--show-environment", "--output", str(output)],
