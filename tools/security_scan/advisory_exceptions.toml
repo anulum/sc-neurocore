@@ -155,18 +155,6 @@ reason = "no_fixed_version_in_channel"
 recorded = "2026-10-12"
 source = "https://www.cve.org/CVERecord?id=CVE-2026-4647"
 
-# ICU: an open fuzzing record without a fixed revision.
-
-[[exception]]
-ecosystem = "pixi"
-lock = "src/sc_neurocore/accel/mojo/pixi.lock"
-package = "icu"
-version = "78.3"
-advisory = "OSV-2023-1328"
-reason = "no_fixed_version_in_channel"
-recorded = "2026-10-12"
-source = "https://osv.dev/vulnerability/OSV-2023-1328"
-
 # Modular: the scanner has no advisory data for the vendor channel. The one
 # vendor record concerns the kvcache agent of MAX Serve before 25.6; the lock
 # holds the Mojo toolchain and its formatter, not the MAX serving package.
