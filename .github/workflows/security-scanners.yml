@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload CI security packet artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: security-scanner-packet
           path: security/ci-security-packet
@@ -194,7 +194,7 @@ jobs:
           test -f security/cargo-fuzz-packet/security/cargo_fuzz_summary.json
 
       - name: Upload cargo fuzz packet artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: cargo-fuzz-packet
           path: security/cargo-fuzz-packet
@@ -239,7 +239,7 @@ jobs:
           test -f security/benchmark-regression-packet/security/benchmark_regression.json
 
       - name: Upload benchmark regression packet artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: benchmark-regression-packet
           path: security/benchmark-regression-packet
