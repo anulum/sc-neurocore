@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 905
+expected_file_count = 906
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3713,3 +3713,7 @@ rationale = "Exercise real PATH aliases, module-selected Go, library-only Mojo e
 [[file]]
 path = "tests/test_studio_candidate_diff.py"
 rationale = "Exercise admitted symbolic comparisons and explicit equation-gate refusals through the public candidate diff API."
+
+[[file]]
+path = "tests/test_studio_jobs_ledger_artifacts.py"
+rationale = "Real completed-job artifact custody, durable restart and corrupted training configuration refusals remain documented and enforced."
