@@ -30,7 +30,7 @@ TOOLS = ("rustc", "cargo", "julia", "go", "mojo")
 def benchmark_environment(
     directory: Path, omitted: str | None = None, *, mojo_via_pixi: bool = False
 ) -> dict[str, str]:
-    """Expose real installed runtimes through a distinct PATH, optionally omitting one.
+    """Alias real tools and system utilities while keeping omitted runtimes absent.
 
     Parameters
     ----------
@@ -57,6 +57,13 @@ def benchmark_environment(
     pixi = shutil.which("pixi")
     if pixi is not None:
         (binaries / "pixi").symlink_to(pixi)
+    for system_directory in os.defpath.split(os.pathsep):
+        for executable in Path(system_directory).iterdir():
+            alias = binaries / executable.name
+            if executable.name in (*TOOLS, "pixi") or alias.exists():
+                continue
+            if executable.is_file() and os.access(executable, os.X_OK):
+                alias.symlink_to(executable)
     if mojo_via_pixi:
         assert pixi is not None, "the hosted Mojo wrapper requires installed pixi"
         manifest = REPOSITORY / "src/sc_neurocore/accel/mojo/pixi.toml"
@@ -69,7 +76,7 @@ def benchmark_environment(
         wrapper.chmod(0o755)
     return {
         **os.environ,
-        "PATH": str(binaries) + os.pathsep + os.defpath,
+        "PATH": str(binaries),
         "PYTHONPATH": str(REPOSITORY / "src"),
         "PYTHONDONTWRITEBYTECODE": "1",
         "OPENBLAS_NUM_THREADS": "1",
