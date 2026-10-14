@@ -42,8 +42,16 @@ def test_pixi_native_cli_and_complete_lock_gate(tmp_path: Path) -> None:
     assert report["errors"] == [], report
     assert report["audits"], report
     for number, row in enumerate(report["audits"], 1):
-        assert "error_type" not in row, row
         directory = full_directory / f"lock-{number}"
+        if "error_type" in row:
+            stderr_path = directory / "stderr.log"
+            stderr = stderr_path.read_text() if stderr_path.exists() else "unavailable"
+            token = os.environ.get("PIXI_AUDIT_TOKEN")
+            if token:
+                stderr = stderr.replace(token, "[REDACTED_SECRET]")
+            receipt_path = directory / "receipt.json"
+            receipt = receipt_path.read_text() if receipt_path.exists() else "unavailable"
+            pytest.fail(f"Native Pixi audit failed: {row}; receipt={receipt}; stderr={stderr}")
         payload = json.loads((directory / "stdout.json").read_text())
         receipt = json.loads((directory / "receipt.json").read_text())
         assert receipt["process_reaped"] is True and receipt["timed_out"] is False
