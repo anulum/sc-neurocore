@@ -312,7 +312,7 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
     a.iter().sum()
 }
 
-/// Scale f64 slice in-place: y[i] *= alpha, using the best available SIMD path.
+/// Scale f64 slice in-place: `y[i] *= alpha`, using the best available SIMD path.
 pub fn scale_f64_dispatch(alpha: f64, y: &mut [f64]) {
     #[cfg(target_arch = "x86_64")]
     {

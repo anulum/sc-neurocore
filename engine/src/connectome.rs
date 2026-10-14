@@ -13,7 +13,7 @@ use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// Watts-Strogatz small-world network.
 ///
-/// Returns adjacency matrix as flat row-major Vec<u8> of shape [n, n].
+/// Returns adjacency matrix as flat row-major `Vec<u8>` of shape `[n, n]`.
 pub fn watts_strogatz(n: usize, k: usize, p_rewire: f64, seed: u64) -> Vec<u8> {
     let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
     let mut adj = vec![0u8; n * n];
@@ -59,7 +59,7 @@ pub fn watts_strogatz(n: usize, k: usize, p_rewire: f64, seed: u64) -> Vec<u8> {
 #[allow(clippy::needless_range_loop)]
 /// Barabási-Albert scale-free network via preferential attachment.
 ///
-/// Returns adjacency matrix as flat row-major Vec<u8> of shape [n, n].
+/// Returns adjacency matrix as flat row-major `Vec<u8>` of shape `[n, n]`.
 pub fn barabasi_albert(n: usize, seed: u64) -> Vec<u8> {
     let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
     let mut adj = vec![0u8; n * n];

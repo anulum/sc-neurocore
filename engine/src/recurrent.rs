@@ -22,7 +22,7 @@ pub struct RecurrentLayer {
     pub w_in: Vec<f64>,
     /// Recurrent weights, flat [n_neurons, n_neurons].
     pub w_rec: Vec<f64>,
-    /// Current state [n_neurons].
+    /// Current state `[n_neurons]`.
     pub state: Vec<f64>,
 }
 

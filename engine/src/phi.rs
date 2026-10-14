@@ -12,7 +12,7 @@
 use nalgebra::DMatrix;
 
 /// Compute Phi* for a multi-channel time series.
-/// data: [n_channels][n_timesteps], row-major.
+/// data: `[n_channels][n_timesteps]`, row-major.
 pub fn phi_star(data: &[Vec<f64>], tau: usize) -> f64 {
     let n = data.len();
     if n < 2 || data[0].len() <= 2 * tau {

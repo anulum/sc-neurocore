@@ -21,8 +21,8 @@
 ///   τ_b dV_b/dt = -V_b + x_b                                  (basal)
 ///   τ_a dV_a/dt = -V_a + x_a                                  (apical)
 ///   τ   dU/dt   = -U + σ(V_a)·[g_B/g_L·(V_b - U) + W_s·I]   (soma)
-///   S[t] = Θ(U[t] - V_th)                                     (spike)
-///   U[t] ← U[t]·(1 - S[t])                                    (soft reset)
+///   `S[t] = Θ(U[t] - V_th)`                                   (spike)
+///   `U[t] ← U[t]·(1 - S[t])`                                  (soft reset)
 ///
 /// Default parameters from Table II: τ = τ_a = τ_b = 2.0, g_B/g_L = 1.0,
 /// β = 1.0 (sigmoid steepness), V_th = 1.0.

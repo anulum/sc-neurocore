@@ -373,7 +373,7 @@ pub unsafe fn sum_f64_avx2(a: &[f64]) -> f64 {
 
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
-/// Scale f64 slice in-place: y[i] *= alpha, using AVX2.
+/// Scale f64 slice in-place: `y[i] *= alpha`, using AVX2.
 ///
 /// # Safety
 /// Caller must ensure the current CPU supports `avx2`.

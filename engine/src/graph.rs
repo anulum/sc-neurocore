@@ -18,7 +18,7 @@ use rayon::prelude::*;
 /// Compressed Sparse Row storage for adjacency matrices.
 #[derive(Clone, Debug)]
 pub struct CsrMatrix {
-    /// Length n_rows + 1. row_offsets[i]..row_offsets[i+1] indexes into col_indices/values.
+    /// Length n_rows + 1. `row_offsets[i]..row_offsets[i+1]` indexes into col_indices/values.
     pub row_offsets: Vec<usize>,
     pub col_indices: Vec<usize>,
     pub values: Vec<f64>,

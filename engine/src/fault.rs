@@ -117,7 +117,7 @@ pub fn inject_dropout_u8(bitstream: &mut [u8], ber: f64, seed: u64) -> u64 {
 }
 
 /// GAUSSIAN_NOISE: add N(0, ber) noise to bitstream cast to f64,
-/// clip to [0,1], then threshold at 0.5. Returns count of flipped bits.
+/// clip to `[0,1]`, then threshold at 0.5. Returns count of flipped bits.
 pub fn inject_gaussian_u8(bitstream: &mut [u8], ber: f64, seed: u64) -> u64 {
     if ber <= 0.0 {
         return 0;

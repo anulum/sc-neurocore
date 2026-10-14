@@ -184,14 +184,14 @@ pub fn gaussian_attention(
 /// h_t = A_bar ⊙ h_{t-1} + B_bar x_t
 /// y_t = Re(C h_t) + D x_t
 ///
-/// A_bar is complex diagonal [d_state] (re, im interleaved → 2 * d_state floats).
-/// B_bar is [d_state × d_model] complex flat (re, im interleaved).
-/// C is [d_model × d_state] complex flat.
-/// D is [d_model × d_model] real flat.
-/// h is [d_state] complex (re, im interleaved).
-/// x is [d_model] real input.
+/// A_bar is complex diagonal `[d_state]` (re, im interleaved → 2 * d_state floats).
+/// B_bar is `[d_state × d_model]` complex flat (re, im interleaved).
+/// C is `[d_model × d_state]` complex flat.
+/// D is `[d_model × d_model]` real flat.
+/// h is `[d_state]` complex (re, im interleaved).
+/// x is `[d_model]` real input.
 ///
-/// Returns y [d_model] and updates h in place.
+/// Returns y `[d_model]` and updates h in place.
 pub fn ssm_step_diagonal(
     a_bar_re: &[f64],
     a_bar_im: &[f64],

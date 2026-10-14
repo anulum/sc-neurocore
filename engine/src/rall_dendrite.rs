@@ -50,7 +50,7 @@ impl RallDendriteRust {
         }
     }
 
-    /// Advance one timestep. branch_inputs: [n_branches] injected at distal tip.
+    /// Advance one timestep. branch_inputs: `[n_branches]` injected at distal tip.
     pub fn step(&mut self, branch_inputs: &[f64]) -> f64 {
         let nb = self.n_branches;
         let bl = self.branch_length;

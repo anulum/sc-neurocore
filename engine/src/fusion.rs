@@ -35,8 +35,8 @@ impl FusionLayer {
         }
     }
 
-    /// Forward pass: inputs is flat [n_modalities * n_features].
-    /// Returns [n_features].
+    /// Forward pass: inputs is flat `[n_modalities * n_features]`.
+    /// Returns `[n_features]`.
     pub fn forward(&self, inputs: &[f64]) -> Vec<f64> {
         assert_eq!(inputs.len(), self.n_modalities * self.n_features);
         let mut out = vec![0.0; self.n_features];

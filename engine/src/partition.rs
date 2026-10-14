@@ -14,13 +14,13 @@
 //! `(kl_iterations, correlation_penalty, n_parts)`).
 //!
 //! Inputs (CSR-style flat arrays):
-//!   - adj_offsets: [V+1] — row pointers; row i covers
-//!     adj_neighbours[adj_offsets[i] .. adj_offsets[i+1]]
-//!   - adj_neighbours: [E_total] — neighbour vertex ids
-//!   - adj_scc_abs: [E_total] — `|edge_scc(v, n)|` for each adjacency
+//!   - adj_offsets: `[V+1]` — row pointers; row i covers
+//!     `adj_neighbours[adj_offsets[i] .. adj_offsets[i+1]]`
+//!   - adj_neighbours: `[E_total]` — neighbour vertex ids
+//!   - adj_scc_abs: `[E_total]` — `|edge_scc(v, n)|` for each adjacency
 //!     entry (already-pre-computed so the kernel does NO graph lookup)
-//!   - vertex_weights: [V] — `vw` per Python `graph.vertex_weights.get(v, 1.0)`
-//!   - part_map: [V] (mut) — initial partition id per vertex; the
+//!   - vertex_weights: `[V]` — `vw` per Python `graph.vertex_weights.get(v, 1.0)`
+//!   - part_map: `[V]` (mut) — initial partition id per vertex; the
 //!     kernel writes the refined assignment back into the same slot
 //!
 //! Behaviour: same as `_refine` — for each KL iteration, walk every

@@ -157,7 +157,7 @@ impl SCScaledResetAdaptiveIFNeuron {
     /// Run `n_steps` of the candidate-first RK4 recurrence under a constant
     /// `current`, recording the membrane voltage after every step.
     ///
-    /// Reuses [`step`] verbatim so the compiled inner loop is bit-identical to
+    /// Reuses [`Self::step`] verbatim so the compiled inner loop is bit-identical to
     /// the per-step path; returns the voltage trace and the total spike count.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
         let mut trace = Vec::with_capacity(n_steps);

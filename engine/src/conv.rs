@@ -14,7 +14,7 @@ use rayon::prelude::*;
 
 /// Stochastic 2D convolutional layer.
 ///
-/// Kernels stored as probabilities in [0,1]. Forward pass uses
+/// Kernels stored as probabilities in `[0,1]`. Forward pass uses
 /// P(A∧B) = P(A)·P(B) for unipolar stochastic multiplication.
 #[derive(Clone, Debug)]
 pub struct Conv2DLayer {

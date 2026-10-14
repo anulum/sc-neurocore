@@ -327,7 +327,7 @@ pub fn conditional_granger_causality(
 }
 
 /// Spectral Granger causality (Geweke 1982).
-/// Returns (d × d × n_freqs) as flat Vec, row-major in [i][j][f] order.
+/// Returns (d × d × n_freqs) as flat Vec, row-major in `[i][j][f]` order.
 pub fn spectral_granger_causality(
     trains: &[&[i32]],
     bin_size: usize,

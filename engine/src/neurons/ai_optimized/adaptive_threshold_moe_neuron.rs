@@ -14,7 +14,7 @@
 /// Exact equations from arXiv:2509.05276v2 (SpikingBrain Technical Report):
 ///
 ///   V_th(x) = (1/k) · mean(|x|)          (adaptive threshold)
-///   v[t+1] = v[t] - V_th · s[t] + x[t+1] (membrane with soft reset)
+///   `v[t+1] = v[t] - V_th · s[t] + x[t+1]` (membrane with soft reset)
 ///   s_INT = round(v_T / V_th)              (integer spike count)
 ///
 /// In time-collapsed mode: v_T = x, s_INT = round(x / V_th).
