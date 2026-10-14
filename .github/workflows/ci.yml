@@ -719,6 +719,8 @@ jobs:
         run: |
           COVERAGE_FILE=.coverage-studio-jobs python -m pytest \
             tests/test_studio_jobs*.py \
+            tests/test_studio_training_config_storage.py \
+            tests/test_studio_event_manifest_corruption.py \
             tests/test_studio_storage_worker_grant_process.py \
             tests/test_studio_worker_limits.py -q \
             --cov --cov-config=tests/studio_jobs.coveragerc \

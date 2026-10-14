@@ -40,6 +40,8 @@ def _ledger(root: Path) -> StudioJobLedger:
 
 
 class TestArtifactCustody:
+    """Keep completed artifact evidence immutable and durable across ledger writers."""
+
     @pytest.mark.parametrize(
         "replacement",
         [
@@ -86,6 +88,7 @@ class TestArtifactCustody:
         )
 
     def test_a_completed_job_keeps_its_manifest_across_a_restart(self, tmp_path: Path) -> None:
+        """Reopening the manager preserves the sealed manifest and artifact bytes."""
         root = tmp_path / "jobs"
         manager = _job_manager(root)
 
@@ -119,6 +122,11 @@ def _canonical_training_config() -> str:
         ("training", "x" * 4097, "exceeds 4096 bytes"),
         ("training", "[1]", "not an object"),
         ("training", '{"epochs": -1}', "is invalid"),
+        (
+            "training",
+            json.dumps({"hidden": [1] * 1950}, separators=(",", ":")),
+            "exceeds its bounds",
+        ),
         ("training", "canonical-with-space", "not canonical"),
     ],
 )
