@@ -612,8 +612,16 @@ jobs:
           name: shd-non-linux-coverage
           path: ${{ runner.temp }}/shd-platform-coverage
 
+      - name: Install pinned Conda audit scanners
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          bash tools/install_conda_audit_scanners.sh "$RUNNER_TEMP/conda-audit-bin"
+          echo "$RUNNER_TEMP/conda-audit-bin" >> "$GITHUB_PATH"
+
       - name: Test + coverage
         env:
+          GRYPE_DB_CACHE_DIR: ${{ runner.temp }}/grype-audit-db
           SCN_EXTRA_COVERAGE_DIR: ${{ runner.temp }}/shd-platform-coverage
         shell: bash
         run: |

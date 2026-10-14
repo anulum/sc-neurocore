@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 906
+expected_file_count = 911
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -86,15 +86,15 @@ rationale = "The archive label, the citation file and both packages must state o
 
 [[file]]
 path = "tools/security_scan/advisory_exceptions.py"
-rationale = "Per-finding advisory exceptions are accepted only while a live channel or package-content check re-establishes their recorded reason."
+rationale = "Named Grype matches retain exact installed artifact and fixed-code vendor-source proof with review-by dates and no broad suppressions."
 
 [[file]]
 path = "tests/test_tools/test_advisory_exceptions.py"
-rationale = "Real containers, index bodies and a real TLS server prove that an advisory exception holds only while its evidence does."
+rationale = "Actual scanner findings and copied vendor source prove that byte corruption, missing or external proof, changed scope and expired records block acceptance."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"
-rationale = "Real stable Pixi scanner and committed-lock CLI qualification bind complete package coverage and refuse malformed or suppressed responses."
+rationale = "Native Pixi installation, Syft inventory and Grype CPE results bind every locked package to process receipts and exact installed fixed-code evidence."
 
 [[file]]
 path = "scripts/cosim_gen_and_check.py"
@@ -3717,3 +3717,23 @@ rationale = "Exercise admitted symbolic comparisons and explicit equation-gate r
 [[file]]
 path = "tests/test_studio_jobs_ledger_artifacts.py"
 rationale = "Real completed-job artifact custody, durable restart and corrupted training configuration refusals remain documented and enforced."
+
+[[file]]
+path = "tools/security_scan/locked_native_process.py"
+rationale = "Actual scanner command output, exit status and bounded process-group lifetime remain in immutable per-command packets."
+
+[[file]]
+path = "tools/security_scan/conda_dependency_audit.py"
+rationale = "Locked installation and exact native Syft inputs feed unfiltered Grype matching with installed metadata and lock custody checked again."
+
+[[file]]
+path = "tools/security_scan/conda_dependency_reports.py"
+rationale = "Native installed Conda artifact identities, complete lock selection, scanner policy and fresh official database must agree before findings are accepted."
+
+[[file]]
+path = "tests/test_tools/test_conda_dependency_reports.py"
+rationale = "Altered copies of actual native scanner reports reject missing packages, changed artifact identities, filtering and stale or unavailable database provenance."
+
+[[file]]
+path = "tests/test_tools/test_locked_native_process.py"
+rationale = "Actual interpreter processes exercise JSON output, nonzero exit, malformed output, timed-out execution and retained process-reaping evidence."

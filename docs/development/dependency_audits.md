@@ -17,7 +17,7 @@ inventory. Project dependencies are neither installed nor rewritten by audits.
 | npm | Every `package-lock.json` | Exact registry identity validation, then `npm audit --package-lock-only --include=dev --include=optional --include=peer --registry=https://registry.npmjs.org --json` |
 | Go | Every `go.mod` and associated `go.sum` | OSV queries for standard library, module pins and checksum-only versions |
 | Julia | Every format-2.0 or format-2.1 `Manifest.toml` | OSV queries for every exact package version, including build suffixes |
-| Pixi | Every `pixi.lock` | Pinned pixi-audit, with complete JSON coverage validation |
+| Pixi / Conda | Every `pixi.lock` | Locked installation, Syft package inventory bound to every artifact, then Grype CPE/NVD matching |
 
 Run an ecosystem without running a test suite:
 
@@ -92,64 +92,49 @@ report explicitly records both identities. Other local version suffixes are
 refused. This checks upstream package advisories; it does not attest that a
 particular CPU wheel has no build-specific vulnerability.
 
-The pinned Pixi audit 0.2.0 covers conda-forge and PyPI. Its `matches`, `ignored`,
-`not_audited` and `unused_ignores` lists must agree with typed counters and cover
-every locked package. A package reported as `not_audited` blocks the lock
-unless a vendor-record exception for exactly that package version holds. A Pixi
-lock without a
-readable package record list is refused before the scanner starts. No blanket waiver
-or automatic `--fix` is applied. Advisory remediation needs reviewed fixed
-versions and ordinary integration validation before changing the lock.
+### Conda inventory and vulnerability matching
 
-### Advisory exceptions
+The Pixi lane installs its committed Mojo environment with `pixi install --locked`.
+Syft 1.54.1 catalogs its installed `conda-meta/*.json` records. Each URL, SHA-256,
+name, version and build must match the lock, with no omitted or additional package.
+Metadata and lock bytes are checked again after scanning. The current adapter
+requires one default `linux-64` environment and Conda artifact records; additional
+platforms, environments or PyPI records fail until they have a maintained adapter.
 
-A Pixi finding can be accepted only through one table of
-`tools/security_scan/advisory_exceptions.toml`, naming the lock, the package
-version and the advisory, with one of two reasons that the audit re-establishes
-on every run. A package the scanner cannot audit has one table without an
-advisory and the third reason:
+Grype 0.120.1 reads that exact Syft SBOM and uses the public Anchore vulnerability
+database. The Linux scanner archives are SHA-256 pinned in
+`tools/install_conda_audit_scanners.sh`. The database must have a valid hash,
+be no older than five days and successfully check for updates. Findings of every
+severity remain blocking. Filters, ignored matches, VEX suppression and missing
+report settings fail validation. Native commands retain stdout, stderr, exit
+status and process-reaping receipts. Database caches remain outside the uploaded
+packet; set `GRYPE_DB_CACHE_DIR` to a reusable owned cache directory.
 
-- `no_fixed_version_in_channel` — the locked artefact is the newest version
-  and the newest build its channel publishes for its platform. Channel and
-  platform are read from the lock, not from the table. The check reads the
-  channel index and requires the locked file to be listed there with the
-  lock's digest; a newer version, or a newer build of the same version, fails
-  it, so a published fix turns the audit red by itself.
-- `component_not_in_package` — the advisory concerns a program the locked
-  package does not ship. The check downloads the exact locked artefact,
-  verifies it against the lock digest and requires that none of its declared
-  paths matches the listed patterns.
-- `vendor_records_reviewed` — the scanner has no advisory data for the vendor
-  channel, so the audit reads the vendor's records itself. The check reads
-  the platform index beside the locked file and requires the file to be
-  listed with the lock's digest. It then asks the National Vulnerability
-  Database for every record bound to a product identifier of the channel's
-  vendor. The vendor identifiers of a channel are a constant of the audit
-  code, keyed by the host and channel read from the lock; a table cannot name
-  them, and a package from a channel without an entry cannot be excepted.
-  The records must be exactly those listed as reviewed, each with exactly
-  the products it named at review, and none may name a package of the lock
-  as its product. A new record, a withdrawn record, a record whose product
-  list changed and a withdrawn file all fail the check.
+Basilisk was replaced because its audit API began requiring authentication and
+our account could not obtain a CI token without a separately granted service
+role. Syft and Grype do not need that account or token. This changes the matching
+basis: Conda packages use generated CPE identities and NVD data. Such matching
+can miss vulnerabilities or misattribute package names and version ranges.
+Complete installed-package inventory does not establish complete advisory
+coverage. See [Anchore's ecosystem documentation](https://oss.anchore.com/docs/guides/vulnerability/ecosystems/).
 
-There is no severity, confidence or reachability filter and no wildcard. A
-finding without a table, a table whose check fails or cannot be completed, a
-table that matches no finding, and a table that names another ecosystem or a
-lock the audit does not read all fail the audit. Whether the listed paths
-describe the affected program is not something a machine can check; it is
-reviewed with each table, and the evidence records how many paths the
-artefact declares. The vendor check has two limits of the same kind. It sees
-only records that already carry a product identifier, and the database
-assigns those some time after publication. Whether a reviewed record that
-names another product of the vendor also affects a locked package is reviewed
-with the table; fixing the products of each reviewed record makes the audit
-ask for that reading again when the database revises a record. A source that
-is busy or unreachable is asked three times; the lock is then blocked with
-the reason `source unavailable`, which is distinct from a reason that no
-longer holds. Each run writes the accepted findings and packages with their
-evidence to `exceptions.json` in the audit packet: an accepted finding is a
-known, recorded limitation, not an absence of findings, and a package accepted
-by its vendor records has not been audited by the scanner.
+### Exact fixed-code exceptions
+
+`tools/security_scan/advisory_exceptions.toml` names one advisory, locked package
+version, artifact digest, fixed source path, source digest and review-by date.
+An exception applies only if its lock exists in the committed inventory, its
+exact package and advisory match, and every audit re-establishes its proof.
+Unused, expired or unavailable proofs block the audit; no finding is hidden from
+the raw Grype output or the accepted/blocked decision.
+
+The current record addresses Grype's generic comparison of Python 3.15.0 against
+its prerelease fix boundary 3.15.0a6 for CVE-2025-15367. Python version ordering
+places the final release after that boundary. The installed `poplib.py` must be
+byte-identical to its SHA-256-bound file from the immutable CPython 3.15.0 release
+commit, which contains the [vendor fix](https://github.com/python/cpython/pull/143924).
+Changing the locked artifact, the installed source, the reported fix or the
+review date invalidates acceptance. This record concerns that one fixed module;
+it does not assert that the interpreter has no other vulnerabilities.
 
 The additional security-packet OSV runner also treats every nonzero scanner
 exit as failure. A partially written report cannot turn a service error green.

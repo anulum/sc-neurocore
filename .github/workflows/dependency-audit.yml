@@ -56,9 +56,17 @@ jobs:
         with:
           pixi-version: v0.81.0
           run-install: false
+      - name: Install pinned Conda audit scanners
+        if: matrix.ecosystem == 'pixi'
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          bash tools/install_conda_audit_scanners.sh "$RUNNER_TEMP/conda-audit-bin"
+          echo "$RUNNER_TEMP/conda-audit-bin" >> "$GITHUB_PATH"
       - name: Audit every committed lock in this ecosystem
         env:
           AUDIT_ECOSYSTEM: ${{ matrix.ecosystem }}
+          GRYPE_DB_CACHE_DIR: ${{ runner.temp }}/grype-audit-db
           GOTOOLCHAIN: local
           PIXI_CACHE_DIR: ${{ runner.temp }}/pixi-audit-cache
         run: |

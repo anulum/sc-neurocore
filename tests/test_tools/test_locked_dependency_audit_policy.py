@@ -93,7 +93,6 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
         "--include=peer",
         "--registry=https://registry.npmjs.org",
         "--json",
-        "pixi-audit==0.2.0=ha35fb5c_45",
     } <= literals
     assert not literals.intersection(
         {
@@ -114,25 +113,17 @@ def test_advisory_commands_cannot_silently_filter_findings() -> None:
     assert "run_dependency_audit(repo_root=repo_root, output_dir=output_dir)" in source
     report_source = (ROOT / "tools/security_scan/locked_dependency_reports.py").read_text()
     assert 'OSV_ENDPOINT = "https://api.osv.dev/v1/querybatch"' in report_source
-    assert '"ignored", "not_audited", "unused_ignores"' in report_source
-    exception_source = (ROOT / "tools/security_scan/advisory_exceptions.py").read_text()
-    assert (
-        'REASONS = ("no_fixed_version_in_channel", "component_not_in_package", '
-        '"vendor_records_reviewed")' in exception_source
-    )
-    # Scanner ignores are never excepted; an unaudited package is decided row by row.
-    assert '("ignored", "unused_ignores")' in exception_source
-    assert 'decide_matches(payload["not_audited"], coverage' in exception_source
-    # Whose records speak for a channel is one constant in code, never a table key.
-    assert '("conda.modular.com", "max"): ("modular",)' in exception_source
-    assert '"vendor_records_reviewed": {"reviewed"}' in exception_source
-    exception_names = {
-        node.id for node in ast.walk(ast.parse(exception_source)) if isinstance(node, ast.Name)
-    } | {
+    conda_source = (ROOT / "tools/security_scan/conda_dependency_audit.py").read_text()
+    conda_literals = {
         node.value
-        for node in ast.walk(ast.parse(exception_source))
-        if isinstance(node, ast.Constant) and isinstance(node.value, str) and " " not in node.value
+        for node in ast.walk(ast.parse(conda_source))
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert not exception_names.intersection(
-        {"severity", "confidence", "match_confidence", "cvss_base_score", "epss", "expires"}
-    )
+    assert {
+        "--locked",
+        "--override-default-catalogers",
+        "conda-meta-cataloger",
+        "grype",
+        "syft",
+    } <= conda_literals
+    assert not {"BASILISK_API_TOKEN", "PIXI_AUDIT_TOKEN"}.intersection(conda_literals)

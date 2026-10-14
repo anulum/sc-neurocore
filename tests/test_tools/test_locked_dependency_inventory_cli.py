@@ -16,7 +16,6 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-from typing import Any
 
 import pytest
 
@@ -30,7 +29,6 @@ from tools.security_scan.locked_dependency_inventory import (
     pixi_package_count,
     require_cargo_audit_configuration,
 )
-from tools.security_scan.locked_dependency_reports import pixi_report_passed
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -203,51 +201,6 @@ def test_julia_queries_retain_registry_build_versions() -> None:
         )
 
 
-@pytest.mark.parametrize("section", ["matches", "ignored", "not_audited", "unused_ignores"])
-def test_pixi_refuses_findings_and_unanswered_packages(section: str) -> None:
-    """Any advisory, suppression or unanswered channel blocks complete-lock acceptance.
-
-    Parameters
-    ----------
-    section : str
-        Report section whose presence invalidates a clean complete audit.
-    """
-    report: dict[str, Any] = {
-        "matches": [],
-        "ignored": [],
-        "not_audited": [],
-        "unused_ignores": [],
-        "summary": {"audited": 1, "vulnerable": 0, "ignored": 0, "not_audited": 0},
-    }
-    assert pixi_report_passed(report, 1) is True
-    report[section] = [{"package": "example", "id": "EXAMPLE-ADVISORY"}]
-    counter = {"matches": "vulnerable", "ignored": "ignored", "not_audited": "not_audited"}.get(
-        section
-    )
-    if counter is not None:
-        report["summary"][counter] = 1
-    if section == "not_audited":
-        report["summary"]["audited"] = 0
-    assert pixi_report_passed(report, 1) is False
-
-
-def test_pixi_refuses_missing_and_inconsistent_coverage() -> None:
-    """Exit status cannot substitute for valid lists and complete package coverage."""
-    with pytest.raises(ValueError, match="invalid"):
-        pixi_report_passed([], 1)
-    with pytest.raises(ValueError, match="lists"):
-        pixi_report_passed({}, 1)
-    report = {
-        "matches": [],
-        "ignored": [],
-        "not_audited": [],
-        "unused_ignores": [],
-        "summary": {"audited": 0, "vulnerable": 0, "ignored": 0, "not_audited": 0},
-    }
-    with pytest.raises(ValueError, match="complete lock"):
-        pixi_report_passed(report, 1)
-
-
 @pytest.mark.parametrize(
     ("manifest", "refusal"),
     [
@@ -350,70 +303,6 @@ def test_pixi_package_count_binds_the_maintained_lock() -> None:
             pixi_package_count(unavailable)
     with pytest.raises(yaml.YAMLError):
         pixi_package_count(b"packages: [\n")
-
-
-@pytest.mark.parametrize("value", [None, [], "complete"])
-def test_pixi_refuses_unavailable_coverage_counters(value: object) -> None:
-    """A report without a counter mapping cannot prove complete lock coverage.
-
-    Parameters
-    ----------
-    value : object
-        Summary section that is not a mapping of counters.
-    """
-    report: dict[str, Any] = {
-        "matches": [],
-        "ignored": [],
-        "not_audited": [],
-        "unused_ignores": [],
-        "summary": value,
-    }
-    with pytest.raises(ValueError, match="counters are unavailable"):
-        pixi_report_passed(report, 1)
-
-
-@pytest.mark.parametrize("value", [True, -1, 1.0, "1", None])
-def test_pixi_refuses_invalid_coverage_counters(value: object) -> None:
-    """Booleans, negatives and non-integers cannot stand in for package counts.
-
-    Parameters
-    ----------
-    value : object
-        Invalid replacement for the audited package counter.
-    """
-    report: dict[str, Any] = {
-        "matches": [],
-        "ignored": [],
-        "not_audited": [],
-        "unused_ignores": [],
-        "summary": {"audited": value, "vulnerable": 0, "ignored": 0, "not_audited": 0},
-    }
-    with pytest.raises(ValueError, match="counter is invalid"):
-        pixi_report_passed(report, 1)
-
-
-@pytest.mark.parametrize("counter", ["vulnerable", "ignored", "not_audited"])
-def test_pixi_refuses_counters_that_disagree_with_their_lists(counter: str) -> None:
-    """A counter cannot report a finding or omission that its list does not show.
-
-    Parameters
-    ----------
-    counter : str
-        Summary counter raised without a matching list entry.
-    """
-    summary = {"audited": 1, "vulnerable": 0, "ignored": 0, "not_audited": 0}
-    summary[counter] = 1
-    if counter == "not_audited":
-        summary["audited"] = 0
-    report: dict[str, Any] = {
-        "matches": [],
-        "ignored": [],
-        "not_audited": [],
-        "unused_ignores": [],
-        "summary": summary,
-    }
-    with pytest.raises(ValueError, match="disagree with their counters"):
-        pixi_report_passed(report, 1)
 
 
 def test_cargo_settings_refuse_invalid_database_and_drift(tmp_path: Path) -> None:

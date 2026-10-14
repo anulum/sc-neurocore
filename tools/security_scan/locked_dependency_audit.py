@@ -12,32 +12,24 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict
-import hashlib
 import json
 import os
 from pathlib import Path
-import signal
 import subprocess
 from typing import Any
 
 import yaml
 
-from tools.security_scan.advisory_exceptions import (
-    EXCEPTION_FILE,
-    fetch,
-    load_exceptions,
-    pixi_lock_decision,
-    require_known_locks,
-)
+from tools.security_scan.conda_dependency_audit import run_conda_audit
 from tools.security_scan.locked_dependency_inventory import (
     cargo_audit_configuration,
     go_queries,
     inventory_locks,
     julia_queries,
-    pixi_package_count,
     require_cargo_audit_configuration,
 )
-from tools.security_scan.locked_dependency_reports import audit_osv_queries, pixi_report_passed
+from tools.security_scan.locked_dependency_reports import audit_osv_queries
+from tools.security_scan.locked_native_process import execute_command as _execute
 from tools.security_scan.locked_native_reports import (
     npm_lock_packages,
     npm_report_passed,
@@ -46,46 +38,6 @@ from tools.security_scan.locked_native_reports import (
 from tools.security_scan.python_dependency_audit import run_dependency_audit
 
 ECOSYSTEMS = ("python", "rust", "npm", "go", "julia", "pixi")
-
-
-def _execute(command: list[str], cwd: Path, directory: Path) -> tuple[int, object]:
-    directory.mkdir(parents=True, exist_ok=False)
-    (directory / "command.json").write_text(json.dumps(command) + "\n", encoding="utf-8")
-    process = subprocess.Popen(
-        command,
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        start_new_session=True,
-    )
-    timed_out = False
-    try:
-        stdout, stderr = process.communicate(timeout=360)
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        os.killpg(process.pid, signal.SIGTERM)
-        try:
-            stdout, stderr = process.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            stdout, stderr = process.communicate()
-    (directory / "stdout.json").write_text(stdout, encoding="utf-8")
-    (directory / "stderr.log").write_text(stderr, encoding="utf-8")
-    (directory / "receipt.json").write_text(
-        json.dumps(
-            {
-                "returncode": process.returncode,
-                "timed_out": timed_out,
-                "process_reaped": process.poll() is not None,
-            }
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    if timed_out:
-        raise ValueError("Dependency audit timed out; its process group was stopped.")
-    return process.returncode, json.loads(stdout)
 
 
 def _go_queries(repo_root: Path, relative: str, directory: Path) -> tuple[dict[str, Any], ...]:
@@ -145,21 +97,10 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
             json.dumps(report, indent=2) + "\n", encoding="utf-8"
         )
         return report["passed"] is True
+    elif ecosystem == "pixi":
+        return run_conda_audit(repo_root, relative, directory)
     else:
-        pixi_packages = pixi_package_count(lock.read_bytes())
-        command = [
-            "pixi",
-            "exec",
-            "--spec",
-            "pixi-audit==0.2.0=ha35fb5c_45",
-            "--channel",
-            "https://prefix.dev/prefix-dev/prefix-labs",
-            "--channel",
-            "https://prefix.dev/conda-forge",
-            "pixi-audit",
-            "--json",
-            str(lock),
-        ]
+        raise ValueError("Unknown native audit ecosystem.")
     rc, payload = _execute(command, lock.parent if ecosystem == "npm" else repo_root, directory)
     if ecosystem == "rust":
         (directory / "configuration-input.json").write_text(
@@ -172,23 +113,7 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
             json.dumps(npm_packages, indent=2) + "\n", encoding="utf-8"
         )
         return npm_report_passed(payload, len(npm_packages)) and rc == 0
-    # Validate the complete report first; a clean report needs no exception.
-    pixi_report_passed(payload, pixi_packages)
-    if not isinstance(payload, dict):
-        raise ValueError("Pixi audit report is invalid.")
-    exceptions_raw = (repo_root / EXCEPTION_FILE).read_bytes()
-    exceptions = load_exceptions(exceptions_raw)
-    require_known_locks(
-        exceptions, {item.path for item in inventory_locks(repo_root) if item.ecosystem == "pixi"}
-    )
-    decision = pixi_lock_decision(
-        payload, rc, relative, yaml.safe_load(lock.read_bytes())["packages"], exceptions, fetch
-    )
-    decision["exception_file_sha256"] = hashlib.sha256(exceptions_raw).hexdigest()
-    (directory / "exceptions.json").write_text(
-        json.dumps(decision, indent=2) + "\n", encoding="utf-8"
-    )
-    return decision["passed"] is True
+    raise ValueError("Unknown native audit ecosystem.")
 
 
 def run_locked_audit(repo_root: Path, output_dir: Path, ecosystem: str) -> dict[str, Any]:
