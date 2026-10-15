@@ -45,8 +45,16 @@ python tools/test_inventory_audit.py \
 ```
 
 Tracked files absent from base collection must declare a module-level
-`pytest.importorskip(...)` optional dependency gate. Any other uncollected
-tracked test file is a failure.
+`pytest.importorskip(...)`, an explicit
+`pytest.skip(..., allow_module_level=True)` guarded by
+`importlib.util.find_spec("dependency") is None`, or the standard `__test__ = False`
+marker for a compatibility or shared-support module. The JSON records each
+classification; any unexplained uncollected tracked test file is a failure.
+
+Missing-reference guards may combine the absence check with stricter conditions
+using `and`. Broader `or` guards, installed-module checks and function-only skips
+do not explain an uncollected module. Required TorchHD reference jobs still fail
+when the reference is missing or broken.
 
 ### SNN memory-discipline audit
 

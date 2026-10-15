@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 911
+expected_file_count = 913
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3737,3 +3737,11 @@ rationale = "Altered copies of actual native scanner reports reject missing pack
 [[file]]
 path = "tests/test_tools/test_locked_native_process.py"
 rationale = "Actual interpreter processes exercise JSON output, nonzero exit, malformed output, timed-out execution and retained process-reaping evidence."
+
+[[file]]
+path = "tools/test_inventory_audit.py"
+rationale = "Classify native pytest collection gaps with explicit optional import guards while refusing broader or unexplained skips."
+
+[[file]]
+path = "tests/test_tools/test_test_inventory_audit.py"
+rationale = "Exercise the inventory command against real reference-module collection and reject guard mutations that conceal missing tests."

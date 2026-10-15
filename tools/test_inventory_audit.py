@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Test inventory audit
 
+"""Account for every tracked test module in a native pytest collection transcript."""
+
 from __future__ import annotations
 
 import argparse
@@ -33,7 +35,6 @@ class OptionalImportSkip:
 
     def to_json(self) -> dict[str, object]:
         """Return a stable JSON object for audit artefacts."""
-
         return {"path": self.path, "dependencies": list(self.dependencies)}
 
 
@@ -45,7 +46,6 @@ class IntentionalNonTestModule:
 
     def to_json(self) -> dict[str, str]:
         """Return a stable JSON object for audit artefacts."""
-
         return {"path": self.path, "marker": "__test__ = False"}
 
 
@@ -64,12 +64,10 @@ class TestInventoryAudit:
     @property
     def passed(self) -> bool:
         """Return whether every uncollected tracked file has an optional gate."""
-
         return self.collected_tests > 0 and not self.unexpected_uncollected
 
     def to_json(self) -> dict[str, object]:
         """Return a stable JSON-compatible audit payload."""
-
         return {
             "schema_version": self.schema_version,
             "passed": self.passed,
@@ -88,7 +86,6 @@ class TestInventoryAudit:
 
 def tracked_test_files(repo: Path) -> tuple[str, ...]:
     """Return tracked test files whose basename follows pytest's test-file pattern."""
-
     result = subprocess.run(
         ["git", "ls-files", "tests"],
         cwd=repo,
@@ -106,7 +103,6 @@ def tracked_test_files(repo: Path) -> tuple[str, ...]:
 
 def parse_collect_only_output(text: str) -> tuple[tuple[str, ...], int]:
     """Parse pytest collect-only output into collected files and test count."""
-
     files = {
         match.group(1)
         for line in text.splitlines()
@@ -120,12 +116,15 @@ def parse_collect_only_output(text: str) -> tuple[tuple[str, ...], int]:
     return tuple(sorted(files)), int(summary_match.group("count"))
 
 
-def module_level_importorskip_dependencies(path: Path) -> tuple[str, ...]:
-    """Return optional dependencies guarded by top-level pytest.importorskip calls."""
-
+def module_level_optional_dependencies(path: Path) -> tuple[str, ...]:
+    """Return imports guarded by explicit module-level optional-dependency skips."""
     tree = ast.parse(path.read_text(encoding="utf-8"))
     dependencies: list[str] = []
     for node in tree.body:
+        if isinstance(node, ast.If):
+            dependency = _missing_module_skip_dependency(node)
+            if dependency is not None:
+                dependencies.append(dependency)
         call = _module_level_call(node)
         if call is None or not _is_pytest_importorskip(call):
             continue
@@ -137,9 +136,61 @@ def module_level_importorskip_dependencies(path: Path) -> tuple[str, ...]:
     return tuple(sorted(set(dependencies)))
 
 
+def _missing_module_skip_dependency(node: ast.If) -> str | None:
+    """Identify a module skip that requires an absent import specification."""
+    if not any(_is_module_skip(_module_level_call(statement)) for statement in node.body):
+        return None
+    conditions = (
+        node.test.values
+        if isinstance(node.test, ast.BoolOp) and isinstance(node.test.op, ast.And)
+        else [node.test]
+    )
+    for condition in conditions:
+        if not (
+            isinstance(condition, ast.Compare)
+            and len(condition.ops) == len(condition.comparators) == 1
+            and isinstance(condition.ops[0], ast.Is)
+            and isinstance(condition.comparators[0], ast.Constant)
+            and condition.comparators[0].value is None
+            and isinstance(condition.left, ast.Call)
+        ):
+            continue
+        call = condition.left
+        if (
+            isinstance(call.func, ast.Attribute)
+            and call.func.attr == "find_spec"
+            and isinstance(call.func.value, ast.Attribute)
+            and call.func.value.attr == "util"
+            and isinstance(call.func.value.value, ast.Name)
+            and call.func.value.value.id == "importlib"
+            and len(call.args) == 1
+            and isinstance(call.args[0], ast.Constant)
+            and isinstance(call.args[0].value, str)
+            and call.args[0].value
+        ):
+            return call.args[0].value
+    return None
+
+
+def _is_module_skip(call: ast.Call | None) -> bool:
+    """Require an explicit pytest module skip instead of a function-only skip."""
+    return (
+        call is not None
+        and isinstance(call.func, ast.Attribute)
+        and call.func.attr == "skip"
+        and isinstance(call.func.value, ast.Name)
+        and call.func.value.id == "pytest"
+        and any(
+            keyword.arg == "allow_module_level"
+            and isinstance(keyword.value, ast.Constant)
+            and keyword.value.value is True
+            for keyword in call.keywords
+        )
+    )
+
+
 def has_module_test_opt_out(path: Path) -> bool:
     """Return whether a module explicitly declares pytest's non-test marker."""
-
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
         if not isinstance(node, ast.Assign) or len(node.targets) != 1:
@@ -157,7 +208,6 @@ def has_module_test_opt_out(path: Path) -> bool:
 
 def build_inventory_audit(repo: Path, collect_output: str) -> TestInventoryAudit:
     """Build a test-inventory audit from git state and pytest collection output."""
-
     tracked = tracked_test_files(repo)
     collected, collected_tests = parse_collect_only_output(collect_output)
     collected_set = set(collected)
@@ -170,7 +220,7 @@ def build_inventory_audit(repo: Path, collect_output: str) -> TestInventoryAudit
         if has_module_test_opt_out(repo / path):
             intentional_non_tests.append(IntentionalNonTestModule(path=path))
             continue
-        dependencies = module_level_importorskip_dependencies(repo / path)
+        dependencies = module_level_optional_dependencies(repo / path)
         if dependencies:
             optional_skips.append(OptionalImportSkip(path=path, dependencies=dependencies))
         else:
@@ -221,7 +271,6 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the test-inventory audit CLI."""
-
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     repo = args.repo.resolve()
     collect_output_path = args.collect_output.resolve()

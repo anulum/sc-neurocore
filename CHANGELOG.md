@@ -10,6 +10,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Recognize guarded optional reference imports in test-inventory audits while
+  rejecting unexplained or overly broad module skips.
+
 - Replace the Basilisk-backed Pixi dependency audit with checksum-pinned Syft
   and Grype scanning of the locked Mojo environment. Basilisk now requires
   account access, a granted role and a CI API token; the replacement uses public

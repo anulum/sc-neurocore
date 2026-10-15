@@ -25,9 +25,10 @@ The workflow performs five checks:
 
 The audit compares tracked `test_*.py` files with the files observed in
 pytest's collect-only output. A tracked file may be absent from base collection
-only when it declares a module-level `pytest.importorskip(...)` optional
-dependency gate or the standard `__test__ = False` marker used by an explicit
-compatibility or shared-support module. Both categories remain visible in the
+when it declares a module-level `pytest.importorskip(...)`, an explicit
+`pytest.skip(..., allow_module_level=True)` guarded by
+`importlib.util.find_spec("dependency") is None`, or the standard `__test__ = False`
+marker used by a compatibility or shared-support module. These remain visible in the
 JSON artefact. Any other uncollected tracked test file fails the workflow.
 
 The workflow uploads two artefacts:
@@ -50,3 +51,8 @@ python tools/test_inventory_audit.py \
 This cadence detects drift in the test inventory between larger audit sweeps.
 Runtime correctness remains owned by the normal CI matrix, optional-dependency
 lanes, perf-gated selector, and focused tests attached to each code change.
+
+Missing-reference guards may combine the absence check with stricter conditions
+using `and`. Broader `or` guards, installed-module checks and function-only skips
+do not explain an uncollected module. Required TorchHD reference jobs still fail
+when the reference is missing or broken.
