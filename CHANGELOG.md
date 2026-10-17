@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Update the Semgrep environment to MCP 1.30.0 to address CVE-2026-59951.
+  Mark embedded receipt-header examples so REUSE checks the source headers
+  without interpreting generated SPDX text as additional file metadata.
+
 - Connect SHD AXI input commits to a shared logical-step enable throughout
   the network. Snapshot complete input vectors, reset each inference, drain
   padding automatically and retain completion for software polling. Exercise

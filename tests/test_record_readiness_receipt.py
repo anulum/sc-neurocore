@@ -175,7 +175,9 @@ def test_record_updates_every_view_from_the_actual_validator(
     assert receipt.runtime["git_head"]
     assert all(old.is_file() for old in before)
     ownership = path.with_name(path.name + ".license").read_text(encoding="utf-8")
+    # REUSE-IgnoreStart
     assert ownership.startswith("SPDX-License-Identifier: AGPL-3.0-or-later\n")
+    # REUSE-IgnoreEnd
     assert "(concepts)" in ownership and "(code)" in ownership
     for artifact in ARTIFACTS:
         assert path.name in (recording_checkout / artifact).read_text(encoding="utf-8")

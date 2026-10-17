@@ -49,6 +49,8 @@ def write_receipt_license(receipt: Path) -> Path:
         If the sidecar cannot be created. The receipt remains intact.
     """
     sidecar = receipt.with_name(receipt.name + ".license")
+    # The embedded SPDX text belongs to the generated sidecar.
+    # REUSE-IgnoreStart
     text = (
         "SPDX-License-Identifier: AGPL-3.0-or-later\n"
         "Commercial license available\n"
@@ -60,6 +62,7 @@ def write_receipt_license(receipt: Path) -> Path:
         "SPDX-FileCopyrightText: 1996-2026 Miroslav Šotek <protoscience@anulum.li> (concepts)\n"
         "SPDX-FileCopyrightText: 2020-2026 Miroslav Šotek <protoscience@anulum.li> (code)\n"
     )
+    # REUSE-IgnoreEnd
     try:
         with sidecar.open("x", encoding="utf-8") as stream:
             stream.write(text)
