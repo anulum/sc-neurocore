@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — SHD AXI Python Q8.8 golden output vectors
+// Three samples (6,1,3 input bins), 20 signed-int32 class sums each.
+fffff760
+fffffeb0
+00000468
+ffffe2d0
+000003a0
+000017b0
+000009c0
+fffff350
+fffffaa0
+00000eb0
+fffff158
+fffff028
+00000108
+00001848
+000001d8
+00000928
+fffffb38
+fffff760
+fffffeb0
+00000468
+000009f8
+00000668
+fffffe10
+fffffe38
+fffffe60
+fffffd78
+fffffa70
+00000c20
+fffff5f8
+ffffffb0
+00000418
+00000440
+fffff830
+fffffc98
+00001200
+fffff798
+fffff490
+000009f8
+00000668
+fffffe10
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000

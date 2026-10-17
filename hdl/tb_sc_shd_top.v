@@ -48,6 +48,7 @@ module tb_sc_shd_top;
 
     sc_shd_top dut (
         .clk                 (clk),
+        .step_en             (1'b1),
         .rst_n               (rst_n),
         .start               (start),
         .t_orig              (t_orig),

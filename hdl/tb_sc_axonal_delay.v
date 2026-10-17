@@ -40,8 +40,9 @@ module tb_sc_axonal_delay;
 
     integer n_samples;
     integer offset_arg;
-    reg [1023:0] input_file;
-    reg [1023:0] output_file;
+    // Keep complete paths, including long build/workspace directories.
+    string input_file;
+    string output_file;
     integer out_fd;
     integer i;
 
@@ -50,6 +51,7 @@ module tb_sc_axonal_delay;
         .PTR_WIDTH(PTR_WIDTH)
     ) dut (
         .clk         (clk),
+        .step_en     (1'b1),
         .rst_n       (rst_n),
         .spike_in    (spike_in),
         .read_offset (read_offset),

@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Connect SHD AXI input commits to a shared logical-step enable throughout
+  the network. Snapshot complete input vectors, reset each inference, drain
+  padding automatically and retain completion for software polling. Exercise
+  the AXI interface against Python Q8.8 golden outputs with stalled transfers.
+
 - Recognize guarded optional reference imports in test-inventory audits while
   rejecting unexplained or overly broad module skips.
 

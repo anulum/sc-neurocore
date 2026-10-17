@@ -32,7 +32,8 @@ module sc_vmin_lif_neuron #(
     parameter signed [15:0] DECAY    = 16'sd192,    // 0.75 = 1 - 1/tau, tau=4
     parameter signed [15:0] V_THRESH = 16'sd256,    // 1.0
     parameter signed [15:0] V_RESET  = 16'sd0,      // 0.0
-    parameter signed [15:0] V_INF    = -16'sd1280   // -5.0
+    parameter signed [15:0] V_INF    = -16'sd1280,  // -5.0
+    parameter integer USE_STEP_ENABLE = 0
 )(
     input  wire              clk,
     input  wire              rst_n,
@@ -43,7 +44,10 @@ module sc_vmin_lif_neuron #(
     // Combinational outputs (zero latency, used by sc_shd_top so the
     // full network can advance one full step per clock cycle).
     output wire              spike_comb,
-    output wire signed [15:0] v_next_comb
+    output wire signed [15:0] v_next_comb,
+    // With USE_STEP_ENABLE=1, hold membrane and registered outputs unless high.
+    // Reset is independent; free-running operation remains the default.
+    input  wire              step_en
 );
 
     reg signed [15:0] v_reg;
@@ -193,7 +197,7 @@ module sc_vmin_lif_neuron #(
             v_reg <= 16'sd0;
             spike <= 1'b0;
             v_out <= 16'sd0;
-        end else begin
+        end else if ((USE_STEP_ENABLE == 0) || step_en) begin
             v_reg <= v_next;
             spike <= spike_now;
             v_out <= v_next;

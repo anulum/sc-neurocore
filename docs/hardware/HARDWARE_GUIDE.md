@@ -164,7 +164,82 @@ This generates a complete project with all 19 HDL modules, a generated
 neuron SystemVerilog file, and target-specific build scripts. See
 Tutorial 40 for details.
 
-## 12. Next steps
+## 12. SHD AXI-Lite input commits
+
+`hdl/sc_shd_axi_wrapper.v` connects the fixed-point SHD network
+(`sc_shd_top`, 140 → 128 → 128 → 20) to a 32-bit AXI4-Lite bus.
+Its input protocol is:
+
+1. Write `T_ORIG` at `0x04` and the three Q16.16 scales at `0x08`–`0x10`.
+   Valid input lengths are 1–65503; the upper bound leaves room in the
+   16-bit logical counter for padding and pipeline drain.
+2. Write bit 0 of `CTRL` (`0x00`) to reset and arm an inference. Configuration
+   is captured for this inference; subsequent configuration writes stage the
+   next one. Starting while busy, or with an invalid length, returns SLVERR.
+3. For each of the `T_ORIG` time bins, stage the five words at `0x14`–`0x24`.
+   The first four hold channels 0–127; the low twelve bits of the fifth hold
+   channels 128–139. AXI byte strobes preserve the other bytes.
+4. Write any value, with at least one byte strobe enabled, to `SPIKE_COMMIT`
+   (`0x28`). This snapshots the whole 140-bit vector and advances one input
+   step. The first commit starts the core with sample 0 already present.
+5. After the last input, the wrapper automatically runs thirty zero-padding
+   steps and three pipeline-drain clocks. Poll `CTRL` bit 2 for completion,
+   then read the twenty signed-int32 class sums at `0x40`–`0x8c`.
+
+`CTRL` bit 1 is busy, including the wait for the first commit. Bit 2 remains
+set until the next accepted start or reset. Idle commits and commits during
+or after the automatic tail have no effect. Existing drivers which send
+thirty extra padding commits remain compatible. Unaligned writes and writes
+to reserved or read-only addresses return SLVERR without mutation.
+
+All network state holds between input commits: delay pointers and storage,
+membranes, dense output registers, pipeline state and accumulators. The core
+and its cells use a synchronous `step_en` with `USE_STEP_ENABLE=1`; the clock
+itself is unchanged. Their default `USE_STEP_ENABLE=0` retains the existing
+one-vector-per-clock direct-core interface. Asynchronous reset remains active
+when logical time is stopped.
+
+A time-multiplexed implementation may take several physical clocks per
+logical timestep. Such a replacement needs an explicit input-acceptance and
+timestep-completion handshake: holding `step_en` low must not stop its
+internal computation. The wrapper above currently connects the parallel
+core; compatibility with a different backend needs separate verification.
+
+Run the AXI regression in a new output directory:
+
+It requires Icarus Verilog 12 or later, Verilator with timing and coverage
+support, and a C++ compiler. The same test runs with both simulators; the
+existing direct-core testbench checks the free-running interface as well.
+
+```bash
+mkdir -p build
+bash hdl/test_shd_axi.sh build/shd-axi
+```
+
+The test sends real AXI transactions with independent AW/W arrival, response
+backpressure, partial-byte writes, uncommitted input changes, repeated
+inferences and reset. It compares all twenty class sums for three input
+sequences against `hdl/fixtures/shd_axi_expected.hex`, generated with the
+maintained `tools/cosim_shd_top_verilog.py::python_output_v_sum` reference.
+`coverage.info` retains RTL line coverage, and CI requires at least 95% for
+both the AXI wrapper and the network logical-time controller. This transport
+threshold does not claim complete coverage of the cells\' arithmetic or LUTs.
+The deterministic fixture uses:
+
+- Weight at flattened index `i`, with `n` inputs:
+  `((13*i + 7*(i//n)) % 17) - 8`; the three Q16.16 scales are 4096, 4096, 2048.
+- Delay for channel `c`: `15 - ((7*c) % 31)`.
+- Input lengths 6, 1, 3. Samples 0 and 1 spike when
+  `(7*c + 11*t + 13*sample) % 17` is below 6 and 11 respectively; sample 2 is zero.
+
+This regression exercises the AXI transport in simulation. Before using a
+trained network on a board, provide a verified weight/delay initialisation
+path: the current SHD cells guard their `$readmemh` calls with
+`ifndef SYNTHESIS`, and the wrapper exposes no model-data loading registers.
+The shipped Vivado script and constraints target PYNQ-Z2; select and verify
+the actual board part, constraints and clock setup for another board.
+
+## 13. Next steps
 
 - Use BENCHMARKS.md to record performance and accuracy data.
 - Update TECHNICAL_MANUAL.md if hardware flows change.

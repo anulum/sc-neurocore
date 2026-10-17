@@ -64,6 +64,7 @@ module tb_sc_dense_int8_sparse;
         .WEIGHT_FILE ("weights.hex")
     ) dut (
         .clk            (clk),
+        .step_en        (1'b1),
         .rst_n          (rst_n),
         .scale_q16_16   (scale_q16_16),
         .spikes_in      (spikes_in),

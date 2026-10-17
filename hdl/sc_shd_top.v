@@ -71,7 +71,11 @@
 
 `timescale 1ns / 1ps
 
-module sc_shd_top (
+module sc_shd_top #(
+    // 0: legacy one-iteration-per-clock stream; 1: step_en clocks logical time.
+    // Every delay, neuron, dense register and pipeline stage shares the enable.
+    parameter integer USE_STEP_ENABLE = 0
+)(
     input  wire                   clk,
     input  wire                   rst_n,
     // Per-inference control
@@ -88,7 +92,8 @@ module sc_shd_top (
     // Status / outputs
     output reg                    running,
     output reg                    done,
-    output reg signed [20*32-1:0] output_v_sum_packed
+    output reg signed [20*32-1:0] output_v_sum_packed,
+    input  wire                   step_en
 );
 
     // ------------------------------------------------------------------
@@ -110,6 +115,7 @@ module sc_shd_top (
     // is the last accumulator update (iter T2-1 reaches the accumulator).
     // `pipe{1,2,3}_active` enable stateful cells in later stages only after
     // enough clocks have passed to fill the pipeline up to that stage.
+    wire advance = (USE_STEP_ENABLE == 0) || step_en;
     reg  [15:0] cycle;
     reg         pipe1_active;   // stage 1 (vmin_lif_l1, axon_delay_l2) valid from clock 1
     reg         pipe2_active;   // stage 2 (vmin_lif_l2) valid from clock 2
@@ -132,7 +138,7 @@ module sc_shd_top (
     //                 so the Verilog gate is (cycle-1) < T_orig+15 ⇒
     //                 cycle < T_orig + 16.
     wire in_input_window = (cycle < t_orig);
-    wire in_l1_window    = (cycle < (t_orig + DELAY_HALF + 1));
+    wire in_l1_window    = ({16'd0, cycle} < ({16'd0, t_orig} + DELAY_HALF + 1));
 
     wire [N_INPUT-1:0] spike_in_gated = in_input_window
         ? spike_in
@@ -172,10 +178,12 @@ module sc_shd_top (
 
             sc_axonal_delay #(
                 .DEPTH    (MAX_DELAY),
-                .PTR_WIDTH(DELAY_PTR_WIDTH)
+                .PTR_WIDTH(DELAY_PTR_WIDTH),
+                .USE_STEP_ENABLE(1)
             ) inst (
                 .clk        (clk),
                 .rst_n      (rst_n),
+                .step_en    (advance),
                 .spike_in   (spike_in_gated[gi]),
                 .read_offset(ro),
                 .spike_out  (delayed_l1[gi])
@@ -191,11 +199,13 @@ module sc_shd_top (
     sc_dense_int8_sparse #(
         .IN_FEATURES (N_INPUT),
         .OUT_FEATURES(N_HIDDEN),
-        .WEIGHT_FILE ("weights_layer1.hex")
+        .WEIGHT_FILE ("weights_layer1.hex"),
+        .USE_STEP_ENABLE(1)
     ) dense1 (
         .clk                 (clk),
         .rst_n               (rst_n),
         .scale_q16_16        (scale_l1_q16_16),
+        .step_en             (advance),
         .spikes_in           (delayed_l1),
         .out_q88_packed      (dense1_out_reg),    // registered → pipeline reg
         .out_q88_packed_comb (/* unused */)
@@ -209,9 +219,10 @@ module sc_shd_top (
     generate
         for (gi = 0; gi < N_HIDDEN; gi = gi + 1) begin: l1_vmin
             wire signed [15:0] x = $signed(dense1_out_reg[16*gi +: 16]);
-            sc_vmin_lif_neuron inst (
+            sc_vmin_lif_neuron #(.USE_STEP_ENABLE(1)) inst (
                 .clk        (clk),
                 .rst_n      (rst_n_stage1),
+                .step_en    (advance),
                 .x_in       (x),
                 .spike      (/* unused */),
                 .v_out      (/* unused */),
@@ -241,10 +252,12 @@ module sc_shd_top (
 
             sc_axonal_delay #(
                 .DEPTH    (MAX_DELAY),
-                .PTR_WIDTH(DELAY_PTR_WIDTH)
+                .PTR_WIDTH(DELAY_PTR_WIDTH),
+                .USE_STEP_ENABLE(1)
             ) inst (
                 .clk        (clk),
                 .rst_n      (rst_n_stage1),
+                .step_en    (advance),
                 .spike_in   (spikes_l1_masked[gi]),
                 .read_offset(ro),
                 .spike_out  (delayed_l2[gi])
@@ -260,11 +273,13 @@ module sc_shd_top (
     sc_dense_int8_sparse #(
         .IN_FEATURES (N_HIDDEN),
         .OUT_FEATURES(N_HIDDEN),
-        .WEIGHT_FILE ("weights_layer2.hex")
+        .WEIGHT_FILE ("weights_layer2.hex"),
+        .USE_STEP_ENABLE(1)
     ) dense2 (
         .clk                 (clk),
         .rst_n               (rst_n),
         .scale_q16_16        (scale_l2_q16_16),
+        .step_en             (advance),
         .spikes_in           (delayed_l2),
         .out_q88_packed      (dense2_out_reg),
         .out_q88_packed_comb (/* unused */)
@@ -278,9 +293,10 @@ module sc_shd_top (
     generate
         for (gi = 0; gi < N_HIDDEN; gi = gi + 1) begin: l2_vmin
             wire signed [15:0] x = $signed(dense2_out_reg[16*gi +: 16]);
-            sc_vmin_lif_neuron inst (
+            sc_vmin_lif_neuron #(.USE_STEP_ENABLE(1)) inst (
                 .clk        (clk),
                 .rst_n      (rst_n_stage2),
+                .step_en    (advance),
                 .x_in       (x),
                 .spike      (/* unused */),
                 .v_out      (/* unused */),
@@ -298,11 +314,13 @@ module sc_shd_top (
     sc_dense_int8_sparse #(
         .IN_FEATURES (N_HIDDEN),
         .OUT_FEATURES(N_OUTPUT),
-        .WEIGHT_FILE ("weights_layer3.hex")
+        .WEIGHT_FILE ("weights_layer3.hex"),
+        .USE_STEP_ENABLE(1)
     ) dense3 (
         .clk                 (clk),
         .rst_n               (rst_n),
         .scale_q16_16        (scale_l3_q16_16),
+        .step_en             (advance),
         .spikes_in           (spikes_l2),
         .out_q88_packed      (dense3_out_reg),
         .out_q88_packed_comb (/* unused */)
@@ -330,7 +348,7 @@ module sc_shd_top (
             output_v_sum_packed <= {(N_OUTPUT*32){1'b0}};
         end else begin
             done <= 1'b0;
-            if (!running && start) begin
+            if (advance && !running && start) begin
                 // At end of the start posedge we want stage 1 to come out
                 // of reset immediately so clock 1 can process iter 0 (the
                 // value dense1 just latched into `dense1_out_reg`). Setting
@@ -343,7 +361,7 @@ module sc_shd_top (
                 pipe2_active        <= 1'b0;
                 pipe3_active        <= 1'b0;
                 output_v_sum_packed <= {(N_OUTPUT*32){1'b0}};
-            end else if (running) begin
+            end else if (advance && running) begin
                 pipe1_active <= 1'b1;            // latched high, stays
                 pipe2_active <= pipe1_active;    // high from PRE of clock 2
                 pipe3_active <= pipe2_active;    // high from PRE of clock 3
@@ -357,7 +375,7 @@ module sc_shd_top (
                     end
                 end
 
-                if (cycle == (t_orig + 2*DELAY_HALF + 2)) begin
+                if ({16'd0, cycle} == ({16'd0, t_orig} + 2*DELAY_HALF + 2)) begin
                     running <= 1'b0;
                     done    <= 1'b1;
                 end else begin

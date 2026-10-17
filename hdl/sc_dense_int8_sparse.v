@@ -44,7 +44,8 @@ module sc_dense_int8_sparse #(
     parameter integer IN_FEATURES  = 140,
     parameter integer OUT_FEATURES = 128,
     parameter integer ACCUM_WIDTH  = 24,
-    parameter         WEIGHT_FILE  = "weights.hex"
+    parameter         WEIGHT_FILE  = "weights.hex",
+    parameter integer USE_STEP_ENABLE = 0
 )(
     input  wire                            clk,
     input  wire                            rst_n,
@@ -54,7 +55,10 @@ module sc_dense_int8_sparse #(
     output reg  [OUT_FEATURES*16-1:0]      out_q88_packed,
     // Combinational output bus (no register, used by sc_shd_top so the
     // full network can advance one full step per clock cycle).
-    output wire [OUT_FEATURES*16-1:0]      out_q88_packed_comb
+    output wire [OUT_FEATURES*16-1:0]      out_q88_packed_comb,
+    // With USE_STEP_ENABLE=1, latch one dense result only when high.
+    // Reset is independent; the default retains one result per clock.
+    input  wire                            step_en
 );
 
     // ------------------------------------------------------------------
@@ -110,7 +114,7 @@ module sc_dense_int8_sparse #(
 
             // 3) ASHR by 8 to recover Q8.8 (Verilog `>>>` on signed wires
             //    matches Python's `>>` on int — round toward -inf)
-            shifted_comb = product_comb >>> 8;
+            shifted_comb = product_comb[55:8];
 
             // 4) saturate to signed 16-bit Q8.8
             if (shifted_comb > 48'sd32767)
@@ -126,7 +130,7 @@ module sc_dense_int8_sparse #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             out_q88_packed <= {(OUT_FEATURES*16){1'b0}};
-        end else begin
+        end else if ((USE_STEP_ENABLE == 0) || step_en) begin
             for (j = 0; j < OUT_FEATURES; j = j + 1) begin
                 out_q88_packed[16*j +: 16] <= sat_comb[j];
             end

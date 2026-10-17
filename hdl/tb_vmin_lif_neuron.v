@@ -48,8 +48,9 @@ module tb_vmin_lif_neuron;
 
     // Plus-arg state
     integer n_samples;
-    reg [1023:0] input_file;
-    reg [1023:0] output_file;
+    // Keep complete paths, including long build/workspace directories.
+    string input_file;
+    string output_file;
     integer out_fd;
     integer i;
 
@@ -63,6 +64,7 @@ module tb_vmin_lif_neuron;
     ) dut (
         .clk   (clk),
         .rst_n (rst_n),
+        .step_en (1'b1),
         .x_in  (x_in),
         .spike (spike),
         .v_out (v_out)

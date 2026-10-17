@@ -422,6 +422,15 @@ jobs:
       - name: Verify HDL simulator versions
         run: python tools/check_icarus_verilog.py --minimum-major 12
 
+      - name: Verify SHD AXI input commits against Python golden vectors
+        if: matrix.primary
+        run: |
+          bash hdl/test_shd_axi.sh "$RUNNER_TEMP/shd-axi"
+          export TMPDIR="$RUNNER_TEMP/shd-axi"
+          python tools/cosim_axonal_delay_verilog.py
+          python tools/cosim_vmin_lif_verilog.py
+          python tools/cosim_dense_int8_verilog.py
+
       # The documentation-debt contracts measure TypeScript with the frontend's
       # own locked ESLint; they refuse to run without that installation.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6

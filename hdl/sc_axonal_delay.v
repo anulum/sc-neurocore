@@ -40,13 +40,17 @@
 
 module sc_axonal_delay #(
     parameter integer DEPTH     = 31,
-    parameter integer PTR_WIDTH = 5    // ceil(log2(31)) = 5
+    parameter integer PTR_WIDTH = 5,   // ceil(log2(31)) = 5
+    parameter integer USE_STEP_ENABLE = 0
 )(
     input  wire                  clk,
     input  wire                  rst_n,
     input  wire                  spike_in,
     input  wire [PTR_WIDTH-1:0]  read_offset,  // 0..DEPTH-1
-    output wire                  spike_out
+    output wire                  spike_out,
+    // With USE_STEP_ENABLE=1, hold all stored spikes/pointers unless high.
+    // Reset remains asynchronous; the default preserves free-running users.
+    input  wire                  step_en
 );
 
     // Storage: depth-bit shift register + write pointer (head).
@@ -62,8 +66,10 @@ module sc_axonal_delay #(
     // ------------------------------------------------------------------
     wire signed [PTR_WIDTH+1:0] diff =
         $signed({2'b00, head}) - $signed({2'b00, read_offset});
+    wire signed [PTR_WIDTH+1:0] wrapped_diff = diff + $signed(DEPTH[PTR_WIDTH+1:0]);
     wire [PTR_WIDTH-1:0] read_idx =
-        (diff < 0) ? (diff + DEPTH) : diff[PTR_WIDTH-1:0];
+        (diff < 0) ? wrapped_diff[PTR_WIDTH-1:0] : diff[PTR_WIDTH-1:0];
+    localparam integer LAST_INDEX = DEPTH - 1;
 
     // Passthrough mux: if read_idx == head, return the spike being written
     // this cycle (matches Python's write-before-read ordering).
@@ -79,9 +85,9 @@ module sc_axonal_delay #(
         if (!rst_n) begin
             buf_reg <= {DEPTH{1'b0}};
             head    <= {PTR_WIDTH{1'b0}};
-        end else begin
+        end else if ((USE_STEP_ENABLE == 0) || step_en) begin
             buf_reg[head] <= spike_in;
-            head <= (head == DEPTH - 1) ? {PTR_WIDTH{1'b0}} : head + 1'b1;
+            head <= (head == LAST_INDEX[PTR_WIDTH-1:0]) ? {PTR_WIDTH{1'b0}} : head + 1'b1;
         end
     end
 
