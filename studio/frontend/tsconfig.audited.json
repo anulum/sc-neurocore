@@ -26,6 +26,7 @@
     "e2e/workbench-accessibility-live.spec.ts",
     "playwright.config.ts",
     "playwright.export.config.ts",
+    "playwright.installed.config.ts",
     "playwright.federation.config.ts",
     "playwright.graph.config.ts",
     "playwright.live.config.ts",

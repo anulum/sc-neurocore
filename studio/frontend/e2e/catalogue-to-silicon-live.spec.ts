@@ -23,6 +23,9 @@ interface ModelContract {
 
 import type { SimulateResponse, ReplayPack } from "../src/api/client";
 
+/** The installed acceptance replays with the same interpreter that serves the wheel. */
+const REPLAY_PYTHON = process.env.SC_NEUROCORE_STUDIO_INSTALLED_PYTHON ?? "python";
+
 const CLASS_REPRESENTATIVES: readonly ClassRepresentative[] = [
   { className: "linear IF", modelName: "PerfectIntegratorNeuron" },
   { className: "polynomial IF", modelName: "QuadraticIFNeuron" },
@@ -277,7 +280,7 @@ test("Poisson constructor controls run, replay, export and preserve observed sta
   await (await download).saveAs(packPath);
   const environment = { ...process.env };
   delete environment.PYTHONPATH;
-  const output = execFileSync("python", ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"], {
+  const output = execFileSync(REPLAY_PYTHON, ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"], {
     cwd: testInfo.outputDir, env: environment, encoding: "utf-8", timeout: 120_000,
   });
   const replayed = JSON.parse(output) as { verdict: string; differences: unknown[] };

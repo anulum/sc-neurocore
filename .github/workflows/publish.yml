@@ -54,6 +54,24 @@ jobs:
             -r requirements/runtime.txt -r requirements/hub.txt
           "$RUNNER_TEMP/installed/bin/pip" install --no-deps dist/sc_neurocore-*.whl
           python tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"
+      - name: Replay through the installed Studio in a real browser
+        id: installed_browser
+        working-directory: studio/frontend
+        env:
+          SC_NEUROCORE_STUDIO_INSTALLED_PYTHON: ${{ runner.temp }}/installed/bin/python
+          SC_NEUROCORE_STUDIO_INSTALLED_TEST_ROOT: ${{ runner.temp }}/installed-studio-browser
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test --config playwright.installed.config.ts
+      - name: Preserve installed browser replay evidence
+        if: always() && steps.installed_browser.outcome != 'skipped'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: installed-studio-browser
+          path: ${{ runner.temp }}/installed-studio-browser/playwright
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: python-dist

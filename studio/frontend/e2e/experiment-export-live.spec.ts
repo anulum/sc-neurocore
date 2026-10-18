@@ -13,6 +13,9 @@ import { expect, test, type Page, type Response } from "@playwright/test";
 
 import type { CodegenResponse, ReplayPack, SimulateResponse } from "../src/api/types";
 
+/** The installed acceptance replays with the same interpreter that serves the wheel. */
+const REPLAY_PYTHON = process.env.SC_NEUROCORE_STUDIO_INSTALLED_PYTHON ?? "python";
+
 /**
  * What `python -m sc_neurocore.studio.replay_pack --json` prints.
  *
@@ -176,7 +179,7 @@ for (const source of ["model", "ode"] as const) {
     await (await download).saveAs(packPath);
     const environment = { ...process.env };
     delete environment.PYTHONPATH;
-    const output = execFileSync("python", ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"], {
+    const output = execFileSync(REPLAY_PYTHON, ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"], {
       cwd: testInfo.outputDir, env: environment, encoding: "utf-8", timeout: 120_000,
     });
     const replayed = JSON.parse(output) as ReplayOutcome;
@@ -274,7 +277,7 @@ test("the browser exports a script that states the experiment the server resolve
   // Execute exactly what the code panel exposes, including digest admission.
   // The interpreter may use an editable install; wheel isolation is verified
   // separately by test_studio_distribution.py.
-  const output = execFileSync("python", ["-c", `
+  const output = execFileSync(REPLAY_PYTHON, ["-c", `
 import contextlib, io, json, runpy, sys
 from sc_neurocore.studio.replay_pack import replay_expectation
 with contextlib.redirect_stdout(io.StringIO()):
@@ -335,12 +338,12 @@ test("a downloaded pack replays in a separate interpreter and reports tampering"
   });
 
   // A separate interpreter, outside the repository, with no PYTHONPATH: the
-  // pack carries the replay inputs. Editable hooks can remain; this is not
-  // the separate installed-wheel receipt in test_studio_distribution.py.
+  // pack carries the replay inputs. The installed configuration selects its
+  // verified wheel interpreter; the source configurations use PATH.
   const environment = { ...process.env };
   delete environment.PYTHONPATH;
   const replayed = execFileSync(
-    "python",
+    REPLAY_PYTHON,
     ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"],
     { cwd: workspace, env: environment, encoding: "utf-8", timeout: 900_000 },
   );
@@ -370,7 +373,7 @@ test("a downloaded pack replays in a separate interpreter and reports tampering"
   let output: string;
   try {
     output = execFileSync(
-      "python",
+      REPLAY_PYTHON,
       ["-m", "sc_neurocore.studio.replay_pack", tamperedPath],
       { cwd: workspace, env: environment, encoding: "utf-8", timeout: 900_000 },
     );
@@ -464,7 +467,7 @@ test("a full-domain seed survives serialized project custody, editing, local ses
   expect(readFileSync(path, "utf8")).toMatch(/"seed"\s*:\s*9223372036854775807/);
   const environment = { ...process.env };
   delete environment.PYTHONPATH;
-  const result = JSON.parse(execFileSync("python", ["-m", "sc_neurocore.studio.replay_pack", path, "--json"], {
+  const result = JSON.parse(execFileSync(REPLAY_PYTHON, ["-m", "sc_neurocore.studio.replay_pack", path, "--json"], {
     cwd: testInfo.outputDir, env: environment, encoding: "utf8", timeout: 120_000,
   })) as ReplayOutcome;
   expect(result).toMatchObject({ verdict: "match", differences: [] });

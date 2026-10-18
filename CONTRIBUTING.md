@@ -97,6 +97,25 @@ consumer directory. It round-trips every public native class/function global
 through every supported pickle protocol and verifies object identity. Binding
 tests separately exercise instance persistence or refusal, inputs and mutation.
 
+### Installed Studio browser acceptance
+
+The publish and release workflows install the built wheel into a fresh
+virtual environment, check its CLI, UI assets and catalogue, then run
+`studio/frontend/playwright.installed.config.ts` against the installed server.
+The browser checks Poisson constructor inputs and replay, and an exact 63-bit
+seed through project saves, local sessions, downloads and a separate replay
+interpreter. An editable source import is refused before the browser starts.
+
+This configuration requires `SC_NEUROCORE_STUDIO_INSTALLED_PYTHON` and
+`SC_NEUROCORE_STUDIO_INSTALLED_TEST_ROOT` as absolute paths. The selected
+interpreter also runs the downloaded pack's independent replay.
+The test root holds jobs, audit output and browser evidence; the project store
+still belongs to the server's normal user. CI runs with a disposable user
+filesystem. Shared-machine checks need a disposable project-store namespace.
+An existing browser may be selected explicitly with
+`SC_NEUROCORE_STUDIO_BROWSER_EXECUTABLE`; CI uses Playwright's locked Chromium.
+These checks do not attest federation-host adoption or hardware execution.
+
 ### Commit Messages
 
 Follow conventional commit format:
