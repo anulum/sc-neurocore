@@ -211,6 +211,42 @@ than 16 (Q4.12, Q1.15, Q4.4, Q1.7). Before 2026-10-18 those formats wrapped the
 offset, and both the RTL and the C kernel read wrong entries (for example
 `exp(0) = 0` at Q4.12).
 
+### Function lowering v2
+
+`compile_to_verilog(..., function_lowering="v2")` (also `compile_to_datapath`,
+`generate_bittrue_kernel_from_neuron` and `hardware_numeric_contract`) replaces
+the tables with function units that reduce the argument and interpolate:
+
+| Unit | Reduction and table |
+| --- | --- |
+| `exp` | `x·log2(e) = k + f`; `2^f` from a quadratic table on `[0, 1)`; shift by `k` |
+| `log` | leading one of the input; `log2` of the mantissa on `[1, 2)`; times `ln 2` |
+| `sqrt`, `x ** 0.5` | exact integer square root, rounded to nearest |
+| `sin`, `cos` | argument in turns, reduced modulo one turn; quarter-wave table and quadrant symmetry |
+| `sigmoid`/`expit`, `tanh` | table on `[0, 32)`, `σ(-x) = 1 - σ(x)`, `tanh x = 2σ(2x) - 1` |
+| `cosh`, `sinh` | two exponentials, summed before one rounding |
+| `exprel` | quartic series for `|x| < 1/8`, otherwise `(e^x - 1)/x` |
+| `x ** (1/3)` | `2^(log2|x|/3)` with the sign of `x` |
+
+Each unit is written once as a 64-bit integer program
+(`sc_neurocore.compiler.function_unit_programs`) and emitted as Verilog wires and
+as C or Rust statements, so the RTL and the bit-true kernel are identical; both
+equal the separately written integer reference `sc_neurocore.compiler.function_units`
+(checked by Icarus, gcc with undefined-behaviour checks, and rustc with overflow
+checks). The units accept words of at most 32 bits with
+`data_width + fraction <= 61`; other formats are refused. `sinh` exists only in
+`v2`. `log` of a non-positive input is the most negative code, `sqrt` of a negative
+input is 0, and `x ** (1/3)` of a negative input is `-(|x| ** (1/3))`, where the
+Python model raises or returns NaN.
+
+At every code of the 16-bit formats every unit is correctly rounded (0.5 LSB),
+except `cosh` and `sinh` (0.63 LSB). At 32-bit formats the exponential family is
+limited by the 30-bit internal fraction, a few LSB at the top of the range.
+[The v2 accuracy report](../validation/function_units_v2_accuracy.md) lists every
+unit and format. `lut-v1` remains the default and its RTL is unchanged; `v2` costs
+more logic (64-bit intermediates and coefficient tables) and its synthesis cost is
+not yet measured.
+
 ## 6. Folded combinational datapaths
 
 `compile_to_datapath()` emits the same arithmetic core without state
@@ -278,11 +314,19 @@ full-period streams, map semantics, and candidate-based resets:
 
 ```bash
 python -m pytest \
-  tests/test_bit_true_cosim.py \
-  tests/test_cosim_emitters.py \
+  tests/test_bit_true_cosim_bit_true_cosim.py \
+  tests/test_bit_true_cosim_rust_matches_c.py \
+  tests/test_cosim_emitters_co_simulation.py \
+  tests/test_cosim_emitters_exp_euler_emitter.py \
+  tests/test_cosim_emitters_macro_step_substep_emitter.py \
+  tests/test_cosim_emitters_multi_precision.py \
+  tests/test_cosim_emitters_rk4_emitter.py \
   tests/test_cosim_poisson.py \
   tests/test_folded_datapath.py \
-  tests/test_pipeline_cosim.py
+  tests/test_pipeline_cosim.py \
+  tests/test_lut_index_offset_width.py \
+  tests/test_verilog_expr_emitter_calls.py \
+  tests/test_function_lowering_v2_cosim.py
 ```
 
 ## 9. Compiler architecture

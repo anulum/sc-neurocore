@@ -40,6 +40,7 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "sqrt",
         "tanh",
         "cosh",
+        "sinh",
         "exprel",
         "sigmoid",
         "expit",
@@ -51,6 +52,24 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "min",
     }
 )
+
+# Functions only the v2 function units lower; lut-v1 has no table for them.
+V2_ONLY_FUNCTIONS: frozenset[str] = frozenset({"sinh"})
+
+# The v2 function unit (sc_neurocore.compiler.function_units) for each call name.
+V2_UNIT_FOR: dict[str, str] = {
+    "exp": "exp",
+    "log": "log",
+    "sqrt": "sqrt",
+    "tanh": "tanh",
+    "cosh": "cosh",
+    "sinh": "sinh",
+    "exprel": "exprel",
+    "sigmoid": "sigmoid",
+    "expit": "sigmoid",
+    "sin": "sin",
+    "cos": "cos",
+}
 
 # Positional-argument counts each function takes, as the Python model accepts it
 # (``neurons.equation_namespace``): ``max(x)`` and ``np.clip(x, lo)`` raise there,
@@ -85,6 +104,7 @@ def check_call_arguments(fname: str, node: ast.Call) -> None:
         outside :data:`FUNCTION_ARITY` for ``fname``. Every backend lowers only
         positional arguments, so a keyword or an extra argument would otherwise be
         dropped without notice.
+
     """
     if node.keywords:
         raise ValueError(
@@ -103,13 +123,16 @@ def check_call_arguments(fname: str, node: ast.Call) -> None:
         raise ValueError(f"Function {fname} takes {expected} argument(s), got {count}")
 
 
-def lut_offset_width(data_width: int, min_q: int) -> int:
-    """Return the signed width that holds a LUT argument plus its table offset.
+def lut_offset_width(data_width: int, min_q: int, left_shift: int = 0) -> int:
+    """Return the signed width that holds a LUT argument plus its table offset, shifted.
 
     The index of a LUT call is ``(arg - min_q) >> shift`` with ``arg`` a signed
-    ``data_width``-bit word. ``data_width + 1`` bits suffice while
-    ``|min_q| < 2**(data_width-1)``; at a narrow integer part (Q4.12, Q1.15) the
-    offset of the [-16, 16) grid is larger, and that width would wrap it.
+    ``data_width``-bit word, or ``(arg - min_q) << left_shift`` when the format has
+    fewer fraction bits than the table step (Q8.0). ``data_width + 1`` bits suffice
+    while ``|min_q| < 2**(data_width-1)`` and nothing is shifted left; at a narrow
+    integer part (Q4.12, Q1.15) the offset of the [-16, 16) grid is larger, and a
+    left shift multiplies the sum, so either would wrap that width before the index
+    is clamped.
 
     Parameters
     ----------
@@ -117,18 +140,45 @@ def lut_offset_width(data_width: int, min_q: int) -> int:
         Word width of the argument.
     min_q : int
         The table's first sample point, encoded in the Q format.
+    left_shift : int, optional
+        Bits the offset sum is shifted left by (0 for a right shift).
 
     Returns
     -------
     int
-        ``data_width + 1`` when that holds every sum, otherwise the smallest signed
-        width that does.
+        ``data_width + 1`` when that holds every shifted sum, otherwise the smallest
+        signed width that does.
+
     """
-    largest = (1 << (data_width - 1)) + abs(min_q)
+    largest = ((1 << (data_width - 1)) + abs(min_q)) << left_shift
     width = data_width + 1
     while (1 << (width - 1)) - 1 < largest:
         width += 1
     return width
+
+
+def saturate_entries(entries: list[int], data_width: int) -> list[int]:
+    """Clamp table entries to the signed range of the word that stores them.
+
+    A generator scales by ``2**fraction`` only; at a narrow integer part an entry
+    such as ``cos(0) = 1.0`` at Q1.7 (code 128) does not fit the word, and a signed
+    literal or array element of that width would wrap it to -128.
+
+    Parameters
+    ----------
+    entries : list[int]
+        Table entries as integer codes.
+    data_width : int
+        Width of the stored word.
+
+    Returns
+    -------
+    list[int]
+        The entries limited to ``[-2**(data_width-1), 2**(data_width-1) - 1]``.
+
+    """
+    high = (1 << (data_width - 1)) - 1
+    return [max(-high - 1, min(high, value)) for value in entries]
 
 
 # ``log`` cannot share the signed symmetric grid because its domain is strictly
@@ -163,6 +213,7 @@ def const_float(node: ast.AST) -> float | None:
     float or None
         The folded value, or ``None`` if the node is not a compile-time
         constant.
+
     """
     if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
         return float(node.value)
@@ -197,6 +248,7 @@ def symmetric_sample_points() -> list[float]:
     -------
     list of float
         The 256 tabulation points.
+
     """
     return [-16.0 + i * 0.125 for i in range(256)]
 
@@ -211,6 +263,7 @@ def log_sample_points() -> list[float]:
     -------
     list of float
         The 256 strictly positive tabulation points.
+
     """
     return [LOG_LUT_MIN + i * LOG_LUT_STEP for i in range(LOG_LUT_SIZE)]
 
@@ -222,6 +275,7 @@ def sqrt_sample_points() -> list[float]:
     -------
     list of float
         The 16 half-unit tabulation points.
+
     """
     return [SQRT_LUT_MIN + i * SQRT_LUT_STEP for i in range(SQRT_LUT_SIZE)]
 
@@ -245,6 +299,7 @@ def exp_lut_entries(data_width: int, fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     cap = _signed_cap(data_width)
     scale = 1 << fraction
@@ -263,6 +318,7 @@ def log_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     scale = 1 << fraction
     return [int(round(math.log(value) * scale)) for value in log_sample_points()]
@@ -280,6 +336,7 @@ def sqrt_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         16 integer Q-format entries.
+
     """
     scale = 1 << fraction
     return [int(round(math.sqrt(value) * scale)) for value in sqrt_sample_points()]
@@ -297,6 +354,7 @@ def tanh_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     scale = 1 << fraction
     return [int(round(math.tanh(x) * scale)) for x in symmetric_sample_points()]
@@ -316,6 +374,7 @@ def cosh_lut_entries(data_width: int, fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     cap = _signed_cap(data_width)
     scale = 1 << fraction
@@ -334,6 +393,7 @@ def cbrt_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     scale = 1 << fraction
 
@@ -359,6 +419,7 @@ def exprel_lut_entries(data_width: int, fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     cap = _signed_cap(data_width)
     scale = 1 << fraction
@@ -381,6 +442,7 @@ def sigmoid_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     scale = 1 << fraction
     return [int(round(1.0 / (1.0 + math.exp(-x)) * scale)) for x in symmetric_sample_points()]
@@ -398,6 +460,7 @@ def sin_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     scale = 1 << fraction
     return [int(round(math.sin(x) * scale)) for x in symmetric_sample_points()]
@@ -415,6 +478,7 @@ def cos_lut_entries(fraction: int) -> list[int]:
     -------
     list of int
         256 integer Q-format entries.
+
     """
     scale = 1 << fraction
     return [int(round(math.cos(x) * scale)) for x in symmetric_sample_points()]

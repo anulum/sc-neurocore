@@ -28,6 +28,7 @@ def compile_to_datapath(
     overflow: str = "saturate",
     rounding: str = "truncate",
     param_ports: Sequence[str] = (),
+    function_lowering: str = "lut-v1",
 ) -> str:
     """Compile an EquationNeuron to a **combinational** processing element.
 
@@ -58,6 +59,8 @@ def compile_to_datapath(
     datapaths use signed fixed-point arithmetic. Product rounding accepts
     ``"truncate"``, ``"nearest"``, or ``"bankers"``; ``"stochastic"`` is
     rejected because the PE has no caller-owned product-rounding LFSR.
+    ``function_lowering`` selects ``"lut-v1"`` (default) or the ``"v2"``
+    function units, as for :func:`compile_to_verilog`.
     """
     if not signed:
         raise NotImplementedError(
@@ -76,6 +79,7 @@ def compile_to_datapath(
         signed=signed,
         overflow=overflow,
         rounding=rounding,
+        function_lowering=function_lowering,
     )
 
     if neuron.dt != 0.0:

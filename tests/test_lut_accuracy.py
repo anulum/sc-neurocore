@@ -122,6 +122,37 @@ class TestMeasuredValues:
         assert "clipped to the word's range" in str(public["reference"])
 
 
+class TestV2Measurement:
+    """``lowering="v2"`` measures the function units the same way."""
+
+    def test_v2_functions_include_sinh(self) -> None:
+        """The v2 vocabulary is the eleven units; lut-v1 has no sinh."""
+        assert "sinh" in table_functions("v2") and "sinh" not in table_functions()
+        with pytest.raises(ValueError, match="unknown lowering"):
+            table_functions("v3")
+
+    def test_q8_8_units_are_correctly_rounded_except_two_term_ones(self) -> None:
+        """Every Q8.8 code: 0.5 LSB, cosh and sinh within 0.63 LSB."""
+        for function in table_functions("v2"):
+            result = measure(function, 16, 8, "v2")
+            assert result.exhaustive and result.lowering == "v2"
+            assert result.max_error / result.resolution <= (
+                0.63 if function in ("cosh", "sinh") else 0.501
+            )
+
+    def test_v2_improves_every_shared_function_at_q16_16(self) -> None:
+        """Inside its domain v2 is at least 1000 times closer than lut-v1 for exp, sin and sigmoid."""
+        for function in ("exp", "sin", "sigmoid"):
+            v1 = measure(function, 32, 16).max_error_in_table
+            v2 = measure(function, 32, 16, "v2").max_error
+            assert v2 * 1000 < v1
+
+    def test_unknown_v2_function_is_refused(self) -> None:
+        """No measurement is invented for a unit that does not exist."""
+        with pytest.raises(ValueError, match="no v2 unit"):
+            measure("erf", 16, 8, "v2")
+
+
 class TestContract:
     """The hardware numeric contract carries the measurement for its own format."""
 
@@ -132,3 +163,24 @@ class TestContract:
         (table,) = contract.lookup_tables
         assert table.accuracy == measure("tanh", 16, 12)
         assert table.to_public_dict()["accuracy"] == measure("tanh", 16, 12).to_public_dict()
+
+    def test_v2_contract_reports_units_not_tables(self) -> None:
+        """With function_lowering v2 the contract lists the units with their v2 measurement."""
+        neuron = EquationNeuron(
+            equations={"v": "tanh(v) + v ** (1.0 / 3.0) + I"}, method="map", dt=1.0
+        )
+        contract = hardware_numeric_contract(
+            neuron, QFormat.from_string("Q8.8"), function_lowering="v2"
+        )
+        assert contract.lookup_tables == ()
+        assert [unit.function for unit in contract.function_units] == ["cbrt", "tanh"]
+        assert contract.function_units[1].accuracy == measure("tanh", 16, 8, "v2")
+        public = contract.to_public_dict()
+        units = public["function_units"]
+        assert public["function_lowering"] == "v2" and isinstance(units, list) and len(units) == 2
+
+    def test_unknown_lowering_is_refused_by_the_contract(self) -> None:
+        """The contract refuses a lowering the compiler does not have."""
+        neuron = EquationNeuron(equations={"v": "tanh(v)"}, method="map", dt=1.0)
+        with pytest.raises(ValueError, match="function_lowering must be"):
+            hardware_numeric_contract(neuron, QFormat.from_string("Q8.8"), function_lowering="v3")

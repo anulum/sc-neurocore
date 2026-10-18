@@ -37,6 +37,7 @@ from __future__ import annotations
 from ...neurons.equation_builder import EquationNeuron
 from ...hdl_gen._ident import sanitize_ident
 from ..c_fixed_emitter import emit_c_fixed_expr, signed_q
+from ..function_unit_ir import TABLE_PREFIX
 from ..verilog_compiler_config import Q88
 
 _NATIVE_WIDTHS = frozenset({8, 16, 32, 64})
@@ -110,6 +111,7 @@ def kernel_arithmetic_contract(
     ValueError
         For a geometry, mode or method the kernel does not mirror, with the
         same message the generator would raise.
+
     """
     q = Q88(data_width=data_width, fraction=fraction, overflow=overflow, rounding=rounding)
     _validate_modes(q)
@@ -343,10 +345,17 @@ def _preamble_rust(q: Q88) -> list[str]:
 
 
 def _format_tables_c(tables: dict[str, list[int]], data_width: int) -> list[str]:
-    """Declare each accumulated LUT as a ``static const`` C array."""
+    """Declare each accumulated LUT as a ``static const`` C array.
+
+    v2 function-unit coefficients (names starting with ``TABLE_PREFIX``) are 64-bit.
+    """
     ctype = _ctype(data_width)
     lines: list[str] = []
     for name, entries in tables.items():
+        if name.startswith(TABLE_PREFIX):
+            body = ", ".join(f"{v}LL" for v in entries)
+            lines.append(f"static const int64_t {name}[{len(entries)}] = {{{body}}};")
+            continue
         body = ", ".join(str(v) for v in entries)
         lines.append(f"static const {ctype} {name}[{len(entries)}] = {{{body}}};")
     if lines:
@@ -355,12 +364,16 @@ def _format_tables_c(tables: dict[str, list[int]], data_width: int) -> list[str]
 
 
 def _format_tables_rust(tables: dict[str, list[int]], data_width: int) -> list[str]:
-    """Declare each accumulated LUT as a Rust ``const`` array."""
+    """Declare each accumulated LUT as a Rust ``const`` array.
+
+    v2 function-unit coefficients (names starting with ``TABLE_PREFIX``) are ``i64``.
+    """
     rtype = _rtype(data_width)
     lines: list[str] = []
     for name, entries in tables.items():
         body = ", ".join(str(v) for v in entries)
-        lines.append(f"const {name}: [{rtype}; {len(entries)}] = [{body}];")
+        element = "i64" if name.startswith(TABLE_PREFIX) else rtype
+        lines.append(f"const {name}: [{element}; {len(entries)}] = [{body}];")
     if lines:
         lines.append("")
     return lines
@@ -413,6 +426,7 @@ def generate_bittrue_kernel(
     -------
     str
         Bit-true kernel source code.
+
     """
     if language not in {"c", "rust"}:
         raise ValueError(f"language must be 'c' or 'rust', got {language!r}")
@@ -567,6 +581,7 @@ def generate_bittrue_kernel_from_neuron(
     overflow: str = "saturate",
     rounding: str = "truncate",
     language: str = "c",
+    function_lowering: str = "lut-v1",
 ) -> str:
     """Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
@@ -597,18 +612,26 @@ def generate_bittrue_kernel_from_neuron(
         ``"truncate"`` (default) or ``"nearest"``.
     language : str
         ``"c"`` (default) or ``"rust"``.
+    function_lowering : str
+        ``"lut-v1"`` (default) or ``"v2"``; must match the RTL it mirrors.
 
     Returns
     -------
     str
         Bit-true whole-neuron kernel source code.
+
     """
     if language not in {"c", "rust"}:
         raise ValueError(f"language must be 'c' or 'rust', got {language!r}")
     if not signed:
         raise ValueError("bit-true neuron kernel requires signed=True (the RTL neuron contract)")
     q = Q88(
-        data_width=data_width, fraction=fraction, signed=True, overflow=overflow, rounding=rounding
+        data_width=data_width,
+        fraction=fraction,
+        signed=True,
+        overflow=overflow,
+        rounding=rounding,
+        function_lowering=function_lowering,
     )
     _validate_modes(q)
     if neuron.method not in {"euler", "map"}:

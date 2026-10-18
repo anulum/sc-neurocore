@@ -65,7 +65,10 @@ EncodingStatus = Literal["exact", "rounded", "underflows_to_zero", "out_of_range
 NOT_STATED: tuple[str, ...] = (
     "the range the state reaches during a run: only encoded values and the initial "
     "state are checked, so a run can still saturate or wrap",
-    "the approximation error of the look-up tables",
+    "the range a table's or unit's argument reaches during a run: each stated "
+    "accuracy covers every input the format holds (or a stated sample of them "
+    "for wide formats), not the inputs this model produces",
+    "how a table's or unit's error propagates through the model to its state and spikes",
     "timing closure, place and route, and board behaviour",
 )
 """What a hardware numeric contract does not establish."""
@@ -109,6 +112,7 @@ class EncodedQuantity:
         ``exact``, ``rounded``, ``underflows_to_zero`` or ``out_of_range``.
     blocking:
         ``True`` when the status makes the format unrepresentable.
+
     """
 
     kind: QuantityKind
@@ -174,6 +178,28 @@ class LookupTable:
 
 
 @dataclass(frozen=True, slots=True)
+class FunctionUnit:
+    """One ``v2`` function unit the datapath instantiates, with its measured error.
+
+    Parameters
+    ----------
+    function : str
+        The unit (``exp``, ``log``, ``sqrt``, ``sin``, ``cos``, ``sigmoid``, ``tanh``,
+        ``cosh``, ``sinh``, ``exprel`` or ``cbrt``).
+    accuracy : LutAccuracy
+        Its error at the contract's format against the Python model's function.
+
+    """
+
+    function: str
+    accuracy: LutAccuracy
+
+    def to_public_dict(self) -> dict[str, object]:
+        """Return the JSON projection."""
+        return {"function": self.function, "accuracy": self.accuracy.to_public_dict()}
+
+
+@dataclass(frozen=True, slots=True)
 class HardwareNumericContract:
     """What one neuron's generated RTL holds at one fixed-point format.
 
@@ -195,7 +221,12 @@ class HardwareNumericContract:
     quantities:
         Every encoded value, in declaration order, literals once each.
     lookup_tables:
-        The look-up tables the datapath uses.
+        The look-up tables the datapath uses (``lut-v1``).
+    function_lowering:
+        ``"lut-v1"`` or ``"v2"``.
+    function_units:
+        The function units the datapath instantiates (``v2``).
+
     """
 
     q_format: str
@@ -208,6 +239,8 @@ class HardwareNumericContract:
     mirror_refusal: str
     quantities: tuple[EncodedQuantity, ...]
     lookup_tables: tuple[LookupTable, ...]
+    function_lowering: str = "lut-v1"
+    function_units: tuple[FunctionUnit, ...] = ()
 
     @property
     def resolution(self) -> float:
@@ -262,6 +295,8 @@ class HardwareNumericContract:
             "refusal": self.refusal(),
             "quantities": [quantity.to_public_dict() for quantity in self.quantities],
             "lookup_tables": [table.to_public_dict() for table in self.lookup_tables],
+            "function_lowering": self.function_lowering,
+            "function_units": [unit.to_public_dict() for unit in self.function_units],
             "timing": {
                 "cycles_per_step": 1,
                 "pipeline_latency_cycles": 0,
@@ -286,6 +321,7 @@ def hardware_numeric_contract(
     *,
     overflow: str = "saturate",
     rounding: str = "truncate",
+    function_lowering: str = "lut-v1",
 ) -> HardwareNumericContract:
     """Return what ``neuron``'s generated RTL holds at ``q_format``.
 
@@ -297,12 +333,24 @@ def hardware_numeric_contract(
         The signed fixed-point format.
     overflow, rounding:
         The accumulate and multiply policies the RTL is compiled with.
+    function_lowering:
+        ``"lut-v1"`` (default; tables reported in ``lookup_tables``) or ``"v2"``
+        (units reported in ``function_units``).
 
     Returns
     -------
     HardwareNumericContract
-        The encoded quantities, look-up tables and bit-true mirror status.
+        The encoded quantities, look-up tables or function units with their
+        measured error, and bit-true mirror status.
+
+    Raises
+    ------
+    ValueError
+        For an unknown lowering, or a format the ``v2`` units cannot mirror.
+
     """
+    if function_lowering not in ("lut-v1", "v2"):
+        raise ValueError(f"function_lowering must be 'lut-v1' or 'v2', got {function_lowering!r}")
     data_width, fraction = q_format.total_bits, q_format.fraction_bits
     quantities = _deduplicated(
         _quantities(neuron, data_width=data_width, fraction=fraction, rounding=rounding)
@@ -314,6 +362,7 @@ def hardware_numeric_contract(
             fraction=fraction,
             overflow=overflow,
             rounding=rounding,
+            function_lowering=function_lowering,
         )
     except (ValueError, NotImplementedError) as exc:
         arithmetic: dict[str, object] | None = None
@@ -337,7 +386,17 @@ def hardware_numeric_contract(
         arithmetic=arithmetic,
         mirror_refusal=mirror_refusal,
         quantities=quantities,
-        lookup_tables=_lookup_tables(neuron, data_width=data_width, fraction=fraction),
+        lookup_tables=(
+            _lookup_tables(neuron, data_width=data_width, fraction=fraction)
+            if function_lowering == "lut-v1"
+            else ()
+        ),
+        function_lowering=function_lowering,
+        function_units=(
+            _function_units(neuron, data_width=data_width, fraction=fraction)
+            if function_lowering == "v2"
+            else ()
+        ),
     )
 
 
@@ -609,6 +668,29 @@ def _lookup_tables(
     )
 
 
+def _function_units(
+    neuron: EquationNeuron, *, data_width: int, fraction: int
+) -> tuple[FunctionUnit, ...]:
+    """Return the ``v2`` units the Verilog emitter instantiates for ``neuron``, measured at the format."""
+    functions: set[str] = {"exprel"} if neuron.method == "exp_euler" else set()
+    for _where, expression in _expressions(neuron):
+        for node in ast.walk(ast.parse(expression, mode="eval")):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                unit = expr_lut_tables.V2_UNIT_FOR.get(node.func.id)
+                if unit is not None:
+                    functions.add(unit)
+            elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow):
+                exponent = expr_lut_tables.const_float(node.right)
+                if exponent is not None and abs(exponent - 1.0 / 3.0) < 1e-6:
+                    functions.add("cbrt")
+                elif exponent is not None and abs(exponent - 0.5) < 1e-6:
+                    functions.add("sqrt")
+    return tuple(
+        FunctionUnit(function, measure(function, data_width, fraction, "v2"))
+        for function in sorted(functions)
+    )
+
+
 def _table(function: str, *, data_width: int, fraction: int) -> LookupTable:
     """Return the sample grid of one look-up table."""
     if function == "log":
@@ -633,6 +715,7 @@ __all__ = [
     "MIRROR_EVIDENCE",
     "NOT_STATED",
     "EncodedQuantity",
+    "FunctionUnit",
     "HardwareNumericContract",
     "LookupTable",
     "hardware_numeric_contract",

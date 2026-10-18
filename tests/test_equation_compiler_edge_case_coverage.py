@@ -16,7 +16,8 @@ from tests.equation_compiler_support import *  # noqa: F403
 class TestEdgeCaseCoverage:
     """Tests for error branches and edge cases."""
 
-    def test_power_4_compiles(self):
+    def test_power_4_compiles(self) -> None:
+        """An integer power of four compiles to a multiply chain."""
         neuron = EquationNeuron(
             equations={"v": "v**4"},
             state={"v": 1.0},
@@ -25,7 +26,8 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron)
         assert "_mul" in verilog  # chained multiplications for power 4
 
-    def test_power_9_raises(self):
+    def test_power_9_raises(self) -> None:
+        """An integer power above eight is refused."""
         import pytest
 
         neuron = EquationNeuron(
@@ -36,7 +38,7 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="Only integer powers"):
             compile_to_verilog(neuron)
 
-    def test_sigmoid_in_equation_builder(self):
+    def test_sigmoid_in_equation_builder(self) -> None:
         """Exercise sigmoid function through equation builder step()."""
         neuron = EquationNeuron(
             equations={"v": "sigmoid(I) - v"},
@@ -46,7 +48,8 @@ class TestEdgeCaseCoverage:
         neuron.step(I=5.0)
         assert neuron.state["v"] > 0
 
-    def test_unary_plus(self):
+    def test_unary_plus(self) -> None:
+        """A unary plus compiles to its operand."""
         neuron = EquationNeuron(
             equations={"v": "+I"},
             state={"v": 0.0},
@@ -55,7 +58,8 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="uadd")
         assert "module uadd" in verilog
 
-    def test_less_than_comparison(self):
+    def test_less_than_comparison(self) -> None:
+        """A less-than threshold compiles."""
         neuron = EquationNeuron(
             equations={"v": "I"},
             state={"v": 0.0},
@@ -65,7 +69,8 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="lt_cmp")
         assert "<" in verilog
 
-    def test_less_equal_comparison(self):
+    def test_less_equal_comparison(self) -> None:
+        """A less-or-equal threshold compiles."""
         neuron = EquationNeuron(
             equations={"v": "I"},
             state={"v": 0.0},
@@ -75,7 +80,7 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="lte_cmp")
         assert "<=" in verilog
 
-    def test_unknown_name_passthrough(self):
+    def test_unknown_name_passthrough(self) -> None:
         """Unknown names pass through as-is (for external signals)."""
         neuron = EquationNeuron(
             equations={"v": "external_signal + I"},
@@ -85,7 +90,7 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="ext_sig")
         assert "external_signal" in verilog
 
-    def test_runtime_division(self):
+    def test_runtime_division(self) -> None:
         """Division by non-constant produces raw Verilog division."""
         neuron = EquationNeuron(
             equations={"v": "I / v"},
@@ -95,7 +100,8 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="rt_div")
         assert "/" in verilog
 
-    def test_gte_comparison(self):
+    def test_gte_comparison(self) -> None:
+        """A greater-or-equal threshold compiles."""
         neuron = EquationNeuron(
             equations={"v": "I"},
             state={"v": 0.0},
@@ -184,7 +190,8 @@ class TestEdgeCaseCoverage:
             "(((P_THRESHOLD) + 32'sd0) <= (((v_reg + I_t)) + 32'sd0))"
         ) in verilog
 
-    def test_unsupported_comparison_raises(self):
+    def test_unsupported_comparison_raises(self) -> None:
+        """A comparison operator outside the grammar is refused."""
         import pytest
 
         neuron = EquationNeuron(
@@ -196,7 +203,7 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="Unsupported comparison"):
             compile_to_verilog(neuron)
 
-    def test_non_name_function_raises(self):
+    def test_non_name_function_raises(self) -> None:
         """Attribute-style calls like obj.method() should raise."""
         import pytest
         import ast
@@ -204,7 +211,7 @@ class TestEdgeCaseCoverage:
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
         q = Q88()
-        emitter = _VerilogExprEmitter(set(), {}, q)
+        emitter = _VerilogExprEmitter({}, {}, q)
         # Construct an ast.Call with ast.Attribute func (not ast.Name)
         node = ast.Call(
             func=ast.Attribute(value=ast.Name(id="np", ctx=ast.Load()), attr="exp", ctx=ast.Load()),
@@ -214,14 +221,15 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="Only named function calls"):
             emitter.visit_Call(node)
 
-    def test_zero_arg_function_raises(self):
+    def test_zero_arg_function_raises(self) -> None:
+        """A function call without arguments is refused by the emitter."""
         import pytest
         import ast
 
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
         q = Q88()
-        emitter = _VerilogExprEmitter(set(), {}, q)
+        emitter = _VerilogExprEmitter({}, {}, q)
         node = ast.Call(
             func=ast.Name(id="exp", ctx=ast.Load()),
             args=[],
@@ -230,7 +238,7 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="requires at least 1 argument"):
             emitter.visit_Call(node)
 
-    def test_clip_single_arg_is_refused(self):
+    def test_clip_single_arg_is_refused(self) -> None:
         """clip(x) without both bounds is refused: np.clip raises on it in the model."""
         import pytest
 
@@ -242,7 +250,7 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="exactly 3"):
             compile_to_verilog(neuron, module_name="clip1")
 
-    def test_max_single_arg_is_refused(self):
+    def test_max_single_arg_is_refused(self) -> None:
         """max(x) with one argument is refused: Python's max raises on a number."""
         import pytest
 
@@ -254,7 +262,7 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="at least 2"):
             compile_to_verilog(neuron, module_name="max1")
 
-    def test_multiply_with_global_pipeline_flag_registers_product(self):
+    def test_multiply_with_global_pipeline_flag_registers_product(self) -> None:
         """The global pipeline flag registers the wide product before truncation."""
         from sc_neurocore.compiler.verilog_expr_emitter import _emit_expr
         from sc_neurocore.compiler.equation_compiler import Q88
@@ -265,7 +273,7 @@ class TestEdgeCaseCoverage:
         assert any(reg.startswith("reg signed") and "_r;" in reg for reg in pipeline_regs)
         assert any("_mul0" in line for line in intermediates)
 
-    def test_multiply_with_named_pipeline_point_registers_product(self):
+    def test_multiply_with_named_pipeline_point_registers_product(self) -> None:
         """A named pipeline insertion point forces product registration."""
         from sc_neurocore.compiler.verilog_expr_emitter import _emit_expr
         from sc_neurocore.compiler.equation_compiler import Q88

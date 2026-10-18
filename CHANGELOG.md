@@ -10,6 +10,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add function lowering v2 to the equation compiler: `compile_to_verilog(...,
+  function_lowering="v2")` (also `compile_to_datapath`, the bit-true C/Rust
+  kernel and the hardware numeric contract). exp, log, sqrt, sin, cos, sigmoid,
+  tanh, cosh, sinh, exprel and `x ** (1/3)` are computed by range reduction and
+  quadratic tables at a 30-bit internal fraction. Each unit is one 64-bit
+  integer program, emitted to Verilog, C and Rust, and equal to a separately
+  written integer reference. Every 16-bit-format code is correctly rounded
+  (cosh and sinh are within 0.63 LSB); `docs/validation/function_units_v2_accuracy.md`
+  lists every format. `lut-v1` stays the default and its RTL is unchanged except
+  for the fixes below. `sinh` is new and exists only in v2.
+- Fix the lut-v1 lowering. `clip` follows numpy (`min(max(x, lo), hi)`), so
+  reversed bounds give the upper bound. Table entries that do not fit the word
+  saturate instead of wrapping: `cos(0)` at Q1.7 gave -1. A left-shifted
+  table index is widened before it is clamped: `exp(64)` at Q8.0 gave 1. The
+  accuracy measurement mirrors these widths and handles 64-bit words. The HLS
+  C++ lowering no longer turns `sinh(v)` into `v`.
+
 - State the approximation error of the equation compiler's transcendental tables.
   `sc_neurocore.compiler.lut_accuracy` reads each table exactly as the generated
   RTL indexes it (checked by Icarus simulation). It compares the result with the

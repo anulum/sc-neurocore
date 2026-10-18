@@ -101,6 +101,9 @@ class TestAgainstThePythonModel:
             ("max(I, 0.5, 3.0)", 4.0),
             ("min(I, -0.5, 1.0, -2.0)", 0.0),
             ("2.0 * pi * I", 0.5),
+            ("clip(I, 1.0, 0.0)", 0.5),  # reversed bounds: numpy.clip gives the upper bound, 0
+            ("clip(I, -1.0, 1.0)", 2.0),
+            ("clip(I, -1.0, 1.0)", -3.0),
         ],
     )
     def test_map_output_equals_model(self, expression: str, x: float) -> None:

@@ -27,6 +27,7 @@ def compile_to_verilog(
     rounding: str = "truncate",
     pipeline_stages: int = 0,
     pipeline_points: list[str] | None = None,
+    function_lowering: str = "lut-v1",
 ) -> str:
     """Compile an EquationNeuron to synthesizable Verilog RTL.
 
@@ -56,6 +57,11 @@ def compile_to_verilog(
     pipeline_points : list[str], optional
         Unique intermediate multiply names to register instead of enabling the
         global pipeline.
+    function_lowering : str, optional
+        ``"lut-v1"`` (default) reads one sample of a fixed table per
+        transcendental call; ``"v2"`` instantiates the function units of
+        :mod:`sc_neurocore.compiler.function_units` (range reduction and
+        quadratic tables, errors in ``docs/validation/lut_accuracy_v1.md``).
 
     """
     if not signed:
@@ -68,6 +74,7 @@ def compile_to_verilog(
         signed=signed,
         overflow=overflow,
         rounding=rounding,
+        function_lowering=function_lowering,
     )
 
     if neuron.dt != 0.0:

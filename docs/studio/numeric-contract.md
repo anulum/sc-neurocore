@@ -53,12 +53,18 @@ takes the neuron the compiler lowers and one Q-format. It returns:
   why, for example that the method is not Euler or map. The mirror rests on a
   finite Icarus Verilog co-simulation, which checks the stimuli it runs; it is
   not a proof.
+- **The measured error of each look-up table or function unit.** Every table
+  (`lut-v1`) or unit (`v2`) carries its largest error against the Python
+  model's function, over every input the format holds or, for wide formats, a
+  stated sample of them.
 
 The contract does not state:
 
 - the range the state reaches during a run, since a run can still saturate or
   wrap;
-- the approximation error of the look-up tables;
+- the range a table's or unit's argument reaches during a run, so the stated
+  error is a bound over the format, not over this model's inputs;
+- how that error propagates through the model to its state and spikes;
 - timing closure, place and route, or board behaviour.
 
 ## How Studio uses it

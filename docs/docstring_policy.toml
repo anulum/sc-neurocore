@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1031
+expected_file_count = 1058
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4217,3 +4217,111 @@ rationale = "Preserve every complete stochastic pipeline repetition with its act
 [[file]]
 path = "tests/test_sc_network_benchmark.py"
 rationale = "The real NumPy and installed-native CLI must retain every repetition and report consistent JSON, Markdown and printed means."
+
+[[file]]
+path = "src/sc_neurocore/compiler/c_expr_emitter.py"
+rationale = "The HLS C++ expression lowering applies the shared call-argument rules, numpy clip order and named constants, so its output computes what the Python model computes."
+
+[[file]]
+path = "src/sc_neurocore/compiler/c_fixed_emitter.py"
+rationale = "The bit-true C/Rust kernel mirrors the Verilog datapath, including argument rules, clip order, saturated table entries, the widened table index and the v2 function units."
+
+[[file]]
+path = "src/sc_neurocore/compiler/expr_lut_tables.py"
+rationale = "The single source of the function vocabulary, argument counts, named constants, table geometry, entry saturation and the table-index offset width."
+
+[[file]]
+path = "src/sc_neurocore/compiler/function_unit_ir.py"
+rationale = "A straight-line 64-bit integer program emitted unchanged to Verilog, C and Rust, with a Python evaluator that refuses any step leaving 64 bits."
+
+[[file]]
+path = "src/sc_neurocore/compiler/function_unit_programs.py"
+rationale = "Each v2 function unit as an integer program; branch inputs are limited so no unselected branch can overflow."
+
+[[file]]
+path = "src/sc_neurocore/compiler/function_units.py"
+rationale = "The integer reference of the v2 function units: range reduction, quadratic tables and one rounding to the output format."
+
+[[file]]
+path = "src/sc_neurocore/compiler/hardware_numeric_contract.py"
+rationale = "States what a neuron's RTL holds at one format, with the measured error of each look-up table or v2 function unit."
+
+[[file]]
+path = "src/sc_neurocore/compiler/intelligence/bit_true_kernel.py"
+rationale = "Generates the bit-true C/Rust neuron kernel, including 64-bit coefficient tables for v2 function units."
+
+[[file]]
+path = "src/sc_neurocore/compiler/lut_accuracy.py"
+rationale = "Measures each lut-v1 table, read with the RTL's widths and saturation, or v2 unit against the Python model's function at a fixed-point format."
+
+[[file]]
+path = "src/sc_neurocore/compiler/verilog_compiler_config.py"
+rationale = "The fixed-point word configuration shared by the emitters, including the function lowering it selects."
+
+[[file]]
+path = "src/sc_neurocore/compiler/verilog_expr_emitter.py"
+rationale = "The Verilog expression lowering: argument rules, n-ary max/min, numpy clip order, pi as a literal, a table index that cannot wrap and the v2 function units."
+
+[[file]]
+path = "tests/test_c_expr_emitter_function_calls.py"
+rationale = "Every call form of the HLS C++ lowering, including refused arities, keywords, sinh, the clip order and the pi literal."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_calls.py"
+rationale = "Every call form of the bit-true C/Rust lowering, including refused arities, n-ary max/min, the clip order and pi."
+
+[[file]]
+path = "tests/test_equation_compiler_edge_case_coverage.py"
+rationale = "Edge cases of the equation compiler's grammar, including the refusal of calls the Python model would not evaluate."
+
+[[file]]
+path = "tests/test_expr_lut_tables_call_arguments.py"
+rationale = "The shared argument-count rules and named constants agree with the Python model's namespace."
+
+[[file]]
+path = "tests/test_function_lowering_v2_cosim.py"
+rationale = "Whole neurons with v2 function units: RTL in Icarus, the bit-true C kernel and the integer reference agree."
+
+[[file]]
+path = "tests/test_function_unit_programs.py"
+rationale = "The unit programs equal the separately written integer reference; emitted C and Rust run without undefined behaviour or overflow."
+
+[[file]]
+path = "tests/test_function_units.py"
+rationale = "The v2 integer reference against the Python model at every code of 16-bit formats, its helpers and its domain statements."
+
+[[file]]
+path = "tests/test_hardware_numeric_contract.py"
+rationale = "Every quantity and look-up table of the contract equals what the RTL holds, including pi and table accuracy."
+
+[[file]]
+path = "tests/test_lut_accuracy.py"
+rationale = "The table reader matches Icarus simulation of the RTL; measured errors equal values worked out by hand; v2 measurement and contract."
+
+[[file]]
+path = "tests/test_lut_accuracy_report.py"
+rationale = "The committed lut-v1 and v2 accuracy reports equal what the code measures."
+
+[[file]]
+path = "tests/test_lut_index_offset_width.py"
+rationale = "RTL and bit-true kernel read the independently computed, saturated table entry at every format, including narrow integer ranges and left-shifted indices."
+
+[[file]]
+path = "tests/test_verilog_expr_emitter_calls.py"
+rationale = "Verilog lowering of calls, the clip order and named constants, checked against the Python model by co-simulation."
+
+[[file]]
+path = "tools/lut_accuracy_report.py"
+rationale = "Writes or checks the per-format accuracy reports of the lut-v1 tables and the v2 function units."
+
+[[file]]
+path = "tests/c_fixed_emitter_support.py"
+rationale = "Shared imports and the typed helper of the bit-exact C/Rust expression emitter tests."
+
+[[file]]
+path = "tests/test_nir_bridge/test_scalar_broadcast.py"
+rationale = "Scalar NIR neuron nodes broadcast to the input width; the snnTorch export shape is checked without depending on snnTorch's exporter."
+
+[[file]]
+path = "tests/test_nir_bridge/test_spikingjelly_interop.py"
+rationale = "A SpikingJelly LIF network exported through NIR produces the same spikes in SC-NeuroCore."

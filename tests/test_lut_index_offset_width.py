@@ -37,6 +37,7 @@ from tests.bit_true_cosim_support import HAS_COSIM, _c_trace, _q_input, _verilog
 # Q4.12, Q1.15, Q4.4 and Q1.7 need the wider offset; Q8.8 and Q16.16 do not.
 FORMATS = [(16, 12), (16, 15), (8, 4), (8, 7), (16, 8), (32, 16)]
 FUNCTIONS = {
+    "cos": lambda dw, fr: tables.cos_lut_entries(fr),
     "exp": lambda dw, fr: tables.exp_lut_entries(dw, fr),
     "sin": lambda dw, fr: tables.sin_lut_entries(fr),
     "sigmoid": lambda dw, fr: tables.sigmoid_lut_entries(fr),
@@ -44,8 +45,9 @@ FUNCTIONS = {
 
 
 def _expected_entry(fname: str, x: float, dw: int, fr: int) -> int:
-    """Return the entry the symmetric-grid table holds for input ``x``, by exact arithmetic."""
-    entries = FUNCTIONS[fname](dw, fr)
+    """Return the entry the symmetric-grid table holds for input ``x``, saturated to the word."""
+    high = (1 << (dw - 1)) - 1
+    entries = [max(-high - 1, min(high, e)) for e in FUNCTIONS[fname](dw, fr)]
     x_q = _q_input(x, dw, fr)
     min_q = round(-16.0 * (1 << fr))
     shift = fr - 3  # step 1/8
@@ -103,6 +105,49 @@ class TestSelectedEntry:
         with tempfile.TemporaryDirectory() as d:
             rtl = _verilog_trace(neuron, "lut_exp_zero", 0.0, 2, 16, 12, Path(d))
         assert int(rtl[-1][1]) == round(math.exp(0.0) * 4096)
+
+
+@pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
+class TestReviewedBoundaries:
+    """The two boundaries RIGOR review 251/252 observed (2026-10-18)."""
+
+    def _map(self, function: str, x: float, dw: int, fr: int) -> tuple[int, int]:
+        neuron = EquationNeuron(
+            equations={"v": f"{function}(I)"}, state={"v": 0.0}, dt=1.0, method="map"
+        )
+        with tempfile.TemporaryDirectory() as d:
+            tmp = Path(d)
+            rtl = _verilog_trace(neuron, f"rv_{function}", x, 2, dw, fr, tmp)
+            kernel = _c_trace(neuron, f"rv_{function}", _q_input(x, dw, fr), 2, dw, fr, tmp)
+        return int(rtl[-1][1]), int(kernel[-1][1])
+
+    def test_left_shifted_index_reads_the_last_entry(self) -> None:
+        """Q8.0, exp(64): the index 640 is clamped to the last entry, min(round(e**15.875), 127)."""
+        assert self._map("exp", 64.0, 8, 0) == (127, 127)
+
+    def test_entry_beyond_the_word_is_saturated_not_wrapped(self) -> None:
+        """Q1.7, cos(0): the entry 1.0 (code 128) is stored as 127, not wrapped to -128."""
+        assert self._map("cos", 0.0, 8, 7) == (127, 127)
+
+
+class TestSaturateEntries:
+    """``saturate_entries`` clamps to the stored word."""
+
+    def test_clamps_both_ends(self) -> None:
+        """Values beyond either end of an 8-bit word are clamped; others are kept."""
+        assert tables.saturate_entries([-200, -128, 5, 127, 128, 300], 8) == [
+            -128,
+            -128,
+            5,
+            127,
+            127,
+            127,
+        ]
+
+    def test_left_shift_widens_the_offset(self) -> None:
+        """Q8.0's left shift by 3 needs 12 bits for (127 + 16) << 3 = 1144."""
+        assert tables.lut_offset_width(8, -16, 3) == 12
+        assert tables.lut_offset_width(8, -16) == 9
 
 
 def test_q88_lut_wires_are_unchanged() -> None:

@@ -13,6 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+# Transcendental lowerings: "lut-v1" (fixed tables, the default) and "v2" (function units).
+FUNCTION_LOWERINGS = ("lut-v1", "v2")
+
+
 @dataclass
 class Q88:
     """Describe a fixed-point word used by compiler diagnostics and emitters.
@@ -59,6 +63,11 @@ class Q88:
         Product-rounding policy consumed by the expression emitter. The public
         equation-to-Verilog paths reject ``"stochastic"`` because they do not
         own a rounding LFSR.
+    function_lowering : str
+        How transcendental functions are lowered: ``"lut-v1"`` (default; one
+        sample of a fixed table) or ``"v2"`` (range reduction and quadratic
+        tables, :mod:`sc_neurocore.compiler.function_units`).
+
     """
 
     data_width: int = 16
@@ -66,6 +75,7 @@ class Q88:
     signed: bool = True
     overflow: str = "saturate"  # saturate | wrap | trap
     rounding: str = "truncate"  # truncate | nearest | bankers | stochastic
+    function_lowering: str = "lut-v1"  # lut-v1 | v2
 
     def __post_init__(self) -> None:
         """Validate the fixed-point geometry and declared arithmetic modes.
@@ -76,6 +86,7 @@ class Q88:
             If a geometry or mode field has the wrong runtime type.
         ValueError
             If the word geometry is impossible.
+
         """
         if type(self.data_width) is not int:
             raise TypeError(f"data_width must be an integer, got {self.data_width!r}")
@@ -93,6 +104,10 @@ class Q88:
             raise TypeError(f"overflow must be a string, got {self.overflow!r}")
         if type(self.rounding) is not str:
             raise TypeError(f"rounding must be a string, got {self.rounding!r}")
+        if self.function_lowering not in FUNCTION_LOWERINGS:
+            raise ValueError(
+                f"function_lowering must be one of {FUNCTION_LOWERINGS}, got {self.function_lowering!r}"
+            )
 
     @property
     def integer_bits(self) -> int:
@@ -136,6 +151,7 @@ class Q88:
         -----
         This method does not apply the configured overflow policy. Call
         :meth:`check_range` before encoding externally supplied values.
+
         """
         raw = int(round(value * (1 << self.fraction)))
         mask = (1 << self.data_width) - 1
@@ -162,6 +178,7 @@ class Q88:
         ValueError
             If this configuration is unsigned and therefore cannot be
             represented by a signed-literal contract.
+
         """
         if not self.signed:
             raise ValueError("signed Verilog literals require signed=True")
@@ -185,6 +202,7 @@ class Q88:
         list[str]
             An empty list for an in-range value, otherwise one overflow or
             underflow message.
+
         """
         warnings: list[str] = []
         prefix = "Q" if self.signed else "UQ"
@@ -216,6 +234,7 @@ class Q88:
         -------
         str
             Multi-line format, timestep, and parameter diagnostics.
+
         """
         prefix = "Q" if self.signed else "UQ"
         signedness = "signed" if self.signed else "unsigned"

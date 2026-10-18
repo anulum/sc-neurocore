@@ -8142,7 +8142,7 @@ RuntimeError
 
 ## Module `compiler._verilog_folded_datapath`
 
-### Function `compile_to_datapath(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, param_ports)`
+### Function `compile_to_datapath(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, param_ports, function_lowering)`
 Compile an EquationNeuron to a **combinational** processing element.
 
 State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
@@ -8172,12 +8172,14 @@ Unsigned emission is rejected because the expression and derivative
 datapaths use signed fixed-point arithmetic. Product rounding accepts
 ``"truncate"``, ``"nearest"``, or ``"bankers"``; ``"stochastic"`` is
 rejected because the PE has no caller-owned product-rounding LFSR.
+``function_lowering`` selects ``"lut-v1"`` (default) or the ``"v2"``
+function units, as for :func:`compile_to_verilog`.
 
 ---
 
 ## Module `compiler._verilog_registered_module`
 
-### Function `compile_to_verilog(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, pipeline_stages, pipeline_points)`
+### Function `compile_to_verilog(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, pipeline_stages, pipeline_points, function_lowering)`
 Compile an EquationNeuron to synthesizable Verilog RTL.
 
 Parameters
@@ -8206,6 +8208,11 @@ pipeline_stages : int
 pipeline_points : list&#91;str&#93;, optional
     Unique intermediate multiply names to register instead of enabling the
     global pipeline.
+function_lowering : str, optional
+    ``"lut-v1"`` (default) reads one sample of a fixed table per
+    transcendental call; ``"v2"`` instantiates the function units of
+    :mod:`sc_neurocore.compiler.function_units` (range reduction and
+    quadratic tables, errors in ``docs/validation/lut_accuracy_v1.md``).
 
 ---
 
@@ -8650,6 +8657,69 @@ str
 
 ## Module `compiler.expr_lut_tables`
 
+### Function `check_call_arguments(fname, node)`
+Refuse a call whose arguments the Python model would not accept as lowered.
+
+Parameters
+----------
+fname : str
+    The called function, a member of :data:`SUPPORTED_FUNCTIONS`.
+node : ast.Call
+    The call node.
+
+Raises
+------
+ValueError
+    If the call passes keyword arguments, or its positional-argument count is
+    outside :data:`FUNCTION_ARITY` for ``fname``. Every backend lowers only
+    positional arguments, so a keyword or an extra argument would otherwise be
+    dropped without notice.
+
+### Function `lut_offset_width(data_width, min_q, left_shift)`
+Return the signed width that holds a LUT argument plus its table offset, shifted.
+
+The index of a LUT call is ``(arg - min_q) >> shift`` with ``arg`` a signed
+``data_width``-bit word, or ``(arg - min_q) << left_shift`` when the format has
+fewer fraction bits than the table step (Q8.0). ``data_width + 1`` bits suffice
+while ``|min_q| < 2**(data_width-1)`` and nothing is shifted left; at a narrow
+integer part (Q4.12, Q1.15) the offset of the &#91;-16, 16) grid is larger, and a
+left shift multiplies the sum, so either would wrap that width before the index
+is clamped.
+
+Parameters
+----------
+data_width : int
+    Word width of the argument.
+min_q : int
+    The table's first sample point, encoded in the Q format.
+left_shift : int, optional
+    Bits the offset sum is shifted left by (0 for a right shift).
+
+Returns
+-------
+int
+    ``data_width + 1`` when that holds every shifted sum, otherwise the smallest
+    signed width that does.
+
+### Function `saturate_entries(entries, data_width)`
+Clamp table entries to the signed range of the word that stores them.
+
+A generator scales by ``2**fraction`` only; at a narrow integer part an entry
+such as ``cos(0) = 1.0`` at Q1.7 (code 128) does not fit the word, and a signed
+literal or array element of that width would wrap it to -128.
+
+Parameters
+----------
+entries : list&#91;int&#93;
+    Table entries as integer codes.
+data_width : int
+    Width of the stored word.
+
+Returns
+-------
+list&#91;int&#93;
+    The entries limited to ``&#91;-2**(data_width-1), 2**(data_width-1) - 1&#93;``.
+
 ### Function `const_float(node)`
 Constant-fold a literal or simple literal-arithmetic node to a float.
 
@@ -8988,6 +9058,544 @@ One-liner: ODE string → (Python neuron, Verilog RTL).
 
 ---
 
+## Module `compiler.function_unit_ir`
+
+### Class `Step`
+One assignment ``name = op(args)`` of a program.
+
+Parameters
+----------
+name : str
+    Local name, unique within the program.
+op : str
+    Operation, one of ``const, add, sub, mul, div, neg, shl, shr, shl_var,
+    shr_var, mask, lt, le, eq, select, table, input``.
+args : tuple&#91;str, ...&#93;
+    Operand names, in operation order.
+value : int
+    Constant value (``const``), constant shift (``shl``, ``shr``), mask bits
+    (``mask``) or coefficient position 0–2 (``table``).
+table : str
+    Table name for ``table``.
+
+
+### Class `Program`
+A straight-line program with one input and one output.
+
+Parameters
+----------
+tables : dict&#91;str, tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;&#93;
+    Coefficient tables referenced by ``table`` steps.
+
+- **input**()
+  - Return the program's input (the signed input code).
+- **const**(value)
+  - Return a constant; ``|value| < 2**63``.
+- **add**(a, b)
+  - Return ``a + b``.
+- **sub**(a, b)
+  - Return ``a - b``.
+- **mul**(a, b)
+  - Return ``a · b``.
+- **div**(a, b)
+  - Return ``a / b`` truncated towards zero; ``b`` must not be zero where selected.
+- **neg**(a)
+  - Return ``-a``.
+- **shl**(a, amount)
+  - Return ``a · 2**amount`` for a constant ``amount >= 0``.
+- **shr**(a, amount)
+  - Return ``floor(a / 2**amount)`` for a constant ``amount >= 0``.
+- **shl_var**(a, amount)
+  - Return ``a · 2**clamp(amount, 0, 63)``.
+- **shr_var**(a, amount)
+  - Return ``floor(a / 2**clamp(amount, 0, 63))``.
+- **mask**(a, bits)
+  - Return the low ``bits`` bits of ``a`` (non-negative).
+- **lt**(a, b)
+  - Return 1 if ``a < b`` else 0.
+- **le**(a, b)
+  - Return 1 if ``a <= b`` else 0.
+- **eq**(a, b)
+  - Return 1 if ``a == b`` else 0.
+- **select**(condition, when_true, when_false)
+  - Return ``when_true`` if ``condition`` is non-zero, else ``when_false``.
+- **lookup**(table, index, coefficient)
+  - Return coefficient ``0``, ``1`` or ``2`` of ``tables&#91;table&#93;&#91;index&#93;``.
+- **evaluate**(code)
+  - Evaluate the program on one input code, checking every value fits 64 bits.
+
+### Function `emit_verilog(program, prefix, argument)`
+Emit the program as Verilog module items.
+
+Parameters
+----------
+program : Program
+    The unit.
+prefix : str
+    Unique wire prefix for this call site.
+argument : str
+    Verilog expression of the signed input code.
+
+Returns
+-------
+tuple&#91;list&#91;str&#93;, str&#93;
+    Module items (wire declarations and ``always @(*)`` table cases) and the
+    name of the 64-bit output wire.
+
+### Function `emit_c(program, prefix, argument, lang)`
+Emit the program as C or Rust statements.
+
+Parameters
+----------
+program : Program
+    The unit.
+prefix : str
+    Unique local-name prefix for this call site.
+argument : str
+    C/Rust expression of the signed input code.
+lang : str
+    ``"c"`` or ``"rust"``.
+
+Returns
+-------
+tuple&#91;list&#91;str&#93;, dict&#91;str, list&#91;int&#93;&#93;, str&#93;
+    Statements, the tables to declare (flattened ``a, b, c`` triples keyed by
+    array name ``TABLE_PREFIX + table``, the same for every call site) and the
+    output local's name.
+
+Raises
+------
+ValueError
+    For a language other than ``"c"`` or ``"rust"``.
+
+---
+
+## Module `compiler.function_unit_programs`
+
+### Function `program(function, data_width, fraction)`
+Return the ``v2`` unit for one function and format as an integer program.
+
+Parameters
+----------
+function : str
+    A member of :data:`sc_neurocore.compiler.function_units.FUNCTIONS`.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+Program
+    The program; its input is the signed input code, its output the result code.
+
+Raises
+------
+ValueError
+    For an unknown function or a format the units cannot mirror.
+
+---
+
+## Module `compiler.function_units`
+
+### Function `check_format(data_width, fraction)`
+Refuse a format the 64-bit units cannot mirror exactly.
+
+Parameters
+----------
+data_width, fraction : int
+    The fixed-point format.
+
+Raises
+------
+ValueError
+    If ``data_width`` is outside ``&#91;2, 32&#93;``, ``fraction`` outside
+    ``&#91;0, min(P, data_width - 1)&#93;``, or ``data_width + fraction > 61`` (the
+    square root's ``x·2**(fraction+2)`` would leave 63 bits).
+
+### Function `shift_round(value, shift)`
+Return ``value · 2**shift``, rounding half up when ``shift`` is negative.
+
+Parameters
+----------
+value : int
+    Signed integer.
+shift : int
+    Left shift if non-negative, otherwise a rounded right shift.
+
+Returns
+-------
+int
+    The shifted value; ``floor(value / 2**-shift + 1/2)`` for a right shift.
+
+### Function `saturate(value, data_width)`
+Clamp ``value`` to the signed range of ``data_width`` bits.
+
+Parameters
+----------
+value : int
+    Signed integer.
+data_width : int
+    Word width.
+
+Returns
+-------
+int
+    ``value`` limited to ``&#91;-2**(data_width-1), 2**(data_width-1) - 1&#93;``.
+
+### Function `scale_to_code(value, shift, data_width)`
+Return ``saturate(shift_round(value, shift))`` without forming an over-wide value.
+
+Parameters
+----------
+value : int
+    Signed integer below ``2**63`` in magnitude.
+shift : int
+    Left shift if non-negative, otherwise a rounded right shift.
+data_width : int
+    Word width of the result.
+
+Returns
+-------
+int
+    The saturated result code; a left shift that would leave the word saturates
+    before it is formed.
+
+### Function `trunc_div(numerator, denominator)`
+Return the quotient truncated towards zero, as C and Verilog divide.
+
+Parameters
+----------
+numerator, denominator : int
+    Signed integers; ``denominator`` is not zero.
+
+Returns
+-------
+int
+    ``sign · (|numerator| // |denominator|)``.
+
+### Function `table(name)`
+Return the quadratic coefficients ``(a, b, c)`` of each segment, scaled by ``2**P``.
+
+On segment ``i`` with local position ``t`` in ``&#91;0, 1&#93;`` the unit evaluates
+``a + b·t + c·t²``, the parabola through the function at the segment's start,
+middle and end: ``a = f0``, ``b = 4·fm - 3·f0 - f1``, ``c = 2·f0 + 2·f1 - 4·fm``.
+
+Parameters
+----------
+name : str
+    ``"exp2"`` (``2^u`` on ``&#91;0, 1&#93;``), ``"log2"`` (``log2(1 + u)`` on ``&#91;0, 1&#93;``),
+    ``"qsin"`` (``sin(π/2·u)`` on ``&#91;0, 1&#93;``) or ``"sigmoid"`` (``σ(x)`` on ``&#91;0, 32&#93;``).
+
+Returns
+-------
+tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;
+    ``2**SEGMENT_BITS&#91;name&#93;`` coefficient triples.
+
+Raises
+------
+KeyError
+    For an unknown table name.
+
+### Function `interpolate(name, position, position_bits)`
+Evaluate table ``name`` at ``position / 2**position_bits`` of its span.
+
+Parameters
+----------
+name : str
+    A table of :func:`table`.
+position : int
+    ``0 <= position <= 2**position_bits``; the end point is the last segment at ``t = 1``.
+position_bits : int
+    Bits of ``position``; at least the table's segment bits.
+
+Returns
+-------
+int
+    ``a + floor((b + floor(c·r / 2**s))·r / 2**s)`` at fraction ``P``, with
+    ``i = position >> s``, ``r`` the low ``s`` bits and ``s = position_bits - SEGMENT_BITS&#91;name&#93;``.
+
+### Function `exp_parts(code, fraction)`
+Return ``(k, m)`` with ``e^x = m·2**(k - P)`` and ``2**P <= m < 2**(P+1)``.
+
+Parameters
+----------
+code : int
+    Signed input code (``|code| <= 2**31``).
+fraction : int
+    Fraction bits of the input.
+
+Returns
+-------
+tuple&#91;int, int&#93;
+    The integer part ``k`` of ``x·log2(e)`` and the mantissa ``m = 2^f·2**P``.
+
+### Function `exp_scaled(code, fraction, out_fraction)`
+Return ``round(e^x · 2**out_fraction)`` for input code ``x``, capped at ``2**62``.
+
+Parameters
+----------
+code : int
+    Signed input code (``|code| <= 2**31``).
+fraction : int
+    Fraction bits of the input.
+out_fraction : int
+    Fraction bits of the result (``<= fraction + 2``).
+
+Returns
+-------
+int
+    Non-negative integer, at most ``2**62`` (no word saturation).
+
+### Function `exp_capped(code, data_width, fraction)`
+Return ``round(e^x · 2**fraction)`` for input code ``x``, capped at ``2**62``.
+
+Parameters
+----------
+code : int
+    Signed input code (``|code| <= 2**31``).
+data_width, fraction : int
+    The format (``data_width`` is not used: the result is not saturated).
+
+Returns
+-------
+int
+    Non-negative result code, at most ``2**62`` (no word saturation yet).
+
+### Function `exp(code, data_width, fraction)`
+Return the code of ``e^x``, saturated to the word.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `log2_internal(code, fraction)`
+Return ``log2(x)`` at fraction ``P`` for a positive input code ``x``.
+
+Parameters
+----------
+code : int
+    Positive input code.
+fraction : int
+    Fraction bits of the input.
+
+Returns
+-------
+int
+    ``(k - fraction)·2**P + log2(m)·2**P`` with ``code = m·2**k``, ``1 <= m < 2``.
+
+### Function `log(code, data_width, fraction)`
+Return the code of ``ln x``; the most negative code for ``x <= 0``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `isqrt(value)`
+Return ``floor(sqrt(value))`` by the restoring digit-by-digit method.
+
+Parameters
+----------
+value : int
+    Non-negative integer below ``2**63``.
+
+Returns
+-------
+int
+    The integer square root.
+
+### Function `sqrt(code, data_width, fraction)`
+Return the code of ``sqrt(x)`` rounded to nearest; 0 for ``x < 0``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `sin(code, data_width, fraction)`
+Return the code of ``sin x``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `cos(code, data_width, fraction)`
+Return the code of ``cos x``, as the sine a quarter turn ahead.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `sigmoid_internal(code, fraction)`
+Return ``σ(x)`` at fraction ``P`` for any signed input code.
+
+Parameters
+----------
+code : int
+    Signed input code (any magnitude below ``2**33``).
+fraction : int
+    Fraction bits of the input.
+
+Returns
+-------
+int
+    ``σ(x)·2**P``; ``2**P`` at and beyond ``|x| = 32``.
+
+### Function `sigmoid(code, data_width, fraction)`
+Return the code of the logistic function ``1/(1 + e^-x)``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `tanh(code, data_width, fraction)`
+Return the code of ``tanh x = 2σ(2x) - 1``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `cosh(code, data_width, fraction)`
+Return the code of ``cosh x = (e^x + e^-x)/2``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `sinh(code, data_width, fraction)`
+Return the code of ``sinh x = (e^x - e^-x)/2``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `exprel(code, data_width, fraction)`
+Return the code of ``exprel x = (e^x - 1)/x``, with ``exprel 0 = 1``.
+
+For ``|x| < 1/8`` the series ``1 + x/2 + x²/6 + x³/24 + x⁴/120`` (truncation
+below ``|x|⁵/720 < 4.3·10⁻⁸``); otherwise ``(e^x - 1)/x`` with a division truncated
+towards zero.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `cbrt(code, data_width, fraction)`
+Return the code of ``x**(1/3)``, odd in ``x``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `evaluate(function, code, data_width, fraction)`
+Evaluate one ``v2`` unit on one input code.
+
+Parameters
+----------
+function : str
+    A member of :data:`FUNCTIONS`.
+code : int
+    Signed input code of the format.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+Raises
+------
+ValueError
+    For an unknown function or a format :func:`check_format` refuses.
+
+---
+
 ## Module `compiler.guard_bits`
 
 ### Function `compute_guard_bits(expr_str)`
@@ -9064,7 +9672,22 @@ blocking:
 One transcendental look-up table the datapath uses.
 
 Arguments outside ``&#91;domain_min, domain_max)`` are clamped to the first or
-last entry.
+last entry. ``accuracy`` is the table's measured error at the contract's
+format against the Python model's function.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `FunctionUnit`
+One ``v2`` function unit the datapath instantiates, with its measured error.
+
+Parameters
+----------
+function : str
+    The unit (``exp``, ``log``, ``sqrt``, ``sin``, ``cos``, ``sigmoid``, ``tanh``,
+    ``cosh``, ``sinh``, ``exprel`` or ``cbrt``).
+accuracy : LutAccuracy
+    Its error at the contract's format against the Python model's function.
 
 - **to_public_dict**()
   - Return the JSON projection.
@@ -9090,7 +9713,11 @@ mirror_refusal:
 quantities:
     Every encoded value, in declaration order, literals once each.
 lookup_tables:
-    The look-up tables the datapath uses.
+    The look-up tables the datapath uses (``lut-v1``).
+function_lowering:
+    ``"lut-v1"`` or ``"v2"``.
+function_units:
+    The function units the datapath instantiates (``v2``).
 
 - **resolution**()
   - Return the value of one least-significant bit.
@@ -9107,7 +9734,7 @@ lookup_tables:
 - **to_public_dict**()
   - Return the path-free JSON projection.
 
-### Function `hardware_numeric_contract(neuron, q_format, *, overflow, rounding)`
+### Function `hardware_numeric_contract(neuron, q_format, *, overflow, rounding, function_lowering)`
 Return what ``neuron``'s generated RTL holds at ``q_format``.
 
 Parameters
@@ -9118,11 +9745,20 @@ q_format:
     The signed fixed-point format.
 overflow, rounding:
     The accumulate and multiply policies the RTL is compiled with.
+function_lowering:
+    ``"lut-v1"`` (default; tables reported in ``lookup_tables``) or ``"v2"``
+    (units reported in ``function_units``).
 
 Returns
 -------
 HardwareNumericContract
-    The encoded quantities, look-up tables and bit-true mirror status.
+    The encoded quantities, look-up tables or function units with their
+    measured error, and bit-true mirror status.
+
+Raises
+------
+ValueError
+    For an unknown lowering, or a format the ``v2`` units cannot mirror.
 
 ---
 
@@ -9374,7 +10010,7 @@ Returns
 str
     Bit-true kernel source code.
 
-### Function `generate_bittrue_kernel_from_neuron(neuron, module_name, *, data_width, fraction, signed, overflow, rounding, language)`
+### Function `generate_bittrue_kernel_from_neuron(neuron, module_name, *, data_width, fraction, signed, overflow, rounding, language, function_lowering)`
 Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
 Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
@@ -9404,6 +10040,8 @@ rounding : str
     ``"truncate"`` (default) or ``"nearest"``.
 language : str
     ``"c"`` (default) or ``"rust"``.
+function_lowering : str
+    ``"lut-v1"`` (default) or ``"v2"``; must match the RTL it mirrors.
 
 Returns
 -------
@@ -11742,6 +12380,141 @@ Contract for dynamic updates through bus-mapped control registers.
 
 ---
 
+## Module `compiler.lut_accuracy`
+
+### Class `TableGeometry`
+Where a table samples its function.
+
+Parameters
+----------
+lo : float
+    First sample point.
+step : float
+    Sample spacing, a power of two.
+size : int
+    Number of entries.
+
+
+### Class `LutAccuracy`
+Measured error of one table at one format, against the Python model.
+
+Parameters
+----------
+function : str
+    The tabulated function.
+data_width, fraction : int
+    The format.
+lowering : str
+    The lowering measured (``"lut-v1"`` or ``"v2"``).
+exhaustive : bool
+    Whether every input code was evaluated (otherwise sampled, see module).
+codes_evaluated : int
+    Number of input codes evaluated.
+input_min, input_max : float
+    The evaluated inputs: the format's range within the model's domain.
+table_min, table_max : float
+    The table's domain ``&#91;lo, lo + size*step)``; outside it the endpoint is read.
+max_error : float
+    Largest ``|table - clip(f)|`` over the evaluated inputs, in real units.
+max_error_at : float
+    An input where ``max_error`` occurs.
+max_error_in_table : float
+    The same, over inputs inside the table's domain only.
+max_error_in_table_at : float
+    An input where ``max_error_in_table`` occurs.
+resolution : float
+    One least significant bit, ``2**-fraction``.
+
+- **q_format**()
+  - Return the format label ``Q<integer bits>.<fraction bits>``.
+- **to_public_dict**()
+  - Return the JSON projection, errors also in least significant bits.
+
+### Function `table_functions(lowering)`
+Return the functions a lowering computes through a table or unit, sorted.
+
+Parameters
+----------
+lowering : str
+    ``"lut-v1"`` (default) or ``"v2"``.
+
+Returns
+-------
+tuple&#91;str, ...&#93;
+    ``cbrt`` and ``sqrt`` stand for ``x ** (1/3)`` and ``sqrt``/``x ** 0.5``;
+    ``sigmoid`` also serves ``expit``. ``v2`` adds ``sinh``.
+
+Raises
+------
+ValueError
+    For an unknown lowering.
+
+### Function `lut_read(function, codes, data_width, fraction)`
+Return the table entries the RTL selects for signed input codes.
+
+Mirrors ``_VerilogExprEmitter._emit_lut_call``: index
+``(code - round(lo * 2**fraction)) >> (fraction - log2(1/step))``, a left shift
+when that is negative, clamped to ``&#91;0, size - 1&#93;``, computed in a width that holds
+every shifted sum (``expr_lut_tables.lut_offset_width``); entries saturated to the
+word (``expr_lut_tables.saturate_entries``). Words up to 62 bits; wider words use
+:func:`lut_read_int`.
+
+Parameters
+----------
+function : str
+    A member of :func:`table_functions`.
+codes : numpy.ndarray of int64
+    Signed input codes of ``data_width`` bits.
+data_width, fraction : int
+    The fixed-point format.
+
+Returns
+-------
+numpy.ndarray of int64
+    The selected entries, as signed codes.
+
+### Function `lut_read_int(function, code, data_width, fraction)`
+Return the entry the RTL selects for one input code, in exact integer arithmetic.
+
+Parameters
+----------
+function : str
+    A member of :func:`table_functions`.
+code : int
+    Signed input code of ``data_width`` bits (any width up to 64).
+data_width, fraction : int
+    The fixed-point format.
+
+Returns
+-------
+int
+    The selected entry, saturated to the word, as :func:`lut_read` computes it.
+
+### Function `measure(function, data_width, fraction, lowering)`
+Measure one table or unit at one format against the Python model's function.
+
+Parameters
+----------
+function : str
+    A member of :func:`table_functions` for the lowering.
+data_width, fraction : int
+    The fixed-point format; ``0 <= fraction < data_width <= 64`` (``v2``: see
+    :func:`sc_neurocore.compiler.function_units.check_format`).
+lowering : str
+    ``"lut-v1"`` (default) or ``"v2"``.
+
+Returns
+-------
+LutAccuracy
+    The measured errors and what was evaluated.
+
+Raises
+------
+ValueError
+    For an unknown function, lowering or an invalid format.
+
+---
+
 ## Module `compiler.mixed_dense_kernel`
 
 ### Class `MixedDenseBatchResult`
@@ -13193,6 +13966,10 @@ rounding : str
     Product-rounding policy consumed by the expression emitter. The public
     equation-to-Verilog paths reject ``"stochastic"`` because they do not
     own a rounding LFSR.
+function_lowering : str
+    How transcendental functions are lowered: ``"lut-v1"`` (default; one
+    sample of a fixed table) or ``"v2"`` (range reduction and quadratic
+    tables, :mod:`sc_neurocore.compiler.function_units`).
 
 - **__post_init__**()
   - Validate the fixed-point geometry and declared arithmetic modes.

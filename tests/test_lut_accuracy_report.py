@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — the committed lut-v1 accuracy report matches the code
 
-"""``docs/validation/lut_accuracy_v1.md`` is what ``tools/lut_accuracy_report.py`` renders now."""
+"""The committed lut-v1 and v2 accuracy reports are what ``tools/lut_accuracy_report.py`` renders now."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def _tool() -> ModuleType:
 
 
 def test_committed_report_is_current() -> None:
-    """The report states exactly the errors the code measures today."""
+    """Both reports state exactly the errors the code measures today."""
     assert _tool().main(["--check"]) == 0
 
 
@@ -39,3 +39,11 @@ def test_report_covers_every_table_and_format() -> None:
     rows = [line for line in text.splitlines() if line.startswith("| `")]
     assert len(rows) == 10
     assert all(line.count("|") == len(tool.FORMATS) + 3 for line in rows)
+
+
+def test_v2_report_covers_every_unit() -> None:
+    """One row per v2 unit; every listed format the units support is a column."""
+    tool = _tool()
+    rows = [line for line in tool.render_v2().splitlines() if line.startswith("| `")]
+    assert len(rows) == 11
+    assert any("`sinh`" in line for line in rows)

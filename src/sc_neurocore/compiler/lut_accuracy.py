@@ -24,9 +24,16 @@ are sampled: every table cell's first and last code, evenly spaced codes inside
 each cell, and evenly spaced codes outside the table's domain; the result says
 which.
 
-What is not stated: the error after the value enters further arithmetic, the
-range a model's argument reaches during a run, and anything about a lowering
-other than ``lut-v1``.
+``lowering="v2"`` measures the function units of
+:mod:`sc_neurocore.compiler.function_units` the same way, reading each result
+from that integer reference (which the generated RTL and kernel equal; see
+``tests/test_function_lowering_v2_cosim.py``): every code of formats up to
+:data:`V2_EXHAUSTIVE_MAX_WIDTH` bits, otherwise 65 536 codes spread over the word
+plus every code within 4096 of zero. A unit has no table domain; it is stated as
+the whole input range.
+
+What is not stated: the error after the value enters further arithmetic, and the
+range a model's argument reaches during a run.
 """
 
 from __future__ import annotations
@@ -42,9 +49,12 @@ import numpy.typing as npt
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
 
 from . import expr_lut_tables
+from . import function_units as fu
 
 LOWERING = "lut-v1"
+LOWERINGS = ("lut-v1", "v2")
 EXHAUSTIVE_MAX_WIDTH = 18
+V2_EXHAUSTIVE_MAX_WIDTH = 16
 _INTERIOR_SAMPLES_PER_CELL = 64
 _OUTSIDE_SAMPLES = 4096
 
@@ -64,6 +74,7 @@ class TableGeometry:
         Sample spacing, a power of two.
     size : int
         Number of entries.
+
     """
 
     lo: float
@@ -123,16 +134,29 @@ def _reference(function: str) -> Callable[[FloatArray], FloatArray]:
     return lambda x: np.asarray(model(x), dtype=np.float64)
 
 
-def table_functions() -> tuple[str, ...]:
-    """Return the functions ``lut-v1`` lowers through a table, sorted.
+def table_functions(lowering: str = LOWERING) -> tuple[str, ...]:
+    """Return the functions a lowering computes through a table or unit, sorted.
+
+    Parameters
+    ----------
+    lowering : str
+        ``"lut-v1"`` (default) or ``"v2"``.
 
     Returns
     -------
     tuple[str, ...]
         ``cbrt`` and ``sqrt`` stand for ``x ** (1/3)`` and ``sqrt``/``x ** 0.5``;
-        ``sigmoid`` also serves ``expit``.
+        ``sigmoid`` also serves ``expit``. ``v2`` adds ``sinh``.
+
+    Raises
+    ------
+    ValueError
+        For an unknown lowering.
+
     """
-    return tuple(sorted(GEOMETRY))
+    if lowering not in LOWERINGS:
+        raise ValueError(f"unknown lowering {lowering!r}")
+    return tuple(sorted(GEOMETRY if lowering == LOWERING else fu.FUNCTIONS))
 
 
 def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> IntArray:
@@ -140,7 +164,10 @@ def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> 
 
     Mirrors ``_VerilogExprEmitter._emit_lut_call``: index
     ``(code - round(lo * 2**fraction)) >> (fraction - log2(1/step))``, a left shift
-    when that is negative, clamped to ``[0, size - 1]``.
+    when that is negative, clamped to ``[0, size - 1]``, computed in a width that holds
+    every shifted sum (``expr_lut_tables.lut_offset_width``); entries saturated to the
+    word (``expr_lut_tables.saturate_entries``). Words up to 62 bits; wider words use
+    :func:`lut_read_int`.
 
     Parameters
     ----------
@@ -155,15 +182,43 @@ def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> 
     -------
     numpy.ndarray of int64
         The selected entries, as signed codes.
+
     """
     geometry = GEOMETRY[function]
-    entries = np.asarray(_ENTRIES[function](data_width, fraction), dtype=np.int64)
+    stored = expr_lut_tables.saturate_entries(_ENTRIES[function](data_width, fraction), data_width)
+    entries = np.asarray(stored, dtype=np.int64)
     min_q = round(geometry.lo * (1 << fraction))
     shift = fraction - round(-math.log2(geometry.step))
     offset = codes.astype(np.int64) - min_q
     index = offset >> shift if shift >= 0 else offset << -shift
     selected: IntArray = entries[np.clip(index, 0, geometry.size - 1)]
     return selected
+
+
+def lut_read_int(function: str, code: int, data_width: int, fraction: int) -> int:
+    """Return the entry the RTL selects for one input code, in exact integer arithmetic.
+
+    Parameters
+    ----------
+    function : str
+        A member of :func:`table_functions`.
+    code : int
+        Signed input code of ``data_width`` bits (any width up to 64).
+    data_width, fraction : int
+        The fixed-point format.
+
+    Returns
+    -------
+    int
+        The selected entry, saturated to the word, as :func:`lut_read` computes it.
+
+    """
+    geometry = GEOMETRY[function]
+    entries = expr_lut_tables.saturate_entries(_ENTRIES[function](data_width, fraction), data_width)
+    shift = fraction - round(-math.log2(geometry.step))
+    offset = code - round(geometry.lo * (1 << fraction))
+    index = offset >> shift if shift >= 0 else offset << -shift
+    return entries[max(0, min(geometry.size - 1, index))]
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,7 +232,7 @@ class LutAccuracy:
     data_width, fraction : int
         The format.
     lowering : str
-        The lowering measured (``"lut-v1"``).
+        The lowering measured (``"lut-v1"`` or ``"v2"``).
     exhaustive : bool
         Whether every input code was evaluated (otherwise sampled, see module).
     codes_evaluated : int
@@ -196,6 +251,7 @@ class LutAccuracy:
         An input where ``max_error_in_table`` occurs.
     resolution : float
         One least significant bit, ``2**-fraction``.
+
     """
 
     function: str
@@ -239,8 +295,8 @@ class LutAccuracy:
         }
 
 
-def _codes(function: str, data_width: int, fraction: int) -> tuple[IntArray, bool]:
-    """Return the input codes to evaluate and whether they are every code."""
+def _codes(function: str, data_width: int, fraction: int) -> tuple[list[int], bool]:
+    """Return the input codes to evaluate and whether they are every code (exact integers)."""
     low_code = -(1 << (data_width - 1))
     high_code = (1 << (data_width - 1)) - 1
     domain = _MODEL_DOMAIN.get(function)
@@ -248,31 +304,95 @@ def _codes(function: str, data_width: int, fraction: int) -> tuple[IntArray, boo
         first = math.ceil(domain[0] * (1 << fraction))
         low_code = max(low_code, first + 1 if function in _OPEN_LOWER else first)
     if data_width <= EXHAUSTIVE_MAX_WIDTH:
-        return np.arange(low_code, high_code + 1, dtype=np.int64), True
+        return list(range(low_code, high_code + 1)), True
     geometry = GEOMETRY[function]
-    scale = 1 << fraction
-    starts = np.round((geometry.lo + np.arange(geometry.size + 1) * geometry.step) * scale)
-    starts = starts.astype(np.int64)
-    pieces: list[IntArray] = [starts, starts - 1]
+    step_codes = (
+        round(geometry.step * (1 << fraction)) if geometry.step * (1 << fraction) >= 1 else 0
+    )
+    starts = [
+        round(geometry.lo * (1 << fraction)) + k * step_codes for k in range(geometry.size + 1)
+    ]
+    picked = {low_code, high_code}
     for first, nxt in zip(starts[:-1], starts[1:]):
-        pieces.append(np.linspace(first, nxt - 1, _INTERIOR_SAMPLES_PER_CELL).astype(np.int64))
-    pieces.append(np.linspace(low_code, starts[0], _OUTSIDE_SAMPLES).astype(np.int64))
-    pieces.append(np.linspace(starts[-1], high_code, _OUTSIDE_SAMPLES).astype(np.int64))
-    pieces.append(np.array([low_code, high_code], dtype=np.int64))
-    codes = np.unique(np.concatenate(pieces))
+        picked.update(_spread(first, nxt - 1, _INTERIOR_SAMPLES_PER_CELL))
+        picked.update((first - 1, first))
+    picked.update(_spread(low_code, starts[0], _OUTSIDE_SAMPLES))
+    picked.update(_spread(starts[-1], high_code, _OUTSIDE_SAMPLES))
+    return sorted(c for c in picked if low_code <= c <= high_code), False
+
+
+def _spread(first: int, last: int, count: int) -> list[int]:
+    """Return up to ``count`` integers evenly spread over ``[first, last]``, exactly."""
+    if last <= first:
+        return [first]
+    return [first + (last - first) * k // (count - 1) for k in range(count)]
+
+
+def _v2_codes(function: str, data_width: int, fraction: int) -> tuple[IntArray, bool]:
+    """Return the input codes a ``v2`` measurement evaluates and whether they are every code."""
+    low_code = -(1 << (data_width - 1))
+    high_code = (1 << (data_width - 1)) - 1
+    domain = _MODEL_DOMAIN.get(function)
+    if domain is not None:
+        first = math.ceil(domain[0] * (1 << fraction))
+        low_code = max(low_code, first + 1 if function in _OPEN_LOWER else first)
+    if data_width <= V2_EXHAUSTIVE_MAX_WIDTH:
+        return np.arange(low_code, high_code + 1, dtype=np.int64), True
+    spread = np.linspace(low_code, high_code, 1 << 16).astype(np.int64)
+    near_zero = np.arange(-4096, 4097, dtype=np.int64)
+    codes = np.unique(np.concatenate([spread, near_zero, np.array([low_code, high_code])]))
     return codes[(codes >= low_code) & (codes <= high_code)], False
 
 
+def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
+    """Measure one ``v2`` unit at one format against the Python model's function."""
+    if function not in fu.FUNCTIONS:
+        raise ValueError(f"no v2 unit for {function!r}")
+    fu.check_format(data_width, fraction)
+    codes, exhaustive = _v2_codes(function, data_width, fraction)
+    scale = float(1 << fraction)
+    x = codes.astype(np.float64) / scale
+    values = np.array(
+        [fu.evaluate(function, int(c), data_width, fraction) for c in codes], dtype=np.float64
+    )
+    word_min = -(1 << (data_width - 1)) / scale
+    word_max = ((1 << (data_width - 1)) - 1) / scale
+    with np.errstate(over="ignore", invalid="ignore"):
+        reference = np.clip(_reference(function)(x), word_min, word_max)
+    error = np.abs(values / scale - reference)
+    worst = int(np.argmax(error))
+    return LutAccuracy(
+        function=function,
+        data_width=data_width,
+        fraction=fraction,
+        lowering="v2",
+        exhaustive=exhaustive,
+        codes_evaluated=len(codes),
+        input_min=float(x[0]),
+        input_max=float(x[-1]),
+        table_min=float(x[0]),
+        table_max=float(x[-1]) + 1.0 / scale,
+        max_error=float(error[worst]),
+        max_error_at=float(x[worst]),
+        max_error_in_table=float(error[worst]),
+        max_error_in_table_at=float(x[worst]),
+        resolution=1.0 / scale,
+    )
+
+
 @lru_cache(maxsize=256)
-def measure(function: str, data_width: int, fraction: int) -> LutAccuracy:
-    """Measure one table at one format against the Python model's function.
+def measure(function: str, data_width: int, fraction: int, lowering: str = LOWERING) -> LutAccuracy:
+    """Measure one table or unit at one format against the Python model's function.
 
     Parameters
     ----------
     function : str
-        A member of :func:`table_functions`.
+        A member of :func:`table_functions` for the lowering.
     data_width, fraction : int
-        The fixed-point format; ``0 <= fraction < data_width <= 64``.
+        The fixed-point format; ``0 <= fraction < data_width <= 64`` (``v2``: see
+        :func:`sc_neurocore.compiler.function_units.check_format`).
+    lowering : str
+        ``"lut-v1"`` (default) or ``"v2"``.
 
     Returns
     -------
@@ -282,16 +402,25 @@ def measure(function: str, data_width: int, fraction: int) -> LutAccuracy:
     Raises
     ------
     ValueError
-        For an unknown function or an invalid format.
+        For an unknown function, lowering or an invalid format.
+
     """
+    if lowering not in LOWERINGS:
+        raise ValueError(f"unknown lowering {lowering!r}")
+    if lowering == "v2":
+        return _measure_v2(function, data_width, fraction)
     if function not in GEOMETRY:
         raise ValueError(f"no lut-v1 table for {function!r}")
     if not 0 <= fraction < data_width <= 64:
         raise ValueError(f"invalid format data_width={data_width}, fraction={fraction}")
     codes, exhaustive = _codes(function, data_width, fraction)
     scale = float(1 << fraction)
-    x = codes.astype(np.float64) / scale
-    table = lut_read(function, codes, data_width, fraction).astype(np.float64) / scale
+    x = np.array([code / scale for code in codes], dtype=np.float64)
+    if data_width <= 62:
+        selected = lut_read(function, np.array(codes, dtype=np.int64), data_width, fraction)
+        table = selected.astype(np.float64) / scale
+    else:
+        table = np.array([lut_read_int(function, c, data_width, fraction) / scale for c in codes])
     word_min = -(1 << (data_width - 1)) / scale
     word_max = ((1 << (data_width - 1)) - 1) / scale
     with np.errstate(over="ignore", invalid="ignore"):
@@ -313,7 +442,7 @@ def measure(function: str, data_width: int, fraction: int) -> LutAccuracy:
         fraction=fraction,
         lowering=LOWERING,
         exhaustive=exhaustive,
-        codes_evaluated=int(codes.size),
+        codes_evaluated=len(codes),
         input_min=float(x[0]),
         input_max=float(x[-1]),
         table_min=geometry.lo,
@@ -330,9 +459,12 @@ __all__ = [
     "EXHAUSTIVE_MAX_WIDTH",
     "GEOMETRY",
     "LOWERING",
+    "LOWERINGS",
     "LutAccuracy",
+    "V2_EXHAUSTIVE_MAX_WIDTH",
     "TableGeometry",
     "lut_read",
+    "lut_read_int",
     "measure",
     "table_functions",
 ]

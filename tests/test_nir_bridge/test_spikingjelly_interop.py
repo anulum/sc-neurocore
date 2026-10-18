@@ -19,17 +19,19 @@ from sc_neurocore.nir_bridge import from_nir
 
 
 class TestSpikingJellyInterop:
+    """A SpikingJelly network exported through NIR runs the same in SC-NeuroCore."""
+
     def test_spikingjelly_lif_roundtrip(self) -> None:
         """SpikingJelly LIFNode -> NIR -> SC-NeuroCore produces identical spikes."""
         pytest_mod = __import__("pytest")
         try:
             import torch
-            from spikingjelly.activation_based import (  # type: ignore[import-not-found]  # optional dependency lacks stubs
+            from spikingjelly.activation_based import (
                 functional,
                 layer,
                 neuron,
             )
-            from spikingjelly.activation_based.nir_exchange import (  # type: ignore[import-not-found]  # optional dependency lacks stubs
+            from spikingjelly.activation_based.nir_exchange import (
                 export_to_nir,
             )
         except ImportError:

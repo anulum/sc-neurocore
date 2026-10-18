@@ -23,6 +23,7 @@ class TestScalarBroadcast:
     """Verify neuron nodes with scalar params auto-broadcast to input size."""
 
     def test_lif_scalar_broadcast(self) -> None:
+        """A one-element LIF node maps to a single neuron that broadcasts over a wider input."""
         node = nir.LIF(
             tau=np.array([10.0]),
             r=np.array([1.0]),
@@ -38,6 +39,7 @@ class TestScalarBroadcast:
         assert np.all(sc.tau == 10.0)
 
     def test_if_scalar_broadcast(self) -> None:
+        """A one-element IF node maps to a single neuron and fires on inputs above threshold."""
         node = nir.IF(r=np.array([1.0]), v_threshold=np.array([0.5]))
         sc = map_node("if", node)
         assert sc.n_neurons == 1
@@ -46,6 +48,7 @@ class TestScalarBroadcast:
         assert len(out) == 3
 
     def test_li_scalar_broadcast(self) -> None:
+        """A one-element LI node maps to a single leaky integrator over a wider input."""
         node = nir.LI(
             tau=np.array([10.0]),
             r=np.array([1.0]),
@@ -58,6 +61,7 @@ class TestScalarBroadcast:
         assert len(out) == 2
 
     def test_cubalif_scalar_broadcast(self) -> None:
+        """A one-element CubaLIF node maps to a single current-based LIF neuron."""
         node = nir.CubaLIF(
             tau_syn=np.array([5.0]),
             tau_mem=np.array([10.0]),
@@ -75,6 +79,7 @@ class TestScalarBroadcast:
         assert len(sc.w_in) == 3
 
     def test_cubali_scalar_broadcast(self) -> None:
+        """A one-element CubaLI node maps to a single current-based leaky integrator."""
         node = nir.CubaLI(
             tau_syn=np.array([5.0]),
             tau_mem=np.array([10.0]),
@@ -89,19 +94,49 @@ class TestScalarBroadcast:
         assert len(out) == 4
 
     def test_cubalif_scalar_in_graph(self) -> None:
-        """Scalar CubaLIF after Affine(4,6) — the real-world snnTorch pattern.
+        """Scalar CubaLIF after Affine(4,6) with an empty input type: the snnTorch export shape.
 
-        snnTorch exports CubaLIF with scalar params and empty input_type.
-        nirtorch builds the graph without strict type inference in this case.
-        We replicate that by importing the snnTorch-exported graph directly.
+        snnTorch exports CubaLIF with scalar parameters and an empty ``input_type``.
+        The graph is built here directly, without NIR's type inference, so the
+        bridge's handling of that shape is checked whether or not snnTorch is
+        installed or its exporter works with the installed NIR.
         """
-        pytest = __import__("pytest")
+        rng = np.random.default_rng(42)
+        graph = nir.NIRGraph(
+            nodes={
+                "input": nir.Input(input_type={"input": np.array([4])}),
+                "0": nir.Affine(weight=rng.standard_normal((6, 4)), bias=rng.standard_normal(6)),
+                "1": nir.CubaLIF(
+                    tau_syn=np.array(1e-3),
+                    tau_mem=np.array(5e-4),
+                    r=np.array(1.0),
+                    v_leak=np.array(0.0),
+                    v_threshold=np.array(1.0),
+                ),
+                "output": nir.Output(output_type={"output": np.array([6])}),
+            },
+            edges=[("input", "0"), ("0", "1"), ("1", "output")],
+            type_check=False,
+        )
+        net = from_nir(graph, dt=1e-4)
+        results = net.run({"input": np.array([1.0, 2.0, 3.0, 4.0])}, steps=10)
+        assert len(results["output"]) == 10
+        assert len(results["output"][0]) == 6
+
+    def test_snntorch_export_reaches_the_bridge(self) -> None:
+        """A graph exported by snnTorch itself imports and runs.
+
+        Skipped when snnTorch is absent, and when snnTorch's own exporter is
+        refused by NIR's type inference before the bridge is reached: snnTorch
+        1.0.0 with nir 1.0.7 and nirtorch 2.6 fails inside ``export_to_nir`` for
+        any sample shape (upstream incompatibility, recorded 2026-10-18).
+        """
         try:
-            import snntorch as snn  # type: ignore[import-not-found]  # optional dependency lacks stubs
-            from snntorch.export_nir import (  # type: ignore[import-not-found]  # optional dependency lacks stubs
+            import snntorch as snn
+            import torch
+            from snntorch.export_nir import (
                 export_to_nir,
             )
-            import torch
         except ImportError:
             pytest.skip("snntorch not installed")
 
@@ -110,7 +145,15 @@ class TestScalarBroadcast:
             torch.nn.Linear(4, 6),
             snn.Synaptic(alpha=0.9, beta=0.8),
         )
-        graph = export_to_nir(model, torch.randn(1, 4))
+        try:
+            graph = export_to_nir(model, torch.randn(1, 4))
+        except ValueError as error:
+            if "Type inference error" not in str(error):
+                raise
+            pytest.skip(
+                f"snntorch {snn.__version__} export refused by nir {nir.version} type inference "
+                f"before the bridge: {error}"
+            )
 
         net = from_nir(graph, dt=1e-4)
         results = net.run({"input": np.array([1.0, 2.0, 3.0, 4.0])}, steps=10)

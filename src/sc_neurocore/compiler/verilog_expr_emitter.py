@@ -15,6 +15,8 @@ import math
 
 from ..hdl_gen._ident import sanitize_ident
 from . import expr_lut_tables
+from .function_unit_ir import emit_verilog
+from .function_unit_programs import program
 from .verilog_compiler_config import Q88
 
 
@@ -53,6 +55,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             Starting counter for multiply wire naming (for chaining emitters).
         trunc_start : int
             Starting counter for truncation wire naming.
+
         """
         self.state_vars = state_vars
         self.param_map = param_map
@@ -336,6 +339,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                     prev = self._trunc(tmp)
                 return prev
             frac_exp = self._const_float(node.right)
+            if self.q.function_lowering == "v2" and frac_exp is not None:
+                if abs(frac_exp - 1.0 / 3.0) < 1e-6:
+                    return self._emit_unit("cbrt", left)
+                if abs(frac_exp - 0.5) < 1e-6:
+                    return self._emit_unit("sqrt", left)
             if frac_exp is not None and abs(frac_exp - 1.0 / 3.0) < 1e-6:
                 return self._emit_lut_call("_cbrt_lut", left, self._cbrt_lut_entries())
             if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
@@ -439,6 +447,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         expr_lut_tables.check_call_arguments(fname, node)
         arg: str = self._value(node.args[0])
 
+        unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
+        if unit is not None and self.q.function_lowering == "v2":
+            return self._emit_unit(unit, arg)
+        if fname in expr_lut_tables.V2_ONLY_FUNCTIONS:
+            raise ValueError(f"Function '{fname}' needs function_lowering='v2'.")
         if fname == "exp":
             return self._emit_lut_call("_exp_lut", arg, self._exp_lut_entries())
         elif fname == "log":
@@ -474,17 +487,35 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         elif fname == "clip":
             lo: str = self._value(node.args[1])
             hi: str = self._value(node.args[2])
-            wide_arg = self._wide(arg)
-            return (
-                f"(({wide_arg} < {self._wide(lo)}) ? {lo} : "
-                f"(({wide_arg} > {self._wide(hi)}) ? {hi} : {arg}))"
-            )
+            # numpy.clip is minimum(maximum(x, lo), hi): with lo > hi the result is hi.
+            raised = f"(({self._wide(arg)} < {self._wide(lo)}) ? {lo} : {arg})"
+            return f"(({self._wide(raised)} > {self._wide(hi)}) ? {hi} : {raised})"
         # max / min over every argument, folded left as Python's builtin compares them.
         cmp = ">" if fname == "max" else "<"
         result = arg
         for extra in node.args[1:]:
             b: str = self._value(extra)
             result = f"(({self._wide(result)} {cmp} {self._wide(b)}) ? {result} : {b})"
+        return result
+
+    def _emit_unit(self, function: str, arg: str) -> str:
+        """Emit one ``v2`` function unit inline; return the ``data_width``-bit result wire.
+
+        The unit's 64-bit integer program
+        (:func:`sc_neurocore.compiler.function_unit_programs.program`) becomes uniquely
+        named wires and table cases; its result is already saturated to the word,
+        so taking the low ``data_width`` bits is exact.
+        """
+        prefix = f"_fu{self._mul_count}"
+        self._mul_count += 1
+        dw = self.q.data_width
+        arg_w = f"{prefix}_arg"
+        self.intermediates.append(f"// v2 function unit: {function}")
+        self.intermediates.append(f"wire signed [{dw - 1}:0] {arg_w} = {arg};")
+        lines, out = emit_verilog(program(function, dw, self.q.fraction), prefix, arg_w)
+        self.intermediates.extend(lines)
+        result = f"{prefix}_out"
+        self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {out}[{dw - 1}:0];")
         return result
 
     def _emit_lut_call(
@@ -514,8 +545,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         s = round(-math.log2(lut_step))  # lut_step == 2**(-s)
         shift = frac - s
         min_q = round(lut_min * (1 << frac))
-        # Width of the offset sum: dw+1 bits wrap the [-16, 16) offset at Q4.12 or Q1.15.
-        ow = expr_lut_tables.lut_offset_width(dw, min_q)
+        # Width of the offset sum: dw+1 bits wrap the [-16, 16) offset at Q4.12 or Q1.15,
+        # and the left shift of a low-fraction format (Q8.0) before the index is clamped.
+        ow = expr_lut_tables.lut_offset_width(dw, min_q, max(0, -shift))
+        # Entries a word of this width cannot hold are saturated, not wrapped.
+        entries = expr_lut_tables.saturate_entries(entries, dw)
         self.intermediates.append(
             f"// {lut_name} lookup table ({n} entries over "
             f"[{lut_min}, {lut_min + n * lut_step}), step {lut_step})"

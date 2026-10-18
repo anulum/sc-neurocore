@@ -87,7 +87,10 @@ def _lif() -> EquationNeuron:
 
 
 class TestEncodedValues:
+    """Parameters, constants, states and steps as the RTL encodes them."""
+
     def test_each_value_holds_in_the_contract_what_it_holds_in_the_rtl(self) -> None:
+        """Every encoded value in the contract equals the value written into the RTL."""
         neuron = _lif()
         contract = hardware_numeric_contract(neuron, Q88)
         named = {(q.kind, q.name): q for q in contract.quantities}
@@ -116,6 +119,7 @@ class TestEncodedValues:
         )
 
     def test_the_same_neuron_fits_a_wider_format(self) -> None:
+        """The neuron refused at Q8.8 is representable at Q16.16."""
         contract = hardware_numeric_contract(_lif(), Q1616)
         assert contract.representable is True
         assert contract.refusal() == ""
@@ -126,6 +130,7 @@ class TestEncodedValues:
         }
 
     def test_a_zero_value_has_no_relative_error(self) -> None:
+        """A value of zero is exact and reports no relative error."""
         contract = hardware_numeric_contract(
             EquationNeuron(equations={"v": "-v"}, state={"v": 0.0}), Q88
         )
@@ -142,6 +147,7 @@ class TestEncodedValues:
         }
 
     def test_constants_are_encoded_like_parameters_and_a_zero_step_is_not(self) -> None:
+        """Constants are encoded like parameters; a zero time step is not reported."""
         neuron = EquationNeuron(
             equations={"v": "v * k"}, constants={"k": 300.0}, method="map", dt=0.0
         )
@@ -153,12 +159,15 @@ class TestEncodedValues:
 
     @pytest.mark.parametrize("value", [math.inf, math.nan])
     def test_a_non_finite_value_is_refused(self, value: float) -> None:
+        """A parameter that is not finite is refused by name."""
         neuron = EquationNeuron(equations={"v": "-v * a"}, parameters={"a": value})
         with pytest.raises(ValueError, match="parameter a is not finite"):
             hardware_numeric_contract(neuron, Q88)
 
 
 class TestLiterals:
+    """Numeric literals of the lowered expressions."""
+
     def test_literals_are_read_as_the_emitter_encodes_them(self) -> None:
         """Exponents and floor divisors are not encoded; divisors become reciprocals."""
         neuron = EquationNeuron(
@@ -185,6 +194,7 @@ class TestLiterals:
         assert contract.refusal().endswith("literal divisor equation v=0.001 becomes 0.0")
 
     def test_a_literal_below_the_resolution_is_reported_not_blocking(self) -> None:
+        """A guard literal below the resolution is reported but does not block."""
         neuron = EquationNeuron(equations={"v": "v - 1e-12"}, method="map", dt=1.0)
         contract = hardware_numeric_contract(neuron, Q1616)
         (guard,) = [q for q in contract.quantities if q.kind == "literal"]
@@ -211,12 +221,16 @@ class TestLiterals:
         ]
 
     def test_division_by_the_literal_zero_is_refused(self) -> None:
+        """Division by the literal zero is refused."""
         with pytest.raises(ValueError, match="divides by the literal 0"):
             hardware_numeric_contract(EquationNeuron(equations={"v": "v / 0"}), Q88)
 
 
 class TestIntegrators:
+    """Quantities each integration method adds to the RTL."""
+
     def test_rk4_states_its_half_and_sixth_step_scales(self) -> None:
+        """RK4 reports dt, dt/2 and dt/6 and which of them underflow."""
         neuron = EquationNeuron(equations={"v": "-v"}, method="rk4", dt=0.01)
         narrow = hardware_numeric_contract(neuron, Q88)
         steps = {q.name: (q.status, q.blocking) for q in narrow.quantities if q.kind == "time_step"}
@@ -228,6 +242,7 @@ class TestIntegrators:
         assert hardware_numeric_contract(neuron, Q1616).representable is True
 
     def test_exponential_euler_states_its_jacobian_and_exprel_table(self) -> None:
+        """Exponential Euler reports its Jacobian literals and the exprel table."""
         neuron = EquationNeuron(equations={"v": "(-v + I) / 10.0"}, method="exp_euler", dt=0.5)
         contract = hardware_numeric_contract(neuron, Q88)
         assert ("literal", "jacobian v") in {(q.kind, q.name) for q in contract.quantities}
@@ -236,7 +251,10 @@ class TestIntegrators:
 
 
 class TestLookupTables:
+    """Look-up tables the datapath builds, with domains and measured accuracy."""
+
     def test_every_table_the_rtl_builds_is_stated_with_its_domain(self) -> None:
+        """Every table in the RTL is in the contract with its geometry and accuracy."""
         neuron = EquationNeuron(
             equations={
                 "v": "exp(v) + log(v) + sqrt(v) + tanh(v) + cosh(v) + expit(v)",
@@ -261,6 +279,7 @@ class TestLookupTables:
         }
 
     def test_stochastic_spike_expressions_are_read(self) -> None:
+        """Escape-rate and spike-probability expressions contribute their tables."""
         escape = EquationNeuron(
             equations={"v": "-v + I"},
             detection="escape_rate",
@@ -281,7 +300,10 @@ class TestLookupTables:
 
 
 class TestMirrorAndProjection:
+    """Bit-true mirror status and the JSON projection."""
+
     def test_an_euler_neuron_has_a_bit_true_mirror_and_its_arithmetic(self) -> None:
+        """An Euler neuron reports its bit-true C mirror and arithmetic."""
         contract = hardware_numeric_contract(_lif(), Q1616)
         public = contract.to_public_dict()
         mirror = public["bit_true_mirror"]
@@ -311,6 +333,7 @@ class TestMirrorAndProjection:
         assert "latency" not in _rtl(_lif(), Q1616)
 
     def test_a_neuron_without_a_mirror_says_why(self) -> None:
+        """A method without a bit-true mirror states the reason."""
         contract = hardware_numeric_contract(
             EquationNeuron(equations={"v": "-v"}, method="rk4", dt=0.5), Q88
         )
@@ -355,6 +378,7 @@ class TestDerivedDivisors:
     def test_a_divisor_is_blocking_only_when_its_word_is_zero(
         self, divisor: str, zero_divisors: list[str]
     ) -> None:
+        """A computed divisor blocks only when its encoded word is zero."""
         neuron = EquationNeuron(
             equations={"x": f"x / ({divisor})"},
             parameters={"a": 20.0, "b": 10.0, "c": 0.001, "d": 0.0015},

@@ -37,6 +37,7 @@ _DIRECT_MATH_FUNCTIONS: dict[str, str] = {
     "sqrt": "sqrt",
     "tanh": "tanh",
     "cosh": "cosh",
+    "sinh": "sinh",
     "sin": "sin",
     "cos": "cos",
 }
@@ -64,6 +65,7 @@ class CExprEmitter(ast.NodeVisitor):
         Identifiers referenced by the expression that are not state variables,
         parameters, or the input current — collected in first-seen order for the
         exporter to declare as inputs.
+
     """
 
     def __init__(
@@ -181,14 +183,18 @@ class CExprEmitter(ast.NodeVisitor):
         if fname == "clip":
             lo: str = self.visit(node.args[1])
             hi: str = self.visit(node.args[2])
-            return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) ? {hi} : {arg}))"
-        # max / min over every argument, folded left as Python's builtin compares them.
-        cmp = ">" if fname == "max" else "<"
-        result = arg
-        for extra in node.args[1:]:
-            other: str = self.visit(extra)
-            result = f"(({result} {cmp} {other}) ? {result} : {other})"
-        return result
+            # numpy.clip is minimum(maximum(x, lo), hi): with lo > hi the result is hi.
+            raised = f"(({arg} < {lo}) ? {lo} : {arg})"
+            return f"(({raised} > {hi}) ? {hi} : {raised})"
+        if fname in ("max", "min"):
+            # Every argument, folded left as Python's builtin compares them.
+            cmp = ">" if fname == "max" else "<"
+            result = arg
+            for extra in node.args[1:]:
+                other: str = self.visit(extra)
+                result = f"(({result} {cmp} {other}) ? {result} : {other})"
+            return result
+        raise ValueError(f"Function '{fname}' has no C/C++ lowering.")
 
     def generic_visit(self, node: ast.AST) -> str:
         """Raise for any unsupported AST node type."""
@@ -223,6 +229,7 @@ def emit_c_expr(
     tuple of (str, list of str)
         The C++ expression string and the free identifiers it references (in
         first-seen order).
+
     """
     tree = ast.parse(expr_str, mode="eval")
     emitter = CExprEmitter(state_vars, param_map, math_ns=math_ns, fp_type=fp_type)

@@ -41,6 +41,8 @@ import math
 from collections.abc import Callable
 
 from . import expr_lut_tables
+from .function_unit_ir import emit_c
+from .function_unit_programs import program
 from .expr_lut_tables import SUPPORTED_FUNCTIONS, const_float
 from .verilog_compiler_config import Q88
 
@@ -115,6 +117,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
     free_vars : list of str
         Identifiers that are neither state, parameter nor input, in first-seen
         order — the generator declares them as extra function arguments.
+
     """
 
     def __init__(
@@ -321,6 +324,11 @@ class _CFixedExprEmitter(ast.NodeVisitor):
                 acc = self._fxmul(acc, left)
             return acc
         frac_exp = const_float(right)
+        if self.q.function_lowering == "v2" and frac_exp is not None:
+            if abs(frac_exp - 1.0 / 3.0) < 1e-6:
+                return self._emit_unit("cbrt", left)
+            if abs(frac_exp - 0.5) < 1e-6:
+                return self._emit_unit("sqrt", left)
         if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
             return self._emit_lut("sqrt", left)
         if frac_exp is not None and abs(frac_exp - 1.0 / 3.0) < 1e-6:
@@ -388,6 +396,11 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         expr_lut_tables.check_call_arguments(fname, node)
         arg: str = self._value(node.args[0])
 
+        unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
+        if unit is not None and self.q.function_lowering == "v2":
+            return self._emit_unit(unit, arg)
+        if fname in expr_lut_tables.V2_ONLY_FUNCTIONS:
+            raise ValueError(f"Function '{fname}' needs function_lowering='v2'.")
         lut_name = {"sigmoid": "sigmoid", "expit": "sigmoid"}.get(fname, fname)
         if lut_name in _LUT_GEOMETRY:
             return self._emit_lut(lut_name, arg)
@@ -396,8 +409,9 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         if fname == "clip":
             lo: str = self._value(node.args[1])
             hi: str = self._value(node.args[2])
-            inner = self._tern(f"{arg} > {hi}", hi, arg)
-            return self._tern(f"{arg} < {lo}", lo, inner)
+            # numpy.clip is minimum(maximum(x, lo), hi): with lo > hi the result is hi.
+            raised = self._tern(f"{arg} < {lo}", lo, arg)
+            return self._tern(f"{raised} > {hi}", hi, raised)
         # max / min over every argument, folded left as in the Verilog emitter.
         cmp = ">" if fname == "max" else "<"
         result = arg
@@ -423,16 +437,36 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         }
         return generators[name]()
 
+    def _emit_unit(self, function: str, arg: str) -> str:
+        """Emit one ``v2`` function unit as statements mirroring the RTL unit; return its result.
+
+        The argument is first truncated to the word, as the RTL hoists it to a
+        ``data_width``-bit wire. Coefficient tables are shared by every call
+        (``_fu_<table>``, declared ``int64_t``/``i64`` by the kernel).
+        """
+        prefix = f"_fu{self._lut_count}"
+        self._lut_count += 1
+        argument = f"{prefix}_arg"
+        self.statements.append(self._local(argument, f"sc_wrap({arg}, {self.q.data_width})"))
+        statements, arrays, out = emit_c(
+            program(function, self.q.data_width, self.q.fraction), prefix, argument, self.lang
+        )
+        self.statements.extend(statements)
+        self.tables.update(arrays)
+        return self._wide(out)
+
     def _emit_lut(self, name: str, arg: str) -> str:
         """Emit a LUT lookup mirroring ``_VerilogExprEmitter._emit_lut_call``."""
-        entries = self._lut_entries(name)
+        # Saturated to the word, as the RTL's signed literals must be.
+        entries = expr_lut_tables.saturate_entries(self._lut_entries(name), self.q.data_width)
         lut_min, lut_step = _LUT_GEOMETRY[name]
         n = len(entries)
         dw, frac = self.q.data_width, self.q.fraction
         shift = frac - round(-math.log2(lut_step))
         min_q = round(lut_min * (1 << frac))
-        # The RTL offset sum is ``lut_offset_width`` bits wide (dw+1 unless the offset needs more).
-        dwp1 = expr_lut_tables.lut_offset_width(dw, min_q)
+        # The RTL offset sum is ``lut_offset_width`` bits wide (dw+1 unless the offset or
+        # the left shift of a low-fraction format needs more).
+        dwp1 = expr_lut_tables.lut_offset_width(dw, min_q, max(0, -shift))
         table = f"_{name}_lut{self._lut_count}"
         argv = f"{table}_arg"
         raw = f"{table}_raw"
@@ -494,6 +528,7 @@ def emit_c_fixed_expr(
         64-bit-integer expression string, the helper statements it depends on, the
         LUT tables it references, the free identifiers it introduced (first-seen
         order), the next free LUT index, and whether the input current was read.
+
     """
     tree = ast.parse(expr_str, mode="eval")
     emitter = _CFixedExprEmitter(

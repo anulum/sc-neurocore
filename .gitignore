@@ -53,6 +53,8 @@ nul
 
 # Virtual environments
 .venv/
+# Separate interpreter for lava-nc 0.10 (needs Python < 3.11 and numpy < 2).
+.venv-lava/
 venv/
 
 # Python packaging
