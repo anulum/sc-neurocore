@@ -452,10 +452,12 @@ def _measure_local_base_install(repo: Path) -> dict[str, Any]:
                 str(python),
                 "-c",
                 (
-                    "import sc_neurocore; "
-                    "from sc_neurocore.neurons.models.mat import MATNeuron; "
-                    "assert MATNeuron().step(0.7) in (0, 1); "
-                    "print(sc_neurocore.__version__); "
+                    "import sc_neurocore\n"
+                    "from sc_neurocore.neurons.models.mat import MATNeuron\n"
+                    "spike = MATNeuron().step(0.7)\n"
+                    "if spike not in (0, 1):\n"
+                    "    raise RuntimeError(f'Invalid MAT spike: {spike!r}')\n"
+                    "print(sc_neurocore.__version__)\n"
                     "print(len(sc_neurocore.__all__))"
                 ),
             ],

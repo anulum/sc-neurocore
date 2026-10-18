@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -170,13 +171,16 @@ def test_install_profile_audit_cli_writes_json(tmp_path: Path) -> None:
     assert payload["install_measurement"] == {"measured": False}
 
 
+@pytest.mark.parametrize("optimized", [False, True])
 def test_install_measurement_uses_base_install_and_records_diagnostics(
+    optimized: bool,
     monkeypatch: Any,
     tmp_path: Path,
 ) -> None:
-    """Installer diagnostics retain command output and a failed import outcome."""
+    """Retain failed diagnostics and execute the real MAT smoke with optimization."""
     tool = _load_tool()
     commands: list[list[str]] = []
+    run_subprocess = subprocess.run
 
     class FakeTemporaryDirectory:
         def __init__(self, prefix: str) -> None:
@@ -243,6 +247,32 @@ def test_install_measurement_uses_base_install_and_records_diagnostics(
     assert measurement["installed_package_count"] == 2
     assert measurement["heavy_optional_packages_installed"] == []
     assert measurement["passed"] is False
+
+    smoke_command = commands[1]
+    observer = (
+        "import sys\n"
+        "from sc_neurocore.neurons.models.mat import MATNeuron\n"
+        "calls = []\n"
+        "def observe(frame, event, arg):\n"
+        "    if event == 'call' and frame.f_code is MATNeuron.step.__code__:\n"
+        "        calls.append(frame.f_locals['current'])\n"
+        "sys.setprofile(observe)\n"
+        + smoke_command[-1]
+        + "\nsys.setprofile(None)\nprint('MAT_CALLS', calls)\n"
+    )
+    result = run_subprocess(
+        [sys.executable, "-B", *(["-O"] if optimized else []), "-c", observer],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+        env={**os.environ, "PYTHONPATH": str(_repo_root() / "src")},
+    )
+    assert result.returncode == 0, result.stderr
+    version, export_count, mat_calls = result.stdout.splitlines()
+    assert version == _project_version(tool)
+    assert int(export_count) > 0
+    assert mat_calls == "MAT_CALLS [0.7]"
 
 
 def test_conda_run_list_is_derived_from_project_metadata() -> None:
