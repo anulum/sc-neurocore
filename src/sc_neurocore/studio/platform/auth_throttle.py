@@ -114,9 +114,9 @@ class StudioBrowserLoginThrottle:
     def attempt(self, username: str, *, client_id: str) -> Iterator[StudioLoginThrottleDecision]:
         """Reserve an attempt before verification, bounded per username and direct client.
 
-        Concurrent verifiers share the failure budget. A full registry evicts
-        the least recently used idle key; in-flight keys are never evicted.
-        Proxy headers do not define client identity.
+        Concurrent verifiers share the failure budget. A full registry reclaims
+        only expired or cleared keys; live failures, lockouts and in-flight
+        keys remain protected. Proxy headers do not define client identity.
         """
         bucket: _ThrottleBucket | None = None
         with self._guard:
@@ -139,12 +139,18 @@ class StudioBrowserLoginThrottle:
                     bucket.pending -= 1
 
     def _bucket(self, key: tuple[str, str]) -> _ThrottleBucket | None:
-        """Return an LRU bucket without evicting an in-flight reservation."""
+        """Return an LRU bucket without discarding live failure or reservation state."""
         if key in self._buckets:
             self._buckets.move_to_end(key)
             return self._buckets[key]
         if len(self._buckets) >= self._max_buckets:
-            idle = next((key for key, value in self._buckets.items() if value.pending == 0), None)
+            idle = None
+            now = self._now()
+            for candidate, value in self._buckets.items():
+                self._prune(value, now)
+                if not value.pending and not value.failure_times and value.locked_until is None:
+                    idle = candidate
+                    break
             if idle is None:
                 return None
             del self._buckets[idle]

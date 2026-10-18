@@ -39218,7 +39218,7 @@ checkout's build follows, found from the application module.
 ### Function `studio_frontend_dir(candidates)`
 Return the first candidate holding a built frontend, or ``None``.
 
-### Function `studio_entry(origin, dist_dir)`
+### Function `studio_entry(origin, dist_dir, *, api_docs_enabled)`
 Return the page a launched Studio opens and the lines announcing it.
 
 Parameters
@@ -39227,13 +39227,15 @@ origin:
     Scheme, host and port the API serves, without a trailing slash.
 dist_dir:
     The built frontend :func:`studio_frontend_dir` found, or ``None``.
+api_docs_enabled:
+    Whether interactive documentation is mounted for this runtime profile.
 
 Returns
 -------
 tuple
     The URL to open, and the lines to print before opening it. Without a
-    frontend the root would be an empty page, so the API documentation
-    opens instead and the first line says why.
+    frontend the API documentation opens in development, or the OpenAPI
+    schema when interactive documentation is disabled.
 
 ### Function `mount_studio_frontend(app, *, app_module_file)`
 Mount the built frontend at :data:`STUDIO_UI_PATH` when one exists.

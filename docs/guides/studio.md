@@ -20,7 +20,10 @@ An installation from a source checkout carries the interface only if
 `studio/frontend/dist/` has been built first (see
 [Development](#development)); without it the build still
 succeeds, and `sc-neurocore studio` says that there is no interface and opens
-the API documentation at `/docs` instead. Release builds set
+the API documentation at `/docs` instead in development. Lab/production disables
+the interactive `/docs` and `/redoc` pages to avoid loading documentation scripts
+from external CDNs; the launcher falls back to `/openapi.json` when the UI is
+absent. The OpenAPI schema remains available in every profile. Release builds set
 `SC_NEUROCORE_STUDIO_UI=required`, which makes a build without the interface
 fail. Before the wheel can be published, the release workflow installs it into
 a clean environment, launches `sc-neurocore studio` from that installation and
@@ -793,7 +796,10 @@ for a 15-minute cooldown. Tune this deployment policy with
 prior invalid-attempt state for that username and direct client. Unknown,
 disabled, expired and wrong-password logins share `401 invalid_browser_login`
 and the same throttle policy. Reservations bound concurrent verification;
-the registry has a default cap of 1024 username/client keys. The
+the registry has a default cap of 1024 username/client keys. Live failures,
+lockouts and in-flight attempts cannot be evicted by new keys. If every slot
+holds protected state, new keys receive `429` until a slot expires or its
+failure state is cleared; existing keys keep their failure and cooldown budgets. The
 Admin panel Operator section reports the active lockout threshold, failure
 window, and cooldown without exposing identity-file paths or secret material.
 

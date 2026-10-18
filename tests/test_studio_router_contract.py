@@ -170,3 +170,25 @@ def test_a_launched_studio_opens_its_ui_or_says_there_is_none(tmp_path: Path) ->
             "SC-NeuroCore Studio starting at http://127.0.0.1:8001/docs",
         ),
     )
+    assert studio_entry(origin, None, api_docs_enabled=False) == (
+        "http://127.0.0.1:8001/openapi.json",
+        (
+            "This installation carries no Studio user interface; its OpenAPI schema opens.",
+            "SC-NeuroCore Studio starting at http://127.0.0.1:8001/openapi.json",
+        ),
+    )
+    assert studio_entry(origin, tmp_path, api_docs_enabled=False)[0] == (
+        "http://127.0.0.1:8001/studios/sc-neurocore/"
+    )
+
+
+def test_development_retains_interactive_docs_with_hashed_bootstrap_scripts() -> None:
+    """Serve development docs under their exact-script CSP while lab disables them."""
+    application = create_app()
+    with TestClient(application, base_url="http://127.0.0.1") as client:
+        for route in ("/docs", "/redoc"):
+            response = client.get(route)
+            assert response.status_code == 200
+            assert "'sha256-" in response.headers["content-security-policy"]
+            assert "https://cdn.jsdelivr.net" in response.text
+        assert client.get("/openapi.json").json() == application.openapi()

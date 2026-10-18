@@ -158,7 +158,7 @@ def test_concurrent_http_logins_share_the_failure_budget(tmp_path: Path) -> None
 
 
 def test_unknown_login_registry_has_a_finite_capacity(tmp_path: Path) -> None:
-    """Distinct ordinary failed logins stay within the configured registry cap."""
+    """Retain live failures and refuse new login keys once the registry is full."""
     client, _ = _lab(tmp_path, browser_login_max_buckets=4)
     with client:
         for index in range(9):
@@ -166,13 +166,12 @@ def test_unknown_login_registry_has_a_finite_capacity(tmp_path: Path) -> None:
                 "/api/studio/auth/login",
                 json={"username": f"missing-{index}", "password": "incorrect-password"},
             )
-            assert response.status_code == 401
-            assert (
-                cast(FastAPI, client.app)
-                .state.studio_browser_login_throttle.snapshot()
-                .active_bucket_count
-                <= 4
-            )
+            assert response.status_code == (401 if index < 4 else 429)
+            assert response.json() == {
+                "detail": "invalid_browser_login" if index < 4 else "browser_login_throttled"
+            }
+            snapshot = cast(FastAPI, client.app).state.studio_browser_login_throttle.snapshot()
+            assert snapshot.active_bucket_count == min(index + 1, 4)
 
 
 def test_cli_and_http_mutations_both_persist(tmp_path: Path) -> None:

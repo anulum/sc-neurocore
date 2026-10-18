@@ -101,7 +101,9 @@ def studio_frontend_dir(candidates: Sequence[Path]) -> Path | None:
     return None
 
 
-def studio_entry(origin: str, dist_dir: Path | None) -> tuple[str, tuple[str, ...]]:
+def studio_entry(
+    origin: str, dist_dir: Path | None, *, api_docs_enabled: bool = True
+) -> tuple[str, tuple[str, ...]]:
     """Return the page a launched Studio opens and the lines announcing it.
 
     Parameters
@@ -110,18 +112,21 @@ def studio_entry(origin: str, dist_dir: Path | None) -> tuple[str, tuple[str, ..
         Scheme, host and port the API serves, without a trailing slash.
     dist_dir:
         The built frontend :func:`studio_frontend_dir` found, or ``None``.
+    api_docs_enabled:
+        Whether interactive documentation is mounted for this runtime profile.
 
     Returns
     -------
     tuple
         The URL to open, and the lines to print before opening it. Without a
-        frontend the root would be an empty page, so the API documentation
-        opens instead and the first line says why.
+        frontend the API documentation opens in development, or the OpenAPI
+        schema when interactive documentation is disabled.
     """
     if dist_dir is None:
-        url = f"{origin}/docs"
+        url = f"{origin}/docs" if api_docs_enabled else f"{origin}/openapi.json"
+        fallback = "API documentation" if api_docs_enabled else "OpenAPI schema"
         return url, (
-            "This installation carries no Studio user interface; its API documentation opens.",
+            f"This installation carries no Studio user interface; its {fallback} opens.",
             f"SC-NeuroCore Studio starting at {url}",
         )
     url = f"{origin}{STUDIO_UI_PATH}/"

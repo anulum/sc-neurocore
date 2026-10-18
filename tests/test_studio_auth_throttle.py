@@ -192,3 +192,73 @@ def test_login_registry_requires_a_positive_slot_budget() -> None:
             cooldown_seconds=60,
             max_buckets=0,
         )
+
+
+def test_login_key_churn_preserves_live_failures_and_lockouts_at_default_capacity() -> None:
+    """Refuse new keys after saturation without resetting existing failure budgets."""
+    current = datetime(2026, 10, 18, 12, 0, tzinfo=UTC)
+    throttle = StudioBrowserLoginThrottle(
+        max_failed_attempts=2,
+        failure_window_seconds=300,
+        cooldown_seconds=60,
+        clock=lambda: current,
+    )
+    throttle.record_failure("locked")
+    assert not throttle.record_failure("locked").allowed
+    throttle.record_failure("failing")
+    for index in range(1022):
+        assert throttle.record_failure(f"retained-{index}").allowed
+    for index in range(1025):
+        with throttle.attempt(f"new-{index}", client_id="local") as decision:
+            assert not decision.allowed
+            assert decision.reason == THROTTLED_BROWSER_LOGIN_REASON
+        assert not throttle.record_failure(f"new-{index}", client_id="local").allowed
+    assert throttle.snapshot().active_bucket_count == 1024
+    assert throttle.snapshot().locked_bucket_count == 1
+    assert not throttle.check("locked").allowed
+    assert not throttle.record_failure("failing").allowed
+    assert throttle.snapshot().locked_bucket_count == 2
+
+
+@pytest.mark.parametrize("reset", ["success", "admin", "cooldown"])
+def test_login_registry_reclaims_cleared_or_expired_lockout_slots(reset: str) -> None:
+    """Reuse a slot after successful login, password rotation or cooldown expiry."""
+    current = datetime(2026, 10, 18, 12, 0, tzinfo=UTC)
+    throttle = StudioBrowserLoginThrottle(
+        max_failed_attempts=1,
+        failure_window_seconds=10,
+        cooldown_seconds=60,
+        max_buckets=1,
+        clock=lambda: current,
+    )
+    assert not throttle.record_failure("locked").allowed
+    current += timedelta(seconds=11)
+    with throttle.attempt("new", client_id="local") as denied:
+        assert not denied.allowed
+    if reset == "success":
+        throttle.record_success("locked")
+    elif reset == "admin":
+        throttle.clear_user("locked")
+    else:
+        current += timedelta(seconds=50)
+    with throttle.attempt("new", client_id="local") as admitted:
+        assert admitted.allowed
+    assert throttle.snapshot().active_bucket_count == 0
+
+
+def test_login_registry_reclaims_an_expired_failure_window_without_a_snapshot() -> None:
+    """Admit a new key when the full registry's sole failure has naturally expired."""
+    current = datetime(2026, 10, 18, 12, 0, tzinfo=UTC)
+    throttle = StudioBrowserLoginThrottle(
+        max_failed_attempts=2,
+        failure_window_seconds=10,
+        cooldown_seconds=60,
+        max_buckets=1,
+        clock=lambda: current,
+    )
+    assert throttle.record_failure("failing").allowed
+    current += timedelta(seconds=11)
+    with throttle.attempt("new", client_id="local") as admitted:
+        assert admitted.allowed
+        assert throttle.record_failure("new", client_id="local").allowed
+    assert throttle.snapshot().active_bucket_count == 1

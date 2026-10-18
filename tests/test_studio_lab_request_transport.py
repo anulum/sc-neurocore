@@ -31,12 +31,15 @@ def _port() -> int:
         return int(listener.getsockname()[1])
 
 
-def _cli(*args: str, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+def _cli(
+    *args: str, env: dict[str, str], input_text: str | None = None
+) -> subprocess.CompletedProcess[str]:
     """Run a finite real CLI command, keeping generated credentials out of logs."""
     return subprocess.run(
         [sys.executable, "-m", "sc_neurocore.cli", *args],
         env=env,
         text=True,
+        input=input_text,
         capture_output=True,
         timeout=30,
     )
@@ -137,12 +140,13 @@ def test_actual_chunked_upload_obeys_received_byte_budget(tmp_path: Path) -> Non
         assert jobs.json()["jobs"] == []
         for route in ("/docs", "/redoc"):
             documentation = client.get(route)
-            assert documentation.status_code == 200
-            assert "'sha256-" in documentation.headers["content-security-policy"]
-            assert (
-                "script-src 'self' https://cdn.jsdelivr.net"
-                in documentation.headers["content-security-policy"]
-            )
+            assert documentation.status_code == 403
+            assert documentation.json() == {"detail": "unclassified_route"}
+            assert "cdn.jsdelivr.net" not in documentation.headers["content-security-policy"]
+            assert "<script" not in documentation.text
+        schema = client.get("/openapi.json")
+        assert schema.status_code == 200
+        assert "/api/studio/auth/login" in schema.json()["paths"]
 
 
 def test_cli_identity_replacement_is_honoured_after_server_restart(tmp_path: Path) -> None:
@@ -243,4 +247,70 @@ def test_preloaded_module_app_serves_the_authenticated_asgi_entry(tmp_path: Path
         response = client.get("/api/studio/jobs", headers={"authorization": f"Bearer {token}"})
         assert response.status_code == 200
         assert response.json()["jobs"] == []
-        assert client.get("/docs").status_code == 200
+        assert client.get("/docs").status_code == 403
+        assert client.get("/redoc").status_code == 403
+        assert client.get("/openapi.json").status_code == 200
+
+
+@pytest.mark.parametrize("initial_failures", [1, 2])
+def test_actual_login_key_churn_cannot_reset_failure_or_lockout_state(
+    tmp_path: Path, initial_failures: int
+) -> None:
+    """Preserve failed and locked accounts across real HTTP registry-saturation attacks."""
+    env = _environment(tmp_path)
+    env["SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_BUCKETS"] = "2"
+    env["SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES"] = "2"
+    bootstrap = _cli(
+        "studio-bootstrap-admin", "--identity-file", str(tmp_path / "identities.json"), env=env
+    )
+    assert bootstrap.returncode == 0
+    created = _cli(
+        "studio-add-browser-user",
+        "--identity-file",
+        str(tmp_path / "identities.json"),
+        "--username",
+        "operator",
+        "--role",
+        "studio.viewer",
+        "--password-stdin",
+        env=env,
+        input_text="browser-password\n",
+    )
+    assert created.returncode == 0
+    token = json.loads(bootstrap.stdout)["bearer_token"]
+    with _server(_port(), env) as client:
+        for index in range(initial_failures):
+            failed = client.post(
+                "/api/studio/auth/login",
+                json={"username": "operator", "password": "wrong-password"},
+            )
+            assert failed.status_code == (401 if index == 0 else 429)
+        filler = client.post(
+            "/api/studio/auth/login",
+            json={"username": "unknown", "password": "wrong-password"},
+        )
+        assert filler.status_code == 401
+        for index in range(32):
+            refused = client.post(
+                "/api/studio/auth/login",
+                json={"username": f"churn-{index}", "password": "wrong-password"},
+            )
+            assert refused.status_code == 429
+            assert refused.json() == {"detail": "browser_login_throttled"}
+            assert int(refused.headers["retry-after"]) >= 1
+        still_failed = client.post(
+            "/api/studio/auth/login",
+            json={"username": "operator", "password": "wrong-password"},
+        )
+        assert still_failed.status_code == 429
+        correct = client.post(
+            "/api/studio/auth/login",
+            json={"username": "operator", "password": "browser-password"},
+        )
+        assert correct.status_code == 429
+        status = client.get(
+            "/api/studio/operator/status", headers={"authorization": f"Bearer {token}"}
+        )
+        assert status.status_code == 200
+        assert status.json()["browser_login"]["active_bucket_count"] == 2
+        assert status.json()["browser_login"]["locked_bucket_count"] == 1

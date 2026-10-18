@@ -165,6 +165,7 @@ def run_studio(args: argparse.Namespace) -> int:
     url, announcement = studio_entry(
         f"http://127.0.0.1:{int(args.port)}",
         studio_frontend_dir(studio_frontend_candidates(studio_app.__file__)),
+        api_docs_enabled=settings.deployment_profile == "development",
     )
     for line in announcement:
         print(line)

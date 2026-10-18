@@ -134,7 +134,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     application.add_exception_handler(RequestValidationError, request_validation_error_handler)
     context = build_studio_api_context(application, runtime_settings)
     settings = context.settings
-    mount_studio_api_docs(application, security_headers=settings.http_security_headers)
+    if settings.deployment_profile == "development":
+        mount_studio_api_docs(application, security_headers=settings.http_security_headers)
     application.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=list(settings.allowed_hosts),
