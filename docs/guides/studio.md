@@ -638,7 +638,7 @@ The production build serves two entry surfaces from the same source tree:
   `sc_neurocore` and expose `./SnnStudioPanel`.
 
 The remote and the SCPN Studio host share `react` and `react-dom` as singleton
-dependencies pinned to `19.2.7`. Keep the object-form share declaration in
+dependencies pinned to `19.3.0`. Keep the object-form share declaration in
 `vite.config.ts`; array shorthand permits an independent React fallback and can
 produce invalid hook calls when the host renders the panel. The corresponding
 schema-A `ui_module` contract is:
