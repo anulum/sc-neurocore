@@ -205,3 +205,9 @@ describe("buildAnalysisJobRequest fail-closed conditions", () => {
     expect(Object.keys(built.value).sort()).toEqual(["analysis", "payload"]);
   });
 });
+
+it("keeps a legacy integer model seed finite without converting it to Number", () => {
+  const input = { ...modelInput, modelParams: { ...modelInput.modelParams, seed: 9223372036854775807n } };
+  expect(validateStudioSimulationCoreNumerics(input)).toBeNull();
+  expect(input.modelParams.seed).toBe(9223372036854775807n);
+});

@@ -5,6 +5,9 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio saved-session persistence helpers
+import { readModelParameters, type ModelParameters } from "./modelInputs";
+import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
+import { parseStudioJson, stringifyStudioJson } from "./studioJson";
 
 /**
  * Keeping the reader's workspaces in the browser, and reading them back.
@@ -44,13 +47,13 @@ export interface StudioSavedSessionInput {
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
   selectedModelName: string;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   dt: number;
   duration: number;
   current: number;
   protocol: string;
   frequencyHz: number;
-  seed: number | null;
+  seed: SimulationSeedInput | null;
   trial: StudioSavedSessionTrial;
 }
 
@@ -176,17 +179,7 @@ function positiveFiniteNumberValue(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-/**
- * Read a seed.
- *
- * @param value - The stored value.
- * @returns The seed, or `null` for no seed. A seed must be a whole number of
- *   zero or more; anything else is read as no seed rather than rounded,
- *   because a rounded seed reproduces a different run.
- */
-function seedValue(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
-}
+
 
 /**
  * Read whether the restore should replay or draw fresh.
@@ -258,6 +251,7 @@ export function studioSavedSessionState(input: StudioSavedSessionInput): Record<
  *
  * @param state - The stored document.
  * @returns The workspace, complete whatever the document was missing.
+ * @throws {Error} When an explicit seed cannot be restored without changing its value.
  */
 export function studioSavedSessionRestoreState(
   state: Record<string, unknown>,
@@ -270,13 +264,13 @@ export function studioSavedSessionRestoreState(
     odeParams: numberRecordValue(state.odeParams),
     odeInit: numberRecordValue(state.odeInit),
     selectedModelName: stringValue(state.selectedModelName, ""),
-    modelParams: numberRecordValue(state.modelParams),
+    modelParams: readModelParameters(state.modelParams),
     dt: nonZeroFiniteNumberValue(state.dt, 0.1),
     duration: nonZeroFiniteNumberValue(state.duration, 100),
     current: finiteNumberValue(state.current, 10),
     protocol: stringValue(state.protocol, "constant"),
     frequencyHz: positiveFiniteNumberValue(state.frequencyHz, 10),
-    seed: seedValue(state.seed),
+    seed: readSimulationSeed(state.seed),
     trial: trialValue(state.trial),
   };
 }
@@ -352,7 +346,7 @@ export function readStudioSessionsResult(
   }
   let parsedSessions: unknown;
   try {
-    parsedSessions = JSON.parse(storedSessions);
+    parsedSessions = parseStudioJson(storedSessions);
   } catch {
     return { sessions: [], status: "corrupt", discarded: 0 };
   }
@@ -401,7 +395,7 @@ export function writeStoredStudioSessions(
     };
   }
   try {
-    storage.setItem(STUDIO_SAVED_SESSIONS_KEY, JSON.stringify(sessions));
+    storage.setItem(STUDIO_SAVED_SESSIONS_KEY, stringifyStudioJson(sessions));
     return { status: "ok", message: "" };
   } catch (error) {
     if (isQuotaError(error)) {

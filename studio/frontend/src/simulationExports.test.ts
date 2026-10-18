@@ -8,8 +8,9 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { SimulateResponse } from "./api/client";
+import type { ReplayPack, SimulateResponse } from "./api/client";
 import {
+  replayPackBlob,
   simulationExportArtefact,
   simulationExportPlan,
   simulationCsvExport,
@@ -188,4 +189,32 @@ describe("Studio simulation export builders", () => {
     })).toBe(true);
     expect(fallbackCount).toBe(1);
   });
+});
+
+it("preserves an exact full-domain seed in the downloaded simulation document", async () => {
+  const exported = simulationJsonExport({ ...result, experiment: {
+    schema_version: "studio.experiment-spec.v1", source: "ode",
+    numerical: { method: "euler", family: "ode", dt: 0.1, dt_source: "request", substeps: 1, time_unit: "ms" },
+    steps: { n_steps: 3, duration_requested_ms: 0.3, duration_effective_ms: 0.3, synchronous_limit: 100 },
+    parameters: { tau: 10 }, initial_state: { v: 0 }, initial_state_source: "request",
+    protocol: { kind: "constant", current: 10 },
+    randomness: { kind: "diffusion-noise", seed: 9223372036854775807n, seed_source: "request",
+      trial: "replay", effective_trial: "replay", generator: "PCG64" },
+    backend: { selected: "python", rejected: [] }, runtime: { python: "controlled" },
+    experiment_sha256: "c".repeat(64), cache: { key: "controlled", cacheable: true },
+  } });
+  expect(await exported.blob.text()).toContain('"seed": 9223372036854775807');
+});
+
+it("retains exact seed digits in replay pack download bytes", async () => {
+  const pack: ReplayPack = {
+    schema_version: "studio.replay-pack.v2", source: "ode",
+    request: { seed: 9223372036854775807n }, experiment: { randomness: { seed: 9223372036854775807n } },
+    experiment_sha256: "a".repeat(64), experiment_identity_sha256: "b".repeat(64),
+    expectation: { spike_count: 0 }, environment: { python: "controlled" },
+    runner: { module: "sc_neurocore.studio.replay_pack", command: "python -m sc_neurocore.studio.replay_pack", entrypoint: "main" },
+  };
+  const blob = replayPackBlob(pack);
+  expect(blob.type).toBe("application/json");
+  expect(await blob.text()).toContain('"seed": 9223372036854775807');
 });

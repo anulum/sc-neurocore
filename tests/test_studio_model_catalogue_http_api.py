@@ -8,10 +8,18 @@
 
 """Focused descriptor-backed model catalogue contracts."""
 
+import sys
+from pathlib import Path
+
+import pytest
+
+from sc_neurocore.studio import model_introspection
+
 from .studio_model_catalogue_support import *
 
 
 def test_api_models_facets_endpoint(client: TestClient) -> None:
+    """Expose catalogue size and the cerebellar family through the public facets route."""
     response = client.get("/api/models/facets")
     assert response.status_code == 200, response.text
     body = response.json()
@@ -20,6 +28,7 @@ def test_api_models_facets_endpoint(client: TestClient) -> None:
 
 
 def test_api_models_endpoint_serves_family(client: TestClient) -> None:
+    """Publish model family, validation method and bounded silicon readiness labels."""
     response = client.get("/api/models")
     assert response.status_code == 200
     models = response.json()
@@ -35,6 +44,7 @@ def test_api_models_endpoint_serves_family(client: TestClient) -> None:
 
 
 def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None:
+    """Offer representable AdEx arithmetic and explain the overflowing Q8.8 refusal."""
     response = client.get("/api/models/AdExNeuron")
     assert response.status_code == 200
     detail = response.json()
@@ -62,6 +72,7 @@ def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None
 
 
 def test_api_expif_detail_serves_source_receipt(client: TestClient) -> None:
+    """Bind ExpIF's served dynamics to its cited source reference receipt."""
     response = client.get("/api/models/ExpIFNeuron")
     assert response.status_code == 200
     detail = response.json()
@@ -74,6 +85,7 @@ def test_api_expif_detail_serves_source_receipt(client: TestClient) -> None:
 def test_api_lapicque_detail_serves_source_receipt_and_h2_boundary(
     client: TestClient,
 ) -> None:
+    """Keep the source receipt and terminal boundary in the served detail."""
     response = client.get("/api/models/LapicqueNeuron")
     assert response.status_code == 200
     detail = response.json()
@@ -83,3 +95,82 @@ def test_api_lapicque_detail_serves_source_receipt_and_h2_boundary(
     assert "first candidate" in detail["dynamics"]["excited"]
     assert detail["silicon_label"] == "H2"
     assert detail["readiness"]["terminal_silicon_tier"] == "H2"
+
+
+def test_model_detail_constructor_kinds_and_derived_state(client: TestClient) -> None:
+    """Keep observable Poisson RNG state out of admissible constructor overrides."""
+    detail = client.get("/api/models/PoissonNeuron").json()
+    assert detail["parameter_kinds"] == {"rate_hz": "float", "dt_ms": "float", "seed": "int"}
+    assert detail["timestep_parameter"] == "dt_ms"
+    assert [row["name"] for row in detail["state_vars"]] == ["rng_state"]
+    integer = client.get("/api/models/IntegerQIFNeuron").json()
+    assert integer["parameter_kinds"]["v_threshold"] == "int"
+    adex = client.get("/api/models/AdExNeuron").json()
+    assert adex["parameter_kinds"]["v"] == "float"
+    assert "dt" not in adex["parameter_kinds"]
+
+
+def test_served_constructor_defaults_execute_poisson_without_derived_overrides(
+    client: TestClient,
+) -> None:
+    """Run and replay the admissible defaults exposed to the real frontend."""
+    detail = client.get("/api/models/PoissonNeuron").json()
+    params = {
+        row["name"]: row["default"]
+        for row in detail["params"] + detail["state_vars"]
+        if row["name"] in detail["parameter_kinds"]
+        and row["name"] not in ("seed", detail["timestep_parameter"])
+    }
+    body = {
+        "model_name": "PoissonNeuron",
+        "params": params,
+        "dt": detail["dt"],
+        "duration": 100,
+        "current": 100,
+        "seed": 123,
+    }
+    first = client.post("/api/models/simulate", json=body)
+    assert first.status_code == 200, first.text
+    replay = client.post("/api/models/simulate", json=body)
+    assert replay.status_code == 200, replay.text
+    assert first.json()["raw"] == replay.json()["raw"]
+    assert first.json()["experiment"] == replay.json()["experiment"]
+    assert "rng_state" in first.json()["raw"]["states"]
+    refused = client.post(
+        "/api/models/simulate",
+        json={**body, "params": {**params, "rng_state": 123}},
+    )
+    assert refused.status_code == 422
+    assert refused.json()["detail"]["field"] == "params.rng_state"
+
+
+def test_descriptor_stays_browsable_when_constructor_module_is_unavailable(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A real failed Python module import disables input admission, not declared state."""
+    with monkeypatch.context() as patch:
+        patch.delitem(model_introspection._class_cache, "PoissonNeuron", raising=False)
+        patch.setitem(sys.modules, "sc_neurocore.neurons.models.poisson", None)
+        response = client.get("/api/models/PoissonNeuron")
+    assert response.status_code == 200, response.text
+    detail = response.json()
+    assert detail["parameter_kinds"] is None
+    assert detail["timestep_parameter"] is None
+    assert detail["state_vars"][0]["name"] == "rng_state"
+
+
+def test_missing_descriptor_still_reports_real_constructor_inputs(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The public introspection fallback retains writable initial state and numeric kinds."""
+    from sc_neurocore.neurons import model_catalogue as corpus
+
+    monkeypatch.setitem(corpus._DESCRIPTOR_PATHS, "AdExNeuron", tmp_path / "absent.toml")
+    response = client.get("/api/models/AdExNeuron")
+    assert response.status_code == 200, response.text
+    detail = response.json()
+    assert detail["metadata_state"] == "unavailable"
+    assert detail["parameter_kinds"]["v"] == "float"
+    assert detail["parameter_kinds"]["tau_w"] == "float"
+    assert detail["timestep_parameter"] == "dt"
+    assert "dt" not in detail["parameter_kinds"]

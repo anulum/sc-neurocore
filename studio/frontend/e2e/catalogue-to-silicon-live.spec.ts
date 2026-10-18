@@ -6,8 +6,10 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — live representative-class catalogue-to-silicon browser contract
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Response } from "@playwright/test";
+import { execFileSync } from "node:child_process";
 
+/** A scientific class and its real catalogue representative. */
 interface ClassRepresentative {
   className: string;
   modelName: string;
@@ -18,6 +20,8 @@ interface ModelContract {
   integration_method: string;
   validation_metric: string;
 }
+
+import type { SimulateResponse, ReplayPack } from "../src/api/client";
 
 const CLASS_REPRESENTATIVES: readonly ClassRepresentative[] = [
   { className: "linear IF", modelName: "PerfectIntegratorNeuron" },
@@ -212,4 +216,190 @@ test("proven-readiness filters and a model link reach the live catalogue", async
   await expect(page.getByText('This link opens "NoSuchNeuron", which this catalogue does not hold.', {
     exact: false,
   })).toBeVisible();
+});
+
+/**
+ * Match an actual model run to the requested control values.
+ *
+ * @param response - The live API response.
+ * @param model - The chosen model.
+ * @param seed - Explicit seed or null for the model default.
+ * @param dt - Timestep in milliseconds.
+ * @returns Whether this is the requested run, including refused responses.
+ */
+function modelInputResponse(response: Response, model: string, seed: number | null, dt: number): boolean {
+  if (new URL(response.url()).pathname !== "/api/models/simulate") return false;
+  const body = response.request().postDataJSON() as Record<string, unknown>;
+  return body.model_name === model && (body.seed ?? null) === seed && body.dt === dt;
+}
+
+test("Poisson constructor controls run, replay, export and preserve observed state", async ({ page }, testInfo) => {
+  await openLiveStudio(page);
+  const initial = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", null, 1));
+  await selectCatalogueModel(page, "PoissonNeuron");
+  const first = await initial;
+  expect(first.ok(), await first.text()).toBe(true);
+  expect(first.request().postDataJSON()).toMatchObject({ params: { rate_hz: 100 } });
+  const firstBody = first.request().postDataJSON() as { params: Record<string, number> };
+  expect(firstBody.params).not.toHaveProperty("rng_state");
+  expect(firstBody.params).not.toHaveProperty("seed");
+  expect(firstBody.params).not.toHaveProperty("dt_ms");
+  await expect(page.getByTestId("read-only-state-rng_state")).toBeVisible();
+  await expect(page.getByTestId("slider-rng_state₀")).toHaveCount(0);
+  await expect(page.getByTestId("slider-seed")).toHaveCount(0);
+  await expect(page.getByTestId("slider-dt_ms")).toHaveCount(0);
+
+  await page.getByTestId("slider-I").fill("100");
+  await page.getByTestId("slider-dt").fill("0.5");
+  const seeded = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", 123, 0.5));
+  await page.getByRole("textbox", { name: "seed", exact: true }).fill("123");
+  const response = await seeded;
+  expect(response.ok(), await response.text()).toBe(true);
+  const original = await response.json() as SimulateResponse;
+  expect(original.dt).toBe(0.5);
+  expect(original.raw?.states).toHaveProperty("rng_state");
+  await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+  const repeated = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", 123, 0.5));
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  const replay = await (await repeated).json() as SimulateResponse;
+  expect(replay.experiment).toEqual(original.experiment);
+  expect(replay.raw).toEqual(original.raw);
+  await page.getByRole("button", { name: "Data table", exact: true }).click();
+  await expect(page.getByRole("table", { name: /^Trace data:/ })).toBeVisible();
+  const download = page.waitForEvent("download");
+  const exported = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/export/replay-pack");
+  await page.getByTestId("export-replay-pack").click();
+  const packed = await exported;
+  expect(packed.ok(), await packed.text()).toBe(true);
+  const pack = await packed.json() as ReplayPack;
+  expect(pack.request).toMatchObject({ seed: 123, dt: 0.5 });
+  const packPath = testInfo.outputPath("poisson-replay.json");
+  await (await download).saveAs(packPath);
+  const environment = { ...process.env };
+  delete environment.PYTHONPATH;
+  const output = execFileSync("python", ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"], {
+    cwd: testInfo.outputDir, env: environment, encoding: "utf-8", timeout: 120_000,
+  });
+  const replayed = JSON.parse(output) as { verdict: string; differences: unknown[] };
+  expect(replayed).toMatchObject({ verdict: "match", differences: [] });
+  const submitted: unknown = response.request().postDataJSON();
+  await testInfo.attach("poisson-experiment", {
+    body: JSON.stringify({ request: submitted, experiment: original.experiment, raw: original.raw }),
+    contentType: "application/json",
+  });
+
+  const fractional = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", 1.5, 0.5));
+  await page.getByRole("textbox", { name: "seed", exact: true }).fill("1.5");
+  expect((await fractional).status()).toBe(422);
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue("1.5");
+
+  const validSeed = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", 123, 0.5));
+  await page.getByRole("textbox", { name: "seed", exact: true }).fill("123");
+  expect((await validSeed).ok()).toBe(true);
+  const fresh = page.waitForResponse((r) => {
+    if (!modelInputResponse(r, "PoissonNeuron", 123, 0.5)) return false;
+    const body = r.request().postDataJSON() as Record<string, unknown>;
+    return body.trial === "fresh";
+  });
+  await page.getByRole("combobox", { name: "trial mode", exact: true }).selectOption("fresh");
+  const freshResponse = await fresh;
+  expect(freshResponse.ok(), await freshResponse.text()).toBe(true);
+  const drawn = await freshResponse.json() as SimulateResponse;
+  expect(drawn.experiment?.randomness).toMatchObject({ seed_source: "drawn", effective_trial: "fresh" });
+
+  const reset = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", null, 1));
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  expect((await reset).ok()).toBe(true);
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue("");
+});
+
+test("legacy parameter seeds migrate through the real seed control", async ({ page, request }) => {
+  await openLiveStudio(page);
+  await selectCatalogueModel(page, "PoissonNeuron");
+  const name = `legacy-seed-${Date.now()}`;
+  const saved = await request.post("/api/project/save", {
+    data: { name, state: {
+      sourceMode: "model", selectedModelName: "PoissonNeuron", modelParams: { seed: 42, rate_hz: 100 },
+      dt: 1, duration: 100, current: 100, protocol: "constant",
+    } },
+  });
+  expect(saved.ok(), await saved.text()).toBe(true);
+  await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
+  const loaded = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", null, 1));
+  await page.getByRole("button", { name: `Open project ${name} revision 1`, exact: true }).click();
+  expect((await loaded).ok()).toBe(true);
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue("42");
+  for (const seed of [123, null]) {
+    const changed = page.waitForResponse((r) => modelInputResponse(r, "PoissonNeuron", seed, 1));
+    await page.getByRole("textbox", { name: "seed", exact: true }).fill(seed === null ? "" : String(seed));
+    const response = await changed;
+    expect(response.ok(), await response.text()).toBe(true);
+    const body = response.request().postDataJSON() as { params: Record<string, number> };
+    expect(body.params).not.toHaveProperty("seed");
+  }
+});
+
+test("integer and writable initial-state controls preserve constructor types", async ({ page }) => {
+  await openLiveStudio(page);
+  await selectCatalogueModel(page, "IntegerQIFNeuron");
+  const integer = page.getByTestId("slider-v_threshold");
+  await expect(integer).toHaveAttribute("step", "1");
+  const run = page.waitForResponse((r) => {
+    if (!modelInputResponse(r, "IntegerQIFNeuron", null, 1)) return false;
+    const body = r.request().postDataJSON() as { params: Record<string, number> };
+    return body.params.v_threshold === 240;
+  });
+  await integer.fill("240");
+  expect((await run).ok()).toBe(true);
+
+  await selectCatalogueModel(page, "AdExNeuron");
+  const writable = page.getByTestId("slider-v₀");
+  await expect(writable).toBeVisible();
+  const defaultState = Number(await writable.inputValue());
+  const step = Number(await writable.getAttribute("step"));
+  const initialState = page.waitForResponse((r) => {
+    if (new URL(r.url()).pathname !== "/api/models/simulate") return false;
+    const body = r.request().postDataJSON() as { model_name: string; params: Record<string, number> };
+    return body.model_name === "AdExNeuron" && body.params.v !== defaultState;
+  });
+  await writable.fill(String(defaultState + 10 * step));
+  const response = await initialState;
+  expect(response.ok(), await response.text()).toBe(true);
+  const result = await response.json() as SimulateResponse;
+  const submitted = response.request().postDataJSON() as { params: Record<string, number> };
+  expect(submitted.params.v).not.toBe(defaultState);
+  expect(result.initial_state?.v).toBe(submitted.params.v);
+});
+
+test("legacy large seed reaches the real progress socket exactly and preserves the model domain refusal", async ({ page, request }) => {
+  await openLiveStudio(page);
+  await selectCatalogueModel(page, "PoissonNeuron");
+  const name = `legacy-large-seed-${Date.now()}`;
+  const saved = await request.post("/api/project/save", {
+    data: `{"name":"${name}","state":{"sourceMode":"model","selectedModelName":"PoissonNeuron","modelParams":{"seed":9223372036854775807,"rate_hz":100},"dt":1,"duration":20,"current":100,"protocol":"constant"}}`,
+    headers: { "Content-Type": "application/json" },
+  });
+  expect(saved.ok(), await saved.text()).toBe(true);
+  await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
+  const refused = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/models/simulate"
+    && (r.request().postData() ?? "").includes('"seed":9223372036854775807'));
+  await page.getByRole("button", { name: `Open project ${name} revision 1`, exact: true }).click();
+  expect((await refused).status()).toBe(422);
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue("9223372036854775807");
+
+  const characterize = page.getByRole("banner").getByRole("button", { name: "Characterize", exact: true });
+  const socket = page.waitForEvent("websocket", { predicate: (ws) => ws.url().endsWith("/ws/progress") });
+  const sent = socket.then((ws) => ws.waitForEvent("framesent"));
+  const received = socket.then((ws) => ws.waitForEvent("framereceived", {
+    predicate: ({ payload }) => String(payload).includes('"type":"error"') || String(payload).includes('"type": "error"'),
+  }));
+  const [sentFrame, receivedFrame] = await Promise.all([
+    sent, received, characterize.click(),
+  ]);
+  expect(String(sentFrame.payload)).toContain('"seed":9223372036854775807');
+  const failure = JSON.parse(String(receivedFrame.payload)) as { type: string; msg: string };
+  expect(failure.type).toBe("error");
+  expect(failure.msg).toBe("constructor: model constructor rejected the supplied parameters");
+  await expect(page.getByRole("alert").filter({ hasText: failure.msg })).toBeVisible();
+  await expect(characterize).toBeEnabled();
 });

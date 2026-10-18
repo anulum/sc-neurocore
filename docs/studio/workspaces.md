@@ -37,6 +37,14 @@ values. Settings that an older build never saved cannot be recovered from that
 revision. An explicitly invalid frequency, seed or trial mode refuses the load
 and leaves the current experiment unchanged rather than silently replacing it.
 
+The seed editor and saved JSON retain every integer from 0 through
+9223372036854775807 exactly, including values beyond JavaScript's safe integer
+range. The same digits reach requests, local session caches, evidence and
+replay-pack exports as numeric JSON tokens. Model-specific limits still apply:
+a large seed accepted for diffusion noise can be refused by a model with a
+smaller generator state. Graph requests retain their 32-bit seed limit.
+Browsers without exact integer JSON support refuse large seeds explicitly.
+
 ## On disk
 
 ```

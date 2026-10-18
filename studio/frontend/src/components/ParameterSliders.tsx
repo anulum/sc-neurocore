@@ -6,8 +6,11 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { modelParameterValue } from "../modelInputs";
+import { seedFromInput } from "../simulationSeed";
 import { formatReading } from "../plotAccessibility";
 import { useStudioStore } from "../stores/studio";
+import { modelParameterKind } from "../modelSelectionStoreState";
 import { qFormatRefusals } from "../modelCompileConfig";
 
 /**
@@ -47,12 +50,18 @@ const PROTOCOLS = [
  *
  * @param value - Its current value.
  * @param range - The model's declared range, when it has one.
+ * @param kind - The constructor numeric kind; integer inputs advance by one.
  * @returns Minimum, maximum and step.
  */
 export function sliderBounds(
   value: number,
   range?: [number, number] | null,
+  kind: "float" | "int" = "float",
 ): [number, number, number] {
+  if (kind === "int") {
+    const [lo, hi] = range && range[0] < range[1] ? range : sliderRange(value);
+    return [Math.ceil(lo), Math.floor(hi), 1];
+  }
   if (range && range[0] < range[1]) {
     const [lo, hi] = range;
     return [lo, hi, (hi - lo) / 200 || 1e-6];
@@ -137,18 +146,26 @@ export default function ParameterSliders() {
     <>
       {sourceMode === "model" && modelDetail && (
         <>
+          {modelDetail.parameter_kinds == null && (
+            <p className="panel-note">Constructor input metadata unavailable; model fields are read-only.</p>
+          )}
           <div className="panel-section">
             <div className="panel-header">
               Parameters ({modelDetail.params.length})
             </div>
-            {modelDetail.params.map((p) => {
+            {modelDetail.params.filter((p) => p.name !== "seed" && p.name !== "dt" && p.name !== modelDetail.timestep_parameter).map((p) => {
+              const kind = modelParameterKind(modelDetail, p.name);
+              if (kind === null) return (
+                <div key={p.name} className="panel-note">{p.name}: {fmt(p.default)} {p.unit} (read-only)</div>
+              );
               const [lo, hi, st] = sliderBounds(
-                modelParams[p.name] ?? p.default,
+                modelParameterValue(modelParams, p.name, p.default),
                 p.range,
+                kind,
               );
               return (
                 <Slider key={p.name} label={p.name}
-                  value={modelParams[p.name] ?? p.default}
+                  value={modelParameterValue(modelParams, p.name, p.default)}
                   onChange={(v) => { setModelParam(p.name, v); }}
                   min={lo} max={hi} step={st}
                   unit={p.unit || undefined}
@@ -161,11 +178,22 @@ export default function ParameterSliders() {
               <div className="panel-header">
                 Initial State ({modelDetail.state_vars.length})
               </div>
-              {modelDetail.state_vars.map((s) => (
-                <Slider key={`init-${s.name}`} label={`${s.name}₀`}
-                  value={modelParams[s.name] ?? s.default}
-                  onChange={(v) => { setModelParam(s.name, v); }} />
-              ))}
+              {modelDetail.state_vars.map((s) => {
+                const kind = modelParameterKind(modelDetail, s.name);
+                if (kind === null) return (
+                  <div key={s.name} className="panel-note" title={s.meaning}
+                    data-testid={`read-only-state-${s.name}`}>
+                    {s.name} ({s.unit || "state"}): read-only state; not submitted as a constructor input
+                  </div>
+                );
+                const [lo, hi, st] = sliderBounds(modelParameterValue(modelParams, s.name, s.default), null, kind);
+                return (
+                  <Slider key={`init-${s.name}`} label={`${s.name}₀`}
+                    value={modelParameterValue(modelParams, s.name, s.default)}
+                    onChange={(v) => { setModelParam(s.name, v); }}
+                    min={lo} max={hi} step={st} unit={s.unit || undefined} title={s.meaning || undefined} />
+                );
+              })}
             </div>
           )}
           <div className="panel-section" data-testid="model-compile-configuration">
@@ -261,9 +289,9 @@ export default function ParameterSliders() {
         </div>
         <div className="slider-row">
           <span className="slider-label">seed</span>
-          <input type="number" min={0} step={1} value={seed ?? ""} placeholder="model default"
+          <input type="text" inputMode="numeric" value={String(seed ?? (sourceMode === "model" ? modelParams.seed : undefined) ?? "")} placeholder="model default"
             aria-label="seed"
-            onChange={(e) => { setSeed(e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value)))); }}
+            onChange={(e) => { setSeed(seedFromInput(e.target.value)); }}
             style={{ flex: 1 }} />
         </div>
       </div>

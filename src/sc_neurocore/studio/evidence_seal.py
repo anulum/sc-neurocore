@@ -23,8 +23,9 @@ The seal here is defined over *values*, not over one runtime's rendering of
 them. A number is written in one normal form that both runtimes reach from the
 same double, keys are ordered by code point rather than by UTF-16 unit, strings
 carry the minimal RFC 8259 escapes, and anything that cannot survive the trip
-intact — a non-finite float, an integer no double holds exactly, an unpaired
-surrogate — is refused instead of silently altered.
+intact — a non-finite float, a non-seed integer no double holds exactly, an
+unpaired surrogate — is refused instead of silently altered. Integer seed
+fields use their original JSON digits, retained by the browser seed codec.
 
 ``studio/frontend/src/evidenceSeal.ts`` is the byte-identical counterpart.
 Neither runtime can perform the other's JSON round trip, so parity is carried
@@ -109,14 +110,25 @@ def canonical_seal_text(value: object) -> str:
     ------
     EvidenceSealError
         If the value is not JSON-shaped, carries a non-finite float, an integer
-        no double holds exactly, or an unpaired surrogate.
+        outside a seed field that no double holds exactly, or an unpaired surrogate.
     """
     parts: list[str] = []
     _encode(value, parts)
     return "".join(parts)
 
 
-def _encode(value: object, parts: list[str]) -> None:
+def _encode(value: object, parts: list[str], *, exact_seed: bool = False) -> None:
+    """Append one value under its numeric field contract.
+
+    Parameters
+    ----------
+    value : object
+        JSON-shaped value to encode.
+    parts : list of str
+        Canonical token accumulator.
+    exact_seed : bool
+        Whether this scalar is an integer seed carried by the exact JSON codec.
+    """
     if value is None:
         parts.append("null")
         return
@@ -124,7 +136,7 @@ def _encode(value: object, parts: list[str]) -> None:
         parts.append("true" if value else "false")
         return
     if isinstance(value, int):
-        parts.append(_canonical_integer(value))
+        parts.append(_canonical_integer(value, exact_seed=exact_seed))
         return
     if isinstance(value, float):
         parts.append(_canonical_float(value))
@@ -142,6 +154,15 @@ def _encode(value: object, parts: list[str]) -> None:
 
 
 def _encode_mapping(value: Mapping[object, object], parts: list[str]) -> None:
+    """Append a mapping with sorted keys and exact integer seed fields.
+
+    Parameters
+    ----------
+    value : Mapping
+        Object whose keys must be strings.
+    parts : list of str
+        Canonical token accumulator.
+    """
     keys: list[str] = []
     for key in value:
         if not isinstance(key, str):
@@ -153,7 +174,7 @@ def _encode_mapping(value: Mapping[object, object], parts: list[str]) -> None:
             parts.append(",")
         parts.append(_canonical_string(key))
         parts.append(":")
-        _encode(value[key], parts)
+        _encode(value[key], parts, exact_seed=key == "seed")
     parts.append("}")
 
 
@@ -176,14 +197,29 @@ def _code_points(value: str) -> tuple[int, ...]:
     return tuple(ord(character) for character in value)
 
 
-def _canonical_integer(value: int) -> str:
-    """Return the token for an integer, refusing one no double holds exactly.
+def _canonical_integer(value: int, *, exact_seed: bool = False) -> str:
+    """Return an exact seed token or a binary64-compatible integer token.
 
-    A JSON number reaches the browser as a double and comes back as one. An
-    integer the conversion changes would be sealed under a value it does not
-    keep, so it is refused; the magnitude alone does not decide this, because a
-    large integer with enough factors of two survives intact.
+    Parameters
+    ----------
+    value : int
+        Integer to encode without rounding.
+    exact_seed : bool
+        Seed fields retain original integer digits through the browser codec.
+        Other integer fields keep the existing binary64 representability guard.
+
+    Returns
+    -------
+    str
+        Original decimal integer digits.
+
+    Raises
+    ------
+    EvidenceSealError
+        If a non-seed integer cannot survive binary64 transport exactly.
     """
+    if exact_seed:
+        return str(value)
     try:
         exact = int(float(value)) == value
     except OverflowError:

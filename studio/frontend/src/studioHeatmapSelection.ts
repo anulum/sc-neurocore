@@ -39,9 +39,10 @@ export async function selectStudioHeatmapPoint(
       || !Object.hasOwn(params, heatmap.param_x) || !Object.hasOwn(params, heatmap.param_y)) {
       throw new Error("Heatmap point requires finite values for two existing parameters.");
     }
-    const selected = { ...params, [heatmap.param_x]: x, [heatmap.param_y]: y };
-    set({ ...compilerConfigurationInvalidatedState(), activeTab: "trace",
-      ...(state.sourceMode === "model" ? { modelParams: selected } : { odeParams: selected }) });
+    const selected = state.sourceMode === "model"
+      ? { modelParams: { ...state.modelParams, [heatmap.param_x]: x, [heatmap.param_y]: y } }
+      : { odeParams: { ...state.odeParams, [heatmap.param_x]: x, [heatmap.param_y]: y } };
+    set({ ...compilerConfigurationInvalidatedState(), activeTab: "trace", ...selected });
     await get().runSimulation();
   } catch (error: unknown) {
     set({ error: error instanceof Error ? error.message : String(error) });

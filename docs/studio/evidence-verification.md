@@ -50,8 +50,12 @@ no verifier could have existed while that was true.
 
 `studio.evidence-seal.v1` encodes values rather than one runtime's rendering of
 them, and the server and the browser implement it identically. Anything that
-would not survive the trip intact, such as a non-finite number or an integer no
-double holds exactly, is refused rather than silently altered.
+would not survive the trip intact, such as a non-finite number or a non-seed
+integer no double holds exactly, is refused rather than silently altered.
+Integer `seed` fields retain their original decimal JSON digits through the
+browser codec, including every simulation seed through 9223372036854775807.
+This extends the supported seed inputs; the normal form and existing seals
+remain unchanged. Model and route seed limits are still checked separately.
 
 **How that identity is checked, and what the check is worth.** Neither runtime
 can perform the other's JSON round trip, so nothing pretends to: the parity is

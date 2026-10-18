@@ -215,3 +215,12 @@ describe("Studio graph request builders", () => {
     });
   });
 });
+
+describe("shared seed to graph seed domain", () => {
+  it.each([0, 42, 4294967295, 0n, 42n, 4294967295n])("retains the exact uint32 graph seed %s", (seed) => {
+    expect(studioGraphRequest([], [], 20, 0.1, seed).seed).toBe(Number(seed));
+  });
+  it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 32, -1n, 2n ** 32n, 9223372036854775807n, "42"])("refuses unsupported graph seed %s without clipping it", (seed) => {
+    expect(() => studioGraphRequest([], [], 20, 0.1, seed)).toThrow("Network graph seed");
+  });
+});

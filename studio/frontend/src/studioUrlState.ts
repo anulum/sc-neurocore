@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio share URL state codec
+import { parseStudioJson, stringifyStudioJson } from "./studioJson";
+import type { ModelParameters } from "./modelInputs";
 
 /**
  * Putting a workspace in a link, and reading one back out of a link.
@@ -34,7 +36,7 @@ export interface StudioShareUrlInput {
   equations: string[];
   threshold: string;
   reset: string;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
   dt: number;
@@ -67,7 +69,7 @@ export interface StudioShareUrlPayload {
   eq: string[];
   th: string;
   rs: string;
-  p: Record<string, number>;
+  p: ModelParameters;
   i: Record<string, number>;
   dt: number;
   d: number;
@@ -147,7 +149,7 @@ export function encodeStudioSharePayload(
   payload: StudioShareUrlPayload,
   encodeBase64: (payload: string) => string = btoa,
 ): string {
-  return encodeBase64(JSON.stringify(payload));
+  return encodeBase64(stringifyStudioJson(payload));
 }
 
 /**
@@ -209,7 +211,7 @@ export function decodeStudioStartupHash(
     return null;
   }
   try {
-    const decodedState: unknown = JSON.parse(decodeBase64(encodedState));
+    const decodedState: unknown = parseStudioJson(decodeBase64(encodedState));
     if (!isRecord(decodedState)) {
       return null;
     }

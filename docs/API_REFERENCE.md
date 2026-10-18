@@ -40892,7 +40892,7 @@ Raises
 ------
 EvidenceSealError
     If the value is not JSON-shaped, carries a non-finite float, an integer
-    no double holds exactly, or an unpaired surrogate.
+    outside a seed field that no double holds exactly, or an unpaired surrogate.
 
 ---
 
@@ -41374,6 +41374,28 @@ Returns
 -------
 str or None
     The reason, or ``None`` when one call of the model lasts one ``dt``.
+
+### Function `model_timestep_parameter(name, contracts)`
+Find the numeric constructor field bound to the run's millisecond timestep.
+
+Parameters
+----------
+name : str
+    Registered model identity.
+contracts : ModelParameterContracts
+    The model's admissible numeric constructor fields.
+
+Returns
+-------
+str or None
+    The dt field when accepted, otherwise the single timebase field declared
+    by the canonical numerical profile, or None for an unbound timestep.
+
+Raises
+------
+ModelInputError
+    The profile is unavailable or invalid, or it declares multiple constructor
+    timebases or a non-millisecond time unit this adapter cannot convert.
 
 ### Function `resolve_model_run_inputs(name, param_overrides, dt)`
 Validate a model-run request against the model's own constructor contract.

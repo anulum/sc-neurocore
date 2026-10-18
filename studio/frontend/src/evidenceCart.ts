@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio session evidence cart (queue + single export)
+import { parseStudioJson, stringifyStudioJson } from "./studioJson";
 
 /**
  * Session-scoped evidence cart for SNN Studio.
@@ -243,7 +244,7 @@ export async function buildEvidenceCartExport(
   // Capture every payload before yielding: hashing and exported bytes must
   // describe the same snapshot, even if a caller later mutates its source.
   const items = cart.items.map((item) => ({ ...item,
-    payload: JSON.parse(canonicalSealText(item.payload)) as unknown,
+    payload: parseStudioJson(canonicalSealText(item.payload)),
   }));
   const entries: EvidenceCartExportEntry[] = [];
   const kindCounts: Record<string, number> = {};
@@ -344,7 +345,7 @@ export async function verifyEvidenceCartExportRoundTrip(
  *   in a terminal and diffs line by line.
  */
 export function evidenceCartExportToBlob(bundle: EvidenceCartExportBundle): Blob {
-  const text = `${JSON.stringify(bundle, null, 2)}\n`;
+  const text = `${stringifyStudioJson(bundle, 2)}\n`;
   return new Blob([text], { type: "application/json" });
 }
 

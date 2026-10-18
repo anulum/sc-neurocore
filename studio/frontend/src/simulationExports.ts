@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio simulation export builders
+import { stringifyStudioJson } from "./studioJson";
 
 /**
  * Turning a run into something a reader can keep.
@@ -133,7 +134,7 @@ export function simulationSvgFilename(result: SimulateResponse): string {
  * @returns The blob.
  */
 export function simulationJsonBlob(result: SimulateResponse): Blob {
-  return new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+  return new Blob([stringifyStudioJson(result, 2)], { type: "application/json" });
 }
 
 /**
@@ -314,7 +315,7 @@ export function replayPackFilename(pack: ReplayPack): string {
  * @returns The blob.
  */
 export function replayPackBlob(pack: ReplayPack): Blob {
-  return new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
+  return new Blob([stringifyStudioJson(pack, 2)], { type: "application/json" });
 }
 
 /**

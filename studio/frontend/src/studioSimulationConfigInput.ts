@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Pure Studio simulation config input extraction
+import type { ModelParameters } from "./modelInputs";
+import type { SimulationSeedInput } from "./simulationSeed";
 
 /**
  * Field-for-field assembly of {@link StudioSimulationConfigInput} from a narrow
@@ -23,7 +25,7 @@ import type {
 export interface StudioSimulationConfigSource {
   sourceMode: StudioSimulationSourceMode;
   selectedModelName: string;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   equations: string[];
   threshold: string;
   reset: string;
@@ -34,7 +36,7 @@ export interface StudioSimulationConfigSource {
   current: number;
   protocol: string;
   frequencyHz: number;
-  seed: number | null;
+  seed: SimulationSeedInput | null;
   trial: "replay" | "fresh";
 }
 

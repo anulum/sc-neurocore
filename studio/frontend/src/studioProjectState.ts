@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio project state snapshot helpers
+import { readModelParameters, type ModelParameters } from "./modelInputs";
+import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
 
 /**
  * Turning the store into a saved workspace, and a saved workspace back.
@@ -67,7 +69,7 @@ export interface StudioProjectSnapshotInput {
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
   selectedModelName: string;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   dt: number;
   duration: number;
   current: number;
@@ -75,7 +77,7 @@ export interface StudioProjectSnapshotInput {
   /** Sine frequency in hertz, including when another protocol is selected. */
   frequencyHz: number;
   /** Explicit simulation seed, or null to use the model/playground default. */
-  seed: number | null;
+  seed: SimulationSeedInput | null;
   /** Whether a reopened run replays its seed or requests a fresh trial. */
   trial: StudioSimulationTrial;
   graphPopulations: PopulationNode[];
@@ -334,13 +336,13 @@ export function studioProjectStateFromLoadResponse(
     odeParams: numberRecordValue(state.odeParams),
     odeInit: numberRecordValue(state.odeInit),
     selectedModelName: stringValue(state.selectedModelName, ""),
-    modelParams: numberRecordValue(state.modelParams),
+    modelParams: readModelParameters(state.modelParams),
     dt: positiveNumberValue(state.dt, 0.1),
     duration: positiveNumberValue(state.duration, 100),
     current: finiteNumberValue(state.current, 10),
     protocol: stringValue(state.protocol, "constant"),
     frequencyHz: simulationFrequencyValue(state.frequencyHz),
-    seed: simulationSeedValue(state.seed),
+    seed: readSimulationSeed(state.seed),
     trial: simulationTrialValue(state.trial),
     graphPopulations: populationArrayValue(state.graphPopulations),
     graphProjections: projectionArrayValue(state.graphProjections),
@@ -379,20 +381,7 @@ function simulationFrequencyValue(value: unknown): number {
   return value;
 }
 
-/**
- * Read an optional simulation seed without rounding it into another trial.
- *
- * @param value - Stored seed; absent and null both request the runtime default.
- * @returns The original integer in the API's seed domain, or null.
- * @throws {Error} When an explicit seed is outside the API's integer domain.
- */
-function simulationSeedValue(value: unknown): number | null {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value >= 2 ** 63) {
-    throw new Error("Saved simulation seed must be a non-negative integer below 2^63");
-  }
-  return value;
-}
+
 
 /**
  * Read a trial mode, retaining fresh trials and refusing unknown modes.

@@ -1094,3 +1094,28 @@ The Studio includes five additional panels beyond the core research workbench:
 - **Integration** — worker-backed full pipeline (graph → compile → synthesise), project save/load. [Details](../studio/integration.md)
 
 Full documentation: [Studio Hub](../studio/index.md)
+
+### Constructor inputs and observed state
+
+The model detail endpoint supplies `parameter_kinds`, a map of numeric
+constructor inputs to `float` or `int`. Studio uses this contract for parameter
+and writable initial-state controls; integer fields advance in whole steps.
+Observed fields such as Poisson's `rng_state` remain visible as read-only state
+and in simulation results. They are never added to constructor overrides.
+If constructor metadata is unavailable, model fields stay read-only.
+
+The timestep uses the run's `dt` field. Model detail identifies its bound
+constructor field as `timestep_parameter`, including profile-declared aliases
+such as Poisson's `dt_ms`. Conflicting alias and run timesteps are refused.
+The Randomness seed control supplies the explicit seed; it does not also add a `params.seed` override. Selecting a
+model or resetting its defaults clears the explicit seed; in replay mode
+this uses the model's default. For older saved projects with a parameter seed,
+the control shows the saved value; editing or clearing it removes the legacy parameter
+binding. Invalid seed values are submitted for the server's normal refusal,
+without rounding or clamping. Model-specific seed domains still apply.
+
+Seeds are edited as decimal text so large integers are never rounded by a
+numeric input. Simulation seeds span 0 through 9223372036854775807; workspace,
+local-session and evidence JSON retain their original integer digits. See
+[workspace simulation settings](../studio/workspaces.md#simulation-settings-in-a-revision)
+for replay and browser compatibility details.

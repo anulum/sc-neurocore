@@ -564,6 +564,53 @@ def _step_duration(name: str, effective_dt: float) -> float:
     return macro
 
 
+def model_timestep_parameter(name: str, contracts: ModelParameterContracts) -> str | None:
+    """Find the numeric constructor field bound to the run's millisecond timestep.
+
+    Parameters
+    ----------
+    name : str
+        Registered model identity.
+    contracts : ModelParameterContracts
+        The model's admissible numeric constructor fields.
+
+    Returns
+    -------
+    str or None
+        The dt field when accepted, otherwise the single timebase field declared
+        by the canonical numerical profile, or None for an unbound timestep.
+
+    Raises
+    ------
+    ModelInputError
+        The profile is unavailable or invalid, or it declares multiple constructor
+        timebases or a non-millisecond time unit this adapter cannot convert.
+    """
+    if "dt" in contracts.overridable:
+        return "dt"
+    try:
+        stem = schema_for_class(name)
+        numerical = resolve_profile(load_schema(stem), stem=stem).numerical
+    except (ModelIdentityError, FileNotFoundError, ValueError, KeyError) as exc:
+        raise ModelInputError(
+            model=name,
+            field="dt",
+            reason="model timestep profile is unavailable or invalid",
+        ) from exc
+    fields = [
+        field.name for field in numerical.timebase_parameters if field.name in contracts.overridable
+    ]
+    if not fields:
+        return None
+    if len(fields) != 1 or numerical.time_unit != "ms":
+        raise ModelInputError(
+            model=name,
+            field="dt",
+            reason="model does not declare one constructor timebase in milliseconds",
+        )
+    return fields[0]
+
+
 def resolve_model_run_inputs(
     name: object,
     param_overrides: Mapping[str, object] | None,
@@ -605,13 +652,23 @@ def resolve_model_run_inputs(
     drive = model_drive_contract(name, cls)
     kwargs = _validated_overrides(name, param_overrides, contracts)
     overrides_applied = tuple(sorted(kwargs))
-    dt_contract = contracts.overridable.get("dt")
+    dt_parameter = model_timestep_parameter(name, contracts)
+    dt_contract = contracts.overridable.get(dt_parameter) if dt_parameter is not None else None
+    if dt_parameter is not None and dt_parameter in kwargs:
+        requested = _positive_finite(name, f"params.{dt_parameter}", kwargs[dt_parameter])
+        if dt is not None and requested != _positive_finite(name, "dt", dt):
+            raise ModelInputError(
+                model=name,
+                field=f"params.{dt_parameter}",
+                reason="timebase parameter contradicts the run dt field",
+            )
+        dt = requested
     fixed_step = _fixed_step_attribute(cls) if dt_contract is None else None
     dt_source: DtSource
     if dt is not None:
         effective_dt = _positive_finite(name, "dt", dt)
         if dt_contract is not None:
-            kwargs["dt"] = _coerce(name, dt_contract, effective_dt)
+            kwargs[dt_contract.name] = _coerce(name, dt_contract, effective_dt)
             dt_source = "override"
         elif fixed_step is not None:
             if effective_dt != fixed_step:

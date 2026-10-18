@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
@@ -152,3 +153,101 @@ def test_invalid_model_signature_metadata_has_an_authored_http_reason(
         }
     }
     assert "caller-text-xyz" not in response.text
+
+
+@pytest.mark.parametrize("dt", [0.25, 1.0, 2.0])
+def test_profile_timebase_matches_direct_poisson_dynamics(client: TestClient, dt: float) -> None:
+    """Bind the declared bin width and check every event/state and observation time."""
+    from sc_neurocore.neurons.models.poisson import PoissonNeuron
+
+    response = client.post(
+        "/api/models/simulate",
+        json={"model_name": "PoissonNeuron", "dt": dt, "duration": 20, "current": 100, "seed": 123},
+    )
+    assert response.status_code == 200, response.text
+    result = response.json()
+    reference = PoissonNeuron(dt_ms=dt, seed=123)
+    states: list[int] = []
+    spikes: list[int] = []
+    for index in range(result["n_steps"]):
+        if reference.step(100):
+            spikes.append(index)
+        states.append(reference.rng_state)
+    assert result["dt"] == dt
+    assert result["n_steps"] == int(20 / dt)
+    assert result["time"] == [(i + 1) * dt for i in range(result["n_steps"])]
+    assert result["raw"]["states"]["rng_state"] == states
+    assert result["raw"]["spike_indices"] == spikes
+    assert result["effective_inputs"]["parameters"]["dt_ms"] == dt
+    assert result["final_state"]["rng_state"] == reference.rng_state
+
+
+@pytest.mark.parametrize("run_dt", [None, 0.5])
+def test_legacy_timebase_override_resolves_one_clock(
+    client: TestClient, run_dt: float | None
+) -> None:
+    """A legacy alias alone or matching the run timestep defines one effective clock."""
+    body: dict[str, object] = {
+        "model_name": "PoissonNeuron",
+        "params": {"dt_ms": 0.5},
+        "duration": 20,
+        "seed": 123,
+    }
+    if run_dt is not None:
+        body["dt"] = run_dt
+    response = client.post("/api/models/simulate", json=body)
+    assert response.status_code == 200, response.text
+    assert response.json()["dt"] == 0.5
+    assert response.json()["n_steps"] == 40
+
+
+def test_conflicting_constructor_timebase_is_refused(client: TestClient) -> None:
+    """Never run a Poisson bin width on a contradictory observation clock."""
+    response = client.post(
+        "/api/models/simulate",
+        json={"model_name": "PoissonNeuron", "params": {"dt_ms": 0.5}, "dt": 1.0},
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"] == {
+        "error": "invalid_model_input",
+        "model": "PoissonNeuron",
+        "field": "params.dt_ms",
+        "reason": "timebase parameter contradicts the run dt field",
+    }
+
+
+def test_non_millisecond_profile_is_refused_before_execution(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A real profile resource with incompatible units cannot mislabel the run clock."""
+    from sc_neurocore.neurons import universal_dsl
+
+    source = (universal_dsl._SCHEMA_DIR / "poisson.toml").read_text()
+    changed = source.replace('time_unit = "ms"', 'time_unit = "s"').replace(
+        'dt_ms = "ms"', 'dt_ms = "s"'
+    )
+    assert changed != source
+    (tmp_path / "poisson.toml").write_text(changed)
+    monkeypatch.setattr(universal_dsl, "_SCHEMA_DIR", tmp_path)
+    response = client.post("/api/models/simulate", json={"model_name": "PoissonNeuron", "dt": 1.0})
+    assert response.status_code == 422
+    assert response.json()["detail"]["field"] == "dt"
+    assert response.json()["detail"]["reason"] == (
+        "model does not declare one constructor timebase in milliseconds"
+    )
+
+
+def test_missing_profile_refuses_an_unverifiable_clock(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A missing canonical clock resource is refused rather than defaulted."""
+    from sc_neurocore.neurons import universal_dsl
+
+    monkeypatch.setattr(universal_dsl, "_SCHEMA_DIR", tmp_path)
+    response = client.post(
+        "/api/models/simulate",
+        json={"model_name": "IntegerQIFNeuron", "dt": 1.0, "duration": 10, "current": 10},
+    )
+    assert response.status_code == 422, response.text
+    assert response.json()["detail"]["field"] == "dt"
+    assert response.json()["detail"]["reason"] == "model timestep profile is unavailable or invalid"

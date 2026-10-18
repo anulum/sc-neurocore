@@ -73,6 +73,12 @@ co-simulation harness. A model's detail (`GET /api/models/{name}`) carries:
 - `numeric_contracts`: the contract of every candidate format, including the
   refused ones and the reason each was refused.
 
+Constructor controls also read `parameter_kinds` (`float` or `int`) and
+`timestep_parameter`, the constructor field bound to the run's `dt` in
+milliseconds. Derived observed state is displayed without being submitted as
+an override. Missing input metadata keeps model fields read-only. These input
+contracts apply before compilation; they do not imply RTL representability.
+
 The RTL configuration panel lists each refused format together with its
 reason.
 

@@ -40,6 +40,7 @@ NOISY = ["dv/dt = -v + I + xi"]
 
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
+    """Run public HTTP requests through a live Studio application lifespan."""
     with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
         yield test_client
 
@@ -49,9 +50,12 @@ def _post(client: TestClient, route: str, body: dict[str, Any]) -> Any:
 
 
 class TestExperimentBlock:
+    """Bind HTTP results and replay caching to the resolved experiment."""
+
     def test_model_response_carries_the_experiment_and_manifest_digest(
         self, client: TestClient
     ) -> None:
+        """Return the model identity and bind its digest to the simulation manifest."""
         response = _post(client, MODEL, {"model_name": ATIF, "duration": 5.0})
         assert response.status_code == 200
         data = response.json()
@@ -66,6 +70,7 @@ class TestExperimentBlock:
     def test_gui_defaults_and_implicit_defaults_hit_the_same_entry(
         self, client: TestClient
     ) -> None:
+        """Resolve explicit UI defaults to the same cached experiment as omission."""
         implicit = _post(client, MODEL, {"model_name": "LapicqueNeuron", "duration": 7.0}).json()
         explicit = _post(
             client,
@@ -90,6 +95,7 @@ class TestExperimentBlock:
     def test_changed_sine_frequency_and_dt_are_different_experiments(
         self, client: TestClient
     ) -> None:
+        """Change experiment identity and traces when frequency or timestep changes."""
         base = {"model_name": ATIF, "duration": 5.0, "protocol": "sine"}
         ten = _post(client, MODEL, {**base, "frequency_hz": 10.0}).json()
         fifty = _post(client, MODEL, {**base, "frequency_hz": 50.0}).json()
@@ -101,6 +107,7 @@ class TestExperimentBlock:
         assert macro["experiment"]["experiment_sha256"] != micro["experiment"]["experiment_sha256"]
 
     def test_protocol_typo_is_rejected_on_both_routes(self, client: TestClient) -> None:
+        """Reject unknown protocols instead of substituting a supported waveform."""
         for route, body in (
             (MODEL, {"model_name": ATIF, "protocol": "sawtooth"}),
             (ODE, {"equations": ["dv/dt = -v"], "protocol": "sawtooth"}),
@@ -110,12 +117,16 @@ class TestExperimentBlock:
             assert any(error["type"] == "literal_error" for error in response.json()["detail"])
 
     def test_unknown_field_is_rejected_on_the_playground_route(self, client: TestClient) -> None:
+        """Reject unrecognized equation inputs rather than discarding them."""
         response = _post(client, ODE, {"equations": ["dv/dt = -v"], "rng": 1})
         assert response.status_code == 422
 
 
 class TestRandomness:
+    """Distinguish deterministic refusal, seeded replay and uncached fresh draws."""
+
     def test_seed_on_deterministic_model_is_experiment_rejected(self, client: TestClient) -> None:
+        """Refuse random seeds when the model declares no stochastic behavior."""
         response = _post(client, MODEL, {"model_name": "AdExNeuron", "seed": 5, "duration": 2.0})
         assert response.status_code == 422
         detail = response.json()["detail"]
@@ -126,6 +137,7 @@ class TestRandomness:
     def test_fresh_trials_are_never_cached_and_replay_by_drawn_seed(
         self, client: TestClient
     ) -> None:
+        """Draw uncached trials and reproduce an earlier Poisson draw from its seed."""
         body = {"model_name": "PoissonNeuron", "duration": 100.0, "trial": "fresh"}
         first = _post(client, MODEL, body).json()
         second = _post(client, MODEL, body).json()
@@ -146,6 +158,7 @@ class TestRandomness:
     def test_playground_noise_replays_by_seed_and_is_fresh_on_request(
         self, client: TestClient
     ) -> None:
+        """Replay diffusion, draw fresh trials and refuse deterministic seeds."""
         seeded = {"equations": NOISY, "duration": 3.0, "seed": 9}
         first = _post(client, ODE, seeded).json()
         assert first["cache"]["hit"] is False
@@ -162,7 +175,10 @@ class TestRandomness:
 
 
 class TestOversizedRuns:
+    """Route oversized simulations to jobs without truncating the requested run."""
+
     def test_synchronous_route_refuses_with_a_job_pointer(self, client: TestClient) -> None:
+        """Refuse oversized synchronous runs with an actionable simulate-job route."""
         response = _post(client, MODEL, {"model_name": "AdExNeuron", "duration": 1e7})
         assert response.status_code == 422
         detail = response.json()["detail"]
@@ -175,6 +191,7 @@ class TestOversizedRuns:
         assert playground.json()["detail"]["execution_mode"] == "job_required"
 
     def test_simulate_job_runs_the_same_contract_asynchronously(self) -> None:
+        """Execute the same experiment contract through a real simulate job."""
         with TestClient(create_app(StudioRuntimeSettings()), base_url="http://127.0.0.1") as client:
             submitted = client.post(
                 "/api/analysis/jobs",
@@ -210,7 +227,10 @@ class TestOversizedRuns:
 
 
 class TestOpenApiContract:
+    """Publish accepted experiment fields and their structured refusal schema."""
+
     def test_experiment_rejection_is_declared(self, client: TestClient) -> None:
+        """Declare seed and trial inputs and structured experiment refusal in OpenAPI."""
         document = client.get("/openapi.json").json()
         components = document["components"]["schemas"]
         assert (
@@ -234,3 +254,41 @@ class TestOpenApiContract:
             "schema"
         ]
         assert schema["$ref"].endswith("/ModelRunErrorResponse")
+
+
+@pytest.mark.parametrize("seed", [9007199254740993, 9223372036854775807])
+def test_full_domain_diffusion_seed_runs_seals_and_exports_through_real_http(
+    client: TestClient, seed: int
+) -> None:
+    """Keep exact input digits through execution, evidence custody, cache and replay export."""
+    body = {"equations": NOISY, "duration": 3.0, "seed": seed}
+    response = client.post(ODE, json=body)
+    assert response.status_code == 200, response.text
+    run = response.json()
+    assert run["experiment"]["randomness"]["seed"] == seed
+    assert isinstance(run["evidence_receipt"], dict)
+    replay = client.post(ODE, json=body)
+    assert replay.status_code == 200, replay.text
+    assert replay.json()["raw"] == run["raw"]
+    exported = client.post("/api/export/replay-pack", json={"mode": "ode", **body})
+    assert exported.status_code == 200, exported.text
+    pack = exported.json()
+    assert pack["request"]["seed"] == seed
+    assert pack["experiment"]["randomness"]["seed"] == seed
+
+
+def test_ode_coefficient_named_seed_keeps_its_float64_domain(client: TestClient) -> None:
+    """A scalar coefficient named seed remains separate from the exact RNG seed."""
+    response = client.post(
+        ODE,
+        json={
+            "equations": ["dv/dt = -v + 0 * seed + xi"],
+            "params": {"seed": 1e20},
+            "duration": 3.0,
+            "seed": 9223372036854775807,
+        },
+    )
+    assert response.status_code == 200, response.text
+    experiment = response.json()["experiment"]
+    assert experiment["parameters"]["seed"] == 1e20
+    assert experiment["randomness"]["seed"] == 9223372036854775807

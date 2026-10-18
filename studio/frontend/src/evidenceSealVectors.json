@@ -211,5 +211,27 @@
         ]
       }
     }
+  ],
+  "seed_vectors": [
+    {
+      "token": "0",
+      "canonical": "{\"seed\":0}",
+      "sha256": "bd0488843468e63c62bb6d1df790f0a83de90616c0906e9dbd3275d3b4100d97"
+    },
+    {
+      "token": "9007199254740993",
+      "canonical": "{\"seed\":9007199254740993}",
+      "sha256": "f84b1e8e1578466e68deac231f520cab6cf71dd0045aaf76b0c9469427d2710e"
+    },
+    {
+      "token": "1152921504606846976",
+      "canonical": "{\"seed\":1152921504606846976}",
+      "sha256": "97c9d0e925e9d3fcc0c281299f07c03bd2740551be4628e58e4fa9f4da524f3b"
+    },
+    {
+      "token": "9223372036854775807",
+      "canonical": "{\"seed\":9223372036854775807}",
+      "sha256": "813b4fcec90ec6ac1b5e99b2d2f53e1ef849c99534f5bb045bce476c92a4d122"
+    }
   ]
 }

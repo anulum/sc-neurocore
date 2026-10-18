@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio simulation request builders
+import type { ModelParameters } from "./modelInputs";
+import type { SimulationSeedInput } from "./simulationSeed";
 
 /**
  * Turning what the panel holds into the body of a request.
@@ -41,7 +43,7 @@ export type StudioSimulationTrial = "replay" | "fresh";
 export interface StudioSimulationConfigInput {
   sourceMode: StudioSimulationSourceMode;
   selectedModelName: string;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   equations: string[];
   threshold: string;
   reset: string;
@@ -54,7 +56,7 @@ export interface StudioSimulationConfigInput {
   /** Sine-protocol frequency; always sent so the effective config is explicit. */
   frequencyHz: number;
   /** Explicit seed of a stochastic run; ``null`` leaves the model or playground default. */
-  seed: number | null;
+  seed: SimulationSeedInput | null;
   /** ``replay`` (cacheable, deterministic) or ``fresh`` (independent stochastic trial). */
   trial: StudioSimulationTrial;
 }

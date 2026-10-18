@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
+import { parseStudioJson, stringifyStudioJson } from "./studioJson";
 
 import {
   EVIDENCE_SEAL_ALGORITHM,
@@ -194,4 +195,27 @@ describe("the hand-written vectors through the browser's own round trip", () => 
       expect(canonicalSealText(afterTheRoundTrip), vector.canonical).toBe(vector.canonical);
     }
   });
+});
+
+describe("exact integer seed seals", () => {
+  it("uses the original integer digits for JSON integer seeds", () => {
+    expect(() => canonicalSealText({ count: 9007199254740993n })).toThrow(EvidenceSealError);
+    expect(canonicalSealText({ seed: 9007199254740993n })).toBe('{"seed":9007199254740993}');
+    expect(canonicalSealText({ seed: 9223372036854775807n })).toBe('{"seed":9223372036854775807}');
+    expect(canonicalSealText({ seed: 9007199254740993n })).not.toBe(canonicalSealText({ seed: 9007199254740992n }));
+  });
+});
+
+it("seals full-domain JSON seed tokens to the same pinned digests as Python", async () => {
+  const vectors = readCorpusText("./evidenceSealVectors.json") as {
+    seed_vectors: { token: string; canonical: string; sha256: string }[];
+  };
+  expect(vectors.seed_vectors).toHaveLength(4);
+  for (const vector of vectors.seed_vectors) {
+    const value = parseStudioJson('{"seed":' + vector.token + '}');
+    expect(canonicalSealText(value)).toBe(vector.canonical);
+    expect(await sealSha256(value)).toBe(vector.sha256);
+    const returned = parseStudioJson(stringifyStudioJson(value));
+    expect(await sealSha256(returned)).toBe(vector.sha256);
+  }
 });

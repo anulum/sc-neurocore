@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Fail-closed analysis-job request policy
+import type { ModelParameters } from "./modelInputs";
 
 /**
  * Turning what the reader filled in into a request the server will accept.
@@ -65,11 +66,11 @@ function isFiniteNumber(value: unknown): value is number {
  * @returns The refusal, or `null` when every value is finite.
  */
 function recordHasNonFinite(
-  values: Record<string, number>,
+  values: ModelParameters,
   error: string,
 ): string | null {
   for (const value of Object.values(values)) {
-    if (!isFiniteNumber(value)) {
+    if (typeof value !== "bigint" && !isFiniteNumber(value)) {
       return error;
     }
   }

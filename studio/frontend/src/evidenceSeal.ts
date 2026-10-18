@@ -20,9 +20,8 @@
  * insignificant whitespace; an integral number written as an integer and any
  * other written in scientific form from its shortest round-tripping digits;
  * minimal RFC 8259 string escapes; and a refusal — never a silent change — for
- * a non-finite number or an unpaired surrogate. The Python half additionally
- * refuses an integer no double holds exactly; this runtime has no such value to
- * refuse, because every number here is already a double.
+ * a non-finite number or an unpaired surrogate. Integer seed fields additionally retain their exact JSON digits as bigint;
+ * other fields retain the existing binary64 contract.
  */
 
 import { at } from "./arrayAt";
@@ -105,10 +104,16 @@ export async function sealSha256(value: unknown): Promise<string> {
  *
  * @param value - The value to encode.
  * @param parts - Accumulator the canonical text is appended to.
+ * @param exactSeed - Whether this scalar is an integer seed from the exact JSON codec.
  */
-function encode(value: unknown, parts: string[]): void {
+function encode(value: unknown, parts: string[], exactSeed = false): void {
   if (value === null) {
     parts.push("null");
+    return;
+  }
+  if (typeof value === "bigint") {
+    if (!exactSeed) throw new EvidenceSealError("bigint is not a sealable JSON value outside a seed field.");
+    parts.push(value.toString());
     return;
   }
   const kind = typeof value;
@@ -160,7 +165,7 @@ function encodeObject(value: Record<string, unknown>, parts: string[]): void {
     }
     parts.push(canonicalString(key));
     parts.push(":");
-    encode(value[key], parts);
+    encode(value[key], parts, key === "seed");
   });
   parts.push("}");
 }

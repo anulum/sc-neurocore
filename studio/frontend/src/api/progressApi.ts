@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio frontend API
+import { parseStudioJson, stringifyStudioJson } from "../studioJson";
 // Studio API: progress endpoints.
 import { progressWebSocketProtocols } from "./http";
 import type {
@@ -25,23 +26,25 @@ import type {
  * @param config - The operation's own configuration, sent on open.
  * @param onMessage - Called for each progress update and for a failure.
  * @returns The open socket, for the caller to close.
+ * @throws {Error} When the request cannot be encoded without losing seed precision.
  */
 export function connectProgress(
   op: string,
   config: Record<string, unknown>,
   onMessage: (msg: ProgressMessage) => void,
 ): WebSocket {
+  const body = stringifyStudioJson({ op, config });
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
   const ws = new WebSocket(
     `${proto}//${window.location.host}/ws/progress`,
     progressWebSocketProtocols(),
   );
   ws.onopen = () => {
-    ws.send(JSON.stringify({ op, config }));
+    ws.send(body);
   };
   ws.onmessage = (e: MessageEvent<string>) => {
     try {
-      onMessage(JSON.parse(e.data) as ProgressMessage);
+      onMessage(parseStudioJson(e.data) as ProgressMessage);
     } catch { /* a frame that does not parse is dropped, not thrown */ }
   };
   ws.onerror = () => {

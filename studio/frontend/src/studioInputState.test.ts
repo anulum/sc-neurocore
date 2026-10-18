@@ -20,6 +20,7 @@ import {
   numberRecordEntryState,
   protocolState,
   resetState,
+  seedState,
   sourceModeState,
   sweepParamState,
   sweepParamYState,
@@ -78,6 +79,7 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
       { default: -65, name: "E_L", unit: "", range: null, biological_range: null, meaning: "" },
     ],
     state_vars: [{ default: -65, name: "v", unit: "", meaning: "" }],
+    parameter_kinds: { tau_m: "float", E_L: "float", v: "float" },
     dynamics: {},
     backends: [],
     reproducibility: { reference_config: "", golden_trace_sha256: "", reproducible: false },
@@ -147,11 +149,24 @@ describe("Studio input state helpers", () => {
       current: 10,
       dt: 0.05,
       duration: 100,
+      seed: null,
       modelParams: {
         E_L: -65,
         tau_m: 10,
         v: -65,
       },
     });
+  });
+});
+
+describe("model seed binding", () => {
+  it.each([null, 0, 17, 1.5, -1])("preserves the seed for authoritative validation (%s)", (seed) => {
+    expect(seedState(seed)).toEqual({ seed });
+    expect(seedState(seed, { rate_hz: 100 })).toEqual({ seed });
+    const legacy = { seed: 42, rate_hz: 100 };
+    const changed = seedState(seed, legacy);
+    expect(changed).toEqual({ seed, modelParams: { rate_hz: 100 } });
+    expect(legacy).toEqual({ seed: 42, rate_hz: 100 });
+    expect(changed.modelParams).not.toBe(legacy);
   });
 });

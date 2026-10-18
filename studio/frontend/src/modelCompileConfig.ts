@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio selected-model compile configuration
+import type { ModelParameters } from "./modelInputs";
 
 import type {
   ModelCompileConfiguration,
@@ -18,7 +19,7 @@ export interface StudioModelCompileInput {
   dt: number;
   integrator: string;
   modelDetail: ModelDetail | null;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   qFormat: string;
   selectedModelName: string;
 }

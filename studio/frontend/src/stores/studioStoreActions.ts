@@ -558,7 +558,7 @@ export function createStudioStoreActions(
   },
   setProtocol: (p) => { set(protocolState(p)); get().autoSimulate(); },
   setFrequencyHz: (frequencyHz) => { set(frequencyHzState(frequencyHz)); get().autoSimulate(); },
-  setSeed: (seed) => { set(seedState(seed)); get().autoSimulate(); },
+  setSeed: (seed) => { set(seedState(seed, get().sourceMode === "model" ? get().modelParams : undefined)); get().autoSimulate(); },
   setTrial: (trial) => { set(trialState(trial)); get().autoSimulate(); },
   setActiveTab: (tab) => { set(activeTabState(tab)); },
   setCandidateDraft: (text) => { set({ candidates: text === "" ? [] : [{ text }] }); },
@@ -1728,11 +1728,16 @@ export function createStudioStoreActions(
   loadSession: (name) => {
     const session = get().savedSessions.find((ss) => ss.name === name);
     if (!session) return;
-    set({
-      ...studioSavedSessionRestoreState(session.state),
-      ...compilerConfigurationInvalidatedState(),
-    });
-    void get().runSimulation();
+    try {
+      const restored = studioSavedSessionRestoreState(session.state);
+      set({
+        ...restored,
+        ...compilerConfigurationInvalidatedState(),
+      });
+      void get().runSimulation();
+    } catch (error) {
+      set(studioProjectFailureState(error, "Failed to restore the saved session"));
+    }
   },
 
   deleteSession: (name) => {

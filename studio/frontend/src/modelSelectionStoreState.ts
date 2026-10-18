@@ -77,6 +77,7 @@ export interface ModelSelectionStartedStatePatch {
 export interface ModelDetailLoadedStatePatch {
   dt: number;
   modelDetail: ModelDetail;
+  seed: null;
   modelParams: Record<string, number>;
   modelIntegrator: string;
   modelQFormat: string;
@@ -191,6 +192,7 @@ export function modelDetailLoadedState(detail: ModelDetail): ModelDetailLoadedSt
   return {
     dt: detail.dt,
     modelDetail: detail,
+    seed: null,
     modelParams: modelDefaultParameters(detail),
     modelIntegrator: compileConfiguration?.default_integrator ?? detail.integration_method,
     // A model with a compile configuration but no representable format gets
@@ -201,19 +203,32 @@ export function modelDetailLoadedState(detail: ModelDetail): ModelDetailLoadedSt
 }
 
 /**
- * A model's parameters and initial state, as one record of numbers.
+ * Find the numeric kind of an editable model constructor field.
  *
- * The two are flattened together because the Studio edits them in one place;
- * the model's contract is what distinguishes them when it matters.
+ * The timestep and seed have their own controls. Missing admission metadata
+ * leaves catalogue fields read-only rather than guessing from state names.
+ *
+ * @param detail - The served model contract.
+ * @param name - The declared parameter or state name.
+ * @returns The numeric kind, or null for a read-only or separately bound field.
+ */
+export function modelParameterKind(detail: ModelDetail, name: string): "float" | "int" | null {
+  if (name === "dt" || name === "seed" || name === detail.timestep_parameter) return null;
+  return detail.parameter_kinds?.[name] ?? null;
+}
+
+/**
+ * Collect only admitted constructor defaults, including writable initial state.
  *
  * @param detail - The model's contract.
- * @returns Name to default value.
+ * @returns Name to default value, excluding the separately bound seed and timestep.
  */
 export function modelDefaultParameters(detail: ModelDetail): Record<string, number> {
   const modelParams: Record<string, number> = {};
-  for (const parameter of detail.params) modelParams[parameter.name] = parameter.default;
-  for (const stateVariable of detail.state_vars) {
-    modelParams[stateVariable.name] = stateVariable.default;
+  for (const field of [...detail.params, ...detail.state_vars]) {
+    if (modelParameterKind(detail, field.name) !== null) {
+      modelParams[field.name] = field.default;
+    }
   }
   return modelParams;
 }

@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio graph request builders
+import type { SimulationSeedInput } from "./simulationSeed";
 
 /**
  * The requests the network canvas sends, and the patches its answers produce.
@@ -204,20 +205,30 @@ export interface StudioGraphFailureStatePatch {
  * @param dt - The integration step, in milliseconds.
  * @param seed - The seed, or `null` to let the server choose.
  * @returns The graph to submit.
+ * @throws {Error} When the shared seed draft is outside the graph API's uint32 domain.
  */
 export function studioGraphRequest(
   populations: PopulationNode[],
   projections: ProjectionEdge[],
   duration: number,
   dt: number,
-  seed: number | null = null,
+  seed: SimulationSeedInput | null = null,
 ): NetworkGraph {
+  let graphSeed: number | undefined;
+  if (seed !== null) {
+    const integer = typeof seed === "bigint" ? seed
+      : typeof seed === "number" && Number.isInteger(seed) ? BigInt(seed) : null;
+    if (integer === null || integer < 0n || integer >= 2n ** 32n) {
+      throw new Error("Network graph seed must be an integer in [0, 2^32)");
+    }
+    graphSeed = Number(integer);
+  }
   return {
     populations,
     projections,
     duration,
     dt,
-    ...(seed === null ? {} : { seed }),
+    ...(graphSeed === undefined ? {} : { seed: graphSeed }),
   };
 }
 

@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import type { ModelDetail, ModelSummary, NeuronTemplate, PresetSummary } from "./api/client";
 import {
   modelDefaultParameters,
+  modelParameterKind,
   modelDetailLoadedState,
   modelSelectionStartedState,
   modelsLoadedState,
@@ -105,6 +106,7 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
       { default: -65, name: "E_L", unit: "", range: null, biological_range: null, meaning: "" },
     ],
     state_vars: [{ default: -65, name: "v", unit: "", meaning: "" }],
+    parameter_kinds: { tau_m: "float", E_L: "float", v: "float" },
     dynamics: {},
     backends: [],
     reproducibility: { reference_config: "", golden_trace_sha256: "", reproducible: false },
@@ -191,6 +193,7 @@ describe("model selection store state helpers", () => {
     expect(modelDetailLoadedState(detail)).toEqual({
       dt: 0.05,
       modelDetail: detail,
+      seed: null,
       modelParams: { E_L: -65, tau_m: 10, v: -65 },
       modelIntegrator: "euler",
       modelQFormat: "Q8.8",
@@ -261,5 +264,36 @@ describe("model selection store state helpers", () => {
       suggested_view: "unknown-panel",
     }).action).toEqual({ activeTab: "trace", kind: "simulate" });
     expect(presetSelection({ equations: [1, "bad"] }).odeState).toBeNull();
+  });
+});
+
+describe("constructor input admission", () => {
+  it("keeps writable state and integer inputs, excluding derived state and separate controls", () => {
+    const detail = modelDetail({
+      params: [
+        { default: 3, name: "count", unit: "", range: null, biological_range: null, meaning: "" },
+        { default: 11, name: "seed", unit: "", range: null, biological_range: null, meaning: "" },
+        { default: 0.1, name: "dt", unit: "", range: null, biological_range: null, meaning: "" },
+      ],
+      state_vars: [
+        { default: -65, name: "v", unit: "", meaning: "" },
+        { default: 11, name: "rng_state", unit: "", meaning: "" },
+      ],
+      parameter_kinds: { count: "int", seed: "int", dt: "float", v: "float" },
+    });
+    expect(modelDefaultParameters(detail)).toEqual({ count: 3, v: -65 });
+    expect(modelParameterKind(detail, "count")).toBe("int");
+    expect(modelParameterKind(detail, "v")).toBe("float");
+    for (const field of ["dt", "seed", "rng_state"]) {
+      expect(modelParameterKind(detail, field)).toBeNull();
+    }
+    expect(modelDetailLoadedState(detail).seed).toBeNull();
+    expect(modelDefaultParameters({ ...detail, timestep_parameter: "count" })).toEqual({ v: -65 });
+  });
+
+  it.each([undefined, null, {}])("leaves fields read-only without admission metadata (%s)", (kinds) => {
+    const detail = modelDetail({ parameter_kinds: kinds });
+    expect(modelDefaultParameters(detail)).toEqual({});
+    expect(modelParameterKind(detail, "v")).toBeNull();
   });
 });

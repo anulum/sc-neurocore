@@ -117,3 +117,11 @@ describe("whether a result is current", () => {
     expect(studioResultIsCurrent(null, studioExperimentKey(config()))).toBe(false);
   });
 });
+
+it("separates adjacent large seeds and equates safe numeric and bigint seed encodings", () => {
+  const first = studioExperimentKey(config({ seed: 9007199254740993n }));
+  const second = studioExperimentKey(config({ seed: 9007199254740992n }));
+  expect(first).not.toBe(second);
+  expect(first).toContain('"seed":9007199254740993');
+  expect(studioExperimentKey(config({ seed: 42n }))).toBe(studioExperimentKey(config({ seed: 42 })));
+});

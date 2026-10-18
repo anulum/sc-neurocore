@@ -125,7 +125,7 @@ for (const source of ["model", "ode"] as const) {
       await page.getByRole("button", { name: `Open project ${name}-input revision 1`, exact: true }).click();
     }
     await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("37");
-    await expect(page.getByRole("spinbutton", { name: "seed", exact: true })).toHaveValue(seed === null ? "" : String(seed));
+    await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue(seed === null ? "" : String(seed));
     await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
     const originalRun = page.waitForResponse((response) =>
       experimentResponse(response, simulationPath, 37, seed, "replay"));
@@ -148,7 +148,7 @@ for (const source of ["model", "ode"] as const) {
     const interveningRun = page.waitForResponse((response) =>
       experimentResponse(response, simulationPath, 11, seed === null ? null : 7, "fresh"));
     await page.getByTestId("slider-f (Hz)").fill("11");
-    if (seed !== null) await page.getByRole("spinbutton", { name: "seed", exact: true }).fill("7");
+    if (seed !== null) await page.getByRole("textbox", { name: "seed", exact: true }).fill("7");
     await page.getByRole("combobox", { name: "trial mode", exact: true }).selectOption("fresh");
     await interveningRun;
     await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
@@ -157,7 +157,7 @@ for (const source of ["model", "ode"] as const) {
     await page.getByRole("button", { name: `Open project ${name} revision 1`, exact: true }).click();
     const reopened = await (await restoredRun).json() as SimulateResponse;
     await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("37");
-    await expect(page.getByRole("spinbutton", { name: "seed", exact: true })).toHaveValue(seed === null ? "" : String(seed));
+    await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue(seed === null ? "" : String(seed));
     await expect(page.getByRole("combobox", { name: "trial mode", exact: true })).toHaveValue("replay");
     expect(reopened.experiment).toEqual(original.experiment);
     expect(reopened.raw).toEqual(original.raw);
@@ -220,7 +220,7 @@ test("fresh and legacy project settings reopen explicitly and malformed revision
   await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
   await page.getByRole("button", { name: `Open project ${name}-legacy revision 1`, exact: true }).click();
   await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("10");
-  await expect(page.getByRole("spinbutton", { name: "seed", exact: true })).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue("");
   await expect(page.getByRole("combobox", { name: "trial mode", exact: true })).toHaveValue("replay");
   await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
 
@@ -242,7 +242,7 @@ test("fresh and legacy project settings reopen explicitly and malformed revision
     await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible();
     await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("10");
     await expect(page.getByTestId("slider-I")).toHaveValue("10");
-    await expect(page.getByRole("spinbutton", { name: "seed", exact: true })).toHaveValue("");
+    await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue("");
     await expect(page.getByRole("combobox", { name: "trial mode", exact: true })).toHaveValue("replay");
   }
 });
@@ -381,4 +381,112 @@ test("a downloaded pack replays in a separate interpreter and reports tampering"
   }
   expect(status).toBe(1);
   expect(output).toContain("verdict: mismatch");
+});
+
+/**
+ * Match a run by its original numeric seed token, without parsing through Number.
+ *
+ * @param response - The live simulation response.
+ * @param token - Exact decimal seed digits expected on the wire.
+ * @returns Whether the real equation request carries those original digits.
+ */
+function exactSeedResponse(response: Response, token: string): boolean {
+  return new URL(response.url()).pathname === "/api/simulate"
+    && (response.request().postData() ?? "").includes(`"seed":${token}`);
+}
+
+test("a full-domain seed survives serialized project custody, editing, local sessions and independent replay", async ({ page, request }, testInfo) => {
+  const token = "9223372036854775807";
+  const alternate = "9007199254740993";
+  const name = `exact-seed-${Date.now()}`;
+  const raw = JSON.stringify({ name: `${name}-input`, state: {
+    ...DIFFUSION_WORKSPACE, seed: "__exact_seed__", modelParams: { seed: "__legacy_seed__" },
+  } }).replace('"__exact_seed__"', token).replace('"__legacy_seed__"', alternate);
+  const provisioned = await request.post("/api/project/save", {
+    data: raw, headers: { "Content-Type": "application/json" },
+  });
+  expect(provisioned.ok(), await provisioned.text()).toBe(true);
+  await page.goto("./");
+  await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
+  const initial = page.waitForResponse((r) => exactSeedResponse(r, token));
+  await page.getByRole("button", { name: `Open project ${name}-input revision 1`, exact: true }).click();
+  const first = await initial;
+  expect(first.ok(), await first.text()).toBe(true);
+  const original = await first.json() as SimulateResponse;
+  const seed = page.getByRole("textbox", { name: "seed", exact: true });
+  await expect(seed).toHaveValue(token);
+
+  const changed = page.waitForResponse((r) => exactSeedResponse(r, alternate));
+  await seed.fill(alternate);
+  const changedResponse = await changed;
+  expect(changedResponse.ok(), await changedResponse.text()).toBe(true);
+  expect((await changedResponse.json() as SimulateResponse).raw).not.toEqual(original.raw);
+  const restored = page.waitForResponse((r) => exactSeedResponse(r, token));
+  await seed.fill(token);
+  expect((await (await restored).json() as SimulateResponse).raw).toEqual(original.raw);
+
+  await page.getByLabel("Save project", { exact: true }).click();
+  const saveDialog = page.getByRole("dialog", { name: "Save project" });
+  await saveDialog.getByLabel("Project name").fill(name);
+  const saved = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/project/save");
+  await saveDialog.getByRole("button", { name: "Save", exact: true }).click();
+  const savedResponse = await saved;
+  expect(savedResponse.ok(), await savedResponse.text()).toBe(true);
+  expect(savedResponse.request().postData()).toContain(`"seed":${token}`);
+  expect(savedResponse.request().postData()).toContain(`"seed":${alternate}`);
+  const stored = await request.get(`/api/project/load/${name}`);
+  const storedText = await stored.text();
+  expect(storedText).toMatch(/"seed"\s*:\s*9223372036854775807/);
+  expect(storedText).toMatch(/"seed"\s*:\s*9007199254740993/);
+
+  await page.getByLabel("Save session", { exact: true }).click();
+  const sessionDialog = page.getByRole("dialog", { name: "Save session" });
+  await sessionDialog.getByLabel("Session name").fill(name);
+  await sessionDialog.getByRole("button", { name: "Save", exact: true }).click();
+  const cached = await page.evaluate(() => localStorage.getItem("sc-studio-sessions"));
+  expect(cached).toContain(`"seed":${token}`);
+  expect(cached).toContain(`"seed":${alternate}`);
+  const other = page.waitForResponse((r) => exactSeedResponse(r, alternate));
+  await seed.fill(alternate);
+  await other;
+  const reopened = page.waitForResponse((r) => exactSeedResponse(r, token));
+  await page.getByRole("button", { name: `Open session ${name}`, exact: true }).click();
+  expect((await (await reopened).json() as SimulateResponse).raw).toEqual(original.raw);
+  await expect(seed).toHaveValue(token);
+
+  const packed = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/export/replay-pack");
+  const download = page.waitForEvent("download");
+  await page.getByTestId("export-replay-pack").click();
+  const packResponse = await packed;
+  expect(packResponse.ok(), await packResponse.text()).toBe(true);
+  const path = testInfo.outputPath("exact-seed-replay.json");
+  await (await download).saveAs(path);
+  expect(readFileSync(path, "utf8")).toMatch(/"seed"\s*:\s*9223372036854775807/);
+  const environment = { ...process.env };
+  delete environment.PYTHONPATH;
+  const result = JSON.parse(execFileSync("python", ["-m", "sc_neurocore.studio.replay_pack", path, "--json"], {
+    cwd: testInfo.outputDir, env: environment, encoding: "utf8", timeout: 120_000,
+  })) as ReplayOutcome;
+  expect(result).toMatchObject({ verdict: "match", differences: [] });
+
+  await page.reload();
+  const afterReload = page.waitForResponse((r) => exactSeedResponse(r, token));
+  await page.getByRole("button", { name: `Open session ${name}`, exact: true }).click();
+  expect((await (await afterReload).json() as SimulateResponse).raw).toEqual(original.raw);
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue(token);
+
+  // An explicit malformed local seed must not replace the currently replayed experiment.
+  await page.evaluate(() => {
+    const cached = localStorage.getItem("sc-studio-sessions");
+    if (!cached) throw new Error("The saved session cache is missing.");
+    localStorage.setItem("sc-studio-sessions",
+      cached.slice(0, -1) + ',{"name":"invalid-exact-seed","state":{"seed":1.5}}]');
+  });
+  await page.reload();
+  const validAgain = page.waitForResponse((r) => exactSeedResponse(r, token));
+  await page.getByRole("button", { name: `Open session ${name}`, exact: true }).click();
+  await validAgain;
+  await page.getByRole("button", { name: "Open session invalid-exact-seed", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Saved simulation seed must be a non-negative integer below 2^63" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "seed", exact: true })).toHaveValue(token);
 });

@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Pure UI/store analysis selection resolver
+import type { ModelParameters } from "./modelInputs";
 
 /**
  * Turning what the panel has selected into a typed analysis selection.
@@ -36,7 +37,7 @@ export type StudioAnalysisJobSelectionResult =
 export interface StudioAnalysisJobSelectionInput {
   analysis: AnalysisJobKind;
   sourceMode: StudioSimulationSourceMode;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   odeParams: Record<string, number>;
   sweepParam: string;
   sweepParamY: string;
@@ -70,9 +71,9 @@ function isFiniteNumber(value: unknown): value is number {
  */
 function activeParams(
   sourceMode: StudioSimulationSourceMode,
-  modelParams: Record<string, number>,
+  modelParams: ModelParameters,
   odeParams: Record<string, number>,
-): Record<string, number> {
+): ModelParameters {
   return sourceMode === "model" ? modelParams : odeParams;
 }
 
@@ -90,7 +91,7 @@ function activeParams(
  * @returns The trimmed name and its value, or the refusal.
  */
 function resolveNamedParam(
-  params: Record<string, number>,
+  params: ModelParameters,
   rawName: string,
   errors: { blank: string; missing: string; nonFinite: string },
 ): { ok: true; name: string; value: number } | { ok: false; error: string } {

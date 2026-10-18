@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio Zustand store
+import type { ModelParameters } from "../modelInputs";
+import type { SimulationSeedInput } from "../simulationSeed";
 // Studio store state shape and view-mode types.
 
 import type { StudioGraphHistory } from "../studioGraphHistory";
@@ -67,7 +69,7 @@ export interface StudioState {
   models: ModelSummary[];
   selectedModelName: string;
   modelDetail: ModelDetail | null;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   modelIntegrator: string;
   modelQFormat: string;
   capabilities: StudioCapability[];
@@ -110,7 +112,7 @@ export interface StudioState {
   current: number;
   protocol: string;
   frequencyHz: number;
-  seed: number | null;
+  seed: SimulationSeedInput | null;
   trial: StudioTrialMode;
   result: SimulateResponse | null;
   fiResult: FICurveResponse | null;
@@ -288,7 +290,7 @@ export interface StudioState {
   setCurrent: (c: number) => void;
   setProtocol: (p: string) => void;
   setFrequencyHz: (frequencyHz: number) => void;
-  setSeed: (seed: number | null) => void;
+  setSeed: (seed: SimulationSeedInput | null) => void;
   setTrial: (trial: StudioTrialMode) => void;
   setActiveTab: (tab: ViewTab) => void;
   /** Replace the workspace's candidate draft; an empty draft removes it. */

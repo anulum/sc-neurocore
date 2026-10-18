@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 913
+expected_file_count = 918
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3745,3 +3745,23 @@ rationale = "Classify native pytest collection gaps with explicit optional impor
 [[file]]
 path = "tests/test_tools/test_test_inventory_audit.py"
 rationale = "Exercise the inventory command against real reference-module collection and reject guard mutations that conceal missing tests."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_run_contract.py"
+rationale = "Bind admitted constructor parameters and canonical timebases without substituting rejected model inputs."
+
+[[file]]
+path = "tests/test_studio_evidence_seal.py"
+rationale = "Keep canonical evidence bytes, exact integer seed vectors and transport refusals identical in Python and the browser."
+
+[[file]]
+path = "tests/test_studio_experiment_http.py"
+rationale = "Exercise public experiment identity, seeded and fresh execution, cache behavior, sealed full-domain seeds and replay exports."
+
+[[file]]
+path = "tests/test_studio_model_catalogue_http_api.py"
+rationale = "Exercise live constructor metadata, declared integer inputs and descriptor browsing when runtime imports are unavailable."
+
+[[file]]
+path = "tests/test_studio_model_run_contract_routes.py"
+rationale = "Verify authored input refusals and exact timebase propagation through simulation, comparison and export routes."

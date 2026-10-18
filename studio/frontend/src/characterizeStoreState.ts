@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio characterisation store state helpers
+import type { ModelParameters } from "./modelInputs";
 
 /**
  * Characterisation's state, and the guards that decide what a result is.
@@ -22,7 +23,7 @@ export interface CharacterizeRequestInput {
   current: number;
   dt: number;
   duration: number;
-  modelParams: Record<string, number>;
+  modelParams: ModelParameters;
   selectedModelName: string;
 }
 

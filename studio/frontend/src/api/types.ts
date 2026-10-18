@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio frontend API
+import type { ModelParameters } from "../modelInputs";
+import type { SimulationSeed } from "../simulationSeed";
 // Shared Studio API DTO contracts.
 
 import type { EventTrainingData } from "../studioEventTrainingData";
@@ -178,7 +180,7 @@ export type StudioTrialMode = "replay" | "fresh";
  */
 export interface SimulationRandomness {
   kind: "none" | "seeded-model" | "diffusion-noise";
-  seed: number | null;
+  seed: SimulationSeed | null;
   seed_source: "none" | "request" | "model-default" | "playground-default" | "drawn";
   trial: StudioTrialMode;
   effective_trial: StudioTrialMode;
@@ -202,7 +204,7 @@ export interface SimulationExperiment {
   equations?: { equations: string[]; threshold: string | null; reset: string | null; variables: string[]; equation_sha256: string };
   numerical: { method: string; family: string; dt: number; dt_source: string; substeps: number; time_unit: string };
   steps: { n_steps: number; duration_requested_ms: number; duration_effective_ms: number; synchronous_limit: number };
-  parameters: Record<string, number | null>;
+  parameters: Record<string, number | bigint | null>;
   initial_state: Record<string, number | null>;
   initial_state_source: string;
   protocol: Record<string, string | number | null>;
@@ -532,6 +534,10 @@ export interface ModelDetail extends ModelSummary {
   docstring: string; display_name: string;
   state_vars: ModelStateVariable[];
   params: ModelParameter[];
+  /** Numeric constructor inputs; absent or null when editability is unavailable. */
+  parameter_kinds?: Record<string, "float" | "int"> | null;
+  /** Constructor field controlled by the run timestep, including declared aliases. */
+  timestep_parameter?: string | null;
   dynamics: Record<string, string>;
   backends: ModelBackendSupport[];
   readiness?: ModelReadiness;
@@ -1650,7 +1656,7 @@ export interface ModelCompileSourcePayload {
   dt: number;
   integrator: string;
   model_name: string;
-  params: Record<string, number>;
+  params: ModelParameters;
   q_format: string;
   schema_name: string;
   schema_sha256: string;
@@ -1659,7 +1665,7 @@ export interface ModelCompileSourcePayload {
 /** What to compile: the model, its parameters, and the arithmetic to compile it in. */
 export interface ModelCompileRequest {
   model_name: string;
-  params: Record<string, number>;
+  params: ModelParameters;
   dt: number;
   integrator: string;
   q_format: string;

@@ -242,3 +242,17 @@ describe("receipt identity in the cart", () => {
     expect(evidenceCartReceiptId({ evidence_receipt: { receipt_id: 7 } })).toBeNull();
   });
 });
+
+it("keeps adjacent large seed evidence distinct through queue custody, sealing and the downloadable bundle", async () => {
+  const payload = { randomness: { seed: 9007199254740993n }, states: { v: [0, 1] } };
+  const queued = enqueueEvidenceCartArtefact(emptyEvidenceCart(), simulationCartDraft("diffusion", payload));
+  expect(queued.ok).toBe(true);
+  if (!queued.ok) throw new Error(queued.error);
+  const bundle = await buildEvidenceCartExport(queued.cart);
+  if ("error" in bundle) throw new Error(bundle.error);
+  const text = await evidenceCartExportToBlob(bundle).text();
+  expect(text).toContain('"seed": 9007199254740993');
+  expect(await sha256HexOfCanonicalJson(payload)).not.toBe(await sha256HexOfCanonicalJson({
+    ...payload, randomness: { seed: 9007199254740992n },
+  }));
+});

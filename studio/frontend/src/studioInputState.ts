@@ -5,6 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio simulation input state helpers
+import type { ModelParameters } from "./modelInputs";
+import type { SimulationSeedInput } from "./simulationSeed";
 
 /**
  * The state patches that change what an experiment *is*, before it is run.
@@ -53,7 +55,7 @@ export interface StudioResetStatePatch {
  * `odeInit` or `odeParams` — and the builder's own parameter is what narrows
  * it to those three.
  */
-export type StudioNumberRecordPatch = Record<string, Record<string, number>>;
+export type StudioNumberRecordPatch = Record<string, ModelParameters>;
 
 /** The integration timestep changed. */
 export interface StudioDtStatePatch {
@@ -117,7 +119,8 @@ export interface StudioModelDefaultsStatePatch {
   current: 10;
   dt: number;
   duration: 100;
-  modelParams: Record<string, number>;
+  seed: null;
+  modelParams: ModelParameters;
 }
 
 /**
@@ -174,7 +177,7 @@ export function resetState(reset: string): StudioResetStatePatch {
  */
 export function numberRecordEntryState(
   field: "modelParams" | "odeInit" | "odeParams",
-  current: Record<string, number>,
+  current: ModelParameters,
   key: string,
   value: number,
 ): StudioNumberRecordPatch {
@@ -228,7 +231,8 @@ export interface StudioFrequencyHzStatePatch {
 
 /** The random seed changed, or was cleared to let the server draw one. */
 export interface StudioSeedStatePatch {
-  seed: number | null;
+  seed: SimulationSeedInput | null;
+  modelParams?: ModelParameters;
 }
 
 /** Whether a stochastic run replays its seed or draws a new one. */
@@ -249,11 +253,17 @@ export function frequencyHzState(frequencyHz: number): StudioFrequencyHzStatePat
 /**
  * Set or clear the random seed.
  *
- * @param seed - The seed, or `null` to let the server draw one.
+ * @param seed - The explicit seed, or `null` to use the model default in replay mode.
+ * @param modelParams - Model overrides, when editing a catalogue experiment.
  * @returns The patch.
  */
-export function seedState(seed: number | null): StudioSeedStatePatch {
-  return { seed };
+export function seedState(
+  seed: SimulationSeedInput | null, modelParams?: ModelParameters,
+): StudioSeedStatePatch {
+  if (!modelParams || !Object.hasOwn(modelParams, "seed")) return { seed };
+  const parameters = { ...modelParams };
+  delete parameters.seed;
+  return { seed, modelParams: parameters };
 }
 
 /**
@@ -342,6 +352,7 @@ export function modelDefaultsState(modelDetail: ModelDetail): StudioModelDefault
     current: 10,
     dt: modelDetail.dt,
     duration: 100,
+    seed: null,
     modelParams: modelDefaultParameters(modelDetail),
   };
 }

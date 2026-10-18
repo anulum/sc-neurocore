@@ -145,3 +145,12 @@ describe("model links", () => {
     expect(decodeStudioStartupHash("#model=AdExNeuron")).toBeNull();
   });
 });
+
+it("encodes a legacy full-domain parameter seed without expanding share-link restore authority", () => {
+  const url = buildStudioShareUrl({ ...input, modelParams: { tau: 10, seed: 9223372036854775807n } },
+    { origin: "https://studio.example", pathname: "/workbench" });
+  expect(atob(new URL(url).hash.slice(1))).toContain('"seed":9223372036854775807');
+  expect(decodeStudioStartupHash(new URL(url).hash)).toEqual({
+    selectedModelName: "lif", current: 10, duration: 100, protocol: "constant",
+  });
+});

@@ -53,15 +53,19 @@ _CORPUS = Path(__file__).resolve().parents[1] / "studio/frontend/src/evidenceSea
 
 
 class TestCanonicalForm:
+    """Canonical numeric, string and ordering rules shared by both runtimes."""
+
     def test_an_integral_float_and_its_integer_seal_alike(self) -> None:
         """The browser returns 1.0 as 1; both must mean the same run."""
         assert canonical_seal_text(1.0) == canonical_seal_text(1) == "1"
         assert canonical_seal_text(-70.0) == "-70"
 
     def test_negative_zero_is_zero(self) -> None:
+        """Normalize both signs of zero to the same canonical integer token."""
         assert canonical_seal_text(-0.0) == canonical_seal_text(0.0) == "0"
 
     def test_a_fraction_keeps_every_digit_that_round_trips(self) -> None:
+        """Retain the shortest decimal that reconstructs the same binary64 value."""
         assert canonical_seal_text(0.30000000000000004) == "3.0000000000000004e-1"
         assert canonical_seal_text(0.1) == "1e-1"
 
@@ -74,22 +78,27 @@ class TestCanonicalForm:
         assert canonical_seal_text(1e21) == "1" + "0" * 21
 
     def test_object_keys_are_ordered_by_code_point(self) -> None:
+        """Order supplementary Unicode keys by code point across both runtimes."""
         text = canonical_seal_text({"z": 1, "a": 2, "\U0001f600": 3, "￿": 4})
 
         assert text.index('"a"') < text.index('"z"') < text.index('"￿"')
         assert text.index('"￿"') < text.index('"\U0001f600"')
 
     def test_there_is_no_insignificant_whitespace(self) -> None:
+        """Exclude formatting whitespace from a nested object's canonical text."""
         assert canonical_seal_text({"a": [1, 2], "b": {"c": None}}) == '{"a":[1,2],"b":{"c":null}}'
 
     def test_strings_carry_the_minimal_escapes(self) -> None:
+        """Use JSON short escapes and lowercase control-code escapes."""
         assert canonical_seal_text('a"b\\c\n\t') == '"a\\"b\\\\c\\n\\t"'
         assert canonical_seal_text("\x01") == '"\\u0001"'
 
     def test_non_ascii_text_is_written_literally(self) -> None:
+        """Keep Unicode characters intact instead of adding runtime-specific escapes."""
         assert canonical_seal_text("ä☃") == '"ä☃"'
 
     def test_the_digest_is_of_the_canonical_text(self) -> None:
+        """Hash canonical UTF-8 bytes with SHA-256 under the declared seal version."""
         import hashlib
 
         value = {"dt": 1.0, "spikes": [0.5]}
@@ -159,6 +168,7 @@ class TestTheRandomCorpus:
             assert canonical_seal_text(vector["value"]) == vector["canonical"], vector
 
     def test_the_committed_file_is_what_the_generator_writes(self) -> None:
+        """Require the random corpus to match its deterministic generator exactly."""
         assert _CORPUS.read_text(encoding="utf-8") == render_corpus(build_corpus())
 
     def test_the_draw_reaches_the_whole_exponent_range(self) -> None:
@@ -177,8 +187,11 @@ class TestTheRandomCorpus:
 
 
 class TestRefusals:
+    """Reject inputs whose original values cannot survive the declared transport."""
+
     @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
     def test_a_non_finite_number_is_refused(self, value: float) -> None:
+        """Refuse infinities and NaN instead of replacing them with JSON null."""
         with pytest.raises(EvidenceSealError, match="sealable JSON number"):
             canonical_seal_text(value)
 
@@ -188,6 +201,7 @@ class TestRefusals:
             canonical_seal_text(2**53 + 1)
 
     def test_an_integer_beyond_every_double_is_refused(self) -> None:
+        """Refuse non-seed integers that overflow finite binary64 conversion."""
         with pytest.raises(EvidenceSealError, match="not carried exactly"):
             canonical_seal_text(10**400)
 
@@ -196,20 +210,25 @@ class TestRefusals:
         assert canonical_seal_text(10**20) == "1" + "0" * 20
 
     def test_an_unpaired_surrogate_is_refused(self) -> None:
+        """Refuse text that cannot travel as valid UTF-8 without replacement."""
         with pytest.raises(EvidenceSealError, match="unpaired surrogate"):
             canonical_seal_text("\ud800")
 
     def test_a_non_string_object_key_is_refused(self) -> None:
+        """Refuse implicit conversion of object keys into a different payload."""
         with pytest.raises(EvidenceSealError, match="object key must be a string"):
             canonical_seal_text({1: "one"})
 
     @pytest.mark.parametrize("value", [b"bytes", bytearray(b"bytes"), {1, 2}, object()])
     def test_a_value_that_is_not_json_shaped_is_refused(self, value: object) -> None:
+        """Reject binary buffers, sets and opaque objects as evidence subjects."""
         with pytest.raises(EvidenceSealError, match="not a sealable JSON value"):
             canonical_seal_text(value)
 
 
 class TestSharedVectors:
+    """Check the browser's committed vectors against the Python implementation."""
+
     def test_the_committed_vectors_match_this_implementation(self) -> None:
         """The file the browser half reads is regenerated from this side.
 
@@ -222,3 +241,22 @@ class TestSharedVectors:
         assert document["vectors"]
         for vector in document["vectors"]:
             assert canonical_seal_text(vector["value"]) == vector["canonical"], vector
+
+
+@pytest.mark.parametrize(
+    "token", ["0", "9007199254740993", "1152921504606846976", "9223372036854775807"]
+)
+def test_exact_seed_seals_match_the_shared_cross_runtime_vectors(token: str) -> None:
+    """Seal original JSON integer digits to the same independently pinned browser digest."""
+    document = json.loads(_VECTORS.read_text(encoding="utf-8"))
+    vector = next(row for row in document["seed_vectors"] if row["token"] == token)
+    value = json.loads('{"seed":' + token + "}")
+    assert canonical_seal_text(value) == vector["canonical"]
+    assert seal_sha256(value) == vector["sha256"]
+    assert seal_sha256({"seed": int(token)}) != seal_sha256({"seed": int(token) + 1})
+
+
+def test_non_seed_unsafe_integer_fields_keep_the_original_refusal() -> None:
+    """The integer seed transport extension does not reinterpret ordinary scalar fields."""
+    with pytest.raises(EvidenceSealError, match="not carried exactly"):
+        canonical_seal_text({"count": 2**53 + 1})

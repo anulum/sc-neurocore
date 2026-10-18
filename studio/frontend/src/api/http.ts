@@ -7,6 +7,8 @@
 // SC-NeuroCore — Studio frontend API
 // HTTP transport for Studio /api (auth token, JSON helpers).
 
+import { parseStudioJson, stringifyStudioJson } from "../studioJson";
+
 /** Prefix every Studio route shares. */
 const BASE = "/api";
 
@@ -127,7 +129,7 @@ export function errorMessage(detail: unknown, status: number): string {
  * @returns The error to throw.
  */
 async function requestError(r: Response): Promise<StudioRequestError> {
-  const body: unknown = await r.json().catch(() => ({ detail: r.statusText }));
+  const body: unknown = await r.text().then(parseStudioJson).catch(() => ({ detail: r.statusText }));
   const detail =
     typeof body === "object" && body !== null ? (body as { detail?: unknown }).detail : undefined;
   return new StudioRequestError(errorMessage(detail, r.status), r.status, detail);
@@ -160,7 +162,7 @@ export async function json<T>(r: Response): Promise<T> {
   if (!r.ok) {
     throw await requestError(r);
   }
-  return (await r.json()) as T;
+  return parseStudioJson(await r.text()) as T;
 }
 
 /**
@@ -173,7 +175,7 @@ export async function json<T>(r: Response): Promise<T> {
 export function post<T>(path: string, body: unknown): Promise<T> {
   return fetch(`${BASE}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
+    body: stringifyStudioJson(body),
   }).then((r) => json<T>(r));
 }
 
@@ -187,7 +189,7 @@ export function post<T>(path: string, body: unknown): Promise<T> {
 export function patch<T>(path: string, body: unknown): Promise<T> {
   return fetch(`${BASE}${path}`, {
     method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
+    body: stringifyStudioJson(body),
   }).then((r) => json<T>(r));
 }
 

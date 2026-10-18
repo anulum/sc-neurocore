@@ -177,7 +177,7 @@ describe("Studio saved-session persistence", () => {
       sourceMode: "invalid",
       threshold: undefined,
       frequencyHz: -3,
-      seed: 1.5,
+      seed: undefined,
       trial: "random",
     })).toEqual({
       current: 10,
@@ -302,4 +302,29 @@ describe("browser cache status", () => {
     });
     expect(readStudioSessionsResult(store).sessions).toHaveLength(1);
   });
+});
+
+describe("exact saved-session seeds", () => {
+  it("preserves a full-domain seed and inactive legacy model seed across actual storage JSON", () => {
+    const store = createStorage('[{"name":"large-seed","state":{"sourceMode":"ode","seed":9223372036854775807,"modelParams":{"seed":9007199254740993}}}]');
+    const sessions = readStoredStudioSessions(store);
+    expect(sessions).toHaveLength(1);
+    const snapshot = studioSavedSessionRestoreState(sessions[0]?.state ?? {});
+    expect(snapshot.seed).toBe(9223372036854775807n);
+    expect(snapshot.modelParams.seed).toBe(9007199254740993n);
+    expect(writeStoredStudioSessions(sessions, store).status).toBe("ok");
+    expect(store.getItem(STUDIO_SAVED_SESSIONS_KEY)).toContain('"seed":9223372036854775807');
+    expect(readStoredStudioSessions(store)).toEqual(sessions);
+  });
+  it.each([1.5, -1, "42", 2n ** 63n])("refuses malformed explicit seed %s before restoration", (seed) => {
+    expect(() => studioSavedSessionRestoreState({ seed })).toThrow("Saved simulation seed");
+  });
+});
+
+it("restores ODE coefficient maps to their Float64 domain while preserving their separate simulation seed", () => {
+  const store = createStorage('[{"name":"coefficient","state":{"sourceMode":"ode","seed":9223372036854775807,"odeParams":{"seed":9007199254740993},"odeInit":{"seed":9007199254740993}}}]');
+  const restored = studioSavedSessionRestoreState(readStoredStudioSessions(store)[0]?.state ?? {});
+  expect(restored.seed).toBe(9223372036854775807n);
+  expect(restored.odeParams.seed).toBe(Number(9007199254740993n));
+  expect(restored.odeInit.seed).toBe(Number(9007199254740993n));
 });
