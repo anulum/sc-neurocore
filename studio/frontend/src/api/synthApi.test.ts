@@ -17,10 +17,10 @@ describe("runSynthesisTerminal", () => {
   });
 
   it("posts the selected RTL and both evidence objects without a host path", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ schema_version: "studio.silicon-terminal.v1" }),
-      ok: true,
-    });
+    const response = { schema_version: "studio.silicon-terminal.v1" };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response), {
+      headers: { "Content-Type": "application/json" },
+    }));
     vi.stubGlobal("fetch", fetchMock);
     const compileTraceability = {
       schema_version: "studio.compile-traceability.v1",
@@ -29,13 +29,14 @@ describe("runSynthesisTerminal", () => {
       schema_version: "studio.cosim-parity.v1",
     } as ModelCosimReport;
 
-    await runSynthesisTerminal(
+    const result = await runSynthesisTerminal(
       "module selected; endmodule",
       "ecp5",
       compileTraceability,
       cosimParity,
     );
 
+    expect(result).toEqual(response);
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("/api/synth/terminal");
