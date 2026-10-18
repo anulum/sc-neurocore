@@ -10,6 +10,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Keep stateless-model custody checks independent of numerical timebase admission;
+  verify real driven instances and preserve refusal of untimed simulation runs.
 - Reject optimizer searches with no layers or missing scoring weights before
   candidate construction, returning `ValueError` instead of aborting Python.
   Preserve seeded results and trailing-weight normalization; reject malformed

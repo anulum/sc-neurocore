@@ -40,13 +40,18 @@ from sc_neurocore.neurons.descriptor_generator import generate_descriptor_payloa
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.model_descriptor import ModelDescriptorError, parse_model_descriptor
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.studio.model_run_contract import ModelInputError
 from sc_neurocore.studio.model_simulate import simulate_model
 from tests.engine_requirement import require_engine
 from sc_neurocore.studio.state_layout import (
     DeclaredState,
     ObservedState,
     StateLayout,
+    attribute_fingerprints,
     declared_state,
+    observe_layout,
+    snapshot,
+    undeclared_mutations,
 )
 
 #: The identities that assert they hold no state, with a drive that exercises
@@ -109,6 +114,8 @@ def _run(
 
 
 class TestTheAssertionIsMeasured:
+    """Measure both instance mutation and process-wide random-state consumption."""
+
     @pytest.mark.parametrize("class_name", sorted(STATELESS))
     def test_the_model_mutates_nothing_under_a_drive_that_exercises_it(
         self, class_name: str
@@ -126,6 +133,8 @@ class TestTheAssertionIsMeasured:
 
 
 class TestTheDescriptorCarriesTheAssertion:
+    """Bind stateless assertions to the committed, reproducible descriptor corpus."""
+
     @pytest.mark.parametrize("class_name", sorted(STATELESS))
     def test_the_committed_descriptor_asserts_it(self, class_name: str) -> None:
         """What the layout reads is the committed file, so check the file."""
@@ -157,6 +166,8 @@ class TestTheDescriptorCarriesTheAssertion:
 
 
 class TestTheLayoutSeparatesSilenceFromEmptiness:
+    """Distinguish an explicit empty declaration from absent custody metadata."""
+
     @pytest.mark.parametrize("class_name", sorted(STATELESS))
     def test_an_asserted_model_answers_descriptor_with_no_variables(self, class_name: str) -> None:
         """The defect: this used to be indistinguishable from an undeclared model."""
@@ -177,16 +188,17 @@ class TestTheLayoutSeparatesSilenceFromEmptiness:
 
 
 class TestTheRunReportsCompleteCustody:
-    @pytest.mark.parametrize("class_name", sorted(STATELESS))
-    def test_a_run_of_an_asserted_model_is_complete(self, class_name: str) -> None:
+    """Keep measured custody separate from admission of a model's simulation clock."""
+
+    def test_a_run_of_an_asserted_model_is_complete(self) -> None:
         """Recording everything a model declares is complete custody, even of nothing.
 
         Measured on the Python path, because that is the one this unit speaks
         for. The Rust batch lane adds custody limits of its own, held below.
         """
-        layout = simulate_model(class_name, duration=20.0, current=5.0, use_fast_path=False)[
-            "state_layout"
-        ]
+        layout = simulate_model(
+            "McCullochPittsNeuron", duration=20.0, current=5.0, use_fast_path=False
+        )["state_layout"]
         assert layout["source"] == "descriptor"
         assert layout["complete"] is True
         assert layout["incomplete_reasons"] == []
@@ -214,11 +226,42 @@ class TestTheRunReportsCompleteCustody:
         )
         assert fast["spikes"] == slow["spikes"]
 
-    def test_the_refused_candidate_is_still_reported_incomplete(self) -> None:
-        """It mutates nothing and is still not reproducible; custody must say so."""
-        layout = simulate_model(REFUSED, duration=20.0, current=5.0)["state_layout"]
-        assert layout["source"] == "undeclared"
-        assert layout["complete"] is False
+    @pytest.mark.parametrize("class_name", ["SiegertTransferFunction", REFUSED])
+    def test_an_untimed_model_is_refused_before_a_run(self, class_name: str) -> None:
+        """A custody declaration cannot manufacture a missing numerical timebase."""
+        with pytest.raises(ModelInputError) as raised:
+            simulate_model(class_name, duration=20.0, current=5.0, use_fast_path=False)
+        assert raised.value.model == class_name
+        assert raised.value.field == "dt"
+        assert raised.value.reason == "model timestep profile is unavailable or invalid"
+        assert isinstance(raised.value.__cause__, FileNotFoundError)
+
+    @pytest.mark.parametrize("class_name", ["SiegertTransferFunction", REFUSED])
+    def test_untimed_models_retain_their_measured_custody(self, class_name: str) -> None:
+        """Audit real driven instances without assigning time to their step calls."""
+        instance = _model(class_name)()
+        drives = STATELESS.get(class_name, REFUSED_DRIVE)
+        source, profile, declared = declared_state(class_name)
+        layout = observe_layout(
+            instance, source, profile, declared, n_steps=len(drives), element_budget=4096
+        )
+        before = attribute_fingerprints(instance)
+        assert snapshot(instance, layout) == {}
+        np.random.seed(PROBE_SEED)
+        outputs = [instance.step(*drive) for drive in drives]
+        assert len({str(output) for output in outputs}) > 1
+        assert snapshot(instance, layout) == {}
+        changes = undeclared_mutations(before, attribute_fingerprints(instance), layout)
+        measured = layout.with_undeclared_mutable(changes).to_public_dict()
+        assert changes == ()
+        if class_name == REFUSED:
+            assert measured["source"] == "undeclared"
+            assert measured["complete"] is False
+            assert measured["incomplete_reasons"] == ["the model declares no state layout"]
+        else:
+            assert measured["source"] == "descriptor"
+            assert measured["complete"] is True
+            assert measured["incomplete_reasons"] == []
 
     def test_the_refusal_rests_on_a_measurement(self) -> None:
         """Why it is refused: no attribute moves, but the global generator does."""
@@ -229,8 +272,10 @@ class TestTheRunReportsCompleteCustody:
 
 
 class TestTheAssertionIsFalsifiable:
+    """Hold explicit statelessness to the same mutation and recording checks."""
+
     def test_an_asserted_model_that_mutates_is_reported_incomplete(self) -> None:
-        """This is what makes a per-identity assertion safe to accept."""
+        """Reject completeness when an asserted-stateless model gains mutable state."""
         layout = StateLayout(source="descriptor", schema_profile="probe", variables=())
         assert layout.complete is True
 

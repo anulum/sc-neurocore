@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 928
+expected_file_count = 929
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3805,3 +3805,7 @@ rationale = "Physical installed GPU Izhikevich batches must refuse impossible ou
 [[file]]
 path = "tests/test_optimizer/test_engine_bindings.py"
 rationale = "Installed optimizer searches preserve seeded reports and recover from empty layers or missing scoring weights without aborting the process."
+
+[[file]]
+path = "tests/test_stateless_declaration.py"
+rationale = "Measure real stateless model custody independently of simulation clock admission and preserve missing-timebase refusals."
