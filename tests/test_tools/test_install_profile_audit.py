@@ -61,6 +61,7 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
         "defusedxml>=0.7.1",
         "tomli>=2.0; python_version < '3.11'",
         "tomli-w>=1.0",
+        "typing-extensions>=4.0,<5",
     ]
     assert report["heavy_dependencies_in_base"] == []
     assert report["polyglot_research_sources_in_wheel"] == []
@@ -100,6 +101,7 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
             "defusedxml >=0.7.1",
             "tomli >=2.0  # [py<311]",
             "tomli-w >=1.0",
+            "typing-extensions >=4.0,<5",
         ],
         "conda_run_dependencies_recorded": [
             "python >=3.10",
@@ -108,6 +110,7 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
             "defusedxml >=0.7.1",
             "tomli >=2.0  # [py<311]",
             "tomli-w >=1.0",
+            "typing-extensions >=4.0,<5",
         ],
         "conda_run_dependencies_missing": [],
         "conda_run_dependencies_unexpected": [],
@@ -137,6 +140,7 @@ def test_conda_recipe_tracks_base_install_contract() -> None:
         "defusedxml >=0.7.1",
         "tomli >=2.0  # [py<311]",
         "tomli-w >=1.0",
+        "typing-extensions >=4.0,<5",
     ]
     assert "sc_neurocore.hdl.resources" in recipe["test_imports"]
     assert any("list_baseline_primitive_rtl" in command for command in recipe["test_commands"])

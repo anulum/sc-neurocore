@@ -148,7 +148,7 @@ committed reports and are stated per model in the
 
 | You install | You get |
 | --- | --- |
-| `pip install sc-neurocore` | The four workflows above and the rest of the core package: neurons, synapses, layers, sources, recorders, the equation builder and the compilers. NumPy and SciPy are the only required dependencies. |
+| `pip install sc-neurocore` | The four workflows above and the rest of the core package: neurons, synapses, layers, sources, recorders, the equation builder and the compilers. NumPy and SciPy provide numerical operations; the complete base dependencies and Python version conditions are declared in [`pyproject.toml`](https://github.com/anulum/sc-neurocore/blob/main/pyproject.toml). |
 | An extra, for example `pip install "sc-neurocore[studio]"` | One optional area and its dependencies. The [optional dependency matrix](optional_dependency_matrix.md) lists each extra, the import it enables and the job that tests it. |
 | The engine wheel (`sc_neurocore_engine`) | The Rust engine. The Python package runs without it. |
 | A source checkout | Everything in the wheel plus the research subpackages listed below, the Julia, Go and Mojo lanes, the benchmarks and the hardware flows. |

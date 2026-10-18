@@ -35,6 +35,7 @@ requirements:
     - defusedxml >=0.7.1
     - tomli >=2.0  # [py<311]
     - tomli-w >=1.0
+    - typing-extensions >=4.0,<5
 
 test:
   imports:

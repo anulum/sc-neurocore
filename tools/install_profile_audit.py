@@ -453,6 +453,8 @@ def _measure_local_base_install(repo: Path) -> dict[str, Any]:
                 "-c",
                 (
                     "import sc_neurocore; "
+                    "from sc_neurocore.neurons.models.mat import MATNeuron; "
+                    "assert MATNeuron().step(0.7) in (0, 1); "
                     "print(sc_neurocore.__version__); "
                     "print(len(sc_neurocore.__all__))"
                 ),

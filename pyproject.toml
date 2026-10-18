@@ -51,6 +51,7 @@ dependencies = [
   "defusedxml>=0.7.1",
   "tomli>=2.0; python_version < '3.11'",
   "tomli-w>=1.0",
+  "typing-extensions>=4.0,<5",
 ]
 
 [project.urls]

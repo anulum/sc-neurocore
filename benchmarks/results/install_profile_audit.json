@@ -5,9 +5,10 @@
     "scipy>=1.10",
     "defusedxml>=0.7.1",
     "tomli>=2.0; python_version < '3.11'",
-    "tomli-w>=1.0"
+    "tomli-w>=1.0",
+    "typing-extensions>=4.0,<5"
   ],
-  "base_dependency_count": 5,
+  "base_dependency_count": 6,
   "empty_polyglot_runtime_patterns": [],
   "heavy_dependencies_in_base": [],
   "install_measurement": {
@@ -22,7 +23,8 @@
       "scipy >=1.10",
       "defusedxml >=0.7.1",
       "tomli >=2.0  # [py<311]",
-      "tomli-w >=1.0"
+      "tomli-w >=1.0",
+      "typing-extensions >=4.0,<5"
     ],
     "conda_run_dependencies_missing": [],
     "conda_run_dependencies_recorded": [
@@ -31,7 +33,8 @@
       "scipy >=1.10",
       "defusedxml >=0.7.1",
       "tomli >=2.0  # [py<311]",
-      "tomli-w >=1.0"
+      "tomli-w >=1.0",
+      "typing-extensions >=4.0,<5"
     ],
     "conda_run_dependencies_unexpected": [],
     "docker_build_arg": "INSTALL_EXTRAS=hdl",

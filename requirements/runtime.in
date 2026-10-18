@@ -3,3 +3,4 @@ scipy
 defusedxml
 tomli; python_version < "3.11"
 tomli-w>=1.0
+typing-extensions>=4.0,<5

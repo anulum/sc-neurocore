@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Declare `typing-extensions` in the base runtime and Conda profiles so the
+  reference MAT model imports without developer extras. Exercise a real MAT
+  step in the measured installation smoke check.
+
 - Keep stateless-model custody checks independent of numerical timebase admission;
   verify real driven instances and preserve refusal of untimed simulation runs.
 - Reject optimizer searches with no layers or missing scoring weights before

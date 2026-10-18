@@ -42,6 +42,11 @@ The base path is enough for:
 
 ### Base install evidence
 
+The base profile includes `typing-extensions` because MAT factories and storage
+protocols import its `Self` type at runtime. A developer installation is not
+required to import or step the reference MAT model. The measured install smoke
+checks this model as well as the root package import.
+
 The metadata audit identifies packaged event-dataset, ANN/QCFS conversion and
 adaptive-threshold neuron adapter resources. Its fourteen bounded Julia, Go
 and Mojo runtime patterns follow the installed wheel contract; other native
