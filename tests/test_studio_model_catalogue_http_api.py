@@ -174,3 +174,59 @@ def test_missing_descriptor_still_reports_real_constructor_inputs(
     assert detail["parameter_kinds"]["tau_w"] == "float"
     assert detail["timestep_parameter"] == "dt"
     assert "dt" not in detail["parameter_kinds"]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "AdaptiveThresholdMoENeuron",
+        "AkidaNeuron",
+        "DifferentiableSurrogateNeuron",
+        "GLMNeuron",
+        "GammaRenewalNeuron",
+        "InhomogeneousPoissonNeuron",
+        "LearnableNeuronModel",
+        "Loihi2Neuron",
+        "LoihiCUBANeuron",
+        "ParallelSpikingNeuron",
+        "SCResettingParallelSpikingNeuron",
+        "SiegertTransferFunction",
+        "SpiNNaker2Neuron",
+        "TrueNorthNeuron",
+        "TwoCompartmentLIFNeuron",
+    ],
+)
+def test_untimed_models_stay_browsable_and_refuse_simulation(client: TestClient, name: str) -> None:
+    """Expose all fifteen real untimed models without admitting an unverifiable run."""
+    response = client.get(f"/api/models/{name}")
+    assert response.status_code == 200, response.text
+    detail = response.json()
+    assert detail["name"] == name
+    assert detail["state_vars"] or detail["params"]
+    assert detail["parameter_kinds"] is None
+    assert detail["timestep_parameter"] is None
+    refused = client.post("/api/models/simulate", json={"model_name": name})
+    assert refused.status_code == 422, refused.text
+    assert refused.json()["detail"] == {
+        "error": "invalid_model_input",
+        "model": name,
+        "field": "dt",
+        "reason": "model timestep profile is unavailable or invalid",
+    }
+
+
+def test_untimed_model_without_descriptor_stays_browsable(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Retain real introspected fields when both descriptor and clock are absent."""
+    from sc_neurocore.neurons import model_catalogue as corpus
+
+    monkeypatch.setitem(corpus._DESCRIPTOR_PATHS, "GLMNeuron", tmp_path / "absent.toml")
+    response = client.get("/api/models/GLMNeuron")
+    assert response.status_code == 200, response.text
+    detail = response.json()
+    assert detail["name"] == "GLMNeuron"
+    assert detail["metadata_state"] == "unavailable"
+    assert detail["state_vars"] or detail["params"]
+    assert detail["parameter_kinds"] is None
+    assert detail["timestep_parameter"] is None

@@ -29,6 +29,7 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
 from sc_neurocore.studio.model_run_contract import (
+    ModelInputError,
     model_parameter_contracts,
     model_timestep_parameter,
 )
@@ -669,6 +670,22 @@ def _build_model_list() -> list[dict[str, Any]]:
     return result
 
 
+def _model_input_detail(name: str) -> dict[str, object]:
+    """Keep declared metadata browsable when model-run admission is unavailable."""
+    try:
+        contracts = model_parameter_contracts(_load_class(name))
+        timestep = model_timestep_parameter(name, contracts)
+    except (ImportError, ModelInputError):
+        logger.warning("Studio model input metadata unavailable for %s", name, exc_info=True)
+        return {"parameter_kinds": None, "timestep_parameter": None}
+    return {
+        "parameter_kinds": {
+            key: field.kind for key, field in contracts.overridable.items() if key != "dt"
+        },
+        "timestep_parameter": timestep,
+    }
+
+
 def get_model_detail(name: str) -> dict[str, Any] | None:
     """Return the full declared metadata view for a single model."""
     if name not in _CLASS_TO_MODULE:
@@ -678,34 +695,19 @@ def get_model_detail(name: str) -> dict[str, Any] | None:
     except Exception as exc:
         raise ModelMetadataError(f"Failed to load Studio model descriptor for '{name}'") from exc
     if descriptor is not None:
-        detail = _descriptor_detail(descriptor)
-        try:
-            contracts = model_parameter_contracts(_load_class(name))
-        except ImportError:
-            detail["parameter_kinds"] = None
-            detail["timestep_parameter"] = None
-        else:
-            detail["timestep_parameter"] = model_timestep_parameter(name, contracts)
-            detail["parameter_kinds"] = {
-                key: field.kind for key, field in contracts.overridable.items() if key != "dt"
-            }
-        return detail
+        return {**_descriptor_detail(descriptor), **_model_input_detail(name)}
     try:
         cls = _load_class(name)
         state_vars, params = _classify_fields(cls)
         dt_val = _extract_dt(cls)
     except Exception as exc:
         raise ModelMetadataError(f"Failed to classify Studio model metadata for '{name}'") from exc
-    contracts = model_parameter_contracts(cls)
     return {
         **_introspected_summary(name),
         "docstring": (cls.__doc__ or "").strip().split("\n")[0],
         "state_vars": state_vars,
         "params": params,
-        "parameter_kinds": {
-            key: field.kind for key, field in contracts.overridable.items() if key != "dt"
-        },
-        "timestep_parameter": model_timestep_parameter(name, contracts),
+        **_model_input_detail(name),
         "dt": dt_val,
     }
 
