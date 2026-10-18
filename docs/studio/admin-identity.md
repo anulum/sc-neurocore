@@ -162,7 +162,8 @@ bounded per username and directly connected client. Proxy forwarding headers
 do not supply that client identity. The registry retains at most 1024 keys by
 default (`SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_BUCKETS`). Live failure, lockout
 and in-flight state is never evicted for a new key. If every slot is protected,
-new keys receive `429` until a slot expires or its failure state is cleared.
+new keys, including legitimate users without an existing bucket, receive `429`
+until a slot expires or its failure state is cleared.
 Password rotation clears that user's failure state.
 
 Lab uses the production runtime profile. Interactive API documentation at
