@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5326
+    "test_files": 5327
   },
   "documentation": {
     "public_pages": [
@@ -7339,6 +7339,7 @@
       "tests/test_sc_four_state_glif_backends.py",
       "tests/test_sc_four_state_glif_engine_binding.py",
       "tests/test_sc_inference_engine_binding.py",
+      "tests/test_sc_network_benchmark.py",
       "tests/test_sc_neurocore_engine_reexports_dna.py",
       "tests/test_sc_neurocore_engine_reexports_domain_wrappers.py",
       "tests/test_sc_neurocore_engine_reexports_predictive_codec.py",

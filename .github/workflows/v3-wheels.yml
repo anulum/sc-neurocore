@@ -279,6 +279,7 @@ jobs:
                   str(checkout / "tests/test_stochastic_graph_engine_binding_runtime.py"),
                   str(checkout / "tests/test_cortical_injection_engine_binding_runtime.py"),
                   str(checkout / "tests/test_dense_layer_engine_binding_runtime.py"),
+                  str(checkout / "tests/test_sc_network_benchmark.py"),
                   str(checkout / "tests/test_pareto_engine_binding_runtime.py"),
                   str(checkout / "tests/test_dna_hybridization_engine_binding_runtime.py"),
                   str(checkout / "tests/test_quantum_annealing_engine_binding_runtime.py"),

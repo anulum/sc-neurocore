@@ -6,9 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SC Network Benchmark — Full Stochastic Computing Pipeline
 
-"""
-SC Network Benchmark — Full Stochastic Computing Pipeline
-==========================================================
+"""Measure complete stochastic pipeline repetitions with NumPy and Rust.
 
 End-to-end benchmark of the SC-NeuroCore stochastic computing pipeline:
   encode (Bernoulli/LFSR) → bitstream AND+popcount → decode
@@ -17,6 +15,10 @@ Measures encode throughput (Gbit/s), MAC throughput (GOP/s), and decode
 throughput at multiple neuron counts and bitstream lengths.
 
 Supports both Python (NumPy) and Rust (sc_neurocore_engine) backends.
+
+Each result row retains one complete repetition and its seed and step count.
+Rust stage times are estimates from the measured fused total; they are not
+independent stage measurements. JSON timestamps use timezone-aware UTC.
 
 Usage::
 
@@ -31,6 +33,7 @@ import argparse
 import json
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -38,6 +41,8 @@ import numpy as np
 
 @dataclass
 class SCRunResult:
+    """Measurements and simulation metadata for one complete repetition."""
+
     n_neurons: int
     bitstream_length: int
     backend: str
@@ -49,6 +54,9 @@ class SCRunResult:
     mac_gop_s: float
     total_spikes: int
     firing_rate: float
+    seed: int | None = None
+    sim_steps: int | None = None
+    repetition: int | None = None
 
 
 def _run_numpy_sc(n_neurons: int, bitstream_length: int, sim_steps: int, seed: int) -> SCRunResult:
@@ -127,6 +135,8 @@ def _run_numpy_sc(n_neurons: int, bitstream_length: int, sim_steps: int, seed: i
         mac_gop_s=mac_gop,
         total_spikes=spike_count,
         firing_rate=spike_count / (n_outputs * sim_steps) if sim_steps > 0 else 0.0,
+        seed=seed,
+        sim_steps=sim_steps,
     )
 
 
@@ -192,6 +202,8 @@ def _run_rust_sc(
         mac_gop_s=mac_gop,
         total_spikes=spike_count,
         firing_rate=spike_count / (n_out * sim_steps) if sim_steps > 0 else 0.0,
+        seed=seed,
+        sim_steps=sim_steps,
     )
 
 
@@ -202,6 +214,28 @@ def run_benchmark(
     repeats: int,
     seed: int = 42,
 ) -> list[SCRunResult]:
+    """Run the requested configurations, retaining every completed repetition.
+
+    Parameters
+    ----------
+    scales : list of int
+        Input and output neuron counts.
+    bitstream_lengths : list of int
+        Bernoulli bitstream lengths.
+    sim_steps : int
+        Complete simulation steps per repetition.
+    repeats : int
+        Repetitions per backend and configuration.
+    seed : int, default=42
+        First seed; repetition r uses seed + r.
+
+    Returns
+    -------
+    list of SCRunResult
+        One row per completed repetition, with its seed, steps and zero-based
+        repetition index. Missing backends and oversized configurations retain
+        the existing refusal behavior; these are not paired-dynamics proofs.
+    """
     results: list[SCRunResult] = []
 
     for n in scales:
@@ -221,40 +255,56 @@ def run_benchmark(
                     if r is None:
                         print("SKIP (not available)")
                         break
+                    r.repetition = rep
                     times.append(r.total_s)
+                    results.append(r)
                     last_result = r
 
                 if last_result is not None:
                     print(
-                        f"{np.mean(times):.3f}s  "
-                        f"encode={last_result.encode_gbit_s:.2f} Gbit/s  "
+                        f"mean_total={np.mean(times):.3f}s  "
+                        f"last_repeat_encode={last_result.encode_gbit_s:.2f} Gbit/s  "
                         f"MAC={last_result.mac_gop_s:.4f} GOP/s  "
                         f"rate={last_result.firing_rate:.3f}"
                     )
-                    results.append(last_result)
 
     return results
 
 
 def format_markdown(results: list[SCRunResult]) -> str:
+    """Render one row for each retained simulation repetition.
+
+    Parameters
+    ----------
+    results : list of SCRunResult
+        Complete per-repetition measurements and simulation metadata.
+
+    Returns
+    -------
+    str
+        Markdown table retaining repetition identity and per-run measurements.
+    """
     lines = [
         "# SC-NeuroCore Stochastic Computing Network Benchmark",
         "",
         "End-to-end: encode > AND+popcount > decode > LIF.",
         "",
-        "| Backend | N | BL | Total (s) | Encode (Gbit/s) | MAC (GOP/s) | Rate |",
-        "|---------|--:|---:|----------:|----------------:|------------:|-----:|",
+        "Rust component rates use an estimated 40/50/10 stage split of the measured fused total.",
+        "",
+        "| Backend | N | BL | Repeat | Seed | Total (s) | Encode (Gbit/s) | MAC (GOP/s) | Rate |",
+        "|---------|--:|---:|-------:|-----:|----------:|----------------:|------------:|-----:|",
     ]
     for r in results:
         lines.append(
             f"| {r.backend:>7s} | {r.n_neurons:>5d} | {r.bitstream_length:>5d} "
-            f"| {r.total_s:>9.3f} | {r.encode_gbit_s:>15.2f} "
+            f"| {r.repetition} | {r.seed} | {r.total_s:>9.3f} | {r.encode_gbit_s:>15.2f} "
             f"| {r.mac_gop_s:>11.4f} | {r.firing_rate:>5.3f} |"
         )
     return "\n".join(lines)
 
 
 def main() -> None:
+    """Run the public benchmark CLI and preserve its complete repetition records."""
     ap = argparse.ArgumentParser(description="SC network benchmark")
     ap.add_argument("--scales", type=int, nargs="+", default=[100, 200, 500, 1000, 2000])
     ap.add_argument("--bitstream-lengths", type=int, nargs="+", default=[256, 512, 1024])
@@ -283,6 +333,9 @@ def main() -> None:
                 "n_neurons": r.n_neurons,
                 "bitstream_length": r.bitstream_length,
                 "backend": r.backend,
+                "repetition": r.repetition,
+                "seed": r.seed,
+                "sim_steps": r.sim_steps,
                 "encode_s": r.encode_s,
                 "mac_s": r.mac_s,
                 "decode_s": r.decode_s,
@@ -295,7 +348,26 @@ def main() -> None:
             for r in results
         ]
         Path(args.json).write_text(
-            json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"), "data": data}, indent=2)
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "protocol": {
+                        "scales": args.scales,
+                        "bitstream_lengths": args.bitstream_lengths,
+                        "sim_steps": args.sim_steps,
+                        "repeats": args.repeats,
+                        "initial_seed": 42,
+                    },
+                    "row_semantics": "one complete repetition per row",
+                    "component_timing": {
+                        "numpy": "measured stage wall time",
+                        "rust": "measured fused total; estimated 40/50/10 stage split",
+                    },
+                    "data": data,
+                },
+                indent=2,
+            )
         )
         print(f"\nResults written to {args.json}")
 

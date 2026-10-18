@@ -57,6 +57,30 @@ not an FPGA throughput or latency measurement.
 
 ---
 
+## Stochastic network CLI records
+
+Run the maintained NumPy/native stochastic pipeline with its configured
+dimensions, bitstream lengths, simulation steps and repetition count:
+
+    python benchmarks/sc_network_benchmark.py --json report.json --markdown
+
+Schema 2 JSON stores one row per completed repetition. Each row identifies the
+backend, neuron count, bitstream length, zero-based repetition index, seed and
+step count. The protocol object records the requested configuration; the
+timestamp includes its UTC offset. Markdown retains the same repetition
+identities. The console reports the mean total time separately from the last
+repetition's throughput fields. Missing rows are not successful measurements.
+
+Keep the actual CPU, RAM, operating system, Python/NumPy versions, native image
+identity, thread limits and isolation conditions with each report. Functional
+checks on a shared host do not qualify reference performance measurements.
+
+NumPy component times are measured individually. Rust component times retain
+the original 40/50/10 split of the measured fused total and are labelled as
+estimates. These pipelines use different weight generation and normalization;
+their timing rows do not establish identical recurrent trajectories. Existing
+historical reports keep their original format and measurement context.
+
 ## 1. Environment
 
 | Field | Value |

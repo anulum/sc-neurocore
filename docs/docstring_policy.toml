@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1029
+expected_file_count = 1031
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4209,3 +4209,11 @@ rationale = "Public-record hygiene, update preservation, and last-admin refusal 
 [[file]]
 path = "studio/frontend/e2e/event_training_server.py"
 rationale = "Serve real process training over disposable published-format event files."
+
+[[file]]
+path = "benchmarks/sc_network_benchmark.py"
+rationale = "Preserve every complete stochastic pipeline repetition with its actual seed, steps, UTC timestamp and measured or estimated timing contract."
+
+[[file]]
+path = "tests/test_sc_network_benchmark.py"
+rationale = "The real NumPy and installed-native CLI must retain every repetition and report consistent JSON, Markdown and printed means."
