@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { studioTrainingKey } from "./studioExperimentKey";
+import { studioExperimentKey, studioTrainingKey } from "./studioExperimentKey";
 import { readEventTrainingData } from "./studioEventTrainingData";
 import eventData from "./studioEventTrainingData.fixture.json";
 import { StudioRequestError } from "./api/client";
@@ -59,6 +59,9 @@ function snapshot(): StudioProjectStateSnapshot {
     duration: 250,
     current: 0,
     protocol: "step",
+    frequencyHz: 37,
+    seed: 424242,
+    trial: "replay",
     graphPopulations: [{
       id: "p1",
       type: "population",
@@ -95,6 +98,41 @@ function snapshot(): StudioProjectStateSnapshot {
 }
 
 describe("Studio project state helpers", () => {
+  it.each(["model", "ode"] as const)("preserves the %s experiment identity through save and reopen", (sourceMode) => {
+    for (const seed of [null, 0, 424242, 2 ** 63 - 1024]) {
+      for (const trial of ["replay", "fresh"] as const) {
+        const original = { ...snapshot(), sourceMode, seed, trial };
+        const saved = studioProjectSaveState(original);
+        const restored = studioProjectStateFromLoadResponse({ state: saved }, fallbackTrainingConfig);
+        expect(saved).toMatchObject({ frequencyHz: 37, seed, trial });
+        expect(studioExperimentKey(restored)).toBe(studioExperimentKey(original));
+        expect(studioProjectRestoreState(restored)).toEqual(saved);
+      }
+    }
+  });
+
+  it("opens legacy revisions with explicit experiment defaults instead of the editor's later values", () => {
+    const legacy: Record<string, unknown> = { ...snapshot() };
+    delete legacy.frequencyHz;
+    delete legacy.seed;
+    delete legacy.trial;
+    expect(studioProjectStateFromLoadResponse({ state: legacy }, fallbackTrainingConfig))
+      .toMatchObject({ frequencyHz: 10, seed: null, trial: "replay" });
+  });
+
+  it.each([
+    { frequencyHz: 0 }, { frequencyHz: -1 }, { frequencyHz: Number.NaN },
+    { frequencyHz: Number.POSITIVE_INFINITY }, { frequencyHz: "37" }, { frequencyHz: null },
+    { seed: -1 }, { seed: 0.5 }, { seed: Number.POSITIVE_INFINITY }, { seed: 2 ** 63 },
+    { seed: "424242" }, { seed: false }, { trial: "independent" }, { trial: null },
+  ])("refuses an explicitly malformed saved experiment without changing it: %j", (patch) => {
+    const state = { ...snapshot(), ...patch };
+    const before = { ...state };
+    expect(() => studioProjectStateFromLoadResponse({ state }, fallbackTrainingConfig))
+      .toThrow(/^Saved simulation /);
+    expect(state).toEqual(before);
+  });
+
   it("builds the complete project save snapshot", () => {
     expect(studioProjectSaveState(snapshot())).toEqual(snapshot());
   });

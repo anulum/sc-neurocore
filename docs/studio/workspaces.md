@@ -20,6 +20,23 @@ before the replacement was written:
 | Torn write | A save truncated the live file and wrote into it. Under a real `RLIMIT_FSIZE` refusal a 156-byte workspace became 65,536 bytes of unterminated JSON, and loading it raised | A revision is written to a sibling temporary file, `fsync`ed and `os.replace`d into place; a failure leaves the previous revision untouched |
 | Lost update through the check | Two savers read the same head between them, both computed revision 1, both were acknowledged with different digests, and one payload was overwritten | Reading the head and writing the revision happen while the workspace is held against every other writer, in this process and in others |
 
+## Simulation settings in a revision
+
+Saving a project keeps its simulation frequency in hertz, explicit seed (or
+the absence of one), and replay/fresh trial selection alongside the model or
+equations, parameters, initial state, timestep, duration and current protocol.
+Opening that revision restores these settings together, including when the
+editor has since been used for another experiment. A replay repeats the saved
+seed; a fresh trial still asks the runtime to draw a new seed. Saving the
+fresh-trial selection does not turn it into a repeat of an earlier draw. Keep
+the exported replay pack when you need to reproduce that particular draw.
+
+Older revisions without these three fields open with the historical defaults:
+10 Hz, no explicit seed, and replay. They do not inherit the editor's current
+values. Settings that an older build never saved cannot be recovered from that
+revision. An explicitly invalid frequency, seed or trial mode refuses the load
+and leaves the current experiment unchanged rather than silently replacing it.
+
 ## On disk
 
 ```

@@ -12,9 +12,9 @@
  * The two directions are deliberately asymmetric. Saving takes a typed
  * snapshot of what the store holds. Loading reads a document that may have
  * been written by an older build, so every field goes through an accessor with
- * a fallback and anything unrecognised is dropped rather than trusted: a
- * workspace saved a year ago must open, not throw, and must not carry a value
- * this build cannot use.
+ * a fallback for missing legacy fields. Explicitly malformed experiment fields
+ * are refused: silently replacing a seed, trial or frequency would run a
+ * different experiment.
  */
 
 import { readEventTrainingData, type EventTrainingData } from "./studioEventTrainingData";
@@ -30,7 +30,7 @@ import type {
   TrainingModelKind,
   TrainingPreregistration,
 } from "./api/client";
-import type { StudioSimulationSourceMode } from "./studioSimulationConfig";
+import type { StudioSimulationSourceMode, StudioSimulationTrial } from "./studioSimulationConfig";
 
 /** The training settings a workspace carries. */
 export interface StudioProjectTrainingConfig {
@@ -72,6 +72,12 @@ export interface StudioProjectSnapshotInput {
   duration: number;
   current: number;
   protocol: string;
+  /** Sine frequency in hertz, including when another protocol is selected. */
+  frequencyHz: number;
+  /** Explicit simulation seed, or null to use the model/playground default. */
+  seed: number | null;
+  /** Whether a reopened run replays its seed or requests a fresh trial. */
+  trial: StudioSimulationTrial;
   graphPopulations: PopulationNode[];
   graphProjections: ProjectionEdge[];
   synthTarget: string;
@@ -143,6 +149,9 @@ export function studioProjectSaveState(input: StudioProjectSnapshotInput): Studi
     duration: input.duration,
     current: input.current,
     protocol: input.protocol,
+    frequencyHz: input.frequencyHz,
+    seed: input.seed,
+    trial: input.trial,
     graphPopulations: input.graphPopulations,
     graphProjections: input.graphProjections,
     synthTarget: input.synthTarget,
@@ -302,14 +311,15 @@ export function studioProjectFailureState(
 /**
  * Read a stored workspace into the store, tolerating an older shape.
  *
- * Every field is read through an accessor with a fallback, so a workspace
- * written by an earlier build opens rather than throwing, and a value this
- * build cannot use is dropped rather than carried into a request.
+ * Missing experiment fields in older revisions use the historical defaults.
+ * Malformed explicit frequency, seed or trial fields refuse the load before
+ * the caller applies any of it; replacing them would change the experiment.
  *
  * @param response - The stored document.
  * @param fallbackTrainingConfig - The training settings to fall back to, field
  *   by field, for anything the document does not carry.
  * @returns The patch.
+ * @throws {Error} When an explicit simulation frequency, seed or trial is invalid.
  */
 export function studioProjectStateFromLoadResponse(
   response: unknown,
@@ -329,6 +339,9 @@ export function studioProjectStateFromLoadResponse(
     duration: positiveNumberValue(state.duration, 100),
     current: finiteNumberValue(state.current, 10),
     protocol: stringValue(state.protocol, "constant"),
+    frequencyHz: simulationFrequencyValue(state.frequencyHz),
+    seed: simulationSeedValue(state.seed),
+    trial: simulationTrialValue(state.trial),
     graphPopulations: populationArrayValue(state.graphPopulations),
     graphProjections: projectionArrayValue(state.graphProjections),
     synthTarget: stringValue(state.synthTarget, "ice40"),
@@ -349,6 +362,51 @@ function candidateDraftsValue(value: unknown): StudioCandidateDraft[] {
     const text = recordValue(entry).text;
     return typeof text === "string" ? [{ text }] : [];
   });
+}
+
+/**
+ * Read the saved sine frequency, defaulting only for a legacy missing field.
+ *
+ * @param value - Stored frequency in hertz.
+ * @returns The original positive frequency, or the historical 10 Hz default.
+ * @throws {Error} When an explicit frequency is not finite and positive.
+ */
+function simulationFrequencyValue(value: unknown): number {
+  if (value === undefined) return 10;
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    throw new Error("Saved simulation frequency must be finite and positive");
+  }
+  return value;
+}
+
+/**
+ * Read an optional simulation seed without rounding it into another trial.
+ *
+ * @param value - Stored seed; absent and null both request the runtime default.
+ * @returns The original integer in the API's seed domain, or null.
+ * @throws {Error} When an explicit seed is outside the API's integer domain.
+ */
+function simulationSeedValue(value: unknown): number | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value >= 2 ** 63) {
+    throw new Error("Saved simulation seed must be a non-negative integer below 2^63");
+  }
+  return value;
+}
+
+/**
+ * Read a trial mode, retaining fresh trials and refusing unknown modes.
+ *
+ * @param value - Stored trial mode.
+ * @returns The saved mode, or replay for a revision predating the field.
+ * @throws {Error} When an explicit mode is neither replay nor fresh.
+ */
+function simulationTrialValue(value: unknown): StudioSimulationTrial {
+  if (value === undefined) return "replay";
+  if (value !== "replay" && value !== "fresh") {
+    throw new Error("Saved simulation trial must be replay or fresh");
+  }
+  return value;
 }
 
 /**
