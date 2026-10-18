@@ -221,12 +221,16 @@ Five injection protocols for all simulations:
   different experiment, and runs it through the public runner — so the time
   step, drive protocol, initial state, parameters and randomness travel with
   the export instead of being guessed from the model's constructor
-- **Replay pack**: a sealed `studio.replay-pack.v1` document with the
+- **Replay pack**: a sealed `studio.replay-pack.v2` document with the
   re-resolvable request, the specification, its identity digest, the complete
-  expectation (every spike event, a digest per state trace, initial and final
-  state, drive digest) and the environment that sealed it. Replay it with
-  `python -m sc_neurocore.studio.replay_pack <pack.json>`; see
-  [Replay and code export](../studio/replay-and-export.md)
+  expectation (every spike event, full scalar/vector state samples bound to
+  trace digests, initial and final state, drive digest) and the environment
+  that sealed it. Replay it with
+  `python -m sc_neurocore.studio.replay_pack <pack.json>`. Historical
+  `studio.replay-pack.v1` packs remain readable; packs without state samples
+  support exact digest agreement only, so a differing digest is a mismatch
+  even with a positive tolerance. See
+  [Replay and code export](../studio/replay-and-export.md).
 
 ## One effective experiment per run
 
