@@ -17757,18 +17757,35 @@ Run sustainability analysis with a stacked harvest profile.
 Combined report from runtime profiling + sustainability analysis.
 
 - **summary**()
+  - Format the report's power, carbon and temperature values.
 
 ### Class `UnifiedEnergyReporter`
 Orchestrates power estimation → carbon accounting → thermal analysis.
 
+Parameters
+----------
+region : GridRegion, optional
+    Grid region used by the carbon model; defaults to the global profile.
+ambient_temp_c : float, optional
+    Ambient temperature in degrees Celsius, defaulting to 25.
+asic_power_mw : float, optional
+    ASIC power contribution in milliwatts, added to every analysis.
+
+The public analysis time argument is in seconds. The example accounts for
+one hour by passing 3600 seconds.
+
 Usage::
 
+    from sc_neurocore.energy_accounting.sustainability_profiler import GridRegion
+    from sc_neurocore.energy_accounting.unified_reporter import UnifiedEnergyReporter
+
     reporter = UnifiedEnergyReporter(region=GridRegion.EU)
-    report = reporter.analyze(total_power_mw=150.0, duration_h=1.0)
+    report = reporter.analyze(total_power_mw=150.0, inference_time_s=3600.0)
 
 - **__init__**(region, ambient_temp_c, asic_power_mw)
+  - Configure the carbon and thermal models used by each analysis.
 - **analyze**(layer_configs, total_power_mw, inference_time_s)
-  - Full analysis: power → carbon → thermal.
+  - Combine supplied power contributions for the requested elapsed time.
 
 ---
 
