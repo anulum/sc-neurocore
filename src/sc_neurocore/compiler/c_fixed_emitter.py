@@ -346,6 +346,8 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         if name == "I":
             self.input_used = True
             return self._wide(self.input_ref)
+        if name in expr_lut_tables.NAMED_CONSTANTS:
+            return self._wide(str(self._q_signed(expr_lut_tables.NAMED_CONSTANTS[name])))
         if name not in self.free_vars:
             self.free_vars.append(name)
         return self._wide(name)
@@ -383,6 +385,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             raise ValueError(f"Unsupported function '{fname}' in bit-exact compilation.")
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
+        expr_lut_tables.check_call_arguments(fname, node)
         arg: str = self._value(node.args[0])
 
         lut_name = {"sigmoid": "sigmoid", "expit": "sigmoid"}.get(fname, fname)
@@ -391,18 +394,17 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         if fname == "abs":
             return self._tern(f"{arg} < 0", f"-({arg})", arg)
         if fname == "clip":
-            if len(node.args) == 3:
-                lo: str = self._value(node.args[1])
-                hi: str = self._value(node.args[2])
-                inner = self._tern(f"{arg} > {hi}", hi, arg)
-                return self._tern(f"{arg} < {lo}", lo, inner)
-            return arg
-        # max / min
-        if len(node.args) >= 2:
-            other: str = self._value(node.args[1])
-            cmp = ">" if fname == "max" else "<"
-            return self._tern(f"{arg} {cmp} {other}", arg, other)
-        return arg
+            lo: str = self._value(node.args[1])
+            hi: str = self._value(node.args[2])
+            inner = self._tern(f"{arg} > {hi}", hi, arg)
+            return self._tern(f"{arg} < {lo}", lo, inner)
+        # max / min over every argument, folded left as in the Verilog emitter.
+        cmp = ">" if fname == "max" else "<"
+        result = arg
+        for extra in node.args[1:]:
+            other: str = self._value(extra)
+            result = self._tern(f"{result} {cmp} {other}", result, other)
+        return result
 
     def _lut_entries(self, name: str) -> list[int]:
         """Return the quantised LUT entries for ``name`` at this word/fraction."""
@@ -427,9 +429,10 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         lut_min, lut_step = _LUT_GEOMETRY[name]
         n = len(entries)
         dw, frac = self.q.data_width, self.q.fraction
-        dwp1 = dw + 1
         shift = frac - round(-math.log2(lut_step))
         min_q = round(lut_min * (1 << frac))
+        # The RTL offset sum is ``lut_offset_width`` bits wide (dw+1 unless the offset needs more).
+        dwp1 = expr_lut_tables.lut_offset_width(dw, min_q)
         table = f"_{name}_lut{self._lut_count}"
         argv = f"{table}_arg"
         raw = f"{table}_raw"

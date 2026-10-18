@@ -230,25 +230,29 @@ class TestEdgeCaseCoverage:
         with pytest.raises(ValueError, match="requires at least 1 argument"):
             emitter.visit_Call(node)
 
-    def test_clip_single_arg_passthrough(self):
-        """clip(x) with only 1 arg returns x unchanged."""
+    def test_clip_single_arg_is_refused(self):
+        """clip(x) without both bounds is refused: np.clip raises on it in the model."""
+        import pytest
+
         neuron = EquationNeuron(
             equations={"v": "clip(I)"},
             state={"v": 0.0},
             dt=1.0,
         )
-        verilog = compile_to_verilog(neuron, module_name="clip1")
-        assert "module clip1" in verilog
+        with pytest.raises(ValueError, match="exactly 3"):
+            compile_to_verilog(neuron, module_name="clip1")
 
-    def test_max_single_arg_passthrough(self):
-        """max(x) with only 1 arg returns x unchanged."""
+    def test_max_single_arg_is_refused(self):
+        """max(x) with one argument is refused: Python's max raises on a number."""
+        import pytest
+
         neuron = EquationNeuron(
             equations={"v": "max(I)"},
             state={"v": 0.0},
             dt=1.0,
         )
-        verilog = compile_to_verilog(neuron, module_name="max1")
-        assert "module max1" in verilog
+        with pytest.raises(ValueError, match="at least 2"):
+            compile_to_verilog(neuron, module_name="max1")
 
     def test_multiply_with_global_pipeline_flag_registers_product(self):
         """The global pipeline flag registers the wide product before truncation."""

@@ -52,6 +52,85 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
     }
 )
 
+# Positional-argument counts each function takes, as the Python model accepts it
+# (``neurons.equation_namespace``): ``max(x)`` and ``np.clip(x, lo)`` raise there,
+# so a backend must refuse them rather than lower them to something else.
+# ``(minimum, maximum)``; ``None`` means no maximum.
+FUNCTION_ARITY: dict[str, tuple[int, int | None]] = {
+    **{name: (1, 1) for name in SUPPORTED_FUNCTIONS - {"clip", "max", "min"}},
+    "clip": (3, 3),
+    "max": (2, None),
+    "min": (2, None),
+}
+
+# Named constants the Python model binds (``equation_namespace``). A state
+# variable or parameter of the same name takes precedence, as it does there.
+NAMED_CONSTANTS: dict[str, float] = {"pi": math.pi}
+
+
+def check_call_arguments(fname: str, node: ast.Call) -> None:
+    """Refuse a call whose arguments the Python model would not accept as lowered.
+
+    Parameters
+    ----------
+    fname : str
+        The called function, a member of :data:`SUPPORTED_FUNCTIONS`.
+    node : ast.Call
+        The call node.
+
+    Raises
+    ------
+    ValueError
+        If the call passes keyword arguments, or its positional-argument count is
+        outside :data:`FUNCTION_ARITY` for ``fname``. Every backend lowers only
+        positional arguments, so a keyword or an extra argument would otherwise be
+        dropped without notice.
+    """
+    if node.keywords:
+        raise ValueError(
+            f"Function {fname} takes positional arguments only in compiled expressions"
+        )
+    minimum, maximum = FUNCTION_ARITY[fname]
+    count = len(node.args)
+    if count < minimum or (maximum is not None and count > maximum):
+        expected = (
+            f"exactly {minimum}"
+            if minimum == maximum
+            else f"at least {minimum}"
+            if maximum is None
+            else f"{minimum} to {maximum}"
+        )
+        raise ValueError(f"Function {fname} takes {expected} argument(s), got {count}")
+
+
+def lut_offset_width(data_width: int, min_q: int) -> int:
+    """Return the signed width that holds a LUT argument plus its table offset.
+
+    The index of a LUT call is ``(arg - min_q) >> shift`` with ``arg`` a signed
+    ``data_width``-bit word. ``data_width + 1`` bits suffice while
+    ``|min_q| < 2**(data_width-1)``; at a narrow integer part (Q4.12, Q1.15) the
+    offset of the [-16, 16) grid is larger, and that width would wrap it.
+
+    Parameters
+    ----------
+    data_width : int
+        Word width of the argument.
+    min_q : int
+        The table's first sample point, encoded in the Q format.
+
+    Returns
+    -------
+    int
+        ``data_width + 1`` when that holds every sum, otherwise the smallest signed
+        width that does.
+    """
+    largest = (1 << (data_width - 1)) + abs(min_q)
+    width = data_width + 1
+    while (1 << (width - 1)) - 1 < largest:
+        width += 1
+    return width
+
+
 # ``log`` cannot share the signed symmetric grid because its domain is strictly
 # positive.  Use a power-of-two geometry so RTL indexing remains one subtract
 # plus one shift, with the smallest Q8.8-positive value as the lower endpoint.

@@ -169,10 +169,19 @@ not enable stochastic product rounding.
 | `v > 1.0` | Candidate-state comparison in threshold/reset context. |
 | `a < b <= c` | Ordered conjunction retaining Python comparison order. |
 | `x % 6.283185307179586` | Floored remainder for a finite positive literal divisor. |
+| `max(a, b, c)`, `min(a, b, c)` | Select chain over every argument (at least two), folded left. |
+| `clip(x, lo, hi)` | Two selects; exactly three arguments. |
+| `2 * pi * v` | `pi` is encoded as a literal unless a state variable or parameter is named `pi`. |
 
 Dynamic, non-finite, zero, negative, underflowed, or out-of-range modulo
 divisors fail compilation. Unsupported AST nodes and function calls also fail
-closed.
+closed, and so does a call whose arguments the Python model would not evaluate
+as written: keyword arguments, `max`/`min` with one argument, `clip` without
+both bounds, or a second argument to a one-argument function. The Verilog, C++
+(HLS) and bit-true C/Rust lowerers share these rules
+(`expr_lut_tables.FUNCTION_ARITY`, `check_call_arguments`, `NAMED_CONSTANTS`).
+Before 2026-10-18 these calls were lowered silently: `max`/`min` used only
+their first two arguments, and `clip(x)`/`max(x)` returned `x`.
 
 ### Transcendental tables
 
@@ -185,8 +194,20 @@ lowerer:
 | `log` | 256 | `[1/256, 8 + 1/256)` | `1/32` |
 | `sqrt` | 16 | `[0, 7.5]` | `1/2` |
 
-These geometries do not imply one model-independent error bound. Model-level
-co-simulation defines the accepted state and event envelope.
+Each table returns the function's value at the sample point at or below the
+argument; there is no interpolation, and an argument outside the domain reads the
+nearest endpoint. The approximation error therefore depends on the argument
+range a model reaches; it is not yet stated per function and format, and the
+bit-true co-simulation does not measure it, because the C/Rust kernel reads the
+same tables. Model-level co-simulation against the Python model defines the
+accepted state and event envelope.
+
+The index is `(x - lo) >> shift`, computed in a signed width that holds every
+argument plus the table offset (`expr_lut_tables.lut_offset_width`): `data_width
++ 1` bits where that suffices, wider at formats whose integer range is narrower
+than 16 (Q4.12, Q1.15, Q4.4, Q1.7). Before 2026-10-18 those formats wrapped the
+offset, and both the RTL and the C kernel read wrong entries (for example
+`exp(0) = 0` at Q4.12).
 
 ## 6. Folded combinational datapaths
 

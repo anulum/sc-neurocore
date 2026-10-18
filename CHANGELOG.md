@@ -10,6 +10,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Stop silent mis-lowering in the equation compiler. `max` and `min` now compare
+  every argument; they used only the first two, and the GLIF5 schema's tolerance
+  term has three. A call the Python model would not evaluate as written is now
+  refused instead of passed through, in the Verilog, HLS C++ and bit-true C/Rust
+  lowerers alike. Such calls include `max(x)`, `clip(x)`, `clip(x, lo)`, keyword
+  arguments, and a second argument to a one-argument function. `pi` is encoded
+  as a literal instead of an undeclared net. The transcendental-table index now
+  holds its offset at formats whose integer range is narrower than 16, such as
+  Q4.12, Q1.15, Q4.4 and Q1.7. At those formats the RTL and the bit-true kernel
+  both read wrong entries; for example, `exp(0)` gave 0 at Q4.12. RTL at Q8.8,
+  Q9.9, Q16.16 and Q8.24 is byte-identical for every bundled schema except GLIF.
+
 - Retain every completed stochastic network benchmark repetition in JSON and
   Markdown, including its seed and step count. Record timezone-aware UTC and
   distinguish measured fused totals from estimated native component times.

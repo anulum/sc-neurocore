@@ -353,18 +353,26 @@ def _expressions(neuron: EquationNeuron) -> Iterator[tuple[str, str]]:
         yield "spike probability", neuron.probability_expression
 
 
-def _literals(node: ast.AST) -> Iterator[tuple[QuantityKind, float]]:
+def _literals(
+    node: ast.AST, bound: frozenset[str] = frozenset()
+) -> Iterator[tuple[QuantityKind, float]]:
     """Yield each numeric literal the Verilog emitter encodes, as it encodes it.
 
     A literal divisor becomes its encoded reciprocal, a modulo period is
-    encoded as it stands, and exponents and floor divisors are not encoded.
+    encoded as it stands, and exponents and floor divisors are not encoded. A
+    named constant such as ``pi`` is encoded as a literal unless a state
+    variable, parameter or constant in ``bound`` takes its name.
     """
     value = _numeric_literal(node)
     if value is not None:
         yield "literal", value
         return
+    if isinstance(node, ast.Name):
+        if node.id in expr_lut_tables.NAMED_CONSTANTS and node.id not in bound:
+            yield "literal", expr_lut_tables.NAMED_CONSTANTS[node.id]
+        return
     if isinstance(node, ast.BinOp):
-        yield from _literals(node.left)
+        yield from _literals(node.left, bound)
         if isinstance(node.op, (ast.Pow, ast.FloorDiv)):
             return
         right = _numeric_literal(node.right)
@@ -376,10 +384,10 @@ def _literals(node: ast.AST) -> Iterator[tuple[QuantityKind, float]]:
         if isinstance(node.op, ast.Mod) and right is not None:
             yield "modulo_period", right
             return
-        yield from _literals(node.right)
+        yield from _literals(node.right, bound)
         return
     for child in ast.iter_child_nodes(node):
-        yield from _literals(child)
+        yield from _literals(child, bound)
 
 
 def _numeric_literal(node: ast.AST) -> float | None:
@@ -414,8 +422,11 @@ def _quantities(
                 data_width=data_width,
                 fraction=fraction,
             )
+    bound = frozenset(
+        {*neuron.parameters, *neuron.constants, *neuron.initial_state, *neuron.equations}
+    )
     for where, expression in _expressions(neuron):
-        for kind, value in _literals(ast.parse(expression, mode="eval")):
+        for kind, value in _literals(ast.parse(expression, mode="eval"), bound):
             yield _encoded(kind, where, value, data_width=data_width, fraction=fraction)
     values = {**neuron.parameters, **neuron.constants}
     fixed = _FixedValue(values, data_width=data_width, fraction=fraction, rounding=rounding)

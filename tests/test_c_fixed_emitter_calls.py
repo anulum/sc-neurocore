@@ -34,9 +34,12 @@ class TestCalls:
         expr, *_ = _c("clip(v, -1.0, 1.0)", state={"v": "s->v"})
         assert expr.count("?") == 2 or "if (" in expr
 
-    def test_clip_wrong_arity_is_identity(self):
-        expr, *_ = _c("clip(v)", state={"v": "s->v"})
-        assert "s->v" in expr and "?" not in expr
+    def test_clip_wrong_arity_is_refused(self):
+        # np.clip needs a_min and a_max; passing v through would differ from the model.
+        with pytest.raises(ValueError, match="exactly 3"):
+            _c("clip(v)", state={"v": "s->v"})
+        with pytest.raises(ValueError, match="exactly 3"):
+            _c("clip(v, 1.0)", state={"v": "s->v"})
 
     def test_max(self):
         expr, *_ = _c("max(v, 0.0)", state={"v": "s->v"})
@@ -46,9 +49,29 @@ class TestCalls:
         expr, *_ = _c("min(v, 0.0)", state={"v": "s->v"})
         assert "<" in expr
 
-    def test_max_single_arg_is_identity(self):
-        expr, *_ = _c("max(v)", state={"v": "s->v"})
-        assert "s->v" in expr
+    def test_max_single_arg_is_refused(self):
+        # Python's max(x) on a number raises; the kernel must not invent a value.
+        with pytest.raises(ValueError, match="at least 2"):
+            _c("max(v)", state={"v": "s->v"})
+
+    def test_max_and_min_use_every_argument(self):
+        # Folded left: max(max(v, 0), 1). Values are checked by the co-simulation tests.
+        expr, *_ = _c("max(v, 0.0, 1.0)", state={"v": "s->v"})
+        assert expr.endswith(f"(((int64_t)({Q.encode(1.0)}))))")
+        expr, *_ = _c("min(v, 0.0, 1.0, 2.0)", state={"v": "s->v"})
+        assert expr.endswith(f"(((int64_t)({Q.encode(2.0)}))))")
+
+    def test_keyword_arguments_are_refused(self):
+        with pytest.raises(ValueError, match="positional arguments only"):
+            _c("clip(v, a_min=0.0, a_max=1.0)", state={"v": "s->v"})
+
+    def test_pi_is_encoded_as_a_literal(self):
+        expr, *_ = _c("2.0 * pi", state={})
+        assert str(signed_q(Q, 3.141592653589793)) in expr
+
+    def test_a_parameter_named_pi_takes_precedence(self):
+        expr, *_ = _c("pi", state={}, params={"pi": 7})
+        assert "7" in expr and str(signed_q(Q, 3.141592653589793)) not in expr
 
     def test_unsupported_function_raises(self):
         with pytest.raises(ValueError, match="Unsupported function"):

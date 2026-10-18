@@ -189,6 +189,25 @@ class TestLiterals:
         assert (guard.status, guard.blocking) == ("underflows_to_zero", False)
         assert contract.representable is True
 
+    def test_pi_is_encoded_as_a_literal(self) -> None:
+        """``pi`` is a literal of the RTL, so the contract reports its encoding."""
+        neuron = EquationNeuron(equations={"v": "2 * pi * v"}, method="map", dt=1.0)
+        contract = hardware_numeric_contract(neuron, Q88)
+        assert any(
+            q.kind == "literal" and q.value == math.pi and q.rtl_value == 804 / 256
+            for q in contract.quantities
+        )
+
+    def test_a_parameter_named_pi_is_not_a_literal(self) -> None:
+        """A parameter ``pi`` is reported once, as the parameter."""
+        neuron = EquationNeuron(
+            equations={"v": "pi * v"}, parameters={"pi": 2.0}, method="map", dt=1.0
+        )
+        contract = hardware_numeric_contract(neuron, Q88)
+        assert [q.kind for q in contract.quantities if q.name == "pi" or q.value == math.pi] == [
+            "parameter"
+        ]
+
     def test_division_by_the_literal_zero_is_refused(self) -> None:
         with pytest.raises(ValueError, match="divides by the literal 0"):
             hardware_numeric_contract(EquationNeuron(equations={"v": "v / 0"}), Q88)

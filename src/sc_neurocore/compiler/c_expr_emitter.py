@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import ast
 
-from .expr_lut_tables import SUPPORTED_FUNCTIONS, const_float
+from .expr_lut_tables import NAMED_CONSTANTS, SUPPORTED_FUNCTIONS, check_call_arguments, const_float
 
 # Transcendentals that map directly to a single hls_math / <cmath> function.
 _DIRECT_MATH_FUNCTIONS: dict[str, str] = {
@@ -128,6 +128,8 @@ class CExprEmitter(ast.NodeVisitor):
             return self.param_map[name]
         if name == "I":
             return "I_t"
+        if name in NAMED_CONSTANTS:
+            return f"{self.fp_type}({NAMED_CONSTANTS[name]!r})"
         if name not in self.free_vars:
             self.free_vars.append(name)
         return name
@@ -165,6 +167,7 @@ class CExprEmitter(ast.NodeVisitor):
             raise ValueError(f"Unsupported function '{fname}' in C/C++ compilation.")
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
+        check_call_arguments(fname, node)
         arg: str = self.visit(node.args[0])
 
         if fname in _DIRECT_MATH_FUNCTIONS:
@@ -176,18 +179,16 @@ class CExprEmitter(ast.NodeVisitor):
         if fname == "abs":
             return f"{self.math_ns}::abs({arg})"
         if fname == "clip":
-            if len(node.args) == 3:
-                lo: str = self.visit(node.args[1])
-                hi: str = self.visit(node.args[2])
-                return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) ? {hi} : {arg}))"
-            return arg
-        if fname in ("max", "min"):
-            if len(node.args) >= 2:
-                other: str = self.visit(node.args[1])
-                cmp = ">" if fname == "max" else "<"
-                return f"(({arg} {cmp} {other}) ? {arg} : {other})"
-            return arg
-        raise ValueError(f"Unsupported function '{fname}' in C/C++ compilation.")
+            lo: str = self.visit(node.args[1])
+            hi: str = self.visit(node.args[2])
+            return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) ? {hi} : {arg}))"
+        # max / min over every argument, folded left as Python's builtin compares them.
+        cmp = ">" if fname == "max" else "<"
+        result = arg
+        for extra in node.args[1:]:
+            other: str = self.visit(extra)
+            result = f"(({result} {cmp} {other}) ? {result} : {other})"
+        return result
 
     def generic_visit(self, node: ast.AST) -> str:
         """Raise for any unsupported AST node type."""

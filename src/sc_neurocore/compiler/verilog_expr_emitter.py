@@ -370,6 +370,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return self.param_map[name]
         if name == "I":
             return "I_t"
+        if name in expr_lut_tables.NAMED_CONSTANTS:
+            # The Python model binds ``pi``; an undeclared ``pi`` net would not elaborate.
+            return str(self.q.encode_signed_literal(expr_lut_tables.NAMED_CONSTANTS[name]))
         return str(sanitize_ident(name, context="expression identifier"))
 
     def visit_Constant(self, node: ast.Constant) -> str:
@@ -431,6 +434,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         fname = node.func.id
         if len(node.args) < 1:
             raise ValueError(f"Function {fname} requires at least 1 argument")
+        if fname not in expr_lut_tables.SUPPORTED_FUNCTIONS:
+            raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
+        expr_lut_tables.check_call_arguments(fname, node)
         arg: str = self._value(node.args[0])
 
         if fname == "exp":
@@ -466,23 +472,20 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         elif fname == "abs":
             return f"(({self._wide(arg)} < 0) ? (-{arg}) : {arg})"
         elif fname == "clip":
-            if len(node.args) == 3:
-                lo: str = self._value(node.args[1])
-                hi: str = self._value(node.args[2])
-                wide_arg = self._wide(arg)
-                return (
-                    f"(({wide_arg} < {self._wide(lo)}) ? {lo} : "
-                    f"(({wide_arg} > {self._wide(hi)}) ? {hi} : {arg}))"
-                )
-            return arg
-        elif fname in ("max", "min"):
-            if len(node.args) >= 2:
-                b: str = self._value(node.args[1])
-                if fname == "max":
-                    return f"(({self._wide(arg)} > {self._wide(b)}) ? {arg} : {b})"
-                return f"(({self._wide(arg)} < {self._wide(b)}) ? {arg} : {b})"
-            return arg
-        raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
+            lo: str = self._value(node.args[1])
+            hi: str = self._value(node.args[2])
+            wide_arg = self._wide(arg)
+            return (
+                f"(({wide_arg} < {self._wide(lo)}) ? {lo} : "
+                f"(({wide_arg} > {self._wide(hi)}) ? {hi} : {arg}))"
+            )
+        # max / min over every argument, folded left as Python's builtin compares them.
+        cmp = ">" if fname == "max" else "<"
+        result = arg
+        for extra in node.args[1:]:
+            b: str = self._value(extra)
+            result = f"(({self._wide(result)} {cmp} {self._wide(b)}) ? {result} : {b})"
+        return result
 
     def _emit_lut_call(
         self,
@@ -511,6 +514,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         s = round(-math.log2(lut_step))  # lut_step == 2**(-s)
         shift = frac - s
         min_q = round(lut_min * (1 << frac))
+        # Width of the offset sum: dw+1 bits wrap the [-16, 16) offset at Q4.12 or Q1.15.
+        ow = expr_lut_tables.lut_offset_width(dw, min_q)
         self.intermediates.append(
             f"// {lut_name} lookup table ({n} entries over "
             f"[{lut_min}, {lut_min + n * lut_step}), step {lut_step})"
@@ -519,7 +524,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         # when the argument is a compound expression.
         arg_w = f"{lut_id}_arg"
         self.intermediates.append(f"wire signed [{dw - 1}:0] {arg_w} = {arg};")
-        ext = f"{{{arg_w}[{dw - 1}]}}, {arg_w}"  # (dw+1)-bit sign extension
+        ext = (
+            f"{{{ow - dw}{{{arg_w}[{dw - 1}]}}}}, {arg_w}"
+            if ow > dw + 1
+            else f"{{{arg_w}[{dw - 1}]}}, {arg_w}"
+        )
         op = "-" if min_q >= 0 else "+"
         shift_op = f">>> {shift}" if shift >= 0 else f"<<< {-shift}"
         raw = f"{lut_id}_raw"
@@ -527,14 +536,14 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             # A concatenation is unsigned in Verilog: without $signed the offset sum
             # and the shift are unsigned, and an argument below the table's first
             # point indexes its last entry instead of clamping to the first.
-            f"wire signed [{dw}:0] {raw} = ($signed({{{ext}}}) {op} {dw + 1}'sd{abs(min_q)}) "
+            f"wire signed [{ow - 1}:0] {raw} = ($signed({{{ext}}}) {op} {ow}'sd{abs(min_q)}) "
             f"{shift_op};"
         )
         idx_wire = f"{lut_id}_idx"
         self.intermediates.append(
             f"wire [{idx_bits - 1}:0] {idx_wire} = "
             f"({raw} < 0) ? {idx_bits}'d0 : "
-            f"(({raw} > {dw + 1}'sd{n - 1}) ? {idx_bits}'d{n - 1} : {raw}[{idx_bits - 1}:0]);"
+            f"(({raw} > {ow}'sd{n - 1}) ? {idx_bits}'d{n - 1} : {raw}[{idx_bits - 1}:0]);"
         )
         result_wire = f"{lut_id}_out"
         lines = [f"reg signed [{dw - 1}:0] {result_wire};"]

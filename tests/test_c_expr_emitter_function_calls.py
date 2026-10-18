@@ -42,12 +42,27 @@ class TestFunctionCalls:
         assert _emit("max(a, b)") == "((a > b) ? a : b)"
         assert _emit("min(a, b)") == "((a < b) ? a : b)"
 
-    def test_clip_single_arg_passthrough(self) -> None:
-        # clip with only the value (no bounds) passes the argument through.
-        assert _emit("clip(v)", {"v"}) == "v"
+    def test_clip_wrong_arity_is_refused(self) -> None:
+        # np.clip needs both bounds; passing v through would differ from the model.
+        with pytest.raises(ValueError, match="exactly 3"):
+            _emit("clip(v)", {"v"})
+        with pytest.raises(ValueError, match="exactly 3"):
+            _emit("clip(v, 1.0)", {"v"})
 
-    def test_max_single_arg_passthrough(self) -> None:
-        assert _emit("max(v)", {"v"}) == "v"
+    def test_max_single_arg_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="at least 2"):
+            _emit("max(v)", {"v"})
+
+    def test_max_min_use_every_argument(self) -> None:
+        assert _emit("max(a, b, c)") == "((((a > b) ? a : b) > c) ? ((a > b) ? a : b) : c)"
+        assert _emit("min(a, b, c)") == "((((a < b) ? a : b) < c) ? ((a < b) ? a : b) : c)"
+
+    def test_keyword_arguments_are_refused(self) -> None:
+        with pytest.raises(ValueError, match="positional arguments only"):
+            _emit("clip(v, a_min=0.0, a_max=1.0)", {"v"})
+
+    def test_pi_is_a_typed_literal(self) -> None:
+        assert _emit("pi") == "fp_t(3.141592653589793)"
 
     def test_unsupported_function_raises(self) -> None:
         with pytest.raises(ValueError, match="Unsupported function"):
