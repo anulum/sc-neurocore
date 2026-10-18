@@ -20,6 +20,8 @@ import re
 
 import pytest
 
+from sc_neurocore.compiler.lut_accuracy import measure
+
 from sc_neurocore.compiler.hardware_numeric_contract import (
     HARDWARE_NUMERIC_CONTRACT_SCHEMA_VERSION,
     MIRROR_EVIDENCE,
@@ -255,6 +257,7 @@ class TestLookupTables:
             "step": 0.125,
             "entries": 256,
             "outside_domain": "clamped to the first or last entry",
+            "accuracy": measure("cbrt", 16, 8).to_public_dict(),
         }
 
     def test_stochastic_spike_expressions_are_read(self) -> None:

@@ -23,10 +23,12 @@ modulo period rounds to zero. A plain literal below the resolution, such as a
 floating-point round-off guard, is reported but does not make the format
 unrepresentable: the fixed-point comparison it guards is exact.
 
-What is not stated: the range the state reaches during a run (only encoded
-values and the initial state are checked, so a run can still saturate or
-wrap), the approximation error of the look-up tables, timing closure, place
-and route, and board behaviour.
+Each look-up table carries its measured error at the format against the Python
+model's function (:mod:`sc_neurocore.compiler.lut_accuracy`), over the inputs the
+format can hold. What is not stated: the range the state, and so a table's
+argument, reaches during a run (only encoded values and the initial state are
+checked, so a run can still saturate or wrap), how a table's error propagates
+through later arithmetic, timing closure, place and route, and board behaviour.
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ from typing import Literal
 
 from ..neurons.equation_builder import EquationNeuron
 from . import expr_lut_tables
+from .lut_accuracy import LutAccuracy, measure
 from .intelligence.bit_true_kernel import (
     generate_bittrue_kernel_from_neuron,
     kernel_arithmetic_contract,
@@ -146,7 +149,8 @@ class LookupTable:
     """One transcendental look-up table the datapath uses.
 
     Arguments outside ``[domain_min, domain_max)`` are clamped to the first or
-    last entry.
+    last entry. ``accuracy`` is the table's measured error at the contract's
+    format against the Python model's function.
     """
 
     function: str
@@ -154,6 +158,7 @@ class LookupTable:
     domain_max: float
     step: float
     entries: int
+    accuracy: LutAccuracy
 
     def to_public_dict(self) -> dict[str, object]:
         """Return the JSON projection."""
@@ -164,6 +169,7 @@ class LookupTable:
             "step": self.step,
             "entries": self.entries,
             "outside_domain": "clamped to the first or last entry",
+            "accuracy": self.accuracy.to_public_dict(),
         }
 
 
@@ -331,7 +337,7 @@ def hardware_numeric_contract(
         arithmetic=arithmetic,
         mirror_refusal=mirror_refusal,
         quantities=quantities,
-        lookup_tables=_lookup_tables(neuron),
+        lookup_tables=_lookup_tables(neuron, data_width=data_width, fraction=fraction),
     )
 
 
@@ -580,8 +586,10 @@ def _deduplicated(quantities: Iterator[EncodedQuantity]) -> tuple[EncodedQuantit
     return tuple(kept)
 
 
-def _lookup_tables(neuron: EquationNeuron) -> tuple[LookupTable, ...]:
-    """Return the look-up tables the Verilog emitter builds for ``neuron``."""
+def _lookup_tables(
+    neuron: EquationNeuron, *, data_width: int, fraction: int
+) -> tuple[LookupTable, ...]:
+    """Return the look-up tables the Verilog emitter builds for ``neuron``, measured at the format."""
     # The exponential-Euler increment is f * dt * exprel(A * dt).
     functions: set[str] = {"exprel"} if neuron.method == "exp_euler" else set()
     for _where, expression in _expressions(neuron):
@@ -596,10 +604,12 @@ def _lookup_tables(neuron: EquationNeuron) -> tuple[LookupTable, ...]:
                     functions.add("cbrt")
                 elif exponent is not None and abs(exponent - 0.5) < 1e-6:
                     functions.add("sqrt")
-    return tuple(_table(function) for function in sorted(functions))
+    return tuple(
+        _table(function, data_width=data_width, fraction=fraction) for function in sorted(functions)
+    )
 
 
-def _table(function: str) -> LookupTable:
+def _table(function: str, *, data_width: int, fraction: int) -> LookupTable:
     """Return the sample grid of one look-up table."""
     if function == "log":
         points = expr_lut_tables.log_sample_points()
@@ -614,6 +624,7 @@ def _table(function: str) -> LookupTable:
         domain_max=points[-1] + step,
         step=step,
         entries=len(points),
+        accuracy=measure(function, data_width, fraction),
     )
 
 

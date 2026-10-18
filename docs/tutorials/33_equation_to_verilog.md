@@ -197,9 +197,11 @@ lowerer:
 Each table returns the function's value at the sample point at or below the
 argument; there is no interpolation, and an argument outside the domain reads the
 nearest endpoint. The approximation error therefore depends on the argument
-range a model reaches; it is not yet stated per function and format, and the
-bit-true co-simulation does not measure it, because the C/Rust kernel reads the
-same tables. Model-level co-simulation against the Python model defines the
+range a model reaches. The bit-true co-simulation does not measure it, because
+the C/Rust kernel reads the same tables; `sc_neurocore.compiler.lut_accuracy`
+measures it against the Python model per function and format, the hardware
+numeric contract reports it for every table a neuron uses, and
+[the lut-v1 accuracy report](../validation/lut_accuracy_v1.md) lists it. Model-level co-simulation against the Python model defines the
 accepted state and event envelope.
 
 The index is `(x - lo) >> shift`, computed in a signed width that holds every

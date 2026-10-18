@@ -10,6 +10,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- State the approximation error of the equation compiler's transcendental tables.
+  `sc_neurocore.compiler.lut_accuracy` reads each table exactly as the generated
+  RTL indexes it (checked by Icarus simulation). It compares the result with the
+  Python model's function, at every input code up to 18 bits and sampled above.
+  The hardware numeric contract now reports the error for every table a neuron
+  uses at its format, and `docs/validation/lut_accuracy_v1.md` lists it per
+  function and format. The current lowering is coarse: inside its table, `exp`
+  errs by up to 13 at Q8.8 and 3765 at Q16.16, `sin` by 0.125, and `sqrt` by
+  0.71.
+
 - Stop silent mis-lowering in the equation compiler. `max` and `min` now compare
   every argument; they used only the first two, and the GLIF5 schema's tolerance
   term has three. A call the Python model would not evaluate as written is now
