@@ -43,8 +43,15 @@ _EXPRESSIONS = {
     "sinh": "sinh(I)",
     "exprel": "exprel(I)",
     "cbrt": "I ** (1.0 / 3.0)",
+    "arctan": "arctan(I)",
+    "erf": "erf(I)",
+    "log1p": "log1p(I)",
+    "expm1": "expm1(I)",
+    "tan": "tan(I)",
+    "floor": "floor(I)",
+    "sign": "sign(I)",
 }
-_POSITIVE = {"log", "sqrt", "cbrt"}
+_POSITIVE = {"log", "sqrt", "cbrt", "log1p"}
 
 
 def _traces(

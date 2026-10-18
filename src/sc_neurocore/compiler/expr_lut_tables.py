@@ -42,6 +42,20 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "cosh",
         "sinh",
         "exprel",
+        "exp2",
+        "log2",
+        "log10",
+        "expm1",
+        "log1p",
+        "tan",
+        "arctan",
+        "arcsin",
+        "arccos",
+        "erf",
+        "floor",
+        "ceil",
+        "trunc",
+        "sign",
         "sigmoid",
         "expit",
         "sin",
@@ -54,7 +68,12 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
 )
 
 # Functions only the v2 function units lower; lut-v1 has no table for them.
-V2_ONLY_FUNCTIONS: frozenset[str] = frozenset({"sinh"})
+V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
+    {"sinh", "exp2", "log2", "log10", "expm1", "log1p", "tan", "arctan", "arcsin", "arccos", "erf"}
+)
+
+# Exact integer functions: their units have no table, so both lowerings use them.
+EXACT_FUNCTIONS: frozenset[str] = frozenset({"floor", "ceil", "trunc", "sign"})
 
 # The v2 function unit (sc_neurocore.compiler.function_units) for each call name.
 V2_UNIT_FOR: dict[str, str] = {
@@ -69,6 +88,20 @@ V2_UNIT_FOR: dict[str, str] = {
     "expit": "sigmoid",
     "sin": "sin",
     "cos": "cos",
+    "exp2": "exp2",
+    "log2": "log2",
+    "log10": "log10",
+    "expm1": "expm1",
+    "log1p": "log1p",
+    "tan": "tan",
+    "arctan": "arctan",
+    "arcsin": "arcsin",
+    "arccos": "arccos",
+    "erf": "erf",
+    "floor": "floor",
+    "ceil": "ceil",
+    "trunc": "trunc",
+    "sign": "sign",
 }
 
 # Positional-argument counts each function takes, as the Python model accepts it

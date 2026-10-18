@@ -23,6 +23,7 @@ import math
 from typing import Any
 
 import numpy as np
+import scipy.special
 
 from sc_neurocore.neurons.equation_refusals import EquationRefusal
 
@@ -68,6 +69,20 @@ def build_eval_namespace() -> dict[str, Any]:
         "tanh": np.tanh,
         "cosh": np.cosh,
         "sinh": np.sinh,
+        "tan": np.tan,
+        "arctan": np.arctan,
+        "arcsin": np.arcsin,
+        "arccos": np.arccos,
+        "exp2": np.exp2,
+        "log2": np.log2,
+        "log10": np.log10,
+        "expm1": np.expm1,
+        "log1p": np.log1p,
+        "erf": scipy.special.erf,
+        "floor": np.floor,
+        "ceil": np.ceil,
+        "trunc": np.trunc,
+        "sign": np.sign,
         "exprel": _exprel,
         "sigmoid": _sigmoid,
         "pi": math.pi,

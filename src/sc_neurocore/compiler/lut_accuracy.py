@@ -113,14 +113,20 @@ _ENTRIES: dict[str, Callable[[int, int], list[int]]] = {
     "sqrt": lambda _dw, fr: expr_lut_tables.sqrt_lut_entries(fr),
 }
 
-# Inputs the Python model evaluates to a real number: ``log`` needs x > 0; ``sqrt``
-# refuses x < 0; ``x ** (1/3)`` of a negative float is NaN in NumPy.
+# Inputs the Python model evaluates to a real number: the logarithms need x > 0
+# (log1p: x > -1); ``sqrt`` refuses x < 0; ``x ** (1/3)`` of a negative float is
+# NaN in NumPy, as are arcsin and arccos outside [-1, 1].
 _MODEL_DOMAIN: dict[str, tuple[float, float]] = {
     "log": (0.0, math.inf),
+    "log2": (0.0, math.inf),
+    "log10": (0.0, math.inf),
+    "log1p": (-1.0, math.inf),
     "sqrt": (0.0, math.inf),
     "cbrt": (0.0, math.inf),
+    "arcsin": (-1.0, 1.0),
+    "arccos": (-1.0, 1.0),
 }
-_OPEN_LOWER = frozenset({"log"})
+_OPEN_LOWER = frozenset({"log", "log2", "log10", "log1p"})
 
 
 def _reference(function: str) -> Callable[[FloatArray], FloatArray]:
@@ -336,6 +342,8 @@ def _v2_codes(function: str, data_width: int, fraction: int) -> tuple[IntArray, 
     if domain is not None:
         first = math.ceil(domain[0] * (1 << fraction))
         low_code = max(low_code, first + 1 if function in _OPEN_LOWER else first)
+        if math.isfinite(domain[1]):
+            high_code = min(high_code, math.floor(domain[1] * (1 << fraction)))
     if data_width <= V2_EXHAUSTIVE_MAX_WIDTH:
         return np.arange(low_code, high_code + 1, dtype=np.int64), True
     spread = np.linspace(low_code, high_code, 1 << 16).astype(np.int64)

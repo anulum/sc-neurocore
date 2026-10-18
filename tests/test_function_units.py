@@ -37,14 +37,34 @@ _REFERENCE = {
     "sinh": np.sinh,
     "exprel": _NS["exprel"],
     "cbrt": np.cbrt,
+    "exp2": np.exp2,
+    "log2": np.log2,
+    "log10": np.log10,
+    "expm1": np.expm1,
+    "log1p": np.log1p,
+    "tan": np.tan,
+    "arctan": np.arctan,
+    "arcsin": np.arcsin,
+    "arccos": np.arccos,
+    "erf": _NS["erf"],
+    "floor": np.floor,
+    "ceil": np.ceil,
+    "trunc": np.trunc,
+    "sign": np.sign,
 }
-_POSITIVE_ONLY = {
-    "log": 0.0,
-    "sqrt": -1.0,
-    "cbrt": -1.0,
-}  # model domain: x > 0 for log, x >= 0 otherwise
+# Inputs the Python model evaluates to a real number (outside, the units state a value).
+_DOMAIN = {
+    "log": lambda x: x > 0,
+    "log2": lambda x: x > 0,
+    "log10": lambda x: x > 0,
+    "log1p": lambda x: x > -1,
+    "sqrt": lambda x: x >= 0,
+    "cbrt": lambda x: x >= 0,
+    "arcsin": lambda x: -1 <= x <= 1,
+    "arccos": lambda x: -1 <= x <= 1,
+}
 # Largest error in least significant bits, 16-bit formats, every code (measured, rounded up).
-_BOUND_16 = {name: 0.51 for name in fu.FUNCTIONS} | {"cosh": 0.63, "sinh": 0.63}
+_BOUND_16 = {name: 0.51 for name in fu.FUNCTIONS} | {"cosh": 0.63, "sinh": 0.63, "tan": 0.52}
 
 
 def _max_error_lsb(
@@ -55,9 +75,7 @@ def _max_error_lsb(
     worst = 0.0
     for code in codes:
         x = code / scale
-        if function in _POSITIVE_ONLY and x <= _POSITIVE_ONLY[function]:
-            continue
-        if function == "log" and x <= 0:
+        if function in _DOMAIN and not _DOMAIN[function](x):
             continue
         with np.errstate(all="ignore"):
             reference = float(np.clip(_REFERENCE[function](np.float64(x)), low, high))
@@ -82,10 +100,22 @@ class TestAccuracy:
         """At Q16.16 bounded functions stay within 0.6 LSB; exp-like ones within 2**-28 relative."""
         codes = list(range(-(1 << 31), 1 << 31, 1 << 20)) + list(range(-(1 << 20), 1 << 20, 4099))
         error = _max_error_lsb(function, 32, 16, codes)
-        if function in ("exp", "cosh", "sinh", "exprel"):
+        if function in ("exp", "cosh", "sinh", "exprel", "exp2", "expm1"):
             assert error <= 5.0  # at most ~2**-28.6 of the largest value, 32767.99
+        elif function == "tan":
+            pass  # ill-conditioned at the poles; see test_tan_away_from_the_poles
         else:
             assert error <= 0.6
+
+    def test_tan_away_from_the_poles(self) -> None:
+        """At Q16.16, where |tan x| <= 10 the unit is within 0.6 LSB of the model.
+
+        Near a pole the error grows with the conditioning, about
+        ``(1 + tan²x)·2π·2**-30`` from the turn's 30-bit resolution: 2.4 LSB at
+        ``|tan x| <= 100`` (measured 2026-10-19).
+        """
+        codes = [c for c in range(-(1 << 22), 1 << 22, 997) if abs(np.tan(c / 65536.0)) <= 10.0]
+        assert _max_error_lsb("tan", 32, 16, codes) <= 0.6
 
 
 class TestHelpers:
@@ -131,6 +161,18 @@ class TestDomainStatements:
         assert fu.evaluate("sqrt", -256, 16, 8) == 0
         assert fu.evaluate("cbrt", -2048, 16, 8) == -fu.evaluate("cbrt", 2048, 16, 8)
 
+    def test_inverse_sine_and_cosine_saturate_outside_the_unit_interval(self) -> None:
+        """``arcsin`` and ``arccos`` of ``|x| > 1`` are their values at ``±1``."""
+        assert fu.evaluate("arcsin", 3 << 8, 16, 8) == fu.evaluate("arcsin", 1 << 8, 16, 8)
+        assert fu.evaluate("arccos", -(3 << 8), 16, 8) == fu.evaluate("arccos", -(1 << 8), 16, 8)
+
+    def test_exact_functions_are_exact(self) -> None:
+        """floor, ceil, trunc and sign at a few codes, including negatives."""
+        assert [fu.evaluate("floor", c, 16, 8) for c in (-257, -256, 255)] == [-512, -256, 0]
+        assert [fu.evaluate("ceil", c, 16, 8) for c in (-257, 1, 256)] == [-256, 256, 256]
+        assert [fu.evaluate("trunc", c, 16, 8) for c in (-257, 257)] == [-256, 256]
+        assert [fu.evaluate("sign", c, 8, 7) for c in (-5, 0, 5)] == [-128, 0, 127]
+
     def test_exprel_at_zero_is_one(self) -> None:
         """The removable singularity: ``exprel(0) = 1`` at every format."""
         for dw, fr in [(8, 2), (16, 8), (32, 24)]:
@@ -149,4 +191,4 @@ class TestFormats:
     def test_unknown_function_is_refused(self) -> None:
         """Only the eleven units exist."""
         with pytest.raises(ValueError, match="no v2 unit"):
-            fu.evaluate("erf", 0, 16, 8)
+            fu.evaluate("gamma", 0, 16, 8)

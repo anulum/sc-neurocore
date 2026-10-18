@@ -9283,7 +9283,8 @@ Parameters
 ----------
 name : str
     ``"exp2"`` (``2^u`` on ``&#91;0, 1&#93;``), ``"log2"`` (``log2(1 + u)`` on ``&#91;0, 1&#93;``),
-    ``"qsin"`` (``sin(π/2·u)`` on ``&#91;0, 1&#93;``) or ``"sigmoid"`` (``σ(x)`` on ``&#91;0, 32&#93;``).
+    ``"qsin"`` (``sin(π/2·u)`` on ``&#91;0, 1&#93;``), ``"sigmoid"`` (``σ(x)`` on ``&#91;0, 32&#93;``),
+    ``"atan"`` (``atan(u)`` on ``&#91;0, 1&#93;``) or ``"erf"`` (``erf(x)`` on ``&#91;0, 4&#93;``).
 
 Returns
 -------
@@ -9559,6 +9560,216 @@ int
 
 ### Function `cbrt(code, data_width, fraction)`
 Return the code of ``x**(1/3)``, odd in ``x``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `exp2(code, data_width, fraction)`
+Return the code of ``2**x``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `log2(code, data_width, fraction)`
+Return the code of ``log2 x``; the most negative code for ``x <= 0``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `log10(code, data_width, fraction)`
+Return the code of ``log10 x = log2 x · log10 2``; the most negative code for ``x <= 0``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `expm1(code, data_width, fraction)`
+Return the code of ``e^x - 1``: the exponential's rounded code minus an exact one.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `log1p(code, data_width, fraction)`
+Return the code of ``log(1 + x)``, from the exact integer ``1 + x``; most negative for ``x <= -1``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code, saturated to the word.
+
+### Function `tan(code, data_width, fraction)`
+Return the code of ``tan x = sin x / cos x``, rounded half away from zero; saturated at the poles.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `arctan(code, data_width, fraction)`
+Return the code of ``arctan x``, with ``arctan x = π/2 - arctan(1/x)`` above 1.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `arcsin(code, data_width, fraction)`
+Return the code of ``arcsin x = arctan(x / sqrt(1 - x²))``; ``±π/2`` for ``|x| >= 1``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `arccos(code, data_width, fraction)`
+Return the code of ``arccos x = π/2 - arcsin x``; ``0`` or ``π`` for ``|x| >= 1``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `erf(code, data_width, fraction)`
+Return the code of the error function, odd in ``x``, 1 at and beyond ``|x| = 4``.
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `floor(code, data_width, fraction)`
+Return the code of ``floor x`` (exact).
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `ceil(code, data_width, fraction)`
+Return the code of ``ceil x`` (exact; saturated where the next integer leaves the word).
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `trunc(code, data_width, fraction)`
+Return the code of ``trunc x``, rounding towards zero (exact).
+
+Parameters
+----------
+code : int
+    Signed input code.
+data_width, fraction : int
+    The format.
+
+Returns
+-------
+int
+    The result code.
+
+### Function `sign(code, data_width, fraction)`
+Return the code of ``sign x`` (-1, 0 or 1; 1 saturates where the word cannot hold it).
 
 Parameters
 ----------

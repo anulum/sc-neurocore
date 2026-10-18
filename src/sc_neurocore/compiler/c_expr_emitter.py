@@ -39,6 +39,19 @@ _DIRECT_MATH_FUNCTIONS: dict[str, str] = {
     "cosh": "cosh",
     "sinh": "sinh",
     "sin": "sin",
+    "tan": "tan",
+    "arctan": "atan",
+    "arcsin": "asin",
+    "arccos": "acos",
+    "exp2": "exp2",
+    "log2": "log2",
+    "log10": "log10",
+    "expm1": "expm1",
+    "log1p": "log1p",
+    "erf": "erf",
+    "floor": "floor",
+    "ceil": "ceil",
+    "trunc": "trunc",
     "cos": "cos",
 }
 
@@ -180,6 +193,8 @@ class CExprEmitter(ast.NodeVisitor):
             return f"sc_exprel({arg})"
         if fname == "abs":
             return f"{self.math_ns}::abs({arg})"
+        if fname == "sign":
+            return f"{self.fp_type}(({arg} > 0) - ({arg} < 0))"
         if fname == "clip":
             lo: str = self.visit(node.args[1])
             hi: str = self.visit(node.args[2])

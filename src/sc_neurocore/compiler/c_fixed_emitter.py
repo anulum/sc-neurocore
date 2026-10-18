@@ -397,7 +397,9 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         arg: str = self._value(node.args[0])
 
         unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
-        if unit is not None and self.q.function_lowering == "v2":
+        if unit is not None and (
+            self.q.function_lowering == "v2" or fname in expr_lut_tables.EXACT_FUNCTIONS
+        ):
             return self._emit_unit(unit, arg)
         if fname in expr_lut_tables.V2_ONLY_FUNCTIONS:
             raise ValueError(f"Function '{fname}' needs function_lowering='v2'.")

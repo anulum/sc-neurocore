@@ -227,6 +227,13 @@ the tables with function units that reduce the argument and interpolate:
 | `cosh`, `sinh` | two exponentials, summed before one rounding |
 | `exprel` | quartic series for `|x| < 1/8`, otherwise `(e^x - 1)/x` |
 | `x ** (1/3)` | `2^(log2|x|/3)` with the sign of `x` |
+| `exp2`, `log2`, `log10` | the `exp` and `log` reductions without the `log2(e)` and `ln 2` factors (`log10 = log2 · log10 2`) |
+| `expm1`, `log1p` | the exponential minus an exact one; the logarithm of the exact integer `1 + x` |
+| `tan` | sine and cosine of the reduced turn, divided and rounded once; saturated at the poles |
+| `arctan` | quadratic table on `[0, 1]`, `arctan x = π/2 - arctan(1/x)` above 1 |
+| `arcsin`, `arccos` | `arctan(x / sqrt(1 - x²))` with an exact square root; `arccos = π/2 - arcsin` |
+| `erf` | table on `[0, 4)`, odd symmetry, 1 beyond |
+| `floor`, `ceil`, `trunc`, `sign` | exact integer arithmetic, no table (also used by `lut-v1`) |
 
 Each unit is written once as a 64-bit integer program
 (`sc_neurocore.compiler.function_unit_programs`) and emitted as Verilog wires and
@@ -234,13 +241,19 @@ as C or Rust statements, so the RTL and the bit-true kernel are identical; both
 equal the separately written integer reference `sc_neurocore.compiler.function_units`
 (checked by Icarus, gcc with undefined-behaviour checks, and rustc with overflow
 checks). The units accept words of at most 32 bits with
-`data_width + fraction <= 61`; other formats are refused. `sinh` exists only in
-`v2`. `log` of a non-positive input is the most negative code, `sqrt` of a negative
-input is 0, and `x ** (1/3)` of a negative input is `-(|x| ** (1/3))`, where the
-Python model raises or returns NaN.
+`data_width + fraction <= 61`; other formats are refused. `sinh`, `tan`,
+`arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p` and `erf`
+exist only in `v2`; the exact `floor`, `ceil`, `trunc` and `sign` work in both
+lowerings. These names are bound in the Python model to the NumPy functions of
+the same name (`erf` to `scipy.special.erf`). `log` of a non-positive input is the most negative code, `sqrt` of a negative
+input is 0, and `x ** (1/3)` of a negative input is `-(|x| ** (1/3))`; `log2`,
+`log10` and `log1p` follow `log`, and `arcsin`/`arccos` of `|x| > 1` take their
+values at `±1`. The Python model raises or returns NaN for these inputs.
 
 At every code of the 16-bit formats every unit is correctly rounded (0.5 LSB),
-except `cosh` and `sinh` (0.63 LSB). At 32-bit formats the exponential family is
+except `cosh` and `sinh` (0.63 LSB) and `tan` (0.52 LSB). Near a pole of `tan` the
+error follows the function's conditioning, about `(1 + tan² x)·2π·2^-30`: 2.4 LSB
+at Q16.16 where `|tan x| <= 100`. At 32-bit formats the exponential family is
 limited by the 30-bit internal fraction, a few LSB at the top of the range.
 [The v2 accuracy report](../validation/function_units_v2_accuracy.md) lists every
 unit and format. `lut-v1` remains the default and its RTL is unchanged; `v2` costs

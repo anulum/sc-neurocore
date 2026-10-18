@@ -132,13 +132,12 @@ class TestV2Measurement:
             table_functions("v3")
 
     def test_q8_8_units_are_correctly_rounded_except_two_term_ones(self) -> None:
-        """Every Q8.8 code: 0.5 LSB, cosh and sinh within 0.63 LSB."""
+        """Every Q8.8 code: 0.5 LSB; cosh and sinh within 0.63, tan within 0.52 LSB."""
+        bounds = {"cosh": 0.63, "sinh": 0.63, "tan": 0.52}
         for function in table_functions("v2"):
             result = measure(function, 16, 8, "v2")
             assert result.exhaustive and result.lowering == "v2"
-            assert result.max_error / result.resolution <= (
-                0.63 if function in ("cosh", "sinh") else 0.501
-            )
+            assert result.max_error / result.resolution <= (bounds.get(function, 0.501))
 
     def test_v2_improves_every_shared_function_at_q16_16(self) -> None:
         """Inside its domain v2 is at least 1000 times closer than lut-v1 for exp, sin and sigmoid."""
@@ -150,7 +149,7 @@ class TestV2Measurement:
     def test_unknown_v2_function_is_refused(self) -> None:
         """No measurement is invented for a unit that does not exist."""
         with pytest.raises(ValueError, match="no v2 unit"):
-            measure("erf", 16, 8, "v2")
+            measure("gamma", 16, 8, "v2")
 
 
 class TestContract:

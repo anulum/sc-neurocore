@@ -10,6 +10,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Extend the equation vocabulary with the functions Brian2 and LEMS provide.
+  New v2 function units: `tan`, `arctan`, `arcsin`, `arccos`, `exp2`, `log2`,
+  `log10`, `expm1`, `log1p` and `erf`. New exact functions `floor`, `ceil`,
+  `trunc` and `sign` work in both lowerings. All are bound in the Python model
+  to their NumPy functions (`erf` to `scipy.special.erf`) and guarded against
+  output arrays like the existing ufuncs. Every 16-bit-format code is correctly
+  rounded except `tan` (0.52 LSB). Near a pole, the `tan` error follows its
+  conditioning.
+
 - Add function lowering v2 to the equation compiler: `compile_to_verilog(...,
   function_lowering="v2")` (also `compile_to_datapath`, the bit-true C/Rust
   kernel and the hardware numeric contract). exp, log, sqrt, sin, cos, sigmoid,

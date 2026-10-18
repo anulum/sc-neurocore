@@ -14,6 +14,8 @@ import importlib.util
 from pathlib import Path
 from types import ModuleType
 
+from sc_neurocore.compiler.lut_accuracy import table_functions
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -45,5 +47,5 @@ def test_v2_report_covers_every_unit() -> None:
     """One row per v2 unit; every listed format the units support is a column."""
     tool = _tool()
     rows = [line for line in tool.render_v2().splitlines() if line.startswith("| `")]
-    assert len(rows) == 11
+    assert len(rows) == len(table_functions("v2"))
     assert any("`sinh`" in line for line in rows)

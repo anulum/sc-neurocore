@@ -295,6 +295,124 @@ def _unit_cbrt(p: Program, code: str, data_width: int, fraction: int) -> str:
     return p.select(nonzero, signed, p.const(0))
 
 
+def _unit_exp2(p: Program, code: str, data_width: int, fraction: int) -> str:
+    whole = p.shr(code, fraction)
+    position = p.shl(p.sub(code, p.shl(whole, fraction)), fu.B - fraction)
+    mantissa = _interpolate(p, "exp2", position, fu.B)
+    return _scale_to_code(p, mantissa, p.add(whole, p.const(fraction - fu.P)), data_width)
+
+
+def _unit_log2(p: Program, code: str, data_width: int, fraction: int) -> str:
+    positive = p.lt(p.const(0), code)
+    log2x = _log2_internal(p, p.select(positive, code, p.const(1)), fraction)
+    value = _saturate(p, _shift_round(p, log2x, fraction - fu.P), data_width)
+    return p.select(positive, value, p.const(-(1 << (data_width - 1))))
+
+
+def _unit_log10(p: Program, code: str, data_width: int, fraction: int) -> str:
+    positive = p.lt(p.const(0), code)
+    log2x = _log2_internal(p, p.select(positive, code, p.const(1)), fraction)
+    whole = p.shr(log2x, fu.P)
+    rest = p.sub(log2x, p.shl(whole, fu.P))
+    value = p.add(
+        p.mul(whole, p.const(fu._LOG10_2)), p.shr(p.mul(rest, p.const(fu._LOG10_2)), fu.P)
+    )
+    rounded = _saturate(p, _shift_round(p, value, fraction - fu.P), data_width)
+    return p.select(positive, rounded, p.const(-(1 << (data_width - 1))))
+
+
+def _unit_expm1(p: Program, code: str, data_width: int, fraction: int) -> str:
+    grown = _exp_scaled(p, code, fraction, fraction)
+    return _saturate(p, p.sub(grown, p.const(1 << fraction)), data_width)
+
+
+def _unit_log1p(p: Program, code: str, data_width: int, fraction: int) -> str:
+    return _unit_log(p, p.add(code, p.const(1 << fraction)), data_width, fraction)
+
+
+def _unit_tan(p: Program, code: str, data_width: int, fraction: int) -> str:
+    turn = _turns(p, code, fraction)
+    sine = _turn_sine(p, turn)
+    cosine = _turn_sine(p, p.mask(p.add(turn, p.const(1 << (fu.B - 2))), fu.B))
+    doubled = p.div(p.shl(sine, fraction + 1), cosine)
+    away = p.select(p.le(p.const(0), doubled), p.const(1), p.const(-1))
+    value = _saturate(p, p.div(p.add(doubled, away), p.const(2)), data_width)
+    pole = p.select(
+        p.lt(sine, p.const(0)),
+        p.const(-(1 << (data_width - 1))),
+        p.const((1 << (data_width - 1)) - 1),
+    )
+    return p.select(p.eq(cosine, p.const(0)), pole, value)
+
+
+def _atan_internal(p: Program, numerator: str, denominator: str) -> str:
+    below = p.le(numerator, denominator)
+    direct = _interpolate(p, "atan", p.div(p.shl(numerator, fu.P), denominator), fu.P)
+    inverse = _interpolate(p, "atan", p.div(p.shl(denominator, fu.P), numerator), fu.P)
+    return p.select(below, direct, p.sub(p.const(fu._HALF_PI), inverse))
+
+
+def _unit_arctan(p: Program, code: str, data_width: int, fraction: int) -> str:
+    value = _atan_internal(p, _abs(p, code), p.const(1 << fraction))
+    signed = p.select(p.lt(code, p.const(0)), p.neg(value), value)
+    return _saturate(p, _shift_round(p, signed, fraction - fu.P), data_width)
+
+
+def _arcsin_internal(p: Program, code: str, fraction: int) -> str:
+    magnitude = _min(p, _abs(p, code), p.const(1 << fraction))
+    x = p.shl(magnitude, fu.P - fraction)
+    root = _isqrt(p, p.sub(p.const(1 << (2 * fu.P)), p.mul(x, x)))
+    value = p.select(p.eq(root, p.const(0)), p.const(fu._HALF_PI), _atan_internal(p, x, root))
+    return p.select(p.lt(code, p.const(0)), p.neg(value), value)
+
+
+def _unit_arcsin(p: Program, code: str, data_width: int, fraction: int) -> str:
+    return _saturate(
+        p, _shift_round(p, _arcsin_internal(p, code, fraction), fraction - fu.P), data_width
+    )
+
+
+def _unit_arccos(p: Program, code: str, data_width: int, fraction: int) -> str:
+    value = p.sub(p.const(fu._HALF_PI), _arcsin_internal(p, code, fraction))
+    return _saturate(p, _shift_round(p, value, fraction - fu.P), data_width)
+
+
+def _unit_erf(p: Program, code: str, data_width: int, fraction: int) -> str:
+    magnitude = _abs(p, code)
+    position_bits = fraction + fu.ERF_RANGE_BITS
+    bits = fu.SEGMENT_BITS["erf"]
+    inside = p.lt(magnitude, p.const(1 << position_bits))
+    bounded = p.select(inside, magnitude, p.const(0))
+    if position_bits >= bits:
+        table_value = _interpolate(p, "erf", bounded, position_bits)
+    else:
+        table_value = _interpolate(p, "erf", p.shl(bounded, bits - position_bits), bits)
+    value = p.select(inside, table_value, p.const(1 << fu.P))
+    signed = p.select(p.lt(code, p.const(0)), p.neg(value), value)
+    return _saturate(p, _shift_round(p, signed, fraction - fu.P), data_width)
+
+
+def _unit_floor(p: Program, code: str, data_width: int, fraction: int) -> str:
+    return p.shl(p.shr(code, fraction), fraction)
+
+
+def _unit_ceil(p: Program, code: str, data_width: int, fraction: int) -> str:
+    return _saturate(p, p.neg(p.shl(p.shr(p.neg(code), fraction), fraction)), data_width)
+
+
+def _unit_trunc(p: Program, code: str, data_width: int, fraction: int) -> str:
+    return p.select(
+        p.le(p.const(0), code),
+        _unit_floor(p, code, data_width, fraction),
+        _unit_ceil(p, code, data_width, fraction),
+    )
+
+
+def _unit_sign(p: Program, code: str, data_width: int, fraction: int) -> str:
+    unit = p.sub(p.lt(p.const(0), code), p.lt(code, p.const(0)))
+    return _saturate(p, p.shl(unit, fraction), data_width)
+
+
 _BUILDERS: dict[str, Builder] = {
     "exp": _unit_exp,
     "log": _unit_log,
@@ -307,6 +425,20 @@ _BUILDERS: dict[str, Builder] = {
     "sinh": _unit_sinh,
     "exprel": _unit_exprel,
     "cbrt": _unit_cbrt,
+    "exp2": _unit_exp2,
+    "log2": _unit_log2,
+    "log10": _unit_log10,
+    "expm1": _unit_expm1,
+    "log1p": _unit_log1p,
+    "tan": _unit_tan,
+    "arctan": _unit_arctan,
+    "arcsin": _unit_arcsin,
+    "arccos": _unit_arccos,
+    "erf": _unit_erf,
+    "floor": _unit_floor,
+    "ceil": _unit_ceil,
+    "trunc": _unit_trunc,
+    "sign": _unit_sign,
 }
 
 

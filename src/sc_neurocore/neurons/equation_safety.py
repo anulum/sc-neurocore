@@ -94,6 +94,20 @@ _INPUT_ARGUMENTS = {
     "tanh": 1,
     "cosh": 1,
     "sinh": 1,
+    "exp2": 1,
+    "log2": 1,
+    "log10": 1,
+    "expm1": 1,
+    "log1p": 1,
+    "tan": 1,
+    "arctan": 1,
+    "arcsin": 1,
+    "arccos": 1,
+    "erf": 1,
+    "floor": 1,
+    "ceil": 1,
+    "trunc": 1,
+    "sign": 1,
     "clip": 3,
 }
 """Number of input arguments of each array function of the equation namespace.
@@ -205,6 +219,7 @@ class ExpressionSafetyValidator:
         ------
         EquationRefusal
             The expression does not parse or breaks a rule of the gate.
+
         """
         try:
             tree = ast.parse(expr, mode="eval")

@@ -48,8 +48,9 @@ P = 30  # internal fraction bits
 B = 30  # bits of a reduced argument on [0, 1) (exp, log) or of one turn (sin, cos)
 # Quadratic segments per table: chosen as the smallest counts that keep every
 # unit within its stated error (tests/test_function_units.py measures them).
-SEGMENT_BITS = {"exp2": 9, "log2": 9, "qsin": 8, "sigmoid": 11}
+SEGMENT_BITS = {"exp2": 9, "log2": 9, "qsin": 8, "sigmoid": 11, "atan": 9, "erf": 10}
 SIGMOID_RANGE_BITS = 5  # the sigmoid table covers [0, 32)
+ERF_RANGE_BITS = 2  # the erf table covers [0, 4); erf(4) = 1 - 1.5e-8
 MAX_WIDTH = 32
 _ONE = 1 << P
 
@@ -65,6 +66,20 @@ FUNCTIONS = (
     "sinh",
     "exprel",
     "cbrt",
+    "exp2",
+    "log2",
+    "log10",
+    "expm1",
+    "log1p",
+    "tan",
+    "arctan",
+    "arcsin",
+    "arccos",
+    "erf",
+    "floor",
+    "ceil",
+    "trunc",
+    "sign",
 )
 
 
@@ -191,7 +206,8 @@ def table(name: str) -> tuple[tuple[int, int, int], ...]:
     ----------
     name : str
         ``"exp2"`` (``2^u`` on ``[0, 1]``), ``"log2"`` (``log2(1 + u)`` on ``[0, 1]``),
-        ``"qsin"`` (``sin(π/2·u)`` on ``[0, 1]``) or ``"sigmoid"`` (``σ(x)`` on ``[0, 32]``).
+        ``"qsin"`` (``sin(π/2·u)`` on ``[0, 1]``), ``"sigmoid"`` (``σ(x)`` on ``[0, 32]``),
+        ``"atan"`` (``atan(u)`` on ``[0, 1]``) or ``"erf"`` (``erf(x)`` on ``[0, 4]``).
 
     Returns
     -------
@@ -209,6 +225,8 @@ def table(name: str) -> tuple[tuple[int, int, int], ...]:
         "log2": (lambda u: math.log2(1.0 + u), 1.0),
         "qsin": (lambda u: math.sin(math.pi / 2 * u), 1.0),
         "sigmoid": (lambda x: 1.0 / (1.0 + math.exp(-x)), float(1 << SIGMOID_RANGE_BITS)),
+        "atan": (math.atan, 1.0),
+        "erf": (math.erf, float(1 << ERF_RANGE_BITS)),
     }
     function, span = functions[name]
     count = 1 << SEGMENT_BITS[name]
@@ -263,6 +281,8 @@ _SIXTH = round(_ONE / 6.0)
 _TWENTY_FOURTH = round(_ONE / 24.0)
 _HUNDRED_TWENTIETH = round(_ONE / 120.0)
 _THIRD = round(_ONE / 3.0)
+_LOG10_2 = round(math.log10(2.0) * _ONE)
+_HALF_PI = round(math.pi / 2 * _ONE)
 
 
 def exp_parts(code: int, fraction: int) -> tuple[int, int]:
@@ -694,6 +714,329 @@ def cbrt(code: int, data_width: int, fraction: int) -> int:
     return -value if code < 0 else value
 
 
+def _code_to_internal(code: int, fraction: int) -> int:
+    """Return the input at fraction ``P`` (``fraction <= P``)."""
+    return code << (P - fraction)
+
+
+def exp2(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``2**x``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    whole = code >> fraction
+    rest = code - (whole << fraction)
+    position = rest << (B - fraction)
+    mantissa = interpolate("exp2", position, B)
+    return scale_to_code(mantissa, whole + fraction - P, data_width)
+
+
+def log2(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``log2 x``; the most negative code for ``x <= 0``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    if code <= 0:
+        return -(1 << (data_width - 1))
+    return saturate(shift_round(log2_internal(code, fraction), fraction - P), data_width)
+
+
+def log10(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``log10 x = log2 x · log10 2``; the most negative code for ``x <= 0``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    if code <= 0:
+        return -(1 << (data_width - 1))
+    log2x = log2_internal(code, fraction)
+    whole = log2x >> P
+    rest = log2x - (whole << P)
+    value = whole * _LOG10_2 + ((rest * _LOG10_2) >> P)
+    return saturate(shift_round(value, fraction - P), data_width)
+
+
+def expm1(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``e^x - 1``: the exponential's rounded code minus an exact one.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    return saturate(exp_capped(code, data_width, fraction) - (1 << fraction), data_width)
+
+
+def log1p(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``log(1 + x)``, from the exact integer ``1 + x``; most negative for ``x <= -1``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code, saturated to the word.
+
+    """
+    if code <= -(1 << fraction):
+        return -(1 << (data_width - 1))
+    return log(code + (1 << fraction), data_width, fraction)
+
+
+def tan(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``tan x = sin x / cos x``, rounded half away from zero; saturated at the poles.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    turn = _turns(code, fraction)
+    sine = _turn_sine(turn)
+    cosine = _turn_sine((turn + (1 << (B - 2))) & ((1 << B) - 1))
+    if cosine == 0:
+        return saturate(-(1 << data_width) if sine < 0 else 1 << data_width, data_width)
+    doubled = trunc_div(sine << (fraction + 1), cosine)
+    return saturate(trunc_div(doubled + (1 if doubled >= 0 else -1), 2), data_width)
+
+
+def _atan_internal(numerator: int, denominator: int) -> int:
+    """Return ``atan(numerator / denominator)`` at fraction ``P`` for ``0 <= numerator``, ``0 < denominator``."""
+    if numerator <= denominator:
+        return interpolate("atan", trunc_div(numerator << P, denominator), P)
+    return _HALF_PI - interpolate("atan", trunc_div(denominator << P, numerator), P)
+
+
+def arctan(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``arctan x``, with ``arctan x = π/2 - arctan(1/x)`` above 1.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    magnitude = -code if code < 0 else code
+    value = _atan_internal(magnitude, 1 << fraction)
+    value = -value if code < 0 else value
+    return saturate(shift_round(value, fraction - P), data_width)
+
+
+def _arcsin_internal(code: int, fraction: int) -> int:
+    """Return ``arcsin x`` at fraction ``P``, ``±π/2`` for ``|x| >= 1``."""
+    magnitude = min(-code if code < 0 else code, 1 << fraction)
+    x = _code_to_internal(magnitude, fraction)
+    root = isqrt((1 << (2 * P)) - x * x)  # sqrt(1 - x²), fraction P
+    value = _HALF_PI if root == 0 else _atan_internal(x, root)
+    return -value if code < 0 else value
+
+
+def arcsin(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``arcsin x = arctan(x / sqrt(1 - x²))``; ``±π/2`` for ``|x| >= 1``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    return saturate(shift_round(_arcsin_internal(code, fraction), fraction - P), data_width)
+
+
+def arccos(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``arccos x = π/2 - arcsin x``; ``0`` or ``π`` for ``|x| >= 1``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    return saturate(
+        shift_round(_HALF_PI - _arcsin_internal(code, fraction), fraction - P), data_width
+    )
+
+
+def erf(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of the error function, odd in ``x``, 1 at and beyond ``|x| = 4``.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    magnitude = -code if code < 0 else code
+    position_bits = fraction + ERF_RANGE_BITS
+    bits = SEGMENT_BITS["erf"]
+    if magnitude >= 1 << position_bits:
+        value = _ONE
+    elif position_bits >= bits:
+        value = interpolate("erf", magnitude, position_bits)
+    else:
+        value = interpolate("erf", magnitude << (bits - position_bits), bits)
+    value = -value if code < 0 else value
+    return saturate(shift_round(value, fraction - P), data_width)
+
+
+def floor(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``floor x`` (exact).
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    return (code >> fraction) << fraction
+
+
+def ceil(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``ceil x`` (exact; saturated where the next integer leaves the word).
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    return saturate(-((-code) >> fraction << fraction), data_width)
+
+
+def trunc(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``trunc x``, rounding towards zero (exact).
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    return floor(code, data_width, fraction) if code >= 0 else ceil(code, data_width, fraction)
+
+
+def sign(code: int, data_width: int, fraction: int) -> int:
+    """Return the code of ``sign x`` (-1, 0 or 1; 1 saturates where the word cannot hold it).
+
+    Parameters
+    ----------
+    code : int
+        Signed input code.
+    data_width, fraction : int
+        The format.
+
+    Returns
+    -------
+    int
+        The result code.
+
+    """
+    unit = (code > 0) - (code < 0)
+    return saturate(unit << fraction, data_width)
+
+
 UNITS: dict[str, Callable[[int, int, int], int]] = {
     "exp": exp,
     "log": log,
@@ -706,6 +1049,20 @@ UNITS: dict[str, Callable[[int, int, int], int]] = {
     "sinh": sinh,
     "exprel": exprel,
     "cbrt": cbrt,
+    "exp2": exp2,
+    "log2": log2,
+    "log10": log10,
+    "expm1": expm1,
+    "log1p": log1p,
+    "tan": tan,
+    "arctan": arctan,
+    "arcsin": arcsin,
+    "arccos": arccos,
+    "erf": erf,
+    "floor": floor,
+    "ceil": ceil,
+    "trunc": trunc,
+    "sign": sign,
 }
 
 

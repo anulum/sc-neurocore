@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1058
+expected_file_count = 1059
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4325,3 +4325,7 @@ rationale = "Scalar NIR neuron nodes broadcast to the input width; the snnTorch 
 [[file]]
 path = "tests/test_nir_bridge/test_spikingjelly_interop.py"
 rationale = "A SpikingJelly LIF network exported through NIR produces the same spikes in SC-NeuroCore."
+
+[[file]]
+path = "tests/test_equation_namespace.py"
+rationale = "The Python model's maths namespace: exact symbol set, NumPy and SciPy bindings and the removable-singularity forms."
