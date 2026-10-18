@@ -61,6 +61,12 @@ and same-instance retries retain their established behaviour.
 output admission, including for empty outputs. Bit widths outside `[1, 16]`,
 fractional precision at or above the bit width and negative refractory periods
 raise the same `ValueError` messages as the CPU batch interface.
+Optimizer search requires at least one layer and a scoring weight for every
+layer. Empty searches and short weight lists raise `ValueError` before candidate
+construction, including when `max_iter=0`; they cannot abort the interpreter.
+Trailing weights retain their existing score-normalization semantics. The
+public Rust search returns `None` for these malformed dimensions or an empty
+candidate list. Accepted seeded searches retain their configurations and scores.
 Pareto extraction checks that power and score columns cover every LUT entry
 before worker admission, retaining unused trailing values. DNA pair scoring
 starts workers only for at least two strands. Ising energy batches, annealing

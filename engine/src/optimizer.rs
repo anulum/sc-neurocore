@@ -183,11 +183,29 @@ pub struct SAResult {
     pub pareto_score: Vec<f64>,
 }
 
+/// Require a layer and a scoring weight for each layer, retaining trailing weights.
+pub(crate) fn validate_search_inputs(
+    layer_count: usize,
+    weights: &[f64],
+) -> Result<(), &'static str> {
+    if layer_count == 0 {
+        return Err("search requires at least one layer");
+    }
+    if weights.len() < layer_count {
+        return Err("weights must cover every layer");
+    }
+    Ok(())
+}
+
 /// Run SA design-space search.
 ///
 /// * `candidates` — Vec of candidate lists, one per layer
 /// * `weights` — per-layer scoring weight (2.0 for critical, 1.0 otherwise)
 /// * `max_luts`, `max_power`, `max_latency` — budget constraints
+///
+/// Returns `None` for no layers, an empty candidate list, missing scoring
+/// weights, or an infeasible budget. Trailing weights remain part of the
+/// score's normalization.
 pub fn simulated_annealing(
     candidates: &[Vec<Candidate>],
     weights: &[f64],
@@ -201,6 +219,10 @@ pub fn simulated_annealing(
     seed: u64,
 ) -> Option<SAResult> {
     let n = candidates.len();
+    validate_search_inputs(n, weights).ok()?;
+    if candidates.iter().any(Vec::is_empty) {
+        return None;
+    }
     let mut rng = Xoshiro256pp::new(seed);
 
     // Start from cheapest

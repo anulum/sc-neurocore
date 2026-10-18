@@ -20,6 +20,16 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 }
 
 /// Run simulated-annealing design-space search.
+///
+/// `mac_counts` supplies per-layer MAC counts; `weights` supplies the per-layer
+/// scoring weights. A feasible result contains `best_config` indices,
+/// `best_score`, the `pareto_luts`, `pareto_power` and `pareto_score` arrays,
+/// and the per-layer `layer_luts`, `layer_power` and `layer_accuracy` arrays.
+/// An infeasible search returns `feasible=false`. Every result includes the
+/// `backend="rust"` marker.
+///
+/// Empty `mac_counts` or fewer weights than layers raise `ValueError` before
+/// candidate construction. Trailing weights retain their scoring semantics.
 #[pyfunction(name = "py_opt_sa_search")]
 #[pyo3(signature = (mac_counts, weights, max_luts, max_power, max_latency=0, t_init=1.0, t_min=0.001, alpha=0.95, max_iter=2000, seed=42))]
 fn simulated_annealing_search<'py>(
@@ -35,6 +45,8 @@ fn simulated_annealing_search<'py>(
     max_iter: usize,
     seed: u64,
 ) -> PyResult<Py<PyAny>> {
+    crate::optimizer::validate_search_inputs(mac_counts.len(), &weights)
+        .map_err(PyValueError::new_err)?;
     let candidates: Vec<Vec<crate::optimizer::Candidate>> = mac_counts
         .iter()
         .map(|&mac_count| crate::optimizer::generate_candidates(mac_count))
@@ -84,8 +96,12 @@ fn simulated_annealing_search<'py>(
     Ok(dictionary.into_any().unbind())
 }
 
-/// Extract the non-dominated points from resource and score arrays.
-/// Validate every indexed column before admitting parallel workers.
+/// Extract the non-dominated points from LUT, power and score arrays.
+///
+/// Power and score columns must cover every LUT entry; unused trailing values
+/// remain accepted. Short columns raise `ValueError` before worker admission.
+/// The result contains the original `indices`, their `luts`, `power` and `score`
+/// columns, and the `backend="rust"` marker.
 #[pyfunction(name = "py_opt_extract_pareto")]
 fn extract_pareto_frontier<'py>(
     py: Python<'py>,

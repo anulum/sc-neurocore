@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Reject optimizer searches with no layers or missing scoring weights before
+  candidate construction, returning `ValueError` instead of aborting Python.
+  Preserve seeded results and trailing-weight normalization; reject malformed
+  native Rust candidate dimensions with `None`.
+
 - Keep Studio model metadata browsable when a simulation timestep profile is
   unavailable. Show constructor fields as read-only and continue rejecting
   simulation requests whose clock cannot be verified.

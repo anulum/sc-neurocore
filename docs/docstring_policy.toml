@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 927
+expected_file_count = 928
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3801,3 +3801,7 @@ rationale = "Physical installed GPU fixed-point batches must refuse impossible o
 [[file]]
 path = "engine/tests/python/test_gpu_izhikevich_batch_engine_binding.py"
 rationale = "Physical installed GPU Izhikevich batches must refuse impossible output storage and dispatch sizes, retain healthy trajectories and caller arrays, and compare against the public CPU neuron."
+
+[[file]]
+path = "tests/test_optimizer/test_engine_bindings.py"
+rationale = "Installed optimizer searches preserve seeded reports and recover from empty layers or missing scoring weights without aborting the process."
