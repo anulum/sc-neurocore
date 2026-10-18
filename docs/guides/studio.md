@@ -677,9 +677,10 @@ render through the host boundary.
 
 The Admin panel loads path-free audit health at startup and can request the
 admin-gated audit export endpoint. Development-preview policy mode can still
-use `X-Studio-Principal` plus the `studio.admin` role, but production
-deployments should set `SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false` and
-configure `SC_NEUROCORE_STUDIO_IDENTITY_FILE` with
+use `X-Studio-Principal` plus the `studio.admin` role. A configured identity
+store requires `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true` and
+`SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false`. Configure
+`SC_NEUROCORE_STUDIO_IDENTITY_FILE` with
 `sc-neurocore.studio.identity.v1` service accounts. Store only SHA-256 token
 hashes in that file, authenticate API calls with `Authorization: Bearer
 <token>`, and give admin export accounts the `studio.admin` role.
@@ -775,9 +776,11 @@ expiry, and a PBKDF2-HMAC-SHA256 password verifier while preserving existing
 service accounts. The browser login form calls `POST /api/studio/auth/login`;
 a successful login stores the returned bearer token in `sessionStorage`, sends
 it as an `Authorization` header for subsequent API calls, and can revoke it
-with `POST /api/studio/auth/logout`. Studio does not use auth cookies for this
-session mode, so cookie CSRF tokens are intentionally not part of the current
-contract. Set `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS` to tune the
+with `POST /api/studio/auth/logout`. Every mutating request requires an allowed
+Origin, or no Origin and `Sec-Fetch-Site: same-origin` or `none`; JSON routes
+require `Content-Type: application/json`. These checks also apply to development.
+Native HTTP clients must send those caller headers explicitly. Studio does not
+use auth cookies for this session mode. Set `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS` to tune the
 server-side session expiry; the default is 12 hours.
 
 Repeated invalid browser-login attempts are throttled before another password
@@ -787,8 +790,10 @@ for a 15-minute cooldown. Tune this deployment policy with
 `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES`,
 `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS`, and
 `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS`. A successful login clears
-prior invalid-attempt state for that username; disabled or expired users keep
-their explicit failure reason and are not converted into throttle events. The
+prior invalid-attempt state for that username and direct client. Unknown,
+disabled, expired and wrong-password logins share `401 invalid_browser_login`
+and the same throttle policy. Reservations bound concurrent verification;
+the registry has a default cap of 1024 username/client keys. The
 Admin panel Operator section reports the active lockout threshold, failure
 window, and cooldown without exposing identity-file paths or secret material.
 
@@ -801,7 +806,8 @@ verifier for the submitted password, reloads backend authentication
 immediately, rejects duplicate usernames with `409`, and records
 `studio.identity.browser_user.create` without password material. Role,
 active-state, and expiry updates preserve the stored password verifier, reload
-backend authentication immediately, and record both the route-policy audit
+backend authentication immediately, revoke existing sessions for that principal,
+and record both the route-policy audit
 decision and a dedicated `studio.identity.browser_user.update` audit event.
 Browser-user lifecycle updates use the same last-admin guard as
 service-account updates.
@@ -1019,8 +1025,7 @@ For production deployments, set
 unless route policies are enforced, header principals are disabled, and the
 identity file, audit log, and job root are all configured.
 
-Studio ships deployment-profile packages for the three supported operator
-contexts:
+Studio emits three deployment configuration templates:
 
 ```bash
 sc-neurocore studio-deployment-profile --studio-profile local
@@ -1028,15 +1033,19 @@ sc-neurocore studio-deployment-profile --studio-profile lab --output studio-lab-
 sc-neurocore studio-deployment-profile --studio-profile server --format env --output studio-server.env
 ```
 
-The package schema is `studio.deployment-profile.v1`. The `local` package keeps
-the runtime profile in `development` with loopback-only hosts and origins for a
-single workstation. The `lab` and `server` packages set the runtime profile to
-`production`, require route-policy enforcement, disable header principals, and
-include placeholders for the durable identity file, audit log, job root,
-saved project workspace, allowed hosts, allowed origins, preflight command,
-launch command, and backup items. Package output contains placeholders and safe
-defaults only; bearer tokens, password material, token hashes, and host-local
-paths must be supplied outside the repository by the operator.
+The package schema is `studio.deployment-profile.v1`. The `local` package is
+unprotected development on a single workstation. The supported `lab` operating
+profile serves one operator on loopback through one API process, with an
+identity store, enforced route policies, header principals disabled and a
+rotating audit log. Its runtime setting is `production`, with explicit
+loopback hosts and origins, 100 MiB audit segments and 14 retained segments.
+Follow the [lab setup](../studio/admin-identity.md) before launching it.
+
+Shared multi-process sessions, per-workspace multi-user job access, OIDC, and
+LAN or VPN exposure with TLS termination are outside that lab profile. The
+`server` template requires its own reviewed network operating contract.
+Templates provide local-state placeholders and configuration defaults; supply
+identity files and credentials outside the repository.
 
 Generate the durable-state backup and restore plan from the same runtime
 environment:

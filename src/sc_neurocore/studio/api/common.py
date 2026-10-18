@@ -21,12 +21,12 @@ from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from sc_neurocore.studio.benchmark_databank import BenchmarkDatabankCapacityError
 from sc_neurocore.studio.model_run_contract import ModelInputError, ModelSimulationFailure
 from sc_neurocore.studio.replay_pack import ReplayRejected
 from sc_neurocore.studio.training_contract import TrainingConfigError
 from sc_neurocore.studio.workspace_lock import WorkspaceLockTimeout
 from sc_neurocore.studio.workspace_store import WorkspaceConflict
-
 
 logger = logging.getLogger("sc_neurocore.studio.app")
 
@@ -61,6 +61,8 @@ def _safe(fn: Callable[..., Any]) -> Any:
         return fn()
     except HTTPException:
         raise
+    except BenchmarkDatabankCapacityError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from None
     except WorkspaceConflict as exc:
         raise HTTPException(status_code=409, detail=exc.to_public_detail()) from None
     except WorkspaceLockTimeout as exc:
@@ -79,13 +81,20 @@ def _safe(fn: Callable[..., Any]) -> Any:
 
 
 def _json_safe(value: Any) -> Any:
-    """Render non-finite floats and unpaired surrogates as JSON-safe text."""
+    """Render invalid numbers and Unicode safely while redacting nested credential fields."""
     if isinstance(value, str):
         return value.encode("utf-8", errors="backslashreplace").decode("utf-8")
     if isinstance(value, float) and not math.isfinite(value):
         return repr(value)
     if isinstance(value, dict):
-        return {_json_safe(str(key)): _json_safe(item) for key, item in value.items()}
+        return {
+            _json_safe(str(key)): (
+                "[REDACTED_SECRET]"
+                if any(word in str(key).lower() for word in ("password", "token", "secret"))
+                else _json_safe(item)
+            )
+            for key, item in value.items()
+        }
     if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
     return value
@@ -99,8 +108,23 @@ async def request_validation_error_handler(request: Request, exc: Exception) -> 
     request into HTTP 500. Unpaired Unicode surrogates fail UTF-8 encoding in
     the same way. Render non-finite numbers as text and unpaired surrogates as
     literal backslash escapes, retaining valid Unicode and field-error details.
+    Identity requests and malformed JSON omit input and exception context;
+    secret locations and nested credential keys never echo their values.
     """
     if not isinstance(exc, RequestValidationError):
         raise exc
-    detail = _json_safe(jsonable_encoder(exc.errors()))
+    identity_request = request.url.path.startswith(("/api/studio/auth/", "/api/studio/identity/"))
+    errors = []
+    for error in exc.errors():
+        safe_error = dict(error)
+        secret_location = any(
+            isinstance(part, str)
+            and any(word in part.lower() for word in ("password", "token", "secret"))
+            for part in error.get("loc", ())
+        )
+        if identity_request or secret_location or error.get("type") == "json_invalid":
+            safe_error.pop("input", None)
+            safe_error.pop("ctx", None)
+        errors.append(safe_error)
+    detail = _json_safe(jsonable_encoder(errors))
     return JSONResponse(status_code=422, content={"detail": detail})

@@ -41,7 +41,9 @@ NOISY = ["dv/dt = -v + I + xi"]
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     """Run public HTTP requests through a live Studio application lifespan."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
@@ -192,7 +194,11 @@ class TestOversizedRuns:
 
     def test_simulate_job_runs_the_same_contract_asynchronously(self) -> None:
         """Execute the same experiment contract through a real simulate job."""
-        with TestClient(create_app(StudioRuntimeSettings()), base_url="http://127.0.0.1") as client:
+        with TestClient(
+            create_app(StudioRuntimeSettings()),
+            base_url="http://127.0.0.1",
+            headers={"sec-fetch-site": "none"},
+        ) as client:
             submitted = client.post(
                 "/api/analysis/jobs",
                 json={

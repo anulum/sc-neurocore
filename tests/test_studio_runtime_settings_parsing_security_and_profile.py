@@ -6,12 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (security_and_profile) from former test_studio_runtime_settings_parsing.py
 
+"""Validate deployment requirements and listener binding before the API starts."""
+
 from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
 
 def test_studio_runtime_settings_default_security_headers_are_fail_closed() -> None:
+    """Require the default response headers before any profile-specific overrides."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.http_security_headers["x-content-type-options"] == "nosniff"
@@ -20,12 +23,14 @@ def test_studio_runtime_settings_default_security_headers_are_fail_closed() -> N
 
 
 def test_studio_runtime_settings_default_request_id_header_is_standard() -> None:
+    """Use the conventional request correlation header when no override is supplied."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.request_id_header == "x-request-id"
 
 
 def test_studio_runtime_settings_disables_route_policy_enforcement_by_default() -> None:
+    """Keep the explicitly unprotected development profile distinct from lab settings."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.enforce_route_policies is False
@@ -33,6 +38,7 @@ def test_studio_runtime_settings_disables_route_policy_enforcement_by_default() 
 
 
 def test_studio_runtime_settings_accepts_complete_production_profile() -> None:
+    """Accept production settings only with identities, enforcement and persistent state."""
     settings = build_default_studio_runtime_settings(
         env={
             "SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE": "production",
@@ -63,6 +69,7 @@ def test_studio_runtime_settings_rejects_incomplete_production_profile(
     env_patch: dict[str, str],
     match: str,
 ) -> None:
+    """Refuse each missing production requirement at settings construction."""
     env = {
         "SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE": "production",
         "SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true",
@@ -78,7 +85,21 @@ def test_studio_runtime_settings_rejects_incomplete_production_profile(
 
 
 def test_studio_runtime_settings_rejects_unknown_deployment_profile() -> None:
+    """Reject an undeclared deployment profile instead of selecting development."""
     with pytest.raises(ValueError, match="deployment profile"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE": "staging"}
         )
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "::", "192.0.2.20", "studio.example.test"])
+def test_development_listener_refuses_non_loopback_bind(host: str) -> None:
+    """Refuse a network listener before a development application can start."""
+    with pytest.raises(ValueError, match="non-loopback bind requires the production profile"):
+        StudioRuntimeSettings().validate_bind_host(host)
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "127.0.0.2", "::1", "localhost"])
+def test_development_listener_accepts_loopback_bind(host: str) -> None:
+    """Retain local IPv4, IPv6 and localhost launch compatibility."""
+    StudioRuntimeSettings().validate_bind_host(host)

@@ -6,16 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio Training Monitor (Block 4)
 
+"""Provide real Studio HTTP fixtures and resolved training configuration helpers."""
+
 from __future__ import annotations
 
 import json
-
 import threading
-
 import time
-
 from pathlib import Path
-
 from typing import cast
 
 import pytest
@@ -25,22 +23,19 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.platform import (
     STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
     StudioRuntimeSettings,
 )
-
 from sc_neurocore.studio.platform.jobs import (
     StudioJobCancelled,
     StudioJobContext,
     StudioJobManager,
 )
-
 from sc_neurocore.studio.training import (
-    TrainingJob,
     _CELL_TYPES,
     _SURROGATES,
+    TrainingJob,
     _register_job,
     get_training_status,
     list_cell_types,
@@ -54,7 +49,8 @@ from sc_neurocore.studio.training import (
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for training configuration and job requests."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 __all__ = [

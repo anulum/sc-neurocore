@@ -27,7 +27,6 @@ def _poll_job_completed(
     client: TestClient, status_route: str, *, timeout_s: float = 10.0
 ) -> dict[str, Any]:
     """Poll production job status until terminal completed (or fail)."""
-
     deadline = time.monotonic() + timeout_s
     last: dict[str, Any] = {}
     while time.monotonic() < deadline:
@@ -44,7 +43,6 @@ def _poll_job_completed(
 
 def test_analysis_and_model_scan_job_routes_are_registered_in_route_policy() -> None:
     """New job routes must be present in the default policy inventory."""
-
     registry = build_default_studio_route_policy_registry()
     scan_job = registry.policy_for("POST", "/api/models/scan/jobs")
     analysis_job = registry.policy_for("POST", "/api/analysis/jobs")
@@ -55,10 +53,10 @@ def test_analysis_and_model_scan_job_routes_are_registered_in_route_policy() -> 
 @pytest.mark.parametrize("trace", ["analysis-custody-trace", "invalid trace", None])
 def test_analysis_job_polls_to_completed_with_analysis_result_schema(trace: str | None) -> None:
     """POST /api/analysis/jobs must reach completed with a real analysis payload."""
-
     client = TestClient(
         create_app(StudioRuntimeSettings()),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
     response = client.post(
         "/api/analysis/jobs",
@@ -105,10 +103,10 @@ def test_analysis_job_polls_to_completed_with_analysis_result_schema(trace: str 
 
 def test_over_budget_heatmap_recommends_existing_analysis_jobs_route() -> None:
     """Heavy analysis budget rejections must advertise a live job route."""
-
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_total_steps=10)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
     response = client.post(
         "/api/heatmap",

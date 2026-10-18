@@ -42,7 +42,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for the recorded NIR interoperability corpus."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _ids(entry: dict[str, Any]) -> str:
@@ -50,6 +51,7 @@ def _ids(entry: dict[str, Any]) -> str:
 
 
 def test_the_corpus_names_its_source_and_carries_its_licence() -> None:
+    """Bind the recorded corpus to its declared upstream source and license."""
     source = MANIFEST["source"]
     assert MANIFEST["schema"] == "sc-neurocore.nir-interop-corpus.v1"
     assert source["repository"] == "https://github.com/neuromorphs/NIR"
@@ -65,6 +67,7 @@ def test_the_corpus_names_its_source_and_carries_its_licence() -> None:
 
 @pytest.mark.parametrize("entry", FILES, ids=_ids)
 def test_each_file_is_the_published_bytes(entry: dict[str, Any]) -> None:
+    """Verify each recorded corpus file against its declared size and digest."""
     content = (CORPUS / entry["file"]).read_bytes()
     assert len(content) == entry["bytes"]
     assert hashlib.sha256(content).hexdigest() == entry["sha256"]
@@ -72,12 +75,14 @@ def test_each_file_is_the_published_bytes(entry: dict[str, Any]) -> None:
 
 @pytest.mark.parametrize("entry", [e for e in FILES if e["readable_by_nir"]], ids=_ids)
 def test_the_reference_package_reads_the_nodes_the_manifest_lists(entry: dict[str, Any]) -> None:
+    """Check reference-package node types against the recorded corpus manifest."""
     graph = nir.read(str(CORPUS / entry["file"]))
     assert sorted({type(node).__name__ for node in graph.nodes.values()}) == entry["nir_node_types"]
 
 
 @pytest.mark.parametrize("entry", FILES, ids=_ids)
 def test_the_studio_answers_each_file_as_recorded(entry: dict[str, Any]) -> None:
+    """Match each corpus graph to its recorded Studio import disposition."""
     content = base64.b64encode((CORPUS / entry["file"]).read_bytes()).decode()
     assert entry["studio_import"] == "refused"
     with pytest.raises(NIRMappingRefused) as refusal:
@@ -89,6 +94,7 @@ def test_the_studio_answers_each_file_as_recorded(entry: dict[str, Any]) -> None
 def test_the_import_route_refuses_with_the_reason_not_a_server_error(
     client: TestClient, entry: dict[str, Any]
 ) -> None:
+    """Preserve an authored corpus-import refusal through the HTTP response."""
     content = base64.b64encode((CORPUS / entry["file"]).read_bytes()).decode()
     response = client.post("/api/graph/import-nir", json={"content_base64": content})
     assert response.status_code == 422

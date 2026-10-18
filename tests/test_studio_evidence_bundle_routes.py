@@ -18,7 +18,6 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Admin evidence route creates a job-backed bundle with downloadable files."""
-
     app, client = _client_with_evidence_state(tmp_path, monkeypatch)
     save_project("demo", {"graph": {"populations": [], "projections": []}})
     compile_response = client.post(
@@ -179,7 +178,6 @@ def test_studio_evidence_bundle_route_rejects_unknown_inputs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Evidence route reports missing project and job references clearly."""
-
     _app, client = _client_with_evidence_state(tmp_path, monkeypatch)
 
     missing_project = client.post(
@@ -200,9 +198,10 @@ def test_studio_evidence_bundle_route_requires_configured_audit_export(
     tmp_path: Path,
 ) -> None:
     """Audit-inclusive evidence bundles require a persistent audit sink."""
-
     settings = StudioRuntimeSettings(job_root_path=str(tmp_path / "jobs"))
-    client = TestClient(create_app(settings), base_url="http://127.0.0.1")
+    client = TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
     response = client.post("/api/studio/evidence/bundle", json={"include_audit": True})
 

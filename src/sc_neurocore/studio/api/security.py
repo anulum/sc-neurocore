@@ -16,8 +16,10 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
+from fastapi.routing import APIRoute
 from starlette.responses import JSONResponse
-from starlette.routing import Match, Route
+from starlette.routing import Match, Mount, Route
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.platform import (
@@ -27,6 +29,7 @@ from sc_neurocore.studio.platform import (
     StudioIdentityAuthenticator,
     StudioIdentityResult,
 )
+from sc_neurocore.studio.platform.settings import DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
 from sc_neurocore.studio.platform.storage_requester import delegated
 
 
@@ -128,8 +131,8 @@ def _studio_websocket_accept_subprotocol(headers: Mapping[str, str]) -> str | No
     return "studio-auth" if "studio-auth" in protocols else None
 
 
-def _iter_leaf_routes(routes: Iterable[Any]) -> Iterator[Route]:
-    """Yield every leaf HTTP ``Route``, descending into included sub-routers.
+def _iter_leaf_routes(routes: Iterable[Any]) -> Iterator[Route | Mount]:
+    """Yield HTTP routes and mounts, descending into included sub-routers.
 
     Starlette 1.3 stopped flattening ``include_router`` routes onto ``app.routes``
     and instead wraps each included router in an ``_IncludedRouter`` whose leaf
@@ -139,7 +142,7 @@ def _iter_leaf_routes(routes: Iterable[Any]) -> Iterator[Route]:
     newer Starlette.
     """
     for route in routes:
-        if isinstance(route, Route):
+        if isinstance(route, (Route, Mount)):
             yield route
         original_router = getattr(route, "original_router", None)
         if original_router is not None and hasattr(original_router, "routes"):
@@ -154,6 +157,67 @@ def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] |
         if match is Match.FULL:
             return request.method, route.path
     return None
+
+
+def _studio_mutation_refusal(
+    app: FastAPI, request: Request, *, allowed_origins: tuple[str, ...]
+) -> JSONResponse | None:
+    """Require an explicit caller origin and the declared JSON route media type."""
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return None
+    origin = request.headers.get("origin")
+    if (origin is not None and origin not in allowed_origins) or (
+        origin is None and request.headers.get("sec-fetch-site") not in {"same-origin", "none"}
+    ):
+        return JSONResponse({"detail": "request_origin_refused"}, status_code=403)
+    for route in _iter_leaf_routes(app.routes):
+        match, _ = route.matches(request.scope)
+        if match is not Match.FULL:
+            continue
+        if isinstance(route, APIRoute) and route.body_field is not None:
+            media_type = getattr(route.body_field.field_info, "media_type", None)
+            supplied_type = request.headers.get("content-type", "").partition(";")[0].strip()
+            if media_type == "application/json" and supplied_type.lower() != media_type:
+                return JSONResponse({"detail": "json_content_type_required"}, status_code=415)
+        break
+    return None
+
+
+def _studio_request_body_limit(app: ASGIApp, *, max_bytes: int) -> ASGIApp:
+    """Bound received HTTP body bytes before routing or parsing their content."""
+
+    async def bounded_body(scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await app(scope, receive, send)
+            return
+        body = bytearray()
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                return
+            chunk = message.get("body", b"")
+            if len(body) + len(chunk) > max_bytes:
+                response = JSONResponse(
+                    {"detail": "Studio request body exceeds configured limit."},
+                    status_code=413,
+                )
+                await response(scope, receive, send)
+                return
+            body.extend(chunk)
+            if not message.get("more_body", False):
+                break
+        delivered = False
+
+        async def receive_body() -> Message:
+            nonlocal delivered
+            if delivered:
+                return await receive()
+            delivered = True
+            return {"type": "http.request", "body": bytes(body), "more_body": False}
+
+        await app(scope, receive_body, send)
+
+    return bounded_body
 
 
 def install_studio_security_middleware(
@@ -173,6 +237,7 @@ def install_studio_security_middleware(
     studio_browser_session_manager = context.studio_browser_session_manager
     studio_policy_gateway = context.studio_policy_gateway
     studio_route_policies = context.studio_route_policies
+    app.add_middleware(_studio_request_body_limit, max_bytes=settings.max_request_body_bytes)
 
     @app.middleware("http")
     async def add_studio_security_headers(
@@ -181,6 +246,9 @@ def install_studio_security_middleware(
         request_id = _studio_request_id(request.headers.get(settings.request_id_header))
         request.state.studio_request_id = request_id
         request.state.studio_principal = None
+        mutation_refusal = _studio_mutation_refusal(
+            app, request, allowed_origins=settings.cors_allowed_origins
+        )
         content_length = request.headers.get("content-length")
         if (
             content_length is not None
@@ -191,6 +259,14 @@ def install_studio_security_middleware(
                 {"detail": "Studio request body exceeds configured limit."},
                 status_code=413,
             )
+        elif (
+            request.method == "OPTIONS"
+            and "origin" in request.headers
+            and "access-control-request-method" in request.headers
+        ):
+            response = await call_next(request)
+        elif mutation_refusal is not None:
+            response = mutation_refusal
         elif settings.enforce_route_policies:
             route_signature = _studio_route_signature(app, request)
             # A route with no registered policy is refused like an unmatched
@@ -238,7 +314,10 @@ def install_studio_security_middleware(
                     )
         else:
             response = await call_next(request)
-        for name, value in settings.http_security_headers.items():
+        for name, value in {
+            **DEFAULT_STUDIO_HTTP_SECURITY_HEADERS,
+            **settings.http_security_headers,
+        }.items():
             response.headers.setdefault(name, value)
         response.headers.setdefault(settings.request_id_header, request_id)
         return response

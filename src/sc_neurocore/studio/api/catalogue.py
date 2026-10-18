@@ -10,9 +10,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from pathlib import Path
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from sc_neurocore.studio.api.analysis_guards import _guard_model_scan_request
 from sc_neurocore.studio.api.common import _safe
@@ -24,9 +25,9 @@ from sc_neurocore.studio.api.schemas import (
 )
 from sc_neurocore.studio.benchmark_contribution import (
     ALLOWED_ENVIRONMENT_KEYS,
-    BenchmarkSubmissionRefused,
     FORBIDDEN_KEYS,
     SUBMISSION_SCHEMA_VERSION,
+    BenchmarkSubmissionRefused,
     databank_leaderboard,
     run_local_benchmark,
     store_contribution,
@@ -60,6 +61,10 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
     router = APIRouter()
     analysis_budget = context.analysis_budget
     studio_job_manager = context.studio_job_manager
+    settings = context.settings
+    databank_path = (
+        Path(settings.benchmark_databank_path) if settings.benchmark_databank_path else None
+    )
 
     @router.get("/api/templates")
     def api_templates() -> list[dict[str, Any]]:
@@ -204,15 +209,33 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
 
         def _contribute() -> dict[str, Any]:
             try:
-                return store_contribution(contribute_request.submission, contribute_request.handle)
+                return store_contribution(
+                    contribute_request.submission,
+                    contribute_request.handle,
+                    path=databank_path,
+                    max_bytes=settings.benchmark_max_bytes,
+                    max_records=settings.benchmark_max_records,
+                )
             except BenchmarkSubmissionRefused as exc:
                 raise HTTPException(400, str(exc)) from None
 
         return _safe(_contribute)
 
     @router.get("/api/benchmarks/databank")
-    def api_benchmark_databank() -> Any:
-        return _safe(databank_leaderboard)
+    def api_benchmark_databank(
+        limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+        offset: Annotated[int, Query(ge=0)] = 0,
+    ) -> Any:
+        """Return a bounded leaderboard page from the capped contribution store."""
+        return _safe(
+            lambda: databank_leaderboard(
+                path=databank_path,
+                limit=limit,
+                offset=offset,
+                max_bytes=settings.benchmark_max_bytes,
+                max_records=settings.benchmark_max_records,
+            )
+        )
 
     @router.post("/api/dcls/evaluate")
     def api_dcls_evaluate(dcls_request: DclsEvaluateRequest) -> Any:

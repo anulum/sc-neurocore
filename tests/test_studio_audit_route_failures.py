@@ -40,7 +40,9 @@ def configured_app(
             job_root_path=str(root / "jobs"),
         )
     )
-    client = TestClient(application, base_url="http://127.0.0.1")
+    client = TestClient(
+        application, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     response = client.post(
         "/api/studio/audit/quarantine/archive",
         json={"limit": 1},
@@ -79,7 +81,10 @@ def test_audit_exports_require_jsonl_sink(
     route: str,
     payload: dict[str, Any] | None,
 ) -> None:
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    """Require persistent JSONL custody before offering an audit export."""
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
     response = client.get(route) if method == "get" else client.post(route, json=payload)
 
@@ -100,6 +105,7 @@ def test_audit_exports_reject_out_of_range_limit(
     route: str,
     limit: int,
 ) -> None:
+    """Refuse audit-export page sizes outside the declared request bounds."""
     _, client, _, _ = configured_app
 
     response = client.get(route, params={"limit": limit})
@@ -149,6 +155,7 @@ def test_audit_sink_failures_are_path_free(
     payload: dict[str, Any] | None,
     detail: str,
 ) -> None:
+    """Translate audit persistence failures without returning storage paths."""
     _, client, _, _ = configured_app
 
     def _raise(*_args: object, **_kwargs: object) -> object:
@@ -179,6 +186,7 @@ def test_audit_worker_terminal_states_map_to_stable_failures(
     expected_detail: str,
     route_kind: str,
 ) -> None:
+    """Keep terminal worker failures within the declared HTTP error contract."""
     _, client, archive, manifest = configured_app
 
     def _submit(self: StudioJobManager, **_kwargs: object) -> StudioJobRecord:

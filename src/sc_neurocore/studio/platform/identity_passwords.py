@@ -43,7 +43,6 @@ def make_browser_user_password_verifier(password: str) -> str:
     str
         Encoded verifier containing algorithm, iteration count, salt, and hash.
     """
-
     if not password:
         raise StudioIdentityRefused("Studio browser-user password must not be empty.")
     salt = secrets.token_hex(MIN_BROWSER_USER_PASSWORD_SALT_BYTES)
@@ -51,14 +50,37 @@ def make_browser_user_password_verifier(password: str) -> str:
     return f"pbkdf2_sha256${DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS}${salt}${password_hash}"
 
 
-def verify_browser_user_password(password: str, encoded_verifier: str) -> bool:
-    """Verify a raw browser-user password against an encoded verifier."""
+def verify_browser_user_password(
+    password: str, encoded_verifier: str, *, minimum_iterations: int = 0
+) -> bool:
+    """Verify a stored digest while completing the caller's PBKDF2 work floor.
+
+    Parameters
+    ----------
+    password:
+        Supplied password, including a legacy password awaiting rotation.
+    encoded_verifier:
+        Stored algorithm, iteration count, salt and expected digest.
+    minimum_iterations:
+        Total hash work required for this attempt. Extra iterations do not
+        change the legacy digest or its password acceptance. Zero preserves
+        the stored cost for standalone verifier callers.
+
+    Returns
+    -------
+    bool
+        Whether the supplied password matches a valid stored verifier.
+    """
+    if minimum_iterations < 0:
+        raise StudioIdentityRefused("Studio password verifier work floor must be non-negative.")
 
     parsed = _parse_password_verifier(encoded_verifier)
     if parsed is None:
         return False
     iterations, salt, expected_hash = parsed
     candidate = _pbkdf2_sha256(password, salt, iterations)
+    if iterations < minimum_iterations:
+        _pbkdf2_sha256(password, salt, minimum_iterations - iterations)
     return hmac.compare_digest(candidate, expected_hash)
 
 

@@ -38,7 +38,9 @@ def benchmark_surface(
     with pytest.MonkeyPatch.context() as paths:
         paths.setattr(bc, "_DATABANK_FILE", path)
         app = create_app(StudioRuntimeSettings(job_root_path=str(root / "jobs")))
-        with TestClient(app, base_url="http://127.0.0.1") as client:
+        with TestClient(
+            app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ) as client:
             response = client.post(
                 "/api/benchmarks/run", json={"n_channels": 64, "n_taps": 16, "repeats": 3}
             )

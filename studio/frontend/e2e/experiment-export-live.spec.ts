@@ -119,7 +119,7 @@ for (const source of ["model", "ode"] as const) {
       await page.getByTestId("protocol-select").selectOption("sine");
       await page.getByTestId("slider-f (Hz)").fill("37");
     } else {
-      const provisioned = await request.post("/api/project/save", {
+      const provisioned = await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" },
         data: { name: `${name}-input`, state: DIFFUSION_WORKSPACE },
       });
       expect(provisioned.ok()).toBe(true);
@@ -190,7 +190,7 @@ for (const source of ["model", "ode"] as const) {
 
 test("fresh and legacy project settings reopen explicitly and malformed revisions leave the editor unchanged", async ({ page, request }) => {
   const name = `experiment-compatibility-${Date.now()}`;
-  const provisioned = await request.post("/api/project/save", {
+  const provisioned = await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" },
     data: { name, state: { ...DIFFUSION_WORKSPACE, trial: "fresh" } },
   });
   expect(provisioned.ok()).toBe(true);
@@ -219,7 +219,7 @@ test("fresh and legacy project settings reopen explicitly and malformed revision
   delete legacy.frequencyHz;
   delete legacy.seed;
   delete legacy.trial;
-  expect((await request.post("/api/project/save", { data: { name: `${name}-legacy`, state: legacy } })).ok()).toBe(true);
+  expect((await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" }, data: { name: `${name}-legacy`, state: legacy } })).ok()).toBe(true);
   await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
   await page.getByRole("button", { name: `Open project ${name}-legacy revision 1`, exact: true }).click();
   await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("10");
@@ -234,7 +234,7 @@ test("fresh and legacy project settings reopen explicitly and malformed revision
   ];
   for (const [index, { patch, message }] of invalidSettings.entries()) {
     const invalidName = `${name}-invalid-${index}`;
-    expect((await request.post("/api/project/save", {
+    expect((await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" },
       data: { name: invalidName, state: { ...DIFFUSION_WORKSPACE, current: -25, ...patch } },
     })).ok()).toBe(true);
     await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
@@ -412,7 +412,7 @@ for (const source of ["ode", "model"] as const) {
       seed: "__exact_seed__",
     } }).replace('"__exact_seed__"', token).replace('"__legacy_seed__"', alternate);
     const provisioned = await request.post("/api/project/save", {
-      data: raw, headers: { "Content-Type": "application/json" },
+      data: raw, headers: { "Sec-Fetch-Site": "none", "Content-Type": "application/json" },
     });
     expect(provisioned.ok(), await provisioned.text()).toBe(true);
     await page.goto("./");
@@ -553,7 +553,7 @@ for (const source of ["ode", "model"] as const) {
       }
 
       const missing = `${name}-missing-model`;
-      const savedMissing = await request.post("/api/project/save", { data: {
+      const savedMissing = await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" }, data: {
         name: missing, state: { sourceMode: "model", selectedModelName: "UnknownModelForSavedWorkspace", seed: 42 },
       } });
       expect(savedMissing.ok(), await savedMissing.text()).toBe(true);
@@ -573,7 +573,7 @@ test("browser session writes report real quota failures and recover without losi
   const baseline = "durable";
   const unsaved = `unsaved-${"x".repeat(60)}`;
   const recovered = "recovered";
-  const provisioned = await request.post("/api/project/save", {
+  const provisioned = await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" },
     data: { name: project, state: DIFFUSION_WORKSPACE },
   });
   expect(provisioned.ok()).toBe(true);

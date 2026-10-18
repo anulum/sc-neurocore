@@ -104,18 +104,50 @@ def _release(process: subprocess.Popen[str]) -> None:
 
 
 class TestOneApiProcess:
+    """Real process exclusion and lock-file failure reporting for identity stores."""
+
+    def test_a_symlink_alias_reaches_the_same_process_lock(self, tmp_path: Path) -> None:
+        """The lock API resolves a store alias before selecting its lifetime hold."""
+        identity = _identity(tmp_path / "identity.json")
+        alias = tmp_path / "alias.json"
+        alias.symlink_to(identity)
+        holder = _holder(identity)
+        try:
+            with pytest.raises(StudioApiProcessConflict):
+                hold_identity_store(alias)
+        finally:
+            _release(holder)
+
+    def test_atomic_identity_replacement_keeps_the_process_hold(self, tmp_path: Path) -> None:
+        """A normal credential-store mutation cannot release the stable path hold."""
+        identity = _identity(tmp_path / "identity.json")
+        holder = _holder(identity)
+        try:
+            add_studio_browser_user_record(
+                identity,
+                username="operator",
+                principal_id="human-operator",
+                roles=["studio.viewer"],
+                password="operator-password",
+            )
+            with pytest.raises(StudioApiProcessConflict):
+                create_app(_settings(identity, tmp_path))
+        finally:
+            _release(holder)
+
     def test_the_holding_process_may_open_its_store_again(self, tmp_path: Path) -> None:
+        """Reuse the identity-store hold within the same API process."""
         identity = _identity(tmp_path / "identity.json")
         assert hold_identity_store(identity) == api_lock_path(identity)
         assert hold_identity_store(identity) == api_lock_path(identity)
-        assert sorted(path.name for path in tmp_path.iterdir()) == [
-            "identity.json",
-            "identity.json.api-lock",
-        ]
+        assert api_lock_path(identity).is_file()
+        info = identity.stat()
+        assert (tmp_path / f".studio-api-{info.st_dev:x}-{info.st_ino:x}.lock").is_file()
         create_app(_settings(identity, tmp_path))
         create_app(_settings(identity, tmp_path))
 
     def test_a_second_process_on_the_same_store_is_refused(self, tmp_path: Path) -> None:
+        """Refuse a second real process while the first serves the identity store."""
         identity = _identity(tmp_path / "identity.json")
         holder = _holder(identity)
         try:
@@ -127,11 +159,13 @@ class TestOneApiProcess:
             _release(holder)
 
     def test_the_store_is_free_once_its_process_has_ended(self, tmp_path: Path) -> None:
+        """Release the identity-store exclusion when its holding process exits."""
         identity = _identity(tmp_path / "identity.json")
         _release(_holder(identity))
         create_app(_settings(identity, tmp_path))
 
     def test_separate_stores_are_served_by_separate_processes(self, tmp_path: Path) -> None:
+        """Allow independent API processes to serve different identity stores."""
         holder = _holder(_identity(tmp_path / "other.json"))
         try:
             create_app(_settings(_identity(tmp_path / "identity.json"), tmp_path))
@@ -139,12 +173,14 @@ class TestOneApiProcess:
             _release(holder)
 
     def test_an_app_without_an_identity_store_holds_nothing(self, tmp_path: Path) -> None:
+        """Avoid creating identity lifetime locks for an unconfigured application."""
         create_app(StudioRuntimeSettings())
         assert not list(tmp_path.glob("*.api-lock"))
 
     def test_a_lock_path_that_is_not_a_file_is_named_not_mistaken_for_a_conflict(
         self, tmp_path: Path
     ) -> None:
+        """Report an unusable lock destination distinctly from a competing process."""
         identity = _identity(tmp_path / "identity.json")
         api_lock_path(identity).mkdir()
         with pytest.raises(StudioApiLockUnavailable, match="cannot open its API lock"):
@@ -153,6 +189,7 @@ class TestOneApiProcess:
     def test_a_lock_file_holding_something_else_is_named_not_mistaken_for_a_conflict(
         self, tmp_path: Path
     ) -> None:
+        """Report an invalid lock database distinctly from a competing process."""
         identity = _identity(tmp_path / "identity.json")
         api_lock_path(identity).write_bytes(b"not a Studio lock " * 64)
         with pytest.raises(StudioApiLockUnavailable, match="file is not a database"):
@@ -161,6 +198,7 @@ class TestOneApiProcess:
     @posix_only
     @pytest.mark.skipif(os.name == "posix" and os.geteuid() == 0, reason="root writes anywhere")
     def test_a_store_in_a_directory_studio_cannot_write_is_named(self, tmp_path: Path) -> None:
+        """Report the actual lock failure when the identity directory is unwritable."""
         store = tmp_path / "store"
         store.mkdir()
         identity = _identity(store / "identity.json")
@@ -174,9 +212,19 @@ class TestOneApiProcess:
 
 @posix_only
 class TestPrivateIdentityFile:
+    """Owner and permission custody for real identity files and mutations."""
+
+    def test_a_named_pipe_is_not_read_as_a_credential_store(self, tmp_path: Path) -> None:
+        """Refuse a real non-regular descriptor without waiting for a pipe writer."""
+        identity = tmp_path / "identity.json"
+        os.mkfifo(identity, mode=0o600)
+        with pytest.raises(ValueError, match="must be a regular file"):
+            load_studio_identity_store(identity)
+
     def test_a_store_readable_by_others_is_narrowed_before_it_is_read(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
+        """Narrow an owned permissive identity file before loading its credentials."""
         identity = _identity(tmp_path / "identity.json", mode=0o644)
         with caplog.at_level(logging.WARNING, logger="sc_neurocore.studio.identity"):
             store = load_studio_identity_store(identity)
@@ -187,6 +235,7 @@ class TestPrivateIdentityFile:
     def test_an_owner_only_store_is_left_as_it_is(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
+        """Preserve an already private identity file without a migration warning."""
         identity = _identity(tmp_path / "identity.json", mode=0o400)
         with caplog.at_level(logging.WARNING, logger="sc_neurocore.studio.identity"):
             load_studio_identity_store(identity)
@@ -199,10 +248,11 @@ class TestPrivateIdentityFile:
     )
     def test_a_store_another_account_owns_is_refused(self) -> None:
         """``/etc/passwd`` is a real file root owns; its content never matters here."""
-        with pytest.raises(ValueError, match="must be owned by the account running Studio"):
+        with pytest.raises(ValueError, match="must be owned by"):
             load_studio_identity_store(Path("/etc/passwd"))
 
     def test_every_write_is_owner_only_whatever_the_file_was(self, tmp_path: Path) -> None:
+        """Write private identity credentials regardless of the previous file mode."""
         identity = _identity(tmp_path / "identity.json", mode=0o644)
         add_studio_browser_user_record(
             identity,

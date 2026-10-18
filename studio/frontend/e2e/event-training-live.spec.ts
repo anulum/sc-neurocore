@@ -118,7 +118,7 @@ test("event input reaches real training, checkpoint export and workspace reopeni
   expect(continuation.config.event_data).toEqual(pack.config.event_data);
   expect(continuation.config.epochs).toBe(2);
   await expect(page.getByText("exact_resume", { exact: true })).toBeVisible();
-  const uninterruptedResponse = await page.request.post("/api/training/start", {
+  const uninterruptedResponse = await page.request.post("/api/training/start", { headers: { "Sec-Fetch-Site": "none" },
     data: { ...pack.config, epochs: 2 },
   });
   expect(uninterruptedResponse.ok()).toBe(true);

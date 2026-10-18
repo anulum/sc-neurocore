@@ -26,7 +26,6 @@ Privacy is structural, not advisory:
 
 from __future__ import annotations
 
-import json
 import platform
 import re
 import time
@@ -37,6 +36,12 @@ import numpy as np
 
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.scpn.dcls_tent_kernel import dcls_max_forward_batch_q88
+from sc_neurocore.studio.benchmark_databank import (
+    DEFAULT_DATABANK_MAX_BYTES,
+    DEFAULT_DATABANK_MAX_RECORDS,
+    append_databank,
+    read_databank,
+)
 from sc_neurocore.studio.dcls import probe_backends
 
 SUBMISSION_SCHEMA_VERSION = "scpn.benchmark.submission.v1"
@@ -236,7 +241,14 @@ def validate_submission(payload: object) -> list[str]:
     return errors
 
 
-def store_contribution(payload: dict[str, Any], handle: str = "") -> dict[str, Any]:
+def store_contribution(
+    payload: dict[str, Any],
+    handle: str = "",
+    *,
+    path: Path | None = None,
+    max_bytes: int = DEFAULT_DATABANK_MAX_BYTES,
+    max_records: int = DEFAULT_DATABANK_MAX_RECORDS,
+) -> dict[str, Any]:
     """Validate and append a submission to the local databank (opt-in path).
 
     The caller's payload is not changed. The handle is trimmed and limited to
@@ -256,27 +268,40 @@ def store_contribution(payload: dict[str, Any], handle: str = "") -> dict[str, A
     errors = validate_submission(payload)
     if errors:
         raise BenchmarkSubmissionRefused("; ".join(errors))
-    _DATABANK_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with _DATABANK_FILE.open("a", encoding="utf-8") as handle_file:
-        handle_file.write(json.dumps(payload, separators=(",", ":")) + "\n")
+    append_databank(path or _DATABANK_FILE, payload, max_bytes=max_bytes, max_records=max_records)
     return {"stored": True, "schema_version": SUBMISSION_SCHEMA_VERSION}
 
 
-def load_databank() -> list[dict[str, Any]]:
-    """Return every stored contribution (already free of identifying fields)."""
-    if not _DATABANK_FILE.is_file():
-        return []
-    rows: list[dict[str, Any]] = []
-    for line in _DATABANK_FILE.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line:
-            rows.append(json.loads(line))
-    return rows
+def load_databank(
+    *,
+    path: Path | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    max_bytes: int = DEFAULT_DATABANK_MAX_BYTES,
+    max_records: int = DEFAULT_DATABANK_MAX_RECORDS,
+) -> list[dict[str, Any]]:
+    """Return one bounded page of stored contributions."""
+    return read_databank(
+        path or _DATABANK_FILE,
+        limit=limit,
+        offset=offset,
+        max_bytes=max_bytes,
+        max_records=max_records,
+    )
 
 
-def databank_leaderboard() -> dict[str, Any]:
+def databank_leaderboard(
+    *,
+    path: Path | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    max_bytes: int = DEFAULT_DATABANK_MAX_BYTES,
+    max_records: int = DEFAULT_DATABANK_MAX_RECORDS,
+) -> dict[str, Any]:
     """Aggregate the databank into a per-CPU, per-backend speed-up leaderboard."""
-    rows = load_databank()
+    rows = load_databank(
+        path=path, limit=limit, offset=offset, max_bytes=max_bytes, max_records=max_records
+    )
     entries: list[dict[str, Any]] = []
     for row in rows:
         fastest = max(

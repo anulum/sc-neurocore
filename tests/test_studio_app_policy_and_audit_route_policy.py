@@ -6,14 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (route_policy) from former test_studio_app_policy_and_audit.py
 
+"""Verify route-policy authorization and audit outcomes through real HTTP requests."""
+
 from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
 
 def test_studio_app_route_policy_enforcement_allows_public_route() -> None:
+    """Serve a registered public route while policy enforcement is enabled."""
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get("/api/health")
 
@@ -21,8 +24,9 @@ def test_studio_app_route_policy_enforcement_allows_public_route() -> None:
 
 
 def test_studio_app_route_policy_enforcement_rejects_unclassified_route() -> None:
+    """Refuse a request whose route has no declared policy."""
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get("/api/unclassified")
 
@@ -31,8 +35,9 @@ def test_studio_app_route_policy_enforcement_rejects_unclassified_route() -> Non
 
 
 def test_studio_app_route_policy_enforcement_rejects_missing_principal() -> None:
+    """Require a principal before handling an authenticated route."""
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post("/api/simulate", json={})
 
@@ -41,8 +46,9 @@ def test_studio_app_route_policy_enforcement_rejects_missing_principal() -> None
 
 
 def test_studio_app_route_policy_enforcement_allows_authenticated_principal() -> None:
+    """Pass a supplied principal into protected request handling."""
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/simulate",
@@ -54,8 +60,9 @@ def test_studio_app_route_policy_enforcement_allows_authenticated_principal() ->
 
 
 def test_studio_app_route_policy_enforcement_rejects_missing_admin_role() -> None:
+    """Refuse administrator operations for a principal without the admin role."""
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/synth/run",
@@ -68,8 +75,9 @@ def test_studio_app_route_policy_enforcement_rejects_missing_admin_role() -> Non
 
 
 def test_studio_terminal_route_policy_rejects_missing_admin_role() -> None:
+    """Apply the administrator policy before a synthesis terminal request runs."""
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/synth/terminal",

@@ -32,10 +32,12 @@ from sc_neurocore.studio.dcls import (
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for DCLS metadata and parity contracts."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_kernel_info_carries_verified_provenance_and_contract() -> None:
+    """Retain the DCLS provenance citation and declared kernel contract."""
     info = dcls_kernel_info()
     assert info["provenance"]["doi"] == "10.48550/arXiv.2112.03740"
     assert info["provenance"]["venue"] == "ICLR"
@@ -47,6 +49,7 @@ def test_kernel_info_carries_verified_provenance_and_contract() -> None:
 
 def test_tent_profile_is_a_symmetric_triangle_peaked_at_the_centre() -> None:
     # centre tap 2 (512 Q8.8 = 2.0), sigma 3.0
+    """Preserve the centre peak and symmetric gates of the tent profile."""
     profile = dcls_tent_profile(centre_q88=512, sigma_q88=768, n_taps=8)
     gates = profile["gates"]
     assert gates[2] == pytest.approx(1.0)  # peak at the learnable centre
@@ -56,6 +59,7 @@ def test_tent_profile_is_a_symmetric_triangle_peaked_at_the_centre() -> None:
 
 
 def test_tent_profile_validates_bounds() -> None:
+    """Refuse tent-profile parameters outside their supported bounds."""
     with pytest.raises(ValueError):
         dcls_tent_profile(centre_q88=256, sigma_q88=0, n_taps=8)
     with pytest.raises(ValueError):
@@ -65,6 +69,7 @@ def test_tent_profile_validates_bounds() -> None:
 
 
 def test_forward_parity_is_bit_exact_across_live_backends() -> None:
+    """Compare live backend outputs against the exact DCLS reference."""
     result = dcls_forward_parity(
         spikes=[1, 0, 1, 1, 0, 1, 0, 1],
         weights_q88=[256] * 8,
@@ -79,6 +84,7 @@ def test_forward_parity_is_bit_exact_across_live_backends() -> None:
 
 
 def test_julia_is_declared_but_never_run_in_the_server_process() -> None:
+    """Describe offline Julia parity without running Julia in the API process."""
     assert frozenset({"julia"}) == IN_PROCESS_REFUSED_BACKENDS
     julia = next(b for b in probe_backends() if b["backend"] == "julia")
     assert julia == {"backend": "julia", "available": True, "live": False}
@@ -92,7 +98,9 @@ _CONCURRENT_DELAY_REQUESTS = textwrap.dedent(
     from starlette.testclient import TestClient
     from sc_neurocore.studio.app import create_app
 
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     body = {"n_taps": 8, "centre_q88": 512, "sigma_q88": 768}
     calls = [
         lambda: client.get("/api/dcls/info"),
@@ -133,6 +141,7 @@ def test_concurrent_delay_requests_answer_without_loading_julia(tmp_path: Path) 
 
 
 def test_forward_parity_validates_input() -> None:
+    """Refuse invalid DCLS forward-parity inputs before execution."""
     with pytest.raises(ValueError):
         dcls_forward_parity(spikes=[], weights_q88=[], centre_q88=256, sigma_q88=256)
     with pytest.raises(ValueError):
@@ -140,6 +149,7 @@ def test_forward_parity_validates_input() -> None:
 
 
 def test_benchmark_reports_fastest_first_speedups_with_context() -> None:
+    """Retain benchmark host context while ordering recorded backend speedups."""
     bench = dcls_benchmark()
     assert bench is not None
     assert "i5-11600K" in bench["cpu"]
@@ -152,18 +162,21 @@ def test_benchmark_reports_fastest_first_speedups_with_context() -> None:
 
 
 def test_api_dcls_benchmark_endpoint(client: TestClient) -> None:
+    """Expose the recorded DCLS backend benchmark through the Studio API."""
     response = client.get("/api/dcls/benchmark")
     assert response.status_code == 200, response.text
     assert response.json()["backends"][0]["speedup_over_python"] > 1.0
 
 
 def test_api_dcls_info_endpoint(client: TestClient) -> None:
+    """Expose the declared DCLS provenance through the Studio API."""
     response = client.get("/api/dcls/info")
     assert response.status_code == 200, response.text
     assert response.json()["provenance"]["venue"] == "ICLR"
 
 
 def test_api_dcls_evaluate_endpoint(client: TestClient) -> None:
+    """Return the requested tent profile and forward result through HTTP."""
     response = client.post(
         "/api/dcls/evaluate", json={"centre_q88": 512, "sigma_q88": 768, "n_taps": 8}
     )
@@ -174,6 +187,7 @@ def test_api_dcls_evaluate_endpoint(client: TestClient) -> None:
 
 
 def test_api_dcls_evaluate_rejects_mismatched_vectors(client: TestClient) -> None:
+    """Refuse a forward request whose spike and weight vectors differ in length."""
     response = client.post(
         "/api/dcls/evaluate",
         json={

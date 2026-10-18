@@ -13,6 +13,12 @@ from __future__ import annotations
 from sc_neurocore.studio.platform.policy_models import RouteVisibility
 
 DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
+    ("GET", "/", RouteVisibility.PUBLIC, "studio.frontend.read"),
+    ("GET", "/docs", RouteVisibility.PUBLIC, "studio.api.docs.read"),
+    ("GET", "/redoc", RouteVisibility.PUBLIC, "studio.api.docs.read"),
+    ("GET", "/openapi.json", RouteVisibility.PUBLIC, "studio.api.docs.read"),
+    ("GET", "/studios/sc-neurocore", RouteVisibility.PUBLIC, "studio.frontend.read"),
+    ("HEAD", "/studios/sc-neurocore", RouteVisibility.PUBLIC, "studio.frontend.read"),
     ("GET", "/api/templates", RouteVisibility.PUBLIC, "studio.templates.read"),
     ("GET", "/api/templates/{name}", RouteVisibility.PUBLIC, "studio.templates.read"),
     ("GET", "/api/models", RouteVisibility.PUBLIC, "studio.models.read"),
@@ -36,7 +42,7 @@ DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     (
         "POST",
         "/api/benchmarks/contribute",
-        RouteVisibility.PUBLIC,
+        RouteVisibility.AUTHENTICATED,
         "studio.benchmarks.contribute",
     ),
     ("GET", "/api/benchmarks/databank", RouteVisibility.PUBLIC, "studio.benchmarks.read"),

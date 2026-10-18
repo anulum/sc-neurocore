@@ -1533,7 +1533,14 @@
             "anyOf": [
               {
                 "additionalProperties": {
-                  "type": "number"
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
                 },
                 "type": "object"
               },
@@ -1696,7 +1703,14 @@
             "anyOf": [
               {
                 "additionalProperties": {
-                  "type": "number"
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
                 },
                 "type": "object"
               },
@@ -2874,7 +2888,7 @@
           },
           "password": {
             "maxLength": 4096,
-            "minLength": 1,
+            "minLength": 12,
             "title": "Password",
             "type": "string"
           },
@@ -2913,7 +2927,7 @@
         "properties": {
           "password": {
             "maxLength": 4096,
-            "minLength": 1,
+            "minLength": 12,
             "title": "Password",
             "type": "string"
           }
@@ -3455,7 +3469,33 @@
     },
     "/api/benchmarks/databank": {
       "get": {
+        "description": "Return a bounded leaderboard page from the capped contribution store.",
         "operationId": "api_benchmark_databank_api_benchmarks_databank_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -3466,6 +3506,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Api Benchmark Databank"
@@ -7900,7 +7950,7 @@
         "summary": "Api Studio Identity Browser User"
       },
       "patch": {
-        "description": "Update persistent browser-user role metadata for administrators.",
+        "description": "Update browser-user metadata and revoke every existing principal session.",
         "operationId": "api_update_studio_identity_browser_user_api_studio_identity_browser_users__username__patch",
         "parameters": [
           {

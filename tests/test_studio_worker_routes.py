@@ -33,24 +33,21 @@ from sc_neurocore.studio.platform.jobs import (
 
 def _client_with_job_root(tmp_path: Path) -> tuple[FastAPI, TestClient]:
     """Create a Studio app whose worker artifacts stay under ``tmp_path``."""
-
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"),
         job_default_timeout_seconds=10.0,
     )
     app = create_app(settings)
-    return app, TestClient(app, base_url="http://127.0.0.1")
+    return app, TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _job_manager(app: FastAPI) -> StudioJobManager:
     """Return the app-local Studio job manager."""
-
     return cast(StudioJobManager, app.state.studio_job_manager)
 
 
 def _single_job(app: FastAPI, *, owner: str, kind: str) -> StudioJobRecord:
     """Return the single job matching the expected route owner and kind."""
-
     matches = [
         record
         for record in _job_manager(app).list_records()
@@ -68,7 +65,6 @@ def _artifact_json(
     relative_path: str,
 ) -> dict[str, object]:
     """Read one declared worker artifact as JSON through the manager API."""
-
     payload = manager.read_artifact(record.job_id, relative_path)
     decoded = json.loads(payload.payload.decode("utf-8"))
     assert isinstance(decoded, dict)
@@ -79,7 +75,6 @@ def _response_result_without_receipt(
     manager: StudioJobManager, data: dict[str, object], record: StudioJobRecord
 ) -> dict[str, object]:
     """Check the response receipt and return the bytes persisted by the worker."""
-
     receipt = data["studio_job_receipt"]
     assert isinstance(receipt, dict)
     assert receipt["schema_version"] == "studio.job-receipt.v1"
@@ -112,7 +107,6 @@ def _assert_evidence_manifest(
     replay_route: str,
 ) -> None:
     """Assert the normalized worker evidence manifest for one route."""
-
     evidence = _artifact_json(manager, record, evidence_path)
     expected_sha256 = hashlib.sha256(
         json.dumps(result, allow_nan=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -194,7 +188,6 @@ def test_compile_route_maps_process_worker_terminal_failures(
 
 def test_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
     """Synthesis returns its legacy payload and persists a job result artifact."""
-
     app, client = _client_with_job_root(tmp_path)
 
     response = client.post(
@@ -230,7 +223,6 @@ def test_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
 
 def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
     """Multi-target synthesis remains synchronous while using the job sandbox."""
-
     app, client = _client_with_job_root(tmp_path)
 
     response = client.post(
@@ -274,7 +266,6 @@ def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path)
 
 def test_pnr_route_records_bounded_worker_job(tmp_path: Path) -> None:
     """PnR records its result artifact even when the external tool is absent."""
-
     netlist = tmp_path / "design.json"
     netlist.write_text("{}", encoding="utf-8")
     app, client = _client_with_job_root(tmp_path)
@@ -311,7 +302,6 @@ def test_pnr_route_records_bounded_worker_job(tmp_path: Path) -> None:
 
 def test_compile_route_records_bounded_worker_job(tmp_path: Path) -> None:
     """Compiler endpoint emits its current payload through a worker artifact."""
-
     app, client = _client_with_job_root(tmp_path)
 
     response = client.post(
@@ -351,7 +341,6 @@ def test_compile_route_records_bounded_worker_job(tmp_path: Path) -> None:
 
 def test_emit_systemverilog_route_requires_ir_text(tmp_path: Path) -> None:
     """Direct IR emission rejects an empty intermediate representation."""
-
     _, client = _client_with_job_root(tmp_path)
 
     response = client.post("/api/ir/emit-sv", json={})
@@ -362,7 +351,6 @@ def test_emit_systemverilog_route_requires_ir_text(tmp_path: Path) -> None:
 
 def test_pipeline_route_records_bounded_worker_job(tmp_path: Path) -> None:
     """Pipeline execution records a bounded compiler-family worker result."""
-
     app, client = _client_with_job_root(tmp_path)
 
     response = client.post(

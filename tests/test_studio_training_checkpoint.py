@@ -10,12 +10,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from datetime import datetime, timezone
 import hashlib
 import json
-from pathlib import Path
 import threading
+from collections.abc import Mapping
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -29,23 +29,23 @@ UTC = timezone.utc
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import JsonValue, StudioRuntimeSettings
-from sc_neurocore.studio.platform.training_evidence import (
-    TRAINING_EVIDENCE_ARTIFACT_PATH,
-    TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
-)
+from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.training_checkpoint import (
     STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
     build_training_checkpoint,
     import_training_checkpoint_payload,
 )
-from sc_neurocore.studio.platform.jobs import StudioJobContext
-from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
-from sc_neurocore.studio.training_contract import resolve_training_config
+from sc_neurocore.studio.platform.training_evidence import (
+    TRAINING_EVIDENCE_ARTIFACT_PATH,
+    TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+)
 from sc_neurocore.studio.platform.training_weights import (
     STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
     TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
     write_training_weight_checkpoint,
 )
+from sc_neurocore.studio.training_contract import resolve_training_config
 
 
 def _weight_checkpoint_metadata(
@@ -54,7 +54,6 @@ def _weight_checkpoint_metadata(
     config: dict[str, object],
 ) -> dict[str, JsonValue]:
     """Return writer-produced weight metadata for checkpoint tests."""
-
     context = StudioJobContext(
         job_id="sj_training",
         work_dir=tmp_path,
@@ -73,7 +72,6 @@ def _weight_checkpoint_metadata(
 
 def _evidence_summary() -> dict[str, object]:
     """Return a validated Training Monitor evidence summary payload."""
-
     return {
         "action_kind": "studio.training.run",
         "evidence_artifact": {
@@ -99,7 +97,6 @@ def _evidence_summary() -> dict[str, object]:
 
 def _rehash_checkpoint(checkpoint: Mapping[str, object]) -> dict[str, object]:
     """Return a checkpoint copy with a matching digest for its current content."""
-
     updated = dict(checkpoint)
     without_digest = {key: value for key, value in updated.items() if key != "checkpoint_sha256"}
     encoded = json.dumps(without_digest, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -109,7 +106,6 @@ def _rehash_checkpoint(checkpoint: Mapping[str, object]) -> dict[str, object]:
 
 def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None:
     """Checkpoint import accepts an untampered exported checkpoint."""
-
     config = {
         "batch_size": 32,
         "dataset": "synthetic",
@@ -151,7 +147,6 @@ def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None
 
 def test_training_checkpoint_import_rejects_tampered_config() -> None:
     """Checkpoint import rejects config changes after export."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -195,14 +190,12 @@ def test_training_checkpoint_import_rejects_invalid_json_contract(
     error_match: str,
 ) -> None:
     """Checkpoint import rejects malformed schemas and non-portable JSON."""
-
     with pytest.raises(ValueError, match=error_match):
         import_training_checkpoint_payload(cast(dict[str, object], payload))
 
 
 def test_training_checkpoint_rejects_invalid_evidence_summary() -> None:
     """Checkpoint export rejects unverified Training Monitor evidence summaries."""
-
     with pytest.raises(ValueError, match="evidence summary"):
         build_training_checkpoint(
             job_id="sj_training",
@@ -215,7 +208,6 @@ def test_training_checkpoint_rejects_invalid_evidence_summary() -> None:
 
 def test_training_checkpoint_import_rejects_tampered_evidence_summary() -> None:
     """Checkpoint import validates evidence summaries even when digest matches."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -235,7 +227,6 @@ def test_training_checkpoint_import_rejects_tampered_evidence_summary() -> None:
 
 def test_training_checkpoint_import_rejects_non_object_evidence_summary() -> None:
     """Checkpoint import requires evidence summary objects."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -251,7 +242,6 @@ def test_training_checkpoint_import_rejects_non_object_evidence_summary() -> Non
 
 def test_training_checkpoint_import_without_weights_has_no_restore_plan() -> None:
     """Checkpoint import omits restore plans when no weight artifact exists."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -267,7 +257,6 @@ def test_training_checkpoint_import_without_weights_has_no_restore_plan() -> Non
 
 def test_training_checkpoint_rejects_missing_build_metadata() -> None:
     """Checkpoint export requires source job and status metadata."""
-
     with pytest.raises(ValueError, match="job_id"):
         build_training_checkpoint(
             job_id="",
@@ -286,7 +275,6 @@ def test_training_checkpoint_rejects_missing_build_metadata() -> None:
 
 def test_training_checkpoint_import_rejects_missing_source_metadata() -> None:
     """Checkpoint import requires source job and status metadata."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -306,7 +294,6 @@ def test_training_checkpoint_import_rejects_missing_source_metadata() -> None:
 
 def test_training_checkpoint_import_rejects_non_object_weight_metadata() -> None:
     """Checkpoint import requires weight checkpoint objects."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -322,7 +309,6 @@ def test_training_checkpoint_import_rejects_non_object_weight_metadata() -> None
 
 def test_training_checkpoint_import_rejects_digest_mismatch() -> None:
     """Checkpoint import rejects stale checkpoint digests."""
-
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
         config={"dataset": "synthetic", "epochs": 4},
@@ -340,7 +326,6 @@ def test_training_checkpoint_import_rejects_tampered_weight_metadata(
     tmp_path: Path,
 ) -> None:
     """Checkpoint import rejects invalid weight metadata after export."""
-
     config = {"dataset": "synthetic", "epochs": 4}
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
@@ -362,13 +347,12 @@ def test_training_checkpoint_import_rejects_tampered_weight_metadata(
 
 def test_training_checkpoint_endpoints_round_trip(tmp_path: Path) -> None:
     """Training checkpoint export and import are wired through FastAPI."""
-
     settings = StudioRuntimeSettings(
         job_default_timeout_seconds=10.0,
         job_root_path=str(tmp_path / "jobs"),
     )
     app = create_app(settings)
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     started = client.post(
         "/api/training/start",
@@ -436,6 +420,7 @@ def test_restarted_training_checkpoint_uses_retained_configuration(tmp_path: Pat
     client = TestClient(
         create_app(StudioRuntimeSettings(job_root_path=str(root))),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
     exported = client.get(f"/api/training/checkpoint/{retained.job_id}")
@@ -453,9 +438,8 @@ def test_restarted_training_checkpoint_uses_retained_configuration(tmp_path: Pat
 
 def test_training_checkpoint_export_rejects_unknown_job(tmp_path: Path) -> None:
     """Checkpoint export returns not found for unknown Training Monitor jobs."""
-
     app = create_app(StudioRuntimeSettings(job_root_path=str(tmp_path / "jobs")))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get("/api/training/checkpoint/missing")
 

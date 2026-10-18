@@ -28,11 +28,11 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioJobManager, StudioRuntimeSettings
-from sc_neurocore.studio.training_refusals import TrainingRefusal
 from sc_neurocore.studio.training_contract import (
     TrainingConfigError,
     resolve_training_config,
 )
+from sc_neurocore.studio.training_refusals import TrainingRefusal
 
 torch = pytest.importorskip("torch")
 
@@ -63,7 +63,9 @@ def client(tmp_path_factory: pytest.TempPathFactory) -> TestClient:
         audit_log_path=str(root / "audit" / "studio.jsonl"),
         job_default_timeout_seconds=300.0,
     )
-    return TestClient(create_app(settings), base_url="http://127.0.0.1")
+    return TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
 
 def _finish(client: TestClient, job_id: str) -> dict[str, Any]:
@@ -82,7 +84,9 @@ def _artifact(client: TestClient, job_id: str, path: str) -> bytes:
     """Download one sealed job artifact."""
     response = client.get(f"/api/studio/jobs/{job_id}/artifacts/{path}")
     assert response.status_code == 200, response.text
-    return response.content
+    content = response.content
+    assert isinstance(content, bytes)
+    return content
 
 
 class TestContract:
@@ -184,12 +188,12 @@ class TestHttpRoute:
 
     def test_a_finished_run_is_judged_on_its_converted_network(self, client: TestClient) -> None:
         """The final metrics and the sealed report describe the converted network."""
+        from sc_neurocore.conversion.checkpoint_network import build_qcfs_classifier
         from sc_neurocore.conversion.loss_report import (
             LOSS_REPORT_SCHEMA_VERSION,
             data_sha256,
             source_sha256,
         )
-        from sc_neurocore.conversion.checkpoint_network import build_qcfs_classifier
         from sc_neurocore.studio._training_datasets import _make_synthetic, _seed_everything
 
         criterion = {"metric": "conversion_accuracy_drop", "threshold": 1.0}
@@ -220,8 +224,10 @@ class TestHttpRoute:
         rebuilt.load_state_dict(checkpoint["model_state_dict"])
         assert source_sha256(rebuilt) == report["source_sha256"]
 
-        _seed_everything(_RUN["seed"])
-        _, test_loader, _, _ = _make_synthetic(_RUN["batch_size"], rates=True)
+        seed, batch_size = _RUN["seed"], _RUN["batch_size"]
+        assert isinstance(seed, int) and isinstance(batch_size, int)
+        _seed_everything(seed)
+        _, test_loader, _, _ = _make_synthetic(batch_size, rates=True)
         inputs = torch.cat([data for data, _ in test_loader]).numpy().astype(np.float64)
         labels = torch.cat([target for _, target in test_loader]).numpy().astype(np.int64)
         assert report["samples"] == len(labels)
@@ -288,8 +294,10 @@ class TestHttpRoute:
         report = json.loads((tmp_path / "training" / "conversion_report.json").read_text())
         target = json.loads((tmp_path / "training" / "target_report.json").read_text())
         assert target["compatible"] is True
-        assert result["final_metrics"]["target_accuracy"] == round(target["quantized_accuracy"], 4)
-        assert result["final_metrics"]["val_accuracy"] == round(report["converted_accuracy"], 4)
+        metrics = result["final_metrics"]
+        assert isinstance(metrics, dict)
+        assert metrics["target_accuracy"] == round(target["quantized_accuracy"], 4)
+        assert metrics["val_accuracy"] == round(report["converted_accuracy"], 4)
         assert "training/conversion_report.json" in {
             artifact.relative_path for artifact in context.artifacts
         }

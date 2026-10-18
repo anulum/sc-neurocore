@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 929
+expected_file_count = 1029
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3809,3 +3809,403 @@ rationale = "Installed optimizer searches preserve seeded reports and recover fr
 [[file]]
 path = "tests/test_stateless_declaration.py"
 rationale = "Measure real stateless model custody independently of simulation clock admission and preserve missing-timebase refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/settings.py"
+rationale = "Runtime settings for SC-NeuroCore Studio."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/identity.py"
+rationale = "Authenticate browser sessions and administer persistent Studio identities."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/security.py"
+rationale = "Enforce Studio HTTP and WebSocket identity and route policy."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/frontend.py"
+rationale = "Serve the built Studio frontend beside the API, from the package or a checkout."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/policy_routes_discovery.py"
+rationale = "Public discovery route-policy catalogue."
+
+[[file]]
+path = "tests/test_studio_runtime_settings_parsing_identity_and_throttle.py"
+rationale = "Validate identity enforcement and finite browser-login settings before startup."
+
+[[file]]
+path = "tests/test_studio_runtime_settings_parsing_security_and_profile.py"
+rationale = "Validate deployment requirements and listener binding before the API starts."
+
+[[file]]
+path = "tests/test_studio_identity_admin_routes.py"
+rationale = "Admin-gated identity HTTP routes, auditing, and session revocation contracts."
+
+[[file]]
+path = "tests/test_studio_app_security_middleware.py"
+rationale = "HTTP host, body-limit, CORS preflight, request-id, and security-header contracts."
+
+[[file]]
+path = "tests/test_studio_router_contract.py"
+rationale = "Verify Studio route ownership and the committed OpenAPI contract."
+
+[[file]]
+path = "tests/test_studio_identity_route_failures.py"
+rationale = "Exercise identity-route failures through the public Studio API."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/deployment_profiles.py"
+rationale = "Deployment-profile manifests for SC-NeuroCore Studio operators."
+
+[[file]]
+path = "tests/test_studio_deployment_profiles.py"
+rationale = "Verify emitted Studio profiles against their runtime and operator contracts."
+
+[[file]]
+path = "tests/test_cli_studio.py"
+rationale = "Exercise cli studio behaviour through the public CLI."
+
+[[file]]
+path = "tests/studio_advanced_support.py"
+rationale = "Provide real Studio HTTP fixtures and advanced model workflow dependencies."
+
+[[file]]
+path = "tests/studio_analysis_support.py"
+rationale = "Provide real Studio HTTP fixtures and analysis workflow dependencies."
+
+[[file]]
+path = "tests/studio_app_support.py"
+rationale = "Provide real Studio HTTP fixtures for application and template contracts."
+
+[[file]]
+path = "tests/studio_compiler_support.py"
+rationale = "Provide real Studio HTTP fixtures for equation compilation and code generation."
+
+[[file]]
+path = "tests/studio_endpoints_support.py"
+rationale = "Provide real Studio HTTP fixtures with explicit analysis resource budgets."
+
+[[file]]
+path = "tests/studio_evidence_bundle_support.py"
+rationale = "Shared fixtures and payload builders for Studio evidence-bundle tests."
+
+[[file]]
+path = "tests/studio_identity_admin_support.py"
+rationale = "Provision real identity stores and authenticated Studio administrator clients."
+
+[[file]]
+path = "tests/studio_integration_support.py"
+rationale = "Provide real Studio HTTP fixtures with test-owned persistent workspaces."
+
+[[file]]
+path = "tests/studio_model_catalogue_support.py"
+rationale = "Shared imports and fixtures for model catalogue tests."
+
+[[file]]
+path = "tests/studio_network_canvas_support.py"
+rationale = "Provide real Studio HTTP fixtures for graph authoring and simulation."
+
+[[file]]
+path = "tests/studio_synthesis_provenance_support.py"
+rationale = "Tests for Studio synthesis target provenance contracts."
+
+[[file]]
+path = "tests/studio_synthesis_support.py"
+rationale = "Provide real Studio HTTP fixtures for synthesis and bounded upload contracts."
+
+[[file]]
+path = "tests/studio_training_support.py"
+rationale = "Provide real Studio HTTP fixtures and resolved training configuration helpers."
+
+[[file]]
+path = "tests/test_studio_adaptive_precision_evidence.py"
+rationale = "Tests for Studio adaptive precision evidence classification contracts."
+
+[[file]]
+path = "tests/test_studio_adaptive_precision_routes.py"
+rationale = "Exercise adaptive-precision success and validation through Studio routes."
+
+[[file]]
+path = "tests/test_studio_analysis_contracts.py"
+rationale = "Every Studio analysis states its metric contract; undefined points are not zeros."
+
+[[file]]
+path = "tests/test_studio_analysis_jobs.py"
+rationale = "Route-level tests for asynchronous heavy-analysis job submission."
+
+[[file]]
+path = "tests/test_studio_analysis_manifest.py"
+rationale = "Tests for Studio analysis result manifest contracts."
+
+[[file]]
+path = "tests/test_studio_analysis_sweep_drive.py"
+rationale = "Bifurcation and 2-D sweeps honour the requested protocol."
+
+[[file]]
+path = "tests/test_studio_app_policy_and_audit_audit_log_status.py"
+rationale = "Verify persistent audit status and rotation through the actual Studio API."
+
+[[file]]
+path = "tests/test_studio_app_policy_and_audit_bearer_identity.py"
+rationale = "Verify bearer and preview identity handling through the actual Studio API."
+
+[[file]]
+path = "tests/test_studio_app_policy_and_audit_route_policy.py"
+rationale = "Verify route-policy authorization and audit outcomes through real HTTP requests."
+
+[[file]]
+path = "tests/test_studio_audit_route_failures.py"
+rationale = "Exercise audit and evidence failures through public Studio routes."
+
+[[file]]
+path = "tests/test_studio_benchmark_contribution.py"
+rationale = "Tests for the opt-in, privacy-controlled benchmark contribution path."
+
+[[file]]
+path = "tests/test_studio_browser_sessions.py"
+rationale = "Verify browser-session authentication, lifecycle and login budgets over real HTTP."
+
+[[file]]
+path = "tests/test_studio_candidate_run.py"
+rationale = "A candidate runs under its own profile, and only when it is valid."
+
+[[file]]
+path = "tests/test_studio_compile_traceability.py"
+rationale = "Tests for Studio compile source-to-RTL traceability contracts."
+
+[[file]]
+path = "tests/test_studio_conflicting_edit_branch.py"
+rationale = "Verify conflict branches preserve both editors through real workspace operations."
+
+[[file]]
+path = "tests/test_studio_dcls.py"
+rationale = "Tests for the Studio surface over the DCLS-max learnable-delay tent kernel."
+
+[[file]]
+path = "tests/test_studio_ei_network_model.py"
+rationale = "Physics of the Studio's balanced E-I network, on both implementations."
+
+[[file]]
+path = "tests/test_studio_endpoints_cache.py"
+rationale = "Focused suite: TestCacheStats from former test_studio_endpoints.py."
+
+[[file]]
+path = "tests/test_studio_event_training_native.py"
+rationale = "Verify native decoding across HTTP admission, child training and saved state."
+
+[[file]]
+path = "tests/test_studio_event_training_process.py"
+rationale = "Train generated SHD recordings through the actual Studio process surface."
+
+[[file]]
+path = "tests/test_studio_evidence_bundle_routes.py"
+rationale = "Admin route contracts for evidence-bundle export and configuration gates."
+
+[[file]]
+path = "tests/test_studio_evidence_process.py"
+rationale = "Exercise complete source custody and explicit input refusal through HTTP."
+
+[[file]]
+path = "tests/test_studio_evidence_seed_faults.py"
+rationale = "Real seed failure, source custody, admission reuse and API denial tests."
+
+[[file]]
+path = "tests/test_studio_export_routes.py"
+rationale = "Exercise SVG export and progress WebSocket adapter branches."
+
+[[file]]
+path = "tests/test_studio_fit_jobs.py"
+rationale = "Exercise scientific fits through the application and real process workers."
+
+[[file]]
+path = "tests/test_studio_fits_routes.py"
+rationale = "Fits run through the Studio application exactly as the browser sends them."
+
+[[file]]
+path = "tests/test_studio_graph_model_contract.py"
+rationale = "An editor driven by a contract is only as honest as the contract it reads."
+
+[[file]]
+path = "tests/test_studio_graph_validation_locations.py"
+rationale = "A refusal a caller cannot place is a refusal they have to hunt for."
+
+[[file]]
+path = "tests/test_studio_identity_refusals.py"
+rationale = "Exercise identity persistence, refusals and Unicode login through real HTTP."
+
+[[file]]
+path = "tests/test_studio_network_nir_routes.py"
+rationale = "Post malformed real NIR files and envelopes through the Studio HTTP boundary."
+
+[[file]]
+path = "tests/test_studio_network_notebook.py"
+rationale = "The notebook's code, run in a fresh process, rebuilds the network the Studio ran."
+
+[[file]]
+path = "tests/test_studio_nir_compile.py"
+rationale = "Server-side NIR ingest: a .nir graph lowered to FPGA Verilog via the Studio."
+
+[[file]]
+path = "tests/test_studio_nir_interop_corpus.py"
+rationale = "An acceptance corpus of NIR graphs other tools wrote, with the Studio's recorded answer."
+
+[[file]]
+path = "tests/test_studio_nullcline_budget.py"
+rationale = "Route-level tests for Studio nullcline grid budget enforcement."
+
+[[file]]
+path = "tests/test_studio_nullclines.py"
+rationale = "Nullclines carry validity masks; an invalid sample is never a zero field."
+
+[[file]]
+path = "tests/test_studio_precision_compare.py"
+rationale = "The precision comparison runs genuine fixed-point arithmetic and refuses clamps."
+
+[[file]]
+path = "tests/test_studio_preset_routes.py"
+rationale = "Exercise preset-flow validation through the public Studio API."
+
+[[file]]
+path = "tests/test_studio_replay_notebook.py"
+rationale = "The generated notebook's code, run in a fresh process away from the author's files, replays."
+
+[[file]]
+path = "tests/test_studio_request_validation.py"
+rationale = "Exercise JSON rendering of rejected requests through real Studio routes."
+
+[[file]]
+path = "tests/test_studio_runtime_job_receipt.py"
+rationale = "Bind response receipts to real process jobs without invoking EDA tools."
+
+[[file]]
+path = "tests/test_studio_simulate_custody_http.py"
+rationale = "HTTP custody contract of the Studio simulation routes."
+
+[[file]]
+path = "tests/test_studio_simulation_manifest.py"
+rationale = "Tests for path-free Studio simulation run manifests."
+
+[[file]]
+path = "tests/test_studio_training_attach_failures.py"
+rationale = "Exercise public warm and live attach failures through real job storage."
+
+[[file]]
+path = "tests/test_studio_training_checkpoint.py"
+rationale = "Tests for portable Studio Training Monitor checkpoints."
+
+[[file]]
+path = "tests/test_studio_training_config_fidelity.py"
+rationale = "The Studio trains what was asked for, or refuses before it starts."
+
+[[file]]
+path = "tests/test_studio_training_config_storage.py"
+rationale = "Exercise real ledger durability, migration and tamper refusal for event inputs."
+
+[[file]]
+path = "tests/test_studio_training_endpoints.py"
+rationale = "Focused suite: TestTrainingEndpoints from former test_studio_training.py."
+
+[[file]]
+path = "tests/test_studio_training_preregistration.py"
+rationale = "A training run is judged against the criterion stored before it started."
+
+[[file]]
+path = "tests/test_studio_training_weight_restore.py"
+rationale = "Tests for the admin training weight-restore materialization endpoint."
+
+[[file]]
+path = "tests/test_studio_worker_routes.py"
+rationale = "Contract tests for Studio routes that execute through local worker jobs."
+
+[[file]]
+path = "tests/test_studio_workspace_concurrency.py"
+rationale = "A conflict check a second writer can walk through is not a check."
+
+[[file]]
+path = "tests/test_studio_workspace_review.py"
+rationale = "A comment names its revision and that revision's digest, and says if either is gone."
+
+[[file]]
+path = "tests/test_studio_workspace_routes.py"
+rationale = "The workspace guarantees have to hold over HTTP, not only in Python."
+
+[[file]]
+path = "tests/test_tools_studio_evidence_verify.py"
+rationale = "A pack exported through the real routes, rechecked without the Studio."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/auth_throttle.py"
+rationale = "Browser-login throttling contracts for SC-NeuroCore Studio."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/api_process_lock.py"
+rationale = "Hold an identity store for one Studio API process."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/identity.py"
+rationale = "Persistent service-account identity contracts for SC-NeuroCore Studio."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/identity_io.py"
+rationale = "Read identity descriptors once and serialise complete store mutations."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/common.py"
+rationale = "Translate route-adapter failures without exposing internal details."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/runtime.py"
+rationale = "Own the state shared by Studio middleware and responsibility routers."
+
+[[file]]
+path = "src/sc_neurocore/hub/bundle.py"
+rationale = "Offline-first Docker Compose bundle generation for local hub deployments."
+
+[[file]]
+path = "tests/test_studio_lab_request_transport.py"
+rationale = "Exercise CLI startup, chunked uploads and identity restart over real loopback TCP."
+
+[[file]]
+path = "tests/test_studio_identity_custody.py"
+rationale = "Exercise the lab identity contract through real stores, HTTP and CLI processes."
+
+[[file]]
+path = "tests/test_studio_auth_throttle.py"
+rationale = "Verify finite login windows, cooldown recovery and secret-free throttle status."
+
+[[file]]
+path = "tests/test_hub_bundle.py"
+rationale = "Tests for offline-first hub bundle generation."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/identity_passwords.py"
+rationale = "PBKDF2-HMAC-SHA256 password verifiers for Studio browser users."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/bootstrap.py"
+rationale = "Offline identity bootstrap for SC-NeuroCore Studio."
+
+[[file]]
+path = "src/sc_neurocore/studio/benchmark_databank.py"
+rationale = "Apply byte, record and page budgets while serialising databank access."
+
+[[file]]
+path = "tests/test_studio_single_api_process.py"
+rationale = "The single-user lab deployment's boundary, held against real processes and files."
+
+[[file]]
+path = "tests/test_studio_identity_passwords.py"
+rationale = "Behaviour tests for Studio browser-user password verifiers."
+
+[[file]]
+path = "tests/test_studio_identity_browser_users.py"
+rationale = "Browser-user authentication and malformed-user rejection contracts."
+
+[[file]]
+path = "tests/test_studio_identity_admin_records.py"
+rationale = "Public-record hygiene, update preservation, and last-admin refusal contracts."
+
+[[file]]
+path = "studio/frontend/e2e/event_training_server.py"
+rationale = "Serve real process training over disposable published-format event files."

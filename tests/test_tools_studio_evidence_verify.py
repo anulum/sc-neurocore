@@ -37,13 +37,15 @@ from tools.studio_evidence_verify import (
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    """A Studio client whose job artefacts land in a directory this test owns."""
+    """Provide a real Studio client with job artifacts in this test's directory."""
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path / "projects"))
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"),
         job_default_timeout_seconds=30.0,
     )
-    return TestClient(create_app(settings), base_url="http://127.0.0.1")
+    return TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
 
 def _problems(finding: dict[str, Any], label: str) -> list[str]:
@@ -84,6 +86,8 @@ def _export(client: TestClient, tmp_path: Path) -> Path:
 
 
 class TestAnExportedPack:
+    """Offline verification of actual exported Studio evidence packs."""
+
     def test_a_pack_exported_through_the_browser_verifies_offline(
         self, client: TestClient, tmp_path: Path
     ) -> None:
@@ -117,6 +121,7 @@ class TestAnExportedPack:
     def test_the_command_line_reports_and_succeeds(
         self, client: TestClient, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Return success and verified verdicts for an intact exported pack."""
         pack = _export(client, tmp_path)
 
         assert main([str(pack)]) == 0
@@ -126,6 +131,7 @@ class TestAnExportedPack:
         assert "verdicts: verified" in printed
 
     def test_the_finding_can_be_written_as_json(self, client: TestClient, tmp_path: Path) -> None:
+        """Write a machine-readable verification finding with a final newline."""
         pack = _export(client, tmp_path)
         destination = tmp_path / "finding.json"
 
@@ -137,9 +143,12 @@ class TestAnExportedPack:
 
 
 class TestTamperingAfterExport:
+    """Digest and recorded-chain agreement after exported evidence changes."""
+
     def test_an_edited_payload_is_caught_by_its_digest_and_its_seal(
         self, client: TestClient, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Report changed evidence through both digest checking and seal verification."""
         pack = _export(client, tmp_path)
         target = pack / "evidence/simulations/000.json"
         document = json.loads(target.read_text(encoding="utf-8"))
@@ -153,6 +162,7 @@ class TestTamperingAfterExport:
         assert "did not verify" in captured.err
 
     def test_a_file_removed_after_export_is_named(self, client: TestClient, tmp_path: Path) -> None:
+        """Identify an exported evidence file which was subsequently removed."""
         pack = _export(client, tmp_path)
         (pack / "evidence/simulations/000.json").unlink()
 
@@ -182,6 +192,7 @@ class TestTamperingAfterExport:
     def test_a_pack_without_a_chain_document_is_not_taken_on_trust(
         self, client: TestClient, tmp_path: Path
     ) -> None:
+        """Refuse to infer recorded verification when the chain document is absent."""
         pack = _export(client, tmp_path)
         (pack / "evidence/chain.json").unlink()
 
@@ -217,7 +228,10 @@ def _entry(pack: Path, relative_path: str, entry_type: str = "job_artifact") -> 
 
 
 class TestFilesThePackCannotCheck:
+    """Manifest entries with missing file references or inconsistent sizes."""
+
     def test_a_manifest_entry_naming_no_file_is_reported(self, tmp_path: Path) -> None:
+        """Report a manifest entry which has no checkable file reference."""
         pack = _hand_built_pack(tmp_path, {}, [{"type": "job_record", "sha256": "0" * 64}])
 
         finding = verify_pack(pack)
@@ -227,6 +241,7 @@ class TestFilesThePackCannotCheck:
         ]
 
     def test_a_file_of_the_wrong_size_is_reported(self, tmp_path: Path) -> None:
+        """Report a payload whose actual size differs from its manifest."""
         pack = _hand_built_pack(tmp_path, {"evidence/notes.txt": "hello\n"}, [])
         entry = _entry(pack, "evidence/notes.txt")
         entry["size_bytes"] = 1
@@ -265,6 +280,8 @@ class TestFilesThePackCannotCheck:
 
 
 class TestARecordedChainThatCannotBeRead:
+    """Malformed recorded-chain entries without invented agreement verdicts."""
+
     @pytest.mark.parametrize(
         "entries",
         ["not a list", [7], [{"name": 1, "verdict": "verified"}]],
@@ -285,18 +302,23 @@ class TestARecordedChainThatCannotBeRead:
 
 
 class TestUnreadablePacks:
+    """Typed refusals for absent or structurally invalid evidence manifests."""
+
     def test_a_directory_that_is_not_a_pack_is_refused(self, tmp_path: Path) -> None:
+        """Refuse a directory without the required evidence manifest."""
         with pytest.raises(EvidencePackError, match="not an evidence pack"):
             verify_pack(tmp_path)
 
     def test_the_command_line_reports_an_unreadable_pack(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Return a failure status and readable diagnostic for an unreadable pack."""
         assert main([str(tmp_path)]) == 1
 
         assert "cannot be verified" in capsys.readouterr().err
 
     def test_a_manifest_that_is_not_an_object_is_refused(self, tmp_path: Path) -> None:
+        """Refuse a manifest whose JSON root is not an object."""
         manifest = tmp_path / "evidence" / "manifest.json"
         manifest.parent.mkdir(parents=True)
         manifest.write_text("[]", encoding="utf-8")
@@ -305,6 +327,7 @@ class TestUnreadablePacks:
             verify_pack(tmp_path)
 
     def test_a_manifest_without_entries_is_refused(self, tmp_path: Path) -> None:
+        """Require the manifest to declare its evidence entries."""
         manifest = tmp_path / "evidence" / "manifest.json"
         manifest.parent.mkdir(parents=True)
         manifest.write_text('{"bundle_id": "seb_x"}', encoding="utf-8")
@@ -313,6 +336,7 @@ class TestUnreadablePacks:
             verify_pack(tmp_path)
 
     def test_a_chain_document_that_is_not_an_object_is_refused(self, tmp_path: Path) -> None:
+        """Refuse a recorded-chain document whose JSON root is not an object."""
         (tmp_path / "evidence").mkdir(parents=True)
         (tmp_path / "evidence" / "manifest.json").write_text(
             '{"bundle_id": "seb_x", "entries": []}', encoding="utf-8"
@@ -324,6 +348,8 @@ class TestUnreadablePacks:
 
 
 class TestReportRendering:
+    """Human-readable verdict counts, evidence problems and failed subjects."""
+
     def _finding(self, **overrides: Any) -> dict[str, Any]:
         finding: dict[str, Any] = {
             "agreement_problems": [],
@@ -343,12 +369,14 @@ class TestReportRendering:
         return finding
 
     def test_an_empty_pack_reports_no_verdicts(self) -> None:
+        """Render an empty verdict collection without inventing subject results."""
         report = render_report(self._finding())
 
         assert "verdicts: none" in report
         assert "result: verified" in report
 
     def test_problems_and_failures_are_both_named(self) -> None:
+        """Render digest problems, agreement problems and failed subject details."""
         report = render_report(
             self._finding(
                 agreement_problems=["a mismatch"],
@@ -376,10 +404,12 @@ class TestReportRendering:
         assert "result: NOT VERIFIED" in report
 
     def test_a_finding_without_a_chain_mapping_is_refused(self) -> None:
+        """Require the finding's chain field to be a mapping before rendering."""
         with pytest.raises(TypeError, match="expected a mapping"):
             render_report(self._finding(chain=[]))
 
     def test_a_chain_whose_entries_are_not_a_list_lists_no_failures(self) -> None:
+        """Avoid inventing subject failures from unreadable chain entries."""
         report = render_report(
             self._finding(
                 chain={

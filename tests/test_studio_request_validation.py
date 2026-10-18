@@ -22,7 +22,9 @@ from sc_neurocore.studio.app import create_app
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     """Provide the actual Studio app with server exceptions exposed to tests."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as connection:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as connection:
         yield connection
 
 
@@ -58,7 +60,10 @@ def test_unpaired_unicode_in_rejected_requests_remains_422(
     assert response.json()["detail"]
     assert "UnicodeEncodeError" not in response.text
     assert "surrogates not allowed" not in response.text
-    assert "\\\\ud" in response.text
+    if route.startswith("/api/studio/"):
+        assert all("input" not in item and "ctx" not in item for item in response.json()["detail"])
+    else:
+        assert "\\\\ud" in response.text
 
 
 def test_validation_preserves_valid_unicode_and_nested_values(client: TestClient) -> None:
@@ -69,6 +74,22 @@ def test_validation_preserves_valid_unicode_and_nested_values(client: TestClient
     assert response.status_code == 422
     errors = response.json()["detail"]
     assert any(error["input"] == value for error in errors)
+
+
+def test_nested_credential_fields_are_redacted_outside_identity_routes(client: TestClient) -> None:
+    """Invalid ordinary requests retain field errors without echoing nested secret values."""
+    response = client.post(
+        "/api/models/simulate",
+        json={
+            "model_name": {
+                "nested": [{"token": "private-token-marker", "password": "private-password-marker"}]
+            }
+        },
+    )
+    assert response.status_code == 422
+    assert "private-token-marker" not in response.text
+    assert "private-password-marker" not in response.text
+    assert "[REDACTED_SECRET]" in response.text
 
 
 @pytest.mark.parametrize("number", ["NaN", "Infinity", "-Infinity"])

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Literal, cast
@@ -85,7 +86,7 @@ def add_studio_commands(
         description="Add a password-authenticated browser user to a Studio identity file.",
     )
     _add_identity_file_argument(browser_user)
-    browser_user.add_argument("--principal-id", default="svc-studio-admin")
+    browser_user.add_argument("--principal-id", default="human-operator")
     browser_user.add_argument("--username", default=None)
     browser_user.add_argument("--role", dest="roles", action="append", default=None)
     browser_user.add_argument("--password-stdin", action="store_true")
@@ -112,25 +113,55 @@ def run_studio(args: argparse.Namespace) -> int:
     Returns
     -------
     int
-        Zero after a clean server shutdown, otherwise one when Studio extras are absent.
+        Zero after a clean shutdown, otherwise one for missing extras or invalid settings.
     """
     try:
         import uvicorn
     except ImportError:
         print("Error: Studio requires FastAPI + Uvicorn.")
-        print("Install with: pip install sc-neurocore[studio]")
+        print("Install with: uv pip install sc-neurocore[studio]")
         return 1
 
     import webbrowser
 
-    from sc_neurocore.studio import app as studio_app
+    from sc_neurocore.studio.platform.settings import (
+        DEFAULT_STUDIO_CORS_ORIGINS,
+        build_default_studio_runtime_settings,
+    )
+
+    try:
+        port = int(args.port)
+        if not 1 <= port <= 65535:
+            raise ValueError("Studio port must be in the range 1..65535.")
+        runtime_env = dict(os.environ)
+        if not runtime_env.get("SC_NEUROCORE_STUDIO_CORS_ORIGINS", "").strip():
+            runtime_env["SC_NEUROCORE_STUDIO_CORS_ORIGINS"] = ",".join(
+                (
+                    *DEFAULT_STUDIO_CORS_ORIGINS,
+                    f"http://127.0.0.1:{port}",
+                    f"http://localhost:{port}",
+                )
+            )
+        settings = build_default_studio_runtime_settings(runtime_env)
+        if f"http://127.0.0.1:{port}" not in settings.cors_allowed_origins:
+            raise ValueError("Studio CORS origins must include the selected loopback URL.")
+        if f"http://127.0.0.1:{port}" not in settings.websocket_allowed_origins:
+            raise ValueError("Studio WebSocket origins must include the selected loopback URL.")
+        settings.validate_bind_host("127.0.0.1")
+        from sc_neurocore.studio import app as studio_app
+
+        app = studio_app.create_app(settings)
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(f"Error: Studio could not start: {exc}")
+        return 1
     from sc_neurocore.studio.api.frontend import (
         studio_entry,
         studio_frontend_candidates,
         studio_frontend_dir,
     )
 
-    app = studio_app.create_app()
+    if not settings.enforce_route_policies or settings.allow_header_principal:
+        print("UNPROTECTED local development: use the lab profile for identity-based access.")
     url, announcement = studio_entry(
         f"http://127.0.0.1:{int(args.port)}",
         studio_frontend_dir(studio_frontend_candidates(studio_app.__file__)),
@@ -211,6 +242,7 @@ def run_studio_bootstrap_admin(args: argparse.Namespace) -> int:
     output["bearer_token"] = result.bearer_token
     output["environment"] = f"SC_NEUROCORE_STUDIO_IDENTITY_FILE={result.identity_file_path}"
     print(json.dumps(output, indent=2, sort_keys=True))
+    print("Restart a running Studio API to apply CLI identity changes.", file=sys.stderr)
     return 0
 
 
@@ -316,6 +348,7 @@ def run_studio_add_browser_user(args: argparse.Namespace) -> int:
         "schema_version": "sc-neurocore.studio.identity.browser-user.add.v1",
     }
     print(json.dumps(output, indent=2, sort_keys=True))
+    print("Restart a running Studio API to apply CLI identity changes.", file=sys.stderr)
     return 0
 
 

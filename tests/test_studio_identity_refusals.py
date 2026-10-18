@@ -28,10 +28,10 @@ from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
 _USERS = "/api/studio/identity/browser-users"
 _MUTATIONS: list[tuple[str, str, dict[str, object]]] = [
-    ("POST", _USERS, {"username": "new", "principal_id": "new", "password": "password"}),
+    ("POST", _USERS, {"username": "new", "principal_id": "new", "password": "operator-password"}),
     ("PATCH", "/api/studio/identity/service-accounts/admin", {"active": True}),
     ("PATCH", f"{_USERS}/operator", {"active": True}),
-    ("POST", f"{_USERS}/operator/password", {"password": "replacement"}),
+    ("POST", f"{_USERS}/operator/password", {"password": "replacement-password"}),
 ]
 
 
@@ -72,7 +72,9 @@ def _client(tmp_path: Path) -> tuple[TestClient, Path]:
         )
     )
     return TestClient(
-        app, base_url="http://127.0.0.1", headers={"Authorization": "Bearer test-admin"}
+        app,
+        base_url="http://127.0.0.1",
+        headers={"Authorization": "Bearer test-admin", "sec-fetch-site": "none"},
     ), identity_path
 
 
@@ -116,7 +118,7 @@ def test_unicode_username_creation_login_and_password_rotation(tmp_path: Path) -
             "username": "Žofia",
             "principal_id": "human-zofia",
             "roles": ["studio.viewer"],
-            "password": "heslo-漢字",
+            "password": "bezpečné-heslo-漢字",
         },
     )
     assert created.status_code == 200
@@ -128,32 +130,32 @@ def test_unicode_username_creation_login_and_password_rotation(tmp_path: Path) -
         assert denied.status_code == 401
         assert denied.json() == {"detail": "invalid_browser_login"}
     login = client.post(
-        "/api/studio/auth/login", json={"username": "Žofia", "password": "heslo-漢字"}
+        "/api/studio/auth/login", json={"username": "Žofia", "password": "bezpečné-heslo-漢字"}
     )
     assert login.status_code == 200
     bearer = {"Authorization": f"Bearer {login.json()['access_token']}"}
     session = client.get("/api/studio/auth/session", headers=bearer)
     assert session.status_code == 200
     assert session.json()["principal_id"] == "human-zofia"
-    rotated = client.post(f"{_USERS}/Žofia/password", json={"password": "nové-heslo"})
+    rotated = client.post(f"{_USERS}/Žofia/password", json={"password": "nové-dlhé-heslo"})
     assert rotated.status_code == 200
     assert client.get("/api/studio/auth/session", headers=bearer).status_code == 401
     assert (
         client.post(
-            "/api/studio/auth/login", json={"username": "Žofia", "password": "heslo-漢字"}
+            "/api/studio/auth/login", json={"username": "Žofia", "password": "bezpečné-heslo-漢字"}
         ).status_code
         == 401
     )
     assert (
         client.post(
-            "/api/studio/auth/login", json={"username": "Žofia", "password": "nové-heslo"}
+            "/api/studio/auth/login", json={"username": "Žofia", "password": "nové-dlhé-heslo"}
         ).status_code
         == 200
     )
     audit = (tmp_path / "audit.jsonl").read_text(encoding="utf-8")
     assert "studio.identity.browser_user.password.rotate" in audit
-    assert "heslo-漢字" not in audit
-    assert "nové-heslo" not in audit
+    assert "bezpečné-heslo-漢字" not in audit
+    assert "nové-dlhé-heslo" not in audit
 
 
 def test_authored_duplicate_and_validation_messages_preserved(tmp_path: Path) -> None:
@@ -165,7 +167,7 @@ def test_authored_duplicate_and_validation_messages_preserved(tmp_path: Path) ->
         json={
             "username": "operator",
             "principal_id": "other",
-            "password": "password",
+            "password": "operator-password",
             "roles": ["studio.viewer"],
         },
     )
@@ -222,7 +224,7 @@ def test_authored_identity_field_refusals(
     client, path = _client(tmp_path)
     before = path.read_bytes()
     response = client.request(
-        method, route, json={"roles": ["studio.viewer"], "password": "password", **payload}
+        method, route, json={"roles": ["studio.viewer"], "password": "operator-password", **payload}
     )
     assert response.status_code == 422
     assert response.json() == {"detail": detail}

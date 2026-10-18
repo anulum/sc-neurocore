@@ -442,7 +442,7 @@ class StudioBrowserUserCreateRequest(BaseModel):
     username: str = Field(min_length=1, max_length=128)
     principal_id: str = Field(min_length=1, max_length=256)
     roles: list[str] = Field(min_length=1)
-    password: str = Field(min_length=1, max_length=4096)
+    password: str = Field(min_length=12, max_length=4096)
     active: bool = True
     expires_at_utc: str | None = None
 
@@ -450,7 +450,7 @@ class StudioBrowserUserCreateRequest(BaseModel):
 class StudioBrowserUserPasswordRotateRequest(BaseModel):
     """Request body for admin browser-user password rotation."""
 
-    password: str = Field(min_length=1, max_length=4096)
+    password: str = Field(min_length=12, max_length=4096)
 
 
 class StudioBrowserLoginRequest(BaseModel):

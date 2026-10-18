@@ -45,8 +45,10 @@ MODEL = "SCLapicqueLIFNeuron"
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
-    """A Studio client for the graph routes."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    """Provide the real Studio API for graph validation and simulation."""
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
@@ -74,7 +76,10 @@ def graph_with(params: dict[str, Any]) -> dict[str, Any]:
 
 
 class TestWhatTheContractStates:
+    """Population-model input kinds, defaults and stable editor ordering."""
+
     def test_it_carries_its_own_version(self) -> None:
+        """Identify the population input contract with its declared schema version."""
         contract = population_model_contract(MODEL)
 
         assert contract is not None
@@ -82,6 +87,7 @@ class TestWhatTheContractStates:
         assert contract["model"] == MODEL
 
     def test_every_parameter_carries_its_kind_and_default(self) -> None:
+        """Describe each offered population parameter with its kind and default."""
         contract = population_model_contract(MODEL)
 
         assert contract is not None
@@ -91,6 +97,7 @@ class TestWhatTheContractStates:
             assert parameter["kind"] in ("float", "int")
 
     def test_parameters_are_ordered_so_an_editor_is_stable(self) -> None:
+        """Keep population parameter ordering deterministic for an editor."""
         contract = population_model_contract(MODEL)
 
         assert contract is not None
@@ -98,6 +105,7 @@ class TestWhatTheContractStates:
         assert names == sorted(names)
 
     def test_it_names_the_drive_parameter_the_protocol_delivers_through(self) -> None:
+        """Identify the numeric parameter through which a protocol supplies drive."""
         contract = population_model_contract(MODEL)
 
         assert contract is not None
@@ -106,6 +114,7 @@ class TestWhatTheContractStates:
         assert contract["drive"]["parameter"]
 
     def test_a_field_that_is_not_an_input_says_why(self) -> None:
+        """Explain why a model field is excluded from population inputs."""
         contract = population_model_contract(MODEL)
 
         assert contract is not None
@@ -115,6 +124,8 @@ class TestWhatTheContractStates:
 
 
 class TestTheContractMatchesWhatTheGraphAccepts:
+    """Agreement between offered population inputs and graph admission."""
+
     def test_every_offered_parameter_is_accepted_by_the_graph(self) -> None:
         """The point of the contract: nothing it offers is refused on use."""
         contract = population_model_contract(MODEL)
@@ -126,6 +137,7 @@ class TestTheContractMatchesWhatTheGraphAccepts:
             assert issues == [], (parameter, [issue.message for issue in issues])
 
     def test_dt_is_not_offered_and_says_why_in_the_run_contract_s_own_words(self) -> None:
+        """Keep the graph time step outside population parameters with its stated reason."""
         contract = population_model_contract(MODEL)
 
         assert contract is not None
@@ -141,6 +153,7 @@ class TestTheContractMatchesWhatTheGraphAccepts:
         assert DT_OVERRIDE_REASON in issues[0].message
 
     def test_a_field_the_contract_does_not_offer_is_refused_by_the_graph(self) -> None:
+        """Locate an undeclared population parameter when graph validation refuses it."""
         issues = graph_issues(graph_with({"not_a_parameter": 1.0}))
 
         assert [issue.field for issue in issues] == ["populations[0].params.not_a_parameter"]
@@ -174,6 +187,7 @@ class TestTheContractMatchesWhatTheGraphAccepts:
         assert body["errors"] == [issues[0].message]
 
     def test_a_model_whose_timestep_range_excludes_the_graph_dt_is_refused(self) -> None:
+        """Refuse model parameters incompatible with the graph time step."""
         graph = graph_with({})
         graph["populations"][0]["model"] = "NMDANeuron"
         issues = graph_issues(graph)
@@ -185,6 +199,8 @@ class TestTheContractMatchesWhatTheGraphAccepts:
 
 
 class TestAModelThatCannotFormAPopulation:
+    """Catalogue admission and missing contracts for unsupported populations."""
+
     def test_it_has_no_contract_rather_than_an_empty_one(self) -> None:
         """An empty contract would read as a model with no parameters."""
         refused = [
@@ -197,29 +213,36 @@ class TestAModelThatCannotFormAPopulation:
             assert population_model_contract(name) is None
 
     def test_every_admissible_model_has_a_contract(self) -> None:
+        """Require an input contract for each model admitted as a population."""
         for name in available_models():
             assert population_model_contract(name) is not None, name
 
 
 class TestOverHttp:
+    """Population input contracts as served by the actual Studio API."""
+
     def test_the_route_answers_the_contract(self, client: TestClient) -> None:
+        """Serve the same population contract which the model adapter declares."""
         response = client.get(f"/api/graph/models/{MODEL}")
 
         assert response.status_code == 200
         assert response.json() == population_model_contract(MODEL)
 
     def test_a_model_that_cannot_form_a_population_answers_404(self, client: TestClient) -> None:
+        """Return the declared missing-contract response for an unsupported model."""
         response = client.get("/api/graph/models/AkidaNeuron")
 
         assert response.status_code == 404
 
     def test_an_unknown_name_answers_404_without_a_path(self, client: TestClient) -> None:
+        """Refuse an unknown catalogue name without exposing a filesystem path."""
         response = client.get("/api/graph/models/not-a-model")
 
         assert response.status_code == 404
         assert "/" not in response.json()["detail"].replace("'not-a-model'", "")
 
     def test_the_listing_and_the_contract_agree(self, client: TestClient) -> None:
+        """Keep the model listing consistent with available HTTP input contracts."""
         listed = client.get("/api/graph/models").json()
 
         assert listed

@@ -36,6 +36,7 @@ STATE = {"sourceMode": "model", "selectedModelName": "AdExNeuron"}
 
 @pytest.fixture
 def store(tmp_path: Path) -> WorkspaceStore:
+    """Create a revisioned workspace store with deterministic review timestamps."""
     workspaces = WorkspaceStore(root=tmp_path / "projects", clock=lambda: 1000.0)
     workspaces.save("study", STATE, expected_revision=None)
     workspaces.save("study", {**STATE, "selectedModelName": "LIFNeuron"}, expected_revision=1)
@@ -43,6 +44,7 @@ def store(tmp_path: Path) -> WorkspaceStore:
 
 
 def test_a_comment_is_bound_to_its_revision_and_digest(store: WorkspaceStore) -> None:
+    """Bind review comments and replies to their revision and state digest."""
     first = add_comment(store, "study", 1, author="alice", body="  Why AdEx here?  ")
     reply = add_comment(
         store, "study", 1, author="bob", body="Adaptation.", reply_to=first.comment_id
@@ -63,6 +65,7 @@ def test_a_comment_is_bound_to_its_revision_and_digest(store: WorkspaceStore) ->
 
 
 def test_a_revision_that_changed_or_vanished_is_marked(store: WorkspaceStore) -> None:
+    """Distinguish changed and missing revisions in recorded review comments."""
     add_comment(store, "study", 1, author="alice", body="On one.")
     add_comment(store, "study", 2, author="alice", body="On two.")
     revisions = store.workspace_dir("study") / "revisions"
@@ -81,11 +84,13 @@ def test_a_revision_that_changed_or_vanished_is_marked(store: WorkspaceStore) ->
 
 @pytest.mark.parametrize("body", ["", "   ", "x" * (MAX_COMMENT_CHARS + 1)])
 def test_an_empty_or_oversized_comment_is_refused(store: WorkspaceStore, body: str) -> None:
+    """Refuse comments outside the supported nonempty length range."""
     with pytest.raises(ValueError, match=f"1 to {MAX_COMMENT_CHARS} characters"):
         add_comment(store, "study", 1, author="alice", body=body)
 
 
 def test_a_reply_must_answer_a_comment_on_the_same_revision(store: WorkspaceStore) -> None:
+    """Require a reply target to belong to the reviewed revision."""
     other = add_comment(store, "study", 2, author="alice", body="On two.")
     with pytest.raises(ValueError, match="is not a comment on revision 1"):
         add_comment(store, "study", 1, author="bob", body="Reply.", reply_to=other.comment_id)
@@ -94,6 +99,7 @@ def test_a_reply_must_answer_a_comment_on_the_same_revision(store: WorkspaceStor
 
 
 def test_a_missing_revision_or_workspace_is_refused(store: WorkspaceStore) -> None:
+    """Refuse review writes for an absent workspace or revision."""
     with pytest.raises(KeyError):
         add_comment(store, "study", 9, author="alice", body="Nowhere.")
     with pytest.raises(KeyError):
@@ -104,9 +110,11 @@ def test_a_missing_revision_or_workspace_is_refused(store: WorkspaceStore) -> No
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
-    """A Studio whose workspaces live under this test's directory."""
+    """Provide the real Studio with workspaces under this test's directory."""
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path / "projects"))
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
@@ -118,6 +126,7 @@ def _saved(client: TestClient) -> None:
 
 
 def test_the_routes_comment_list_and_refuse(client: TestClient) -> None:
+    """Create and list comments while refusing missing or invalid review inputs."""
     _saved(client)
     posted = client.post("/api/project/study/revisions/1/comments", json={"body": "Looks right."})
     assert posted.status_code == 200
@@ -139,9 +148,14 @@ def test_the_routes_comment_list_and_refuse(client: TestClient) -> None:
 def test_the_author_is_the_authenticated_principal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Attribute a review comment to the authenticated request principal."""
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path / "projects"))
     settings = StudioRuntimeSettings(enforce_route_policies=True, allow_header_principal=True)
-    headers = {"X-Studio-Principal": "reviewer-7", "X-Studio-Roles": "studio.admin"}
+    headers = {
+        "sec-fetch-site": "none",
+        "X-Studio-Principal": "reviewer-7",
+        "X-Studio-Roles": "studio.admin",
+    }
     with TestClient(create_app(settings), base_url="http://127.0.0.1", headers=headers) as client:
         _saved(client)
         posted = client.post("/api/project/study/revisions/1/comments", json={"body": "Signed."})

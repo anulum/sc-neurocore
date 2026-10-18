@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio browser session tests
 
+"""Verify browser-session authentication, lifecycle and login budgets over real HTTP."""
+
 from __future__ import annotations
 
 import hashlib
@@ -72,6 +74,7 @@ def _client(identity_path: Path, audit_path: Path) -> TestClient:
             )
         ),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
 
@@ -90,6 +93,7 @@ def _throttled_client(identity_path: Path, audit_path: Path) -> TestClient:
             )
         ),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
 
@@ -98,6 +102,7 @@ def _audit_rows(path: Path) -> list[dict[str, Any]]:
 
 
 def test_browser_user_password_verifier_rejects_wrong_password() -> None:
+    """Accept the encoded password while refusing a different supplied password."""
     verifier = make_browser_user_password_verifier("correct-password")
 
     assert verify_browser_user_password("correct-password", verifier)
@@ -106,6 +111,7 @@ def test_browser_user_password_verifier_rejects_wrong_password() -> None:
 
 
 def test_browser_user_public_records_hide_password_verifiers(tmp_path: Path) -> None:
+    """Expose account metadata without returning its password verifier."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
 
@@ -122,6 +128,7 @@ def test_browser_user_public_records_hide_password_verifiers(tmp_path: Path) -> 
 
 
 def test_browser_session_manager_issues_and_revokes_bearer_session() -> None:
+    """Issue a bounded bearer session and revoke its subsequent authentication."""
     now = datetime(2026, 6, 20, 12, 0, tzinfo=UTC)
     manager = StudioBrowserSessionManager(
         clock=lambda: now,
@@ -149,6 +156,7 @@ def test_browser_session_manager_issues_and_revokes_bearer_session() -> None:
 
 
 def test_browser_session_manager_revokes_all_sessions_for_principal() -> None:
+    """Revoke every session belonging to the selected principal."""
     tokens = iter(("session-token-a", "session-token-b", "session-token-c"))
     manager = StudioBrowserSessionManager(
         token_factory=lambda: next(tokens),
@@ -175,6 +183,7 @@ def test_browser_session_manager_revokes_all_sessions_for_principal() -> None:
 
 
 def test_browser_session_manager_expires_sessions() -> None:
+    """Refuse a session after its configured lifetime has elapsed."""
     current = datetime(2026, 6, 20, 12, 0, tzinfo=UTC)
 
     def clock() -> datetime:
@@ -195,6 +204,7 @@ def test_browser_session_manager_expires_sessions() -> None:
 
 
 def test_browser_login_session_logout_flow_is_audited(tmp_path: Path) -> None:
+    """Record failed login, successful session access and explicit logout outcomes."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     _write_identity_file(identity_path)
@@ -242,7 +252,6 @@ def test_identity_lifecycle_routes_emit_allow_and_deny_audit_rows(
     tmp_path: Path,
 ) -> None:
     """Identity lifecycle APIs leave password-free allow and deny evidence."""
-
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     _write_identity_file(identity_path)
@@ -340,6 +349,7 @@ def test_identity_lifecycle_routes_emit_allow_and_deny_audit_rows(
 
 
 def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> None:
+    """Enforce the configured failed-password budget through the HTTP login route."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     _write_identity_file(identity_path)
@@ -388,6 +398,7 @@ def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> N
 
 
 def test_browser_login_success_resets_prior_invalid_attempts(tmp_path: Path) -> None:
+    """Reset prior login failures after a successful browser authentication."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     _write_identity_file(identity_path)
@@ -412,7 +423,8 @@ def test_browser_login_success_resets_prior_invalid_attempts(tmp_path: Path) -> 
     assert invalid_after_success.json()["detail"] == "invalid_browser_login"
 
 
-def test_disabled_browser_user_is_not_counted_toward_login_throttle(tmp_path: Path) -> None:
+def test_disabled_browser_user_counts_toward_generic_login_throttle(tmp_path: Path) -> None:
+    """Apply the same refusal and failure budget to a disabled user's login."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     _write_identity_file(identity_path)
@@ -431,7 +443,7 @@ def test_disabled_browser_user_is_not_counted_toward_login_throttle(tmp_path: Pa
     )
 
     assert first.status_code == 401
-    assert first.json()["detail"] == "disabled_browser_user"
-    assert second.status_code == 401
-    assert second.json()["detail"] == "disabled_browser_user"
-    assert "browser_login_throttled" not in audit_path.read_text(encoding="utf-8")
+    assert first.json()["detail"] == "invalid_browser_login"
+    assert second.status_code == 429
+    assert second.json()["detail"] == "browser_login_throttled"
+    assert "browser_login_throttled" in audit_path.read_text(encoding="utf-8")

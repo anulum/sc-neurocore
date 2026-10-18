@@ -6,22 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio identity admin test support
 
+"""Provision real identity stores and authenticated Studio administrator clients."""
+
 from __future__ import annotations
 
 import hashlib
-
 import json
-
 from pathlib import Path
-
 from typing import Any
 
 import pytest
-
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.platform.identity import (
     StudioIdentityAuthenticator,
     StudioIdentityLifecycleError,
@@ -33,7 +30,6 @@ from sc_neurocore.studio.platform.identity import (
     update_studio_browser_user_record,
     update_studio_identity_record,
 )
-
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
 
@@ -140,7 +136,7 @@ def _client(identity_path: Path, audit_path: Path) -> TestClient:
             identity_file_path=str(identity_path),
         )
     )
-    return TestClient(app, base_url="http://127.0.0.1")
+    return TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _admin_headers(token: str) -> dict[str, str]:

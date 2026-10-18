@@ -14,6 +14,7 @@ from tests.studio_identity_admin_support import *  # noqa: F403
 
 
 def test_identity_public_records_never_expose_token_hashes(tmp_path: Path) -> None:
+    """Return ordered service metadata without exposing bearer-token digests."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
 
@@ -30,6 +31,7 @@ def test_identity_public_records_never_expose_token_hashes(tmp_path: Path) -> No
 
 
 def test_identity_record_update_preserves_token_hash_and_reloads_auth(tmp_path: Path) -> None:
+    """Preserve the bearer digest while applying metadata to reloaded authentication."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
     before = json.loads(identity_path.read_text(encoding="utf-8"))
@@ -58,6 +60,7 @@ def test_identity_record_update_preserves_token_hash_and_reloads_auth(tmp_path: 
 
 
 def test_browser_user_public_records_never_expose_password_verifiers(tmp_path: Path) -> None:
+    """Return ordered browser-user metadata without its password verifier."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
 
@@ -77,6 +80,7 @@ def test_browser_user_public_records_never_expose_password_verifiers(tmp_path: P
 def test_browser_user_update_preserves_password_verifier_and_reloads_auth(
     tmp_path: Path,
 ) -> None:
+    """Preserve the stored verifier while applying updated browser-user metadata."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
     before = json.loads(identity_path.read_text(encoding="utf-8"))
@@ -102,10 +106,11 @@ def test_browser_user_update_preserves_password_verifier_and_reloads_auth(
     }
     assert after["browser_users"][0]["password_pbkdf2_sha256"] == original_verifier
     assert auth_result.principal is None
-    assert auth_result.failure_reason == "disabled_browser_user"
+    assert auth_result.failure_reason == "invalid_browser_login"
 
 
 def test_service_account_update_refuses_to_remove_last_admin(tmp_path: Path) -> None:
+    """Leave the store unchanged when a service update would remove its last admin."""
     identity_path = tmp_path / "studio-identities.json"
     _write_single_service_admin_identity_file(identity_path)
     before = identity_path.read_text(encoding="utf-8")
@@ -123,6 +128,7 @@ def test_service_account_update_refuses_to_remove_last_admin(tmp_path: Path) -> 
 
 
 def test_browser_user_update_refuses_to_remove_last_admin(tmp_path: Path) -> None:
+    """Leave the store unchanged when a browser update would remove its last admin."""
     identity_path = tmp_path / "studio-identities.json"
     _write_single_browser_admin_identity_file(identity_path)
     before = identity_path.read_text(encoding="utf-8")
@@ -140,6 +146,7 @@ def test_browser_user_update_refuses_to_remove_last_admin(tmp_path: Path) -> Non
 
 
 def test_rotate_browser_user_password_preserves_public_metadata(tmp_path: Path) -> None:
+    """Replace password acceptance while preserving the user's public metadata."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
 

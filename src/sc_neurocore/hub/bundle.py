@@ -31,6 +31,7 @@ from sc_neurocore.model_zoo import (
 )
 from sc_neurocore.model_zoo.model_zoo import PluginRegistry
 from sc_neurocore.model_zoo.pretrained import _REGISTRY as _PRETRAINED_REGISTRY
+from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
 SCHEMA_VERSION = "sc-neurocore.self-hosted-hub.v1"
 
@@ -66,11 +67,31 @@ class HubBundleConfig:
     dependency_mirror_dirs: tuple[str, ...] = ("mirrors/wheelhouse", "mirrors/huggingface")
     benchmarks_dir: str = "benchmarks"
     compose_name: str = "docker-compose.yml"
+    state_dir: str = "state"
+    studio_deployment_profile: str = "production"
+    identity_file: str | None = "studio-identities.json"
 
     def __post_init__(self) -> None:
+        """Validate storage paths and the authenticated container listener contract."""
         if not self.bind_host:
             raise ValueError("bind_host must not be empty")
         _validate_bind_host(self.bind_host)
+        if self.studio_deployment_profile != "production" or not self.identity_file:
+            raise ValueError(
+                "Hub Studio non-loopback container bind requires production settings and an identity store."
+            )
+        _validate_relative_path("state_dir", self.state_dir)
+        _validate_relative_path("identity_file", self.identity_file)
+        if PurePosixPath(self.identity_file).name != self.identity_file:
+            raise ValueError("identity_file must be a file name inside state_dir")
+        StudioRuntimeSettings(
+            deployment_profile="production",
+            enforce_route_policies=True,
+            allow_header_principal=False,
+            identity_file_path=f"/var/lib/sc-neurocore/studio/{self.identity_file}",
+            audit_log_path="/var/lib/sc-neurocore/studio/audit/events.jsonl",
+            job_root_path="/var/lib/sc-neurocore/studio/jobs",
+        ).validate_bind_host(_ALL_INTERFACES_IPV4)
         if not 1 <= self.studio_port <= 65535:
             raise ValueError("studio_port must be in the range 1..65535")
         if not self.image:
@@ -92,7 +113,6 @@ class HubBundleConfig:
 
 def build_model_zoo_index() -> dict[str, Any]:
     """Build a deterministic model-zoo index for hub manifests."""
-
     registry = PluginRegistry.with_builtins()
     plugin_entries = []
     for name in registry.list_plugins():
@@ -138,7 +158,6 @@ def build_model_zoo_index() -> dict[str, Any]:
 
 def build_benchmark_plan(config: HubBundleConfig | None = None) -> dict[str, Any]:
     """Build the benchmark-runner plan included in the hub bundle."""
-
     cfg = config or HubBundleConfig()
     return {
         "schema_version": "sc-neurocore.hub-benchmark-plan.v1",
@@ -162,7 +181,6 @@ def build_benchmark_plan(config: HubBundleConfig | None = None) -> dict[str, Any
 
 def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
     """Build a deterministic manifest for a self-hosted hub bundle."""
-
     cfg = config or HubBundleConfig()
     return {
         "schema_version": SCHEMA_VERSION,
@@ -176,6 +194,7 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
                 "healthcheck": f"http://127.0.0.1:{cfg.studio_port}/api/health",
                 "writable_paths": [
                     "/var/lib/sc-neurocore/cache",
+                    "/var/lib/sc-neurocore/studio",
                     _CONTAINER_TMPFS_PATH,
                 ],
             },
@@ -216,6 +235,7 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
             "models": cfg.models_dir,
             "dependency_mirrors": list(cfg.dependency_mirror_dirs),
             "benchmark_results": f"{cfg.benchmarks_dir}/results",
+            "studio_state": cfg.state_dir,
         },
         "artefacts": {
             "compose": cfg.compose_name,
@@ -257,7 +277,6 @@ def write_hub_bundle(
     output_dir: str | Path, config: HubBundleConfig | None = None
 ) -> dict[str, Path]:
     """Write a local Docker Compose hub bundle and return generated paths."""
-
     cfg = config or HubBundleConfig()
     root = Path(output_dir)
     root.mkdir(parents=True, exist_ok=True)
@@ -265,6 +284,7 @@ def write_hub_bundle(
         cfg.cache_dir,
         cfg.models_dir,
         cfg.benchmarks_dir,
+        cfg.state_dir,
         f"{cfg.benchmarks_dir}/results",
         *cfg.dependency_mirror_dirs,
     ):
@@ -290,6 +310,10 @@ def write_hub_bundle(
 
 def _compose_yaml(config: HubBundleConfig, repo_context: str) -> str:
     offline = _offline_environment(config)
+    hosts = ["127.0.0.1", "localhost"]
+    if config.bind_host not in {_ALL_INTERFACES_IPV4, "::", *hosts}:
+        hosts.append(config.bind_host)
+    origins = ",".join(f"http://{host}:{config.studio_port}" for host in hosts if ":" not in host)
     return f"""# SPDX-License-Identifier: AGPL-3.0-or-later
 name: sc-neurocore-hub
 
@@ -312,12 +336,26 @@ services:
     image: {config.image}
     pull_policy: never
     command: {_studio_container_command(config)}
-    environment: *hub-env
+    environment:
+      <<: *hub-env
+      SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE: production
+      SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES: "true"
+      SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL: "false"
+      SC_NEUROCORE_STUDIO_IDENTITY_FILE: /var/lib/sc-neurocore/studio/{config.identity_file}
+      SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH: /var/lib/sc-neurocore/studio/audit/events.jsonl
+      SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES: "104857600"
+      SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES: "14"
+      SC_NEUROCORE_STUDIO_JOB_ROOT: /var/lib/sc-neurocore/studio/jobs
+      SC_NEUROCORE_STUDIO_BENCHMARK_DATABANK: /var/lib/sc-neurocore/studio/contributions.jsonl
+      SC_NEUROCORE_STUDIO_ALLOWED_HOSTS: "{",".join(hosts)}"
+      SC_NEUROCORE_STUDIO_CORS_ORIGINS: "{origins}"
+      SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS: "{origins}"
     ports:
       - "{config.bind_host}:{config.studio_port}:{config.studio_port}"
     volumes:
       - ./{config.cache_dir}:/var/lib/sc-neurocore/cache:rw
       - ./{config.models_dir}:/var/lib/sc-neurocore/models:ro
+      - ./{config.state_dir}:/var/lib/sc-neurocore/studio:rw
     read_only: true
     tmpfs:
       - /tmp
@@ -391,11 +429,22 @@ locally, and no telemetry egress is required by the generated configuration.
 
 ## Start Studio
 
+Provision the identity store before starting the container. Its state directory
+must be private and owned by the account used inside the container. Follow the
+Studio administrator guide for browser-user provisioning; use a browser
+principal distinct from the service account. Offline CLI changes require an API restart.
+
 ```bash
+chmod 700 {config.state_dir}
+sc-neurocore studio-bootstrap-admin --identity-file {config.state_dir}/{config.identity_file}
 docker compose up studio
 ```
 
 Studio binds to `http://{config.bind_host}:{config.studio_port}`.
+The container listener uses the production identity settings even when the
+published host port is loopback. Missing or inconsistent identity settings
+refuse startup. LAN exposure, TLS and shared multi-process operation require
+their own reviewed operating contract.
 
 ## Run Benchmarks
 

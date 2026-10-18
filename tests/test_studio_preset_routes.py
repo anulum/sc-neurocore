@@ -24,7 +24,7 @@ from sc_neurocore.studio.app import create_app
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     """Return a client for the public Studio preset routes."""
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 @pytest.fixture(scope="module")
@@ -65,6 +65,7 @@ def test_preset_action_resolve_rejects_invalid_overrides(
     client: TestClient,
     overrides: dict[str, Any],
 ) -> None:
+    """Refuse action overrides which violate the preset request contract."""
     response = client.post(
         "/api/presets/fpga_precision/actions/auto_tune_adaptive_precision/resolve",
         json={"overrides": overrides},
@@ -122,6 +123,7 @@ def test_preset_subroutes_reject_missing_preset(
     route: str,
     payload: dict[str, Any] | None,
 ) -> None:
+    """Return the declared missing-preset response across preset subroutes."""
     response = client.get(route) if method == "get" else client.post(route, json=payload)
 
     assert response.status_code == 404
@@ -132,6 +134,7 @@ def test_preset_action_routes_reject_missing_action(
     client: TestClient,
     suffix: str,
 ) -> None:
+    """Refuse an action name absent from the selected preset."""
     response = client.post(
         f"/api/presets/fpga_precision/actions/missing/{suffix}",
         json={"overrides": {}},
@@ -146,6 +149,7 @@ def test_preset_action_routes_reject_missing_template(
     monkeypatch: pytest.MonkeyPatch,
     suffix: str,
 ) -> None:
+    """Refuse an action whose required request template is unavailable."""
     monkeypatch.setattr(
         preset_routes,
         "get_preset_action",
@@ -169,6 +173,7 @@ def test_execute_all_skips_action_without_string_id(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Exclude malformed action identifiers from a batch execution plan."""
     monkeypatch.setattr(
         preset_routes,
         "get_preset_actions",
@@ -195,6 +200,7 @@ def test_execute_all_rejects_missing_action_template(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Refuse batch execution when an action template cannot be resolved."""
     monkeypatch.setattr(
         preset_routes,
         "get_preset_actions",
@@ -221,6 +227,7 @@ def test_default_flow_plan_preserves_missing_method(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Retain an absent method in the default-flow plan instead of inventing one."""
     monkeypatch.setattr(
         preset_flows,
         "get_preset_actions",
@@ -253,6 +260,7 @@ def test_default_flow_rejects_malformed_action_templates(
     route: str,
     method: str,
 ) -> None:
+    """Refuse malformed action templates before a default flow runs."""
     monkeypatch.setattr(
         preset_flows,
         "get_preset_actions",
@@ -282,6 +290,7 @@ def test_guarded_run_rejects_stale_plan(
     client: TestClient,
     valid_plan: dict[str, Any],
 ) -> None:
+    """Refuse guarded execution when its bound plan is stale."""
     fingerprints = {
         row["action_id"]: row["template_fingerprint_sha256"] for row in valid_plan["actions"]
     }
@@ -315,6 +324,7 @@ def test_run_from_contract_rejects_invalid_contract(
     valid_contract: dict[str, Any],
     case: str,
 ) -> None:
+    """Refuse a default-flow request carrying an invalid execution contract."""
     contract = deepcopy(valid_contract)
     guarded = contract["guarded_run_request_template"]
     if case == "schema":
@@ -350,6 +360,7 @@ def test_attestation_routes_reject_invalid_run_result(
     case: str,
     suffix: str,
 ) -> None:
+    """Refuse to attest a payload which is not a valid run result."""
     run_result = deepcopy(valid_run)
     manifest = run_result["reproducibility_manifest"]
     if case == "preset":
@@ -379,6 +390,7 @@ def test_attestation_verify_reports_mismatched_attestation(
     client: TestClient,
     valid_run: dict[str, Any],
 ) -> None:
+    """Report an attestation mismatch without claiming successful verification."""
     response = client.post(
         "/api/presets/fpga_precision/default-flow/attest/verify",
         json={"run_result": valid_run, "attestation": {}},

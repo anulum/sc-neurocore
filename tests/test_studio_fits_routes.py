@@ -65,10 +65,12 @@ def _body(**overrides: Any) -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for parameter fitting and replay."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_a_fit_recovers_the_parameters_and_replays(client: TestClient) -> None:
+    """Recover identifiable parameters and replay the accepted fitting result."""
     response = client.post("/api/fits", json=_body())
     assert response.status_code == 200
     result = response.json()
@@ -84,6 +86,7 @@ def test_a_fit_recovers_the_parameters_and_replays(client: TestClient) -> None:
 
 
 def test_a_fit_too_large_for_a_request_is_refused_with_its_estimate(client: TestClient) -> None:
+    """Return the workload estimate when a fitting request exceeds its budget."""
     body = _body(generations=500, population=100)
     response = client.post("/api/fits", json=body)
     assert response.status_code == 422
@@ -107,6 +110,7 @@ def test_a_fit_too_large_for_a_request_is_refused_with_its_estimate(client: Test
 def test_an_invalid_fit_is_refused_with_the_reason(
     client: TestClient, overrides: dict[str, Any], message: str
 ) -> None:
+    """Retain the authored reason when the fitting request is invalid."""
     response = client.post("/api/fits", json=_body(**overrides))
     assert response.status_code == 422
     detail = response.json()["detail"]
@@ -115,11 +119,13 @@ def test_an_invalid_fit_is_refused_with_the_reason(
 
 
 def test_a_catalogue_model_is_fitted_through_its_canonical_schema() -> None:
+    """Resolve a catalogue fitting request through its canonical model schema."""
     request = FitRequest.model_validate(_body(schema=None, catalogue_model="AdExNeuron"))
     assert _schema(request) == load_schema("adex")
 
 
 def test_a_result_that_is_not_a_fit_cannot_be_replayed(client: TestClient) -> None:
+    """Refuse replay input which does not carry a valid fitting result."""
     response = client.post("/api/fits/replay", json={"result": {"problem": {}}})
     assert response.status_code == 422
     assert response.json()["detail"]["message"].startswith("the result cannot be replayed")
@@ -162,9 +168,8 @@ def test_a_malformed_replay_names_no_key_or_python_type(client: TestClient, resu
 
 def test_refusal_message_keeps_authored_reasons_and_hides_structural_faults() -> None:
     """Only explicitly marked laboratory messages are caller-facing."""
-    from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT, refusal_message
-
     from sc_neurocore.fitting.refusals import LaboratoryRefusal
+    from sc_neurocore.studio.api.fits import MALFORMED_DOCUMENT, refusal_message
 
     assert (
         refusal_message(LaboratoryRefusal("gain is not a parameter")) == "gain is not a parameter"

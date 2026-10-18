@@ -61,7 +61,12 @@ def experiment(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Experiment]
             job_default_timeout_seconds=120.0,
         )
     )
-    with TestClient(app, base_url="http://127.0.0.1", raise_server_exceptions=False) as client:
+    with TestClient(
+        app,
+        base_url="http://127.0.0.1",
+        raise_server_exceptions=False,
+        headers={"sec-fetch-site": "none"},
+    ) as client:
         manager = cast(FastAPI, client.app).state.studio_job_manager
         assert isinstance(manager, StudioJobManager)
         started = client.post("/api/training/start", json=_CONFIG)

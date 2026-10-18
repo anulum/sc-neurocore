@@ -29,7 +29,7 @@ import sqlite3
 import threading
 from pathlib import Path
 
-_HELD: dict[str, sqlite3.Connection] = {}
+_HELD: dict[tuple[str, int, int], tuple[sqlite3.Connection, ...]] = {}
 _GUARD = threading.Lock()
 
 
@@ -43,7 +43,8 @@ class StudioApiLockUnavailable(RuntimeError):
 
 def api_lock_path(identity_path: Path) -> Path:
     """Return the file whose exclusive transaction marks the serving process."""
-    return identity_path.with_name(f"{identity_path.name}.api-lock")
+    canonical = identity_path.expanduser().resolve(strict=True)
+    return canonical.with_name(f"{canonical.name}.api-lock")
 
 
 def hold_identity_store(identity_path: Path) -> Path:
@@ -62,24 +63,28 @@ def hold_identity_store(identity_path: Path) -> Path:
         When the lock file cannot be created or opened, for example because
         the identity store's directory is not writable by this account.
     """
-    lock_path = api_lock_path(identity_path)
-    key = str(lock_path.resolve())
+    canonical = identity_path.expanduser().resolve(strict=True)
+    info = canonical.stat()
+    lock_path = api_lock_path(canonical)
+    inode_lock = canonical.parent / f".studio-api-{info.st_dev:x}-{info.st_ino:x}.lock"
+    key = (str(canonical), info.st_dev, info.st_ino)
     with _GUARD:
-        if key in _HELD:
+        # Keep the path lock across atomic file replacements as well as the
+        # original inode hold. Parent/symlink aliases converge before locking.
+        if any(held[0] == key[0] for held in _HELD):
             return lock_path
+        opened: list[sqlite3.Connection] = []
         try:
-            connection = sqlite3.connect(
-                lock_path, timeout=0, isolation_level=None, check_same_thread=False
-            )
+            for path in (lock_path, inode_lock):
+                connection = sqlite3.connect(
+                    path, timeout=0, isolation_level=None, check_same_thread=False
+                )
+                opened.append(connection)
+                connection.execute("PRAGMA journal_mode=MEMORY")
+                connection.execute("BEGIN EXCLUSIVE")
         except sqlite3.DatabaseError as exc:
-            raise _lock_unavailable(lock_path, exc) from exc
-        try:
-            # The lock holds no data, so its journal stays in memory: the only
-            # file beside the identity store is the lock itself.
-            connection.execute("PRAGMA journal_mode=MEMORY")
-            connection.execute("BEGIN EXCLUSIVE")
-        except sqlite3.DatabaseError as exc:
-            connection.close()
+            for connection in opened:
+                connection.close()
             if "locked" not in str(exc):
                 raise _lock_unavailable(lock_path, exc) from exc
             raise StudioApiProcessConflict(
@@ -87,7 +92,7 @@ def hold_identity_store(identity_path: Path) -> Path:
                 "login throttles are kept in that process, so one identity store is served by "
                 "one API process (run a single server worker)"
             ) from exc
-        _HELD[key] = connection
+        _HELD[key] = tuple(opened)
     return lock_path
 
 

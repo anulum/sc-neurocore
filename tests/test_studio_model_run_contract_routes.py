@@ -16,15 +16,17 @@ from pathlib import Path
 import pytest
 from starlette.testclient import TestClient
 
+from sc_neurocore.neurons.models.adaptive_threshold_if import AdaptiveThresholdIFNeuron
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.network_graph import create_population
-from sc_neurocore.neurons.models.adaptive_threshold_if import AdaptiveThresholdIFNeuron
 
 
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     """Serve the production routers under the supported loopback profile."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as http:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as http:
         yield http
 
 

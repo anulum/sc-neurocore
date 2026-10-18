@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio FastAPI backend
 
+"""Provide real Studio HTTP fixtures for application and template contracts."""
+
 from __future__ import annotations
 
 import logging
@@ -19,14 +21,14 @@ httpx = pytest.importorskip("httpx")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.templates import TEMPLATES
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    """Provide the real Studio API for application and template contracts."""
     app = create_app()
-    return TestClient(app, base_url="http://127.0.0.1")
+    return TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 __all__ = [

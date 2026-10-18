@@ -35,7 +35,9 @@ SIMULATE = "/api/models/simulate"
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     """Serve the production HTTP routers throughout the module's request contracts."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 

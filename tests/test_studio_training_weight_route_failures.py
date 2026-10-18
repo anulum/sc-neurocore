@@ -45,7 +45,7 @@ def _build_client(tmp_path: Path) -> TestClient:
             job_default_timeout_seconds=1.0,
         )
     )
-    return TestClient(application, base_url="http://127.0.0.1")
+    return TestClient(application, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _patch_restore_prerequisites(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -28,7 +28,6 @@ from sc_neurocore.studio.compile_traceability import (
 )
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 
-
 LIF_COMPILE_REQUEST: dict[str, JsonValue] = {
     "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
     "threshold": "v > -50",
@@ -42,13 +41,11 @@ LIF_COMPILE_REQUEST: dict[str, JsonValue] = {
 @pytest.fixture
 def client() -> TestClient:
     """Return a Studio test client."""
-
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_build_compile_traceability_records_source_and_output_hashes() -> None:
     """Compile traceability records source payload and RTL digests without paths."""
-
     verilog = "module sc_traceable_neuron; endmodule\n"
     traceability = build_compile_traceability(
         equations=["dv/dt = -v / tau"],
@@ -76,7 +73,6 @@ def test_build_compile_traceability_records_source_and_output_hashes() -> None:
 
 def test_build_compile_traceability_rejects_missing_equations() -> None:
     """Compile traceability fails closed when the source equations are absent."""
-
     with pytest.raises(ValueError, match="At least one equation"):
         build_compile_traceability(
             equations=[],
@@ -91,7 +87,6 @@ def test_build_compile_traceability_rejects_missing_equations() -> None:
 
 def test_build_model_compile_traceability_records_selected_configuration() -> None:
     """Model traceability hashes the canonical model, schema, solver, and precision."""
-
     traceability = build_model_compile_traceability(
         model_name="SCLapicqueLIFNeuron",
         schema_name="sc_lapicque_lif",
@@ -118,6 +113,7 @@ def test_build_model_compile_traceability_records_selected_configuration() -> No
 
 
 def test_build_model_compile_traceability_requires_schema_identity() -> None:
+    """Require canonical model schema identity before constructing compile traceability."""
     with pytest.raises(ValueError, match="schema digest"):
         build_model_compile_traceability(
             model_name="SCLapicqueLIFNeuron",
@@ -134,7 +130,6 @@ def test_build_model_compile_traceability_requires_schema_identity() -> None:
 
 def test_compile_traceability_rejects_unknown_evidence_classification() -> None:
     """Compile traceability uses the shared Studio evidence-class contract."""
-
     traceability = StudioCompileTraceability(
         equations=("dv/dt = -v / tau",),
         threshold="v > 1",
@@ -152,7 +147,6 @@ def test_compile_traceability_rejects_unknown_evidence_classification() -> None:
 
 def test_compile_traceability_rejects_unknown_status() -> None:
     """Compile traceability uses the shared terminal-status contract."""
-
     traceability = StudioCompileTraceability(
         equations=("dv/dt = -v / tau",),
         threshold="v > 1",
@@ -170,7 +164,6 @@ def test_compile_traceability_rejects_unknown_status() -> None:
 
 def test_compile_route_returns_traceability_manifest(client: TestClient) -> None:
     """The public compile route returns source-to-RTL traceability."""
-
     response = client.post("/api/compile", json=LIF_COMPILE_REQUEST)
 
     assert response.status_code == 200
@@ -191,7 +184,6 @@ def test_compile_route_returns_traceability_manifest(client: TestClient) -> None
 
 def test_direct_sv_route_returns_traceability_manifest(client: TestClient) -> None:
     """The Compiler Inspector direct-SV route returns the same manifest contract."""
-
     response = client.post("/api/ir/emit-sv-direct", json=LIF_COMPILE_REQUEST)
 
     assert response.status_code == 200
@@ -206,6 +198,7 @@ def test_direct_sv_route_returns_traceability_manifest(client: TestClient) -> No
 
 @pytest.mark.parametrize("route", ["/api/compile", "/api/ir/emit-sv-direct"])
 def test_compile_routes_preserve_coupled_equations_and_init(client: TestClient, route: str) -> None:
+    """Preserve coupled equations and initial state in the generated RTL."""
     from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
     request = {
@@ -230,13 +223,13 @@ def test_compile_routes_preserve_coupled_equations_and_init(client: TestClient, 
 def test_compile_routes_reject_unimplemented_options(
     client: TestClient, route: str, field: str
 ) -> None:
+    """Refuse compiler options which the selected backend cannot implement."""
     response = client.post(route, json={**LIF_COMPILE_REQUEST, field: 1.0})
     assert response.status_code == 422
 
 
 def test_compile_route_rejects_empty_equation_list(client: TestClient) -> None:
     """The compile request model rejects empty source equation lists."""
-
     response = client.post("/api/compile", json={**LIF_COMPILE_REQUEST, "equations": []})
 
     assert response.status_code == 422
@@ -244,7 +237,6 @@ def test_compile_route_rejects_empty_equation_list(client: TestClient) -> None:
 
 def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) -> None:
     """The public model route compiles the selected schema and returns its configuration."""
-
     response = client.post(
         "/api/models/compile",
         json={
@@ -284,10 +276,10 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
 
 def test_model_compile_route_is_authenticated_when_policy_is_enforced() -> None:
     """The new compute route participates in the production fail-closed policy registry."""
-
     protected_client = TestClient(
         create_app(StudioRuntimeSettings(enforce_route_policies=True)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
     response = protected_client.post(
         "/api/models/compile",
@@ -305,6 +297,7 @@ def test_model_compile_route_is_authenticated_when_policy_is_enforced() -> None:
 def test_model_cosim_route_returns_real_bit_exact_selected_configuration(
     client: TestClient,
 ) -> None:
+    """Report real co-simulation parity for the exact selected model configuration."""
     response = client.post(
         "/api/models/cosim",
         json={
@@ -326,9 +319,11 @@ def test_model_cosim_route_returns_real_bit_exact_selected_configuration(
 
 
 def test_model_cosim_route_is_authenticated_when_policy_is_enforced() -> None:
+    """Require a principal before running the protected co-simulation route."""
     protected_client = TestClient(
         create_app(StudioRuntimeSettings(enforce_route_policies=True)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
     response = protected_client.post(
         "/api/models/cosim",
@@ -350,6 +345,7 @@ def test_model_cosim_route_is_authenticated_when_policy_is_enforced() -> None:
 def test_model_compile_route_fails_closed_for_invalid_configuration(
     client: TestClient, payload: dict[str, JsonValue]
 ) -> None:
+    """Translate a refused model compilation into the declared job-failure response."""
     response = client.post("/api/models/compile", json=payload)
 
     assert response.status_code == 500
@@ -358,7 +354,6 @@ def test_model_compile_route_fails_closed_for_invalid_configuration(
 
 def _sha256_json(payload: dict[str, JsonValue]) -> str:
     """Return a stable SHA-256 digest over canonical JSON."""
-
     encoded = json.dumps(
         payload,
         allow_nan=False,

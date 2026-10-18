@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio endpoint coverage (network, analysis, codegen)
 
+"""Provide real Studio HTTP fixtures with explicit analysis resource budgets."""
+
 from __future__ import annotations
 
 import pytest
@@ -17,7 +19,6 @@ httpx = pytest.importorskip("httpx")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.platform import (
     DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS,
     DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION,
@@ -29,9 +30,10 @@ MODEL = "AdExNeuron"
 
 
 @pytest.fixture(scope="module")
-def client():
+def client() -> TestClient:
+    """Provide the real Studio API for network and analysis endpoint contracts."""
     app = create_app()
-    return TestClient(app, base_url="http://127.0.0.1")
+    return TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _budget_client(
@@ -48,7 +50,9 @@ def _budget_client(
         max_sync_analysis_total_steps=max_sync_analysis_total_steps,
         max_sync_analysis_simulations=max_sync_analysis_simulations,
     )
-    return TestClient(create_app(settings), base_url="http://127.0.0.1")
+    return TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
 
 __all__ = [

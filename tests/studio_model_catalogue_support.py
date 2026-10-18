@@ -39,7 +39,8 @@ __all__ = [
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for catalogue queries and model metadata."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _adex_summary() -> dict[str, object]:

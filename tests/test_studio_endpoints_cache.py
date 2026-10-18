@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
-
 from sc_neurocore.studio.evidence_receipt import (
     EVIDENCE_RECEIPT_KEY,
     read_evidence_receipt,
     subject_of,
 )
 from sc_neurocore.studio.evidence_seal import seal_sha256
+from tests.studio_endpoints_support import *  # noqa: F403
 
 
 class TestCacheStats:
-    def test_cache_stats(self, client):
+    """Verify public cache counters and simulation result reuse."""
+
+    def test_cache_stats(self, client: TestClient) -> None:
+        """Expose hit, miss and size counters through the running Studio API."""
         r = client.get("/api/cache/stats")
         assert r.status_code == 200
         data = r.json()
@@ -29,13 +31,17 @@ class TestCacheStats:
         assert "misses" in data
         assert "size" in data
 
-    def test_simulation_cache_reuses_and_evicts_results(self, monkeypatch):
+    def test_simulation_cache_reuses_and_evicts_results(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """The bounded simulation cache reuses hits and evicts its oldest entry."""
         import sc_neurocore.studio.api.simulation as simulation_routes
 
         cache = simulation_routes._SimCache(maxsize=1)
         monkeypatch.setattr(simulation_routes, "_cache", cache)
-        local_client = TestClient(create_app(), base_url="http://127.0.0.1")
+        local_client = TestClient(
+            create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        )
         payload = {
             "current": 1.0,
             "dt": 0.1,

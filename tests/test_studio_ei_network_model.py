@@ -62,6 +62,7 @@ BACKENDS = pytest.mark.parametrize("simulate", (_numpy, _rust), ids=("numpy", "r
 
 
 def test_external_drive_constants_give_a_threshold_inside_the_slider_range() -> None:
+    """Keep the declared external-drive threshold within the offered control range."""
     threshold_gap_mv = 15.0  # -50 mV threshold, -65 mV rest
     tau_m_s = 0.020
     threshold_rate = threshold_gap_mv / (
@@ -77,6 +78,7 @@ def test_default_network_fires_at_the_rate_the_drive_predicts(simulate: Simulato
     # a lone neuron fires every 20 ms x ln(19.2 / 4.2) + 2 ms, about 31 Hz, and
     # the default weights (g = 4, four excitatory inputs per inhibitory one)
     # cancel on average.
+    """Check default excitatory and inhibitory firing against the expected rate range."""
     result = simulate()
     assert 20.0 < result["mean_exc_rate"] < 45.0
     assert 20.0 < result["mean_inh_rate"] < 45.0
@@ -84,11 +86,13 @@ def test_default_network_fires_at_the_rate_the_drive_predicts(simulate: Simulato
 
 @BACKENDS
 def test_drive_well_below_threshold_is_silent(simulate: Simulator) -> None:
+    """Retain silence when the external drive remains well below threshold."""
     assert simulate(ext_rate=2.0)["n_spikes"] == 0
 
 
 @BACKENDS
 def test_rate_grows_with_the_external_drive(simulate: Simulator) -> None:
+    """Preserve the increase in firing rate as the external drive grows."""
     rates = [simulate(ext_rate=rate)["mean_exc_rate"] for rate in (5.0, 10.0, 15.0, 25.0)]
     assert rates == sorted(rates)
     assert rates[-1] > rates[1] > 0.0
@@ -96,6 +100,7 @@ def test_rate_grows_with_the_external_drive(simulate: Simulator) -> None:
 
 @BACKENDS
 def test_rate_does_not_depend_on_the_step_size(simulate: Simulator) -> None:
+    """Keep the measured rate stable across the compared numerical step sizes."""
     coarse = simulate(duration=1000.0, dt=0.1)["mean_exc_rate"]
     fine = simulate(duration=1000.0, dt=0.05)["mean_exc_rate"]
     assert fine == pytest.approx(coarse, rel=0.1)
@@ -103,6 +108,7 @@ def test_rate_does_not_depend_on_the_step_size(simulate: Simulator) -> None:
 
 @BACKENDS
 def test_mean_rate_counts_silent_time(simulate: Simulator) -> None:
+    """Count the complete observation interval when reporting mean firing rate."""
     result = simulate()
     excitatory_spikes = sum(1 for neuron in result["spike_neurons"] if int(neuron) < 80)
     assert result["mean_exc_rate"] == pytest.approx(excitatory_spikes / 80 / 0.5, abs=0.051)
@@ -111,6 +117,7 @@ def test_mean_rate_counts_silent_time(simulate: Simulator) -> None:
 @BACKENDS
 def test_stronger_inhibition_lowers_the_excitatory_rate(simulate: Simulator) -> None:
     # w_ei is inhibitory-to-excitatory in the model's post-pre convention.
+    """Retain the lower excitatory rate under stronger inhibition."""
     weak = simulate(w_ei=0.1)["mean_exc_rate"]
     strong = simulate(w_ei=1.0)["mean_exc_rate"]
     assert strong < weak
@@ -119,10 +126,14 @@ def test_stronger_inhibition_lowers_the_excitatory_rate(simulate: Simulator) -> 
 @BACKENDS
 def test_a_very_large_external_mean_terminates(simulate: Simulator) -> None:
     # 800 inputs x 50 Hz x 5 ms = 200 expected events per step.
+    """Complete a finite network run under the declared large external drive."""
     assert simulate(ext_rate=50.0, duration=50.0, dt=5.0)["n_spikes"] > 0
 
 
 def test_the_route_refuses_a_negative_external_rate() -> None:
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    """Refuse a negative external-drive rate at the HTTP input boundary."""
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     response = client.post("/api/network/ei", json={"ext_rate": -1.0})
     assert response.status_code == 422

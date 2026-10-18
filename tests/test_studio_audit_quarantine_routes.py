@@ -18,18 +18,18 @@ import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform import (
-    AuditEvent,
-    JsonlAuditSink,
-    StudioRuntimeSettings,
-    StudioJobManager,
-    STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
-    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION,
+    AuditEvent,
+    JsonlAuditSink,
+    StudioJobManager,
+    StudioRuntimeSettings,
 )
+from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from tests.studio_audit_quarantine_support import (
     _job_manager,
     _json_artifact,
@@ -62,7 +62,7 @@ def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/studio/audit/quarantine/archive",
@@ -120,7 +120,7 @@ def test_studio_audit_quarantine_archive_retention_route_lists_archive_jobs(
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
     headers = {"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"}
     for _index in range(2):
         response = client.post(
@@ -171,7 +171,7 @@ def test_studio_audit_quarantine_archive_purge_route_removes_prune_candidates(
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
     headers = {"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"}
     archive_job_ids: list[str] = []
     for _index in range(2):
@@ -209,7 +209,7 @@ def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     """Admin validation route accepts archive and manifest payloads."""
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/studio/audit/quarantine/archive/validate",
@@ -236,7 +236,7 @@ def test_studio_audit_quarantine_archive_restore_route_writes_job_artifacts(
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/studio/audit/quarantine/archive/restore",
@@ -275,7 +275,7 @@ def test_studio_audit_quarantine_archive_restore_route_rejects_invalid_archive(
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     manifest_payload["archive_id"] = "saqa_other"
     app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/studio/audit/quarantine/archive/restore",
@@ -302,7 +302,7 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     archive_response = client.post(
         "/api/studio/audit/quarantine/archive",

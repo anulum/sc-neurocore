@@ -44,8 +44,8 @@ _FAST_RUN = {"dataset": "synthetic", "epochs": 1, "batch_size": 32, "timesteps":
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    """A Studio client for the training routes."""
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the real Studio API for training configuration and jobs."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _run(client: TestClient, config: dict[str, Any]) -> dict[str, Any]:
@@ -66,7 +66,10 @@ def _run(client: TestClient, config: dict[str, Any]) -> dict[str, Any]:
 
 
 class TestResolution:
+    """Training configuration resolution, defaults and field-specific refusals."""
+
     def test_each_requested_width_is_kept_in_order(self) -> None:
+        """Preserve all requested hidden widths and their architecture order."""
         resolved = resolve_training_config({"hidden": [128, 64, 32]})
 
         assert resolved.hidden_widths == (128, 64, 32)
@@ -86,6 +89,7 @@ class TestResolution:
         assert resolve_training_config(resolved.to_public_dict()) == resolved
 
     def test_the_defaults_are_a_complete_runnable_configuration(self) -> None:
+        """Resolve an empty request into a supported runnable configuration."""
         resolved = resolve_training_config({})
 
         assert isinstance(resolved, ResolvedTrainingConfig)
@@ -121,6 +125,7 @@ class TestResolution:
     def test_an_unrunnable_request_is_refused_by_field(
         self, payload: dict[str, Any], field: str
     ) -> None:
+        """Identify the invalid field when a training configuration cannot run."""
         with pytest.raises(TrainingConfigError) as raised:
             resolve_training_config(payload)
 
@@ -148,9 +153,12 @@ class TestResolution:
 
 
 class TestHttpSurface:
+    """Configuration admission through the actual training HTTP routes."""
+
     def test_an_unsupported_dataset_is_refused_before_a_job_exists(
         self, client: TestClient
     ) -> None:
+        """Refuse an unsupported dataset before registering a training job."""
         response = client.post("/api/training/start", json={**_FAST_RUN, "dataset": "cifar10"})
 
         assert response.status_code == 422
@@ -161,6 +169,7 @@ class TestHttpSurface:
         assert "job_id" not in response.json()
 
     def test_an_unknown_surrogate_is_refused(self, client: TestClient) -> None:
+        """Report an unknown surrogate as a configuration error."""
         response = client.post(
             "/api/training/start", json={**_FAST_RUN, "surrogate": "not_a_real_surrogate"}
         )

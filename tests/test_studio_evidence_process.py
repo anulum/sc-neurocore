@@ -15,13 +15,13 @@ from typing import cast
 import pytest
 from starlette.testclient import TestClient
 
-from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.api.evidence_jobs import (
     EvidenceInputLimitExceeded,
     prepare_evidence_process_payload,
 )
-from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobRecord
+from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioJobContext, StudioJobManager, StudioRuntimeSettings
+from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobRecord
 from sc_neurocore.studio.platform.settings import build_default_studio_runtime_settings
 
 
@@ -37,7 +37,7 @@ def test_bundle_process_copies_complete_source_or_refuses_before_admission(
             job_default_timeout_seconds=15.0,
         )
     )
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         manager = cast(StudioJobManager, app.state.studio_job_manager)
 
         def source(context: StudioJobContext) -> dict[str, object]:
@@ -110,7 +110,7 @@ def test_evidence_worker_rejects_incomplete_envelope(
 ) -> None:
     """Direct malformed worker inputs fail without manufacturing bundle evidence."""
     app = create_app(StudioRuntimeSettings(job_root_path=str(tmp_path / "jobs")))
-    with TestClient(app, base_url="http://127.0.0.1"):
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}):
         manager = cast(StudioJobManager, app.state.studio_job_manager)
         submitted = manager.submit_process_task(
             kind="evidence",
@@ -130,7 +130,7 @@ def test_evidence_worker_rejects_incomplete_envelope(
 def test_bundle_refuses_tampered_source_and_retains_failed_job(tmp_path: Path) -> None:
     """Corrupt source bytes fail verified ingress with stable HTTP failure mapping."""
     app = create_app(StudioRuntimeSettings(job_root_path=str(tmp_path / "jobs")))
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         manager = cast(StudioJobManager, app.state.studio_job_manager)
 
         def source(context: StudioJobContext) -> dict[str, object]:

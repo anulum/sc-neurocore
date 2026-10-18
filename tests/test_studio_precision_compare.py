@@ -15,8 +15,8 @@ everywhere.
 
 from __future__ import annotations
 
-import shutil
 import importlib
+import shutil
 from typing import Any
 
 import numpy as np
@@ -133,6 +133,7 @@ def test_precision_refuses_invalid_or_shortened_experiment(
 
 @requires_gcc
 def test_precision_runs_exact_step_limit_without_shortening() -> None:
+    """Preserve the requested step count at the accepted execution limit."""
     result = precision_compare(**{**LIF, "duration": 0.2, "max_steps": 2})
     for key in ("float_result", "fixed_result", "parameter_quantisation_result"):
         assert result[key]["n_steps"] == 2
@@ -141,7 +142,8 @@ def test_precision_runs_exact_step_limit_without_shortening() -> None:
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for fixed-point precision comparisons."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_kernel_arithmetic_contract_states_the_operation_semantics() -> None:
@@ -176,6 +178,7 @@ def test_kernel_arithmetic_contract_states_the_operation_semantics() -> None:
 
 
 def test_resolve_word_format_rejects_unsupported_widths() -> None:
+    """Resolve supported word formats and refuse unsupported widths."""
     assert resolve_word_format("Q8.8") == (16, 8)
     assert resolve_word_format("Q16.16") == (32, 16)
     assert resolve_word_format("Q4.12") == (16, 12)
@@ -217,6 +220,7 @@ def test_precision_compare_rejects_values_the_word_cannot_hold(
 def test_precision_compare_reports_tool_absence_instead_of_estimating(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Return the declared missing-tool refusal without inventing native results."""
     monkeypatch.setattr(bit_true_execution, "resolve_native_tool", lambda name: None)
     with pytest.raises(NativeToolUnavailable) as info:
         precision_compare(**LIF)
@@ -230,6 +234,7 @@ def test_precision_compare_reports_tool_absence_instead_of_estimating(
 
 
 def test_run_bittrue_kernel_rejects_words_outside_the_format() -> None:
+    """Refuse fixed-point input words outside the generated harness format."""
     neuron = from_equations(*LIF["equations"], params=LIF["params"], init=LIF["init"], dt=0.1)
     with pytest.raises(ValueError, match="outside the 16-bit range"):
         run_bittrue_kernel(
@@ -255,6 +260,7 @@ def test_run_bittrue_kernel_rejects_words_outside_the_format() -> None:
 
 
 def test_native_command_failures_are_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bound native-tool discovery and translate unavailable version output."""
     import subprocess
 
     monkeypatch.setattr(
@@ -342,6 +348,7 @@ def test_bit_true_saturation_is_distinguishable_from_parameter_rounding() -> Non
 
 @requires_gcc
 def test_nearest_rounding_and_wider_word_reduce_the_error() -> None:
+    """Compare observed errors for nearest rounding and the wider word format."""
     truncate = precision_compare(**LIF)
     wide = precision_compare(**{**LIF, "q_format": "Q16.16"})
     assert (
@@ -356,6 +363,7 @@ def test_nearest_rounding_and_wider_word_reduce_the_error() -> None:
 
 @requires_gcc
 def test_sine_protocol_feeds_the_same_drive_to_every_run() -> None:
+    """Feed the same declared sine drive into every precision comparison."""
     result = precision_compare(**{**LIF, "protocol": "sine", "frequency_hz": 40.0})
     drive = result["encoding"]["drive"]
     assert drive["protocol"] == "sine" and drive["frequency_hz"] == 40.0
@@ -371,6 +379,7 @@ def test_sine_protocol_feeds_the_same_drive_to_every_run() -> None:
 
 @requires_gcc
 def test_precision_route_returns_contract_metadata_and_refuses_clamps(client: TestClient) -> None:
+    """Expose precision metadata while refusing requests which would be clamped."""
     response = client.post("/api/precision", json=LIF)
     assert response.status_code == 200
     payload = response.json()
@@ -396,6 +405,7 @@ def test_precision_route_returns_contract_metadata_and_refuses_clamps(client: Te
 def test_precision_route_reports_missing_compiler_as_503(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Expose a missing native compiler as the declared unavailable-tool response."""
     monkeypatch.setattr(bit_true_execution, "resolve_native_tool", lambda name: None)
     response = client.post("/api/precision", json=LIF)
     assert response.status_code == 503

@@ -29,7 +29,9 @@ from sc_neurocore.studio.network_nir import STUDIO_METADATA_KEY
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     """Serve the production router with the supported loopback security profile."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as http:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as http:
         yield http
 
 

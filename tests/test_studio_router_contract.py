@@ -37,6 +37,7 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.export",
         "sc_neurocore.studio.api.fit_jobs",
         "sc_neurocore.studio.api.fits",
+        "sc_neurocore.studio.api.frontend",
         "sc_neurocore.studio.api.identity",
         "sc_neurocore.studio.api.jobs",
         "sc_neurocore.studio.api.presets",
@@ -67,6 +68,7 @@ def _leaf_routes(routes: Iterable[Any]) -> Iterator[Any]:
 
 
 def test_application_routes_are_owned_by_responsibility_modules() -> None:
+    """Bind every declared route to its expected responsibility module."""
     application = create_app()
     routes = [route for route in _leaf_routes(application.routes) if isinstance(route, APIRoute)]
     backend_routes = [route for route in routes if route.path != "/"]
@@ -82,7 +84,14 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     # The count is pinned so a route cannot
     # appear without a deliberate change here; raising it is how a new route is
     # admitted, never by relaxing the assertion.
-    assert len(backend_routes) == 148
+    # Swagger and ReDoc now have explicit frontend-owned handlers so their
+    # generated scripts can be bound to the response CSP by content hash.
+    assert len(backend_routes) == 150
+    assert {
+        route.path
+        for route in backend_routes
+        if route.endpoint.__module__ == "sc_neurocore.studio.api.frontend"
+    } == {"/docs", "/redoc"}
     assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
     assert len(root_routes) <= 1
     assert all(
@@ -100,12 +109,14 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
 
 
 def test_runtime_openapi_matches_committed_reference() -> None:
+    """Match the runtime API schema to its maintained generated reference."""
     committed = json.loads(OPENAPI_REFERENCE.read_text(encoding="utf-8"))
 
     assert create_app().openapi() == committed
 
 
 def test_frontend_mount_supports_source_tree_fallback(tmp_path: Path) -> None:
+    """Serve the source-tree frontend when no packaged frontend is available."""
     app_module_file = tmp_path / "one" / "two" / "three" / "four" / "app.py"
     app_module_file.parent.mkdir(parents=True)
     fallback_dist = tmp_path / "studio" / "frontend" / "dist"
@@ -116,7 +127,9 @@ def test_frontend_mount_supports_source_tree_fallback(tmp_path: Path) -> None:
     application = FastAPI()
 
     mount_studio_frontend(application, app_module_file=str(app_module_file))
-    client = TestClient(application, base_url="http://127.0.0.1")
+    client = TestClient(
+        application, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     root = client.get("/", follow_redirects=False)
     page = client.get("/studios/sc-neurocore/")
     asset = client.get("/studios/sc-neurocore/assets/app.js")
@@ -130,17 +143,21 @@ def test_frontend_mount_supports_source_tree_fallback(tmp_path: Path) -> None:
 
 
 def test_frontend_mount_leaves_root_unclaimed_without_distribution(tmp_path: Path) -> None:
+    """Leave the root unclaimed when no built frontend exists."""
     app_module_file = tmp_path / "one" / "two" / "three" / "four" / "app.py"
     app_module_file.parent.mkdir(parents=True)
     application = FastAPI()
 
     mount_studio_frontend(application, app_module_file=str(app_module_file))
-    response = TestClient(application, base_url="http://127.0.0.1").get("/")
+    response = TestClient(
+        application, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ).get("/")
 
     assert response.status_code == 404
 
 
 def test_a_launched_studio_opens_its_ui_or_says_there_is_none(tmp_path: Path) -> None:
+    """Choose the built UI entry or explicitly announce the API-docs fallback."""
     origin = "http://127.0.0.1:8001"
     assert studio_entry(origin, tmp_path) == (
         "http://127.0.0.1:8001/studios/sc-neurocore/",

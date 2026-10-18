@@ -31,7 +31,6 @@ _ORIGIN = "http://127.0.0.1:8001"
 
 def _client(tmp_path: Path, *, enforce_route_policies: bool = False) -> TestClient:
     """Return an isolated client that admits the canonical local origin."""
-
     application = create_app(
         StudioRuntimeSettings(
             allowed_hosts=("testserver",),
@@ -41,7 +40,7 @@ def _client(tmp_path: Path, *, enforce_route_policies: bool = False) -> TestClie
             websocket_allowed_origins=(_ORIGIN,),
         )
     )
-    return TestClient(application)
+    return TestClient(application, headers={"sec-fetch-site": "none"})
 
 
 def test_svg_export_returns_rendered_vector_response(

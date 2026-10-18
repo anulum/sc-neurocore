@@ -16,6 +16,7 @@ from tests.studio_identity_support import *  # noqa: F403
 def test_browser_user_authentication_rejects_empty_expired_and_unknown_users(
     tmp_path: Path,
 ) -> None:
+    """Return the generic login refusal for empty, expired and unknown users."""
     identity_path = tmp_path / "studio-identities.json"
     _write_payload(
         identity_path,
@@ -43,7 +44,7 @@ def test_browser_user_authentication_rejects_empty_expired_and_unknown_users(
     unknown = authenticator.authenticate_browser_user("missing", "operator-password")
 
     assert empty.failure_reason == "invalid_browser_login"
-    assert expired.failure_reason == "expired_browser_user"
+    assert expired.failure_reason == "invalid_browser_login"
     assert unknown.failure_reason == "invalid_browser_login"
 
 
@@ -104,6 +105,7 @@ def test_studio_identity_store_rejects_malformed_browser_users(
     browser_user: object,
     match: str,
 ) -> None:
+    """Refuse browser-user records which violate the persistent identity schema."""
     identity_path = tmp_path / "studio-identities.json"
     _write_payload(
         identity_path,
@@ -119,6 +121,7 @@ def test_studio_identity_store_rejects_malformed_browser_users(
 
 
 def test_studio_identity_store_rejects_non_list_browser_users(tmp_path: Path) -> None:
+    """Require the browser-user collection to be a JSON list."""
     identity_path = tmp_path / "studio-identities.json"
     _write_payload(
         identity_path,
@@ -134,6 +137,7 @@ def test_studio_identity_store_rejects_non_list_browser_users(tmp_path: Path) ->
 
 
 def test_browser_user_mutations_preserve_non_target_users(tmp_path: Path) -> None:
+    """Preserve another user's authentication when updating the selected account."""
     identity_path = tmp_path / "studio-identities.json"
     _write_payload(
         identity_path,
@@ -185,6 +189,7 @@ def test_browser_user_mutations_preserve_non_target_users(tmp_path: Path) -> Non
 
 
 def test_add_browser_user_rejects_whitespace_username(tmp_path: Path) -> None:
+    """Refuse a browser username containing embedded whitespace."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
 
@@ -211,4 +216,5 @@ def test_add_browser_user_rejects_whitespace_username(tmp_path: Path) -> None:
 def test_browser_password_verifier_rejects_malformed_encodings(
     encoded_verifier: str,
 ) -> None:
+    """Reject malformed stored password verifiers through the public verifier."""
     assert not verify_browser_user_password("password", encoded_verifier)

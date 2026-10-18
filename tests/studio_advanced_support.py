@@ -6,30 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio advanced features
 
+"""Provide real Studio HTTP fixtures and advanced model workflow dependencies."""
+
 from __future__ import annotations
 
 import pytest
 
 fastapi = pytest.importorskip("fastapi")
 
+from sc_neurocore_engine.studio import get_ei_network_simulator
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
-from sc_neurocore_engine.studio import get_ei_network_simulator
-
 from sc_neurocore.studio.characterize import characterize_model
-
-from sc_neurocore.studio.firing_pattern import classify_firing_pattern
-
 from sc_neurocore.studio.codegen import generate_experiment_script, generate_oneliner
-
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.network import simulate_ei_network
 
 
 @pytest.fixture
-def client():
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+def client() -> TestClient:
+    """Provide the real Studio API for advanced model and network workflows."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 __all__ = [

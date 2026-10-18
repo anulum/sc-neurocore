@@ -25,10 +25,10 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.candidate_package import MAX_CANDIDATE_STEPS, candidate_sha256
 from sc_neurocore.studio.candidate_run import (
+    MAX_TRACE_POINTS,
     NOT_ESTABLISHED,
     REVIEW_PACKET_SCHEMA_VERSION,
     CandidateRejected,
-    MAX_TRACE_POINTS,
     review_packet,
     run_reference_tests,
     simulate_candidate,
@@ -37,7 +37,7 @@ from tests.studio_candidate_support import adex_candidate
 
 
 def _diverging() -> dict[str, Any]:
-    """A valid candidate whose state leaves the finite numbers within a few steps."""
+    """Build a valid candidate whose state leaves finite numbers within a few steps."""
     document = adex_candidate()
     document["model"]["dynamics"]["w"] = "w * w * 1e6 + 1e6"
     document["reference_tests"] = [
@@ -52,7 +52,10 @@ def _diverging() -> dict[str, Any]:
 
 
 class TestSimulation:
+    """Candidate admission, bounded traces and explicit numerical divergence."""
+
     def test_a_long_run_is_strided_to_a_bounded_trace(self) -> None:
+        """Bound trace size while retaining the simulated candidate identity and digest."""
         document = adex_candidate()
         result = simulate_candidate(document, current=800.0, steps=12_000)
 
@@ -68,6 +71,7 @@ class TestSimulation:
         assert set(result["final_state"]) == {"v", "w"}
 
     def test_a_diverging_run_says_where_instead_of_returning_nonsense(self) -> None:
+        """Report the diverged state and its step instead of non-finite trace values."""
         result = simulate_candidate(_diverging(), current=0.0, steps=200)
         assert result["diverged_at_step"] is not None
         assert "'w' became non-finite" in result["divergence"]
@@ -75,10 +79,12 @@ class TestSimulation:
 
     @pytest.mark.parametrize("steps", [0, MAX_CANDIDATE_STEPS + 1])
     def test_a_run_outside_the_bound_is_refused(self, steps: int) -> None:
+        """Refuse a candidate simulation outside the supported execution budget."""
         with pytest.raises(ValueError, match="steps must be from 1 to"):
             simulate_candidate(adex_candidate(), current=0.0, steps=steps)
 
     def test_an_invalid_candidate_is_not_run(self) -> None:
+        """Reject an invalid candidate before its simulation begins."""
         document = adex_candidate()
         document["units"]["state"]["v"] = "banana"
         with pytest.raises(CandidateRejected) as refused:
@@ -91,7 +97,10 @@ class TestSimulation:
 
 
 class TestReferenceTests:
+    """Reference expectations and retained observations for candidate simulations."""
+
     def test_each_expectation_states_what_was_observed(self) -> None:
+        """Retain each reference expectation beside its observed candidate result."""
         results = run_reference_tests(adex_candidate())
         assert [result["name"] for result in results] == [
             "rests without drive",
@@ -104,6 +113,7 @@ class TestReferenceTests:
         assert -66.0 <= rest[1]["observed"] <= -64.0
 
     def test_a_failed_expectation_fails_its_test(self) -> None:
+        """Mark a reference expectation failed when its observed bound does not hold."""
         document = adex_candidate()
         document["reference_tests"][1]["expect"]["spike_count"] = {"min": 10_000}
         results = run_reference_tests(document)
@@ -112,6 +122,7 @@ class TestReferenceTests:
         assert results[1]["checks"][0]["held"] is False
 
     def test_a_diverged_run_holds_no_final_state_bound(self) -> None:
+        """Avoid claiming a final-state bound for a diverged candidate run."""
         (result,) = run_reference_tests(_diverging())
         assert result["diverged_at_step"] is not None
         assert result["checks"] == [
@@ -126,6 +137,7 @@ class TestReferenceTests:
 
 
 def test_the_review_packet_binds_everything_under_one_digest() -> None:
+    """Bind the candidate, observations and review packet to one content digest."""
     document = adex_candidate()
     packet = review_packet(document)
 
@@ -143,11 +155,17 @@ def test_the_review_packet_binds_everything_under_one_digest() -> None:
 
 
 class TestRoutes:
+    """Candidate validation, simulation and review through the actual Studio API."""
+
     @pytest.fixture(scope="class")
     def client(self) -> TestClient:
-        return TestClient(create_app(), base_url="http://127.0.0.1")
+        """Provide the actual Studio API for candidate authoring and review requests."""
+        return TestClient(
+            create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        )
 
     def test_validation_reports_located_diagnostics_with_200(self, client: TestClient) -> None:
+        """Return located candidate diagnostics from the validation endpoint."""
         document = adex_candidate()
         document["parent"] = "NoSuchNeuron"
         response = client.post("/api/candidates/validate", json={"candidate": document})
@@ -160,6 +178,7 @@ class TestRoutes:
     def test_acting_on_an_invalid_candidate_is_refused_with_the_diagnostics(
         self, client: TestClient, route: str
     ) -> None:
+        """Refuse candidate execution while preserving its validation diagnostics."""
         document = adex_candidate()
         document["authors"] = []
         response = client.post(f"/api/candidates/{route}", json={"candidate": document})
@@ -171,6 +190,7 @@ class TestRoutes:
         )
 
     def test_a_valid_candidate_is_diffed_simulated_and_reviewed(self, client: TestClient) -> None:
+        """Carry a valid candidate through diff, simulation and review HTTP routes."""
         document = adex_candidate()
         diff = client.post("/api/candidates/diff", json={"candidate": document})
         run = client.post(
@@ -187,6 +207,7 @@ class TestRoutes:
     def test_the_request_bounds_are_enforced_before_the_candidate_is_read(
         self, client: TestClient
     ) -> None:
+        """Validate execution bounds before attempting to read the candidate body."""
         response = client.post(
             "/api/candidates/simulate",
             json={"candidate": {}, "steps": MAX_CANDIDATE_STEPS + 1},

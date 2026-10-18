@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import threading
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from sc_neurocore.studio.api import build_studio_routers
 from sc_neurocore.studio.api.common import request_validation_error_handler
-from sc_neurocore.studio.api.frontend import mount_studio_frontend
+from sc_neurocore.studio.api.frontend import mount_studio_api_docs, mount_studio_frontend
 from sc_neurocore.studio.api.runtime import (
     DEFAULT_STUDIO_JOB_KINDS,
     build_studio_api_context,
@@ -28,10 +30,10 @@ from sc_neurocore.studio.api.schemas import (
     BenchmarkContributeRequest,
     BenchmarkRunRequest,
     BifurcationRequest,
-    ExperimentExportRequest,
     CompareRequest,
     CompileRequest,
     DclsEvaluateRequest,
+    ExperimentExportRequest,
     FICurveRequest,
     FreqResponseRequest,
     HeatmapRequest,
@@ -126,10 +128,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     FastAPI
         Application with security middleware and responsibility routers mounted.
     """
-    application = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
+    application = FastAPI(
+        title="SC-NeuroCore Studio", version="1.0.0", docs_url=None, redoc_url=None
+    )
     application.add_exception_handler(RequestValidationError, request_validation_error_handler)
     context = build_studio_api_context(application, runtime_settings)
     settings = context.settings
+    mount_studio_api_docs(application, security_headers=settings.http_security_headers)
     application.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=list(settings.allowed_hosts),
@@ -147,4 +152,21 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     return application
 
 
-app = create_app()
+app: FastAPI
+_default_app: FastAPI | None = None
+_default_app_guard = threading.Lock()
+
+
+def __getattr__(name: str) -> FastAPI:
+    """Build the ASGI ``app`` lazily for servers importing the module entry point.
+
+    Factory callers create only the application they requested. Importing the
+    factory does not first initialise a second job manager or identity runtime.
+    """
+    if name != "app":
+        raise AttributeError(name)
+    global _default_app
+    with _default_app_guard:
+        if _default_app is None:
+            _default_app = create_app()
+        return _default_app

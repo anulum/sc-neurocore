@@ -12,12 +12,12 @@ from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-import pytest
 
-from sc_neurocore.studio.api.runtime import build_studio_api_context
 from sc_neurocore.studio.api import synthesis as synthesis_routes
+from sc_neurocore.studio.api.runtime import build_studio_api_context
 from sc_neurocore.studio.platform import build_default_studio_runtime_settings
 
 
@@ -103,7 +103,7 @@ def test_synthesis_routes_return_the_executed_process_receipt(
         replace(build_default_studio_runtime_settings(), job_root_path=str(tmp_path)),
     )
     app.include_router(synthesis_routes.build_synthesis_router(context))
-    with TestClient(app) as client:
+    with TestClient(app, headers={"sec-fetch-site": "none"}) as client:
         response = client.post(f"/api/synth/{route}", json=payload)
     assert response.status_code == 200, response.text
     result = response.json()

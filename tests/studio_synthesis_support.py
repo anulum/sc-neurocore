@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio Synthesis Dashboard (Block 3)
 
+"""Provide real Studio HTTP fixtures for synthesis and bounded upload contracts."""
+
 from __future__ import annotations
 
 import json
@@ -17,9 +19,7 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.platform import StudioRuntimeSettings
-
 from sc_neurocore.studio.synthesis import (
     _DEVICE_CAPACITY,
     _TARGETS,
@@ -32,14 +32,20 @@ from sc_neurocore.studio.synthesis import (
 
 
 @pytest.fixture(scope="module")
-def client():
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+def client() -> TestClient:
+    """Provide the real Studio API for synthesis requests and evidence."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 @pytest.fixture(scope="module")
-def large_body_client():
+def large_body_client() -> TestClient:
+    """Provide the real synthesis API with a declared four-MiB upload budget."""
     settings = StudioRuntimeSettings(max_request_body_bytes=4 * 1024 * 1024)
-    return TestClient(create_app(runtime_settings=settings), base_url="http://127.0.0.1")
+    return TestClient(
+        create_app(runtime_settings=settings),
+        base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
+    )
 
 
 __all__ = [

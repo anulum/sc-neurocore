@@ -61,6 +61,10 @@ export default defineConfig({
   webServer: [
     {
       command: `python -m uvicorn sc_neurocore.studio.app:create_app --factory --host 127.0.0.1 --port ${apiPort} --log-level warning`,
+      env: {
+        SC_NEUROCORE_STUDIO_CORS_ORIGINS: [apiOrigin, uiOrigin].join(","),
+        SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS: [apiOrigin, uiOrigin].join(","),
+      },
       reuseExistingServer: false,
       timeout: 120_000,
       url: `${apiOrigin}/api/health`,

@@ -60,7 +60,8 @@ def _graph(*, autapses: bool = False) -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for graph notebook export and replay."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _code(notebook: dict[str, Any]) -> str:
@@ -91,6 +92,7 @@ def _run(code: str, tmp_path: Path) -> str:
 def test_the_notebook_rebuilds_the_network_and_reproduces_every_spike(
     client: TestClient, tmp_path: Path
 ) -> None:
+    """Rebuild the exported network and reproduce its complete spike recording."""
     graph = _graph()
     response = client.post("/api/graph/notebook", json=graph)
     assert response.status_code == 200, response.text
@@ -114,6 +116,7 @@ def test_the_notebook_rebuilds_the_network_and_reproduces_every_spike(
 
 
 def test_every_construction_step_is_visible(client: TestClient) -> None:
+    """Include the public neuron, stimulus and network construction steps."""
     notebook = client.post("/api/graph/notebook", json=_graph()).json()
     code = _code(notebook)
     assert "from sc_neurocore.neurons.models.adex import AdExNeuron" in code
@@ -130,6 +133,7 @@ def test_every_construction_step_is_visible(client: TestClient) -> None:
 def test_the_notebook_cites_its_models_and_says_what_it_does_not_establish(
     client: TestClient,
 ) -> None:
+    """Retain model citations and the declared limits of notebook evidence."""
     text = _markdown(client.post("/api/graph/notebook", json=_graph()).json())
     assert (
         "`AdExNeuron` follows Brette, R. & Gerstner, W. (2005) doi:10.1152/jn.00686.2005." in text
@@ -142,6 +146,7 @@ def test_the_notebook_cites_its_models_and_says_what_it_does_not_establish(
 def test_declared_autapses_are_kept_and_no_helper_is_written(
     client: TestClient, tmp_path: Path
 ) -> None:
+    """Preserve declared autapses in the generated, independently executable notebook."""
     notebook = client.post("/api/graph/notebook", json=_graph(autapses=True)).json()
     code = _code(notebook)
     assert "without_autapses" not in code
@@ -151,6 +156,7 @@ def test_declared_autapses_are_kept_and_no_helper_is_written(
 def test_a_graph_with_no_projections_has_no_projection_section(
     client: TestClient, tmp_path: Path
 ) -> None:
+    """Omit absent projections while retaining a reproducible network notebook."""
     graph = _graph()
     graph["projections"] = []
     notebook = client.post("/api/graph/notebook", json=graph).json()
@@ -159,6 +165,7 @@ def test_a_graph_with_no_projections_has_no_projection_section(
 
 
 def test_a_graph_that_does_not_validate_answers_every_message(client: TestClient) -> None:
+    """Return the graph validation diagnostics instead of exporting an invalid graph."""
     graph = _graph()
     graph["projections"][0]["delay"] = 0.33
     response = client.post("/api/graph/notebook", json=graph)
@@ -169,6 +176,7 @@ def test_a_graph_that_does_not_validate_answers_every_message(client: TestClient
 
 
 def test_a_graph_that_fails_while_running_answers_the_failure(client: TestClient) -> None:
+    """Return the declared finite-execution refusal when graph evaluation fails."""
     population = create_population(
         count=1, model="AlphaMotorNeuron", drive={"kind": "constant", "current": 1e300}
     )
@@ -186,6 +194,7 @@ def test_a_graph_that_fails_while_running_answers_the_failure(client: TestClient
 
 
 def test_a_constructor_value_without_an_exact_literal_is_refused() -> None:
+    """Require constructor values which have an exact supported Python literal."""
     assert (_literal(True), _literal(3), _literal(0.1)) == ("True", "3", "0.1")
     with pytest.raises(TypeError, match="no literal for str"):
         _literal("tau")

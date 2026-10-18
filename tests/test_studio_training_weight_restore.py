@@ -34,25 +34,22 @@ _CONFIG = {"dataset": "synthetic", "epochs": 2}
 
 def _build_client(tmp_path: Path) -> TestClient:
     """Return a TestClient backed by a durable Studio job root."""
-
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"),
         audit_log_path=str(tmp_path / "audit" / "studio.jsonl"),
         job_default_timeout_seconds=10.0,
     )
     app = create_app(settings)
-    return TestClient(app, base_url="http://127.0.0.1")
+    return TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _job_manager(client: TestClient) -> StudioJobManager:
     """Return the app-local Studio job manager."""
-
     return cast(StudioJobManager, cast(FastAPI, client.app).state.studio_job_manager)
 
 
 def _torch_weights_bytes(config: dict[str, object] | None = None) -> bytes:
     """Return a portable torch checkpoint payload like the Training Monitor."""
-
     torch = pytest.importorskip("torch")
     payload = {
         "config": dict(config or _CONFIG),
@@ -108,7 +105,6 @@ def _submit_training_source(
 
 def test_weight_restore_materializes_completed_training_job(tmp_path: Path) -> None:
     """Endpoint materializes verified weights and emits training evidence."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -145,7 +141,6 @@ def test_weight_restore_materializes_completed_training_job(tmp_path: Path) -> N
 
 def test_weight_restore_rejects_unknown_job(tmp_path: Path) -> None:
     """Endpoint returns 404 for an unknown source training job."""
-
     client = _build_client(tmp_path)
 
     response = client.post(
@@ -180,7 +175,6 @@ def test_weight_restore_rejects_digest_valid_unloadable_checkpoint(tmp_path: Pat
 
 def test_weight_restore_rejects_job_without_weights(tmp_path: Path) -> None:
     """Endpoint returns 409 when the training job published no weights."""
-
     client = _build_client(tmp_path)
     manager = _job_manager(client)
     source_job_id = _submit_training_source(
@@ -201,7 +195,6 @@ def test_weight_restore_rejects_job_without_weights(tmp_path: Path) -> None:
 
 def test_weight_restore_rejects_config_digest_mismatch(tmp_path: Path) -> None:
     """Endpoint returns 422 when the expected config digest does not match."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -221,7 +214,6 @@ def test_weight_restore_rejects_config_digest_mismatch(tmp_path: Path) -> None:
 
 def test_weight_restore_evidence_feeds_evidence_bundle(tmp_path: Path) -> None:
     """Restore evidence is accepted by the admin evidence bundle endpoint."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)

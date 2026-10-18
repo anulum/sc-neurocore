@@ -36,7 +36,6 @@ def test_adaptive_precision_formal_bundle_uses_studio_compile_evidence(
     tmp_path: Path,
 ) -> None:
     """Compiler formal bundles expose controlled Studio evidence fields."""
-
     assignments = assign_synapse_precisions(
         [np.array([[0.25, 0.75]])],
         target_error=0.01,
@@ -61,15 +60,15 @@ def test_adaptive_precision_formal_bundle_uses_studio_compile_evidence(
 
 def test_adaptive_precision_formal_bundle_rejects_empty_evidence(tmp_path: Path) -> None:
     """Compiler formal bundles fail closed when no precision evidence exists."""
-
     with pytest.raises(ValueError, match="assignments must not be empty"):
         write_precision_formal_evidence_bundle(tmp_path, [])
 
 
 def test_studio_adaptive_precision_formal_bundle_route_returns_controlled_evidence() -> None:
     """Studio formal-bundle route returns evidence metadata on the public payload."""
-
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     response = client.post(
         "/api/adaptive-precision/formal-bundle",
         json={

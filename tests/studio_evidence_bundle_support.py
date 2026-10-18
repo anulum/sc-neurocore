@@ -11,27 +11,18 @@
 from __future__ import annotations
 
 import json
-
 import math
-
 import threading
-
 from collections.abc import Callable
-
 from datetime import datetime, timezone
-
 from pathlib import Path
-
 from typing import cast
 
 import pytest
-
 from fastapi import FastAPI
-
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.platform import (
     STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
     AuditEvent,
@@ -43,11 +34,9 @@ from sc_neurocore.studio.platform import (
     StudioRuntimeSettings,
     write_studio_evidence_bundle,
 )
-
 from sc_neurocore.studio.platform.action_evidence import (
     write_studio_action_evidence_manifest,
 )
-
 from sc_neurocore.studio.project import save_project
 
 UTC = timezone.utc
@@ -55,7 +44,6 @@ UTC = timezone.utc
 
 def _simulation_payload() -> dict[str, object]:
     """Return a minimal Studio simulation response carrying run metadata."""
-
     return {
         "current_trace": [1.0, 1.0],
         "dt": 0.1,
@@ -82,7 +70,6 @@ def _simulation_payload() -> dict[str, object]:
 
 def _analysis_payload() -> dict[str, object]:
     """Return a minimal Studio analysis response carrying analysis metadata."""
-
     return {
         "analysis_metadata": {
             "analysis_type": "fi_curve",
@@ -101,7 +88,6 @@ def _analysis_payload() -> dict[str, object]:
 
 def _project_payload() -> dict[str, object]:
     """Return a minimal saved Studio project payload."""
-
     return {
         "name": "demo",
         "saved_at": 1_782_000_000.0,
@@ -112,7 +98,6 @@ def _project_payload() -> dict[str, object]:
 
 def _action_evidence_payload(job_id: str) -> dict[str, object]:
     """Return a minimal worker action-evidence manifest payload."""
-
     return {
         "action_kind": "studio.compile",
         "artifacts": [
@@ -136,7 +121,6 @@ def _action_evidence_payload(job_id: str) -> dict[str, object]:
 
 def _default_flow_run_payload() -> dict[str, object]:
     """Return a minimal default-flow run response with reproducibility hashes."""
-
     return {
         "action_order": ["auto_tune_adaptive_precision"],
         "evidence_classification": "default_flow",
@@ -157,7 +141,6 @@ def _default_flow_run_payload() -> dict[str, object]:
 
 def _default_flow_attestation_payload() -> dict[str, object]:
     """Return a minimal default-flow attestation for the test run payload."""
-
     return {
         "attestation_fingerprint_sha256": "9" * 64,
         "evidence_classification": "default_flow",
@@ -176,7 +159,6 @@ def _client_with_evidence_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> tuple[FastAPI, TestClient]:
     """Create a Studio app with durable job, audit, and project roots."""
-
     projects_root = tmp_path / "projects"
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(projects_root))
     audit_path = tmp_path / "audit" / "studio.jsonl"
@@ -201,12 +183,11 @@ def _client_with_evidence_state(
             timestamp_utc="2026-06-20T00:00:00Z",
         )
     )
-    return app, TestClient(app, base_url="http://127.0.0.1")
+    return app, TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _job_manager(app: FastAPI) -> StudioJobManager:
     """Return the app-local Studio job manager."""
-
     return cast(StudioJobManager, app.state.studio_job_manager)
 
 
@@ -216,7 +197,6 @@ def _json_artifact(
     relative_path: str,
 ) -> dict[str, object]:
     """Read one JSON job artifact through the verified artifact API."""
-
     payload = manager.read_artifact(job_id, relative_path)
     decoded = json.loads(payload.payload.decode("utf-8"))
     assert isinstance(decoded, dict)
@@ -225,7 +205,6 @@ def _json_artifact(
 
 def _model_scan_response() -> dict[str, object]:
     """Return a minimal Studio model-scan response carrying scan metadata."""
-
     scan_metadata = {
         "current": 10.0,
         "duration": 100.0,
@@ -246,7 +225,6 @@ def _model_scan_response() -> dict[str, object]:
 
 def _weight_restore_response() -> dict[str, object]:
     """Return a minimal Studio training weight-restore evidence response."""
-
     return {
         "schema_version": "studio.training.weight-restore.v1",
         "evidence_classification": "training",
@@ -270,7 +248,6 @@ def _weight_restore_response() -> dict[str, object]:
 
 def _weight_restore_attach_response() -> dict[str, object]:
     """Return a minimal Studio training weight-restore attach evidence response."""
-
     return {
         "schema_version": "studio.training.weight-restore-attach.v1",
         "evidence_classification": "training",

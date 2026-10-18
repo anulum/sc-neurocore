@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5324
+    "test_files": 5326
   },
   "documentation": {
     "public_pages": [
@@ -7860,6 +7860,7 @@
       "tests/test_studio_identity_bootstrap_browser_user_records.py",
       "tests/test_studio_identity_bootstrap_cli.py",
       "tests/test_studio_identity_browser_users.py",
+      "tests/test_studio_identity_custody.py",
       "tests/test_studio_identity_mutations.py",
       "tests/test_studio_identity_passwords.py",
       "tests/test_studio_identity_refusals.py",
@@ -7934,6 +7935,7 @@
       "tests/test_studio_jobs_worker_guard_main.py",
       "tests/test_studio_jobs_worker_recovery.py",
       "tests/test_studio_jobs_worker_registration.py",
+      "tests/test_studio_lab_request_transport.py",
       "tests/test_studio_laboratory_cancel_reply_loss.py",
       "tests/test_studio_laboratory_isolated_jobs.py",
       "tests/test_studio_ledger_lease_bounds.py",

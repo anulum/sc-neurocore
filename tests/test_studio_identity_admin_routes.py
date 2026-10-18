@@ -14,6 +14,7 @@ from tests.studio_identity_admin_support import *  # noqa: F403
 
 
 def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
+    """Authorize service-account administration and record its lifecycle outcomes."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     token = _write_identity_file(identity_path)
@@ -60,6 +61,7 @@ def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> No
 
 
 def test_identity_admin_route_rejects_last_admin_removal(tmp_path: Path) -> None:
+    """Refuse an HTTP update which would remove the last active admin."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     token = _write_single_service_admin_identity_file(identity_path)
@@ -86,6 +88,7 @@ def test_identity_admin_route_rejects_last_admin_removal(tmp_path: Path) -> None
 
 
 def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
+    """Authorize browser-user administration and record its lifecycle outcomes."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     token = _write_identity_file(identity_path)
@@ -132,7 +135,7 @@ def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -
         "username": "operator",
     }
     assert login_after_disable.status_code == 401
-    assert login_after_disable.json()["detail"] == "disabled_browser_user"
+    assert login_after_disable.json()["detail"] == "invalid_browser_login"
     actions = [row["action"] for row in _audit_rows(audit_path)]
     assert "studio.identity.browser_users.list" in actions
     assert "studio.identity.browser_users.detail" in actions
@@ -143,6 +146,7 @@ def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -
 def test_browser_user_create_route_is_admin_gated_password_free_and_audited(
     tmp_path: Path,
 ) -> None:
+    """Create an authorized browser user without echoing password material."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     token = _write_identity_file(identity_path)
@@ -201,6 +205,7 @@ def test_browser_user_create_route_is_admin_gated_password_free_and_audited(
 def test_browser_user_password_rotation_revokes_sessions_and_is_audited(
     tmp_path: Path,
 ) -> None:
+    """Revoke existing sessions when an audited password rotation succeeds."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
     token = _write_identity_file(identity_path)
@@ -252,14 +257,69 @@ def test_browser_user_password_rotation_revokes_sessions_and_is_audited(
     assert "studio.identity.browser_user.password.rotate" in actions
 
 
+@pytest.mark.parametrize(
+    ("active", "roles", "expiry"),
+    [
+        (False, ["studio.admin", "studio.viewer"], None),
+        (True, ["studio.viewer"], None),
+        (True, ["studio.admin", "studio.viewer"], "2000-01-01T00:00:00Z"),
+    ],
+)
+def test_browser_user_update_revokes_all_existing_sessions(
+    tmp_path: Path, active: bool, roles: list[str], expiry: str | None
+) -> None:
+    """Apply account changes to both existing sessions before another request."""
+    identity_path = tmp_path / "identities.json"
+    admin_token = _write_identity_file(identity_path)
+    client = _client(identity_path, tmp_path / "audit.jsonl")
+    sessions: list[dict[str, str]] = []
+    for _ in range(2):
+        login = client.post(
+            "/api/studio/auth/login",
+            json={"username": "operator", "password": "operator-password"},
+        )
+        assert login.status_code == 200
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        assert client.get("/api/studio/operator/status", headers=headers).status_code == 200
+        sessions.append(headers)
+
+    updated = client.patch(
+        "/api/studio/identity/browser-users/operator",
+        headers=_admin_headers(admin_token),
+        json={"active": active, "roles": roles, "expires_at_utc": expiry},
+    )
+    assert updated.status_code == 200
+    for headers in sessions:
+        assert client.get("/api/studio/auth/session", headers=headers).status_code == 401
+        assert client.get("/api/studio/operator/status", headers=headers).status_code == 401
+
+    login = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "operator-password"},
+    )
+    if active and expiry is None:
+        assert login.status_code == 200
+        assert login.json()["roles"] == roles
+        assert (
+            client.get(
+                "/api/studio/operator/status",
+                headers={"Authorization": f"Bearer {login.json()['access_token']}"},
+            ).status_code
+            == 403
+        )
+    else:
+        assert login.status_code == 401
+
+
 def test_identity_admin_routes_reject_unconfigured_store(tmp_path: Path) -> None:
+    """Refuse identity administration until a persistent store is configured."""
     app = create_app(
         StudioRuntimeSettings(
             allow_header_principal=False,
             enforce_route_policies=False,
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get("/api/studio/identity/service-accounts")
 

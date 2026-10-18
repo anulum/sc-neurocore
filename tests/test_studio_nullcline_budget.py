@@ -20,10 +20,10 @@ from sc_neurocore.studio.platform import StudioRuntimeSettings
 
 def test_nullclines_rejected_over_grid_budget_before_analysis_runs() -> None:
     """Oversized nullcline grids fail at the API budget guard with path-free detail."""
-
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_simulations=3_000)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
     response = client.post(
@@ -52,10 +52,10 @@ def test_nullclines_rejected_over_grid_budget_before_analysis_runs() -> None:
 
 def test_nullclines_within_grid_budget_returns_analysis_metadata() -> None:
     """A bounded nullcline grid still uses the production analysis route."""
-
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_simulations=500)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
     response = client.post(

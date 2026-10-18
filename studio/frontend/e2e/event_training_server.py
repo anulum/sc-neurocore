@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import uvicorn
@@ -23,7 +24,7 @@ from sc_neurocore.datasets.splits import group_split
 from sc_neurocore.studio import project
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.event_training_contract import EventTrainingContract
-from sc_neurocore.studio.platform import StudioRuntimeSettings
+from sc_neurocore.studio.platform import build_default_studio_runtime_settings
 from tests.event_dataset_support import write_nmnist
 
 
@@ -52,7 +53,9 @@ def main() -> None:
     os.environ["SC_NEUROCORE_STUDIO_DATASET_ROOT"] = str(recordings)
     # Only the existing storage path is isolated; routes and workspace logic stay real.
     project._PROJECTS_DIR = str(root / "projects")
-    app = create_app(StudioRuntimeSettings(job_root_path=str(root / "jobs")))
+    app = create_app(
+        replace(build_default_studio_runtime_settings(), job_root_path=str(root / "jobs"))
+    )
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
 
 

@@ -47,7 +47,8 @@ LIF: dict[str, Any] = {
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for analysis metric contracts."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _rate_fn(rate_of: Any) -> Any:
@@ -58,6 +59,7 @@ def _rate_fn(rate_of: Any) -> Any:
 
 
 def test_metric_contract_validates_and_serialises() -> None:
+    """Preserve metric units, domain and schema when serialising a contract."""
     contract = MetricContract(
         kind="fi-curve",
         definition="rate",
@@ -82,6 +84,7 @@ def test_metric_contract_validates_and_serialises() -> None:
 
 
 def test_manifest_records_contract_kind_and_domain() -> None:
+    """Bind the analysis manifest to the declared metric kind and domain."""
     payload = attach_contract(
         {"rates": [0.0]},
         MetricContract(
@@ -118,6 +121,7 @@ def test_sensitivity_reports_undefined_points_with_reasons() -> None:
 
 
 def test_fi_curve_and_frequency_response_state_their_rate_definition() -> None:
+    """State the rate definition alongside current and frequency response values."""
     fi = fi_curve_sweep(_rate_fn(lambda cfg: cfg["current"]), 0.0, 10.0, 3)
     assert fi["currents"] == [0.0, 5.0, 10.0] and fi["rates"] == [0.0, 5.0, 10.0]
     assert fi["contract"]["kind"] == "fi-curve"
@@ -166,6 +170,8 @@ def test_fi_curve_and_frequency_response_state_their_rate_definition() -> None:
 
 
 def test_bifurcation_sweep_is_labelled_as_a_numerical_extrema_sweep() -> None:
+    """Label sampled extrema without claiming analytic bifurcation continuation."""
+
     def simulate(**cfg: Any) -> dict[str, Any]:
         gain = float(cfg["params"]["g"])
         trace = [gain * (1.0 if index % 2 else -1.0) for index in range(40)]
@@ -196,6 +202,7 @@ def test_bifurcation_sweep_is_labelled_as_a_numerical_extrema_sweep() -> None:
 
 
 def test_heatmap_and_spike_triggered_average_carry_contracts() -> None:
+    """Attach metric contracts to rate maps and spike-triggered averages."""
     heat = heatmap_2d(
         _rate_fn(lambda cfg: cfg["params"]["x"] + cfg["params"]["y"]),
         {"params": {}},
@@ -219,6 +226,7 @@ def test_heatmap_and_spike_triggered_average_carry_contracts() -> None:
 
 
 def test_analysis_routes_attach_contract_and_manifest_summary(client: TestClient) -> None:
+    """Carry metric definitions and manifest metadata through the HTTP response."""
     fi = client.post(
         "/api/fi-curve", json={**LIF, "i_min": 0.0, "i_max": 20.0, "i_steps": 3}
     ).json()

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio deployment profile tests
 
+"""Verify emitted Studio profiles against their runtime and operator contracts."""
+
 from __future__ import annotations
 
 import json
@@ -22,6 +24,28 @@ from sc_neurocore.studio.platform.deployment_profiles import (
     build_studio_deployment_profile_package,
     list_studio_deployment_profile_packages,
 )
+from sc_neurocore.studio.platform.settings import build_default_studio_runtime_settings
+
+
+def test_lab_package_builds_the_single_operator_loopback_settings() -> None:
+    """Build usable lab runtime settings directly from the emitted package."""
+    package = build_studio_deployment_profile_package("lab")
+    settings = build_default_studio_runtime_settings(package.environment)
+
+    assert settings.deployment_profile == "production"
+    assert settings.enforce_route_policies is True
+    assert settings.allow_header_principal is False
+    assert settings.allowed_hosts == ("127.0.0.1", "localhost")
+    assert settings.cors_allowed_origins == (
+        "http://127.0.0.1:8001",
+        "http://localhost:8001",
+    )
+    assert settings.websocket_allowed_origins == settings.cors_allowed_origins
+    assert settings.identity_file_path == package.environment["SC_NEUROCORE_STUDIO_IDENTITY_FILE"]
+    assert settings.audit_log_path is not None
+    assert settings.audit_rotation_bytes == 104857600
+    assert settings.audit_retained_files == 14
+    assert "one API process per identity store" in package.security_controls
 
 
 @pytest.mark.parametrize(
@@ -32,6 +56,7 @@ def test_studio_deployment_profile_packages_are_secret_free(
     name: StudioDeploymentPackageName,
     runtime_profile: str,
 ) -> None:
+    """Emit each declared deployment package without embedding operator secrets."""
     package = build_studio_deployment_profile_package(name)
     payload = package.to_public_dict()
     encoded = json.dumps(payload)
@@ -47,6 +72,7 @@ def test_studio_deployment_profile_packages_are_secret_free(
 
 
 def test_studio_deployment_profile_lab_and_server_are_fail_closed() -> None:
+    """Require identity enforcement in the emitted lab and server templates."""
     for name in ("lab", "server"):
         package = build_studio_deployment_profile_package(name)
         environment = package.environment
@@ -65,6 +91,7 @@ def test_studio_deployment_profile_lab_and_server_are_fail_closed() -> None:
 
 
 def test_studio_deployment_profile_local_is_loopback_development() -> None:
+    """Keep the local template on explicit loopback development settings."""
     package = build_studio_deployment_profile_package("local")
     environment = package.environment
 
@@ -76,6 +103,7 @@ def test_studio_deployment_profile_local_is_loopback_development() -> None:
 
 
 def test_studio_deployment_profile_env_lines_are_quoted_and_sorted() -> None:
+    """Emit deterministic shell environment lines with quoted values."""
     package = build_studio_deployment_profile_package("server")
     env_lines = package.to_env_lines()
 
@@ -86,12 +114,14 @@ def test_studio_deployment_profile_env_lines_are_quoted_and_sorted() -> None:
 
 
 def test_list_studio_deployment_profile_packages_returns_all_profiles() -> None:
+    """List the local, lab and server deployment templates in stable order."""
     packages = list_studio_deployment_profile_packages()
 
     assert tuple(package.name for package in packages) == ("local", "lab", "server")
 
 
 def test_studio_deployment_profile_rejects_unknown_name() -> None:
+    """Refuse a deployment-template name outside the declared catalogue."""
     unknown_name: Any = "staging"
 
     with pytest.raises(ValueError, match="local, lab, or server"):
@@ -102,6 +132,7 @@ def test_studio_deployment_profile_cli_prints_json(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Emit the selected deployment package through the real CLI."""
     monkeypatch.setattr(
         sys,
         "argv",
@@ -122,6 +153,7 @@ def test_studio_deployment_profile_cli_writes_env_file(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Write the selected shell environment without duplicating it on stdout."""
     output_path = tmp_path / "studio-server.env"
     monkeypatch.setattr(
         sys,

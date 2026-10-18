@@ -30,7 +30,8 @@ MODEL = "ATypeKNeuron"
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for protocol-dependent analysis sweeps."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _bifurcation(client: TestClient, **extra: Any) -> Any:
@@ -49,6 +50,7 @@ def _bifurcation(client: TestClient, **extra: Any) -> Any:
 
 
 def test_bifurcation_defaults_to_a_constant_drive_and_completes(client: TestClient) -> None:
+    """Complete the default extrema sweep using the declared constant drive."""
     response = _bifurcation(client)
     assert response.status_code == 200, response.text[:400]
     payload = response.json()
@@ -59,6 +61,7 @@ def test_bifurcation_defaults_to_a_constant_drive_and_completes(client: TestClie
 
 def test_bifurcation_runs_the_requested_protocol(client: TestClient) -> None:
     # A step drive stays inside the model's bounds; the result records it.
+    """Preserve a requested step protocol in the completed extrema sweep."""
     response = _bifurcation(client, protocol="step")
     assert response.status_code == 200, response.text[:400]
     assert response.json()["protocol"] == "step"
@@ -83,6 +86,7 @@ def test_bifurcation_under_the_sine_drive_reports_the_model_failure(client: Test
 
 
 def test_heatmap_runs_the_requested_protocol(client: TestClient) -> None:
+    """Preserve a requested ramp protocol in the completed rate map."""
     body = {
         "model_name": MODEL,
         "dt": 0.5,
@@ -104,4 +108,5 @@ def test_heatmap_runs_the_requested_protocol(client: TestClient) -> None:
 
 
 def test_an_unknown_protocol_is_refused(client: TestClient) -> None:
+    """Reject an undeclared drive protocol at the HTTP input boundary."""
     assert _bifurcation(client, protocol="square").status_code == 422

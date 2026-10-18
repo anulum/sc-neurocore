@@ -6,12 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (bearer_identity) from former test_studio_app_policy_and_audit.py
 
+"""Verify bearer and preview identity handling through the actual Studio API."""
+
 from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
 
 def test_studio_app_accepts_bearer_identity_file_principal(tmp_path: Path) -> None:
+    """Admit a configured service bearer on its permitted Studio route."""
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "audit" / "studio.jsonl"
     token_hash = hashlib.sha256(b"admin-token").hexdigest()
@@ -38,7 +41,7 @@ def test_studio_app_accepts_bearer_identity_file_principal(tmp_path: Path) -> No
             allow_header_principal=False,
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get(
         "/api/studio/audit/export",
@@ -49,6 +52,7 @@ def test_studio_app_accepts_bearer_identity_file_principal(tmp_path: Path) -> No
 
 
 def test_studio_app_rejects_invalid_bearer_identity_token(tmp_path: Path) -> None:
+    """Refuse an unmatched service bearer with the declared identity reason."""
     identity_path = tmp_path / "studio-identities.json"
     token_hash = hashlib.sha256(b"admin-token").hexdigest()
     audit_path = tmp_path / "audit" / "studio.jsonl"
@@ -75,7 +79,7 @@ def test_studio_app_rejects_invalid_bearer_identity_token(tmp_path: Path) -> Non
             allow_header_principal=False,
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get(
         "/api/studio/audit/export",
@@ -89,13 +93,14 @@ def test_studio_app_rejects_invalid_bearer_identity_token(tmp_path: Path) -> Non
 
 
 def test_studio_app_rejects_header_principal_when_fallback_disabled() -> None:
+    """Ignore preview principal headers when the profile disables that fallback."""
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
             enforce_route_policies=True,
             allow_header_principal=False,
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/simulate",

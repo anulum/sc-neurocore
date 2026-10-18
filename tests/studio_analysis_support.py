@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio analysis and new endpoints
 
+"""Provide real Studio HTTP fixtures and analysis workflow dependencies."""
+
 from __future__ import annotations
 
 import pytest
@@ -14,19 +16,17 @@ fastapi = pytest.importorskip("fastapi")
 
 from starlette.testclient import TestClient
 
-from sc_neurocore.studio.app import create_app
-
-from sc_neurocore.studio.firing_pattern import classify_firing_pattern
-
 from sc_neurocore.studio.analysis import frequency_response, heatmap_2d
-
 from sc_neurocore.studio.api.analysis_guards import _make_simulate_fn
+from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.simulation import _make_current_trace, simulate
 
 
 @pytest.fixture
-def client():
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+def client() -> TestClient:
+    """Provide the real Studio API for analysis request and result contracts."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 __all__ = [

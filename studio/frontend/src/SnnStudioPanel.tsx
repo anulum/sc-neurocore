@@ -6,8 +6,12 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — federated Studio panel entry
 
+import { loader } from "@monaco-editor/react";
 import App from "./App";
 import "./index.css";
+
+const editorPath = `${import.meta.env.BASE_URL}vs`;
+loader.config({ paths: { vs: new URL(editorPath, import.meta.url).href } });
 
 /**
  * The Studio's entry component, for standalone and federated hosts alike.

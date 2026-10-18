@@ -5,6 +5,8 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
+"""Verify conflict branches preserve both editors through real workspace operations."""
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -14,13 +16,12 @@ import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.workspace_store import WorkspaceConflict, WorkspaceStore
 
 
 @pytest.fixture
 def store(tmp_path: Path) -> WorkspaceStore:
-    """A store holding one workspace two editors have both loaded."""
+    """Prepare one real workspace already loaded by two independent editors."""
     return WorkspaceStore(root=tmp_path)
 
 
@@ -83,9 +84,11 @@ def test_branching_never_overwrites_an_existing_workspace(
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
-    """A Studio client whose workspaces live under this test's own directory."""
+    """Provide a real Studio client whose workspaces stay in this test's directory."""
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path / "projects"))
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 

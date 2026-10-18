@@ -18,12 +18,6 @@ from typing import Any, cast
 import pytest
 from starlette.testclient import TestClient
 
-from sc_neurocore.studio.evidence_receipt import (
-    EVIDENCE_RECEIPT_KEY,
-    read_evidence_receipt,
-    subject_of,
-)
-from sc_neurocore.studio.evidence_seal import seal_sha256
 from sc_neurocore.studio.analysis_manifest import (
     STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION,
     JsonValue,
@@ -33,7 +27,12 @@ from sc_neurocore.studio.analysis_manifest import (
     infer_analysis_source,
 )
 from sc_neurocore.studio.app import create_app
-
+from sc_neurocore.studio.evidence_receipt import (
+    EVIDENCE_RECEIPT_KEY,
+    read_evidence_receipt,
+    subject_of,
+)
+from sc_neurocore.studio.evidence_seal import seal_sha256
 
 LIF_REQUEST: dict[str, JsonValue] = {
     "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
@@ -50,13 +49,11 @@ LIF_REQUEST: dict[str, JsonValue] = {
 @pytest.fixture
 def client() -> TestClient:
     """Return a Studio test client."""
-
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_build_analysis_result_manifest_returns_path_free_hashes() -> None:
     """Analysis manifests record stable request and result digests."""
-
     request = {"equations": ["dv/dt = -v / tau"], "params": {"tau": 10.0}}
     result = {"currents": [0.0, 1.0], "rates": [0.0, 25.0]}
     manifest = build_analysis_result_manifest(
@@ -83,7 +80,6 @@ def test_build_analysis_result_manifest_returns_path_free_hashes() -> None:
 
 def test_attach_analysis_result_manifest_ignores_existing_metadata_for_hash() -> None:
     """Attached manifests hash the analysis payload without stale metadata."""
-
     request = {"model_name": "LIFNeuron"}
     result: dict[str, Any] = {
         "analysis_metadata": {"stale": True},
@@ -115,13 +111,11 @@ def test_attach_analysis_result_manifest_ignores_existing_metadata_for_hash() ->
 )
 def test_infer_analysis_source(payload: dict[str, Any], source: str) -> None:
     """Analysis source inference follows Studio request conventions."""
-
     assert infer_analysis_source(payload) == source
 
 
 def test_build_analysis_result_manifest_rejects_non_portable_numbers() -> None:
     """Analysis manifests fail closed when payloads are not portable JSON."""
-
     with pytest.raises(ValueError, match="portable JSON"):
         build_analysis_result_manifest(
             analysis_type="fi_curve",
@@ -133,7 +127,6 @@ def test_build_analysis_result_manifest_rejects_non_portable_numbers() -> None:
 
 def test_analysis_result_manifest_rejects_unknown_evidence_classification() -> None:
     """Analysis metadata rejects evidence classes outside the shared contract."""
-
     manifest = StudioAnalysisResultManifest(
         analysis_type="fi_curve",
         source="ode",
@@ -149,7 +142,6 @@ def test_analysis_result_manifest_rejects_unknown_evidence_classification() -> N
 
 def test_analysis_result_manifest_rejects_unknown_status() -> None:
     """Analysis metadata rejects statuses outside the shared contract."""
-
     manifest = StudioAnalysisResultManifest(
         analysis_type="fi_curve",
         source="ode",
@@ -230,7 +222,6 @@ def test_analysis_routes_return_metadata(
     source: str,
 ) -> None:
     """Analysis endpoints return the shared metadata contract."""
-
     response = client.post(path, json=request_payload)
 
     assert response.status_code == 200
@@ -259,7 +250,6 @@ def test_analysis_routes_return_metadata(
 
 def test_compare_route_returns_mixed_analysis_metadata(client: TestClient) -> None:
     """Comparison analysis records the mixed-source metadata contract."""
-
     response = client.post(
         "/api/compare",
         json={"config_a": LIF_REQUEST, "config_b": {**LIF_REQUEST, "current": 10.0}},
@@ -274,7 +264,6 @@ def test_compare_route_returns_mixed_analysis_metadata(client: TestClient) -> No
 
 def _sha256_json(payload: dict[str, Any]) -> str:
     """Return a stable SHA-256 digest over canonical JSON."""
-
     encoded = json.dumps(
         payload,
         allow_nan=False,

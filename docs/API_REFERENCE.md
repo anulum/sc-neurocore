@@ -7811,7 +7811,7 @@ args : argparse.Namespace
 Returns
 -------
 int
-    Zero after a clean server shutdown, otherwise one when Studio extras are absent.
+    Zero after a clean shutdown, otherwise one for missing extras or invalid settings.
 
 ### Function `run_studio_backup_plan(args)`
 Emit the Studio durable-state backup and restore plan.
@@ -21307,6 +21307,7 @@ duration_fraction : float
 Configuration for a local self-hosted hub bundle.
 
 - **__post_init__**()
+  - Validate storage paths and the authenticated container listener contract.
 
 ### Function `build_model_zoo_index()`
 Build a deterministic model-zoo index for hub manifests.
@@ -39205,6 +39206,9 @@ context:
 
 ## Module `studio.api.frontend`
 
+### Function `mount_studio_api_docs(app, *, security_headers)`
+Serve interactive API docs under a CSP with exact bootstrap-script hashes.
+
 ### Function `studio_frontend_candidates(app_module_file)`
 Return where a built frontend is looked for, in order.
 
@@ -39686,6 +39690,12 @@ Returns
 FastAPI
     Application with security middleware and responsibility routers mounted.
 
+### Function `__getattr__(name)`
+Build the ASGI ``app`` lazily for servers importing the module entry point.
+
+Factory callers create only the application they requested. Importing the
+factory does not first initialise a second job manager or identity runtime.
+
 ---
 
 ## Module `studio.behavior_probe`
@@ -39779,7 +39789,7 @@ An empty list means the payload satisfies this contribution contract.
 Diagnostics can name the declared schema, kernel and fields, but never
 interpolate a submitted key or value. Validation performs no writes.
 
-### Function `store_contribution(payload, handle)`
+### Function `store_contribution(payload, handle, *, path, max_bytes, max_records)`
 Validate and append a submission to the local databank (opt-in path).
 
 The caller's payload is not changed. The handle is trimmed and limited to
@@ -39794,11 +39804,30 @@ BenchmarkSubmissionRefused
 OSError
     The validated submission could not be appended to the databank.
 
-### Function `load_databank()`
-Return every stored contribution (already free of identifying fields).
+### Function `load_databank(*, path, limit, offset, max_bytes, max_records)`
+Return one bounded page of stored contributions.
 
-### Function `databank_leaderboard()`
+### Function `databank_leaderboard(*, path, limit, offset, max_bytes, max_records)`
 Aggregate the databank into a per-CPU, per-backend speed-up leaderboard.
+
+---
+
+## Module `studio.benchmark_databank`
+
+### Class `BenchmarkDatabankCapacityError`
+A declared storage or record budget refused an operation without writing.
+
+- **__init__**(\*, record_too_large)
+
+### Function `append_databank(path, payload, *, max_bytes, max_records)`
+Append one complete record only if it fits both store budgets.
+
+A process-shared lock covers the capacity check and append. A capacity
+refusal leaves existing bytes unchanged. Each JSON record is also limited
+to one MiB, independent of the total store budget.
+
+### Function `read_databank(path, *, limit, offset, max_bytes, max_records)`
+Read one finite page while refusing a store beyond its declared budgets.
 
 ---
 
@@ -42704,15 +42733,19 @@ The guard stores only normalized login keys and failure timestamps in memory.
 It does not persist or inspect password material. A successful login clears
 the bucket for the normalized key.
 
-- **__init__**(\*, max_failed_attempts, failure_window_seconds, cooldown_seconds, clock)
-- **check**(username)
+- **__init__**(\*, max_failed_attempts, failure_window_seconds, cooldown_seconds, clock, max_buckets)
+- **attempt**(username, \*, client_id)
+  - Reserve an attempt before verification, bounded per username and direct client.
+- **check**(username, \*, client_id)
   - Return whether a browser-login attempt may proceed.
-- **record_failure**(username)
+- **record_failure**(username, \*, client_id)
   - Record a failed browser-login attempt and return the new state.
-- **record_success**(username)
+- **record_success**(username, \*, client_id)
   - Clear the failure bucket after a successful browser login.
 - **snapshot**()
   - Return aggregate lockout state without exposing login keys.
+- **clear_user**(username)
+  - Clear failure state for every client after an administrator rotates a password.
 
 ---
 
@@ -42973,7 +43006,7 @@ Parameters
 ----------
 name:
     Deployment package name. ``local`` targets single-operator loopback
-    use, ``lab`` targets private LAN or VPN-hosted research workstations,
+    use, ``lab`` targets an authenticated single-operator loopback service,
     and ``server`` targets reverse-proxied service deployment.
 
 Returns
@@ -43375,6 +43408,30 @@ ValueError
 
 ---
 
+## Module `studio.platform.identity_io`
+
+### Function `private_identity_path(path)`
+Resolve the parent and refuse a writable parent or a symbolic-link store.
+
+POSIX stores must belong to the running account in a directory it owns
+which group and other accounts cannot write. Windows uses its filesystem
+ACLs. Parent aliases resolve to the same store and writer-lock location.
+
+### Function `read_identity_text(path)`
+Read one no-follow descriptor after checking its owner and permissions.
+
+Owner-readable copies retain the existing migration behaviour: permissions
+are narrowed on the opened descriptor and a warning records that action.
+No subsequent path open can substitute a different file for the checked one.
+
+### Function `identity_store_mutation(path)`
+Hold a stable path-based writer lock across load, validation and replacement.
+
+The lock survives atomic replacements of the JSON file and is shared by
+every CLI and API mutation on this host. Its bounded wait is ten seconds.
+
+---
+
 ## Module `studio.platform.identity_passwords`
 
 ### Function `make_browser_user_password_verifier(password)`
@@ -43390,8 +43447,24 @@ Returns
 str
     Encoded verifier containing algorithm, iteration count, salt, and hash.
 
-### Function `verify_browser_user_password(password, encoded_verifier)`
-Verify a raw browser-user password against an encoded verifier.
+### Function `verify_browser_user_password(password, encoded_verifier, *, minimum_iterations)`
+Verify a stored digest while completing the caller's PBKDF2 work floor.
+
+Parameters
+----------
+password:
+    Supplied password, including a legacy password awaiting rotation.
+encoded_verifier:
+    Stored algorithm, iteration count, salt and expected digest.
+minimum_iterations:
+    Total hash work required for this attempt. Extra iterations do not
+    change the legacy digest or its password acceptance. Zero preserves
+    the stored cost for standalone verifier callers.
+
+Returns
+-------
+bool
+    Whether the supplied password matches a valid stored verifier.
 
 ---
 
@@ -44816,6 +44889,8 @@ Runtime settings consumed by the Studio FastAPI application.
 
 - **__post_init__**()
   - Validate settings that affect Studio security boundaries.
+- **validate_bind_host**(host)
+  - Refuse a non-loopback listener without production identity settings.
 
 ### Function `build_default_studio_runtime_settings(env)`
 Build Studio runtime settings from environment-style values.

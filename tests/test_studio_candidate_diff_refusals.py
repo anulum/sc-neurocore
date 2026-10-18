@@ -35,7 +35,10 @@ def test_corrupt_parent_resource_remains_a_generic_server_failure(
     monkeypatch.setenv("SC_NEUROCORE_STUDIO_JOB_ROOT", str(tmp_path / "jobs"))
     monkeypatch.setenv("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH", str(tmp_path / "audit.jsonl"))
     with TestClient(
-        create_app(), base_url="http://127.0.0.1", raise_server_exceptions=False
+        create_app(),
+        base_url="http://127.0.0.1",
+        raise_server_exceptions=False,
+        headers={"sec-fetch-site": "none"},
     ) as client:
         response = client.post(f"/api/candidates/{route}", json={"candidate": document})
     assert response.status_code == 500

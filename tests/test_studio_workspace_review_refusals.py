@@ -34,7 +34,9 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[tuple
     """Save two real revisions through the app in an isolated project directory."""
     root = tmp_path / "projects"
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(root))
-    with TestClient(create_app(), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         for revision, state in enumerate([STATE, {**STATE, "selectedModelName": "LIFNeuron"}]):
             response = client.post(
                 "/api/project/save",

@@ -46,15 +46,21 @@ def _markdown(notebook: dict[str, Any]) -> str:
 
 @pytest.fixture(scope="module")
 def notebook() -> dict[str, Any]:
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    """Export a real model replay notebook through the Studio API."""
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     response = client.post("/api/export/replay-notebook", json=MODEL_REQUEST)
     assert response.status_code == 200, response.text
-    return response.json()
+    document = response.json()
+    assert isinstance(document, dict)
+    return document
 
 
 def test_the_notebook_cites_the_model_and_says_what_it_does_not_establish(
     notebook: dict[str, Any],
 ) -> None:
+    """Retain model provenance and the declared limits of notebook evidence."""
     assert notebook["nbformat"] == NOTEBOOK_FORMAT
     assert notebook["metadata"]["kernelspec"]["language"] == "python"
     assert [cell["cell_type"] for cell in notebook["cells"]] == [
@@ -74,6 +80,7 @@ def test_the_notebook_cites_the_model_and_says_what_it_does_not_establish(
 def test_the_notebook_replays_in_a_fresh_process_without_the_authors_files(
     notebook: dict[str, Any], tmp_path: Path
 ) -> None:
+    """Replay the generated notebook in a separate process and working directory."""
     script = tmp_path / "notebook.py"
     script.write_text(_code(notebook), encoding="utf-8")
     run = subprocess.run(
@@ -90,6 +97,7 @@ def test_the_notebook_replays_in_a_fresh_process_without_the_authors_files(
 
 
 def test_an_equation_experiment_says_it_has_no_published_source() -> None:
+    """State that an authored equation experiment has no attached published source."""
     pack = build_replay_pack(
         {
             "mode": "ode",
@@ -114,12 +122,14 @@ def test_an_equation_experiment_says_it_has_no_published_source() -> None:
 def test_a_model_without_a_citeable_descriptor_is_named_as_such(
     class_name: str, phrase: str
 ) -> None:
+    """Explain the absence of a citeable model descriptor in the exported notebook."""
     pack = build_replay_pack(MODEL_REQUEST)
     pack["experiment"]["model"]["class_name"] = class_name
     assert phrase in _markdown(notebook_from_pack(pack))
 
 
 def test_a_cited_paper_title_is_carried_when_the_descriptor_has_one() -> None:
+    """Carry the available source-paper title into notebook provenance."""
     from sc_neurocore.neurons.model_catalogue import load_descriptor
 
     descriptor = load_descriptor("AdaptiveThresholdIFNeuron")

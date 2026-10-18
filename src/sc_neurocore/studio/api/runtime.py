@@ -18,7 +18,6 @@ from typing import Any, cast
 from fastapi import FastAPI, HTTPException
 
 from sc_neurocore.studio.api.analysis_guards import _analysis_budget_from_settings
-from sc_neurocore.studio.platform.api_process_lock import hold_identity_store
 from sc_neurocore.studio.platform import (
     AnalysisBudget,
     AuditSink,
@@ -38,12 +37,12 @@ from sc_neurocore.studio.platform import (
     build_default_studio_runtime_settings,
     load_studio_identity_store,
 )
-from sc_neurocore.studio.synthesis import EdaProcessLimits
+from sc_neurocore.studio.platform.api_process_lock import hold_identity_store
 from sc_neurocore.studio.platform.storage_isolated_runtime import build_isolated_job_manager
 from sc_neurocore.studio.platform.storage_mode import require_available_storage
 from sc_neurocore.studio.platform.storage_preflight import require_isolated_preflight
 from sc_neurocore.studio.platform.studio_job_service import StudioJobService
-
+from sc_neurocore.studio.synthesis import EdaProcessLimits
 
 DEFAULT_STUDIO_JOB_KINDS = frozenset(
     {"analysis", "compiler", "evidence", "model_scan", "synthesis", "training"}
@@ -175,6 +174,7 @@ def build_studio_api_context(
         max_failed_attempts=settings.browser_login_max_failures,
         failure_window_seconds=settings.browser_login_failure_window_seconds,
         cooldown_seconds=settings.browser_login_cooldown_seconds,
+        max_buckets=settings.browser_login_max_buckets,
     )
     # A configured root is durable: its ledger outlives the process, and
     # recovery reconciles what a departed supervisor left behind. An

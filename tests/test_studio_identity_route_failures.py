@@ -20,6 +20,7 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.api import identity
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import (
+    AuditEvent,
     AuditSinkError,
     JsonlAuditSink,
     StudioIdentityLifecycleError,
@@ -27,10 +28,11 @@ from sc_neurocore.studio.platform import (
     make_browser_user_password_verifier,
 )
 
+_RECORD_AUDIT_EVENT = JsonlAuditSink.record
+
 
 def _write_identity_store(path: Path) -> None:
     """Write one valid service account and browser administrator."""
-
     path.write_text(
         json.dumps(
             {
@@ -67,8 +69,7 @@ def _configured_client(
     *,
     browser_login_max_failures: int = 5,
 ) -> TestClient:
-    """Return a policy-disabled client with a valid persistent identity store."""
-
+    """Return an authenticated client with a valid persistent identity store."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_store(identity_path)
     application = create_app(
@@ -77,17 +78,21 @@ def _configured_client(
             browser_login_cooldown_seconds=60.0,
             browser_login_failure_window_seconds=300.0,
             browser_login_max_failures=browser_login_max_failures,
-            enforce_route_policies=False,
+            enforce_route_policies=True,
+            allow_header_principal=False,
             identity_file_path=str(identity_path),
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    return TestClient(application, base_url="http://127.0.0.1")
+    return TestClient(
+        application,
+        base_url="http://127.0.0.1",
+        headers={"Authorization": "Bearer admin-token", "sec-fetch-site": "none"},
+    )
 
 
 def _unconfigured_client(tmp_path: Path) -> TestClient:
     """Return a client without a persistent identity store."""
-
     application = create_app(
         StudioRuntimeSettings(
             audit_log_path=str(tmp_path / "audit" / "studio.jsonl"),
@@ -96,19 +101,19 @@ def _unconfigured_client(tmp_path: Path) -> TestClient:
             job_root_path=str(tmp_path / "jobs"),
         )
     )
-    return TestClient(application, base_url="http://127.0.0.1")
+    return TestClient(application, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
-def _raise_audit_error(self: JsonlAuditSink, event: object) -> None:
-    """Raise a redaction sentinel instead of appending an audit row."""
-
-    del self, event
+def _raise_audit_error(self: JsonlAuditSink, event: AuditEvent) -> None:
+    """Fail the route's outcome append after its real authorization audit."""
+    if event.reason == "authorized":
+        _RECORD_AUDIT_EVENT(self, event)
+        return
     raise AuditSinkError("private/audit/path")
 
 
 def test_login_requires_an_identity_store(tmp_path: Path) -> None:
     """Browser login fails closed when persistent identities are unavailable."""
-
     response = _unconfigured_client(tmp_path).post(
         "/api/studio/auth/login",
         json={"username": "operator", "password": "operator-password"},
@@ -132,7 +137,6 @@ def test_login_audit_failure_fails_closed(
     expected_stage: str,
 ) -> None:
     """Both denied and successful authentication require durable audit evidence."""
-
     client = _configured_client(tmp_path)
     monkeypatch.setattr(JsonlAuditSink, "record", _raise_audit_error)
     response = client.post("/api/studio/auth/login", json=credentials)
@@ -147,7 +151,6 @@ def test_throttled_login_audit_failure_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A pre-throttled denial is not returned without its audit record."""
-
     client = _configured_client(tmp_path, browser_login_max_failures=1)
     priming = client.post(
         "/api/studio/auth/login",
@@ -170,7 +173,6 @@ def test_logout_audit_failure_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Session revocation requires durable audit evidence."""
-
     client = _configured_client(tmp_path)
     monkeypatch.setattr(JsonlAuditSink, "record", _raise_audit_error)
     response = client.post("/api/studio/auth/logout")
@@ -254,7 +256,6 @@ def test_identity_admin_routes_require_a_store(
     payload: dict[str, object] | None,
 ) -> None:
     """Every identity administration route fails closed without a store."""
-
     response = _unconfigured_client(tmp_path).request(method, route, json=payload)
 
     assert response.status_code == 409
@@ -280,7 +281,6 @@ def test_identity_record_lookup_returns_stable_not_found(
     expected_detail: str,
 ) -> None:
     """Unknown public record lookups return type-specific errors."""
-
     response = _configured_client(tmp_path).get(route)
 
     assert response.status_code == 404
@@ -289,7 +289,6 @@ def test_identity_record_lookup_returns_stable_not_found(
 
 def test_service_account_lookup_returns_public_record(tmp_path: Path) -> None:
     """A service-account lookup returns its token-free public projection."""
-
     response = _configured_client(tmp_path).get("/api/studio/identity/service-accounts/svc-admin")
 
     assert response.status_code == 200
@@ -428,7 +427,6 @@ def test_identity_mutation_audit_failure_fails_closed(
     payload: dict[str, object],
 ) -> None:
     """A successful identity mutation is not acknowledged without audit evidence."""
-
     client = _configured_client(tmp_path)
     monkeypatch.setattr(JsonlAuditSink, "record", _raise_audit_error)
     response = client.request(method, route, json=payload)

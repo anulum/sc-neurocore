@@ -103,9 +103,9 @@ def test_http_stream_keeps_an_empty_terminal_event_without_inventing_an_error(
         assert end == len(raw) and raw
         persisted = json.loads(raw)
         assert persisted == {"event": "stopped", "data": {}, "timestamp": 1.0}
-        response = TestClient(app, base_url="http://127.0.0.1").get(
-            f"/api/training/stream/{job.job_id}"
-        )
+        response = TestClient(
+            app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ).get(f"/api/training/stream/{job.job_id}")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/event-stream")
         frames = [frame for frame in response.text.split("\n\n") if frame.strip()]
@@ -146,9 +146,9 @@ def test_http_stream_replays_real_failure_without_exposing_diagnostics(
         assert outcome.error is not None
         if failure == "os-error":
             assert str(tmp_path) in outcome.error
-        response = TestClient(app, base_url="http://127.0.0.1").get(
-            f"/api/training/stream/{record.job_id}"
-        )
+        response = TestClient(
+            app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ).get(f"/api/training/stream/{record.job_id}")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/event-stream")
         frames = [frame for frame in response.text.split("\n\n") if frame.strip()]

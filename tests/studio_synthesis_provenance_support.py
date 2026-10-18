@@ -6,26 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_studio_synthesis_provenance.py
 
-from __future__ import annotations
-
 """Tests for Studio synthesis target provenance contracts."""
 
+from __future__ import annotations
+
+
 import hashlib
-
 import json
-
 import re
-
 from typing import cast
 
 import pytest
-
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-
 from sc_neurocore.studio.synthesis import run_synthesis
-
 from sc_neurocore.studio.synthesis_provenance import (
     STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
     STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION,
@@ -41,13 +36,11 @@ from sc_neurocore.studio.synthesis_provenance import (
 @pytest.fixture
 def client() -> TestClient:
     """Return a Studio test client."""
-
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _tool_status() -> ToolStatusMap:
     """Return deterministic path-free EDA tool status."""
-
     return cast(
         ToolStatusMap,
         {

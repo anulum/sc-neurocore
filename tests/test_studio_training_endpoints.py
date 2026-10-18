@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.studio_training_support import *  # noqa: F403
-from sc_neurocore.studio.training_contract import resolve_training_config
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.studio.training_contract import resolve_training_config
+from tests.studio_training_support import *  # noqa: F403
 
 
 class TestTrainingEndpoints:
+    """Training job creation, cancellation, status and platform registration."""
+
     def test_start_endpoint(self, client: TestClient) -> None:
+        """Return a registered job identifier when training starts."""
         r = client.post(
             "/api/training/start",
             json={"epochs": 1, "dataset": "synthetic", "batch_size": 32},
@@ -27,10 +30,12 @@ class TestTrainingEndpoints:
         assert data["job_id"].startswith("sj_")
 
     def test_stop_endpoint_requires_job_id(self, client: TestClient) -> None:
+        """Require a job identifier before attempting cancellation."""
         r = client.post("/api/training/stop", json={})
         assert r.status_code == 422
 
     def test_stop_endpoint(self, client: TestClient) -> None:
+        """Accept cancellation of an existing training job."""
         start = client.post(
             "/api/training/start",
             json={"epochs": 50, "dataset": "synthetic"},
@@ -81,10 +86,12 @@ class TestTrainingEndpoints:
         assert manager.wait(submitted.job_id, timeout_seconds=5.0).status == "completed"
         restarted_app = create_app(settings)
 
-        response = TestClient(restarted_app, base_url="http://127.0.0.1").post(
-            "/api/training/stop", json={"job_id": submitted.job_id}
-        )
-        listed = TestClient(restarted_app, base_url="http://127.0.0.1").get("/api/training/jobs")
+        response = TestClient(
+            restarted_app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ).post("/api/training/stop", json={"job_id": submitted.job_id})
+        listed = TestClient(
+            restarted_app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ).get("/api/training/jobs")
 
         assert response.status_code == 200
         assert response.json() == {"job_id": submitted.job_id, "status": "completed"}
@@ -108,7 +115,9 @@ class TestTrainingEndpoints:
             kind="training", owner="studio-training", request_id=None, task=cancelled
         )
         assert manager.wait(submitted.job_id, timeout_seconds=5.0).status == "cancelled"
-        restarted = TestClient(create_app(settings), base_url="http://127.0.0.1")
+        restarted = TestClient(
+            create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        )
 
         response = restarted.post("/api/training/stop", json={"job_id": submitted.job_id})
 
@@ -133,7 +142,7 @@ class TestTrainingEndpoints:
         ).record
         ledger.transition(created.job_id, "unknown", reason="worker liveness uncertain")
         ledger.close()
-        client = TestClient(app, base_url="http://127.0.0.1")
+        client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
         response = client.post("/api/training/stop", json={"job_id": created.job_id})
 
@@ -142,6 +151,7 @@ class TestTrainingEndpoints:
         assert client.get(f"/api/training/status/{created.job_id}").json()["status"] == "unknown"
 
     def test_status_endpoint(self, client: TestClient) -> None:
+        """Return the current status of an existing training job."""
         start = client.post(
             "/api/training/start",
             json={"epochs": 1, "dataset": "synthetic"},
@@ -153,6 +163,7 @@ class TestTrainingEndpoints:
         assert data["job_id"] == job_id
 
     def test_status_nonexistent(self, client: TestClient) -> None:
+        """Report an absent training job through the status route."""
         r = client.get("/api/training/status/nonexistent")
         assert r.status_code == 404
 
@@ -176,7 +187,7 @@ class TestTrainingEndpoints:
         ledger.transition(created.job_id, "interrupted", reason="supervisor exited")
         ledger.close()
         app = create_app(StudioRuntimeSettings(job_root_path=str(root)))
-        restarted = TestClient(app, base_url="http://127.0.0.1")
+        restarted = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
         status = restarted.get(f"/api/training/status/{created.job_id}")
         listed = restarted.get("/api/training/jobs")
@@ -189,18 +200,20 @@ class TestTrainingEndpoints:
         ]
 
     def test_jobs_endpoint(self, client: TestClient) -> None:
+        """Return the training-job collection through the jobs route."""
         r = client.get("/api/training/jobs")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
 
     def test_training_endpoint_registers_platform_job(self, tmp_path: Path) -> None:
+        """Persist the training job in the configured platform job store."""
         job_root = tmp_path / "jobs"
         settings = StudioRuntimeSettings(
             job_root_path=str(job_root),
             job_default_timeout_seconds=10.0,
         )
         app = create_app(settings)
-        client = TestClient(app, base_url="http://127.0.0.1")
+        client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
         r = client.post(
             "/api/training/start",
             json={"epochs": 1, "dataset": "synthetic", "batch_size": 32},
@@ -216,9 +229,9 @@ class TestTrainingEndpoints:
             {"epochs": 1, "dataset": "synthetic", "batch_size": 32}
         ).to_public_dict()
         assert manager.record(job_id).training_config == expected
-        restarted = TestClient(create_app(settings), base_url="http://127.0.0.1").get(
-            "/api/training/jobs"
-        )
+        restarted = TestClient(
+            create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ).get("/api/training/jobs")
         assert restarted.status_code == 200
         assert any(
             row["job_id"] == job_id and row["config"] == expected for row in restarted.json()

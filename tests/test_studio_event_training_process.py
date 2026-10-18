@@ -10,8 +10,8 @@
 
 from __future__ import annotations
 
-import json
 import io
+import json
 import os
 import time
 from collections.abc import Iterator
@@ -28,8 +28,8 @@ from sc_neurocore.datasets.encoders import EventBinning
 from sc_neurocore.datasets.manifest import build_manifest
 from sc_neurocore.datasets.splits import group_split
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.event_training_contract import EventTrainingContract
 from sc_neurocore.studio.event_training_budget import admit_event_training_input
+from sc_neurocore.studio.event_training_contract import EventTrainingContract
 from sc_neurocore.studio.event_training_data import DATASET_ROOT_ENV
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 from tests.event_dataset_support import write_shd
@@ -56,7 +56,9 @@ def experiment(tmp_path: Path) -> Iterator[tuple[TestClient, EventTrainingContra
         )
     )
     try:
-        with TestClient(app, base_url="http://127.0.0.1") as client:
+        with TestClient(
+            app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ) as client:
             yield client, contract
     finally:
         if previous is None:

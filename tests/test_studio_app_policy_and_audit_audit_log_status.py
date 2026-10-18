@@ -6,12 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (audit_log_status) from former test_studio_app_policy_and_audit.py
 
+"""Verify persistent audit status and rotation through the actual Studio API."""
+
 from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
 
 def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path) -> None:
+    """Persist the refused simulation decision in the configured audit log."""
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
@@ -19,7 +22,7 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
             enforce_route_policies=True,
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post("/api/simulate", json={})
 
@@ -37,9 +40,10 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
 
 
 def test_studio_app_exposes_safe_audit_status(tmp_path: Path) -> None:
+    """Report audit readiness and integrity without exposing its storage path."""
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(runtime_settings=StudioRuntimeSettings(audit_log_path=str(audit_path)))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get("/api/studio/audit/status")
 
@@ -61,8 +65,9 @@ def test_studio_app_exposes_safe_audit_status(tmp_path: Path) -> None:
 
 
 def test_studio_app_exposes_unhealthy_audit_location_without_path(tmp_path: Path) -> None:
+    """Report an unusable audit destination without returning the local path."""
     app = create_app(runtime_settings=StudioRuntimeSettings(audit_log_path=str(tmp_path)))
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.get("/api/studio/audit/status")
 
@@ -74,13 +79,14 @@ def test_studio_app_exposes_unhealthy_audit_location_without_path(tmp_path: Path
 
 
 def test_studio_app_fails_closed_when_policy_audit_append_fails(tmp_path: Path) -> None:
+    """Refuse request handling when its authorization decision cannot be audited."""
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
             audit_log_path=str(tmp_path),
             enforce_route_policies=True,
         )
     )
-    client = TestClient(app, base_url="http://127.0.0.1")
+    client = TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
     response = client.post(
         "/api/simulate",

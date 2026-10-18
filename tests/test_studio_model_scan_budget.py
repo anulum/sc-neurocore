@@ -10,18 +10,18 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
-import time
 
 import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.api import catalogue as catalogue_routes
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform import StudioRuntimeSettings
 from sc_neurocore.studio.models import list_models
+from sc_neurocore.studio.platform import StudioRuntimeSettings
 from sc_neurocore.studio.platform.jobs_manager import StudioJobManager
 
 
@@ -37,7 +37,7 @@ def model_scan_client(tmp_path: Path, request: pytest.FixtureRequest) -> Iterato
             job_root_path=str(tmp_path),
         )
     )
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         try:
             yield client
         finally:
@@ -137,6 +137,7 @@ def test_model_scan_rejected_over_catalogue_budget_before_scan_runs(
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_simulations=2)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
     response = client.get("/api/models/scan")
@@ -195,6 +196,7 @@ def test_model_scan_within_catalogue_budget_runs_scan(
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_simulations=1)),
         base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
     response = client.get("/api/models/scan")

@@ -155,7 +155,7 @@ def test_evidence_policy_denial_creates_no_export_job(tmp_path: Path) -> None:
             audit_log_path=str(tmp_path / "audit.jsonl"),
         )
     )
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         manager = cast(StudioJobManager, app.state.studio_job_manager)
         response = client.post(
             "/api/studio/evidence/bundle",

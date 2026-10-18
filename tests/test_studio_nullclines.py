@@ -56,7 +56,8 @@ def test_parser_and_symbol_faults_have_authored_http_reasons(
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    """Provide the actual Studio API for nullcline domain and metric contracts."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_analytic_control_harmonic_oscillator_nullclines_are_the_axes() -> None:
@@ -103,6 +104,7 @@ def test_singular_field_reports_invalid_samples_instead_of_zero_contours() -> No
 
 
 def test_partial_domain_from_log_and_sqrt_is_masked_per_component() -> None:
+    """Keep separate validity masks for component-specific log and square-root domains."""
     result = nullclines_2d(
         ["dv/dt = log(w) - v", "dw/dt = sqrt(w) - 1"],
         {},
@@ -123,6 +125,7 @@ def test_partial_domain_from_log_and_sqrt_is_masked_per_component() -> None:
 
 
 def test_overflow_and_non_finite_samples_are_invalid_not_zero() -> None:
+    """Mark overflowing samples invalid instead of replacing them with zero."""
     result = nullclines_2d(
         ["dv/dt = exp(v) - w", "dw/dt = v * 0"],
         {},
@@ -139,6 +142,7 @@ def test_overflow_and_non_finite_samples_are_invalid_not_zero() -> None:
 
 
 def test_empty_domain_is_reported_when_no_sample_is_valid() -> None:
+    """Report an empty domain when no nullcline sample is admissible."""
     result = nullclines_2d(
         ["dv/dt = log(w)", "dw/dt = v"], {}, ["v", "w"], {"v": (-1.0, 1.0), "w": (-3.0, -1.0)}, 20
     )
@@ -149,6 +153,7 @@ def test_empty_domain_is_reported_when_no_sample_is_valid() -> None:
 
 
 def test_held_variables_and_input_current_are_stated_and_used() -> None:
+    """Retain the held state and supplied current in the evaluated field."""
     result = nullclines_2d(
         ["dv/dt = -(v - E) + I * u", "dw/dt = a * (v - w)", "du/dt = -u"],
         {"E": -65.0, "a": 0.1},
@@ -174,6 +179,7 @@ def test_held_variables_and_input_current_are_stated_and_used() -> None:
 
 
 def test_stochastic_drift_field_evaluates_xi_at_zero() -> None:
+    """State and use the zero-noise drift field for stochastic equations."""
     result = nullclines_2d(
         ["dv/dt = w + xi", "dw/dt = -v"], {}, ["v", "w"], {"v": (-1.0, 1.0), "w": (-1.0, 1.0)}, 11
     )
@@ -196,6 +202,7 @@ def test_stochastic_drift_field_evaluates_xi_at_zero() -> None:
     ],
 )
 def test_invalid_requests_name_their_field(kwargs: dict[str, object], field: str) -> None:
+    """Locate an invalid nullcline request by its declared input field."""
     request: dict[str, object] = {
         "equations": ["dv/dt = w", "dw/dt = -v"],
         "params": {},
@@ -210,6 +217,7 @@ def test_invalid_requests_name_their_field(kwargs: dict[str, object], field: str
 
 
 def test_nullcline_route_carries_domain_in_the_manifest(client: TestClient) -> None:
+    """Carry the evaluated domain and its analysis metadata through HTTP."""
     response = client.post(
         "/api/nullclines",
         json={

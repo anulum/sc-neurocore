@@ -68,6 +68,10 @@ export default defineConfig({
   webServer: [
     {
       command: `python e2e/event_training_server.py --port ${apiPort}`,
+      env: {
+        SC_NEUROCORE_STUDIO_CORS_ORIGINS: [apiOrigin, uiOrigin].join(","),
+        SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS: [apiOrigin, uiOrigin].join(","),
+      },
       reuseExistingServer: false,
       timeout: 120_000,
       url: `${apiOrigin}/api/health`,

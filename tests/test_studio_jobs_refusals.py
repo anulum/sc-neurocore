@@ -61,7 +61,9 @@ def test_catalogue_job_http_preserves_real_queue_refusal(tmp_path: Path) -> None
                 assert time.monotonic() < deadline, "Concurrent submissions did not fill the queue"
                 time.sleep(0.01)
             before = manager.status().admission
-            with TestClient(app, base_url="http://127.0.0.1") as client:
+            with TestClient(
+                app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+            ) as client:
                 response = client.post("/api/models/scan/jobs")
             assert response.status_code == 422
             assert response.json()["detail"] == (
@@ -114,7 +116,7 @@ def test_filesystem_failure_is_private_across_http_and_restart(tmp_path: Path, k
     assert record.status == "failed"
     assert record.error is not None and str(root) in record.error
     assert record.public_error == GENERIC_JOB_FAILURE
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         detail = client.get("/api/studio/jobs/" + job.job_id)
         listing = client.get("/api/studio/jobs")
         if kind == "training":
@@ -157,7 +159,7 @@ def test_authored_artifact_limit_survives_job_and_http(tmp_path: Path) -> None:
     message = "Studio job artifact exceeds configured size limit."
     assert record.status == "failed"
     assert record.error == record.public_error == message
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         response = client.get("/api/studio/jobs/" + job.job_id)
     assert response.status_code == 200 and response.json()["error"] == message
     manager._ledger.close()
@@ -245,7 +247,12 @@ def test_nonfinite_thread_result_keeps_http_record_readable(tmp_path: Path, valu
     try:
         submitted = manager.submit(kind="analysis", owner="operator", request_id=None, task=task)
         record = manager.wait(submitted.job_id, 5.0)
-        with TestClient(app, base_url="http://127.0.0.1", raise_server_exceptions=False) as client:
+        with TestClient(
+            app,
+            base_url="http://127.0.0.1",
+            raise_server_exceptions=False,
+            headers={"sec-fetch-site": "none"},
+        ) as client:
             response = client.get("/api/studio/jobs/" + submitted.job_id)
         assert response.status_code == 200
         assert record.status == "failed" and record.public_error == GENERIC_JOB_FAILURE
@@ -314,7 +321,9 @@ def test_context_refusal_reaches_http_without_consuming_invalid_input(
     try:
         submitted = manager.submit(kind="analysis", owner="operator", request_id=None, task=task)
         record = manager.wait(submitted.job_id, 5.0)
-        with TestClient(app, base_url="http://127.0.0.1") as client:
+        with TestClient(
+            app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        ) as client:
             response = client.get("/api/studio/jobs/" + submitted.job_id)
         assert record.status == "failed" and record.public_error == expected
         assert response.status_code == 200 and response.json()["error"] == expected

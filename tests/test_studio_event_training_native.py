@@ -28,10 +28,10 @@ from sc_neurocore.studio.event_training_contract import EventTrainingContract
 from sc_neurocore.studio.event_training_data import DATASET_ROOT_ENV
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 from tests.event_dataset_support import write_nmnist
-from tests.test_accel_event_recordings import native_recording_library as native_recording_library
 from tests.test_accel_event_recordings import go_recording_library as go_recording_library
-from tests.test_accel_event_recordings import rust_recording_library as rust_recording_library
 from tests.test_accel_event_recordings import mojo_recording_library as mojo_recording_library
+from tests.test_accel_event_recordings import native_recording_library as native_recording_library
+from tests.test_accel_event_recordings import rust_recording_library as rust_recording_library
 
 
 def _train(client: TestClient, config: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -90,7 +90,7 @@ def test_native_child_matches_numpy_saved_state_and_refuses_missing_library(
         "event_data": contract.to_dict(),
     }
     state_files: list[Path] = []
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         for native in (True, False):
             if native:
                 monkeypatch.setenv(library_variable, str(library))

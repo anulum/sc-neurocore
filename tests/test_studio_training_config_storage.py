@@ -10,31 +10,30 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
+import sqlite3
 import subprocess
 import sys
-import sqlite3
-
-from starlette.testclient import TestClient
 from pathlib import Path
 
 import pytest
+from starlette.testclient import TestClient
 
 from sc_neurocore.datasets.encoders import EventBinning
 from sc_neurocore.datasets.manifest import build_manifest
 from sc_neurocore.datasets.splits import group_split
+from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.event_training_contract import EventTrainingContract
 from sc_neurocore.studio.event_training_data import DATASET_ROOT_ENV
-from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioRuntimeSettings
-from tests.test_studio_event_training_native import _train
-from tests.test_studio_event_training_process import _wait_terminal
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
-from sc_neurocore.studio.platform.jobs_ledger_schema import LEDGER_FILENAME, SCHEMA_V1
 from sc_neurocore.studio.platform.jobs_ledger_rows import StudioJobLedgerCorrupt
+from sc_neurocore.studio.platform.jobs_ledger_schema import LEDGER_FILENAME, SCHEMA_V1
 from sc_neurocore.studio.training_contract import resolve_training_config
 from tests.event_dataset_support import write_shd
+from tests.test_studio_event_training_native import _train
+from tests.test_studio_event_training_process import _wait_terminal
 
 
 def _configuration(root: Path, count: int = 120) -> dict[str, object]:
@@ -173,13 +172,17 @@ def test_large_event_checkpoint_resumes_after_application_reopen(
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"), job_default_timeout_seconds=60
     )
-    with TestClient(create_app(settings), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         job_id, status = _train(client, config)
         assert status["status"] == "completed", status
         response = client.get(f"/api/training/checkpoint/{job_id}")
         assert response.status_code == 200, response.text
         assert response.json()["config"]["event_data"] == config["event_data"]
-    with TestClient(create_app(settings), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         response = client.get(f"/api/training/checkpoint/{job_id}")
         assert response.status_code == 200, response.text
         assert response.json()["config"]["event_data"] == config["event_data"]

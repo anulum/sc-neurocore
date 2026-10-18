@@ -62,7 +62,9 @@ def checkpoint(tmp_path_factory: pytest.TempPathFactory) -> Checkpoint:
         audit_log_path=str(root / "audit.jsonl"),
         job_default_timeout_seconds=60.0,
     )
-    with TestClient(create_app(settings), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         manager = cast(FastAPI, client.app).state.studio_job_manager
         assert isinstance(manager, StudioJobManager)
         started = client.post("/api/training/start", json=_CONFIG)

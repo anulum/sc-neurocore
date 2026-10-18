@@ -60,7 +60,9 @@ def experiment(tmp_path: Path) -> Iterator[tuple[TestClient, dict[str, object]]]
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"), audit_log_path=str(tmp_path / "audit.jsonl")
     )
-    with TestClient(create_app(settings), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         yield client, _object(contract.to_dict())
 
 

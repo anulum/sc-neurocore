@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import TypedDict
 
 import pytest
 import yaml
@@ -26,7 +27,22 @@ from sc_neurocore.hub import (
 )
 
 
+class _HubBundleOptions(TypedDict, total=False):
+    """Retain the declared constructor types in invalid-value configuration cases."""
+
+    bind_host: str
+    studio_port: int
+    image: str
+    cache_dir: str
+    models_dir: str
+    compose_name: str
+    offline: bool
+    dependency_mirror_dirs: tuple[str, ...]
+    identity_file: str
+
+
 def test_model_zoo_index_lists_plugins_networks_and_weights() -> None:
+    """Include the declared plugins, network builders and pretrained weight entries."""
     index = build_model_zoo_index()
 
     assert index["schema_version"] == "sc-neurocore.model-zoo-index.v1"
@@ -49,6 +65,7 @@ def test_model_zoo_index_lists_plugins_networks_and_weights() -> None:
 
 
 def test_hub_manifest_is_offline_first_and_points_to_local_storage() -> None:
+    """Describe local service URLs, persistent storage and offline network settings."""
     manifest = build_hub_manifest(HubBundleConfig(studio_port=8123, offline=True))
 
     assert manifest["schema_version"] == "sc-neurocore.self-hosted-hub.v1"
@@ -66,6 +83,7 @@ def test_hub_manifest_is_offline_first_and_points_to_local_storage() -> None:
         "models": "models",
         "dependency_mirrors": ["mirrors/wheelhouse", "mirrors/huggingface"],
         "benchmark_results": "benchmarks/results",
+        "studio_state": "state",
     }
     assert manifest["network_policy"]["external_egress_required"] is False
     assert manifest["network_policy"]["ingress_scope"] == "loopback"
@@ -88,6 +106,7 @@ def test_hub_manifest_is_offline_first_and_points_to_local_storage() -> None:
 
 
 def test_hub_manifest_records_non_loopback_ingress_scope() -> None:
+    """Distinguish private-network ingress from the optional offline egress policy."""
     manifest = build_hub_manifest(HubBundleConfig(bind_host="10.10.0.5", offline=False))
 
     assert manifest["network_policy"]["ingress_scope"] == "private_network"
@@ -103,12 +122,27 @@ def test_hub_manifest_records_non_loopback_ingress_scope() -> None:
 
 
 def test_hub_manifest_records_all_interface_ingress_scope() -> None:
+    """Identify an explicitly selected all-interface host bind in the manifest."""
     manifest = build_hub_manifest(HubBundleConfig(bind_host="0.0.0.0"))
 
     assert manifest["network_policy"]["ingress_scope"] == "all_interfaces"
 
 
+@pytest.mark.parametrize(
+    ("profile", "identity_file"), [("development", "studio-identities.json"), ("production", None)]
+)
+def test_hub_refuses_unprotected_non_loopback_listener(
+    profile: str, identity_file: str | None
+) -> None:
+    """No bundle can pair its all-interface container listener with development defaults."""
+    with pytest.raises(ValueError, match="requires production settings and an identity store"):
+        HubBundleConfig(
+            bind_host="0.0.0.0", studio_deployment_profile=profile, identity_file=identity_file
+        )
+
+
 def test_benchmark_plan_is_opt_in() -> None:
+    """Keep benchmark execution behind its separate Compose activation profile."""
     plan = build_benchmark_plan(HubBundleConfig(benchmarks_dir="bench"))
 
     assert plan["runner"]["service"] == "benchmark-runner"
@@ -128,18 +162,21 @@ def test_benchmark_plan_is_opt_in() -> None:
         ({"bind_host": "127.0.0.1:8001"}, "bind_host must be"),
         ({"bind_host": "10.0.0.0/24"}, "bind_host must be"),
         ({"compose_name": "nested/docker-compose.yml"}, "compose_name must be a file name"),
+        ({"identity_file": "nested/identity.json"}, "identity_file must be a file name"),
         (
             {"offline": True, "dependency_mirror_dirs": ()},
             "offline mode requires at least one dependency_mirror_dirs entry",
         ),
     ],
 )
-def test_hub_bundle_config_rejects_invalid_values(kwargs: dict[str, object], message: str) -> None:
+def test_hub_bundle_config_rejects_invalid_values(kwargs: _HubBundleOptions, message: str) -> None:
+    """Refuse invalid bundle paths, ports and offline dependency-mirror settings."""
     with pytest.raises(ValueError, match=message):
         HubBundleConfig(**kwargs)
 
 
 def test_write_hub_bundle_creates_compose_manifests_and_directories(tmp_path: Path) -> None:
+    """Write a complete parseable bundle whose services use the declared storage."""
     paths = write_hub_bundle(
         tmp_path,
         HubBundleConfig(studio_port=9000, cache_dir="local-cache", benchmarks_dir="bench"),
@@ -173,6 +210,11 @@ def test_write_hub_bundle_creates_compose_manifests_and_directories(tmp_path: Pa
     assert "/api/health" in compose
     assert "neurocore-hub:" in compose
     compose_doc = yaml.safe_load(compose)
+    environment = compose_doc["services"]["studio"]["environment"]
+    assert environment["SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE"] == "production"
+    assert environment["SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES"] == "true"
+    assert environment["SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL"] == "false"
+    assert environment["SC_NEUROCORE_STUDIO_IDENTITY_FILE"].endswith("studio-identities.json")
     assert compose_doc["services"]["studio"]["healthcheck"]["test"][:3] == [
         "CMD",
         "python",
@@ -189,6 +231,7 @@ def test_write_hub_bundle_creates_compose_manifests_and_directories(tmp_path: Pa
 
 
 def test_ingress_scope_classifies_host_categories() -> None:
+    """Distinguish operator hostnames, loopback addresses and routable ingress."""
     from sc_neurocore.hub.bundle import _ingress_scope
 
     assert _ingress_scope("example.com") == "operator_selected_hostname"
@@ -196,16 +239,29 @@ def test_ingress_scope_classifies_host_categories() -> None:
     assert _ingress_scope("8.8.8.8") == "public_or_routable"
 
 
+def test_authentication_hosts_include_the_selected_bundle_bind(tmp_path: Path) -> None:
+    """Carry the operator's non-loopback bind into the authenticated service settings."""
+    paths = write_hub_bundle(tmp_path, HubBundleConfig(bind_host="10.10.0.5"))
+    compose = yaml.safe_load(paths["compose"].read_text())
+    settings = compose["services"]["studio"]["environment"]
+    assert "10.10.0.5" in settings["SC_NEUROCORE_STUDIO_ALLOWED_HOSTS"]
+    assert settings["SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE"] == "production"
+    assert settings["SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL"] == "false"
+
+
 def test_validate_bind_host_rejects_whitespace() -> None:
+    """Reject a host value containing whitespace before bundle generation."""
     from sc_neurocore.hub.bundle import _validate_bind_host
 
     with pytest.raises(ValueError, match="must not contain whitespace"):
         _validate_bind_host("bad host")
 
 
-def test_model_zoo_index_skips_unresolvable_plugin_names(monkeypatch) -> None:
+def test_model_zoo_index_skips_unresolvable_plugin_names(monkeypatch: pytest.MonkeyPatch) -> None:
     # A listed plugin name that fails to resolve is skipped rather than crashing
     # the index build.
+    """Omit listed plugin names which the registry cannot resolve."""
+
     class _GhostRegistry:
         @classmethod
         def with_builtins(cls) -> "_GhostRegistry":

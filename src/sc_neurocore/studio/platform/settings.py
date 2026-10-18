@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import math
 import os
 from collections.abc import Mapping
@@ -17,28 +18,32 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Literal
 
+from sc_neurocore.studio.benchmark_databank import (
+    DEFAULT_DATABANK_MAX_BYTES,
+    DEFAULT_DATABANK_MAX_RECORDS,
+)
 from sc_neurocore.studio.platform.analysis_limits import (
     DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS,
     DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION,
     DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS,
-)
-from sc_neurocore.studio.platform.jobs import (
-    DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES as DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
-)
-from sc_neurocore.studio.platform.storage_launcher_client_settings import (
-    LauncherClientSettings,
-    parse_launcher_client,
-)
-from sc_neurocore.studio.platform.storage_mode import StudioStorageMode, parse_storage_mode
-from sc_neurocore.studio.platform.storage_configuration import (
-    StorageBoundaryConfiguration,
-    parse_storage_boundary,
 )
 from sc_neurocore.studio.platform.evidence_limits import (
     DEFAULT_EVIDENCE_MAX_INPUT_BYTES,
     parse_evidence_input_limit,
     validate_evidence_input_limit,
 )
+from sc_neurocore.studio.platform.jobs import (
+    DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES as DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
+)
+from sc_neurocore.studio.platform.storage_configuration import (
+    StorageBoundaryConfiguration,
+    parse_storage_boundary,
+)
+from sc_neurocore.studio.platform.storage_launcher_client_settings import (
+    LauncherClientSettings,
+    parse_launcher_client,
+)
+from sc_neurocore.studio.platform.storage_mode import StudioStorageMode, parse_storage_mode
 
 StudioDeploymentProfile = Literal["development", "production"]
 
@@ -71,13 +76,18 @@ DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
         "x-content-type-options": "nosniff",
         "referrer-policy": "no-referrer",
         "x-frame-options": "DENY",
+        "content-security-policy": (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "worker-src 'self' blob:; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' "
+            "ws://127.0.0.1:* ws://localhost:*; object-src 'none'; "
+            "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+        ),
     }
 )
 
 
 def _default_studio_http_security_headers() -> Mapping[str, str]:
     """Return immutable default HTTP security headers for Studio responses."""
-
     return DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
 
 
@@ -94,6 +104,9 @@ class StudioRuntimeSettings:
     )
     request_id_header: str = "x-request-id"
     max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
+    benchmark_databank_path: str | None = None
+    benchmark_max_bytes: int = DEFAULT_DATABANK_MAX_BYTES
+    benchmark_max_records: int = DEFAULT_DATABANK_MAX_RECORDS
     enforce_route_policies: bool = False
     identity_file_path: str | None = None
     allow_header_principal: bool = True
@@ -110,6 +123,7 @@ class StudioRuntimeSettings:
     max_sync_analysis_simulations: int = DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS
     browser_session_ttl_seconds: float = DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS
     browser_login_max_failures: int = DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES
+    browser_login_max_buckets: int = 1024
     browser_login_failure_window_seconds: float = (
         DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS
     )
@@ -123,7 +137,6 @@ class StudioRuntimeSettings:
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
-
         if self.storage_mode not in ("embedded", "isolated"):
             raise ValueError("Studio storage mode must be embedded or isolated.")
         if self.storage_boundary is not None and self.storage_mode != "isolated":
@@ -160,10 +173,21 @@ class StudioRuntimeSettings:
             raise ValueError("Studio request ID header must not be empty.")
         if self.max_request_body_bytes <= 0:
             raise ValueError("Studio request body limit must be positive.")
+        if self.benchmark_max_bytes <= 0 or self.benchmark_max_records <= 0:
+            raise ValueError("Studio benchmark databank budgets must be positive.")
+        if self.benchmark_databank_path is not None and not self.benchmark_databank_path.strip():
+            raise ValueError("Studio benchmark databank path must not be empty.")
         if self.identity_file_path is not None and not self.identity_file_path.strip():
             raise ValueError("Studio identity file path must not be empty.")
         if not isinstance(self.allow_header_principal, bool):
             raise ValueError("Studio header principal fallback must be boolean.")
+        if self.identity_file_path is not None:
+            if not self.enforce_route_policies:
+                raise ValueError("Studio identity file requires route policy enforcement.")
+            if self.allow_header_principal:
+                raise ValueError(
+                    "Studio identity file requires header principal fallback disabled."
+                )
         if self.job_root_path is not None and not self.job_root_path.strip():
             raise ValueError("Studio job root path must not be empty.")
         if (
@@ -188,6 +212,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio browser session TTL must be positive.")
         if self.browser_login_max_failures <= 0:
             raise ValueError("Studio browser login max failures must be positive.")
+        if self.browser_login_max_buckets <= 0:
+            raise ValueError("Studio browser login bucket cap must be positive.")
         if self.browser_login_failure_window_seconds <= 0:
             raise ValueError("Studio browser login failure window must be positive.")
         if self.browser_login_cooldown_seconds <= 0:
@@ -203,7 +229,6 @@ class StudioRuntimeSettings:
 
     def _validate_production_profile(self) -> None:
         """Validate fail-closed settings required for production deployments."""
-
         if not self.enforce_route_policies:
             raise ValueError("Studio production profile requires route policy enforcement.")
         if self.allow_header_principal:
@@ -221,12 +246,28 @@ class StudioRuntimeSettings:
                 "Studio production profile requires EDA process CPU and memory ceilings."
             )
 
+    def validate_bind_host(self, host: str) -> None:
+        """Refuse a non-loopback listener without production identity settings.
+
+        Launchers call this before creating the application or listening.
+        Hostnames other than localhost need an explicit production contract;
+        resolving arbitrary names here would make startup depend on DNS.
+        """
+        loopback = host.lower() == "localhost"
+        try:
+            loopback = ipaddress.ip_address(host).is_loopback
+        except ValueError:
+            pass
+        if not loopback and self.deployment_profile != "production":
+            raise ValueError(
+                "Studio non-loopback bind requires the production profile and identity store."
+            )
+
 
 def build_default_studio_runtime_settings(
     env: Mapping[str, str] | None = None,
 ) -> StudioRuntimeSettings:
     """Build Studio runtime settings from environment-style values."""
-
     source = os.environ if env is None else env
     raw_deployment_profile = source.get("SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE")
     raw_origins = source.get("SC_NEUROCORE_STUDIO_CORS_ORIGINS")
@@ -410,6 +451,22 @@ def build_default_studio_runtime_settings(
     except ValueError as exc:
         raise ValueError("Studio retained audit file count must be an integer.") from exc
     return StudioRuntimeSettings(
+        browser_login_max_buckets=_parse_int_env(
+            source.get("SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_BUCKETS"),
+            default=1024,
+            error_message="Studio browser login bucket cap must be an integer.",
+        ),
+        benchmark_databank_path=source.get("SC_NEUROCORE_STUDIO_BENCHMARK_DATABANK") or None,
+        benchmark_max_bytes=_parse_int_env(
+            source.get("SC_NEUROCORE_STUDIO_BENCHMARK_MAX_BYTES"),
+            default=DEFAULT_DATABANK_MAX_BYTES,
+            error_message="Studio benchmark byte budget must be an integer.",
+        ),
+        benchmark_max_records=_parse_int_env(
+            source.get("SC_NEUROCORE_STUDIO_BENCHMARK_MAX_RECORDS"),
+            default=DEFAULT_DATABANK_MAX_RECORDS,
+            error_message="Studio benchmark record budget must be an integer.",
+        ),
         evidence_max_input_bytes=parse_evidence_input_limit(
             source.get("SC_NEUROCORE_STUDIO_EVIDENCE_MAX_INPUT_BYTES")
         ),

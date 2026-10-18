@@ -35,7 +35,9 @@ def _finish(client: TestClient, route: str) -> dict[str, Any]:
 
 def test_real_background_fit_and_replay() -> None:
     """A process fit exports full artifacts and replays its scientific digest."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         response = client.post("/api/fits/jobs", json=_body(generations=2, population=4))
         assert response.status_code == 202, response.text
         job = _finish(client, response.json()["status_route"])
@@ -57,7 +59,9 @@ def test_cohort_process_and_replay_use_the_full_admitted_document() -> None:
     from tests.test_fitting_cohorts import cohort
     from tests.test_fitting_cohorts import receipts as receipts_for
 
-    with TestClient(create_app(), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         document = cohort().to_public_dict()
         response = client.post("/api/cohorts/jobs", json={"cohort": document})
         assert response.status_code == 202, response.text
@@ -97,7 +101,9 @@ def test_authenticated_users_cannot_observe_or_cancel_each_others_lab_jobs() -> 
     from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
     settings = StudioRuntimeSettings(enforce_route_policies=True)
-    with TestClient(create_app(settings), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         alice = {"x-studio-principal": "alice"}
         bob = {"x-studio-principal": "bob"}
         anonymous = client.post("/api/fits/jobs", json=_body(generations=2, population=4))
@@ -118,12 +124,12 @@ def test_authenticated_users_cannot_observe_or_cancel_each_others_lab_jobs() -> 
 
 def test_overbudget_invalid_and_malformed_lab_requests_are_refused_before_submission() -> None:
     """Bad protocol/version/split/optimiser documents never start an execution worker."""
-    from tests.test_fitting_cohorts import cohort
-    from sc_neurocore.fitting.problem import Recording, FitProblem, ParameterDomain
+    from sc_neurocore.fitting.problem import FitProblem, ParameterDomain, Recording
     from sc_neurocore.neurons.universal_dsl import load_schema
+    from tests.test_fitting_cohorts import cohort
 
     app = create_app()
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         before = app.state.studio_job_manager.status().to_public_dict()
         assert client.post("/api/fits/jobs", json=_body(holdout=[])).status_code == 422
         assert (
@@ -167,7 +173,7 @@ def test_document_byte_admission_and_worker_operation_refusal() -> None:
     from tests.test_fitting_cohorts import cohort
 
     app = create_app(StudioRuntimeSettings(max_request_body_bytes=8_500_000))
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         document = cohort().to_public_dict()
         document["noise_provenance"] = "x" * 4_100_000
         refused = client.post("/api/cohorts/jobs", json={"cohort": document})
@@ -207,7 +213,7 @@ def test_malformed_lab_documents_are_refused_without_exception_text() -> None:
         ("/api/cohorts/replay", {"result": {"cohort": document}}),
     ]
     app = create_app()
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         before = app.state.studio_job_manager.status().to_public_dict()
         for route, body in requests:
             response = client.post(route, json=body)
@@ -227,7 +233,7 @@ def test_cohort_refusals_keep_authored_text_and_hide_structural_faults() -> None
     from tests.test_fitting_cohorts import cohort
 
     app = create_app()
-    with TestClient(app, base_url="http://127.0.0.1") as client:
+    with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}) as client:
         before = app.state.studio_job_manager.status().to_public_dict()
         for route in ("/api/cohorts/jobs", "/api/cohorts/replay"):
             document = cohort().to_public_dict()

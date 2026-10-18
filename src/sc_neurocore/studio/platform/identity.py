@@ -14,31 +14,29 @@ import hashlib
 import hmac
 import json
 import os
-import logging
+import secrets
 import tempfile
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sc_neurocore.studio.platform.identity_io import identity_store_mutation, read_identity_text
+from sc_neurocore.studio.platform.identity_passwords import (
+    DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS,
+    _parse_password_verifier,
+    make_browser_user_password_verifier,
+    verify_browser_user_password,
+)
 from sc_neurocore.studio.platform.identity_refusals import (
     StudioIdentityConflict,
     StudioIdentityRefused,
 )
 from sc_neurocore.studio.platform.policy import Principal
-from sc_neurocore.studio.platform.identity_passwords import (
-    DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS,
-    make_browser_user_password_verifier,
-    verify_browser_user_password,
-    _parse_password_verifier,
-)
 
 IDENTITY_SCHEMA_VERSION = "sc-neurocore.studio.identity.v1"
 UTC = timezone.utc
 _ADMIN_ROLE = "studio.admin"
-
-
-_LOGGER = logging.getLogger("sc_neurocore.studio.identity")
 
 
 class StudioIdentityLifecycleError(StudioIdentityRefused):
@@ -72,7 +70,6 @@ class StudioIdentityRecord:
 
     def to_public_record(self) -> "StudioIdentityPublicRecord":
         """Return a token-free operator representation of this identity."""
-
         expiry = (
             None
             if self.expires_at_utc is None
@@ -109,7 +106,6 @@ class StudioIdentityPublicRecord:
 
     def to_public_dict(self) -> dict[str, bool | list[str] | str | None]:
         """Return an API payload without token hashes or local paths."""
-
         return {
             "active": self.active,
             "expires_at_utc": self.expires_at_utc,
@@ -147,7 +143,6 @@ class StudioBrowserUserRecord:
 
     def to_public_record(self) -> "StudioBrowserUserPublicRecord":
         """Return a password-free operator representation of this user."""
-
         expiry = (
             None
             if self.expires_at_utc is None
@@ -174,7 +169,6 @@ class StudioBrowserUserPublicRecord:
 
     def to_public_dict(self) -> dict[str, bool | list[str] | str | None]:
         """Return an API payload without password verifier material."""
-
         return {
             "active": self.active,
             "expires_at_utc": self.expires_at_utc,
@@ -193,12 +187,10 @@ class StudioIdentityStore:
 
     def public_records(self) -> tuple[StudioIdentityPublicRecord, ...]:
         """Return token-free service-account records for admin APIs."""
-
         return tuple(record.to_public_record() for record in self.service_accounts)
 
     def public_browser_users(self) -> tuple[StudioBrowserUserPublicRecord, ...]:
         """Return password-free browser-user records for admin APIs."""
-
         return tuple(record.to_public_record() for record in self.browser_users)
 
 
@@ -220,6 +212,20 @@ class StudioIdentityAuthenticator:
     ) -> None:
         self._identity_store = identity_store
         self._clock = clock or self._utc_now
+        self._dummy_password_verifier = make_browser_user_password_verifier(
+            secrets.token_urlsafe(32)
+        )
+        self._browser_password_iterations = max(
+            [
+                DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS,
+                *(
+                    parsed[0]
+                    for record in identity_store.browser_users
+                    if (parsed := _parse_password_verifier(record.password_pbkdf2_sha256))
+                    is not None
+                ),
+            ]
+        )
 
     def authenticate_authorization_header(self, authorization: str | None) -> StudioIdentityResult:
         """Authenticate an HTTP ``Authorization`` header.
@@ -236,7 +242,6 @@ class StudioIdentityAuthenticator:
             Authenticated principal or a stable failure reason for policy
             auditing.
         """
-
         if authorization is None or not authorization.strip():
             return StudioIdentityResult(principal=None)
         scheme, separator, token = authorization.strip().partition(" ")
@@ -272,26 +277,25 @@ class StudioIdentityAuthenticator:
         StudioIdentityResult
             Authenticated principal or a stable failure reason for audit rows.
         """
-
         clean_username = username.strip()
-        if not clean_username or not password:
-            return StudioIdentityResult(principal=None, failure_reason="invalid_browser_login")
         for record in self._identity_store.browser_users:
             if not hmac.compare_digest(
                 record.username.encode("utf-8"), clean_username.encode("utf-8")
             ):
                 continue
-            if not record.active:
-                return StudioIdentityResult(
-                    principal=None,
-                    failure_reason="disabled_browser_user",
+            password_matches = verify_browser_user_password(
+                password,
+                record.password_pbkdf2_sha256,
+                minimum_iterations=self._browser_password_iterations,
+            )
+            if (
+                not password_matches
+                or not record.active
+                or (
+                    record.expires_at_utc is not None
+                    and self._utc_now_value() >= record.expires_at_utc
                 )
-            if record.expires_at_utc is not None and self._utc_now_value() >= record.expires_at_utc:
-                return StudioIdentityResult(
-                    principal=None,
-                    failure_reason="expired_browser_user",
-                )
-            if not verify_browser_user_password(password, record.password_pbkdf2_sha256):
+            ):
                 return StudioIdentityResult(
                     principal=None,
                     failure_reason="invalid_browser_login",
@@ -299,6 +303,11 @@ class StudioIdentityAuthenticator:
             return StudioIdentityResult(
                 principal=Principal(principal_id=record.principal_id, roles=record.roles)
             )
+        verify_browser_user_password(
+            password,
+            self._dummy_password_verifier,
+            minimum_iterations=self._browser_password_iterations,
+        )
         return StudioIdentityResult(principal=None, failure_reason="invalid_browser_login")
 
     def _utc_now_value(self) -> datetime:
@@ -328,10 +337,8 @@ def load_studio_identity_store(path: Path) -> StudioIdentityStore:
     ValueError
         If the file cannot be parsed into the supported identity schema.
     """
-
     try:
-        _require_private_identity_file(path)
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(read_identity_text(path))
     except OSError as exc:
         raise StudioIdentityRefused("Studio identity file cannot be read.") from exc
     except json.JSONDecodeError as exc:
@@ -366,7 +373,6 @@ def list_studio_identity_public_records(path: Path) -> tuple[StudioIdentityPubli
     tuple[StudioIdentityPublicRecord, ...]
         Public service-account records sorted by principal identifier.
     """
-
     return tuple(
         sorted(
             load_studio_identity_store(path).public_records(),
@@ -390,7 +396,6 @@ def list_studio_browser_user_public_records(
     tuple[StudioBrowserUserPublicRecord, ...]
         Public browser-user records sorted by username.
     """
-
     return tuple(
         sorted(
             load_studio_identity_store(path).public_browser_users(),
@@ -436,33 +441,35 @@ def update_studio_identity_record(
     ValueError
         If replacement metadata is malformed.
     """
-
-    store = load_studio_identity_store(path)
-    clean_principal_id = _parse_principal_id(principal_id)
-    clean_roles = frozenset(_parse_roles(roles))
-    clean_expires_at = _parse_expiry(expires_at_utc)
-    updated: StudioIdentityRecord | None = None
-    records: list[StudioIdentityRecord] = []
-    for record in store.service_accounts:
-        if record.principal_id == clean_principal_id:
-            updated = StudioIdentityRecord(
-                active=active,
-                expires_at_utc=clean_expires_at,
-                principal_id=record.principal_id,
-                roles=clean_roles,
-                token_sha256=record.token_sha256,
-            )
-            records.append(updated)
-        else:
-            records.append(record)
-    if updated is None:
-        raise KeyError(clean_principal_id)
-    _require_active_admin_principal(
-        service_accounts=tuple(records),
-        browser_users=store.browser_users,
-    )
-    _write_identity_store(path, service_accounts=tuple(records), browser_users=store.browser_users)
-    return updated.to_public_record()
+    with identity_store_mutation(path) as path:
+        store = load_studio_identity_store(path)
+        clean_principal_id = _parse_principal_id(principal_id)
+        clean_roles = frozenset(_parse_roles(roles))
+        clean_expires_at = _parse_expiry(expires_at_utc)
+        updated: StudioIdentityRecord | None = None
+        records: list[StudioIdentityRecord] = []
+        for record in store.service_accounts:
+            if record.principal_id == clean_principal_id:
+                updated = StudioIdentityRecord(
+                    active=active,
+                    expires_at_utc=clean_expires_at,
+                    principal_id=record.principal_id,
+                    roles=clean_roles,
+                    token_sha256=record.token_sha256,
+                )
+                records.append(updated)
+            else:
+                records.append(record)
+        if updated is None:
+            raise KeyError(clean_principal_id)
+        _require_active_admin_principal(
+            service_accounts=tuple(records),
+            browser_users=store.browser_users,
+        )
+        _write_identity_store(
+            path, service_accounts=tuple(records), browser_users=store.browser_users
+        )
+        return updated.to_public_record()
 
 
 def update_studio_browser_user_record(
@@ -503,38 +510,38 @@ def update_studio_browser_user_record(
     ValueError
         If replacement metadata is malformed.
     """
-
-    store = load_studio_identity_store(path)
-    clean_username = _parse_username(username)
-    clean_roles = frozenset(_parse_roles(roles))
-    clean_expires_at = _parse_expiry(expires_at_utc)
-    updated: StudioBrowserUserRecord | None = None
-    records: list[StudioBrowserUserRecord] = []
-    for record in store.browser_users:
-        if record.username == clean_username:
-            updated = StudioBrowserUserRecord(
-                active=active,
-                expires_at_utc=clean_expires_at,
-                password_pbkdf2_sha256=record.password_pbkdf2_sha256,
-                principal_id=record.principal_id,
-                roles=clean_roles,
-                username=record.username,
-            )
-            records.append(updated)
-        else:
-            records.append(record)
-    if updated is None:
-        raise KeyError(clean_username)
-    _require_active_admin_principal(
-        service_accounts=store.service_accounts,
-        browser_users=tuple(records),
-    )
-    _write_identity_store(
-        path,
-        service_accounts=store.service_accounts,
-        browser_users=tuple(records),
-    )
-    return updated.to_public_record()
+    with identity_store_mutation(path) as path:
+        store = load_studio_identity_store(path)
+        clean_username = _parse_username(username)
+        clean_roles = frozenset(_parse_roles(roles))
+        clean_expires_at = _parse_expiry(expires_at_utc)
+        updated: StudioBrowserUserRecord | None = None
+        records: list[StudioBrowserUserRecord] = []
+        for record in store.browser_users:
+            if record.username == clean_username:
+                updated = StudioBrowserUserRecord(
+                    active=active,
+                    expires_at_utc=clean_expires_at,
+                    password_pbkdf2_sha256=record.password_pbkdf2_sha256,
+                    principal_id=record.principal_id,
+                    roles=clean_roles,
+                    username=record.username,
+                )
+                records.append(updated)
+            else:
+                records.append(record)
+        if updated is None:
+            raise KeyError(clean_username)
+        _require_active_admin_principal(
+            service_accounts=store.service_accounts,
+            browser_users=tuple(records),
+        )
+        _write_identity_store(
+            path,
+            service_accounts=store.service_accounts,
+            browser_users=tuple(records),
+        )
+        return updated.to_public_record()
 
 
 def rotate_studio_browser_user_password(
@@ -566,32 +573,36 @@ def rotate_studio_browser_user_password(
     ValueError
         If the username or replacement password is malformed.
     """
-
-    store = load_studio_identity_store(path)
-    clean_username = _parse_username(username)
-    updated: StudioBrowserUserRecord | None = None
-    records: list[StudioBrowserUserRecord] = []
-    for record in store.browser_users:
-        if record.username == clean_username:
-            updated = StudioBrowserUserRecord(
-                active=record.active,
-                expires_at_utc=record.expires_at_utc,
-                password_pbkdf2_sha256=make_browser_user_password_verifier(password),
-                principal_id=record.principal_id,
-                roles=record.roles,
-                username=record.username,
+    with identity_store_mutation(path) as path:
+        if len(password) < 12:
+            raise StudioIdentityRefused(
+                "Studio browser-user password must contain at least 12 characters."
             )
-            records.append(updated)
-        else:
-            records.append(record)
-    if updated is None:
-        raise KeyError(clean_username)
-    _write_identity_store(
-        path,
-        service_accounts=store.service_accounts,
-        browser_users=tuple(records),
-    )
-    return updated.to_public_record()
+        store = load_studio_identity_store(path)
+        clean_username = _parse_username(username)
+        updated: StudioBrowserUserRecord | None = None
+        records: list[StudioBrowserUserRecord] = []
+        for record in store.browser_users:
+            if record.username == clean_username:
+                updated = StudioBrowserUserRecord(
+                    active=record.active,
+                    expires_at_utc=record.expires_at_utc,
+                    password_pbkdf2_sha256=make_browser_user_password_verifier(password),
+                    principal_id=record.principal_id,
+                    roles=record.roles,
+                    username=record.username,
+                )
+                records.append(updated)
+            else:
+                records.append(record)
+        if updated is None:
+            raise KeyError(clean_username)
+        _write_identity_store(
+            path,
+            service_accounts=store.service_accounts,
+            browser_users=tuple(records),
+        )
+        return updated.to_public_record()
 
 
 def add_studio_browser_user_record(
@@ -634,25 +645,33 @@ def add_studio_browser_user_record(
         If the new user metadata is malformed or conflicts with an existing
         browser username.
     """
-
-    store = load_studio_identity_store(path)
-    clean_username = _parse_username(username)
-    if any(record.username == clean_username for record in store.browser_users):
-        raise StudioIdentityConflict("Studio browser user username already exists.")
-    record = StudioBrowserUserRecord(
-        active=active,
-        expires_at_utc=_parse_expiry(expires_at_utc),
-        password_pbkdf2_sha256=make_browser_user_password_verifier(password),
-        principal_id=_parse_principal_id(principal_id),
-        roles=frozenset(_parse_roles(roles)),
-        username=clean_username,
-    )
-    _write_identity_store(
-        path,
-        service_accounts=store.service_accounts,
-        browser_users=(*store.browser_users, record),
-    )
-    return record.to_public_record()
+    with identity_store_mutation(path) as path:
+        if len(password) < 12:
+            raise StudioIdentityRefused(
+                "Studio browser-user password must contain at least 12 characters."
+            )
+        store = load_studio_identity_store(path)
+        clean_username = _parse_username(username)
+        if any(record.username == clean_username for record in store.browser_users):
+            raise StudioIdentityConflict("Studio browser user username already exists.")
+        if any(record.principal_id == principal_id.strip() for record in store.service_accounts):
+            raise StudioIdentityConflict(
+                "Studio browser principal must be distinct from a service account."
+            )
+        record = StudioBrowserUserRecord(
+            active=active,
+            expires_at_utc=_parse_expiry(expires_at_utc),
+            password_pbkdf2_sha256=make_browser_user_password_verifier(password),
+            principal_id=_parse_principal_id(principal_id),
+            roles=frozenset(_parse_roles(roles)),
+            username=clean_username,
+        )
+        _write_identity_store(
+            path,
+            service_accounts=store.service_accounts,
+            browser_users=(*store.browser_users, record),
+        )
+        return record.to_public_record()
 
 
 def _parse_identity_record(index: int, item: object) -> StudioIdentityRecord:
@@ -809,32 +828,6 @@ def _write_identity_store(
     except BaseException:
         tmp_path.unlink(missing_ok=True)
         raise
-
-
-def _require_private_identity_file(path: Path) -> None:
-    """Refuse an identity file another user owns; close one others can read.
-
-    The store holds credential hashes. One owned by another account is refused,
-    since its owner can change who may sign in. One the owner left readable by
-    group or others is narrowed to owner read and write before it is read, and
-    the widening is logged; its hashes were exposed until then. POSIX modes do
-    not exist on Windows, where the file's ACL governs instead.
-    """
-    if os.name != "posix":
-        return
-    info = path.stat()
-    if info.st_uid != os.geteuid():
-        raise StudioIdentityRefused(
-            "Studio identity file must be owned by the account running Studio; "
-            f"{path.name} is owned by uid {info.st_uid}."
-        )
-    if info.st_mode & 0o077:
-        path.chmod(0o600)
-        _LOGGER.warning(
-            "Studio identity file %s was readable beyond its owner (mode %o); narrowed to 600",
-            path.name,
-            info.st_mode & 0o777,
-        )
 
 
 def _require_active_admin_principal(

@@ -20,10 +20,11 @@ from sc_neurocore.studio.app import create_app
 @pytest.fixture
 def client() -> TestClient:
     """Return a client for adaptive-precision Studio routes."""
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_adaptive_precision_auto_tune_route(client: TestClient) -> None:
+    """Return the declared adaptive-precision plan through the public HTTP route."""
     response = client.post(
         "/api/adaptive-precision/auto-tune",
         json={"layer_weights": [[0.1, 0.2, 0.4]]},
@@ -38,6 +39,7 @@ def test_adaptive_precision_rejects_invalid_layer_weights(
     client: TestClient,
     layer: list[object],
 ) -> None:
+    """Refuse invalid layer weights with the shared input-error response."""
     response = client.post(
         "/api/adaptive-precision/auto-tune",
         json={"layer_weights": [layer]},
@@ -51,6 +53,7 @@ def test_preset_action_execute_rejects_unknown_endpoint(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Refuse a preset action targeting an undeclared API endpoint."""
     monkeypatch.setattr(
         preset_routes,
         "get_preset_action",

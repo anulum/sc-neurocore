@@ -41,7 +41,9 @@ def _build_client(tmp_path: Path) -> TestClient:
         audit_log_path=str(tmp_path / "audit" / "studio.jsonl"),
         job_default_timeout_seconds=120.0,
     )
-    return TestClient(create_app(settings), base_url="http://127.0.0.1")
+    return TestClient(
+        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
 
 def _manager(client: TestClient) -> StudioJobManager:

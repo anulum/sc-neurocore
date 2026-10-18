@@ -47,7 +47,7 @@ def _build_client(tmp_path: Path) -> TestClient:
         job_default_timeout_seconds=120.0,
     )
     app = create_app(settings)
-    return TestClient(app, base_url="http://127.0.0.1")
+    return TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def _job_manager(client: TestClient) -> StudioJobManager:

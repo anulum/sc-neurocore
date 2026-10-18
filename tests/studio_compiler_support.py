@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio Compiler Inspector (Block 2)
 
+"""Provide real Studio HTTP fixtures for equation compilation and code generation."""
+
 from __future__ import annotations
 
 import pytest
@@ -29,8 +31,9 @@ LIF_EQ = {
 
 
 @pytest.fixture(scope="module")
-def client():
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+def client() -> TestClient:
+    """Provide the real Studio API for compiler and generated-code contracts."""
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 __all__ = [

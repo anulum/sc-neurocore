@@ -43,12 +43,18 @@ ATIF = "AdaptiveThresholdIFNeuron"
 
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    """Provide the actual Studio API for simulation state and result custody."""
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
 class TestModelSimulateCustody:
+    """Raw state, snapshots and bounded display traces across simulation routes."""
+
     def test_response_carries_layout_snapshots_raw_and_display(self, client: TestClient) -> None:
+        """Retain state layout and snapshots beside raw and display recordings."""
         response = client.post(
             "/api/models/simulate",
             json={"model_name": ATIF, "current": 20.0, "duration": 50.0},
@@ -74,6 +80,8 @@ class TestModelSimulateCustody:
     def test_model_route_uses_the_python_custody_backend(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Declare the Python backend actually used for model-state custody."""
+
         def _never() -> None:
             raise AssertionError("the custody route must not use the Rust batch backend")
 
@@ -88,6 +96,7 @@ class TestModelSimulateCustody:
         assert data["initial_state"] is not None
 
     def test_long_run_is_bounded_on_display_and_complete_in_raw(self, client: TestClient) -> None:
+        """Retain complete raw recordings while bounding the displayed samples."""
         response = client.post(
             "/api/models/simulate",
             json={"model_name": ATIF, "current": 20.0, "duration": 999.9},
@@ -102,6 +111,7 @@ class TestModelSimulateCustody:
         assert data["run_metadata"]["sample_count"] == data["display"]["point_count"]
 
     def test_multi_simulate_shares_the_custody_contract(self, client: TestClient) -> None:
+        """Preserve the same state-custody contract in multi-model simulation."""
         response = client.post(
             "/api/multi-simulate",
             json=[{"name": ATIF, "duration": 5.0}, {"name": "AdExNeuron", "duration": 5.0}],
@@ -113,6 +123,7 @@ class TestModelSimulateCustody:
             assert result["run_metadata"]["schema_version"] == STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 
     def test_ode_route_shares_the_custody_contract(self, client: TestClient) -> None:
+        """Declare equation-state layout through the shared simulation response."""
         response = client.post(
             "/api/simulate",
             json={
@@ -130,6 +141,7 @@ class TestModelSimulateCustody:
         assert data["raw"]["states"]["v"][-1] == pytest.approx(1.0)
 
     def test_svg_export_uses_the_effective_step(self, client: TestClient) -> None:
+        """Render SVG output using the simulation's effective time step."""
         response = client.post(
             "/api/export/svg", json={"model_name": "IntegerQIFNeuron", "duration": 20.0}
         )
@@ -138,7 +150,10 @@ class TestModelSimulateCustody:
 
 
 class TestCacheGuard:
+    """Cache admission for complete raw recordings and legacy result payloads."""
+
     def test_oversized_raw_results_are_not_retained(self) -> None:
+        """Refuse cache retention when the raw recording exceeds its byte budget."""
         cache = simulation_api._SimCache(maxsize=4)
         small = {"raw": {"element_count": 10}, "time": [0.1]}
         big = {"raw": {"element_count": simulation_api.CACHE_RAW_ELEMENT_LIMIT + 1}, "time": [0.1]}
@@ -149,6 +164,7 @@ class TestCacheGuard:
         assert len(cache._cache) == 1
 
     def test_results_without_a_raw_block_are_retained(self) -> None:
+        """Retain supported legacy results which have no raw-recording block."""
         cache = simulation_api._SimCache(maxsize=4)
         legacy: dict[str, Any] = {"time": [0.1]}
         cache.put({"k": "legacy"}, legacy)
@@ -156,10 +172,13 @@ class TestCacheGuard:
 
 
 class TestEvidenceBundleVersions:
+    """Supported simulation manifests at the evidence-bundle input boundary."""
+
     @pytest.mark.parametrize(
         "version", [STUDIO_SIMULATION_RUN_SCHEMA_V1, STUDIO_SIMULATION_RUN_SCHEMA_VERSION]
     )
     def test_both_manifest_versions_are_accepted(self, version: str) -> None:
+        """Accept both explicitly supported simulation-result manifest versions."""
         payload = {
             "time": [0.1],
             "states": {"v": [0.0]},
@@ -172,6 +191,7 @@ class TestEvidenceBundleVersions:
         assert _simulation_result_payload(payload)["time"] == [0.1]
 
     def test_unknown_manifest_version_is_rejected(self) -> None:
+        """Refuse a simulation-result manifest with an undeclared version."""
         payload = {
             "run_metadata": {
                 "schema_version": "studio.simulation-run.v3",

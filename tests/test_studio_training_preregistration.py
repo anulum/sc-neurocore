@@ -42,13 +42,16 @@ _CRITERION = {
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    """A Studio client for the training routes."""
+    """Provide the real Studio API for training configuration and jobs."""
     pytest.importorskip("torch")
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 class TestCriterion:
+    """Preregistered metric validation, immutable digests and verdict direction."""
+
     def test_resolution_keeps_the_declared_criterion(self) -> None:
+        """Preserve the declared metric, threshold and rationale during resolution."""
         criterion = resolve_training_preregistration(_CRITERION)
         assert criterion == TrainingPreregistration(
             "val_accuracy", 0.5, "above chance on ten classes"
@@ -60,6 +63,7 @@ class TestCriterion:
         assert resolve_training_preregistration(None) is None
 
     def test_the_stored_form_resolves_again_and_a_changed_one_is_refused(self) -> None:
+        """Round-trip a stored criterion and reject an altered digest-bound field."""
         criterion = resolve_training_preregistration(_CRITERION)
         assert criterion is not None
         stored = criterion.to_public_dict()
@@ -70,6 +74,7 @@ class TestCriterion:
             resolve_training_preregistration({**stored, "threshold": 0.4})
 
     def test_the_digest_binds_every_field(self) -> None:
+        """Change the criterion digest when any declared criterion field changes."""
         base = TrainingPreregistration("val_accuracy", 0.5, "hypothesis")
         others = [
             TrainingPreregistration("val_loss", 0.5, "hypothesis"),
@@ -106,10 +111,12 @@ class TestCriterion:
         ],
     )
     def test_an_unjudgeable_criterion_is_refused(self, value: object, message: str) -> None:
+        """Refuse a criterion which cannot support a meaningful verdict."""
         with pytest.raises(ValueError, match=message):
             resolve_training_preregistration(value)
 
     def test_the_verdict_follows_the_metric_direction(self) -> None:
+        """Apply the declared threshold in the metric's improvement direction."""
         accuracy = TrainingPreregistration("val_accuracy", 0.5, "")
         loss = TrainingPreregistration("val_loss", 0.5, "")
         assert accuracy.judge(0.5)["passed"] is True
@@ -134,7 +141,10 @@ class TestCriterion:
 
 
 class TestTrainingContract:
+    """Preregistration custody in resolved and stored training configurations."""
+
     def test_the_criterion_is_part_of_the_stored_configuration(self) -> None:
+        """Carry the criterion and its digest into the stored training configuration."""
         resolved = resolve_training_config({**_FAST_RUN, "preregistration": _CRITERION})
         criterion = resolved.preregistration
         assert criterion is not None
@@ -145,10 +155,12 @@ class TestTrainingContract:
         assert '"preregistration"' in stored and criterion.sha256 in stored
 
     def test_a_run_without_a_criterion_stores_none(self) -> None:
+        """Avoid inventing a criterion for a request without preregistration."""
         public = resolve_training_config(_FAST_RUN).to_public_dict()
         assert "preregistration" not in public
 
     def test_an_invalid_criterion_is_refused_by_field(self) -> None:
+        """Attribute an invalid criterion to the preregistration request field."""
         with pytest.raises(TrainingConfigError) as refusal:
             resolve_training_config({**_FAST_RUN, "preregistration": {"metric": "val_loss"}})
         assert refusal.value.field == "preregistration"
@@ -171,7 +183,10 @@ def _run(client: TestClient, config: dict[str, Any]) -> tuple[dict[str, Any], di
 
 
 class TestHttpSurface:
+    """Preregistration admission and final verdicts through real training routes."""
+
     def test_an_invalid_criterion_is_refused_before_a_job_exists(self, client: TestClient) -> None:
+        """Refuse invalid preregistration before creating a training job."""
         response = client.post(
             "/api/training/start",
             json={**_FAST_RUN, "preregistration": {"metric": "val_accuracy", "threshold": 2}},
@@ -192,6 +207,7 @@ class TestHttpSurface:
     def test_a_finished_run_is_judged_on_its_stored_criterion(
         self, client: TestClient, criterion: dict[str, Any], passed: bool
     ) -> None:
+        """Bind a completed run's verdict to its stored criterion and final metric."""
         status, checkpoint = _run(client, {**_FAST_RUN, "preregistration": criterion})
         stored = checkpoint["config"]["preregistration"]
         verdict = status["preregistration_verdict"]
@@ -202,6 +218,7 @@ class TestHttpSurface:
         assert verdict["threshold"] == float(criterion["threshold"])
 
     def test_a_run_without_a_criterion_has_no_verdict(self, client: TestClient) -> None:
+        """Leave the final preregistration verdict empty when none was declared."""
         status, checkpoint = _run(client, _FAST_RUN)
         assert status["preregistration_verdict"] is None
         assert "preregistration" not in checkpoint["config"]

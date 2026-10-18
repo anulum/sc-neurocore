@@ -6,18 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (identity_and_throttle) from former test_studio_runtime_settings_parsing.py
 
+"""Validate identity enforcement and finite browser-login settings before startup."""
+
 from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
 
 def test_studio_runtime_settings_disables_audit_log_by_default() -> None:
+    """Keep development auditing unconfigured until a durable path is supplied."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.audit_log_path is None
 
 
 def test_studio_runtime_settings_disables_identity_file_by_default() -> None:
+    """Keep identity-free development distinct from the enforced identity profile."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.identity_file_path is None
@@ -25,10 +29,12 @@ def test_studio_runtime_settings_disables_identity_file_by_default() -> None:
 
 
 def test_studio_runtime_settings_parses_identity_file_and_header_fallback() -> None:
+    """Parse an identity path together with disabled preview-principal fallback."""
     settings = build_default_studio_runtime_settings(
         env={
             "SC_NEUROCORE_STUDIO_IDENTITY_FILE": "/etc/sc-neurocore/studio-identities.json",
             "SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL": "false",
+            "SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true",
         }
     )
 
@@ -36,7 +42,24 @@ def test_studio_runtime_settings_parses_identity_file_and_header_fallback() -> N
     assert settings.allow_header_principal is False
 
 
+@pytest.mark.parametrize(
+    ("enforce", "allow_headers", "message"),
+    [(False, False, "route policy enforcement"), (True, True, "header principal")],
+)
+def test_identity_file_requires_consistent_authentication_settings(
+    enforce: bool, allow_headers: bool, message: str
+) -> None:
+    """Refuse an identity store whose route or principal contract is inconsistent."""
+    with pytest.raises(ValueError, match=message):
+        StudioRuntimeSettings(
+            identity_file_path="studio-identities.json",
+            enforce_route_policies=enforce,
+            allow_header_principal=allow_headers,
+        )
+
+
 def test_studio_runtime_settings_default_browser_login_throttle_is_bounded() -> None:
+    """Retain finite default login attempts, failure window and cooldown."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.browser_login_max_failures == 5
@@ -45,6 +68,7 @@ def test_studio_runtime_settings_default_browser_login_throttle_is_bounded() -> 
 
 
 def test_studio_runtime_settings_parses_browser_login_throttle() -> None:
+    """Preserve explicitly configured browser-login resource budgets."""
     settings = build_default_studio_runtime_settings(
         env={
             "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS": "120",
@@ -59,6 +83,7 @@ def test_studio_runtime_settings_parses_browser_login_throttle() -> None:
 
 
 def test_studio_runtime_settings_rejects_invalid_browser_login_throttle() -> None:
+    """Refuse malformed or non-positive browser-login budget settings."""
     with pytest.raises(ValueError, match="browser login max failures"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES": "not-a-number"}
@@ -80,6 +105,7 @@ def test_studio_runtime_settings_rejects_invalid_browser_login_throttle() -> Non
 
 
 def test_studio_runtime_settings_rejects_invalid_header_fallback_flag() -> None:
+    """Refuse a preview-principal flag outside the supported boolean syntax."""
     with pytest.raises(ValueError, match="header principal"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL": "sometimes"}

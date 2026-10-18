@@ -11,8 +11,8 @@
 from __future__ import annotations
 
 import io
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -21,7 +21,7 @@ from tests.cli_test_support import run_cli
 
 
 def _expected_entry(origin: str) -> tuple[str, tuple[str, ...]]:
-    """The page this checkout's Studio opens: its UI when built, else the API docs."""
+    """Resolve the real Studio entry page from this checkout's available frontend."""
     pytest.importorskip("fastapi")
     from sc_neurocore.studio import app as studio_app
     from sc_neurocore.studio.api.frontend import (
@@ -39,6 +39,7 @@ def _expected_entry(origin: str) -> tuple[str, tuple[str, ...]]:
 # test process: uvicorn.run blocks serving forever and webbrowser.open launches
 # a desktop browser. Both are replaced so the arguments they receive are checked.
 def test_studio_launches_uvicorn(capsys: pytest.CaptureFixture[str]) -> None:
+    """Launch the single application and announce unprotected development."""
     url, announcement = _expected_entry("http://127.0.0.1:8001")
     with (
         mock.patch("uvicorn.run") as m_uvicorn,
@@ -47,11 +48,15 @@ def test_studio_launches_uvicorn(capsys: pytest.CaptureFixture[str]) -> None:
         rc = run_cli("studio")
     assert rc == 0
     m_uvicorn.assert_called_once()
+    assert m_uvicorn.call_args.args[0].state.studio_runtime_settings.enforce_route_policies is False
     m_browser.assert_called_once_with(url)
-    assert capsys.readouterr().out.splitlines()[-len(announcement) :] == list(announcement)
+    output = capsys.readouterr().out
+    assert "UNPROTECTED local development" in output
+    assert output.splitlines()[-len(announcement) :] == list(announcement)
 
 
 def test_studio_missing_fastapi(capsys: pytest.CaptureFixture[str]) -> None:
+    """Report the required Studio extras when the server dependency is unavailable."""
     with mock.patch.dict("sys.modules", {"uvicorn": None}):
         rc = run_cli("studio")
     assert rc == 1
@@ -59,6 +64,7 @@ def test_studio_missing_fastapi(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_studio_command_routes_custom_port() -> None:
+    """Pass the selected port to the server and announce its matching entry URL."""
     url, _ = _expected_entry("http://127.0.0.1:9000")
     with (
         mock.patch("uvicorn.run") as run_server,

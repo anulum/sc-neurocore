@@ -47,6 +47,7 @@ def _nir_bytes(tmp_path: Path) -> bytes:
 
 
 def test_compile_nir_graph_returns_verilog_artefacts() -> None:
+    """Lower an accepted NIR graph into the declared Verilog artifacts."""
     artefacts = compile_nir_graph(_two_layer_graph(), module_name="snn_demo")
 
     assert artefacts["module_name"] == "snn_demo"
@@ -59,6 +60,7 @@ def test_compile_nir_graph_returns_verilog_artefacts() -> None:
 
 
 def test_compile_nir_file_bytes_reads_hdf5_and_compiles(tmp_path: Path) -> None:
+    """Read the uploaded HDF5 graph and retain its compiled network shape."""
     artefacts = compile_nir_file_bytes(_nir_bytes(tmp_path), module_name="from_file")
 
     assert artefacts["module_name"] == "from_file"
@@ -67,12 +69,16 @@ def test_compile_nir_file_bytes_reads_hdf5_and_compiles(tmp_path: Path) -> None:
 
 
 def test_compile_nir_file_bytes_rejects_empty_upload() -> None:
+    """Refuse an empty NIR upload before graph decoding or compilation."""
     with pytest.raises(ValueError, match="Empty NIR upload"):
         compile_nir_file_bytes(b"")
 
 
 def test_api_nir_compile_endpoint_lowers_uploaded_graph(tmp_path: Path) -> None:
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    """Compile the uploaded NIR graph through the actual Studio HTTP route."""
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
     data = _nir_bytes(tmp_path)
 
     response = client.post(
@@ -91,7 +97,10 @@ def test_api_nir_compile_endpoint_lowers_uploaded_graph(tmp_path: Path) -> None:
 
 
 def test_api_nir_compile_endpoint_rejects_empty_upload() -> None:
-    client = TestClient(create_app(), base_url="http://127.0.0.1")
+    """Refuse an empty uploaded graph at the HTTP compilation boundary."""
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
 
     response = client.post(
         "/api/nir/compile",

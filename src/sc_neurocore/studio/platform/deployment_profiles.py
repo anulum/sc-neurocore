@@ -65,7 +65,6 @@ class StudioDeploymentProfilePackage:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable deployment package manifest."""
-
         return {
             "backup_items": list(self.backup_items),
             "environment": dict(sorted(self.environment.items())),
@@ -81,7 +80,6 @@ class StudioDeploymentProfilePackage:
 
     def to_env_lines(self) -> tuple[str, ...]:
         """Return sorted shell ``export`` lines for non-secret profile values."""
-
         return tuple(
             f"export {name}={_shell_quote(value)}"
             for name, value in sorted(self.environment.items())
@@ -97,7 +95,7 @@ def build_studio_deployment_profile_package(
     ----------
     name:
         Deployment package name. ``local`` targets single-operator loopback
-        use, ``lab`` targets private LAN or VPN-hosted research workstations,
+        use, ``lab`` targets an authenticated single-operator loopback service,
         and ``server`` targets reverse-proxied service deployment.
 
     Returns
@@ -111,7 +109,6 @@ def build_studio_deployment_profile_package(
     ValueError
         If ``name`` is not a supported Studio deployment package.
     """
-
     if name == "local":
         return _local_profile_package()
     if name == "lab":
@@ -123,7 +120,6 @@ def build_studio_deployment_profile_package(
 
 def list_studio_deployment_profile_packages() -> tuple[StudioDeploymentProfilePackage, ...]:
     """Return all supported Studio deployment-profile packages."""
-
     return (
         build_studio_deployment_profile_package("local"),
         build_studio_deployment_profile_package("lab"),
@@ -168,29 +164,35 @@ def _lab_profile_package() -> StudioDeploymentProfilePackage:
     return StudioDeploymentProfilePackage(
         name="lab",
         runtime_profile="production",
-        summary="Private lab workstation or VPN service with durable identity and audit state.",
+        summary="Single-operator loopback lab with durable identity and rotating audit state.",
         environment={
-            "SC_NEUROCORE_STUDIO_ALLOWED_HOSTS": "<lab-hostname>,127.0.0.1,localhost",
+            "SC_NEUROCORE_STUDIO_ALLOWED_HOSTS": "127.0.0.1,localhost",
             "SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL": "false",
             "SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH": "<audit-log-path>",
             "SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES": "14",
+            "SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES": "104857600",
+            "SC_NEUROCORE_STUDIO_BENCHMARK_DATABANK": "<benchmark-databank-path>",
+            "SC_NEUROCORE_STUDIO_BENCHMARK_MAX_BYTES": "16777216",
+            "SC_NEUROCORE_STUDIO_BENCHMARK_MAX_RECORDS": "10000",
             "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS": "900",
             "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS": "300",
             "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES": "5",
-            "SC_NEUROCORE_STUDIO_CORS_ORIGINS": "https://<lab-hostname>",
+            "SC_NEUROCORE_STUDIO_CORS_ORIGINS": ("http://127.0.0.1:8001,http://localhost:8001"),
             "SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE": "production",
             "SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS": "120",
             "SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES": "2147483648",
             "SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true",
             "SC_NEUROCORE_STUDIO_IDENTITY_FILE": "<identity-file>",
             "SC_NEUROCORE_STUDIO_JOB_ROOT": "<job-root>",
-            "SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS": "https://<lab-hostname>",
+            "SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS": (
+                "http://127.0.0.1:8001,http://localhost:8001"
+            ),
         },
         required_operator_inputs=(
-            "<lab-hostname>",
             "<identity-file>",
             "<audit-log-path>",
             "<job-root>",
+            "<benchmark-databank-path>",
             "browser-user or service-account secret material in an external secret store",
         ),
         security_controls=(
@@ -198,7 +200,9 @@ def _lab_profile_package() -> StudioDeploymentProfilePackage:
             "route-policy enforcement",
             "header principal fallback disabled",
             "durable identity file",
-            "append-only audit log",
+            "append-only rotated audit log",
+            "loopback binding",
+            "one API process per identity store",
             "persistent job root",
             "explicit host and origin allow-lists",
             "process CPU and memory ceilings for EDA jobs",
@@ -208,6 +212,7 @@ def _lab_profile_package() -> StudioDeploymentProfilePackage:
             "<audit-log-path>",
             "<job-root>",
             "<studio-project-root>",
+            "<benchmark-databank-path>",
         ),
         preflight_command="sc-neurocore studio-preflight --output studio-preflight.json",
         launch_command="sc-neurocore studio --port 8001",

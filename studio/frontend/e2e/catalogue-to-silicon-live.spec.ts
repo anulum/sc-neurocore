@@ -320,7 +320,7 @@ test("legacy parameter seeds migrate through the real seed control", async ({ pa
   await openLiveStudio(page);
   await selectCatalogueModel(page, "PoissonNeuron");
   const name = `legacy-seed-${Date.now()}`;
-  const saved = await request.post("/api/project/save", {
+  const saved = await request.post("/api/project/save", { headers: { "Sec-Fetch-Site": "none" },
     data: { name, state: {
       sourceMode: "model", selectedModelName: "PoissonNeuron", modelParams: { seed: 42, rate_hz: 100 },
       dt: 1, duration: 100, current: 100, protocol: "constant",
@@ -380,7 +380,7 @@ test("legacy large seed reaches the real progress socket exactly and preserves t
   const name = `legacy-large-seed-${Date.now()}`;
   const saved = await request.post("/api/project/save", {
     data: `{"name":"${name}","state":{"sourceMode":"model","selectedModelName":"PoissonNeuron","modelParams":{"seed":9223372036854775807,"rate_hz":100},"dt":1,"duration":20,"current":100,"protocol":"constant"}}`,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Sec-Fetch-Site": "none", "Content-Type": "application/json" },
   });
   expect(saved.ok(), await saved.text()).toBe(true);
   await page.getByRole("button", { name: "Refresh projects", exact: true }).click();

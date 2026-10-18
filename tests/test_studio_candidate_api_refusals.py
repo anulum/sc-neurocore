@@ -43,7 +43,9 @@ def candidate_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterato
     """
     monkeypatch.setenv("SC_NEUROCORE_STUDIO_JOB_ROOT", str(tmp_path / "jobs"))
     monkeypatch.setenv("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH", str(tmp_path / "audit.jsonl"))
-    with TestClient(create_app(), base_url="http://127.0.0.1") as client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as client:
         yield client
 
 

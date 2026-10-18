@@ -116,6 +116,7 @@ class TestTheAcknowledgedLostUpdate:
     """The reported defect: two saves acknowledged, one payload kept."""
 
     def test_two_saves_of_a_new_workspace_acknowledge_exactly_one(self, tmp_path: Path) -> None:
+        """Acknowledge one concurrent creator and retain its sole workspace revision."""
         clock = _Rendezvous()
         stores = [WorkspaceStore(root=tmp_path / "projects", clock=clock) for _ in range(2)]
 
@@ -138,6 +139,7 @@ class TestTheAcknowledgedLostUpdate:
         assert written[0].state_sha256 == reader.revisions("demo")[0].state_sha256
 
     def test_two_saves_from_one_revision_acknowledge_exactly_one(self, tmp_path: Path) -> None:
+        """Acknowledge one concurrent update from the same workspace revision."""
         root = tmp_path / "projects"
         WorkspaceStore(root=root).save("demo", {"editor": "first"}, expected_revision=None)
         clock = _Rendezvous()
@@ -159,6 +161,7 @@ class TestTheAcknowledgedLostUpdate:
         assert [revision.revision for revision in reader.revisions("demo")] == [1, 2]
 
     def test_the_refused_writer_is_told_which_revision_is_current(self, tmp_path: Path) -> None:
+        """Report the winning revision to a writer whose update conflicts."""
         root = tmp_path / "projects"
         WorkspaceStore(root=root).save("demo", {"editor": "first"}, expected_revision=None)
         clock = _Rendezvous()
@@ -220,6 +223,7 @@ class TestTwoProcesses:
     def test_a_second_process_is_refused_while_the_first_holds_the_workspace(
         self, tmp_path: Path
     ) -> None:
+        """Refuse a separate writer process while the workspace lock is held."""
         root = tmp_path / "projects"
         root.mkdir(parents=True)
         gate = tmp_path / "go"
@@ -249,6 +253,7 @@ class TestTwoProcesses:
     def test_two_processes_saving_one_new_workspace_leave_one_revision(
         self, tmp_path: Path
     ) -> None:
+        """Retain one revision when two real processes create the same workspace."""
         root = tmp_path / "projects"
         root.mkdir(parents=True)
         gate = tmp_path / "go"
@@ -284,10 +289,13 @@ class TestTheLockItself:
             return "taken again"
 
     def test_one_thread_may_take_it_again(self, tmp_path: Path) -> None:
+        """Allow the owning thread to reenter its workspace lock."""
         with workspace_lock(tmp_path, "demo"):
             assert self._take_again(tmp_path) == "taken again"
 
     def test_another_thread_is_refused_within_the_wait(self, tmp_path: Path) -> None:
+        """Bound another thread's wait for a held workspace lock."""
+
         def attempt() -> str:
             try:
                 with workspace_lock(tmp_path, "demo", timeout=0.2):
@@ -299,6 +307,7 @@ class TestTheLockItself:
             assert _run([attempt]) == ["workspace_busy"]
 
     def test_it_is_released_when_the_block_raises(self, tmp_path: Path) -> None:
+        """Release the workspace lock when the protected operation raises."""
         with pytest.raises(RuntimeError, match="deliberate"), workspace_lock(tmp_path, "demo"):
             raise RuntimeError("deliberate")
 
@@ -309,6 +318,7 @@ class TestTheLockItself:
         assert _run([attempt]) == ["acquired"]
 
     def test_it_is_released_when_the_holding_process_is_killed(self, tmp_path: Path) -> None:
+        """Reclaim the workspace lock after its holding process is killed."""
         holder = subprocess.Popen(  # noqa: S603 - fixed argv, no shell
             [sys.executable, "-c", _HOLD_SCRIPT, str(tmp_path), "demo", "60"],
             stdout=subprocess.PIPE,
@@ -324,6 +334,7 @@ class TestTheLockItself:
         assert reclaimed
 
     def test_another_process_holding_it_refuses_this_one_in_time(self, tmp_path: Path) -> None:
+        """Bound the wait when a separate process holds the workspace lock."""
         holder = subprocess.Popen(  # noqa: S603 - fixed argv, no shell
             [sys.executable, "-c", _HOLD_SCRIPT, str(tmp_path), "demo", "10"],
             stdout=subprocess.PIPE,
@@ -346,6 +357,7 @@ class TestTheLockItself:
         assert refused.value.name == "demo"
 
     def test_a_lock_file_that_is_not_a_database_refuses_the_write(self, tmp_path: Path) -> None:
+        """Refuse an invalid lock database and recover after its replacement."""
         path = lock_path(tmp_path, "demo")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"this is not a lock")
@@ -363,6 +375,7 @@ class TestTheLockItself:
         assert recovered
 
     def test_the_wait_is_reported_without_a_path(self, tmp_path: Path) -> None:
+        """Report the workspace wait budget without exposing its storage path."""
         error = WorkspaceLockTimeout(name="demo", timeout=0.5)
         detail = error.to_public_detail()
 
@@ -373,16 +386,19 @@ class TestTheLockItself:
 
     @pytest.mark.parametrize("name", ["", ".", "..", "a/b", "a\\b"])
     def test_a_name_that_is_not_one_segment_is_refused(self, tmp_path: Path, name: str) -> None:
+        """Refuse workspace names which cannot form one safe path segment."""
         with pytest.raises(ValueError, match="Invalid workspace name"):
             lock_path(tmp_path, name)
 
     def test_the_lock_lives_beside_the_workspaces_not_inside_one(self, tmp_path: Path) -> None:
+        """Place lock files in the shared sibling lock directory."""
         path = lock_path(tmp_path, "demo")
 
         assert path.parent == tmp_path / LOCK_DIR
         assert (tmp_path / "demo") not in path.parents
 
     def test_a_locked_workspace_is_not_listed_as_one(self, tmp_path: Path) -> None:
+        """Exclude the lock directory from the workspace collection."""
         store = WorkspaceStore(root=tmp_path / "projects")
         store.save("demo", dict(STATE), expected_revision=None)
         (tmp_path / "projects" / "not-a-workspace").mkdir()
@@ -391,6 +407,7 @@ class TestTheLockItself:
         assert [summary["name"] for summary in store.list_workspaces()] == ["demo"]
 
     def test_a_directory_named_like_a_legacy_file_is_not_adopted(self, tmp_path: Path) -> None:
+        """Avoid adopting a directory as a legacy workspace file."""
         root = tmp_path / "projects"
         store = WorkspaceStore(root=root)
         store.save("demo", dict(STATE), expected_revision=None)
@@ -399,11 +416,13 @@ class TestTheLockItself:
         assert [summary["name"] for summary in store.list_workspaces()] == ["demo"]
 
     def test_a_workspace_that_was_never_saved_has_no_revisions(self, tmp_path: Path) -> None:
+        """Return no revision history for a workspace which has never existed."""
         store = WorkspaceStore(root=tmp_path / "projects")
 
         assert store.revisions("never-saved") == ()
 
     def test_deleting_a_workspace_that_is_not_there_releases_the_lock(self, tmp_path: Path) -> None:
+        """Release the lock after deleting a missing workspace."""
         store = WorkspaceStore(root=tmp_path / "projects")
 
         with pytest.raises(KeyError):
@@ -419,6 +438,7 @@ class TestAnInterruptedWriter:
     def test_a_revision_the_head_does_not_point_at_is_never_overwritten(
         self, tmp_path: Path
     ) -> None:
+        """Preserve an interrupted revision when assigning the next revision number."""
         root = tmp_path / "projects"
         store = WorkspaceStore(root=root)
         store.save("demo", {"editor": "first"}, expected_revision=None)
@@ -445,6 +465,7 @@ class TestAnInterruptedWriter:
         assert [revision.revision for revision in store.revisions("demo")] == [1, 2, 3]
 
     def test_the_interrupted_state_is_still_readable(self, tmp_path: Path) -> None:
+        """Retain explicit access to a revision beyond the recorded head."""
         root = tmp_path / "projects"
         store = WorkspaceStore(root=root)
         store.save("demo", {"editor": "first"}, expected_revision=None)
@@ -470,6 +491,7 @@ class TestLifecycleUnderTheLock:
     """Deleting and restoring move a whole workspace; they race a save too."""
 
     def test_a_delete_waits_for_the_writer_that_holds_the_workspace(self, tmp_path: Path) -> None:
+        """Refuse deletion while another writer holds the workspace lock."""
         root = tmp_path / "projects"
         store = WorkspaceStore(root=root, lock_timeout=0.3)
         store.save("demo", dict(STATE), expected_revision=None)
@@ -486,12 +508,14 @@ class TestLifecycleUnderTheLock:
         assert (root / "demo").is_dir()
 
     def test_nothing_is_waiting_before_anything_is_deleted(self, tmp_path: Path) -> None:
+        """Return an empty recovery collection before any workspace is deleted."""
         store = WorkspaceStore(root=tmp_path / "projects")
         store.save("demo", dict(STATE), expected_revision=None)
 
         assert store.deleted() == ()
 
     def test_a_stray_file_in_the_trash_is_not_a_deleted_workspace(self, tmp_path: Path) -> None:
+        """Exclude unrelated trash files from recoverable workspace entries."""
         root = tmp_path / "projects"
         store = WorkspaceStore(root=root)
         store.save("demo", dict(STATE), expected_revision=None)
@@ -501,6 +525,7 @@ class TestLifecycleUnderTheLock:
         assert [entry["token"] for entry in store.deleted()] == [token]
 
     def test_two_restores_of_one_name_leave_one_workspace(self, tmp_path: Path) -> None:
+        """Allow one concurrent restore without nesting the restored workspace."""
         root = tmp_path / "projects"
         store = WorkspaceStore(root=root)
         tokens = []
@@ -520,6 +545,7 @@ class TestLifecycleUnderTheLock:
     def test_a_fork_and_a_save_of_one_destination_acknowledge_exactly_one(
         self, tmp_path: Path
     ) -> None:
+        """Acknowledge one writer when a fork and save share a destination."""
         root = tmp_path / "projects"
         WorkspaceStore(root=root).save("source", {"editor": "source"}, expected_revision=None)
         clock = _Rendezvous()
@@ -554,6 +580,7 @@ class TestAWorkspaceSavedBeforeRevisions:
         return path
 
     def test_two_readers_adopt_one_flat_file_once(self, tmp_path: Path) -> None:
+        """Migrate a legacy workspace once under concurrent readers."""
         root = tmp_path / "projects"
         self._legacy(root, "old", {"note": "written before revisions"})
         stores = [WorkspaceStore(root=root) for _ in range(2)]
@@ -565,6 +592,7 @@ class TestAWorkspaceSavedBeforeRevisions:
         assert stores[0].load("old")["state"] == {"note": "written before revisions"}
 
     def test_a_save_over_an_adopted_workspace_states_its_revision(self, tmp_path: Path) -> None:
+        """Advance the revision when updating an adopted legacy workspace."""
         root = tmp_path / "projects"
         self._legacy(root, "old", {"note": "written before revisions"})
         store = WorkspaceStore(root=root)
@@ -578,10 +606,12 @@ class TestAWorkspaceSavedBeforeRevisions:
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
-    """A Studio client whose workspaces live under this test's own directory."""
+    """Provide a real Studio client whose workspaces stay in this test's directory."""
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path / "projects"))
     monkeypatch.setattr("sc_neurocore.studio.project._LOCK_TIMEOUT", 0.3)
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
@@ -589,6 +619,8 @@ class TestOverHttp:
     """The browser is the editor, so the guarantee has to reach it."""
 
     def test_two_clients_saving_one_new_workspace_get_one_success(self, client: TestClient) -> None:
+        """Return one successful creation and one conflict to concurrent HTTP clients."""
+
         def save(editor: str) -> tuple[int, Any]:
             response = client.post(
                 "/api/project/save",
@@ -607,6 +639,7 @@ class TestOverHttp:
     def test_a_busy_workspace_answers_503_without_a_path(
         self, client: TestClient, tmp_path: Path
     ) -> None:
+        """Return a path-free busy response while the workspace is locked."""
         root = (tmp_path / "projects").resolve()
         root.mkdir(parents=True, exist_ok=True)
 

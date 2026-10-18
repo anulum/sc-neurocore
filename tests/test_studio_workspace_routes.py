@@ -34,9 +34,11 @@ STATE = {
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
-    """A Studio client whose workspaces live under this test's own directory."""
+    """Provide a real Studio client whose workspaces stay in this test's directory."""
     monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path / "projects"))
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
@@ -53,7 +55,10 @@ def _save(
 
 
 class TestSaveConflict:
+    """Revision conflicts and path-free error responses at workspace routes."""
+
     def test_a_second_editor_is_refused_instead_of_overwriting(self, client: TestClient) -> None:
+        """Preserve the winning editor's state when another revision update conflicts."""
         first = _save(client, "shared", STATE, None)
         assert first["revision"] == 1
 
@@ -79,6 +84,7 @@ class TestSaveConflict:
     def test_claiming_a_new_workspace_over_an_existing_one_is_refused(
         self, client: TestClient
     ) -> None:
+        """Refuse creation when the workspace name already has a revision."""
         _save(client, "shared", STATE, None)
 
         refused = client.post("/api/project/save", json={"name": "shared", "state": {"note": "x"}})
@@ -87,6 +93,7 @@ class TestSaveConflict:
         assert refused.json()["detail"]["expected_revision"] is None
 
     def test_a_non_integer_expected_revision_is_a_client_error(self, client: TestClient) -> None:
+        """Report a malformed expected revision as a request validation error."""
         response = client.post(
             "/api/project/save",
             json={"name": "shared", "state": STATE, "expected_revision": "one"},
@@ -95,6 +102,7 @@ class TestSaveConflict:
         assert response.status_code == 422
 
     def test_a_conflict_body_carries_no_filesystem_path(self, client: TestClient) -> None:
+        """Keep internal filesystem paths out of workspace conflict responses."""
         _save(client, "shared", STATE, None)
         refused = client.post("/api/project/save", json={"name": "shared", "state": STATE})
 
@@ -102,7 +110,10 @@ class TestSaveConflict:
 
 
 class TestHistory:
+    """Readable revision history and source-preserving workspace forks."""
+
     def test_every_revision_stays_readable_after_later_saves(self, client: TestClient) -> None:
+        """Retain earlier states and parent links after subsequent workspace saves."""
         _save(client, "w", {"note": "one"}, None)
         _save(client, "w", {"note": "two"}, 1)
         _save(client, "w", {"note": "three"}, 2)
@@ -119,6 +130,7 @@ class TestHistory:
         assert client.get("/api/project/load/w").json()["state"] == {"note": "three"}
 
     def test_an_absent_revision_is_reported_as_absent(self, client: TestClient) -> None:
+        """Return a missing-revision response for an unknown revision number."""
         _save(client, "w", STATE, None)
 
         response = client.get("/api/project/load/w?revision=9")
@@ -127,6 +139,7 @@ class TestHistory:
         assert "not found" in response.json()["detail"]
 
     def test_a_fork_branches_without_touching_its_source(self, client: TestClient) -> None:
+        """Create a fork from the selected revision while retaining the source head."""
         _save(client, "w", {"note": "one"}, None)
         _save(client, "w", {"note": "two"}, 1)
 
@@ -138,6 +151,7 @@ class TestHistory:
         assert client.get("/api/project/load/w").json()["state"] == {"note": "two"}
 
     def test_forking_onto_a_live_workspace_is_refused(self, client: TestClient) -> None:
+        """Refuse a fork whose destination already names a live workspace."""
         _save(client, "w", STATE, None)
         _save(client, "taken", STATE, None)
 
@@ -147,7 +161,10 @@ class TestHistory:
 
 
 class TestRecoverableDelete:
+    """Recoverable workspace deletion and conflict-aware restoration."""
+
     def test_a_deleted_workspace_can_be_restored(self, client: TestClient) -> None:
+        """Restore the deleted workspace together with its revision history."""
         _save(client, "w", {"note": "one"}, None)
         _save(client, "w", {"note": "two"}, 1)
 
@@ -169,6 +186,7 @@ class TestRecoverableDelete:
         assert len(client.get("/api/project/w/revisions").json()["revisions"]) == 2
 
     def test_restoring_onto_a_live_name_is_refused(self, client: TestClient) -> None:
+        """Preserve a live workspace when a deleted copy shares its name."""
         _save(client, "w", STATE, None)
         token = None
         client.delete("/api/project/w")
@@ -182,15 +200,19 @@ class TestRecoverableDelete:
         assert client.get("/api/project/load/w").json()["state"] == {"note": "new work"}
 
     def test_an_unknown_token_is_refused(self, client: TestClient) -> None:
+        """Refuse restoration with an unknown recovery token."""
         response = client.post("/api/project/restore", json={"token": "nothing-here"})
 
         assert response.status_code == 404
 
 
 class TestTransfer:
+    """Portable workspace export and validated import through HTTP routes."""
+
     def test_export_and_import_carry_a_workspace_between_installations(
         self, client: TestClient
     ) -> None:
+        """Round-trip workspace state through the portable export document."""
         _save(client, "w", STATE, None)
 
         exported = client.get("/api/project/w/export")
@@ -207,6 +229,7 @@ class TestTransfer:
     def test_importing_something_that_is_not_a_workspace_is_refused(
         self, client: TestClient
     ) -> None:
+        """Refuse an invalid import without creating its destination workspace."""
         response = client.post(
             "/api/project/import", json={"name": "arrived", "document": {"nope": True}}
         )
@@ -215,6 +238,7 @@ class TestTransfer:
         assert client.get("/api/project/load/arrived").status_code == 404
 
     def test_an_exported_document_carries_no_filesystem_path(self, client: TestClient) -> None:
+        """Exclude installation-specific filesystem paths from portable exports."""
         _save(client, "w", STATE, None)
 
         document = client.get("/api/project/w/export").json()

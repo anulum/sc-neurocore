@@ -68,6 +68,8 @@ export default defineConfig({
     {
       command: `python -m uvicorn sc_neurocore.studio.app:create_app --factory --host 127.0.0.1 --port ${apiPort} --log-level warning`,
       env: {
+        SC_NEUROCORE_STUDIO_CORS_ORIGINS: [apiOrigin, uiOrigin].join(","),
+        SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS: [apiOrigin, uiOrigin].join(","),
         SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH: auditLogPath,
         SC_NEUROCORE_STUDIO_JOB_ROOT: jobRoot,
       },

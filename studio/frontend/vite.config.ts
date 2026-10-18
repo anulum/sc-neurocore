@@ -8,7 +8,23 @@
 
 import { federation } from "@module-federation/vite";
 import react from "@vitejs/plugin-react";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
+import type { Plugin } from "vite";
+
+/** Preserve the editor publisher's license beside its emitted runtime assets. */
+const monacoLicense: Plugin = {
+  name: "studio-monaco-license",
+  /** Emit the installed editor's unchanged license in the deployable frontend. */
+  generateBundle() {
+    this.emitFile({
+      type: "asset",
+      fileName: "vs/LICENSE",
+      source: readFileSync(new URL("./node_modules/monaco-editor/LICENSE", import.meta.url)),
+    });
+  },
+};
 
 const studioApiOrigin = process.env.SC_NEUROCORE_STUDIO_API_ORIGIN
   ?? "http://127.0.0.1:8001";
@@ -34,7 +50,11 @@ const reactSharedContract = {
 
 export default defineConfig({
   base: "/studios/sc-neurocore/",
+  // Vite serves and packages these existing dependency assets. Both entry
+  // surfaces select them instead of relying on an editor CDN at runtime.
+  publicDir: fileURLToPath(new URL("./node_modules/monaco-editor/min", import.meta.url)),
   plugins: [
+    monacoLicense,
     react(),
     federation({
       name: "sc_neurocore",

@@ -78,8 +78,10 @@ def graph(**overrides: Any) -> dict[str, Any]:
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
-    """A Studio client for the graph routes."""
-    with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
+    """Provide the real Studio API for graph validation and simulation."""
+    with TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    ) as test_client:
         yield test_client
 
 
@@ -91,7 +93,10 @@ def _validate(client: TestClient, document: dict[str, Any]) -> dict[str, Any]:
 
 
 class TestAValidGraph:
+    """Successful graph validation with no diagnostic issues."""
+
     def test_it_is_valid_and_carries_no_issues(self, client: TestClient) -> None:
+        """Return an accepted graph with empty legacy and structured diagnostics."""
         body = _validate(client, graph())
 
         assert body["valid"] is True
@@ -100,23 +105,29 @@ class TestAValidGraph:
 
 
 class TestWhereAFailureHappened:
+    """Stable locations for projection, population and run-field failures."""
+
     def test_a_projection_failure_names_the_projection_by_index(self, client: TestClient) -> None:
+        """Locate an invalid projection field by its graph index."""
         body = _validate(client, graph(projections=[projection("e1", weight=-4.0)]))
 
         assert body["valid"] is False
         assert [issue["field"] for issue in body["issues"]] == ["projections[0].weight"]
 
     def test_a_population_failure_names_the_population_by_index(self, client: TestClient) -> None:
+        """Locate an invalid population count by its graph index."""
         body = _validate(client, graph(populations=[population("p1"), population("p2", count=0)]))
 
         assert "populations[1].count" in [issue["field"] for issue in body["issues"]]
 
     def test_a_failure_about_the_run_names_its_own_field(self, client: TestClient) -> None:
+        """Locate an invalid run-level setting by its declared field."""
         body = _validate(client, graph(dt=0.0))
 
         assert "dt" in [issue["field"] for issue in body["issues"]]
 
     def test_a_parameter_failure_names_the_parameter(self, client: TestClient) -> None:
+        """Retain the population parameter path in a model-input diagnostic."""
         body = _validate(
             client, graph(populations=[population("p1", params={"not_a_parameter": 1.0})])
         )
@@ -143,6 +154,8 @@ class TestWhereAFailureHappened:
 
 
 class TestBothFormsAgree:
+    """Agreement between legacy graph errors and structured issue messages."""
+
     def test_every_message_appears_in_both_lists_in_one_order(self, client: TestClient) -> None:
         """A caller reading either form must see the same refusal."""
         body = _validate(

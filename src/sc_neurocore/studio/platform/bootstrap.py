@@ -24,6 +24,7 @@ from sc_neurocore.studio.platform.identity import (
     IDENTITY_SCHEMA_VERSION,
     load_studio_identity_store,
 )
+from sc_neurocore.studio.platform.identity_io import identity_store_mutation
 
 DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID = "svc-studio-admin"
 DEFAULT_STUDIO_ADMIN_ROLES = ("studio.admin", "studio.viewer")
@@ -68,7 +69,6 @@ class StudioIdentityBootstrapResult:
 
     def to_public_dict(self) -> dict[str, bool | list[str] | str | None]:
         """Return bootstrap metadata without the bearer token."""
-
         return {
             "expires_at_utc": self.expires_at_utc,
             "file_permissions_hardened": self.file_permissions_hardened,
@@ -128,7 +128,6 @@ def bootstrap_studio_admin_identity(
     OSError
         If the destination cannot be written.
     """
-
     destination = identity_file_path.expanduser()
     if destination.exists() and not overwrite:
         raise FileExistsError("Studio identity file already exists.")
@@ -141,29 +140,30 @@ def bootstrap_studio_admin_identity(
         )
     normalised_expiry = _normalise_expiry(expires_at_utc)
     parent_created = _ensure_parent_directory(destination.parent)
-    bearer_token = token_factory(token_bytes)
-    if not isinstance(bearer_token, str) or not bearer_token.strip():
-        raise ValueError("Studio bootstrap token factory returned an invalid token.")
-    token = bearer_token.strip()
-    token_sha256 = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    payload = _build_identity_payload(
-        principal_id=clean_principal_id,
-        roles=clean_roles,
-        token_sha256=token_sha256,
-        expires_at_utc=normalised_expiry,
-    )
-    permissions_hardened = _write_identity_payload(destination, payload, overwrite=overwrite)
-    load_studio_identity_store(destination)
-    return StudioIdentityBootstrapResult(
-        identity_file_path=destination,
-        principal_id=clean_principal_id,
-        roles=clean_roles,
-        bearer_token=token,
-        token_sha256=token_sha256,
-        expires_at_utc=normalised_expiry,
-        file_permissions_hardened=permissions_hardened,
-        parent_directory_created=parent_created,
-    )
+    with identity_store_mutation(destination) as destination:
+        bearer_token = token_factory(token_bytes)
+        if not isinstance(bearer_token, str) or not bearer_token.strip():
+            raise ValueError("Studio bootstrap token factory returned an invalid token.")
+        token = bearer_token.strip()
+        token_sha256 = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        payload = _build_identity_payload(
+            principal_id=clean_principal_id,
+            roles=clean_roles,
+            token_sha256=token_sha256,
+            expires_at_utc=normalised_expiry,
+        )
+        permissions_hardened = _write_identity_payload(destination, payload, overwrite=overwrite)
+        load_studio_identity_store(destination)
+        return StudioIdentityBootstrapResult(
+            identity_file_path=destination,
+            principal_id=clean_principal_id,
+            roles=clean_roles,
+            bearer_token=token,
+            token_sha256=token_sha256,
+            expires_at_utc=normalised_expiry,
+            file_permissions_hardened=permissions_hardened,
+            parent_directory_created=parent_created,
+        )
 
 
 def _parse_principal_id(principal_id: str) -> str:

@@ -29,13 +29,11 @@ from sc_neurocore.studio.simulation_manifest import (
 @pytest.fixture
 def client() -> TestClient:
     """Return a Studio test client."""
-
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+    return TestClient(create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"})
 
 
 def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
     """Simulation manifests describe reproducibility without local paths."""
-
     request_payload = {
         "equations": ["dv/dt = I"],
         "dt": 0.1,
@@ -100,7 +98,6 @@ def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
 
 def test_simulation_run_manifest_excludes_existing_manifest_from_result_hash() -> None:
     """Result hashes stay stable when callers pass an already annotated result."""
-
     request_payload = {"name": "AdExNeuron"}
     result_payload = {
         "time": [0.0],
@@ -150,7 +147,6 @@ def test_simulation_run_manifest_rejects_non_portable_json(
     payload: dict[str, float],
 ) -> None:
     """Simulation manifests fail closed on non-portable JSON values."""
-
     with pytest.raises(ValueError, match="portable JSON"):
         build_simulation_run_manifest(
             source="ode",
@@ -167,7 +163,6 @@ def test_simulation_run_manifest_rejects_non_portable_json(
 
 def test_simulation_run_manifest_rejects_unknown_evidence_classification() -> None:
     """Simulation metadata rejects evidence classes outside the shared contract."""
-
     manifest = StudioSimulationRunManifest(
         source="ode",
         input_sha256="0" * 64,
@@ -191,7 +186,6 @@ def test_simulation_run_manifest_rejects_unknown_evidence_classification() -> No
 
 def test_simulation_run_manifest_rejects_unknown_status() -> None:
     """Simulation metadata rejects statuses outside the shared contract."""
-
     manifest = StudioSimulationRunManifest(
         source="ode",
         input_sha256="0" * 64,
@@ -215,7 +209,6 @@ def test_simulation_run_manifest_rejects_unknown_status() -> None:
 
 def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> None:
     """ODE simulation responses include path-free reproducibility metadata."""
-
     response = client.post(
         "/api/simulate",
         json={
@@ -249,7 +242,6 @@ def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> Non
 
 def test_model_simulation_endpoint_returns_run_metadata(client: TestClient) -> None:
     """Named-model simulation responses include source-aware metadata."""
-
     response = client.post(
         "/api/models/simulate",
         json={"name": "AdExNeuron", "duration": 1.0, "current": 0.0},
