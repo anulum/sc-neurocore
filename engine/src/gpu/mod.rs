@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — GPU compute registration
 
 //! GPU compute backend for SC-NeuroCore stochastic computing layers.
 //!
@@ -25,6 +27,7 @@
 //! Weights are uploaded once and persist on the GPU. Input probabilities
 //! and output values are transferred per forward call.
 
+mod batch_output;
 pub mod buffers;
 pub mod context;
 pub mod dense;
@@ -198,6 +201,16 @@ impl PyGpuLifBatch {
                 n_neurons
             )));
         }
+        crate::neuron::FixedPointLif::try_new(
+            data_width,
+            fraction,
+            v_rest,
+            v_reset,
+            v_threshold,
+            refractory_period,
+        )
+        .map_err(PyValueError::new_err)?;
+        batch_output::validate(n_neurons, n_steps, self.inner.output_limits())?;
         let curr_i32: Vec<i32> = curr.iter().map(|&x| x as i32).collect();
         let result = self.inner.run(
             n_neurons,
@@ -300,6 +313,7 @@ impl PyGpuIzhikevichBatch {
                 n_neurons
             )));
         }
+        batch_output::validate(n_neurons, n_steps, self.inner.output_limits())?;
         let result = self
             .inner
             .run(n_neurons, n_steps, curr, a, b, c, d, dt, v_peak);

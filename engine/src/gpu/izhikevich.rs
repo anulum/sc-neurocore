@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — GPU Izhikevich batch runner
 
 //! GPU-accelerated Izhikevich neuron batch runner using a wgpu compute shader.
 //!
@@ -51,6 +53,11 @@ pub struct GpuIzhikevichBatch {
 }
 
 impl GpuIzhikevichBatch {
+    /// Return the limits requested for this batch runner's actual device.
+    pub(crate) fn output_limits(&self) -> wgpu::Limits {
+        self.ctx.device.limits()
+    }
+
     /// Acquire the shared GPU context, or `None` if no GPU is available.
     pub fn try_new() -> Option<Self> {
         let ctx = super::context::get_context()?;

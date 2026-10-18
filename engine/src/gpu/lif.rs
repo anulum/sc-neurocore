@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — GPU fixed-point LIF batch runner
 
 //! GPU-accelerated fixed-point LIF batch runner using a wgpu compute shader.
 //!
@@ -51,6 +53,11 @@ pub struct GpuLifBatch {
 }
 
 impl GpuLifBatch {
+    /// Return the limits requested for this batch runner's actual device.
+    pub(crate) fn output_limits(&self) -> wgpu::Limits {
+        self.ctx.device.limits()
+    }
+
     /// Acquire the shared GPU context, or `None` if no GPU is available.
     pub fn try_new() -> Option<Self> {
         let ctx = super::context::get_context()?;
@@ -61,6 +68,9 @@ impl GpuLifBatch {
     ///
     /// `currents` has length `n_neurons`. Returns row-major `[n_neurons × n_steps]`
     /// spikes and voltages, bit-exact with the CPU reference.
+    /// Callers supply bit widths in `[1, 16]`, fraction below the bit width,
+    /// nonnegative refractory periods and device-admitted output dimensions.
+    /// The Python binding checks these conditions before entering this kernel.
     #[allow(clippy::too_many_arguments)]
     pub fn run(
         &self,

@@ -51,6 +51,16 @@ Worker refusal raises the same recoverable `MemoryError` and permits a fresh
 construction with the original seed. Its existing scalar and parallel forward
 thresholds are unchanged; a successfully constructed layer already has an
 initialised shared pool.
+The Python `GpuLifBatch` and `GpuIzhikevichBatch` runners validate nonempty
+output products, shader indices, device buffer capacity and workgroup limits
+before allocating or dispatching. Unrepresentable or oversized output storage
+raises `MemoryError`; shader-index and dispatch-limit refusals raise `ValueError`.
+Input-length errors retain precedence. Empty shapes, accepted numerical kernels
+and same-instance retries retain their established behaviour.
+`GpuLifBatch` applies the CPU fixed-point configuration validator before
+output admission, including for empty outputs. Bit widths outside `[1, 16]`,
+fractional precision at or above the bit width and negative refractory periods
+raise the same `ValueError` messages as the CPU batch interface.
 Pareto extraction checks that power and score columns cover every LUT entry
 before worker admission, retaining unused trailing values. DNA pair scoring
 starts workers only for at least two strands. Ising energy batches, annealing

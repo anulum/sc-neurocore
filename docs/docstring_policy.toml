@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 925
+expected_file_count = 927
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3793,3 +3793,11 @@ rationale = "Document supported public power contributions and elapsed-time unit
 [[file]]
 path = "tests/test_energy_accounting_unified_energy_reporter.py"
 rationale = "Execute the actual reporter documentation and preserve public report formatting, layer and ASIC power integration."
+
+[[file]]
+path = "engine/tests/python/test_gpu_lif_batch_engine_binding.py"
+rationale = "Physical installed GPU fixed-point batches must refuse impossible output storage and dispatch sizes, preserve caller arrays, recover on the same object and match the public CPU reference."
+
+[[file]]
+path = "engine/tests/python/test_gpu_izhikevich_batch_engine_binding.py"
+rationale = "Physical installed GPU Izhikevich batches must refuse impossible output storage and dispatch sizes, retain healthy trajectories and caller arrays, and compare against the public CPU neuron."

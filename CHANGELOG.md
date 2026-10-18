@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Reject oversized GPU LIF and Izhikevich batch outputs before buffer creation
+  or dispatch. Return recoverable exceptions for storage, shader-index and
+  workgroup limits while preserving accepted trajectories and empty shapes.
+  Apply the CPU fixed-point configuration checks to GPU LIF batches, including
+  empty runs.
+
 - Update the Semgrep environment to MCP 1.30.0 to address CVE-2026-59951.
   Mark embedded receipt-header examples so REUSE checks the source headers
   without interpreting generated SPDX text as additional file metadata.
