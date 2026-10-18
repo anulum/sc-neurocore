@@ -30,7 +30,7 @@ import type {
   StudioJobRecord, StudioJobStatus, StudioOperatorStatus, TrainingJobSummary,
   TrainingPreregistrationVerdict,
 } from "../api/client";
-import type { StudioSavedSession } from "../studioSavedSessions";
+import type { StudioSavedSession, StudioSessionWriteResult } from "../studioSavedSessions";
 import type {
   StudioCandidateDraft,
   StudioProjectRevisionPointer,
@@ -250,6 +250,8 @@ export interface StudioState {
   /** Digest of the exported effective experiment. */
   codeExperimentSha256: string;
   savedSessions: StudioSavedSession[];
+  /** Outcome of the last session-list write; independent of simulation errors. */
+  sessionWriteResult: StudioSessionWriteResult | null;
   error: string | null;
   /** The latest failed attempt at a workflow stage, with the experiment it failed under. */
   stageFailure: StudioStageFailure | null;
@@ -460,9 +462,11 @@ export interface StudioState {
   exportCSV: () => void;
   exportSVG: () => void;
   resetDefaults: () => void;
-  saveSession: (name: string) => void;
+  /** Keep a snapshot in this page and return whether its browser copy was saved. */
+  saveSession: (name: string) => StudioSessionWriteResult;
   loadSession: (name: string) => void;
-  deleteSession: (name: string) => void;
+  /** Remove a page snapshot and return whether the stored list was updated. */
+  deleteSession: (name: string) => StudioSessionWriteResult;
   shareURL: () => void;
   sweepParamY: string;
   setSweepParamY: (p: string) => void;

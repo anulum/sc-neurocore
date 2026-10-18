@@ -10,13 +10,13 @@ import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
 import { parseStudioJson, stringifyStudioJson } from "./studioJson";
 
 /**
- * Keeping the reader's workspaces in the browser, and reading them back.
+ * Keeping named experiment snapshots in the browser, and reading them back.
  *
- * **The browser copy is a convenience, never the record.** Workspaces live on
- * the server; this is a local cache so a reload does not lose what someone was
- * in the middle of. Every failure here is therefore reported rather than
- * thrown: a full quota, a storage the browser refuses to open, a payload that
- * was mangled. The caller shows the reason and the server copy is unaffected.
+ * A browser session is independent of a server project: saving a session
+ * does not create a server copy. Every failure here is reported rather than
+ * thrown: a full quota, storage the browser refuses to open, or a payload that
+ * was mangled. The caller shows the reason and retains page-only changes.
+ * Any separately saved server project is unaffected.
  *
  * Reading is asymmetric with writing on purpose. A session is written as a
  * typed snapshot; it is read back as a document that may predate any field it
@@ -214,7 +214,11 @@ function numberRecordValue(value: unknown): Record<string, number> {
  *   browser configured to refuse it.
  */
 export function browserSavedSessionStorage(): StudioSavedSessionStorage | null {
-  return typeof localStorage === "undefined" ? null : localStorage;
+  try {
+    return typeof localStorage === "undefined" ? null : localStorage;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -391,7 +395,7 @@ export function writeStoredStudioSessions(
   if (storage === null) {
     return {
       status: "unavailable",
-      message: "This browser has no local storage; sessions are kept on the server only.",
+      message: "Local storage is unavailable in this browser.",
     };
   }
   try {
@@ -402,7 +406,7 @@ export function writeStoredStudioSessions(
       return {
         status: "quota-exceeded",
         message:
-          "The browser refused to cache this session: local storage is full. " +
+          "The browser refused to update the session list: local storage is full. " +
           "Saved workspaces on the server are unaffected.",
       };
     }
@@ -410,8 +414,8 @@ export function writeStoredStudioSessions(
       status: "failed",
       message:
         error instanceof Error
-          ? `The browser could not cache this session: ${error.message}`
-          : "The browser could not cache this session.",
+          ? `The browser could not update the session list: ${error.message}`
+          : "The browser could not update the session list.",
     };
   }
 }

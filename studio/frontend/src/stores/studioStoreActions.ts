@@ -1741,8 +1741,9 @@ export function createStudioStoreActions(
     const s = get();
     const state = studioSavedSessionState(s);
     const nextState = studioSavedSessionUpsertState(s.savedSessions, { name, state });
-    set(nextState);
-    writeStoredStudioSessions(nextState.savedSessions);
+    const result = writeStoredStudioSessions(nextState.savedSessions);
+    set({ ...nextState, sessionWriteResult: result });
+    return result;
   },
 
   loadSession: (name) => {
@@ -1762,8 +1763,9 @@ export function createStudioStoreActions(
 
   deleteSession: (name) => {
     const nextState = studioSavedSessionRemovedState(get().savedSessions, name);
-    set(nextState);
-    writeStoredStudioSessions(nextState.savedSessions);
+    const result = writeStoredStudioSessions(nextState.savedSessions);
+    set({ ...nextState, sessionWriteResult: result });
+    return result;
   },
 
   applyShareLink: async () => {

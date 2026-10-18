@@ -40,7 +40,7 @@ const path = `${dirname(python)}${delimiter}${process.env.PATH ?? ""}`;
 export default defineConfig({
   testDir: "./e2e",
   testMatch: ["catalogue-to-silicon-live.spec.ts", "experiment-export-live.spec.ts"],
-  grep: /Poisson constructor controls run, replay, export and preserve observed state|a full-domain seed survives serialized project custody, editing, local sessions and independent replay/,
+  grep: /Poisson constructor controls run, replay, export and preserve observed state|a full-domain seed survives serialized project custody, editing, local sessions and independent replay|browser session writes report real quota failures and recover without losing the stored list/,
   timeout: 900_000,
   expect: { timeout: 60_000 },
   fullyParallel: false,

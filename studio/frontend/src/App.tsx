@@ -65,6 +65,7 @@ import {
 import { Btn, CapabilityUnavailable } from "./appChrome";
 import ViewTabs from "./components/ViewTabs";
 import TextPromptDialog from "./components/TextPromptDialog";
+import SessionStorageStatus from "./components/SessionStorageStatus";
 import type { TextPromptRequest } from "./components/TextPromptDialog";
 import { viewTabGroups, viewTabId, VIEW_PANEL_ID } from "./viewTabs";
 
@@ -764,6 +765,7 @@ export default function App() {
                 borderRadius: 3, cursor: "pointer",
               }}>Save</button>
             </div>
+            <SessionStorageStatus result={s.sessionWriteResult} />
             {s.savedSessions.length > 0 && (
               <div style={{ maxHeight: 60, overflowY: "auto" }}>
                 {s.savedSessions.map((ss) => (

@@ -567,3 +567,111 @@ for (const source of ["ode", "model"] as const) {
     }
   });
 }
+
+test("browser session writes report real quota failures and recover without losing the stored list", async ({ page, request }, testInfo) => {
+  const project = `session-quota-${Date.now()}`;
+  const baseline = "durable";
+  const unsaved = `unsaved-${"x".repeat(60)}`;
+  const recovered = "recovered";
+  const provisioned = await request.post("/api/project/save", {
+    data: { name: project, state: DIFFUSION_WORKSPACE },
+  });
+  expect(provisioned.ok()).toBe(true);
+  const serverBefore = await (await request.get(`/api/project/load/${project}`)).json() as unknown;
+  await page.coverage.startJSCoverage({ resetOnNavigation: false });
+  await page.goto("./");
+  await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
+  await page.getByRole("button", { name: `Open project ${project} revision 1`, exact: true }).click();
+  await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("37");
+
+  /**
+   * Save the current experiment through the actual session dialog.
+   *
+   * @param name - The local session name.
+   */
+  async function saveSession(name: string): Promise<void> {
+    await page.getByRole("button", { name: "Save session", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Save session" });
+    await dialog.getByLabel("Session name").fill(name);
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+  }
+
+  await saveSession(baseline);
+  await expect(page.getByRole("button", { name: `Open session ${baseline}`, exact: true })).toBeVisible();
+  const storedBefore = await page.evaluate(() => localStorage.getItem("sc-studio-sessions"));
+  expect(storedBefore).not.toBeNull();
+  const quota = await page.evaluate(() => {
+    let low = 0;
+    let high = 8 * 1024 * 1024;
+    let refused = "";
+    while (low < high) {
+      const size = Math.ceil((low + high) / 2);
+      try {
+        localStorage.setItem("sc-studio-quota-test", "x".repeat(size));
+        low = size;
+      } catch (error) {
+        if (!(error instanceof DOMException) || error.name !== "QuotaExceededError") throw error;
+        refused = error.name;
+        high = size - 1;
+      }
+    }
+    return { refused, fillerCharacters: low, stored: localStorage.getItem("sc-studio-sessions") };
+  });
+  expect(quota.refused).toBe("QuotaExceededError");
+  expect(quota.fillerCharacters).toBeGreaterThan(1024 * 1024);
+  expect(quota.stored).toBe(storedBefore);
+  await page.getByTestId("slider-f (Hz)").fill("41");
+  await saveSession(unsaved);
+  await expect(page.getByRole("button", { name: `Open session ${unsaved}`, exact: true })).toBeVisible();
+  const afterFailedSave = await page.evaluate(() => localStorage.getItem("sc-studio-sessions"));
+  expect(afterFailedSave).toBe(storedBefore);
+  await testInfo.attach("real-browser-quota-before-feedback", {
+    body: JSON.stringify({ quota, afterFailedSave, unsaved }), contentType: "application/json",
+  });
+  const notice = page.getByTestId("session-storage-status");
+  await expect(notice).toHaveAttribute("role", "alert", { timeout: 5000 });
+  await expect(notice).toContainText("local storage is full");
+  await expect(notice).toContainText("this page only");
+  await expect(notice).toContainText("Reloading may restore the last saved list");
+
+  await page.getByRole("button", { name: `Delete session ${baseline}`, exact: true }).click();
+  await expect(page.getByRole("button", { name: `Open session ${baseline}`, exact: true })).not.toBeVisible();
+  await expect(notice).toHaveAttribute("role", "alert");
+  expect(await page.evaluate(() => localStorage.getItem("sc-studio-sessions"))).toBe(storedBefore);
+  await page.getByRole("button", { name: `Open session ${unsaved}`, exact: true }).click();
+  await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("41");
+  await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+  const memoryRun = page.waitForResponse((response) =>
+    experimentResponse(response, "/api/simulate", 41, 424242, "replay"));
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  const original = await (await memoryRun).json() as SimulateResponse;
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: `Open session ${baseline}`, exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: `Open session ${unsaved}`, exact: true })).not.toBeVisible();
+  await page.evaluate(() => { localStorage.removeItem("sc-studio-quota-test"); });
+  await page.getByRole("button", { name: `Open session ${baseline}`, exact: true }).click();
+  await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("37");
+  await page.getByTestId("slider-f (Hz)").fill("41");
+  await saveSession(recovered);
+  await expect(page.getByTestId("session-storage-status")).toHaveAttribute("role", "status");
+  await expect(page.getByTestId("session-storage-status")).toContainText("saved in this browser");
+  await page.getByRole("button", { name: `Delete session ${baseline}`, exact: true }).click();
+  await expect(page.getByTestId("session-storage-status")).toHaveAttribute("role", "status");
+  await page.reload();
+  await expect(page.getByRole("button", { name: `Open session ${baseline}`, exact: true })).not.toBeVisible();
+  await expect(page.getByRole("button", { name: `Open session ${recovered}`, exact: true })).toBeVisible();
+  await page.getByRole("button", { name: `Open session ${recovered}`, exact: true }).click();
+  await expect(page.getByTestId("slider-f (Hz)")).toHaveValue("41");
+  await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+  const recoveredRun = page.waitForResponse((response) =>
+    experimentResponse(response, "/api/simulate", 41, 424242, "replay"));
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  expect((await (await recoveredRun).json() as SimulateResponse).raw).toEqual(original.raw);
+  const serverAfter = await (await request.get(`/api/project/load/${project}`)).json() as unknown;
+  expect(serverAfter).toEqual(serverBefore);
+  const coveragePath = testInfo.outputPath("session-browser-v8.json");
+  writeFileSync(coveragePath, JSON.stringify(await page.coverage.stopJSCoverage()));
+  await testInfo.attach("session-browser-v8", { path: coveragePath, contentType: "application/json" });
+});

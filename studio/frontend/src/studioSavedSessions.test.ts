@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  browserSavedSessionStorage,
   readStudioSessionsResult,
   STUDIO_SAVED_SESSIONS_KEY,
   readStoredStudioSessions,
@@ -279,19 +280,39 @@ describe("browser cache status", () => {
     expect(result.message).toContain("server");
   });
 
-  it("reports any other write failure without throwing", () => {
+  it.each<unknown>([new Error("disk on fire"), { reason: "write denied" }])(
+    "reports other write failures without throwing: %s", (failure) => {
     const failing = storage({}, () => {
-      throw new Error("disk on fire");
+      throw failure;
     });
 
     const result = writeStoredStudioSessions([], failing);
 
     expect(result.status).toBe("failed");
-    expect(result.message).toContain("disk on fire");
+    expect(result.message).toContain(failure instanceof Error
+      ? failure.message : "could not update the session list");
   });
 
   it("says when there is no storage to write to", () => {
     expect(writeStoredStudioSessions([], null).status).toBe("unavailable");
+  });
+
+  it("reports a browser storage getter refusal before reading or writing", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get: () => { throw new DOMException("Access denied", "SecurityError"); },
+    });
+    try {
+      expect(browserSavedSessionStorage()).toBeNull();
+      expect(readStudioSessionsResult().status).toBe("unavailable");
+      expect(writeStoredStudioSessions([])).toEqual({
+        status: "unavailable", message: "Local storage is unavailable in this browser.",
+      });
+    } finally {
+      if (descriptor) Object.defineProperty(globalThis, "localStorage", descriptor);
+      else Reflect.deleteProperty(globalThis, "localStorage");
+    }
   });
 
   it("succeeds quietly when the browser cooperates", () => {

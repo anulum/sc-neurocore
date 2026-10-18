@@ -232,6 +232,16 @@ Five injection protocols for all simulations:
   even with a positive tolerance. See
   [Replay and code export](../studio/replay-and-export.md).
 
+The **Sessions** list stores named experiment snapshots in this browser;
+**Save session** does not create a server project. A successful write is
+announced beside the list. If storage is full, unavailable or refuses a write,
+an alert explains that the session-list changes remain in this page only.
+The last stored list stays intact, so reloading may bring back a session whose
+deletion could not be saved, or omit a newly added session. The current page
+keeps those changes usable; saving a session again after storage recovers
+writes the current list. Use **Save project** for a separate server copy of
+the current experiment.
+
 ## One effective experiment per run
 
 The resolved Python specification owns immutable snapshots of its inputs.
