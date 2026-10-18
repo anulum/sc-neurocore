@@ -30,16 +30,16 @@ Popcount of packed u64 array (from Python list).
 ### Function `sc_popcount_packed_np(data)`
 Popcount of packed u64 numpy array (zero-copy).
 
-### Function `sc_scc_packed(a, b)`
+### Function `sc_scc_packed(a, b, *, bit_length)`
 Stochastic cross-correlation of packed u64 arrays (from Python list).
 
-### Function `sc_scc_packed_np(a, b)`
+### Function `sc_scc_packed_np(a, b, *, bit_length)`
 Stochastic cross-correlation of packed u64 numpy arrays (zero-copy).
 
-### Function `lfsr_encode_packed()`
+### Function `lfsr_encode_packed(*, seed, threshold, bit_length)`
 Encode an LFSR-16 stochastic bitstream as packed little-endian u64 words.
 
-### Function `lfsr_encode_bits()`
+### Function `lfsr_encode_bits(*, seed, threshold, bit_length)`
 Encode an LFSR-16 stochastic bitstream as a uint8 0/1 numpy array.
 
 ---
@@ -59,7 +59,7 @@ Expose read-only historical runtime diagnostics for compatibility.
 
 ## Module `_native.learning_factory`
 
-### Function `create_plasticity_layer(count, rule_type, backend, autograd)`
+### Function `create_plasticity_layer(count, rule_type, backend, autograd, **kwargs)`
 Construct a Torch, Rust-Rayon, or Rust-WGPU plasticity layer.
 
 Rust backends remain available when PyTorch is not installed.  Torch is
@@ -99,8 +99,8 @@ Return the configured shared deterministic seed.
 ### Class `RustOnlineO1Synapse`
 Own one bounded fixed-point online O(1) Rust learner.
 
-- **__init__**()
-- **step**()
+- **__init__**(\*, weight_bits, trace_bits, reward_bits, learning_shift, trace_decay_shift, initial_weight)
+- **step**(\*, pre_spike, post_spike, reward)
   - Advance one timestep and return the bounded fixed-point state.
 - **per_synapse_state_bits**()
   - Return the Rust-reported fixed-point state footprint in bits.
@@ -163,7 +163,7 @@ Own a parallel Rust rule layer with length-checked array boundaries.
 ### Class `TorchRuleLayer`
 Execute biological plasticity with optional surrogate autograd.
 
-- **__init__**(count, rule_type, weight, param_a, param_b, autograd)
+- **__init__**(count, rule_type, weight, param_a, param_b, autograd, \*\*kwargs)
 - **reset**()
   - Clear only the mutable traces defined by the selected rule.
 - **forward**(pre_spikes, post_spikes, rewards, dt)
@@ -181,10 +181,10 @@ Execute biological plasticity with optional surrogate autograd.
 
 ## Module `_native.learning_torch_precision`
 
-### Function `normalise_bit_spec(spec)`
+### Function `normalise_bit_spec(spec, *, count, device, field)`
 Return a per-synapse integer bit vector within the supported domain.
 
-### Function `normalise_clip(value)`
+### Function `normalise_clip(value, *, field)`
 Return a finite, positive symmetric quantisation limit.
 
 ### Function `quantise_tensor(values, bits, clip)`
@@ -197,20 +197,20 @@ Symmetrically quantise a tensor, preserving its device and dtype.
 ### Function `rule_parameters(rule_type, param_a, param_b, kwargs)`
 Build the five validated scalar parameters shared by every rule.
 
-### Function `validate_input(values)`
+### Function `validate_input(values, *, name, count, device, dtype, probability)`
 Move a finite one-dimensional public input onto the layer device.
 
 ---
 
 ## Module `_native.learning_validation`
 
-### Function `require_integral()`
+### Function `require_integral(*, name, value)`
 Return an integer after rejecting booleans and non-integral values.
 
-### Function `require_non_negative_integral()`
+### Function `require_non_negative_integral(*, name, value)`
 Return a non-negative integer for an unsigned native ABI field.
 
-### Function `require_integral_range()`
+### Function `require_integral_range(*, name, value, lower, upper)`
 Return an integer inside the inclusive native ABI domain.
 
 ### Function `require_count(value)`
@@ -219,37 +219,37 @@ Return a positive layer size that can safely cross ``size_t``.
 ### Function `require_rule_type(value)`
 Return one of the four native plasticity rule identifiers.
 
-### Function `require_bool()`
+### Function `require_bool(*, name, value)`
 Return a real Python boolean for the C ``bool`` ABI.
 
-### Function `require_finite_float()`
+### Function `require_finite_float(*, name, value)`
 Return a finite real scalar after rejecting booleans.
 
-### Function `require_positive_float()`
+### Function `require_positive_float(*, name, value)`
 Return a finite strictly positive scalar.
 
-### Function `require_non_negative_float()`
+### Function `require_non_negative_float(*, name, value)`
 Return a finite non-negative scalar.
 
-### Function `require_unit_interval()`
+### Function `require_unit_interval(*, name, value)`
 Return a finite scalar in the closed unit interval.
 
-### Function `require_u32_seed()`
+### Function `require_u32_seed(*, name, value)`
 Return a deterministic seed accepted by CPU and WGPU paths.
 
-### Function `require_u64_seed()`
+### Function `require_u64_seed(*, name, value)`
 Return an explicit seed accepted by the Rayon analogue path.
 
 ### Function `saturate(value, lower, upper)`
 Clamp an already validated integer into inclusive bounds.
 
-### Function `as_bool_vector(values)`
+### Function `as_bool_vector(values, *, name, length)`
 Return a contiguous Boolean vector without truthiness coercion.
 
-### Function `as_float_vector(values)`
+### Function `as_float_vector(values, *, name, length)`
 Return a contiguous finite ``float32`` vector.
 
-### Function `as_probability_vector(values)`
+### Function `as_probability_vector(values, *, name, length)`
 Return a contiguous finite probability vector in ``&#91;0, 1&#93;``.
 
 ---
@@ -259,7 +259,7 @@ Return a contiguous finite probability vector in ``&#91;0, 1&#93;``.
 ### Class `RustWgpuRuleLayer`
 Own one explicit WGPU rule layer with safe host-buffer boundaries.
 
-- **__init__**(count, rule_type, weight, param_a, param_b, tau_e, target_sum_weights)
+- **__init__**(count, rule_type, weight, param_a, param_b, tau_e, target_sum_weights, \*\*kwargs)
 - **step**(pre_spikes, post_spikes, rewards, dt)
   - Advance one exactly sized WGPU probability batch.
 - **step_analog**(pre_probs, post_probs, rewards, dt, seed)
@@ -298,7 +298,7 @@ Returns
 str
     An available backend name, with ``python`` as the total fallback.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial, v_reset, theta_rest, delta_theta, tau_theta, dt)`
 Validate complete state/spike traces and scalar final receipts.
 
 Parameters
@@ -356,7 +356,7 @@ ValueError
 FloatingPointError
     If a candidate or returned receipt is non-finite.
 
-### Function `simulate_adaptive_threshold_if(v, theta, v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt, current)`
+### Function `simulate_adaptive_threshold_if(v, theta, v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt, current, *, backend)`
 Run one complete exact-relaxation batch on a selected execution lane.
 
 Parameters
@@ -408,13 +408,13 @@ Return whether one maintained execution lane is ready.
 ### Function `auto_backend()`
 Return the first available lane in measured ascending-latency order.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial_y, epsilon)`
 Validate complete state, graded-output, event traces, and receipts.
 
 ### Function `simulate_python(y, k, alpha, bias, epsilon, current)`
 Run a complete batch through the Python golden model.
 
-### Function `simulate_aihara_map(y, k, alpha, bias, epsilon, current)`
+### Function `simulate_aihara_map(y, k, alpha, bias, epsilon, current, *, backend)`
 Run one complete source-faithful batch on a selected execution lane.
 
 ---
@@ -442,7 +442,7 @@ Returns
 str
     An available backend name, with ``python`` as the total fallback.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial, v_rest)`
 Validate complete state/spike traces and scalar final receipts.
 
 Parameters
@@ -472,7 +472,7 @@ FloatingPointError
 ### Function `simulate_python(v, a_exc, i_exc, a_inh, i_inh, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current)`
 Run the complete batch through the Python golden model.
 
-### Function `simulate_alpha(v, a_exc, i_exc, a_inh, i_inh, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current)`
+### Function `simulate_alpha(v, a_exc, i_exc, a_inh, i_inh, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current, *, backend)`
 Run one complete exact-flow batch on a selected execution lane.
 
 Parameters
@@ -520,7 +520,7 @@ Return whether one named Amari execution lane is currently usable.
 ### Function `auto_backend()`
 Return the first available lane in measured latency order.
 
-### Function `simulate_amari_field(u_init, tau, a_exc, a_width, b_inh, b_width, dx, dt, currents)`
+### Function `simulate_amari_field(u_init, tau, a_exc, a_width, b_inh, b_width, dx, dt, currents, *, backend)`
 Run a complete Amari field batch on an explicit maintained backend.
 
 ---
@@ -530,19 +530,19 @@ Run a complete Amari field batch on an explicit maintained backend.
 ### Class `Backend`
 Acceleration backend handle exposing the stable SC inference contract.
 
-- **sc_forward**(weights_packed, input_probs)
+- **sc_forward**(weights_packed, input_probs, \*, length, seed)
   - Run the stochastic forward pass; see :func:`sc_neurocore.accel.sc_forward`.
 
 ### Class `NumpyBackend`
 NumPy fallback backend (always available, the bit-true floor).
 
-- **sc_forward**(weights_packed, input_probs)
+- **sc_forward**(weights_packed, input_probs, \*, length, seed)
   - Run the NumPy bit-true stochastic forward pass.
 
 ### Class `RustBackend`
 Rust-accelerated backend over the compiled engine.
 
-- **sc_forward**(weights_packed, input_probs)
+- **sc_forward**(weights_packed, input_probs, \*, length, seed)
   - Run the compiled Rust stochastic forward pass.
 
 ### Function `available_backends()`
@@ -600,7 +600,7 @@ Cached: the on-disk benchmarks are immutable for the life of the process.
 Malformed or non-comparison files (no ``backends`` / ``kernel`` / ``meta.cpu``)
 are skipped silently — they are simply not a usable measurement.
 
-### Function `select_backend_order(kernel)`
+### Function `select_backend_order(kernel, *, static, cpu)`
 Return the dispatch order for ``kernel``, reordered from measured benchmarks.
 
 Compiled backends measured on this host's CPU lead, fastest-first; any backend
@@ -614,7 +614,7 @@ order is returned verbatim.
 
 ### Function `backend_available(backend)`
 ### Function `auto_backend()`
-### Function `simulate_benda_herz(currents)`
+### Function `simulate_benda_herz(currents, *, a, phase, onset_gain, rheobase, adaptation_slope, tau_a, dt, backend)`
 ---
 
 ## Module `accel.brunel_wang`
@@ -625,7 +625,7 @@ Return whether one named Brunel-Wang runtime is executable.
 ### Function `auto_backend()`
 Return the first available measured lane, with Python as floor.
 
-### Function `simulate_brunel_wang(v, ref_remaining, v_rest, v_reset, v_threshold, tau_m, tau_ref, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc, dt, i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)`
+### Function `simulate_brunel_wang(v, ref_remaining, v_rest, v_reset, v_threshold, tau_m, tau_ref, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc, dt, i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba, *, backend)`
 Run the complete configured four-gate contract on one real backend.
 
 ---
@@ -663,7 +663,7 @@ Return whether one named Compte runtime is executable.
 ### Function `auto_backend()`
 Return the first executable measured lane, with Python as floor.
 
-### Function `simulate_compte_wm(v, s_ampa, s_nmda, x_nmda, s_gaba, ref_remaining, g_l, g_ampa, g_nmda, g_gaba, e_l, e_exc, e_inh, c_m, mg, tau_ampa, tau_nmda, tau_x, tau_gaba, alpha_nmda, v_threshold, v_reset, tau_ref, dt, currents, recurrent_events, external_events, inhibitory_events)`
+### Function `simulate_compte_wm(v, s_ampa, s_nmda, x_nmda, s_gaba, ref_remaining, g_l, g_ampa, g_nmda, g_gaba, e_l, e_exc, e_inh, c_m, mg, tau_ampa, tau_nmda, tau_x, tau_gaba, alpha_nmda, v_threshold, v_reset, tau_ref, dt, currents, recurrent_events, external_events, inhibitory_events, *, backend)`
 Run the complete configured Compte contract on one real backend.
 
 ---
@@ -710,7 +710,7 @@ Run the complete configurable Mojo batch through its C ABI.
 ### Function `native_executable(backend)`
 Validate the selected operator command without discovery or runtime installation.
 
-### Function `read_native_recording(path, maximum, executable)`
+### Function `read_native_recording(path, maximum, executable, *, backend)`
 Read an owned native event matrix or refuse the entire command response.
 
 Parameters
@@ -755,7 +755,7 @@ Read the declared Go command through the shared guarded binary protocol.
 
 ## Module `accel.dvs_recordings`
 
-### Function `read_dvs_recording(path)`
+### Function `read_dvs_recording(path, *, maximum_bytes, backend)`
 Read a converted camera recording as an owned row-major event matrix.
 
 Parameters
@@ -807,7 +807,7 @@ reads the recording directly; no native refusal falls back to NumPy.
 
 ### Function `backend_available(backend)`
 ### Function `auto_backend()`
-### Function `simulate_energy_lif(currents)`
+### Function `simulate_energy_lif(currents, *, v, epsilon, capacitance, g_leak, e_0, e_u, e_d, e_f, v_threshold, v_reset, alpha, epsilon_0, epsilon_c, delta, tau_e, dt, backend)`
 ---
 
 ## Module `accel.ermentrout_kopell_pop`
@@ -833,7 +833,7 @@ Returns
 str
     Available backend name, with ``python`` as the total fallback.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial)`
 Validate traces and final-state receipts from one backend.
 
 Parameters
@@ -880,7 +880,7 @@ ValueError
 FloatingPointError
     If a candidate state violates the finite non-negative-rate contract.
 
-### Function `simulate_ermentrout_kopell_pop(r, v, tau, delta, eta_bar, coupling, dt, ext_input)`
+### Function `simulate_ermentrout_kopell_pop(r, v, tau, delta, eta_bar, coupling, dt, ext_input, *, backend)`
 Run one complete MPR Euler batch on a selected execution lane.
 
 Parameters
@@ -944,7 +944,7 @@ Run the Mojo recurrence through its shared-library ABI.
 
 ## Module `accel.event_recordings`
 
-### Function `decode_nmnist_recording(raw)`
+### Function `decode_nmnist_recording(raw, *, backend)`
 Decode N-MNIST bytes with identical address, polarity and timestamp semantics.
 
 Parameters
@@ -1037,7 +1037,7 @@ Return whether one public execution lane is ready.
 ### Function `auto_backend()`
 Choose the first available lane from committed measured evidence.
 
-### Function `normalise_result(trace, spikes, final_v)`
+### Function `normalise_result(trace, spikes, final_v, *, n_steps, v_min, v_max)`
 Reject malformed or lossy backend output before narrowing to int64.
 
 ### Function `simulate_rust(v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current)`
@@ -1072,13 +1072,13 @@ bool
 ### Function `auto_backend()`
 Return the first available runtime in measured ascending-latency order.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial)`
 Validate all traces and final-state receipts from one backend.
 
 ### Function `simulate_python(y0, y3, y1, y4, y2, y5, a_exc, b_exc, a_rate, b_rate, c, e0, v0, r, dt, p_ext)`
 Run the equation-(6) batch through the Python golden model.
 
-### Function `simulate_jansen_rit(y0, y3, y1, y4, y2, y5, a_exc, b_exc, a_rate, b_rate, c, e0, v0, r, dt, p_ext)`
+### Function `simulate_jansen_rit(y0, y3, y1, y4, y2, y5, a_exc, b_exc, a_rate, b_rate, c, e0, v0, r, dt, p_ext, *, backend)`
 Run one complete Jansen–Rit batch on a selected execution lane.
 
 ---
@@ -1218,10 +1218,10 @@ Run the complete vector batch through the native Julia module.
 
 ## Module `accel.julia.neurons.benda_herz`
 
-### Function `simulate_benda_herz(currents)`
+### Function `simulate_benda_herz(currents, *, a, phase, onset_gain, rheobase, adaptation_slope, tau_a, dt)`
 Run a source Benda-Herz trace in Julia.
 
-### Function `simulate_sc_stochastic_rate_adaptation(currents, uniforms)`
+### Function `simulate_sc_stochastic_rate_adaptation(currents, uniforms, *, a, f_max, beta, i_half, tau_a, delta_a, dt)`
 Run the retained SC recurrence with controlled uniforms in Julia.
 
 ---
@@ -1235,34 +1235,34 @@ Run complete voltage, refractory, and event traces in Julia.
 
 ## Module `accel.julia.neurons.compte_wm`
 
-### Function `simulate_compte_wm()`
+### Function `simulate_compte_wm(*args)`
 Run complete Compte membrane, channel, refractory, and event traces.
 
 ---
 
 ## Module `accel.julia.neurons.energy_lif`
 
-### Function `simulate_energy_lif(currents)`
+### Function `simulate_energy_lif(currents, *, v, epsilon, capacitance, g_leak, e_0, e_u, e_d, e_f, v_threshold, v_reset, alpha, epsilon_0, epsilon_c, delta, tau_e, dt)`
 Run the complete source-faithful eLIF trace in Julia.
 
-### Function `simulate_sc_normalized_energy_lif(currents)`
+### Function `simulate_sc_normalized_energy_lif(currents, *, v, epsilon, v_rest, v_reset, v_threshold, tau_m, tau_e, alpha, epsilon_0, resistance, dt)`
 Run the complete retained normalized-energy SC trace in Julia.
 
 ---
 
 ## Module `accel.julia.neurons.mat`
 
-### Function `simulate_mat(currents)`
+### Function `simulate_mat(currents, *, v, theta1, theta2, refractory_remaining, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt)`
 Run a complete non-resetting MAT* state/event trace in Julia.
 
-### Function `simulate_sc_resetting_mat(currents)`
+### Function `simulate_sc_resetting_mat(currents, *, v, theta1, theta2, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt)`
 Run a complete candidate-first RK4/reset trace in Julia.
 
 ---
 
 ## Module `accel.julia.neurons.mckean`
 
-### Function `simulate_mckean(currents)`
+### Function `simulate_mckean(currents, *, v, w, a, lambda_, mu, b, dt)`
 Run a complete source McKean state/event trace in Julia.
 
 ---
@@ -1276,10 +1276,10 @@ Run a checked Julia batch and translate typed numerical failures.
 
 ## Module `accel.julia.neurons.non_resetting_lif`
 
-### Function `simulate_non_resetting_lif(currents)`
+### Function `simulate_non_resetting_lif(currents, *, v, theta, refractory_remaining, omega, tau_m, tau_theta, alpha, resistance, refractory_period, dt)`
 Run a complete source MAT(1) state/event trace in Julia.
 
-### Function `simulate_sc_non_resetting_adaptive_lif(currents)`
+### Function `simulate_sc_non_resetting_adaptive_lif(currents, *, v, theta, v_rest, theta_rest, delta_theta, tau_m, tau_theta, r_m, dt)`
 Run a complete retained-project state/event trace in Julia.
 
 ---
@@ -1298,10 +1298,10 @@ Run a checked Julia batch and translate typed numerical failures.
 
 ## Module `accel.julia.neurons.sigma_delta`
 
-### Function `simulate_sigma_delta(currents)`
+### Function `simulate_sigma_delta(currents, *, sigma, reconstruction, delta, tau_reconstruction, dt)`
 Run the complete sampled APSDM trace in Julia.
 
-### Function `simulate_sc_sigma_delta_accumulator(currents)`
+### Function `simulate_sc_sigma_delta_accumulator(currents, *, sigma, v_threshold)`
 Run the complete retained bipolar accumulator trace in Julia.
 
 ---
@@ -1351,7 +1351,7 @@ Return whether one named MAT* runtime is executable now.
 ### Function `auto_backend()`
 Return the first available measured lane, with Python as floor.
 
-### Function `simulate_mat(currents)`
+### Function `simulate_mat(currents, *, v, theta1, theta2, refractory_remaining, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt, backend)`
 Run the complete configured MAT* contract on one real backend.
 
 ---
@@ -1373,7 +1373,7 @@ Return whether one public execution lane is ready.
 ### Function `auto_backend()`
 Choose the first available lane from committed measured evidence.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, expected_length)`
 Reject malformed native output before returning the public binary trace.
 
 ### Function `math_is_finite_integer(value)`
@@ -1401,7 +1401,7 @@ Return whether an executable implementation of ``backend`` is available.
 ### Function `auto_backend()`
 Select the first available backend under the configured policy.
 
-### Function `simulate_mckean(currents)`
+### Function `simulate_mckean(currents, *, v, w, a, lambda_, mu, b, dt, backend)`
 Execute the complete source state/event trace on one selected runtime.
 
 ---
@@ -1481,7 +1481,7 @@ Return whether one maintained execution lane is ready.
 ### Function `auto_backend()`
 Return the first available lane in measured ascending-latency order.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial_y)`
 Validate complete state/output traces and scalar receipts.
 
 ### Function `math_isfinite(value)`
@@ -1490,7 +1490,7 @@ Avoid importing a scalar math helper into the public surface.
 ### Function `simulate_python(y, k, alpha, bias, current)`
 Run a complete batch through the Python golden model.
 
-### Function `simulate_nagumo_sato_map(y, k, alpha, bias, current)`
+### Function `simulate_nagumo_sato_map(y, k, alpha, bias, current, *, backend)`
 Run one complete source-faithful batch on a selected lane.
 
 ---
@@ -1503,7 +1503,7 @@ Return whether one named MAT(1) runtime is executable now.
 ### Function `auto_backend()`
 Return the first available measured lane, with Python as floor.
 
-### Function `simulate_non_resetting_lif(currents)`
+### Function `simulate_non_resetting_lif(currents, *, v, theta, refractory_remaining, omega, tau_m, tau_theta, alpha, resistance, refractory_period, dt, backend)`
 Run the complete configured source MAT(1) contract on one backend.
 
 ---
@@ -1744,7 +1744,7 @@ Returns
 str
     An available backend name, with ``python`` as the total fallback.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial, threshold)`
 Validate complete state/spike traces and scalar final receipts.
 
 Parameters
@@ -1794,7 +1794,7 @@ ValueError
 FloatingPointError
     If an exact-flow candidate or returned receipt is non-finite.
 
-### Function `simulate_resonate_and_fire(x, y, b, omega, threshold, dt, current)`
+### Function `simulate_resonate_and_fire(x, y, b, omega, threshold, dt, current, *, backend)`
 Run one complete exact-flow batch on a selected execution lane.
 
 Parameters
@@ -1838,13 +1838,13 @@ Return whether one executable SC adaptive-map lane is ready.
 ### Function `auto_backend()`
 Return the first available lane in measured ascending-latency order.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial_x, initial_theta, threshold)`
 Validate state traces, upward events, and scalar receipts.
 
 ### Function `simulate_python(x, theta, k, beta, gamma, theta_spike, x_threshold, current)`
 Run a complete batch through the Python project specification.
 
-### Function `simulate_sc_adaptive_threshold_map(x, theta, k, beta, gamma, theta_spike, x_threshold, current)`
+### Function `simulate_sc_adaptive_threshold_map(x, theta, k, beta, gamma, theta_spike, x_threshold, current, *, backend)`
 Run one complete retained-project-model batch on a selected lane.
 
 ---
@@ -1855,11 +1855,11 @@ Run one complete retained-project-model batch on a selected lane.
 Return whether one executable SC-map lane is available.
 
 ### Function `auto_backend()`
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial_x, initial_y, threshold)`
 Validate complete traces, edge events, and final receipts.
 
 ### Function `simulate_python(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
-### Function `simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
+### Function `simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, current, *, backend)`
 ---
 
 ## Module `accel.sc_inference`
@@ -1890,7 +1890,7 @@ Raises
 ValueError
     If shapes are inconsistent or probabilities lie outside ``&#91;0, 1&#93;``.
 
-### Function `sc_forward(weights_packed, input_probs)`
+### Function `sc_forward(weights_packed, input_probs, *, length, backend, seed)`
 Stochastic forward pass over caller-owned packed weight bitstreams.
 
 Encodes ``input_probs`` into LFSR bitstreams, ANDs them against the pre-packed
@@ -1926,7 +1926,7 @@ Return whether one named retained-project runtime is executable now.
 ### Function `auto_backend()`
 Return the first available measured lane, with Python as floor.
 
-### Function `simulate_sc_non_resetting_adaptive_lif(currents)`
+### Function `simulate_sc_non_resetting_adaptive_lif(currents, *, v, theta, v_rest, theta_rest, delta_theta, tau_m, tau_theta, r_m, dt, backend)`
 Run the complete retained-project contract on one real backend.
 
 ---
@@ -1935,7 +1935,7 @@ Run the complete retained-project contract on one real backend.
 
 ### Function `backend_available(backend)`
 ### Function `auto_backend()`
-### Function `simulate_sc_normalized_energy_lif(currents)`
+### Function `simulate_sc_normalized_energy_lif(currents, *, v, epsilon, v_rest, v_reset, v_threshold, tau_m, tau_e, alpha, epsilon_0, resistance, dt, backend)`
 ---
 
 ## Module `accel.sc_resetting_mat`
@@ -1946,7 +1946,7 @@ Return whether one named SC resetting-MAT runtime is executable.
 ### Function `auto_backend()`
 Return the first available measured lane, with Python as floor.
 
-### Function `simulate_sc_resetting_mat(currents)`
+### Function `simulate_sc_resetting_mat(currents, *, v, theta1, theta2, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt, backend)`
 Run the complete configured SC recurrence on one real backend.
 
 ---
@@ -1955,7 +1955,7 @@ Run the complete configured SC recurrence on one real backend.
 
 ### Function `backend_available(backend)`
 ### Function `auto_backend()`
-### Function `simulate_sc_sigma_delta_accumulator(currents)`
+### Function `simulate_sc_sigma_delta_accumulator(currents, *, sigma, v_threshold, backend)`
 Run the complete retained project contract on one real backend.
 
 ---
@@ -1964,7 +1964,7 @@ Run the complete retained project contract on one real backend.
 
 ### Function `backend_available(backend)`
 ### Function `auto_backend()`
-### Function `simulate_sc_stochastic_rate_adaptation(currents, uniforms)`
+### Function `simulate_sc_stochastic_rate_adaptation(currents, uniforms, *, a, f_max, beta, i_half, tau_a, delta_a, dt, backend)`
 ---
 
 ## Module `accel.sc_triangular_mckean`
@@ -1975,14 +1975,14 @@ Return whether the retained recurrence can execute on ``backend``.
 ### Function `auto_backend()`
 Select the first available backend under the configured policy.
 
-### Function `simulate_sc_triangular_mckean(currents)`
+### Function `simulate_sc_triangular_mckean(currents, *, v, w, a, epsilon, gamma, dt, v_peak, backend)`
 Execute the complete retained state/event trace on one runtime.
 
 ---
 
 ## Module `accel.shd_recordings`
 
-### Function `read_shd_recording(path, index)`
+### Function `read_shd_recording(path, index, *, maximum_bytes, backend)`
 Read one auditory recording and its label through a selected real reader.
 
 Parameters
@@ -2034,7 +2034,7 @@ every worker is reaped. Reads do not certify event geometry or finite values.
 
 ### Function `backend_available(backend)`
 ### Function `auto_backend()`
-### Function `simulate_sigma_delta(currents)`
+### Function `simulate_sigma_delta(currents, *, sigma, reconstruction, delta, tau_reconstruction, dt, backend)`
 Run the complete sampled source contract on one real backend.
 
 ---
@@ -2056,7 +2056,7 @@ Return whether one public execution lane is ready.
 ### Function `auto_backend()`
 Choose the first available lane from committed measured evidence.
 
-### Function `normalise_result(trace, final_rate)`
+### Function `normalise_result(trace, final_rate, *, n_steps, initial_rate)`
 Reject malformed or non-atomic backend output before public commit.
 
 ### Function `simulate_rust(r, tau, beta, theta, dt, n_steps, current)`
@@ -2127,7 +2127,7 @@ Return whether one public execution lane is ready.
 ### Function `auto_backend()`
 Choose the first available lane from committed measured evidence.
 
-### Function `normalise_result(trace, final_rate)`
+### Function `normalise_result(trace, final_rate, *, n_steps, initial_rate)`
 Reject malformed or non-atomic backend output before public commit.
 
 ### Function `simulate_rust(r, theta, gain, n_steps, current)`
@@ -2211,7 +2211,7 @@ Return whether one public execution lane is ready.
 ### Function `auto_backend()`
 Choose the first available lane from committed measured evidence.
 
-### Function `normalise_result(e_trace, i_trace, e_final, i_final)`
+### Function `normalise_result(e_trace, i_trace, e_final, i_final, *, n_steps, initial_e, initial_i, a, theta)`
 Reject malformed or non-atomic backend output before public commit.
 
 ### Function `simulate_rust(e, i, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, n_steps, current)`
@@ -2251,7 +2251,7 @@ Returns
 str
     Available runtime name, with ``python`` as the fail-safe floor.
 
-### Function `normalise_result(result)`
+### Function `normalise_result(result, *, n_steps, initial)`
 Validate a complete backend result before exposing it publicly.
 
 Parameters
@@ -2301,7 +2301,7 @@ ValueError
 FloatingPointError
     If a complete candidate result violates a state invariant.
 
-### Function `simulate_wong_wang(s1, s2, noise1, noise2, tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt, stim1, stim2, xi)`
+### Function `simulate_wong_wang(s1, s2, noise1, noise2, tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt, stim1, stim2, xi, *, backend)`
 Run one complete Wong-Wang batch on a selected execution lane.
 
 Parameters
@@ -3004,9 +3004,9 @@ np.ndarray
 ### Class `AnalogSubstrateProfile`
 Parameter set for analog/mixed-signal neuromorphic chips.
 
-- **brainscales3**(cls)
+- **brainscales3**()
   - Return the bundled BrainScaleS-3 substrate profile.
-- **dynapse2**(cls)
+- **dynapse2**()
   - Return the bundled DynapSE-2 substrate profile.
 
 ### Class `AEREvent`
@@ -4167,14 +4167,14 @@ Example:
     ...     spike = core.step(current=i % 50)
     >>> print(f"drift={core.neuron.identity_drift:.4f}")
 
-- **__init__**(backend)
+- **__init__**(backend, \*\*kwargs)
 - **step**(current)
   - Step the unified physical simulation one tick forward.
 - **step_from_bio_rates**(rates)
   - Modulate phenomenological bounds leveraging a multi-channel biological firing rate map.
-- **evaluate_bio_pathway_resilience**(rates)
+- **evaluate_bio_pathway_resilience**(rates, \*, pathway_name, bitstream_length, radiation_profile, seed)
   - Run deterministic fault-injection resilience over biological pathways.
-- **run_meta_learning_episode**(currents)
+- **run_meta_learning_episode**(currents, \*, reset_before)
   - Run a full outer-loop adaptation episode over a current sequence.
 - **export_reasoning_trace**()
   - Export a compact symbolic trace for outer-loop introspection.
@@ -4188,7 +4188,7 @@ Example:
 - **get_state_dict**()
 - **load_state_dict**(state_dict)
 
-### Function `create_arcane_neuron_with_zenith_plasticity(backend)`
+### Function `create_arcane_neuron_with_zenith_plasticity(backend, **kwargs)`
 Seamless factory configuring a unified ArcaneZenith primitive running entirely connected.
 
 ---
@@ -4303,7 +4303,7 @@ foundry-characterised PPA models:
 Outputs support relative design screening only. They are not physical
 evidence and must not be presented as post-synthesis or signoff results.
 
-- **estimate**(cls, n_neurons, n_synapses, bitstream_width, n_aer_ports, pdk)
+- **estimate**(n_neurons, n_synapses, bitstream_width, n_aer_ports, pdk)
   - Estimate design metrics from architectural parameters.
 
 ---
@@ -4328,7 +4328,7 @@ Generated ASIC flow files plus the evidence manifest path.
 - **to_dict**()
   - Serialise bundle paths, PDK resolution, and screening estimate.
 
-### Function `generate_asic_flow_bundle(output_dir)`
+### Function `generate_asic_flow_bundle(output_dir, *, pdk_type, design, pdk_root, require_pdk_files, n_neurons, n_synapses, bitstream_width, n_aer_ports, formal_evidence_artifacts)`
 Write a complete ASIC flow deck and evidence manifest in one call.
 
 The helper deliberately does not run Yosys/OpenROAD. It materialises the
@@ -4367,7 +4367,7 @@ Process-design-kit families supported by the deck templates.
 ### Class `PDKConfig`
 Process Design Kit configuration.
 
-- **from_pdk_type**(cls, pdk)
+- **from_pdk_type**(pdk)
   - Construct the maintained preset for a process family.
 - **is_open_source**()
   - Return whether the process has a maintained open-source file map.
@@ -4469,7 +4469,7 @@ On-Chip Variation derating factors.
 
 - **generate_sdc_fragment**()
   - Render early and late cell/net derates as an SDC fragment.
-- **conservative**(cls)
+- **conservative**()
   - Return wider early/late derates for screening runs.
 
 ### Class `DRCViolation`
@@ -4694,7 +4694,7 @@ preferred_target_hz : float, optional
   - Update profile after a completed session.
 - **to_dict**()
   - Serialise the profile into JSON-compatible primitive values.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a profile from a dictionary produced by :meth:`to_dict`.
 
 ---
@@ -4826,7 +4826,7 @@ Packet layout is 24 bytes: `&#91;schema:u16, command:u8, flags:u8,
 channel:u16, reserved:u16, amplitude:f32, timestamp_us:u64, score:f32&#93;`.
 
 - **to_packet**()
-- **from_packet**(cls, packet)
+- **from_packet**(packet)
 
 ### Class `BCIClosedLoopTrace`
 Audit trace for one processed frame.
@@ -4841,7 +4841,7 @@ Result from one closed-loop primitive step.
 ### Class `BCIClosedLoopPrimitive`
 Deterministic raw-signal to feedback primitive with audit trace.
 
-- **__init__**(config)
+- **__init__**(config, \*, initial_weights)
 - **process_frame**(frame)
 
 ### Class `BCIClosedLoopEngine`
@@ -4950,14 +4950,14 @@ BenchmarkResult
 
 ## Module `benchmarks.mlperf_sc_report`
 
-### Function `aggregate_mlperf_sc_results(result_paths)`
+### Function `aggregate_mlperf_sc_results(result_paths, *, output_path)`
 Aggregate validated MLPerf-SC result files into a deterministic report.
 
 ---
 
 ## Module `benchmarks.mlperf_sc_runner`
 
-### Function `run_mlperf_sc_fixture()`
+### Function `run_mlperf_sc_fixture(*, output_dir, task, model, seed, bitstream_length)`
 Run the deterministic synthetic MLPerf-SC fixture and return result path.
 
 ---
@@ -4996,7 +4996,7 @@ Evidence class, environment manifest, and raw artifact references.
 Typed MLPerf-SC benchmark result.
 
 
-### Function `validate_mlperf_sc_result(payload)`
+### Function `validate_mlperf_sc_result(payload, *, artifact_root)`
 Validate a decoded MLPerf-SC result and return a typed result.
 
 ### Function `mlperf_sc_result_to_dict(result)`
@@ -5006,26 +5006,26 @@ Serialise a typed MLPerf-SC result to the canonical dictionary shape.
 
 ## Module `benchmarks.online_o1_adaptation`
 
-### Function `build_online_o1_adaptation_benchmark()`
+### Function `build_online_o1_adaptation_benchmark(*, config, n_synapses, target_weight, max_pairings, reward)`
 Return a deterministic Python/Rust adaptation benchmark report.
 
-### Function `write_online_o1_adaptation_benchmark(path)`
+### Function `write_online_o1_adaptation_benchmark(path, *, config, n_synapses, target_weight, max_pairings, reward)`
 Write a canonical benchmark report and return the output path.
 
 ---
 
 ## Module `benchmarks.stochastic_backprop`
 
-### Function `build_stochastic_backprop_benchmark()`
+### Function `build_stochastic_backprop_benchmark(*, bitstream_length, steps, learning_rate)`
 Return deterministic evidence for SC-aware backpropagation loss reduction.
 
-### Function `write_stochastic_backprop_benchmark(path)`
+### Function `write_stochastic_backprop_benchmark(path, *, bitstream_length, steps, learning_rate)`
 Write a canonical stochastic backpropagation benchmark report.
 
-### Function `build_stochastic_backprop_estimator_regression_manifest()`
+### Function `build_stochastic_backprop_estimator_regression_manifest(*, bitstream_lengths, sample_count)`
 Return seeded estimator-family variance evidence across bitstream lengths.
 
-### Function `write_stochastic_backprop_estimator_regression_manifest(path)`
+### Function `write_stochastic_backprop_estimator_regression_manifest(path, *, bitstream_lengths, sample_count)`
 Write seeded estimator-family regression evidence to canonical JSON.
 
 ---
@@ -5283,7 +5283,7 @@ Multi-electrode array configuration.
 
 - **__post_init__**()
   - Validate physical and acquisition configuration boundaries.
-- **from_layout**(cls, layout)
+- **from_layout**(layout)
   - Create a configuration preset for a standard MEA layout.
 
 ### Class `DetectedSpike`
@@ -5410,7 +5410,7 @@ Multi-well plate (e.g., 6/24/48/96-well MEA plate).
   - Validate well types and unique well identifiers.
 - **add_well**(well)
   - Append a well configuration to the plate.
-- **standard_6_well**(cls, layout)
+- **standard_6_well**(layout)
   - Construct a six-well plate with uniform MEA layout presets.
 - **num_wells**()
   - Return the number of configured wells.
@@ -5421,7 +5421,7 @@ Multi-well plate (e.g., 6/24/48/96-well MEA plate).
 
 ## Module `bioware.bioware_fitness`
 
-### Function `mea_fitness_hook(detected_spikes, target_rate)`
+### Function `mea_fitness_hook(detected_spikes, target_rate, *, duration_s, stimulus_time_s, measured_latency_ms)`
 Organism fitness metrics derived from MEA response dynamics.
 
 Designed to plug into the evo_substrate
@@ -5533,7 +5533,7 @@ Require a non-boolean integer greater than or equal to zero.
 ### Function `require_positive_int(value, name)`
 Require a non-boolean integer strictly greater than zero.
 
-### Function `validate_voltage_matrix(voltage_data)`
+### Function `validate_voltage_matrix(voltage_data, *, expected_channels)`
 Validate a non-empty, finite two-dimensional MEA voltage matrix.
 
 Parameters
@@ -5550,7 +5550,7 @@ TypeError
 ValueError
     If dimensionality, shape, channel count, or finiteness is invalid.
 
-### Function `validate_binary_bitstream(bitstream)`
+### Function `validate_binary_bitstream(bitstream, *, name, allow_empty)`
 Validate a one-dimensional NumPy bitstream containing only 0 and 1.
 
 ---
@@ -5562,7 +5562,7 @@ Wire format for an AER spike event (28 bytes big-endian).
 
 - **encode**()
   - Serialize to 28-byte big-endian frame.
-- **decode**(cls, data)
+- **decode**(data)
   - Deserialize from 28-byte big-endian frame.
 
 ### Class `RouteStats`
@@ -5602,7 +5602,7 @@ UDP routing, use the Go server (hil_debugger/interconnect).
 ### Class `EnergyLandscape`
 Compute energy statistics and spectral gaps for an Ising model.
 
-- **__init__**()
+- **__init__**(\*, backend, random_sample_count, seed)
   - Configure deterministic large-model sampling and backend choice.
 - **analyze**(model, samples)
   - Analyze exhaustive, supplied, or deterministic random samples.
@@ -5759,7 +5759,7 @@ Ising spin-glass model ``H = Σhᵢsᵢ + ΣJᵢⱼsᵢsⱼ``.
 
 - **__post_init__**()
   - Normalize canonical couplings and validate model bounds.
-- **energy**(spins)
+- **energy**(spins, \*, backend)
   - Compute energy for a partial spin assignment.
 
 ### Class `QUBOModel`
@@ -5782,7 +5782,7 @@ Validate and narrow an execution-backend selector.
 ### Class `SimulatedAnnealer`
 Metropolis simulated annealer with explicit backend selection.
 
-- **__init__**(n_sweeps, beta_start, beta_end, seed)
+- **__init__**(n_sweeps, beta_start, beta_end, seed, \*, backend)
   - Configure a deterministic annealer.
 - **solve_ising**(model, num_reads)
   - Solve an Ising model and preserve a stable sample contract.
@@ -6480,18 +6480,18 @@ Structured response from a local LLM endpoint.
 ### Class `SpikePromptAdapter`
 Convert spike activity into compact text suitable for local LLM prompts.
 
-- **summarise_rates**(rates_hz)
+- **summarise_rates**(rates_hz, \*, neuron_labels, top_k)
   - Summarise per-neuron firing rates as compact ranked text.
-- **raster_summary**(raster)
+- **raster_summary**(raster, \*, dt_ms, neuron_labels, top_k)
   - Summarise a boolean spike raster into rates and density statistics.
 
 ### Class `LocalLLMBridge`
 Thin client for local LLM chat endpoints.
 
 - **__init__**(config)
-- **chat**(user_prompt)
+- **chat**(user_prompt, \*, system_prompt, model, temperature, max_tokens)
   - Send a prompt to the configured local LLM chat endpoint.
-- **analyse_spike_raster**(raster)
+- **analyse_spike_raster**(raster, \*, question, dt_ms, neuron_labels, top_k, model)
   - Summarise a spike raster through the local LLM.
 
 ---
@@ -6521,13 +6521,13 @@ Complete output of a stochastic photonic co-design pass.
 End-to-end stochastic bitstream, photonic NoC, and FDTD loop.
 
 - **__init__**(config)
-- **compile**(adjacency)
+- **compile**(adjacency, \*, probabilities, node_labels, gate_specs, name)
   - Run the full co-design loop for one SC connectivity matrix.
 
 ### Function `derive_probabilities_from_adjacency(adjacency, floor, ceiling)`
 Derive per-node SC probabilities from inbound absolute weight mass.
 
-### Function `encode_bitstream_bank(probabilities)`
+### Function `encode_bitstream_bank(probabilities, *, bitstream_length, seed, names)`
 Encode probabilities into deterministic LFSR-backed SC bitstreams.
 
 ---
@@ -7026,7 +7026,7 @@ An undirected edge with connection and SC-correlation weights.
 ### Class `CSRGraph`
 Compressed sparse-row graph with constant-time adjacency slices.
 
-- **from_edge_list**(cls, num_vertices, edges, vertex_weights)
+- **from_edge_list**(num_vertices, edges, vertex_weights)
   - Build a symmetric CSR graph from an undirected edge list.
 - **neighbors**(vertex)
   - Return the adjacent-vertex slice for the vertex.
@@ -7309,7 +7309,7 @@ max_temperature_c
 Contain steady-state, transient, and conductance evidence for a package.
 
 
-### Function `simulate_thermal(topology, power_per_die_mw, ambient_c)`
+### Function `simulate_thermal(topology, power_per_die_mw, ambient_c, *, die_state, transient_steps, transient_dt_s)`
 Solve the package thermal network.
 
 Parameters
@@ -7369,7 +7369,7 @@ thermal_resistance_k_per_w
 
 - **__post_init__**()
   - Validate endpoint identities and finite physical link properties.
-- **from_tech**(cls, src, dst, tech)
+- **from_tech**(src, dst, tech)
   - Construct a link from a technology preset.
 - **latency_cycles**()
   - Return rounded link latency at the historical 200 MHz reference clock.
@@ -7391,11 +7391,11 @@ Store the directed die and interposer graph for one package.
   - Append a die to the topology.
 - **add_link**(link)
   - Append a directed interposer link to the topology.
-- **mesh_2d**(cls, rows, cols, tech)
+- **mesh_2d**(rows, cols, tech)
   - Construct a rectangular mesh without wrap-around links.
-- **ring**(cls, n_dies, tech)
+- **ring**(n_dies, tech)
   - Construct a directed ring with one outgoing edge per die.
-- **star**(cls, n_dies, tech)
+- **star**(n_dies, tech)
   - Construct a bidirectional star with die zero as the hub.
 - **get_links_from**(die_id)
   - Return all directed links originating at ``die_id``.
@@ -8066,7 +8066,7 @@ Returns
 tuple&#91;str, int&#93;
     The verdict token and the ``sby`` return code it reported.
 
-### Function `run_sby_task(workdir, sby_name)`
+### Function `run_sby_task(workdir, sby_name, *, timeout_s)`
 Run one already-written ``.sby`` task in ``workdir`` and read its verdict.
 
 The ``.sby`` script and every source file it reads must already exist in
@@ -8115,7 +8115,7 @@ Returns
 bool
     ``True`` only for the ``UNKNOWN`` / inconclusive-return-code signature.
 
-### Function `raise_for_incomplete(run)`
+### Function `raise_for_incomplete(run, *, what)`
 Raise when the run is a tool or setup failure, not a verdict about the design.
 
 A ``PASS`` (proved) or ``FAIL`` (disproved with a counterexample) is a
@@ -8142,7 +8142,7 @@ RuntimeError
 
 ## Module `compiler._verilog_folded_datapath`
 
-### Function `compile_to_datapath(neuron, module_name, data_width, fraction)`
+### Function `compile_to_datapath(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, param_ports)`
 Compile an EquationNeuron to a **combinational** processing element.
 
 State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
@@ -8177,7 +8177,7 @@ rejected because the PE has no caller-owned product-rounding LFSR.
 
 ## Module `compiler._verilog_registered_module`
 
-### Function `compile_to_verilog(neuron, module_name, data_width, fraction)`
+### Function `compile_to_verilog(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, pipeline_stages, pipeline_points)`
 Compile an EquationNeuron to synthesizable Verilog RTL.
 
 Parameters
@@ -8214,7 +8214,7 @@ pipeline_points : list&#91;str&#93;, optional
 ### Function `precision_plan_manifest(assignments)`
 Build a deterministic manifest for a per-synapse precision plan.
 
-### Function `auto_tune_synapse_precisions(layer_weights)`
+### Function `auto_tune_synapse_precisions(layer_weights, *, layer_names, target_error_percent, min_bits, max_bits, min_length, max_length, confidence)`
 Auto-tune per-synapse precision for an explicit percent error target.
 
 ---
@@ -8242,11 +8242,11 @@ Shared-exponent block floating-point specification.
   - Return the exact number of shared exponents for a flat parameter payload.
 - **block_exponent_layout**(parameter_count)
   - Return the explicit exponent-vector layout for downstream emitters.
-- **validate_exponents**(exponents)
+- **validate_exponents**(exponents, \*, parameter_count)
   - Validate exponent vector length and code range for a parameter payload.
-- **from_string**(cls, fmt)
+- **from_string**(fmt)
   - Parse strict canonical format like 'BFP16E3'.
-- **from_aliases**(cls, fmt)
+- **from_aliases**(fmt)
   - Parse tolerant aliases such as BFP16_E3, BFP16.3, BFP16-3, and BFP16E3X32.
 
 ### Class `BlockExponentLayout`
@@ -8257,7 +8257,7 @@ Concrete shared-exponent layout for flattened block-floating parameters.
   - Number of parameters carried by the final exponent block.
 - **manifest**()
   - Deterministic block-exponent layout manifest.
-- **validate_exponents**(exponents)
+- **validate_exponents**(exponents, \*, exponent_bits)
   - Validate exponent vector length and encoded range.
 
 ---
@@ -8287,10 +8287,10 @@ Dense operator compiled with shared-exponent block-floating weights.
 - **precision_envelope_report**(inputs)
   - Return a conservative absolute-output envelope for this workload.
 
-### Function `compile_dense_block_floating(weights, fmt)`
+### Function `compile_dense_block_floating(weights, fmt, *, block_size, input_fmt, clip)`
 Compile a dense matrix into block-floating weights with Q-format inputs.
 
-### Function `quantize_block_floating(weights, fmt)`
+### Function `quantize_block_floating(weights, fmt, *, block_size, clip)`
 Quantize float weights into shared-exponent block-floating blocks.
 
 ### Function `dequantize_block_floating(quantized, exponents, fmt)`
@@ -8323,7 +8323,7 @@ free_vars : list of str
     parameters, or the input current — collected in first-seen order for the
     exporter to declare as inputs.
 
-- **__init__**(state_vars, param_map)
+- **__init__**(state_vars, param_map, \*, math_ns, fp_type)
 - **visit_BinOp**(node)
   - Emit C++ for a binary operation (add, sub, mul, div, pow).
 - **visit_UnaryOp**(node)
@@ -8339,7 +8339,7 @@ free_vars : list of str
 - **generic_visit**(node)
   - Raise for any unsupported AST node type.
 
-### Function `emit_c_expr(expr_str, state_vars, param_map)`
+### Function `emit_c_expr(expr_str, state_vars, param_map, *, math_ns, fp_type)`
 Parse an ODE expression and return its C++ form plus its free variables.
 
 Parameters
@@ -8373,7 +8373,7 @@ truncated to ``data_width`` bits, reinterpreted as a signed integer — exactly
 what :meth:`Q88.encode_signed_literal` writes into the RTL, but as a Python
 ``int`` suitable for a C/Rust literal.
 
-### Function `emit_c_fixed_expr(expr_str, state_map, param_map, q)`
+### Function `emit_c_fixed_expr(expr_str, state_map, param_map, q, *, lang, input_ref, lut_start)`
 Lower an ODE expression to a bit-exact integer C/Rust expression.
 
 Parameters
@@ -8423,7 +8423,7 @@ status : str
     ``"PASS"``, ``"FAIL"``, or ``"UNTESTED"``.
 
 
-### Function `generate_certification_evidence(module_name, items)`
+### Function `generate_certification_evidence(module_name, items, *, standard, dal_level)`
 Generate XML traceability matrix for safety certification.
 
 Produces a certification evidence document linking requirements to
@@ -8450,7 +8450,7 @@ str
 
 ## Module `compiler.cocotb_gen`
 
-### Function `generate_cocotb_testbench(module_name)`
+### Function `generate_cocotb_testbench(module_name, *, data_width, fraction, n_steps, input_current)`
 Generate a Cocotb (Python) testbench for a compiled neuron.
 
 Parameters
@@ -8475,14 +8475,14 @@ str
 
 ## Module `compiler.compiler_impl`
 
-### Function `compile_adaptive_precision(neuron, module_name, lp_width, lp_frac, hp_width, hp_frac)`
+### Function `compile_adaptive_precision(neuron, module_name, lp_width, lp_frac, hp_width, hp_frac, *, lp_precision, hp_precision, lp_parameter_count, hp_parameter_count, threshold_up_pct, threshold_down_pct, signed, overflow, rounding)`
 Compile an EquationNeuron to dual-datapath adaptive-precision Verilog.
 
 ---
 
 ## Module `compiler.constraint_gen`
 
-### Function `generate_constraints(module_name)`
+### Function `generate_constraints(module_name, *, target_freq_mhz, format, clock_port, reset_port, data_width)`
 Generate timing constraint file for FPGA synthesis.
 
 Parameters
@@ -8534,7 +8534,7 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports)`
+### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports, *, dut_top, ref_top, dut_params, ref_params, depth, engine, mode, reset_cycles, clock, reset_n, timeout_s, workdir)`
 Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
 
 Parameters
@@ -8595,7 +8595,7 @@ direction : str
 - **declaration**(suffix)
   - Return a Verilog ``wire`` declaration for this port.
 
-### Function `parse_module_interface(verilog, top)`
+### Function `parse_module_interface(verilog, top, *, params)`
 Parse the ANSI port interface of a Verilog module.
 
 Parameters
@@ -8614,7 +8614,7 @@ Returns
 list&#91;MiterPort&#93;
     The ports in declaration order.
 
-### Function `build_equivalence_miter(dut_top, ref_top, io_ports)`
+### Function `build_equivalence_miter(dut_top, ref_top, io_ports, *, miter_name, dut_params, ref_params, reset_cycles, clock, reset_n)`
 Build a sequential-equivalence miter for two interface-compatible modules.
 
 Both ``dut_top`` and ``ref_top`` are instantiated with the same ``io_ports``;
@@ -8872,7 +8872,7 @@ Compute quantization error statistics.
 
 ## Module `compiler.formal_evidence`
 
-### Function `write_precision_formal_evidence_bundle(output_dir, assignments)`
+### Function `write_precision_formal_evidence_bundle(output_dir, assignments, *, module_name, execute, unbounded)`
 Write a SymbiYosys evidence bundle for adaptive-precision claims.
 
 Renders the bounded-error monitor RTL, the bound assertion checker, a runnable
@@ -8943,7 +8943,7 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `prove_property(rtl_verilog, sva_verilog)`
+### Function `prove_property(rtl_verilog, sva_verilog, *, top, mode, depth, engine, timeout_s, workdir)`
 Prove ``rtl_verilog`` satisfies the assertions in ``sva_verilog`` via SymbiYosys.
 
 Parameters
@@ -8983,7 +8983,7 @@ RuntimeError
 
 ## Module `compiler.fpga_wrapper`
 
-### Function `equation_to_fpga()`
+### Function `equation_to_fpga(*equation_strings, threshold, reset, params, init, constants, dt, module_name, data_width, fraction, units, input_unit)`
 One-liner: ODE string → (Python neuron, Verilog RTL).
 
 ---
@@ -9107,7 +9107,7 @@ lookup_tables:
 - **to_public_dict**()
   - Return the path-free JSON projection.
 
-### Function `hardware_numeric_contract(neuron, q_format)`
+### Function `hardware_numeric_contract(neuron, q_format, *, overflow, rounding)`
 Return what ``neuron``'s generated RTL holds at ``q_format``.
 
 Parameters
@@ -9128,7 +9128,7 @@ HardwareNumericContract
 
 ## Module `compiler.host_driver_gen`
 
-### Function `generate_host_driver(module_name, params)`
+### Function `generate_host_driver(module_name, params, *, language, bus, base_address, data_width, fraction, live_update_spec)`
 Generate host-side driver code for a bus-wrapped neuron.
 
 Parameters
@@ -9213,10 +9213,10 @@ nbti_degradation_pct : float
 hci_degradation_pct : float
 
 
-### Function `predict_reliability()`
+### Function `predict_reliability(*, voltage_v, temperature_c, node_nm, base_mttf_hours)`
 Predict MTTF from voltage, temperature, and technology node.
 
-### Function `predict_aging(initial_fmax_mhz)`
+### Function `predict_aging(initial_fmax_mhz, *, voltage_v, temperature_c, years)`
 Predict end-of-life Fmax after transistor aging.
 
 ---
@@ -9233,7 +9233,7 @@ total_energy_savings_pct : float
 max_output_error_pct : float
 
 
-### Function `configure_approximation(equations)`
+### Function `configure_approximation(equations, *, target_savings_pct, max_error_pct)`
 Configure precision-energy tradeoff knobs per state variable.
 
 ---
@@ -9263,7 +9263,7 @@ min_step : float
     Minimum step size (LSB resolution).
 
 
-### Function `auto_quantisation_sweep(equations, target)`
+### Function `auto_quantisation_sweep(equations, target, *, widths, fraction_ratio)`
 Sweep data widths to find accuracy-vs-resource trade-offs.
 
 Compiles the same ODE equations at multiple quantisation levels
@@ -9310,7 +9310,7 @@ Harnesses that drive a generated kernel (per-step input words, decoded
 state reads) must pass and read exactly this type; it is the type of the
 ``I_t`` step argument and of every ``<state>_out`` field.
 
-### Function `kernel_arithmetic_contract()`
+### Function `kernel_arithmetic_contract(*, data_width, fraction, overflow, rounding, method)`
 State the fixed-point arithmetic a generated neuron kernel performs.
 
 The description is derived from the same configuration checks the
@@ -9345,7 +9345,7 @@ ValueError
     For a geometry, mode or method the kernel does not mirror, with the
     same message the generator would raise.
 
-### Function `generate_bittrue_kernel(module_name, equations)`
+### Function `generate_bittrue_kernel(module_name, equations, *, data_width, fraction, language)`
 Generate a bit-true fixed-point kernel from a ``{var: derivative}`` mapping.
 
 Each state variable advances by one unit-``dt`` explicit-Euler step using the
@@ -9374,7 +9374,7 @@ Returns
 str
     Bit-true kernel source code.
 
-### Function `generate_bittrue_kernel_from_neuron(neuron, module_name)`
+### Function `generate_bittrue_kernel_from_neuron(neuron, module_name, *, data_width, fraction, signed, overflow, rounding, language)`
 Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
 Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
@@ -9414,14 +9414,14 @@ str
 
 ## Module `compiler.intelligence.bitstream_encryption`
 
-### Function `generate_bitstream_encryption(module_name)`
+### Function `generate_bitstream_encryption(module_name, *, vendor, key_length, key_source)`
 Generate bitstream encryption TCL/constraints for secure boot.
 
 ---
 
 ## Module `compiler.intelligence.bitstream_flow`
 
-### Function `generate_oss_makefile(module_name)`
+### Function `generate_oss_makefile(module_name, *, target, device, package, freq_mhz, verilog_files, pcf_file)`
 Generate a Makefile for open-source FPGA synthesis (Yosys + nextpnr).
 
 Parameters
@@ -9450,7 +9450,7 @@ str
 
 ## Module `compiler.intelligence.bram_array`
 
-### Function `generate_bram_array(module_name)`
+### Function `generate_bram_array(module_name, *, neuron_count, data_width, state_vars)`
 Generate a time-multiplexed BRAM-backed neuron array in Verilog.
 
 A single compute pipeline is shared across N neurons with BRAM-backed
@@ -9493,7 +9493,7 @@ energy_mix : str
     Assumed energy source.
 
 
-### Function `estimate_carbon_footprint(profile_name)`
+### Function `estimate_carbon_footprint(profile_name, *, power_mw, hours_per_day, grid_carbon_g_per_kwh)`
 Estimate carbon footprint for a compilation target.
 
 ---
@@ -9513,14 +9513,14 @@ total_crossings : int
 safe : bool
 
 
-### Function `analyze_cdc(equations)`
+### Function `analyze_cdc(equations, *, clock_domains)`
 Analyze clock domain crossings in a neuron array.
 
 ---
 
 ## Module `compiler.intelligence.cdc_synchroniser`
 
-### Function `generate_cdc_synchroniser(signal_name)`
+### Function `generate_cdc_synchroniser(signal_name, *, width, stages, src_clock, dst_clock)`
 Generate a CDC (Clock Domain Crossing) synchroniser in Verilog.
 
 Uses a multi-stage register chain to safely transfer signals between
@@ -9548,7 +9548,7 @@ str
 
 ## Module `compiler.intelligence.checksum`
 
-### Function `embed_model_checksum(verilog)`
+### Function `embed_model_checksum(verilog, *, equations, params)`
 Embed a SHA-256 checksum of the compiled model in the Verilog source.
 
 ---
@@ -9590,7 +9590,7 @@ Avoids redundant recompilation when re-targeting.
 
 ## Module `compiler.intelligence.compilation_report`
 
-### Function `generate_compilation_report(module_name, equations, profile_name)`
+### Function `generate_compilation_report(module_name, equations, profile_name, *, include_carbon, include_reliability)`
 Generate comprehensive compilation report.
 
 Consolidates Verilog, timing, power, carbon, risk,
@@ -9618,7 +9618,7 @@ str
 
 ## Module `compiler.intelligence.compilation_summary`
 
-### Function `generate_compilation_summary(module_name, equations, target)`
+### Function `generate_compilation_summary(module_name, equations, target, *, data_width, fraction, verilog_lines)`
 Generate a comprehensive human-readable compilation summary.
 
 Produces a markdown document summarising all aspects of a compilation.
@@ -9666,7 +9666,7 @@ artefact : str
     File or test that provides evidence.
 
 
-### Function `generate_compliance_matrix(module_name)`
+### Function `generate_compliance_matrix(module_name, *, standards, has_tmr, has_checksum, has_sva, has_provenance)`
 Generate safety compliance matrix for certification.
 
 Maps DO-254 / IEC 61508 / ISO 26262 requirements to SC-NeuroCore
@@ -9718,7 +9718,7 @@ coherence_protocol : str
     CXL protocol used (``"CXL.mem"`` or ``"CXL.cache"``).
 
 
-### Function `advise_cxl_mapping(neuron_count, synapse_count)`
+### Function `advise_cxl_mapping(neuron_count, synapse_count, *, data_width, device_capacity_gb, max_devices, access_pattern)`
 Advise on CXL.mem Type-3 device mapping for neuron state.
 
 Plans the distribution of neuron state and synaptic weights
@@ -9762,7 +9762,7 @@ tcl_commands : str
     Vendor-specific TCL to insert probes.
 
 
-### Function `insert_debug_probes(module_name, equations)`
+### Function `insert_debug_probes(module_name, equations, *, vendor, depth)`
 Auto-insert ILA/SignalTap debug probes.
 
 Parameters
@@ -9800,7 +9800,7 @@ estimated_speedup : float
     Estimated speedup vs single-backend.
 
 
-### Function `plan_heterogeneous_dispatch(equations, backends)`
+### Function `plan_heterogeneous_dispatch(equations, backends, *, neuron_count, time_constants)`
 Plan multi-backend dispatch for an SNN model.
 
 Splits ODE variables across heterogeneous backends based on
@@ -9842,21 +9842,21 @@ verilog_controller : str
     Generated Verilog refresh controller.
 
 
-### Function `generate_drift_compensator(module_name)`
+### Function `generate_drift_compensator(module_name, *, drift_rate_per_day, max_drift_tolerance, clock_freq_mhz, compensation_method)`
 Generate analog drift compensation controller.
 
 ---
 
 ## Module `compiler.intelligence.dvfs_controller`
 
-### Function `generate_dvfs_controller(module_name)`
+### Function `generate_dvfs_controller(module_name, *, operating_points, spike_rate_thresholds)`
 Generate a Verilog DVFS controller FSM.
 
 ---
 
 ## Module `compiler.intelligence.dvs_bridge`
 
-### Function `generate_dvs_aer_bridge(module_name)`
+### Function `generate_dvs_aer_bridge(module_name, *, addr_width, polarity_bit, timestamp_width, fifo_depth)`
 Generate a DVS (Dynamic Vision Sensor) to AER bridge in Verilog.
 
 Converts Prophesee / Metavision / Sony IMX636 event packets into
@@ -9916,10 +9916,10 @@ recommended_duty_cycle : float
 margin_pct : float
 
 
-### Function `generate_energy_schedule(neuron_count)`
+### Function `generate_energy_schedule(neuron_count, *, energy_budget_uj, energy_per_neuron_nj, epoch_duration_ms, priority_neurons)`
 Generate energy-budget-aware neuron update schedule.
 
-### Function `model_energy_harvest(design_power_uw)`
+### Function `model_energy_harvest(design_power_uw, *, harvester_type, harvester_area_cm2, environment)`
 Model whether an energy harvester can sustain the neural workload.
 
 ---
@@ -9943,7 +9943,7 @@ quantisation_bound : float
     Maximum quantisation error bound.
 
 
-### Function `generate_equivalence_sketch(module_name, equations)`
+### Function `generate_equivalence_sketch(module_name, equations, *, data_width, fraction)`
 Generate a formal equivalence proof sketch for ODE→RTL translation.
 
 Produces a structured argument that the compiled Verilog computes
@@ -9981,7 +9981,7 @@ critical_bits : list&#91;int&#93;
 recommended_tmr_bits : list&#91;int&#93;
 
 
-### Function `run_fault_campaign(equations, data_width)`
+### Function `run_fault_campaign(equations, data_width, *, num_injections, seed)`
 Run a fault injection campaign on the state register.
 
 ---
@@ -10020,14 +10020,14 @@ num_parameters : int
 sweep_ranges : dict&#91;str, tuple&#91;float, float&#93;&#93;
 
 
-### Function `generate_hil_calibration(module_name, equations)`
+### Function `generate_hil_calibration(module_name, equations, *, parameters, sample_points, repetitions, settle_cycles, acceptance_tolerance, correction_model, observables)`
 Generate hardware-in-the-loop calibration protocol.
 
 ---
 
 ## Module `compiler.intelligence.hls_export`
 
-### Function `generate_hls_cpp(module_name, equations)`
+### Function `generate_hls_cpp(module_name, equations, *, data_width, fraction, hls_tool, dt, threshold)`
 Translate compiled neuron equations to Vitis/Catapult HLS C++.
 
 Generates a synthesisable ``ap_fixed`` C++ function with ``#pragma HLS``
@@ -10092,7 +10092,7 @@ original_signals : int
 obfuscated_signals : int
 
 
-### Function `obfuscate_ip(module_name, equations)`
+### Function `obfuscate_ip(module_name, equations, *, key_length, methods)`
 Apply logic locking and structural obfuscation for IP protection.
 
 ---
@@ -10124,7 +10124,7 @@ target_platform : str
     Target neuromorphic platform.
 
 
-### Function `generate_learning_params()`
+### Function `generate_learning_params(*, learning_rule, tau_plus_ms, tau_minus_ms, a_plus, a_minus, w_max, w_min, reward_tau_ms, target)`
 Generate on-chip learning parameters for neuromorphic targets.
 
 Creates calibration parameters for platforms with in-situ
@@ -10157,7 +10157,7 @@ Returns
 OnChipLearningParams
     Complete learning parameter set.
 
-### Function `export_learning_config(params)`
+### Function `export_learning_config(params, *, output_format)`
 Export on-chip learning parameters as a configuration file.
 
 Parameters
@@ -10208,7 +10208,7 @@ decoder_verilog : str
     Generated address decoder Verilog.
 
 
-### Function `generate_memory_map(module_name, equations)`
+### Function `generate_memory_map(module_name, equations, *, num_neurons, data_width, base_address)`
 Generate address decoder for multi-neuron SoC arrays.
 
 Parameters
@@ -10287,7 +10287,7 @@ die_utilization : dict&#91;int, float&#93;
 total_dies : int
 
 
-### Function `plan_multi_die_floorplan(blocks)`
+### Function `plan_multi_die_floorplan(blocks, *, die_capacity, num_dies)`
 Assign neuron blocks to chiplet/die positions.
 
 Uses first-fit-decreasing bin packing.
@@ -10385,7 +10385,7 @@ num_chips : int
     Total chips used.
 
 
-### Function `optimize_network_topology(adjacency)`
+### Function `optimize_network_topology(adjacency, *, num_chips, neurons_per_chip)`
 Optimize SNN partitioning across multiple chips.
 
 Minimises inter-chip spike communication by grouping
@@ -10445,7 +10445,7 @@ unused_parameters : dict&#91;str, tuple&#91;str, ...&#93;&#93;
     that were therefore not applied.
 
 
-### Function `import_nir_graph(nir_data)`
+### Function `import_nir_graph(nir_data, *, framework)`
 Import a dict-form Neuromorphic Intermediate Representation graph.
 
 Each node's ``type`` selects a canonical ODE template (shared with the FPGA
@@ -10494,7 +10494,7 @@ method : str
     Analysis method used.
 
 
-### Function `verify_ode_stability(equations)`
+### Function `verify_ode_stability(equations, *, dt, time_constants)`
 Verify numerical stability of discretized ODE system.
 
 Uses eigenvalue analysis of the linearized system.
@@ -10553,10 +10553,10 @@ mesh_size : int
     Number of MZI columns.
 
 
-### Function `encode_mzi_weights(weights)`
+### Function `encode_mzi_weights(weights, *, mesh_type, loss_db_per_mzi)`
 Encode a weight matrix as MZI phase-shift parameters.
 
-### Function `generate_mzi_config(encoding)`
+### Function `generate_mzi_config(encoding, *, output_format)`
 Generate a photonic chip configuration file from MZI weights.
 
 ---
@@ -10574,7 +10574,7 @@ area_luts : int
 latency_ns : float
 
 
-### Function `explore_pareto(equations)`
+### Function `explore_pareto(equations, *, widths, pipeline_depths)`
 Explore power/area/latency Pareto frontier.
 
 ---
@@ -10600,7 +10600,7 @@ layout_map : dict&#91;str, list&#91;int&#93;&#93;
     Mapping of data regions to bank IDs.
 
 
-### Function `plan_pim_layout(neuron_count, synapse_count)`
+### Function `plan_pim_layout(neuron_count, synapse_count, *, data_width, bank_size_kb, num_banks, target)`
 Plan data placement across PIM memory banks.
 
 Distributes neuron state and synaptic weights across memory banks.
@@ -10628,7 +10628,7 @@ PIMLayout
 
 ## Module `compiler.intelligence.pipeline_wrapper`
 
-### Function `generate_pipeline_wrapper(module_name, equations)`
+### Function `generate_pipeline_wrapper(module_name, equations, *, data_width, target, stages)`
 Generate a pipelined wrapper that inserts register stages.
 
 Auto-computes the critical path depth and required pipeline stages.
@@ -10670,7 +10670,7 @@ blockers : list&#91;str&#93;
     Portability blockers.
 
 
-### Function `score_portability(equations)`
+### Function `score_portability(equations, *, min_data_width)`
 Score how portable a model is across all profiles.
 
 ---
@@ -10728,7 +10728,7 @@ float
 
 ## Module `compiler.intelligence.power_domain_wrapper`
 
-### Function `generate_power_domain_wrapper(module_name)`
+### Function `generate_power_domain_wrapper(module_name, *, data_width, state_vars, always_on_signals, wakeup_cycles)`
 Generate a clock/power gating wrapper for always-on edge deployment.
 
 Creates a wrapper module with ICG and power-down state retention.
@@ -10755,14 +10755,14 @@ str
 
 ## Module `compiler.intelligence.power_intent`
 
-### Function `generate_power_intent(module_name)`
+### Function `generate_power_intent(module_name, *, num_domains, always_on)`
 Generate IEEE 1801 UPF power intent for neuron arrays.
 
 ---
 
 ## Module `compiler.intelligence.power_state_machine`
 
-### Function `generate_power_state_machine(module_name)`
+### Function `generate_power_state_machine(module_name, *, states)`
 Generate sleep/wake/hibernate FSM for ultra-low-power.
 
 ---
@@ -10780,7 +10780,7 @@ key_size_bits : int
 quantum_safe : bool
 
 
-### Function `protect_ip_pqc(module_name, equations)`
+### Function `protect_ip_pqc(module_name, equations, *, algorithm, security_level)`
 Apply post-quantum cryptographic protection to IP core.
 
 ---
@@ -10804,7 +10804,7 @@ parameters : dict
     Compilation parameters used.
 
 
-### Function `generate_provenance_chain(module_name, equations, verilog_source)`
+### Function `generate_provenance_chain(module_name, equations, verilog_source, *, target, data_width, fraction)`
 Generate a cryptographic provenance chain for compilation.
 
 ### Function `format_provenance_json(chain)`
@@ -10829,7 +10829,7 @@ bitstream_count : int
     Total partial bitstreams needed.
 
 
-### Function `plan_partial_reconfiguration(equations)`
+### Function `plan_partial_reconfiguration(equations, *, max_regions, time_slots)`
 Plan FPGA partial reconfiguration for SNN time-multiplexing.
 
 Splits neuron equations across reconfigurable regions and
@@ -10865,7 +10865,7 @@ delta_pct : float
 regression : bool
 
 
-### Function `check_regression(baseline, current)`
+### Function `check_regression(baseline, current, *, threshold_pct)`
 Detect performance regressions between compilations.
 
 ---
@@ -10900,7 +10900,7 @@ components : list&#91;dict&#93;
 total_components : int
 
 
-### Function `generate_sbom(module_name, profile_name)`
+### Function `generate_sbom(module_name, profile_name, *, dependencies, sbom_format)`
 Generate SBOM/HBOM for IP core compliance.
 
 ---
@@ -10918,7 +10918,7 @@ frames_per_cycle : int
 expected_seu_rate : float
 
 
-### Function `schedule_seu_scrubbing(config_bits)`
+### Function `schedule_seu_scrubbing(config_bits, *, orbit_altitude_km, shielding_mm_al, strategy)`
 Generate scrubbing schedule for space-grade configuration memory.
 
 ---
@@ -10949,7 +10949,7 @@ recommendation : str
     Mitigation suggestion.
 
 
-### Function `lint_side_channels(equations)`
+### Function `lint_side_channels(equations, *, module_name, data_width)`
 Analyse equations for power/timing side-channel vulnerabilities.
 
 ---
@@ -10977,7 +10977,7 @@ reason : str
     Human-readable explanation.
 
 
-### Function `storage_recommendation(neuron_count, state_bits_per_neuron)`
+### Function `storage_recommendation(neuron_count, state_bits_per_neuron, *, has_uram, register_threshold, uram_threshold)`
 Determine optimal storage strategy for a neuron array.
 
 Decides between registers (small), BRAM (medium), and URAM (large)
@@ -11079,7 +11079,7 @@ rationale : str
     Why this target is recommended.
 
 
-### Function `recommend_target(equations)`
+### Function `recommend_target(equations, *, max_power_mw, min_freq_mhz, max_data_width, require_class, top_n)`
 Recommend optimal hardware targets for a neuron model.
 
 Given ODE equations and constraints, ranks all registered
@@ -11109,7 +11109,7 @@ list&#91;TargetRecommendation&#93;
 
 ## Module `compiler.intelligence.tcl_gen`
 
-### Function `generate_tcl_project(module_name)`
+### Function `generate_tcl_project(module_name, *, tool, part, verilog_files, constraint_file)`
 Generate FPGA project TCL script.
 
 Parameters
@@ -11146,14 +11146,14 @@ alerts : list&#91;str&#93;
 healthy : bool
 
 
-### Function `ingest_telemetry(telemetry_data, twin_states)`
+### Function `ingest_telemetry(telemetry_data, twin_states, *, drift_threshold)`
 Ingest hardware telemetry and compare against digital twin.
 
 ---
 
 ## Module `compiler.intelligence.testbench_gen`
 
-### Function `generate_testbench(module_name, equations)`
+### Function `generate_testbench(module_name, equations, *, framework, num_cycles)`
 Generate verification testbench for compiled neuron.
 
 ---
@@ -11200,13 +11200,13 @@ pass_fail : str
     ``"PASS"`` or ``"FAIL"``.
 
 
-### Function `thermal_analysis(estimated_power_mw, target_freq_mhz)`
+### Function `thermal_analysis(estimated_power_mw, target_freq_mhz, *, theta_ja, t_ambient_c, t_junction_max_c, process_nm, mul_count, dsp_columns, dsp_power_mw, theta_spreading)`
 Estimate thermal impact and frequency derating.
 
-### Function `estimate_thermal_envelope()`
+### Function `estimate_thermal_envelope(*, power_mw, theta_ja, t_ambient, t_junction_max)`
 Predict junction temperature from power dissipation.
 
-### Function `generate_thermal_constraints(module_name, analysis)`
+### Function `generate_thermal_constraints(module_name, analysis, *, dsp_columns)`
 Generate XDC constraints for thermal-aware DSP placement.
 
 ---
@@ -11230,7 +11230,7 @@ cdc_signals : list&#91;str&#93;
     Signals requiring clock domain crossing.
 
 
-### Function `partition_timescales(equations, time_constants)`
+### Function `partition_timescales(equations, time_constants, *, threshold_ratio)`
 Partition ODE equations by timescale for multi-clock execution.
 
 Identifies fast vs slow dynamics and assigns them to different
@@ -11268,14 +11268,14 @@ timing_met : bool
 recommendations : list&#91;str&#93;
 
 
-### Function `verify_timing_closure(equations)`
+### Function `verify_timing_closure(equations, *, target_freq_mhz, data_width)`
 Perform static timing analysis on the dataflow graph.
 
 ---
 
 ## Module `compiler.intelligence.tmr_wrapper`
 
-### Function `generate_tmr_wrapper(module_name)`
+### Function `generate_tmr_wrapper(module_name, *, data_width, state_vars, voter)`
 Generate a Triple Modular Redundancy wrapper for any neuron module.
 
 Instantiates three copies of the target module and a majority voter
@@ -11311,7 +11311,7 @@ risk_level : str
 total_checks : int
 
 
-### Function `lint_hardware_trojans(equations)`
+### Function `lint_hardware_trojans(equations, *, check_dormant, check_payload)`
 Detect suspicious combinational paths that could hide trojans.
 
 ---
@@ -11337,7 +11337,7 @@ partition_map : dict&#91;int, list&#91;int&#93;&#93;
     Tile ID → list of neuron indices.
 
 
-### Function `advise_ucie_partition(neuron_count, connectivity)`
+### Function `advise_ucie_partition(neuron_count, connectivity, *, tile_count, spike_rate_hz, timestep_us, ucie_lane_gbps, ucie_latency_ns)`
 Advise on neuron array partitioning across chiplet tiles.
 
 Analyses a neuron array's connectivity to estimate inter-tile
@@ -11378,7 +11378,7 @@ protocol_version : str
 total_bandwidth_gbps : float
 
 
-### Function `map_ucie_protocol(blocks)`
+### Function `map_ucie_protocol(blocks, *, lane_bandwidth_gbps, protocol_version)`
 Map neuron array blocks to UCIe die-to-die protocol lanes.
 
 Parameters
@@ -11398,7 +11398,7 @@ UCIeMapping
 
 ## Module `compiler.intelligence.vhdl_emitter`
 
-### Function `verilog_to_vhdl_wrapper(module_name)`
+### Function `verilog_to_vhdl_wrapper(module_name, *, data_width, signed)`
 Generate a VHDL-2008 entity/architecture wrapper for a Verilog module.
 
 This produces a VHDL entity that matches the Verilog module's port list,
@@ -11434,7 +11434,7 @@ overhead_percent : float
 verifiable : bool
 
 
-### Function `embed_watermark(module_name, equations)`
+### Function `embed_watermark(module_name, equations, *, owner_id, method)`
 Embed a verifiable watermark into the compiled netlist.
 
 ---
@@ -11458,7 +11458,7 @@ target_platform : str
     Target platform.
 
 
-### Function `inject_weight_noise(weights)`
+### Function `inject_weight_noise(weights, *, noise_model, sigma, seed)`
 Inject device-variation noise into a weight matrix.
 
 Simulates manufacturing variations and read noise in analog
@@ -11481,7 +11481,7 @@ Returns
 list&#91;list&#91;float&#93;&#93;
     Weight matrix with injected noise.
 
-### Function `create_noise_profile()`
+### Function `create_noise_profile(*, noise_model, sigma, cycle_drift, retention_loss_per_day, target)`
 Create a device-variation noise profile for analog targets.
 
 Parameters
@@ -11506,7 +11506,7 @@ WeightNoiseProfile
 
 ## Module `compiler.intelligence.weight_rom`
 
-### Function `generate_weight_rom(weights, module_name)`
+### Function `generate_weight_rom(weights, module_name, *, data_width, output_format)`
 Generate a weight ROM for synaptic connections.
 
 Produces either a Verilog ROM module or a Xilinx ``.coe`` / Intel
@@ -11694,7 +11694,7 @@ Immutable contract describing one writable bank mapped to MMIO.
   - Return byte address for one parameter entry in this bank.
 - **to_dict**()
   - Serialise to JSON-compatible mapping.
-- **from_dict**(cls, payload)
+- **from_dict**(payload)
   - Rehydrate immutable bank spec from serialized mapping.
 
 ### Class `MMIOUpdateSpec`
@@ -11737,7 +11737,7 @@ Contract for dynamic updates through bus-mapped control registers.
   - Build the host-side select/readback sequence for one active entry.
 - **to_dict**()
   - Serialise contract for manifest persistence.
-- **from_dict**(cls, payload)
+- **from_dict**(payload)
   - Rehydrate contract from serialized mapping.
 
 ---
@@ -11793,7 +11793,7 @@ dict
     Mapping of backend name to availability, in fastest-first order. The
     ``python`` floor is always ``True``.
 
-### Function `mixed_dense_forward_batch(weights_q88, inputs_q1616, n_outputs, n_inputs)`
+### Function `mixed_dense_forward_batch(weights_q88, inputs_q1616, n_outputs, n_inputs, *, backend)`
 Run the batched mixed-precision dense MAC through the fastest available backend.
 
 Parameters
@@ -11843,7 +11843,7 @@ Bit-true mixed fixed-point dense operator compiled from float weights.
 - **forward_float**(inputs)
   - Return dense outputs reconstructed from saturated accumulator codes.
 
-### Function `compile_dense_mixed_precision(weights, fmt)`
+### Function `compile_dense_mixed_precision(weights, fmt, *, clip)`
 Compile a dense weight matrix into the mixed Q8.8/Q16.16 MAC contract.
 
 ---
@@ -11867,11 +11867,11 @@ var_configs : dict&#91;str, PrecisionConfig&#93;
   - List of variable names.
 - **get**(var)
   - Get the precision config for a variable.
-- **require_scalar_encoding**()
+- **require_scalar_encoding**(\*, consumer)
   - Reject variables whose precision needs detached block exponents.
 - **summary**()
   - Return a human-readable summary of the precision allocation.
-- **manifest**()
+- **manifest**(\*, parameter_counts)
   - Return deterministic per-variable precision metadata.
 
 ---
@@ -11904,10 +11904,10 @@ Translate sc-neurocore objects into MLIR text formatted for CIRCT.
   - Emit a comb.mux operation for SC scaled addition.
 - **generate**()
   - Generate CIRCT-consumable ``hw``/``comb`` dialect MLIR for the module.
-- **write_bundle**(output_dir)
+- **write_bundle**(output_dir, \*, circt_opt, run_circt)
   - Write MLIR plus a manifest describing CIRCT lowering readiness.
 
-### Function `generate_mlir_bundle(emitter, output_dir)`
+### Function `generate_mlir_bundle(emitter, output_dir, *, circt_opt, run_circt)`
 Write a CIRCT-ready MLIR file, a manifest, and optionally lowered Verilog.
 
 With ``run_circt=False`` (default) the bundle is evidence-first: it records
@@ -12005,7 +12005,7 @@ signed : bool
 - **declaration**()
   - Return the ``input wire`` port declaration for the module header.
 
-### Function `abstract_to_free_inputs(verilog)`
+### Function `abstract_to_free_inputs(verilog, *, top, signals)`
 Abstract each signal's driver away and expose it as a free input port.
 
 For every :class:`LiftedSignal` the internal name is renamed to the target
@@ -12086,7 +12086,7 @@ exceeds the signed Q-format capacity.
 - **manifest**()
   - Return a stable JSON-serialisable proof manifest.
 
-### Function `prove_fixed_point_envelope(bound_codes)`
+### Function `prove_fixed_point_envelope(bound_codes, *, total_bits, fractional_bits, signed)`
 Prove whether conservative Q-code bounds fit a fixed-point format.
 
 Parameters
@@ -12264,7 +12264,7 @@ notes : str
   - Minimum representable value (most negative or zero).
 - **resolution**()
   - Smallest representable step.
-- **from_constraints**(cls, name)
+- **from_constraints**(name, \*, vendor, family, platform_class, data_width, fraction, max_freq_mhz, overflow, rounding, min_precision_bits, max_power_budget_mw, notes)
   - Auto-construct an optimal profile from spec-sheet constraints.
 
 ### Function `get_profile(name)`
@@ -12285,7 +12285,7 @@ Raises
 KeyError
     If no profile matches.
 
-### Function `list_profiles()`
+### Function `list_profiles(*, platform_class, vendor)`
 List all registered hardware profiles, optionally filtered.
 
 Parameters
@@ -12426,7 +12426,7 @@ toggle_rate : float
     Average toggle rate (transitions per clock per bit).
 
 
-### Function `estimate_power(verilog)`
+### Function `estimate_power(verilog, *, data_width, freq_mhz, vdd, process_nm, spike_rate_hz, activity_vcd, vcd_time_units_per_cycle)`
 Estimate power consumption from generated Verilog.
 
 When a VCD trace is provided, dynamic power uses measured bit-level
@@ -12517,7 +12517,7 @@ signed:
   - Whether this precision contract requires shared exponent metadata.
 - **supports_scalar_encoding**()
   - Whether ``encode`` can produce a complete scalar storage word.
-- **require_scalar_encoding**()
+- **require_scalar_encoding**(\*, variable, consumer)
   - Reject scalar consumers before block exponent metadata is lost.
 - **can_represent**(value)
   - Return whether ``value`` lies inside the coarse block-floating range.
@@ -12529,7 +12529,7 @@ signed:
   - Return the number of shared exponents needed for ``parameter_count``.
 - **block_exponent_layout**(parameter_count)
   - Return the flattened exponent-vector layout for ``parameter_count``.
-- **validate_exponents**(exponents)
+- **validate_exponents**(exponents, \*, parameter_count)
   - Validate and normalise encoded block exponents for a parameter payload.
 - **manifest_for_parameter_count**(parameter_count)
   - Return a deterministic manifest with optional concrete layout metadata.
@@ -12564,7 +12564,7 @@ signed:
   - Whether this precision contract requires shared exponent metadata.
 - **supports_scalar_encoding**()
   - Whether ``encode`` can produce a complete scalar storage word.
-- **require_scalar_encoding**()
+- **require_scalar_encoding**(\*, variable, consumer)
   - Validate that this fixed-point config is scalar-encodable.
 - **manifest**()
   - Return a deterministic fixed-point manifest for compilers and telemetry.
@@ -12573,14 +12573,14 @@ signed:
 - **encode**(value)
   - Quantise ``value`` to the nearest clamped fixed-point integer code.
 
-### Function `encode_scalar_value(config, value)`
+### Function `encode_scalar_value(config, value, *, variable, consumer)`
 Encode one scalar value or reject precision modes requiring exponent metadata.
 
 ---
 
 ## Module `compiler.precision_presets`
 
-### Function `from_preset(var_presets)`
+### Function `from_preset(var_presets, *, scalar_only)`
 Create a MixedPrecisionSpec from named presets.
 
 Set ``scalar_only`` when the downstream consumer cannot carry detached
@@ -12591,7 +12591,7 @@ resolution instead of later scalar encoding.
 
 ## Module `compiler.precision_solver`
 
-### Function `solve_precision(bounds)`
+### Function `solve_precision(bounds, *, min_resolution, max_total_bits, signed, align_to)`
 Solve a deterministic per-variable fixed-point precision assignment.
 
 The solver derives integer bits from each value range and fractional bits
@@ -12669,7 +12669,7 @@ Raises
 KeyError
     If ``kind`` is not registered.
 
-### Function `apply_proof_transform(kind, verilog)`
+### Function `apply_proof_transform(kind, verilog, *, top, taps, signals)`
 Apply one registered proof-only RTL transform.
 
 Parameters
@@ -12727,7 +12727,7 @@ fraction_bits:
   - Maximum representable fixed-point value.
 - **q_label**()
   - Canonical Q-format label.
-- **from_string**(cls, fmt)
+- **from_string**(fmt)
   - Parse 'Q8.8', 'Q4.12', etc.
 
 ### Class `QFormatMixed`
@@ -12847,7 +12847,7 @@ reg_bits : int
     Total register bits.
 
 
-### Function `estimate_resources(verilog)`
+### Function `estimate_resources(verilog, *, data_width, has_dsp)`
 Estimate FPGA resources from generated Verilog without synthesis.
 
 Uses pattern matching on the Verilog source to count multipliers, adders,
@@ -12872,7 +12872,7 @@ ResourceEstimate
 
 ## Module `compiler.riscv_driver`
 
-### Function `generate_riscv_driver(module_name, params)`
+### Function `generate_riscv_driver(module_name, params, *, base_address, data_width, fraction, rtos)`
 Generate a RISC-V C driver for neuron control via MMIO.
 
 Supports bare-metal, FreeRTOS, and Zephyr templates with timer-driven
@@ -12902,7 +12902,7 @@ str
 
 ## Module `compiler.sby_formal`
 
-### Function `generate_sby_script(module_name)`
+### Function `generate_sby_script(module_name, *, sva_file, depth, mode, solver, engine)`
 Generate a SymbiYosys ``.sby`` formal verification script.
 
 Enables one-command bounded model checking of compiled neurons
@@ -12977,7 +12977,7 @@ pblock_name : str
 - **__post_init__**()
   - Auto-generate pblock name if not set.
 
-### Function `generate_slr_constraints(placements)`
+### Function `generate_slr_constraints(placements, *, insert_pipeline_regs, target_freq_mhz)`
 Generate Vivado XDC for multi-die SLR placement.
 
 Emits PBLOCK constraints that pin modules to specific SLRs and
@@ -13001,7 +13001,7 @@ str
 
 ## Module `compiler.sva_gen`
 
-### Function `generate_sva(state_vars)`
+### Function `generate_sva(state_vars, *, data_width, fraction, signed, input_bounds, module_name)`
 Generate SystemVerilog Assertions for a compiled neuron module.
 
 Produces three categories of formal properties:
@@ -13240,7 +13240,7 @@ signed : bool
 - **assignment**()
   - Return the continuous ``assign`` that drives the tap from its source.
 
-### Function `expose_state_taps(verilog)`
+### Function `expose_state_taps(verilog, *, top, taps)`
 Instrument ``top`` to expose internal signals as observation output ports.
 
 Adds each tap's ``output wire`` port to the module's ANSI port list and a
@@ -13313,13 +13313,13 @@ Deterministic response from the contract boundary.
 - **to_dict**()
   - Return a JSON-compatible compiler-service response.
 
-### Function `build_compiler_service_contract()`
+### Function `build_compiler_service_contract(*, targets, sync, policy)`
 Build a deterministic compiler-service boundary manifest.
 
 ### Function `plan_live_update(request, policy)`
 Classify a request into a live-update package.
 
-### Function `build_compiler_service_response(request)`
+### Function `build_compiler_service_response(request, *, optimiser_report, policy)`
 Build a response without invoking a network service or toolchain.
 
 ---
@@ -13777,7 +13777,7 @@ Returns
 nn.Module
     The same ``model`` instance, returned for chaining.
 
-### Function `convert(model, calibration_data, T, percentile)`
+### Function `convert(model, calibration_data, T, percentile, *, max_working_bytes)`
 Convert a trained PyTorch ANN to a rate-coded SNN.
 
 Activations are associated with their actual preceding source operations.
@@ -13873,7 +13873,7 @@ Returns
 torch.nn.Sequential
     ``Flatten`` then alternating ``Linear`` and QCFS layers, ending in ``Linear``.
 
-### Function `network_from_checkpoint(payload)`
+### Function `network_from_checkpoint(payload, *, steps, calibration, max_dense_params)`
 Convert the network a trusted, already loaded checkpoint holds.
 
 Parameters
@@ -13974,17 +13974,17 @@ validate them again, so caller edits cannot bypass shape/domain admission.
 The ``dense-if-f64-sequential-v1`` profile orders input-column reductions
 and separates multiplication/addition instead of using BLAS reductions.
 
-- **__init__**(weights, biases, thresholds, T, initial_membrane_fraction, output_scale, output_mode)
+- **__init__**(weights, biases, thresholds, T, initial_membrane_fraction, output_scale, output_mode, \*, max_working_bytes, layer_membrane_fractions)
   - Copy and validate all coupled parameters before exposing the network.
 - **n_layers**()
   - Return the current number of connected weighted layers.
-- **replay**(inputs)
+- **replay**(inputs, \*, initial_state, trace, binary_inputs, max_working_bytes, backend)
   - Replay explicit frames, optionally continuing independently owned states.
-- **run**(x)
+- **run**(x, \*, input_mode, seed, max_working_bytes, backend)
   - Encode and simulate one input vector or a batch for the stored budget.
-- **rates**(x)
+- **rates**(x, \*, input_mode, seed, max_working_bytes, backend)
   - Decode accumulated responses into the source activation's units.
-- **classify**(x)
+- **classify**(x, \*, max_working_bytes, backend)
   - Return the first maximal response index for a vector or each batch row.
 
 ---
@@ -14488,7 +14488,7 @@ Raises
 ValueError
     If the data is nonreal, nonfinite or cannot be represented in float64.
 
-### Function `parameter_snapshot(weights, biases, thresholds, initial_membrane_fraction, output_mode)`
+### Function `parameter_snapshot(weights, biases, thresholds, initial_membrane_fraction, output_mode, *, max_working_bytes, layer_membrane_fractions)`
 Validate coupled layer dimensions and freeze independent parameter copies.
 
 Parameters
@@ -14532,7 +14532,7 @@ its integrated current. Final states include the linear readout integrator.
 Trace tuples contain every layer's post-reset state and only IF spike events.
 
 
-### Function `replay_dense_if(parameters, inputs)`
+### Function `replay_dense_if(parameters, inputs, *, initial_state, trace, binary_inputs, max_working_bytes)`
 Replay real input frames with inclusive thresholds and subtractive reset.
 
 Parameters
@@ -14603,7 +14603,7 @@ ValueError
 MemoryError
     If coefficient snapshots exceed the declared budget.
 
-### Function `admit_replay_buffers(weights, biases, shape)`
+### Function `admit_replay_buffers(weights, biases, shape, *, trace, linear, max_working_bytes)`
 Admit a conservative portable bound on one replay's numeric buffers.
 
 Parameters
@@ -14728,7 +14728,7 @@ Returns
 str
     Hex SHA-256 over the input shape and values followed by the labels.
 
-### Function `measure_conversion_loss(model, snn, inputs, labels)`
+### Function `measure_conversion_loss(model, snn, inputs, labels, *, input_mode, seed, batch_size, max_working_bytes, backend)`
 Classify labelled samples with a source ANN and its converted SNN and compare.
 
 Parameters
@@ -14862,7 +14862,7 @@ ValueError
 RuntimeError
     Explicit configuration is absent, or a configured provider cannot load.
 
-### Function `qcfs_forward(x, steps, theta)`
+### Function `qcfs_forward(x, steps, theta, *, backend)`
 Quantise activations onto the QCFS rate lattice without PyTorch.
 
 Parameters
@@ -14891,7 +14891,7 @@ TypeError
 RuntimeError
     Selected runtime unavailable or a provider refused admitted input.
 
-### Function `qcfs_backward(x, upstream, steps, theta)`
+### Function `qcfs_backward(x, upstream, steps, theta, *, backend)`
 Evaluate QCFS straight-through derivatives without PyTorch.
 
 Parameters
@@ -15236,7 +15236,7 @@ arithmetic : str
 - **to_public_dict**()
   - Return the report as JSON-ready fields.
 
-### Function `calibrate_for_target(snn, profile, inputs, labels)`
+### Function `calibrate_for_target(snn, profile, inputs, labels, *, batch_size, max_working_bytes, backend)`
 Fit ``snn`` into ``profile``'s fixed-point format and measure the rounded network.
 
 Parameters
@@ -15412,7 +15412,7 @@ float
     The signed deviation of the observed one-probability of ``AND`` from the
     independent product :math:`p_a p_b`.
 
-### Function `correlation_diagnostic(bits_a, bits_b)`
+### Function `correlation_diagnostic(bits_a, bits_b, *, bias_threshold)`
 Diagnose ``AND``-composition correlation bias between two SC bitstreams.
 
 Estimates the SCC, converts it to the predicted AND bias through
@@ -15637,7 +15637,7 @@ Returns
 int
     The minimum distribution-free bitstream length.
 
-### Function `min_length_for_std_error(value, target_std)`
+### Function `min_length_for_std_error(value, target_std, *, bipolar)`
 Smallest :math:`N` whose SC standard error is at most ``target_std``.
 
 Unipolar: :math:`N \ge \lceil p(1-p) / \sigma^2 \rceil`; bipolar:
@@ -15658,7 +15658,7 @@ Returns
 int
     The minimum bitstream length (at least 1).
 
-### Function `sc_error_bound(value, length)`
+### Function `sc_error_bound(value, length, *, bipolar)`
 Summarise the SC accuracy of one encoded value as an :class:`SCErrorBound`.
 
 Parameters
@@ -15686,7 +15686,7 @@ Unified tensor container for sc-neurocore.
 Handles automatic conversion between the probability, bitstream, and
 quantum domains.
 
-- **from_prob**(cls, probs)
+- **from_prob**(probs)
   - Create a tensor stream whose data is already in probability form.
 - **to_bitstream**(length)
   - Convert probability-domain data into Bernoulli bitstreams.
@@ -16123,7 +16123,7 @@ unexpected:
 - **ok**()
   - ``True`` when the disk holds exactly the manifest's bytes.
 
-### Function `build_manifest(name, root)`
+### Function `build_manifest(name, root, *, version)`
 Scan a dataset directory and record its files and samples.
 
 Parameters
@@ -16220,7 +16220,7 @@ groups:
 - **digest**()
   - ``sha256:`` over the canonical JSON form.
 
-### Function `group_split(manifest)`
+### Function `group_split(manifest, *, fractions, source_split, seed)`
 Divide one published split into new splits made of whole groups.
 
 Groups are taken in an order fixed by ``seed``; each goes to the split
@@ -16623,10 +16623,10 @@ Manages a live debugging session.
 ### Class `ScopeRenderer`
 Text-mode rendering of live scope data for CLI output.
 
-- **render_density_bar**(cls, density, width)
+- **render_density_bar**(density, width)
   - Render a density as a text bar.
-- **render_layer_summary**(cls, layer_id, stats)
-- **render_session**(cls, session)
+- **render_layer_summary**(layer_id, stats)
+- **render_session**(session)
   - Render full session status as text.
 
 ### Function `compute_scc(a, b)`
@@ -17033,7 +17033,7 @@ and CI. ``mode="TCP"`` opens a JSON-line request/response connection for a
 real hardware-twin service. The class never marks itself connected to
 physical hardware unless a TCP exchange actually succeeds.
 
-- **__init__**(ip, port)
+- **__init__**(ip, port, \*, mode, timeout_s, seed, noise_sigma, divergence_threshold)
 - **sync_step**(sw_v_mem, sw_spike)
   - Send software state and return the twin membrane voltage.
 
@@ -17175,10 +17175,10 @@ Supports regular spiking, fast spiking, chattering, and intrinsic burst.
 - **tick**(input_current_q16)
   - Process one timestep. Returns True on spike.
 - **reset**()
-- **regular_spiking**(cls)
-- **fast_spiking**(cls)
-- **chattering**(cls)
-- **intrinsic_burst**(cls)
+- **regular_spiking**()
+- **fast_spiking**()
+- **chattering**()
+- **intrinsic_burst**()
 
 ---
 
@@ -17192,14 +17192,14 @@ Supported RISC-V MCU targets.
 ### Class `PowerProfile`
 Estimated power profile for a target board at a given clock.
 
-- **for_board**(cls, board, clock_mhz)
+- **for_board**(board, clock_mhz)
 - **duty_cycled_uw**(duty)
   - Estimate µW for a given duty cycle (0.0=sleep, 1.0=active).
 
 ### Class `MemoryFootprint`
 Memory footprint estimate for a tinySC network.
 
-- **estimate**(cls, num_layers, neurons_per_layer, bs_words, board)
+- **estimate**(num_layers, neurons_per_layer, bs_words, board)
   - Estimate memory for a network configuration.
 - **max_neurons**(board)
   - Maximum neurons that fit in a board's RAM (single layer).
@@ -17224,7 +17224,7 @@ Resource counts parsed from a Vivado utilisation report.
 ### Function `build_power_thermal_model(config)`
 Build a deterministic JSON-compatible FPGA power/thermal model.
 
-### Function `build_power_thermal_model_from_vivado_reports(report_dir, config)`
+### Function `build_power_thermal_model_from_vivado_reports(report_dir, config, *, power_report, utilization_report)`
 Build a power/thermal model seeded from Vivado implementation reports.
 
 The returned model keeps the estimator resource breakdown for workload
@@ -17240,7 +17240,7 @@ Parse FPGA resource counts from a Vivado report_utilization file.
 ### Function `write_power_thermal_model(output_dir, config)`
 Write `power_thermal_model.json` beside generated FPGA artefacts.
 
-### Function `write_power_thermal_model_from_vivado_reports(report_dir, output_dir, config)`
+### Function `write_power_thermal_model_from_vivado_reports(report_dir, output_dir, config, *, power_report, utilization_report)`
 Write report-derived FPGA power/thermal JSON beside deployable artefacts.
 
 ---
@@ -17277,7 +17277,7 @@ Usage::
   - Full inference: encode → cascaded layer inference → spike output.
 - **export_weights**()
   - Export all layer weights in serialization-ready format.
-- **from_weights**(cls, layers_data, bit_length, lfsr_seed)
+- **from_weights**(layers_data, bit_length, lfsr_seed)
   - Construct network from deserialized weight data.
 - **layer_count**()
   - Return the number of layers currently registered in the network.
@@ -17358,14 +17358,14 @@ Generate a static browser deployment scaffold for a model artefact.
 Weight blob header (16 bytes).
 
 - **to_bytes**()
-- **from_bytes**(cls, data)
+- **from_bytes**(data)
 - **validate**()
 
 ### Class `LayerHeader`
 Per-layer header (16 bytes).
 
 - **to_bytes**()
-- **from_bytes**(cls, data)
+- **from_bytes**(data)
 - **words_per_row**()
 
 ### Function `serialize_weights(layers)`
@@ -17568,7 +17568,7 @@ costs; treat them as ~20%-accurate architectural guidance, not synthesis truth.
 - **summary**()
   - Human-readable one-block summary.
 
-### Function `estimate_folded_area(metrics)`
+### Function `estimate_folded_area(metrics, *, target, data_width, clock_mhz, event_driven, include_infra)`
 Estimate folded-interconnect FPGA resources, latency, and power.
 
 Parameters
@@ -17659,7 +17659,7 @@ Vivado-style utilisation report.
   - Per-component dynamic power breakdown in mW.
 - **scale_dvfs**(clock_mhz, voltage_v)
   - Return a new report with scaled clock and voltage (DVFS).
-- **from_vivado_dict**(cls, d)
+- **from_vivado_dict**(d)
   - Parse from a Vivado utilisation report dictionary.
 
 ### Class `GridRegion`
@@ -17998,7 +17998,7 @@ Encodes the network topology.
 
 - **to_vector**()
   - Serialise topology fields in their canonical five-value order.
-- **from_vector**(cls, v)
+- **from_vector**(v)
   - Construct a topology gene while enforcing physical parameter bounds.
 
 ### Class `NeuronGene`
@@ -18006,7 +18006,7 @@ Encodes neuron-level parameters (ArcaneNeuron-compatible).
 
 - **to_vector**()
   - Serialise neuron kinetics in their canonical eight-value order.
-- **from_vector**(cls, v)
+- **from_vector**(v)
   - Construct neuron kinetics while enforcing finite lower bounds.
 
 ### Class `PlasticityGene`
@@ -18014,7 +18014,7 @@ Encodes plasticity rule parameters.
 
 - **to_vector**()
   - Serialise plasticity fields in their canonical six-value order.
-- **from_vector**(cls, v)
+- **from_vector**(v)
   - Construct plasticity parameters while enforcing valid rates.
 
 ### Class `Genome`
@@ -18022,7 +18022,7 @@ Complete genome for an evolving SC organism.
 
 - **to_vector**()
   - Return the canonical 19-value topology-neuron-plasticity vector.
-- **from_vector**(cls, v, gen)
+- **from_vector**(v, gen)
   - Construct a genome from its canonical parameter vector.
 - **vector_dim**()
   - Return the number of values in the canonical genome vector.
@@ -18106,7 +18106,7 @@ Runtime fault-check settings for evolved SC organisms.
 ### Class `RuntimeFaultCheck`
 Recorded runtime fault/degradation decision for one organism.
 
-- **from_plan**(cls, organism, plan)
+- **from_plan**(organism, plan)
   - Capture a degradation plan against the organism's current identity.
 - **to_dict**()
   - Return a JSON-ready fault-check summary.
@@ -18436,7 +18436,7 @@ Named pair of stable baseline and experimental candidate implementations.
 
 - **describe**()
   - Return route metadata for discovery and documentation.
-- **run**(config)
+- **run**(config, \*args, \*\*kwargs)
   - Execute the route according to the provided policy.
 - **evaluate_cases**(cases, config)
   - Run the route across named cases and aggregate compare/benchmark results.
@@ -18449,7 +18449,7 @@ Registry for named alternative execution paths.
 - **get**(name)
 - **names**()
 - **describe**()
-- **run**(name, config)
+- **run**(name, config, \*args, \*\*kwargs)
 - **evaluate**(name, cases, config)
 
 ### Function `compare_outputs(baseline, candidate, config, context)`
@@ -18667,7 +18667,7 @@ Return *n_samples* of simulated EEG voltage for *stage*.
 
 ## Module `experiments.demonstration_convergence`
 
-### Function `run_demonstration()`
+### Function `run_demonstration(*, hardware_mode, work_dir, bundle_dir)`
 ---
 
 ## Module `experiments.exascale_demo`
@@ -18958,9 +18958,9 @@ Generates human-readable explanation strings.
 - **explain_node**(node)
 - **explain_attribution**(attr)
 - **explain_sensitivity**(results)
-- **enhance_with_local_llm**(text)
+- **enhance_with_local_llm**(text, \*, bridge, question)
   - Enhance a deterministic explanation through the local LLM bridge.
-- **explain_node_with_local_llm**(node)
+- **explain_node_with_local_llm**(node, \*, bridge, question)
   - Generate a local-LLM-enhanced explanation for one decision node.
 
 ### Class `MultiLayerTrace`
@@ -19000,7 +19000,7 @@ End-to-end explainability: replay + decision tree + provenance.
   - Run sensitivity analysis on a decision node.
 - **attribute**(target, input_bitstreams, weights)
   - Compute causal attribution for a decision.
-- **explain_spike_with_local_llm**(neuron_id, threshold_q16, bitstream_length, spike_threshold_count)
+- **explain_spike_with_local_llm**(neuron_id, threshold_q16, bitstream_length, spike_threshold_count, \*, bridge, scc, timestep, layer_id, contributing_neurons, question)
   - Run the deterministic explainability path, then enhance it locally.
 
 ---
@@ -19150,9 +19150,9 @@ Usage::
 ### Class `TargetDevice`
 
 ### Class `TargetSchedule`
-- **for_fpga**(cls, vendor)
-- **for_gpu**(cls)
-- **for_cpu**(cls)
+- **for_fpga**(vendor)
+- **for_gpu**()
+- **for_cpu**()
 
 ### Class `RelayFunction`
 - **to_relay_text**()
@@ -19176,10 +19176,10 @@ Lowers SC-NeuroCore IR to TVM Relay IR text representation.
 Preset radiation environments with typical BER (bit error rate).
 
 - **__post_init__**()
-- **leo**(cls)
-- **geo**(cls)
-- **deep_space**(cls)
-- **terrestrial**(cls)
+- **leo**()
+- **geo**()
+- **deep_space**()
+- **terrestrial**()
 
 ### Class `FaultInjectionResult`
 - **__post_init__**()
@@ -19204,9 +19204,9 @@ Applies configurable faults to SC bitstreams.
 Monte-Carlo resilience benchmarking harness.
 
 - **__init__**(seed)
-- **run**()
+- **run**(\*, fault_model, ber, bitstream_length, probability, num_trials)
   - Run Monte-Carlo fault injection trials.
-- **sweep_ber**()
+- **sweep_ber**(\*, fault_model, ber_range, bitstream_length, probability, num_trials)
   - Sweep across multiple BER values to produce a degradation curve.
 
 ---
@@ -19265,7 +19265,7 @@ Graceful-degradation decision derived from seeded diagnostics.
 Combine seeded fault injection with stochastic-doctor diagnosis.
 
 - **__post_init__**()
-- **evaluate**(bitstreams)
+- **evaluate**(bitstreams, \*, layer_id, fault_model, ber, seed)
   - Inject seeded faults, audit the layer, and recommend degradation.
 
 ---
@@ -19382,7 +19382,7 @@ Orchestrates one complete round of federated SC learning.
 ### Class `DPCertificate`
 Exportable privacy proof document for regulatory compliance.
 
-- **from_accountant**(cls, accountant, mechanism, bitstream_length)
+- **from_accountant**(accountant, mechanism, bitstream_length)
   - Build a differential-privacy certificate from an accountant.
 - **to_dict**()
   - Return the certificate as a serialisable dictionary.
@@ -19514,7 +19514,7 @@ Recompute the sc-inference grade from the signed unit.
 re-check and exact string zero error against NumPy. Missing, legacy or malformed
 evidence stays ``bounded-model``. The signed ``claim_status`` is not trusted.
 
-### Function `seal_sc_inference(result)`
+### Function `seal_sc_inference(result, *, signer, freshness)`
 Seal an sc-inference result in **recompute** mode (no attestation).
 
 Parameters
@@ -19545,7 +19545,7 @@ Recompute the FPGA grade from the signed unit.
 valid report fields and an addressed co-simulation transcript. This grade is
 pre-silicon parity; no physical deployment or power claim is established.
 
-### Function `attest_fpga_deployment(result, artifacts)`
+### Function `attest_fpga_deployment(result, artifacts, *, signer, freshness)`
 Seal pre-silicon co-simulation in **attestation** mode with a result pack.
 
 The producer signs the complete path-free unit, including source freshness and
@@ -19575,7 +19575,7 @@ Raises
 ValueError
     If artifacts are absent or bit-exact evidence lacks a source re-check.
 
-### Function `verify_envelope(envelope, rendered_grade)`
+### Function `verify_envelope(envelope, rendered_grade, *, keyring)`
 Verify a SC-NeuroCore honesty envelope, dispatching the regrade by schema.
 
 Parameters
@@ -19655,7 +19655,7 @@ ValueError
 - **__post_init__**()
   - Validate finite report values and their SHA-256 identity.
 
-### Function `sc_inference_evidence(result)`
+### Function `sc_inference_evidence(result, *, operator, studio_version, started, ended, host, freshness)`
 Build measured software parity evidence on a numerical model.
 
 Parameters
@@ -19687,7 +19687,7 @@ Raises
 ValueError
     If a bit-identical result lacks a verified-at-source re-check.
 
-### Function `fpga_deployment_evidence(result)`
+### Function `fpga_deployment_evidence(result, *, operator, studio_version, started, ended, host, freshness)`
 Build the ``studio.fpga-deployment.v1`` pre-silicon measurement bundle.
 
 RTL is co-simulated against the Q8.8 fixed-point reference on the
@@ -19737,7 +19737,7 @@ dict&#91;str, bytes&#93;
     Mapping of logical path to canonical-JSON bytes, suitable for
     :func:`scpn_studio_platform.manifest.content_digest`.
 
-### Function `build_manifest()`
+### Function `build_manifest(*, studio_version)`
 Build the SC-NeuroCore studio's capability manifest.
 
 Parameters
@@ -19906,7 +19906,7 @@ Read a full cohort with strict version, field and numeric custody.
 
 ## Module `fitting.cohort_run`
 
-### Function `run_cohort(cohort)`
+### Function `run_cohort(cohort, *, progress)`
 Run every declared trial, retaining rejected and divergent members.
 
 Parameters
@@ -19951,7 +19951,7 @@ Read exported constraints, preserving all coefficients and bounds.
 
 ## Module `fitting.fit`
 
-### Function `fit_parameters(problem)`
+### Function `fit_parameters(problem, *, generations, population, progress)`
 Fit ``problem`` and return the complete, replayable result.
 
 Parameters
@@ -20197,7 +20197,7 @@ Bound consecutive valid cycles with no active network outputs.
 
 - **__post_init__**()
 
-### Function `validate_systemverilog_identifier(value)`
+### Function `validate_systemverilog_identifier(value, *, field_name)`
 Return ``value`` after checking it is a plain SystemVerilog identifier.
 
 ---
@@ -20236,7 +20236,7 @@ Compile a bounded global-output inactivity contract into deterministic SVA.
 Raised when a formal network verification report violates its schema.
 
 
-### Function `validate_formal_network_report(payload)`
+### Function `validate_formal_network_report(payload, *, artifact_root)`
 Validate a formal network verification report without external dependencies.
 
 ---
@@ -20474,7 +20474,7 @@ Constraint set for a target device.
 
 Derived from a ``DeviceSpec``, or specified manually.
 
-- **from_device**(cls, device)
+- **from_device**(device)
   - Derive constraints from a device specification.
 
 ### Class `ConstraintChecker`
@@ -20782,7 +20782,7 @@ One cycle of queue input/output activity.
 ### Class `AERPriorityQueueReference`
 Finite AER strict-priority queue with hardware-equivalent traps.
 
-- **__init__**()
+- **__init__**(\*, capacity, max_latency_cycles)
 - **occupancy**()
 - **ready**()
 - **empty**()
@@ -20793,7 +20793,7 @@ Finite AER strict-priority queue with hardware-equivalent traps.
   - Return the next event without consuming it.
 - **dequeue**()
   - Consume and return the highest-priority event.
-- **step**(event)
+- **step**(event, \*, out_ready)
   - Advance one hardware cycle with optional input and output ready.
 - **drain**()
   - Drain the queue according to the strict-priority contract.
@@ -20870,7 +20870,7 @@ Validate an HDL-facing identifier before interpolating it into source.
 
 ## Module `hdl_gen._live_parameter_bank`
 
-### Function `render_axi_live_parameter_bank(spec)`
+### Function `render_axi_live_parameter_bank(spec, *, module_name, addr_width, bus_data_width, block_ram_threshold_bits)`
 Render the AXI4-Lite live-parameter bank core.
 
 Parameters
@@ -20895,7 +20895,7 @@ str
 
 ## Module `hdl_gen._pcie_live_parameter_bank`
 
-### Function `render_pcie_live_parameter_bank(spec)`
+### Function `render_pcie_live_parameter_bank(spec, *, module_name, addr_width, bus_data_width, block_ram_threshold_bits)`
 Render a PCIe-MMIO adapter around the AXI4-Lite parameter-bank core.
 
 Parameters
@@ -20935,7 +20935,7 @@ interface. It is not a QDI async network replacement.
 
 ## Module `hdl_gen.bus_interface`
 
-### Function `generate_bus_wrapper(inner_module, params)`
+### Function `generate_bus_wrapper(inner_module, params, *, bus, data_width, addr_width, bus_data_width, base_address)`
 Generate a bus-attached wrapper around a compiled neuron module.
 
 Parameters
@@ -20960,7 +20960,7 @@ Returns
 str
     Complete SystemVerilog source for the bus wrapper module.
 
-### Function `generate_register_map(params)`
+### Function `generate_register_map(params, *, base_address)`
 Return the register map for a neuron's parameters.
 
 Parameters
@@ -20975,7 +20975,7 @@ Returns
 dict&#91;str, int&#93;
     Mapping from register name to byte address.
 
-### Function `generate_live_parameter_bank(spec)`
+### Function `generate_live_parameter_bank(spec, *, module_name, addr_width, bus_data_width, block_ram_threshold_bits)`
 Generate a live-parameter bank from an MMIO update spec.
 
 The emitted RTL stores each parameter bank in distributed RAM or BRAM and
@@ -21006,7 +21006,7 @@ str
 
 ## Module `hdl_gen.ip_xact`
 
-### Function `generate_ip_xact(module_name)`
+### Function `generate_ip_xact(module_name, *, vendor, library, version, data_width, params, bus)`
 Generate IP-XACT component XML.
 
 Parameters
@@ -21048,13 +21048,13 @@ The generated RTL is intentionally narrow in scope:
 This is a synthesis exploration scaffold, not a drop-in replacement for
 the production Kuramoto solvers.
 
-- **__init__**(module_name)
+- **__init__**(module_name, \*, n_oscillators, omegas, initial_phases, coupling, dt, data_width, fraction, lut_size)
   - Initialize a bounded research Kuramoto HDL emitter configuration.
 - **initial_phase_state_fixed**()
   - Return the emitted fixed-point reset state for each oscillator.
 - **fixed_point_step**(phase_state)
   - Mirror one generated RTL phase step in integer fixed-point arithmetic.
-- **fixed_point_error_summary**()
+- **fixed_point_error_summary**(\*, steps)
   - Characterise fixed-point drift against the float Kuramoto Euler step.
 - **fixed_state_to_float**(phase_state)
   - Convert integer fixed-point phase state to radians.
@@ -21085,12 +21085,12 @@ Deterministic pre-synthesis resource estimate for one online-learning block.
 ### Class `OnlineO1LearningEmitter`
 Emit a synthesisable reward-modulated STDP state machine.
 
-- **__init__**()
+- **__init__**(\*, module_name, config)
 - **generate**()
   - Return Verilog for one bounded online-learning synapse lane.
-- **estimate_resources**()
+- **estimate_resources**(\*, n_synapses, target)
   - Return a conservative pre-synthesis resource estimate.
-- **manifest**()
+- **manifest**(\*, verilog_path, n_synapses)
   - Return deterministic metadata for the generated learning lane.
 
 ---
@@ -21132,10 +21132,10 @@ seed : int, optional
 ### Class `SideChannelEncodingEmitter`
 Emit a synthesisable ROM-style wrapper for one protected encoding record.
 
-- **__init__**()
+- **__init__**(\*, module_name, encoding)
 - **generate**()
   - Return a Verilog module exposing payload and dummy stream bits.
-- **manifest**()
+- **manifest**(\*, verilog_path)
   - Return transport metadata linking the HDL hook to analytic evidence.
 
 ---
@@ -21163,7 +21163,7 @@ Generates SPICE netlists for Memristive Crossbars.
 
 ## Module `hdl_gen.tmr_wrapper`
 
-### Function `generate_tmr_wrapper(module_name, inputs, outputs)`
+### Function `generate_tmr_wrapper(module_name, inputs, outputs, *, voter_module)`
 Generate a TMR wrapper for a given Verilog module.
 
 Parameters
@@ -21203,15 +21203,15 @@ Generates Top-Level Verilog for a defined SC Network.
   - Emit standalone stochastic source modules declared in an IR payload.
 - **emit_async_aer**(module_name)
   - Emit the research-stage async AER wrapper.
-- **emit_kuramoto_phase**(module_name)
+- **emit_kuramoto_phase**(module_name, \*, n_oscillators, omegas, initial_phases, coupling, dt, data_width, fraction, lut_size)
   - Emit the bounded research Kuramoto phase core.
 - **emit_halton16_source**(module_name)
   - Emit a standalone Halton-16 stochastic source module.
 - **emit_quasirandom_source**(method, module_name, seed)
   - Emit a quasi-random source via the unified factory.
-- **emit_decorrelator**()
+- **emit_decorrelator**(\*, num_streams, stream_width, shift_seed)
   - Return the path to the sc_decorrelator HDL module.
-- **emit_edt_controller**()
+- **emit_edt_controller**(\*, data_width, margin, stable_cycles)
   - Return an instantiation template for the EDT controller.
 - **emit_tmr_wrapper**(module_name, inputs, outputs)
   - Generate a TMR wrapper for the given module.
@@ -21760,7 +21760,7 @@ seed : int
 ### Class `BCIDecoder`
 Legacy alias. Use BCIEncoder instead.
 
-- **__init__**(channels, sampling_rate)
+- **__init__**(channels, sampling_rate, \*\*kwargs)
 
 ---
 
@@ -21804,7 +21804,7 @@ Deterministic feedback sink used by the closed-loop template.
 WaveformCodec + AER + telemetry closed-loop BCI scaffold.
 
 - **__post_init__**()
-- **process_window**(waveform)
+- **process_window**(waveform, \*, window_start_us)
   - Process one raw electrode window through the closed-loop template.
 
 ---
@@ -21978,7 +21978,7 @@ schema_version:
 Closed-loop primitive for continuous BCI streams with latency guarantees.
 
 - **__init__**(config)
-- **process_stream**(waveform)
+- **process_stream**(waveform, \*, window_start_us, pathway_name)
   - Process one continuous stream window into a closed-loop control action.
 
 ---
@@ -22024,10 +22024,10 @@ Configuration for deterministic SC-NIR metadata export.
 - **resolved_accumulator_bits**()
   - Accumulator width used by exported precision metadata.
 
-### Function `build_scnir_from_neuron_graph(neuron_graph)`
+### Function `build_scnir_from_neuron_graph(neuron_graph, *, config)`
 Build an SC-NIR document from an existing NIR-derived NeuronGraph.
 
-### Function `export_scnir_from_nir(model_path)`
+### Function `export_scnir_from_nir(model_path, *, output_path, config, dt)`
 Read a NIR model, export SC-NIR metadata, and write it to JSON.
 
 ---
@@ -22493,7 +22493,7 @@ True
 
 - **__post_init__**()
   - Validate dimensions and encoding, then initialize packed weights and optional bias.
-- **from_exported_weights**(cls, exported_layer)
+- **from_exported_weights**(exported_layer, \*, length, use_gpu, sparse, connectivity, sc_mode, seed)
   - Build a packed SC inference layer from ``to_sc_weights()`` output.
 - **forward**(input_values)
   - Compute SC multiply-accumulate estimates across input channels.
@@ -22609,7 +22609,7 @@ Log scalars to TensorBoard via ``torch.utils.tensorboard``.
 ### Class `WandBCallback`
 Log metrics to Weights & Biases.
 
-- **__init__**(project)
+- **__init__**(project, \*\*init_kwargs)
 - **log**(metrics, step)
   - Forward the metrics to the active Weights & Biases run.
 - **close**()
@@ -22683,7 +22683,7 @@ Hardware-bounded configuration for local reward-modulated STDP.
   - Maximum signed reward input.
 - **per_synapse_state_bits**()
   - Stored bits per synapse: weight plus three bounded traces.
-- **to_scnir_annotation**()
+- **to_scnir_annotation**(\*, rule_id)
   - Return deterministic SC-NIR metadata for online-learning synapses.
 
 ### Class `OnlineO1Snapshot`
@@ -22701,10 +22701,10 @@ One fixed-point reward-modulated STDP synapse with O(1) state.
   - Stored state bits for one synapse.
 - **snapshot**()
   - Return the current bounded state.
-- **step**()
+- **step**(\*, pre_spike, post_spike, reward)
   - Advance one streamed timestep and return the bounded state.
 
-### Function `build_online_o1_memory_proof()`
+### Function `build_online_o1_memory_proof(*, n_synapses, config, sequence_length)`
 Return a sequence-length independent memory proof for the rule.
 
 ---
@@ -22763,13 +22763,13 @@ Return the current local licence state without contacting a network.
 ### Function `reset_license_status()`
 Reset process-local licence state to the default AGPL mode.
 
-### Function `set_license_key(key)`
+### Function `set_license_key(key, *, organization_id, endpoint, timeout, transport)`
 Validate and install an explicit commercial licence key for this process.
 
-### Function `load_license_from_env()`
+### Function `load_license_from_env(*, endpoint, timeout, transport)`
 Validate ``SC_NEUROCORE_LICENSE_KEY`` when it is explicitly configured.
 
-### Function `validate_license_key(key)`
+### Function `validate_license_key(key, *, organization_id, endpoint, timeout, transport)`
 Validate a Polar customer-portal licence key.
 
 Validation is opt-in. AGPL users who never call this function, never call
@@ -22955,7 +22955,7 @@ Models interconnect wire resistance and voltage drop.
 ### Class `StuckFaultMap`
 Map of stuck-at ON/OFF devices in a crossbar.
 
-- **generate**(cls, rows, cols, fault_rate, seed)
+- **generate**(rows, cols, fault_rate, seed)
   - Generate random stuck faults at given rate.
 - **is_stuck**(row, col)
   - Return 'on', 'off', or None.
@@ -23002,7 +23002,7 @@ Power and performance estimate for a crossbar tile.
 ### Class `CrossbarEstimator`
 Estimates power, latency, and area for crossbar arrays.
 
-- **estimate**(cls, crossbar)
+- **estimate**(crossbar)
   - Estimate read/write power, latency and area for a crossbar array.
 
 ### Class `CrossbarTopology`
@@ -23042,7 +23042,7 @@ Per-device compensation lookup table.
 Maps nominal level → compensated threshold to absorb known D2D
 variability at design time (program-verify or digital pre-distortion).
 
-- **build**(cls, device_id, model, measured_g)
+- **build**(device_id, model, measured_g)
   - Build compensation LUT from measured or modelled conductances.
 - **max_compensation**()
   - Maximum compensation ratio (deviation from 1.0).
@@ -23094,13 +23094,13 @@ Generates crossbar-aware SystemVerilog with compensation LUTs.
 Mutable STDP parameters.
 
 - **to_vector**()
-- **from_vector**(cls, v)
+- **from_vector**(v)
 
 ### Class `STPParams`
 Mutable short-term plasticity parameters.
 
 - **to_vector**()
-- **from_vector**(cls, v)
+- **from_vector**(v)
 
 ### Class `HomeostaticParams`
 Homeostatic plasticity: target rate + gain modulation.
@@ -23119,7 +23119,7 @@ This is the "genome" that the meta-controller evolves.
 
 - **to_vector**()
   - Serialise all mutable params to a flat vector.
-- **from_vector**(cls, v, gen)
+- **from_vector**(v, gen)
 - **vector_dim**()
 - **copy**()
 
@@ -23511,7 +23511,7 @@ Discovers and manages neuron model plugins.
   - Return the number of registered plugins.
 - **__contains__**(name)
   - Return whether a plugin name is registered.
-- **with_builtins**(cls)
+- **with_builtins**()
   - Create a registry pre-loaded with all built-in neuron models.
 
 ### Class `VerilogGenerator`
@@ -23847,19 +23847,19 @@ Surrogate optimiser policy projected onto an SC-NAS candidate.
 Result of calling the surrogate optimiser from inside NAS evaluation.
 
 
-### Function `candidate_layer_profiles(candidate)`
+### Function `candidate_layer_profiles(candidate, *, layer_ids, mac_counts, critical_layer_indices)`
 Convert an SC-NAS candidate into optimiser layer profiles.
 
-### Function `optimise_candidate_policy(candidate, optimiser)`
+### Function `optimise_candidate_policy(candidate, optimiser, *, layer_ids, mac_counts, critical_layer_indices, apply_policy)`
 Run the surrogate optimiser for a candidate and optionally apply its policy.
 
-### Function `evaluate_candidate_with_surrogate(candidate, optimiser)`
+### Function `evaluate_candidate_with_surrogate(candidate, optimiser, *, budget, layer_ids, mac_counts, critical_layer_indices)`
 Score a candidate through the surrogate optimiser for NAS search loops.
 
-### Function `build_nas_policy_plan(candidate, report)`
+### Function `build_nas_policy_plan(candidate, report, *, layer_ids)`
 Project a surrogate optimiser report onto a NAS candidate.
 
-### Function `apply_surrogate_policy(candidate, report)`
+### Function `apply_surrogate_policy(candidate, report, *, layer_ids)`
 Return a candidate copy with compatible bitstream/decorrelator settings.
 
 ---
@@ -23896,7 +23896,7 @@ materialising the full synapse graph.
 Differentiable bridge for a bounded subset of declarative ``Network`` graphs.
 
 - **__init__**(populations, projections, surrogate_fn)
-- **forward**(inputs)
+- **forward**(inputs, \*, return_traces)
   - Run the differentiable bridge on ``(T, batch, input_dim)`` current input.
 - **sync_to_network**()
   - Copy learned bridge weights back into the underlying CSR projections.
@@ -24057,7 +24057,7 @@ either is requested with ``backend='mpi'``.
 ### Class `Network`
 Declarative network: collects objects, runs the simulation loop.
 
-- **__init__**()
+- **__init__**(\*objects, seed, fim_lambda)
 - **add**(obj)
   - Register a simulation object by type.
 - **run**(duration, dt, progress, backend, spike_gating)
@@ -24166,7 +24166,7 @@ delay : float, array-like, or 0
 - **update_plasticity**(src_spikes, tgt_spikes, a_plus, a_minus, tau, directional_bias)
   - Trace-based STDP weight update.
 
-### Function `validate_csr_topology(indptr, indices, data, n_source, n_target)`
+### Function `validate_csr_topology(indptr, indices, data, n_source, n_target, *, context)`
 Validate and normalize CSR connectivity arrays.
 
 ---
@@ -24284,7 +24284,7 @@ reported tuned E-to-I footprint; the default E-to-I projection is uniform.
   - Return the selected control or modulated recurrent conductance.
 - **connectivity_footprint**(projection, source_angle_deg, target_angles_deg)
   - Return an exactly unit-mean footprint over the supplied targets.
-- **cue_current_pa**(center_deg, target_angles_deg)
+- **cue_current_pa**(center_deg, target_angles_deg, \*, peak_pa)
   - Return the SC compact raised-cosine cue current on the ring.
 
 ### Class `SCCompteWMActivityStatistics`
@@ -24319,7 +24319,7 @@ One selected-backend receipt with native execution timing.
 ### Function `sc_compte_wm_backend_status()`
 Return deterministic availability details for all five runtimes.
 
-### Function `run_sc_compte_wm_network(duration_ms)`
+### Function `run_sc_compte_wm_network(duration_ms, *, backend, spec, stimuli, statistics_window_ms, timeout_s)`
 Execute one explicitly selected complete runtime without fallback.
 
 ``timeout_s=None`` permits long scientific runs. A finite timeout must be
@@ -24356,13 +24356,13 @@ One selected-runtime, one-seed behavior classification and custody.
 Aggregate acceptance for the reference seeds and all runtime anchors.
 
 
-### Function `assess_sc_compte_wm_behavior(run)`
+### Function `assess_sc_compte_wm_behavior(run, *, protocol, acceptance)`
 Classify one complete backend receipt against the frozen v1 protocol.
 
-### Function `run_sc_compte_wm_behavior_trial()`
+### Function `run_sc_compte_wm_behavior_trial(*, backend, seed, protocol, acceptance, timeout_s)`
 Execute and classify one modulated-network behavior trial.
 
-### Function `summarize_sc_compte_wm_behavior_ensemble(trials)`
+### Function `summarize_sc_compte_wm_behavior_ensemble(trials, *, reference_backend, reference_seeds, required_backends, anchor_seed, acceptance)`
 Require three reference seeds, bidirectional drift, and exact route anchors.
 
 ---
@@ -24418,14 +24418,14 @@ Bounded aggregate evidence from one network execution.
 ### Class `SCCompteWMNetwork`
 Execute the frozen SC 2,560-cell network with deterministic receipts.
 
-- **__init__**(spec)
+- **__init__**(spec, \*, state)
 - **state**()
   - Return a deep copy of the complete current state.
 - **reset**()
   - Reset dynamic state while preserving the specification and streams.
-- **step**(direct_exc_current_pa)
+- **step**(direct_exc_current_pa, \*, external_exc_events, external_inh_events)
   - Advance one atomic midpoint-RK2 step and return complete event receipts.
-- **run**(duration_ms)
+- **run**(duration_ms, \*, stimuli, statistics_window_ms)
   - Execute an integral number of steps and return bounded run evidence.
 
 ---
@@ -24530,7 +24530,7 @@ Hybrid predictive-coding agent for symbolic-spiking workflows.
   - Number of registered symbolic labels.
 - **register_symbols**(symbols)
   - Register additional symbolic labels.
-- **observe**(observation)
+- **observe**(observation, \*, top_k, learn)
   - Run one predictive-symbolic observation pass.
 
 ### Function `build_sc_error_signature(observation, prediction)`
@@ -24575,9 +24575,9 @@ Uses ``np.uint64`` packed bitstream layout compatible with the
 ``neuro_symbolic`` crate's ``Vec<u64>`` representation.
 
 - **__init__**(data, length)
-- **zeros**(cls, dim)
+- **zeros**(dim)
   - Construct an all-zero hypervector of the given dimensionality.
-- **random**(cls, seed, dim)
+- **random**(seed, dim)
   - Construct a seeded pseudo-random binary hypervector.
 - **bind**(other)
   - XOR binding (self-inverse, dimension-preserving).
@@ -24664,12 +24664,12 @@ Machine-checkable summary of a neuro-symbolic inference result.
 ### Class `NeuroSymbolicSelfVerifier`
 Build checked self-verification traces for inference outputs.
 
-- **verify_result**(result)
+- **verify_result**(result, \*, observation)
   - Verify a high-level hybrid inference result against its observation.
-- **verify_trace_only**(trace)
+- **verify_trace_only**(trace, \*, symbol_scores, signature)
   - Verify a trace when only symbolic evidence is available.
 
-### Function `build_self_verification_trace(result)`
+### Function `build_self_verification_trace(result, *, observation)`
 Verify a high-level neuro-symbolic inference result against its observation.
 
 ---
@@ -24798,7 +24798,7 @@ Raises
 SCDependencyError
     pint is not installed.
 
-### Function `validate_quantity_expression(expr, env)`
+### Function `validate_quantity_expression(expr, env, *, expected_quantity, label)`
 Run one expression with unit-carrying values and check the unit of its result.
 
 Parameters
@@ -25129,7 +25129,7 @@ validation before the expressions are compiled for runtime.
   - Return whether the threshold condition holds on the INITIAL committed state.
 - **uses_diffusion_noise**()
   - Whether any authored expression references the diffusion-noise symbol ``xi``.
-- **step**(I)
+- **step**(I, \*\*kwargs)
   - Advance the neuron by one macro timestep; return 1 if it spikes.
 - **get_state**()
   - Return current state, with units if in strict mode.
@@ -25146,7 +25146,7 @@ validation before the expressions are compiled for runtime.
 - **__repr__**()
   - Human-readable representation of the neuron equations.
 
-### Function `from_equations()`
+### Function `from_equations(*equation_strings, threshold, reset, params, init, constants, dt, method, units, input_unit, detection, noise_rng)`
 Build an EquationNeuron from Brian2-style equation strings.
 
 ``noise_rng`` seeds the diffusion-noise symbol ``xi``; without it the
@@ -25317,7 +25317,7 @@ exponential Euler) its symbolic Jacobian. A program is only ever built from
 the tree that :meth:`checked_tree` returns, so no expression is evaluated
 without having passed this gate.
 
-- **__init__**()
+- **__init__**(\*, max_depth)
   - Create a validator with the given maximum AST depth.
 - **validate**(expr)
   - Validate an expression against the AST whitelist.
@@ -25338,10 +25338,10 @@ its base unit for converting runtime inputs; ``base_state_units`` and
 caller's display units to each state variable.
 
 
-### Function `prepare_strict_runtime()`
+### Function `prepare_strict_runtime(*, equations, threshold_expr, reset_rules, input_unit_name, raw_parameters, raw_state, raw_constants, dt, input_unit)`
 Convert pint quantities to base-unit floats for runtime.
 
-### Function `convert_runtime_value()`
+### Function `convert_runtime_value(*, strict_units, runtime_units, name, value)`
 Convert a runtime value from pint quantity to float.
 
 ---
@@ -25576,7 +25576,7 @@ One immutable record of an executed evidence command.
 
 Every field is a recorded fact of the run; none is derived by the verifier.
 
-- **to_payload**()
+- **to_payload**(\*, sealed)
   - Return the JSON payload, with the seal digest when ``sealed``.
 - **sealed**()
   - Return a copy whose ``receipt_sha256`` seals the current content.
@@ -25603,7 +25603,7 @@ FacetReceiptError
 ### Function `load_receipt(path)`
 Load and structurally validate one receipt file.
 
-### Function `credit_problems(receipt)`
+### Function `credit_problems(receipt, *, class_name)`
 Return why a receipt cannot credit its facet; empty when it can.
 
 Freshness of the subjects is not judged here (it needs the repository);
@@ -25617,7 +25617,7 @@ class_name:
     When given, the class the receipt is being read for; a receipt for a
     different class is a wrong-subject receipt.
 
-### Function `receipt_filename(class_name, facet, recorded_at)`
+### Function `receipt_filename(class_name, facet, recorded_at, *, profile)`
 Return the canonical receipt file name for one run.
 
 ### Function `iter_receipts(directory)`
@@ -26448,7 +26448,7 @@ frozenset&#91;str&#93;
     Identifier names; ``x_prev`` is reported as ``x``. An unparsable
     expression (a descriptive record's prose) yields the empty set.
 
-### Function `resolve_profile(schema)`
+### Function `resolve_profile(schema, *, stem)`
 Resolve the profile of one schema document.
 
 Parameters
@@ -26465,7 +26465,7 @@ ModelProfile
     The separated scientific model, numerical realisation and lowering
     profile, with every contradiction listed in ``problems``.
 
-### Function `admit_overrides(profile)`
+### Function `admit_overrides(profile, *, dt, method, parameters, rng_seed)`
 Admit consumer overrides under a profile or refuse them.
 
 Parameters
@@ -26531,7 +26531,7 @@ str or None
     The bare ``*.json`` file name, or ``None`` when the reference names no
     receipt or names one outside the receipt directory.
 
-### Function `load_bound_receipt(class_name, reference)`
+### Function `load_bound_receipt(class_name, reference, *, directory)`
 Load the receipt a descriptor reference binds to ``class_name``.
 
 Parameters
@@ -26614,7 +26614,7 @@ https://doi.org/10.1371/journal.pcbi.1000850
   - Normalise scalar fields and reject an invalid configuration.
 - **step**(current)
   - Advance one exact-relaxation interval and return a binary spike event.
-- **simulate**(current)
+- **simulate**(current, \*, backend)
   - Run one atomic piecewise-constant-input batch on a maintained backend.
 - **reset**()
   - Restore the documented rest state while preserving configuration.
@@ -26669,7 +26669,7 @@ Mojo, then Python, independently of individual benchmark timing rankings.
 
 - **__post_init__**()
   - Validate the initial state, model parameters and integrator selection.
-- **brette_gerstner_2005**(cls)
+- **brette_gerstner_2005**(\*, dt, integrator)
   - Return the regular-spiking fit reported by Brette and Gerstner (2005).
 - **step**(current)
   - Advance one configured integration step and commit its event/reset state.
@@ -26823,7 +26823,7 @@ epsilon : float, default=0.01
   - Return the source graded output ``x=f(y)``.
 - **step**(current)
   - Advance one map step and return the source thresholded output.
-- **simulate**(current)
+- **simulate**(current, \*, backend)
   - Run an atomic piecewise-stimulus batch on a maintained backend.
 - **reset**()
   - Restore the source initial state while preserving parameters.
@@ -26886,7 +26886,7 @@ University Press, §4.1. https://doi.org/10.1017/CBO9780511815706
   - Normalise scalar fields and reject an invalid configuration.
 - **step**(exc_current, inh_current)
   - Advance one exact-flow interval and return a binary spike event.
-- **simulate**(exc_current, inh_current)
+- **simulate**(exc_current, inh_current, \*, backend)
   - Run one atomic piecewise-constant-input batch on a maintained backend.
 - **reset**()
   - Restore the documented rest state while preserving configuration.
@@ -26950,7 +26950,7 @@ ValueError
   - Validate configuration and build the circular interaction matrix.
 - **step**(current)
   - Advance one atomic Euler step and return mean source-level activity.
-- **simulate**(currents)
+- **simulate**(currents, \*, backend)
   - Run a complete drive batch through one maintained execution lane.
 - **reset**()
   - Zero every dynamic site while preserving numerical configuration.
@@ -27235,7 +27235,7 @@ that this single-cell object owns presynaptic channel states.
 - **__post_init__**()
 - **step**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
   - Advance one source-level midpoint-RK2 timestep atomically.
-- **simulate**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
+- **simulate**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba, \*, backend)
   - Run a complete four-gate batch through one maintained backend.
 - **reset**()
   - Reset dynamic state while preserving every configuration field.
@@ -27552,9 +27552,9 @@ own evidence boundary.
 
 - **__post_init__**()
   - Normalise construction scalars and establish valid dynamic state.
-- **step**(current, spike_in)
+- **step**(current, spike_in, \*, external_spike, inhibitory_spike)
   - Advance one atomic source-level midpoint-RK2 timestep.
-- **simulate**(currents, recurrent_events, external_events, inhibitory_events)
+- **simulate**(currents, recurrent_events, external_events, inhibitory_events, \*, backend)
   - Run complete state/event traces through one maintained backend.
 - **reset**()
   - Reset all dynamic state while preserving configuration.
@@ -27721,9 +27721,9 @@ Parameters are finite and physical: positive ``tau``, ``theta`` and ``dt``;
 non-negative centre/surround weights; finite preferred direction and state.
 
 - **__post_init__**()
-- **new_on**(cls)
+- **new_on**()
   - Create an On-centre cell.
-- **new_off**(cls)
+- **new_off**()
   - Create an Off-centre cell.
 - **step_rf**(intensity, surround_mean)
   - Step with local intensity and surround mean intensity.
@@ -27930,7 +27930,7 @@ Montbrió, E., Pazó, D., and Roxin, A. (2015), Physical Review X 5,
   - Normalise scalar fields and reject an invalid configuration.
 - **step**(ext_input)
   - Advance one Euler step atomically and return the firing rate.
-- **simulate**(ext_input)
+- **simulate**(ext_input, \*, backend)
   - Run one atomic batch through a maintained execution backend.
 - **reset**()
   - Restore the two dynamic states while preserving parameters.
@@ -28009,9 +28009,9 @@ Fourcaud-Trocmé, N., Hansel, D., van Vreeswijk, C. & Brunel, N.
 doi:10.1523/JNEUROSCI.23-37-11628.2003.
 
 - **__post_init__**()
-- **fourcaud_trocme_2003**(cls)
+- **fourcaud_trocme_2003**(\*, dt)
   - Return the fitted source protocol's deterministic zero-noise profile.
-- **sc_rk4_compatibility**(cls)
+- **sc_rk4_compatibility**()
   - Return the historical SC candidate-first RK4/Q32.32 contract.
 - **analytical_tail_ms**()
   - Return the source approximation from the handoff to divergence.
@@ -28114,7 +28114,7 @@ Reference: Prochazka & Hulliger (1989) Prog Brain Res 80;
 Taylor et al. (1999) J Physiol 519(3).
 
 - **__post_init__**()
-- **static_type**(cls)
+- **static_type**()
   - Static gamma — bag2/chain intrafusal fibres (length-sensitive).
 - **step**(drive)
 - **reset**()
@@ -28682,7 +28682,7 @@ https://doi.org/10.1007/BF00199471
   - Normalise scalar fields and reject an invalid configuration.
 - **step**(p_ext)
   - Advance one explicit-Euler step and return the post-update EEG proxy.
-- **simulate**(p_ext)
+- **simulate**(p_ext, \*, backend)
   - Run an atomic batch on one maintained execution backend.
 - **reset**()
   - Restore all six dynamic states while preserving parameters.
@@ -28737,9 +28737,9 @@ Lapicque, L. (1907). *Journal de Physiologie et de Pathologie Generale*,
 9, 620-635. English translation: doi:10.1007/s00422-007-0189-6.
 
 - **__post_init__**()
-- **lapicque_1907**(cls)
+- **lapicque_1907**(\*, v, v_threshold, capacitance, series_resistance, polarization_resistance, dt, excited)
   - Construct the source-equation polarization-threshold profile.
-- **sc_lif_compatibility**(cls)
+- **sc_lif_compatibility**(\*, v, v_rest, v_reset, v_threshold, tau, resistance, dt)
   - Construct the preserved hard-reset SC exact-flow LIF profile.
 - **source_beta**()
   - Return Lapicque's physical time constant ``K R rho/(R+rho)``.
@@ -28882,7 +28882,7 @@ Reference: Dieudonné & Dumoulin (2000). Serotonin-driven long-range
 inhibitory connections in the cerebellar cortex. J Neurosci 20:1837-1848.
 
 - **__post_init__**()
-- **with_serotonin**(cls, level)
+- **with_serotonin**(level)
 - **step**(current)
 - **reset**()
 
@@ -29025,11 +29025,11 @@ Computational Neuroscience 3:9 (2009), doi:10.3389/neuro.10.009.2009.
 
 - **__post_init__**()
   - Validate the complete source-model contract before first use.
-- **regular_spiking**(cls)
+- **regular_spiking**(\*\*overrides)
   - Construct the paper's regular-spiking profile with validated field overrides.
-- **intrinsically_bursting**(cls)
+- **intrinsically_bursting**(\*\*overrides)
   - Construct the paper's bursting profile with validated field overrides.
-- **fast_spiking**(cls)
+- **fast_spiking**(\*\*overrides)
   - Construct the paper's fast-spiking profile with validated field overrides.
 - **threshold**()
   - Return the instantaneous adaptive threshold in millivolts.
@@ -29195,9 +29195,9 @@ damped second-order: f(t) = A · (t/τ) · exp(1 - t/τ).
 Reference: Fuglevand et al. (1993) J Neurophysiol 70(6);
 Heckman & Enoka (2012) Compr Physiol 2(4).
 
-- **slow**(cls)
+- **slow**()
   - Slow motor unit (type S): small, fatigue-resistant, low force.
-- **fast**(cls)
+- **fast**()
   - Fast motor unit (type FF): large, fatigable, high force.
 - **step**(drive)
 - **reset**()
@@ -29269,7 +29269,7 @@ bias : float, default=0.2
   - Return the current all-or-none firing output ``H(y)``.
 - **step**(current)
   - Advance one source-equation step and return ``H(y&#91;t+1&#93;)``.
-- **simulate**(current)
+- **simulate**(current, \*, backend)
   - Run an atomic batch on Python, Rust, Julia, Go, or Mojo.
 - **reset**()
   - Restore the source initial state while preserving parameters.
@@ -29401,9 +29401,9 @@ Neuron Models: Generalizations of the Leaky Integrate-and-Fire Model*,
 section 1.1. doi:10.1007/978-94-007-3858-4_6.
 
 - **__post_init__**()
-- **naud_gerstner_2012**(cls)
+- **naud_gerstner_2012**(\*, v, c_m, v_threshold, v_reset, dt)
   - Construct the source-equation profile with a strict threshold.
-- **sc_inclusive_compatibility**(cls)
+- **sc_inclusive_compatibility**(\*, v, c_m, v_threshold, v_reset, dt)
   - Construct the preserved inclusive-threshold SC profile.
 - **step**(current)
   - Advance one exact held-current step and return a binary event.
@@ -29734,9 +29734,9 @@ doi:10.1152/jn.2000.83.2.808.
 
 - **__post_init__**()
   - Validate the finite ordered state and integration contract.
-- **latham_2000**(cls)
+- **latham_2000**(\*, v, v_reset, v_peak, dt)
   - Construct Latham et al.'s normalized numerical source profile.
-- **sc_symmetric_compatibility**(cls)
+- **sc_symmetric_compatibility**(\*, v, v_reset, v_peak, dt)
   - Construct the preserved symmetric finite-boundary SC profile.
 - **step**(current)
   - Advance one exact constant-current Riccati-flow update.
@@ -29845,7 +29845,7 @@ https://doi.org/10.1016/S0893-6080(01)00078-8
   - Normalise scalar fields and reject an invalid configuration.
 - **step**(current)
   - Advance one exact-flow interval and return a binary spike event.
-- **simulate**(current)
+- **simulate**(current, \*, backend)
   - Run one atomic piecewise-constant-input batch on a maintained backend.
 - **reset**()
   - Restore the quiescent initial state while preserving parameters.
@@ -29888,7 +29888,7 @@ The returned event is an upward crossing of ``x_threshold`` by ``x'``.
   - Normalise scalar fields and reject invalid configuration.
 - **step**(current)
   - Advance atomically and return an upward-threshold crossing event.
-- **simulate**(current)
+- **simulate**(current, \*, backend)
   - Run an atomic complete-state batch on a maintained backend.
 - **reset**()
   - Restore both project-model states while preserving parameters.
@@ -29909,7 +29909,7 @@ source-faithful paper model.
 - **__post_init__**()
 - **step**(current)
   - Commit one simultaneous bounded update and return an upward crossing.
-- **simulate**(current)
+- **simulate**(current, \*, backend)
   - Run an atomic batch on a parity-checked maintained backend.
 - **reset**()
   - Clear both states while preserving the configured parameters.
@@ -30661,7 +30661,7 @@ Reference: Zhang, S., Yang, Q., Ma, C., Wu, J., Li, H. & Tan, K.C.
 (2024). AAAI 38(15):16838–16847. DOI 10.1609/aaai.v38i15.29625.
 
 - **__post_init__**()
-- **from_profile**(cls, profile)
+- **from_profile**(profile)
   - Construct the neuron from a named Table 5 profile.
 - **step**(i_ext)
 - **reset**()
@@ -31004,7 +31004,7 @@ for accelerator parity and source-oracle replay.
   - Advance one published Euler/OU step with supplied noise samples.
 - **step**(stim1, stim2)
   - Advance one stochastic Euler/OU step.
-- **simulate**(stim1, stim2, xi)
+- **simulate**(stim1, stim2, xi, \*, backend)
   - Run an atomic deterministic-sample batch on one maintained runtime.
 - **reset**()
   - Restore the four dynamic states while preserving parameters.
@@ -31120,7 +31120,7 @@ unvalidated_backends:
 - **to_public_dict**()
   - Return the JSON projection with a stable field order.
 
-### Function `profile_row(identity, stem)`
+### Function `profile_row(identity, stem, *, repo_root, receipts)`
 Build the inventory row of one bound profile.
 
 Parameters
@@ -31136,7 +31136,7 @@ receipts:
     :func:`~sc_neurocore.neurons.facet_receipts.latest_receipts`; read
     from the receipt store when omitted.
 
-### Function `profile_inventory()`
+### Function `profile_inventory(*, repo_root)`
 Return one row per bound (class, profile), sorted by class and stem.
 
 Parameters
@@ -31196,7 +31196,7 @@ Return the compiler subjects shared by every generated-RTL receipt.
 ### Function `current_digest(subject, repo_root)`
 Recompute a subject's digest from the current repository, ``None`` if absent.
 
-### Function `derive_subjects(class_name, facet)`
+### Function `derive_subjects(class_name, facet, *, repo_root, evidence_refs, extra_subjects)`
 Derive the current subjects a receipt for ``facet`` must cover.
 
 Parameters
@@ -31221,7 +31221,7 @@ tuple&#91;Subject, ...&#93;
     Subjects with digests of the current content, de-duplicated by
     ``(kind, path)`` and sorted.
 
-### Function `verify_receipt(receipt)`
+### Function `verify_receipt(receipt, *, class_name, repo_root)`
 Judge one receipt against the current repository.
 
 Returns
@@ -31231,7 +31231,7 @@ tuple&#91;FacetStatus, tuple&#91;str, ...&#93;, tuple&#91;str, ...&#93;&#93;
     ``invalid`` (cannot credit), ``stale`` (creditable but a subject
     changed or vanished) or ``bound``.
 
-### Function `verify_model(class_name)`
+### Function `verify_model(class_name, *, repo_root, receipts, profile)`
 Verify every facet of one registered class.
 
 Parameters
@@ -31247,7 +31247,7 @@ profile:
     Exact schema profile. Without a selection, a multi-profile model cannot
     receive a class-wide verified claim from one profile's evidence.
 
-### Function `readiness_report()`
+### Function `readiness_report(*, repo_root, receipt_dir)`
 Verify every registered class (aliases excluded), keyed by class name.
 
 ### Function `summarise(records)`
@@ -31997,13 +31997,13 @@ ValueError
     profile refuses the schema or an override
     (:class:`~sc_neurocore.neurons.model_profile.ProfileAdmissionError`).
 
-- **__init__**(schema)
+- **__init__**(schema, \*, parameter_overrides, dt_override, method_override, rng_seed_override)
   - Initialise from a validated schema dictionary.
-- **from_schema**(cls, source)
+- **from_schema**(source, \*\*kwargs)
   - Create a UniversalNeuron from a schema file or bundled name.
-- **from_dict**(cls, schema)
+- **from_dict**(schema, \*\*kwargs)
   - Create from an in-memory schema dictionary.
-- **step**()
+- **step**(\*\*inputs)
   - Advance one timestep.  Keyword args are external inputs (e.g. I=10.0).
 - **reset**()
   - Reset state to initial conditions.
@@ -32037,7 +32037,7 @@ ValueError
   - Export the model schema as TOML (version control format).
 - **to_equation_neuron**()
   - Return the underlying EquationNeuron instance.
-- **to_verilog**(module_name)
+- **to_verilog**(module_name, \*\*kwargs)
   - Compile the model to Verilog via the equation compiler.
 - **list_state_variables**()
   - Return the names of all state variables.
@@ -32131,7 +32131,7 @@ nir.NIRGraph
 
 ## Module `nir_bridge.fpga_aer_interconnect`
 
-### Function `build_aer_interconnect(module_name, qgraph)`
+### Function `build_aer_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids)`
 Generate weighted event-bus top-level interconnect.
 
 The emitted datapath keeps the same population instances as the direct
@@ -32270,7 +32270,7 @@ scnir_hierarchy_modules : dict&#91;str, str&#93;
 
 ## Module `nir_bridge.fpga_compiler`
 
-### Function `compile_network_to_fpga(graph)`
+### Function `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target, online_learning, interconnect)`
 Compile a NeuronGraph to synthesisable Verilog RTL.
 
 End-to-end pipeline:
@@ -32346,7 +32346,7 @@ ValueError
 
 ## Module `nir_bridge.fpga_direct_interconnect`
 
-### Function `build_direct_interconnect(module_name, qgraph)`
+### Function `build_direct_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids)`
 Generate direct-wired per-neuron top-level interconnect.
 
 Every neuron gets its own instance of the type-specific module.  NIR
@@ -32395,7 +32395,7 @@ ValueError
 
 ## Module `nir_bridge.fpga_folded_interconnect`
 
-### Function `can_fold(qgraph)`
+### Function `can_fold(qgraph, *, data_width)`
 Return True if the graph is in the folded interconnect's supported subset.
 
 The folded interconnect time-multiplexes any number of populations of supported
@@ -32433,7 +32433,7 @@ Returns
 bool
     ``True`` when the graph can use the shared-datapath interconnect.
 
-### Function `folded_resource_metrics(qgraph)`
+### Function `folded_resource_metrics(qgraph, *, data_width)`
 Summarise the shared-datapath resources of a foldable graph.
 
 Counts one PE per distinct neuron type (the per-type pool), the shared
@@ -32455,7 +32455,7 @@ Returns
 FoldedResourceMetrics
     The architectural fold summary.
 
-### Function `build_folded_interconnect(module_name, qgraph)`
+### Function `build_folded_interconnect(module_name, qgraph, *, data_width, fraction)`
 Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
 
 One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
@@ -32501,7 +32501,7 @@ ValueError
 
 ## Module `nir_bridge.fpga_neuron_rtl`
 
-### Function `build_neuron_module(neuron_type, pop)`
+### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction)`
 Build a Verilog module for one canonical neuron type.
 
 Uses the existing ``equation_compiler.compile_to_verilog()`` with
@@ -32553,7 +32553,7 @@ Raises
 ValueError
     If a weight port references an unknown stream or incompatible packed width.
 
-### Function `build_scnir_hierarchy_modules(document)`
+### Function `build_scnir_hierarchy_modules(document, *, weight_literals)`
 Emit standalone boundary modules for preserved SC-NIR hierarchy instances.
 
 Parameters
@@ -32573,7 +32573,7 @@ Raises
 ValueError
     If module names collide or a hierarchy boundary is malformed.
 
-### Function `build_scnir_hierarchy_instance_block(hierarchy)`
+### Function `build_scnir_hierarchy_instance_block(hierarchy, *, data_width)`
 Emit top-level hierarchy instances and typed connecting wires.
 
 Parameters
@@ -32597,7 +32597,7 @@ ValueError
 
 ## Module `nir_bridge.fpga_weight_rom`
 
-### Function `build_weight_rom(qgraph)`
+### Function `build_weight_rom(qgraph, *, data_width)`
 Generate a combined weight ROM for all connections.
 
 All connection weight matrices are flattened into a single ROM
@@ -32682,7 +32682,7 @@ Returns
 str or None
     The version string, or ``None`` when the file stores no version.
 
-### Function `import_notes(graph, network)`
+### Function `import_notes(graph, network, *, dt, reset_mode)`
 Record what importing ``graph`` as ``network`` assumed or approximated.
 
 Parameters
@@ -32866,7 +32866,7 @@ LIF neuron mapped from NIR LIF primitive.
 NIR LIF: tau*dv/dt = (v_leak - v) + R*I, spike when v > v_threshold
 Euler: v += ((v_leak - v) + R*I) * dt/tau
 
-- **from_nir**(cls, name, node, dt, reset_mode)
+- **from_nir**(name, node, dt, reset_mode)
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -32877,7 +32877,7 @@ IF neuron — integrator with threshold, no leak.
 NIR IF: dv/dt = R*I, spike when v > v_threshold
 Euler: v += R*I*dt
 
-- **from_nir**(cls, name, node, dt, reset_mode)
+- **from_nir**(name, node, dt, reset_mode)
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -32887,7 +32887,7 @@ Leaky integrator — LIF without threshold.
 
 NIR LI: tau*dv/dt = (v_leak - v) + R*I
 
-- **from_nir**(cls, name, node, dt)
+- **from_nir**(name, node, dt)
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -32895,37 +32895,37 @@ NIR LI: tau*dv/dt = (v_leak - v) + R*I
 ### Class `SCAffineNode`
 Dense linear transform with bias: y = Wx + b
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCLinearNode`
 Matrix multiply without bias: y = Wx
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCScaleNode`
 Element-wise scaling: y = s * x
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCThresholdNode`
 Spike threshold: y = 1 if x > threshold else 0
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCFlattenNode`
 Reshape tensor — flatten dimensions.
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCIntegratorNode`
 Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt
 
-- **from_nir**(cls, name, node, dt)
+- **from_nir**(name, node, dt)
 - **n_neurons**()
   - Number of integrator state channels.
 - **__post_init__**()
@@ -32938,7 +32938,7 @@ Temporal delay: output = input(t - delay).
 NIR Delay: I(t - tau). Implemented as a circular buffer per element.
 Delay values are rounded to integer timesteps.
 
-- **from_nir**(cls, name, node, dt)
+- **from_nir**(name, node, dt)
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -32950,7 +32950,7 @@ NIR CubaLIF: tau_syn * dI_syn/dt = -I_syn + w_in * I
              tau_mem * dv/dt = (v_leak - v) + R * I_syn
              spike when v > v_threshold, reset to v_reset
 
-- **from_nir**(cls, name, node, dt, reset_mode)
+- **from_nir**(name, node, dt, reset_mode)
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -32961,7 +32961,7 @@ Current-based leaky integrator (CubaLIF without threshold).
 NIR CubaLI: tau_syn * dI_syn/dt = -I_syn + w_in * I
             tau_mem * dv/dt = (v_leak - v) + R * I_syn
 
-- **from_nir**(cls, name, node, dt)
+- **from_nir**(name, node, dt)
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -32969,28 +32969,28 @@ NIR CubaLI: tau_syn * dI_syn/dt = -I_syn + w_in * I
 ### Class `SCSumPool2dNode`
 2D sum pooling: sum over spatial kernel windows.
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCAvgPool2dNode`
 2D average pooling: SumPool / kernel_area.
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCConv1dNode`
 1D convolution: y = conv1d(x, weight) + bias.
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
 ### Class `SCConv2dNode`
 2D convolution: y = conv2d(x, weight) + bias.
 
-- **from_nir**(cls, name, node)
+- **from_nir**(name, node)
 - **forward**(x)
 
-### Function `map_node(name, node)`
+### Function `map_node(name, node, **kwargs)`
 Convert a single NIR node to its SC-NeuroCore equivalent.
 
 ---
@@ -33029,9 +33029,9 @@ number of timesteps and returns the output node's accumulated result.
 Recurrent edges (cycles) are automatically handled by inserting
 unit-delay nodes that feed from the previous timestep.
 
-- **from_nir**(cls, source, dt, reset_mode)
+- **from_nir**(source, dt, reset_mode)
   - Build an ``SCNetwork`` directly from a NIR graph or file path.
-- **to_hardware**()
+- **to_hardware**(\*, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target, dt, online_learning)
   - Compile this parsed network to the existing FPGA artefact bundle.
 - **topo_order**()
 - **step**(inputs)
@@ -33367,11 +33367,11 @@ Hardware target specification for a photonic backend.
 
 - **__post_init__**()
   - Validate target metadata before it reaches a compiler backend.
-- **lightmatter**(cls)
+- **lightmatter**()
   - Return a Lightmatter-style photonic target profile.
-- **silicon_photonics**(cls)
+- **silicon_photonics**()
   - Return a generic silicon-photonics target profile.
-- **two_d_waveguide**(cls)
+- **two_d_waveguide**()
   - Return a two-dimensional-material waveguide target profile.
 
 ### Class `OpticalPulse`
@@ -33401,7 +33401,7 @@ Uses Phase Noise (Laser Interference) to generate bitstreams.
 Result of one measured-evidence optimiser feedback pass.
 
 
-### Function `optimise_from_synthesis_reports()`
+### Function `optimise_from_synthesis_reports(*, network, target, design_path, utilisation_path, power_path, accuracy_score, timing_path, latency_cycles, clock_mhz, inferences_per_run)`
 Parse synthesis reports and immediately rerun the SC optimiser.
 
 This helper is the local closed loop for the first production path:
@@ -33410,7 +33410,7 @@ observations, and those observations bias the surrogate optimiser for the
 supplied layer network.  It never invokes vendor tools or fabricates
 missing metrics; callers must provide reports and measured accuracy.
 
-### Function `optimise_from_evidence_payload()`
+### Function `optimise_from_evidence_payload(*, network, target, payload)`
 Rerun the SC optimiser from an in-memory evidence payload.
 
 ---
@@ -33424,17 +33424,17 @@ Raised when a benchmark/synthesis observation cannot be trusted.
 ### Function `load_observations(path)`
 Load benchmark observations from a JSON evidence file.
 
-### Function `load_synthesis_observation(report_paths)`
+### Function `load_synthesis_observation(report_paths, *, design, accuracy_score, latency_cycles)`
 Load one observation from Vivado/Quartus report files plus design metadata.
 
 Raw vendor reports do not describe the compiler decision that produced the
 hardware, and many do not carry model accuracy.  The caller must therefore
 provide the design fields and measured accuracy explicitly.
 
-### Function `observation_from_synthesis_reports(reports)`
+### Function `observation_from_synthesis_reports(reports, *, design, accuracy_score, latency_cycles, source)`
 Build one observation from raw Vivado/Quartus text reports.
 
-### Function `observations_from_payload(payload)`
+### Function `observations_from_payload(payload, *, source)`
 Convert an in-memory benchmark/synthesis payload into observations.
 
 ---
@@ -33499,7 +33499,7 @@ OptimizationResult
 - **__init__**(budget)
 - **optimize**(network)
   - Greedy knapsack optimization maximizing weighted accuracy.
-- **optimize_annealing**(network)
+- **optimize_annealing**(network, \*, t_init, t_min, alpha, max_iter, seed)
   - Simulated annealing for larger design spaces.
 
 ---
@@ -33531,7 +33531,7 @@ Budgeted per-layer compiler configuration.
 ### Class `SurrogateSCOptimizer`
 Compiler optimiser using a learned surrogate over SC design points.
 
-- **__init__**(target)
+- **__init__**(target, \*, bitstream_options, precision_options, lfsr_polynomials, observations)
 - **optimise**(network)
   - Select budgeted layer settings for ``network``.
 
@@ -33545,13 +33545,13 @@ Load explicit compiler-design metadata for one synthesis observation.
 ### Function `observation_to_record(observation)`
 Convert an optimiser observation into the stable evidence JSON shape.
 
-### Function `build_payload_from_reports()`
+### Function `build_payload_from_reports(*, design_path, utilisation_path, power_path, timing_path, accuracy_score, latency_cycles, clock_mhz, inferences_per_run)`
 Build an evidence payload from report files and explicit metadata.
 
 ### Function `build_payload(args)`
 Build an evidence payload from parsed command-line arguments.
 
-### Function `energy_payload(observation)`
+### Function `energy_payload(observation, *, clock_mhz, inferences_per_run)`
 Compute report-derived energy only when workload metadata is explicit.
 
 ### Function `write_payload(payload, output)`
@@ -33745,7 +33745,7 @@ Participant-level legal basis and telemetry permissions.
   - Validate consent identity, legal basis, telemetry flag, and token fields.
 - **to_dict**()
   - Return this consent boundary as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a consent boundary from a manifest section.
 
 ### Class `RetentionPolicy`
@@ -33755,7 +33755,7 @@ Retention windows for neural telemetry and artefacts.
   - Validate retention windows and enforce the maximum retention horizon.
 - **to_dict**()
   - Return this retention policy as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a retention policy from a manifest section.
 
 ### Class `RedactionPolicy`
@@ -33765,7 +33765,7 @@ Field-level redaction policy for protected telemetry and logs.
   - Validate redaction activation, field list, and replacement marker.
 - **to_dict**()
   - Return this redaction policy as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a redaction policy from a manifest section.
 
 ### Class `TelemetryPolicy`
@@ -33775,7 +33775,7 @@ Telemetry sink and sampling policy.
   - Validate telemetry activation, sink name, and sampling interval.
 - **to_dict**()
   - Return this telemetry policy as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a telemetry policy from a manifest section.
 
 ### Class `ProvenanceRecord`
@@ -33785,7 +33785,7 @@ Cryptographic provenance record for model and dataset artefacts.
   - Validate provenance artefact identity, hash, and source-system fields.
 - **to_dict**()
   - Return this provenance record as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a provenance record from one manifest list item.
 
 ### Class `IntegratorResponsibility`
@@ -33795,7 +33795,7 @@ Operational responsibilities for an integrator in a deployment pipeline.
   - Validate integrator contact details and approval responsibility fields.
 - **to_dict**()
   - Return this integrator responsibility record as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build an integrator responsibility record from a manifest section.
 
 ### Class `PrivacyFeatureFlags`
@@ -33805,7 +33805,7 @@ Feature activation and audit flags for a governed workflow.
   - Validate feature toggles and the audit-flag activation contract.
 - **to_dict**()
   - Return this privacy feature flag set as a deterministic mapping.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build privacy feature flags from a manifest section.
 
 ### Class `GovernanceContract`
@@ -33819,7 +33819,7 @@ Full privacy governance contract for BCI/neural workflows.
   - Return names of enabled privacy features in deterministic order.
 - **to_dict**()
   - Return a deterministic JSON-serialisable representation.
-- **from_dict**(cls, data)
+- **from_dict**(data)
   - Build a full governance contract from a manifest mapping.
 
 ---
@@ -33962,7 +33962,7 @@ Attributes
 step : torch.nn.Parameter
     The learned step size(s). Lazily initialised from the first input.
 
-- **__init__**(n_bits)
+- **__init__**(n_bits, \*, per_channel, ch_axis, num_channels)
 - **forward**(x)
   - Fake-quantise ``x`` at the learned step, with the LSQ gradient.
 - **integer_weights**(x)
@@ -33985,7 +33985,7 @@ per_channel : bool
 bias : bool
     Whether to include a full-precision bias.
 
-- **__init__**(in_features, out_features)
+- **__init__**(in_features, out_features, \*, n_bits, per_channel, bias)
 - **forward**(x)
   - Apply the layer with LSQ-quantised weights.
 - **export_quantized**()
@@ -34009,7 +34009,7 @@ unsigned : bool
 eps : float
     Scale floor guarding against a zero-width observed range.
 
-- **__init__**(n_bits)
+- **__init__**(n_bits, \*, symmetric, unsigned, eps)
 - **observe**(x)
   - Fold ``x`` into the running range and return it unchanged.
 - **calculate_qparams**()
@@ -34038,7 +34038,7 @@ unsigned : bool
 eps : float
     Scale floor guarding against a zero-width observed range.
 
-- **__init__**(n_bits)
+- **__init__**(n_bits, \*, ch_axis, symmetric, unsigned, eps)
 - **observe**(x)
   - Fold ``x`` into the running per-channel range and return it unchanged.
 - **calculate_qparams**()
@@ -34046,7 +34046,7 @@ eps : float
 - **quantize**(x)
   - Fake-quantise ``x`` with the observed per-channel scales.
 
-### Function `fake_quantize(x, scale, zero_point)`
+### Function `fake_quantize(x, scale, zero_point, *, n_bits, unsigned)`
 Quantise then de-quantise ``x`` (simulated quantisation, no STE).
 
 This is the inference-time / calibration-time fake-quant used to evaluate
@@ -34523,7 +34523,7 @@ backend : str
   - Active backend name.
 - **execute_non_local_sync**(entangle_pairs)
   - Execute non-local synchronisation via entanglement.
-- **execute_posner_circuit**(shots)
+- **execute_posner_circuit**(shots, \*\*posner_kwargs)
   - Dispatch an actual 8q Posner Hamiltonian circuit to IBM QPU.
 - **optimize_phases**(target_coherence, learning_rate, n_steps)
   - Optimise qubit phases towards target coherence.
@@ -34941,7 +34941,7 @@ params : RadicalPairParams, optional
     not a Posner molecule parameterization.
 
 - **__init__**(params)
-- **from_hyperfine_tensors**(cls)
+- **from_hyperfine_tensors**(\*, tensors_1, tensors_2, exchange_j, recombination_rate, lifetime_us, quadrature_order)
   - Construct an exact RPM model from explicit 3×3 hyperfine tensors.
 - **singlet_yield**(b_local)
   - Compute singlet yield Φ_S for the current parameters.
@@ -34990,11 +34990,11 @@ update_rate : float
     Mixing rate α for entanglement map updates on spike events.
 
 - **__init__**(n_sites, bond_dim, correlation_length, update_rate, seed)
-- **to_statevector**()
+- **to_statevector**(\*, max_sites)
   - Return the exact statevector represented by this MPS.
-- **set_statevector**(statevector)
+- **set_statevector**(statevector, \*, atol)
   - Load a statevector into MPS form without silent truncation.
-- **evolve_exact**(couplings, time_us)
+- **evolve_exact**(couplings, time_us, \*, max_sites)
   - Evolve under explicit two-spin coupling tensors.
 - **apply_measurement**(site_idx, intensity)
   - Apply a Born-rule projective measurement at one spin site.
@@ -35568,7 +35568,7 @@ detail:
     What was found, or what is missing and how to provide it.
 
 
-### Function `lane_statuses()`
+### Function `lane_statuses(*, accel_root)`
 Report, for every lane, whether this installation has its resources.
 
 Parameters
@@ -35606,13 +35606,13 @@ In-memory safety-evidence reports ready for deterministic materialisation.
 ### Class `CertificationGenerator`
 Assemble caller-supplied records without fabricating assurance evidence.
 
-- **generate**(standard, target_sil, modules, formal_properties, network_config)
+- **generate**(standard, target_sil, modules, formal_properties, network_config, \*, implementation_evidence, failure_modes, checklist_evidence, generated_at)
   - Build one evidence package from explicit records and assumptions.
 
 ### Class `SafetyManualGenerator`
 Render a clearly labelled safety-manual template from explicit inputs.
 
-- **generate**(product_name, sil_level, modules, wcet_ns)
+- **generate**(product_name, sil_level, modules, wcet_ns, \*, generated_on)
   - Generate a non-certifying manual template for later expert review.
 
 ---
@@ -35655,7 +35655,7 @@ Clause descriptions and suggested artifact locations are navigation aids,
 not normative text. Users remain responsible for licensed standards,
 applicability analysis, evidence review, and conformity assessment.
 
-- **generate**(cls, standard)
+- **generate**(standard, \*, evidence)
   - Create a checklist, marking only caller-supplied evidence partial.
 
 ### Class `SWClass`
@@ -35737,7 +35737,7 @@ Safe Failure Fraction (SFF) and Diagnostic Coverage (DC).
 - **__init__**()
 - **add_failure_mode**(fm)
   - Add one uniquely identified failure mode.
-- **add_sc_standard_modes**(component)
+- **add_sc_standard_modes**(component, \*, acknowledge_synthetic_profile)
   - Add the legacy synthetic profile after explicit acknowledgement.
 - **total_failure_rate**()
   - Return the sum of caller-supplied FIT values.
@@ -35835,9 +35835,9 @@ Immutable-content identifier and report for formal-property evidence.
   - Return the proven fraction, or zero for an empty certificate.
 - **content_sha256**()
   - Return the full SHA-256 digest of every material property field.
-- **compute_hash**()
+- **compute_hash**(\*, generated_at)
   - Set and return the historical 32-character certificate identifier.
-- **generate_report**()
+- **generate_report**(\*, generated_at)
   - Render the formal-property evidence as Markdown.
 
 ### Class `ProofTestCoverage`
@@ -35861,9 +35861,9 @@ One module with insufficient formal coverage.
 ### Class `FormalPropertyGapDetector`
 Detects modules with insufficient formal verification coverage.
 
-- **detect**(cls, properties, required_modules)
+- **detect**(properties, required_modules)
   - Return missing or incomplete formal-property coverage by module.
-- **is_fully_covered**(cls, properties, required_modules)
+- **is_fully_covered**(properties, required_modules)
   - Return whether every required module passes the configured screen.
 
 ---
@@ -35933,9 +35933,9 @@ the following caller-reviewable stage assumptions:
 - AER encoding: num_neurons worst-case
 - STP update: 1 cycle
 
-- **analyze**(cls, bitstream_length, num_inputs, num_neurons, has_stp)
+- **analyze**(bitstream_length, num_inputs, num_neurons, has_stp)
   - Build a single-layer path from explicit dimension assumptions.
-- **analyze_multistage**(cls, layers)
+- **analyze_multistage**(layers)
   - Analyze a multi-layer SC network.
 
 ---
@@ -35970,7 +35970,7 @@ Each requirement links to:
   - Return the number with implementation but no verification link.
 - **verified_count**()
   - Return the number with implementation and verification links.
-- **generate_report**()
+- **generate_report**(\*, generated_at)
   - Generate a Markdown traceability report.
 
 ---
@@ -35992,10 +35992,10 @@ In-memory representation of one deterministic SCPN stream.
   - Real amplitude encoding of firing rates as ``&#91;alpha, beta&#93;`` pairs.
 - **to_json_dict**()
   - Serialise the datastream to a stable JSON-compatible mapping.
-- **from_json_dict**(cls, payload)
+- **from_json_dict**(payload)
   - Load and validate a datastream from a JSON-compatible mapping.
 
-### Function `generate_scpn_datastream()`
+### Function `generate_scpn_datastream(*, n_steps, dt_s, seed, spike_floor, spike_ceiling)`
 Generate a deterministic 16-layer stream for inter-repository tests.
 
 The probability envelope is a bounded phase oscillator driven by the
@@ -36012,7 +36012,7 @@ Write a stream payload to JSON.
 ### Function `read_scpn_datastream(path)`
 Read a stream payload from JSON.
 
-### Function `generate_scpn_datastream_payload()`
+### Function `generate_scpn_datastream_payload(**kwargs)`
 Generate a JSON-compatible stream payload in one call.
 
 ---
@@ -36144,7 +36144,7 @@ dict
     Mapping of backend name to availability, in fastest-first order. The
     ``python`` floor is always ``True``.
 
-### Function `dcls_max_forward_batch(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
+### Function `dcls_max_forward_batch(spikes, weights_q88, centres_q88, sigmas_q88, n_taps, *, backend)`
 Run the batched DCLS-max tent kernel through the fastest available backend.
 
 Parameters
@@ -36490,13 +36490,13 @@ cross-hierarchy boosts, symmetrisation, zero diagonal.
 Raised when a checkpoint is not present in the trusted digest set.
 
 
-### Function `safe_load_checkpoint(path)`
+### Function `safe_load_checkpoint(path, *, trusted_sha256, map_location, max_bytes)`
 Load a tensor/state-dict checkpoint only after SHA-256 verification.
 
 The trust map accepts either the file name or the resolved full path as key.
 PyTorch is always invoked with ``weights_only=True`` after digest validation.
 
-### Function `safe_load_legacy_checkpoint(path)`
+### Function `safe_load_legacy_checkpoint(path, *, trusted_sha256, map_location, max_bytes)`
 Load a metadata checkpoint through pickle only after SHA-256 verification.
 
 Use this only for legacy internal checkpoints whose dictionaries contain
@@ -36556,10 +36556,10 @@ Analytic baseline-versus-protected side-channel benchmark report.
 
 - **__post_init__**()
 
-### Function `run_side_channel_leakage_benchmark()`
+### Function `run_side_channel_leakage_benchmark(*, probabilities, labels, protected_config)`
 Compare correlated baseline streams against activity-balanced streams.
 
-### Function `write_side_channel_benchmark_report(output_path)`
+### Function `write_side_channel_benchmark_report(output_path, *, probabilities, labels, protected_config)`
 Run the analytic benchmark and write a canonical JSON artifact.
 
 ---
@@ -36612,10 +36612,10 @@ Batch-level analytic evidence for activity-shaped encodings.
 Batch result for activity-shaped stochastic encodings.
 
 
-### Function `encode_activity_balanced_probability(probability, config)`
+### Function `encode_activity_balanced_probability(probability, config, *, stream_index)`
 Encode one probability with distributed ones and deterministic rotation.
 
-### Function `encode_activity_balanced_probabilities(probabilities, config)`
+### Function `encode_activity_balanced_probabilities(probabilities, config, *, labels)`
 Encode a probability batch and attach analytic class-activity evidence.
 
 ---
@@ -36740,7 +36740,7 @@ dict
     Mapping of backend name to availability, in fastest-first order. The
     ``python`` floor is always ``True``.
 
-### Function `adc_to_spike_windows(samples, config)`
+### Function `adc_to_spike_windows(samples, config, *, backend)`
 Encode ADC samples into spike windows through the fastest available backend.
 
 Parameters
@@ -37200,7 +37200,7 @@ Immutable parameters and semantics for one exact-current LIF instance.
   - Serialize the profile canonically.
 - **verify_source_binding**()
   - Fail closed if the shipped model source differs from this profile.
-- **from_json**(cls, serialized)
+- **from_json**(serialized)
   - Parse strict canonical semantics; reject versions, fields and units.
 
 ### Class `CurrentDriveTick`
@@ -37233,13 +37233,13 @@ Immutable complete trace and provenance packet for one execute call.
 - **to_payload**()
 - **to_json**()
   - Serialize the packet canonically for deterministic evidence.
-- **from_json**(cls, serialized)
+- **from_json**(serialized, \*, profile, expected_producer_commit)
   - Validate a packet by strict parsing and deterministic replay.
 
 ### Class `ExactCurrentLIFSession`
 Stateful, failure-atomic executor for :class:`ExactCurrentLIFProfile`.
 
-- **__init__**(profile)
+- **__init__**(profile, \*, producer_commit, shot_id)
 - **state**()
   - Return the current immutable persistent state.
 - **reset_shot**(shot_id)
@@ -37342,7 +37342,7 @@ The callable f must return A*y + b; the solver extracts the decay constant.
 - **step**(f, y, t, dt)
   - Advance one exponential-Euler step; return ``(y_new, dt_used)``.
 
-### Function `get_solver(name)`
+### Function `get_solver(name, **kwargs)`
 Return an ODE solver instance selected by name.
 
 Supported names: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler',
@@ -37677,7 +37677,7 @@ timing_precision : int
 
 ## Module `spike_codec.registry`
 
-### Function `get_codec(name)`
+### Function `get_codec(name, **kwargs)`
 Get a codec by name.
 
 Parameters
@@ -38067,18 +38067,18 @@ seed : int
 ### Class `MaterialParams`
 Micromagnetic material parameters.
 
-- **cofeb_mgo**(cls)
+- **cofeb_mgo**()
   - CoFeB/MgO — standard STT-MTJ / SOT-MRAM stack.
-- **pt_co_multilayer**(cls)
+- **pt_co_multilayer**()
   - Pt/Co multilayer — skyrmion host.
-- **w_cofeb**(cls)
+- **w_cofeb**()
   - W/CoFeB — SOT switching with heavy-metal underlayer.
 
 ### Class `SpintronicDeviceConfig`
 Configuration for a single spintronic device.
 
 - **__post_init__**()
-- **from_tech**(cls, tech)
+- **from_tech**(tech)
 - **area_nm2**()
 - **switching_energy_fj**()
   - Write-path switching energy, E = I² × R_write × t.
@@ -38370,7 +38370,7 @@ target_report : dict or None
     The sealed target calibration, when a target profile was named.
 
 
-### Function `train_qcfs_conversion(resolved, context)`
+### Function `train_qcfs_conversion(resolved, context, *, job_id, emit, stop_requested)`
 Run the conversion route to completion, or stop at a batch boundary.
 
 Parameters
@@ -38396,7 +38396,7 @@ ConversionOutcome or None
 
 ## Module `studio._training_evidence`
 
-### Function `seal_training_status(context, status_payload)`
+### Function `seal_training_status(context, status_payload, *, status, error_message)`
 Write the public status artifact and the evidence manifest bound to it.
 
 Parameters
@@ -38463,7 +38463,7 @@ Raises
 TrainingConfigError
     The request names something the Studio cannot run.
 
-- **__init__**(config)
+- **__init__**(config, \*, job_id, cancelled, event_sink, initial_state_dict, resume_state)
 - **start**()
   - Start the legacy in-process training thread.
 - **stop**()
@@ -38475,7 +38475,7 @@ TrainingConfigError
 
 ## Module `studio._training_live_attach`
 
-### Function `poll_live_attach(context, model, epoch)`
+### Function `poll_live_attach(context, model, epoch, *, job_id, emit)`
 Consume one pending control command and apply it when it is an attach.
 
 Parameters
@@ -38496,7 +38496,7 @@ Returns
 dict or None
     The written attach evidence, or None when nothing was attached.
 
-### Function `apply_live_attach(context, model, command, epoch)`
+### Function `apply_live_attach(context, model, command, epoch, *, job_id, emit)`
 Verify and load a live weight attach, rejecting on any failure.
 
 Parameters
@@ -38536,7 +38536,7 @@ parameter_count : int
     Total parameters, for the published metadata.
 
 
-### Function `capture_weight_checkpoint()`
+### Function `capture_weight_checkpoint(*, model, architecture, model_info, config, final_metrics, resume_state)`
 Serialise terminal weights, and the run position when there is one.
 
 Parameters
@@ -38587,7 +38587,7 @@ Returns
 dict
     ``currents``, ``rates`` and the metric contract.
 
-### Function `bifurcation_sweep(simulate_fn, base_config, param_name, param_min, param_max, n_values)`
+### Function `bifurcation_sweep(simulate_fn, base_config, param_name, param_min, param_max, n_values, *, variable)`
 Sweep one parameter and record the late-run extrema of one state trace.
 
 This is a numerical extrema sweep under the configured drive, not a
@@ -38756,7 +38756,7 @@ domain:
 - **to_public_dict**()
   - Return the public, path-free analysis manifest.
 
-### Function `build_analysis_result_manifest()`
+### Function `build_analysis_result_manifest(*, analysis_type, source, request_payload, result_payload)`
 Build digest-backed reproducibility metadata for an analysis result.
 
 Parameters
@@ -38782,7 +38782,7 @@ ValueError
     If request or result payloads cannot be encoded as portable JSON, or
     the payload's contract block carries an unknown domain verdict.
 
-### Function `attach_analysis_result_manifest()`
+### Function `attach_analysis_result_manifest(*, analysis_type, source, request_payload, result_payload)`
 Return an analysis result with a path-free metadata manifest attached.
 
 Parameters
@@ -38872,7 +38872,7 @@ Raises
 ValueError
     The envelope or selected analysis payload is invalid.
 
-### Function `submit_analysis_job(job_manager, req)`
+### Function `submit_analysis_job(job_manager, req, *, request_id)`
 Validate and submit one analysis job; return the public job receipt.
 
 Parameters
@@ -39214,7 +39214,7 @@ tuple
     frontend the root would be an empty page, so the API documentation
     opens instead and the first line says why.
 
-### Function `mount_studio_frontend(app)`
+### Function `mount_studio_frontend(app, *, app_module_file)`
 Mount the built frontend at :data:`STUDIO_UI_PATH` when one exists.
 
 Parameters
@@ -39281,7 +39281,7 @@ Build the preset and default-flow router over shared Studio runtime state.
 ### Class `StudioApiContext`
 Hold the collaborators shared across Studio route responsibilities.
 
-- **run_studio_process_job_sync**()
+- **run_studio_process_job_sync**(\*, kind, owner, task_path, payload, include_job_receipt)
   - Run one importable task through the bounded process worker.
 
 ### Function `build_studio_api_context(app, runtime_settings)`
@@ -39685,7 +39685,7 @@ The measured behavioural envelope of one model over the current sweep.
 - **to_public_dict**()
   - Return a JSON-compatible behaviour profile.
 
-### Function `derive_behavior_tags(observations)`
+### Function `derive_behavior_tags(observations, *, stochastic)`
 Derive the behaviour tags from a model's sweep observations.
 
 Pure and side-effect free, so the tag logic is testable without running any
@@ -39706,13 +39706,13 @@ tuple&#91;str, ...&#93;
     The validated, sorted behaviour tags. Empty when no current could be
     driven (an honest "no measured behaviour").
 
-### Function `probe_model_behavior(name)`
+### Function `probe_model_behavior(name, *, currents, duration, seed)`
 Probe one model across the current sweep and derive its behaviour tags.
 
 Never raises for a model that cannot be driven: each failed drive is
 recorded as an error observation and the profile is still returned.
 
-### Function `probe_all_models()`
+### Function `probe_all_models(*, currents, duration, seed, names)`
 Probe every catalogue model and return a recordable evidence manifest.
 
 The manifest is the source the fast catalogue gate compares descriptors
@@ -39837,10 +39837,10 @@ compiler:
 ### Function `resolve_native_tool(name)`
 Return the absolute path of a supported native tool, or ``None``.
 
-### Function `require_native_tools(names)`
+### Function `require_native_tools(names, *, purpose)`
 Resolve every tool in ``names`` or raise :class:`NativeToolUnavailable`.
 
-### Function `run_native_command(command)`
+### Function `run_native_command(command, *, timeout_seconds)`
 Run ``command`` without a shell and raise a bounded error on failure.
 
 ### Function `native_tool_version(path, name)`
@@ -39855,7 +39855,7 @@ one binary row ``&#91;spike, <state words…>&#93;`` of ``int64`` to the file na
 by its second argument. Binary rows avoid any text formatting of the
 words on either side.
 
-### Function `run_bittrue_kernel(neuron)`
+### Function `run_bittrue_kernel(neuron, *, data_width, fraction, overflow, rounding, drive_words, module_name, timeout_seconds)`
 Compile the neuron's bit-true kernel and run it under ``drive_words``.
 
 Parameters
@@ -40009,7 +40009,7 @@ Raises
 CandidateDocumentRefused
     If values cannot form finite JSON or text contains lone surrogates.
 
-### Function `validate_candidate(document)`
+### Function `validate_candidate(document, *, catalogue)`
 Validate a candidate document and locate every problem.
 
 Parameters
@@ -40048,7 +40048,7 @@ Raises
 CandidateRejected
     Carrying the located validation, when the candidate has any problem.
 
-### Function `simulate_candidate(document)`
+### Function `simulate_candidate(document, *, current, steps)`
 Simulate a valid candidate under a constant current.
 
 Raises
@@ -40081,7 +40081,7 @@ A source-authored query refusal, compatible with existing ValueError callers.
 ### Class `CatalogueQuery`
 What a catalogue query asks for; every field left at its default is no filter.
 
-- **from_params**(cls, params)
+- **from_params**(params)
   - Build a query from HTTP query parameters, refusing what cannot be one.
 
 ### Function `query_catalogue(query)`
@@ -40207,7 +40207,7 @@ source_payload_override:
 - **to_public_dict**()
   - Return the public, path-free traceability payload.
 
-### Function `build_compile_traceability()`
+### Function `build_compile_traceability(*, equations, threshold, reset, params, init, module_name, verilog)`
 Build path-free traceability for an equation-to-RTL compile result.
 
 Parameters
@@ -40237,7 +40237,7 @@ Raises
 ValueError
     If no equations are supplied.
 
-### Function `build_model_compile_traceability()`
+### Function `build_model_compile_traceability(*, model_name, schema_name, schema_sha256, params, dt, integrator, q_format, module_name, verilog)`
 Build path-free traceability for catalogue-model RTL compilation.
 
 ---
@@ -40260,7 +40260,7 @@ Parse IR text and emit synthesisable SystemVerilog.
 ### Function `emit_sv_from_equation(equations, params, threshold, reset, init, module_name)`
 Direct equation → SystemVerilog via the Python equation compiler.
 
-### Function `cosim_traces(equations, threshold, reset, params, init, dt, duration, current)`
+### Function `cosim_traces(equations, threshold, reset, params, init, dt, duration, current, *, protocol, frequency_hz, q_format, overflow, rounding)`
 Run the float64 reference and the bit-true fixed-point kernel side by side.
 
 This is the precision comparison of
@@ -40365,7 +40365,7 @@ train_split, evaluation_split:
 - **digest**()
   - Return the SHA-256 of the complete canonical data contract.
 
-### Function `resolve_event_training_contract(payload)`
+### Function `resolve_event_training_contract(payload, *, dataset, timesteps)`
 Validate event data declarations before allocating a training job.
 
 Parameters
@@ -40473,7 +40473,7 @@ verified_at_utc : str
 - **to_public_dict**()
   - Return the chain document written beside a bundle manifest.
 
-### Function `verify_evidence_chain(subjects)`
+### Function `verify_evidence_chain(subjects, *, now)`
 Verify a whole pack of evidence against its own receipts.
 
 Parameters
@@ -40601,7 +40601,7 @@ Returns
 dict
     The payload without :data:`EVIDENCE_RECEIPT_KEY`.
 
-### Function `build_evidence_receipt(payload)`
+### Function `build_evidence_receipt(payload, *, lane, status, binding, scope, depends_on, produced_at_utc)`
 Seal a payload and describe what it rests on.
 
 Parameters
@@ -40634,7 +40634,7 @@ EvidenceReceiptError
 EvidenceSealError
     If the payload cannot be sealed identically in both runtimes.
 
-### Function `attach_evidence_receipt(payload)`
+### Function `attach_evidence_receipt(payload, *, lane, status, binding, scope, depends_on, now)`
 Return the payload with its receipt embedded.
 
 Parameters
@@ -40800,7 +40800,7 @@ Returns
 dict of str to str
     Analysis type, input digest and model class where the request named one.
 
-### Function `action_scope()`
+### Function `action_scope(*, job_id, action_kind)`
 Return the identity of one worker-backed Studio action.
 
 Parameters
@@ -40911,7 +40911,7 @@ execution_mode : {"refused", "job_required"}
     ``job_required`` when the run is valid but too large for the
     synchronous route and must be submitted as a job.
 
-- **__init__**()
+- **__init__**(\*, field, reason, execution_mode)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -40934,7 +40934,7 @@ stochastic trial.
 - **to_public_dict**()
   - Return the path-free experiment specification.
 
-### Function `resolve_model_experiment(request)`
+### Function `resolve_model_experiment(request, *, max_steps)`
 Resolve a catalogue-model request into its effective experiment.
 
 Parameters
@@ -40954,7 +40954,7 @@ ExperimentRejected
     Seed on a deterministic model, seed given twice, no complete step or
     an oversized run.
 
-### Function `resolve_ode_experiment(request)`
+### Function `resolve_ode_experiment(request, *, max_steps)`
 Resolve an equation-playground request into its effective experiment.
 
 Raises
@@ -40963,7 +40963,7 @@ ExperimentRejected
     Unparsable equation, initial value for an undeclared variable, seed
     on noise-free equations, no complete step or an oversized run.
 
-### Function `resolve_experiment(request)`
+### Function `resolve_experiment(request, *, max_steps)`
 Resolve a model or equation request into its effective experiment.
 
 ### Function `run_experiment(spec)`
@@ -41004,7 +41004,7 @@ dict
 
 ## Module `studio.model_capabilities`
 
-### Function `model_capabilities(name)`
+### Function `model_capabilities(name, *, tool_status, formal_inventory)`
 Return what each silicon operation can do for ``name`` here, or ``None``.
 
 Parameters
@@ -41136,7 +41136,7 @@ Validated schema, compiler options and instantiated universal neuron.
 - **to_verilog**()
   - Compile the resolved neuron with the exact selected fixed-point geometry.
 
-### Function `resolve_model_compile_configuration(payload)`
+### Function `resolve_model_compile_configuration(payload, *, detail_getter)`
 Validate a model-mode compiler payload and instantiate its canonical schema.
 
 The Q-format must be one Studio compiles at, and the neuron, with the
@@ -41174,7 +41174,7 @@ accumulate commit saturates in both directions; resets the neuron mid-run;
 replays the requested input from the initial state; and ends at zero input.
 Every phase starts after the requested run, from a reset neuron.
 
-### Function `run_model_cosim(configuration)`
+### Function `run_model_cosim(configuration, *, current, n_steps)`
 Compile and compare real C-reference and RTL state traces cycle by cycle.
 
 The requested constant ``current`` runs for ``n_steps`` cycles, then the
@@ -41182,7 +41182,7 @@ The requested constant ``current`` runs for ``n_steps`` cycles, then the
 only when both traces agree. ``current`` must lie inside the Q-format's
 range, since an input word outside it would wrap.
 
-### Function `simulate_phases(neuron, rtl_source, module_name, phases)`
+### Function `simulate_phases(neuron, rtl_source, module_name, phases, *, data_width, fraction, overflow, rounding, tools)`
 Run ``rtl_source`` under Icarus and the generated C kernel through ``phases``.
 
 ``rtl_source`` must be the RTL of ``neuron`` compiled at the same word,
@@ -41238,7 +41238,7 @@ field : str
 reason : str
     Deliberately authored reason; never generated exception text.
 
-- **__init__**()
+- **__init__**(\*, model, field, reason)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -41259,7 +41259,7 @@ diagnostic : str
     Deliberately authored failure reason, optionally naming a state
     variable. Original faults remain in the exception cause.
 
-- **__init__**()
+- **__init__**(\*, model, backend, step, time_ms, diagnostic)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -41423,7 +41423,7 @@ ModelInputError
     On any unknown, mistyped, non-finite, fractional-integer or
     unsupported input, naming the field and reason.
 
-### Function `resolve_drive_trace(inputs)`
+### Function `resolve_drive_trace(inputs, *, protocol, current, duration, frequency_hz, max_steps, bias)`
 Validate the injection protocol and build the sample trace for the run.
 
 Raises
@@ -41433,7 +41433,7 @@ ModelInputError
     frequency, a duration shorter than one step, or fractional samples for
     a model whose ``step`` declares an integer drive.
 
-### Function `run_receipt(inputs, trace)`
+### Function `run_receipt(inputs, trace, *, backend, recorded_state, excluded_state, display_points)`
 Return the effective-input receipt attached to a successful run payload.
 
 Parameters
@@ -41491,7 +41491,7 @@ status:
 - **to_public_dict**()
   - Return the JSON-compatible model scan metadata.
 
-### Function `scan_all_models(current, duration)`
+### Function `scan_all_models(current, duration, *, should_stop)`
 Simulate every model at a given current and classify its firing pattern.
 
 Results are cached per ``(current, duration)`` pair so a scan for one
@@ -41608,7 +41608,7 @@ reason : str
     Deliberately authored failure reason, optionally naming the
     population whose state is non-finite.
 
-- **__init__**()
+- **__init__**(\*, reason)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -41792,7 +41792,7 @@ field : str
 reason : str
     Bounded, path-free reason.
 
-- **__init__**()
+- **__init__**(\*, field, reason)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -41877,7 +41877,7 @@ A Studio network as the hardware compiler's graph, with its drive lanes.
 - **input_sha256**()
   - Return the digest every later artefact of this lowering is bound to.
 
-### Function `lower_graph(graph)`
+### Function `lower_graph(graph, *, data_width, fraction)`
 Lower a Studio network graph to the hardware compiler's graph.
 
 Raises
@@ -41912,7 +41912,7 @@ The three rasters of one network, and the digests that bind them.
 ### Function `compile_lowered(lowered)`
 Compile a lowered network with the direct interconnect the model reproduces.
 
-### Function `cosimulate(lowered, graph, workdir)`
+### Function `cosimulate(lowered, graph, workdir, *, steps, timeout_seconds, compiled)`
 Run the compiled RTL, its bit-true model and the Studio for the same steps.
 
 Parameters
@@ -42029,13 +42029,13 @@ GraphExecutionFailure
 
 ## Module `studio.nir_compile`
 
-### Function `compile_nir_graph(graph)`
+### Function `compile_nir_graph(graph, *, module_name, dt, data_width, fraction, source_kind, target)`
 Lower a parsed NIR graph to synthesisable Verilog and return the artefacts.
 
 The result carries ``interchange_notes``: what importing the graph assumed
 (the timestep, the reset rule, recurrent delays) or approximated.
 
-### Function `compile_nir_file_bytes(data)`
+### Function `compile_nir_file_bytes(data, **options)`
 Compile a standard ``.nir`` (HDF5) document supplied as raw bytes.
 
 Options are forwarded to :func:`compile_nir_graph`. The result also
@@ -42046,7 +42046,7 @@ when it stores none).
 
 ## Module `studio.nullclines`
 
-### Function `nullclines_2d(equations, params, var_names, ranges, grid_size)`
+### Function `nullclines_2d(equations, params, var_names, ranges, grid_size, *, current, held)`
 Compute both nullclines of a two-variable section of the drift field.
 
 Parameters
@@ -42094,7 +42094,7 @@ Path-free manifest describing one Studio worker-backed action.
 - **to_public_dict**()
   - Return the path-free evidence payload.
 
-### Function `write_studio_action_evidence_manifest(context)`
+### Function `write_studio_action_evidence_manifest(context, *, action_kind, result, result_artifact, evidence_artifact_path, evidence_classification, replay_route, status, request_id, principal_id, error_message)`
 Write a normalised evidence manifest for a worker-backed action.
 
 Parameters
@@ -42151,7 +42151,7 @@ allowed:
 message:
     Operator-facing summary that must not include local paths or secrets.
 
-- **__init__**()
+- **__init__**(\*, limit, projected, allowed, message)
 - **to_public_detail**()
   - Return a JSON-serializable, path-free HTTP error detail payload.
 
@@ -42273,7 +42273,7 @@ Returns
 ModelCostFactors
     The factors the projection should use.
 
-### Function `evaluate_analysis_cost()`
+### Function `evaluate_analysis_cost(*, simulation_count, duration, dt, work_per_step)`
 Project the cost of a request whose simulations share one duration/dt.
 
 Parameters
@@ -42322,7 +42322,7 @@ AnalysisBudgetError
     If ``configs`` is empty (``"simulations"`` limit) or any pair has an
     invalid timestep (``"timestep"`` limit).
 
-### Function `evaluate_nullcline_grid_cost()`
+### Function `evaluate_nullcline_grid_cost(*, grid_size, equation_count)`
 Project the synchronous point-evaluation cost of a nullcline grid.
 
 Parameters
@@ -42346,7 +42346,7 @@ AnalysisBudgetError
     because the grid point count is checked against the same synchronous
     request fan-out ceiling as parameter sweeps.
 
-### Function `evaluate_model_scan_cost()`
+### Function `evaluate_model_scan_cost(*, model_count, duration, dt)`
 Project the synchronous simulation cost of a Studio model scan.
 
 Parameters
@@ -42538,7 +42538,7 @@ retain_latest:
 - **to_public_dict**()
   - Return the path-free purge result for operator APIs.
 
-### Function `write_studio_audit_quarantine_archive(context)`
+### Function `write_studio_audit_quarantine_archive(context, *, quarantine_export, clock)`
 Write quarantined audit evidence into a confined Studio job archive.
 
 Parameters
@@ -42561,7 +42561,7 @@ Raises
 ValueError
     If the export payload is malformed or not the quarantine export schema.
 
-### Function `validate_studio_audit_quarantine_archive(archive_payload)`
+### Function `validate_studio_audit_quarantine_archive(archive_payload, *, manifest_payload)`
 Validate one quarantine archive before import or restore handling.
 
 Parameters
@@ -42578,7 +42578,7 @@ Returns
 StudioAuditQuarantineArchiveValidation
     Path-free validation verdict with stable error codes.
 
-### Function `build_studio_audit_quarantine_archive_retention_plan(records)`
+### Function `build_studio_audit_quarantine_archive_retention_plan(records, *, retain_latest)`
 Build a non-destructive retention plan for quarantine archive jobs.
 
 Parameters
@@ -42598,7 +42598,7 @@ Raises
 ValueError
     If ``retain_latest`` is not positive.
 
-### Function `write_studio_audit_quarantine_restore(context)`
+### Function `write_studio_audit_quarantine_restore(context, *, archive_payload, manifest_payload, clock)`
 Materialize validated quarantine archive rows into restore artifacts.
 
 Parameters
@@ -42625,7 +42625,7 @@ Raises
 ValueError
     If archive validation fails before restore materialization.
 
-### Function `purge_studio_audit_quarantine_archive_prune_candidates(records)`
+### Function `purge_studio_audit_quarantine_archive_prune_candidates(records, *, purge_job, retain_latest)`
 Purge archive jobs marked as retention prune candidates.
 
 Parameters
@@ -42687,7 +42687,7 @@ The guard stores only normalized login keys and failure timestamps in memory.
 It does not persist or inspect password material. A successful login clears
 the bucket for the normalized key.
 
-- **__init__**()
+- **__init__**(\*, max_failed_attempts, failure_window_seconds, cooldown_seconds, clock)
 - **check**(username)
   - Return whether a browser-login attempt may proceed.
 - **record_failure**(username)
@@ -42729,7 +42729,7 @@ local_path:
     Optional resolved path. This is emitted only when the operator requests
     local-path disclosure for an internal handoff.
 
-- **to_public_dict**()
+- **to_public_dict**(\*, include_local_paths)
   - Return a JSON-serializable item payload.
 
 ### Class `StudioBackupPlan`
@@ -42757,7 +42757,7 @@ schema_version:
 - **to_public_dict**()
   - Return a JSON-serializable backup-plan payload.
 
-### Function `build_studio_backup_plan(settings)`
+### Function `build_studio_backup_plan(settings, *, include_local_paths, project_root)`
 Build the Studio durable-state backup and restore plan.
 
 Parameters
@@ -42807,7 +42807,7 @@ parent_directory_created:
 - **to_public_dict**()
   - Return bootstrap metadata without the bearer token.
 
-### Function `bootstrap_studio_admin_identity(identity_file_path)`
+### Function `bootstrap_studio_admin_identity(identity_file_path, *, principal_id, roles, token_bytes, expires_at_utc, overwrite, token_factory)`
 Create a local Studio admin identity file for first deployment.
 
 Parameters
@@ -42884,7 +42884,7 @@ In-memory registry for Studio capabilities.
 - **health_all**()
   - Return runtime health for all capabilities sorted by stable ID.
 
-### Function `build_default_studio_capability_registry()`
+### Function `build_default_studio_capability_registry(*, executable_resolver)`
 Build the default capability registry for the current Studio backend.
 
 ---
@@ -42994,7 +42994,7 @@ artifact_paths:
 - **to_public_dict**()
   - Return the path-free evidence bundle result.
 
-### Function `write_studio_evidence_bundle(context)`
+### Function `write_studio_evidence_bundle(context, *, project_payload, simulation_payloads, analysis_payloads, model_scan_payloads, weight_restore_payloads, weight_restore_attach_payloads, default_flow_runs, default_flow_attestations, job_records, artifact_reader, audit_export, command_replay, clock)`
 Write a path-confined Studio evidence bundle into a job context.
 
 Parameters
@@ -43240,7 +43240,7 @@ Returns
 tuple&#91;StudioBrowserUserPublicRecord, ...&#93;
     Public browser-user records sorted by username.
 
-### Function `update_studio_identity_record(path)`
+### Function `update_studio_identity_record(path, *, principal_id, roles, active, expires_at_utc)`
 Atomically update mutable service-account metadata.
 
 The raw bearer-token SHA-256 digest is preserved and never returned.
@@ -43270,7 +43270,7 @@ KeyError
 ValueError
     If replacement metadata is malformed.
 
-### Function `update_studio_browser_user_record(path)`
+### Function `update_studio_browser_user_record(path, *, username, roles, active, expires_at_utc)`
 Atomically update mutable browser-user metadata.
 
 The stored PBKDF2-HMAC-SHA256 password verifier is preserved and never
@@ -43301,7 +43301,7 @@ KeyError
 ValueError
     If replacement metadata is malformed.
 
-### Function `rotate_studio_browser_user_password(path)`
+### Function `rotate_studio_browser_user_password(path, *, username, password)`
 Atomically rotate one browser user's password verifier.
 
 Parameters
@@ -43325,7 +43325,7 @@ KeyError
 ValueError
     If the username or replacement password is malformed.
 
-### Function `add_studio_browser_user_record(path)`
+### Function `add_studio_browser_user_record(path, *, username, principal_id, roles, password, active, expires_at_utc)`
 Atomically add one persistent browser-login user to an identity file.
 
 Parameters
@@ -43404,7 +43404,7 @@ queued : int
 limit : int
     The queue ceiling that was reached.
 
-- **__init__**()
+- **__init__**(\*, running, queued, limit)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -43440,8 +43440,8 @@ max_queued : int
     Jobs allowed to wait for a slot. A submission that arrives when both
     are full is refused with :class:`StudioJobQueueFull`.
 
-- **__init__**()
-- **reserve**()
+- **__init__**(\*, max_concurrent, max_queued)
+- **reserve**(\*, timeout_seconds)
   - Take a slot, waiting in the queue when they are all occupied.
 - **release**()
   - Give a slot back and wake one waiting submission.
@@ -43474,10 +43474,10 @@ not replace this identity.
 - **validate**()
   - Reject malformed replay identities before any reservation is opened.
 
-### Function `read_admission_replay(connection)`
+### Function `read_admission_replay(connection, *, workspace, replay)`
 Return an immutable prior outcome or reject a changed request digest.
 
-### Function `write_admission_replay(connection)`
+### Function `write_admission_replay(connection, *, workspace, replay, outcome)`
 Write the exact result inside the caller's job/capacity transaction.
 
 ---
@@ -43514,7 +43514,7 @@ Add immutable exact-outcome replay without inferring legacy request digests.
 ### Class `StudioJobContext`
 Execution context passed to one local Studio job task.
 
-- **__init__**()
+- **__init__**(\*, job_id, work_dir, cancel_event, max_artifact_bytes)
   - Bind one job identifier to its confined task resources.
 - **cancelled**()
   - Return whether the manager requested cooperative cancellation.
@@ -43553,7 +43553,7 @@ diagnostic : str
 public_message : str
     Deliberately selected caller-facing text, independent of diagnostics.
 
-- **__new__**(cls, diagnostic)
+- **__new__**(diagnostic, \*, public_message)
   - Bind retained diagnostic text to a caller-facing message.
 - **public_message**()
   - Return the message the producer explicitly qualified for callers.
@@ -43573,7 +43573,7 @@ Returns
 StudioJobError
     Identical diagnostic and public messages with explicit qualification.
 
-### Function `job_failure(error)`
+### Function `job_failure(error, *, fallback, prefix, suffix)`
 Retain the fault; expose its text only when its type marks authored refusal.
 
 ``fallback``, ``prefix`` and ``suffix`` are source-authored context. Prefix
@@ -43628,7 +43628,7 @@ supervisor : str, optional
 lease_seconds : float
     Finite positive seconds a lease stays valid without a heartbeat.
 
-- **__init__**()
+- **__init__**(\*, root, clock, supervisor, lease_seconds)
 - **path**()
   - Return the ledger file path.
 - **storage_identity**()
@@ -43647,21 +43647,21 @@ lease_seconds : float
   - Return the ledger clock as a stable UTC string.
 - **lease_expiry**()
   - Return when a lease taken now would expire without a heartbeat.
-- **create**()
+- **create**(\*, job_id, kind, actor, workspace, request_id, idempotency_key, experiment_sha256, admission, execution_model, training_config)
   - Admit one job, or return the one that already owns its key.
-- **transition**(job_id, to_status)
+- **transition**(job_id, to_status, \*, actor, reason, started_at_utc, finished_at_utc, error, result, artifacts, expected_record)
   - Move one job to a new status and append the transition.
 - **heartbeat**(job_id)
   - Extend this supervisor's lease; reject renewal by a different owner.
 - **delete**(job_id)
   - Remove one terminal job and its whole transition history.
-- **record**(job_id)
+- **record**(job_id, \*, actor, workspace)
   - Return one job record, scoped to an actor and workspace when given.
-- **list_records**()
+- **list_records**(\*, actor, workspace)
   - Return records in creation order, scoped to an actor and workspace.
 - **pending_purge_count**()
   - Count unresolved purge intents without initiating recovery.
-- **purge_snapshot**()
+- **purge_snapshot**(\*, limit, after)
   - Read a bounded global operator page, without authorising any mutation.
 - **transitions**(job_id)
   - Return the append-only transition history of one job, in order.
@@ -43674,7 +43674,7 @@ lease_seconds : float
 
 ## Module `studio.platform.jobs_ledger_creation`
 
-### Function `create_job(ledger)`
+### Function `create_job(ledger, *, job_id, kind, actor, workspace, request_id, idempotency_key, experiment_sha256, admission, execution_model, training_config, connection, lease_owner)`
 Admit one job, or return the one that already owns its key.
 
 Parameters
@@ -43739,21 +43739,21 @@ sqlite3.Error
 ### Function `read_pending_purge_count(ledger)`
 Count all unresolved journal phases without exposing SQL to manager clients.
 
-### Function `read_purge_snapshot(ledger)`
+### Function `read_purge_snapshot(ledger, *, limit, after)`
 Read at most 1000 intents without recovery, filesystem reads or process probes.
 
 Cursor ordering is lexical by job ID. Pages reflect current database state;
 concurrent changes can occur between requests. Invalid bounds/cursors raise
 ValueError before querying, including when called without HTTP validation.
 
-### Function `read_record(ledger, job_id)`
+### Function `read_record(ledger, job_id, *, actor, workspace)`
 Return one job record, scoped to an actor and workspace when given.
 
 A job that exists but belongs to a different actor or workspace raises
 :class:`KeyError`, so an isolated caller cannot tell it apart from a job
 that never existed.
 
-### Function `read_records(ledger)`
+### Function `read_records(ledger, *, actor, workspace)`
 Return records in creation order, scoped to an actor and workspace.
 
 Creation timestamps have one-second resolution, so two jobs submitted in
@@ -43828,7 +43828,7 @@ Serialise an artifact manifest deterministically.
 ### Function `record_from_row(row)`
 Rebuild one immutable public record from its stored row.
 
-### Function `training_config_from_json(value)`
+### Function `training_config_from_json(value, *, kind, event_data)`
 Decode a validated training snapshot, preserving absent legacy values.
 
 A snapshot whose exact stored bytes were validated before, under the same
@@ -43902,7 +43902,7 @@ bool or None
 
 ## Module `studio.platform.jobs_ledger_writes`
 
-### Function `transition_job(ledger, job_id, to_status)`
+### Function `transition_job(ledger, job_id, to_status, *, actor, reason, started_at_utc, finished_at_utc, error, result, artifacts, expected_record, supervisor, connection)`
 Move one job to a new status and append the transition.
 
 The move is refused when the state machine does not allow it, so a terminal
@@ -43935,7 +43935,7 @@ StudioJobRejected
     The transition is not allowed from the job's current status, or a
     supplied field conflicts with the already sealed terminal record.
 
-### Function `heartbeat_job(ledger, job_id)`
+### Function `heartbeat_job(ledger, job_id, *, supervisor)`
 Extend a live job's lease, checking its status in the write transaction.
 
 Terminal and absent jobs remain unchanged. The transaction serialises this
@@ -43951,10 +43951,10 @@ bool
     ``True`` when the lease was renewed, ``False`` when the job is absent
     or already terminal.
 
-### Function `require_purgeable(connection, job_id)`
+### Function `require_purgeable(connection, job_id, *, purge_supervisor)`
 Refuse missing, active or capacity-retaining jobs before discarding custody.
 
-### Function `delete_job(ledger, job_id)`
+### Function `delete_job(ledger, job_id, *, connection)`
 Remove one unreserved terminal job, worker identity and transition history.
 
 An optional connection must be this ledger's active transaction, allowing
@@ -43977,15 +43977,15 @@ Start and supervise local Studio jobs inside per-job sandbox directories.
 Reading what those jobs did is the custody surface this inherits from
 :class:`~sc_neurocore.studio.platform.jobs_manager_custody.StudioJobCustody`.
 
-- **__init__**()
+- **__init__**(\*, root, allowed_kinds, default_timeout_seconds, max_artifact_bytes, configured, clock, workspace, lease_seconds, reconcile, max_concurrent_jobs, max_queued_jobs, worker_limits)
   - Configure bounded execution over the durable job ledger.
 - **root**()
   - Return the directory holding the ledger and every job's sandbox.
-- **submit**()
+- **submit**(\*, kind, owner, request_id, task, timeout_seconds, workspace, idempotency_key, experiment_sha256, admission)
   - Submit one local task to the bounded thread supervisor.
-- **submit_process_task**()
+- **submit_process_task**(\*, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config)
   - Submit one importable task to an isolated Python process.
-- **send_control_command**(job_id)
+- **send_control_command**(job_id, \*, command, seed_inputs)
   - Atomically deliver control data to one running process job.
 - **cancel**(job_id)
   - Request cooperative cancellation for one job.
@@ -44005,13 +44005,13 @@ Every method annotates ``self`` as the manager state it needs. The mixin
 carries no state of its own: it is the reading half of one object, split
 from the supervising half so each file has one responsibility.
 
-- **record**(job_id)
+- **record**(job_id, \*, actor, workspace)
   - Return the durable record for one job, scoped when asked.
-- **list_records**()
+- **list_records**(\*, actor, workspace)
   - Return durable jobs in creation order, scoped when asked.
-- **list_snapshot**()
+- **list_snapshot**(\*, actor, workspace)
   - Return a path-free snapshot of every job visible to the caller.
-- **purge_snapshot**()
+- **purge_snapshot**(\*, limit, after)
   - Read a bounded global operator journal page without initiating recovery.
 - **transitions**(job_id)
   - Return the append-only transition history of one job.
@@ -44025,7 +44025,7 @@ from the supervising half so each file has one responsibility.
   - Delete one terminal job directory and its in-memory state.
 - **read_artifact**(job_id, relative_path)
   - Read and verify one manifest-declared artifact.
-- **read_live_artifact_bytes**(job_id, relative_path)
+- **read_live_artifact_bytes**(job_id, relative_path, \*, offset, max_bytes)
   - Read one bounded slice from a confined live artifact.
 - **unreaped_workers**()
   - Return the jobs whose worker was still running when they ended.
@@ -44170,7 +44170,7 @@ supervises, which a purge forgets. The embedded manager is one owner;
 the storage authority is another, with no local handles.
 
 
-### Function `recover_purges(manager)`
+### Function `recover_purges(manager, *, own_job)`
 Recover exact custody with committed cleanup-start and removal evidence.
 
 Each phase rechecks ownership under its own writer transaction. Ambiguous
@@ -44213,7 +44213,7 @@ A worker started with ``start_new_session=True`` leads its own group, so
 the group id equals its pid. Reading it from the operating system rather
 than assuming it keeps the reap honest when the process has already gone.
 
-### Function `reap_process_group(process)`
+### Function `reap_process_group(process, *, owned_group_id, terminate_grace_seconds, kill_grace_seconds)`
 Stop the registered worker process group and report what happened.
 
 SIGTERM to the group first, so a worker that handles it can seal its own
@@ -44246,7 +44246,7 @@ ReapReport
 
 ## Module `studio.platform.jobs_refusals`
 
-### Function `job_refusal(error)`
+### Function `job_refusal(error, *, fallback)`
 Translate a validation fault, preserving only explicitly authored messages.
 
 Parameters
@@ -44261,7 +44261,7 @@ Returns
 StudioJobRefused
     Caller-facing refusal; the raising caller retains ``error`` as its cause.
 
-### Function `artifact_refusal(error)`
+### Function `artifact_refusal(error, *, fallback)`
 Translate artifact validation with the same explicit provenance boundary.
 
 Parameters
@@ -44286,14 +44286,14 @@ One root's capacity, with job-scoped reservations and release.
 Opening an observer does not change configuration. The first submission
 establishes root limits; conflicting submission limits are rejected.
 
-- **__init__**(ledger)
-- **admit**()
+- **__init__**(ledger, \*, max_concurrent, max_queued)
+- **admit**(\*, job_id, kind, actor, workspace, request_id, idempotency_key, experiment_sha256, admission, execution_model, training_config, timeout_seconds, replay, supervisor)
   - Atomically admit capacity and job, or return the existing scoped key.
-- **release**()
+- **release**(\*, job_id, supervisor)
   - Release this supervisor's exact reservation; repeated release is a no-op.
 - **reconcile**()
   - Release only reservations whose stopped work has been proved after job recovery.
-- **mark_unreaped**()
+- **mark_unreaped**(\*, job_id, supervisor)
   - Keep capacity occupied when a terminal job's worker has not stopped.
 - **snapshot**()
   - Read one consistent root-wide occupancy and cumulative counter snapshot.
@@ -44374,12 +44374,12 @@ max_cpu_seconds:
 
 - **__post_init__**()
   - Reject nonpositive, fractional and boolean resource ceilings.
-- **for_host**(cls)
+- **for_host**()
   - Use half of physical RAM and bounded descriptor and file ceilings.
 - **worker_arguments**(timeout_seconds)
   - Encode limits for the worker launched with this job timeout.
 
-### Function `apply_worker_limits()`
+### Function `apply_worker_limits(*, max_data_bytes, max_cpu_seconds, max_open_files, max_file_bytes)`
 Set POSIX hard ceilings in the worker before loading task code.
 
 An inherited hard ceiling is never raised. The CPU soft limit can rise to
@@ -44428,7 +44428,7 @@ Returns
 str or None
     Finite refusal code, or no code for an unmarked or cross-domain fault.
 
-### Function `worker_job_error(payload)`
+### Function `worker_job_error(payload, *, diagnostic)`
 Retain worker diagnostics and render a known code from the versioned contract.
 
 A code conveys a worker's reported reason, not proof of the incident. Public
@@ -44516,7 +44516,7 @@ Path-free aggregate status for the Studio operator control plane.
 - **to_public_dict**()
   - Return the path-free operator status API payload.
 
-### Function `build_studio_operator_status()`
+### Function `build_studio_operator_status(*, settings, capabilities, audit_status, job_status, route_policy_registry, browser_login_snapshot)`
 Build the aggregate operator status from live Studio platform components.
 
 ---
@@ -44550,7 +44550,7 @@ ValueError
 ### Class `JsonlAuditSink`
 Append-only JSONL audit sink for Studio policy decisions.
 
-- **__init__**(path)
+- **__init__**(path, \*, rotation_bytes, retained_files)
   - Configure an append-only audit log and bounded rotation policy.
 - **path**()
   - Return the configured JSONL audit log path.
@@ -44586,7 +44586,7 @@ Fail-closed Studio route authorization gateway.
 
 - **__init__**(audit_sink, clock)
   - Bind the required audit sink and optional deterministic clock.
-- **authorize**(policy)
+- **authorize**(policy, \*, principal, route, request_id, identity_failure_reason)
   - Authorize a caller against a Studio route policy.
 
 ---
@@ -44711,7 +44711,7 @@ schema_version:
 - **to_public_dict**()
   - Return a JSON-serializable, secret-free preflight payload.
 
-### Function `run_studio_preflight(env)`
+### Function `run_studio_preflight(env, *, clock)`
 Run Studio release-readiness checks from environment-style settings.
 
 Parameters
@@ -44778,7 +44778,7 @@ Result of authenticating a browser bearer-session token.
 ### Class `StudioBrowserSessionManager`
 Issue, authenticate, and revoke ephemeral browser bearer sessions.
 
-- **__init__**()
+- **__init__**(\*, ttl_seconds, clock, token_factory)
 - **issue**(principal)
   - Issue a new browser session for an authenticated principal.
 - **authenticate_authorization_header**(authorization)
@@ -44815,7 +44815,7 @@ bytes were sent. The service identity and deadline are also snapshotted so
 a later caller cannot replace them with another configuration.
 
 
-### Function `send_named_admission_request(channel)`
+### Function `send_named_admission_request(channel, *, request, seed_inputs, configuration)`
 Send validated metadata and exact seed bytes on one connected Unix stream.
 
 The trusted API caller must construct the requester only from its
@@ -44855,7 +44855,7 @@ TimeoutError
 OSError
     A socket transfer fails; the ambiguous stream is closed.
 
-### Function `read_named_admission_result(channel)`
+### Function `read_named_admission_result(channel, *, pending)`
 Read one peer-verified result for the exact previously sent mutation.
 
 The original send and this response share one absolute deadline. The
@@ -44894,7 +44894,7 @@ OSError
 
 ## Module `studio.platform.storage_admission_digest`
 
-### Function `derive_storage_admission_replay()`
+### Function `derive_storage_admission_replay(*, requester, mutation_id, workspace, task, authorized_route, payload_json, seed_inputs, execution_timeout_seconds, queue_wait_seconds, admission, training_config, experiment_sha256, max_metadata_bytes, max_seed_bytes, max_seed_entries)`
 Hash one exact named admission without trusting a caller-supplied digest.
 
 ``task`` must match the service's reviewed named-operation map and its
@@ -44960,7 +44960,7 @@ service checks actual bytes before deriving durable replay identity.
 No client-selected kind, owner, import path, digest or supervisor is valid.
 
 
-### Function `decode_named_admission_request(payload)`
+### Function `decode_named_admission_request(payload, *, max_metadata_bytes)`
 Decode one exact metadata frame with no ambiguous JSON object names.
 
 Parameters
@@ -45001,7 +45001,7 @@ against the authority's durable table.
 - **validate_outcome**()
   - Require mutually exclusive complete success and capacity shapes.
 
-### Function `encode_named_admission_response()`
+### Function `encode_named_admission_response(*, request, replay, outcome, max_bytes)`
 Serialize one actual authority outcome within a trusted frame ceiling.
 
 Parameters
@@ -45025,7 +45025,7 @@ Raises
 ValueError
     Correlation, domain outcome or complete frame size is invalid.
 
-### Function `decode_named_admission_response(payload)`
+### Function `decode_named_admission_response(payload, *, request, replay, max_bytes)`
 Return the admitted job ID or raise the exact durable queue refusal.
 
 This codec checks a bounded response from a separately verified service
@@ -45061,7 +45061,7 @@ ValueError
 
 ## Module `studio.platform.storage_artifact_chunks`
 
-### Function `receive_artifact_chunks(channel, artifact)`
+### Function `receive_artifact_chunks(channel, artifact, *, expected_service_uid, frame_max_bytes, max_artifact_bytes, deadline)`
 Read and verify one declaration under a locally trusted content ceiling.
 
 Parameters
@@ -45096,10 +45096,10 @@ PermissionError, TimeoutError, EOFError, OSError
 
 ## Module `studio.platform.storage_artifact_client`
 
-### Function `artifact_request(workspace, job_id, relative_path)`
+### Function `artifact_request(workspace, job_id, relative_path, *, route, requester)`
 Build a sealed artefact read with a fresh random request ID.
 
-### Function `exchange_artifact(channel, request)`
+### Function `exchange_artifact(channel, request, *, expected_service_uid, max_bytes, deadline, max_artifact_bytes)`
 Read one sealed artefact over a connected, exclusively owned stream.
 
 Parameters
@@ -45151,7 +45151,7 @@ The declared artefact, or a fixed refusal.
 ### Function `encode_artifact_message(message)`
 Serialise a validated message as compact, sorted UTF-8 JSON.
 
-### Function `decode_artifact_request(payload)`
+### Function `decode_artifact_request(payload, *, max_bytes)`
 Decode one exact request frame.
 
 Raises
@@ -45159,7 +45159,7 @@ Raises
 ValueError
     Size, encoding, duplicate names, unknown fields, route or field is invalid.
 
-### Function `decode_artifact_response(payload)`
+### Function `decode_artifact_response(payload, *, request, max_bytes)`
 Decode a response that must answer ``request`` and name its artefact.
 
 Raises
@@ -45189,7 +45189,7 @@ job_id : str
 artifact : StudioJobArtifact
     The declaration from the job's terminal record.
 
-### Function `serve_artifact_read(channel)`
+### Function `serve_artifact_read(channel, *, ledger, gateway, workspace, expected_api_uid, max_bytes, deadline, initial_frame, max_artifact_bytes)`
 Serve one peer-verified sealed artefact read.
 
 Parameters
@@ -45241,7 +45241,7 @@ job_id : str
 
 - **__init__**(root, job_id)
   - Hold the authority root and the job directory, creating it if needed.
-- **seal**(relative_path, payload)
+- **seal**(relative_path, payload, \*, sha256)
   - Seal one verified artefact at its canonical job-relative path.
 - **close**()
   - Synchronise and release the held job and root directories.
@@ -45254,10 +45254,10 @@ job_id : str
 
 ## Module `studio.platform.storage_cancel`
 
-### Function `apply_cancel(ledger, request)`
+### Function `apply_cancel(ledger, request, *, allowed)`
 Apply one decoded request whose workspace matched the service.
 
-### Function `serve_cancel(channel)`
+### Function `serve_cancel(channel, *, ledger, gateway, workspace, expected_api_uid, max_bytes, deadline, initial_frame, max_content_bytes)`
 Serve one peer-verified cancellation after the stop route's policy.
 
 Parameters
@@ -45296,10 +45296,10 @@ AuditSinkError
 
 ## Module `studio.platform.storage_cancel_client`
 
-### Function `cancel_request(workspace, job_id)`
+### Function `cancel_request(workspace, job_id, *, requester, authorized_route)`
 Build a cancellation with a fresh random request ID.
 
-### Function `exchange_cancel(channel, request)`
+### Function `exchange_cancel(channel, request, *, expected_service_uid, max_bytes, deadline, max_content_bytes)`
 Run one cancellation over a connected, exclusively owned stream.
 
 Individual frames obey ``max_bytes``; the complete snapshot independently
@@ -45338,7 +45338,7 @@ The job's record after the request, or a fixed refusal.
 ### Function `encode_cancel_message(message)`
 Serialise a validated message as compact, sorted UTF-8 JSON.
 
-### Function `decode_cancel_request(payload)`
+### Function `decode_cancel_request(payload, *, max_bytes)`
 Decode one exact request frame.
 
 Raises
@@ -45346,7 +45346,7 @@ Raises
 ValueError
     Size, encoding, duplicate names, unknown fields or any field is invalid.
 
-### Function `decode_cancel_response(payload)`
+### Function `decode_cancel_response(payload, *, request, max_bytes)`
 Decode a response and require that it answers ``request``.
 
 Raises
@@ -45419,7 +45419,7 @@ The authority's collaborators and the configured limits they serve with.
 is absent is refused before its request is decoded.
 
 
-### Function `serve_operation(channel, metadata, services)`
+### Function `serve_operation(channel, metadata, services, *, deadline)`
 Serve the operation named by ``metadata`` on ``channel``.
 
 Parameters
@@ -45469,7 +45469,7 @@ Raises
 ValueError
     Configuration, event custody budget or payload/snapshot identity differs.
 
-### Function `encode_event_admission(request)`
+### Function `encode_event_admission(request, *, max_metadata_bytes)`
 Freeze a bounded header and the separately bounded event declaration.
 
 Parameters
@@ -45484,7 +45484,7 @@ Returns
 tuple
     Exact metadata frame and optional canonical event content.
 
-### Function `decode_event_admission(metadata)`
+### Function `decode_event_admission(metadata, *, max_metadata_bytes)`
 Read a small request without receiving content before policy authorization.
 
 Parameters
@@ -45499,7 +45499,7 @@ Returns
 tuple
     Small request and optional bounded event transfer declaration.
 
-### Function `send_event_admission_content(channel, content)`
+### Function `send_event_admission_content(channel, content, *, expected_uid, frame_max_bytes, deadline)`
 Send admitted event bytes as exact frames under one deadline and peer UID.
 
 Parameters
@@ -45515,7 +45515,7 @@ frame_max_bytes : int
 deadline : float
     Absolute transfer deadline shared with metadata and seeds.
 
-### Function `receive_event_admission_content(channel, request, envelope)`
+### Function `receive_event_admission_content(channel, request, envelope, *, expected_uid, frame_max_bytes, deadline)`
 Verify all declared bytes and restore the request only after authorization.
 
 Parameters
@@ -45572,7 +45572,7 @@ worker access, dependency compatibility or immutable file custody.
 
 ## Module `studio.platform.storage_finish`
 
-### Function `decide_finish(ledger, request)`
+### Function `decide_finish(ledger, request, *, supervisor)`
 Decide whether the verified API generation may finish this job now.
 
 Parameters
@@ -45589,7 +45589,7 @@ Returns
 tuple
     ``("ready", None)`` to receive artefacts, or a final reply and reason.
 
-### Function `commit_finish(ledger, request)`
+### Function `commit_finish(ledger, request, *, supervisor)`
 Commit the terminal record for sealed artefacts and settle its capacity.
 
 Both writes are one transaction: a crash never leaves a terminal job that
@@ -45611,7 +45611,7 @@ Returns
 tuple
     ``sealed``, or the answer for a job that became terminal meanwhile.
 
-### Function `serve_finish(channel)`
+### Function `serve_finish(channel, *, ledger, workspace, expected_api_uid, frame_max_bytes, max_artifact_bytes, max_artifact_entries, deadline, initial_frame)`
 Serve one peer-verified finish exchange and write its final answer.
 
 Parameters
@@ -45652,7 +45652,7 @@ TimeoutError, EOFError, OSError
 An otherwise framed chunk does not match its declared artefact position.
 
 
-### Function `receive_finish_artifact(channel)`
+### Function `receive_finish_artifact(channel, *, size_bytes, sha256, expected_api_uid, frame_max_bytes, deadline)`
 Read exact full-size chunks and a final remainder under one deadline.
 
 Parameters
@@ -45687,7 +45687,7 @@ PermissionError, TimeoutError, EOFError, OSError
 
 ## Module `studio.platform.storage_finish_client`
 
-### Function `spool_finish_request(job_directory)`
+### Function `spool_finish_request(job_directory, *, workspace, job_id, outcome, exit_status, frame_max_bytes, max_artifact_bytes, max_artifact_entries, error, worker_reaped)`
 Build a finish request and its artefact bytes from a stopped worker's spool.
 
 Parameters
@@ -45726,7 +45726,7 @@ ValueError
     non-regular files, changed bytes, a digest or size different from the
     declaration, or an invalid manifest.
 
-### Function `exchange_finish(channel, request, payloads)`
+### Function `exchange_finish(channel, request, payloads, *, expected_service_uid, max_bytes, deadline)`
 Run one finish exchange over a connected, exclusively owned stream.
 
 Parameters
@@ -45790,7 +45790,7 @@ is final.
 - **validate_reply**()
   - Only a refusal carries a reason.
 
-### Function `validate_artifact_budget(artifacts)`
+### Function `validate_artifact_budget(artifacts, *, frame_max_bytes, max_artifact_bytes, max_artifact_entries)`
 Hold declared artefacts to the trusted budgets before any byte moves.
 
 Parameters
@@ -45807,7 +45807,7 @@ Raises
 ValueError
     The declaration exceeds a budget.
 
-### Function `validate_finish_manifest(request)`
+### Function `validate_finish_manifest(request, *, frame_max_bytes, max_artifact_bytes, max_artifact_entries)`
 Hold a request's manifest to the trusted artefact budgets.
 
 Raises
@@ -45828,7 +45828,7 @@ Returns
 bytes
     UTF-8 JSON.
 
-### Function `decode_finish_request(payload)`
+### Function `decode_finish_request(payload, *, max_bytes)`
 Decode one exact request frame from the verified API peer.
 
 Parameters
@@ -45849,7 +45849,7 @@ ValueError
     Size, encoding, duplicate names, unknown fields or any field shape is
     invalid.
 
-### Function `decode_finish_response(payload)`
+### Function `decode_finish_response(payload, *, request, max_bytes)`
 Decode a response and require exact correlation with the sent request.
 
 Parameters
@@ -45900,7 +45900,7 @@ The authority did not register the worker; carries the finish verdict.
 ### Class `GenerationExchanges`
 Bounded exchanges of one API generation for one exact job generation.
 
-- **__init__**(runtime)
+- **__init__**(runtime, \*, job_id, generation)
   - Bind the runtime to the job and its 128-bit generation.
 - **launcher**(operation)
   - Send one launcher request; ``None`` when no valid reply arrived.
@@ -45922,14 +45922,14 @@ Bounded exchanges of one API generation for one exact job generation.
 ### Class `GenerationSupervisor`
 Supervise one job generation from spool staging to its finish reply.
 
-- **__init__**(runtime, job)
+- **__init__**(runtime, job, \*, cancel)
   - Choose the generation; nothing is staged, launched or sent yet.
 - **generation**()
   - Return the 128-bit launch generation of this supervisor.
 - **run**()
   - Run the generation to the authority's final finish reply.
 
-### Function `supervise_generation(runtime, job)`
+### Function `supervise_generation(runtime, job, *, cancel)`
 Supervise one admitted job's launched generation to its finish reply.
 
 Parameters
@@ -45959,9 +45959,9 @@ TimeoutError
 ### Class `IsolatedJobManager`
 Serve the API's job methods through the storage authority and launcher.
 
-- **__init__**(runtime, configuration)
+- **__init__**(runtime, configuration, \*, allowed_kinds, default_timeout_seconds)
   - Bind the trusted runtime and boundary; nothing is contacted yet.
-- **submit_process_task**()
+- **submit_process_task**(\*, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config)
   - Admit a named process job and supervise its launched worker here.
 - **generation_failures**()
   - Return supervised generations that ended without a final finish reply.
@@ -45969,11 +45969,11 @@ Serve the API's job methods through the storage authority and launcher.
   - Return one record of the configured workspace.
 - **wait**(job_id, timeout_seconds)
   - Observe the record until terminal or the deadline, as embedded.
-- **list_records**()
+- **list_records**(\*, actor, workspace)
   - Return the workspace's records in creation order, scoped when asked.
-- **list_snapshot**()
+- **list_snapshot**(\*, actor, workspace)
   - Return a path-free snapshot of every visible job.
-- **purge_snapshot**()
+- **purge_snapshot**(\*, limit, after)
   - Read one operator purge journal page.
 - **unreaped_workers**()
   - Return jobs whose capacity is held because their workers were not reaped.
@@ -45983,9 +45983,9 @@ Serve the API's job methods through the storage authority and launcher.
   - Record the cancellation at the authority; stop a worker supervised here.
 - **read_artifact**(job_id, relative_path)
   - Read one sealed artefact through the route the request was authorised for.
-- **read_live_artifact_bytes**(job_id, relative_path)
+- **read_live_artifact_bytes**(job_id, relative_path, \*, offset, max_bytes)
   - Read one bounded slice from a live artefact of a job supervised here.
-- **send_control_command**(job_id)
+- **send_control_command**(job_id, \*, command, seed_inputs)
   - Deliver a command and control seeds to a running job supervised here.
 - **purge_terminal_record**(job_id)
   - Purge one terminal job and its sealed directory at the authority.
@@ -45994,7 +45994,7 @@ Serve the API's job methods through the storage authority and launcher.
 
 ## Module `studio.platform.storage_isolated_runtime`
 
-### Function `build_isolated_job_manager(boundary, launcher)`
+### Function `build_isolated_job_manager(boundary, launcher, *, allowed_kinds, default_timeout_seconds, max_artifact_bytes)`
 Return the isolated facade for this API process.
 
 Parameters
@@ -46028,7 +46028,7 @@ The generations this API supervises, with their cancel and done events.
 - **start**(job)
   - Supervise an admitted generation and retain its registered custody.
 
-### Function `submit_named(configuration, delegation)`
+### Function `submit_named(configuration, delegation, *, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config, connect)`
 Admit one named job for the delegated requester.
 
 Returns
@@ -46051,7 +46051,7 @@ PermissionError, ValueError, TimeoutError, EOFError, OSError
 
 ## Module `studio.platform.storage_launcher_client`
 
-### Function `new_launcher_request(operation)`
+### Function `new_launcher_request(operation, *, job_id, generation)`
 Build a request with a fresh random request ID.
 
 Parameters
@@ -46073,7 +46073,7 @@ Raises
 pydantic.ValidationError
     An identifier does not match the wire grammar.
 
-### Function `exchange_launcher_request(socket_path, request)`
+### Function `exchange_launcher_request(socket_path, request, *, launcher_uid, deadline)`
 Deliver one request to the verified launcher and return its reply.
 
 Parameters
@@ -46113,7 +46113,7 @@ OSError
 ### Class `LauncherClientSettings`
 How the API reaches the launcher and supervises launched generations.
 
-- **canonical_socket**(cls, value)
+- **canonical_socket**(value)
   - Accept only an absolute canonical endpoint path.
 
 ### Function `parse_launcher_client(value)`
@@ -46249,7 +46249,7 @@ Returns
 bytes
     Sorted, compact UTF-8 JSON within :data:`LAUNCHER_MESSAGE_MAX_BYTES`.
 
-### Function `decode_launcher_response(payload)`
+### Function `decode_launcher_response(payload, *, request)`
 Decode a response and require exact correlation with the sent request.
 
 Parameters
@@ -46307,7 +46307,7 @@ handler that establishes worker custody before returning a durable outcome.
 A caller owns the service loop and calls :meth:`serve_once` repeatedly;
 this class does not claim a deployed isolated profile.
 
-- **__init__**(configuration)
+- **__init__**(configuration, \*, ledger, gateway, admit_named, admission)
   - Retain explicit configuration and existing authority collaborators.
 - **start**()
   - Bind a new socket through held descriptors after strict path checks.
@@ -46327,7 +46327,7 @@ this class does not claim a deployed isolated profile.
 ### Class `LiveSpools`
 Live worker directories held by this API generation, keyed by job.
 
-- **__init__**()
+- **__init__**(\*, retain, max_seed_bytes)
   - Keep ``retain`` finished directories; bound each control seed.
 - **attach**(job_id, work)
   - Hold a duplicate of a staged worker directory for ``job_id``.
@@ -46335,7 +46335,7 @@ Live worker directories held by this API generation, keyed by job.
   - Mark an attached ``job_id`` finished; close the oldest beyond the bound.
 - **close**()
   - Close every held directory.
-- **read**(job_id, relative_path)
+- **read**(job_id, relative_path, \*, offset, max_bytes)
   - Return up to ``max_bytes`` appended after ``offset`` and the new offset.
 - **deliver**(job_id, command, seeds)
   - Publish control seeds, then the command, into the job's live spool.
@@ -46401,7 +46401,7 @@ its response; the admission handler must transfer them before returning.
 ``seed_inputs`` remains the bounded byte path for direct callers.
 
 
-### Function `prepare_named_admission(channel)`
+### Function `prepare_named_admission(channel, *, gateway, workspace, expected_api_uid, frame_max_bytes, max_metadata_bytes, max_seed_bytes, max_seed_entries, max_manifest_bytes, deadline, initial_frame, authority_dirfd)`
 Read and authorize a real connected API request without ledger mutation.
 
 Event content follows a bounded header only after policy authorization;
@@ -46455,7 +46455,7 @@ AuditSinkError
 
 ## Module `studio.platform.storage_named_admit`
 
-### Function `named_process_admission(admission)`
+### Function `named_process_admission(admission, *, workspace)`
 Return the service's handler that admits prepared named process jobs.
 
 Parameters
@@ -46479,10 +46479,10 @@ Constructing this value does not authorize or execute the task.
 
 - **owner_for**(principal_id)
   - Derive actor custody from the authenticated delegation when required.
-- **validate_admission**()
+- **validate_admission**(\*, authorized_route, payload, admission)
   - Bind laboratory operation and custody before connection or allocation.
 
-### Function `resolve_named_studio_task(name)`
+### Function `resolve_named_studio_task(name, *, authorized_route)`
 Return one exact reviewed task for an already authorized POST route.
 
 Unknown names and route/task mismatches refuse before any capacity or
@@ -46506,7 +46506,7 @@ Raises
 ValueError
     Name, route or their exact pairing is not in the reviewed catalogue.
 
-### Function `named_studio_task_for_path(task_path)`
+### Function `named_studio_task_for_path(task_path, *, authorized_route)`
 Return the reviewed task that runs ``task_path`` on an authorised route.
 
 The isolated API facade keeps the embedded ``submit_process_task``
@@ -46579,7 +46579,7 @@ The PID is not a process generation token. UID/GID are OS identities, not
 authenticated HTTP principals or a workspace membership assertion.
 
 
-### Function `require_storage_peer(channel)`
+### Function `require_storage_peer(channel, *, expected_uid)`
 Require an exact configured UID on a connected Linux Unix stream.
 
 Parameters
@@ -46603,7 +46603,7 @@ PermissionError
     The platform/transport/peer is unsupported, unknown or not permitted.
     The rejected socket is closed without transferring framed bytes.
 
-### Function `require_storage_supervisor_identity(channel)`
+### Function `require_storage_supervisor_identity(channel, *, expected_uid)`
 Bind a connected trusted API peer to its kernel-anchored process generation.
 
 The peer pidfd must still refer to the SO_PEERCRED PID while its proc start
@@ -46611,7 +46611,7 @@ token is read. An exited peer, unsupported pidfd option or unavailable
 start token refuses before admission. The returned identity is suitable
 for the existing ledger lease, not a browser authorization decision.
 
-### Function `read_verified_frame(channel)`
+### Function `read_verified_frame(channel, *, expected_uid, max_bytes, deadline)`
 Verify the OS peer before receiving a bounded storage frame.
 
 Parameters
@@ -46643,7 +46643,7 @@ EOFError
 OSError
     Frame transfer fails; the ambiguous socket is closed.
 
-### Function `write_verified_frame(channel, payload)`
+### Function `write_verified_frame(channel, payload, *, expected_uid, max_bytes, deadline)`
 Verify the OS peer before sending a bounded storage frame.
 
 Parameters
@@ -46678,7 +46678,7 @@ OSError
 One failed check and why it failed.
 
 
-### Function `isolated_preflight(settings)`
+### Function `isolated_preflight(settings, *, sysctl_root)`
 Return every failed check for an isolated API with ``settings``.
 
 Parameters
@@ -46717,10 +46717,10 @@ The authority as a purge owner: its ledger and root, no local handles.
 - **__init__**(ledger)
   - Bind purging to the authority's ledger and the root that holds it.
 
-### Function `apply_purge(custody, request)`
+### Function `apply_purge(custody, request, *, allowed)`
 Apply one decoded request whose workspace matched the service.
 
-### Function `serve_purge(channel)`
+### Function `serve_purge(channel, *, custody, gateway, workspace, expected_api_uid, max_bytes, deadline, initial_frame, max_content_bytes)`
 Serve one peer-verified purge after the archive purge route's policy.
 
 Parameters
@@ -46759,10 +46759,10 @@ AuditSinkError
 
 ## Module `studio.platform.storage_purge_client`
 
-### Function `purge_request(workspace, job_id)`
+### Function `purge_request(workspace, job_id, *, requester)`
 Build a purge with a fresh random request ID.
 
-### Function `exchange_purge(channel, request)`
+### Function `exchange_purge(channel, request, *, expected_service_uid, max_bytes, deadline, max_content_bytes)`
 Run one purge over a connected, exclusively owned stream.
 
 Frames obey ``max_bytes``; the full pre-purge snapshot independently obeys
@@ -46803,7 +46803,7 @@ The purged record, a refusal text, or a fixed status.
 ### Function `encode_purge_message(message)`
 Serialise a validated message as compact, sorted UTF-8 JSON.
 
-### Function `decode_purge_request(payload)`
+### Function `decode_purge_request(payload, *, max_bytes)`
 Decode one exact request frame.
 
 Raises
@@ -46811,7 +46811,7 @@ Raises
 ValueError
     Size, encoding, duplicate names, unknown fields or any field is invalid.
 
-### Function `decode_purge_response(payload)`
+### Function `decode_purge_response(payload, *, request, max_bytes)`
 Decode a response and require that it answers ``request``.
 
 Raises
@@ -46829,7 +46829,7 @@ StudioJobRejected
 
 ## Module `studio.platform.storage_query`
 
-### Function `apply_query(ledger, admission, request)`
+### Function `apply_query(ledger, admission, request, *, authorize, max_bytes)`
 Answer one decoded request whose workspace matched the service.
 
 Returns
@@ -46837,7 +46837,7 @@ Returns
 bytes
     The encoded response, within ``max_bytes``.
 
-### Function `serve_query(channel)`
+### Function `serve_query(channel, *, ledger, admission, gateway, workspace, expected_api_uid, max_bytes, deadline, initial_frame, max_content_bytes)`
 Serve one peer-verified query after the route's policy allowed it.
 
 Parameters
@@ -46882,22 +46882,22 @@ AuditSinkError
 ### Class `QueryReader`
 Read whole views through a connection factory and bounded exchanges.
 
-- **__init__**(connect)
+- **__init__**(connect, \*, workspace, storage_uid, max_bytes, timeout_seconds, max_content_bytes)
   - Keep the trusted endpoint settings; nothing is sent yet.
 - **records**(requester)
   - Return every record of the workspace in creation order.
 - **status**(requester)
   - Return the authority's aggregate summary for the workspace.
-- **purges**(requester)
+- **purges**(requester, \*, limit, after)
   - Return one operator purge journal page.
 
 ### Class `StatusSummary`
 The authority's workspace summary, exactly as it serialises it.
 
-- **snapshot**()
+- **snapshot**(\*, allowed_kinds, default_timeout_seconds, max_artifact_bytes)
   - Return the embedded status shape for this summary.
 
-### Function `query_request(workspace, view)`
+### Function `query_request(workspace, view, *, requester, limit, after)`
 Build a query with a fresh random request ID.
 
 Raises
@@ -46905,7 +46905,7 @@ Raises
 pydantic.ValidationError
     A field does not match the wire grammar.
 
-### Function `exchange_query(channel, request)`
+### Function `exchange_query(channel, request, *, expected_service_uid, max_bytes, deadline, max_content_bytes)`
 Run one query over a connected, exclusively owned stream.
 
 Each frame obeys ``max_bytes``; the complete reply independently obeys
@@ -46925,7 +46925,7 @@ TimeoutError, EOFError, OSError
 
 ## Module `studio.platform.storage_query_pages`
 
-### Function `fit_page(request, items, more)`
+### Function `fit_page(request, items, more, *, max_bytes)`
 Encode the longest prefix of ``items`` whose response fits the content limit.
 
 Each item is measured by its own compact encoding plus one separator, and
@@ -46938,7 +46938,7 @@ Raises
 ValueError
     A single item does not fit the content limit: a configuration fault.
 
-### Function `read_record_page(ledger, request)`
+### Function `read_record_page(ledger, request, *, max_bytes)`
 Materialize only records that fit the independently bounded page.
 
 Parameters
@@ -46987,7 +46987,7 @@ The authority's answer; items and summary belong to the requested view.
 ### Function `encode_query_message(message)`
 Serialise a validated message as compact, sorted UTF-8 JSON.
 
-### Function `decode_query_request(payload)`
+### Function `decode_query_request(payload, *, max_bytes)`
 Decode one exact request frame.
 
 Raises
@@ -46995,7 +46995,7 @@ Raises
 ValueError
     Size, encoding, duplicate names, unknown fields or any field is invalid.
 
-### Function `decode_query_response(payload)`
+### Function `decode_query_response(payload, *, request, max_bytes)`
 Decode a response and require that it answers ``request``.
 
 Raises
@@ -47010,7 +47010,7 @@ PermissionError
 
 ## Module `studio.platform.storage_record`
 
-### Function `serve_record_read(channel)`
+### Function `serve_record_read(channel, *, ledger, gateway, workspace, expected_api_uid, max_bytes, deadline, initial_frame, max_content_bytes)`
 Serve one peer-verified read with policy evaluation before ledger lookup.
 
 Parameters
@@ -47062,7 +47062,7 @@ state, reservation, lease or transition is changed by this operation.
 
 ## Module `studio.platform.storage_record_client`
 
-### Function `read_storage_record(channel)`
+### Function `read_storage_record(channel, *, request, expected_service_uid, max_bytes, deadline, max_content_bytes)`
 Exchange one bounded request with a peer-verified storage authority.
 
 Parameters
@@ -47107,7 +47107,7 @@ No reconnect, retry, mutation, local fallback or isolated readiness claim.
 Connection establishment and protected endpoint configuration belong to the
 runtime lifecycle owner; this function consumes an already connected socket.
 
-### Function `read_storage_record_at_endpoint(configuration)`
+### Function `read_storage_record_at_endpoint(configuration, *, request)`
 Read one record over the configured, peer-verified service endpoint.
 
 The caller must construct ``request.requester`` from the API's authenticated
@@ -47156,7 +47156,7 @@ Nullable identity and trace fields remain mandatory. The optional
 retains the existing administrator read policy and original wire shape.
 Workspace and requester checks belong to the authority before ledger access.
 
-### Function `decode_record_response(payload)`
+### Function `decode_record_response(payload, *, request)`
 Reconstruct one complete correlated record from a bounded response.
 
 Parameters
@@ -47193,7 +47193,7 @@ separately, and errors never expose a partial or mismatched record.
 The allowed request: who asked, through which route, under which trace.
 
 
-### Function `delegated(principal)`
+### Function `delegated(principal, *, method, route, request_id)`
 Open the delegation of one authorised request for its duration.
 
 Parameters
@@ -47223,9 +47223,9 @@ Own all private seed handles until admission transfers or rejects them.
 - **close**()
   - Release every unlinked seed file, including after a handler error.
 - **__enter__**()
-- **__exit__**()
+- **__exit__**(\*_exc)
 
-### Function `receive_storage_seed_files(channel)`
+### Function `receive_storage_seed_files(channel, *, manifest, expected_api_uid, authority_dirfd, frame_max_bytes, max_seed_bytes, max_seed_entries, max_manifest_bytes, deadline)`
 Stream one bounded transfer into unlinked files under a held authority.
 
 The caller owns the returned handles and must close them after the
@@ -47238,7 +47238,7 @@ A failed or ambiguous transfer closes the channel and every staged file.
 
 ## Module `studio.platform.storage_seed_ingress`
 
-### Function `validate_storage_seed_manifest(manifest)`
+### Function `validate_storage_seed_manifest(manifest, *, frame_max_bytes, max_seed_bytes, max_seed_entries, max_manifest_bytes, deadline)`
 Validate one declared seed manifest and return deterministic frame order.
 
 Parameters
@@ -47269,7 +47269,7 @@ Notes
 The service and API client share this path, byte and resource contract.
 Validation does not read a socket or grant admission authority.
 
-### Function `receive_storage_seeds(channel)`
+### Function `receive_storage_seeds(channel, *, manifest, expected_api_uid, frame_max_bytes, max_seed_bytes, max_seed_entries, max_manifest_bytes, deadline)`
 Read exactly the declared seeds in sorted-name order on one Unix stream.
 
 The manifest is metadata already decoded from a bounded request frame.
@@ -47313,7 +47313,7 @@ EOFError
 OSError
     The socket transfer fails. Errors after validation close the stream.
 
-### Function `send_storage_seeds(channel)`
+### Function `send_storage_seeds(channel, *, seed_inputs, manifest, expected_service_uid, frame_max_bytes, max_seed_bytes, max_seed_entries, max_manifest_bytes, deadline)`
 Send received API seed bytes in the receiver's deterministic order.
 
 The caller places ``manifest`` in its preceding versioned request frame.
@@ -47440,7 +47440,7 @@ Raises
 ValueError
     The path is not text, not printable, escapes, or is not canonical.
 
-### Function `stage_generation(spool_root, descriptor)`
+### Function `stage_generation(spool_root, descriptor, *, payload, seeds, group)`
 Create one generation's inputs and worker directory in the compute spool.
 
 Parameters
@@ -47476,7 +47476,7 @@ OSError
 
 ## Module `studio.platform.storage_supervision`
 
-### Function `apply_supervision(ledger, request)`
+### Function `apply_supervision(ledger, request, *, supervisor, workspace)`
 Apply one decoded request on behalf of the verified API generation.
 
 Parameters
@@ -47495,7 +47495,7 @@ Returns
 StorageSupervisionResponse
     Outcome correlated with ``request``.
 
-### Function `serve_supervision(channel)`
+### Function `serve_supervision(channel, *, ledger, workspace, expected_api_uid, max_bytes, deadline, initial_frame)`
 Serve one peer-verified supervision request and write its outcome.
 
 Parameters
@@ -47528,7 +47528,7 @@ TimeoutError, EOFError, OSError
 
 ## Module `studio.platform.storage_supervision_client`
 
-### Function `supervision_start_request(configuration)`
+### Function `supervision_start_request(configuration, *, job_id, worker)`
 Build a ``start`` request for the configured workspace.
 
 Parameters
@@ -47545,7 +47545,7 @@ Returns
 SupervisionStartRequest
     Validated request with a fresh random request ID.
 
-### Function `supervision_heartbeat_request(configuration)`
+### Function `supervision_heartbeat_request(configuration, *, job_id)`
 Build a ``heartbeat`` request for the configured workspace.
 
 Parameters
@@ -47560,7 +47560,7 @@ Returns
 SupervisionHeartbeatRequest
     Validated request with a fresh random request ID.
 
-### Function `exchange_supervision(channel, request)`
+### Function `exchange_supervision(channel, request, *, expected_service_uid, max_bytes, deadline)`
 Exchange one request over a connected, exclusively owned stream.
 
 Parameters
@@ -47654,7 +47654,7 @@ Returns
 bytes
     UTF-8 JSON; every field is bounded by the schema.
 
-### Function `decode_supervision_request(payload)`
+### Function `decode_supervision_request(payload, *, max_bytes)`
 Decode one exact request frame from the verified API peer.
 
 Parameters
@@ -47676,7 +47676,7 @@ ValueError
     Size, encoding, duplicate names, unknown fields or any field shape is
     invalid.
 
-### Function `decode_supervision_response(payload)`
+### Function `decode_supervision_response(payload, *, request, max_bytes)`
 Decode a response and require exact correlation with the sent request.
 
 Parameters
@@ -47702,7 +47702,7 @@ ValueError
 
 ## Module `studio.platform.storage_transport`
 
-### Function `read_frame(channel)`
+### Function `read_frame(channel, *, max_bytes, deadline)`
 Receive one nonempty frame within an absolute deadline.
 
 Parameters
@@ -47731,7 +47731,7 @@ EOFError
 OSError
     Socket transfer fails. Transfer failures close the connection.
 
-### Function `write_frame(channel, payload)`
+### Function `write_frame(channel, payload, *, max_bytes, deadline)`
 Send one nonempty byte payload under a single absolute deadline.
 
 Parameters
@@ -47789,7 +47789,7 @@ Raises
 ValueError
     Either supplied limit is not a positive uint32 integer.
 
-### Function `send_view_content(channel, content)`
+### Function `send_view_content(channel, content, *, content_schema, request_id, expected_uid, frame_max_bytes, deadline, max_content_bytes)`
 Send a complete admitted response with exact chunk boundaries and SHA.
 
 Parameters
@@ -47816,7 +47816,7 @@ Raises
 ValueError
     Limits or total content size are invalid, before any response is sent.
 
-### Function `read_view_content(channel)`
+### Function `read_view_content(channel, *, content_schema, request_id, expected_uid, frame_max_bytes, deadline, max_content_bytes)`
 Read an inline or chunked response without weakening its inner grammar.
 
 Parameters
@@ -47857,7 +47857,7 @@ API-written selection for one generation; the launcher never reads it.
 The task is selected by reviewed name and route, never by import path.
 
 
-### Function `read_worker_descriptor(spool_root)`
+### Function `read_worker_descriptor(spool_root, *, job_id, generation, server_uid)`
 Read and check the API-written descriptor for one exact generation.
 
 Parameters
@@ -47927,7 +47927,7 @@ created. The endpoint grants at most one worker and then closes its listener.
   - Return the absolute endpoint path the worker must connect to.
 - **open**()
   - Bind and listen on a new socket inode through the held directory.
-- **grant**(expected)
+- **grant**(expected, \*, deadline, max_refusals, register)
   - Verify the launched worker, commit its identity and send one grant.
 - **close**()
   - Close the listener and remove only this endpoint's unchanged socket.
@@ -47958,7 +47958,7 @@ Raises
 ValueError
     The name has any other value.
 
-### Function `receive_socket_grant(path)`
+### Function `receive_socket_grant(path, *, expected_server_uid)`
 Connect to the API grant endpoint and require the exact ``ready`` grant.
 
 Parameters
@@ -48038,7 +48038,7 @@ Return PIDs of processes whose ``/proc`` entry is owned by ``uid``.
 
 A process that exits during the scan is skipped.
 
-### Function `spawn_worker_bootstrap(config)`
+### Function `spawn_worker_bootstrap(config, *, job_id, generation, privileged)`
 Start one fixed bootstrap for an exact job generation.
 
 Parameters
@@ -48090,7 +48090,7 @@ it; descendants are reaped by their parents or by :func:`reap_adopted`.
   - Walk from every live member and track newly visible children.
 - **live**()
   - Return tracked members whose pidfd does not yet report exit.
-- **kill**()
+- **kill**(\*, rounds)
   - SIGKILL every observed member until none is live or rounds run out.
 - **close**()
   - Close every pidfd held by this tree.
@@ -48126,7 +48126,7 @@ Raises
 OSError
     The process metadata is unavailable.
 
-### Function `reap_adopted(trees)`
+### Function `reap_adopted(trees, *, leaders)`
 Reap adopted zombies and kill adopted processes no tree has attributed.
 
 Parameters
@@ -48156,27 +48156,27 @@ kill the kernel refuses to deliver leaves that process unreported.
 ### Class `StudioJobService`
 Job submission, observation, control and custody used by the API.
 
-- **submit_process_task**()
+- **submit_process_task**(\*, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config)
   - Submit one process task and return its record.
 - **wait**(job_id, timeout_seconds)
   - Observe one job until terminal or the deadline.
 - **record**(job_id)
   - Return one job record.
-- **list_records**()
+- **list_records**(\*, actor, workspace)
   - Return records in creation order, scoped when asked.
-- **list_snapshot**()
+- **list_snapshot**(\*, actor, workspace)
   - Return a path-free snapshot of every visible job.
 - **status**()
   - Return aggregate path-free health.
-- **purge_snapshot**()
+- **purge_snapshot**(\*, limit, after)
   - Read one operator purge journal page.
 - **cancel**(job_id)
   - Request cooperative cancellation for one job.
 - **read_artifact**(job_id, relative_path)
   - Read and verify one declared artefact.
-- **read_live_artifact_bytes**(job_id, relative_path)
+- **read_live_artifact_bytes**(job_id, relative_path, \*, offset, max_bytes)
   - Read one bounded slice from a live artefact.
-- **send_control_command**(job_id)
+- **send_control_command**(job_id, \*, command, seed_inputs)
   - Deliver a command and control seeds to a running job.
 - **purge_terminal_record**(job_id)
   - Purge one terminal job and its custody.
@@ -48282,7 +48282,7 @@ checkpoint_sha256:
 - **to_public_dict**()
   - Return the JSON-serializable checkpoint payload.
 
-### Function `build_training_checkpoint()`
+### Function `build_training_checkpoint(*, job_id, config, status, final_metrics, evidence_summary, weight_checkpoint, clock)`
 Build a portable Training Monitor checkpoint manifest.
 
 Parameters
@@ -48634,7 +48634,7 @@ schema_version:
 - **to_public_dict**()
   - Return path-free materialization metadata without tensor payloads.
 
-### Function `write_training_weight_checkpoint(context)`
+### Function `write_training_weight_checkpoint(context, *, weights_payload, config, architecture, parameter_count, final_metrics)`
 Write binary training weights and path-free metadata artifacts.
 
 Parameters
@@ -48663,7 +48663,7 @@ ValueError
     If the payload is empty, metadata is not portable JSON, or the context
     rejects either artifact.
 
-### Function `build_training_weight_restore_plan()`
+### Function `build_training_weight_restore_plan(*, source_job_id, source_status, weight_checkpoint, expected_config_sha256)`
 Build a safe restore plan from validated weight metadata.
 
 Parameters
@@ -48688,7 +48688,7 @@ Raises
 ValueError
     If source metadata is missing or the weight checkpoint is invalid.
 
-### Function `materialize_training_weight_payload()`
+### Function `materialize_training_weight_payload(*, restore_plan, metadata_payload, weights_payload, trusted_loader)`
 Validate and materialize a Training Monitor weight payload in memory.
 
 Parameters
@@ -48717,7 +48717,7 @@ ValueError
     If the restore plan, metadata payload, artifact digests, artifact
     sizes, or loader output is invalid.
 
-### Function `build_training_weight_restore_evidence(materialization)`
+### Function `build_training_weight_restore_evidence(materialization, *, source_status)`
 Wrap a verified weight materialization as path-free restore evidence.
 
 The returned object is the ``studio.training.weight-restore.v1`` payload that
@@ -48785,7 +48785,7 @@ Returns
 str
     SHA-256 hex digest of the canonical architecture field projection.
 
-### Function `build_training_weight_restore_attach_evidence(materialization)`
+### Function `build_training_weight_restore_attach_evidence(materialization, *, mode, target_job_id, target_architecture, target_parameter_count, architecture_fingerprint)`
 Wrap a verified materialization as path-free attach evidence.
 
 The returned ``studio.training.weight-restore-attach.v1`` object records that
@@ -48840,7 +48840,7 @@ ValueError
     If the schema, classification, status, mode, target identifiers,
     fingerprint, or embedded materialization summary are invalid.
 
-### Function `validate_training_weight_checkpoint_metadata(payload)`
+### Function `validate_training_weight_checkpoint_metadata(payload, *, expected_config_sha256)`
 Validate imported Training Monitor weight metadata.
 
 Parameters
@@ -48873,7 +48873,7 @@ Parse a Studio Q-format label into ``(data_width, fraction)``.
 ``Q8.8`` is 16 bits with 8 fractional bits; the kernel supports total
 widths from 8 to 32 bits with at least one integer bit.
 
-### Function `precision_compare(equations, threshold, reset, params, init, dt, duration, current)`
+### Function `precision_compare(equations, threshold, reset, params, init, dt, duration, current, *, protocol, frequency_hz, q_format, overflow, rounding, max_steps)`
 Run float64, bit-true fixed-point and parameter-quantised comparisons.
 
 Parameters
@@ -48938,7 +48938,7 @@ Return the route-facing catalogue of preset action identifiers.
 An authored refusal of a name outside the local project namespace.
 
 
-### Function `save_project(name, state)`
+### Function `save_project(name, state, *, expected_revision)`
 Save full Studio state as a new immutable revision.
 
 Parameters
@@ -48967,7 +48967,7 @@ ValueError
 WorkspaceConflict
     The workspace moved on while the caller was editing.
 
-### Function `load_project(name)`
+### Function `load_project(name, *, revision)`
 Load one revision of a saved workspace, defaulting to the current one.
 
 Parameters
@@ -49013,7 +49013,7 @@ Restore one deleted workspace under its original name.
 Restoring onto a name that is in use is refused rather than performed:
 overwriting a live workspace is the loss this store exists to prevent.
 
-### Function `branch_refused_edit(name, state)`
+### Function `branch_refused_edit(name, state, *, base_revision, branch_name)`
 Keep an edit a save conflict refused, as a branch of its own.
 
 A conflicting save is refused so it cannot overwrite the other editor's
@@ -49038,7 +49038,7 @@ dict
     ``branched`` name, the source ``from``, and ``base_revision``; or an
     ``error`` when the source workspace or revision does not exist.
 
-### Function `fork_project(name, new_name)`
+### Function `fork_project(name, new_name, *, revision)`
 Copy one revision of a workspace into a new one.
 
 The source workspace is untouched; the fork starts at revision 1.
@@ -49046,7 +49046,7 @@ The source workspace is untouched; the fork starts at revision 1.
 ### Function `project_revisions(name)`
 Return every stored revision of one workspace, oldest first.
 
-### Function `review_comments(name)`
+### Function `review_comments(name, *, revision)`
 Return a workspace's review comments, each checked against its revision.
 
 Raises
@@ -49054,7 +49054,7 @@ Raises
 KeyError
     The workspace does not exist.
 
-### Function `comment_on_revision(name, revision)`
+### Function `comment_on_revision(name, revision, *, author, body, reply_to)`
 Append a review comment bound to one immutable revision.
 
 Raises
@@ -49068,13 +49068,13 @@ ProjectNameRefused
 WorkspaceReviewStorageError
     Saved review or revision data cannot be read safely.
 
-### Function `export_project(name)`
+### Function `export_project(name, *, revision)`
 Return one revision as a self-contained document for transfer.
 
 ### Function `import_project(name, document)`
 Create a workspace from an exported document.
 
-### Function `run_pipeline(graph, target)`
+### Function `run_pipeline(graph, target, *, q_format, process_limits)`
 Validate, simulate, lower, co-simulate and synthesise a Studio network.
 
 The hardware is the network the caller drew: the graph is lowered with each
@@ -49141,7 +49141,7 @@ status:
 - **to_public_dict**()
   - Return the public, path-free project save response.
 
-### Function `build_project_save_manifest()`
+### Function `build_project_save_manifest(*, name, saved_at, version, state, project_payload)`
 Build digest-backed metadata for a persisted Studio project.
 
 Parameters
@@ -49245,7 +49245,7 @@ reason : str
 differences : sequence of str, optional
     Named blocks or fields that differ, for a drift refusal.
 
-- **__init__**()
+- **__init__**(\*, stage, reason, differences)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -49326,7 +49326,7 @@ Raises
 ReplayRejected
     When raw trajectories are omitted; display projections cannot replace them.
 
-### Function `build_replay_pack(request)`
+### Function `build_replay_pack(request, *, max_steps)`
 Resolve, pin, execute and seal one experiment into a replay pack.
 
 The pack is built from the *pinned* experiment, so what it promises is
@@ -49354,7 +49354,7 @@ ExperimentRejected
     From the experiment contract: invalid randomness, no complete step or
     an oversized run.
 
-### Function `verify_replay_pack(pack)`
+### Function `verify_replay_pack(pack, *, allow_runtime_drift, max_steps)`
 Admit a pack for replay, refusing before any side effect.
 
 The pack's request is re-resolved against the installed package and the
@@ -49382,7 +49382,7 @@ ReplayRejected
     Unsupported schema, unexecutable request, model or experiment drift, or
     unadmitted runtime drift.
 
-### Function `compare_to_expectation(expectation, result)`
+### Function `compare_to_expectation(expectation, result, *, tolerance)`
 Compare a replayed result with a sealed expectation.
 
 Spike events are compared exactly; a spike train is an observable, not a
@@ -49410,7 +49410,7 @@ Raises
 ReplayRejected
     If tolerance is negative/nonfinite or complete raw evidence is unavailable.
 
-### Function `replay_pack(pack)`
+### Function `replay_pack(pack, *, allow_runtime_drift, tolerance, max_steps)`
 Admit, execute and judge one replay pack.
 
 Parameters
@@ -49528,7 +49528,7 @@ PacketCoverage
     Which declared variables the lane carries, which it drops, and which of
     its exports this model cannot name.
 
-### Function `validate_scalar_trace(values)`
+### Function `validate_scalar_trace(values, *, runtime, name, n_steps)`
 Return one scalar trace from a foreign runtime, or refuse it.
 
 Structure only: the trace must be one-dimensional real numbers of exactly
@@ -49557,7 +49557,7 @@ Raises
 ForeignRuntimeError
     If the trace is not one-dimensional real numbers of length ``n_steps``.
 
-### Function `validate_spike_indices(values)`
+### Function `validate_spike_indices(values, *, runtime, n_steps)`
 Return spike sample positions from a foreign runtime, or refuse them.
 
 Parameters
@@ -49686,7 +49686,7 @@ status:
 - **to_public_dict**()
   - Return the public, path-free simulation run manifest.
 
-### Function `build_simulation_run_manifest()`
+### Function `build_simulation_run_manifest(*, source, request_payload, result_payload)`
 Build digest-backed reproducibility metadata for a simulation result.
 
 Parameters
@@ -49859,7 +49859,7 @@ dictionary, a ragged sequence or a sequence carrying a non-number is not a
 vector and is refused, so an unrecordable value is still reported with its
 reason rather than coerced into a shape.
 
-### Function `observe_layout(instance, source, schema_profile, declared)`
+### Function `observe_layout(instance, source, schema_profile, declared, *, n_steps, element_budget)`
 Observe the shape of every declared variable on a constructed instance.
 
 Parameters
@@ -49965,7 +49965,7 @@ dict&#91;str, int&#93; or None
     Resource amounts, empty for a cell that takes none, None for a cell
     whose cost the Studio does not know.
 
-### Function `capacity_verdict(resources, capacity)`
+### Function `capacity_verdict(resources, capacity, *, device, uncounted)`
 Say whether a synthesised design fits its target device.
 
 Synthesis succeeding says the netlist exists, not that the device can
@@ -50028,7 +50028,7 @@ str
 ### Function `supported_targets()`
 Return synthesis targets accepted by the Studio EDA routes.
 
-### Function `run_synthesis(verilog_source, target)`
+### Function `run_synthesis(verilog_source, target, *, process_limits, tool_status)`
 Run Yosys synthesis and return resource usage.
 
 Parameters
@@ -50050,7 +50050,7 @@ dict&#91;str, Any&#93;
     Path-free synthesis result with success state, target, resource counts,
     capacity metadata, utilisation, or a bounded error message.
 
-### Function `run_synthesis_terminal(verilog_source, target)`
+### Function `run_synthesis_terminal(verilog_source, target, *, compile_traceability, cosim_parity, process_limits)`
 Run digest-bound synthesis and PnR for one parity-verified model RTL source.
 
 ### Function `estimate_resources(ir_op_count, target)`
@@ -50059,7 +50059,7 @@ Quick resource estimate from IR operation count, no Yosys needed.
 Heuristic: each IR op maps to ~2 LUTs + 1 FF on average.
 LIF step op maps to ~12 LUTs + 8 FFs + 1 DSP (multiplier).
 
-### Function `multi_target_synthesis(verilog_source)`
+### Function `multi_target_synthesis(verilog_source, *, process_limits)`
 Run synthesis on all supported targets and return a comparison.
 
 Parameters
@@ -50075,7 +50075,7 @@ Returns
 dict&#91;str, Any&#93;
     Mapping with per-target synthesis results and the supported target list.
 
-### Function `run_pnr(json_path, target)`
+### Function `run_pnr(json_path, target, *, process_limits)`
 Run nextpnr place-and-route and return timing report.
 
 Parameters
@@ -50145,7 +50145,7 @@ status:
 - **to_public_dict**()
   - Return the public, path-free target provenance payload.
 
-### Function `build_synthesis_target_provenance(target)`
+### Function `build_synthesis_target_provenance(target, *, target_config, capacity, tool_status)`
 Build provenance metadata for one Studio synthesis target.
 
 Parameters
@@ -50169,7 +50169,7 @@ Raises
 ValueError
     If the target configuration lacks a synthesis command.
 
-### Function `build_synthesis_target_provenance_matrix()`
+### Function `build_synthesis_target_provenance_matrix(*, targets, capacities, tool_status)`
 Build a path-free provenance matrix for all Studio synthesis targets.
 
 Parameters
@@ -50218,7 +50218,7 @@ max_points : int
 - **point_count**()
   - Number of display points.
 
-### Function `display_sample_indices(n_steps, series)`
+### Function `display_sample_indices(n_steps, series, *, max_points)`
 Choose the raw step indices a bounded viewport shows.
 
 Parameters
@@ -50252,7 +50252,7 @@ Return the post-step sample time of every raw step: ``(index + 1) * dt``.
 ### Function `observation_block(dt)`
 Return the observation-clock contract of a run.
 
-### Function `raw_block()`
+### Function `raw_block(*, dt, n_steps, scalar_traces, vector_traces, vector_omitted, drive, spikes, element_budget)`
 Return the full-resolution raw block of a run.
 
 Parameters
@@ -50279,7 +50279,7 @@ dict
     ``included`` is ``False`` only when the scalar traces alone exceed the
     budget; nothing is shortened silently, the reason is stated instead.
 
-### Function `custody_payload()`
+### Function `custody_payload(*, dt, n_steps, layout, initial_state, final_state, scalar_traces, vector_traces, vector_omitted, drive, spikes, stats, max_points, element_budget)`
 Assemble the public result of a run: raw custody plus display projection.
 
 The top-level ``time``, ``states`` and ``current_trace`` fields are the
@@ -50339,7 +50339,7 @@ Returns
 dict&#91;str, Any&#93;
     Path-free job identifier and initial ``running`` status.
 
-### Function `start_training_attach(source_job_id, config, job_manager)`
+### Function `start_training_attach(source_job_id, config, job_manager, *, expected_config_sha256, mode)`
 Start a training job seeded with restored, verified weights.
 
 ``mode`` names which of two different runs this is. ``warm_start`` begins a
@@ -50377,7 +50377,7 @@ Raises
 ValueError
     If source checkpoint metadata or its expected digest is invalid.
 
-### Function `request_live_training_weight_attach(target_job_id, source_job_id, job_manager)`
+### Function `request_live_training_weight_attach(target_job_id, source_job_id, job_manager, *, expected_config_sha256)`
 Deliver verified weights to a running training job.
 
 The command is confined to the worker control channel and applied at the
@@ -50697,7 +50697,7 @@ dataset_fingerprint : str
 - **to_public_dict**()
   - Return the JSON-safe summary a status payload may carry.
 
-### Function `capture_resume_state()`
+### Function `capture_resume_state(*, epochs_completed, architecture, config, optimiser, dataset_fingerprint)`
 Take the state a later run needs in order to continue this one.
 
 Parameters
@@ -50719,7 +50719,7 @@ TrainingResumeState
     Captured at an epoch boundary, which is the only point where the
     generator states describe a clean position in the run.
 
-### Function `apply_resume_state(state)`
+### Function `apply_resume_state(state, *, optimiser, architecture, config)`
 Restore a saved position and return the epoch to start from.
 
 Parameters
@@ -50791,7 +50791,7 @@ step it protects, so the boundary is stated rather than implied.
 
 ## Module `studio.workspace_lifecycle`
 
-### Function `fork_workspace(store, name, new_name)`
+### Function `fork_workspace(store, name, new_name, *, revision)`
 Copy one revision into a new workspace as its first revision.
 
 Raises
@@ -50802,7 +50802,7 @@ WorkspaceConflict
     The destination workspace already exists; forking never
     overwrites one.
 
-### Function `branch_conflicting_edit(store, name, state)`
+### Function `branch_conflicting_edit(store, name, state, *, base_revision, branch_name)`
 Keep an edit that lost a save conflict, instead of asking for it again.
 
 A save from a stale revision is refused so it cannot overwrite the other
@@ -50872,7 +50872,7 @@ WorkspaceConflict
     A live workspace already holds the name; restoring would overwrite
     it, which is the loss this store exists to prevent.
 
-### Function `export_workspace(store, name)`
+### Function `export_workspace(store, name, *, revision)`
 Return one revision as a self-contained document.
 
 ### Function `import_workspace(store, name, document)`
@@ -50899,7 +50899,7 @@ name : str
 timeout : float
     The wait that elapsed, in seconds.
 
-- **__init__**()
+- **__init__**(\*, name, timeout)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -50920,7 +50920,7 @@ ValueError
     already; this refuses rather than trusting them, because the result is
     a filesystem path.
 
-### Function `workspace_lock(root, name)`
+### Function `workspace_lock(root, name, *, timeout)`
 Hold one workspace against every other writer for the block's duration.
 
 Parameters
@@ -50965,7 +50965,7 @@ Stored review or revision data cannot support a trustworthy comment.
 One comment on one revision.
 
 
-### Function `add_comment(store, name, revision)`
+### Function `add_comment(store, name, revision, *, author, body, reply_to)`
 Append a comment on ``name`` at ``revision``.
 
 Raises
@@ -50978,7 +50978,7 @@ WorkspaceReviewRefused
 WorkspaceReviewStorageError
     Persisted review or revision data is unreadable; nothing is appended.
 
-### Function `list_comments(store, name)`
+### Function `list_comments(store, name, *, revision)`
 Return a workspace's comments, each checked against its revision.
 
 Raises
@@ -51059,7 +51059,7 @@ expected : int or None
 actual : int
     The revision that is current.
 
-- **__init__**()
+- **__init__**(\*, expected, actual)
 - **to_public_detail**()
   - Return the path-free public error detail.
 
@@ -51096,7 +51096,7 @@ lock_timeout : float, optional
     before being refused with
     :class:`~sc_neurocore.studio.workspace_lock.WorkspaceLockTimeout`.
 
-- **__init__**()
+- **__init__**(\*, root, clock, lock_timeout)
 - **lock**(name)
   - Hold one workspace against every other writer, in this process and others.
 - **root**()
@@ -51111,17 +51111,17 @@ lock_timeout : float, optional
   - Return whether a workspace has at least one revision.
 - **head_revision**(name)
   - Return the current revision number, or ``None`` for a new workspace.
-- **save**(name, state)
+- **save**(name, state, \*, expected_revision)
   - Append one revision, refusing a save made from a stale one.
-- **load**(name)
+- **load**(name, \*, revision)
   - Return one revision's document, defaulting to the current one.
 - **revisions**(name)
   - Return every stored revision of one workspace, oldest first.
 - **list_workspaces**()
   - Return one summary per workspace, by name.
-- **fork**(name, new_name)
+- **fork**(name, new_name, \*, revision)
   - Copy one revision into a new workspace; see ``workspace_lifecycle``.
-- **branch_conflicting_edit**(name, state)
+- **branch_conflicting_edit**(name, state, \*, base_revision, branch_name)
   - Keep an edit refused by a save conflict; see ``workspace_lifecycle``.
 - **delete**(name)
   - Move a workspace aside so it can be restored.
@@ -51129,7 +51129,7 @@ lock_timeout : float, optional
   - Return the workspaces waiting in the trash, newest first.
 - **restore**(token)
   - Bring one deleted workspace back under its original name.
-- **export_document**(name)
+- **export_document**(name, \*, revision)
   - Return one revision as a self-contained document.
 - **import_document**(name, document)
   - Create a workspace from an exported document.
@@ -51307,7 +51307,7 @@ Parameters
 gate_type : str
     'AND', 'OR', 'NOT', 'NAND', 'XOR'
 
-- **__call__**()
+- **__call__**(\*inputs)
 - **lif_config**()
   - LIF neuron configuration for this gate.
 
@@ -51594,9 +51594,9 @@ dt : float
     Integration timestep (ms). Default: 1.0.
 
 - **__post_init__**()
-- **new_depressing**(cls)
+- **new_depressing**()
   - Create a depressing synapse (cortical pyr-pyr).
-- **new_facilitating**(cls)
+- **new_facilitating**()
   - Create a facilitating synapse (cortical pyr-interneuron).
 - **step**(pre_spike)
   - Advance one timestep. Returns post-synaptic current.
@@ -51863,7 +51863,7 @@ rng_seed : int
     Random seed for reproducibility.
 
 - **__init__**(layer_sizes, rng_seed)
-- **train**(x_batch, y_batch)
+- **train**(x_batch, y_batch, \*, beta, lr, n_settle, epsilon)
   - Train on a mini-batch using the EP two-phase protocol.
 - **predict**(x, n_settle)
   - Predict output by settling in free phase.
@@ -51912,13 +51912,13 @@ L2 penalty on mean spike rate. Penalizes high-firing neurons.
 
 ## Module `training.sc_correlation_regularizers`
 
-### Function `correlation_matrix(streams)`
+### Function `correlation_matrix(streams, *, eps)`
 Return Pearson correlation matrix across bitstream rows.
 
-### Function `pairwise_correlation_penalty(streams)`
+### Function `pairwise_correlation_penalty(streams, *, threshold, weight, eps)`
 Penalize off-diagonal stream correlations above ``threshold``.
 
-### Function `correlation_penalty(observed)`
+### Function `correlation_penalty(observed, *, target, weight)`
 Differentiable mean-square penalty toward a target correlation.
 
 ---
@@ -51947,10 +51947,10 @@ Rate, variance, and correlation evidence for sampled bitstreams.
 Decoded sampled SC multiply result and stream statistics.
 
 
-### Function `sample_sc_bitstreams(values, config)`
+### Function `sample_sc_bitstreams(values, config, *, role)`
 Sample deterministic SC bitstreams for training-time statistics.
 
-### Function `estimate_bitstream_statistics(streams)`
+### Function `estimate_bitstream_statistics(streams, *, eps)`
 Return rate, variance, and Pearson correlation evidence for bitstreams.
 
 ### Function `relaxed_sc_multiply(input_value, weight_value, config)`
@@ -51959,7 +51959,7 @@ Return differentiable expected SC multiplication under the config contract.
 ### Function `sampled_sc_multiply(input_value, weight_value, config)`
 Sample SC bitstreams, multiply them, and decode the empirical product.
 
-### Function `finite_difference_gradients(input_value, weight_value, config)`
+### Function `finite_difference_gradients(input_value, weight_value, config, *, epsilon)`
 Central finite-difference gradients for deterministic relaxed SC operators.
 
 ---
@@ -52164,10 +52164,10 @@ Joint stochastic-backpropagation result with exportable SC design metadata.
 ### Function `relaxed_sc_linear(input_value, weight, bias, sc_config)`
 Linear layer whose multiply-accumulate path uses relaxed SC products.
 
-### Function `stochastic_training_objective(task_loss)`
+### Function `stochastic_training_objective(task_loss, *, sc_config, streams, observed_correlation, resource_proxy, objective_config)`
 Compose task loss with SC length, correlation, variance, and resource costs.
 
-### Function `stochastic_backprop_joint_objective(inputs, targets)`
+### Function `stochastic_backprop_joint_objective(inputs, targets, *, weight, bias, length_logits, encoding_logits, correlation_logit, base_config, design_space, resource_proxy, objective_config)`
 Train a relaxed SC layer jointly over weights and SC architecture variables.
 
 The selected config remains discrete and exportable, while length, encoding,
@@ -52179,13 +52179,13 @@ variables in the same backward pass.
 
 ## Module `training.stochastic_backprop_export`
 
-### Function `build_stochastic_backprop_export_manifest(benchmark_report, sc_config)`
+### Function `build_stochastic_backprop_export_manifest(benchmark_report, sc_config, *, producer, replay_uri)`
 Build a deterministic SC-NIR handoff manifest for stochastic backpropagation.
 
-### Function `write_stochastic_backprop_export_manifest(path, benchmark_report, sc_config)`
+### Function `write_stochastic_backprop_export_manifest(path, benchmark_report, sc_config, *, producer, replay_uri)`
 Write a canonical stochastic backpropagation SC-NIR export manifest.
 
-### Function `write_stochastic_backprop_handoff_bundle(export_manifest, output_dir)`
+### Function `write_stochastic_backprop_handoff_bundle(export_manifest, output_dir, *, module_name)`
 Materialise an auditable SC-NIR HDL handoff bundle from an export manifest.
 
 ---
@@ -52198,7 +52198,7 @@ Heaviside forward, fast-sigmoid backward via ``torch.library.custom_op``.
 ### Function `fast_sigmoid_legacy(x, slope)`
 Heaviside forward, fast-sigmoid backward via legacy autograd.
 
-### Function `fast_sigmoid(x, slope)`
+### Function `fast_sigmoid(x, slope, *, path)`
 Heaviside forward, fast-sigmoid backward.
 
 ### Function `superspike_custom_op(x, beta)`
@@ -52207,7 +52207,7 @@ Heaviside forward, SuperSpike backward via ``torch.library.custom_op``.
 ### Function `superspike_legacy(x, beta)`
 Heaviside forward, SuperSpike backward via legacy autograd.
 
-### Function `superspike(x, beta)`
+### Function `superspike(x, beta, *, path)`
 Heaviside forward, SuperSpike backward.
 
 ### Function `atan_surrogate_custom_op(x, alpha)`
@@ -52216,7 +52216,7 @@ Heaviside forward, arctan backward via ``torch.library.custom_op``.
 ### Function `atan_surrogate_legacy(x, alpha)`
 Heaviside forward, arctan backward via legacy autograd.
 
-### Function `atan_surrogate(x, alpha)`
+### Function `atan_surrogate(x, alpha, *, path)`
 Heaviside forward, arctan backward.
 
 ### Function `sigmoid_surrogate_custom_op(x, slope)`
@@ -52225,7 +52225,7 @@ Heaviside forward, sigmoid backward via ``torch.library.custom_op``.
 ### Function `sigmoid_surrogate_legacy(x, slope)`
 Heaviside forward, sigmoid backward via legacy autograd.
 
-### Function `sigmoid_surrogate(x, slope)`
+### Function `sigmoid_surrogate(x, slope, *, path)`
 Heaviside forward, sigmoid backward.
 
 ### Function `straight_through_custom_op(x)`
@@ -52234,7 +52234,7 @@ Heaviside forward, identity backward via ``torch.library.custom_op``.
 ### Function `straight_through_legacy(x)`
 Heaviside forward, identity backward via legacy autograd.
 
-### Function `straight_through(x)`
+### Function `straight_through(x, *, path)`
 Heaviside forward, identity backward (STE).
 
 ### Function `triangular_custom_op(x, width)`
@@ -52243,7 +52243,7 @@ Heaviside forward, triangular backward via ``torch.library.custom_op``.
 ### Function `triangular_legacy(x, width)`
 Heaviside forward, triangular backward via legacy autograd.
 
-### Function `triangular(x, width)`
+### Function `triangular(x, width, *, path)`
 Heaviside forward, triangular window backward.
 
 ---
@@ -52530,7 +52530,7 @@ max_len : int
 
 ## Module `utils.adapter_discovery`
 
-### Function `discover_adapters()`
+### Function `discover_adapters(*, include_first_party, include_entry_points)`
 Discover adapter classes and register them in the global registry.
 
 Parameters
@@ -53111,7 +53111,7 @@ RTL module parameter.
 ### Class `RTLModule`
 Parsed RTL module specification.
 
-- **from_verilog_source**(cls, source)
+- **from_verilog_source**(source)
   - Parse a Verilog/SystemVerilog module header.
 - **input_ports**()
   - Input ports excluding generated clock and reset controls.
@@ -53504,7 +53504,7 @@ ValueError
   - Return the observation dimension ``p``.
 - **control_dim**()
   - Return the control-input dimension ``m``.
-- **random**(cls, state_dim, obs_dim, control_dim, seed)
+- **random**(state_dim, obs_dim, control_dim, seed)
   - Construct a stable random model for initialisation and examples.
 
 ### Class `FilterResult`

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — API documentation generator tests
 
+"""Verify public source extraction, call signatures and API-reference freshness."""
+
 from pathlib import Path
 
 import pytest
@@ -16,6 +18,7 @@ from scripts.generate_docs import (
     check_markdown,
     generate_markdown,
     main,
+    parse_file,
 )
 
 
@@ -192,3 +195,121 @@ def test_main_regenerates_reference_by_default(
     assert exit_code == 0
     assert output.exists()
     assert "SC-NeuroCore API Reference" in output.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("declaration", "expected"),
+    [
+        ("def dispatch(*, name, value):", ["*", "name", "value"]),
+        ("def dispatch(value, /):", ["value", "/"]),
+        (
+            "def dispatch(value, /, fallback, *, name):",
+            ["value", "/", "fallback", "*", "name"],
+        ),
+        (
+            "def dispatch(value, *items, name=None, **labels):",
+            ["value", "*items", "name", "**labels"],
+        ),
+        ("def dispatch(**options):", ["**options"]),
+        ("def dispatch(self, *, value):", ["self", "*", "value"]),
+        ("def dispatch():", []),
+    ],
+    ids=[
+        "required-keyword-only",
+        "positional-only",
+        "mixed-positional-and-keyword",
+        "variadic-with-keyword",
+        "variadic-keyword",
+        "module-parameter-named-self",
+        "no-parameters",
+    ],
+)
+def test_generated_function_signatures_preserve_parameter_kinds(
+    tmp_path: Path, declaration: str, expected: list[str]
+) -> None:
+    """All Python parameter kinds survive public parsing and file generation."""
+    source = tmp_path / "dispatch.py"
+    source.write_text(declaration + '\n    """Dispatch the supplied values."""\n', encoding="utf-8")
+
+    classes, functions = parse_file(source)
+    output = tmp_path / "reference.md"
+    generate_markdown(tmp_path, output)
+
+    assert classes == []
+    assert len(functions) == 1
+    assert functions[0]["args"] == expected
+    assert f"### Function `dispatch({', '.join(expected)})`" in output.read_text(encoding="utf-8")
+
+
+def test_generated_method_signatures_preserve_bound_and_static_contracts(
+    tmp_path: Path,
+) -> None:
+    """Method headers omit bound receivers and retain static parameters and markers."""
+    source = tmp_path / "collector.py"
+    source.write_text(
+        '''class Collector:
+    """Collect explicitly labelled samples."""
+
+    def __init__(self, /, *, name):
+        """Create a named collection."""
+
+    def submit(self, sample, /, channel, *items, required, **options):
+        """Submit one sample and optional additional items."""
+
+    @classmethod
+    def create(cls, /, *, name):
+        """Construct a collection by name."""
+
+    @staticmethod
+    def decode(self, /, *, mode):
+        """Decode a payload whose parameter happens to be named self."""
+
+    def reset(self):
+        """Discard collected samples."""
+
+    def keyword(self, *, value):
+        """Record a keyword-only value."""
+
+    def variadic(*items):
+        """Receive the bound instance and any supplied items."""
+''',
+        encoding="utf-8",
+    )
+
+    classes, functions = parse_file(source)
+    rendered = build_markdown(tmp_path)
+
+    assert functions == []
+    assert len(classes) == 1
+    assert {method["name"]: method["args"] for method in classes[0]["methods"]} == {
+        "__init__": ["*", "name"],
+        "submit": ["sample", "/", "channel", "*items", "required", "**options"],
+        "create": ["*", "name"],
+        "decode": ["self", "/", "*", "mode"],
+        "reset": [],
+        "keyword": ["*", "value"],
+        "variadic": ["*items"],
+    }
+    assert r"- **__init__**(\*, name)" in rendered
+    assert r"- **submit**(sample, /, channel, \*items, required, \*\*options)" in rendered
+    assert r"- **create**(\*, name)" in rendered
+    assert r"- **decode**(self, /, \*, mode)" in rendered
+    assert "- **reset**()" in rendered
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["require_integral", "require_bool", "require_finite_float", "require_u32_seed"],
+)
+def test_real_validation_headers_include_required_keyword_arguments(name: str) -> None:
+    """The actual validation declarations and committed headers retain name and value."""
+    repo = Path(__file__).resolve().parents[1]
+    source = repo / "src/sc_neurocore/_native/learning_validation.py"
+
+    _, functions = parse_file(source)
+
+    function = next(item for item in functions if item["name"] == name)
+    assert function["args"] == ["*", "name", "value"]
+    assert f"### Function `{name}(*, name, value)`" in (repo / "docs/API_REFERENCE.md").read_text(
+        encoding="utf-8"
+    )

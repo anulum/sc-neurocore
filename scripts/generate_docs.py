@@ -69,8 +69,52 @@ def _is_public_name(name: str) -> bool:
     return not name.startswith("_") or (name.startswith("__") and name.endswith("__"))
 
 
+def _parameter_names(arguments: ast.arguments, *, bound: bool = False) -> list[str]:
+    """Preserve parameter names and kind separators, omitting a bound receiver."""
+    positional_only = [arg.arg for arg in arguments.posonlyargs]
+    positional = [arg.arg for arg in arguments.args]
+    if bound:
+        if positional_only:
+            positional_only = positional_only[1:]
+        elif positional:
+            positional = positional[1:]
+
+    names = positional_only + (["/"] if positional_only else []) + positional
+    if arguments.vararg:
+        names.append(f"*{arguments.vararg.arg}")
+    elif arguments.kwonlyargs:
+        names.append("*")
+    names.extend(arg.arg for arg in arguments.kwonlyargs)
+    if arguments.kwarg:
+        names.append(f"**{arguments.kwarg.arg}")
+    return names
+
+
 def parse_file(filepath: str | Path) -> tuple[list[ClassDoc], list[FunctionDoc]]:
-    """Parse public classes and functions from one Python source file."""
+    """Extract public declarations without importing or executing their module.
+
+    Parameters
+    ----------
+    filepath : str or pathlib.Path
+        UTF-8 Python source file to parse with the standard-library AST.
+
+    Returns
+    -------
+    tuple of lists
+        Class and function records containing docstrings and parameter names
+        with Python kind separators. Bound method receivers are omitted;
+        static methods retain all parameters. Defaults and annotations are
+        omitted from the name-only reference.
+
+    Raises
+    ------
+    OSError
+        If the source file cannot be read.
+    UnicodeError
+        If the source file is not valid UTF-8.
+    SyntaxError
+        If the source file is not valid Python.
+    """
     filepath = Path(filepath)
     tree = ast.parse(filepath.read_text(encoding="utf-8"), filename=str(filepath))
 
@@ -90,7 +134,14 @@ def parse_file(filepath: str | Path) -> tuple[list[ClassDoc], list[FunctionDoc]]
                     methods.append(
                         {
                             "name": item.name,
-                            "args": [a.arg for a in item.args.args if a.arg != "self"],
+                            "args": _parameter_names(
+                                item.args,
+                                bound=not any(
+                                    isinstance(decorator, ast.Name)
+                                    and decorator.id == "staticmethod"
+                                    for decorator in item.decorator_list
+                                ),
+                            ),
                             "doc": doc,
                         }
                     )
@@ -100,9 +151,7 @@ def parse_file(filepath: str | Path) -> tuple[list[ClassDoc], list[FunctionDoc]]
             if not _is_public_name(node.name):
                 continue
             doc = ast.get_docstring(node)
-            functions.append(
-                {"name": node.name, "args": [a.arg for a in node.args.args], "doc": doc}
-            )
+            functions.append({"name": node.name, "args": _parameter_names(node.args), "doc": doc})
 
     return classes, functions
 
@@ -159,7 +208,7 @@ def build_markdown(src_dir: str | Path) -> str:
                 md += f"{_markdown_text(cls['doc'])}\n\n"
 
             for method in cls["methods"]:
-                args = ", ".join(method["args"])
+                args = ", ".join(method["args"]).replace("*", r"\*")
                 md += f"- **{method['name']}**({args})\n"
                 if method["doc"]:
                     md += f"  - {_markdown_text(method['doc'].splitlines()[0])}\n"
