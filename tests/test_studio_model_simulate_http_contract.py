@@ -34,6 +34,7 @@ SIMULATE = "/api/models/simulate"
 
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
+    """Serve the production HTTP routers throughout the module's request contracts."""
     with TestClient(create_app(), base_url="http://127.0.0.1") as test_client:
         yield test_client
 
@@ -53,7 +54,10 @@ def _raw_post(client: TestClient, route: str, raw_body: bytes) -> Any:
 
 
 class TestRejectedRequests:
+    """Expose schema and model-domain refusals through the actual simulation HTTP routes."""
+
     def test_unknown_model_name(self, client: TestClient) -> None:
+        """Return the catalogue name refusal as a structured HTTP 422 response."""
         response = _post(client, SIMULATE, {"model_name": "NoSuchNeuron"})
         assert response.status_code == 422
         assert response.json()["detail"] == {
@@ -64,6 +68,7 @@ class TestRejectedRequests:
         }
 
     def test_unknown_parameter(self, client: TestClient) -> None:
+        """Keep the rejected constructor keyword in the public HTTP refusal."""
         response = _post(
             client, SIMULATE, {"model_name": ATIF, "params": {"no_such_parameter": 1.0}}
         )
@@ -81,6 +86,7 @@ class TestRejectedRequests:
         assert detail["reason"] == "model constructor rejected the supplied parameters"
 
     def test_fractional_integer_parameter(self, client: TestClient) -> None:
+        """Reject a fractional threshold with its model parameter field named."""
         response = _post(
             client,
             SIMULATE,
@@ -91,7 +97,22 @@ class TestRejectedRequests:
         assert detail["field"] == "params.v_threshold"
         assert "fractional" in detail["reason"]
 
+    @pytest.mark.parametrize("value", [10**400, -(10**400)])
+    def test_integer_outside_float64_has_a_structured_field_refusal(
+        self, client: TestClient, value: int
+    ) -> None:
+        """Reject a finite integer outside Float64 without an unhandled conversion fault."""
+        response = _post(client, SIMULATE, {"model_name": ATIF, "params": {"tau_m": value}})
+        assert response.status_code == 422
+        assert response.json()["detail"] == {
+            "error": "invalid_model_input",
+            "model": ATIF,
+            "field": "params.tau_m",
+            "reason": "must be a finite number",
+        }
+
     def test_step_requiring_unsupplied_input(self, client: TestClient) -> None:
+        """Return the missing glutamate argument as a step-contract refusal."""
         response = _post(client, SIMULATE, {"model_name": "DendriticNMDANeuron"})
         assert response.status_code == 422
         detail = response.json()["detail"]
@@ -101,8 +122,16 @@ class TestRejectedRequests:
     @pytest.mark.parametrize(
         ("body", "loc_tail", "error_type"),
         [
-            ({"model_name": ATIF, "params": {"tau_m": True}}, ["params", "tau_m"], "float_type"),
-            ({"model_name": ATIF, "params": {"tau_m": "10"}}, ["params", "tau_m"], "float_type"),
+            (
+                {"model_name": ATIF, "params": {"tau_m": True}},
+                ["params", "tau_m", "float"],
+                "float_type",
+            ),
+            (
+                {"model_name": ATIF, "params": {"tau_m": "10"}},
+                ["params", "tau_m", "float"],
+                "float_type",
+            ),
             ({"model_name": ATIF, "dt": 0.0}, ["dt"], "greater_than"),
             ({"model_name": ATIF, "duration": -1.0}, ["duration"], "greater_than"),
             ({"model_name": ATIF, "protocol": "sawtooth"}, ["protocol"], "literal_error"),
@@ -116,6 +145,7 @@ class TestRejectedRequests:
         loc_tail: list[str],
         error_type: str,
     ) -> None:
+        """Keep the typed numeric-branch error attached to the original parameter field."""
         response = _post(client, SIMULATE, body)
         assert response.status_code == 422
         errors = response.json()["detail"]
@@ -129,13 +159,14 @@ class TestRejectedRequests:
         ("raw_body", "loc_tail"),
         [
             (b'{"model_name": "%s", "dt": NaN}', ["dt"]),
-            (b'{"model_name": "%s", "params": {"tau_m": Infinity}}', ["params", "tau_m"]),
+            (b'{"model_name": "%s", "params": {"tau_m": Infinity}}', ["params", "tau_m", "float"]),
             (b'{"model_name": "%s", "current": -Infinity}', ["current"]),
         ],
     )
     def test_non_finite_json_number_is_422_not_500(
         self, client: TestClient, raw_body: bytes, loc_tail: list[str]
     ) -> None:
+        """Reject non-finite JSON tokens with a numeric field and validation type."""
         response = _raw_post(client, SIMULATE, raw_body % ATIF.encode())
         assert response.status_code == 422
         errors = response.json()["detail"]
@@ -146,6 +177,7 @@ class TestRejectedRequests:
         ), errors
 
     def test_export_svg_shares_the_contract(self, client: TestClient) -> None:
+        """Reject non-finite and unknown SVG constructor inputs before rendering any trace."""
         response = _raw_post(
             client,
             "/api/export/svg",
@@ -158,6 +190,7 @@ class TestRejectedRequests:
         assert response.json()["detail"]["field"] == "params.nope"
 
     def test_fixed_step_model_rejects_foreign_dt(self, client: TestClient) -> None:
+        """Refuse a foreign clock and publish the model's actual default step interval."""
         response = _post(client, SIMULATE, {"model_name": "IntegerQIFNeuron", "dt": 0.1})
         assert response.status_code == 422
         detail = response.json()["detail"]
@@ -170,6 +203,8 @@ class TestRejectedRequests:
 
 
 class TestNumericalFailure:
+    """Keep numerical and admission failures out of the response cache."""
+
     OVERFLOW = {
         "model_name": "HodgkinHuxleyNeuron",
         "protocol": "ramp",
@@ -199,6 +234,7 @@ class TestNumericalFailure:
         assert second.json()["detail"] == detail
 
     def test_rejected_request_is_never_cached(self, client: TestClient) -> None:
+        """Leave cache size unchanged after a rejected unknown constructor parameter."""
         size_before = _cache_size(client)
         body = {"model_name": ATIF, "params": {"unknown_parameter": 2.0}}
         assert _post(client, SIMULATE, body).status_code == 422
@@ -206,7 +242,10 @@ class TestNumericalFailure:
 
 
 class TestSuccessfulRun:
+    """Publish effective constructor inputs and alias-equivalent model runs."""
+
     def test_valid_nondefault_adaptive_threshold_run(self, client: TestClient) -> None:
+        """Report nondefault constructor inputs beside the actual complete voltage trace."""
         body = {
             "model_name": ATIF,
             "params": {"delta_theta": 8.0, "tau_theta": 30.0, "theta_rest": -48.0},
@@ -228,6 +267,7 @@ class TestSuccessfulRun:
         assert data["run_metadata"]["source"] == "model"
 
     def test_model_name_and_name_aliases_are_equivalent(self, client: TestClient) -> None:
+        """Resolve both public model name spellings to the same spike trace."""
         by_alias = _post(client, SIMULATE, {"model_name": ATIF, "duration": 5.0})
         by_name = _post(client, SIMULATE, {"name": ATIF, "duration": 5.0})
         assert by_alias.status_code == by_name.status_code == 200
@@ -235,7 +275,10 @@ class TestSuccessfulRun:
 
 
 class TestOpenApiContract:
+    """Declare simulation refusals and request restrictions in the generated OpenAPI document."""
+
     def test_simulate_route_declares_the_error_response(self, client: TestClient) -> None:
+        """Expose structured 422 schemas, forbidden unknown fields and step metadata."""
         document = client.get("/openapi.json").json()
         for route in (SIMULATE, "/api/export/svg"):
             operation = document["paths"][route]["post"]

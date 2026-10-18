@@ -17,7 +17,7 @@ import { qFormatRefusals } from "../modelCompileConfig";
  * Bounds and a step for a parameter whose model declared none.
  *
  * @param value - The parameter's current value.
- * @returns Minimum, maximum and step.
+ * @returns Minimum, maximum and suggested step for an unbounded visual range.
  */
 function sliderRange(value: number): [number, number, number] {
   const absVal = Math.abs(value) || 1;
@@ -51,22 +51,23 @@ const PROTOCOLS = [
  * @param value - Its current value.
  * @param range - The model's declared range, when it has one.
  * @param kind - The constructor numeric kind; integer inputs advance by one.
- * @returns Minimum, maximum and step.
+ * @returns Bounds, with unit integer steps or continuous floating-point input.
  */
 export function sliderBounds(
   value: number,
   range?: [number, number] | null,
   kind: "float" | "int" = "float",
-): [number, number, number] {
+): [number, number, number | "any"] {
   if (kind === "int") {
     const [lo, hi] = range && range[0] < range[1] ? range : sliderRange(value);
     return [Math.ceil(lo), Math.floor(hi), 1];
   }
   if (range && range[0] < range[1]) {
     const [lo, hi] = range;
-    return [lo, hi, (hi - lo) / 200 || 1e-6];
+    return [lo, hi, "any"];
   }
-  return sliderRange(value);
+  const [lo, hi] = sliderRange(value);
+  return [lo, hi, "any"];
 }
 
 /**
@@ -78,7 +79,7 @@ export function sliderBounds(
 function Slider({ label, value, onChange, min, max, step, unit, title }: {
   label: string; value: number;
   onChange: (v: number) => void;
-  min?: number; max?: number; step?: number;
+  min?: number; max?: number; step?: number | "any";
   unit?: string; title?: string;
 }) {
   // A caller that sets one bound sets all three; reading them through the

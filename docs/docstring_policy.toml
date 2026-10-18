@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 918
+expected_file_count = 922
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -3765,3 +3765,19 @@ rationale = "Exercise live constructor metadata, declared integer inputs and des
 [[file]]
 path = "tests/test_studio_model_run_contract_routes.py"
 rationale = "Verify authored input refusals and exact timebase propagation through simulation, comparison and export routes."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/schemas.py"
+rationale = "Model constructor integers retain their original JSON tokens while strict numeric branches reject booleans, strings and non-finite values."
+
+[[file]]
+path = "tests/test_studio_experiment_spec.py"
+rationale = "Resolved model seeds, effective constructor inputs, randomness and immutable experiment projections stay bound to one original input."
+
+[[file]]
+path = "tests/test_studio_model_simulate_contract.py"
+rationale = "The public model resolver preserves Python and NumPy integers, refuses invalid kinds and retains actual numerical and state-custody failures."
+
+[[file]]
+path = "tests/test_studio_model_simulate_http_contract.py"
+rationale = "Real model simulation and SVG routes retain typed input refusals, numerical step metadata, cache exclusions and published OpenAPI fields."

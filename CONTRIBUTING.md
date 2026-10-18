@@ -103,7 +103,8 @@ The publish and release workflows install the built wheel into a fresh
 virtual environment, check its CLI, UI assets and catalogue, then run
 `studio/frontend/playwright.installed.config.ts` against the installed server.
 The browser checks Poisson constructor inputs and replay, and an exact 63-bit
-seed through project saves, local sessions, downloads and a separate replay
+seed through both a catalogue model and the equation playground, including
+project saves, local sessions, downloads and a separate replay
 interpreter. An editable source import is refused before the browser starts.
 
 This configuration requires `SC_NEUROCORE_STUDIO_INSTALLED_PYTHON` and

@@ -409,7 +409,10 @@ def model_drive_contract(model: str, cls: type) -> DriveContract:
 def _finite_number(model: str, field: str, raw: object) -> float:
     if isinstance(raw, bool) or not isinstance(raw, numbers.Real):
         raise ModelInputError(model=model, field=field, reason="must be a finite number")
-    value = float(raw)
+    try:
+        value = float(raw)
+    except OverflowError as exc:
+        raise ModelInputError(model=model, field=field, reason="must be a finite number") from exc
     if not math.isfinite(value):
         raise ModelInputError(model=model, field=field, reason="must be a finite number")
     return value
@@ -424,6 +427,9 @@ def _positive_finite(model: str, field: str, raw: object) -> float:
 
 def _coerce(model: str, contract: ParameterContract, raw: object) -> float | int:
     field = f"params.{contract.name}"
+    # Exact Python/NumPy integers must never pass through a floating-point value.
+    if contract.kind == "int" and isinstance(raw, numbers.Integral) and not isinstance(raw, bool):
+        return int(raw)
     value = _finite_number(model, field, raw)
     if contract.kind == "int":
         if not value.is_integer():

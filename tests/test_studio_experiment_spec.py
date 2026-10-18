@@ -46,8 +46,11 @@ def _spec(**request: Any) -> dict[str, Any]:
 
 
 class TestEffectiveConfiguration:
+    """Bind experiment identity to effective model, numerical and runtime inputs."""
+
     @pytest.mark.parametrize("surface", ["public", "export", "run_kwargs", "result"])
     def test_nested_projections_cannot_change_sealed_execution(self, surface: str) -> None:
+        """Keep sealed equation inputs and identity intact when returned projections are mutated."""
         request = {
             "equations": ["dv/dt = gain * I"],
             "params": {"gain": 2.0},
@@ -81,6 +84,7 @@ class TestEffectiveConfiguration:
         assert after["experiment"]["experiment_sha256"] == digest
 
     def test_model_spec_binds_revision_profile_steps_state_protocol_and_runtime(self) -> None:
+        """Include model revision, clock, initial state, drive and runtime digests in the cache key."""
         public = _spec(name=ATIF, duration=5.0)
         assert public["schema_version"] == EXPERIMENT_SCHEMA_VERSION
         assert public["source"] == "model"
@@ -113,6 +117,7 @@ class TestEffectiveConfiguration:
         assert public["cache"] == {"key": public["experiment_sha256"], "cacheable": True}
 
     def test_explicit_defaults_resolve_to_the_implicit_spec(self) -> None:
+        """Resolve explicit UI defaults to the same sealed specification as omitted defaults."""
         implicit = _spec(name=ATIF)
         explicit = _spec(
             name=ATIF,
@@ -128,6 +133,7 @@ class TestEffectiveConfiguration:
         assert explicit == implicit
 
     def test_explicit_model_default_dt_is_the_same_experiment(self) -> None:
+        """Keep physical timing and drive aligned while retaining explicit timestep provenance."""
         assert _spec(name=ATIF, dt=0.1)["experiment_sha256"] != _spec(name=ATIF)[
             "experiment_sha256"
         ] or (_spec(name=ATIF, dt=0.1)["numerical"]["dt"] == _spec(name=ATIF)["numerical"]["dt"])
@@ -140,6 +146,7 @@ class TestEffectiveConfiguration:
         assert override["protocol"]["drive_sha256"] == default["protocol"]["drive_sha256"]
 
     def test_effective_dt_comes_from_the_model_not_the_studio_default(self) -> None:
+        """Use AdEx and integer-model clocks instead of one global integration interval."""
         adex = _spec(name="AdExNeuron", duration=1.0)
         integer = _spec(name="IntegerQIFNeuron", duration=10.0)
         assert (adex["numerical"]["dt"], adex["steps"]["n_steps"]) == (0.1, 10)
@@ -149,6 +156,7 @@ class TestEffectiveConfiguration:
         # One Hodgkin-Huxley step() is 100 sub-steps of 0.01 ms: 20 ms is 20
         # calls, not 2000. Counting sub-steps ran the model 100 times too long
         # and divided its spikes by the requested 20 ms.
+        """Count Hodgkin-Huxley calls in one-millisecond macro steps rather than substeps."""
         hh = _spec(name="HodgkinHuxleyNeuron", duration=20.0)
         assert hh["numerical"]["dt"] == 0.01
         assert hh["numerical"]["step_ms"] == 1.0
@@ -173,9 +181,11 @@ class TestEffectiveConfiguration:
     def test_different_effective_inputs_never_share_a_cache_key(
         self, left: dict[str, Any], right: dict[str, Any]
     ) -> None:
+        """Distinguish model, parameter, waveform, seed, frequency and duration changes."""
         assert _spec(**left)["experiment_sha256"] != _spec(**right)["experiment_sha256"]
 
     def test_model_revision_enters_the_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Change the sealed identity when the recorded package revision changes."""
         from sc_neurocore.studio import experiment_spec as module
 
         before = _spec(name=ATIF)["experiment_sha256"]
@@ -183,6 +193,7 @@ class TestEffectiveConfiguration:
         assert _spec(name=ATIF)["experiment_sha256"] != before
 
     def test_protocol_typo_and_undeclared_init_are_rejected(self) -> None:
+        """Refuse unknown waveforms, undeclared initial states and malformed equations."""
         with pytest.raises(ExperimentRejected) as info:
             resolve_ode_experiment({"equations": ["dv/dt = -v"], "protocol": "sawtooth"})
         assert info.value.field == "protocol"
@@ -196,6 +207,7 @@ class TestEffectiveConfiguration:
             resolve_model_experiment({"name": ATIF, "protocol": "sawtooth"})
 
     def test_oversized_synchronous_run_is_refused_not_shortened(self) -> None:
+        """Route oversized runs to jobs and refuse durations without one complete step."""
         with pytest.raises(ExperimentRejected) as info:
             resolve_model_experiment({"name": "AdExNeuron", "duration": 1e7})
         rejection = info.value
@@ -211,6 +223,7 @@ class TestEffectiveConfiguration:
         assert "no complete step" in info.value.reason
 
     def test_ode_spec_declares_every_variable_and_the_equation_digest(self) -> None:
+        """Bind ordered equation variables, implicit zero initial state and equation digest."""
         public = _spec(equations=["dv/dt = -v + I", "dw/dt = v - w"], init={"v": -65.0})
         assert public["source"] == "ode"
         assert public["equations"]["variables"] == ["v", "w"]
@@ -228,7 +241,10 @@ class TestEffectiveConfiguration:
 
 
 class TestRandomnessContract:
+    """Separate deterministic runs, seeded replay and independently drawn fresh trials."""
+
     def test_seed_on_a_deterministic_model_is_refused(self) -> None:
+        """Reject seeds when neither the model nor its equations declare randomness."""
         with pytest.raises(ExperimentRejected) as info:
             resolve_model_experiment({"name": "AdExNeuron", "seed": 3})
         assert info.value.field == "seed"
@@ -236,28 +252,34 @@ class TestRandomnessContract:
             resolve_ode_experiment({"equations": ["dv/dt = -v"], "seed": 3})
         assert "xi" in info.value.reason
 
-    def test_seeded_model_replay_uses_the_request_or_default_seed(self) -> None:
+    @pytest.mark.parametrize("seed", [77, 9007199254740993, 9223372036854775807])
+    def test_seeded_model_replay_uses_the_request_or_default_seed(self, seed: int) -> None:
+        """Keep the original seed in both constructor inputs and randomness metadata."""
         default = _spec(name="PoissonNeuron")
         assert default["randomness"]["kind"] == "seeded-model"
         assert default["randomness"]["seed_source"] == "model-default"
         assert default["cache"]["cacheable"] is True
-        requested = resolve_model_experiment({"name": "PoissonNeuron", "seed": 77})
+        model = "PoissonNeuron" if seed == 77 else "SCStochasticRateAdaptationNeuron"
+        requested = resolve_model_experiment({"name": model, "seed": seed})
         assert requested.public["randomness"] == {
             "kind": "seeded-model",
-            "seed": 77,
+            "seed": seed,
             "seed_source": "request",
             "trial": "replay",
             "effective_trial": "replay",
             "generator": "model seed field",
         }
-        assert requested.run_kwargs["param_overrides"] == {"seed": 77}
-        assert requested.public["parameters"]["seed"] == 77
-        via_param = resolve_model_experiment({"name": "PoissonNeuron", "params": {"seed": 77.0}})
-        assert via_param.public["randomness"]["seed"] == 77
+        assert requested.run_kwargs["param_overrides"] == {"seed": seed}
+        assert requested.public["parameters"]["seed"] == seed
+        legacy_seed = 77.0 if seed == 77 else seed
+        via_param = resolve_model_experiment({"name": model, "params": {"seed": legacy_seed}})
+        assert via_param.public["randomness"]["seed"] == seed
+        assert via_param.public["parameters"]["seed"] == seed
         with pytest.raises(ExperimentRejected, match="both"):
             resolve_model_experiment({"name": "PoissonNeuron", "params": {"seed": 1.0}, "seed": 2})
 
     def test_fresh_trial_draws_a_seed_and_is_never_cacheable(self) -> None:
+        """Draw independent in-domain Poisson seeds while keeping deterministic trials replayable."""
         first = resolve_model_experiment({"name": "PoissonNeuron", "trial": "fresh"})
         second = resolve_model_experiment({"name": "PoissonNeuron", "trial": "fresh"})
         assert first.public["randomness"]["seed_source"] == "drawn"
@@ -271,6 +293,7 @@ class TestRandomnessContract:
         assert deterministic.cacheable is True
 
     def test_fresh_trials_of_a_seeded_model_are_independent_and_replayable(self) -> None:
+        """Reproduce a fresh Poisson trace by its recorded seed and distinguish another seed."""
         first = run_experiment(
             resolve_model_experiment({"name": "PoissonNeuron", "duration": 200.0, "trial": "fresh"})
         )
@@ -288,6 +311,7 @@ class TestRandomnessContract:
         assert other["spikes"] != first["spikes"]
 
     def test_playground_noise_is_seeded_per_run_not_process_global(self) -> None:
+        """Replay the sealed noise trace without reading or consuming NumPy's global RNG."""
         spec = resolve_ode_experiment({"equations": NOISY, "duration": 5.0, "seed": 11})
         assert spec.public["randomness"] == {
             "kind": "diffusion-noise",
@@ -319,6 +343,7 @@ class TestRandomnessContract:
         assert np.random.randn() == expected_next
 
     def test_playground_replay_without_seed_uses_the_documented_default(self) -> None:
+        """Use the documented default noise seed and distinguish uncached fresh draws."""
         spec = resolve_ode_experiment({"equations": NOISY, "duration": 2.0})
         assert spec.public["randomness"]["seed"] == DEFAULT_NOISE_SEED
         assert spec.public["randomness"]["seed_source"] == "playground-default"
@@ -331,6 +356,7 @@ class TestRandomnessContract:
         assert fresh.cacheable is False
 
     def test_deterministic_replay_is_bit_identical_and_json_portable(self) -> None:
+        """Reproduce the full deterministic trace and serialize its experiment without non-finite values."""
         spec = resolve_model_experiment(
             {"name": ATIF, "duration": 20.0, "protocol": "sine", "frequency_hz": 33.0}
         )

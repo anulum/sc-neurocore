@@ -428,7 +428,9 @@ itself and never substitutes a default:
   model; private state, derived (`init=False`) fields, factory-initialised
   fields and non-numeric fields (integrator or profile literals, arrays) are
   rejected with the reason;
-- integer fields reject fractional values; integer-drive models reject
+- integer constructor fields preserve exact Python/NumPy integers without a
+  floating-point conversion, including seeds above 2^53; fractional values
+  are rejected and model-specific seed domains still apply. Integer-drive models reject
   protocols whose samples are not integral;
 - a model with a fixed class-level step (for example `IntegerQIFNeuron`,
   1.0 ms) accepts only that `dt`; a model without any timestep accepts only the
@@ -1103,6 +1105,11 @@ and writable initial-state controls; integer fields advance in whole steps.
 Observed fields such as Poisson's `rng_state` remain visible as read-only state
 and in simulation results. They are never added to constructor overrides.
 If constructor metadata is unavailable, model fields stay read-only.
+
+Opening a saved model project or local session reloads its catalogue detail
+without replacing saved parameters, timestep or seed with defaults. Export
+waits for that detail. A reply from an earlier restored model cannot replace
+a later selection; a failed current read is reported before the model runs.
 
 The timestep uses the run's `dt` field. Model detail identifies its bound
 constructor field as `timestep_parameter`, including profile-declared aliases

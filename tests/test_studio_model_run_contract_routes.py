@@ -122,15 +122,31 @@ def test_graph_execution_fault_is_an_authored_refusal(client: TestClient, route:
 
 
 @pytest.mark.parametrize("route", ["/api/models/simulate", "/api/export/svg"])
-def test_existing_model_rule_arrives_verbatim(client: TestClient, route: str) -> None:
+@pytest.mark.parametrize("seed", [None, 9007199254740993, 9223372036854775807])
+def test_existing_model_rule_arrives_verbatim(
+    client: TestClient, route: str, seed: int | None
+) -> None:
     """Deliberate parameter validation retains the original public rule."""
+    model = "AdaptiveThresholdIFNeuron" if seed is None else "PoissonNeuron"
     response = client.post(
-        route, json={"model_name": "AdaptiveThresholdIFNeuron", "params": {"dt": 0.1}}
+        route, json={"model_name": model, "params": {"dt": 0.1} if seed is None else {"seed": seed}}
     )
     assert response.status_code == 422
     detail = response.json()["detail"]
-    assert detail["field"] == "params.dt"
-    assert detail["reason"] == "the timestep is set through the dt field, not a parameter override"
+    if seed is None:
+        assert detail["field"] == "params.dt"
+        assert (
+            detail["reason"] == "the timestep is set through the dt field, not a parameter override"
+        )
+    else:
+        if route == "/api/export/svg":
+            assert detail["field"] == "constructor"
+            assert detail["reason"] == "model constructor rejected the supplied parameters"
+        else:
+            assert detail["field"] == "seed"
+            assert (
+                detail["reason"] == f"PoissonNeuron accepts a seed in [0, 65535]; received {seed}"
+            )
 
 
 def test_invalid_model_signature_metadata_has_an_authored_http_reason(

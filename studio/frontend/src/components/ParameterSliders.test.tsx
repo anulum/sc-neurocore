@@ -82,7 +82,7 @@ describe("sliderBounds", () => {
     const [lo, hi, step] = sliderBounds(20, [1, 100]);
     expect(lo).toBe(1);
     expect(hi).toBe(100);
-    expect(step).toBeCloseTo(99 / 200);
+    expect(step).toBe("any");
   });
 
   it("falls back to the value heuristic when no range is given", () => {
@@ -97,9 +97,9 @@ describe("sliderBounds", () => {
     expect(sliderBounds(5, [9, 1])).toEqual(heuristic);
   });
 
-  it("keeps a positive step for a zero-width admissible interval guard", () => {
+  it("keeps narrow floating-point intervals continuous instead of quantising them", () => {
     const [, , step] = sliderBounds(0, [0, 0.000001]);
-    expect(step).toBeGreaterThan(0);
+    expect(step).toBe("any");
   });
 });
 

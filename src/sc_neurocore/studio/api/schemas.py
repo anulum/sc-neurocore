@@ -20,6 +20,8 @@ PositiveFiniteFloat = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=Fa
 StudioProtocol = Literal["constant", "step", "ramp", "pulse", "sine"]
 StudioTrial = Literal["replay", "fresh"]
 ExperimentSeed = Annotated[int, Field(strict=True, ge=0, le=2**63 - 1)]
+# Preserve integer constructor tokens before the model declares their numeric kind.
+ModelParameter = Annotated[int, Field(strict=True)] | FiniteFloat
 
 
 class SimulateRequest(BaseModel):
@@ -66,7 +68,7 @@ class ModelSimulateRequest(BaseModel):
     # surface (fi-curve, characterize, sensitivity, …) and the Studio frontend,
     # which sends ``model_name`` consistently.
     name: str = Field(validation_alias=AliasChoices("name", "model_name"))
-    params: dict[str, FiniteFloat] | None = None
+    params: dict[str, ModelParameter] | None = None
     dt: PositiveFiniteFloat | None = None
     duration: PositiveFiniteFloat = 100.0
     current: FiniteFloat = 10.0

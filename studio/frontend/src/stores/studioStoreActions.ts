@@ -415,6 +415,26 @@ export function createStudioStoreActions(
   let trainingListVersion = 0;
   let modelSelectionVersion = 0;
 
+  /** Fetch restored model metadata without replacing saved inputs with catalogue defaults. */
+  const runRestoredExperiment = (): void => {
+    const version = ++modelSelectionVersion;
+    const { sourceMode, selectedModelName } = get();
+    if (sourceMode !== "model") {
+      void get().runSimulation();
+      return;
+    }
+    set({ modelDetail: null });
+    void fetchModelDetail(selectedModelName).then((detail) => {
+      if (version !== modelSelectionVersion) return;
+      set({ modelDetail: detail });
+      void get().runSimulation();
+    }).catch((error: unknown) => {
+      if (version === modelSelectionVersion) {
+        set(studioProjectFailureState(error, "Restored model details could not be loaded"));
+      }
+    });
+  };
+
   const observeTrainingStream = (jobId: string): void => {
     trainingStream?.close();
     const version = trainingSelectionVersion;
@@ -1150,7 +1170,7 @@ export function createStudioStoreActions(
         ...compilerConfigurationInvalidatedState(),
         projectRevision: studioProjectRevisionFromLoadResponse(data, name),
       });
-      void get().runSimulation();
+      runRestoredExperiment();
     } catch (e) { set(studioProjectFailureState(e, "Project load failed")); }
   },
 
@@ -1734,7 +1754,7 @@ export function createStudioStoreActions(
         ...restored,
         ...compilerConfigurationInvalidatedState(),
       });
-      void get().runSimulation();
+      runRestoredExperiment();
     } catch (error) {
       set(studioProjectFailureState(error, "Failed to restore the saved session"));
     }

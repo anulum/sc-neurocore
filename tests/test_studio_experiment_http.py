@@ -257,24 +257,54 @@ class TestOpenApiContract:
 
 
 @pytest.mark.parametrize("seed", [9007199254740993, 9223372036854775807])
+@pytest.mark.parametrize("source", ["ode", "model", "legacy-model"])
 def test_full_domain_diffusion_seed_runs_seals_and_exports_through_real_http(
-    client: TestClient, seed: int
+    client: TestClient, seed: int, source: str
 ) -> None:
-    """Keep exact input digits through execution, evidence custody, cache and replay export."""
-    body = {"equations": NOISY, "duration": 3.0, "seed": seed}
-    response = client.post(ODE, json=body)
+    """Bind exact RNG identity to actual model/ODE execution, cache and replay packs."""
+    body: dict[str, Any]
+    if source == "ode":
+        body = {"equations": NOISY, "duration": 3.0, "seed": seed}
+    else:
+        body = {
+            "model_name": "SCStochasticRateAdaptationNeuron",
+            "duration": 200.0,
+            "current": 10.0,
+            "seed": seed,
+        }
+        if source == "legacy-model":
+            body.pop("seed")
+            body["params"] = {"seed": seed}
+    route = ODE if source == "ode" else MODEL
+    response = client.post(route, json=body)
     assert response.status_code == 200, response.text
     run = response.json()
     assert run["experiment"]["randomness"]["seed"] == seed
     assert isinstance(run["evidence_receipt"], dict)
-    replay = client.post(ODE, json=body)
+    if source != "ode":
+        from sc_neurocore.neurons.models.sc_stochastic_rate_adaptation import (
+            SCStochasticRateAdaptationNeuron,
+        )
+
+        reference = SCStochasticRateAdaptationNeuron(seed=seed)
+        expected = [index for index in range(run["n_steps"]) if reference.step(10.0)]
+        assert run["raw"]["spike_indices"] == expected
+        assert run["effective_inputs"]["parameters"]["seed"] == seed
+        assert run["experiment"]["parameters"]["seed"] == seed
+    replay = client.post(route, json=body)
     assert replay.status_code == 200, replay.text
+    assert replay.json()["cache"]["hit"] is True
     assert replay.json()["raw"] == run["raw"]
-    exported = client.post("/api/export/replay-pack", json={"mode": "ode", **body})
+    exported = client.post(
+        "/api/export/replay-pack", json={"mode": "ode" if source == "ode" else "model", **body}
+    )
     assert exported.status_code == 200, exported.text
     pack = exported.json()
-    assert pack["request"]["seed"] == seed
+    assert pack["request"].get("seed", pack["request"].get("params", {}).get("seed")) == seed
     assert pack["experiment"]["randomness"]["seed"] == seed
+    from sc_neurocore.studio.replay_pack import replay_pack
+
+    assert replay_pack(pack)["verdict"] == "match"
 
 
 def test_ode_coefficient_named_seed_keeps_its_float64_domain(client: TestClient) -> None:

@@ -10,14 +10,14 @@ import { createStore } from "zustand/vanilla";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ModelDetail } from "../api/client";
-import { fetchModelDetail, fetchReplayPack } from "../api/client";
+import { fetchModelDetail, fetchReplayPack, loadProject } from "../api/client";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
 import type { StudioState } from "./studioTypes";
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual<typeof import("../api/client")>("../api/client");
-  return { ...actual, fetchModelDetail: vi.fn(), fetchReplayPack: vi.fn() };
+  return { ...actual, fetchModelDetail: vi.fn(), fetchReplayPack: vi.fn(), loadProject: vi.fn() };
 });
 
 /** Build the contract fields consumed by model selection in this test. */
@@ -28,11 +28,79 @@ function detail(name: string, parameter: string): ModelDetail {
     integration_method: "euler",
     compile_configuration: null,
     params: [{ name: parameter, default: 1 }],
+    parameter_kinds: { [parameter]: "float" },
     state_vars: [],
   } as unknown as ModelDetail;
 }
 
 describe("Studio model selection", () => {
+  it.each(["session", "project"] as const)("loads restored %s metadata while keeping the saved constructor, clock and exact seed", async (source) => {
+    const store = createStore<StudioState>((set, get) => ({
+      ...studioInitialData, ...createStudioStoreActions(set, get),
+    }));
+    const runSimulation = vi.fn(() => Promise.resolve());
+    vi.mocked(fetchModelDetail).mockResolvedValue(detail("SCStochasticRateAdaptationNeuron", "tau_a"));
+    const state = {
+      sourceMode: "model", selectedModelName: "SCStochasticRateAdaptationNeuron",
+      modelParams: { tau_a: 37 }, dt: 0.5, duration: 20, seed: 9223372036854775807n,
+    };
+    store.setState({ runSimulation, savedSessions: [{ name: "saved", state }] });
+    if (source === "project") {
+      vi.mocked(loadProject).mockResolvedValue({ revision: 1, state });
+      await store.getState().loadProjectFromServer("saved");
+    } else store.getState().loadSession("saved");
+    await vi.waitFor(() => { expect(runSimulation).toHaveBeenCalledOnce(); });
+    expect(store.getState().modelDetail?.name).toBe("SCStochasticRateAdaptationNeuron");
+    expect(store.getState().modelParams).toEqual({ tau_a: 37 });
+    expect(store.getState().dt).toBe(0.5);
+    expect(store.getState().seed).toBe(9223372036854775807n);
+  });
+
+  it.each(["success", "failure"] as const)("ignores a late restored metadata %s after a new selection", async (outcome) => {
+    let resolveOld: (value: ModelDetail) => void = () => { throw new Error("No pending read"); };
+    let rejectOld: (error: Error) => void = () => { throw new Error("No pending read"); };
+    const old = new Promise<ModelDetail>((resolve, reject) => { resolveOld = resolve; rejectOld = reject; });
+    vi.mocked(fetchModelDetail).mockImplementation((name) => name === "SCStochasticRateAdaptationNeuron"
+      ? old : Promise.resolve(detail(name, "tau_w")));
+    const store = createStore<StudioState>((set, get) => ({
+      ...studioInitialData, ...createStudioStoreActions(set, get),
+    }));
+    const runSimulation = vi.fn(() => Promise.resolve());
+    store.setState({ runSimulation, savedSessions: [{ name: "saved", state: {
+      sourceMode: "model", selectedModelName: "SCStochasticRateAdaptationNeuron", seed: 42,
+    } }] });
+    store.getState().loadSession("saved");
+    await store.getState().selectModel("AdExNeuron");
+    if (outcome === "success") {
+      resolveOld(detail("SCStochasticRateAdaptationNeuron", "tau_a"));
+      await old;
+    } else {
+      rejectOld(new Error("Earlier metadata read failed"));
+      await expect(old).rejects.toThrow("Earlier metadata read failed");
+    }
+    expect(store.getState().modelDetail?.name).toBe("AdExNeuron");
+    expect(store.getState().modelParams).toEqual({ tau_w: 1 });
+    expect(store.getState().seed).toBeNull();
+    expect(store.getState().error).toBeNull();
+    expect(runSimulation).toHaveBeenCalledOnce();
+  });
+
+  it("reports a failed restored metadata read before running an unbound model", async () => {
+    vi.mocked(fetchModelDetail).mockRejectedValue(new Error("Model contract unavailable"));
+    const store = createStore<StudioState>((set, get) => ({
+      ...studioInitialData, ...createStudioStoreActions(set, get),
+    }));
+    const runSimulation = vi.fn(() => Promise.resolve());
+    store.setState({ runSimulation, savedSessions: [{ name: "saved", state: {
+      sourceMode: "model", selectedModelName: "SCStochasticRateAdaptationNeuron", seed: 42,
+    } }] });
+    store.getState().loadSession("saved");
+    await vi.waitFor(() => { expect(store.getState().error).toContain("Model contract unavailable"); });
+    expect(store.getState().modelDetail).toBeNull();
+    expect(store.getState().seed).toBe(42);
+    expect(runSimulation).not.toHaveBeenCalled();
+  });
+
   it("keeps the last selected model when an older detail response arrives later", async () => {
     const replies = new Map<string, (value: ModelDetail) => void>();
     vi.mocked(fetchModelDetail).mockImplementation(
