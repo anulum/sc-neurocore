@@ -8,11 +8,13 @@
 
 """Verify public source extraction, call signatures and API-reference freshness."""
 
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-from scripts import generate_docs
 from scripts.generate_docs import (
     build_markdown,
     check_markdown,
@@ -170,31 +172,121 @@ def test_repo_api_reference_stays_fresh() -> None:
     assert main(["--check"]) == 0
 
 
-def test_main_reports_stale_reference(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """``--check`` must return a non-zero code and an error line when stale."""
-    monkeypatch.setattr(generate_docs, "check_markdown", lambda src, out: False)
+def _cli_project(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Place the actual CLI and validation module in an isolated project layout.
 
-    exit_code = main(["--check"])
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Owned temporary directory outside the shared checkout.
 
-    assert exit_code == 1
-    assert "::error::" in capsys.readouterr().out
+    Returns
+    -------
+    tuple of pathlib.Path
+        Script, validation source and expected script-relative output path.
+    """
+    repo = Path(__file__).resolve().parents[1]
+    project = tmp_path / "project with spaces"
+    (project / "docs").mkdir(parents=True)
+    script = project / "scripts/generate_docs.py"
+    source = project / "src/sc_neurocore/_native/learning_validation.py"
+    for relative in (script.relative_to(project), source.relative_to(project)):
+        destination = project / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((repo / relative).read_bytes())
+    return script, source, project / "docs/API_REFERENCE.md"
 
 
-def test_main_regenerates_reference_by_default(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    """The default action must regenerate the reference at the resolved paths."""
-    src_dir = _write_documented_source(tmp_path)
-    output = tmp_path / "API_REFERENCE.md"
-    monkeypatch.setattr(generate_docs, "_default_paths", lambda: (src_dir, output))
+def _run_generator(script: Path, cwd: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
+    """Execute the actual command from outside its project root.
 
-    exit_code = main([])
+    Parameters
+    ----------
+    script : pathlib.Path
+        Unmodified production generator in its isolated project layout.
+    cwd : pathlib.Path
+        Unrelated working directory, which must not determine source or output.
+    *arguments : str
+        Public CLI arguments.
 
-    assert exit_code == 0
-    assert output.exists()
-    assert "SC-NeuroCore API Reference" in output.read_text(encoding="utf-8")
+    Returns
+    -------
+    subprocess.CompletedProcess[str]
+        Actual exit status and captured output, including CLI error lines.
+    """
+    return subprocess.run(
+        [sys.executable, str(script), *arguments],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=15,
+    )
+
+
+@pytest.mark.parametrize("state", ["missing", "output-drift", "source-drift"])
+def test_main_reports_stale_reference(tmp_path: Path, state: str) -> None:
+    """The real CLI rejects missing or stale docs without creating or rewriting them."""
+    script, source, output = _cli_project(tmp_path)
+    if state != "missing":
+        generated = _run_generator(script, tmp_path)
+        assert generated.returncode == 0, generated.stdout + generated.stderr
+        if state == "output-drift":
+            output.write_text(output.read_text(encoding="utf-8") + "drift\n", encoding="utf-8")
+        else:
+            original = source.read_text(encoding="utf-8")
+            changed = original.replace(
+                "Return an integer after rejecting booleans and non-integral values.",
+                "Validate the updated integer contract.",
+            )
+            assert changed != original
+            source.write_text(changed, encoding="utf-8")
+        os.utime(output, ns=(1_000_000_000, 1_000_000_000))
+    before = (output.read_bytes(), output.stat().st_mtime_ns) if output.exists() else None
+
+    checked = _run_generator(script, tmp_path, "--check")
+
+    assert checked.returncode == 1, checked.stdout + checked.stderr
+    assert f"::error::{output} is stale;" in checked.stdout
+    assert checked.stderr == ""
+    after = (output.read_bytes(), output.stat().st_mtime_ns) if output.exists() else None
+    assert after == before
+
+
+@pytest.mark.parametrize("state", ["missing", "output-drift"])
+def test_main_regenerates_reference_by_default(tmp_path: Path, state: str) -> None:
+    """The real default command creates or replaces docs at its script-relative root."""
+    script, _, output = _cli_project(tmp_path)
+    if state == "output-drift":
+        output.write_text("stale reference\n", encoding="utf-8")
+
+    generated = _run_generator(script, tmp_path)
+
+    assert generated.returncode == 0, generated.stdout + generated.stderr
+    assert str(output) in generated.stdout
+    rendered = output.read_text(encoding="utf-8")
+    assert "SC-NeuroCore API Reference" in rendered
+    assert "### Function `require_integral(*, name, value)`" in rendered
+    assert "stale reference" not in rendered
+    checked = _run_generator(script, tmp_path, "--check")
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+    assert f"{output} is up to date" in checked.stdout
+
+
+def test_main_checks_fresh_reference_without_writing(tmp_path: Path) -> None:
+    """Fresh-check success preserves both generated bytes and the actual file mtime."""
+    script, _, output = _cli_project(tmp_path)
+    generated = _run_generator(script, tmp_path)
+    assert generated.returncode == 0, generated.stdout + generated.stderr
+    os.utime(output, ns=(1_000_000_000, 1_000_000_000))
+    before = (output.read_bytes(), output.stat().st_mtime_ns)
+
+    checked = _run_generator(script, tmp_path, "--check")
+
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+    assert f"{output} is up to date" in checked.stdout
+    assert checked.stderr == ""
+    assert (output.read_bytes(), output.stat().st_mtime_ns) == before
 
 
 @pytest.mark.parametrize(
