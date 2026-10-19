@@ -29,6 +29,7 @@ def compile_to_datapath(
     rounding: str = "truncate",
     param_ports: Sequence[str] = (),
     function_lowering: str = "lut-v1",
+    random_precision: str = "standard",
 ) -> str:
     """Compile an EquationNeuron to a **combinational** processing element.
 
@@ -73,7 +74,8 @@ def compile_to_datapath(
     ``"truncate"``, ``"nearest"``, or ``"bankers"``; ``"stochastic"`` is
     rejected because the PE has no caller-owned product-rounding LFSR.
     ``function_lowering`` selects ``"lut-v1"`` (default) or the ``"v2"``
-    function units, as for :func:`compile_to_verilog`.
+    function units, and ``random_precision`` the ``"standard"`` (default) or
+    ``"exact"`` ``randn()``, as for :func:`compile_to_verilog`.
     """
     if not signed:
         raise NotImplementedError(
@@ -93,14 +95,7 @@ def compile_to_datapath(
         raise TypeError("param_ports entries must all be strings")
     if len(normalised_param_ports) != len(set(normalised_param_ports)):
         raise ValueError("param_ports must not contain duplicates")
-    q = Q88(
-        data_width=data_width,
-        fraction=fraction,
-        signed=signed,
-        overflow=overflow,
-        rounding=rounding,
-        function_lowering=function_lowering,
-    )
+    q = Q88(data_width, fraction, signed, overflow, rounding, function_lowering, random_precision)
 
     if neuron.dt != 0.0:
         dt_quantised = int(round(neuron.dt * (1 << fraction)))

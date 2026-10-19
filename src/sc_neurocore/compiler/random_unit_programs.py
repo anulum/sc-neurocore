@@ -30,10 +30,12 @@ from __future__ import annotations
 
 from functools import cache
 
+from . import exact_normal as xn
 from . import function_units as fu
 from . import random_units as ru
 from .function_unit_ir import Program
 from .function_unit_programs import (
+    _abs,
     _isqrt,
     _log2_internal,
     _saturate,
@@ -42,7 +44,7 @@ from .function_unit_programs import (
 )
 
 _MASK = (1 << 32) - 1
-KINDS = ("rand", "randn", "poisson", "poisson_grid")
+KINDS = ("rand", "randn", "randn_exact", "poisson", "poisson_grid")
 EXTERNS = ("step", "seed", "stream")
 
 
@@ -100,6 +102,116 @@ def _randn(p: Program, site: int, data_width: int, fraction: int) -> str:
     turn = p.shr(word1, 2)
     cosine = _turn_sine(p, p.mask(p.add(turn, p.const(1 << (fu.B - 2))), fu.B))
     return _saturate(p, _shift_round(p, p.mul(radius, cosine), fraction - 58), data_width)
+
+
+def _mul60(p: Program, a: str, b: str) -> str:
+    """``(a·b) >> 60`` of two non-negative values below ``2**62``, as :func:`exact_normal.mul60`."""
+    a1, a0 = p.shr(a, 31), p.mask(a, 31)
+    b1, b0 = p.shr(b, 31), p.mask(b, 31)
+    cross = p.add(p.shr(p.mul(a1, b0), 1), p.shr(p.mul(a0, b1), 1))
+    return p.add(p.shl(p.mul(a1, b1), 2), p.shr(p.add(cross, p.shr(p.mul(a0, b0), 32)), 28))
+
+
+def _top_bit(p: Program, value: str) -> str:
+    """Index of the highest set bit of a positive value below ``2**63`` (0 for 0), by halving."""
+    position, rest = p.const(0), value
+    for step in (32, 16, 8, 4, 2, 1):
+        shifted = p.shr(rest, step)
+        above = p.lt(p.const(0), shifted)
+        rest = p.select(above, shifted, rest)
+        position = p.add(position, p.select(above, p.const(step), p.const(0)))
+    return position
+
+
+def _shift_signed(p: Program, value: str, amount: str) -> str:
+    """``value << amount`` for a non-negative amount, ``value >> -amount`` otherwise.
+
+    Both shifts are formed with the other direction's amount clamped to 0, so the
+    branch that is not selected never shifts a large value left.
+    """
+    zero = p.const(0)
+    negative = p.lt(amount, zero)
+    left = p.select(negative, zero, amount)
+    right = p.select(negative, p.neg(amount), zero)
+    return p.shr_var(p.shl_var(value, left), right)
+
+
+def _randn_exact(p: Program, site: int, data_width: int, fraction: int) -> str:
+    word0, word1, _, _ = _philox(p, site)
+    one = p.const(xn.ONE)
+    zero = p.const(0)
+    ln2_58, two_pi_38 = xn.tables()["const"]
+    # -ln u near u = 1: the series in x = 1 - u (s at fraction 59).
+    distance = p.sub(p.const((1 << 32) - 1), word0)
+    x = p.shl(distance, 28)
+    acc = p.const(xn.ONE // 6)
+    for divisor in (5, 4, 3, 2):
+        acc = p.add(p.const(xn.ONE // divisor), _mul60(p, x, acc))
+    near = _mul60(p, x, p.add(one, _mul60(p, x, acc)))
+    # -ln u elsewhere: mantissa, table point, ln(1 + r) to r^5/5 (s at fraction 57).
+    n = p.add(word0, p.const(1))
+    e_n = _top_bit(p, n)
+    m = p.shl_var(n, p.sub(p.const(xn.F), e_n))
+    point = p.mask(p.shr(m, xn.F - 8), 8)
+    r = p.sub(_mul60(p, m, p.lookup("xn_log", point, 1)), one)
+    r = p.select(p.lt(r, zero), zero, r)
+    acc = p.const(xn.ONE // 5)
+    for divisor in (4, 3, 2, 1):
+        acc = p.sub(p.const(xn.ONE // divisor), _mul60(p, r, acc))
+    ln_m = p.add(p.lookup("xn_log", point, 0), _mul60(p, r, acc))
+    far = p.sub(p.mul(p.sub(p.const(32), e_n), p.const(ln2_58)), p.shr(ln_m, 2))
+    far = p.select(p.lt(far, zero), zero, far)
+    is_near = p.lt(distance, p.const(xn.NEAR_ONE_WORDS))
+    s = p.select(is_near, near, far)
+    s_fraction = p.select(is_near, p.const(59), p.const(57))
+    # sqrt(s) at fraction 58: s = 4**e m, m in [1, 4); three inverse-square-root Newton steps.
+    e = p.shr(p.sub(_top_bit(p, s), s_fraction), 1)
+    mantissa = _shift_signed(p, s, p.sub(p.sub(p.const(xn.F), s_fraction), p.shl(e, 1)))
+    index = p.sub(p.shr(mantissa, 54), p.const(64))
+    y = p.lookup("xn_rsqrt", p.select(p.lt(index, zero), zero, index), 0)
+    three = p.const(3 * xn.ONE)
+    for _ in range(3):
+        y = p.shr(_mul60(p, y, p.sub(three, _mul60(p, mantissa, _mul60(p, y, y)))), 1)
+    root = _mul60(p, mantissa, y)
+    radius = _shift_signed(p, root, p.sub(e, p.const(2)))
+    radius = p.select(p.eq(s, zero), zero, radius)
+    # cos(2π word1 / 2**32): quadrant, 256 segments, Taylor remainder.
+    quadrant = p.shr(word1, 30)
+    within = p.mask(word1, 30)
+    segment = p.shr(within, 22)
+    b = p.shr(p.mul(p.mask(within, 22), p.const(two_pi_38)), 10)
+    b2 = _mul60(p, b, b)
+    b3 = _mul60(p, b, b2)
+    cos_b = p.add(p.sub(one, p.shr(b2, 1)), p.div(_mul60(p, b2, b2), p.const(24)))
+    sin_b = p.add(p.sub(b, p.div(b3, p.const(6))), p.div(_mul60(p, b3, b2), p.const(120)))
+    cos_k, sin_k = p.lookup("xn_trig", segment, 0), p.lookup("xn_trig", segment, 1)
+    cos = p.sub(_mul60(p, cos_k, cos_b), _mul60(p, sin_k, sin_b))
+    sin = p.add(_mul60(p, sin_k, cos_b), _mul60(p, cos_k, sin_b))
+    turn_cos = p.select(
+        p.eq(quadrant, zero),
+        cos,
+        p.select(
+            p.eq(quadrant, p.const(1)),
+            p.neg(sin),
+            p.select(p.eq(quadrant, p.const(2)), p.neg(cos), sin),
+        ),
+    )
+    # One rounding to the output fraction, ties away from zero, then saturation.
+    magnitude = _mul60(p, radius, _abs(p, turn_cos))
+    shift = 58 - fraction
+    rounded = p.shr(p.add(magnitude, p.const(1 << (shift - 1))), shift)
+    value = p.select(p.lt(turn_cos, zero), p.neg(rounded), rounded)
+    return _saturate(p, value, data_width)
+
+
+def _exact_tables() -> dict[str, tuple[tuple[int, int, int], ...]]:
+    """Return the exact mode's tables as rows of three coefficients."""
+    t = xn.tables()
+    return {
+        "xn_log": tuple(zip(t["ln"], t["recip"], (0,) * 256, strict=True)),
+        "xn_trig": tuple(zip(t["cos"], t["sin"], (0,) * 256, strict=True)),
+        "xn_rsqrt": tuple((y, 0, 0) for y in t["rsqrt"]),
+    }
 
 
 def _grid_tables() -> dict[str, tuple[tuple[int, int, int], ...]]:
@@ -187,6 +299,12 @@ def program(
         ru.poisson_thresholds(lam)  # range check before any step is built
         p = Program(tables={})
         p.output = _poisson(p, site, data_width, fraction, lam)
+        return p
+    if kind == "randn_exact":
+        # check_format limits words to 32 bits, so the fraction is below 58, where
+        # the unit rounds from.
+        p = Program(tables=_exact_tables())
+        p.output = _randn_exact(p, site, data_width, fraction)
         return p
     p = Program(tables={name: fu.table(name) for name in fu.SEGMENT_BITS})
     build = _rand if kind == "rand" else _randn

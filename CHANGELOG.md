@@ -10,6 +10,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `randn()` can be lowered at full precision: `random_precision="exact"`
+  (on `compile_to_verilog`, `compile_to_datapath`, the bit-true C and Rust
+  kernels, `hardware_numeric_contract` and `--random-precision exact` in the
+  CLI) computes the Box–Muller transform with 60-bit internals and rounds
+  once, so every code is within 0.5 LSB + `2^(fraction-45)` of the exact
+  value (0.50002 LSB at Q3.29, where the standard unit can be 32.5 LSB away).
+  The standard unit stays the default and its RTL is unchanged.
+
 - The FPGA network compiler learns: `ConnectionSpec(plasticity=STDPRule(...))`
   applies trace-based pair STDP (the rule of `Projection.update_plasticity`) in
   the network's fixed-point format, in the direct and the folded

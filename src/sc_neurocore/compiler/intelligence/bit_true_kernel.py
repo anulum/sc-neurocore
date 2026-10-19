@@ -86,6 +86,7 @@ def kernel_arithmetic_contract(
     method: str = "euler",
     function_lowering: str = "lut-v1",
     random_draws: tuple[int, int] | None = None,
+    random_precision: str = "standard",
 ) -> dict[str, object]:
     """State the fixed-point arithmetic a generated neuron kernel performs.
 
@@ -113,6 +114,8 @@ def kernel_arithmetic_contract(
     function_lowering : str
         ``"lut-v1"`` (look-up tables) or ``"v2"`` (integer function units): the
         lowering whose transcendentals are described.
+    random_precision : str
+        ``"standard"`` or ``"exact"``: the ``randn()`` lowering described.
     random_draws : tuple of int, optional
         ``(seed, stream)`` of a neuron that calls ``rand``, ``randn`` or
         ``poisson``; ``None`` when it draws nothing.
@@ -238,7 +241,7 @@ def kernel_arithmetic_contract(
             f"one signed {data_width}-bit word per step ({c_word_type(data_width)}), "
             "held for the whole step"
         ),
-        "randomness": _randomness(random_draws),
+        "randomness": _randomness(random_draws, random_precision),
         "identity_evidence": (
             "the generated kernel mirrors the compile_to_verilog RTL; the Icarus "
             "Verilog co-simulation test checks equal per-cycle traces on the stimuli "
@@ -281,7 +284,16 @@ def _transcendentals(function_lowering: str, data_width: int, fraction: int) -> 
     )
 
 
-def _randomness(random_draws: tuple[int, int] | None) -> str:
+_RANDN_PRECISION = {
+    "standard": "30-bit internals, within 0.5 LSB + 2**-24 of the model's value",
+    "exact": (
+        "60-bit internals (exact_normal) and one rounding to nearest, within "
+        "0.5 LSB + 2**-45 of the exact transform"
+    ),
+}
+
+
+def _randomness(random_draws: tuple[int, int] | None, precision: str = "standard") -> str:
     """Describe the counter-based draws of a neuron, or their absence."""
     if random_draws is None:
         return (
@@ -293,7 +305,7 @@ def _randomness(random_draws: tuple[int, int] | None) -> str:
         f"counter-based Philox4x32-10 keyed by seed {seed}, counter (call site, step, "
         f"stream {stream}); the step counter is reset to 0 and advances once per step; "
         "rand() = floor(word0 * 2**fraction / 2**32); randn() = integer Box-Muller of "
-        "words 0 and 1, saturated; poisson(lam) = exact inversion of word 0 against "
+        f"words 0 and 1, {_RANDN_PRECISION[precision]}, saturated; poisson(lam) = exact inversion of word 0 against "
         "ceil(2**32 * CDF(k)) for a constant mean in [0, 100]; replayable from seed, stream "
         "and step; the diffusion-noise symbol xi is not supported"
     )
@@ -704,6 +716,7 @@ def generate_bittrue_kernel_from_neuron(
     rounding: str = "truncate",
     language: str = "c",
     function_lowering: str = "lut-v1",
+    random_precision: str = "standard",
 ) -> str:
     """Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
@@ -740,6 +753,8 @@ def generate_bittrue_kernel_from_neuron(
         ``"c"`` (default) or ``"rust"``.
     function_lowering : str
         ``"lut-v1"`` (default) or ``"v2"``; must match the RTL it mirrors.
+    random_precision : str
+        ``"standard"`` (default) or ``"exact"`` ``randn()``; must match the RTL.
 
     Returns
     -------
@@ -758,6 +773,7 @@ def generate_bittrue_kernel_from_neuron(
         overflow=overflow,
         rounding=rounding,
         function_lowering=function_lowering,
+        random_precision=random_precision,
     )
     _validate_modes(q)
     if neuron.method not in KERNEL_METHODS:

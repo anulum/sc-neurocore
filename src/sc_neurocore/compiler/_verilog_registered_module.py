@@ -28,6 +28,7 @@ def compile_to_verilog(
     pipeline_stages: int = 0,
     pipeline_points: list[str] | None = None,
     function_lowering: str = "lut-v1",
+    random_precision: str = "standard",
 ) -> str:
     """Compile an EquationNeuron to synthesizable Verilog RTL.
 
@@ -64,20 +65,16 @@ def compile_to_verilog(
         quadratic tables). Measured errors: ``docs/validation/lut_accuracy_v1.md``
         for ``"lut-v1"``, ``docs/validation/function_units_v2_accuracy.md`` for
         ``"v2"``.
+    random_precision : str, optional
+        ``"standard"`` (default) or ``"exact"`` lowering of ``randn()``
+        (:mod:`sc_neurocore.compiler.exact_normal`).
 
     """
     if not signed:
         raise NotImplementedError(
             "unsigned equation-to-Verilog emission is not supported; signed must be True"
         )
-    q = Q88(
-        data_width=data_width,
-        fraction=fraction,
-        signed=signed,
-        overflow=overflow,
-        rounding=rounding,
-        function_lowering=function_lowering,
-    )
+    q = Q88(data_width, fraction, signed, overflow, rounding, function_lowering, random_precision)
 
     if neuron.dt != 0.0:
         dt_quantised = int(round(neuron.dt * (1 << fraction)))

@@ -543,8 +543,13 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             self.intermediates.append(
                 f"wire signed [{dw - 1}:0] {argument} = {self._value(node.args[0])};"
             )
-        unit = random_program(kind, site, dw, self.q.fraction, lam)
+        unit_kind = (
+            "randn_exact" if kind == "randn" and self.q.random_precision == "exact" else kind
+        )
+        unit = random_program(unit_kind, site, dw, self.q.fraction, lam)
         self.intermediates.append(f"// {kind}() draw, call site {site}")
+        if unit_kind != kind:
+            self.intermediates.append("// exact mode: 60-bit internals (exact_normal)")
         lines, out = emit_verilog(unit, prefix, argument, externs)
         self.intermediates.extend(lines)
         result = f"{prefix}_out"

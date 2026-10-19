@@ -461,7 +461,10 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             argument = f"{prefix}_arg"
             mean = self._value(node.args[0])
             self.statements.append(self._local(argument, f"sc_wrap({mean}, {self.q.data_width})"))
-        unit = random_program(kind, site, self.q.data_width, self.q.fraction, lam)
+        unit_kind = (
+            "randn_exact" if kind == "randn" and self.q.random_precision == "exact" else kind
+        )
+        unit = random_program(unit_kind, site, self.q.data_width, self.q.fraction, lam)
         statements, arrays, out = emit_c(unit, prefix, argument, self.lang, externs)
         self.statements.extend(statements)
         self.tables.update(arrays)

@@ -148,3 +148,32 @@ class TestCompileCLI:
         assert "Q16.16" in verilog
         testbench = (output / "tb_sc_equation_neuron.v").read_text(encoding="utf-8")
         assert "[31:0]" in testbench
+
+    def test_compile_passes_the_exact_random_precision(self, tmp_path: Path) -> None:
+        """``--random-precision exact`` emits the 60-bit randn unit; standard is the default."""
+        outputs = {}
+        for precision in ("standard", "exact"):
+            output = tmp_path / precision
+            with patch(
+                "sys.argv",
+                [
+                    "sc-neurocore",
+                    "compile",
+                    "dv/dt = randn()",
+                    "--method",
+                    "map",
+                    "--data-width",
+                    "32",
+                    "--fraction",
+                    "29",
+                    "--random-precision",
+                    precision,
+                    "-o",
+                    str(output),
+                ],
+            ):
+                assert main() == 0
+            outputs[precision] = (output / "sc_equation_neuron.v").read_text(encoding="utf-8")
+        assert outputs["exact"] != outputs["standard"]
+        assert "exact mode: 60-bit internals" in outputs["exact"]
+        assert "exact mode" not in outputs["standard"]

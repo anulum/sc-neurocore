@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5353
+    "test_files": 5354
   },
   "documentation": {
     "public_pages": [
@@ -5098,6 +5098,7 @@
       "tests/test_evo_substrate/test_variation_mutation_engine.py",
       "tests/test_evo_substrate/variation_support.py",
       "tests/test_evolution_engine_binding_runtime.py",
+      "tests/test_exact_randn.py",
       "tests/test_examples_nir_to_fpga.py",
       "tests/test_examples_pretrained_checkpoint_contract.py",
       "tests/test_exceptions.py",

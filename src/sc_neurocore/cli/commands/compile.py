@@ -70,6 +70,12 @@ def add_compile_commands(
         help="Transcendental lowering: fixed tables (lut-v1) or v2 function units",
     )
     equation.add_argument(
+        "--random-precision",
+        choices=["standard", "exact"],
+        default="standard",
+        help="randn() lowering: 30-bit internals (standard) or 60-bit, 0.5 LSB + 2**-45 (exact)",
+    )
+    equation.add_argument(
         "--rng-seed", type=int, default=None, help="Philox key of rand()/randn()/poisson() draws"
     )
     equation.add_argument(
@@ -369,7 +375,8 @@ def run_compile(args: argparse.Namespace) -> int:
 
     1. **Standard** (default): combinational datapath at the configured
        precision (``--data-width`` / ``--fraction``), integration ``--method``
-       and transcendental ``--function-lowering``. ``--rng-seed`` and
+       and transcendental ``--function-lowering``; ``--random-precision exact``
+       lowers ``randn()`` with 60-bit internals. ``--rng-seed`` and
        ``--random-stream`` key ``rand()``, ``randn()`` and ``poisson()``;
        ``--spike-value`` adds a graded spike output.
     2. **Pipelined** (``--pipeline auto|N``): insert register stages at
@@ -483,6 +490,7 @@ def run_compile(args: argparse.Namespace) -> int:
             pipeline_stages=pipeline_stages,
             pipeline_points=pipeline_points_list,
             function_lowering=args.function_lowering,
+            random_precision=args.random_precision,
         )
 
     print(f"  State variables: {list(neuron.equations.keys())}")

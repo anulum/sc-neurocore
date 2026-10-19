@@ -7490,7 +7490,8 @@ The command supports three compilation modes via CLI flags:
 
 1. **Standard** (default): combinational datapath at the configured
    precision (``--data-width`` / ``--fraction``), integration ``--method``
-   and transcendental ``--function-lowering``. ``--rng-seed`` and
+   and transcendental ``--function-lowering``; ``--random-precision exact``
+   lowers ``randn()`` with 60-bit internals. ``--rng-seed`` and
    ``--random-stream`` key ``rand()``, ``randn()`` and ``poisson()``;
    ``--spike-value`` adds a graded spike output.
 2. **Pipelined** (``--pipeline auto|N``): insert register stages at
@@ -8145,7 +8146,7 @@ RuntimeError
 
 ## Module `compiler._verilog_folded_datapath`
 
-### Function `compile_to_datapath(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, param_ports, function_lowering)`
+### Function `compile_to_datapath(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, param_ports, function_lowering, random_precision)`
 Compile an EquationNeuron to a **combinational** processing element.
 
 State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
@@ -8189,13 +8190,14 @@ datapaths use signed fixed-point arithmetic. Product rounding accepts
 ``"truncate"``, ``"nearest"``, or ``"bankers"``; ``"stochastic"`` is
 rejected because the PE has no caller-owned product-rounding LFSR.
 ``function_lowering`` selects ``"lut-v1"`` (default) or the ``"v2"``
-function units, as for :func:`compile_to_verilog`.
+function units, and ``random_precision`` the ``"standard"`` (default) or
+``"exact"`` ``randn()``, as for :func:`compile_to_verilog`.
 
 ---
 
 ## Module `compiler._verilog_registered_module`
 
-### Function `compile_to_verilog(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, pipeline_stages, pipeline_points, function_lowering)`
+### Function `compile_to_verilog(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, pipeline_stages, pipeline_points, function_lowering, random_precision)`
 Compile an EquationNeuron to synthesizable Verilog RTL.
 
 Parameters
@@ -8231,6 +8233,9 @@ function_lowering : str, optional
     quadratic tables). Measured errors: ``docs/validation/lut_accuracy_v1.md``
     for ``"lut-v1"``, ``docs/validation/function_units_v2_accuracy.md`` for
     ``"v2"``.
+random_precision : str, optional
+    ``"standard"`` (default) or ``"exact"`` lowering of ``randn()``
+    (:mod:`sc_neurocore.compiler.exact_normal`).
 
 ---
 
@@ -8670,6 +8675,93 @@ Returns
 -------
 str
     The complete miter Verilog module.
+
+---
+
+## Module `compiler.exact_normal`
+
+### Function `mul60(a, b)`
+Return ``(a·b) >> 60`` for ``0 <= a, b < 2**62`` with every partial product below ``2**62``.
+
+Parameters
+----------
+a, b : int
+    Non-negative operands at fraction 60 (or any fractions whose sum is 60
+    more than the result's).
+
+Returns
+-------
+int
+    The product shifted right by 60, truncated (the partial shifts lose at
+    most two units of the result).
+
+### Function `tables()`
+Return the tables of the exact mode, at fraction 60.
+
+Returns
+-------
+dict
+    ``ln``: ``ln(1 + k/256)``; ``recip``: ``1/(1 + k/256)``; ``cos``/``sin``:
+    of ``k·(π/2)/256``; ``rsqrt``: ``1/sqrt(1 + (k + 1/2)/64)`` for the 192
+    points of ``&#91;1, 4)``; ``const``: ``ln 2`` at fraction 58 and ``2π·2**38``.
+
+### Function `neg_log_u(word0)`
+Return ``-ln((word0 + 1)/2**32)`` and the fraction of ``s = -2 ln u`` it represents.
+
+Parameters
+----------
+word0 : int
+    Philox word 0.
+
+Returns
+-------
+tuple of int
+    ``(L, fs)``: ``L`` is ``-ln u`` at fraction ``fs + 1``, which is ``s`` at
+    fraction ``fs`` — 59 for the near-one series, 57 otherwise (so that ``L``
+    up to 22.2 still fits 63 bits).
+
+### Function `sqrt_fraction58(s, fraction)`
+Return ``sqrt(s / 2**fraction)`` at fraction 58 by inverse-square-root Newton steps.
+
+Parameters
+----------
+s : int
+    Non-negative input word.
+fraction : int
+    Its fraction (57 or 59).
+
+Returns
+-------
+int
+    The square root at fraction 58 (0 for 0).
+
+### Function `turn_cosine(word1)`
+Return ``cos(2π·word1/2**32)`` at fraction 60 (signed).
+
+Parameters
+----------
+word1 : int
+    Philox word 1, a fraction of a turn.
+
+Returns
+-------
+int
+    The cosine.
+
+### Function `normal_code_exact(word0, word1, data_width, fraction)`
+Return the exact-mode code of ``randn()``: one rounding of the 60-bit transform.
+
+Parameters
+----------
+word0, word1 : int
+    Two Philox words.
+data_width, fraction : int
+    The output format; ``fraction <= 57``.
+
+Returns
+-------
+int
+    The code, rounded to nearest (ties away from zero) and saturated.
 
 ---
 
@@ -9994,6 +10086,8 @@ function_lowering:
     ``"lut-v1"`` or ``"v2"``.
 function_units:
     The function units the datapath instantiates (``v2``).
+random_precision:
+    ``"standard"`` or ``"exact"``: how ``randn()`` is lowered.
 
 - **resolution**()
   - Return the value of one least-significant bit.
@@ -10010,7 +10104,7 @@ function_units:
 - **to_public_dict**()
   - Return the path-free JSON projection.
 
-### Function `hardware_numeric_contract(neuron, q_format, *, overflow, rounding, function_lowering)`
+### Function `hardware_numeric_contract(neuron, q_format, *, overflow, rounding, function_lowering, random_precision)`
 Return what ``neuron``'s generated RTL holds at ``q_format``.
 
 Parameters
@@ -10024,6 +10118,9 @@ overflow, rounding:
 function_lowering:
     ``"lut-v1"`` (default; tables reported in ``lookup_tables``) or ``"v2"``
     (units reported in ``function_units``).
+random_precision:
+    ``"standard"`` (default) or ``"exact"`` lowering of ``randn()``; stated in
+    ``random_precision`` and the arithmetic's ``randomness``.
 
 Returns
 -------
@@ -10222,7 +10319,7 @@ Harnesses that drive a generated kernel (per-step input words, decoded
 state reads) must pass and read exactly this type; it is the type of the
 ``I_t`` step argument and of every ``<state>_out`` field.
 
-### Function `kernel_arithmetic_contract(*, data_width, fraction, overflow, rounding, method, function_lowering, random_draws)`
+### Function `kernel_arithmetic_contract(*, data_width, fraction, overflow, rounding, method, function_lowering, random_draws, random_precision)`
 State the fixed-point arithmetic a generated neuron kernel performs.
 
 The description is derived from the same configuration checks the
@@ -10249,6 +10346,8 @@ method : str
 function_lowering : str
     ``"lut-v1"`` (look-up tables) or ``"v2"`` (integer function units): the
     lowering whose transcendentals are described.
+random_precision : str
+    ``"standard"`` or ``"exact"``: the ``randn()`` lowering described.
 random_draws : tuple of int, optional
     ``(seed, stream)`` of a neuron that calls ``rand``, ``randn`` or
     ``poisson``; ``None`` when it draws nothing.
@@ -10293,7 +10392,7 @@ Returns
 str
     Bit-true kernel source code.
 
-### Function `generate_bittrue_kernel_from_neuron(neuron, module_name, *, data_width, fraction, signed, overflow, rounding, language, function_lowering)`
+### Function `generate_bittrue_kernel_from_neuron(neuron, module_name, *, data_width, fraction, signed, overflow, rounding, language, function_lowering, random_precision)`
 Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
 Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
@@ -10329,6 +10428,8 @@ language : str
     ``"c"`` (default) or ``"rust"``.
 function_lowering : str
     ``"lut-v1"`` (default) or ``"v2"``; must match the RTL it mirrors.
+random_precision : str
+    ``"standard"`` (default) or ``"exact"`` ``randn()``; must match the RTL.
 
 Returns
 -------
@@ -14543,6 +14644,10 @@ function_lowering : str
     How transcendental functions are lowered: ``"lut-v1"`` (default; one
     sample of a fixed table) or ``"v2"`` (range reduction and quadratic
     tables, :mod:`sc_neurocore.compiler.function_units`).
+random_precision : str
+    How ``randn()`` is lowered: ``"standard"`` (default; 30-bit internals,
+    within 0.5 LSB + ``2**-24``) or ``"exact"`` (60-bit internals, within
+    0.5 LSB + ``2**-45``, :mod:`sc_neurocore.compiler.exact_normal`).
 
 - **__post_init__**()
   - Validate the fixed-point geometry and declared arithmetic modes.

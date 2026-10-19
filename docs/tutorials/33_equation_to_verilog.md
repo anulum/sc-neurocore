@@ -310,7 +310,16 @@ summed as a series), saturated to the word. Its code is within half an LSB plus
 the transform's own error, `NORMAL_TRANSFORM_ERROR = 2^-24` (measured, largest
 seen 3.1·10^-8), of the model's value clipped to the word, so at most
 `0.5 + 2^(fraction-24)` LSB: about 0.504 LSB at a 16-bit fraction, but up to
-32.5 LSB at Q3.29; a high fraction gains resolution, not accuracy. `poisson(lam)` inverts the distribution on word 0: the
+32.5 LSB at Q3.29; a high fraction gains resolution, not accuracy. Where the
+full fraction matters, `random_precision="exact"` (on `compile_to_verilog`,
+`compile_to_datapath`, the bit-true kernels, `hardware_numeric_contract` and the
+CLI flag `--random-precision exact`) lowers `randn()` with 60-bit internals
+(`sc_neurocore.compiler.exact_normal`: 31-bit-limb products, a table-and-series
+logarithm, Newton inverse square root, a 32-bit-turn cosine) and rounds once,
+so every code is within `0.5 + 2^(fraction-45)` LSB of the exact transform
+(measured transform error 1.4·10^-14): 0.50002 LSB at Q3.29. It is an option, not
+the default — the unit is larger — and the standard RTL is unchanged. RTL, C
+and Rust equal the integer reference (`tests/test_exact_randn.py`). `poisson(lam)` inverts the distribution on word 0: the
 count is the number of thresholds `ceil(2^32·CDF(k))` at or below the word, so
 the model, the RTL and the kernel return the same count, the exact inversion of
 a 32-bit uniform. Its mean must be a constant in `[0, 100]` in compiled

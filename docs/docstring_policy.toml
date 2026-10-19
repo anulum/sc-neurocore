@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1146
+expected_file_count = 1148
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4677,3 +4677,11 @@ rationale = "Trace-based pair STDP for the FPGA network compiler: the rule, its 
 [[file]]
 path = "tests/test_stdp_network.py"
 rationale = "STDP in the network compiler: direct and folded weights bit for bit with the integer golden, golden versus the network rule, refusals."
+
+[[file]]
+path = "src/sc_neurocore/compiler/exact_normal.py"
+rationale = "randn() at 60-bit internal precision: the integer reference of random_precision=exact, within 0.5 LSB + 2**-45."
+
+[[file]]
+path = "tests/test_exact_randn.py"
+rationale = "Exact randn mode: transform bound, code bound, program equals reference, RTL = C = Rust, standard mode unchanged."

@@ -227,6 +227,8 @@ class HardwareNumericContract:
         ``"lut-v1"`` or ``"v2"``.
     function_units:
         The function units the datapath instantiates (``v2``).
+    random_precision:
+        ``"standard"`` or ``"exact"``: how ``randn()`` is lowered.
 
     """
 
@@ -242,6 +244,7 @@ class HardwareNumericContract:
     lookup_tables: tuple[LookupTable, ...]
     function_lowering: str = "lut-v1"
     function_units: tuple[FunctionUnit, ...] = ()
+    random_precision: str = "standard"
 
     @property
     def resolution(self) -> float:
@@ -298,6 +301,7 @@ class HardwareNumericContract:
             "lookup_tables": [table.to_public_dict() for table in self.lookup_tables],
             "function_lowering": self.function_lowering,
             "function_units": [unit.to_public_dict() for unit in self.function_units],
+            "random_precision": self.random_precision,
             "timing": {
                 "cycles_per_step": 1,
                 "pipeline_latency_cycles": 0,
@@ -323,6 +327,7 @@ def hardware_numeric_contract(
     overflow: str = "saturate",
     rounding: str = "truncate",
     function_lowering: str = "lut-v1",
+    random_precision: str = "standard",
 ) -> HardwareNumericContract:
     """Return what ``neuron``'s generated RTL holds at ``q_format``.
 
@@ -337,6 +342,9 @@ def hardware_numeric_contract(
     function_lowering:
         ``"lut-v1"`` (default; tables reported in ``lookup_tables``) or ``"v2"``
         (units reported in ``function_units``).
+    random_precision:
+        ``"standard"`` (default) or ``"exact"`` lowering of ``randn()``; stated in
+        ``random_precision`` and the arithmetic's ``randomness``.
 
     Returns
     -------
@@ -364,6 +372,7 @@ def hardware_numeric_contract(
             overflow=overflow,
             rounding=rounding,
             function_lowering=function_lowering,
+            random_precision=random_precision,
         )
     except (ValueError, NotImplementedError) as exc:
         arithmetic: dict[str, object] | None = None
@@ -376,6 +385,7 @@ def hardware_numeric_contract(
             rounding=rounding,
             method=neuron.method,
             function_lowering=function_lowering,
+            random_precision=random_precision,
             random_draws=(
                 (neuron.random_seed, neuron.random_stream) if neuron.uses_random_draws else None
             ),
@@ -402,6 +412,7 @@ def hardware_numeric_contract(
             if function_lowering == "v2"
             else ()
         ),
+        random_precision=random_precision,
     )
 
 

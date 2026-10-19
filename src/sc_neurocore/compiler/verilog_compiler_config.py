@@ -16,6 +16,7 @@ from fractions import Fraction
 
 # Transcendental lowerings: "lut-v1" (fixed tables, the default) and "v2" (function units).
 FUNCTION_LOWERINGS = ("lut-v1", "v2")
+RANDOM_PRECISIONS = ("standard", "exact")
 
 
 @dataclass
@@ -68,6 +69,10 @@ class Q88:
         How transcendental functions are lowered: ``"lut-v1"`` (default; one
         sample of a fixed table) or ``"v2"`` (range reduction and quadratic
         tables, :mod:`sc_neurocore.compiler.function_units`).
+    random_precision : str
+        How ``randn()`` is lowered: ``"standard"`` (default; 30-bit internals,
+        within 0.5 LSB + ``2**-24``) or ``"exact"`` (60-bit internals, within
+        0.5 LSB + ``2**-45``, :mod:`sc_neurocore.compiler.exact_normal`).
 
     """
 
@@ -77,6 +82,7 @@ class Q88:
     overflow: str = "saturate"  # saturate | wrap | trap
     rounding: str = "truncate"  # truncate | nearest | bankers | stochastic
     function_lowering: str = "lut-v1"  # lut-v1 | v2
+    random_precision: str = "standard"  # standard | exact (randn only)
 
     def __post_init__(self) -> None:
         """Validate the fixed-point geometry and declared arithmetic modes.
@@ -105,6 +111,10 @@ class Q88:
             raise TypeError(f"overflow must be a string, got {self.overflow!r}")
         if type(self.rounding) is not str:
             raise TypeError(f"rounding must be a string, got {self.rounding!r}")
+        if self.random_precision not in RANDOM_PRECISIONS:
+            raise ValueError(
+                f"random_precision must be one of {RANDOM_PRECISIONS}, got {self.random_precision!r}"
+            )
         if self.function_lowering not in FUNCTION_LOWERINGS:
             raise ValueError(
                 f"function_lowering must be one of {FUNCTION_LOWERINGS}, got {self.function_lowering!r}"
