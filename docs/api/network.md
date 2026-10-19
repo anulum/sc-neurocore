@@ -149,13 +149,20 @@ is empty and the engine can run every model:
    anything besides `v` when stepped (AdEx's `w`, Rulkov's `x` and `y`, a
    refractory counter, a generator), would keep that state at its initial
    value (`rust_dispatch.evolving_state`).
-6. The model name means the same model on both sides: `LapicqueNeuron` is the
+6. No model draws from the process-wide NumPy or standard `random` generator
+   (`StochasticIFNeuron` calls `np.random.randn()`): a native run would not
+   advance it, so every later draw of the caller would differ
+   (`rust_dispatch.draws_process_random`). The probe behind this check and
+   check 5 constructs and steps default neurons inside a generator
+   transaction, so checking, a fallback and a refusal leave the caller's
+   generators exactly where they were.
+7. The model name means the same model on both sides: `LapicqueNeuron` is the
    SC LIF compatibility profile in Python but the 1907 source profile in the
    engine, so it is refused; `SCLapicqueLIFNeuron` is the same on both.
-7. No projection has per-synapse delays, a non-zero `weight_threshold` or
+8. No projection has per-synapse delays, a non-zero `weight_threshold` or
    plasticity (`rust_dispatch.projection_divergences`): the runner takes the
    CSR arrays and one uniform delay.
-8. The Rust engine import succeeded and every `pop.model_name` (or its
+9. The Rust engine import succeeded and every `pop.model_name` (or its
    `*Neuron`-stripped form) is in `NetworkRunner.supported_models()`.
 
 When any of these fails and `backend="auto"`, the network falls back to

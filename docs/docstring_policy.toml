@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1227
+expected_file_count = 1228
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -5001,3 +5001,7 @@ rationale = "Production module brought to the NumPy docstring convention (RIGOR 
 [[file]]
 path = "src/sc_neurocore/neurons/schema_contracts.py"
 rationale = "Production module brought to the NumPy docstring convention (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_rust_dispatch_generator_state.py"
+rationale = "Fresh-interpreter tests that native-dispatch checks keep the caller's generators."

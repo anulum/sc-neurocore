@@ -25759,6 +25759,25 @@ Return whether a neuron sits exactly at the measured quiescent state.
 
 ## Module `network.rust_dispatch`
 
+### Function `draws_process_random(model_name)`
+Return whether a default neuron of this model draws from a process-wide generator.
+
+A native run would not advance NumPy's global generator or the standard
+``random`` one, so every later draw of the caller would differ from a
+Python run; such a model is not dispatched. The probe itself leaves both
+generators exactly as it found them.
+
+Parameters
+----------
+model_name : str
+    The model the bridge would build.
+
+Returns
+-------
+bool
+    True when stepping a default neuron through the probe drive moved
+    either generator.
+
 ### Function `evolving_state(model_name)`
 Return the attributes besides ``v`` a default neuron changes as it steps.
 
@@ -25776,7 +25795,8 @@ tuple of str or None
     again): a drive that never fires leaves an adaptation variable still,
     so the declaration is read as well as the behaviour. ``None`` when the
     model has no descriptor or cannot be built or stepped with a float
-    drive, which counts as a difference.
+    drive, which counts as a difference. The probe leaves the caller's
+    process-wide generators exactly as it found them.
 
 ### Function `population_divergence(population)`
 Return why the native bridge cannot build this population, or ``""``.
@@ -25796,10 +25816,10 @@ str
 Examples
 --------
 >>> from sc_neurocore.network import Population
->>> population_divergence(Population("AdExNeuron", 3))
+>>> population_divergence(Population("SCLapicqueLIFNeuron", 3))
 ''
->>> population_divergence(Population("AdExNeuron", 3, {"v_rest": -60.0}))
-"population 'AdExNeuron' carries v_rest, which the native bridge cannot receive"
+>>> population_divergence(Population("SCLapicqueLIFNeuron", 3, {"tau": 5.0}))
+"population 'SCLapicqueLIFNeuron' carries tau, which the native bridge cannot receive"
 
 ### Function `projection_divergences(projections)`
 Return one reason per projection feature the native runner would drop.

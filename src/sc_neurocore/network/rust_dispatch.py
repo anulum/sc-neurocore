@@ -48,6 +48,7 @@ is a parity question, held by the parity suites.
 
 from __future__ import annotations
 
+import random
 from collections.abc import Iterable
 from functools import cache
 from typing import Any, Final
@@ -55,6 +56,7 @@ from typing import Any, Final
 import numpy as np
 
 from sc_neurocore.network.population import Population
+from sc_neurocore.network.quiescence import GeneratorTransaction
 from sc_neurocore.neurons import models as _model_registry
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 
@@ -106,7 +108,10 @@ def _reference_neuron(model_name: str) -> object | None:
     if model is None or not callable(model):
         return None
     try:
-        neuron: object = model()
+        # Construction may draw from or reseed the process-wide generators; the
+        # caller's streams must not move because the dispatch was checked.
+        with GeneratorTransaction():
+            neuron: object = model()
     except Exception:
         # A model that refuses to build with no arguments cannot be what the
         # bridge builds either; the caller gets the Python path.
@@ -189,7 +194,65 @@ def _summarise(names: list[str]) -> str:
     return f"{head} and {len(names) - _NAMED_ATTRIBUTE_LIMIT} more"
 
 
+def _numpy_global_state() -> tuple[Any, ...]:
+    """Return NumPy's global generator state as a comparable tuple (key words as bytes)."""
+    state: Any = np.random.get_state(legacy=True)
+    return (state[0], state[1].tobytes(), state[2], state[3], state[4])
+
+
 @cache
+def _probe(model_name: str) -> tuple[tuple[str, ...] | None, bool]:
+    """Step a default neuron inside a generator transaction; see :func:`evolving_state`.
+
+    Returns
+    -------
+    tuple
+        The evolving state (``None`` when undecidable) and whether stepping
+        drew from the process-wide NumPy or standard ``random`` generator.
+    """
+    descriptor = load_descriptor(model_name)
+    if descriptor is None:
+        return None, False
+    declared = tuple(spec.name for spec in descriptor.state if spec.name != "v")
+    stepped = _reference_neuron(model_name)
+    fresh = _reference_neuron(model_name)
+    step: Any = getattr(stepped, "step", None)
+    if stepped is None or fresh is None or not callable(step):
+        return None, False
+    with GeneratorTransaction():
+        numpy_before, stdlib_before = _numpy_global_state(), random.getstate()
+        try:
+            for drive in _PROBE_DRIVE:
+                step(drive)
+        except Exception:
+            return None, False
+        drew = _numpy_global_state() != numpy_before or random.getstate() != stdlib_before
+    moved = [name for name in _differing_attributes(stepped, fresh) if name != "v"]
+    return declared + tuple(name for name in moved if name not in declared), drew
+
+
+def draws_process_random(model_name: str) -> bool:
+    """Return whether a default neuron of this model draws from a process-wide generator.
+
+    A native run would not advance NumPy's global generator or the standard
+    ``random`` one, so every later draw of the caller would differ from a
+    Python run; such a model is not dispatched. The probe itself leaves both
+    generators exactly as it found them.
+
+    Parameters
+    ----------
+    model_name : str
+        The model the bridge would build.
+
+    Returns
+    -------
+    bool
+        True when stepping a default neuron through the probe drive moved
+        either generator.
+    """
+    return _probe(model_name)[1]
+
+
 def evolving_state(model_name: str) -> tuple[str, ...] | None:
     """Return the attributes besides ``v`` a default neuron changes as it steps.
 
@@ -207,24 +270,10 @@ def evolving_state(model_name: str) -> tuple[str, ...] | None:
         again): a drive that never fires leaves an adaptation variable still,
         so the declaration is read as well as the behaviour. ``None`` when the
         model has no descriptor or cannot be built or stepped with a float
-        drive, which counts as a difference.
+        drive, which counts as a difference. The probe leaves the caller's
+        process-wide generators exactly as it found them.
     """
-    descriptor = load_descriptor(model_name)
-    if descriptor is None:
-        return None
-    declared = tuple(spec.name for spec in descriptor.state if spec.name != "v")
-    stepped = _reference_neuron(model_name)
-    fresh = _reference_neuron(model_name)
-    step: Any = getattr(stepped, "step", None)
-    if stepped is None or fresh is None or not callable(step):
-        return None
-    try:
-        for drive in _PROBE_DRIVE:
-            step(drive)
-    except Exception:
-        return None
-    moved = [name for name in _differing_attributes(stepped, fresh) if name != "v"]
-    return declared + tuple(name for name in moved if name not in declared)
+    return _probe(model_name)[0]
 
 
 def population_divergence(population: Population) -> str:
@@ -245,10 +294,10 @@ def population_divergence(population: Population) -> str:
     Examples
     --------
     >>> from sc_neurocore.network import Population
-    >>> population_divergence(Population("AdExNeuron", 3))
+    >>> population_divergence(Population("SCLapicqueLIFNeuron", 3))
     ''
-    >>> population_divergence(Population("AdExNeuron", 3, {"v_rest": -60.0}))
-    "population 'AdExNeuron' carries v_rest, which the native bridge cannot receive"
+    >>> population_divergence(Population("SCLapicqueLIFNeuron", 3, {"tau": 5.0}))
+    "population 'SCLapicqueLIFNeuron' carries tau, which the native bridge cannot receive"
     """
     if population.model_name in NATIVE_IDENTITY_DIFFERS:
         return f"population {population.label!r}: {NATIVE_IDENTITY_DIFFERS[population.model_name]}"
@@ -284,6 +333,11 @@ def population_divergence(population: Population) -> str:
             f"population {population.label!r} evolves {_summarise(list(hidden))} besides v; "
             "the native bridge returns only voltages, so that state would stay at its "
             "initial value"
+        )
+    if draws_process_random(population.model_name):
+        return (
+            f"population {population.label!r}: model {population.model_name!r} draws from "
+            "the process-wide random generators, which a native run would not advance"
         )
     return ""
 
@@ -333,6 +387,7 @@ def network_divergences(populations: Iterable[Population]) -> list[str]:
 __all__ = [
     "BRIDGE_CONSTRUCTOR_ARGUMENTS",
     "NATIVE_IDENTITY_DIFFERS",
+    "draws_process_random",
     "evolving_state",
     "network_divergences",
     "population_divergence",

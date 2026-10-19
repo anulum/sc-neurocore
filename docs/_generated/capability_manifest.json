@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5362
+    "test_files": 5363
   },
   "documentation": {
     "public_pages": [
@@ -7266,6 +7266,7 @@
       "tests/test_run_experimental_suite.py",
       "tests/test_runtime_lanes.py",
       "tests/test_rust_attention_softmax.py",
+      "tests/test_rust_dispatch_generator_state.py",
       "tests/test_rust_graph_sparse.py",
       "tests/test_rust_integration_ir_compiler.py",
       "tests/test_rust_integration_network_runner.py",

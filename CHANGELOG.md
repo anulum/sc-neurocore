@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Checking whether a network can run natively no longer moves the caller's
+  random generators: the state probe constructs and steps default neurons
+  inside a generator transaction, and a model that draws from NumPy's global
+  generator or `random` (`StochasticIFNeuron`) is not dispatched natively, since
+  a native run would not advance it. Before, `backend="auto"` and a refused
+  `backend="rust"` advanced `np.random` by 44 draws.
+
 - Docstrings: `training/snn_modules.py`, the Brunel-Wang model module and
   `schema_contracts` meet the NumPy convention, and 66 compiler, DSL, readiness
   and training test modules carry real docstrings and strict typing.
