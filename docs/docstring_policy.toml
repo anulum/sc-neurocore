@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1087
+expected_file_count = 1092
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4441,3 +4441,23 @@ rationale = "What the RTL and the bit-true kernel both refuse, with the same mes
 [[file]]
 path = "tests/test_poisson_grid.py"
 rationale = "poisson_grid: exact thresholds per grid mean, program = reference, model = RTL = C = Rust counts, refusals and contract literals."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/fpga_neuron_rtl.py"
+rationale = "Neuron parameter binding, equation templates, per-neuron streams and per-type RTL emission for the network compiler."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/fpga_direct_interconnect.py"
+rationale = "Direct network top: one neuron instance per neuron, with parameter and Philox stream overrides."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/fpga_folded_interconnect.py"
+rationale = "Folded network top: per-type PE pool, BRAM state, sequencer, delays, analogue bus and the network step counter."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/quantise_params.py"
+rationale = "Quantisation of a neuron graph to fixed-point parameters and weights, keeping population templates."
+
+[[file]]
+path = "tests/test_folded_equation_populations.py"
+rationale = "Equation-defined populations: folded equals direct with and without draws, distinct streams, refusals."

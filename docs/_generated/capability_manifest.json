@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5344
+    "test_files": 5345
   },
   "documentation": {
     "public_pages": [
@@ -5278,6 +5278,7 @@
       "tests/test_folded_area_estimator_resources.py",
       "tests/test_folded_area_estimator_storage.py",
       "tests/test_folded_datapath.py",
+      "tests/test_folded_equation_populations.py",
       "tests/test_folded_heterogeneous_params_can_fold_heterogeneity.py",
       "tests/test_folded_heterogeneous_params_dequantise_pop.py",
       "tests/test_folded_heterogeneous_params_folded_heterogeneous_params.py",

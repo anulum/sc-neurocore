@@ -21,7 +21,12 @@ from .fpga_connection_routing import (
     _normalise_connection_delay_steps,
     _signed_hex,
 )
-from .fpga_neuron_rtl import _neuron_param_override, _type_default_qparams
+from .fpga_neuron_rtl import (
+    _neuron_param_override,
+    _type_default_qparams,
+    population_draws,
+    population_stream,
+)
 from .fpga_scnir_hierarchy import (
     build_scnir_hierarchy_instance_block,
     _hierarchy_output_wires_by_stream,
@@ -196,20 +201,26 @@ def build_direct_interconnect(
         )
     lines.append("")
 
+    first_neuron = 0
     for pop in pops:
         mod = sanitize_ident(f"sc_nir_{pop.neuron_type}", context="module name")
         lines.append(
             f"    // Population {pop_index[pop.name]}: {pop.name} "
             f"({pop.neuron_type} x {pop.n_neurons})"
         )
+        draws = population_draws(pop)
         for neuron_idx in range(pop.n_neurons):
             prefix = neuron_prefix(pop, neuron_idx)
+            stream = population_stream(pop, first_neuron + neuron_idx) if draws else None
+            override = _neuron_param_override(
+                pop, neuron_idx, type_defaults, data_width, rng_stream=stream
+            )
             lines.extend(
                 [
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_I;",
                     f"    wire {prefix}_spike;",
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_v;",
-                    f"    {mod}{_neuron_param_override(pop, neuron_idx, type_defaults, data_width)} {prefix}_inst (",
+                    f"    {mod}{override} {prefix}_inst (",
                     "        .clk(clk),",
                     "        .rst_n(rst_n),",
                     f"        .I_t({prefix}_I),",
@@ -219,6 +230,7 @@ def build_direct_interconnect(
                     "",
                 ]
             )
+        first_neuron += pop.n_neurons
 
     if delayed_source_depths:
         lines.append(

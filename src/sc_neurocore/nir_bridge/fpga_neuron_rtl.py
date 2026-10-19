@@ -60,6 +60,7 @@ def _neuron_param_override(
     neuron_idx: int,
     type_defaults: dict[str, dict[str, int]],
     data_width: int,
+    rng_stream: int | None = None,
 ) -> str:
     """Return a Verilog parameter-override clause for a single neuron instance.
 
@@ -82,6 +83,9 @@ def _neuron_param_override(
         if qval != defaults[pname]:
             vname = f"P_{sanitize_ident(pname, context='parameter name').upper()}"
             fragments.append(f".{vname}({data_width}'sd{qval})")
+    if rng_stream is not None:
+        # Each instance draws from its own Philox stream (see population_stream).
+        fragments.append(f".P_RNG_STREAM(32'd{rng_stream})")
     if not fragments:
         return ""
     return " #(" + ", ".join(fragments) + ")"
@@ -151,11 +155,53 @@ def _dequantised_pop(pop: NeuronSpec, fraction: int) -> NeuronSpec:
     return replace(pop, params=rescaled)
 
 
+def _template_for(neuron_type: str, pop: NeuronSpec) -> dict[str, Any]:
+    """Return the population's equation template, or the canonical one of its type.
+
+    An equation-defined population names its own type, which may not shadow a
+    canonical type, and must have a membrane state ``v``: the interconnects read
+    ``v_out`` for analogue fan-in.
+    """
+    if pop.template is None:
+        template = _NEURON_TEMPLATES.get(neuron_type)
+        if template is None:
+            raise ValueError(f"No ODE template for neuron type: {neuron_type!r}")
+        return template
+    if neuron_type in _NEURON_TEMPLATES:
+        raise ValueError(
+            f"population {pop.name!r}: an equation template may not reuse the canonical "
+            f"neuron type {neuron_type!r}; give it its own type name"
+        )
+    variables = [eq.split("/")[0].replace("d", "", 1).strip() for eq in pop.template["equations"]]
+    if "v" not in variables:
+        raise ValueError(
+            f"population {pop.name!r}: an equation template needs a state 'v' "
+            "(the interconnects read v_out)"
+        )
+    return pop.template
+
+
+def population_draws(pop: NeuronSpec) -> bool:
+    """Return whether a population's neurons call ``rand``, ``randn`` or ``poisson``."""
+    return pop.template is not None and _population_neuron(pop.neuron_type, pop).uses_random_draws
+
+
+def population_stream(pop: NeuronSpec, global_index: int) -> int:
+    """Return the Philox stream of one neuron: the template's base plus its global index.
+
+    Every neuron of the network draws from its own stream with the same seed, so two
+    neurons of one population never draw the same numbers.
+    """
+    base = int((pop.template or {}).get("random_stream", 0))
+    stream = base + global_index
+    if not 0 <= stream < 1 << 32:
+        raise ValueError(f"population {pop.name!r}: stream {stream} is outside 32 bits")
+    return stream
+
+
 def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, float]:
     """Resolve population parameters without averaging per-neuron values."""
-    template = _NEURON_TEMPLATES.get(neuron_type)
-    if template is None:
-        raise ValueError(f"No ODE template for neuron type: {neuron_type!r}")
+    template = _template_for(neuron_type, pop)
 
     params: dict[str, float] = {
         name: float(value) for name, value in template["default_params"].items()
@@ -231,7 +277,7 @@ def _population_neuron(neuron_type: str, pop: NeuronSpec) -> EquationNeuron:
     datapath PE (:func:`~fpga_folded_interconnect.build_folded_interconnect`),
     so the two share identical dynamics.
     """
-    template = _NEURON_TEMPLATES[neuron_type]
+    template = _template_for(neuron_type, pop)
 
     # Shared modules are only emitted when every per-neuron parameter is
     # identical.  Heterogeneous populations need generated per-neuron modules
@@ -246,7 +292,12 @@ def _population_neuron(neuron_type: str, pop: NeuronSpec) -> EquationNeuron:
             init["v"] = params.get(rest_param, 0.0)
         else:
             init[var_name] = 0.0
+    init.update({str(k): float(v) for k, v in template.get("init", {}).items()})
 
+    optional: dict[str, Any] = {}
+    for key in ("rng_seed", "random_stream", "spike_value", "detection"):
+        if key in template:
+            optional[key] = template[key]
     return from_equations(
         *template["equations"],
         threshold=template["threshold"],
@@ -255,4 +306,5 @@ def _population_neuron(neuron_type: str, pop: NeuronSpec) -> EquationNeuron:
         init=init,
         dt=pop.dt,
         method=template.get("method", "euler"),
+        **optional,
     )

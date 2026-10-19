@@ -28,6 +28,7 @@ from .fpga_neuron_rtl import (
     _heterogeneous_param_names,
     _param_neuron_literal,
     _population_neuron,
+    population_stream,
 )
 from .neuron_graph import ConnectionSpec, NeuronSpec
 from .quantise_params import QuantisedGraph
@@ -289,8 +290,17 @@ def can_fold(qgraph: QuantisedGraph, *, data_width: int) -> bool:
         return False
     pop_by_name = {p.name: p for p in pops}
     pop_names = set(pop_by_name)
-    if any(p.neuron_type not in _NEURON_TEMPLATES for p in pops):
+    if any(p.neuron_type not in _NEURON_TEMPLATES and p.template is None for p in pops):
         return False
+    for pop in pops:
+        if pop.template is not None:
+            neuron = _population_neuron(pop.neuron_type, pop)
+            # The sequencer keeps no per-neuron LFSR or threshold history: stochastic
+            # detection and rising-edge (non-resetting crossing) neurons stay direct.
+            if getattr(neuron, "_stochastic_threshold_enabled", False) or (
+                neuron.threshold_expr and getattr(neuron, "_edge_detection", False)
+            ):
+                return False
     for pop in pops:
         het = _heterogeneous_param_names(pop, data_width)
         if het:
@@ -511,6 +521,7 @@ def build_folded_interconnect(
         neuron_type: sorted(parameter_names)
         for neuron_type, parameter_names in type_het_param_sets.items()
     }
+    draws_by_type: dict[str, bool] = {}
     for pop in pops:
         ntype = pop.neuron_type
         if ntype in pe_module_name:
@@ -519,6 +530,7 @@ def build_folded_interconnect(
         # integers, which Q88.encode would encode a second time (see _dequantised_pop).
         neuron = _population_neuron(ntype, _dequantised_pop(pop, fraction))
         type_neuron[ntype] = neuron
+        draws_by_type[ntype] = bool(neuron.uses_random_draws)
         mod = sanitize_ident(f"sc_nir_{ntype}_pe", context="module name")
         pe_module_name[ntype] = mod
         pe_modules[f"{ntype}_pe"] = compile_to_datapath(
@@ -575,6 +587,9 @@ def build_folded_interconnect(
         f"    reg [{idx_w - 1}:0] nidx;  // neuron within the active population",
         "    reg phase;  // 0 = process one neuron, 1 = commit tick",
         f"    reg [{n_total - 1}:0] spike_acc;",
+        # One step counter for the network: every neuron steps once per tick, as each
+        # neuron's own counter does in the direct path and in EquationNeuron.step.
+        *(["    reg [63:0] rng_step;"] if any(draws_by_type.values()) else []),
         "",
     ]
 
@@ -705,6 +720,21 @@ def build_folded_interconnect(
                 "        .I_t(active_I),",
             ]
         )
+        if draws_by_type.get(ntype):
+            # The active neuron's own stream: its base plus its global index.
+            stream_mux = _cond_mux(
+                [
+                    (
+                        f"pidx == {pidx_w}'d{pi}",
+                        f"(32'd{population_stream(pops[pi], spike_offsets[pops[pi].name])}"
+                        f" + {{{{{32 - idx_w}{{1'b0}}}}, nidx}})",
+                    )
+                    for pi in same_type
+                ],
+                default="32'd0",
+            )
+            lines.append("        .rng_step(rng_step),")
+            lines.append(f"        .P_RNG_STREAM({stream_mux}),")
         # Heterogeneous parameters streamed from the per-neuron ROM into the PE's ports.
         for pname in type_het_params.get(ntype, []):
             pkey = sanitize_ident(pname, context="parameter name").lower()
@@ -746,6 +776,8 @@ def build_folded_interconnect(
             "            tick_done <= 1'b0;",
         ]
     )
+    if any(draws_by_type.values()):
+        lines.append("            rng_step <= 64'd0;")
     for d in range(1, max_delay + 1):
         lines.append(f"            spike_bus_hist_{d} <= 0;")
     if v_total:
@@ -796,6 +828,11 @@ def build_folded_interconnect(
             "            end else begin",
             "                spike_bus <= spike_acc;",
             "                tick_done <= 1'b1;",
+            *(
+                ["                rng_step <= rng_step + 64'd1;"]
+                if any(draws_by_type.values())
+                else []
+            ),
             "                phase <= 1'b0;",
             "                pidx <= 0;",
             "                nidx <= 0;",

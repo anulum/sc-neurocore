@@ -10,6 +10,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The network compiler accepts equation-defined populations: a `NeuronSpec`
+  with a `template` (equations, threshold, reset, default parameters, and
+  optionally method, detection, `spike_value`, `rng_seed` and a base
+  `random_stream`) compiles in the direct and the folded interconnect. A
+  population that draws gives each neuron the stream `base + global index`:
+  per-instance `P_RNG_STREAM` overrides in the direct top, and in the folded
+  top one network step counter with the active neuron's stream on the shared
+  PE. Stochastic detection and rising-edge templates stay on the direct path.
+
 - A state whose name takes a compiled form's own field is refused by name
   instead of emitting a duplicate declaration: in the C and Rust kernels a
   state named `spike` (field `spike_out`) or, for an edge-crossing neuron,

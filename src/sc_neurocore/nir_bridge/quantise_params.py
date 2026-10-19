@@ -243,6 +243,7 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
                 n_neurons=pop.n_neurons,
                 params=q_params,
                 dt=pop.dt,
+                template=pop.template,
             )
         )
 

@@ -35,6 +35,14 @@ class NeuronSpec:
         Canonical neuron parameters stored as arrays.
     dt : float
         Simulation timestep inherited from NIR import.
+    template : dict or None
+        An equation-defined neuron for this population, in the form of
+        :data:`~sc_neurocore.nir_bridge.neuron_templates.NEURON_TEMPLATES`
+        entries (``equations``, ``threshold``, ``reset``, ``default_params``,
+        optional ``method``, ``rest_param``, ``detection``, ``spike_value``,
+        ``rng_seed`` and ``random_stream``). ``None`` uses the canonical template
+        of ``neuron_type``; with a template, ``neuron_type`` names it and must not
+        be a canonical type.
     """
 
     name: str
@@ -42,6 +50,7 @@ class NeuronSpec:
     n_neurons: int
     params: dict[str, np.ndarray[Any, Any]] = field(default_factory=dict)
     dt: float = 1.0
+    template: dict[str, Any] | None = None
 
 
 @dataclass

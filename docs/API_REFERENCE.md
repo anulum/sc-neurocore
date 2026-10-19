@@ -33946,6 +33946,15 @@ ValueError
 
 ## Module `nir_bridge.fpga_neuron_rtl`
 
+### Function `population_draws(pop)`
+Return whether a population's neurons call ``rand``, ``randn`` or ``poisson``.
+
+### Function `population_stream(pop, global_index)`
+Return the Philox stream of one neuron: the template's base plus its global index.
+
+Every neuron of the network draws from its own stream with the same seed, so two
+neurons of one population never draw the same numbers.
+
 ### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction)`
 Build a Verilog module for one canonical neuron type.
 
@@ -34228,6 +34237,14 @@ params : dict&#91;str, numpy.ndarray&#93;
     Canonical neuron parameters stored as arrays.
 dt : float
     Simulation timestep inherited from NIR import.
+template : dict or None
+    An equation-defined neuron for this population, in the form of
+    :data:`~sc_neurocore.nir_bridge.neuron_templates.NEURON_TEMPLATES`
+    entries (``equations``, ``threshold``, ``reset``, ``default_params``,
+    optional ``method``, ``rest_param``, ``detection``, ``spike_value``,
+    ``rng_seed`` and ``random_stream``). ``None`` uses the canonical template
+    of ``neuron_type``; with a template, ``neuron_type`` names it and must not
+    be a canonical type.
 
 
 ### Class `ConnectionSpec`
