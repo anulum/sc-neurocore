@@ -10,6 +10,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The FPGA network compiler carries graded spikes: a population whose
+  template has `spike_value` adds `(value · weight) >>> fraction` to its
+  targets (a value of 1.0 is the binary case; a source threshold compares the
+  value). The direct interconnect wires each instance's `spike_value_out`, the
+  folded one commits the values to a `val_bus` with `spike_bus`, both with
+  delays; a network with a graded source is not auto-selected for the
+  address-event interconnect, which carries addresses only.
+
 - The table-accuracy measurement of wide formats places each table cell where
   the RTL indexes it; at fraction 0, where a 1/8 step is finer than one code,
   it takes every code inside the table. Sampled cos at 32/0 and 62/0 reported

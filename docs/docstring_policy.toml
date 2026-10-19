@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1141
+expected_file_count = 1144
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4657,3 +4657,15 @@ rationale = "Declarative network engine tests (execution paths monitor and dispa
 [[file]]
 path = "tests/test_network_population_probe_edges.py"
 rationale = "Declarative network engine tests (population probe edges); typed and documented."
+
+[[file]]
+path = "tests/test_graded_spike_network.py"
+rationale = "Graded spikes in the network compiler: direct current word for word, folded equals direct, binary control, AER avoided."
+
+[[file]]
+path = "tests/folded_interconnect_support.py"
+rationale = "Shared graphs, testbenches and Icarus co-simulation of the direct and folded interconnect parity tests."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/fpga_compiler.py"
+rationale = "compile_network_to_fpga: the public FPGA network compiler composing neuron RTL, weight ROMs and the direct, AER or folded interconnect."

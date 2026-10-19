@@ -6,9 +6,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_folded_interconnect.py
 
-from __future__ import annotations
-
-
 """The folded (time-multiplexed) interconnect matches direct, spike-for-spike.
 
 For a single connection-less population driven by per-neuron external current,
@@ -19,6 +16,8 @@ direct module sampled every clock (step t), the folded sampled at each ``tick_do
 (also step t). The PE arithmetic is already bit-exact (test_folded_datapath), so the
 folded sequencer carries that to the network output.
 """
+
+from __future__ import annotations
 
 
 import re
@@ -45,11 +44,15 @@ from sc_neurocore.compiler.equation_compiler import Q88
 from sc_neurocore.nir_bridge import quantise_graph
 
 
-from sc_neurocore.nir_bridge.fpga_compiler import (
-    _build_neuron_module,
-    _build_top_direct,
-    _build_top_folded,
+from sc_neurocore.nir_bridge.fpga_direct_interconnect import (
+    build_direct_interconnect as _build_top_direct,
+)
+from sc_neurocore.nir_bridge.fpga_folded_interconnect import (
+    build_folded_interconnect as _build_top_folded,
+)
+from sc_neurocore.nir_bridge.fpga_neuron_rtl import (
     _dequantised_pop,
+    build_neuron_module as _build_neuron_module,
 )
 
 
@@ -319,9 +322,7 @@ def _two_pop_delayed_ff_graph() -> tuple[NeuronGraph, list[float], int]:
     out = NeuronSpec(name="out", neuron_type="lif", n_neurons=n_out, params={}, dt=1.0)
     ext_conn = ConnectionSpec(src="stim", dst="inp", weights=ext)
     # Per-source-column delays: input neuron 0 undelayed, 1 by one tick, 2 by two, 3 by one.
-    ff_conn = ConnectionSpec(
-        src="inp", dst="out", weights=ff, delay_steps=np.array([0, 1, 2, 1], dtype=np.int64)
-    )
+    ff_conn = ConnectionSpec(src="inp", dst="out", weights=ff, delay_steps=(0, 1, 2, 1))
     ng = NeuronGraph(
         populations=[inp, out],
         connections=[ext_conn, ff_conn],
@@ -332,7 +333,9 @@ def _two_pop_delayed_ff_graph() -> tuple[NeuronGraph, list[float], int]:
     return ng, [4.0, 3.5], n_in + n_out
 
 
-def _parity_rasters(ng: NeuronGraph, currents: list[float], n_total: int) -> tuple[list, list]:
+def _parity_rasters(
+    ng: NeuronGraph, currents: list[float], n_total: int
+) -> tuple[list[str], list[str]]:
     """Co-simulate ``ng`` through both interconnects and return ``(direct, folded)`` rasters."""
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)

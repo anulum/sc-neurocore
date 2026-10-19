@@ -367,6 +367,11 @@ state after the last sub-step. The C and Rust kernels evaluate the value and the
 reset rules only on a spike, as the model does, so an expression undefined off
 the spike (a reciprocal of a zero state) does not trap them.
 
+In a network compiled by `compile_network_to_fpga()`, a population whose
+template has `spike_value` passes the value on: its connections add
+`(value · weight) >>> fraction` in both the direct and the folded interconnect
+(see `docs/api/nir_bridge.md`).
+
 ## 6. Folded combinational datapaths
 
 `compile_to_datapath()` emits the same arithmetic core without state

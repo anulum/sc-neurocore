@@ -25,6 +25,7 @@ from .fpga_neuron_rtl import (
     _neuron_param_override,
     _type_default_qparams,
     population_draws,
+    population_graded,
     population_stream,
 )
 from .fpga_scnir_hierarchy import (
@@ -58,6 +59,10 @@ def build_direct_interconnect(
     * analogue source populations use ``(v_out * weight) >>> fraction``;
     * spiking source populations contribute their fixed-point weight on
       spikes and zero otherwise;
+    * graded spiking source populations (a template with ``spike_value``)
+      contribute ``(spike_value_out * weight) >>> fraction``, the value their
+      module emits on a spike and zero otherwise, so a value of 1.0 is the
+      binary case; a source threshold compares that value;
     * all fan-in terms and biases accumulate in a widened signed accumulator
       before saturation back to the neuron input Q-format.
 
@@ -116,6 +121,7 @@ def build_direct_interconnect(
         semantic_stream_ids=set(scnir_semantic_hierarchy_stream_ids),
     )
 
+    graded_pops = {pop.name for pop in pops if population_graded(pop)}
     max_terms = external_width if pops else 1
     delayed_source_depths: dict[tuple[str, int], int] = {}
     delay_vectors: dict[int, DelayVector] = {}
@@ -209,6 +215,7 @@ def build_direct_interconnect(
             f"({pop.neuron_type} x {pop.n_neurons})"
         )
         draws = population_draws(pop)
+        graded = pop.name in graded_pops
         for neuron_idx in range(pop.n_neurons):
             prefix = neuron_prefix(pop, neuron_idx)
             stream = population_stream(pop, first_neuron + neuron_idx) if draws else None
@@ -220,11 +227,13 @@ def build_direct_interconnect(
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_I;",
                     f"    wire {prefix}_spike;",
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_v;",
+                    *([f"    wire signed [DATA_WIDTH - 1:0] {prefix}_val;"] if graded else []),
                     f"    {mod}{override} {prefix}_inst (",
                     "        .clk(clk),",
                     "        .rst_n(rst_n),",
                     f"        .I_t({prefix}_I),",
                     f"        .spike_out({prefix}_spike),",
+                    *([f"        .spike_value_out({prefix}_val),"] if graded else []),
                     f"        .v_out({prefix}_v)",
                     "    );",
                     "",
@@ -245,6 +254,8 @@ def build_direct_interconnect(
             for step in range(1, delayed_source_depths[(pop_name, neuron_idx)] + 1):
                 lines.append(f"    reg {prefix}_spike_d{step};")
                 lines.append(f"    reg signed [DATA_WIDTH - 1:0] {prefix}_v_d{step};")
+                if pop_name in graded_pops:
+                    lines.append(f"    reg signed [DATA_WIDTH - 1:0] {prefix}_val_d{step};")
         lines.extend(
             [
                 "    always @(posedge clk or negedge rst_n) begin",
@@ -260,6 +271,8 @@ def build_direct_interconnect(
             for step in range(1, delayed_source_depths[(pop_name, neuron_idx)] + 1):
                 lines.append(f"            {prefix}_spike_d{step} <= 1'b0;")
                 lines.append(f"            {prefix}_v_d{step} <= {data_width}'sd0;")
+                if pop_name in graded_pops:
+                    lines.append(f"            {prefix}_val_d{step} <= {data_width}'sd0;")
         lines.extend(
             [
                 "        end else if (en) begin",
@@ -274,9 +287,13 @@ def build_direct_interconnect(
             depth = delayed_source_depths[(pop_name, neuron_idx)]
             lines.append(f"            {prefix}_spike_d1 <= {prefix}_spike;")
             lines.append(f"            {prefix}_v_d1 <= {prefix}_v;")
+            if pop_name in graded_pops:
+                lines.append(f"            {prefix}_val_d1 <= {prefix}_val;")
             for step in range(2, depth + 1):
                 lines.append(f"            {prefix}_spike_d{step} <= {prefix}_spike_d{step - 1};")
                 lines.append(f"            {prefix}_v_d{step} <= {prefix}_v_d{step - 1};")
+                if pop_name in graded_pops:
+                    lines.append(f"            {prefix}_val_d{step} <= {prefix}_val_d{step - 1};")
         lines.extend(["        end", "    end", ""])
 
     lines.append("    // Weighted fixed-point input accumulation")
@@ -343,9 +360,15 @@ def build_direct_interconnect(
 
                     src_prefix = neuron_prefix(src_pop, src_idx)
                     delay_steps = delay_vectors[id(conn)][src_idx]
-                    if _connection_sources_are_analogue(src_pop):
+                    graded_src = src_pop.name in graded_pops
+                    if _connection_sources_are_analogue(src_pop) or graded_src:
+                        # A voltage (analogue source) or the graded spike's value: both
+                        # multiply the weight, or are compared under a source threshold.
+                        signal = "val" if graded_src else "v"
                         src_value = (
-                            f"{src_prefix}_v_d{delay_steps}" if delay_steps else f"{src_prefix}_v"
+                            f"{src_prefix}_{signal}_d{delay_steps}"
+                            if delay_steps
+                            else f"{src_prefix}_{signal}"
                         )
                         if source_thresholds is not None:
                             threshold = int(source_thresholds[src_idx])

@@ -74,6 +74,7 @@ from .fpga_neuron_rtl import (
     _param_neuron_literal as _param_neuron_literal,
     _population_module_signature as _population_module_signature,
     _population_neuron as _population_neuron,
+    population_graded as population_graded,
     _population_params_are_uniform as _population_params_are_uniform,
     _representative_param as _representative_param,
     _resolved_population_params as _resolved_population_params,
@@ -297,6 +298,9 @@ def compile_network_to_fpga(
         for conn in qgraph.connections
     )
     has_threshold_connections = any(_connection_has_thresholds(conn) for conn in qgraph.connections)
+    # The AER fan-out carries addresses, not values: a graded spike's value would be lost.
+    graded_sources = {pop.name for pop in qgraph.populations if population_graded(pop)}
+    has_graded_sources = any(conn.src in graded_sources for conn in qgraph.connections)
     folded_metrics: FoldedResourceMetrics | None = None
 
     if interconnect == "folded":
@@ -328,6 +332,7 @@ def compile_network_to_fpga(
         and total_neurons > _AER_THRESHOLD
         and not has_delayed_connections
         and not has_threshold_connections
+        and not has_graded_sources
     ):
         selected_interconnect = "aer"
         top_module = _build_top_aer(
@@ -347,6 +352,11 @@ def compile_network_to_fpga(
             warnings.append(
                 "Using direct interconnect because delayed recurrent connections require "
                 "registered one-step source semantics"
+            )
+        if interconnect is None and total_neurons > _AER_THRESHOLD and has_graded_sources:
+            warnings.append(
+                "Using direct interconnect because graded spikes carry values the address-event "
+                "fan-out does not"
             )
         if interconnect is None and total_neurons > _AER_THRESHOLD and has_threshold_connections:
             warnings.append(

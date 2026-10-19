@@ -34014,6 +34014,10 @@ affine weights are emitted explicitly in fixed-point arithmetic:
 * analogue source populations use ``(v_out * weight) >>> fraction``;
 * spiking source populations contribute their fixed-point weight on
   spikes and zero otherwise;
+* graded spiking source populations (a template with ``spike_value``)
+  contribute ``(spike_value_out * weight) >>> fraction``, the value their
+  module emits on a spike and zero otherwise, so a value of 1.0 is the
+  binary case; a source threshold compares that value;
 * all fan-in terms and biases accumulate in a widened signed accumulator
   before saturation back to the neuron input Q-format.
 
@@ -34161,6 +34165,13 @@ ValueError
 
 ### Function `population_draws(pop)`
 Return whether a population's neurons call ``rand``, ``randn`` or ``poisson``.
+
+### Function `population_graded(pop)`
+Return whether a population's neurons emit a graded spike (``spike_value``).
+
+A graded spike carries a value instead of 1: the neuron module has a
+``spike_value_out`` port, and a connection from it adds ``(value · weight) >>> fraction``
+rather than the weight, so a binary spike (value 1.0) is the special case.
 
 ### Function `population_stream(pop, global_index)`
 Return the Philox stream of one neuron: the template's base plus its global index.

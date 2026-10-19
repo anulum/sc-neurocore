@@ -186,6 +186,18 @@ def population_draws(pop: NeuronSpec) -> bool:
     return pop.template is not None and _population_neuron(pop.neuron_type, pop).uses_random_draws
 
 
+def population_graded(pop: NeuronSpec) -> bool:
+    """Return whether a population's neurons emit a graded spike (``spike_value``).
+
+    A graded spike carries a value instead of 1: the neuron module has a
+    ``spike_value_out`` port, and a connection from it adds ``(value · weight) >>> fraction``
+    rather than the weight, so a binary spike (value 1.0) is the special case.
+    """
+    return pop.template is not None and bool(
+        _population_neuron(pop.neuron_type, pop).spike_value_expr
+    )
+
+
 def population_stream(pop: NeuronSpec, global_index: int) -> int:
     """Return the Philox stream of one neuron: the template's base plus its global index.
 

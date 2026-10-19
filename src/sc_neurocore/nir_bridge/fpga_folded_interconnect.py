@@ -28,6 +28,7 @@ from .fpga_neuron_rtl import (
     _heterogeneous_param_names,
     _param_neuron_literal,
     _population_neuron,
+    population_graded,
     population_stream,
 )
 from .neuron_graph import ConnectionSpec, NeuronSpec
@@ -60,6 +61,7 @@ def _folded_population_input(
     analogue_offsets: dict[str, int],
     pop_names: set[str],
     is_first_pop: bool,
+    graded_offsets: dict[str, int] | None = None,
     idx_signal: str,
     idx_w: int,
     suffix: str,
@@ -90,6 +92,12 @@ def _folded_population_input(
       path's registered ``v_out``. A delay of ``d`` ticks instead reads
       ``v_bus_hist_d`` (the voltage bus committed ``d`` ticks ago), mirroring direct's
       ``*_v_d{d}`` register chain.
+    * **graded fan-in** — a source population with graded spikes (``spike_value``)
+      reads the prior-tick global ``val_bus`` (one ``DATA_WIDTH`` word per graded
+      source neuron: the value its PE emitted, zero without a spike, committed with
+      ``spike_bus``) and multiplies it by the weight (shifted by ``fraction``), or
+      threshold-gates the weight on it, exactly like the direct path's registered
+      ``spike_value_out``; a delay of ``d`` ticks reads ``val_bus_hist_d``.
 
     NIR ``Threshold`` transforms fold too: a **source threshold** gates the full
     sign-extended weight on the source value (spike magnitude or external input)
@@ -108,6 +116,7 @@ def _folded_population_input(
     """
     n = pop.n_neurons
     product_width = 2 * data_width
+    graded_offsets = graded_offsets or {}
     if not feeding:
         if is_first_pop:
             return [], f"I_ext_flat[{idx_signal} * {data_width} +: {data_width}]"
@@ -122,6 +131,7 @@ def _folded_population_input(
     for ci, conn in enumerate(feeding):
         weights = np.asarray(conn.weights, dtype=np.int64)
         src_is_analogue = conn.src in analogue_offsets
+        src_is_graded = conn.src in graded_offsets
         src_is_pop = conn.src in pop_names and not src_is_analogue
         ext_off = ext_offsets.get(conn.src, 0)
         spike_base = spike_offsets.get(conn.src, 0)
@@ -162,7 +172,28 @@ def _folded_population_input(
             # Full weight, sign-extended to ACC_WIDTH (gated paths contribute the whole
             # weight; only the un-thresholded external path multiplies by the input).
             rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
-            if src_is_analogue:
+            if src_is_graded:
+                # Graded spiking source: the prior-tick value word from val_bus (zero
+                # without a spike), weighted like a voltage, exactly as the direct path.
+                delay = delay_vector[src]
+                val_signal = "val_bus" if delay == 0 else f"val_bus_hist_{delay}"
+                val_word = (
+                    f"{val_signal}[{(graded_offsets[conn.src] + src) * data_width} +: DATA_WIDTH]"
+                )
+                if source_thresholds is not None:
+                    thr = _signed_hex(int(source_thresholds[src]), data_width)
+                    conn_terms.append(f"({val_word} > {thr} ? {rw_sext} : {acc_width}'sd0)")
+                else:
+                    mul = f"gmul{suffix}_{ci}_{src}"
+                    term = f"gterm{suffix}_{ci}_{src}"
+                    term_lines.append(
+                        f"    wire signed [{product_width - 1}:0] {mul} = {val_word} * {rw};"
+                    )
+                    term_lines.append(
+                        f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
+                    )
+                    conn_terms.append(term)
+            elif src_is_analogue:
                 # Analogue source: the prior-tick committed membrane voltage from the
                 # global v_bus (one DATA_WIDTH word per analogue source neuron). A delay
                 # of d ticks instead reads v_bus_hist_d (the voltage bus committed d ticks
@@ -357,12 +388,15 @@ def folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Folde
         max_state_vars = max(max_state_vars, n_vars)
         state_ram_bits += pop.n_neurons * n_vars * data_width
     analogue_src_names = {p.name for p in pops if _connection_sources_are_analogue(p)}
+    graded_src_names = {p.name for p in pops if population_graded(p)}
     shared_multipliers = sum(
         int(np.asarray(conn.weights).shape[1])
         for conn in qgraph.connections
-        # External-weighted and analogue (voltage) sources multiply; spiking sources are
-        # spike-gated and use no multiplier.
-        if conn.src not in pop_names or conn.src in analogue_src_names
+        # External-weighted, analogue (voltage) and graded-spike sources multiply; binary
+        # spiking sources are spike-gated and use no multiplier.
+        if conn.src not in pop_names
+        or conn.src in analogue_src_names
+        or conn.src in graded_src_names
     )
     distinct_types = len({pop.neuron_type for pop in pops})
     # Per-neuron parameter ROM: each population contributes one data-width word per neuron
@@ -468,6 +502,22 @@ def build_folded_interconnect(
             v_cursor += pop.n_neurons
     v_total = v_cursor
 
+    # Global graded-value bus: one DATA_WIDTH word per neuron of each graded spiking
+    # source population (the value its PE emits, zero without a spike), committed with
+    # spike_bus. Empty when no graded source feeds a connection.
+    graded_src_names = {
+        conn.src
+        for conn in conns
+        if (sp := pop_by_name.get(conn.src)) is not None and population_graded(sp)
+    }
+    graded_offsets: dict[str, int] = {}
+    g_cursor = 0
+    for pop in pops:
+        if pop.name in graded_src_names:
+            graded_offsets[pop.name] = g_cursor
+            g_cursor += pop.n_neurons
+    g_total = g_cursor
+
     ext_width, ext_offsets, _ext_src_widths = _external_input_layout(conns, pop_by_name, pops)
     input_bus_width = max(1, ext_width * data_width)
 
@@ -484,6 +534,7 @@ def build_folded_interconnect(
     # means no delayed connection of that kind and no history register is emitted.
     max_delay = 0  # spiking-source history depth (spike_bus_hist)
     max_analogue_delay = 0  # analogue-source history depth (v_bus_hist)
+    max_graded_delay = 0  # graded-source history depth (val_bus_hist)
     for conn in conns:
         delay_vector = _normalise_connection_delay_steps(
             getattr(conn, "delay_steps", 0),
@@ -492,6 +543,8 @@ def build_folded_interconnect(
         )
         if conn.src in analogue_offsets:
             max_analogue_delay = max(max_analogue_delay, max(delay_vector))
+        elif conn.src in graded_offsets:
+            max_graded_delay = max(max_graded_delay, max(delay_vector))
         else:
             max_delay = max(max_delay, max(delay_vector))
 
@@ -611,6 +664,12 @@ def build_folded_interconnect(
         for d in range(1, max_analogue_delay + 1):
             lines.append(f"    reg signed [{v_total * data_width - 1}:0] v_bus_hist_{d};")
         lines.append("")
+    if g_total:
+        lines.append(f"    reg signed [{g_total * data_width - 1}:0] val_bus;")
+        lines.append(f"    reg signed [{g_total * data_width - 1}:0] val_acc;")
+        for d in range(1, max_graded_delay + 1):
+            lines.append(f"    reg signed [{g_total * data_width - 1}:0] val_bus_hist_{d};")
+        lines.append("")
 
     # Per-population state BRAMs (word width set by the population's neuron type).
     for pi, pop in enumerate(pops):
@@ -685,6 +744,7 @@ def build_folded_interconnect(
             analogue_offsets=analogue_offsets,
             pop_names=pop_names,
             is_first_pop=(pi == 0),
+            graded_offsets=graded_offsets,
             idx_signal="nidx",
             idx_w=idx_w,
             suffix=f"_{pi}",
@@ -716,6 +776,11 @@ def build_folded_interconnect(
                 f"    wire [{sw - 1}:0] cur_state_{ntype} = {state_mux};",
                 f"    wire [{sw - 1}:0] next_state_{ntype};",
                 f"    wire pe_spike_{ntype};",
+                *(
+                    [f"    wire signed [DATA_WIDTH - 1:0] pe_val_{ntype};"]
+                    if type_neuron[ntype].spike_value_expr
+                    else []
+                ),
                 f"    {mod} pe_inst_{ntype} (",
                 "        .I_t(active_I),",
             ]
@@ -744,6 +809,8 @@ def build_folded_interconnect(
             f"        .{svars[k]}_reg(cur_state_{ntype}{slice_of(k)})," for k in range(len(svars))
         )
         lines.append(f"        .spike_out(pe_spike_{ntype}),")
+        if type_neuron[ntype].spike_value_expr:
+            lines.append(f"        .spike_value_out(pe_val_{ntype}),")
         lines.extend(
             f"        .{svars[k]}_next_out(next_state_{ntype}{slice_of(k)}),"
             for k in range(len(svars))
@@ -785,6 +852,11 @@ def build_folded_interconnect(
         lines.append("            v_acc <= 0;")
         for d in range(1, max_analogue_delay + 1):
             lines.append(f"            v_bus_hist_{d} <= 0;")
+    if g_total:
+        lines.append("            val_bus <= 0;")
+        lines.append("            val_acc <= 0;")
+        for d in range(1, max_graded_delay + 1):
+            lines.append(f"            val_bus_hist_{d} <= 0;")
     for pi, pop in enumerate(pops):
         lines.append(
             f"            for (i = 0; i < {pop.n_neurons}; i = i + 1) "
@@ -816,6 +888,11 @@ def build_folded_interconnect(
                 f" v_acc[{v_base} * DATA_WIDTH +: DATA_WIDTH] <= "
                 f"next_state_{ntype}[{v_word_off} +: DATA_WIDTH];"
             )
+        if pop.name in graded_offsets:
+            # Snapshot this graded source neuron's emitted value (zero without a spike).
+            goff = graded_offsets[pop.name]
+            g_base = "nidx" if goff == 0 else f"({goff} + nidx)"
+            writeback += f" val_acc[{g_base} * DATA_WIDTH +: DATA_WIDTH] <= pe_val_{ntype};"
         lines.append(f"                    {pidx_w}'d{pi}: begin {writeback} end")
     lines.extend(
         [
@@ -841,6 +918,8 @@ def build_folded_interconnect(
     if v_total:
         # Commit the analogue voltage snapshot alongside the spike bus.
         lines.append("                v_bus <= v_acc;")
+    if g_total:
+        lines.append("                val_bus <= val_acc;")
     # Advance the delay shift-registers on the same commit edge (nonblocking, so every
     # stage samples its old source): hist_d <- hist_{d-1}, hist_1 <- the bus being retired.
     for d in range(max_delay, 0, -1):
@@ -849,6 +928,9 @@ def build_folded_interconnect(
     for d in range(max_analogue_delay, 0, -1):
         source = "v_bus" if d == 1 else f"v_bus_hist_{d - 1}"
         lines.append(f"                v_bus_hist_{d} <= {source};")
+    for d in range(max_graded_delay, 0, -1):
+        source = "val_bus" if d == 1 else f"val_bus_hist_{d - 1}"
+        lines.append(f"                val_bus_hist_{d} <= {source};")
     lines.extend(
         [
             "            end",

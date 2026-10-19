@@ -21,6 +21,19 @@ validation, neuron RTL, weight ROMs, SC-NIR hierarchy boundaries, and the
 direct, address-event, and folded interconnects. Result classes retain their
 historical `sc_neurocore.nir_bridge.fpga_compiler` serialisation path.
 
+A population defined by a template with `spike_value` emits graded spikes.
+Its connections add `(value · weight) >>> fraction`, the value its neuron emits
+on a spike and zero otherwise, so a value of 1.0 is the binary case and a
+source threshold compares the value. The direct interconnect reads each
+instance's registered `spike_value_out` (delayed through `_val_d<k>`
+registers); the folded interconnect commits each graded source's value to a
+`val_bus` with `spike_bus` (delayed through `val_bus_hist_<k>`), so both
+produce the same raster. The address-event interconnect carries addresses
+only: a network with a graded source is not auto-selected for it and stays
+direct, with a warning. `tests/test_graded_spike_network.py` checks the direct
+current word for word against that arithmetic and the folded raster against
+the direct one.
+
 Malformed direct `NeuronGraph` inputs fail before SC-NIR conversion or HDL
 emission: the compiler rejects empty networks, non-matrix weights, inconsistent
 source/destination widths, invalid bias or threshold vectors, and invalid
