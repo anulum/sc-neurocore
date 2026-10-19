@@ -13360,6 +13360,43 @@ OverflowProofResult
 
 ---
 
+## Module `compiler.philox_threshold`
+
+### Function `philox_trial_text(probability)`
+Return the level threshold of a Philox trial with ``probability``.
+
+Parameters
+----------
+probability : str
+    The probability expression of one step.
+
+Returns
+-------
+str
+    ``rand(STOCHASTIC_SITE) < (probability)``.
+
+### Function `lower_philox_threshold(neuron)`
+Return the neuron with a Philox stochastic threshold spelled as a level threshold.
+
+Parameters
+----------
+neuron : EquationNeuron
+    The neuron to compile; returned unchanged unless it has a stochastic
+    threshold with ``threshold_rng="philox"``.
+
+Returns
+-------
+EquationNeuron
+    A shallow copy with ``threshold_expr = rand(STOCHASTIC_SITE) < (p)``,
+    level detection and no stochastic-threshold runtime.
+
+Raises
+------
+ValueError
+    If the stochastic expression is missing.
+
+---
+
 ## Module `compiler.pipeline`
 
 ### Class `CompilerPipeline`
@@ -26836,7 +26873,7 @@ and the special variable `I` (input current).
 ``units="strict"`` enables opt-in pint-based dimensional
 validation before the expressions are compiled for runtime.
 
-- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed, noise_rng, random_stream, spike_value)
+- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed, noise_rng, random_stream, spike_value, threshold_rng)
   - Initialise an equation-defined neuron from ODE strings.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
@@ -27005,6 +27042,34 @@ stream : int
   - Return the Poisson draw of a call site at the current step.
 - **poisson_grid**(lam, site)
   - Return the Poisson draw of a call site for a mean floored to the 1/16 grid.
+
+### Class `PhiloxThreshold`
+The Philox stochastic-threshold trial: fire when ``rand(STOCHASTIC_SITE) < p``.
+
+The counter-based alternative to the 16-bit LFSR (``threshold_rng="philox"``):
+the trial reads word 0 of the neuron's own draw at the reserved call site and
+the current step, so every neuron of a population has its own stream and the
+trial resolves ``p`` to ``2**-32`` instead of ``1/65535``. The compiler lowers
+the same comparison as a level threshold, which a Q-format with ``f`` fraction
+bits evaluates as ``floor(word0 / 2**(32 - f)) < P``: the same decision
+whenever ``p`` is exactly the code ``P / 2**f``.
+
+Parameters
+----------
+draws : RandomDraws
+    The neuron's draws (seed, stream and step counter).
+
+- **__init__**(draws)
+- **initial_seed**()
+  - Return the Philox key of the trials.
+- **state**()
+  - Return the step counter the next trial reads.
+- **trial**(probability)
+  - Return whether this step's trial fires with ``probability``.
+- **restore**(state)
+  - Return the step counter to ``state`` (a refused step draws again).
+- **reset**()
+  - Leave the counter to the neuron's reset, which returns it to step 0.
 
 ### Function `draws_in(expressions)`
 Return whether any of the expressions calls ``rand``, ``randn`` or ``poisson``.

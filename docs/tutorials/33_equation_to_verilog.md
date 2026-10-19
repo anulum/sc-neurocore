@@ -430,6 +430,18 @@ Stochastic Poisson and escape-rate RTL currently requires a signed, unpipelined
 registered datapath. The registered form owns a seeded 16-bit LFSR; the folded
 form receives its sample from the scheduler.
 
+`EquationNeuron(..., threshold_rng="philox")` replaces the LFSR by the
+counter-based draws: a step fires when `rand()` of the reserved call site
+`STOCHASTIC_SITE = 2**31` is below the probability (`p`, or `1 - exp(-rate·dt)`
+for an escape rate), keyed by `rng_seed` and `random_stream`, so every neuron
+has its own stream and the trial resolves `p` to `2**-32`. The compiler
+(`compiler.philox_threshold`) lowers it as the level threshold `rand(S) < p`:
+the registered and folded RTL, the C kernel and the Rust kernel all compile it
+(the LFSR form is RTL-only). In a format with `f` fraction bits the comparison
+is `floor(word0 / 2**(32 - f)) < P`, the model's decision whenever `p` is the
+code `P / 2**f` exactly (`tests/test_philox_threshold.py`). The LFSR stays the
+default.
+
 ## 8. Generate and compile a testbench
 
 ```python
@@ -542,8 +554,9 @@ a named synthesis/place-and-route flow and its retained reports.
 
 - The whole-neuron integer C/Rust generator mirrors every integrator
   (`euler`, `map`, `rk4`, `exp_euler`, `gauss_seidel`) and the macro steps of
-  sub-stepped crossing models; it does not mirror stochastic spike detection
-  (the RTL's LFSR) and refuses the rounding modes the RTL alone supports.
+  sub-stepped crossing models; it does not mirror the LFSR stochastic spike
+  detection (it compiles `threshold_rng="philox"`) and refuses the rounding
+  modes the RTL alone supports.
 - The integrator scalings (`dt`, the RK4 stage factors, `dt/6`) round under the
   format's rounding mode like every product; before 2026-10-19 the RTL
   truncated them while the kernel rounded the Euler `dt` product.

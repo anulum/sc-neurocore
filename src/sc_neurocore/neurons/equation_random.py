@@ -33,7 +33,10 @@ XI_SITE = (1 << 32) - 1
 """Call site of the diffusion-noise symbol ``xi``; sub-step ``k`` of a step reads ``XI_SITE - k``."""
 
 RESERVED_SITES = 1 << 31
-"""Sites from here up are reserved for ``xi``; an explicit call site must lie below."""
+"""Sites from here up are reserved (``xi``, the Philox threshold trial); explicit sites lie below."""
+
+STOCHASTIC_SITE = RESERVED_SITES
+"""Call site of the Philox stochastic-threshold trial (``threshold_rng="philox"``)."""
 
 # Arguments before the call site: poisson's mean.
 _LEADING = {"rand": 0, "randn": 0, "poisson": 1, "poisson_grid": 1}
@@ -265,4 +268,55 @@ class RandomDraws:
         return float(ru.poisson_grid_count(word, ru.poisson_grid_index(lam)))
 
 
-__all__ = ["RANDOM_CALLS", "RandomDraws", "draws_in", "number_random_sites"]
+__all__ = [
+    "RANDOM_CALLS",
+    "RESERVED_SITES",
+    "STOCHASTIC_SITE",
+    "XI_SITE",
+    "PhiloxThreshold",
+    "RandomDraws",
+    "draws_in",
+    "number_random_sites",
+]
+
+
+class PhiloxThreshold:
+    """The Philox stochastic-threshold trial: fire when ``rand(STOCHASTIC_SITE) < p``.
+
+    The counter-based alternative to the 16-bit LFSR (``threshold_rng="philox"``):
+    the trial reads word 0 of the neuron's own draw at the reserved call site and
+    the current step, so every neuron of a population has its own stream and the
+    trial resolves ``p`` to ``2**-32`` instead of ``1/65535``. The compiler lowers
+    the same comparison as a level threshold, which a Q-format with ``f`` fraction
+    bits evaluates as ``floor(word0 / 2**(32 - f)) < P``: the same decision
+    whenever ``p`` is exactly the code ``P / 2**f``.
+
+    Parameters
+    ----------
+    draws : RandomDraws
+        The neuron's draws (seed, stream and step counter).
+    """
+
+    def __init__(self, draws: RandomDraws) -> None:
+        self._draws = draws
+
+    @property
+    def initial_seed(self) -> int:
+        """Return the Philox key of the trials."""
+        return self._draws.seed
+
+    @property
+    def state(self) -> int:
+        """Return the step counter the next trial reads."""
+        return self._draws.step
+
+    def trial(self, probability: float) -> bool:
+        """Return whether this step's trial fires with ``probability``."""
+        return self._draws.rand(STOCHASTIC_SITE) < probability
+
+    def restore(self, state: int) -> None:
+        """Return the step counter to ``state`` (a refused step draws again)."""
+        self._draws.step = state
+
+    def reset(self) -> None:
+        """Leave the counter to the neuron's reset, which returns it to step 0."""

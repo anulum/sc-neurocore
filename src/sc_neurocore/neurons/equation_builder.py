@@ -72,6 +72,7 @@ from sc_neurocore.neurons.equation_evaluation import evaluate_condition, evaluat
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
 from sc_neurocore.neurons.equation_random import (
     XI_SITE,
+    PhiloxThreshold,
     RandomDraws,
     draws_in,
     number_random_sites,
@@ -130,6 +131,7 @@ class EquationNeuron:
         noise_rng: np.random.Generator | None = None,
         random_stream: int = 0,
         spike_value: str | None = None,
+        threshold_rng: str = "lfsr16",
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings.
 
@@ -154,6 +156,15 @@ class EquationNeuron:
         evaluated on the integrated state before reset (the environment of the
         reset rules) and kept as :attr:`last_spike_value`; without a spike that
         value is 0. The compiled RTL emits it as ``spike_value_out``.
+
+        ``threshold_rng`` chooses the generator of a stochastic threshold
+        (``detection="poisson"`` or ``"escape_rate"``): ``"lfsr16"`` (default) is
+        the model-scoped 16-bit LFSR seeded by ``rng_seed``; ``"philox"`` fires
+        when ``rand()`` of the reserved call site
+        :data:`~sc_neurocore.neurons.equation_random.STOCHASTIC_SITE` is below
+        the probability, keyed by ``rng_seed`` and ``random_stream`` — its own
+        stream per neuron, 32-bit resolution, and lowered by the equation
+        compiler to RTL, C and Rust alike.
         """
         if units not in {"none", "strict"}:
             raise EquationRefusal("units must be 'none' or 'strict'")
@@ -246,9 +257,23 @@ class EquationNeuron:
             if not math.isfinite(float(dt)) or float(dt) <= 0.0:
                 raise EquationRefusal(f"{detection} dt must be finite and positive")
             self.threshold_expr = None
-            self._stochastic_rng: Lfsr16Threshold | None = Lfsr16Threshold(rng_seed)
+            self._stochastic_rng: Lfsr16Threshold | PhiloxThreshold | None = (
+                PhiloxThreshold(self._random)
+                if threshold_rng == "philox"
+                else Lfsr16Threshold(rng_seed)
+            )
         else:
             self._stochastic_rng = None
+        if threshold_rng not in ("lfsr16", "philox"):
+            raise EquationRefusal(
+                f"threshold_rng must be 'lfsr16' or 'philox', got {threshold_rng!r}"
+            )
+        if threshold_rng == "philox" and not self._stochastic_threshold_enabled:
+            raise EquationRefusal(
+                "threshold_rng='philox' needs a stochastic threshold "
+                "(detection='poisson' or 'escape_rate')"
+            )
+        self.threshold_rng = threshold_rng
         # Rising-edge (``crossing``) detection is only engaged for a NON-resetting model:
         # a reset that drops the state back below threshold already clears the condition
         # every spike, so ``level`` and ``crossing`` are identical there and the simpler

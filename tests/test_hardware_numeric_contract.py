@@ -349,7 +349,8 @@ class TestMirrorAndProjection:
             "available": False,
             "refusal": (
                 "bit-true neuron kernel does not mirror stochastic spike detection "
-                "('poisson'): the RTL draws from an LFSR the kernel does not model"
+                "('poisson') with the LFSR the RTL draws from; "
+                "threshold_rng='philox' compiles on every target"
             ),
             "evidence": "",
             "arithmetic": None,

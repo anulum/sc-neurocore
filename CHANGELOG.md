@@ -10,6 +10,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `EquationNeuron(..., threshold_rng="philox")` is an optional generator for
+  Poisson and escape-rate thresholds: a step fires when `rand()` of the reserved
+  call site `2**31` is below the probability, keyed by the neuron's seed and
+  stream (its own stream per neuron, `2**-32` resolution). The compiler lowers
+  it as the level threshold `rand(S) < p`, so the C and Rust kernels compile it
+  as well as the RTL; for a probability with an exact Q-format code the model,
+  RTL, C and Rust fire on the same steps. The 16-bit LFSR stays the default and
+  its RTL is unchanged.
+
 - The diffusion-noise symbol `xi` is the counter-based normal draw of a reserved
   call site (`XI_SITE = 2**32 - 1`, sub-step `k` reads `XI_SITE - k`) divided by
   `sqrt(dt)`, keyed by the neuron's seed and stream like `randn()`: replayable,

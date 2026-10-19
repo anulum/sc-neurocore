@@ -46,6 +46,7 @@ from .. import expr_lut_tables
 from ..function_unit_ir import TABLE_PREFIX
 from ..lut_accuracy import GEOMETRY
 from ..diffusion_noise import lower_diffusion_noise
+from ..philox_threshold import lower_philox_threshold
 from ..verilog_compiler_config import Q88
 
 _NATIVE_WIDTHS = frozenset({8, 16, 32, 64})
@@ -782,10 +783,13 @@ def generate_bittrue_kernel_from_neuron(
             f"{', '.join(repr(m) for m in KERNEL_METHODS)}, got {neuron.method!r}"
         )
 
+    # Counter-based draws: xi and a Philox threshold become ordinary rand()/randn().
+    neuron = lower_philox_threshold(lower_diffusion_noise(neuron))
     if getattr(neuron, "_stochastic_threshold_enabled", False):
         raise ValueError(
             "bit-true neuron kernel does not mirror stochastic spike detection "
-            f"({neuron.detection!r}): the RTL draws from an LFSR the kernel does not model"
+            f"({neuron.detection!r}) with the LFSR the RTL draws from; "
+            "threshold_rng='philox' compiles on every target"
         )
     if neuron.substeps > 1 and not (
         neuron.threshold_expr and getattr(neuron, "_edge_detection", False)
@@ -795,7 +799,6 @@ def generate_bittrue_kernel_from_neuron(
             "bit-true neuron kernel mirrors substeps > 1 only for edge-crossing "
             "(non-resetting) models, as the RTL does"
         )
-    neuron = lower_diffusion_noise(neuron)  # xi -> randn(XI_SITE) * (1/sqrt(dt))
 
     if neuron.uses_random_draws and "rng_step" in {*neuron.equations, *neuron.parameters}:
         # The draws' step counter is the struct field ``rng_step``.

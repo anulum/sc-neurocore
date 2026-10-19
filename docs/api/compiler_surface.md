@@ -42,6 +42,7 @@ can change without a deprecation window.
 | `equivalence_check` | internal build tool | SymbiYosys equivalence runner behind the hardware evidence pipeline. |
 | `equivalence_miter` | internal build tool | Sequential-equivalence miter builder feeding the equivalence runner. |
 | `diffusion_noise` | internal build tool | Lowers the diffusion-noise symbol `xi` to `randn(XI_SITE) * (1/sqrt(dt))` before RTL and kernel emission; refuses `noise_rng` and sub-stepped `xi`. |
+| `philox_threshold` | internal build tool | Lowers a `threshold_rng="philox"` stochastic threshold to the level threshold `rand(STOCHASTIC_SITE) < p` before RTL and kernel emission. |
 | `exact_normal` | internal build tool | Integer reference of the 60-bit `randn()` lowering (`random_precision="exact"`) the random-unit programs mirror. |
 | `expr_lut_tables` | internal build tool | Shared transcendental look-up tables for the expression emitters. |
 | `fixed_point_quantization` | direct public module | Fixed-point quantization primitives back direct quantization workflows. |

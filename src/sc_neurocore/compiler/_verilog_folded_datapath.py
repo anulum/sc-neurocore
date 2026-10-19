@@ -16,6 +16,7 @@ from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
 from ._verilog_neuron_core import _build_neuron_core, _escape_threshold_wires
 from .diffusion_noise import lower_diffusion_noise
+from .philox_threshold import lower_philox_threshold
 from .verilog_compiler_config import Q88
 
 
@@ -97,7 +98,7 @@ def compile_to_datapath(
     if len(normalised_param_ports) != len(set(normalised_param_ports)):
         raise ValueError("param_ports must not contain duplicates")
     q = Q88(data_width, fraction, signed, overflow, rounding, function_lowering, random_precision)
-    neuron = lower_diffusion_noise(neuron)  # xi -> randn(XI_SITE) * (1/sqrt(dt))
+    neuron = lower_philox_threshold(lower_diffusion_noise(neuron))  # draws -> rand()/randn()
 
     if neuron.dt != 0.0:
         q.check_time_step(neuron.dt, neuron.method)  # a wrapped dt runs another step
