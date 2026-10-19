@@ -395,19 +395,6 @@ def precision_compare(
     q = Q88(data_width=data_width, fraction=fraction, overflow=overflow, rounding=rounding)
     q_label = f"Q{data_width - fraction}.{fraction}"
     try:
-        arithmetic = kernel_arithmetic_contract(
-            data_width=data_width,
-            fraction=fraction,
-            overflow=overflow,
-            rounding=rounding,
-            method="euler",
-        )
-    except ValueError as exc:
-        raise _input_error(
-            "q_format", "fixed-point arithmetic configuration is unsupported"
-        ) from exc
-
-    try:
         neuron = from_equations(
             *equations,
             threshold=threshold,
@@ -418,10 +405,22 @@ def precision_compare(
         )
     except (ValueError, TypeError, SyntaxError, KeyError) as exc:
         raise _input_error("equations", "equations could not be parsed") from exc
-    if neuron.uses_diffusion_noise:
-        raise _input_error(
-            "equations", "the diffusion-noise symbol xi has no bit-true fixed-point arithmetic"
+    try:
+        # The draws (rand, randn, poisson, xi) are stated with their key and stream.
+        arithmetic = kernel_arithmetic_contract(
+            data_width=data_width,
+            fraction=fraction,
+            overflow=overflow,
+            rounding=rounding,
+            method="euler",
+            random_draws=(
+                (neuron.random_seed, neuron.random_stream) if neuron.uses_random_draws else None
+            ),
         )
+    except ValueError as exc:
+        raise _input_error(
+            "q_format", "fixed-point arithmetic configuration is unsupported"
+        ) from exc
     if neuron.method != "euler":
         raise _input_error("equations", f"integrator {neuron.method!r} is not mirrored bit-true")
     _reject_unrepresentable(q, q_label, neuron, equations, threshold, reset, dt)
@@ -557,7 +556,8 @@ def precision_compare(
             "rate_hz": "Hz",
         },
         applicability=(
-            "explicit-Euler equation systems without diffusion noise",
+            "explicit-Euler equation systems; draws and the diffusion noise xi use the "
+            "counter-based generator keyed by the default seed",
             f"values representable in {q_label} [{q.min_value}, {q.max_value}]",
             "identical drive: the float runs receive the requested samples, the kernel "
             "their word encoding (reported under encoding.drive)",

@@ -548,9 +548,14 @@ a named synthesis/place-and-route flow and its retained reports.
   format's rounding mode like every product; before 2026-10-19 the RTL
   truncated them while the kernel rounded the Euler `dt` product.
 - Registered and folded Verilog emission currently requires signed state.
-- The diffusion-noise symbol `xi` has no RTL or kernel lowering; an expression
-  using it, the graded value included, is refused. `randn()` is the
-  counter-based normal draw that compiles.
+- The diffusion-noise symbol `xi` is the counter-based normal draw of the
+  reserved call site `XI_SITE = 2**32 - 1` times `1/sqrt(dt)` (so `xi * dt` has
+  variance `dt`), shared by every occurrence in a step and by the Runge–Kutta
+  stages; the compiler lowers it as `randn(XI_SITE) * (1/sqrt(dt))` on RTL, C and
+  Rust (`compiler.diffusion_noise`), in either `random_precision`. Refused: `xi`
+  drawn from a caller's `noise_rng` (Python only) and `xi` with `substeps > 1`.
+  Explicit call sites must lie below `2**31`. Before 2026-10-19 `xi` came from
+  NumPy's global generator and was `N(0, 1)` regardless of `dt`.
 - Folded datapaths do not support multiplier pipeline registers.
 - Stochastic-threshold registered RTL is signed and unpipelined.
 - Stochastic product rounding is rejected until the caller can provide and own

@@ -276,7 +276,8 @@ the result cache:
   and the effective one. A seed on a deterministic model or on noise-free
   equations is rejected; a fresh trial draws a seed, reports it so the trial
   can be replayed, and is never cached. Playground diffusion noise (`xi`) is
-  drawn from a per-run generator, not from the process-global stream.
+  the counter-based normal draw keyed by the run's seed, like `rand()` and
+  `randn()`, not the process-global stream.
 - `backend` — the selected backend and the rejected alternatives with their
   reasons; `runtime` — package, Python and NumPy versions and the equation
   builder digest.
@@ -413,8 +414,10 @@ The request names the word (`q_format`, `Q8.8` = 16 bits with 8 fractional,
 parameter, expression constant, initial value, time step or drive sample the
 word cannot hold is rejected with its field (HTTP 422 `invalid_model_input`)
 instead of being clamped — a clamped parameter is a different model, not a
-precision effect — as are diffusion noise (`xi`) and integrators the kernel
-does not mirror. When the host has no C compiler the route answers HTTP 503
+precision effect — as are integrators the kernel does not mirror. Random
+draws and the diffusion noise `xi` run in both arithmetics from the same
+counter-based generator (default seed), and the arithmetic block states its
+key and stream. When the host has no C compiler the route answers HTTP 503
 `native_tool_unavailable`; nothing is estimated in its place.
 
 ## API Reference

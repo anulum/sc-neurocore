@@ -310,10 +310,9 @@ def test_stochastic_processes_state_their_randomness_contract(
     )
     noisy = deepcopy(load_schema("lif"))
     noisy["dynamics"]["v"] = "-(v - v_rest) / tau_m + R * I / C + xi"
-    assert resolve_profile(noisy, stem="noisy").numerical.randomness.kind == (
-        "diffusion-noise-global-rng"
-    )
-    assert resolve_profile(noisy, stem="noisy").numerical.randomness.reproducible is False
+    # xi is the counter-based normal draw of its reserved site since 2026-10-19.
+    assert resolve_profile(noisy, stem="noisy").numerical.randomness.kind == "philox-draws"
+    assert resolve_profile(noisy, stem="noisy").numerical.randomness.reproducible is True
 
 
 def test_coba_stage_registers_are_lowering_state_not_biology(

@@ -42,6 +42,7 @@ from typing import Literal
 
 from ..neurons.equation_builder import EquationNeuron
 from . import expr_lut_tables
+from .diffusion_noise import lower_diffusion_noise
 from .lut_accuracy import LutAccuracy, measure
 from .intelligence.bit_true_kernel import (
     generate_bittrue_kernel_from_neuron,
@@ -361,6 +362,7 @@ def hardware_numeric_contract(
     if function_lowering not in ("lut-v1", "v2"):
         raise ValueError(f"function_lowering must be 'lut-v1' or 'v2', got {function_lowering!r}")
     data_width, fraction = q_format.total_bits, q_format.fraction_bits
+    neuron = lower_diffusion_noise(neuron)  # xi -> randn(XI_SITE) * (1/sqrt(dt))
     quantities = _deduplicated(
         _quantities(neuron, data_width=data_width, fraction=fraction, rounding=rounding)
     )

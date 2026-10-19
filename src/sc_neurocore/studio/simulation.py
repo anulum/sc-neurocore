@@ -175,10 +175,9 @@ def simulate(
         Level a sine oscillates about; zero, and refused for any other
         protocol, unless given.
     seed : int or None
-        Seed of the diffusion-noise generator (the ``xi`` symbol) and key of the
-        counter-based ``rand()``, ``randn()`` and ``poisson()`` draws. ``None``
-        draws ``xi`` from the process-global ``numpy.random`` stream, which is
-        not reproducible, and keys the draws with the default seed; the
+        Key of the counter-based draws: ``rand()``, ``randn()``, ``poisson()``
+        and the diffusion noise ``xi`` (the normal draw of its reserved call
+        site over ``sqrt(dt)``). ``None`` keys them with the default seed; the
         experiment contract always passes a seed for a stochastic playground
         run and rejects one for equations that draw nothing.
 
@@ -213,7 +212,6 @@ def simulate(
         params=dict(params) if params else None,
         init=dict(init) if init else None,
         dt=dt,
-        noise_rng=np.random.default_rng(seed) if seed is not None else None,
         rng_seed=seed if seed is not None else DEFAULT_LFSR16_SEED,
     )
 

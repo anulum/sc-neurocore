@@ -110,14 +110,14 @@ def test_declaring_a_derived_exactness_does_not_promote_the_model() -> None:
     assert profile.problems == ()
 
 
-def test_stochastic_threshold_with_diffusion_noise_is_not_reproducible() -> None:
-    """Check that adding diffusion noise marks the randomness as not reproducible."""
+def test_stochastic_threshold_with_diffusion_noise_is_reproducible() -> None:
+    """Check that diffusion noise joins the replayable Philox draws beside the LFSR trial."""
     schema = deepcopy(load_schema("escape_rate"))
     variable = next(iter(schema["dynamics"]))
     schema["dynamics"][variable] += " + xi"
     profile = resolve_profile(schema, stem="escape_rate")
-    assert profile.numerical.randomness.kind == "lfsr16-threshold+diffusion-noise-global-rng"
-    assert profile.numerical.randomness.reproducible is False
+    assert profile.numerical.randomness.kind == "lfsr16-threshold+philox-draws"
+    assert profile.numerical.randomness.reproducible is True
 
 
 def test_poisson_detection_inside_an_ode_retains_the_reset_phase() -> None:

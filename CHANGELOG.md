@@ -10,6 +10,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The diffusion-noise symbol `xi` is the counter-based normal draw of a reserved
+  call site (`XI_SITE = 2**32 - 1`, sub-step `k` reads `XI_SITE - k`) divided by
+  `sqrt(dt)`, keyed by the neuron's seed and stream like `randn()`: replayable,
+  shared by every occurrence in a step, and compiled bit for bit to RTL, C and
+  Rust (`compiler.diffusion_noise`). It was drawn from NumPy's global generator
+  and, despite the documented `1/sqrt(dt)`, equalled `N(0, 1)`, so an Euler
+  increment had variance `dt**2` instead of `dt`; seeded runs with `xi` change.
+  A caller's `noise_rng` still draws `xi` (Python only, refused by the compiler);
+  explicit call sites must lie below `2**31`. Model profiles count `xi` as
+  `philox-draws` (replayable), Studio keys it by the run seed, and the precision
+  comparison runs it and states the draws' key and stream.
+
 - Docstrings and strict typing: the StochasticIF and Cazelles model modules
   and 12 native-dispatch, projection and StochasticIF test modules meet the
   NumPy docstring convention and `mypy --strict`.

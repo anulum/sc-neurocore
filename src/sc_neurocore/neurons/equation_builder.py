@@ -70,7 +70,12 @@ from sc_neurocore.neurons._stochastic_threshold import (
 )
 from sc_neurocore.neurons.equation_evaluation import evaluate_condition, evaluate_scalar
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
-from sc_neurocore.neurons.equation_random import RandomDraws, draws_in, number_random_sites
+from sc_neurocore.neurons.equation_random import (
+    XI_SITE,
+    RandomDraws,
+    draws_in,
+    number_random_sites,
+)
 from sc_neurocore.neurons.equation_refusals import EquationRefusal, EquationStateFailure
 from sc_neurocore.neurons.equation_program import compile_expression
 from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
@@ -128,10 +133,16 @@ class EquationNeuron:
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings.
 
-        ``noise_rng`` is the generator that draws the diffusion-noise symbol
-        ``xi``; when ``None`` the process-global ``numpy.random`` stream is
-        used (legacy behaviour). A caller that needs a reproducible stochastic
-        trial passes its own seeded ``numpy.random.Generator``.
+        The diffusion-noise symbol ``xi`` is a white-noise sample: a standard
+        normal draw divided by ``sqrt(dt)``, so that ``xi * dt`` has variance
+        ``dt`` (Euler–Maruyama). Every occurrence of ``xi`` in a step reads the
+        same draw (also across Runge–Kutta stages). By default the draw is the
+        counter-based ``randn()`` of call site :data:`~sc_neurocore.neurons.equation_random.XI_SITE`
+        (sub-step ``k`` reads ``XI_SITE - k``), keyed by ``rng_seed`` and
+        ``random_stream`` like every other draw, so a run is replayable from its
+        seed and the equation compiler lowers ``xi`` bit for bit. A
+        ``noise_rng`` (a ``numpy.random.Generator``) instead draws ``xi`` from
+        that generator, as before 2026-10-19; such a neuron runs in Python only.
 
         ``rand()``, ``randn()`` and ``poisson(lam)`` in any expression draw from the counter-based
         generator of :mod:`sc_neurocore.neurons.equation_random`, keyed by
@@ -299,8 +310,10 @@ class EquationNeuron:
             self.dt = float(dt)
 
         self.initial_state = deepcopy(self.state)
-        self._noise_scale = np.sqrt(self.dt)
+        # xi = N(0, 1) / sqrt(dt): xi * dt then has variance dt (Euler-Maruyama).
+        self._xi_scale = 1.0 / max(self.dt, 1e-12) ** 0.5
         self._noise_rng = noise_rng
+        self._xi_substep = 0
 
         self._safety = ExpressionSafetyValidator()
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
@@ -423,14 +436,23 @@ class EquationNeuron:
         return compiled
 
     def _draw_noise(self) -> float:
-        """Draw one standard-normal diffusion-noise sample from the run's generator."""
+        """Draw the standard-normal sample behind ``xi`` for the current sub-step.
+
+        The counter-based draw of call site ``XI_SITE - k`` at sub-step ``k``, or
+        a fresh sample of the caller's ``noise_rng`` when one was given.
+        """
         if self._noise_rng is not None:
             return float(self._noise_rng.standard_normal())
-        return float(np.random.randn())
+        return self._random.randn(XI_SITE - self._xi_substep)
 
     @property
     def uses_random_draws(self) -> bool:
-        """Whether any authored expression calls ``rand``, ``randn`` or ``poisson``."""
+        """Whether the neuron draws counter-based numbers.
+
+        True when an authored expression calls ``rand``, ``randn`` or
+        ``poisson``, or names ``xi`` without a ``noise_rng`` (``xi`` is then the
+        counter-based normal draw of :data:`XI_SITE`).
+        """
         return draws_in(
             [
                 *self.equations.values(),
@@ -440,7 +462,12 @@ class EquationNeuron:
                 self.probability_expression,
                 self.spike_value_expr,
             ]
-        )
+        ) or (self._noise_rng is None and self.uses_diffusion_noise)
+
+    @property
+    def xi_from_noise_rng(self) -> bool:
+        """Whether ``xi`` is drawn from a caller's ``noise_rng`` (Python only, not compiled)."""
+        return self._noise_rng is not None and self.uses_diffusion_noise
 
     @property
     def uses_diffusion_noise(self) -> bool:
@@ -467,7 +494,7 @@ class EquationNeuron:
             # equations, probability/rate, or reset expressions references diffusion noise.
             env["xi"] = 0.0
         else:
-            env["xi"] = self._noise_scale * self._draw_noise() / max(self.dt, 1e-12) ** 0.5
+            env["xi"] = self._draw_noise() * self._xi_scale
         env.update(self.parameters)
         env.update(self.constants)
         env.update(self.state)
@@ -507,7 +534,9 @@ class EquationNeuron:
             }
         previous_state = dict(self.state)
         try:
-            for _ in range(self.substeps):
+            for substep in range(self.substeps):
+                # The threshold, reset and spike value read the last sub-step's xi.
+                self._xi_substep = substep
                 self._integrate_once(**kwargs)
         except Exception:
             if self._stochastic_threshold_enabled:
@@ -623,7 +652,7 @@ class EquationNeuron:
         elif self.method == "rk4":
             s0 = deepcopy(self.state)
 
-            xi_sample = self._noise_scale * self._draw_noise() / max(self.dt, 1e-12) ** 0.5
+            xi_sample = self._draw_noise() * self._xi_scale
 
             def eval_derivs(state_override: dict[str, float]) -> dict[str, float]:
                 """Evaluate all ODE derivatives at given state."""

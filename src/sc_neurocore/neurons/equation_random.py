@@ -29,6 +29,12 @@ from typing import cast
 
 RANDOM_CALLS = frozenset({"rand", "randn", "poisson", "poisson_grid"})
 
+XI_SITE = (1 << 32) - 1
+"""Call site of the diffusion-noise symbol ``xi``; sub-step ``k`` of a step reads ``XI_SITE - k``."""
+
+RESERVED_SITES = 1 << 31
+"""Sites from here up are reserved for ``xi``; an explicit call site must lie below."""
+
 # Arguments before the call site: poisson's mean.
 _LEADING = {"rand": 0, "randn": 0, "poisson": 1, "poisson_grid": 1}
 
@@ -115,6 +121,11 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
                 or site.value < 0
             ):
                 raise ValueError(f"{name}() takes an optional call-site integer literal")
+            if site.value >= RESERVED_SITES:
+                raise ValueError(
+                    f"random call site {site.value} is reserved for the diffusion noise xi; "
+                    f"explicit sites must be below {RESERVED_SITES}"
+                )
             if site.value in used:
                 raise ValueError(f"random call site {site.value} is used twice")
             used.add(site.value)

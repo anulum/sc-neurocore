@@ -70,11 +70,7 @@ RandomnessKind = Literal[
     "none",
     "lfsr16-threshold",
     "philox-draws",
-    "diffusion-noise-global-rng",
     "lfsr16-threshold+philox-draws",
-    "lfsr16-threshold+diffusion-noise-global-rng",
-    "philox-draws+diffusion-noise-global-rng",
-    "lfsr16-threshold+philox-draws+diffusion-noise-global-rng",
 ]
 
 EXECUTABLE_METHODS: tuple[str, ...] = tuple(SUPPORTED_METHODS)
@@ -288,16 +284,15 @@ class RandomnessContract:
     kind:
         ``none``; ``lfsr16-threshold`` (a model-scoped 16-bit LFSR decides
         stochastic threshold trials from ``seed``); ``philox-draws`` (an
-        expression calls ``rand``, ``randn`` or ``poisson``, counter-based
-        Philox draws keyed by ``seed``); ``diffusion-noise-global-rng`` (an
-        expression names ``xi``, drawn from NumPy's process-global stream); or
-        their combination joined by ``+`` in that order.
+        expression calls ``rand``, ``randn`` or ``poisson`` or names the
+        diffusion noise ``xi``, counter-based Philox draws keyed by ``seed``);
+        or their combination joined by ``+`` in that order.
     seed:
         The LFSR seed or Philox key (the same ``threshold.rng_seed``) when the
         threshold is stochastic or an expression draws, else ``None``.
     reproducible:
-        ``True`` unless an expression names ``xi``: the LFSR and the Philox draws
-        replay from the seed.
+        ``True``: the LFSR and the Philox draws (``xi`` included since
+        2026-10-19) replay from the seed.
     """
 
     kind: RandomnessKind
@@ -947,7 +942,8 @@ def resolve_profile(schema: Mapping[str, Any], *, stem: str = "") -> ModelProfil
     )
 
     uses_xi = "xi" in read_names
-    draws = draws_in(_all_expressions(schema))
+    # xi is the counter-based normal draw of the reserved site, keyed like randn().
+    draws = draws_in(_all_expressions(schema)) or uses_xi
     stochastic = detection in {"escape_rate", "poisson"} and bool(stochastic_expression)
     seed_raw = threshold.get("rng_seed", DEFAULT_LFSR16_SEED)
     seed = seed_raw if isinstance(seed_raw, int) and not isinstance(seed_raw, bool) else None
@@ -958,7 +954,6 @@ def resolve_profile(schema: Mapping[str, Any], *, stem: str = "") -> ModelProfil
         for name, present in (
             ("lfsr16-threshold", stochastic),
             ("philox-draws", draws),
-            ("diffusion-noise-global-rng", uses_xi),
         )
         if present
     ]
@@ -966,7 +961,7 @@ def resolve_profile(schema: Mapping[str, Any], *, stem: str = "") -> ModelProfil
     randomness = RandomnessContract(
         kind=randomness_kind,
         seed=seed if stochastic or draws else None,
-        reproducible=not uses_xi,
+        reproducible=True,
     )
 
     admissible = _admissible_methods(

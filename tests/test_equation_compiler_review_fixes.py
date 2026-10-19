@@ -288,8 +288,14 @@ def test_level_pe_has_no_history_ports() -> None:
         ("-v", "xi", None),
     ],
 )
-def test_xi_is_refused_by_every_target(equation: str, reset: str, spike_value: str | None) -> None:
-    """NEURO-C35-GRADE-XI-01: xi anywhere, including the graded value, is refused."""
+def test_xi_from_a_noise_rng_is_refused_by_every_target(
+    equation: str, reset: str, spike_value: str | None
+) -> None:
+    """NEURO-C35-GRADE-XI-01: xi from a caller's noise_rng, anywhere, is refused.
+
+    Without a noise_rng, xi is the counter-based draw and compiles
+    (tests/test_diffusion_noise_philox.py).
+    """
     neuron = EquationNeuron(
         equations={"v": equation},
         state={"v": 0.0},

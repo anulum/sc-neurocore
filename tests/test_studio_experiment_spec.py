@@ -311,7 +311,7 @@ class TestRandomnessContract:
         assert other["spikes"] != first["spikes"]
 
     def test_playground_noise_is_seeded_per_run_not_process_global(self) -> None:
-        """Replay the sealed noise trace without reading or consuming NumPy's global RNG."""
+        """Replay the sealed noise trace (Philox, keyed by the seed) without NumPy's global RNG."""
         spec = resolve_ode_experiment({"equations": NOISY, "duration": 5.0, "seed": 11})
         assert spec.public["randomness"] == {
             "kind": "diffusion-noise",
@@ -319,7 +319,7 @@ class TestRandomnessContract:
             "seed_source": "request",
             "trial": "replay",
             "effective_trial": "replay",
-            "generator": "numpy.random.default_rng",
+            "generator": "Philox4x32-10 counter draws keyed by the seed",
         }
         before = json.dumps(spec.to_public_dict(), sort_keys=True)
         np.random.seed(1)

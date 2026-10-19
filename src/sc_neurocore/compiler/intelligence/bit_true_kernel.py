@@ -45,6 +45,7 @@ from ..c_fixed_emitter import emit_c_fixed_expr, signed_q
 from .. import expr_lut_tables
 from ..function_unit_ir import TABLE_PREFIX
 from ..lut_accuracy import GEOMETRY
+from ..diffusion_noise import lower_diffusion_noise
 from ..verilog_compiler_config import Q88
 
 _NATIVE_WIDTHS = frozenset({8, 16, 32, 64})
@@ -296,10 +297,7 @@ _RANDN_PRECISION = {
 def _randomness(random_draws: tuple[int, int] | None, precision: str = "standard") -> str:
     """Describe the counter-based draws of a neuron, or their absence."""
     if random_draws is None:
-        return (
-            "none: the neuron calls no rand(), randn() or poisson(); the diffusion-noise "
-            "symbol xi is not supported"
-        )
+        return "none: the neuron calls no rand(), randn() or poisson() and names no xi"
     seed, stream = random_draws
     return (
         f"counter-based Philox4x32-10 keyed by seed {seed}, counter (call site, step, "
@@ -307,7 +305,8 @@ def _randomness(random_draws: tuple[int, int] | None, precision: str = "standard
         "rand() = floor(word0 * 2**fraction / 2**32); randn() = integer Box-Muller of "
         f"words 0 and 1, {_RANDN_PRECISION[precision]}, saturated; poisson(lam) = exact inversion of word 0 against "
         "ceil(2**32 * CDF(k)) for a constant mean in [0, 100]; replayable from seed, stream "
-        "and step; the diffusion-noise symbol xi is not supported"
+        "and step; the diffusion-noise symbol xi is randn() of call site 2**32 - 1 "
+        "times 1/sqrt(dt)"
     )
 
 
@@ -796,11 +795,7 @@ def generate_bittrue_kernel_from_neuron(
             "bit-true neuron kernel mirrors substeps > 1 only for edge-crossing "
             "(non-resetting) models, as the RTL does"
         )
-    if getattr(neuron, "uses_diffusion_noise", False):
-        raise ValueError(
-            "bit-true neuron kernel has no lowering of the diffusion-noise symbol xi; "
-            "use the counter-based randn() draw instead"
-        )
+    neuron = lower_diffusion_noise(neuron)  # xi -> randn(XI_SITE) * (1/sqrt(dt))
 
     if neuron.uses_random_draws and "rng_step" in {*neuron.equations, *neuron.parameters}:
         # The draws' step counter is the struct field ``rng_step``.

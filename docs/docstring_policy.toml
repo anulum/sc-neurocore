@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1242
+expected_file_count = 1245
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -5061,3 +5061,15 @@ rationale = "Production model module brought to the NumPy docstring convention (
 [[file]]
 path = "src/sc_neurocore/neurons/models/cazelles_map.py"
 rationale = "Production model module brought to the NumPy docstring convention (RIGOR QA debt)."
+
+[[file]]
+path = "src/sc_neurocore/compiler/diffusion_noise.py"
+rationale = "Lowers the diffusion-noise symbol xi to its counter-based draw for the compiler."
+
+[[file]]
+path = "tests/test_diffusion_noise_philox.py"
+rationale = "Model, RTL, C and Rust tests of the counter-based diffusion noise xi."
+
+[[file]]
+path = "tests/test_model_profile_contract.py"
+rationale = "Model-profile contract tests with maintained docstrings."

@@ -83,7 +83,13 @@ def test_compiler_configuration_fault_has_an_authored_http_reason(
     module = importlib.import_module("sc_neurocore.studio.precision_compare")
 
     def invalid_method(
-        *, data_width: int, fraction: int, overflow: str, rounding: str, method: str
+        *,
+        data_width: int,
+        fraction: int,
+        overflow: str,
+        rounding: str,
+        method: str,
+        random_draws: tuple[int, int] | None,
     ) -> dict[str, object]:
         return kernel_arithmetic_contract(
             data_width=data_width,
@@ -204,7 +210,6 @@ def test_resolve_word_format_rejects_unsupported_widths() -> None:
         ({"q_format": "Q40.8"}, "q_format"),
         ({"overflow": "trap"}, "overflow"),
         ({"rounding": "bankers"}, "rounding"),
-        ({"equations": ["dv/dt = -(v - E_L) / tau_m + I / C + xi"]}, "equations"),
     ],
 )
 def test_precision_compare_rejects_values_the_word_cannot_hold(
@@ -413,3 +418,15 @@ def test_precision_route_reports_missing_compiler_as_503(
     assert response.json()["detail"]["tools"] == ["gcc"]
     cosim = client.post("/api/ir/cosim", json=LIF)
     assert cosim.status_code == 503
+
+
+def test_diffusion_noise_runs_in_both_arithmetics_and_is_stated() -> None:
+    """Since xi is the counter-based draw, the compare runs it and states its key and stream."""
+    request = {**LIF, "equations": ["dv/dt = -(v - E_L) / tau_m + I / C + xi"]}
+    result = precision_compare(**request)
+    randomness = str(result["arithmetic"]["randomness"])
+    assert randomness.startswith("counter-based Philox4x32-10 keyed by seed")
+    assert "xi is randn() of call site 2**32 - 1" in randomness
+    floats = result["float_result"]["states"]["v"]
+    fixed = result["fixed_result"]["states"]["v"]
+    assert len(floats) == len(fixed) > 0 and floats != fixed

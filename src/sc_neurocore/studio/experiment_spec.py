@@ -589,14 +589,9 @@ def resolve_ode_experiment(
         else:
             effective_seed = DEFAULT_NOISE_SEED
             seed_source = "playground-default"
-        generators = [
-            name
-            for name, used in (
-                ("Philox4x32-10 counter draws keyed by the seed", draws),
-                ("numpy.random.default_rng", noise),
-            )
-            if used
-        ]
+        # xi is the counter-based normal draw of its reserved call site since
+        # 2026-10-19, keyed by the same seed as rand(), randn() and poisson().
+        generators = ["Philox4x32-10 counter draws keyed by the seed"]
         kind: RandomnessKind = (
             "counter-draws+diffusion-noise"
             if draws and noise

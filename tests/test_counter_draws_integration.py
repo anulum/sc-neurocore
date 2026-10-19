@@ -126,14 +126,14 @@ def test_playground_seed_keys_the_draws() -> None:
     assert run_experiment(other)["raw"]["states"]["v"] != first
 
 
-def test_playground_with_draws_and_xi_names_both_generators() -> None:
-    """Equations with both kinds report the combined kind and both generators."""
+def test_playground_with_draws_and_xi_names_one_generator() -> None:
+    """Draws and xi report the combined kind; both come from the one Philox generator."""
     spec = resolve_ode_experiment(
         {"equations": ["dv/dt = -v + randn() + 0.1*xi"], "duration": 2.0, "seed": 3}
     )
     randomness = spec.public["randomness"]
     assert randomness["kind"] == "counter-draws+diffusion-noise"
-    assert "Philox" in randomness["generator"] and "numpy" in randomness["generator"]
+    assert randomness["generator"] == "Philox4x32-10 counter draws keyed by the seed"
 
 
 def test_playground_refuses_a_seed_for_equations_that_draw_nothing() -> None:

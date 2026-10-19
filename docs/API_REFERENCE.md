@@ -8542,6 +8542,43 @@ str
 
 ---
 
+## Module `compiler.diffusion_noise`
+
+### Function `xi_text(scale)`
+Return the expression ``xi`` stands for: ``(randn(XI_SITE) * scale)``.
+
+Parameters
+----------
+scale : float
+    ``1/sqrt(dt)`` as the model computes it.
+
+Returns
+-------
+str
+    The draw expression, with ``scale`` written to round-trip exactly.
+
+### Function `lower_diffusion_noise(neuron)`
+Return the neuron with ``xi`` spelled as its counter-based draw, for compilation.
+
+Parameters
+----------
+neuron : EquationNeuron
+    The neuron to compile. Returned unchanged when no expression names ``xi``.
+
+Returns
+-------
+EquationNeuron
+    A shallow copy whose equations, reset rules, threshold, rate,
+    probability, spike value and Jacobian expressions read
+    ``(randn(XI_SITE) * (1/sqrt(dt)))`` for ``xi``.
+
+Raises
+------
+ValueError
+    If ``xi`` comes from a caller's ``noise_rng`` or the neuron sub-steps.
+
+---
+
 ## Module `compiler.equivalence_check`
 
 ### Class `EquivalenceResult`
@@ -26804,7 +26841,9 @@ validation before the expressions are compiled for runtime.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
 - **uses_random_draws**()
-  - Whether any authored expression calls ``rand``, ``randn`` or ``poisson``.
+  - Whether the neuron draws counter-based numbers.
+- **xi_from_noise_rng**()
+  - Whether ``xi`` is drawn from a caller's ``noise_rng`` (Python only, not compiled).
 - **uses_diffusion_noise**()
   - Whether any authored expression references the diffusion-noise symbol ``xi``.
 - **step**(I, \*\*kwargs)
@@ -28035,16 +28074,15 @@ Parameters
 kind:
     ``none``; ``lfsr16-threshold`` (a model-scoped 16-bit LFSR decides
     stochastic threshold trials from ``seed``); ``philox-draws`` (an
-    expression calls ``rand``, ``randn`` or ``poisson``, counter-based
-    Philox draws keyed by ``seed``); ``diffusion-noise-global-rng`` (an
-    expression names ``xi``, drawn from NumPy's process-global stream); or
-    their combination joined by ``+`` in that order.
+    expression calls ``rand``, ``randn`` or ``poisson`` or names the
+    diffusion noise ``xi``, counter-based Philox draws keyed by ``seed``);
+    or their combination joined by ``+`` in that order.
 seed:
     The LFSR seed or Philox key (the same ``threshold.rng_seed``) when the
     threshold is stochastic or an expression draws, else ``None``.
 reproducible:
-    ``True`` unless an expression names ``xi``: the LFSR and the Philox draws
-    replay from the seed.
+    ``True``: the LFSR and the Philox draws (``xi`` included since
+    2026-10-19) replay from the seed.
 
 - **to_public_dict**()
   - Return the JSON projection.
@@ -51624,10 +51662,9 @@ bias : float
     Level a sine oscillates about; zero, and refused for any other
     protocol, unless given.
 seed : int or None
-    Seed of the diffusion-noise generator (the ``xi`` symbol) and key of the
-    counter-based ``rand()``, ``randn()`` and ``poisson()`` draws. ``None``
-    draws ``xi`` from the process-global ``numpy.random`` stream, which is
-    not reproducible, and keys the draws with the default seed; the
+    Key of the counter-based draws: ``rand()``, ``randn()``, ``poisson()``
+    and the diffusion noise ``xi`` (the normal draw of its reserved call
+    site over ``sqrt(dt)``). ``None`` keys them with the default seed; the
     experiment contract always passes a seed for a stochastic playground
     run and rejects one for equations that draw nothing.
 
