@@ -82,6 +82,13 @@ verilog = compile_to_verilog(neuron, module_name="sc_fhn_rk4")
 Unsupported integration methods are rejected by `EquationNeuron` before
 compilation.
 
+`exp_euler` differentiates each right-hand side symbolically. Every smooth
+function of the vocabulary has its derivative in the same grammar (`tan`,
+`arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p` and
+`erf` included, with their constant factors written as numbers). A dependence on
+`abs`, `clip`, `min`, `max`, `floor`, `ceil`, `trunc` or `sign` is refused;
+random draws do not depend on the state and stay as coefficients.
+
 ## 3. Candidate, previous-state, and event semantics
 
 Dynamics read the committed state at the beginning of an integration step.
@@ -262,8 +269,9 @@ not yet measured.
 
 ### Random draws
 
-`rand()` (uniform on `[0, 1)`) and `randn()` (standard normal) may appear in
-equations, thresholds, reset rules and rate expressions:
+`rand()` (uniform on `[0, 1)`), `randn()` (standard normal) and `poisson(lam)`
+(a Poisson count) may appear in equations, thresholds, reset rules and rate
+expressions:
 
 ```python
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
@@ -284,8 +292,9 @@ verilog = compile_to_verilog(neuron, "noisy_lif", 16, 8)
 
 Every call draws one Philox4x32-10 block at counter `(site, step, stream)` with
 the 64-bit `rng_seed` as key. The neuron numbers each bare call when it is
-built (`rand()` becomes `rand(<site>)`), so the Python model and the compiler
-read the same site; a literal written by hand is kept and may not repeat.
+built (`rand()` becomes `rand(<site>)`, `poisson(lam)` becomes
+`poisson(lam, <site>)`), so the Python model and the compiler read the same
+site; a literal written by hand is kept and may not repeat.
 `step` advances once per `EquationNeuron.step` and returns to 0 on `reset()`;
 `random_stream` separates instances that share a seed. A draw is a function of
 its counter only, so a site evaluated twice in one step returns the same number.
@@ -297,8 +306,13 @@ their state and the constants `SC_RNG_SEED` and `SC_RNG_STREAM`. `rand()` is
 `floor(rand·2^fraction)` of the model's value exactly; `randn()` is an integer
 Box–Muller (`sqrt(-2 ln u1)·cos(2π u2)` with the v2 logarithm, square root and
 quarter-wave cosine) within 0.5 LSB of the model's floating-point value and
-saturated to the word. Both are built from the same integer programs in either
-function lowering, and the RTL equals the kernel bit for bit.
+saturated to the word. `poisson(lam)` inverts the distribution on word 0: the
+count is the number of thresholds `ceil(2^32·CDF(k))` at or below the word, so
+the model, the RTL and the kernel return the same count, the exact inversion of
+a 32-bit uniform. Its mean must be a constant in `[0, 100]` in compiled
+expressions (the thresholds, at most 168, are built with the unit); the Python
+model also accepts a variable mean. All three are built from the same integer
+programs in either function lowering, and the RTL equals the kernel bit for bit.
 
 Draws are refused where the step counter is not yet defined: pipelined or
 multi-substep modules, folded datapaths, and the HLS C++ lowering.
@@ -450,8 +464,9 @@ a named synthesis/place-and-route flow and its retained reports.
 - Stochastic-threshold registered RTL is signed and unpipelined.
 - Stochastic product rounding is rejected until the caller can provide and own
   a rounding RNG stream.
-- `rand()` and `randn()` compile only to unpipelined, single-substep registered
-  modules and the bit-true kernels.
+- `rand()`, `randn()` and `poisson()` compile only to unpipelined,
+  single-substep registered modules and the bit-true kernels; a compiled
+  `poisson()` needs a constant mean.
 - A loaded-host compiler timing is not an FPGA timing, area, power, or energy
   measurement.
 - Generated RTL must still pass the target toolchain, co-simulation envelope,

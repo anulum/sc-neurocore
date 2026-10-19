@@ -28,7 +28,13 @@ from __future__ import annotations
 
 import ast
 
-from .expr_lut_tables import NAMED_CONSTANTS, SUPPORTED_FUNCTIONS, check_call_arguments, const_float
+from .expr_lut_tables import (
+    NAMED_CONSTANTS,
+    RANDOM_FUNCTIONS,
+    SUPPORTED_FUNCTIONS,
+    check_call_arguments,
+    const_float,
+)
 
 # Transcendentals that map directly to a single hls_math / <cmath> function.
 _DIRECT_MATH_FUNCTIONS: dict[str, str] = {
@@ -183,7 +189,7 @@ class CExprEmitter(ast.NodeVisitor):
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
         check_call_arguments(fname, node)
-        if fname in ("rand", "randn"):
+        if fname in RANDOM_FUNCTIONS:
             raise ValueError(
                 f"Function '{fname}' has no C/C++ (HLS) lowering; use the RTL or bit-true kernel."
             )

@@ -17,8 +17,10 @@ Verilog emitter already evaluate — so one derivative expression drives every
 backend and the numerics stay consistent by construction.
 
 The derivative is computed symbolically (SymPy) over the smooth subset of the
-grammar (arithmetic, powers, and ``exp/log/sqrt/sin/cos/tanh/sinh/cosh`` plus the
-conductance helpers ``exprel/sigmoid``). A sub-expression the differentiator
+grammar (arithmetic, powers, ``exp/log/sqrt/sin/cos/tan/tanh/sinh/cosh``,
+``exp2/log2/log10/expm1/log1p``, ``arctan/arcsin/arccos``, ``erf`` and the
+conductance helpers ``exprel/sigmoid``). ``rand()``/``randn()`` do not depend on
+any state variable, so their derivative is zero and they survive as coefficients. A sub-expression the differentiator
 cannot see through (``abs/min/max/clip``, comparisons, conditionals, ``%``,
 ``//``) is admissible **only** when it does not depend on the differentiation
 variable — then its derivative is zero and it survives verbatim as a coefficient.
@@ -31,6 +33,7 @@ fabrication, not a faithful discretisation.
 from __future__ import annotations
 
 import ast
+import math
 from collections.abc import Callable
 from typing import cast
 
@@ -61,6 +64,58 @@ class sigmoid(  # noqa: N801 - DSL/print token
         x = _as_expr(self.args[0])
         sigma = _sigmoid_expr(x)
         return _as_expr(sigma * (1 - sigma))
+
+
+# The DSL functions below keep their own names in SymPy, so a derivative that
+# still contains one prints with the DSL token, and their constant factors are
+# floats, so a derivative needs no constant-argument function call.
+_LN2 = math.log(2.0)
+_LN10 = math.log(10.0)
+_TWO_OVER_SQRT_PI = 2.0 / math.sqrt(math.pi)
+
+_Derivative = Callable[[Callable[..., sympy.Expr], sympy.Expr], sympy.Expr]
+
+
+def _dsl_function(name: str, derivative: _Derivative) -> Callable[..., sympy.Expr]:
+    """Return a SymPy function class printed as ``name`` whose derivative is ``derivative``.
+
+    Parameters
+    ----------
+    name : str
+        The DSL function name, also the printed token.
+    derivative : callable
+        ``derivative(function, x)`` returns ``d function(x) / dx``.
+
+    Returns
+    -------
+    callable
+        The SymPy function class.
+
+    """
+
+    def fdiff(self: sympy.Function, argindex: int = 1) -> sympy.Expr:
+        return derivative(function, _as_expr(self.args[0]))
+
+    function = cast(
+        Callable[..., sympy.Expr],
+        type(name, (sympy.Function,), {"fdiff": fdiff, "__doc__": f"SymPy image of DSL {name}()."}),
+    )
+    return function
+
+
+_DSL_FUNCTIONS: dict[str, Callable[..., sympy.Expr]] = {
+    "exp2": _dsl_function("exp2", lambda f, x: _as_expr(_float(_LN2) * f(x))),
+    "log2": _dsl_function("log2", lambda f, x: _as_expr(1 / (_float(_LN2) * x))),
+    "log10": _dsl_function("log10", lambda f, x: _as_expr(1 / (_float(_LN10) * x))),
+    "expm1": _dsl_function("expm1", lambda f, x: _as_expr(sympy.exp(x))),
+    "log1p": _dsl_function("log1p", lambda f, x: _as_expr(1 / (1 + x))),
+    "arctan": _dsl_function("arctan", lambda f, x: _as_expr(1 / (1 + x**2))),
+    "arcsin": _dsl_function("arcsin", lambda f, x: _as_expr(1 / sympy.sqrt(1 - x**2))),
+    "arccos": _dsl_function("arccos", lambda f, x: _as_expr(-1 / sympy.sqrt(1 - x**2))),
+    "erf": _dsl_function(
+        "erf", lambda f, x: _as_expr(_float(_TWO_OVER_SQRT_PI) * sympy.exp(-(x**2)))
+    ),
+}
 
 
 # Binary operators that are smooth wherever their operands are defined.
@@ -103,6 +158,7 @@ def differentiate(expr: str, wrt: str) -> str:
         is not expressible in the smooth grammar (``abs``/``clip``/``min``/
         ``max``, a comparison, a conditional, ``%``, ``//``, or an unknown
         function).
+
     """
     try:
         tree = ast.parse(expr, mode="eval")
@@ -163,8 +219,10 @@ _SMOOTH_FUNCS: dict[str, Callable[..., sympy.Expr]] = {
     "tanh": sympy.tanh,
     "sinh": sympy.sinh,
     "cosh": sympy.cosh,
+    "tan": sympy.tan,
     "exprel": _exprel_expr,
     "sigmoid": _sigmoid_expr,
+    **_DSL_FUNCTIONS,
 }
 
 

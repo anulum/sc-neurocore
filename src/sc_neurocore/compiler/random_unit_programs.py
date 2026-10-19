@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — rand() and randn() as 64-bit integer programs over Philox4x32-10
 
-"""Build ``rand`` and ``randn`` units as :class:`~sc_neurocore.compiler.function_unit_ir.Program` values.
+"""Build ``rand``, ``randn`` and ``poisson`` units as :class:`~sc_neurocore.compiler.function_unit_ir.Program` values.
 
 The Philox4x32-10 rounds of :mod:`sc_neurocore.compiler.random_units` are
 written in the 64-bit integer program: each 32×32-bit product is formed from two
@@ -15,8 +15,11 @@ exact without a 64-bit unsigned type. The programs read three named external
 inputs: ``step`` (the step counter), ``seed`` (the 64-bit key, two's complement)
 and ``stream`` (the instance number); the call site is a constant. The tests
 evaluate the programs against :func:`~sc_neurocore.compiler.random_units.draw`,
-:func:`~sc_neurocore.compiler.random_units.uniform_code` and
-:func:`~sc_neurocore.compiler.random_units.normal_code`.
+:func:`~sc_neurocore.compiler.random_units.uniform_code`,
+:func:`~sc_neurocore.compiler.random_units.normal_code` and
+:func:`~sc_neurocore.compiler.random_units.poisson_code`. A ``poisson`` unit
+compares word 0 with the constant thresholds of its mean, so the mean is fixed
+when the unit is built.
 """
 
 from __future__ import annotations
@@ -35,7 +38,7 @@ from .function_unit_programs import (
 )
 
 _MASK = (1 << 32) - 1
-KINDS = ("rand", "randn")
+KINDS = ("rand", "randn", "poisson")
 EXTERNS = ("step", "seed", "stream")
 
 
@@ -85,18 +88,31 @@ def _randn(p: Program, site: int, data_width: int, fraction: int) -> str:
     return _saturate(p, _shift_round(p, p.mul(radius, cosine), fraction - 58), data_width)
 
 
+def _poisson(p: Program, site: int, data_width: int, fraction: int, lam: float) -> str:
+    word0 = _philox(p, site)[0]
+    count = p.const(0)
+    for threshold in ru.poisson_thresholds(lam):
+        count = p.add(count, p.le(p.const(threshold), word0))
+    return _saturate(p, p.shl(count, fraction), data_width)
+
+
 @cache
-def program(kind: str, site: int, data_width: int, fraction: int) -> Program:
-    """Return the ``rand`` or ``randn`` unit for one call site and format.
+def program(
+    kind: str, site: int, data_width: int, fraction: int, lam: float | None = None
+) -> Program:
+    """Return the ``rand``, ``randn`` or ``poisson`` unit for one call site and format.
 
     Parameters
     ----------
     kind : str
-        ``"rand"`` or ``"randn"``.
+        ``"rand"``, ``"randn"`` or ``"poisson"``.
     site : int
         Call-site number, ``[0, 2**32)``.
     data_width, fraction : int
         The output format; ``rand`` needs ``fraction <= 32``.
+    lam : float, optional
+        The mean of a ``poisson`` unit, ``[0, MAX_POISSON_LAMBDA]``; required for
+        ``poisson`` and refused for the others.
 
     Returns
     -------
@@ -106,7 +122,8 @@ def program(kind: str, site: int, data_width: int, fraction: int) -> Program:
     Raises
     ------
     ValueError
-        For an unknown kind, a site outside 32 bits or a format the units cannot mirror.
+        For an unknown kind, a site outside 32 bits, a format the units cannot mirror,
+        or a missing, superfluous or out-of-range mean.
 
     """
     if kind not in KINDS:
@@ -114,6 +131,13 @@ def program(kind: str, site: int, data_width: int, fraction: int) -> Program:
     if not 0 <= site <= _MASK:
         raise ValueError(f"call site {site} is outside 32 bits")
     fu.check_format(data_width, fraction)
+    if (kind == "poisson") != (lam is not None):
+        raise ValueError("a mean is given to, and only to, a poisson unit")
+    if lam is not None:
+        ru.poisson_thresholds(lam)  # range check before any step is built
+        p = Program(tables={})
+        p.output = _poisson(p, site, data_width, fraction, lam)
+        return p
     p = Program(tables={name: fu.table(name) for name in fu.SEGMENT_BITS})
     build = _rand if kind == "rand" else _randn
     p.output = build(p, site, data_width, fraction)

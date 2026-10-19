@@ -108,10 +108,23 @@ class TestCosim:
         assert rtl == c
         assert max(abs(int(row[1]) / 65536 - v) * 65536 for row, v in zip(rtl, model)) <= 0.5
 
+    def test_poisson_equals_the_model_exactly(self) -> None:
+        """Map neuron v = poisson(3.5): every RTL code is the model's count times 2**8."""
+        neuron = EquationNeuron(
+            equations={"v": "poisson(3.5)"}, state={"v": 0.0}, dt=1.0, method="map", rng_seed=11
+        )
+        rtl, c = _traces(neuron, 16, 8, 40)
+        model = []
+        for _ in range(40):
+            neuron.step(0.0)
+            model.append(neuron.state["v"])
+        assert rtl == c
+        assert [int(row[1]) for row in rtl] == [int(v) * 256 for v in model]
+
     def test_noisy_euler_neuron_with_random_reset(self) -> None:
         """Noise in the drift and a random reset: RTL and kernel spike and move identically."""
         neuron = EquationNeuron(
-            equations={"v": "-v + 2.0*randn()"},
+            equations={"v": "-v + 2.0*randn() + 0.5*poisson(2.0)"},
             state={"v": 0.0},
             dt=0.1,
             threshold="v > 0.2",
@@ -151,6 +164,14 @@ class TestRefusals:
         )
         with pytest.raises(NotImplementedError, match="one step per clock"):
             compile_to_verilog(neuron, "m", pipeline_stages=1)
+
+    def test_variable_poisson_mean_is_refused(self) -> None:
+        """The unit's thresholds are built from a constant mean."""
+        neuron = EquationNeuron(
+            equations={"v": "poisson(v)"}, state={"v": 1.0}, method="map", dt=1.0
+        )
+        with pytest.raises(ValueError, match="constant mean"):
+            compile_to_verilog(neuron, "m")
 
     def test_hls_refuses_draws(self) -> None:
         """The HLS C++ lowering has no counter-based generator."""

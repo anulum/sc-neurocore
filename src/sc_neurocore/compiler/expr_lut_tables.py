@@ -43,6 +43,7 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "sinh",
         "rand",
         "randn",
+        "poisson",
         "exprel",
         "exp2",
         "log2",
@@ -74,19 +75,19 @@ V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
     {"sinh", "exp2", "log2", "log10", "expm1", "log1p", "tan", "arctan", "arcsin", "arccos", "erf"}
 )
 
-# Counter-based random draws (sc_neurocore.compiler.random_units). Their one argument
+# Counter-based random draws (sc_neurocore.compiler.random_units). Their last argument
 # is the call site, a non-negative integer literal the Python model numbers when the
-# neuron is built; both lowerings use the same unit.
-RANDOM_FUNCTIONS: frozenset[str] = frozenset({"rand", "randn"})
+# neuron is built; poisson's first is its mean. Both lowerings use the same unit.
+RANDOM_FUNCTIONS: frozenset[str] = frozenset({"rand", "randn", "poisson"})
 
 
 def random_site(fname: str, node: ast.Call) -> int:
-    """Return the call-site literal of a ``rand``/``randn`` call.
+    """Return the call-site literal of a ``rand``/``randn``/``poisson`` call.
 
     Parameters
     ----------
     fname : str
-        ``"rand"`` or ``"randn"``.
+        ``"rand"``, ``"randn"`` or ``"poisson"``.
     node : ast.Call
         The call, after :func:`check_call_arguments`.
 
@@ -101,7 +102,7 @@ def random_site(fname: str, node: ast.Call) -> int:
         If the argument is not an integer literal in ``[0, 2**32)``.
 
     """
-    site = node.args[0]
+    site = node.args[-1]
     if (
         not isinstance(site, ast.Constant)
         or isinstance(site.value, bool)
@@ -112,6 +113,35 @@ def random_site(fname: str, node: ast.Call) -> int:
             f"{fname}() takes its call-site number as an integer literal in [0, 2**32)"
         )
     return site.value
+
+
+def poisson_mean(node: ast.Call) -> float:
+    """Return the constant mean of a ``poisson`` call.
+
+    Parameters
+    ----------
+    node : ast.Call
+        The call, after :func:`check_call_arguments`.
+
+    Returns
+    -------
+    float
+        The mean; its range is checked by the unit.
+
+    Raises
+    ------
+    ValueError
+        If the mean is not a compile-time constant: the unit's thresholds are
+        computed from it when the unit is built.
+
+    """
+    mean = const_float(node.args[0])
+    if mean is None:
+        raise ValueError(
+            "poisson() needs a constant mean in compiled expressions, "
+            f"got {ast.unparse(node.args[0])!r}"
+        )
+    return mean
 
 
 # Exact integer functions: their units have no table, so both lowerings use them.
@@ -151,7 +181,8 @@ V2_UNIT_FOR: dict[str, str] = {
 # so a backend must refuse them rather than lower them to something else.
 # ``(minimum, maximum)``; ``None`` means no maximum.
 FUNCTION_ARITY: dict[str, tuple[int, int | None]] = {
-    **{name: (1, 1) for name in SUPPORTED_FUNCTIONS - {"clip", "max", "min"}},
+    **{name: (1, 1) for name in SUPPORTED_FUNCTIONS - {"clip", "max", "min", "poisson"}},
+    "poisson": (2, 2),
     "clip": (3, 3),
     "max": (2, None),
     "min": (2, None),

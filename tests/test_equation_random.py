@@ -31,6 +31,16 @@ class TestSiteNumbering:
             "rand(3)*randn(4)",
         ]
 
+    def test_poisson_sites_follow_the_mean(self) -> None:
+        """``poisson(lam)`` gains its site as a second argument; an explicit one is kept."""
+        assert number_random_sites(
+            ["poisson(3.0) + rand()", "poisson(2.5, 7)", "poisson(1.0,)"]
+        ) == [
+            "poisson(3.0, 0) + rand(1)",
+            "poisson(2.5, 7)",
+            "poisson(1.0, 2)",
+        ]
+
     def test_expression_without_draws_is_unchanged(self) -> None:
         """Formatting of an expression without draws is preserved exactly."""
         assert number_random_sites(["-v  +   I*2"]) == ["-v  +   I*2"]
@@ -40,10 +50,19 @@ class TestSiteNumbering:
         assert number_random_sites(["v +* rand()"]) == ["v +* rand()"]
 
     @pytest.mark.parametrize(
-        "expressions", [["rand(1) + rand(1)"], ["rand(-1)"], ["rand(1.5)"], ["rand(1, 2)"]]
+        "expressions",
+        [
+            ["rand(1) + rand(1)"],
+            ["rand(-1)"],
+            ["rand(1.5)"],
+            ["rand(1, 2)"],
+            ["poisson()"],
+            ["poisson(1.0, 2, 3)"],
+            ["rand(site=1)"],
+        ],
     )
     def test_invalid_explicit_sites_are_refused(self, expressions: list[str]) -> None:
-        """A repeated, negative, non-integer or extra site argument is refused."""
+        """A repeated, negative or non-integer site, a wrong count or a keyword is refused."""
         with pytest.raises(ValueError):
             number_random_sites(expressions)
 

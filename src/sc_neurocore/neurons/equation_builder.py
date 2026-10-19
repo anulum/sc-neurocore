@@ -131,7 +131,7 @@ class EquationNeuron:
         used (legacy behaviour). A caller that needs a reproducible stochastic
         trial passes its own seeded ``numpy.random.Generator``.
 
-        ``rand()`` and ``randn()`` in any expression draw from the counter-based
+        ``rand()``, ``randn()`` and ``poisson(lam)`` in any expression draw from the counter-based
         generator of :mod:`sc_neurocore.neurons.equation_random`, keyed by
         ``rng_seed`` (``[0, 2**64)``) and ``random_stream`` (``[0, 2**32)``, one per
         instance of a population); each call is numbered here, and the compiled RTL
@@ -233,6 +233,7 @@ class EquationNeuron:
         self._namespace: dict[str, Any] = build_eval_namespace()
         self._namespace["rand"] = self._random.rand
         self._namespace["randn"] = self._random.randn
+        self._namespace["poisson"] = self._random.poisson
         raw_parameters = parameters or {}
         raw_state = state or {k: 0.0 for k in equations}
         raw_constants = constants or {}

@@ -102,7 +102,7 @@ def compile_to_datapath(
     )
     if any("rng_step" in line for line in core.intermediates):
         raise NotImplementedError(
-            "rand()/randn() draws are not yet supported in the folded datapath: its step counter "
+            "rand()/randn()/poisson() draws are not yet supported in the folded datapath: its step counter "
             "and per-neuron stream would have to come from the sequencer"
         )
     state_var_map = core.state_var_map

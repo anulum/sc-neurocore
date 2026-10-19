@@ -10,6 +10,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add `poisson(lam)` to equation-defined neurons and the equation compiler. The
+  count inverts the Poisson distribution on one 32-bit Philox word against the
+  thresholds `ceil(2^32·CDF(k))`, summed at 50 significant digits, so the
+  Python model, the RTL and the bit-true kernel return the same count. A
+  compiled mean must be a constant in `[0, 100]`.
+- `exp_euler` differentiates `tan`, `arctan`, `arcsin`, `arccos`, `exp2`,
+  `log2`, `log10`, `expm1`, `log1p` and `erf`; random draws stay as
+  coefficients.
+
 - Add `rand()` and `randn()` to equation-defined neurons and the equation
   compiler. Each call draws a Philox4x32-10 block at counter `(site, step,
   stream)` keyed by `rng_seed`; `EquationNeuron` numbers the call sites when it is

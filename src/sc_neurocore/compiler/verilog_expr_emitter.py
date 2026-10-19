@@ -447,7 +447,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
         expr_lut_tables.check_call_arguments(fname, node)
         if fname in expr_lut_tables.RANDOM_FUNCTIONS:
-            return self._emit_random(fname, expr_lut_tables.random_site(fname, node))
+            return self._emit_random(fname, node)
         arg: str = self._value(node.args[0])
 
         unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
@@ -523,8 +523,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {out}[{dw - 1}:0];")
         return result
 
-    def _emit_random(self, kind: str, site: int) -> str:
-        """Emit one ``rand``/``randn`` draw; return the ``data_width``-bit result wire.
+    def _emit_random(self, kind: str, node: ast.Call) -> str:
+        """Emit one ``rand``/``randn``/``poisson`` draw; return the ``data_width``-bit result wire.
 
         The unit reads the module's ``rng_step`` register and its ``P_RNG_SEED`` and
         ``P_RNG_STREAM`` parameters, which the module emitter declares when any
@@ -534,7 +534,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self._mul_count += 1
         dw = self.q.data_width
         externs = {"step": "rng_step", "seed": "P_RNG_SEED", "stream": "P_RNG_STREAM"}
-        unit = random_program(kind, site, dw, self.q.fraction)
+        site = expr_lut_tables.random_site(kind, node)
+        lam = expr_lut_tables.poisson_mean(node) if kind == "poisson" else None
+        unit = random_program(kind, site, dw, self.q.fraction, lam)
         self.intermediates.append(f"// {kind}() draw, call site {site}")
         lines, out = emit_verilog(unit, prefix, "1'b0", externs)
         self.intermediates.extend(lines)

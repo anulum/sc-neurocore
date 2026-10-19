@@ -21,6 +21,9 @@ from typing import Any
 import numpy as np
 import pytest
 
+from sc_neurocore.neurons.equation_evaluation import evaluate_scalar
+from sc_neurocore.neurons.equation_namespace import build_eval_namespace
+from sc_neurocore.neurons.equation_program import compile_expression
 from sc_neurocore.neurons.expression_derivative import (
     ExpressionDifferentiationError,
     differentiate,
@@ -186,3 +189,51 @@ def test_call_through_non_name_target_is_opaque_when_independent() -> None:
     # raising. It is not evaluable, so only the round-trip is checked.
     derivative = differentiate("(a + b)(y)*x", "x")
     assert "a + b" in derivative
+
+
+@pytest.mark.parametrize(
+    ("expr", "x"),
+    [
+        ("tan(x)", 0.4),
+        ("arctan(3*x)", 0.4),
+        ("arcsin(0.5*x)", 0.4),
+        ("arccos(0.5*x)", 0.4),
+        ("exp2(x)", 0.4),
+        ("log2(x + 2)", 0.4),
+        ("log10(x + 2)", 0.4),
+        ("expm1(x)", -0.3),
+        ("log1p(x)", 0.4),
+        ("erf(x)", 0.4),
+        ("exp(arctan(x)) * erf(x)", 0.4),
+        ("exp2(log2(x + 3))", 0.4),
+    ],
+)
+def test_extended_vocabulary_derivatives(expr: str, x: float) -> None:
+    """The functions added to the vocabulary differentiate in-grammar.
+
+    The expression and its derivative pass the golden model's safety gate and run as
+    its programs (:func:`compile_expression`) in its namespace, so the derivative uses
+    DSL names only.
+    """
+    namespace = build_eval_namespace()
+
+    def value(text: str, at: float) -> float:
+        return evaluate_scalar(compile_expression(text), {**namespace, "x": at})
+
+    derivative = differentiate(expr, "x")
+    step = 1e-6
+    finite_difference = (value(expr, x + step) - value(expr, x - step)) / (2 * step)
+    assert value(derivative, x) == pytest.approx(finite_difference, abs=1e-6), derivative
+
+
+def test_random_draws_are_coefficients() -> None:
+    """``rand()``/``randn()`` do not depend on the state, so they survive verbatim."""
+    assert differentiate("-x + 0.3*randn(0)", "x") == "-1"
+    assert differentiate("x * rand(2)", "x") == "(rand(2))"
+
+
+@pytest.mark.parametrize("expr", ["floor(x)", "ceil(x)", "trunc(x)", "sign(x)"])
+def test_exact_rounding_functions_are_refused(expr: str) -> None:
+    """Steps have no derivative to linearise through; a dependence on them is refused."""
+    with pytest.raises(ExpressionDifferentiationError):
+        differentiate(expr, "x")

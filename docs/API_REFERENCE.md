@@ -8658,12 +8658,12 @@ str
 ## Module `compiler.expr_lut_tables`
 
 ### Function `random_site(fname, node)`
-Return the call-site literal of a ``rand``/``randn`` call.
+Return the call-site literal of a ``rand``/``randn``/``poisson`` call.
 
 Parameters
 ----------
 fname : str
-    ``"rand"`` or ``"randn"``.
+    ``"rand"``, ``"randn"`` or ``"poisson"``.
 node : ast.Call
     The call, after :func:`check_call_arguments`.
 
@@ -8676,6 +8676,25 @@ Raises
 ------
 ValueError
     If the argument is not an integer literal in ``&#91;0, 2**32)``.
+
+### Function `poisson_mean(node)`
+Return the constant mean of a ``poisson`` call.
+
+Parameters
+----------
+node : ast.Call
+    The call, after :func:`check_call_arguments`.
+
+Returns
+-------
+float
+    The mean; its range is checked by the unit.
+
+Raises
+------
+ValueError
+    If the mean is not a compile-time constant: the unit's thresholds are
+    computed from it when the unit is built.
 
 ### Function `check_call_arguments(fname, node)`
 Refuse a call whose arguments the Python model would not accept as lowered.
@@ -13838,17 +13857,20 @@ Parse fixed-point and block-floating precision labels.
 
 ## Module `compiler.random_unit_programs`
 
-### Function `program(kind, site, data_width, fraction)`
-Return the ``rand`` or ``randn`` unit for one call site and format.
+### Function `program(kind, site, data_width, fraction, lam)`
+Return the ``rand``, ``randn`` or ``poisson`` unit for one call site and format.
 
 Parameters
 ----------
 kind : str
-    ``"rand"`` or ``"randn"``.
+    ``"rand"``, ``"randn"`` or ``"poisson"``.
 site : int
     Call-site number, ``&#91;0, 2**32)``.
 data_width, fraction : int
     The output format; ``rand`` needs ``fraction <= 32``.
+lam : float, optional
+    The mean of a ``poisson`` unit, ``&#91;0, MAX_POISSON_LAMBDA&#93;``; required for
+    ``poisson`` and refused for the others.
 
 Returns
 -------
@@ -13858,7 +13880,8 @@ Program
 Raises
 ------
 ValueError
-    For an unknown kind, a site outside 32 bits or a format the units cannot mirror.
+    For an unknown kind, a site outside 32 bits, a format the units cannot mirror,
+    or a missing, superfluous or out-of-range mean.
 
 ---
 
@@ -13978,6 +14001,62 @@ Returns
 -------
 int
     The result code, saturated to the word.
+
+### Function `poisson_thresholds(lam)`
+Return the inversion thresholds of a Poisson distribution for 32-bit uniform words.
+
+Threshold ``k`` is ``ceil(2**32·CDF(k))``; a word ``w`` gives the count
+``#{k : threshold_k <= w}``, the smallest ``k`` with ``w < 2**32·CDF(k)``. The
+list ends at the first ``k`` whose threshold reaches ``2**32``, which no word
+reaches. The CDF is summed with 50 significant digits (:mod:`decimal`) from the exact
+binary value of ``lam``.
+
+Parameters
+----------
+lam : float
+    The mean, ``&#91;0, MAX_POISSON_LAMBDA&#93;``.
+
+Returns
+-------
+tuple&#91;int, ...&#93;
+    Non-decreasing thresholds in ``&#91;1, 2**32)``.
+
+Raises
+------
+ValueError
+    If ``lam`` is not a finite number in ``&#91;0, MAX_POISSON_LAMBDA&#93;``.
+
+### Function `poisson_count(word, lam)`
+Return the Poisson count of one 32-bit word by inversion.
+
+Parameters
+----------
+word : int
+    A 32-bit output word.
+lam : float
+    The mean, see :func:`poisson_thresholds`.
+
+Returns
+-------
+int
+    The count, ``>= 0``.
+
+### Function `poisson_code(word, lam, data_width, fraction)`
+Return the code of ``poisson(lam)``: the count in the output format, saturated.
+
+Parameters
+----------
+word : int
+    A 32-bit output word.
+lam : float
+    The mean.
+data_width, fraction : int
+    The output format.
+
+Returns
+-------
+int
+    ``count·2**fraction``, saturated to the word.
 
 ---
 
@@ -26460,6 +26539,8 @@ stream : int
   - Return the uniform draw of a call site at the current step, in ``&#91;0, 1)``.
 - **randn**(site)
   - Return the standard-normal draw of a call site at the current step.
+- **poisson**(lam, site)
+  - Return the Poisson draw of a call site at the current step.
 
 ### Function `number_random_sites(expressions)`
 Give every bare ``rand()``/``randn()`` call its own call-site number.
@@ -26472,7 +26553,8 @@ expressions : Sequence&#91;str or None&#93;
 Returns
 -------
 list&#91;str or None&#93;
-    The expressions with ``rand()`` rewritten to ``rand(<site>)``. Sites are the
+    The expressions with ``rand()`` rewritten to ``rand(<site>)`` and
+    ``poisson(lam)`` to ``poisson(lam, <site>)``. Sites are the
     smallest non-negative integers not already written explicitly, in expression
     order and, within an expression, in source order. Expressions without such
     calls are returned unchanged, character for character.
@@ -26480,8 +26562,8 @@ list&#91;str or None&#93;
 Raises
 ------
 ValueError
-    If an explicit site is not a non-negative integer literal, or one site is
-    written twice.
+    If a call has the wrong number of arguments or a keyword, an explicit
+    site is not a non-negative integer literal, or one site is written twice.
 
 ---
 

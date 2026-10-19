@@ -154,7 +154,7 @@ def compile_to_verilog(
     if uses_random:
         if total_pipeline_latency > 0 or substeps > 1:
             raise NotImplementedError(
-                "rand()/randn() RTL needs one step per clock: pipeline_stages and substeps > 1 "
+                "rand()/randn()/poisson() RTL needs one step per clock: pipeline_stages and substeps > 1 "
                 "are not supported with random draws"
             )
         param_decls = [

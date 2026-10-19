@@ -396,7 +396,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             raise ValueError(f"Function {fname} requires at least 1 argument")
         expr_lut_tables.check_call_arguments(fname, node)
         if fname in expr_lut_tables.RANDOM_FUNCTIONS:
-            return self._emit_random(fname, expr_lut_tables.random_site(fname, node))
+            return self._emit_random(fname, node)
         arg: str = self._value(node.args[0])
 
         unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
@@ -442,8 +442,8 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         }
         return generators[name]()
 
-    def _emit_random(self, kind: str, site: int) -> str:
-        """Emit one ``rand``/``randn`` draw mirroring the RTL unit; return its result.
+    def _emit_random(self, kind: str, node: ast.Call) -> str:
+        """Emit one ``rand``/``randn``/``poisson`` draw mirroring the RTL unit; return its result.
 
         The kernel declares ``rng_step`` in its state and the ``SC_RNG_SEED`` and
         ``SC_RNG_STREAM`` constants when any expression draws.
@@ -452,7 +452,9 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         self._lut_count += 1
         step = "self.rng_step" if self.lang == "rust" else "s->rng_step"
         externs = {"step": step, "seed": "SC_RNG_SEED", "stream": "SC_RNG_STREAM"}
-        unit = random_program(kind, site, self.q.data_width, self.q.fraction)
+        site = expr_lut_tables.random_site(kind, node)
+        lam = expr_lut_tables.poisson_mean(node) if kind == "poisson" else None
+        unit = random_program(kind, site, self.q.data_width, self.q.fraction, lam)
         statements, arrays, out = emit_c(unit, prefix, "0", self.lang, externs)
         self.statements.extend(statements)
         self.tables.update(arrays)

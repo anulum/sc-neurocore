@@ -8,12 +8,13 @@
 
 """Counter-based random draws for equation-defined neurons.
 
-Every ``rand()`` or ``randn()`` call in a neuron's expressions draws one
+Every ``rand()``, ``randn()`` or ``poisson(lam)`` call in a neuron's expressions draws one
 Philox4x32-10 block (:mod:`sc_neurocore.compiler.random_units`) at counter
 ``(site, step, stream)`` with the neuron's seed. The call site is numbered when
 the neuron is built, :func:`number_random_sites` rewriting ``rand()`` to
-``rand(<site>)``, so the Python model and the equation compiler read the same
-number from the same text. An explicit integer literal is kept as written.
+``rand(<site>)`` and ``poisson(lam)`` to ``poisson(lam, <site>)``, so the Python
+model and the equation compiler read the same number from the same text. An
+explicit integer literal is kept as written.
 Repeating a step's evaluation (a Runge–Kutta stage, a reset expression) draws
 the same number; the step counter advances once per :meth:`EquationNeuron.step`.
 """
@@ -23,7 +24,10 @@ from __future__ import annotations
 import ast
 from collections.abc import Sequence
 
-RANDOM_CALLS = frozenset({"rand", "randn"})
+RANDOM_CALLS = frozenset({"rand", "randn", "poisson"})
+
+# Arguments before the call site: poisson's mean.
+_LEADING = {"rand": 0, "randn": 0, "poisson": 1}
 
 
 def _calls(expression: str) -> list[tuple[str, ast.Call]]:
@@ -56,7 +60,8 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
     Returns
     -------
     list[str or None]
-        The expressions with ``rand()`` rewritten to ``rand(<site>)``. Sites are the
+        The expressions with ``rand()`` rewritten to ``rand(<site>)`` and
+        ``poisson(lam)`` to ``poisson(lam, <site>)``. Sites are the
         smallest non-negative integers not already written explicitly, in expression
         order and, within an expression, in source order. Expressions without such
         calls are returned unchanged, character for character.
@@ -64,8 +69,8 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
     Raises
     ------
     ValueError
-        If an explicit site is not a non-negative integer literal, or one site is
-        written twice.
+        If a call has the wrong number of arguments or a keyword, an explicit
+        site is not a non-negative integer literal, or one site is written twice.
 
     """
     used: set[int] = set()
@@ -73,12 +78,16 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
         if expression is None:
             continue
         for name, call in _calls(expression):
-            if not call.args:
+            leading = _LEADING[name]
+            if call.keywords or len(call.args) not in (leading, leading + 1):
+                raise ValueError(
+                    f"{name}() takes {leading} argument(s) and an optional call-site literal"
+                )
+            if len(call.args) == leading:
                 continue
-            site = call.args[0]
+            site = call.args[leading]
             if (
-                len(call.args) != 1
-                or not isinstance(site, ast.Constant)
+                not isinstance(site, ast.Constant)
                 or isinstance(site.value, bool)
                 or not isinstance(site.value, int)
                 or site.value < 0
@@ -93,7 +102,7 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
         if expression is None:
             result.append(None)
             continue
-        bare = [call for _name, call in _calls(expression) if not call.args]
+        bare = [call for name, call in _calls(expression) if len(call.args) == _LEADING[name]]
         if not bare:
             result.append(expression)
             continue
@@ -102,15 +111,18 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
         for line in lines[:-1]:
             offsets.append(offsets[-1] + len(line.encode()) + 1)
         text = expression.encode()
-        inserts: list[tuple[int, int]] = []
+        inserts: list[tuple[int, bytes]] = []
         for call in bare:
             while next_site in used:
                 next_site += 1
             assert call.end_lineno is not None and call.end_col_offset is not None
-            inserts.append((offsets[call.end_lineno - 1] + call.end_col_offset - 1, next_site))
+            position = offsets[call.end_lineno - 1] + call.end_col_offset - 1
+            inside = text[:position].rstrip()
+            separator = b"" if not call.args else b" " if inside.endswith(b",") else b", "
+            inserts.append((position, separator + str(next_site).encode()))
             used.add(next_site)
-        for position, number in sorted(inserts, reverse=True):
-            text = text[:position] + str(number).encode() + text[position:]
+        for position, insertion in sorted(inserts, reverse=True):
+            text = text[:position] + insertion + text[position:]
         result.append(text.decode())
     return result
 
@@ -173,6 +185,27 @@ class RandomDraws:
 
         words = ru.draw(site, self.step, self.stream, self.seed)
         return ru.normal_value(words[0], words[1])
+
+    def poisson(self, lam: float, site: int) -> float:
+        """Return the Poisson draw of a call site at the current step.
+
+        Parameters
+        ----------
+        lam : float
+            The mean, ``[0, MAX_POISSON_LAMBDA]`` of
+            :mod:`sc_neurocore.compiler.random_units`.
+        site : int
+            Call-site number.
+
+        Returns
+        -------
+        float
+            The count from word 0 by exact inversion.
+
+        """
+        from sc_neurocore.compiler import random_units as ru
+
+        return float(ru.poisson_count(ru.draw(site, self.step, self.stream, self.seed)[0], lam))
 
 
 __all__ = ["RANDOM_CALLS", "RandomDraws", "number_random_sites"]

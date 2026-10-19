@@ -28,12 +28,19 @@ take its top ``fraction`` bits, i.e. ``floor(rand·2**fraction)``. ``randn()`` i
 Box–Muller transform of words 0 and 1, ``sqrt(-2 ln((w0 + 1)/2**32))·cos(2π·w1/2**32)``,
 computed in floating point by the Python model and by the integer program
 :func:`normal_code` in RTL and kernel (``log``, exact square root, quarter-wave
-cosine; ``w1`` truncated to 30 bits of a turn).
+cosine; ``w1`` truncated to 30 bits of a turn). ``poisson(lam)`` inverts the
+Poisson distribution on word 0: the count is the number of thresholds
+``ceil(2**32·CDF(k))`` at or below the word (:func:`poisson_thresholds`), so the
+Python model, the RTL and the kernel return the same integer, and the sample is
+the exact inversion of a 32-bit uniform.
 """
 
 from __future__ import annotations
 
+import bisect
+import decimal
 import math
+from functools import lru_cache
 
 from . import function_units as fu
 
@@ -219,7 +226,96 @@ def normal_code(word0: int, word1: int, data_width: int, fraction: int) -> int:
     return fu.saturate(fu.shift_round(radius * cosine, fraction - 58), data_width)
 
 
+MAX_POISSON_LAMBDA = 100.0
+
+
+@lru_cache(maxsize=256)
+def poisson_thresholds(lam: float) -> tuple[int, ...]:
+    """Return the inversion thresholds of a Poisson distribution for 32-bit uniform words.
+
+    Threshold ``k`` is ``ceil(2**32·CDF(k))``; a word ``w`` gives the count
+    ``#{k : threshold_k <= w}``, the smallest ``k`` with ``w < 2**32·CDF(k)``. The
+    list ends at the first ``k`` whose threshold reaches ``2**32``, which no word
+    reaches. The CDF is summed with 50 significant digits (:mod:`decimal`) from the exact
+    binary value of ``lam``.
+
+    Parameters
+    ----------
+    lam : float
+        The mean, ``[0, MAX_POISSON_LAMBDA]``.
+
+    Returns
+    -------
+    tuple[int, ...]
+        Non-decreasing thresholds in ``[1, 2**32)``.
+
+    Raises
+    ------
+    ValueError
+        If ``lam`` is not a finite number in ``[0, MAX_POISSON_LAMBDA]``.
+
+    """
+    if not (math.isfinite(lam) and 0.0 <= lam <= MAX_POISSON_LAMBDA):
+        raise ValueError(f"poisson() mean must be in [0, {MAX_POISSON_LAMBDA:g}], got {lam!r}")
+    thresholds: list[int] = []
+    context = decimal.Context(prec=50, rounding=decimal.ROUND_HALF_EVEN)
+    scale = decimal.Decimal(1 << 32)
+    rate = decimal.Decimal(lam)  # the exact binary value of the float
+    term = context.exp(-rate)
+    cdf = term
+    k = 0
+    while True:
+        threshold = int(context.multiply(cdf, scale).to_integral_value(decimal.ROUND_CEILING))
+        if threshold >= 1 << 32:
+            return tuple(thresholds)
+        thresholds.append(threshold)
+        k += 1
+        term = context.divide(context.multiply(term, rate), k)
+        cdf = context.add(cdf, term)
+
+
+def poisson_count(word: int, lam: float) -> int:
+    """Return the Poisson count of one 32-bit word by inversion.
+
+    Parameters
+    ----------
+    word : int
+        A 32-bit output word.
+    lam : float
+        The mean, see :func:`poisson_thresholds`.
+
+    Returns
+    -------
+    int
+        The count, ``>= 0``.
+
+    """
+    return bisect.bisect_right(poisson_thresholds(lam), word)
+
+
+def poisson_code(word: int, lam: float, data_width: int, fraction: int) -> int:
+    """Return the code of ``poisson(lam)``: the count in the output format, saturated.
+
+    Parameters
+    ----------
+    word : int
+        A 32-bit output word.
+    lam : float
+        The mean.
+    data_width, fraction : int
+        The output format.
+
+    Returns
+    -------
+    int
+        ``count·2**fraction``, saturated to the word.
+
+    """
+    return fu.saturate(poisson_count(word, lam) << fraction, data_width)
+
+
 __all__ = [
+    "MAX_POISSON_LAMBDA",
     "MULTIPLIER_0",
     "MULTIPLIER_1",
     "ROUNDS",
@@ -230,6 +326,9 @@ __all__ = [
     "normal_code",
     "normal_value",
     "philox4x32",
+    "poisson_code",
+    "poisson_count",
+    "poisson_thresholds",
     "uniform_code",
     "uniform_value",
 ]
