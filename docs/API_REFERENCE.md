@@ -9136,15 +9136,15 @@ tables : dict&#91;str, tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;&#93;
 - **const**(value)
   - Return a constant; ``|value| < 2**63``.
 - **add**(a, b)
-  - Return ``a + b``.
+  - Return the name of the 64-bit sum ``a + b``.
 - **sub**(a, b)
-  - Return ``a - b``.
+  - Return the name of the 64-bit difference ``a - b``.
 - **mul**(a, b)
-  - Return ``a · b``.
+  - Return the name of the 64-bit product ``a · b``.
 - **div**(a, b)
   - Return ``a / b`` truncated towards zero; ``b`` must not be zero where selected.
 - **neg**(a)
-  - Return ``-a``.
+  - Return the name of the 64-bit negation ``-a``.
 - **shl**(a, amount)
   - Return ``a · 2**amount`` for a constant ``amount >= 0``.
 - **shr**(a, amount)

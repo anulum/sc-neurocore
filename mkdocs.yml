@@ -128,6 +128,8 @@ nav:
       - COBA-LIF Fidelity: validation/coba_lif_cosim_fidelity.md
       - EscapeRate Stochastic Fidelity: validation/escape_rate_stochastic_fidelity.md
       - Poisson Stochastic Fidelity: validation/poisson_stochastic_fidelity.md
+      - Transcendental Table Error (lut-v1): validation/lut_accuracy_v1.md
+      - Function Unit Error (v2): validation/function_units_v2_accuracy.md
       - IQIF Source Fidelity: validation/iqif_source_fidelity.md
       - McCulloch-Pitts Source Fidelity: validation/mcculloch_pitts_source_fidelity.md
       - Sigmoid Rate Source Fidelity: validation/sigmoid_rate_source_fidelity.md

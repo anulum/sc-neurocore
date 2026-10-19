@@ -46,6 +46,9 @@ can change without a deprecation window.
 | `formal_evidence` | internal build tool | Evidence writer used by hardware audit pipelines. |
 | `formal_property_check` | internal build tool | SymbiYosys RTL-property runner behind the hardware evidence pipeline. |
 | `fpga_wrapper` | internal build tool | Wrapper generator behind compiler and deployment paths. |
+| `function_unit_ir` | internal build tool | Straight-line 64-bit integer program behind the `v2` function units and the random draws, emitted to Verilog, C and Rust. |
+| `function_unit_programs` | internal build tool | Builds each `v2` function unit as an integer program for the expression emitters. |
+| `function_units` | internal build tool | Integer reference of the `v2` function units that the RTL and the bit-true kernel mirror. |
 | `guard_bits` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
 | `hardware_numeric_contract` | direct public module | Reports the RTL encoding of a neuron at a chosen fixed-point format for Studio and compiler consumers. |
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
@@ -56,6 +59,7 @@ can change without a deprecation window.
 | `live_control_ops` | internal build tool | Implementation module for live-control operations. |
 | `live_control_specs` | internal build tool | Implementation module for live-control spec records. |
 | `live_control_types` | internal build tool | Implementation module for live-control type aliases. |
+| `lut_accuracy` | internal build tool | Measures the transcendental tables against the Python model for the validation report. |
 | `manifest_gen` | internal build tool | Manifest helper used by validation and compiler evidence paths. |
 | `mixed_dense_kernel` | internal build tool | Numeric kernel behind mixed dense compilation. |
 | `mixed_dense_quantization` | direct public module | Mixed dense compiler helpers are direct quantization surfaces. |
@@ -77,6 +81,8 @@ can change without a deprecation window.
 | `quantization_reports` | internal build tool | Report records are re-exported through quantization surfaces. |
 | `quantize_core` | compatibility facade | Backward-compatible import surface for `quantizer`. |
 | `quantizer` | public facade | Package-level exports provide canonical quantization helpers. |
+| `random_unit_programs` | internal build tool | Builds the `rand()`, `randn()` and `poisson()` units as integer programs for the expression emitters. |
+| `random_units` | internal build tool | Philox4x32-10 reference and the draw conversions shared by the equation neuron and the compiler. |
 | `resource_estimator` | internal build tool | Deployment estimator reached through `deployment`. |
 | `riscv_driver` | direct public module | RISC-V driver generator has direct tests and documentation. |
 | `sby_formal` | internal build tool | SymbiYosys script generator reached through `deployment`. |

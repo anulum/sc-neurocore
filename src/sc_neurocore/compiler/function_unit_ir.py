@@ -103,15 +103,15 @@ class Program:
         return self._add("const", value=value)
 
     def add(self, a: str, b: str) -> str:
-        """Return ``a + b``."""
+        """Return the name of the 64-bit sum ``a + b``."""
         return self._add("add", (a, b))
 
     def sub(self, a: str, b: str) -> str:
-        """Return ``a - b``."""
+        """Return the name of the 64-bit difference ``a - b``."""
         return self._add("sub", (a, b))
 
     def mul(self, a: str, b: str) -> str:
-        """Return ``a · b``."""
+        """Return the name of the 64-bit product ``a · b``."""
         return self._add("mul", (a, b))
 
     def div(self, a: str, b: str) -> str:
@@ -119,7 +119,7 @@ class Program:
         return self._add("div", (a, b))
 
     def neg(self, a: str) -> str:
-        """Return ``-a``."""
+        """Return the name of the 64-bit negation ``-a``."""
         return self._add("neg", (a,))
 
     def shl(self, a: str, amount: int) -> str:

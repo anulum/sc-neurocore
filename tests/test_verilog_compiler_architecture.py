@@ -71,6 +71,7 @@ def test_public_signatures_remain_explicit_and_stable() -> None:
         "rounding",
         "pipeline_stages",
         "pipeline_points",
+        "function_lowering",
     )
     assert tuple(inspect.signature(verilog_compiler.compile_to_datapath).parameters) == (
         "neuron",
@@ -81,6 +82,7 @@ def test_public_signatures_remain_explicit_and_stable() -> None:
         "overflow",
         "rounding",
         "param_ports",
+        "function_lowering",
     )
 
 

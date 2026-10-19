@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1069
+expected_file_count = 1070
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4369,3 +4369,7 @@ rationale = "Symbolic derivatives against central differences, in the golden mod
 [[file]]
 path = "tests/test_folded_datapath.py"
 rationale = "The folded processing element against the per-instance module, cycle for cycle, on spiking workloads."
+
+[[file]]
+path = "tests/test_verilog_compiler_architecture.py"
+rationale = "The two-function facade, its stable signatures, module ownership, dependency direction and size ceilings."
