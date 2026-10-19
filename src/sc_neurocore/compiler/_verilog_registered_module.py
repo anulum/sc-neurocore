@@ -150,6 +150,7 @@ def compile_to_verilog(
                 "substeps > 1 is not supported with multiply pipelining (pipeline_stages > 0)"
             )
     substep_cnt_width = max(1, (substeps - 1).bit_length()) if substeps > 1 else 1
+    macro_prev = core.macro_prev  # macro-step entry states the expressions read
     if "spike" in state_var_map.values():
         # A state s has the output port s_out; the module's spike output is spike_out.
         raise ValueError(
@@ -247,6 +248,7 @@ def compile_to_verilog(
         # a macro step, at which the crossing is evaluated and ``_thr_prev`` is refreshed.
         lines.append(f"reg [{substep_cnt_width - 1}:0] _ss_cnt;")
         lines.append(f"wire _macro_boundary = (_ss_cnt == {substep_cnt_width}'d{substeps - 1});")
+        lines.extend(f"reg signed [{data_width - 1}:0] {s}_mprev;" for s, _ in macro_prev)
 
     lines.append("")
 
@@ -331,6 +333,7 @@ def compile_to_verilog(
             )
             step_lines.append("            else spike_out <= 1'b0;")
         step_lines.append(f"            _thr_prev <= ({threshold_verilog});")
+        step_lines.extend(f"            {s}_mprev <= {s}_next;" for s, _ in macro_prev)
         step_lines.append("        end else begin")
         step_lines.append("            spike_out <= 1'b0;")
         if spike_value:
@@ -412,6 +415,7 @@ def compile_to_verilog(
         lines.append(f"        _thr_prev <= {thr_prev_init};")
     if substeps > 1:
         lines.append(f"        _ss_cnt <= {substep_cnt_width}'d0;")
+        lines.extend(f"        {s}_mprev <= {init};" for s, init in macro_prev)
     if total_pipeline_latency > 0:
         lines.append(f"        _pl_cnt <= {cnt_w}'d0;")
     lines.append("    end else begin")

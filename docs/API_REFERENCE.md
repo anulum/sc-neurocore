@@ -8180,7 +8180,9 @@ A crossing-detection model without reset (rising-edge spikes) adds the input
 so they never take this form.
 
 Pipelining is not supported here (a combinational PE has no register stages);
-the folded sequencer provides the one-cycle-per-neuron timing instead.
+the folded sequencer provides the one-cycle-per-neuron timing instead. A
+neuron with ``substeps > 1`` is refused: the PE computes one integration
+step per visit and the sequencer has no sub-step loop.
 
 Unsigned emission is rejected because the expression and derivative
 datapaths use signed fixed-point arithmetic. Product rounding accepts
@@ -10295,14 +10297,18 @@ str
 Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
 Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
-exactly for explicit-Euler and discrete-map neurons — parameter/constant
-Q-encoding, wrap-truncate arithmetic, the same overflow handling, and the
-threshold / reset / spike sequencing of the RTL ``always`` block. Threshold
-and reset expressions may read ``<state>_prev`` aliases for the pre-step
-register while ordinary state names resolve to the integrated candidate.
-Both state and output fields take the same post-reset value on a spike. The
-resulting ``<module>_step`` therefore produces the identical per-cycle state
-trace as the RTL, which the iverilog co-simulation checks on the stimuli it runs.
+for the methods in :data:`KERNEL_METHODS` — explicit Euler, discrete maps,
+RK4, exponential Euler and Gauss–Seidel — with the parameter/constant
+Q-encoding, the products under the rounding mode, the same overflow
+handling, and the threshold / reset / spike sequencing of the RTL ``always``
+block. Threshold, reset and graded-value expressions may read
+``<state>_prev`` aliases for the state before the step (the macro step's
+entry state when ``substeps > 1``, as ``EquationNeuron.step`` reads it),
+while ordinary state names resolve to the integrated candidate. Reset and
+graded-value expressions are evaluated only on a spike. Both state and
+output fields take the same post-reset value on a spike. The resulting
+``<module>_step`` therefore produces the identical per-step state trace as
+the RTL, which the iverilog co-simulation checks on the stimuli it runs.
 
 Parameters
 ----------
@@ -30268,6 +30274,7 @@ Lapicque, L. (1907). *Journal de Physiologie et de Pathologie Generale*,
 9, 620-635. English translation: doi:10.1007/s00422-007-0189-6.
 
 - **__post_init__**()
+  - Validate the configuration and the starting state.
 - **lapicque_1907**(\*, v, v_threshold, capacitance, series_resistance, polarization_resistance, dt, excited)
   - Construct the source-equation polarization-threshold profile.
 - **sc_lif_compatibility**(\*, v, v_rest, v_reset, v_threshold, tau, resistance, dt)

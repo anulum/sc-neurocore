@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1117
+expected_file_count = 1118
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4561,3 +4561,7 @@ rationale = "EscapeRateNeuron: exact RC flow with a finite-step escape hazard dr
 [[file]]
 path = "tests/test_network_population_seeds.py"
 rationale = "Population seeds: distinct per neuron, reproducible, distinct generator states under declared aliases."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/lapicque.py"
+rationale = "LapicqueNeuron: the 1907 source polarisation profile and the SC LIF exact-flow profile."

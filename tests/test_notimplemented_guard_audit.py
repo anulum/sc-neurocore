@@ -199,6 +199,11 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
         "signed must be True",
     ),
     _RaiseSite(
+        "src/sc_neurocore/compiler/_verilog_folded_datapath.py",
+        "compile_to_datapath",
+        "substeps > 1 is compiled only by compile_to_verilog",
+    ),
+    _RaiseSite(
         "src/sc_neurocore/studio/platform/policy_audit_integrity.py",
         "_JsonlAuditIntegrityMixin._export_paths",
         "<abstract>",

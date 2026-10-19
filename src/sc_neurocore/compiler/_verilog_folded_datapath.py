@@ -64,7 +64,9 @@ def compile_to_datapath(
     so they never take this form.
 
     Pipelining is not supported here (a combinational PE has no register stages);
-    the folded sequencer provides the one-cycle-per-neuron timing instead.
+    the folded sequencer provides the one-cycle-per-neuron timing instead. A
+    neuron with ``substeps > 1`` is refused: the PE computes one integration
+    step per visit and the sequencer has no sub-step loop.
 
     Unsigned emission is rejected because the expression and derivative
     datapaths use signed fixed-point arithmetic. Product rounding accepts
@@ -76,6 +78,13 @@ def compile_to_datapath(
     if not signed:
         raise NotImplementedError(
             "unsigned equation-to-Verilog emission is not supported; signed must be True"
+        )
+    if int(getattr(neuron, "substeps", 1)) > 1:
+        # The PE computes one integration step per neuron visit; the sequencer has no
+        # sub-step loop, so a sub-stepped neuron would step too coarsely.
+        raise NotImplementedError(
+            "the folded PE lowers one integration step per step; substeps > 1 is "
+            "compiled only by compile_to_verilog"
         )
     if isinstance(param_ports, (str, bytes)):
         raise TypeError("param_ports must be a sequence of parameter-name strings, not text")

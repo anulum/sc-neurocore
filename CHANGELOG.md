@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- With `substeps > 1`, `<state>_prev` in a threshold or graded value is the
+  macro step's entry state in the RTL and the C and Rust kernels, as in
+  `EquationNeuron.step`; the RTL compared with the penultimate sub-step
+  (`x < x_prev` with `x -> 1 - x` spiked once where the model never does).
+  The folded PE refuses `substeps > 1`, which it did not lower.
+
 - A population derives its neurons' seeds by distinct generator states: the
   LFSR16 models (`PoissonNeuron`, `EscapeRateNeuron`) declare that seed 0 runs
   as `0xACE1` (`SEED_ALIASES`), so the two are never both handed out and the

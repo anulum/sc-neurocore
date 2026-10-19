@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from ..hdl_gen._ident import sanitize_ident
@@ -48,6 +49,9 @@ class _NeuronCore:
     escape_probability_verilog: str
     reset_expressions: dict[str, str]
     spike_value: str = ""
+    # (safe_var, reset literal) of each state whose macro-step entry ``<var>_mprev``
+    # an expression reads (``substeps > 1`` only).
+    macro_prev: tuple[tuple[str, str], ...] = ()
 
     @property
     def total_pipeline_latency(self) -> int:
@@ -298,6 +302,11 @@ def _build_neuron_core(
 
     threshold_verilog = ""
     escape_probability_verilog = ""
+    # ``<var>_prev`` is the state before the step. With one sub-step per step that is
+    # the state register; with several, the register holds the penultimate sub-step at
+    # the macro boundary, so the module keeps the macro step's entry state in
+    # ``<var>_mprev``, as EquationNeuron.step keeps ``previous_state``.
+    prev_suffix = "_mprev" if int(getattr(neuron, "substeps", 1)) > 1 else "_reg"
     if getattr(neuron, "_stochastic_threshold_enabled", False):
         stochastic_param_map = dict(param_map)
         for var in neuron.equations:
@@ -334,7 +343,7 @@ def _build_neuron_core(
         for var in neuron.equations:
             safe_var = state_var_map[var]
             thr_param_map[var] = f"{safe_var}_next"
-            thr_param_map[f"{var}_prev"] = f"{safe_var}_reg"
+            thr_param_map[f"{var}_prev"] = f"{safe_var}{prev_suffix}"
         threshold_verilog, thr_intermediates, _mc, _tc, thr_pregs = _emit_expr(
             neuron.threshold_expr,
             {},
@@ -349,7 +358,7 @@ def _build_neuron_core(
     reset_param_map = dict(param_map)
     reset_param_map.update({var: f"{safe_var}_next" for var, safe_var in state_var_map.items()})
     reset_param_map.update(
-        {f"{var}_prev": f"{safe_var}_reg" for var, safe_var in state_var_map.items()}
+        {f"{var}_prev": f"{safe_var}{prev_suffix}" for var, safe_var in state_var_map.items()}
     )
     reset_expressions: dict[str, str] = {}
     for var, expr_str in neuron.reset_rules.items():
@@ -401,6 +410,12 @@ def _build_neuron_core(
         )
         spike_value = "_spike_value"
 
+    read = "\n".join([threshold_verilog, spike_value, *all_intermediates])
+    macro_prev = tuple(
+        (safe_var, q.encode_signed_literal(neuron.initial_state.get(var, 0.0)))
+        for var, safe_var in state_var_map.items()
+        if prev_suffix == "_mprev" and re.search(rf"\b{safe_var}_mprev\b", read)
+    )
     return _NeuronCore(
         state_var_map=state_var_map,
         param_map=param_map,
@@ -413,4 +428,5 @@ def _build_neuron_core(
         escape_probability_verilog=escape_probability_verilog,
         reset_expressions=reset_expressions,
         spike_value=spike_value,
+        macro_prev=macro_prev,
     )

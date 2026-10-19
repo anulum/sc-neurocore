@@ -31,7 +31,7 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import (
     generate_bittrue_kernel_from_neuron,
     kernel_arithmetic_contract,
 )
-from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
+from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from tests.bit_true_cosim_support import HAS_COSIM, HAS_RUST, _c_main, _rows, _rust_main, _testbench
 
@@ -307,6 +307,19 @@ def _oscillator() -> EquationNeuron:
     )
 
 
+def _flip(substeps: int) -> EquationNeuron:
+    """Return the map ``x -> 1 - x`` that fires when ``x`` falls below its value before the step."""
+    return EquationNeuron(
+        equations={"x": "1.0 - x"},
+        state={"x": 0.0},
+        dt=1.0,
+        method="map",
+        threshold="x < x_prev",
+        detection="crossing",
+        substeps=substeps,
+    )
+
+
 @pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
 class TestSubsteps:
     """Macro steps of sub-stepped neurons: the kernel equals the RTL at every boundary."""
@@ -332,6 +345,52 @@ class TestSubsteps:
         rtl, c = _macro_rows(neuron, 0.5, 60, extra="spike_value_out")
         assert rtl == c
         assert any(row[1] != "0" for row in rtl)
+
+    @pytest.mark.parametrize("substeps", [2, 1])
+    def test_prev_alias_is_the_macro_step_entry_state(self, substeps: int) -> None:
+        """``x < x_prev`` compares a macro step's exit with its entry in RTL, C and Rust.
+
+        RIGOR review 275: with two sub-steps EquationNeuron.step compares the macro step's
+        exit with its entry; the RTL and kernels compared with the penultimate sub-step.
+        ``x -> 1 - x`` returns to its entry value after two sub-steps, so Python never spikes;
+        the RTL compared with the penultimate sub-step and spiked once. One sub-step is the
+        control, where the alias is the state register itself.
+        """
+        neuron = _flip(substeps)
+        golden = _flip(substeps)
+        python = []
+        for _ in range(8):
+            spike = golden.step(0.0)
+            python.append([str(int(spike)), str(round(golden.state["x"] * 256))])
+        rtl, c = _macro_rows(neuron, 0.0, 8)
+        assert rtl == c == python
+        if HAS_RUST:
+            with tempfile.TemporaryDirectory() as d:
+                tmp = Path(d)
+                (tmp / "m.rs").write_text(
+                    "#![allow(non_snake_case, dead_code, unused)]\n"
+                    + generate_bittrue_kernel_from_neuron(neuron, "m", language="rust")
+                    + "\n"
+                    + _rust_main(neuron, "m", 0, 8, 16)
+                )
+                subprocess.run(
+                    ["rustc", "-C", "overflow-checks=on", "-o", str(tmp / "r"), str(tmp / "m.rs")],
+                    check=True,
+                    capture_output=True,
+                    timeout=300,
+                )
+                rust = _rows(
+                    subprocess.run(
+                        [str(tmp / "r")], capture_output=True, text=True, timeout=60
+                    ).stdout
+                )
+            assert rust == python
+
+    def test_the_folded_pe_refuses_substeps(self) -> None:
+        """The folded PE computes one integration step per visit, so it refuses sub-steps."""
+        with pytest.raises(NotImplementedError, match="substeps > 1"):
+            compile_to_datapath(_flip(2), "pe")
+        assert "module pe" in compile_to_datapath(_flip(1), "pe")
 
     def test_resetting_substeps_are_refused(self) -> None:
         """The RTL lowers sub-steps only for non-resetting crossing models; so does the kernel."""

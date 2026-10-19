@@ -84,6 +84,7 @@ class LapicqueNeuron:
     profile: LapicqueProfile = "sc_lif"
 
     def __post_init__(self) -> None:
+        """Validate the configuration and the starting state."""
         self._validate_configuration()
         self._validate_runtime_state()
 

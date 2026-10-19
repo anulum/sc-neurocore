@@ -37,6 +37,7 @@ Two entry points:
 from __future__ import annotations
 
 import math
+import re
 
 from ...neurons.equation_builder import EquationNeuron
 from ...hdl_gen._ident import sanitize_ident
@@ -707,14 +708,18 @@ def generate_bittrue_kernel_from_neuron(
     """Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
     Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
-    exactly for explicit-Euler and discrete-map neurons — parameter/constant
-    Q-encoding, wrap-truncate arithmetic, the same overflow handling, and the
-    threshold / reset / spike sequencing of the RTL ``always`` block. Threshold
-    and reset expressions may read ``<state>_prev`` aliases for the pre-step
-    register while ordinary state names resolve to the integrated candidate.
-    Both state and output fields take the same post-reset value on a spike. The
-    resulting ``<module>_step`` therefore produces the identical per-cycle state
-    trace as the RTL, which the iverilog co-simulation checks on the stimuli it runs.
+    for the methods in :data:`KERNEL_METHODS` — explicit Euler, discrete maps,
+    RK4, exponential Euler and Gauss–Seidel — with the parameter/constant
+    Q-encoding, the products under the rounding mode, the same overflow
+    handling, and the threshold / reset / spike sequencing of the RTL ``always``
+    block. Threshold, reset and graded-value expressions may read
+    ``<state>_prev`` aliases for the state before the step (the macro step's
+    entry state when ``substeps > 1``, as ``EquationNeuron.step`` reads it),
+    while ordinary state names resolve to the integrated candidate. Reset and
+    graded-value expressions are evaluated only on a spike. Both state and
+    output fields take the same post-reset value on a spike. The resulting
+    ``<module>_step`` therefore produces the identical per-step state trace as
+    the RTL, which the iverilog co-simulation checks on the stimuli it runs.
 
     Parameters
     ----------
@@ -839,7 +844,13 @@ def generate_bittrue_kernel_from_neuron(
 
     next_map = {v: f"_next_{safe[v]}" for v in neuron.equations}
     candidate_map = dict(next_map)
-    candidate_map.update({f"{v}_prev": state_map[v] for v in neuron.equations})
+    # ``<var>_prev`` is the state before the step: the struct field with one sub-step,
+    # the macro step's entry state (saved before the sub-step loop) with several, as
+    # EquationNeuron.step keeps ``previous_state`` and the RTL ``<var>_mprev``.
+    prev_names = (
+        {v: f"_macro_{safe[v]}" for v in neuron.equations} if neuron.substeps > 1 else state_map
+    )
+    candidate_map.update({f"{v}_prev": prev_names[v] for v in neuron.equations})
     threshold_expr = ""
     threshold_stmts: list[str] = []
     if neuron.threshold_expr:
@@ -868,6 +879,12 @@ def generate_bittrue_kernel_from_neuron(
         tables.update(t)
 
     init_q = {v: signed_q(q, neuron.initial_state.get(v, 0.0)) for v in neuron.equations}
+    read_text = "\n".join([threshold_expr, *threshold_stmts, spike_value_expr, *reset_stmts])
+    macro_prev = [
+        safe[v]
+        for v in neuron.equations
+        if neuron.substeps > 1 and re.search(rf"\b_macro_{safe[v]}\b", read_text)
+    ]
     ctx = _KernelContext(
         module_name=module_name,
         neuron=neuron,
@@ -884,6 +901,7 @@ def generate_bittrue_kernel_from_neuron(
         init_q=init_q,
         spike_value_expr=spike_value_expr,
         increments=increments,
+        macro_prev=macro_prev,
     )
     source = _emit_neuron_c(ctx) if language == "c" else _emit_neuron_rust(ctx)
     if neuron.uses_random_draws:
@@ -1103,6 +1121,7 @@ class _KernelContext:
         init_q: dict[str, int],
         spike_value_expr: str = "",
         increments: dict[str, str] | None = None,
+        macro_prev: list[str] | None = None,
     ) -> None:
         self.module_name = module_name
         self.neuron = neuron
@@ -1121,6 +1140,8 @@ class _KernelContext:
         # The RTL's d<var> wire per variable when the method computes it in statements
         # (rk4); next = commit(reg + d). None for euler (fxmul(f, dt)) and map.
         self.increments = increments
+        # States whose macro-step entry value ``_macro_<var>`` the expressions read.
+        self.macro_prev = macro_prev or []
 
 
 def _emit_neuron_c(ctx: _KernelContext) -> str:
@@ -1161,6 +1182,8 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
     lines.append("}")
     lines.append("")
     lines.append(f"int {m}_step({m}_state_t *s, {ctype} I_t) {{")
+    for field in ctx.macro_prev:
+        lines.append(f"    {ctype} _macro_{field} = s->{field};")
     if ctx.neuron.substeps > 1:
         # Every sub-step but the last advances the state, as the RTL's clock does
         # inside a macro step; the last one goes through the spike decision below.
@@ -1303,6 +1326,8 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
     lines.append("    }")
     lines.append("")
     lines.append(f"    pub fn step(&mut self, I_t: {rtype}) -> i32 {{")
+    for field in ctx.macro_prev:
+        lines.append(f"        let _macro_{field}: {rtype} = self.{field};")
     if ctx.neuron.substeps > 1:
         lines.append(f"        for _ss in 1..{ctx.neuron.substeps} {{")
         lines.extend(f"    {line}" for line in _neuron_update_rust(ctx))
