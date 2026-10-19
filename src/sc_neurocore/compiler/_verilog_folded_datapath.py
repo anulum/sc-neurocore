@@ -100,6 +100,11 @@ def compile_to_datapath(
         pipeline_stages=0,
         pipeline_points=None,
     )
+    if any("rng_step" in line for line in core.intermediates):
+        raise NotImplementedError(
+            "rand()/randn() draws are not yet supported in the folded datapath: its step counter "
+            "and per-neuron stream would have to come from the sequencer"
+        )
     state_var_map = core.state_var_map
     stochastic_threshold = bool(core.escape_probability_verilog)
     # Partition parameters into those baked as module ``parameter`` defaults and those

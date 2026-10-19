@@ -8657,6 +8657,26 @@ str
 
 ## Module `compiler.expr_lut_tables`
 
+### Function `random_site(fname, node)`
+Return the call-site literal of a ``rand``/``randn`` call.
+
+Parameters
+----------
+fname : str
+    ``"rand"`` or ``"randn"``.
+node : ast.Call
+    The call, after :func:`check_call_arguments`.
+
+Returns
+-------
+int
+    The site number.
+
+Raises
+------
+ValueError
+    If the argument is not an integer literal in ``&#91;0, 2**32)``.
+
 ### Function `check_call_arguments(fname, node)`
 Refuse a call whose arguments the Python model would not accept as lowered.
 
@@ -9069,14 +9089,14 @@ name : str
     Local name, unique within the program.
 op : str
     Operation, one of ``const, add, sub, mul, div, neg, shl, shr, shl_var,
-    shr_var, mask, lt, le, eq, select, table, input``.
+    shr_var, mask, xor, lt, le, eq, select, table, input, extern``.
 args : tuple&#91;str, ...&#93;
     Operand names, in operation order.
 value : int
     Constant value (``const``), constant shift (``shl``, ``shr``), mask bits
     (``mask``) or coefficient position 0–2 (``table``).
 table : str
-    Table name for ``table``.
+    Table name for ``table``; input name for ``extern``.
 
 
 ### Class `Program`
@@ -9109,6 +9129,10 @@ tables : dict&#91;str, tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;&#93;
   - Return ``a · 2**clamp(amount, 0, 63)``.
 - **shr_var**(a, amount)
   - Return ``floor(a / 2**clamp(amount, 0, 63))``.
+- **xor**(a, b)
+  - Return the bitwise exclusive or of ``a`` and ``b``.
+- **extern**(name)
+  - Return a named external input (a step counter, a seed), bound at emission or evaluation.
 - **mask**(a, bits)
   - Return the low ``bits`` bits of ``a`` (non-negative).
 - **lt**(a, b)
@@ -9121,10 +9145,10 @@ tables : dict&#91;str, tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;&#93;
   - Return ``when_true`` if ``condition`` is non-zero, else ``when_false``.
 - **lookup**(table, index, coefficient)
   - Return coefficient ``0``, ``1`` or ``2`` of ``tables&#91;table&#93;&#91;index&#93;``.
-- **evaluate**(code)
+- **evaluate**(code, externs)
   - Evaluate the program on one input code, checking every value fits 64 bits.
 
-### Function `emit_verilog(program, prefix, argument)`
+### Function `emit_verilog(program, prefix, argument, externs)`
 Emit the program as Verilog module items.
 
 Parameters
@@ -9135,6 +9159,8 @@ prefix : str
     Unique wire prefix for this call site.
 argument : str
     Verilog expression of the signed input code.
+externs : dict&#91;str, str&#93;, optional
+    Verilog expression of each named external input (64 bits).
 
 Returns
 -------
@@ -9142,7 +9168,7 @@ tuple&#91;list&#91;str&#93;, str&#93;
     Module items (wire declarations and ``always @(*)`` table cases) and the
     name of the 64-bit output wire.
 
-### Function `emit_c(program, prefix, argument, lang)`
+### Function `emit_c(program, prefix, argument, lang, externs)`
 Emit the program as C or Rust statements.
 
 Parameters
@@ -9155,6 +9181,8 @@ argument : str
     C/Rust expression of the signed input code.
 lang : str
     ``"c"`` or ``"rust"``.
+externs : dict&#91;str, str&#93;, optional
+    C/Rust expression of each named external input (64-bit).
 
 Returns
 -------
@@ -13805,6 +13833,151 @@ Conservative fixed-point output-envelope report for deployment checks.
 
 ### Function `parse_precision_format(fmt)`
 Parse fixed-point and block-floating precision labels.
+
+---
+
+## Module `compiler.random_unit_programs`
+
+### Function `program(kind, site, data_width, fraction)`
+Return the ``rand`` or ``randn`` unit for one call site and format.
+
+Parameters
+----------
+kind : str
+    ``"rand"`` or ``"randn"``.
+site : int
+    Call-site number, ``&#91;0, 2**32)``.
+data_width, fraction : int
+    The output format; ``rand`` needs ``fraction <= 32``.
+
+Returns
+-------
+Program
+    A program with external inputs ``step``, ``seed`` and ``stream``.
+
+Raises
+------
+ValueError
+    For an unknown kind, a site outside 32 bits or a format the units cannot mirror.
+
+---
+
+## Module `compiler.random_units`
+
+### Function `philox4x32(counter, key, rounds)`
+Return the Philox4x32 block for one counter and key.
+
+Parameters
+----------
+counter : tuple&#91;int, int, int, int&#93;
+    Four 32-bit counter words, least significant first.
+key : tuple&#91;int, int&#93;
+    Two 32-bit key words, least significant first.
+rounds : int, optional
+    Number of rounds; 10 is the standard Philox4x32-10.
+
+Returns
+-------
+tuple&#91;int, int, int, int&#93;
+    Four 32-bit output words.
+
+Raises
+------
+ValueError
+    If a word is outside ``&#91;0, 2**32)`` or ``rounds`` is outside ``&#91;1, 16&#93;``.
+
+### Function `counter_words(value)`
+Split a 128-bit counter into four 32-bit words, least significant first.
+
+Parameters
+----------
+value : int
+    Counter in ``&#91;0, 2**128)``.
+
+Returns
+-------
+tuple&#91;int, int, int, int&#93;
+    The four words.
+
+Raises
+------
+ValueError
+    If ``value`` is outside ``&#91;0, 2**128)``.
+
+### Function `draw(site, step, stream, seed)`
+Return the Philox block of one call site at one step.
+
+Parameters
+----------
+site : int
+    Call-site number within the neuron, ``&#91;0, 2**32)``.
+step : int
+    Step number, ``&#91;0, 2**64)``.
+stream : int
+    Stream (neuron instance) number, ``&#91;0, 2**32)``.
+seed : int
+    Seed, ``&#91;0, 2**64)``.
+
+Returns
+-------
+tuple&#91;int, int, int, int&#93;
+    Four 32-bit words.
+
+### Function `uniform_value(word)`
+Return ``rand()``: the word as a fraction of ``2**32``, in ``&#91;0, 1)``.
+
+Parameters
+----------
+word : int
+    A 32-bit output word.
+
+Returns
+-------
+float
+    ``word / 2**32``.
+
+### Function `uniform_code(word, fraction)`
+Return the code of ``rand()`` at ``fraction`` bits: ``floor(word / 2**(32 - fraction))``.
+
+Parameters
+----------
+word : int
+    A 32-bit output word.
+fraction : int
+    Fraction bits, ``&#91;0, 32&#93;``.
+
+Returns
+-------
+int
+    Non-negative code below ``2**fraction``.
+
+### Function `normal_value(word0, word1)`
+Return ``randn()`` in floating point: Box–Muller of two words.
+
+Parameters
+----------
+word0, word1 : int
+    Two 32-bit output words.
+
+Returns
+-------
+float
+    ``sqrt(-2 ln((word0 + 1)/2**32))·cos(2π·word1/2**32)``.
+
+### Function `normal_code(word0, word1, data_width, fraction)`
+Return the code of ``randn()`` computed in integers, as the RTL and kernel compute it.
+
+Parameters
+----------
+word0, word1 : int
+    Two 32-bit output words.
+data_width, fraction : int
+    The output format.
+
+Returns
+-------
+int
+    The result code, saturated to the word.
 
 ---
 
@@ -26129,7 +26302,7 @@ and the special variable `I` (input current).
 ``units="strict"`` enables opt-in pint-based dimensional
 validation before the expressions are compiled for runtime.
 
-- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed, noise_rng)
+- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed, noise_rng, random_stream)
   - Initialise an equation-defined neuron from ODE strings.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
@@ -26147,8 +26320,12 @@ validation before the expressions are compiled for runtime.
   - Return the emitted stochastic-threshold seed, or ``None`` when unused.
 - **stochastic_rng_state**()
   - Return the live stochastic-threshold LFSR state, or ``None`` when unused.
+- **random_seed**()
+  - Return the key of the neuron's ``rand()``/``randn()`` draws.
+- **random_stream**()
+  - Return the instance number of the neuron's ``rand()``/``randn()`` draws.
 - **reset**()
-  - Reset state to initial values.
+  - Reset state to initial values and the random-draw step counter to 0.
 - **__repr__**()
   - Human-readable representation of the neuron equations.
 
@@ -26263,6 +26440,48 @@ Raises
 EquationRefusal
     The validator refuses the expression, or the checked tree holds a
     construct that no translator of this module covers.
+
+---
+
+## Module `neurons.equation_random`
+
+### Class `RandomDraws`
+The draws of one neuron: its seed, its stream and its step counter.
+
+Parameters
+----------
+seed : int
+    Philox key, ``&#91;0, 2**64)``.
+stream : int
+    Instance number, ``&#91;0, 2**32)``.
+
+- **__init__**(seed, stream)
+- **rand**(site)
+  - Return the uniform draw of a call site at the current step, in ``&#91;0, 1)``.
+- **randn**(site)
+  - Return the standard-normal draw of a call site at the current step.
+
+### Function `number_random_sites(expressions)`
+Give every bare ``rand()``/``randn()`` call its own call-site number.
+
+Parameters
+----------
+expressions : Sequence&#91;str or None&#93;
+    The neuron's expressions in a fixed order; ``None`` entries are kept.
+
+Returns
+-------
+list&#91;str or None&#93;
+    The expressions with ``rand()`` rewritten to ``rand(<site>)``. Sites are the
+    smallest non-negative integers not already written explicitly, in expression
+    order and, within an expression, in source order. Expressions without such
+    calls are returned unchanged, character for character.
+
+Raises
+------
+ValueError
+    If an explicit site is not a non-negative integer literal, or one site is
+    written twice.
 
 ---
 

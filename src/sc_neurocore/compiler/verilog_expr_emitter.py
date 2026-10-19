@@ -17,6 +17,7 @@ from ..hdl_gen._ident import sanitize_ident
 from . import expr_lut_tables
 from .function_unit_ir import emit_verilog
 from .function_unit_programs import program
+from .random_unit_programs import program as random_program
 from .verilog_compiler_config import Q88
 
 
@@ -445,6 +446,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         if fname not in expr_lut_tables.SUPPORTED_FUNCTIONS:
             raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
         expr_lut_tables.check_call_arguments(fname, node)
+        if fname in expr_lut_tables.RANDOM_FUNCTIONS:
+            return self._emit_random(fname, expr_lut_tables.random_site(fname, node))
         arg: str = self._value(node.args[0])
 
         unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
@@ -515,6 +518,25 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self.intermediates.append(f"// v2 function unit: {function}")
         self.intermediates.append(f"wire signed [{dw - 1}:0] {arg_w} = {arg};")
         lines, out = emit_verilog(program(function, dw, self.q.fraction), prefix, arg_w)
+        self.intermediates.extend(lines)
+        result = f"{prefix}_out"
+        self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {out}[{dw - 1}:0];")
+        return result
+
+    def _emit_random(self, kind: str, site: int) -> str:
+        """Emit one ``rand``/``randn`` draw; return the ``data_width``-bit result wire.
+
+        The unit reads the module's ``rng_step`` register and its ``P_RNG_SEED`` and
+        ``P_RNG_STREAM`` parameters, which the module emitter declares when any
+        expression draws (:mod:`sc_neurocore.compiler.random_unit_programs`).
+        """
+        prefix = f"_rnd{self._mul_count}"
+        self._mul_count += 1
+        dw = self.q.data_width
+        externs = {"step": "rng_step", "seed": "P_RNG_SEED", "stream": "P_RNG_STREAM"}
+        unit = random_program(kind, site, dw, self.q.fraction)
+        self.intermediates.append(f"// {kind}() draw, call site {site}")
+        lines, out = emit_verilog(unit, prefix, "1'b0", externs)
         self.intermediates.extend(lines)
         result = f"{prefix}_out"
         self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {out}[{dw - 1}:0];")

@@ -148,6 +148,21 @@ def compile_to_verilog(
             )
     substep_cnt_width = max(1, (substeps - 1).bit_length()) if substeps > 1 else 1
 
+    # rand()/randn() draw from Philox at (site, step, stream) with the neuron's seed; the
+    # step counter advances once per step, as EquationNeuron.step advances it.
+    uses_random = any("rng_step" in line for line in all_intermediates)
+    if uses_random:
+        if total_pipeline_latency > 0 or substeps > 1:
+            raise NotImplementedError(
+                "rand()/randn() RTL needs one step per clock: pipeline_stages and substeps > 1 "
+                "are not supported with random draws"
+            )
+        param_decls = [
+            *param_decls,
+            f"    parameter [63:0] P_RNG_SEED = 64'd{neuron.random_seed}",
+            f"    parameter [31:0] P_RNG_STREAM = 32'd{neuron.random_stream}",
+        ]
+
     lines = [
         "// SPDX-License-Identifier: AGPL-3.0-or-later",
         "// Commercial license available",
@@ -196,6 +211,8 @@ def compile_to_verilog(
         safe_var = state_var_map[var]
         lines.append(f"reg signed [{data_width - 1}:0] {safe_var}_reg;")
 
+    if uses_random:
+        lines.append("reg [63:0] rng_step;")
     if stochastic_threshold:
         lines.append("reg [15:0] _escape_lfsr;")
         lines.append("function [15:0] _escape_advance;")
@@ -358,6 +375,8 @@ def compile_to_verilog(
         lines.append(f"        {safe_var}_reg <= {init_val};")
         lines.append(f"        {safe_var}_out <= {init_val};")
     lines.append("        spike_out <= 1'b0;")
+    if uses_random:
+        lines.append("        rng_step <= 64'd0;")
     if stochastic_threshold:
         lines.append("        _escape_lfsr <= (RNG_SEED == 16'd0) ? 16'hace1 : RNG_SEED;")
     if edge_detection:
@@ -370,6 +389,8 @@ def compile_to_verilog(
     if total_pipeline_latency > 0:
         lines.append(f"        _pl_cnt <= {cnt_w}'d0;")
     lines.append("    end else begin")
+    if uses_random:
+        lines.append("        rng_step <= rng_step + 64'd1;")
 
     if total_pipeline_latency > 0:
         lines.append(f"        _pl_cnt <= _pl_valid ? {cnt_w}'d0 : (_pl_cnt + {cnt_w}'d1);")

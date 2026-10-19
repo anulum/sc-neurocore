@@ -41,6 +41,8 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "tanh",
         "cosh",
         "sinh",
+        "rand",
+        "randn",
         "exprel",
         "exp2",
         "log2",
@@ -71,6 +73,46 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
 V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
     {"sinh", "exp2", "log2", "log10", "expm1", "log1p", "tan", "arctan", "arcsin", "arccos", "erf"}
 )
+
+# Counter-based random draws (sc_neurocore.compiler.random_units). Their one argument
+# is the call site, a non-negative integer literal the Python model numbers when the
+# neuron is built; both lowerings use the same unit.
+RANDOM_FUNCTIONS: frozenset[str] = frozenset({"rand", "randn"})
+
+
+def random_site(fname: str, node: ast.Call) -> int:
+    """Return the call-site literal of a ``rand``/``randn`` call.
+
+    Parameters
+    ----------
+    fname : str
+        ``"rand"`` or ``"randn"``.
+    node : ast.Call
+        The call, after :func:`check_call_arguments`.
+
+    Returns
+    -------
+    int
+        The site number.
+
+    Raises
+    ------
+    ValueError
+        If the argument is not an integer literal in ``[0, 2**32)``.
+
+    """
+    site = node.args[0]
+    if (
+        not isinstance(site, ast.Constant)
+        or isinstance(site.value, bool)
+        or not isinstance(site.value, int)
+        or not 0 <= site.value < 1 << 32
+    ):
+        raise ValueError(
+            f"{fname}() takes its call-site number as an integer literal in [0, 2**32)"
+        )
+    return site.value
+
 
 # Exact integer functions: their units have no table, so both lowerings use them.
 EXACT_FUNCTIONS: frozenset[str] = frozenset({"floor", "ceil", "trunc", "sign"})

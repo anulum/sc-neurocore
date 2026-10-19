@@ -69,6 +69,7 @@ from sc_neurocore.neurons._stochastic_threshold import (
 )
 from sc_neurocore.neurons.equation_evaluation import evaluate_condition, evaluate_scalar
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
+from sc_neurocore.neurons.equation_random import RandomDraws, number_random_sites
 from sc_neurocore.neurons.equation_refusals import EquationRefusal, EquationStateFailure
 from sc_neurocore.neurons.equation_program import compile_expression
 from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
@@ -121,6 +122,7 @@ class EquationNeuron:
         probability_expression: str | None = None,
         rng_seed: int = DEFAULT_LFSR16_SEED,
         noise_rng: np.random.Generator | None = None,
+        random_stream: int = 0,
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings.
 
@@ -128,6 +130,12 @@ class EquationNeuron:
         ``xi``; when ``None`` the process-global ``numpy.random`` stream is
         used (legacy behaviour). A caller that needs a reproducible stochastic
         trial passes its own seeded ``numpy.random.Generator``.
+
+        ``rand()`` and ``randn()`` in any expression draw from the counter-based
+        generator of :mod:`sc_neurocore.neurons.equation_random`, keyed by
+        ``rng_seed`` (``[0, 2**64)``) and ``random_stream`` (``[0, 2**32)``, one per
+        instance of a population); each call is numbered here, and the compiled RTL
+        and bit-true kernel draw the same numbers.
         """
         if units not in {"none", "strict"}:
             raise EquationRefusal("units must be 'none' or 'strict'")
@@ -154,6 +162,36 @@ class EquationNeuron:
         self.substeps = substeps
         self.rate_expression = rate_expression
         self.probability_expression = probability_expression
+        try:
+            numbered = number_random_sites(
+                [
+                    *equations.values(),
+                    threshold,
+                    *self.reset_rules.values(),
+                    rate_expression,
+                    probability_expression,
+                ]
+            )
+            self._random = RandomDraws(rng_seed, random_stream)
+        except ValueError as exc:
+            raise EquationRefusal(str(exc)) from exc
+        count = len(equations)
+        reset_count = len(self.reset_rules)
+        self.equations = {
+            name: str(expression) for name, expression in zip(equations, numbered[:count])
+        }
+        self.threshold_expr = numbered[count]
+        self.reset_rules = {
+            name: str(expression)
+            for name, expression in zip(
+                self.reset_rules, numbered[count + 1 : count + 1 + reset_count]
+            )
+        }
+        self.rate_expression = numbered[count + 1 + reset_count]
+        self.probability_expression = numbered[count + 2 + reset_count]
+        rate_expression = self.rate_expression
+        probability_expression = self.probability_expression
+        threshold = self.threshold_expr
         self._escape_rate_enabled = detection == "escape_rate" and rate_expression is not None
         self._poisson_enabled = detection == "poisson" and probability_expression is not None
         self._stochastic_threshold_enabled = self._escape_rate_enabled or self._poisson_enabled
@@ -193,6 +231,8 @@ class EquationNeuron:
         self._input_unit_name = "I"
 
         self._namespace: dict[str, Any] = build_eval_namespace()
+        self._namespace["rand"] = self._random.rand
+        self._namespace["randn"] = self._random.randn
         raw_parameters = parameters or {}
         raw_state = state or {k: 0.0 for k in equations}
         raw_constants = constants or {}
@@ -479,6 +519,7 @@ class EquationNeuron:
                 for var, code in self._compiled_reset.items():
                     self.state[var] = evaluate_scalar(code, reset_env)
 
+        self._random.step += 1
         return spike
 
     def _integrate_once(self, **kwargs: float) -> None:
@@ -608,9 +649,20 @@ class EquationNeuron:
         """Return the live stochastic-threshold LFSR state, or ``None`` when unused."""
         return self._stochastic_rng.state if self._stochastic_rng is not None else None
 
+    @property
+    def random_seed(self) -> int:
+        """Return the key of the neuron's ``rand()``/``randn()`` draws."""
+        return self._random.seed
+
+    @property
+    def random_stream(self) -> int:
+        """Return the instance number of the neuron's ``rand()``/``randn()`` draws."""
+        return self._random.stream
+
     def reset(self) -> None:
-        """Reset state to initial values."""
+        """Reset state to initial values and the random-draw step counter to 0."""
         self.state = deepcopy(self.initial_state)
+        self._random.step = 0
         if self._stochastic_rng is not None:
             self._stochastic_rng.reset()
         self._prev_threshold_active = (

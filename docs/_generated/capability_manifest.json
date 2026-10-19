@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5335
+    "test_files": 5339
   },
   "documentation": {
     "public_pages": [
@@ -4999,6 +4999,7 @@
       "tests/test_equation_evaluation.py",
       "tests/test_equation_namespace.py",
       "tests/test_equation_program.py",
+      "tests/test_equation_random.py",
       "tests/test_equation_safety_acceptance.py",
       "tests/test_equation_safety_capabilities.py",
       "tests/test_equation_safety_numeric_limits.py",
@@ -7135,6 +7136,9 @@
       "tests/test_quasirandom_emitter_quasi_random_emitter.py",
       "tests/test_quasirandom_emitter_sobol16_emitter.py",
       "tests/test_rall_dendrite.py",
+      "tests/test_random_draws_cosim.py",
+      "tests/test_random_unit_programs.py",
+      "tests/test_random_units.py",
       "tests/test_readiness_artifact_refresh.py",
       "tests/test_readiness_evidence_ledger.py",
       "tests/test_readiness_verification.py",

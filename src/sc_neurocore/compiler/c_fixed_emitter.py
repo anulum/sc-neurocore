@@ -43,6 +43,7 @@ from collections.abc import Callable
 from . import expr_lut_tables
 from .function_unit_ir import emit_c
 from .function_unit_programs import program
+from .random_unit_programs import program as random_program
 from .expr_lut_tables import SUPPORTED_FUNCTIONS, const_float
 from .verilog_compiler_config import Q88
 
@@ -394,6 +395,8 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
         expr_lut_tables.check_call_arguments(fname, node)
+        if fname in expr_lut_tables.RANDOM_FUNCTIONS:
+            return self._emit_random(fname, expr_lut_tables.random_site(fname, node))
         arg: str = self._value(node.args[0])
 
         unit = expr_lut_tables.V2_UNIT_FOR.get(fname)
@@ -438,6 +441,22 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             "cbrt": lambda: expr_lut_tables.cbrt_lut_entries(frac),
         }
         return generators[name]()
+
+    def _emit_random(self, kind: str, site: int) -> str:
+        """Emit one ``rand``/``randn`` draw mirroring the RTL unit; return its result.
+
+        The kernel declares ``rng_step`` in its state and the ``SC_RNG_SEED`` and
+        ``SC_RNG_STREAM`` constants when any expression draws.
+        """
+        prefix = f"_rnd{self._lut_count}"
+        self._lut_count += 1
+        step = "self.rng_step" if self.lang == "rust" else "s->rng_step"
+        externs = {"step": step, "seed": "SC_RNG_SEED", "stream": "SC_RNG_STREAM"}
+        unit = random_program(kind, site, self.q.data_width, self.q.fraction)
+        statements, arrays, out = emit_c(unit, prefix, "0", self.lang, externs)
+        self.statements.extend(statements)
+        self.tables.update(arrays)
+        return self._wide(out)
 
     def _emit_unit(self, function: str, arg: str) -> str:
         """Emit one ``v2`` function unit as statements mirroring the RTL unit; return its result.

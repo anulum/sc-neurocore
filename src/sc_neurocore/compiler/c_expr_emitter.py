@@ -183,6 +183,10 @@ class CExprEmitter(ast.NodeVisitor):
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
         check_call_arguments(fname, node)
+        if fname in ("rand", "randn"):
+            raise ValueError(
+                f"Function '{fname}' has no C/C++ (HLS) lowering; use the RTL or bit-true kernel."
+            )
         arg: str = self.visit(node.args[0])
 
         if fname in _DIRECT_MATH_FUNCTIONS:

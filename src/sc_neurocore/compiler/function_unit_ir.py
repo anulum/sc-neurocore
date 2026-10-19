@@ -34,7 +34,7 @@ from dataclasses import dataclass, field
 _OPS = frozenset(
     {
         "const", "add", "sub", "mul", "div", "neg", "shl", "shr", "shl_var", "shr_var",
-        "mask", "lt", "le", "eq", "select", "table", "input",
+        "mask", "lt", "le", "eq", "select", "table", "input", "xor", "extern",
     }
 )  # fmt: skip
 
@@ -49,14 +49,14 @@ class Step:
         Local name, unique within the program.
     op : str
         Operation, one of ``const, add, sub, mul, div, neg, shl, shr, shl_var,
-        shr_var, mask, lt, le, eq, select, table, input``.
+        shr_var, mask, xor, lt, le, eq, select, table, input, extern``.
     args : tuple[str, ...]
         Operand names, in operation order.
     value : int
         Constant value (``const``), constant shift (``shl``, ``shr``), mask bits
         (``mask``) or coefficient position 0–2 (``table``).
     table : str
-        Table name for ``table``.
+        Table name for ``table``; input name for ``extern``.
 
     """
 
@@ -138,6 +138,14 @@ class Program:
         """Return ``floor(a / 2**clamp(amount, 0, 63))``."""
         return self._add("shr_var", (a, amount))
 
+    def xor(self, a: str, b: str) -> str:
+        """Return the bitwise exclusive or of ``a`` and ``b``."""
+        return self._add("xor", (a, b))
+
+    def extern(self, name: str) -> str:
+        """Return a named external input (a step counter, a seed), bound at emission or evaluation."""
+        return self._add("extern", table=name)
+
     def mask(self, a: str, bits: int) -> str:
         """Return the low ``bits`` bits of ``a`` (non-negative)."""
         return self._add("mask", (a,), bits)
@@ -165,13 +173,15 @@ class Program:
         return self._add("table", (index,), coefficient, table)
 
     # -- evaluation ---------------------------------------------------------------------------
-    def evaluate(self, code: int) -> int:
+    def evaluate(self, code: int, externs: dict[str, int] | None = None) -> int:
         """Evaluate the program on one input code, checking every value fits 64 bits.
 
         Parameters
         ----------
         code : int
             Signed input code.
+        externs : dict[str, int], optional
+            Values of the program's named external inputs.
 
         Returns
         -------
@@ -185,7 +195,11 @@ class Program:
 
         """
         values: dict[str, int] = {}
+        bound = externs or {}
         for step in self.steps:
+            if step.op == "extern":
+                values[step.name] = _check(step, bound[step.table])
+                continue
             values[step.name] = _check(step, _apply(step, values, code, self.tables))
         return values[self.output]
 
@@ -225,6 +239,8 @@ def _apply(
         return a[0] >> _clamp_shift(a[1])
     if op == "mask":
         return a[0] & ((1 << step.value) - 1)
+    if op == "xor":
+        return a[0] ^ a[1]
     if op in ("lt", "le", "eq"):
         return int(a[0] < a[1] if op == "lt" else a[0] <= a[1] if op == "le" else a[0] == a[1])
     if op == "select":
@@ -242,7 +258,7 @@ def _check(step: Step, value: int) -> int:
 # -- emission ---------------------------------------------------------------------------------
 # C/Rust coefficient arrays carry this prefix; kernels declare them as 64-bit.
 TABLE_PREFIX = "_fu_"
-_BINARY = {"add": "+", "sub": "-", "mul": "*"}
+_BINARY = {"add": "+", "sub": "-", "mul": "*", "xor": "^"}
 _COMPARE = {"lt": "<", "le": "<=", "eq": "=="}
 
 
@@ -254,10 +270,12 @@ def _v_clamp(amount: str) -> str:
     return f"(({amount} < 64'sd0) ? 64'sd0 : (({amount} > 64'sd63) ? 64'sd63 : {amount}))"
 
 
-def _verilog_expression(step: Step, a: list[str], argument: str) -> str:
+def _verilog_expression(step: Step, a: list[str], argument: str, externs: dict[str, str]) -> str:
     op = step.op
     if op == "input":
         return f"$signed({argument})"
+    if op == "extern":
+        return f"$signed({externs[step.table]})"
     if op == "const":
         return _v_const(step.value)
     if op in _BINARY:
@@ -281,7 +299,9 @@ def _verilog_expression(step: Step, a: list[str], argument: str) -> str:
     return f"({a[0]} != 64'sd0) ? {a[1]} : {a[2]}"  # select
 
 
-def emit_verilog(program: Program, prefix: str, argument: str) -> tuple[list[str], str]:
+def emit_verilog(
+    program: Program, prefix: str, argument: str, externs: dict[str, str] | None = None
+) -> tuple[list[str], str]:
     """Emit the program as Verilog module items.
 
     Parameters
@@ -292,6 +312,8 @@ def emit_verilog(program: Program, prefix: str, argument: str) -> tuple[list[str
         Unique wire prefix for this call site.
     argument : str
         Verilog expression of the signed input code.
+    externs : dict[str, str], optional
+        Verilog expression of each named external input (64 bits).
 
     Returns
     -------
@@ -314,11 +336,14 @@ def emit_verilog(program: Program, prefix: str, argument: str) -> tuple[list[str
             lines.append(f"    default: {target} = {_v_const(rows[-1][step.value])};")
             lines.append("endcase")
         else:
-            lines.append(f"wire signed [63:0] {target} = {_verilog_expression(step, a, argument)};")
+            expression = _verilog_expression(step, a, argument, externs or {})
+            lines.append(f"wire signed [63:0] {target} = {expression};")
     return lines, name[program.output]
 
 
-def _c_expression(step: Step, a: list[str], argument: str, rust: bool) -> str:
+def _c_expression(
+    step: Step, a: list[str], argument: str, rust: bool, externs: dict[str, str]
+) -> str:
     op = step.op
     one = "1i64" if rust else "(int64_t)1"
 
@@ -329,6 +354,8 @@ def _c_expression(step: Step, a: list[str], argument: str, rust: bool) -> str:
 
     if op == "input":
         return f"({argument}) as i64" if rust else f"(int64_t)({argument})"
+    if op == "extern":
+        return f"({externs[step.table]}) as i64" if rust else f"(int64_t)({externs[step.table]})"
     if op == "const":
         if rust:
             return f"{step.value}i64"
@@ -364,7 +391,11 @@ def _c_expression(step: Step, a: list[str], argument: str, rust: bool) -> str:
 
 
 def emit_c(
-    program: Program, prefix: str, argument: str, lang: str = "c"
+    program: Program,
+    prefix: str,
+    argument: str,
+    lang: str = "c",
+    externs: dict[str, str] | None = None,
 ) -> tuple[list[str], dict[str, list[int]], str]:
     """Emit the program as C or Rust statements.
 
@@ -378,6 +409,8 @@ def emit_c(
         C/Rust expression of the signed input code.
     lang : str
         ``"c"`` or ``"rust"``.
+    externs : dict[str, str], optional
+        C/Rust expression of each named external input (64-bit).
 
     Returns
     -------
@@ -411,7 +444,7 @@ def emit_c(
                 index = f"(({a[0]}) < 0 ? 0 : (({a[0]}) > {last} ? {last} : ({a[0]})))"
                 expression = f"{array}[({index}) * 3 + {step.value}]"
         else:
-            expression = _c_expression(step, a, argument, rust)
+            expression = _c_expression(step, a, argument, rust, externs or {})
         local = name[step.name]
         statements.append(
             f"let {local}: i64 = {expression};" if rust else f"int64_t {local} = {expression};"

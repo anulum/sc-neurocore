@@ -712,9 +712,59 @@ def generate_bittrue_kernel_from_neuron(
         tables=tables,
         init_q=init_q,
     )
-    if language == "c":
-        return _emit_neuron_c(ctx)
-    return _emit_neuron_rust(ctx)
+    source = _emit_neuron_c(ctx) if language == "c" else _emit_neuron_rust(ctx)
+    if "rng_step" in source:
+        source = _with_random_state(source, neuron, language)
+    return source
+
+
+def _with_random_state(source: str, neuron: EquationNeuron, language: str) -> str:
+    """Add the step counter, its reset and advance, and the seed/stream constants of rand()/randn().
+
+    The counter is reset to 0 and advanced once at the end of every step, after all
+    draws of that step, as the RTL's ``rng_step`` register advances once per clock.
+
+    Parameters
+    ----------
+    source : str
+        The generated kernel, which reads ``rng_step`` in its draws.
+    neuron : EquationNeuron
+        The neuron, for its ``random_seed`` and ``random_stream``.
+    language : str
+        ``"c"`` or ``"rust"``.
+
+    Returns
+    -------
+    str
+        The kernel with the counter declared, reset, and advanced before each return.
+
+    """
+    seed = int(neuron.random_seed)
+    stream = int(neuron.random_stream)
+    rust = language == "rust"
+    out: list[str] = []
+    for line in source.split("\n"):
+        stripped = line.strip()
+        if not rust and stripped == "typedef struct {":
+            out.append(f"static const int64_t SC_RNG_SEED = (int64_t){seed}ULL;")
+            out.append(f"static const int64_t SC_RNG_STREAM = (int64_t){stream}LL;")
+            out.extend([line, "    int64_t rng_step;"])
+            continue
+        if rust and stripped.startswith("pub struct "):
+            out.append(f"const SC_RNG_SEED: i64 = {seed}u64 as i64;")
+            out.append(f"const SC_RNG_STREAM: i64 = {stream};")
+            out.extend([line, "    pub rng_step: i64,"])
+            continue
+        if not rust and line in ("    return 0;", "    return _spk;"):
+            out.append("    s->rng_step += 1;")
+        if rust and line in ("        return 0;", "        _spk"):
+            out.append("        self.rng_step += 1;")
+        out.append(line)
+        if not rust and stripped.startswith("static void ") and "_reset(" in stripped:
+            out.append("    s->rng_step = 0;")
+        if rust and stripped == "pub fn reset(&mut self) {":
+            out.append("        self.rng_step = 0;")
+    return "\n".join(out)
 
 
 class _KernelContext:
@@ -837,6 +887,9 @@ def _neuron_commit_c(ctx: _KernelContext) -> list[str]:
         lines.append("    s->thr_prev = _cond;")
     else:
         lines.append(f"    int _spk = ({ctx.threshold_expr}) ? 1 : 0;")
+    # The reset expressions' own statements (table indices, function units, draws).
+    for stmt in ctx.reset_stmts:
+        lines.append(f"    {stmt}")
     for var, expr in ctx.reset_exprs.items():
         # A reset value is committed like a next state, under the overflow policy.
         reset = _accumulate_bias(expr, ctx.q.overflow)
@@ -930,6 +983,9 @@ def _neuron_commit_rust(ctx: _KernelContext) -> list[str]:
         lines.append("        self.thr_prev = _cond;")
     else:
         lines.append(f"        let _spk: i32 = if ({ctx.threshold_expr}) {{ 1 }} else {{ 0 }};")
+    # The reset expressions' own statements (table indices, function units, draws).
+    for stmt in ctx.reset_stmts:
+        lines.append(f"        {stmt}")
     for var, expr in ctx.reset_exprs.items():
         reset = _accumulate_bias(expr, ctx.q.overflow, _rtype(ctx.q.data_width))
         lines.append(f"        let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = {reset};")

@@ -79,11 +79,15 @@ class TestFunctionCalls:
         assert _emit("sinh(v)", {"v"}) == "hls::sinh(v)"
 
     def test_every_supported_function_has_a_lowering(self) -> None:
-        """No vocabulary entry falls through to another function's lowering."""
-        from sc_neurocore.compiler.expr_lut_tables import FUNCTION_ARITY
+        """No vocabulary entry falls through to another function's lowering; draws refuse."""
+        from sc_neurocore.compiler.expr_lut_tables import FUNCTION_ARITY, RANDOM_FUNCTIONS
 
         for name, (count, _maximum) in FUNCTION_ARITY.items():
             call = f"{name}({', '.join(['v'] * count)})"
+            if name in RANDOM_FUNCTIONS:
+                with pytest.raises(ValueError, match="no C/C\\+\\+ \\(HLS\\) lowering"):
+                    _emit(call, {"v"})
+                continue
             assert _emit(call, {"v"}) != "v", name
 
     def test_pi_is_a_typed_literal(self) -> None:

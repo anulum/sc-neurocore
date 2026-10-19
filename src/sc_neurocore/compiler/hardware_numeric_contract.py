@@ -432,6 +432,12 @@ def _literals(
     if value is not None:
         yield "literal", value
         return
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in expr_lut_tables.RANDOM_FUNCTIONS
+    ):
+        return  # the argument is a call-site number, not an encoded value
     if isinstance(node, ast.Name):
         if node.id in expr_lut_tables.NAMED_CONSTANTS and node.id not in bound:
             yield "literal", expr_lut_tables.NAMED_CONSTANTS[node.id]

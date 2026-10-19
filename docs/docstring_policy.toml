@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1059
+expected_file_count = 1066
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4329,3 +4329,31 @@ rationale = "A SpikingJelly LIF network exported through NIR produces the same s
 [[file]]
 path = "tests/test_equation_namespace.py"
 rationale = "The Python model's maths namespace: exact symbol set, NumPy and SciPy bindings and the removable-singularity forms."
+
+[[file]]
+path = "src/sc_neurocore/compiler/random_units.py"
+rationale = "Philox4x32-10 counter-based draws and the integer uniform and Box–Muller normal that the compiled units must equal."
+
+[[file]]
+path = "src/sc_neurocore/compiler/random_unit_programs.py"
+rationale = "rand() and randn() as 64-bit integer programs; 32×32-bit products from 16-bit partial products so no step leaves 64 bits."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_random.py"
+rationale = "Call-site numbering shared by the Python model and the compiler, and the neuron's seed, stream and step counter."
+
+[[file]]
+path = "tests/test_random_units.py"
+rationale = "Philox4x32-10 against an independent implementation's published output."
+
+[[file]]
+path = "tests/test_random_unit_programs.py"
+rationale = "The random programs equal the reference at counter boundaries; integer normal within 0.5 LSB; sample statistics with stated size."
+
+[[file]]
+path = "tests/test_equation_random.py"
+rationale = "Site numbering, seed and stream ranges, and reproducible neuron traces across reset."
+
+[[file]]
+path = "tests/test_random_draws_cosim.py"
+rationale = "Compiled rand() and randn(): RTL equals the bit-true kernel and follows the Python model; unsupported lowerings refuse."

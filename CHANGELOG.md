@@ -10,6 +10,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add `rand()` and `randn()` to equation-defined neurons and the equation
+  compiler. Each call draws a Philox4x32-10 block at counter `(site, step,
+  stream)` keyed by `rng_seed`; `EquationNeuron` numbers the call sites when it is
+  built, so the Python model and the compiler read the same text, and takes a new
+  `random_stream` argument. Registered RTL gains `P_RNG_SEED`, `P_RNG_STREAM` and
+  an `rng_step` register; the bit-true C and Rust kernels carry the same counter.
+  `rand()` equals `floor(rand·2^fraction)` of the model exactly and `randn()` (an
+  integer Box–Muller) is within 0.5 LSB; RTL equals the kernel. Pipelined,
+  multi-substep and folded modules and the HLS lowering refuse draws.
+- Fix the bit-true C and Rust kernels: statements needed by a reset expression
+  (table reads, function units) were not emitted, so a reset such as
+  `exp(v) - 1.5` produced a kernel that did not compile.
+
 - Extend the equation vocabulary with the functions Brian2 and LEMS provide.
   New v2 function units: `tan`, `arctan`, `arcsin`, `arccos`, `exp2`, `log2`,
   `log10`, `expm1`, `log1p` and `erf`. New exact functions `floor`, `ceil`,
