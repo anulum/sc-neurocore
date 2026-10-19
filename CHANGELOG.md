@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The folded datapath PE (`compile_to_datapath`) accepts `rand()`, `randn()`
+  and `poisson()`: it takes the neuron's step counter and stream on the inputs
+  `rng_step` and `P_RNG_STREAM`, and with the same values matches the
+  per-instance module state for state.
+
 - Add `poisson(lam)` to equation-defined neurons and the equation compiler. The
   count inverts the Poisson distribution on one 32-bit Philox word against the
   thresholds `ceil(2^32·CDF(k))`, summed at 50 significant digits, so the

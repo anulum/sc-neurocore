@@ -18,6 +18,7 @@ function checks the kernel's reset statements, which were not emitted before
 
 from __future__ import annotations
 
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -31,6 +32,7 @@ from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from tests.bit_true_cosim_support import HAS_COSIM, _c_main, _rows, _testbench
+from tests.test_folded_datapath import _dual_testbench
 
 
 def _traces(
@@ -148,14 +150,58 @@ class TestCosim:
         assert rtl == c and sum(int(row[0]) for row in rtl) > 0
 
 
+@pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
+def test_folded_pe_draws_what_the_module_draws() -> None:
+    """The PE, given the module's step count and stream, matches it state and spike for spike."""
+    neuron = EquationNeuron(
+        equations={"v": "-v + I + randn() + 0.5*poisson(2.0)"},
+        state={"v": 0.0},
+        dt=0.1,
+        threshold="v > 0.6",
+        reset={"v": "rand() - 0.5"},
+        rng_seed=4242,
+        random_stream=3,
+    )
+    tb = _dual_testbench(neuron, "inst", "pe_mod", 0.0, 200)
+    for old, new in (
+        ("reg pe_spike;", "reg pe_spike; reg [63:0] pe_step;"),
+        ("pe_mod pe (", "pe_mod pe (\n    .rng_step(pe_step),\n    .P_RNG_STREAM(32'd3),"),
+        ("        pe_spike <= 1'b0;", "        pe_spike <= 1'b0; pe_step <= 64'd0;"),
+        (
+            "        pe_spike <= pe_spike_comb;",
+            "        pe_spike <= pe_spike_comb; pe_step <= pe_step + 64'd1;",
+        ),
+        (
+            "        if (inst_spike !== pe_spike) mismatches = mismatches + 1;",
+            "        if (inst_spike !== pe_spike || v_out !== pe_v) mismatches = mismatches + 1;",
+        ),
+    ):
+        assert tb.count(old) == 1, old
+        tb = tb.replace(old, new)
+    pe = compile_to_datapath(neuron, "pe_mod", 16, 8)
+    assert "input wire [31:0] P_RNG_STREAM," in pe
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        (tmp / "inst.v").write_text(compile_to_verilog(neuron, "inst", 16, 8))
+        (tmp / "pe.v").write_text(pe)
+        (tmp / "tb.v").write_text(tb)
+        subprocess.run(
+            ["iverilog", "-g2012", "-o", str(tmp / "s")]
+            + [str(tmp / f) for f in ("inst.v", "pe.v", "tb.v")],
+            check=True,
+            capture_output=True,
+            timeout=120,
+        )
+        out = subprocess.run(
+            ["vvp", str(tmp / "s")], capture_output=True, text=True, timeout=120
+        ).stdout
+    match = re.search(r"MISMATCHES=(\d+) SPIKES=(\d+)", out)
+    assert match, out
+    assert match.group(1) == "0" and int(match.group(2)) > 0, out
+
+
 class TestRefusals:
     """Where draws are not yet lowered, the compiler says so."""
-
-    def test_folded_datapath_refuses_draws(self) -> None:
-        """A folded processing element has no step counter or stream of its own yet."""
-        neuron = EquationNeuron(equations={"v": "rand()"}, method="map", dt=1.0)
-        with pytest.raises(NotImplementedError, match="folded datapath"):
-            compile_to_datapath(neuron)
 
     def test_pipelined_module_refuses_draws(self) -> None:
         """Pipelining would decouple the step counter from the step."""

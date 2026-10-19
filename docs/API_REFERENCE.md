@@ -8164,6 +8164,11 @@ identical. Every name must be a real neuron parameter/constant; the rest stay ba
 Escape-rate models additionally expose the already-advanced 16-bit ``rng_sample``
 input: the folded population owns one LFSR state per neuron in BRAM and supplies
 that sample on the same cycle as the corresponding membrane state.
+A neuron with ``rand()``, ``randn()`` or ``poisson()`` draws adds the inputs
+``rng_step`` (the neuron's step counter) and ``P_RNG_STREAM`` (its stream) and
+the parameter ``P_RNG_SEED``; with the same step and stream the PE draws exactly
+what the per-instance module draws. The folded network's neuron templates
+have no draws, so its sequencer does not drive these inputs.
 
 Pipelining is not supported here (a combinational PE has no register stages);
 the folded sequencer provides the one-cycle-per-neuron timing instead.

@@ -314,8 +314,12 @@ expressions (the thresholds, at most 168, are built with the unit); the Python
 model also accepts a variable mean. All three are built from the same integer
 programs in either function lowering, and the RTL equals the kernel bit for bit.
 
-Draws are refused where the step counter is not yet defined: pipelined or
-multi-substep modules, folded datapaths, and the HLS C++ lowering.
+A folded processing element (`compile_to_datapath`) takes the step counter and
+stream on the inputs `rng_step` and `P_RNG_STREAM` (with the parameter
+`P_RNG_SEED`), so the sequencer that streams a neuron's state also supplies
+its counter; given the same values it draws exactly what the per-instance
+module draws. Draws are refused where the step counter is not yet defined:
+pipelined or multi-substep modules and the HLS C++ lowering.
 
 ## 6. Folded combinational datapaths
 
@@ -465,8 +469,10 @@ a named synthesis/place-and-route flow and its retained reports.
 - Stochastic product rounding is rejected until the caller can provide and own
   a rounding RNG stream.
 - `rand()`, `randn()` and `poisson()` compile only to unpipelined,
-  single-substep registered modules and the bit-true kernels; a compiled
-  `poisson()` needs a constant mean.
+  single-substep registered modules, folded processing elements and the
+  bit-true kernels; a compiled `poisson()` needs a constant mean. The folded
+  network's neuron templates have no draws, and its sequencer does not yet
+  assign step counters and streams.
 - A loaded-host compiler timing is not an FPGA timing, area, power, or energy
   measurement.
 - Generated RTL must still pass the target toolchain, co-simulation envelope,

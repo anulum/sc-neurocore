@@ -28,6 +28,7 @@ import pytest
 from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.compiler.verilog_compiler_config import Q88
 from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 _HAVE_IVERILOG = shutil.which("iverilog") is not None and shutil.which("vvp") is not None
@@ -43,7 +44,9 @@ _MODELS = [
 _DW, _FR = 16, 8
 
 
-def _dual_testbench(neuron, inst_mod: str, pe_mod: str, current: float, n_steps: int) -> str:
+def _dual_testbench(
+    neuron: EquationNeuron, inst_mod: str, pe_mod: str, current: float, n_steps: int
+) -> str:
     """Build a TB comparing the per-instance module to the externally-clocked PE."""
     q = Q88(data_width=_DW, fraction=_FR)
     i_val = q.encode_signed_literal(current)
@@ -120,11 +123,11 @@ def _dual_testbench(neuron, inst_mod: str, pe_mod: str, current: float, n_steps:
     return "\n".join(lines)
 
 
-def _unsanitised(neuron, safe_var: str) -> str:
+def _unsanitised(neuron: EquationNeuron, safe_var: str) -> str:
     """Map a sanitised state-var name back to the original equation key."""
     for var in neuron.equations:
         if sanitize_ident(var, context="state variable") == safe_var:
-            return var
+            return str(var)
     return safe_var
 
 

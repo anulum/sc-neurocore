@@ -51,6 +51,11 @@ def compile_to_datapath(
     Escape-rate models additionally expose the already-advanced 16-bit ``rng_sample``
     input: the folded population owns one LFSR state per neuron in BRAM and supplies
     that sample on the same cycle as the corresponding membrane state.
+    A neuron with ``rand()``, ``randn()`` or ``poisson()`` draws adds the inputs
+    ``rng_step`` (the neuron's step counter) and ``P_RNG_STREAM`` (its stream) and
+    the parameter ``P_RNG_SEED``; with the same step and stream the PE draws exactly
+    what the per-instance module draws. The folded network's neuron templates
+    have no draws, so its sequencer does not drive these inputs.
 
     Pipelining is not supported here (a combinational PE has no register stages);
     the folded sequencer provides the one-cycle-per-neuron timing instead.
@@ -100,11 +105,9 @@ def compile_to_datapath(
         pipeline_stages=0,
         pipeline_points=None,
     )
-    if any("rng_step" in line for line in core.intermediates):
-        raise NotImplementedError(
-            "rand()/randn()/poisson() draws are not yet supported in the folded datapath: its step counter "
-            "and per-neuron stream would have to come from the sequencer"
-        )
+    # rand()/randn()/poisson() draw at (site, step, stream): the sequencer that streams a
+    # neuron's state through the PE also supplies its step counter and stream number.
+    uses_random = any("rng_step" in line for line in core.intermediates)
     state_var_map = core.state_var_map
     stochastic_threshold = bool(core.escape_probability_verilog)
     # Partition parameters into those baked as module ``parameter`` defaults and those
@@ -118,6 +121,8 @@ def compile_to_datapath(
     baked_decls = [
         decl for decl in core.param_decls if not any(f" {vn} =" in decl for vn in port_vnames)
     ]
+    if uses_random:
+        baked_decls.append(f"    parameter [63:0] P_RNG_SEED = 64'd{neuron.random_seed}")
 
     lines = [
         "// SPDX-License-Identifier: AGPL-3.0-or-later",
@@ -146,6 +151,9 @@ def compile_to_datapath(
         lines.append(f"    input wire signed [{data_width - 1}:0] {vname},")
     if stochastic_threshold:
         lines.append("    input wire [15:0] rng_sample,")
+    if uses_random:
+        lines.append("    input wire [63:0] rng_step,")
+        lines.append("    input wire [31:0] P_RNG_STREAM,")
     # State carried in on ports (named <var>_reg so the shared core wires match).
     for var in neuron.equations:
         safe_var = state_var_map[var]
