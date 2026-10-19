@@ -31,7 +31,7 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import generate_bittrue_
 from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
-from tests.bit_true_cosim_support import HAS_COSIM, _c_main, _rows, _testbench
+from tests.bit_true_cosim_support import HAS_COSIM, HAS_RUST, _c_main, _rows, _rust_main, _testbench
 from tests.test_folded_datapath import _dual_testbench
 
 
@@ -148,6 +148,45 @@ class TestCosim:
         )
         rtl, c = _traces(neuron, 16, 8, 40)
         assert rtl == c and sum(int(row[0]) for row in rtl) > 0
+
+
+@pytest.mark.skipif(
+    not (HAS_COSIM and HAS_RUST), reason="Icarus Verilog / gcc / rustc not available"
+)
+def test_rust_kernel_draws_what_the_c_kernel_draws() -> None:
+    """The Rust kernel, with overflow checks, prints the C kernel's trace for all three draws."""
+    neuron = EquationNeuron(
+        equations={"v": "-v + 2.0*randn() + 0.5*poisson(2.0)"},
+        state={"v": 0.0},
+        dt=0.1,
+        threshold="v > 0.2",
+        reset={"v": "rand() - 0.5"},
+        rng_seed=(1 << 64) - 3,
+        random_stream=9,
+    )
+    main = _rust_main(neuron, "m", 0, 80, 32).replace(
+        "spike_out: 0", "spike_out: 0, rng_step: 0", 1
+    )
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        source = generate_bittrue_kernel_from_neuron(
+            neuron, "m", data_width=32, fraction=16, language="rust"
+        )
+        (tmp / "m.rs").write_text(
+            "#![allow(non_snake_case, dead_code, unused)]\n" + source + "\n" + main
+        )
+        subprocess.run(
+            ["rustc", "-C", "overflow-checks=on", "-o", str(tmp / "r"), str(tmp / "m.rs")],
+            check=True,
+            capture_output=True,
+            timeout=300,
+        )
+        rust = _rows(
+            subprocess.run([str(tmp / "r")], capture_output=True, text=True, timeout=60).stdout
+        )
+    rtl, c = _traces(neuron, 32, 16, 80)
+    assert rust == c == rtl
+    assert sum(int(row[0]) for row in rust) > 0
 
 
 @pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")

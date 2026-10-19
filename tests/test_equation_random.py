@@ -41,6 +41,13 @@ class TestSiteNumbering:
             "poisson(1.0, 2)",
         ]
 
+    def test_multi_line_expression_with_non_ascii_text(self) -> None:
+        """Sites land after the right parenthesis on every line; offsets count UTF-8 bytes."""
+        expression = '(rand() *\n  "μ" .count("μ") +\n  poisson(2.0))'
+        assert number_random_sites([expression]) == [
+            '(rand(0) *\n  "μ" .count("μ") +\n  poisson(2.0, 1))'
+        ]
+
     def test_expression_without_draws_is_unchanged(self) -> None:
         """Formatting of an expression without draws is preserved exactly."""
         assert number_random_sites(["-v  +   I*2"]) == ["-v  +   I*2"]

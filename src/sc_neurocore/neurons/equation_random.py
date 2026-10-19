@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Sequence
+from typing import cast
 
 RANDOM_CALLS = frozenset({"rand", "randn", "poisson"})
 
@@ -115,8 +116,10 @@ def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
         for call in bare:
             while next_site in used:
                 next_site += 1
-            assert call.end_lineno is not None and call.end_col_offset is not None
-            position = offsets[call.end_lineno - 1] + call.end_col_offset - 1
+            # ast.parse sets the end position of every node it returns.
+            end_line = cast(int, call.end_lineno)
+            end_column = cast(int, call.end_col_offset)
+            position = offsets[end_line - 1] + end_column - 1
             inside = text[:position].rstrip()
             separator = b"" if not call.args else b" " if inside.endswith(b",") else b", "
             inserts.append((position, separator + str(next_site).encode()))
