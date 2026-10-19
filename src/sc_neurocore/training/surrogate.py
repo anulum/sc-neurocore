@@ -30,8 +30,13 @@ SurrogatePath = Literal["custom_op", "legacy_autograd"]
 SURROGATE_PATHS: tuple[SurrogatePath, ...] = ("custom_op", "legacy_autograd")
 
 
+def _spike_dtype(x: torch.Tensor) -> torch.dtype:
+    """Spikes keep a floating input's precision; anything else gives float32."""
+    return x.dtype if torch.is_floating_point(x) else torch.float32
+
+
 def _heaviside(x: torch.Tensor) -> torch.Tensor:
-    return (x > 0).float()
+    return (x > 0).to(_spike_dtype(x))
 
 
 def _fast_sigmoid_grad(x: torch.Tensor, slope: float) -> torch.Tensor:
@@ -156,7 +161,7 @@ _Triangular = _TriangularLegacy
 
 
 def _fake_like_float(x: torch.Tensor) -> torch.Tensor:
-    return torch.empty_like(x, dtype=torch.float32)
+    return torch.empty_like(x, dtype=_spike_dtype(x))
 
 
 @torch.library.custom_op("sc_neurocore::fast_sigmoid", mutates_args=())

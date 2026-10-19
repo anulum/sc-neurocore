@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1093
+expected_file_count = 1097
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4465,3 +4465,19 @@ rationale = "Equation-defined populations: folded equals direct with and without
 [[file]]
 path = "tests/test_small_world_simple_graph.py"
 rationale = "Watts-Strogatz as a simple graph with a validated domain, and the Chebyshev grid neighbourhood."
+
+[[file]]
+path = "src/sc_neurocore/training/surrogate.py"
+rationale = "Surrogate spike functions: exact Heaviside forward in the input's precision, smooth backward, custom ops and legacy autograd."
+
+[[file]]
+path = "tests/test_torch_bridge_fidelity.py"
+rationale = "Network.to_torch steps as each supported model steps, per neuron, or refuses: profile, reset, threshold, state, CSR, dtype."
+
+[[file]]
+path = "tests/test_network_execution_paths_backends_and_features.py"
+rationale = "Network backends and features: Rust, MPI guards, FIM feedback, plasticity and the Torch bridge refusals."
+
+[[file]]
+path = "tests/test_notimplemented_guard_audit.py"
+rationale = "Every NotImplementedError raise is an approved fail-fast guard, matched by path, qualified name and message."

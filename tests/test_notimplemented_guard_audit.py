@@ -66,7 +66,27 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
     _RaiseSite(
         "src/sc_neurocore/network/_torch_bridge.py",
         "_build_population_spec",
-        "v_reset == v_rest",
+        "only in its SC LIF profile",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/network/_torch_bridge.py",
+        "_build_population_spec",
+        "for every neuron",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/network/_torch_bridge.py",
+        "_uniform",
+        "per population",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/network/_torch_bridge.py",
+        "_validate_projection_csr",
+        "parallel connections",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/network/_torch_bridge.py",
+        "_validate_projection_csr",
+        "weight_threshold pruning",
     ),
     _RaiseSite(
         "src/sc_neurocore/network/_torch_bridge.py",

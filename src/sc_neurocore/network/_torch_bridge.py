@@ -16,6 +16,7 @@ mapped without hidden approximations.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
@@ -23,7 +24,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from sc_neurocore.training.snn_modules import LapicqueCell
 from sc_neurocore.training.surrogate import atan_surrogate_custom_op
 
 from .population import Population
@@ -62,8 +62,46 @@ else:
 class _PopulationSpec:
     population: Population
     state_kind: str
-    init_voltage: float
+    init_voltage: tuple[float, ...]
     label: str
+
+
+class _ExactResetCell(nn.Module):
+    """The deterministic discrete update of a supported model, with a surrogate gradient.
+
+    ``candidate = decay * (v - v_rest) + v_rest + gain * I``; the spike is
+    ``candidate >= threshold`` in the forward pass (the models' comparison) with the
+    surrogate's gradient in the backward pass; a spike resets to ``v_reset``.
+    """
+
+    def __init__(
+        self,
+        *,
+        decay: float,
+        gain: float,
+        v_rest: float,
+        v_reset: float,
+        threshold: float,
+        surrogate_fn: Callable[[torch.Tensor], torch.Tensor],
+    ) -> None:
+        super().__init__()
+        self.decay = decay
+        self.gain = gain
+        self.v_rest = v_rest
+        self.v_reset = v_reset
+        self.threshold = threshold
+        self.surrogate_fn = surrogate_fn
+
+    def forward(self, current: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return the spike and the next voltage of one step."""
+        candidate = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
+        distance = candidate - self.threshold
+        surrogate = self.surrogate_fn(distance).to(distance.dtype)
+        exact = (distance >= 0).to(distance.dtype)
+        spike = exact + (surrogate - surrogate.detach())
+        held = spike.detach()
+        next_v = candidate * (1.0 - held) + self.v_reset * held
+        return spike, next_v
 
 
 def _csr_to_dense(projection: Projection) -> np.ndarray[Any, Any]:
@@ -93,6 +131,30 @@ def _validate_projection_csr(projection: Projection) -> None:
         projection.target.n,
         context="Network.to_torch() projection",
     )
+    # One dense weight per (target, source) pair: parallel CSR entries add their
+    # currents in the network but have no lossless dense or sync representation.
+    for src_idx in range(projection.source.n):
+        targets = projection.indices[projection.indptr[src_idx] : projection.indptr[src_idx + 1]]
+        if len(set(int(t) for t in targets)) != len(targets):
+            raise NotImplementedError(
+                "Network.to_torch() does not support parallel connections (one source "
+                f"{src_idx} reaches one target twice); merge them into one weight"
+            )
+    if float(getattr(projection, "weight_threshold", 0.0)) != 0.0:
+        raise NotImplementedError(
+            "Network.to_torch() does not support weight_threshold pruning; use weight_threshold=0.0"
+        )
+
+
+def _uniform(population: Population, attribute: str) -> float:
+    """Return a parameter every neuron shares, or refuse a heterogeneous population."""
+    values = {float(getattr(neuron, attribute)) for neuron in population.neurons}
+    if len(values) != 1:
+        raise NotImplementedError(
+            f"Network.to_torch() needs one {attribute} per population; "
+            f"{population.label!r} has {len(values)}"
+        )
+    return values.pop()
 
 
 def _build_population_spec(
@@ -100,24 +162,26 @@ def _build_population_spec(
     surrogate_fn: Callable[[torch.Tensor], torch.Tensor],
 ) -> tuple[_PopulationSpec, nn.Module]:
     sample = population.neurons[0]
-    if population.model_name == "LapicqueNeuron":
-        cell = LapicqueCell(
-            tau=float(sample.tau),
-            r=float(sample.resistance),
-            dt=float(sample.dt),
-            threshold=float(sample.v_threshold),
-            v_rest=float(sample.v_rest),
+    voltages = tuple(float(neuron.v) for neuron in population.neurons)
+    if population.model_name in ("LapicqueNeuron", "SCLapicqueLIFNeuron"):
+        if getattr(sample, "profile", "sc_lif") != "sc_lif":
+            raise NotImplementedError(
+                "Network.to_torch() supports LapicqueNeuron only in its SC LIF profile; the "
+                f"{sample.profile!r} source profile latches one event and has no hard reset"
+            )
+        tau = _uniform(population, "tau")
+        dt = _uniform(population, "dt")
+        decay = math.exp(-dt / tau)
+        cell: nn.Module = _ExactResetCell(
+            decay=decay,
+            gain=(1.0 - decay) * _uniform(population, "resistance"),
+            v_rest=_uniform(population, "v_rest"),
+            v_reset=_uniform(population, "v_reset"),
+            threshold=_uniform(population, "v_threshold"),
             surrogate_fn=surrogate_fn,
         )
-        return (
-            _PopulationSpec(
-                population=population,
-                state_kind="v",
-                init_voltage=float(sample.v),
-                label=population.label,
-            ),
-            cell,
-        )
+        spec = _PopulationSpec(population, "v", voltages, population.label)
+        return spec, cell
 
     if population.model_name == "StochasticLIFNeuron":
         if float(sample.noise_std) != 0.0:
@@ -132,30 +196,25 @@ def _build_population_spec(
             raise NotImplementedError(
                 "Network.to_torch() does not support external entropy_source in StochasticLIFNeuron"
             )
-        if float(sample.v_reset) != float(sample.v_rest):
-            raise NotImplementedError(
-                "Network.to_torch() supports StochasticLIFNeuron only when v_reset == v_rest"
-            )
-
-        # LapicqueCell gain = r * dt / tau, so r must absorb tau_mem to match
-        # the discrete StochasticLIF input term resistance * current * dt.
-        cell = LapicqueCell(
-            tau=float(sample.tau_mem),
-            r=float(sample.resistance) * float(sample.tau_mem),
-            dt=float(sample.dt),
-            threshold=float(sample.v_threshold),
-            v_rest=float(sample.v_rest),
+        for neuron in population.neurons:
+            if float(neuron.noise_std) != 0.0 or int(neuron.refractory_period) != 0:
+                raise NotImplementedError(
+                    "Network.to_torch() needs noise_std == 0 and refractory_period == 0 "
+                    "for every neuron"
+                )
+        dt = _uniform(population, "dt")
+        tau = _uniform(population, "tau_mem")
+        # v += -(v - v_rest)·dt/tau + R·I·dt: the model's forward Euler step, exactly.
+        cell = _ExactResetCell(
+            decay=1.0 - dt / tau,
+            gain=_uniform(population, "resistance") * dt,
+            v_rest=_uniform(population, "v_rest"),
+            v_reset=_uniform(population, "v_reset"),
+            threshold=_uniform(population, "v_threshold"),
             surrogate_fn=surrogate_fn,
         )
-        return (
-            _PopulationSpec(
-                population=population,
-                state_kind="v",
-                init_voltage=float(sample.v),
-                label=population.label,
-            ),
-            cell,
-        )
+        spec = _PopulationSpec(population, "v", voltages, population.label)
+        return spec, cell
 
     raise NotImplementedError(
         f"Network.to_torch() does not support model {population.model_name!r} yet"
@@ -269,12 +328,9 @@ class NetworkTorchBridge(_TorchModuleBase):
         spikes: dict[int, torch.Tensor] = {}
         for pid, spec in self.population_specs.items():
             n = spec.population.n
-            voltages[pid] = torch.full(
-                (batch, n),
-                fill_value=spec.init_voltage,
-                dtype=dtype,
-                device=device,
-            )
+            # Every batch member starts from each neuron's own voltage.
+            per_neuron = torch.tensor(spec.init_voltage, dtype=dtype, device=device)
+            voltages[pid] = per_neuron.expand(batch, n).clone()
             spikes[pid] = torch.zeros((batch, n), dtype=dtype, device=device)
         return voltages, spikes
 

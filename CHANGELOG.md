@@ -10,6 +10,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `Network.to_torch()` steps as the supported models step: the SC LIF Lapicque
+  profile by its exact flow and StochasticLIF by its forward-Euler update, both
+  with the models' `>=` threshold and hard reset (surrogate gradient in the
+  backward pass), each neuron from its own voltage. The 1907 Lapicque source
+  profile, parallel CSR connections, a nonzero `weight_threshold` and
+  heterogeneous per-neuron parameters are refused instead of being substituted,
+  overwritten or ignored. Surrogate spikes keep the input's floating dtype, so a
+  float64 bridge runs past its first projected step.
+
 - `small_world` is a Watts-Strogatz simple graph: a rewired edge goes to a node
   that is neither the source nor already its neighbour, the graph keeps `n·k`
   entries in both directions, and an odd or too large degree, a probability

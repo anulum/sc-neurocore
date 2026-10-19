@@ -6,12 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backends_and_features) from former test_network_execution_paths.py
 
+"""Network backends and features: Rust, MPI guards, FIM feedback, plasticity, the Torch bridge."""
+
 from __future__ import annotations
 
 from tests.network_execution_paths_support import *  # noqa: F403
 
 
 def test_rust_backend_runs_populations_and_projection() -> None:
+    """The Rust backend accepts two populations, a projection and a monitor and runs."""
     source = Population(_MODEL, 3)
     target = Population(_MODEL, 3)
     projection = Projection(source, target, weight=0.5, topology="all_to_all")
@@ -23,6 +26,7 @@ def test_rust_backend_runs_populations_and_projection() -> None:
 
 
 def test_can_use_rust_is_disabled_by_stimuli_and_plasticity() -> None:
+    """Embedded stimuli or a plastic projection route the network away from Rust."""
     pop = Population(_MODEL, 2)
     assert Network(pop, StepCurrent(onset=0, offset=5, amplitude=1.0))._can_use_rust() is False
 
@@ -33,6 +37,7 @@ def test_can_use_rust_is_disabled_by_stimuli_and_plasticity() -> None:
 
 
 def test_mpi_backend_guards_each_unsupported_feature() -> None:
+    """The MPI backend refuses each feature it does not implement, naming it."""
     pop = Population(_MODEL, 2)
     with pytest.raises(NotImplementedError, match="spike_gating"):
         Network(pop).run(0.01, dt=0.001, backend="mpi", spike_gating=True)
@@ -56,6 +61,7 @@ def test_mpi_backend_guards_each_unsupported_feature() -> None:
 
 
 def test_python_backend_runs_with_fim_feedback() -> None:
+    """A positive fim_lambda runs the FIM weight feedback in the Python loop."""
     source = Population(_MODEL, 3)
     target = Population(_MODEL, 3)
     projection = Projection(source, target, weight=0.5, topology="all_to_all")
@@ -65,6 +71,7 @@ def test_python_backend_runs_with_fim_feedback() -> None:
 
 
 def test_apply_fim_adjusts_projection_weights_for_non_uniform_spikes() -> None:
+    """A non-uniform source spike vector changes the projection weights."""
     source = Population(_MODEL, 3)
     target = Population(_MODEL, 3)
     projection = Projection(source, target, weight=0.5, topology="all_to_all")
@@ -77,6 +84,7 @@ def test_apply_fim_adjusts_projection_weights_for_non_uniform_spikes() -> None:
 
 
 def test_python_backend_runs_with_plastic_projection() -> None:
+    """A plastic projection is updated inside the Python step loop."""
     source = Population(_MODEL, 3)
     target = Population(_MODEL, 3)
     plastic = Projection(source, target, weight=0.5, topology="all_to_all", plasticity="stdp")
@@ -86,20 +94,25 @@ def test_python_backend_runs_with_plastic_projection() -> None:
 
 
 def test_to_torch_rejects_stimuli_and_builds_bridge() -> None:
+    """The Torch bridge refuses stimuli and the 1907 Lapicque profile and builds for SC LIF."""
     pop = Population(_MODEL, 2)
     with pytest.raises(NotImplementedError, match="does not support embedded stimuli"):
         Network(pop, StepCurrent(onset=0, offset=5, amplitude=1.0)).to_torch()
 
-    # The torch bridge supports LapicqueNeuron cells; the default surrogate is
-    # resolved when none is supplied.
-    source = Population("LapicqueNeuron", 2)
-    target = Population("LapicqueNeuron", 2)
+    # The torch bridge supports the SC LIF Lapicque profile; the default surrogate
+    # is resolved when none is supplied.
+    source = Population("SCLapicqueLIFNeuron", 2)
+    target = Population("SCLapicqueLIFNeuron", 2)
     projection = Projection(source, target, weight=0.5, topology="all_to_all")
     bridge = Network(source, target, projection).to_torch()
     assert bridge is not None
+    # The 1907 source profile latches one event; the bridge refuses it.
+    with pytest.raises(NotImplementedError, match="lapicque_1907"):
+        Network(Population("LapicqueNeuron", 2)).to_torch()
 
 
 def test_apply_stimuli_defaults_to_first_population_when_target_unset() -> None:
+    """An untargeted stimulus drives the first population."""
     pop = Population(_MODEL, 2)
     stimulus = StepCurrent(onset=0, offset=5, amplitude=1.0)
     assert stimulus.target is None  # untargeted -> first population fallback
