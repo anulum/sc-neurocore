@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `compile_network_to_fpga()` takes `random_precision` ("standard" or "exact")
+  and lowers `randn()` in every neuron module and folded processing element
+  with it; with "exact" every state word of the direct and the folded network
+  equals the exact 60-bit reference.
+
 - `Network.to_torch()` steps in float64, the Python models' precision, for any
   input dtype (a float32 bridge overflowed or rounded where the model did not),
   keeps the models' runtime refusals of a non-finite voltage and Lapicque

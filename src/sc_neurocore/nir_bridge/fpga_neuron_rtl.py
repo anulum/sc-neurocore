@@ -286,6 +286,7 @@ def build_neuron_module(
     *,
     data_width: int = 16,
     fraction: int = 8,
+    random_precision: str = "standard",
 ) -> str:
     """Build a Verilog module for one canonical neuron type.
 
@@ -302,6 +303,9 @@ def build_neuron_module(
         Fixed-point data width.
     fraction : int
         Fractional bits.
+    random_precision : {"standard", "exact"}
+        Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
+        :mod:`sc_neurocore.compiler.exact_normal`.
 
     Returns
     -------
@@ -320,6 +324,7 @@ def build_neuron_module(
         module_name=f"sc_nir_{neuron_type}",
         data_width=data_width,
         fraction=fraction,
+        random_precision=random_precision,
     )
 
 

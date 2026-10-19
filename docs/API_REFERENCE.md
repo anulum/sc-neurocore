@@ -34044,7 +34044,7 @@ scnir_hierarchy_modules : dict&#91;str, str&#93;
 
 ## Module `nir_bridge.fpga_compiler`
 
-### Function `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target, online_learning, interconnect)`
+### Function `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target, online_learning, interconnect, random_precision)`
 Compile a NeuronGraph to synthesisable Verilog RTL.
 
 End-to-end pipeline:
@@ -34082,6 +34082,9 @@ interconnect : str | None
     state, swept by a single sequencer), which supports the :func:`_can_fold`
     subset: any number of populations with external-weighted, recurrent, or
     inter-population spiking fan-in.
+random_precision : {"standard", "exact"}
+    Lowering of ``randn()`` in every neuron module and folded PE: the standard unit or the exact 60-bit mode of
+    :mod:`sc_neurocore.compiler.exact_normal`.
 
 Returns
 -------
@@ -34091,8 +34094,9 @@ NetworkCompilationResult
 Raises
 ------
 ValueError
-    If the graph is empty or contains unsupported neuron types, or if two
-    populations of one neuron type differ in parameters or template definition.
+    If the graph is empty or contains unsupported neuron types, if two
+    populations of one neuron type differ in parameters or template definition,
+    or if ``random_precision`` is unknown.
 
 ---
 
@@ -34252,7 +34256,7 @@ Returns
 FoldedResourceMetrics
     The architectural fold summary.
 
-### Function `build_folded_interconnect(module_name, qgraph, *, data_width, fraction)`
+### Function `build_folded_interconnect(module_name, qgraph, *, data_width, fraction, random_precision)`
 Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
 
 One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
@@ -34283,6 +34287,9 @@ data_width : int
     Fixed-point word width.
 fraction : int
     Number of fractional bits in each fixed-point word.
+random_precision : {"standard", "exact"}
+    Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
+    :mod:`sc_neurocore.compiler.exact_normal`.
 
 Returns
 -------
@@ -34326,7 +34333,7 @@ Raises
 ValueError
     If two populations share a type but not their template definition.
 
-### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction)`
+### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction, random_precision)`
 Build a Verilog module for one canonical neuron type.
 
 Uses the existing ``equation_compiler.compile_to_verilog()`` with
@@ -34342,6 +34349,9 @@ data_width : int
     Fixed-point data width.
 fraction : int
     Fractional bits.
+random_precision : {"standard", "exact"}
+    Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
+    :mod:`sc_neurocore.compiler.exact_normal`.
 
 Returns
 -------

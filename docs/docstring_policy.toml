@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1157
+expected_file_count = 1158
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4721,3 +4721,7 @@ rationale = "RTL-versus-model tests of stochastic thresholds at Q1.f formats."
 [[file]]
 path = "tests/test_torch_bridge_runtime_contract.py"
 rationale = "Regression tests for the Torch bridge's precision, refusals and live counters."
+
+[[file]]
+path = "tests/test_network_random_precision.py"
+rationale = "Direct and folded co-simulation of randn() in the requested precision."

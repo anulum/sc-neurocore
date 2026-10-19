@@ -46,6 +46,14 @@ emitted, by `compile_network_to_fpga()` and by the folded builder. Give each
 definition its own type name. The random stream may differ: each instance
 receives its own `P_RNG_STREAM` (`tests/test_shared_type_templates.py`).
 
+`compile_network_to_fpga(..., random_precision="exact")` lowers `randn()` in
+every neuron module and folded processing element with the exact 60-bit unit
+of `sc_neurocore.compiler.exact_normal` (0.5 LSB + 2^(fraction-45)); the
+default `"standard"` keeps the standard unit. Each neuron draws from its own
+stream in either mode; `tests/test_network_random_precision.py` checks every
+state word of the direct and the folded co-simulation against the exact
+reference at Q3.29.
+
 ### Trace STDP
 
 ::: sc_neurocore.nir_bridge.stdp

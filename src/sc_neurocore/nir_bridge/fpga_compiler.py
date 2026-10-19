@@ -38,6 +38,7 @@ from typing import Any, Literal, Mapping
 import numpy as np
 
 from ..compiler.equation_compiler import Q88
+from ..compiler.verilog_compiler_config import RANDOM_PRECISIONS
 from ..ir.scnir_convert import SCNIRConversionConfig, build_scnir_from_neuron_graph
 from ..ir.scnir_hdl import build_scnir_source_bundle
 from .fpga_aer_interconnect import build_aer_interconnect as _build_top_aer
@@ -174,6 +175,7 @@ def compile_network_to_fpga(
     target: str = "artix7",
     online_learning: Mapping[str, Mapping[str, Any]] | None = None,
     interconnect: str | None = None,
+    random_precision: str = "standard",
 ) -> NetworkCompilationResult:
     """Compile a NeuronGraph to synthesisable Verilog RTL.
 
@@ -212,6 +214,9 @@ def compile_network_to_fpga(
         state, swept by a single sequencer), which supports the :func:`_can_fold`
         subset: any number of populations with external-weighted, recurrent, or
         inter-population spiking fan-in.
+    random_precision : {"standard", "exact"}
+        Lowering of ``randn()`` in every neuron module and folded PE: the standard unit or the exact 60-bit mode of
+        :mod:`sc_neurocore.compiler.exact_normal`.
 
     Returns
     -------
@@ -221,9 +226,14 @@ def compile_network_to_fpga(
     Raises
     ------
     ValueError
-        If the graph is empty or contains unsupported neuron types, or if two
-        populations of one neuron type differ in parameters or template definition.
+        If the graph is empty or contains unsupported neuron types, if two
+        populations of one neuron type differ in parameters or template definition,
+        or if ``random_precision`` is unknown.
     """
+    if random_precision not in RANDOM_PRECISIONS:
+        raise ValueError(
+            f"random_precision must be one of {RANDOM_PRECISIONS}, got {random_precision!r}"
+        )
     _check_synthesis_resource_bounds(
         total_neurons=graph.total_neurons,
         total_synapses=graph.total_synapses,
@@ -279,6 +289,7 @@ def compile_network_to_fpga(
             rep_pop,
             data_width=data_width,
             fraction=fraction,
+            random_precision=random_precision,
         )
         neuron_modules[ntype] = verilog
         logger.info("Generated Verilog for neuron type: %s", ntype)
@@ -324,7 +335,11 @@ def compile_network_to_fpga(
             )
         selected_interconnect = "folded"
         pe_modules, top_module = _build_top_folded(
-            module_name, qgraph, data_width=data_width, fraction=fraction
+            module_name,
+            qgraph,
+            data_width=data_width,
+            fraction=fraction,
+            random_precision=random_precision,
         )
         neuron_modules.update(pe_modules)
         folded_metrics = _folded_resource_metrics(qgraph, data_width=data_width)

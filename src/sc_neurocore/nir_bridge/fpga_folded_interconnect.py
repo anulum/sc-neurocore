@@ -441,6 +441,7 @@ def build_folded_interconnect(
     *,
     data_width: int = 16,
     fraction: int = 8,
+    random_precision: str = "standard",
 ) -> tuple[dict[str, str], str]:
     """Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
 
@@ -472,6 +473,9 @@ def build_folded_interconnect(
         Fixed-point word width.
     fraction : int
         Number of fractional bits in each fixed-point word.
+    random_precision : {"standard", "exact"}
+        Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
+        :mod:`sc_neurocore.compiler.exact_normal`.
 
     Returns
     -------
@@ -615,6 +619,7 @@ def build_folded_interconnect(
             data_width=data_width,
             fraction=fraction,
             param_ports=type_het_params.get(ntype, []),
+            random_precision=random_precision,
         )
         svars = [sanitize_ident(v, context="state variable") for v in neuron.equations]
         type_svars[ntype] = svars
