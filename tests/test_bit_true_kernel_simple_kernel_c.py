@@ -14,34 +14,43 @@ from tests.bit_true_kernel_support import *  # noqa: F403
 
 
 class TestSimpleKernelC:
+    """Check the C bit-true kernel generated from a plain update dictionary."""
+
     def test_substrings(self) -> None:
+        """Check that the C kernel carries its include, state type and fixed-point helpers."""
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"})
         for s in ("#include <stdint.h>", "sc_lif_state_t", "sat(", "fxmul("):
             assert s in code
 
     def test_step_is_not_a_noop(self) -> None:
+        """Check that the C step computes and commits the next value, not a placeholder."""
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"})
         assert "_next_v = sat(" in code
         assert "s->v = _next_v;" in code
         assert "/* update */" not in code  # the old placeholder is gone
 
     def test_multi_var_struct(self) -> None:
+        """Check that every state variable becomes a field of the C state struct."""
         code = generate_bittrue_kernel("sc_izh", {"v": "a * b", "u": "c + d"})
         assert "int16_t v;" in code and "int16_t u;" in code
 
     def test_free_variables_become_arguments(self) -> None:
+        """Check that free variables of the update become C step arguments."""
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"})
         assert "int16_t a" in code and "int16_t b" in code
 
     def test_input_current_becomes_argument(self) -> None:
+        """Check that the input current ``I`` becomes the ``I_t`` C argument."""
         code = generate_bittrue_kernel("sc_lif", {"v": "I - v"})
         assert "int16_t I_t" in code
 
     def test_transcendental_declares_table(self) -> None:
+        """Check that a ``tanh`` update declares a static C lookup table."""
         code = generate_bittrue_kernel("sc_th", {"v": "tanh(v)"})
         assert "static const int16_t _tanh_lut0" in code
 
     def test_positive_modulo_uses_floor_remainder_helper(self) -> None:
+        """Check that C modulo goes through the floor-remainder ``fxmod`` helper."""
         code = generate_bittrue_kernel("sc_phase", {"v": "v % 2.0"})
         assert "static inline int16_t fxmod" in code
         assert "if (remainder < 0) { remainder += period; }" in code

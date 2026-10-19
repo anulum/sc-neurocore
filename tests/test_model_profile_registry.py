@@ -185,11 +185,13 @@ def test_registry_payload_and_method_table_are_serialisable(rows: tuple[ProfileR
 
 
 def test_an_unknown_facet_is_not_answered_by_another(rows: tuple[ProfileRow, ...]) -> None:
+    """Check that asking a row for an unknown facet raises ``KeyError``."""
     with pytest.raises(KeyError, match="no-such-facet"):
         rows[0].entry("no-such-facet")
 
 
 def test_a_schema_validation_block_without_evidence_names_no_validator() -> None:
+    """Check that a validation block without evidence yields no schema validator."""
     from sc_neurocore.neurons.profile_registry import _schema_validators
     from sc_neurocore.neurons.readiness import REPO_ROOT
 

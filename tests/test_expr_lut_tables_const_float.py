@@ -14,28 +14,37 @@ from tests.expr_lut_tables_support import *  # noqa: F403
 
 
 class TestConstFloat:
+    """Check constant folding of expression nodes by ``const_float``."""
+
     def _fold(self, expr: str) -> float | None:
         return tables.const_float(ast.parse(expr, mode="eval").body)
 
     def test_literal(self) -> None:
+        """Check that a float literal folds to its own value."""
         assert self._fold("3.5") == 3.5
 
     def test_unary_minus(self) -> None:
+        """Check that a negated literal folds to the negative value."""
         assert self._fold("-2.0") == -2.0
 
     def test_division(self) -> None:
+        """Check that a constant division folds to the float quotient."""
         assert self._fold("1.0 / 3.0") == 1.0 / 3.0
 
     def test_mult_add_sub(self) -> None:
+        """Check that constant products, sums and differences fold to floats."""
         assert self._fold("2 * 3") == 6.0
         assert self._fold("2 + 3") == 5.0
         assert self._fold("5 - 3") == 2.0
 
     def test_division_by_zero_is_none(self) -> None:
+        """Check that a constant division by zero does not fold."""
         assert self._fold("1.0 / 0.0") is None
 
     def test_non_constant_is_none(self) -> None:
+        """Check that an expression with a free name does not fold."""
         assert self._fold("x + 1") is None
 
     def test_nested_non_constant_is_none(self) -> None:
+        """Check that a nested expression with a free name does not fold."""
         assert self._fold("x * 2 + 1") is None

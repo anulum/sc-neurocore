@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_bit_true_cosim.py
 
+"""Shared toolchain probes, cases and trace runners for bit-true co-simulation tests."""
+
 from __future__ import annotations
 
 """Bit-for-bit co-simulation proof for the bit-true neuron kernel.

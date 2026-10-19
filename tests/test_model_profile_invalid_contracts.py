@@ -47,6 +47,7 @@ from sc_neurocore.neurons.universal_dsl import load_schema
 def test_invalid_profile_input_is_reported(
     stem: str, changes: dict[str, Any], expected: str
 ) -> None:
+    """Check that each malformed schema change is reported as its specific problem."""
     schema = deepcopy(load_schema(stem))
     for section, values in changes.items():
         if isinstance(values, dict) and isinstance(schema.get(section), dict):
@@ -62,6 +63,7 @@ def test_invalid_profile_input_is_reported(
 
 
 def test_public_profile_payload_refuses_bad_contract_and_missing_fields() -> None:
+    """Check that a payload with a foreign contract or a missing section is refused."""
     payload = resolve_profile(load_schema("lif"), stem="lif").to_public_dict()
     wrong_contract = dict(payload, contract="foreign")
     with pytest.raises(ModelProfileError, match="profile payload contract"):
@@ -73,6 +75,7 @@ def test_public_profile_payload_refuses_bad_contract_and_missing_fields() -> Non
 
 
 def test_non_text_role_falls_back_to_biological_state() -> None:
+    """Check that a non-text state role leaves the variable as biological state."""
     schema = deepcopy(load_schema("lif"))
     schema["profile"]["state"]["v"] = 42
     profile = resolve_profile(schema, stem="lif")
@@ -81,6 +84,7 @@ def test_non_text_role_falls_back_to_biological_state() -> None:
 
 
 def test_exact_relaxation_refuses_nonsmooth_self_dependence() -> None:
+    """Check that an exact relaxation with a kink in its own variable is reported."""
     schema = deepcopy(load_schema("sc_lapicque_lif"))
     schema["dynamics"]["v"] = "abs(v)"
     profile = resolve_profile(schema, stem="sc_lapicque_lif")
@@ -88,6 +92,7 @@ def test_exact_relaxation_refuses_nonsmooth_self_dependence() -> None:
 
 
 def test_executable_method_without_dynamics_is_only_a_descriptive_record() -> None:
+    """Check that a schema without dynamics resolves to a descriptive record."""
     schema = deepcopy(load_schema("lif"))
     schema["dynamics"] = {}
     profile = resolve_profile(schema, stem="lif")
@@ -96,6 +101,7 @@ def test_executable_method_without_dynamics_is_only_a_descriptive_record() -> No
 
 
 def test_declaring_a_derived_exactness_does_not_promote_the_model() -> None:
+    """Check that a declared first-order exactness is kept but not counted as claimed."""
     schema = deepcopy(load_schema("lif"))
     schema["profile"]["exactness"] = "first-order"
     profile = resolve_profile(schema, stem="lif")
@@ -105,6 +111,7 @@ def test_declaring_a_derived_exactness_does_not_promote_the_model() -> None:
 
 
 def test_stochastic_threshold_with_diffusion_noise_is_not_reproducible() -> None:
+    """Check that adding diffusion noise marks the randomness as not reproducible."""
     schema = deepcopy(load_schema("escape_rate"))
     variable = next(iter(schema["dynamics"]))
     schema["dynamics"][variable] += " + xi"
@@ -114,6 +121,7 @@ def test_stochastic_threshold_with_diffusion_noise_is_not_reproducible() -> None
 
 
 def test_poisson_detection_inside_an_ode_retains_the_reset_phase() -> None:
+    """Check that Poisson detection in an ODE keeps the reset in its evaluation order."""
     schema = deepcopy(load_schema("lif"))
     schema["threshold"]["detection"] = "poisson"
     schema["threshold"]["probability_expression"] = "0.1"

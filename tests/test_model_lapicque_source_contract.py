@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Lapicque source identity and paired-schema contracts
 
+"""Test the Lapicque source identity, the SC compatibility identity and their paired schemas."""
+
 from __future__ import annotations
 
 import json
@@ -28,6 +30,7 @@ SCHEMAS = ROOT / "src/sc_neurocore/neurons/model_schemas"
 
 
 def test_paired_source_and_sc_schemas_are_exact_and_disjoint() -> None:
+    """Check that each schema's TOML and JSON agree and the two identities stay distinct."""
     for stem in ("lapicque", "sc_lapicque_lif"):
         with (SCHEMAS / f"{stem}.toml").open("rb") as handle:
             toml_schema = tomllib.load(handle)
@@ -46,6 +49,7 @@ def test_paired_source_and_sc_schemas_are_exact_and_disjoint() -> None:
 
 
 def test_source_factory_preserves_lapicques_distinct_circuit_parameters() -> None:
+    """Check the profile, circuit constants, latch and step of the 1907 source factory."""
     neuron = LapicqueNeuron.lapicque_1907()
     assert neuron.profile == "lapicque_1907"
     assert neuron.source_beta == 1.0
@@ -56,6 +60,7 @@ def test_source_factory_preserves_lapicques_distinct_circuit_parameters() -> Non
 
 @pytest.mark.parametrize("duration", (0.1, 0.5, 1.0, 2.0, 5.0))
 def test_strength_duration_voltage_reaches_threshold_analytically(duration: float) -> None:
+    """Check that the strength-duration voltage reaches threshold exactly at each duration."""
     neuron = LapicqueNeuron.lapicque_1907()
     source_voltage = neuron.source_threshold_voltage(duration)
     reached = (
@@ -68,6 +73,7 @@ def test_strength_duration_voltage_reaches_threshold_analytically(duration: floa
 
 
 def test_source_event_latches_without_implicit_reset_or_repetition() -> None:
+    """Check that the source fires once, latches, and neither resets nor fires again."""
     neuron = LapicqueNeuron.lapicque_1907()
     voltage, events = neuron.simulate_complete(2_000, 22.0, backend="python")
     assert events.sum() == 1
@@ -82,6 +88,7 @@ def test_source_event_latches_without_implicit_reset_or_repetition() -> None:
 
 
 def test_sc_compatibility_identity_is_explicit_and_repetitively_resettable() -> None:
+    """Check that the SC identity has its own profile and fires repeatedly with resets."""
     neuron = SCLapicqueLIFNeuron()
     assert neuron.profile == "sc_lif"
     _, events = neuron.simulate_complete(1_000, 5.0, backend="python")
@@ -90,6 +97,7 @@ def test_sc_compatibility_identity_is_explicit_and_repetitively_resettable() -> 
 
 
 def test_population_canonical_string_routes_source_and_sc_parameters_remain_compatible() -> None:
+    """Check that population names and SC parameters select the expected profile."""
     source = Population("LapicqueNeuron", 2)
     assert [neuron.profile for neuron in source.neurons] == ["lapicque_1907"] * 2
 

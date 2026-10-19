@@ -14,29 +14,38 @@ from tests.bit_true_kernel_support import *  # noqa: F403
 
 
 class TestTypeHelpers:
+    """Check the C and Rust type helpers and the bias and table formatters."""
+
     @pytest.mark.parametrize(
         "dw,expected", [(8, "int8_t"), (16, "int16_t"), (32, "int32_t"), (64, "int64_t")]
     )
     def test_ctype_native(self, dw: int, expected: str) -> None:
+        """Check that native word widths map to the matching C integer type."""
         assert _ctype(dw) == expected
 
     def test_ctype_non_native_widens(self) -> None:
+        """Check that non-native widths widen to the next C integer type."""
         assert _ctype(24) == "int32_t"
         assert _ctype(48) == "int64_t"
 
     @pytest.mark.parametrize("dw,expected", [(8, "i8"), (16, "i16"), (32, "i32"), (64, "i64")])
     def test_rtype_native(self, dw: int, expected: str) -> None:
+        """Check that native word widths map to the matching Rust integer type."""
         assert _rtype(dw) == expected
 
     def test_rtype_non_native_widens(self) -> None:
+        """Check that non-native widths widen to the next Rust integer type."""
         assert _rtype(24) == "i32"
         assert _rtype(48) == "i64"
 
     def test_accumulate_bias_saturate(self) -> None:
+        """Check that saturate overflow wraps the accumulator in ``sat``."""
         assert _accumulate_bias("x", "saturate") == "sat(x)"
 
     def test_accumulate_bias_wrap(self) -> None:
+        """Check that wrap overflow wraps the accumulator in ``sc_wrap``."""
         assert _accumulate_bias("x", "wrap") == "sc_wrap(x, WORD_BITS)"
 
     def test_format_tables_empty(self) -> None:
+        """Check that formatting no lookup tables yields no C lines."""
         assert _format_tables_c({}, 16) == []

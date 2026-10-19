@@ -17,6 +17,7 @@ class TestFormatParity:
     """Verify that TOML and JSON schemas produce identical simulation results."""
 
     def test_lif_toml_vs_json_parity(self) -> None:
+        """Check that the LIF TOML and JSON schemas give the same spikes and state."""
         schema_dir = Path(__file__).parent.parent / "src/sc_neurocore/neurons/model_schemas"
 
         toml_neuron = UniversalNeuron.from_schema(schema_dir / "lif.toml")
@@ -30,6 +31,7 @@ class TestFormatParity:
         assert toml_neuron.state["v"] == json_neuron.state["v"]
 
     def test_izhikevich_toml_vs_json_parity(self) -> None:
+        """Check that the Izhikevich TOML and JSON schemas give the same spikes and state."""
         schema_dir = Path(__file__).parent.parent / "src/sc_neurocore/neurons/model_schemas"
 
         toml_neuron = UniversalNeuron.from_schema(schema_dir / "izhikevich.toml")

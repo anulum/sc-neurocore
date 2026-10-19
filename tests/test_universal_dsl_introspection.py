@@ -17,18 +17,22 @@ class TestIntrospection:
     """Test introspection methods."""
 
     def test_name(self) -> None:
+        """Check that ``name`` returns the schema's model name."""
         neuron = UniversalNeuron.from_schema("fitzhugh_nagumo")
         assert neuron.name == "FitzHugh-Nagumo"
 
     def test_doi(self) -> None:
+        """Check that ``doi`` returns the Izhikevich publication DOI."""
         neuron = UniversalNeuron.from_schema("izhikevich")
         assert neuron.doi == "10.1109/TNN.2003.820440"
 
     def test_list_state_variables(self) -> None:
+        """Check that Hindmarsh-Rose lists its three state variables."""
         neuron = UniversalNeuron.from_schema("hindmarsh_rose")
         assert set(neuron.list_state_variables()) == {"x", "y", "z"}
 
     def test_list_parameters(self) -> None:
+        """Check that Hindmarsh-Rose lists its ``b``, ``r`` and ``s`` parameters."""
         neuron = UniversalNeuron.from_schema("hindmarsh_rose")
         params = neuron.list_parameters()
         assert "b" in params
@@ -36,6 +40,7 @@ class TestIntrospection:
         assert "s" in params
 
     def test_list_equations(self) -> None:
+        """Check that FitzHugh-Nagumo lists both equations with the exact cube."""
         neuron = UniversalNeuron.from_schema("fitzhugh_nagumo")
         eqs = neuron.list_equations()
         assert "v" in eqs
@@ -44,17 +49,20 @@ class TestIntrospection:
         assert "v * v * v" in eqs["v"]
 
     def test_repr(self) -> None:
+        """Check that the representation names the class and the model."""
         neuron = UniversalNeuron.from_schema("lif")
         r = repr(neuron)
         assert "UniversalNeuron" in r
         assert "LIF" in r
 
     def test_extensions_property(self) -> None:
+        """Check that AdEx exposes its integrator options among the extensions."""
         neuron = UniversalNeuron.from_schema("adex")
         ext = neuron.extensions
         assert "integrator_options" in ext
 
     def test_to_equation_neuron(self) -> None:
+        """Check that a universal neuron converts to an ``EquationNeuron``."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         neuron = UniversalNeuron.from_schema("lif")
@@ -65,6 +73,7 @@ class TestIntrospection:
         self,
         monkeypatch: MonkeyPatch,
     ) -> None:
+        """Check that ``to_verilog`` derives a safe module name and forwards options."""
         captured: dict[str, object] = {}
 
         def fake_compile_to_verilog(

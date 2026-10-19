@@ -28964,6 +28964,7 @@ and remain configurable metadata for network adapters.  They do not imply
 that this single-cell object owns presynaptic channel states.
 
 - **__post_init__**()
+  - Coerce every parameter to a finite float and refuse non-physical values.
 - **step**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
   - Advance one source-level midpoint-RK2 timestep atomically.
 - **simulate**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba, \*, backend)
@@ -53964,7 +53965,9 @@ Central finite-difference gradients for deterministic relaxed SC operators.
 Deterministic export-time noise model for SC weight probabilities.
 
 - **__post_init__**()
+  - Refuse an unknown mode, a non-positive bitstream length or a negative sigma.
 - **metadata**()
+  - Return the noise model as a plain dictionary for export metadata.
 
 ### Class `LIFCell`
 Single-step Leaky Integrate-and-Fire with surrogate backward.
@@ -53975,8 +53978,11 @@ v&#91;t&#93; -= spike&#91;t&#93; * threshold  (subtract reset)
 
 - **__init__**(beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
+  - Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value.
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, v)
+  - Advance one step: leak, integrate, fire against the threshold, subtract-reset.
 
 ### Class `IFCell`
 Integrate-and-Fire (no leak, beta=1).
@@ -53985,7 +53991,9 @@ Simplest spiking model: v&#91;t&#93; = v&#91;t-1&#93; + I&#91;t&#93;, fire when 
 
 - **__init__**(threshold, surrogate_fn, learn_threshold)
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, v)
+  - Advance one step without leak: integrate, fire, subtract-reset.
 
 ### Class `SynapticCell`
 Dual-exponential synaptic LIF. Two state variables: synapse current + membrane.
@@ -53995,9 +54003,11 @@ v&#91;t&#93; = beta * v&#91;t-1&#93; + i_syn&#91;t&#93;
 
 - **__init__**(alpha, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
+  - Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value.
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, i_syn, v)
-  - Returns (spike, i_syn_next, v_next).
+  - Advance the synaptic current and the membrane by one step.
 
 ### Class `ALIFCell`
 Adaptive LIF. Bellec et al. 2020.
@@ -54007,7 +54017,7 @@ where a&#91;t&#93; = rho * a&#91;t-1&#93; + spike&#91;t-1&#93;.
 
 - **__init__**(beta, threshold, rho, beta_adapt, surrogate_fn)
 - **forward**(current, v, a)
-  - Returns (spike, v_next, a_next).
+  - Advance the membrane and the adaptation trace against the adapted threshold.
 
 ### Class `ExpIFCell`
 Exponential Integrate-and-Fire. Fourcaud-Trocmé et al. 2003.
@@ -54017,8 +54027,11 @@ Exponential term creates sharp upstroke near threshold.
 
 - **__init__**(beta, threshold, delta_t, v_rh, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
+  - Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value.
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, v)
+  - Advance one step with the clamped exponential upstroke term.
 
 ### Class `AdExCell`
 Adaptive Exponential IF. Brette & Gerstner 2005.
@@ -54028,8 +54041,11 @@ w&#91;t&#93; = rho * w&#91;t-1&#93; + a * (v&#91;t-1&#93; - v_rest) + b * spike&
 
 - **__init__**(beta, threshold, delta_t, v_rh, a, b, rho, v_rest, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
+  - Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value.
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, v, w)
+  - Advance one step of membrane and adaptation current.
 
 ### Class `LapicqueCell`
 SC hard-reset RC training cell with a historical public name.
@@ -54043,7 +54059,9 @@ Discretised: v&#91;t&#93; = (1 - dt/tau) * v&#91;t-1&#93; + (R * dt / tau) * I&#
 
 - **__init__**(tau, r, dt, threshold, v_rest, surrogate_fn, learn_threshold)
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, v)
+  - Advance one RC step towards ``v_rest``, fire, and reset by ``threshold - v_rest``.
 
 ### Class `AlphaCell`
 Alpha synapse neuron. Rall 1967.
@@ -54053,8 +54071,11 @@ v&#91;t&#93; = beta * v&#91;t-1&#93; + i_exc&#91;t&#93; - i_inh&#91;t&#93;
 
 - **__init__**(alpha_exc, alpha_inh, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
+  - Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value.
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(exc_current, inh_current, i_exc, i_inh, v)
+  - Advance the excitatory and inhibitory currents and the membrane by one step.
 
 ### Class `SecondOrderLIFCell`
 Second-order LIF with inertial term. Dayan & Abbott 2001.
@@ -54065,14 +54086,18 @@ v&#91;t&#93; = beta * v&#91;t-1&#93; + a&#91;t&#93;
 
 - **__init__**(alpha, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
+  - Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value.
 - **threshold**()
+  - Return the firing threshold: the exponential of the learnt log, or the fixed value.
 - **forward**(current, a, v)
+  - Advance the inertial current and the membrane by one step.
 
 ### Class `RecurrentLIFCell`
 LIF with trainable recurrent weights.
 
 - **__init__**(n_neurons, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **forward**(current, v, spike_prev)
+  - Add the recurrent projection of the previous spikes and step the LIF cell.
 
 ### Class `SpikingNet`
 Multi-layer feedforward SNN for classification.

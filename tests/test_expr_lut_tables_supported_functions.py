@@ -14,11 +14,15 @@ from tests.expr_lut_tables_support import *  # noqa: F403
 
 
 class TestSupportedFunctions:
+    """Check the shared vocabulary of supported expression functions."""
+
     def test_contains_transcendentals_and_helpers(self) -> None:
+        """Check that the vocabulary holds the transcendentals and helper functions."""
         assert {"exp", "log", "sqrt", "tanh", "cosh", "exprel", "sin", "cos"} <= (
             tables.SUPPORTED_FUNCTIONS
         )
         assert {"sigmoid", "expit", "abs", "clip", "max", "min"} <= tables.SUPPORTED_FUNCTIONS
 
     def test_is_frozen(self) -> None:
+        """Check that the vocabulary is an immutable frozenset."""
         assert isinstance(tables.SUPPORTED_FUNCTIONS, frozenset)

@@ -14,18 +14,23 @@ from tests.bit_true_kernel_support import *  # noqa: F403
 
 
 class TestNeuronKernelRust:
+    """Check the Rust bit-true kernel generated from an equation neuron."""
+
     def test_reset_and_step(self) -> None:
+        """Check that the LIF Rust kernel declares its reset and step methods."""
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", language="rust")
         assert "pub fn reset(&mut self)" in code
         assert "pub fn step(&mut self, I_t: i16) -> i32" in code
 
     def test_threshold_sequencing(self) -> None:
+        """Check that a Rust spike writes the post-reset value to state and output."""
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", language="rust")
         assert "self.v = _rst_v;" in code
         assert "self.v_out = _rst_v;" in code
         assert "if _spk != 0" in code
 
     def test_state_dependent_reset_reads_candidate(self) -> None:
+        """Check that the recovery reset in Rust reads the next-step candidate value."""
         code = generate_bittrue_kernel_from_neuron(
             _adaptive_reset_neuron(),
             "sc_izh",
@@ -38,11 +43,13 @@ class TestNeuronKernelRust:
         assert "self.u = _rst_u;" in code and "self.u_out = _rst_u;" in code
 
     def test_no_threshold_branch(self) -> None:
+        """Check that a Rust kernel without a threshold returns zero."""
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=1.0)
         code = generate_bittrue_kernel_from_neuron(neuron, "sc_leak", language="rust")
         assert "return 0;" in code
 
     def test_map_commit_and_previous_state_threshold(self) -> None:
+        """Check that a Rust map kernel commits the modulo map and thresholds on the register."""
         code = generate_bittrue_kernel_from_neuron(
             _wrapped_phase_neuron(),
             "sc_phase",

@@ -17,6 +17,7 @@ class TestTranscendentalStatements:
     """Cover the LUT-statement paths (deriv, threshold and table declarations)."""
 
     def test_simple_rust_lut_and_input(self) -> None:
+        """Check the Rust table declaration, input argument and LUT statement for ``tanh``."""
         code = generate_bittrue_kernel("sc_th", {"v": "tanh(v) + I"}, language="rust")
         assert "const _tanh_lut0: [i16;" in code  # rust table declaration
         assert ", I_t: i16" in code  # input argument
@@ -32,11 +33,13 @@ class TestTranscendentalStatements:
         )
 
     def test_neuron_c_deriv_and_threshold_statements(self) -> None:
+        """Check that the C neuron kernel emits LUT statements for derivative and threshold."""
         code = generate_bittrue_kernel_from_neuron(self._transcendental_neuron(), "sc_tr")
         assert "_exp_lut0_arg" in code  # derivative LUT statement (line 534)
         assert "_tanh_lut" in code  # threshold LUT statement (line 557)
 
     def test_neuron_rust_deriv_and_threshold_statements(self) -> None:
+        """Check that the Rust neuron kernel emits LUT statements for derivative and threshold."""
         code = generate_bittrue_kernel_from_neuron(
             self._transcendental_neuron(), "sc_tr", language="rust"
         )

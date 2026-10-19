@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_cosim_lif.py
 
+"""Shared imports and constants for the LIF Q4.12 and Q16.16 co-simulation tests."""
+
 from __future__ import annotations
 
 """LIF Q4.12 and Q16.16 precision contracts."""

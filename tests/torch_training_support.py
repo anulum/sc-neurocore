@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_torch_training.py
 
+"""Shared torch and training-package imports for the torch training test suites."""
+
 from __future__ import annotations
 
 import pytest

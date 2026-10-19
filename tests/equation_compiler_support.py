@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_equation_compiler.py
 
+"""Shared imports and unit registry for the equation-to-Verilog compiler tests."""
+
 from __future__ import annotations
 
 """Tests for equation_compiler: ODE strings → synthesizable Verilog RTL."""

@@ -17,6 +17,7 @@ class TestParameterOverrides:
     """Test runtime parameter overrides."""
 
     def test_override_tau(self) -> None:
+        """Check that a shorter membrane time constant gives at least as many spikes."""
         # Faster membrane time constant → more spikes
         slow = UniversalNeuron.from_schema("lif")
         fast = UniversalNeuron.from_schema("lif", parameter_overrides={"tau_m": 2.0})
@@ -25,11 +26,13 @@ class TestParameterOverrides:
         assert fast_spikes >= slow_spikes
 
     def test_override_dt(self) -> None:
+        """Check that a LIF neuron with a halved step still spikes."""
         neuron = UniversalNeuron.from_schema("lif", dt_override=0.5)
         spikes = sum(neuron.step(I=50.0) for _ in range(400))
         # With dt=0.5 (half the default 1.0), the neuron should still spike
         assert spikes > 0, "LIF with dt_override should still produce spikes"
 
     def test_zero_escape_rate_dt_override_is_rejected_not_ignored(self) -> None:
+        """Check that a zero step override for escape rate is refused."""
         with pytest.raises(ValueError, match="dt"):
             UniversalNeuron.from_schema("escape_rate", dt_override=0.0)

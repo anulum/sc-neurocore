@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_bit_true_kernel.py
 
+"""Shared imports and neuron builders for the bit-true kernel generator tests."""
+
 from __future__ import annotations
 
 """Unit tests for the bit-true fixed-point kernel generators.

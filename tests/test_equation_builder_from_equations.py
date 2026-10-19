@@ -14,7 +14,10 @@ from tests.equation_builder_support import *  # noqa: F403
 
 
 class TestFromEquations:
+    """Check ``from_equations`` parsing and the equation safety and escape-rate rules."""
+
     def test_brian2_style_lif(self) -> None:
+        """Check that a Brian2-style LIF string builds a neuron that spikes."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -29,6 +32,7 @@ class TestFromEquations:
         assert spikes > 0
 
     def test_multi_equation(self) -> None:
+        """Check that two coupled equations both evolve under drive."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -44,12 +48,14 @@ class TestFromEquations:
         assert n.state["w"] != 0.0
 
     def test_invalid_equation_raises(self) -> None:
+        """Check that an equation without a derivative form is refused."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         with pytest.raises(ValueError, match="Cannot parse"):
             from_equations("v = I + 1")
 
     def test_adex_from_string(self) -> None:
+        """Check that an AdEx model parsed from strings evolves its membrane."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -74,6 +80,7 @@ class TestFromEquations:
         assert n.state["v"] != -70.6, "AdEx dynamics must evolve"
 
     def test_hodgkin_huxley_from_string(self) -> None:
+        """Check that a Hodgkin-Huxley model parsed from strings spikes."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -99,6 +106,7 @@ class TestFromEquations:
         assert spikes > 0
 
     def test_non_numeric_reset_expression(self) -> None:
+        """Check that a reset to a parameter name is accepted and spiking works."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -113,6 +121,7 @@ class TestFromEquations:
         assert spikes > 0
 
     def test_get_state(self) -> None:
+        """Check that ``get_state`` returns the stepped state variables."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations("dv/dt = I", init={"v": 0.0}, dt=0.1)
@@ -122,6 +131,7 @@ class TestFromEquations:
         assert state["v"] != 0.0
 
     def test_reject_syntax_error(self) -> None:
+        """Check that an equation with invalid syntax is refused."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Invalid equation syntax"):
@@ -132,6 +142,7 @@ class TestFromEquations:
             )
 
     def test_reject_unsafe_ast_node(self) -> None:
+        """Check that a comprehension in an equation is refused as an unsafe node."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Unsafe AST node"):
@@ -142,6 +153,7 @@ class TestFromEquations:
             )
 
     def test_reject_blocked_name(self) -> None:
+        """Check that a call to ``__import__`` in an equation is refused."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Blocked function"):
@@ -152,6 +164,7 @@ class TestFromEquations:
             )
 
     def test_reject_blocked_attribute(self) -> None:
+        """Check that a dunder attribute access in an equation is refused."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Blocked attribute|Dunder attribute"):
@@ -162,6 +175,7 @@ class TestFromEquations:
             )
 
     def test_reset_with_empty_parts(self) -> None:
+        """Check that empty parts of a reset string are skipped and spiking works."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -176,6 +190,7 @@ class TestFromEquations:
         assert spikes > 0
 
     def test_escape_rate_detection_replays_state_and_rng(self) -> None:
+        """Check that escape-rate spikes, state and generator replay exactly after reset."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         neuron = EquationNeuron(
@@ -197,6 +212,7 @@ class TestFromEquations:
         assert neuron.escape_rng_initial_seed == 0x1234
 
     def test_escape_rate_does_not_consume_global_numpy_rng_for_zero_noise(self) -> None:
+        """Check that an escape-rate step leaves the global NumPy generator untouched."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         neuron = EquationNeuron(
@@ -215,6 +231,7 @@ class TestFromEquations:
         assert np.random.random() == expected
 
     def test_escape_rate_failure_rolls_back_integrated_state_and_rng(self) -> None:
+        """Check that a failing rate expression rolls back state and generator."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         neuron = EquationNeuron(
@@ -232,6 +249,7 @@ class TestFromEquations:
         assert (neuron.state, neuron.escape_rng_state) == before
 
     def test_escape_rate_reset_failure_rolls_back_consumed_rng(self) -> None:
+        """Check that a failing reset rolls back state and the consumed generator draw."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         neuron = EquationNeuron(
@@ -250,6 +268,7 @@ class TestFromEquations:
         assert (neuron.state, neuron.escape_rng_state) == before
 
     def test_escape_rate_configuration_rejects_ambiguous_thresholds(self) -> None:
+        """Check that escape rate needs a rate expression and refuses a threshold."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="requires rate_expression"):

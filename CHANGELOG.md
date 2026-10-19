@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Docstrings: `training/snn_modules.py`, the Brunel-Wang model module and
+  `schema_contracts` meet the NumPy convention, and 66 compiler, DSL, readiness
+  and training test modules carry real docstrings and strict typing.
+
 - `compile_network_to_fpga()` takes `random_precision` ("standard" or "exact")
   and lowers `randn()` in every neuron module and folded processing element
   with it; with "exact" every state word of the direct and the folded network

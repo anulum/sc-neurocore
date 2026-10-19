@@ -14,10 +14,14 @@ from tests.c_expr_emitter_support import *  # noqa: F403
 
 
 class TestUnsupportedNodes:
+    """Check that the C++ emitter refuses syntax it cannot lower."""
+
     def test_list_node_raises(self) -> None:
+        """Check that a list literal is refused as an unsupported node."""
         with pytest.raises(ValueError, match="Unsupported AST node"):
             _emit("[1, 2, 3]")
 
     def test_unsupported_binop_raises(self) -> None:
+        """Check that the modulo operator is refused as an unsupported binary op."""
         with pytest.raises(ValueError, match="Unsupported binary op"):
             _emit("a % b")

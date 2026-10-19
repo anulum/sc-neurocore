@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_surrogate.py
 
+"""Shared torch and surrogate function imports for the surrogate gradient tests."""
+
 from __future__ import annotations
 
 """Tests for surrogate gradient functions."""

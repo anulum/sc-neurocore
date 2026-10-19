@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_adaptive_runtime_precision.py
 
+"""Shared imports, neuron fixtures and manifest helper for adaptive precision tests."""
+
 from __future__ import annotations
 
 """End-to-end tests for adaptive precision telemetry (Roadmap Item 6).
@@ -24,13 +26,14 @@ from sc_neurocore.compiler.adaptive_runtime_precision import (
     PRECISION_PAIRS,
     compile_adaptive_precision,
 )
-from sc_neurocore.neurons.equation_builder import from_equations
+from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 import json
+from typing import Any, cast
 
 
 @pytest.fixture
-def lif_neuron():
-    """Standard LIF neuron for adaptive precision tests."""
+def lif_neuron() -> EquationNeuron:
+    """Return a standard LIF neuron for adaptive precision tests."""
     return from_equations(
         "dv/dt = -(v - E_L)/tau_m + I/C",
         threshold="v > -50",
@@ -41,8 +44,8 @@ def lif_neuron():
 
 
 @pytest.fixture
-def izhikevich_neuron():
-    """Two-state-variable neuron (Izhikevich)."""
+def izhikevich_neuron() -> EquationNeuron:
+    """Return a two-state-variable Izhikevich neuron."""
     return from_equations(
         "dv/dt = 0.04 * v * v + 5 * v + 140 - u + I",
         "du/dt = a * (b * v - u)",
@@ -53,12 +56,12 @@ def izhikevich_neuron():
     )
 
 
-def _extract_manifest(verilog: str) -> dict:
+def _extract_manifest(verilog: str) -> dict[str, Any]:
     """Extract adaptive precision manifest JSON from generated RTL comments."""
     prefix = "// SC-NeuroCore Adaptive Precision Manifest: "
     for line in verilog.splitlines():
         if line.startswith(prefix):
-            return json.loads(line[len(prefix) :])
+            return cast(dict[str, Any], json.loads(line[len(prefix) :]))
     raise AssertionError("Adaptive precision manifest comment not found")
 
 

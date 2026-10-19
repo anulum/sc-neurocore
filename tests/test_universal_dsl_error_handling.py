@@ -17,6 +17,7 @@ class TestErrorHandling:
     """Test error handling for invalid schemas."""
 
     def test_empty_dynamics_raises(self) -> None:
+        """Check that a schema with no dynamics is refused."""
         with pytest.raises(ValueError, match="at least one ODE"):
             UniversalNeuron.from_dict(
                 {
@@ -43,6 +44,7 @@ class TestErrorHandling:
         Path(path).unlink()
 
     def test_from_dict_works(self) -> None:
+        """Check that a complete dictionary schema builds a neuron that steps."""
         neuron = UniversalNeuron.from_dict(
             {
                 "metadata": {"schema_version": 1, "name": "TestModel"},

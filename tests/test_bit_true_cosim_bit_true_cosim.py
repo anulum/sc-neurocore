@@ -15,6 +15,8 @@ from tests.bit_true_cosim_support import *  # noqa: F403
 
 @pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
 class TestBitTrueCosim:
+    """Co-simulate the bit-true C kernel against the Verilog RTL cycle by cycle."""
+
     @pytest.mark.parametrize(
         "name,factory,current,steps,dw,frac", _CASES, ids=[c[0] for c in _CASES]
     )
@@ -27,6 +29,7 @@ class TestBitTrueCosim:
         dw: int,
         frac: int,
     ) -> None:
+        """Check that the C kernel trace equals the RTL trace for every co-simulation case."""
         neuron = factory()
         module = f"sc_{name}"
         with tempfile.TemporaryDirectory() as d:
@@ -38,6 +41,7 @@ class TestBitTrueCosim:
         assert vtrace == ctrace, f"{name}: bit-true kernel diverged from RTL"
 
     def test_fire_case_actually_resets(self) -> None:
+        """Check that the fire case resets at least once, so its trace is not monotone."""
         # Guard against a trivially-matching (monotone) trace: the fire case must
         # exercise the threshold / reset path — its output must drop at least once.
         neuron = _fire()

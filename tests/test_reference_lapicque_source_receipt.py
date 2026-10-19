@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Independent Lapicque 1907 source-receipt oracle
 
+"""Test the Lapicque 1907 source receipt against an independent re-derivation and production."""
+
 from __future__ import annotations
 
 import hashlib
@@ -59,6 +61,7 @@ def _independent_packet(
 
 
 def test_receipt_reproduces_from_the_independent_source_equation() -> None:
+    """Check that the independent source equation reproduces every value in the receipt."""
     receipt = json.loads(RECEIPT.read_text(encoding="utf-8"))
     expected = receipt["expected"]
     voltage, events = _independent_packet(receipt)
@@ -70,6 +73,7 @@ def test_receipt_reproduces_from_the_independent_source_equation() -> None:
 
 
 def test_receipt_matches_production_complete_packet() -> None:
+    """Check that the production complete simulation hashes to the receipt digests."""
     receipt = json.loads(RECEIPT.read_text(encoding="utf-8"))
     protocol = receipt["protocol"]
     expected = receipt["expected"]
@@ -85,6 +89,7 @@ def test_receipt_matches_production_complete_packet() -> None:
 
 
 def test_receipt_strength_duration_points_are_rederived_not_copied() -> None:
+    """Check that every strength-duration point equals its closed-form threshold voltage."""
     receipt = json.loads(RECEIPT.read_text(encoding="utf-8"))
     numerical = receipt["numerical_specialization"]
     alpha = (

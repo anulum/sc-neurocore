@@ -35,7 +35,6 @@ def stateless_event_kind(schema: Mapping[str, object]) -> StatelessEventKind | N
         The exact supported event contract, or ``None`` when the schema must
         declare ordinary state and dynamics.
     """
-
     state = schema.get("state")
     dynamics = schema.get("dynamics")
     threshold = schema.get("threshold")

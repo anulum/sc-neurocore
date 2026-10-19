@@ -16,6 +16,7 @@ from sc_neurocore.studio.model_catalogue import _verified_perfect, get_model_det
 
 
 def test_a_declared_perfect_model_without_fresh_receipts_is_not_verified_perfect() -> None:
+    """Check that AdEx is declared perfect but not verified perfect, by the same rule."""
     detail = get_model_detail("AdExNeuron")
     assert detail is not None
     readiness = detail["readiness"]
@@ -42,4 +43,5 @@ def test_a_declared_perfect_model_without_fresh_receipts_is_not_verified_perfect
 def test_verified_perfect_needs_s5_and_the_terminal_tier(
     science: int, silicon: int | None, target: str | None, perfect: bool
 ) -> None:
+    """Check that verified perfect needs science tier 5 and the terminal silicon tier."""
     assert _verified_perfect(science, silicon, target) is perfect

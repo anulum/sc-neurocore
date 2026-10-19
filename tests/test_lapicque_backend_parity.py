@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Lapicque compiled-backend parity contracts
 
+"""Test that every compiled Lapicque backend matches the Python reference."""
+
 from __future__ import annotations
 
 

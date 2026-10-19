@@ -14,20 +14,27 @@ from tests.c_expr_emitter_support import *  # noqa: F403
 
 
 class TestArithmetic:
+    """Check how the C++ emitter lowers arithmetic operators and constants."""
+
     def test_add_sub_mul_div(self) -> None:
+        """Check that the four binary operators lower to parenthesised C++."""
         assert _emit("a + b") == "(a + b)"
         assert _emit("a - b") == "(a - b)"
         assert _emit("a * b") == "(a * b)"
         assert _emit("a / b") == "(a / b)"
 
     def test_unary_minus(self) -> None:
+        """Check that unary minus lowers to a parenthesised negation."""
         assert _emit("-a") == "(-a)"
 
     def test_unary_plus_passthrough(self) -> None:
+        """Check that unary plus passes its operand through unchanged."""
         assert _emit("+a") == "a"
 
     def test_constant_cast_to_fp_type(self) -> None:
+        """Check that a numeric literal is cast to the ``fp_t`` type."""
         assert _emit("1.5") == "fp_t(1.5)"
 
     def test_nested(self) -> None:
+        """Check that nested expressions keep their grouping in C++."""
         assert _emit("(a + b) * c") == "((a + b) * c)"

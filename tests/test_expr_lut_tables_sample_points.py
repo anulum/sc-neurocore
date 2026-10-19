@@ -14,7 +14,10 @@ from tests.expr_lut_tables_support import *  # noqa: F403
 
 
 class TestSamplePoints:
+    """Check the sample grids that the lookup tables are built on."""
+
     def test_length_and_endpoints(self) -> None:
+        """Check the length, centre and end points of the symmetric grid."""
         pts = tables.symmetric_sample_points()
         assert len(pts) == 256
         assert pts[0] == -16.0
@@ -22,9 +25,11 @@ class TestSamplePoints:
         assert pts[-1] == -16.0 + 255 * 0.125
 
     def test_deterministic(self) -> None:
+        """Check that the symmetric grid is the same on every call."""
         assert tables.symmetric_sample_points() == tables.symmetric_sample_points()
 
     def test_log_grid_is_positive_power_of_two_geometry(self) -> None:
+        """Check the size, start and step of the positive log grid."""
         points = tables.log_sample_points()
         assert len(points) == tables.LOG_LUT_SIZE == 256
         assert points[0] == tables.LOG_LUT_MIN == 1.0 / 256.0
@@ -32,6 +37,7 @@ class TestSamplePoints:
         assert points[-1] < tables.LOG_LUT_MIN + tables.LOG_LUT_SIZE * tables.LOG_LUT_STEP
 
     def test_sqrt_grid_is_non_negative_half_unit_geometry(self) -> None:
+        """Check the size, start, half-unit step and end of the sqrt grid."""
         points = tables.sqrt_sample_points()
         assert len(points) == tables.SQRT_LUT_SIZE == 16
         assert points[0] == tables.SQRT_LUT_MIN == 0.0

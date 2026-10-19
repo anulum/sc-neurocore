@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Lapicque backend parity fixtures
 
+"""Shared tolerances, golden spike counts and neuron factories for Lapicque backend parity tests."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -28,18 +30,21 @@ def run_backend(
     n_steps: int = 1_000,
     factory: Callable[[], LapicqueNeuron] = LapicqueNeuron,
 ) -> tuple[npt.NDArray[np.float64], int, float]:
+    """Return the voltage trace, spike count and final voltage of one backend run."""
     neuron = factory()
     trace, spikes = neuron.simulate(n_steps, current, backend=backend)
     return trace, spikes, neuron.v
 
 
 def configured() -> LapicqueNeuron:
+    """Return a Lapicque neuron with every SC-profile parameter set off its default."""
     return LapicqueNeuron(
         v=0.25, v_rest=-0.1, v_reset=-0.2, v_threshold=1.3, tau=7.5, resistance=1.7, dt=0.37
     )
 
 
 def source_configured() -> LapicqueNeuron:
+    """Return a Lapicque 1907 source-profile neuron with non-default circuit values."""
     return LapicqueNeuron.lapicque_1907(
         v=0.125,
         v_threshold=1.25,
@@ -51,6 +56,7 @@ def source_configured() -> LapicqueNeuron:
 
 
 def c_arguments(neuron: LapicqueNeuron) -> tuple[float, ...]:
+    """Return the neuron's state and parameters in the C kernel's argument order."""
     return (
         neuron.v,
         neuron.v_rest,

@@ -14,7 +14,10 @@ from tests.equation_builder_support import *  # noqa: F403
 
 
 class TestEquationNeuron:
+    """Check ``EquationNeuron`` built directly from equation dictionaries."""
+
     def test_lif_from_dict(self) -> None:
+        """Check that a LIF neuron built from dictionaries spikes under constant drive."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -29,6 +32,7 @@ class TestEquationNeuron:
         assert spikes > 0
 
     def test_fitzhugh_nagumo(self) -> None:
+        """Check that a FitzHugh-Nagumo neuron spikes under constant drive."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -130,6 +134,7 @@ class TestEquationNeuron:
         assert n.state["v"] == 10.0
 
     def test_izhikevich(self) -> None:
+        """Check that an Izhikevich neuron with a two-variable reset spikes under drive."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -147,6 +152,7 @@ class TestEquationNeuron:
         assert spikes > 0
 
     def test_reset_clears_state(self) -> None:
+        """Check that ``reset`` restores a stepped state variable to its initial value."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -160,6 +166,7 @@ class TestEquationNeuron:
         assert n.state["v"] == 0.0
 
     def test_rk4_method(self) -> None:
+        """Check that RK4 integration drives a leaky neuron towards its steady state."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -219,6 +226,7 @@ class TestEquationNeuron:
             n.step()
 
     def test_no_threshold(self) -> None:
+        """Check that a neuron without a threshold never reports a spike."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -230,6 +238,7 @@ class TestEquationNeuron:
         assert spike == 0
 
     def test_math_functions(self) -> None:
+        """Check that ``exp``, ``tanh`` and ``sin`` evaluate inside an equation."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -241,6 +250,7 @@ class TestEquationNeuron:
         assert n.state["v"] != 0.0
 
     def test_repr(self) -> None:
+        """Check that the representation names the class and the derivative."""
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(equations={"v": "I"}, state={"v": 0.0})

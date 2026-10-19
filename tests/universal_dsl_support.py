@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_universal_dsl.py
 
+"""Shared imports for the Universal Neuron DSL test suites."""
+
 from __future__ import annotations
 
 """Test suite for the Universal Neuron DSL.

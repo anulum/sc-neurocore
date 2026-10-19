@@ -17,6 +17,7 @@ class TestListBundledSchemas:
     """Test discovery of bundled schemas."""
 
     def test_lists_all_bundled(self) -> None:
+        """Check that the core bundled schemas are all listed."""
         names = list_bundled_schemas()
         assert "lif" in names
         assert "fitzhugh_nagumo" in names
@@ -25,5 +26,6 @@ class TestListBundledSchemas:
         assert "adex" in names
 
     def test_returns_sorted(self) -> None:
+        """Check that the bundled schema names come back sorted."""
         names = list_bundled_schemas()
         assert names == sorted(names)

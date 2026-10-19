@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for surrogate custom-op and compiled execution paths
 
+"""Test the surrogate custom-op and compiled execution paths against the legacy ones."""
+
 from __future__ import annotations
 
 from collections.abc import Callable

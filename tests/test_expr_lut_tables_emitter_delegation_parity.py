@@ -20,6 +20,7 @@ class TestEmitterDelegationParity:
         return _VerilogExprEmitter({}, {}, Q88(data_width=data_width, fraction=fraction))
 
     def test_emitter_luts_match_module(self) -> None:
+        """Check that every emitter lookup table equals the shared module table."""
         e = self._emitter()
         assert e._exp_lut_entries() == tables.exp_lut_entries(16, 8)
         assert e._log_lut_entries() == tables.log_lut_entries(8)
@@ -33,8 +34,10 @@ class TestEmitterDelegationParity:
         assert e._cbrt_lut_entries() == tables.cbrt_lut_entries(8)
 
     def test_emitter_sample_points_match_module(self) -> None:
+        """Check that the emitter's symmetric sample points equal the module's."""
         assert self._emitter()._sym_points() == tables.symmetric_sample_points()
 
     def test_emitter_const_float_delegates(self) -> None:
+        """Check that the emitter's constant folding agrees with the module's."""
         node = ast.parse("1.0 / 3.0", mode="eval").body
         assert _VerilogExprEmitter._const_float(node) == tables.const_float(node)

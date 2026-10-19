@@ -17,39 +17,46 @@ class TestSchemaLoading:
     """Test TOML and JSON schema loading from bundled schemas."""
 
     def test_load_lif_toml(self) -> None:
+        """Check that the bundled LIF schema loads by bare name."""
         schema = load_schema("lif")
         assert schema["metadata"]["name"] == "LIF"
         assert schema["metadata"]["schema_version"] == 1
         assert "v" in schema["dynamics"]
 
     def test_load_lif_json(self) -> None:
+        """Check that the LIF schema loads from its JSON path."""
         schema_dir = Path(__file__).parent.parent / "src/sc_neurocore/neurons/model_schemas"
         schema = load_schema(schema_dir / "lif.json")
         assert schema["metadata"]["name"] == "LIF"
 
     def test_load_fitzhugh_nagumo(self) -> None:
+        """Check the FitzHugh-Nagumo year and its two equations."""
         schema = load_schema("fitzhugh_nagumo")
         assert schema["metadata"]["year"] == 1961
         assert "v" in schema["dynamics"]
         assert "w" in schema["dynamics"]
 
     def test_load_izhikevich(self) -> None:
+        """Check the Izhikevich year and its two state variables."""
         schema = load_schema("izhikevich")
         assert schema["metadata"]["year"] == 2003
         assert "v" in schema["state"]
         assert "u" in schema["state"]
 
     def test_load_hindmarsh_rose(self) -> None:
+        """Check the Hindmarsh-Rose year and its three state variables."""
         schema = load_schema("hindmarsh_rose")
         assert schema["metadata"]["year"] == 1984
         assert len(schema["state"]) == 3
 
     def test_load_adex(self) -> None:
+        """Check the AdEx year and its ``delta_T`` parameter."""
         schema = load_schema("adex")
         assert schema["metadata"]["year"] == 2005
         assert "delta_T" in schema["parameters"]
 
     def test_escape_rate_toml_and_json_are_semantically_identical(self) -> None:
+        """Check that escape-rate TOML equals JSON and carries its DOI, method and seed."""
         schema_dir = Path(__file__).parent.parent / "src/sc_neurocore/neurons/model_schemas"
         toml = load_schema(schema_dir / "escape_rate.toml")
         json_schema = load_schema(schema_dir / "escape_rate.json")
@@ -59,10 +66,12 @@ class TestSchemaLoading:
         assert toml["threshold"]["rng_seed"] == 0xACE1
 
     def test_nonexistent_schema_raises(self) -> None:
+        """Check that an unknown bare schema name raises ``FileNotFoundError``."""
         with pytest.raises(FileNotFoundError):
             load_schema("nonexistent_model_xyz")
 
     def test_unsupported_format_raises(self) -> None:
+        """Check that a schema file with a YAML suffix is refused."""
         # Create a temp file with unsupported extension
         import tempfile
 
@@ -74,6 +83,7 @@ class TestSchemaLoading:
         Path(path).unlink()
 
     def test_explicit_missing_schema_path_raises(self, tmp_path: Path) -> None:
+        """Check that a missing explicit schema path raises ``FileNotFoundError``."""
         with pytest.raises(FileNotFoundError, match="Schema file not found"):
             load_schema(tmp_path / "missing.json")
 
@@ -82,6 +92,7 @@ class TestSchemaLoading:
         monkeypatch: MonkeyPatch,
         tmp_path: Path,
     ) -> None:
+        """Check that TOML loading still works when Python reports version 3.10."""
         schema_path = tmp_path / "fallback.toml"
         schema_path.write_text(
             "\n".join(

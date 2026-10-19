@@ -182,10 +182,12 @@ def _hand_trace(
 
 
 def test_required_cosimulation_tool_is_available() -> None:
+    """Check that Icarus Verilog is installed, so the RTL contracts can run."""
     assert HAS_IVERILOG
 
 
 def test_schema_formats_are_identical() -> None:
+    """Check that the TOML and JSON resonate-and-fire schemas load to the same data."""
     with (_SCHEMA_DIR / "resonate_fire.toml").open("rb") as handle:
         toml_schema = tomllib.load(handle)
     json_schema = json.loads((_SCHEMA_DIR / "resonate_fire.json").read_text(encoding="utf-8"))
@@ -193,6 +195,7 @@ def test_schema_formats_are_identical() -> None:
 
 
 def test_default_schemas_match_hand_exact_map_and_sampled_events() -> None:
+    """Check that both default schemas follow the hand model's state and spikes for 200 steps."""
     drives = tuple(4.0 + 1.2 * math.sin(index * 0.037) for index in range(200))
     hand = ResonateAndFireNeuron()
     schemas = (
@@ -209,6 +212,7 @@ def test_default_schemas_match_hand_exact_map_and_sampled_events() -> None:
 
 
 def test_q3232_rtl_tracks_exact_map_and_complete_event_vector() -> None:
+    """Check that the Q32.32 RTL reproduces every spike and tracks the state within 1e-8."""
     expected = _hand_trace(_RTL_CONFIG, _DRIVES)
     actual = _q3232_rtl_trace(_RTL_CONFIG, _DRIVES)
     assert [row[2] for row in actual] == [row[2] for row in expected]
@@ -220,6 +224,7 @@ def test_q3232_rtl_tracks_exact_map_and_complete_event_vector() -> None:
 
 
 def test_q3232_quantisation_stress_remains_bounded_without_event_drift() -> None:
+    """Check that alternating strong drive keeps Q32.32 error bounded and fires no spike."""
     config: _Config = {
         "x": 0.75,
         "y": -0.5,

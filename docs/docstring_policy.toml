@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1158
+expected_file_count = 1227
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4725,3 +4725,279 @@ rationale = "Regression tests for the Torch bridge's precision, refusals and liv
 [[file]]
 path = "tests/test_network_random_precision.py"
 rationale = "Direct and folded co-simulation of randn() in the requested precision."
+
+[[file]]
+path = "tests/adaptive_runtime_precision_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/bit_true_cosim_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/bit_true_kernel_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/c_expr_emitter_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/cosim_emitters_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/cosim_lif_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/equation_builder_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/equation_compiler_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/expr_lut_tables_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/hypothesis_fuzz_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/lapicque_backends_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/schema_validator_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/studio_simulation_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_cosim_bit_true_cosim.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_cosim_rust_matches_c.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_kernel_neuron_kernel_c.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_kernel_neuron_kernel_rust.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_kernel_simple_kernel_c.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_kernel_simple_kernel_rust.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_kernel_transcendental_statements.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_bit_true_kernel_type_helpers.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_c_expr_emitter_arithmetic.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_c_expr_emitter_comparisons.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_c_expr_emitter_emitter_state.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_c_expr_emitter_names.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_c_expr_emitter_pow.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_c_expr_emitter_unsupported_nodes.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_cosim_resonate_and_fire.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_equation_builder_equation_neuron.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_equation_builder_from_equations.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_exp_euler_golden.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_expr_lut_tables_const_float.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_expr_lut_tables_emitter_delegation_parity.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_expr_lut_tables_lut_entries.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_expr_lut_tables_sample_points.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_expr_lut_tables_supported_functions.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_lapicque_backend_parity.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_lapicque_engine_binding.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_model_lapicque_source_contract.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_model_profile_admission.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_model_profile_invalid_contracts.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_model_profile_registry.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_readiness_verification.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_reference_lapicque_source_receipt.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_schema_validator_validate_bundled_schemas.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_schema_validator_validate_nonexistent.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_schema_validator_validate_schema_dict.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_studio_model_readiness_verified.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_studio_readiness_seal.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_torch_training_surrogates.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_training/surrogate_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_training/test_surrogate_additional_surrogate_contracts.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_training/test_surrogate_custom_op.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_training/test_surrogate_free_tests.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_training/test_surrogate_surrogate_gradients.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_error_handling.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_format_parity.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_introspection.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_list_bundled_schemas.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_parameter_overrides.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_reset_and_state.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_schema_export.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_schema_loading.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/test_universal_dsl_universal_neuron_simulation.py"
+rationale = "Test module with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/torch_training_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "tests/universal_dsl_support.py"
+rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
+
+[[file]]
+path = "src/sc_neurocore/training/snn_modules.py"
+rationale = "Production module brought to the NumPy docstring convention (RIGOR QA debt)."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/brunel_wang.py"
+rationale = "Production module brought to the NumPy docstring convention (RIGOR QA debt)."
+
+[[file]]
+path = "src/sc_neurocore/neurons/schema_contracts.py"
+rationale = "Production module brought to the NumPy docstring convention (RIGOR QA debt)."

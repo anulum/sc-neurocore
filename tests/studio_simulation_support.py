@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Studio simulation engine
 
+"""Shared imports and limits for the Studio simulation engine tests."""
+
 from __future__ import annotations
 
 import pytest

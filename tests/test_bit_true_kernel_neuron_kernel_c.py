@@ -14,17 +14,22 @@ from tests.bit_true_kernel_support import *  # noqa: F403
 
 
 class TestNeuronKernelC:
+    """Check the C bit-true kernel generated from an equation neuron."""
+
     def test_reset_and_step(self) -> None:
+        """Check that the LIF C kernel declares its reset and step functions."""
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         assert "sc_lif_reset(sc_lif_state_t *s)" in code
         assert "int sc_lif_step(sc_lif_state_t *s, int16_t I_t)" in code
 
     def test_bit_identical_claim_present(self) -> None:
+        """Check that the C kernel states the co-simulated claim and never says proven."""
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         assert "Bit-identical to compile_to_verilog (checked by iverilog co-simulation)" in code
         assert "proven" not in code
 
     def test_threshold_and_spike_sequencing(self) -> None:
+        """Check that a spike writes the post-reset value to state and output and returns it."""
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         # On a spike, state and output expose the same post-reset value.
         assert "s->v = _rst_v;" in code
@@ -32,16 +37,19 @@ class TestNeuronKernelC:
         assert "int _spk" in code and "return _spk;" in code
 
     def test_reset_rule_lowered(self) -> None:
+        """Check that the LIF reset rule is lowered to a saturated assignment."""
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         assert "_rst_v = sat(" in code
 
     def test_no_threshold_branch(self) -> None:
+        """Check that a neuron without a threshold never spikes and has no spike variable."""
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=1.0)
         code = generate_bittrue_kernel_from_neuron(neuron, "sc_leak")
         assert "return 0;" in code and "spike_out = 0;" in code
         assert "_spk" not in code
 
     def test_multi_var_with_two_resets(self) -> None:
+        """Check that both resets of a two-state neuron are lowered and read the candidate."""
         code = generate_bittrue_kernel_from_neuron(
             _adaptive_reset_neuron(), "sc_izh", data_width=32, fraction=16
         )

@@ -17,6 +17,8 @@ from tests.bit_true_cosim_support import *  # noqa: F403
     not (HAS_COSIM and HAS_RUST), reason="Icarus Verilog / gcc / rustc not all available"
 )
 class TestRustMatchesC:
+    """Compare the bit-true Rust kernel trace with the C kernel trace."""
+
     @pytest.mark.parametrize(
         "name,factory,current,steps,dw,frac", _CASES, ids=[c[0] for c in _CASES]
     )
@@ -29,6 +31,7 @@ class TestRustMatchesC:
         dw: int,
         frac: int,
     ) -> None:
+        """Check that the Rust kernel trace equals the C kernel trace for every case."""
         neuron = factory()
         module = f"sc_{name}"
         i_q = _q_input(current, dw, frac)

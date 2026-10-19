@@ -26,6 +26,7 @@ class TestSchemaExport:
     """Test JSON and TOML export."""
 
     def test_to_json_roundtrip(self) -> None:
+        """Check that the JSON export parses back with the LIF name and dynamics."""
         neuron = UniversalNeuron.from_schema("lif")
         exported = neuron.to_json()
         parsed = json.loads(exported)
@@ -33,6 +34,7 @@ class TestSchemaExport:
         assert parsed["dynamics"]["v"] == "-(v - v_rest) / tau_m + R * I / C"
 
     def test_to_toml_contains_sections(self) -> None:
+        """Check that the TOML export contains the main schema sections."""
         neuron = UniversalNeuron.from_schema("lif")
         toml_str = neuron.to_toml()
         assert "[metadata]" in toml_str
@@ -40,6 +42,7 @@ class TestSchemaExport:
         assert "[threshold]" in toml_str
 
     def test_to_toml_serializes_bool_and_structured_values(self, tmp_path: Path) -> None:
+        """Check that booleans and lists in extensions survive a TOML round trip."""
         schema = load_schema("lif")
         schema["extensions"] = {"enabled": True, "backend_tags": ["python", "verilog"]}
         exported = tmp_path / "structured.toml"
@@ -47,6 +50,7 @@ class TestSchemaExport:
         assert load_schema(exported) == schema
 
     def test_schema_property_returns_copy(self) -> None:
+        """Check that ``schema`` returns an equal but separate copy each time."""
         neuron = UniversalNeuron.from_schema("lif")
         schema1 = neuron.schema
         schema2 = neuron.schema

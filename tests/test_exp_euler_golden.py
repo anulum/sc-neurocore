@@ -128,6 +128,7 @@ def test_threshold_and_reset_fire_under_exp_euler() -> None:
 
 
 def test_unsupported_method_is_rejected() -> None:
+    """Check that an unknown integration method is refused at construction."""
     with pytest.raises(ValueError, match="method must be one of"):
         EquationNeuron(equations={"v": "-v"}, state={"v": 1.0}, method="rosenbrock")
 

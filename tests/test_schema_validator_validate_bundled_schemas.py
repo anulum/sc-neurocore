@@ -17,6 +17,7 @@ class TestValidateBundledSchemas:
     """Validate all 12 bundled schemas."""
 
     def test_all_bundled_schemas_have_no_errors(self) -> None:
+        """Check that at least 12 bundled schemas validate without errors."""
         results = validate_all_bundled()
         assert len(results) >= 12, f"Expected ≥12 schemas, found {len(results)}"
 
@@ -25,6 +26,7 @@ class TestValidateBundledSchemas:
             assert len(real_errors) == 0, f"Schema '{name}' has errors: {real_errors}"
 
     def test_all_bundled_schemas_have_both_formats(self) -> None:
+        """Check that no bundled schema lacks its JSON or TOML counterpart."""
         results = validate_all_bundled()
         for name, errors in results.items():
             missing_format = [
@@ -37,16 +39,19 @@ class TestValidateBundledSchemas:
             assert len(missing_format) == 0, f"Schema '{name}' missing a format: {missing_format}"
 
     def test_lif_validates_clean(self) -> None:
+        """Check that the LIF schema validates without errors."""
         errors = validate_schema("lif")
         real_errors = [e for e in errors if e.level == "error"]
         assert len(real_errors) == 0
 
     def test_hodgkin_huxley_validates_clean(self) -> None:
+        """Check that the Hodgkin-Huxley schema validates without errors."""
         errors = validate_schema("hodgkin_huxley")
         real_errors = [e for e in errors if e.level == "error"]
         assert len(real_errors) == 0
 
     def test_glif_validates_clean(self) -> None:
+        """Check that the GLIF schema validates without errors."""
         errors = validate_schema("glif")
         real_errors = [e for e in errors if e.level == "error"]
         assert len(real_errors) == 0

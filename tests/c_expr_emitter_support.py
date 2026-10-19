@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_c_expr_emitter.py
 
+"""Shared imports and the emit helper for the C++ expression emitter tests."""
+
 from __future__ import annotations
 
 """Tests for the C++ (ap_fixed) expression emitter."""

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_equation_builder.py
 
+"""Shared NumPy and pytest imports for the equation builder test suites."""
+
 from __future__ import annotations
 
 import numpy as np

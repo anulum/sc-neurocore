@@ -26,6 +26,7 @@ extension = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
 
 
 def test_exported_class_signature_and_top_level_identity_are_stable() -> None:
+    """Check the binding's name, module, text signature and top-level identity."""
     lapicque = extension.LapicqueNeuron
 
     assert lapicque.__name__ == "LapicqueNeuron"
@@ -35,6 +36,7 @@ def test_exported_class_signature_and_top_level_identity_are_stable() -> None:
 
 
 def test_default_step_matches_independent_exact_rc_flow() -> None:
+    """Check that one default step equals the exact RC relaxation without a spike."""
     neuron = extension.LapicqueNeuron()
     current = 0.25
     v_inf = current
@@ -45,6 +47,7 @@ def test_default_step_matches_independent_exact_rc_flow() -> None:
 
 
 def test_threshold_crossing_and_reset_restore_zero_state() -> None:
+    """Check that strong drive crosses threshold and ``reset`` restores zero voltage."""
     neuron = extension.LapicqueNeuron(tau=2.0, resistance=2.0, threshold=1.0, dt=1.0)
 
     spikes = [neuron.step(1.0) for _ in range(8)]
@@ -56,11 +59,13 @@ def test_threshold_crossing_and_reset_restore_zero_state() -> None:
 
 
 def test_complete_binding_is_exported_through_the_public_bridge() -> None:
+    """Check that the complete simulation binding is re-exported by the public package."""
     assert engine.lapicque_simulate_complete is extension.lapicque_simulate_complete
     assert "lapicque_simulate_complete" in engine.__all__
 
 
 def test_complete_binding_transports_source_profile_and_event_latch() -> None:
+    """Check that the complete binding returns the source trace, one latched event and state."""
     voltage, events, final_v, excited = extension.lapicque_simulate_complete(
         0.0,
         0.0,
@@ -85,6 +90,7 @@ def test_complete_binding_transports_source_profile_and_event_latch() -> None:
 
 
 def test_complete_binding_rejection_is_failure_atomic() -> None:
+    """Check that a NaN input makes the complete binding refuse the whole batch."""
     with pytest.raises(FloatingPointError, match="Lapicque batch rejected"):
         extension.lapicque_simulate_complete(
             0.25,
@@ -105,6 +111,7 @@ def test_complete_binding_rejection_is_failure_atomic() -> None:
 
 
 def test_network_runner_canonical_spelling_selects_the_source_profile() -> None:
+    """Check that the canonical model name runs the source profile in the network runner."""
     python = LapicqueNeuron.lapicque_1907()
     expected_event = python.step(22.0)
     runner = extension.NetworkRunner()
@@ -116,6 +123,7 @@ def test_network_runner_canonical_spelling_selects_the_source_profile() -> None:
 
 @pytest.mark.parametrize("alias", ("Lapicque", "SCLapicqueLIF", "SCLapicqueLIFNeuron"))
 def test_network_runner_aliases_preserve_the_sc_profile(alias: str) -> None:
+    """Check that each SC alias runs the SC-compatibility profile in the network runner."""
     python = LapicqueNeuron.sc_lif_compatibility()
     expected_event = python.step(5.0)
     runner = extension.NetworkRunner()

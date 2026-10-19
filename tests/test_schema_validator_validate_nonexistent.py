@@ -17,6 +17,7 @@ class TestValidateNonexistent:
     """Test error handling for missing schemas."""
 
     def test_nonexistent_schema(self) -> None:
+        """Check that an unknown schema name yields one no-files-found error."""
         errors = validate_schema("totally_fake_model")
         assert len(errors) == 1
         assert "No schema files found" in errors[0].message

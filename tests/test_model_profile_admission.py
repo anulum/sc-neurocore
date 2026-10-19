@@ -49,7 +49,7 @@ def test_map_method_override_is_refused_and_ode_alternatives_are_derived() -> No
 
 
 def test_recurrence_without_timebase_refuses_a_step_override() -> None:
-    """dt has no meaning for an iteration-indexed map; equality is still admitted."""
+    """A step dt has no meaning for an iteration-indexed map; equality is still admitted."""
     with pytest.raises(ProfileAdmissionError, match="no continuous timebase"):
         UniversalNeuron.from_schema("chialvo_map", dt_override=0.5)
     neuron = UniversalNeuron.from_schema("chialvo_map", dt_override=1.0)

@@ -17,6 +17,7 @@ class TestResetAndState:
     """Test reset and state introspection."""
 
     def test_reset_restores_initial(self) -> None:
+        """Check that ``reset`` restores the initial state after stepping."""
         neuron = UniversalNeuron.from_schema("lif")
         initial = dict(neuron.state)
         for _ in range(100):
@@ -25,6 +26,7 @@ class TestResetAndState:
         assert neuron.state == initial
 
     def test_state_is_dict(self) -> None:
+        """Check that ``state`` is a dictionary holding both state variables."""
         neuron = UniversalNeuron.from_schema("fitzhugh_nagumo")
         assert isinstance(neuron.state, dict)
         assert "v" in neuron.state

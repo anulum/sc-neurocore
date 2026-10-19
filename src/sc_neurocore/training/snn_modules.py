@@ -34,6 +34,7 @@ class SCWeightNoiseModel:
     sigma: float = 0.0
 
     def __post_init__(self) -> None:
+        """Refuse an unknown mode, a non-positive bitstream length or a negative sigma."""
         if self.mode not in {"none", "binomial", "gaussian"}:
             raise ValueError(f"unsupported SC weight noise mode: {self.mode}")
         if self.bitstream_length <= 0:
@@ -42,6 +43,7 @@ class SCWeightNoiseModel:
             raise ValueError("sigma must be non-negative")
 
     def metadata(self) -> dict[str, Any]:
+        """Return the noise model as a plain dictionary for export metadata."""
         return {
             "mode": self.mode,
             "bitstream_length": self.bitstream_length,
@@ -168,18 +170,27 @@ class LIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
+        """Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value."""
         return cast(
             torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
         )
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
         )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Advance one step: leak, integrate, fire against the threshold, subtract-reset.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next)``; the spike carries the surrogate gradient.
+        """
         v_next = self.beta * v + current
         spike = self.surrogate_fn(v_next - self.threshold)
         v_next = v_next - spike.detach() * self.threshold
@@ -208,12 +219,20 @@ class IFCell(nn.Module):
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
         )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Advance one step without leak: integrate, fire, subtract-reset.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next)``; the spike carries the surrogate gradient.
+        """
         v_next = v + current
         spike = self.surrogate_fn(v_next - self.threshold)
         v_next = v_next - spike.detach() * self.threshold
@@ -253,12 +272,14 @@ class SynapticCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
+        """Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value."""
         return cast(
             torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
         )
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
@@ -270,7 +291,13 @@ class SynapticCell(nn.Module):
         i_syn: torch.Tensor,
         v: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Returns (spike, i_syn_next, v_next)."""
+        """Advance the synaptic current and the membrane by one step.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, i_syn_next, v_next)``.
+        """
         i_syn_next = self.alpha * i_syn + current
         v_next = self.beta * v + i_syn_next
         spike = self.surrogate_fn(v_next - self.threshold)
@@ -306,7 +333,13 @@ class ALIFCell(nn.Module):
         v: torch.Tensor,
         a: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Returns (spike, v_next, a_next)."""
+        """Advance the membrane and the adaptation trace against the adapted threshold.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next, a_next)``.
+        """
         v_next = self.beta * v + current
         theta = self.threshold_0 + self.beta_adapt * a
         spike = self.surrogate_fn(v_next - theta)
@@ -349,18 +382,27 @@ class ExpIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
+        """Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value."""
         return cast(
             torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
         )
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
         )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Advance one step with the clamped exponential upstroke term.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next)``; the spike carries the surrogate gradient.
+        """
         exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
         v_next = self.beta * v + exp_term + current
         spike = self.surrogate_fn(v_next - self.threshold)
@@ -410,12 +452,14 @@ class AdExCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
+        """Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value."""
         return cast(
             torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
         )
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
@@ -427,6 +471,13 @@ class AdExCell(nn.Module):
         v: torch.Tensor,
         w: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Advance one step of membrane and adaptation current.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next, w_next)``; the spike carries the surrogate gradient.
+        """
         exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
         v_next = self.beta * v + exp_term - w + current
         spike = self.surrogate_fn(v_next - self.threshold)
@@ -469,12 +520,20 @@ class LapicqueCell(nn.Module):
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
         )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Advance one RC step towards ``v_rest``, fire, and reset by ``threshold - v_rest``.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next)``; the spike carries the surrogate gradient.
+        """
         v_next = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
         spike = self.surrogate_fn(v_next - self.threshold)
         v_next = v_next - spike.detach() * (self.threshold - self.v_rest)
@@ -516,12 +575,14 @@ class AlphaCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
+        """Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value."""
         return cast(
             torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
         )
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
@@ -535,6 +596,13 @@ class AlphaCell(nn.Module):
         i_inh: torch.Tensor,
         v: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Advance the excitatory and inhibitory currents and the membrane by one step.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, i_exc_next, i_inh_next, v_next)``.
+        """
         i_exc_next = self.alpha_exc * i_exc + exc_current
         i_inh_next = self.alpha_inh * i_inh + inh_current
         v_next = self.beta * v + i_exc_next - i_inh_next
@@ -577,12 +645,14 @@ class SecondOrderLIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
+        """Return the membrane decay factor: the sigmoid of the learnt logit, or the fixed value."""
         return cast(
             torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
         )
 
     @property
     def threshold(self) -> torch.Tensor:
+        """Return the firing threshold: the exponential of the learnt log, or the fixed value."""
         return cast(
             torch.Tensor,
             self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
@@ -594,6 +664,13 @@ class SecondOrderLIFCell(nn.Module):
         a: torch.Tensor,
         v: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Advance the inertial current and the membrane by one step.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, a_next, v_next)``.
+        """
         a_next = self.alpha * a + current
         v_next = self.beta * v + a_next
         spike = self.surrogate_fn(v_next - self.threshold)
@@ -624,6 +701,13 @@ class RecurrentLIFCell(nn.Module):
         v: torch.Tensor,
         spike_prev: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Add the recurrent projection of the previous spikes and step the LIF cell.
+
+        Returns
+        -------
+        tuple of Tensor
+            ``(spike, v_next)`` of the inner :class:`LIFCell`.
+        """
         return self.lif.forward(current + self.recurrent(spike_prev), v)
 
 

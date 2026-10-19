@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Brunel-Wang 2001 pyramidal LIF cell
 
+"""Brunel-Wang (2001) pyramidal LIF cell with external and recurrent AMPA, NMDA and GABA gates."""
+
 from __future__ import annotations
 
 import math
@@ -69,6 +71,7 @@ class BrunelWangNeuron:
     dt: float = 0.1
 
     def __post_init__(self) -> None:
+        """Coerce every parameter to a finite float and refuse non-physical values."""
         for name in (
             "v",
             "v_rest",

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_cosim_emitters.py
 
+"""Shared imports, constants and models for the integrator-emitter co-simulation tests."""
+
 from __future__ import annotations
 
 """Cross-model co-simulation infrastructure and integrator-emitter contracts."""

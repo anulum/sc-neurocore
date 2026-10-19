@@ -17,26 +17,31 @@ class TestUniversalNeuronSimulation:
     """Test that UniversalNeuron produces physically reasonable dynamics."""
 
     def test_lif_spikes(self) -> None:
+        """Check that the LIF schema spikes under strong input."""
         neuron = UniversalNeuron.from_schema("lif")
         spikes = sum(neuron.step(I=30.0) for _ in range(200))
         assert spikes > 0, "LIF should spike with strong input"
 
     def test_lif_no_spike_without_input(self) -> None:
+        """Check that the LIF schema stays silent without input."""
         neuron = UniversalNeuron.from_schema("lif")
         spikes = sum(neuron.step(I=0.0) for _ in range(200))
         assert spikes == 0, "LIF should not spike without input"
 
     def test_fitzhugh_nagumo_oscillates(self) -> None:
+        """Check that the FitzHugh-Nagumo schema oscillates at ``I = 0.5``."""
         neuron = UniversalNeuron.from_schema("fitzhugh_nagumo")
         spikes = sum(neuron.step(I=0.5) for _ in range(2000))
         assert spikes > 0, "FHN should oscillate with I=0.5"
 
     def test_izhikevich_spikes(self) -> None:
+        """Check that the Izhikevich schema spikes at ``I = 10``."""
         neuron = UniversalNeuron.from_schema("izhikevich")
         spikes = sum(neuron.step(I=10.0) for _ in range(200))
         assert spikes > 0, "Izhikevich should spike with I=10"
 
     def test_hindmarsh_rose_evolves(self) -> None:
+        """Check that the Hindmarsh-Rose state moves away from its initial value."""
         neuron = UniversalNeuron.from_schema("hindmarsh_rose")
         initial_x = neuron.state["x"]
         for _ in range(500):
@@ -44,11 +49,13 @@ class TestUniversalNeuronSimulation:
         assert neuron.state["x"] != initial_x, "HR should evolve from initial state"
 
     def test_adex_spikes(self) -> None:
+        """Check that the AdEx schema spikes under strong current."""
         neuron = UniversalNeuron.from_schema("adex")
         spikes = sum(neuron.step(I=500.0) for _ in range(500))
         assert spikes > 0, "AdEx should spike with strong current"
 
     def test_escape_rate_schema_matches_hand_model_events_state_and_rng(self) -> None:
+        """Check that escape rate matches the hand model's events, trace and generator."""
         from sc_neurocore.neurons.models.escape_rate import EscapeRateNeuron
 
         seed = 0xBEEF

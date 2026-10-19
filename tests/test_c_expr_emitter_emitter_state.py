@@ -14,7 +14,10 @@ from tests.c_expr_emitter_support import *  # noqa: F403
 
 
 class TestEmitterState:
+    """Check the state the C++ emitter keeps while visiting an expression."""
+
     def test_free_vars_attribute(self) -> None:
+        """Check that a visited expression records its non-state names as free variables."""
         e = CExprEmitter({"v"})
         e.visit(__import__("ast").parse("v + leak", mode="eval").body)
         assert e.free_vars == ["leak"]

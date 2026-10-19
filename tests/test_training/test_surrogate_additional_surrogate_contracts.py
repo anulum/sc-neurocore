@@ -10,24 +10,32 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from tests.test_training.surrogate_support import *  # noqa: F403
 
 
 @pytest.mark.parametrize("fn", [sigmoid_surrogate, straight_through, triangular])
 class TestAdditionalSurrogateContracts:
-    def test_forward_is_heaviside(self, fn):
+    """Check sigmoid, straight-through and triangular surrogate contracts."""
+
+    def test_forward_is_heaviside(self, fn: Callable[..., Any]) -> None:
+        """Check that the forward pass is a Heaviside step that is zero at zero."""
         x = torch.tensor([-1.0, -0.1, 0.0, 0.1, 1.0])
         out = fn(x)
         expected = torch.tensor([0.0, 0.0, 0.0, 1.0, 1.0])
         assert torch.equal(out, expected)
 
-    def test_backward_has_gradient_support(self, fn):
+    def test_backward_has_gradient_support(self, fn: Callable[..., Any]) -> None:
+        """Check that the gradient is non-zero around the threshold."""
         x = torch.tensor([-0.5, 0.0, 0.5], requires_grad=True)
         fn(x).sum().backward()
         assert x.grad is not None
         assert (x.grad.abs() > 0).all()
 
-    def test_batch_shape_is_preserved(self, fn):
+    def test_batch_shape_is_preserved(self, fn: Callable[..., Any]) -> None:
+        """Check that output and gradient keep the shape of a batched input."""
         x = torch.randn(16, 64, requires_grad=True)
         out = fn(x)
         assert out.shape == x.shape

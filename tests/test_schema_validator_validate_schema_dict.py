@@ -17,6 +17,7 @@ class TestValidateSchemaDict:
     """Test the core validation logic."""
 
     def test_valid_minimal_schema(self) -> None:
+        """Check that a minimal version 1 schema validates without errors."""
         schema = {
             "metadata": {"schema_version": 1, "name": "Test"},
             "state": {"v": 0.0},
@@ -63,6 +64,7 @@ class TestValidateSchemaDict:
         assert any("Section 'science' must be an object" in error.message for error in errors)
 
     def test_missing_required_section(self) -> None:
+        """Check that a schema without its required sections is reported."""
         schema = {
             "metadata": {"schema_version": 1, "name": "Test"},
             "state": {"v": 0.0},
@@ -71,6 +73,7 @@ class TestValidateSchemaDict:
         assert any("Missing required section" in e.message for e in errors)
 
     def test_unsupported_version(self) -> None:
+        """Check that an unknown schema version is reported as unsupported."""
         schema = {
             "metadata": {"schema_version": 99, "name": "Test"},
             "state": {"v": 0.0},
@@ -82,6 +85,7 @@ class TestValidateSchemaDict:
         assert any("Unsupported schema version" in e.message for e in errors)
 
     def test_empty_state_is_error(self) -> None:
+        """Check that an empty state section is reported as an error."""
         schema = {
             "metadata": {"schema_version": 1, "name": "Test"},
             "state": {},
@@ -93,6 +97,7 @@ class TestValidateSchemaDict:
         assert any("State section is empty" in e.message for e in errors)
 
     def test_negative_dt_is_error(self) -> None:
+        """Check that a negative integration step is reported as an error."""
         schema = {
             "metadata": {"schema_version": 1, "name": "Test"},
             "state": {"v": 0.0},
@@ -104,6 +109,7 @@ class TestValidateSchemaDict:
         assert any("dt must be positive" in e.message for e in errors)
 
     def test_warns_on_missing_metadata(self) -> None:
+        """Check that missing recommended metadata produces a warning."""
         schema = {
             "metadata": {"schema_version": 1, "name": "Test"},
             "state": {"v": 0.0},

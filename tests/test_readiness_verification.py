@@ -281,6 +281,7 @@ def test_fabricated_and_tampered_receipts_are_invalid_not_stale(
 def test_receipt_refuses_unregistered_identity_profile_and_missing_descriptor(
     copied_receipt: tuple[Path, FacetReceipt],
 ) -> None:
+    """Check the refusals for an unknown class, unknown profile and absent descriptor."""
     repo, receipt = copied_receipt
     ghost = replace(receipt, class_name="GhostNeuron").sealed()
     assert verify_receipt(ghost, class_name="GhostNeuron", repo_root=repo)[2] == (
@@ -316,11 +317,13 @@ def test_profile_specific_readiness_does_not_promote_other_profiles() -> None:
 
 
 def test_missing_facet_is_not_returned_as_unverified(report: dict[str, ReadinessRecord]) -> None:
+    """Check that asking a record for an absent facet raises ``KeyError``."""
     with pytest.raises(KeyError, match="absent-facet"):
         report["LapicqueNeuron"].facet("absent-facet")
 
 
 def test_missing_subject_digest_is_absent_for_files_and_trees(tmp_path: Path) -> None:
+    """Check that a missing file or tree subject has no current digest."""
     absent_file = Subject("validator", "tests/missing.py", "0" * 64)
     absent_tree = Subject("compiler", "compiler/missing", "0" * 64, "tree")
     assert current_digest(absent_file, tmp_path) is None
@@ -330,6 +333,7 @@ def test_missing_subject_digest_is_absent_for_files_and_trees(tmp_path: Path) ->
 def test_deleted_receipt_input_becomes_stale(
     copied_receipt: tuple[Path, FacetReceipt],
 ) -> None:
+    """Check that deleting one receipt input makes the receipt stale and names it."""
     repo, receipt = copied_receipt
     subject = next(s for s in receipt.subjects if s.scope == "file")
     (repo / subject.path).unlink()

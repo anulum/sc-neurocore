@@ -14,12 +14,16 @@ from tests.c_expr_emitter_support import *  # noqa: F403
 
 
 class TestComparisons:
+    """Check how the C++ emitter lowers comparison operators."""
+
     def test_all_comparisons(self) -> None:
+        """Check that the four ordering comparisons lower against a typed literal."""
         assert _emit("v > 1.0", {"v"}) == "(v > fp_t(1.0))"
         assert _emit("v >= 1.0", {"v"}) == "(v >= fp_t(1.0))"
         assert _emit("v < 1.0", {"v"}) == "(v < fp_t(1.0))"
         assert _emit("v <= 1.0", {"v"}) == "(v <= fp_t(1.0))"
 
     def test_unsupported_comparison_raises(self) -> None:
+        """Check that an equality comparison is refused as unsupported."""
         with pytest.raises(ValueError, match="Unsupported comparison"):
             _emit("v == 1.0", {"v"})
