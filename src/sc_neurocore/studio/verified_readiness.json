@@ -483,7 +483,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "AdaptiveThresholdIFNeuron__cosim__20261019T132305Z__adaptive_threshold_if.json",
+     "receipt": "AdaptiveThresholdIFNeuron__cosim__20261019T153339Z__adaptive_threshold_if.json",
      "status": "bound"
     },
     {
@@ -3461,7 +3461,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "BrunelWangNeuron__cosim__20261019T132316Z__brunel_wang.json",
+     "receipt": "BrunelWangNeuron__cosim__20261019T153352Z__brunel_wang.json",
      "status": "bound"
     },
     {
@@ -13400,7 +13400,9 @@
   "LapicqueNeuron": {
    "facets": [
     {
-     "changed_subjects": [],
+     "changed_subjects": [
+      "model-module:src/sc_neurocore/neurons/models/lapicque.py"
+     ],
      "declared": true,
      "evidence": [
       {
@@ -13442,10 +13444,12 @@
      "facet": "dynamics_faithful",
      "problems": [],
      "receipt": "LapicqueNeuron__dynamics_faithful__20260924T130847Z__lapicque.json",
-     "status": "bound"
+     "status": "stale"
     },
     {
-     "changed_subjects": [],
+     "changed_subjects": [
+      "model-module:src/sc_neurocore/neurons/models/lapicque.py"
+     ],
      "declared": true,
      "evidence": [
       {
@@ -13487,7 +13491,7 @@
      "facet": "class_validated",
      "problems": [],
      "receipt": "LapicqueNeuron__class_validated__20260924T130838Z__lapicque.json",
-     "status": "bound"
+     "status": "stale"
     },
     {
      "changed_subjects": [],
@@ -13565,7 +13569,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "LapicqueNeuron__cosim__20261019T132326Z__lapicque.json",
+     "receipt": "LapicqueNeuron__cosim__20261019T153410Z__lapicque.json",
      "status": "bound"
     },
     {
@@ -13632,8 +13636,8 @@
     }
    ],
    "profile": "lapicque",
-   "science_label": "S5",
-   "science_tier": 5,
+   "science_label": "S3",
+   "science_tier": 3,
    "silicon_label": "H1",
    "silicon_tier": 1
   },
@@ -20395,7 +20399,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "ResonateAndFireNeuron__cosim__20261019T132338Z__resonate_fire.json",
+     "receipt": "ResonateAndFireNeuron__cosim__20261019T153426Z__resonate_fire.json",
      "status": "bound"
     },
     {

@@ -659,7 +659,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261019T132305Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261019T153339Z__adaptive_threshold_if.json",
           "validators": [
             {
               "facet": "cosim",
@@ -2257,7 +2257,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "BrunelWangNeuron__cosim__20261019T132316Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20261019T153352Z__brunel_wang.json",
           "validators": [
             {
               "facet": "cosim",
@@ -9026,7 +9026,7 @@
       },
       "profile_problems": [],
       "verified": {
-        "science_label": "S5",
+        "science_label": "S3",
         "silicon_label": "H1"
       },
       "declared": {
@@ -9048,7 +9048,7 @@
         {
           "facet": "dynamics_faithful",
           "declared": true,
-          "status": "bound",
+          "status": "stale",
           "receipt": "LapicqueNeuron__dynamics_faithful__20260924T130847Z__lapicque.json",
           "validators": [
             {
@@ -9111,7 +9111,7 @@
         {
           "facet": "class_validated",
           "declared": true,
-          "status": "bound",
+          "status": "stale",
           "receipt": "LapicqueNeuron__class_validated__20260924T130838Z__lapicque.json",
           "validators": [
             {
@@ -9229,7 +9229,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__cosim__20261019T132326Z__lapicque.json",
+          "receipt": "LapicqueNeuron__cosim__20261019T153410Z__lapicque.json",
           "validators": [
             {
               "facet": "cosim",
@@ -13724,7 +13724,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "ResonateAndFireNeuron__cosim__20261019T132338Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20261019T153426Z__resonate_fire.json",
           "validators": [
             {
               "facet": "cosim",
