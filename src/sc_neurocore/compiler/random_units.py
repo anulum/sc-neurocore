@@ -330,7 +330,99 @@ def poisson_code(word: int, lam: float, data_width: int, fraction: int) -> int:
     return fu.saturate(poisson_count(word, lam) << fraction, data_width)
 
 
+# poisson_grid(lam): the mean is floored to a 1/GRID_STEPS_PER_UNIT grid and clamped to
+# [0, MAX_GRID_LAMBDA], so every mean it can take has exact thresholds in a table.
+GRID_STEPS_PER_UNIT = 16
+MAX_GRID_LAMBDA = 16
+GRID_ROWS = MAX_GRID_LAMBDA * GRID_STEPS_PER_UNIT + 1
+_NEVER = 1 << 32  # pads a short row: no 32-bit word reaches it
+
+
+@lru_cache(maxsize=1)
+def poisson_grid_table() -> tuple[tuple[int, ...], ...]:
+    """Return the inversion thresholds of every grid mean, padded to one length.
+
+    Row ``i`` holds :func:`poisson_thresholds` of ``i / GRID_STEPS_PER_UNIT``
+    followed by ``2**32`` up to the longest row, so a count is the number of
+    entries of its row at or below the word.
+
+    Returns
+    -------
+    tuple of tuple of int
+        ``GRID_ROWS`` rows of equal length.
+
+    """
+    rows = [poisson_thresholds(i / GRID_STEPS_PER_UNIT) for i in range(GRID_ROWS)]
+    width = max(len(row) for row in rows)
+    return tuple(row + (_NEVER,) * (width - len(row)) for row in rows)
+
+
+def poisson_grid_index(lam: float) -> int:
+    """Return the grid row of a mean: ``floor(lam * 16)`` clamped to ``[0, 256]``.
+
+    Parameters
+    ----------
+    lam : float
+        The mean; NaN takes row 0.
+
+    Returns
+    -------
+    int
+        The row index.
+
+    """
+    if not lam > 0.0:
+        return 0
+    if lam >= MAX_GRID_LAMBDA:
+        return GRID_ROWS - 1
+    return min(GRID_ROWS - 1, math.floor(lam * GRID_STEPS_PER_UNIT))
+
+
+def poisson_grid_index_code(code: int, fraction: int) -> int:
+    """Return the grid row of a mean given as a signed fixed-point code.
+
+    Parameters
+    ----------
+    code : int
+        The mean's code.
+    fraction : int
+        Its fractional bits.
+
+    Returns
+    -------
+    int
+        ``floor(code * 16 / 2**fraction)`` clamped to ``[0, 256]``, as the unit
+        computes it with an arithmetic shift.
+
+    """
+    shift = fraction - 4
+    index = code >> shift if shift >= 0 else code << -shift
+    return max(0, min(GRID_ROWS - 1, index))
+
+
+def poisson_grid_count(word: int, row: int) -> int:
+    """Return the Poisson count of one 32-bit word for the mean of a grid row.
+
+    Parameters
+    ----------
+    word : int
+        A 32-bit output word.
+    row : int
+        The grid row, see :func:`poisson_grid_index`.
+
+    Returns
+    -------
+    int
+        The count: the exact inversion for the mean ``row / 16``.
+
+    """
+    return bisect.bisect_right(poisson_grid_table()[row], word)
+
+
 __all__ = [
+    "GRID_ROWS",
+    "GRID_STEPS_PER_UNIT",
+    "MAX_GRID_LAMBDA",
     "MAX_POISSON_LAMBDA",
     "MULTIPLIER_0",
     "MULTIPLIER_1",
@@ -346,6 +438,10 @@ __all__ = [
     "philox4x32",
     "poisson_code",
     "poisson_count",
+    "poisson_grid_count",
+    "poisson_grid_index",
+    "poisson_grid_index_code",
+    "poisson_grid_table",
     "poisson_thresholds",
     "uniform_code",
     "uniform_value",

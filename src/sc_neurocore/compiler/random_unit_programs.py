@@ -19,7 +19,11 @@ evaluate the programs against :func:`~sc_neurocore.compiler.random_units.draw`,
 :func:`~sc_neurocore.compiler.random_units.normal_code` and
 :func:`~sc_neurocore.compiler.random_units.poisson_code`. A ``poisson`` unit
 compares word 0 with the constant thresholds of its mean, so the mean is fixed
-when the unit is built.
+when the unit is built. A ``poisson_grid`` unit takes its mean as the program
+input (a code of the output format), floors it to the 1/16 grid on ``[0, 16]``
+and compares word 0 with that row of
+:func:`~sc_neurocore.compiler.random_units.poisson_grid_table`, packed three
+thresholds to a table row.
 """
 
 from __future__ import annotations
@@ -38,7 +42,7 @@ from .function_unit_programs import (
 )
 
 _MASK = (1 << 32) - 1
-KINDS = ("rand", "randn", "poisson")
+KINDS = ("rand", "randn", "poisson", "poisson_grid")
 EXTERNS = ("step", "seed", "stream")
 
 
@@ -98,6 +102,37 @@ def _randn(p: Program, site: int, data_width: int, fraction: int) -> str:
     return _saturate(p, _shift_round(p, p.mul(radius, cosine), fraction - 58), data_width)
 
 
+def _grid_tables() -> dict[str, tuple[tuple[int, int, int], ...]]:
+    """Return the grid thresholds as tables of triples: table ``j`` holds entries 3j..3j+2."""
+    rows = ru.poisson_grid_table()
+    width = len(rows[0])
+    tables: dict[str, tuple[tuple[int, int, int], ...]] = {}
+    for j in range((width + 2) // 3):
+        triples = []
+        for row in rows:
+            padded = row + (1 << 32,) * (3 * j + 3 - len(row))
+            triples.append((padded[3 * j], padded[3 * j + 1], padded[3 * j + 2]))
+        tables[f"poisson_grid_{j}"] = tuple(triples)
+    return tables
+
+
+def _poisson_grid(p: Program, site: int, data_width: int, fraction: int) -> str:
+    word0 = _philox(p, site)[0]
+    code = p.input()
+    shift = fraction - 4
+    raw = p.shr(code, shift) if shift >= 0 else p.shl(code, -shift)
+    # Clamp both ends here: a Verilog case of a negative index would take the default row.
+    last = p.const(ru.GRID_ROWS - 1)
+    zero = p.const(0)
+    index = p.select(p.lt(raw, zero), zero, p.select(p.lt(last, raw), last, raw))
+    count = p.const(0)
+    width = len(ru.poisson_grid_table()[0])
+    for k in range(width):
+        threshold = p.lookup(f"poisson_grid_{k // 3}", index, k % 3)
+        count = p.add(count, p.le(threshold, word0))
+    return _saturate(p, p.shl(count, fraction), data_width)
+
+
 def _poisson(p: Program, site: int, data_width: int, fraction: int, lam: float) -> str:
     word0 = _philox(p, site)[0]
     count = p.const(0)
@@ -115,7 +150,8 @@ def program(
     Parameters
     ----------
     kind : str
-        ``"rand"``, ``"randn"`` or ``"poisson"``.
+        ``"rand"``, ``"randn"``, ``"poisson"`` or ``"poisson_grid"`` (whose mean is
+        the program input).
     site : int
         Call-site number, ``[0, 2**32)``.
     data_width, fraction : int
@@ -143,6 +179,10 @@ def program(
     fu.check_format(data_width, fraction)
     if (kind == "poisson") != (lam is not None):
         raise ValueError("a mean is given to, and only to, a poisson unit")
+    if kind == "poisson_grid":
+        p = Program(tables=_grid_tables())
+        p.output = _poisson_grid(p, site, data_width, fraction)
+        return p
     if lam is not None:
         ru.poisson_thresholds(lam)  # range check before any step is built
         p = Program(tables={})

@@ -44,6 +44,7 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "rand",
         "randn",
         "poisson",
+        "poisson_grid",
         "exprel",
         "exp2",
         "log2",
@@ -78,7 +79,7 @@ V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
 # Counter-based random draws (sc_neurocore.compiler.random_units). Their last argument
 # is the call site, a non-negative integer literal the Python model numbers when the
 # neuron is built; poisson's first is its mean. Both lowerings use the same unit.
-RANDOM_FUNCTIONS: frozenset[str] = frozenset({"rand", "randn", "poisson"})
+RANDOM_FUNCTIONS: frozenset[str] = frozenset({"rand", "randn", "poisson", "poisson_grid"})
 
 
 def random_site(fname: str, node: ast.Call) -> int:
@@ -87,7 +88,7 @@ def random_site(fname: str, node: ast.Call) -> int:
     Parameters
     ----------
     fname : str
-        ``"rand"``, ``"randn"`` or ``"poisson"``.
+        ``"rand"``, ``"randn"``, ``"poisson"`` or ``"poisson_grid"``.
     node : ast.Call
         The call, after :func:`check_call_arguments`.
 
@@ -139,7 +140,8 @@ def poisson_mean(node: ast.Call) -> float:
     if mean is None:
         raise ValueError(
             "poisson() needs a constant mean in compiled expressions, "
-            f"got {ast.unparse(node.args[0])!r}"
+            f"got {ast.unparse(node.args[0])!r}; poisson_grid() takes a variable mean "
+            "on a 1/16 grid"
         )
     return mean
 
@@ -181,8 +183,12 @@ V2_UNIT_FOR: dict[str, str] = {
 # so a backend must refuse them rather than lower them to something else.
 # ``(minimum, maximum)``; ``None`` means no maximum.
 FUNCTION_ARITY: dict[str, tuple[int, int | None]] = {
-    **{name: (1, 1) for name in SUPPORTED_FUNCTIONS - {"clip", "max", "min", "poisson"}},
+    **{
+        name: (1, 1)
+        for name in SUPPORTED_FUNCTIONS - {"clip", "max", "min", "poisson", "poisson_grid"}
+    },
     "poisson": (2, 2),
+    "poisson_grid": (2, 2),
     "clip": (3, 3),
     "max": (2, None),
     "min": (2, None),

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1086
+expected_file_count = 1087
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4437,3 +4437,7 @@ rationale = "Binary spike recorder statistics and its refusals, including non-fi
 [[file]]
 path = "tests/test_rtl_lowering_refusals.py"
 rationale = "What the RTL and the bit-true kernel both refuse, with the same messages."
+
+[[file]]
+path = "tests/test_poisson_grid.py"
+rationale = "poisson_grid: exact thresholds per grid mean, program = reference, model = RTL = C = Rust counts, refusals and contract literals."

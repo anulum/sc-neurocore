@@ -454,8 +454,14 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         externs = {"step": step, "seed": "SC_RNG_SEED", "stream": "SC_RNG_STREAM"}
         site = expr_lut_tables.random_site(kind, node)
         lam = expr_lut_tables.poisson_mean(node) if kind == "poisson" else None
+        argument = "0"
+        if kind == "poisson_grid":
+            # The mean truncated to the word, as the RTL hoists it to a word wire.
+            argument = f"{prefix}_arg"
+            mean = self._value(node.args[0])
+            self.statements.append(self._local(argument, f"sc_wrap({mean}, {self.q.data_width})"))
         unit = random_program(kind, site, self.q.data_width, self.q.fraction, lam)
-        statements, arrays, out = emit_c(unit, prefix, "0", self.lang, externs)
+        statements, arrays, out = emit_c(unit, prefix, argument, self.lang, externs)
         self.statements.extend(statements)
         self.tables.update(arrays)
         return self._wide(out)

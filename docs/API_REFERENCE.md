@@ -8679,7 +8679,7 @@ Return the call-site literal of a ``rand``/``randn``/``poisson`` call.
 Parameters
 ----------
 fname : str
-    ``"rand"``, ``"randn"`` or ``"poisson"``.
+    ``"rand"``, ``"randn"``, ``"poisson"`` or ``"poisson_grid"``.
 node : ast.Call
     The call, after :func:`check_call_arguments`.
 
@@ -13910,7 +13910,8 @@ Return the ``rand``, ``randn`` or ``poisson`` unit for one call site and format.
 Parameters
 ----------
 kind : str
-    ``"rand"``, ``"randn"`` or ``"poisson"``.
+    ``"rand"``, ``"randn"``, ``"poisson"`` or ``"poisson_grid"`` (whose mean is
+    the program input).
 site : int
     Call-site number, ``&#91;0, 2**32)``.
 data_width, fraction : int
@@ -14104,6 +14105,62 @@ Returns
 -------
 int
     ``count·2**fraction``, saturated to the word.
+
+### Function `poisson_grid_table()`
+Return the inversion thresholds of every grid mean, padded to one length.
+
+Row ``i`` holds :func:`poisson_thresholds` of ``i / GRID_STEPS_PER_UNIT``
+followed by ``2**32`` up to the longest row, so a count is the number of
+entries of its row at or below the word.
+
+Returns
+-------
+tuple of tuple of int
+    ``GRID_ROWS`` rows of equal length.
+
+### Function `poisson_grid_index(lam)`
+Return the grid row of a mean: ``floor(lam * 16)`` clamped to ``&#91;0, 256&#93;``.
+
+Parameters
+----------
+lam : float
+    The mean; NaN takes row 0.
+
+Returns
+-------
+int
+    The row index.
+
+### Function `poisson_grid_index_code(code, fraction)`
+Return the grid row of a mean given as a signed fixed-point code.
+
+Parameters
+----------
+code : int
+    The mean's code.
+fraction : int
+    Its fractional bits.
+
+Returns
+-------
+int
+    ``floor(code * 16 / 2**fraction)`` clamped to ``&#91;0, 256&#93;``, as the unit
+    computes it with an arithmetic shift.
+
+### Function `poisson_grid_count(word, row)`
+Return the Poisson count of one 32-bit word for the mean of a grid row.
+
+Parameters
+----------
+word : int
+    A 32-bit output word.
+row : int
+    The grid row, see :func:`poisson_grid_index`.
+
+Returns
+-------
+int
+    The count: the exact inversion for the mean ``row / 16``.
 
 ---
 
@@ -26593,6 +26650,8 @@ stream : int
   - Return the standard-normal draw of a call site at the current step.
 - **poisson**(lam, site)
   - Return the Poisson draw of a call site at the current step.
+- **poisson_grid**(lam, site)
+  - Return the Poisson draw of a call site for a mean floored to the 1/16 grid.
 
 ### Function `draws_in(expressions)`
 Return whether any of the expressions calls ``rand``, ``randn`` or ``poisson``.

@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add `poisson_grid(lam)`, a Poisson draw whose mean is a variable expression:
+  the mean is floored to a multiple of 1/16 and clamped to `[0, 16]`, and word
+  0 of the Philox block is inverted against the exact thresholds of that grid
+  mean (257 rows of 47 thresholds, as for a constant `poisson()`). The model,
+  the RTL and the C and Rust kernels give the same counts; `poisson()` keeps
+  its exact constant mean and its refusal now names `poisson_grid()`.
+
 - The bit-true C and Rust kernels mirror every integrator the RTL lowers:
   `rk4`, `exp_euler` and `gauss_seidel` join `euler` and `map`, and the macro
   steps of sub-stepped crossing models are mirrored (draws once per macro

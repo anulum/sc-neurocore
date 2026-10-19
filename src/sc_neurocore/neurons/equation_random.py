@@ -8,11 +8,13 @@
 
 """Counter-based random draws for equation-defined neurons.
 
-Every ``rand()``, ``randn()`` or ``poisson(lam)`` call in a neuron's expressions draws one
+Every ``rand()``, ``randn()``, ``poisson(lam)`` or ``poisson_grid(lam)`` call in a
+neuron's expressions draws one
 Philox4x32-10 block (:mod:`sc_neurocore.compiler.random_units`) at counter
 ``(site, step, stream)`` with the neuron's seed. The call site is numbered when
 the neuron is built, :func:`number_random_sites` rewriting ``rand()`` to
-``rand(<site>)`` and ``poisson(lam)`` to ``poisson(lam, <site>)``, so the Python
+``rand(<site>)`` and ``poisson(lam)`` to ``poisson(lam, <site>)`` (likewise
+``poisson_grid``), so the Python
 model and the equation compiler read the same number from the same text. An
 explicit integer literal is kept as written.
 Repeating a step's evaluation (a Runge–Kutta stage, a reset expression) draws
@@ -25,10 +27,10 @@ import ast
 from collections.abc import Sequence
 from typing import cast
 
-RANDOM_CALLS = frozenset({"rand", "randn", "poisson"})
+RANDOM_CALLS = frozenset({"rand", "randn", "poisson", "poisson_grid"})
 
 # Arguments before the call site: poisson's mean.
-_LEADING = {"rand": 0, "randn": 0, "poisson": 1}
+_LEADING = {"rand": 0, "randn": 0, "poisson": 1, "poisson_grid": 1}
 
 
 def _calls(expression: str) -> list[tuple[str, ast.Call]]:
@@ -228,6 +230,28 @@ class RandomDraws:
         from sc_neurocore.compiler import random_units as ru
 
         return float(ru.poisson_count(ru.draw(site, self.step, self.stream, self.seed)[0], lam))
+
+    def poisson_grid(self, lam: float, site: int) -> float:
+        """Return the Poisson draw of a call site for a mean floored to the 1/16 grid.
+
+        Parameters
+        ----------
+        lam : float
+            The mean; floored to a multiple of 1/16 and clamped to ``[0, 16]``.
+        site : int
+            Call-site number.
+
+        Returns
+        -------
+        float
+            The exact inversion of word 0 for the grid mean, as the compiled unit
+            computes it.
+
+        """
+        from sc_neurocore.compiler import random_units as ru
+
+        word = ru.draw(site, self.step, self.stream, self.seed)[0]
+        return float(ru.poisson_grid_count(word, ru.poisson_grid_index(lam)))
 
 
 __all__ = ["RANDOM_CALLS", "RandomDraws", "draws_in", "number_random_sites"]

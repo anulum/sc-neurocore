@@ -536,9 +536,16 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         externs = {"step": "rng_step", "seed": "P_RNG_SEED", "stream": "P_RNG_STREAM"}
         site = expr_lut_tables.random_site(kind, node)
         lam = expr_lut_tables.poisson_mean(node) if kind == "poisson" else None
+        argument = "1'b0"
+        if kind == "poisson_grid":
+            # The mean, evaluated like any expression and hoisted to a word.
+            argument = f"{prefix}_arg"
+            self.intermediates.append(
+                f"wire signed [{dw - 1}:0] {argument} = {self._value(node.args[0])};"
+            )
         unit = random_program(kind, site, dw, self.q.fraction, lam)
         self.intermediates.append(f"// {kind}() draw, call site {site}")
-        lines, out = emit_verilog(unit, prefix, "1'b0", externs)
+        lines, out = emit_verilog(unit, prefix, argument, externs)
         self.intermediates.extend(lines)
         result = f"{prefix}_out"
         self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {out}[{dw - 1}:0];")

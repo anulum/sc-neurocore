@@ -443,7 +443,11 @@ def _literals(
         and isinstance(node.func, ast.Name)
         and node.func.id in expr_lut_tables.RANDOM_FUNCTIONS
     ):
-        return  # the argument is a call-site number, not an encoded value
+        # The site is a number, not an encoded value; a constant poisson() mean builds
+        # thresholds. Only poisson_grid() encodes its mean expression as a word.
+        if node.func.id == "poisson_grid" and node.args:
+            yield from _literals(node.args[0], bound)
+        return
     if isinstance(node, ast.Name):
         if node.id in expr_lut_tables.NAMED_CONSTANTS and node.id not in bound:
             yield "literal", expr_lut_tables.NAMED_CONSTANTS[node.id]

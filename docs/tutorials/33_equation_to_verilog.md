@@ -315,8 +315,14 @@ count is the number of thresholds `ceil(2^32·CDF(k))` at or below the word, so
 the model, the RTL and the kernel return the same count, the exact inversion of
 a 32-bit uniform. Its mean must be a constant in `[0, 100]` in compiled
 expressions (the thresholds, at most 168, are built with the unit); the Python
-model also accepts a variable mean. All three are built from the same integer
-programs in either function lowering, and the RTL equals the kernel bit for bit.
+model also accepts a variable mean for `poisson()`. A variable mean compiles as
+`poisson_grid(lam)`: the mean (any expression, evaluated as a word) is floored
+to a multiple of 1/16 and clamped to `[0, 16]`, and word 0 is compared with the
+exact thresholds of that grid mean, held in tables of 257 rows (47 thresholds,
+packed three to a row); the model applies the same grid, so the count is the
+exact inversion for the grid mean in the model, the RTL and both kernels. All of
+them are built from the same integer programs in either function lowering, and
+the RTL equals the kernel bit for bit.
 
 A folded processing element (`compile_to_datapath`) takes the step counter and
 stream on the inputs `rng_step` and `P_RNG_STREAM` (with the parameter
@@ -527,7 +533,8 @@ a named synthesis/place-and-route flow and its retained reports.
   a rounding RNG stream.
 - `rand()`, `randn()` and `poisson()` compile to registered modules (also
   pipelined or multi-substep), folded processing elements and the bit-true
-  kernels; a compiled `poisson()` needs a constant mean. The folded
+  kernels; a compiled `poisson()` needs a constant mean, and
+  `poisson_grid()` takes a variable one on the 1/16 grid. The folded
   network's neuron templates have no draws, and its sequencer does not yet
   assign step counters and streams.
 - A loaded-host compiler timing is not an FPGA timing, area, power, or energy

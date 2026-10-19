@@ -257,6 +257,7 @@ class EquationNeuron:
         self._namespace["rand"] = self._random.rand
         self._namespace["randn"] = self._random.randn
         self._namespace["poisson"] = self._random.poisson
+        self._namespace["poisson_grid"] = self._random.poisson_grid
         raw_parameters = parameters or {}
         raw_state = state or {k: 0.0 for k in equations}
         raw_constants = constants or {}
@@ -374,6 +375,7 @@ class EquationNeuron:
         env["rand"] = initial_draws.rand
         env["randn"] = initial_draws.randn
         env["poisson"] = initial_draws.poisson
+        env["poisson_grid"] = initial_draws.poisson_grid
         env["xi"] = 0.0
         env.update(self.parameters)
         env.update(self.constants)
