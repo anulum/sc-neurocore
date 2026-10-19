@@ -52,6 +52,7 @@ Or use the factory for a common pattern::
         params=dict(E_L=-65, tau_m=10, C=1),
         init=dict(v=-65),
     )
+
 """
 
 from __future__ import annotations
@@ -123,6 +124,7 @@ class EquationNeuron:
         rng_seed: int = DEFAULT_LFSR16_SEED,
         noise_rng: np.random.Generator | None = None,
         random_stream: int = 0,
+        spike_value: str | None = None,
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings.
 
@@ -136,6 +138,11 @@ class EquationNeuron:
         ``rng_seed`` (``[0, 2**64)``) and ``random_stream`` (``[0, 2**32)``, one per
         instance of a population); each call is numbered here, and the compiled RTL
         and bit-true kernel draw the same numbers.
+
+        ``spike_value`` makes the spike graded: on a spike, the expression is
+        evaluated on the integrated state before reset (the environment of the
+        reset rules) and kept as :attr:`last_spike_value`; without a spike that
+        value is 0. The compiled RTL emits it as ``spike_value_out``.
         """
         if units not in {"none", "strict"}:
             raise EquationRefusal("units must be 'none' or 'strict'")
@@ -170,6 +177,7 @@ class EquationNeuron:
                     *self.reset_rules.values(),
                     rate_expression,
                     probability_expression,
+                    spike_value,
                 ]
             )
             self._random = RandomDraws(rng_seed, random_stream)
@@ -189,6 +197,14 @@ class EquationNeuron:
         }
         self.rate_expression = numbered[count + 1 + reset_count]
         self.probability_expression = numbered[count + 2 + reset_count]
+        self.spike_value_expr = numbered[count + 3 + reset_count]
+        if (
+            self.spike_value_expr is not None
+            and threshold is None
+            and probability_expression is None
+            and rate_expression is None
+        ):
+            raise EquationRefusal("spike_value needs a threshold or a stochastic spike mechanism")
         rate_expression = self.rate_expression
         probability_expression = self.probability_expression
         threshold = self.threshold_expr
@@ -283,6 +299,8 @@ class EquationNeuron:
             all_exprs.append(self.rate_expression)
         if self.probability_expression:
             all_exprs.append(self.probability_expression)
+        if self.spike_value_expr:
+            all_exprs.append(self.spike_value_expr)
         self._stochastic_uses_diffusion_noise = self._stochastic_threshold_enabled and any(
             re.search(r"\bxi\b", expression) is not None for expression in all_exprs
         )
@@ -309,6 +327,12 @@ class EquationNeuron:
         self._compiled_reset = {
             var: compile_expression(expr, self._safety) for var, expr in self.reset_rules.items()
         }
+        self._compiled_spike_value = (
+            compile_expression(self.spike_value_expr, self._safety)
+            if self.spike_value_expr
+            else None
+        )
+        self.last_spike_value = 0.0
         self.jacobian_expressions: dict[str, str] = {}
         self._compiled_jacobian = self._build_jacobian() if self.method == "exp_euler" else {}
 
@@ -457,6 +481,7 @@ class EquationNeuron:
             raise
 
         spike = 0
+        self.last_spike_value = 0.0
         if self._stochastic_threshold_enabled:
             stochastic_rng = self._stochastic_rng
             compiled_stochastic = (
@@ -491,6 +516,10 @@ class EquationNeuron:
                     spike = 1
                     reset_env = self._build_env(**kwargs)
                     reset_env.update(_previous_state_aliases(previous_state))
+                    if self._compiled_spike_value is not None:
+                        self.last_spike_value = evaluate_scalar(
+                            self._compiled_spike_value, reset_env
+                        )
                     for var, code in self._compiled_reset.items():
                         self.state[var] = evaluate_scalar(code, reset_env)
             except Exception:
@@ -517,6 +546,8 @@ class EquationNeuron:
                 spike = 1
                 reset_env = self._build_env(**kwargs)
                 reset_env.update(_previous_state_aliases(previous_state))
+                if self._compiled_spike_value is not None:
+                    self.last_spike_value = evaluate_scalar(self._compiled_spike_value, reset_env)
                 for var, code in self._compiled_reset.items():
                     self.state[var] = evaluate_scalar(code, reset_env)
 
@@ -664,6 +695,7 @@ class EquationNeuron:
         """Reset state to initial values and the random-draw step counter to 0."""
         self.state = deepcopy(self.initial_state)
         self._random.step = 0
+        self.last_spike_value = 0.0
         if self._stochastic_rng is not None:
             self._stochastic_rng.reset()
         self._prev_threshold_active = (
@@ -709,6 +741,7 @@ def from_equations(
 
     Use ``units="strict"`` with pint quantities to validate the
     equation dimensions before runtime compilation.
+
     """
     equations = {}
     for eq_str in equation_strings:

@@ -416,6 +416,8 @@ def _expressions(neuron: EquationNeuron) -> Iterator[tuple[str, str]]:
         yield "escape rate", neuron.rate_expression
     if neuron.probability_expression:
         yield "spike probability", neuron.probability_expression
+    if neuron.spike_value_expr:
+        yield "spike value", neuron.spike_value_expr
 
 
 def _literals(

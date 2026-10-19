@@ -45,7 +45,7 @@ class TestSiteNumbering:
         """Formatting of an expression without draws is preserved exactly."""
         assert number_random_sites(["-v  +   I*2"]) == ["-v  +   I*2"]
 
-    def test_unparseable_text_is_left_to_the_validator(self) -> None:
+    def test_unparsable_text_is_left_to_the_validator(self) -> None:
         """Invalid syntax passes through unchanged so the equation validator reports it."""
         assert number_random_sites(["v +* rand()"]) == ["v +* rand()"]
 

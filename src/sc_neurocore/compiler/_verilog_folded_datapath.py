@@ -159,6 +159,8 @@ def compile_to_datapath(
         safe_var = state_var_map[var]
         lines.append(f"    input wire signed [{data_width - 1}:0] {safe_var}_reg,")
     lines.append("    output wire spike_out,")
+    if core.spike_value:
+        lines.append(f"    output wire signed [{data_width - 1}:0] spike_value_out,")
     for var in neuron.equations:
         safe_var = state_var_map[var]
         lines.append(f"    output wire signed [{data_width - 1}:0] {safe_var}_next_out,")
@@ -194,6 +196,9 @@ def compile_to_datapath(
         lines.append(f"assign spike_out = ({core.threshold_verilog});")
     else:
         lines.append("assign spike_out = 1'b0;")
+
+    if core.spike_value:
+        lines.append(f"assign spike_value_out = spike_out ? {core.spike_value} : {data_width}'sd0;")
 
     # Next-state output: on spike, apply reset rules (or hold <var>_next when the
     # variable has no reset rule); otherwise advance to <var>_next. This mirrors

@@ -321,6 +321,35 @@ its counter; given the same values it draws exactly what the per-instance
 module draws. Draws are refused where the step counter is not yet defined:
 pipelined or multi-substep modules and the HLS C++ lowering.
 
+### Graded spikes
+
+`spike_value` makes a spike carry a value, as the graded spikes of Loihi 2 and
+the `graded` processes of Lava do:
+
+```python
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+neuron = EquationNeuron(
+    equations={"v": "v + I"},
+    state={"v": 0.0},
+    dt=1.0,
+    method="map",
+    threshold="abs(v) > 0.5",
+    reset={"v": "0.0"},
+    spike_value="v",
+)
+```
+
+On a spike the expression is evaluated where the reset rules are (the
+integrated state before reset, with `<var>_prev` for the previous state) and
+kept as `neuron.last_spike_value`; on other steps that value is 0. The
+registered RTL adds the output `spike_value_out` (a word of the data format,
+committed under the overflow policy like a reset value and registered with
+`spike_out`), the folded processing element drives it combinationally, and the
+bit-true C and Rust kernels keep it in `spike_value_out` of their state. A
+graded spike needs a threshold or a stochastic spike mechanism; the
+multi-substep datapath refuses it.
+
 ## 6. Folded combinational datapaths
 
 `compile_to_datapath()` emits the same arithmetic core without state

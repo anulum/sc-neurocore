@@ -106,6 +106,7 @@ def compile_to_verilog(
     threshold_verilog = core.threshold_verilog
     escape_probability_verilog = core.escape_probability_verilog
     reset_expressions = core.reset_expressions
+    spike_value = core.spike_value
     total_pipeline_latency = core.total_pipeline_latency
     stochastic_threshold = bool(escape_probability_verilog)
     if stochastic_threshold and total_pipeline_latency > 0:
@@ -147,6 +148,8 @@ def compile_to_verilog(
                 "substeps > 1 is not supported with multiply pipelining (pipeline_stages > 0)"
             )
     substep_cnt_width = max(1, (substeps - 1).bit_length()) if substeps > 1 else 1
+    if spike_value and substeps > 1:
+        raise NotImplementedError("a graded spike (spike_value) is not supported with substeps > 1")
 
     # rand()/randn() draw from Philox at (site, step, stream) with the neuron's seed; the
     # step counter advances once per step, as EquationNeuron.step advances it.
@@ -188,6 +191,9 @@ def compile_to_verilog(
     lines.append("    input wire rst_n,")
     lines.append(f"    input wire signed [{data_width - 1}:0] I_t,")
     lines.append("    output reg spike_out,")
+    if spike_value:
+        # Graded spike: the value on a spike cycle, 0 otherwise.
+        lines.append(f"    output reg signed [{data_width - 1}:0] spike_value_out,")
 
     for var in neuron.equations:
         safe_var = state_var_map[var]
@@ -333,6 +339,8 @@ def compile_to_verilog(
             spike_cond = threshold_verilog
         step_lines.append(f"        if ({spike_cond}) begin")
         step_lines.append("            spike_out <= 1'b1;")
+        if spike_value:
+            step_lines.append(f"            spike_value_out <= {spike_value};")
         for var in neuron.equations:
             safe_var = state_var_map[var]
             on_spike = reset_expressions.get(safe_var, f"{safe_var}_next")
@@ -340,6 +348,8 @@ def compile_to_verilog(
             step_lines.append(f"            {safe_var}_out <= {on_spike};")
         step_lines.append("        end else begin")
         step_lines.append("            spike_out <= 1'b0;")
+        if spike_value:
+            step_lines.append(f"            spike_value_out <= {data_width}'sd0;")
         for var in neuron.equations:
             safe_var = state_var_map[var]
             step_lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
@@ -375,6 +385,8 @@ def compile_to_verilog(
         lines.append(f"        {safe_var}_reg <= {init_val};")
         lines.append(f"        {safe_var}_out <= {init_val};")
     lines.append("        spike_out <= 1'b0;")
+    if spike_value:
+        lines.append(f"        spike_value_out <= {data_width}'sd0;")
     if uses_random:
         lines.append("        rng_step <= 64'd0;")
     if stochastic_threshold:
@@ -399,6 +411,8 @@ def compile_to_verilog(
             lines.append("    " + sline)
         lines.append("        end else begin")
         lines.append("            spike_out <= 1'b0;")
+        if spike_value:
+            lines.append(f"            spike_value_out <= {data_width}'sd0;")
         lines.append("        end")
     else:
         lines.extend(step_lines)

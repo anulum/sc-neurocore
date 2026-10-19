@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1066
+expected_file_count = 1067
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4357,3 +4357,7 @@ rationale = "Site numbering, seed and stream ranges, and reproducible neuron tra
 [[file]]
 path = "tests/test_random_draws_cosim.py"
 rationale = "Compiled rand() and randn(): RTL equals the bit-true kernel and follows the Python model; unsupported lowerings refuse."
+
+[[file]]
+path = "tests/test_graded_spikes.py"
+rationale = "Graded spike values: RTL, C and Rust kernels and the model agree; the folded PE equals the module; refusals stated."

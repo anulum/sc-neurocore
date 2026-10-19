@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add graded spikes: `EquationNeuron(spike_value=...)` evaluates an expression
+  on a spike (on the state before reset) and keeps it as `last_spike_value`.
+  The registered RTL emits `spike_value_out`, the folded PE drives it, and the
+  bit-true C and Rust kernels store it; all agree with each other and with the
+  model on a dyadic grid.
+
 - The folded datapath PE (`compile_to_datapath`) accepts `rand()`, `randn()`
   and `poisson()`: it takes the neuron's step counter and stream on the inputs
   `rng_step` and `P_RNG_STREAM`, and with the same values matches the

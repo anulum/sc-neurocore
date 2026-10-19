@@ -47,6 +47,7 @@ class _NeuronCore:
     threshold_verilog: str
     escape_probability_verilog: str
     reset_expressions: dict[str, str]
+    spike_value: str = ""
 
     @property
     def total_pipeline_latency(self) -> int:
@@ -368,6 +369,31 @@ def _build_neuron_core(
         )
         reset_expressions[safe_var] = reset_value
 
+    # A graded spike's value: evaluated where the reset rules are (the integrated
+    # candidate, before reset) and committed to the word like a reset value.
+    spike_value = ""
+    spike_value_expr = getattr(neuron, "spike_value_expr", None)
+    if spike_value_expr:
+        vexpr, v_intermediates, _mc, _tc, v_pregs = _emit_expr(
+            spike_value_expr,
+            {},
+            reset_param_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+        all_intermediates.extend(v_intermediates)
+        all_pipeline_regs.extend(v_pregs)
+        all_intermediates.append(
+            f"wire signed [{2 * data_width - 1}:0] _spike_value_raw = {vexpr};"
+        )
+        all_intermediates.append(
+            f"wire signed [{data_width - 1}:0] _spike_value = "
+            + _commit("_spike_value_raw", q.overflow, data_width)
+            + ";"
+        )
+        spike_value = "_spike_value"
+
     return _NeuronCore(
         state_var_map=state_var_map,
         param_map=param_map,
@@ -379,4 +405,5 @@ def _build_neuron_core(
         threshold_verilog=threshold_verilog,
         escape_probability_verilog=escape_probability_verilog,
         reset_expressions=reset_expressions,
+        spike_value=spike_value,
     )

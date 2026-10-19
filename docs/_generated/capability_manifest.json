@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5339
+    "test_files": 5340
   },
   "documentation": {
     "public_pages": [
@@ -5396,6 +5396,7 @@
       "tests/test_gpu_backend_gpu_vec_mac.py",
       "tests/test_gpu_backend_transfer_helpers.py",
       "tests/test_gpu_backend_vectorized_layer_gpu.py",
+      "tests/test_graded_spikes.py",
       "tests/test_graph_forward_rtl_cosim.py",
       "tests/test_graph_topology_modularity.py",
       "tests/test_graph_topology_path_sample_cap.py",

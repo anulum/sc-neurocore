@@ -695,6 +695,15 @@ def generate_bittrue_kernel_from_neuron(
         reset_exprs[var] = result
         reset_stmts.extend(s)
         tables.update(t)
+    # A graded spike's value reads the reset rules' environment (candidate, before reset).
+    spike_value_expr = ""
+    spike_value_source = neuron.spike_value_expr
+    if spike_value_source:
+        spike_value_expr, s, t, _fv, lut, _used = emit_c_fixed_expr(
+            spike_value_source, candidate_map, param_map, q, lang=language, lut_start=lut
+        )
+        reset_stmts.extend(s)
+        tables.update(t)
 
     init_q = {v: signed_q(q, neuron.initial_state.get(v, 0.0)) for v in neuron.equations}
     ctx = _KernelContext(
@@ -711,6 +720,7 @@ def generate_bittrue_kernel_from_neuron(
         reset_stmts=reset_stmts,
         tables=tables,
         init_q=init_q,
+        spike_value_expr=spike_value_expr,
     )
     source = _emit_neuron_c(ctx) if language == "c" else _emit_neuron_rust(ctx)
     if "rng_step" in source:
@@ -786,6 +796,7 @@ class _KernelContext:
         reset_stmts: list[str],
         tables: dict[str, list[int]],
         init_q: dict[str, int],
+        spike_value_expr: str = "",
     ) -> None:
         self.module_name = module_name
         self.neuron = neuron
@@ -800,6 +811,7 @@ class _KernelContext:
         self.reset_stmts = reset_stmts
         self.tables = tables
         self.init_q = init_q
+        self.spike_value_expr = spike_value_expr
 
 
 def _emit_neuron_c(ctx: _KernelContext) -> str:
@@ -822,6 +834,8 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
         lines.append(f"    {ctype} {ctx.safe[var]};")
         lines.append(f"    {ctype} {ctx.safe[var]}_out;")
     lines.append("    int spike_out;")
+    if ctx.spike_value_expr:
+        lines.append(f"    {ctype} spike_value_out;")
     if _edge(ctx):
         lines.append("    int thr_prev;")
     lines.append(f"}} {m}_state_t;")
@@ -831,6 +845,8 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
         lines.append(f"    s->{ctx.safe[var]} = {ctx.init_q[var]};")
         lines.append(f"    s->{ctx.safe[var]}_out = {ctx.init_q[var]};")
     lines.append("    s->spike_out = 0;")
+    if ctx.spike_value_expr:
+        lines.append("    s->spike_value_out = 0;")
     if _edge(ctx):
         lines.append(f"    s->thr_prev = {_initial_edge_state(ctx)};")
     lines.append("}")
@@ -894,6 +910,10 @@ def _neuron_commit_c(ctx: _KernelContext) -> list[str]:
         # A reset value is committed like a next state, under the overflow policy.
         reset = _accumulate_bias(expr, ctx.q.overflow)
         lines.append(f"    {_ctype(ctx.q.data_width)} _rst_{ctx.safe[var]} = {reset};")
+    if ctx.spike_value_expr:
+        value = _accumulate_bias(ctx.spike_value_expr, ctx.q.overflow)
+        lines.append(f"    {_ctype(ctx.q.data_width)} _spike_value = {value};")
+        lines.append("    s->spike_value_out = _spk ? _spike_value : 0;")
     lines.append("    if (_spk) {")
     for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
@@ -929,6 +949,8 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
         lines.append(f"    pub {ctx.safe[var]}: {rtype},")
         lines.append(f"    pub {ctx.safe[var]}_out: {rtype},")
     lines.append("    pub spike_out: i32,")
+    if ctx.spike_value_expr:
+        lines.append(f"    pub spike_value_out: {rtype},")
     if _edge(ctx):
         lines.append("    pub thr_prev: i32,")
     lines.append("}")
@@ -939,6 +961,8 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
         lines.append(f"        self.{ctx.safe[var]} = {ctx.init_q[var]};")
         lines.append(f"        self.{ctx.safe[var]}_out = {ctx.init_q[var]};")
     lines.append("        self.spike_out = 0;")
+    if ctx.spike_value_expr:
+        lines.append("        self.spike_value_out = 0;")
     if _edge(ctx):
         lines.append(f"        self.thr_prev = {_initial_edge_state(ctx)};")
     lines.append("    }")
@@ -989,6 +1013,11 @@ def _neuron_commit_rust(ctx: _KernelContext) -> list[str]:
     for var, expr in ctx.reset_exprs.items():
         reset = _accumulate_bias(expr, ctx.q.overflow, _rtype(ctx.q.data_width))
         lines.append(f"        let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = {reset};")
+    if ctx.spike_value_expr:
+        rtype = _rtype(ctx.q.data_width)
+        value = _accumulate_bias(ctx.spike_value_expr, ctx.q.overflow, rtype)
+        lines.append(f"        let _spike_value: {rtype} = {value};")
+        lines.append("        self.spike_value_out = if _spk != 0 { _spike_value } else { 0 };")
     lines.append("        if _spk != 0 {")
     for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
