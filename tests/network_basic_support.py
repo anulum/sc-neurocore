@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_network_basic.py
 
+"""Support for the declarative network simulation engine tests."""
+
 from __future__ import annotations
 
-"""Tests for the declarative network simulation engine."""
 from dataclasses import dataclass
 import numpy as np
 import pytest

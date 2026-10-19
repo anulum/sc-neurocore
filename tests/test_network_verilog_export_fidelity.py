@@ -23,6 +23,7 @@ import shutil
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -35,12 +36,14 @@ from sc_neurocore.network.population import Population
 _HAVE_ICARUS = shutil.which("iverilog") is not None and shutil.which("vvp") is not None
 
 
-def _rtl_trains(top: Path, currents: list[float], steps: int) -> list[list[int]]:
+def _rtl_trains(
+    top: Path, currents: list[float], steps: int, width: int = 16, fraction: int = 8
+) -> list[list[int]]:
     """Simulate a one-population top at constant per-neuron currents; return spikes per step."""
     n = len(currents)
     packed = 0
     for k, current in enumerate(currents):
-        packed |= (round(current * 256) & 0xFFFF) << (16 * k)
+        packed |= (round(current * (1 << fraction)) & ((1 << width) - 1)) << (width * k)
     tb = top.parent / "tb.v"
     tb.write_text(
         "\n".join(
@@ -48,7 +51,7 @@ def _rtl_trains(top: Path, currents: list[float], steps: int) -> list[list[int]]
                 "`timescale 1ns/1ps",
                 "module tb;",
                 f"reg clk; reg rst_n; wire [{n - 1}:0] s;",
-                f"sc_network_top uut (.clk(clk), .rst_n(rst_n), .current_0({16 * n}'h{packed:x}), .spike_0(s));",
+                f"sc_network_top uut (.clk(clk), .rst_n(rst_n), .current_0({width * n}'h{packed:x}), .spike_0(s));",
                 "initial clk = 0; always #5 clk = ~clk;",
                 "integer k;",
                 "initial begin",
@@ -112,15 +115,89 @@ def test_sc_lapicque_export_elaborates_and_spikes(tmp_path: Path) -> None:
     assert np.abs(rtl.sum(axis=0) - expected.sum(axis=0)).max() <= 1
 
 
-def test_parameters_reach_the_rtl() -> None:
+def test_parameters_reach_the_rtl(tmp_path: Path) -> None:
     """Two tau_mem values give two different files; the parameter is not collapsed."""
-    from sc_neurocore.network.export import _emit_top
-
     files = {
-        tau: _emit_top(Network(Population("StochasticLIFNeuron", 1, params={"tau_mem": tau})), "t")
+        tau: Path(
+            export_verilog(
+                Network(Population("StochasticLIFNeuron", 1, params={"tau_mem": tau})),
+                str(tmp_path / str(tau)),
+            )
+        ).read_text()
         for tau in (5.0, 50.0)
     }
     assert files[5.0] != files[50.0]
+
+
+# RIGOR review 277: Q8.8 holds [-128, 127.99609375]; threshold 300 was written as 44 and a
+# gain of 256 as 0, so the RTL spiked where the model did not and the other way round.
+_OUT_OF_RANGE = [
+    ({"tau_mem": 2.0, "dt": 1.0, "v_threshold": 300.0}, 100.0, "v_threshold=300.0"),
+    ({"tau_mem": 2.0, "dt": 1.0, "v_threshold": 1.0, "resistance": 256.0}, 0.5, "gain=256.0"),
+]
+
+
+@pytest.mark.parametrize(("params", "current", "named"), _OUT_OF_RANGE)
+def test_a_value_outside_q8_8_is_refused_before_writing(
+    params: dict[str, float], current: float, named: str, tmp_path: Path
+) -> None:
+    """The out-of-range parameter is named and nothing is written."""
+    network = Network(Population("StochasticLIFNeuron", 1, params=params))
+    with pytest.raises(SCHardwareError, match=named):
+        export_verilog(network, str(tmp_path / "out"))
+    assert not (tmp_path / "out").exists()
+
+
+def test_a_parameter_that_rounds_to_zero_is_refused(tmp_path: Path) -> None:
+    """tau_mem 1000 gives a leak of 0.001, below one Q8.8 step: the leak would vanish."""
+    network = Network(Population("StochasticLIFNeuron", 1, params={"tau_mem": 1000.0}))
+    with pytest.raises(SCHardwareError, match="leak=0.001"):
+        export_verilog(network, str(tmp_path / "out"))
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize(
+    ("data_width", "fraction"), [(16, 0), (16, 16), (16, 20), (True, 8), (16.0, 8)]
+)
+def test_an_invalid_format_is_refused(data_width: Any, fraction: Any, tmp_path: Path) -> None:
+    """The format needs integer widths with 0 < fraction < data_width."""
+    network = Network(Population("StochasticLIFNeuron", 1))
+    with pytest.raises(SCHardwareError, match="data_width|fraction"):
+        export_verilog(network, str(tmp_path / "out"), data_width=data_width, fraction=fraction)
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.skipif(not _HAVE_ICARUS, reason="Icarus Verilog not available")
+@pytest.mark.parametrize(
+    ("params", "current", "width", "fraction", "spikes"),
+    [
+        (_OUT_OF_RANGE[0][0], 100.0, 32, 16, 0),
+        (_OUT_OF_RANGE[1][0], 0.5, 32, 16, 16),
+        ({"tau_mem": 2.0, "dt": 1.0, "v_threshold": 120.0}, 100.0, 16, 8, 8),
+        ({"tau_mem": 2.0, "dt": 1.0, "v_threshold": 1.0, "resistance": 2.0}, 0.5, 16, 8, 16),
+    ],
+)
+def test_a_format_that_holds_the_model_steps_as_the_model(
+    params: dict[str, float],
+    current: float,
+    width: int,
+    fraction: int,
+    spikes: int,
+    tmp_path: Path,
+) -> None:
+    """Q16.16 holds both refused models and the RTL equals Python; Q8.8 controls agree too."""
+    top = Path(
+        export_verilog(
+            Network(Population("StochasticLIFNeuron", 1, params=params)),
+            str(tmp_path),
+            data_width=width,
+            fraction=fraction,
+        )
+    )
+    rtl = _rtl_trains(top, [current], 16, width, fraction)
+    expected = _python_trains(Population("StochasticLIFNeuron", 1, params=params), [current], 16)
+    assert rtl == expected
+    assert sum(row[0] for row in expected) == spikes
 
 
 @pytest.mark.parametrize(

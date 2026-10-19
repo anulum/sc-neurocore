@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Discrete-time noisy leaky integrate-and-fire neuron
 
+"""Discrete-time noisy leaky integrate-and-fire neuron stepped by forward Euler."""
+
 from __future__ import annotations
 
 from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
@@ -73,6 +75,7 @@ class StochasticLIFNeuron(BaseNeuron):
     entropy_source: Any | None = None  # Optional external entropy (e.g. Quantum)
 
     def __post_init__(self) -> None:
+        """Validate the parameters and start at rest with a fresh generator."""
         if not np.isfinite(self.v_rest):
             raise ValueError("v_rest must be finite")
         if not np.isfinite(self.v_reset):
@@ -95,6 +98,22 @@ class StochasticLIFNeuron(BaseNeuron):
         self.reset_state()
 
     def step(self, input_current: float) -> int:
+        """Advance one forward Euler step and return the spike (1) or not (0).
+
+        During the refractory period the voltage is held at ``v_rest``. A
+        voltage that reaches ``v_threshold`` (``>=``) spikes and resets to
+        ``v_reset``.
+
+        Parameters
+        ----------
+        input_current : float
+            Finite input current of this step.
+
+        Returns
+        -------
+        int
+            1 on a spike, 0 otherwise.
+        """
         self._validate_runtime_state()
         if not np.isfinite(input_current):
             raise ValueError("input_current must be finite")
@@ -133,10 +152,12 @@ class StochasticLIFNeuron(BaseNeuron):
         return spike
 
     def reset_state(self) -> None:
+        """Return to rest and clear the refractory counter."""
         self.v = self.v_rest
         self.refractory_counter = 0
 
     def get_state(self) -> dict[str, Any]:
+        """Return the membrane voltage and the refractory counter."""
         self._validate_runtime_state()
         return {"v": float(self.v), "refractory": self.refractory_counter}
 
@@ -149,11 +170,19 @@ class StochasticLIFNeuron(BaseNeuron):
     def process_bitstream(
         self, input_bits: npt.ArrayLike, input_scale: float = 1.0
     ) -> npt.NDArray[np.uint8]:
-        """
-        Process a bitstream (array of 0s and 1s) as input current.
-        Returns an array of spikes (0s and 1s).
+        """Step once per bit with a current of ``bit * input_scale``.
 
-        input_scale: scaling factor to convert bit (0/1) to current amplitude.
+        Parameters
+        ----------
+        input_bits : array_like
+            One-dimensional array of 0 and 1 values.
+        input_scale : float, default 1.0
+            Finite, non-negative current amplitude of a 1 bit.
+
+        Returns
+        -------
+        numpy.ndarray
+            The spikes (0 or 1), one per bit, as ``uint8``.
         """
         bits = np.asarray(input_bits)
         if bits.ndim != 1:

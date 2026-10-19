@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1108
+expected_file_count = 1111
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4525,3 +4525,15 @@ rationale = "Network.to_torch StochasticLIF boundary: noise, refractoriness and 
 [[file]]
 path = "tests/test_network/to_torch_bridge_support.py"
 rationale = "Shared helpers of the Network.to_torch tests: dense topologies, a stepped NumPy reference and edge readout."
+
+[[file]]
+path = "src/sc_neurocore/neurons/stochastic_lif.py"
+rationale = "StochasticLIFNeuron: forward Euler noisy LIF with >= threshold, hard reset and refractory hold."
+
+[[file]]
+path = "tests/conftest.py"
+rationale = "Shared pytest configuration and fixtures of the SC-NeuroCore test suite."
+
+[[file]]
+path = "tests/network_basic_support.py"
+rationale = "Shared imports and helpers of the declarative network engine tests."

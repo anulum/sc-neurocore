@@ -6,9 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Shared test configuration and fixtures for SC-NeuroCore
 
-"""
-Shared test configuration and fixtures for SC-NeuroCore.
-"""
+"""Shared test configuration and fixtures for SC-NeuroCore."""
 
 import os
 import shlex

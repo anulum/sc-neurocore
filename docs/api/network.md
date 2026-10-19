@@ -376,10 +376,11 @@ to per-neuron mean rate (`Hz`). The bin-completion check uses
 
 ## 9. Verilog export
 
-`export_verilog(network, output_dir, target="ice40") -> str` writes RTL that
-elaborates (Icarus, Yosys `hierarchy -check`) and steps as the Python neurons
-do. Each population is lowered by the equation compiler to a neuron module
-(`sc_net_pop<i>_neuron`, Q8.8) from an `EquationNeuron` with the model's own
+`export_verilog(network, output_dir, target="ice40", *, data_width=16, fraction=8) -> str`
+writes RTL that elaborates (Icarus, Yosys `hierarchy -check`) and steps as the
+Python neurons do. Each population is lowered by the equation compiler to a
+neuron module (`sc_net_pop<i>_neuron`, signed fixed point, Q8.8 by default)
+from an `EquationNeuron` with the model's own
 update, `>=` threshold and hard reset, and `sc_network_top` instantiates one
 module per neuron:
 
@@ -391,8 +392,16 @@ module per neuron:
 Every neuron of a population must share its parameters and initial voltage.
 Other models, the 1907 Lapicque source profile, noise, refractoriness, an empty
 network and an empty population raise `SCHardwareError` before anything is
-written. The top has one 16-bit Q8.8 current word (`current_<i>`) and one
+written. The top has one `data_width`-bit current word (`current_<i>`) and one
 spike bit (`spike_<i>`) per neuron.
+
+Before anything is written, every lowered parameter (`decay`, `r`, `leak`,
+`gain`, `v_rest`, `v_reset`, `v_threshold`) and the initial voltage are checked
+at the format with `hardware_numeric_contract`: a value outside the format's
+range, which the encoder would wrap to another value, or a non-zero value that
+rounds to zero refuses the export with `SCHardwareError` naming the quantity.
+Q8.8 holds `[-128, 127.99609375]`; `v_threshold=300` or a gain `R·dt = 256`
+needs a wider format, for example `data_width=32, fraction=16`.
 
 The exporter writes two files:
 - `sc_network_top.v` — the neuron modules and the top
@@ -400,9 +409,13 @@ The exporter writes two files:
 
 Limitations:
 - Projections and topology are not exported, only the neurons
-- Q8.8 quantises the parameters (`e^(-dt/tau)`, `dt/tau_mem`); spike trains
+- The format rounds the parameters (`e^(-dt/tau)`, `dt/tau_mem`); spike trains
   equal the model's exactly where the arithmetic is exact
   (`tests/test_network_verilog_export_fidelity.py`)
+- Only parameters and the initial state are range-checked; the voltage a run
+  reaches is not, and the RTL saturates it
+- The Rust, Julia and Mojo files named `export` under `accel/` are unfinished
+  skeletons, marked as such, and are not called; export runs in Python only
 
 For full equation → Verilog compilation including state-machine generation
 and FPGA project files, use `sc-neurocore compile` (see `api/cli.md`) or
@@ -502,7 +515,7 @@ uniform delay when the biological detail tolerates it.
 | `net.run(backend="rust")` | imports `sc_neurocore_engine.NetworkRunner` lazily | `_get_rust_engine` (network.py:25) |
 | `net.run(backend="mpi")` | imports `mpi4py.MPI` lazily, raises if absent | `_require_mpi` (mpi_runner.py:36) |
 | `Projection(plasticity="stdp")` | activates `update_plasticity` per timestep | tested in `test_network_basic.py` |
-| `export_verilog(net, dir)` | calls `_check_exportable` first | raises `SCHardwareError` for non-LIF models |
+| `export_verilog(net, dir)` | calls `_check_exportable` first | raises `SCHardwareError` for unsupported models and unrepresentable formats; `tests/test_network_verilog_export_fidelity.py` |
 
 Every public symbol terminates either in tested code or in an explicit
 runtime check. There are no orphan helpers.
@@ -514,7 +527,7 @@ runtime check. There are no orphan helpers.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 18 public symbols wired; backend dispatcher complete |
-| 2 | Multi-angle tests | ⚠️ WARN | Network tests cover the orchestrator, monitors, topology, cortical column, gamma circuit, and 12 mocked-mpi4py MPIRunner paths including per-rank Rust dispatch. Real multi-rank coverage is still missing (task #17). `export.py` is not directly covered. |
+| 2 | Multi-angle tests | ⚠️ WARN | Network tests cover the orchestrator, monitors, topology, cortical column, gamma circuit, and 12 mocked-mpi4py MPIRunner paths including per-rank Rust dispatch. Real multi-rank coverage is still missing (task #17). `export.py` is covered by `tests/test_network_basic_export.py` and `tests/test_network_verilog_export_fidelity.py` (Icarus simulation against the Python neurons, Yosys elaboration, refusals). |
 | 3 | Rust path | ✅ PASS | `Network._run_rust` and the installed `sc_neurocore_engine==3.16.0` wheel are covered by `tests/test_rust_integration.py` plus the WC-E1 execution-path tests. Rust dispatch rejects `StateMonitor`, `RateMonitor`, `spike_gating`, and `fim_lambda` instead of silently skipping those Python-only semantics. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` remain pure Python — task #13 tracks that separate Rustification gap. |
 | 4 | Benchmarks | ✅ PASS | §6.1, §11, §11.1 measured this session. `benchmarks/sc_network_benchmark.py` covers the SC pipeline (encode/MAC/decode); its current [per-repetition report contract](../benchmarks/BENCHMARKS.md#stochastic-network-cli-records) is separate from network orchestration — that gap is now filled by §11. |
 | 5 | Performance docs | ✅ PASS | §11 + §6.1 + §11.1 |
@@ -579,37 +592,41 @@ SHARED_CONTEXT.md. Not blocking; future cleanup.
 
 ```bash
 PYTHONPATH=src python3 -m pytest \
-    tests/test_network_basic.py \
-    tests/test_network_monitors_stimulus.py \
-    tests/test_network/test_to_torch_bridge.py \
-    tests/test_cortical_column.py \
-    tests/test_cortical_column_dynamics.py \
-    tests/test_gamma_oscillation.py \
-    tests/test_topology.py \
-    tests/test_topology_generators.py -q
-# 87 passed in 2.26s  (verified 2026-04-17)
+    tests/test_network_basic_*.py \
+    tests/test_network_monitors_stimulus_*.py \
+    tests/test_network/ \
+    tests/test_torch_bridge_fidelity.py \
+    tests/test_network_verilog_export_fidelity.py \
+    tests/test_cortical_column_*.py \
+    tests/test_gamma_oscillation_*.py \
+    tests/test_topology_*.py -q
+# 428 passed, 29 skipped in 200.76s  (2026-10-19, this workstation; the skips
+# are Go, Julia and Mojo parity cases whose kernels are not built here, and an
+# unavailable-backend case that cannot run while the Go backend is built)
 ```
 
 What the existing tests cover:
 
-- `test_network_basic.py` — Network construction, add(), run() with each
+- `test_network_basic_*.py` — Network construction, add(), run() with each
   backend dispatch path, all monitor types, stimuli, plasticity flag
-- `test_network/test_to_torch_bridge.py` — Network-to-Torch projection
-  contracts, malformed connectivity rejection, and bridge parity checks
-- `test_network_monitors_stimulus.py` — Spike/State/Rate monitor
+- `test_network/test_to_torch_bridge_*.py`, `test_torch_bridge_fidelity.py` —
+  Network-to-Torch projection contracts, malformed connectivity rejection, and
+  spike trains, resets and weights compared with the Python neurons
+- `test_network_basic_export.py`, `test_network_verilog_export_fidelity.py` —
+  `export_verilog`: Icarus simulation against the Python neurons, Yosys
+  elaboration, format range checks and refusals that write nothing
+- `test_network_monitors_stimulus_*.py` — Spike/State/Rate monitor
   determinism, Poisson seed reproducibility, TimedArray clamping
-- `test_topology.py`, `test_topology_generators.py` — every generator's
+- `test_topology_*.py` — every generator's
   output shape, symmetry where claimed, deterministic seeding
-- `test_cortical_column*.py` — `CorticalColumn` dynamics smoke tests
+- `test_cortical_column_*.py` — `CorticalColumn` dynamics smoke tests
   (does NOT verify Potjans/Binzegger fidelity — see task #10)
-- `test_gamma_oscillation.py` — `PINGCircuit` smoke tests (does NOT verify
+- `test_gamma_oscillation_*.py` — `PINGCircuit` smoke tests (does NOT verify
   spectral peak in 30–80 Hz band — see task #11)
 
 What the existing tests do **not** cover:
 
 - `MPIRunner` real multi-rank semantics — 12 mocked-mpi4py tests exist; real `mpirun -n 2` coverage missing (task #17)
-- `export_verilog` — no direct test; covered transitively by FPGA flow
-  smoke tests at most
 - Performance regressions — no `pytest-benchmark` cases for the network
   loop; §11 numbers are point measurements
 

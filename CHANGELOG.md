@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `export_verilog` checks every lowered parameter and the initial voltage at
+  its format before writing: a value outside the range (threshold 300 was
+  written as 44 in Q8.8, a gain of 256 as 0) or a non-zero value that rounds
+  to zero is refused with `SCHardwareError` naming the quantity. The new
+  keyword arguments `data_width` and `fraction` choose a wider format (for
+  example Q16.16), in which those models step as the Python neurons do.
+
 - `Network.to_torch()` keeps projection weights in float64, the precision of
   the CSR data, and casts them to the input's dtype in the forward pass: a
   float64 run uses the network's own weights and a sync without training

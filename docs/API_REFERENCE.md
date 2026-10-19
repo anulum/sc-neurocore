@@ -25314,7 +25314,7 @@ seed : int or None, optional
 
 ## Module `network.export`
 
-### Function `export_verilog(network, output_dir, target)`
+### Function `export_verilog(network, output_dir, target, *, data_width, fraction)`
 Export the network's populations to Verilog files.
 
 Parameters
@@ -25325,6 +25325,10 @@ output_dir : str
     Directory for ``sc_network_top.v`` and ``params.vh``; created if needed.
 target : str, default "ice40"
     Label written into the files.
+data_width : int, default 16
+    Signed word width in bits of every parameter, state and current word.
+fraction : int, default 8
+    Fractional bits of that word (``Q8.8`` by default).
 
 Returns
 -------
@@ -25335,8 +25339,9 @@ Raises
 ------
 SCHardwareError
     For an empty network, an empty population, an unsupported model or
-    configuration, or parameters that differ between neurons of a
-    population; nothing is written.
+    configuration, parameters that differ between neurons of a
+    population, an invalid format, or a lowered parameter or initial
+    voltage the format cannot represent; nothing is written.
 
 ---
 
@@ -33465,11 +33470,15 @@ Process a bitstream as input current:
 (8,)
 
 - **__post_init__**()
+  - Validate the parameters and start at rest with a fresh generator.
 - **step**(input_current)
+  - Advance one forward Euler step and return the spike (1) or not (0).
 - **reset_state**()
+  - Return to rest and clear the refractory counter.
 - **get_state**()
+  - Return the membrane voltage and the refractory counter.
 - **process_bitstream**(input_bits, input_scale)
-  - Process a bitstream (array of 0s and 1s) as input current.
+  - Step once per bit with a current of ``bit * input_scale``.
 
 ---
 

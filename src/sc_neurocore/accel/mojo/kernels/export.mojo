@@ -5,6 +5,10 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for export
+#
+# UNFINISHED MIRROR: an untranslated skeleton of an earlier sc_neurocore.network.export,
+# not a working implementation and not called by any code path. Network
+# Verilog export runs only in Python (sc_neurocore.network.export.export_verilog).
 
 fn _check_exportable(network: Int) -> Int:
     var __check_exportable_line = 'for pop in network.populations:'
