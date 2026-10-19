@@ -60,7 +60,10 @@ def _only_error(graph: dict[str, Any], fragment: str) -> None:
 
 
 class TestResolution:
+    """A valid graph resolves to the effective run the public Network executes."""
+
     def test_default_graph_resolves_with_effective_parameters_and_exact_steps(self) -> None:
+        """The default graph: step counts, offsets, drives, delays in steps and derived seeds."""
         spec = resolve_graph(_graph())
         assert spec.n_steps == 500
         assert spec.n_neurons == 50
@@ -83,6 +86,7 @@ class TestResolution:
         assert ei.seed_source == "derived"
 
     def test_public_dict_is_path_free_and_digest_bound(self) -> None:
+        """The public projection is path-free, reproducible and its digest follows the seed."""
         first = resolve_graph(_graph()).to_public_dict()
         second = resolve_graph(_graph()).to_public_dict()
         assert first["schema_version"] == GRAPH_SPEC_SCHEMA_VERSION
@@ -105,6 +109,7 @@ class TestResolution:
         assert resolve_graph(moved).to_public_dict() == resolve_graph(placed).to_public_dict()
 
     def test_explicit_seeds_and_params_are_taken_as_given(self) -> None:
+        """Requested seeds and parameters are kept and marked as requested; omitted ones derive."""
         graph = _graph()
         graph["projections"][0]["seed"] = 123
         graph["populations"][0]["params"] = {"tau": 10.0, "v_threshold": 2.0}
@@ -130,6 +135,7 @@ class TestResolution:
         assert derived.seed_source == "derived"
 
     def test_resolve_raises_with_the_first_field(self) -> None:
+        """``resolve_graph`` raises for the first issue while every issue is collected."""
         graph = _graph()
         graph["populations"][0]["count"] = 2.5
         graph["projections"][1]["weight"] = 3.0
@@ -141,13 +147,17 @@ class TestResolution:
 
 
 class TestRejections:
+    """Each invalid graph is refused with a message naming the field."""
+
     def test_unknown_model_and_missing_default_model_name(self) -> None:
+        """A model outside the catalogue is refused by name."""
         graph = _graph()
         graph["populations"][0]["model"] = "LIFNeuron"
         _only_error(graph, "model 'LIFNeuron' is not a catalogue model")
 
     @pytest.mark.parametrize("count", [0, -3, 2.5, True, "40", None])
     def test_count_must_be_a_positive_integer(self, count: object) -> None:
+        """A population count must be a positive integer, not a float, bool or text."""
         graph = _graph()
         graph["populations"][0]["count"] = count
         errors = validate_graph(graph)
@@ -155,6 +165,7 @@ class TestRejections:
         assert "count must be" in errors[0]
 
     def test_duplicate_population_and_projection_ids(self) -> None:
+        """Duplicate population and projection ids are refused."""
         graph = _graph()
         graph["populations"][1]["id"] = "e"
         errors = validate_graph(graph)
@@ -164,11 +175,13 @@ class TestRejections:
         _only_error(graph, "Projection ei id is duplicated")
 
     def test_missing_endpoint(self) -> None:
+        """A projection whose target does not exist is refused."""
         graph = _graph()
         graph["projections"][0]["target"] = "ghost"
         _only_error(graph, "target ghost not found")
 
     def test_sign_must_agree_with_the_source_population(self) -> None:
+        """Weights must carry the sign of the source population's type."""
         graph = _graph()
         graph["projections"][1]["weight"] = 40.0
         _only_error(graph, "inhibitory sources need a negative weight")
@@ -177,6 +190,7 @@ class TestRejections:
         _only_error(graph, "excitatory sources need a positive weight")
 
     def test_conflicting_rules(self) -> None:
+        """A connection rule that contradicts its probability, or lacks one, is refused."""
         graph = _graph()
         graph["projections"][1]["probability"] = 0.2
         _only_error(graph, "rule all_to_all conflicts with probability 0.2")
@@ -190,12 +204,14 @@ class TestRejections:
 
     @pytest.mark.parametrize("probability", [0.0, 1.5, -0.1, float("nan")])
     def test_probability_domain(self, probability: float) -> None:
+        """A connection probability outside ``(0, 1]`` or NaN is refused."""
         graph = _graph()
         graph["projections"][0]["probability"] = probability
         errors = validate_graph(graph)
         assert len(errors) == 1 and "probability" in errors[0]
 
     def test_delay_must_be_whole_steps(self) -> None:
+        """Delays must be finite, non-negative whole numbers of steps."""
         graph = _graph()
         graph["projections"][0]["delay"] = 0.25
         _only_error(graph, "delay 0.25 ms is not a whole number of 0.1 ms steps")
@@ -207,6 +223,7 @@ class TestRejections:
         _only_error(graph, "delay must be a finite non-negative number")
 
     def test_autapses_only_on_self_projections(self) -> None:
+        """``autapses`` is accepted only on a self-projection."""
         graph = _graph()
         graph["projections"][0]["autapses"] = True
         _only_error(graph, "autapses only apply to a self-projection")
@@ -217,6 +234,7 @@ class TestRejections:
         assert resolve_graph(graph).projections[2].autapses is True
 
     def test_unknown_fields_are_rejected_not_ignored(self) -> None:
+        """Unknown fields at every level are refused rather than ignored."""
         graph = _graph()
         graph["projections"][0]["delay_ms"] = 1.0
         _only_error(graph, "Projection ei has unknown fields: delay_ms")
@@ -227,20 +245,29 @@ class TestRejections:
         _only_error(graph, "Network graph has unknown fields: p_conn")
 
     def test_model_contract_errors_name_the_population_field(self) -> None:
+        """Model contract refusals name the population field and the reason."""
         graph = _graph()
         graph["populations"][0]["params"] = {"tau_m": 20.0}
         issues = graph_issues(graph)
         assert len(issues) == 1
         assert issues[0].field == "populations[0].params.tau_m"
         assert "unknown parameter" in issues[0].message
+        # An integer-drive model with a timebase reaches the drive refusal; IntegerQIF
+        # steps 1 ms, so the graph does too (with whole-step delays).
+        graph = _graph(dt=1.0)
+        graph["projections"][0]["delay"] = 1.0
+        graph["populations"][0]["model"] = "IntegerQIFNeuron"
+        _only_error(graph, "integer-drive model")
+        # AkidaNeuron declares no timestep profile: refused at dt before the drive is read.
         graph = _graph()
         graph["populations"][0]["model"] = "AkidaNeuron"
-        _only_error(graph, "integer-drive model")
+        _only_error(graph, "Population e dt:")
         graph = _graph()
         graph["populations"][0]["model"] = "StochasticLIFNeuron"
         _only_error(graph, "perfectly correlated noise")
 
     def test_fixed_step_model_rejects_the_graph_timestep(self) -> None:
+        """A fixed-step model refuses a graph timestep that differs from its step."""
         graph = _graph()
         graph["populations"][0]["model"] = "IntegerQIFNeuron"
         errors = validate_graph(graph)
@@ -248,6 +275,7 @@ class TestRejections:
         assert "dt: model has a fixed step of 1.0 ms" in errors[0]
 
     def test_drive_blocks(self) -> None:
+        """Drive blocks must be complete, of a known kind and without stray fields."""
         graph = _graph()
         graph["populations"][0]["drive"] = {"kind": "constant"}
         _only_error(graph, "constant drive needs a finite current")
@@ -263,6 +291,7 @@ class TestRejections:
         _only_error(graph, "drive kind must be one of")
 
     def test_budgets_refuse_instead_of_shortening(self) -> None:
+        """Neuron, step and work budgets refuse a graph instead of shortening it."""
         graph = _graph(duration=10.0)
         graph["populations"][0]["count"] = MAX_NEURONS
         _only_error(graph, f"exceeds {MAX_NEURONS} limit")
@@ -276,10 +305,12 @@ class TestRejections:
 
     @pytest.mark.parametrize("seed", [-1, 2**32, 1.5, "42"])
     def test_seed_domain(self, seed: object) -> None:
+        """A graph seed outside ``[0, 2^32)`` or not an integer is refused."""
         graph = _graph(seed=seed)
         _only_error(graph, "seed must be an integer in [0, 2^32)")
 
     def test_all_issues_are_reported_together(self) -> None:
+        """Independent issues are reported together."""
         graph = _graph()
         graph["populations"][0]["count"] = 0
         graph["projections"][0]["delay"] = 0.33
@@ -287,6 +318,7 @@ class TestRejections:
         assert len(validate_graph(graph)) == 3
 
     def test_non_object_and_empty_graphs(self) -> None:
+        """A non-object graph, an empty one and mistyped lists are refused."""
         assert validate_graph([]) == ["Network graph must be an object"]
         assert validate_graph({"populations": [], "projections": []}) == [
             "Network has no populations"
@@ -296,7 +328,10 @@ class TestRejections:
 
 
 class TestAdmission:
+    """Which catalogue models a population may use."""
+
     def test_available_models_are_the_admissible_catalogue_models(self) -> None:
+        """The admissible list holds the default and AdEx, not Akida or StochasticLIF."""
         models = available_models()
         assert DEFAULT_MODEL in models
         assert "AdExNeuron" in models
@@ -305,6 +340,7 @@ class TestAdmission:
         assert len(models) > 100
 
     def test_population_model_admission_reasons(self) -> None:
+        """Admission names the reason a model is refused."""
         assert population_model_admission(DEFAULT_MODEL) is None
         assert population_model_admission("LIFNeuron") == "not a catalogue model"
         assert "integer-drive" in str(population_model_admission("AkidaNeuron"))

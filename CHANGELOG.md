@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio equation playground sees `rand()`, `randn()` and `poisson()` in
+  reset assignments (including `;`-separated ones): a seed is accepted and
+  replayed, an unseeded run discloses its counter draws, and a fresh trial is
+  not cached. A reset-only draw was refused a seed and labelled deterministic.
+
 - `export_verilog` checks every lowered parameter and the initial voltage at
   its format before writing: a value outside the range (threshold 300 was
   written as 44 in Q8.8, a gain of 256 as 0) or a non-zero value that rounds

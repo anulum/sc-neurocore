@@ -14,7 +14,10 @@ from tests.studio_simulation_support import *  # noqa: F403
 
 
 class TestSimulateEdgeCases:
-    def test_max_steps_cap(self):
+    """Limits and refusals of the Studio equation simulator."""
+
+    def test_max_steps_cap(self) -> None:
+        """An oversized run is capped at ``MAX_STEPS``."""
         result = simulate(
             equations=["dv/dt = I"],
             init={"v": 0.0},
@@ -24,7 +27,8 @@ class TestSimulateEdgeCases:
         )
         assert result["n_steps"] == MAX_STEPS
 
-    def test_downsampling_large_trace(self):
+    def test_downsampling_large_trace(self) -> None:
+        """A long trace is downsampled to at most ``MAX_PLOT_POINTS``."""
         n_steps = MAX_PLOT_POINTS * 3
         dt = 0.1
         duration = n_steps * dt
@@ -37,7 +41,8 @@ class TestSimulateEdgeCases:
         )
         assert len(result["time"]) <= MAX_PLOT_POINTS
 
-    def test_invalid_duration_raises(self):
+    def test_invalid_duration_raises(self) -> None:
+        """A duration with no complete step is refused."""
         with pytest.raises(ValueError, match="< 1 step"):
             simulate(
                 equations=["dv/dt = I"],
@@ -47,7 +52,8 @@ class TestSimulateEdgeCases:
                 current=0.0,
             )
 
-    def test_bad_equation_raises(self):
+    def test_bad_equation_raises(self) -> None:
+        """An equation that is not ``d<var>/dt = <expr>`` is refused."""
         with pytest.raises(ValueError):
             simulate(
                 equations=["v = I"],
@@ -57,7 +63,8 @@ class TestSimulateEdgeCases:
                 current=0.0,
             )
 
-    def test_multi_variable_states(self):
+    def test_multi_variable_states(self) -> None:
+        """The Izhikevich template reports both state traces, of equal length."""
         t = TEMPLATES["izhikevich"]
         result = simulate(
             equations=t["equations"],

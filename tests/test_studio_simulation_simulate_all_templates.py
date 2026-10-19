@@ -14,8 +14,11 @@ from tests.studio_simulation_support import *  # noqa: F403
 
 
 class TestSimulateAllTemplates:
+    """Every bundled Studio template runs."""
+
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_template_runs_without_error(self, name):
+    def test_template_runs_without_error(self, name: str) -> None:
+        """The template runs and returns a non-empty trace."""
         t = TEMPLATES[name]
         result = simulate(
             equations=t["equations"],

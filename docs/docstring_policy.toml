@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1111
+expected_file_count = 1115
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4537,3 +4537,19 @@ rationale = "Shared pytest configuration and fixtures of the SC-NeuroCore test s
 [[file]]
 path = "tests/network_basic_support.py"
 rationale = "Shared imports and helpers of the declarative network engine tests."
+
+[[file]]
+path = "tests/test_studio_simulation_simulate_basic.py"
+rationale = "Studio equation simulator: basic results, spikes, trace lengths and step counts."
+
+[[file]]
+path = "tests/test_studio_simulation_simulate_edge_cases.py"
+rationale = "Studio equation simulator: step cap, downsampling, refusals and multi-variable states."
+
+[[file]]
+path = "tests/test_studio_simulation_simulate_all_templates.py"
+rationale = "Studio equation simulator: every bundled template runs."
+
+[[file]]
+path = "tests/test_studio_network_graph_spec.py"
+rationale = "Studio network graph spec: resolution to the effective run, field-named refusals and model admission."

@@ -23,11 +23,13 @@ import copy
 from typing import Any
 
 import pytest
+from starlette.testclient import TestClient
 
 from sc_neurocore.neurons.equation_builder import from_equations
 from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.schema_validator import validate_schema_dict
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
+from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.experiment_spec import (
     ExperimentRejected,
     resolve_ode_experiment,
@@ -138,3 +140,56 @@ def test_playground_refuses_a_seed_for_equations_that_draw_nothing() -> None:
     """The refusal names both sources of randomness."""
     with pytest.raises(ExperimentRejected, match="no random draw"):
         resolve_ode_experiment({"equations": ["dv/dt = -v"], "duration": 2.0, "seed": 3})
+
+
+# RIGOR review 275 (NEURO-41BD-RESET-DRAWS-01): a draw only in a reset assignment was not
+# seen, so a seed was refused and an unseeded run was labelled deterministic and cacheable.
+RESET_DRAW = {
+    "equations": ["dv/dt = I"],
+    "threshold": "v > 0.5",
+    "reset": "v = rand()",
+    "init": {"v": 0.0},
+    "dt": 1.0,
+    "duration": 8.0,
+    "current": 1.0,
+}
+
+
+@pytest.mark.parametrize(
+    ("equations", "reset"),
+    [(["dv/dt = I"], "v = rand()"), (["dv/dt = I", "dw/dt = 0"], "w = 0.5; v = 0.25 * randn()")],
+)
+def test_a_draw_in_a_reset_assignment_takes_the_seed(equations: list[str], reset: str) -> None:
+    """Reset-only and semicolon-separated mixed resets: seed accepted, replayed, and it matters."""
+    request = {**RESET_DRAW, "equations": equations, "reset": reset}
+    spec = resolve_ode_experiment({**request, "seed": 11})
+    assert spec.public["randomness"]["kind"] == "counter-draws"
+    assert spec.public["randomness"]["seed"] == 11
+    first = run_experiment(spec)["raw"]["states"]["v"]
+    assert run_experiment(spec)["raw"]["states"]["v"] == first
+    other = resolve_ode_experiment({**request, "seed": 12})
+    assert run_experiment(other)["raw"]["states"]["v"] != first
+
+
+def test_a_fresh_trial_with_reset_draws_is_not_cached() -> None:
+    """Without a seed the reset draws are disclosed, and a fresh trial is not cacheable."""
+    replay = resolve_ode_experiment(RESET_DRAW)
+    assert replay.public["randomness"]["kind"] == "counter-draws"
+    assert replay.public["randomness"]["seed_source"] == "playground-default"
+    fresh = resolve_ode_experiment({**RESET_DRAW, "trial": "fresh"})
+    assert fresh.public["randomness"]["effective_trial"] == "fresh"
+    assert fresh.cacheable is False
+
+
+def test_the_http_route_runs_reset_draws() -> None:
+    """POST /api/simulate: seed 11 is accepted and replays; two fresh trials differ."""
+    client = TestClient(
+        create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+    )
+    seeded = [client.post("/api/simulate", json={**RESET_DRAW, "seed": 11}) for _ in range(2)]
+    assert [response.status_code for response in seeded] == [200, 200]
+    assert seeded[0].json()["experiment"]["randomness"]["seed"] == 11
+    assert seeded[0].json()["raw"]["states"]["v"] == seeded[1].json()["raw"]["states"]["v"]
+    fresh = [client.post("/api/simulate", json={**RESET_DRAW, "trial": "fresh"}) for _ in range(2)]
+    assert [response.json()["cache"]["hit"] for response in fresh] == [False, False]
+    assert fresh[0].json()["raw"]["states"]["v"] != fresh[1].json()["raw"]["states"]["v"]

@@ -508,6 +508,21 @@ def _equation_variables(equations: list[str]) -> list[str]:
     return names
 
 
+def _reset_right_hand_sides(reset: str | None) -> list[str | None]:
+    """Return the right-hand side of each ``var = expr`` reset assignment.
+
+    The reset string is split on ``;`` exactly as ``from_equations`` splits it.
+    """
+    if not reset:
+        return []
+    sides: list[str | None] = []
+    for part in reset.split(";"):
+        match = re.match(r"(\w+)\s*=\s*(.+)", part.strip())
+        if match is not None:
+            sides.append(match.group(2).strip())
+    return sides
+
+
 def resolve_ode_experiment(
     request: Mapping[str, Any], *, max_steps: int = MAX_STEPS
 ) -> ExperimentSpec:
@@ -544,8 +559,14 @@ def resolve_ode_experiment(
     initial_state = {name: float(init.get(name, 0.0)) for name in variables}
     expressions = list(equations) + [text for text in (threshold, reset) if text]
     noise = any(_NOISE_PATTERN.search(text) is not None for text in expressions)
-    # rand(), randn() and poisson() are counter-based draws keyed by the same seed.
-    draws = draws_in([_EQUATION_PATTERN.sub(r"\2", text) for text in expressions])
+    # rand(), randn() and poisson() are counter-based draws keyed by the same seed;
+    # they are read from each equation's right-hand side, the threshold and every
+    # reset assignment's right-hand side, as ``from_equations`` splits them.
+    draws = draws_in(
+        [_EQUATION_PATTERN.sub(r"\2", text) for text in equations]
+        + [threshold]
+        + _reset_right_hand_sides(reset)
+    )
     stochastic = noise or draws
     if seed is not None and not stochastic:
         raise ExperimentRejected(
