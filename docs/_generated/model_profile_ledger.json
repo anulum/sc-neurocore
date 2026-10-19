@@ -9026,7 +9026,7 @@
       },
       "profile_problems": [],
       "verified": {
-        "science_label": "S3",
+        "science_label": "S5",
         "silicon_label": "H1"
       },
       "declared": {
@@ -9048,8 +9048,8 @@
         {
           "facet": "dynamics_faithful",
           "declared": true,
-          "status": "stale",
-          "receipt": "LapicqueNeuron__dynamics_faithful__20260924T130847Z__lapicque.json",
+          "status": "bound",
+          "receipt": "LapicqueNeuron__dynamics_faithful__20261019T181830Z__lapicque.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -9111,8 +9111,8 @@
         {
           "facet": "class_validated",
           "declared": true,
-          "status": "stale",
-          "receipt": "LapicqueNeuron__class_validated__20260924T130838Z__lapicque.json",
+          "status": "bound",
+          "receipt": "LapicqueNeuron__class_validated__20261019T181642Z__lapicque.json",
           "validators": [
             {
               "facet": "class_validated",

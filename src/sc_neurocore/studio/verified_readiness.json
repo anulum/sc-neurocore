@@ -13400,9 +13400,7 @@
   "LapicqueNeuron": {
    "facets": [
     {
-     "changed_subjects": [
-      "model-module:src/sc_neurocore/neurons/models/lapicque.py"
-     ],
+     "changed_subjects": [],
      "declared": true,
      "evidence": [
       {
@@ -13443,13 +13441,11 @@
      ],
      "facet": "dynamics_faithful",
      "problems": [],
-     "receipt": "LapicqueNeuron__dynamics_faithful__20260924T130847Z__lapicque.json",
-     "status": "stale"
+     "receipt": "LapicqueNeuron__dynamics_faithful__20261019T181830Z__lapicque.json",
+     "status": "bound"
     },
     {
-     "changed_subjects": [
-      "model-module:src/sc_neurocore/neurons/models/lapicque.py"
-     ],
+     "changed_subjects": [],
      "declared": true,
      "evidence": [
       {
@@ -13490,8 +13486,8 @@
      ],
      "facet": "class_validated",
      "problems": [],
-     "receipt": "LapicqueNeuron__class_validated__20260924T130838Z__lapicque.json",
-     "status": "stale"
+     "receipt": "LapicqueNeuron__class_validated__20261019T181642Z__lapicque.json",
+     "status": "bound"
     },
     {
      "changed_subjects": [],
@@ -13636,8 +13632,8 @@
     }
    ],
    "profile": "lapicque",
-   "science_label": "S3",
-   "science_tier": 3,
+   "science_label": "S5",
+   "science_tier": 5,
    "silicon_label": "H1",
    "silicon_tier": 1
   },
