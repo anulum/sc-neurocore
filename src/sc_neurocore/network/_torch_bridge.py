@@ -69,24 +69,36 @@ class _PopulationSpec:
 class _ExactResetCell(nn.Module):
     """The deterministic discrete update of a supported model, with a surrogate gradient.
 
-    ``candidate = decay * (v - v_rest) + v_rest + gain * I``; the spike is
-    ``candidate >= threshold`` in the forward pass (the models' comparison) with the
-    surrogate's gradient in the backward pass; a spike resets to ``v_reset``.
+    The candidate voltage is computed with the model's own operations in the
+    model's own order, so a float64 run reproduces the Python neuron bit for bit
+    and a factor such as ``R·dt`` is never formed where the model does not form
+    it (``R·dt`` can overflow where ``(R·I)·dt`` does not):
+
+    * ``"flow"`` (SC Lapicque): ``v_inf = v_rest + R·I``; ``v_inf + (v - v_inf)·decay``;
+    * ``"euler"`` (StochasticLIF): ``v + (-(v - v_rest)·(dt/tau) + (R·I)·dt)``.
+
+    The spike is ``candidate >= threshold`` in the forward pass (the models'
+    comparison) with the surrogate's gradient in the backward pass; a spike
+    resets to ``v_reset``.
     """
 
     def __init__(
         self,
         *,
+        form: str,
         decay: float,
-        gain: float,
+        resistance: float,
+        dt: float,
         v_rest: float,
         v_reset: float,
         threshold: float,
         surrogate_fn: Callable[[torch.Tensor], torch.Tensor],
     ) -> None:
         super().__init__()
+        self.form = form
         self.decay = decay
-        self.gain = gain
+        self.resistance = resistance
+        self.dt = dt
         self.v_rest = v_rest
         self.v_reset = v_reset
         self.threshold = threshold
@@ -94,7 +106,12 @@ class _ExactResetCell(nn.Module):
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Return the spike and the next voltage of one step."""
-        candidate = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
+        if self.form == "flow":
+            v_inf = self.v_rest + self.resistance * current
+            candidate = v_inf + (v - v_inf) * self.decay
+        else:
+            leak = -(v - self.v_rest) * self.decay
+            candidate = v + (leak + (self.resistance * current) * self.dt)
         distance = candidate - self.threshold
         surrogate = self.surrogate_fn(distance).to(distance.dtype)
         exact = (distance >= 0).to(distance.dtype)
@@ -167,17 +184,18 @@ def _build_population_spec(
     sample = population.neurons[0]
     voltages = tuple(float(neuron.v) for neuron in population.neurons)
     if population.model_name in ("LapicqueNeuron", "SCLapicqueLIFNeuron"):
-        if getattr(sample, "profile", "sc_lif") != "sc_lif":
-            raise NotImplementedError(
-                "Network.to_torch() supports LapicqueNeuron only in its SC LIF profile; the "
-                f"{sample.profile!r} source profile latches one event and has no hard reset"
-            )
-        tau = _uniform(population, "tau")
-        dt = _uniform(population, "dt")
-        decay = math.exp(-dt / tau)
+        # Every neuron's profile, not the first one's: one shared cell steps them all.
+        for neuron in population.neurons:
+            if getattr(neuron, "profile", "sc_lif") != "sc_lif":
+                raise NotImplementedError(
+                    "Network.to_torch() supports LapicqueNeuron only in its SC LIF profile; the "
+                    f"{neuron.profile!r} source profile latches one event and has no hard reset"
+                )
         cell: nn.Module = _ExactResetCell(
-            decay=decay,
-            gain=(1.0 - decay) * _uniform(population, "resistance"),
+            form="flow",
+            decay=math.exp(-_uniform(population, "dt") / _uniform(population, "tau")),
+            resistance=_uniform(population, "resistance"),
+            dt=_uniform(population, "dt"),
             v_rest=_uniform(population, "v_rest"),
             v_reset=_uniform(population, "v_reset"),
             threshold=_uniform(population, "v_threshold"),
@@ -206,11 +224,12 @@ def _build_population_spec(
                     "for every neuron"
                 )
         dt = _uniform(population, "dt")
-        tau = _uniform(population, "tau_mem")
-        # v += -(v - v_rest)·dt/tau + R·I·dt: the model's forward Euler step, exactly.
+        # v += -(v - v_rest)·(dt/tau) + (R·I)·dt: the model's forward Euler step, exactly.
         cell = _ExactResetCell(
-            decay=1.0 - dt / tau,
-            gain=_uniform(population, "resistance") * dt,
+            form="euler",
+            decay=dt / _uniform(population, "tau_mem"),
+            resistance=_uniform(population, "resistance"),
+            dt=dt,
             v_rest=_uniform(population, "v_rest"),
             v_reset=_uniform(population, "v_reset"),
             threshold=_uniform(population, "v_threshold"),

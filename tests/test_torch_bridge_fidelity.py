@@ -25,6 +25,7 @@ import pytest
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
+from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 
 torch = pytest.importorskip("torch")
 
@@ -172,7 +173,7 @@ def test_an_overflowing_input_still_resets(
     bridge = Network(Population("StochasticLIFNeuron", 1, params=params)).to_torch().to(dtype=dtype)
     voltages: list[float] = []
     cell = next(module for _name, module in bridge.named_modules() if hasattr(module, "v_reset"))
-    cell.register_forward_hook(lambda _m, _i, out: voltages.append(float(out[1][0, 0])))
+    cell.register_forward_hook(lambda _m, _i, out: voltages.append(float(out[1][0, 0].detach())))
     _counts, traces = bridge(torch.tensor(drive[:, None, :], dtype=dtype), return_traces=True)
     assert traces[population.label][:, 0, 0].tolist() == expected[:, 0].tolist()
     assert all(np.isfinite(voltages)) and voltages[0] == 0.0
@@ -187,3 +188,70 @@ def test_float64_runs_several_projected_steps() -> None:
     counts = bridge(torch.full((5, 1, 2), 2.0, dtype=torch.float64))
     assert counts.dtype == torch.float64 and counts.sum().item() > 0
     counts.sum().backward()
+
+
+# RIGOR review 280.
+def _mixed_profiles(source_first: bool) -> Population:
+    """Return a Lapicque population whose neurons hold the SC and the 1907 source profile."""
+    population = Population("SCLapicqueLIFNeuron", 2, params={"dt": 1.0})
+    sc = population.neurons[0]
+    source = LapicqueNeuron(
+        profile="lapicque_1907",
+        tau=sc.tau,
+        dt=sc.dt,
+        resistance=sc.resistance,
+        v_rest=sc.v_rest,
+        v_reset=sc.v_reset,
+        v_threshold=sc.v_threshold,
+    )
+    population.neurons[0 if source_first else 1] = source
+    return population
+
+
+@pytest.mark.parametrize("source_first", [False, True])
+def test_every_neuron_profile_is_checked(source_first: bool) -> None:
+    """NEURO-TORCH-PROFILE-01: [SC, 1907] was accepted (Torch [8, 8], Python [8, 0])."""
+    with pytest.raises(NotImplementedError, match="lapicque_1907"):
+        Network(_mixed_profiles(source_first)).to_torch()
+
+
+@pytest.mark.parametrize(
+    ("dtype", "resistance"),
+    [(torch.float64, 1e308), (torch.float32, 1e38), (torch.float64, 1e307)],
+)
+def test_the_gain_keeps_the_model_order(dtype: object, resistance: float) -> None:
+    """NEURO-TORCH-GAIN-ORDER-01: R·dt overflowed where (R·I)·dt is zero at zero input.
+
+    The model forms (R·I)·dt; the bridge formed R·dt = inf and inf·0 = NaN from the
+    first step. Every voltage stays 0 with finite input gradients; 1e307 is the control.
+    """
+    params = {"resistance": resistance, "dt": 10.0}
+    population = Population("StochasticLIFNeuron", 1, params=params)
+    assert _python_trains(population, np.zeros((3, 1))).sum() == 0.0
+    bridge = Network(Population("StochasticLIFNeuron", 1, params=params)).to_torch()
+    bridge = bridge.to(dtype=dtype)
+    voltages: list[float] = []
+    cell = next(module for _name, module in bridge.named_modules() if hasattr(module, "v_reset"))
+    cell.register_forward_hook(lambda _m, _i, out: voltages.append(float(out[1][0, 0].detach())))
+    inputs = torch.zeros((3, 1, 1), dtype=dtype, requires_grad=True)
+    counts = bridge(inputs)
+    counts.sum().backward()
+    assert voltages == [0.0, 0.0, 0.0]
+    assert inputs.grad is not None and bool(torch.isfinite(inputs.grad).all())
+
+
+def test_a_float64_run_reproduces_the_python_voltages() -> None:
+    """The cell repeats the models' operations in their order: float64 voltages are bit-equal."""
+    drive = np.array([[0.37], [0.0], [1.3], [0.21], [0.9]])
+    for model in ("SCLapicqueLIFNeuron", "StochasticLIFNeuron"):
+        reference = Population(model, 1, params={"dt": 1.0})
+        expected = []
+        for value in drive[:, 0]:
+            reference.neurons[0].step(float(value))
+            expected.append(float(reference.neurons[0].v))
+        bridge = Network(Population(model, 1, params={"dt": 1.0})).to_torch().double()
+        seen: list[float] = []
+        cell = next(m for _n, m in bridge.named_modules() if hasattr(m, "v_reset"))
+        cell.register_forward_hook(lambda _m, _i, out: seen.append(float(out[1][0, 0].detach())))
+        bridge(torch.tensor(drive[:, None, :], dtype=torch.float64))
+        assert seen == expected, model

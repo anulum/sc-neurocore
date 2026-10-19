@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `Network.to_torch()` steps each model with its own operations in its own
+  order (`(R·I)·dt`, the SC flow through `v_inf`), so a float64 run equals the
+  Python voltages bit for bit and a resistance of 1e308 no longer turns a
+  zero-input state into NaN through a precomputed `R·dt`. Every neuron's
+  Lapicque profile is checked, not only the first one's.
+
 - With `substeps > 1`, `<state>_prev` in a threshold or graded value is the
   macro step's entry state in the RTL and the C and Rust kernels, as in
   `EquationNeuron.step`; the RTL compared with the penultimate sub-step
