@@ -75,6 +75,7 @@ def test_gating_form_is_exact_reciprocal_time_constant() -> None:
 
 
 def test_polynomial_and_rational_derivatives() -> None:
+    """A quadratic and a leaky-integrator right-hand side match central differences."""
     _assert_matches_finite_difference(
         "a*x**2 + b*x + c", "x", {"x": 1.3, "a": 2.0, "b": -1.0, "c": 5.0}
     )
@@ -114,16 +115,19 @@ def test_conductance_rate_expression() -> None:
 
 
 def test_no_dependence_returns_zero() -> None:
+    """An expression that does not contain the variable differentiates to the literal 0."""
     assert differentiate("I/C", "v") == "0"
     assert differentiate("g*(E_l - w) + I", "v") == "0"
 
 
 def test_unary_plus_and_negation() -> None:
+    """Unary plus is transparent and negation carries its sign into the derivative."""
     assert differentiate("+x", "x") == "1"
     _assert_matches_finite_difference("-x/tau", "x", {"x": 2.0, "tau": 4.0})
 
 
 def test_integer_and_float_constants_are_preserved() -> None:
+    """Integer and float coefficients survive the round trip and keep the value right."""
     _assert_matches_finite_difference("2*x + 0.5*x**2", "x", {"x": 1.1})
 
 
@@ -178,6 +182,7 @@ def test_non_smooth_dependence_on_variable_raises(expr: str) -> None:
 
 @pytest.mark.parametrize("expr", ["True + x", "None + x"])
 def test_non_numeric_constant_raises(expr: str) -> None:
+    """A boolean or ``None`` constant is not a number and is refused."""
     with pytest.raises(ExpressionDifferentiationError):
         differentiate(expr, "x")
 

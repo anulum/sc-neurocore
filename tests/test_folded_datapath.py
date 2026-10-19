@@ -166,6 +166,7 @@ def _run_dual(schema: str, current: float, n_steps: int) -> tuple[int, int]:
 
 @pytest.mark.parametrize(("schema", "current", "n_steps"), _MODELS)
 def test_datapath_pe_matches_per_instance(schema: str, current: float, n_steps: int) -> None:
+    """The combinational PE with an external state register spikes on the module's cycles."""
     mismatches, spikes = _run_dual(schema, current, n_steps)
     assert mismatches == 0, (
         f"{schema}: PE spike train diverged from per-instance ({mismatches} cycles)"

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1067
+expected_file_count = 1069
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4361,3 +4361,11 @@ rationale = "Compiled rand() and randn(): RTL equals the bit-true kernel and fol
 [[file]]
 path = "tests/test_graded_spikes.py"
 rationale = "Graded spike values: RTL, C and Rust kernels and the model agree; the folded PE equals the module; refusals stated."
+
+[[file]]
+path = "tests/test_expression_derivative.py"
+rationale = "Symbolic derivatives against central differences, in the golden model's namespace and safety gate, with refusals for non-smooth dependence."
+
+[[file]]
+path = "tests/test_folded_datapath.py"
+rationale = "The folded processing element against the per-instance module, cycle for cycle, on spiking workloads."
