@@ -6,12 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (projection_graph_rejects) from former test_to_torch_bridge.py
 
+"""Projection and graph checks of ``Network.to_torch()``: malformed graphs are refused by name."""
+
 from __future__ import annotations
 
-from to_torch_bridge_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+import pytest
+
+from sc_neurocore.network import Network, Population, Projection
+from tests.test_network.to_torch_bridge_support import _all_to_all_topology
+
+torch = pytest.importorskip("torch")
 
 
 def test_network_to_torch_rejects_projection_endpoint_outside_network() -> None:
+    """A projection whose target is not in the network is refused."""
     src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
     outsider = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="outsider")
@@ -86,6 +97,7 @@ def test_network_to_torch_rejects_malformed_projection_csr(
     topology: tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]],
     message: str,
 ) -> None:
+    """Each malformed CSR array is refused with a message naming the defect."""
     src = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="out")
     projection = Projection(src, out, weight=0.0, topology=_all_to_all_topology(2, 2, 0.0))
@@ -96,6 +108,7 @@ def test_network_to_torch_rejects_malformed_projection_csr(
 
 
 def test_network_to_torch_rejects_duplicate_output_trace_labels() -> None:
+    """Two output populations with one label would share a trace and are refused."""
     left = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
     right = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
 
@@ -127,6 +140,7 @@ def test_network_to_torch_rejects_registered_projection_tensor_corruption() -> N
 
 
 def test_network_to_torch_rejects_plastic_and_delayed_projections() -> None:
+    """Plastic and delayed projections have no bridge form and are refused."""
     src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
 

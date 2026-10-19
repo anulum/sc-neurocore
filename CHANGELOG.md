@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `Network.to_torch()` keeps projection weights in float64, the precision of
+  the CSR data, and casts them to the input's dtype in the forward pass: a
+  float64 run uses the network's own weights and a sync without training
+  writes every weight back unchanged (a weight of 0.99999999 had become 1.0).
+  A step whose voltage overflows to infinity now resets to `v_reset` instead
+  of turning the state into NaN and losing every later spike.
+
 - Spike gating probes only models whose purity is declared (the catalogue
   models, or a user class with `quiescence_pure = True`); any other model is
   never skipped. The probe also restores the standard `random` generator and

@@ -6,9 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_to_torch_bridge.py
 
-from __future__ import annotations
-
 """Support extracted from test_to_torch_bridge.py."""
+
+from __future__ import annotations
 
 from typing import Any, cast
 

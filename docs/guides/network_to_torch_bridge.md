@@ -29,14 +29,19 @@ The returned module:
 
 ## Current support boundary
 
-Supported population models:
+Supported population models, each stepped as the Python model steps it, with
+the model's `v >= v_threshold` comparison and a hard reset to `v_reset`:
 
-- `LapicqueNeuron`
-- `StochasticLIFNeuron` only when:
+- `SCLapicqueLIFNeuron`, or `LapicqueNeuron` in its SC LIF profile (exact flow
+  `v_inf + (v - v_inf)·e^(-dt/tau)`); the 1907 source profile is refused
+- `StochasticLIFNeuron` (forward Euler) only when:
   - `noise_std == 0.0`
   - `refractory_period == 0`
   - `entropy_source is None`
-  - `v_reset == v_rest`
+
+Every neuron of a population must share its parameters; each starts from its
+own voltage. A step whose candidate voltage overflows to infinity still spikes
+and resets to `v_reset`, as the Python neuron does.
 
 Not supported yet:
 
@@ -65,6 +70,15 @@ Only edges present in the original CSR graph remain trainable; absent edges are
 masked to zero.
 
 `sync_to_network()` writes the learned values back into the original CSR data.
+
+The weight parameters are float64, the precision of the CSR data, so a sync
+without training writes back every weight unchanged and a float64 run uses the
+network's own weights. The forward pass casts the weights to the input's dtype:
+a float32 run therefore uses float32-rounded weights, which can move an event
+whose input sits within float32 rounding of the threshold. Converting the
+bridge itself (for example `bridge.float()`) rounds the stored weights, and a
+later sync writes those rounded values. Parallel CSR entries (one source
+reaching one target twice) and a nonzero `weight_threshold` are refused.
 
 ## Example
 

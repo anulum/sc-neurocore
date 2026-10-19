@@ -99,13 +99,16 @@ class _ExactResetCell(nn.Module):
         surrogate = self.surrogate_fn(distance).to(distance.dtype)
         exact = (distance >= 0).to(distance.dtype)
         spike = exact + (surrogate - surrogate.detach())
-        held = spike.detach()
-        next_v = candidate * (1.0 - held) + self.v_reset * held
+        # Select rather than blend: a blend multiplies an overflowed candidate by
+        # zero on a spike, and inf * 0 would turn the hard reset into NaN.
+        next_v = torch.where(exact > 0, torch.full_like(candidate, self.v_reset), candidate)
         return spike, next_v
 
 
 def _csr_to_dense(projection: Projection) -> np.ndarray[Any, Any]:
-    dense = np.zeros((projection.target.n, projection.source.n), dtype=np.float32)
+    # float64, the CSR's own precision: an untrained sync and a double bridge keep
+    # every weight exactly; the forward pass casts to the input's dtype.
+    dense = np.zeros((projection.target.n, projection.source.n), dtype=np.float64)
     for src_idx in range(projection.source.n):
         for k in range(projection.indptr[src_idx], projection.indptr[src_idx + 1]):
             tgt_idx = projection.indices[k]
@@ -114,7 +117,7 @@ def _csr_to_dense(projection: Projection) -> np.ndarray[Any, Any]:
 
 
 def _csr_mask(projection: Projection) -> np.ndarray[Any, Any]:
-    mask = np.zeros((projection.target.n, projection.source.n), dtype=np.float32)
+    mask = np.zeros((projection.target.n, projection.source.n), dtype=np.float64)
     for src_idx in range(projection.source.n):
         for k in range(projection.indptr[src_idx], projection.indptr[src_idx + 1]):
             tgt_idx = projection.indices[k]
@@ -308,7 +311,9 @@ class NetworkTorchBridge(_TorchModuleBase):
         outputs = [id(pop) for pop in self.populations if outgoing[id(pop)] == 0]
         return outputs or [id(pop) for pop in self.populations]
 
-    def _projection_weight(self, projection: Projection) -> torch.Tensor:
+    def _projection_weight(
+        self, projection: Projection, dtype: torch.dtype | None = None
+    ) -> torch.Tensor:
         name = self._projection_names[id(projection)]
         weight = getattr(self, f"{name}_weight")
         mask = getattr(self, f"{name}_mask")
@@ -316,7 +321,8 @@ class NetworkTorchBridge(_TorchModuleBase):
             raise TypeError(
                 f"registered projection tensors are corrupted for {name}_weight/{name}_mask"
             )
-        return weight * mask
+        masked = weight * mask
+        return masked if dtype is None else masked.to(dtype)
 
     def _initial_state(
         self,
@@ -385,7 +391,7 @@ class NetworkTorchBridge(_TorchModuleBase):
             for projection in self.projections:
                 src_pid = id(projection.source)
                 tgt_pid = id(projection.target)
-                weight = self._projection_weight(projection)
+                weight = self._projection_weight(projection, dtype)
                 currents[tgt_pid] = currents[tgt_pid] + torch.matmul(last_spikes[src_pid], weight.T)
 
             new_spikes: dict[int, torch.Tensor] = {}

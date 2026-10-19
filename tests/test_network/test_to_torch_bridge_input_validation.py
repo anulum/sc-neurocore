@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (input_validation) from former test_to_torch_bridge.py
 
+"""Input and construction checks of ``Network.to_torch()``: each malformed case is refused by name."""
+
 from __future__ import annotations
 
-from to_torch_bridge_support import *  # noqa: F403
+import pytest
+
+from sc_neurocore.network import Network, Population
+from tests.test_network.to_torch_bridge_support import NetworkTorchBridge
+
+torch = pytest.importorskip("torch")
 
 
 def test_network_to_torch_rejects_unsupported_population_model() -> None:
+    """A model without a bridge cell is refused, naming the model."""
     pop = Population("AdaptiveThresholdIFNeuron", 2)
     net = Network(pop)
 
@@ -24,6 +32,7 @@ def test_network_to_torch_rejects_unsupported_population_model() -> None:
 
 
 def test_network_to_torch_validates_input_rank_and_dimension() -> None:
+    """Inputs must be ``(T, batch, input_dim)`` with the network's input width."""
     pop = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     net = Network(pop)
     bridge = net.to_torch()
@@ -44,6 +53,7 @@ def test_network_to_torch_validates_input_rank_and_dimension() -> None:
 
 
 def test_network_to_torch_validates_input_time_dtype_and_finiteness() -> None:
+    """Zero timesteps, integer inputs and non-finite values are refused."""
     pop = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     bridge = Network(pop).to_torch()
 
@@ -60,6 +70,7 @@ def test_network_to_torch_validates_input_time_dtype_and_finiteness() -> None:
 
 
 def test_network_to_torch_rejects_empty_populations() -> None:
+    """A population with no neurons is refused before the bridge is built."""
     pop = Population("LapicqueNeuron", 0, params={"tau": 5.0, "dt": 1.0}, label="empty")
 
     with pytest.raises(ValueError, match="n > 0"):

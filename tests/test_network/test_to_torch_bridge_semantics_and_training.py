@@ -6,12 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (semantics_and_training) from former test_to_torch_bridge.py
 
+"""Semantics and training of ``Network.to_torch()`` against stepping the Python network."""
+
 from __future__ import annotations
 
-from to_torch_bridge_support import *  # noqa: F403
+from typing import Any, cast
+
+import numpy as np
+import pytest
+
+from sc_neurocore.network import Network, Population, Projection
+from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
+from tests.test_network.to_torch_bridge_support import (
+    atan_surrogate_custom_op,
+    _all_to_all_topology,
+    _manual_counts,
+    _projection_edge_values_from_bridge,
+)
+
+torch = pytest.importorskip("torch")
 
 
 def test_network_to_torch_matches_manual_numpy_semantics_for_lapicque_chain() -> None:
+    """A three-population Lapicque chain gives the counts of the stepped NumPy network."""
     src = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     hid = Population("LapicqueNeuron", 3, params={"tau": 5.0, "dt": 1.0}, label="hid")
     out = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="out")
@@ -39,6 +56,7 @@ def test_network_to_torch_matches_manual_numpy_semantics_for_lapicque_chain() ->
 
 
 def test_network_to_torch_training_loss_decreases_on_simple_dataset() -> None:
+    """Adam on the bridge lowers the loss of a small dataset and sync writes the weights back."""
     src = Population("LapicqueNeuron", 2, params={"tau": 2.0, "dt": 1.0}, label="src")
     hid = Population("LapicqueNeuron", 4, params={"tau": 2.0, "dt": 1.0}, label="hid")
     out = Population("LapicqueNeuron", 2, params={"tau": 2.0, "dt": 1.0}, label="out")
@@ -89,6 +107,7 @@ def test_network_to_torch_training_loss_decreases_on_simple_dataset() -> None:
 
 
 def test_network_to_torch_return_traces_returns_output_label_trace_stack() -> None:
+    """``return_traces`` stacks each output population's spikes under its label."""
     pop = Population("LapicqueNeuron", 1, params={"tau": 2.0, "dt": 1.0}, label="out")
     net = Network(pop)
     bridge = net.to_torch()
@@ -104,6 +123,7 @@ def test_network_to_torch_return_traces_returns_output_label_trace_stack() -> No
 
 
 def test_network_to_torch_supports_deterministic_stochastic_lif() -> None:
+    """A noise-free StochasticLIF population runs through the bridge."""
     pop = Population(
         StochasticLIFNeuron,
         2,

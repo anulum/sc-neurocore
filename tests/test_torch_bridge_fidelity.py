@@ -108,7 +108,74 @@ def test_untrained_sync_keeps_every_weight() -> None:
     projection = Projection(source, target, 1.0, topology=csr)
     before = projection.data.copy()
     Network(source, target, projection).to_torch().sync_to_network()
-    assert np.allclose(projection.data, before)
+    assert np.array_equal(projection.data, before)
+
+
+def _edge_events(weight: float, dtype: object) -> tuple[list[float], list[float]]:
+    """One edge source→target, source input [2, 0]: target events in Python and in Torch."""
+    python_source = Population("StochasticLIFNeuron", 1)
+    python_target = Population("StochasticLIFNeuron", 1)
+    expected, carried = [], 0.0
+    for drive in (2.0, 0.0):
+        expected.append(python_target.neurons[0].step(weight * carried))
+        carried = python_source.neurons[0].step(drive)
+    source = Population("StochasticLIFNeuron", 1)
+    target = Population("StochasticLIFNeuron", 1)
+    edge = (np.array([0, 1]), np.array([0]), np.array([weight]))
+    bridge = Network(source, target, Projection(source, target, 1.0, topology=edge)).to_torch()
+    bridge = bridge.to(dtype=dtype)
+    _counts, traces = bridge(torch.tensor([[[2.0]], [[0.0]]], dtype=dtype), return_traces=True)
+    return [float(e) for e in expected], traces[target.label][:, 0, 0].tolist()
+
+
+def test_a_double_bridge_keeps_float64_weights() -> None:
+    """Weight 0.99999999 stays below the threshold of 1 in float64, as in the network."""
+    expected, events = _edge_events(0.99999999, torch.float64)
+    assert expected == [0.0, 0.0] and events == expected
+    # Control: an exactly representable weight that reaches the threshold fires in both.
+    expected, events = _edge_events(1.0, torch.float64)
+    assert expected == [0.0, 1.0] and events == expected
+
+
+def test_untrained_sync_is_exact_for_a_weight_float32_cannot_hold() -> None:
+    """Sync without training writes back 0.99999999 itself, not its float32 rounding 1.0."""
+    source = Population("StochasticLIFNeuron", 1)
+    target = Population("StochasticLIFNeuron", 1)
+    edge = (np.array([0, 1]), np.array([0]), np.array([0.99999999]))
+    projection = Projection(source, target, 1.0, topology=edge)
+    bridge = Network(source, target, projection).to_torch()
+    bridge(torch.zeros((2, 1, 1)))
+    bridge.sync_to_network()
+    assert projection.data.tolist() == [0.99999999]
+
+
+@pytest.mark.parametrize(
+    ("dtype", "first", "resistance", "events"),
+    [
+        (torch.float64, 1e307, 100.0, [1.0, 0.0, 1.0, 1.0]),
+        (torch.float32, 1e38, 10.0, [1.0, 0.0, 1.0, 1.0]),
+        (torch.float64, 1e150, 2.0, [1.0, 0.0, 0.0, 0.0]),
+    ],
+)
+def test_an_overflowing_input_still_resets(
+    dtype: object, first: float, resistance: float, events: list[float]
+) -> None:
+    """A finite input whose step overflows spikes, resets to v_reset and keeps a finite state.
+
+    The 1e150 row, whose step does not overflow, is the well-conditioned control.
+    """
+    drive = np.array([[first], [0.0], [0.2], [0.2]])
+    params = {"resistance": resistance}
+    population = Population("StochasticLIFNeuron", 1, params=params)
+    expected = _python_trains(population, drive)
+    assert expected[:, 0].tolist() == events
+    bridge = Network(Population("StochasticLIFNeuron", 1, params=params)).to_torch().to(dtype=dtype)
+    voltages: list[float] = []
+    cell = next(module for _name, module in bridge.named_modules() if hasattr(module, "v_reset"))
+    cell.register_forward_hook(lambda _m, _i, out: voltages.append(float(out[1][0, 0])))
+    _counts, traces = bridge(torch.tensor(drive[:, None, :], dtype=dtype), return_traces=True)
+    assert traces[population.label][:, 0, 0].tolist() == expected[:, 0].tolist()
+    assert all(np.isfinite(voltages)) and voltages[0] == 0.0
 
 
 def test_float64_runs_several_projected_steps() -> None:

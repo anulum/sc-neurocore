@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1103
+expected_file_count = 1108
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4505,3 +4505,23 @@ rationale = "Spike gating is exact: probe acceptance and refusals, gated equals 
 [[file]]
 path = "tests/test_network_basic_population.py"
 rationale = "Population construction, stepping, reset, state access and spike gating."
+
+[[file]]
+path = "tests/test_network/test_to_torch_bridge_input_validation.py"
+rationale = "Network.to_torch input and construction checks: malformed inputs and models are refused by name."
+
+[[file]]
+path = "tests/test_network/test_to_torch_bridge_projection_graph_rejects.py"
+rationale = "Network.to_torch projection and graph checks: malformed CSR, endpoints, labels, plastic and delayed projections refused."
+
+[[file]]
+path = "tests/test_network/test_to_torch_bridge_semantics_and_training.py"
+rationale = "Network.to_torch semantics and training against stepping the Python network."
+
+[[file]]
+path = "tests/test_network/test_to_torch_bridge_stochastic_lif_rejects.py"
+rationale = "Network.to_torch StochasticLIF boundary: noise, refractoriness and entropy refused; hard reset to v_reset accepted."
+
+[[file]]
+path = "tests/test_network/to_torch_bridge_support.py"
+rationale = "Shared helpers of the Network.to_torch tests: dense topologies, a stepped NumPy reference and edge readout."
