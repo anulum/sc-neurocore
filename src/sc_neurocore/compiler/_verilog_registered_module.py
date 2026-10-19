@@ -61,7 +61,9 @@ def compile_to_verilog(
         ``"lut-v1"`` (default) reads one sample of a fixed table per
         transcendental call; ``"v2"`` instantiates the function units of
         :mod:`sc_neurocore.compiler.function_units` (range reduction and
-        quadratic tables, errors in ``docs/validation/lut_accuracy_v1.md``).
+        quadratic tables). Measured errors: ``docs/validation/lut_accuracy_v1.md``
+        for ``"lut-v1"``, ``docs/validation/function_units_v2_accuracy.md`` for
+        ``"v2"``.
 
     """
     if not signed:

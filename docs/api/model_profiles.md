@@ -92,9 +92,14 @@ Poisson bin, then the reset rule if any.
 
 The randomness contract is `none`, `lfsr16-threshold` (a model-scoped 16-bit
 LFSR seeded from `threshold.rng_seed` decides stochastic trials; replayable),
+`philox-draws` (an expression, the graded `threshold.spike_value` included,
+calls `rand()`, `randn()` or `poisson()`: counter-based Philox4x32-10 draws
+keyed by the same `threshold.rng_seed`; replayable),
 `diffusion-noise-global-rng` (an expression names `xi`, drawn from NumPy's
-process-global stream; not replayable by the model alone), or both. No bundled
-schema uses diffusion noise.
+process-global stream; not replayable by the model alone), or their
+combination joined by `+` in that order. No bundled schema uses diffusion noise
+or draws. A schema neuron's draws are separated per instance by
+`UniversalNeuron(..., random_stream=n)`.
 
 ## Contradictions and admission
 

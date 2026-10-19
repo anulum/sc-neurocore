@@ -26,6 +26,7 @@ function BitstreamSpikeRecorderState()
 end
 
 function BitstreamSpikeRecorderState(dt_ms::Real)
+    isfinite(dt_ms) || throw(ArgumentError("dt_ms must be finite."))
     dt_ms < 0 && throw(ArgumentError("dt_ms must be non-negative."))
     BitstreamSpikeRecorderState(Float64(dt_ms), UInt8[])
 end

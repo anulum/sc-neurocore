@@ -14,21 +14,27 @@ from tests.c_fixed_emitter_support import *  # noqa: F403
 
 
 class TestValidation:
-    def test_invalid_lang_raises(self):
+    """Configuration and syntax the bit-exact expression emitter refuses or accepts."""
+
+    def test_invalid_lang_raises(self) -> None:
+        """Only 'c' and 'rust' are accepted languages."""
         with pytest.raises(ValueError, match="lang must be"):
             emit_c_fixed_expr("v", {"v": "s->v"}, {}, Q, lang="go")
 
-    def test_word_too_wide_raises(self):
+    def test_word_too_wide_raises(self) -> None:
+        """A word whose product needs more than 64 bits is refused."""
         with pytest.raises(ValueError, match="2\\*data_width <= 64"):
             emit_c_fixed_expr("v", {"v": "s->v"}, {}, Q88(data_width=40, fraction=8))
 
-    def test_q16_16_supported(self):
+    def test_q16_16_supported(self) -> None:
+        """Q16.16 products fit the 64-bit intermediate and are emitted."""
         expr, *_ = emit_c_fixed_expr(
             "a * b", {"a": "s->a", "b": "s->b"}, {}, Q88(data_width=32, fraction=16)
         )
         assert "fxmul(" in expr
 
-    def test_generic_visit_rejects_unknown_node(self):
+    def test_generic_visit_rejects_unknown_node(self) -> None:
+        """An AST node outside the grammar, such as a list, is refused."""
         import ast
 
         emitter = _CFixedExprEmitter({}, {}, Q)

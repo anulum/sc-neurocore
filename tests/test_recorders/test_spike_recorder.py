@@ -33,6 +33,19 @@ def test_recorder_rejects_negative_dt() -> None:
         BitstreamSpikeRecorder(dt_ms=-1.0)
 
 
+@pytest.mark.parametrize("dt_ms", [float("nan"), float("inf"), float("-inf")])
+def test_recorder_rejects_non_finite_dt(dt_ms: float) -> None:
+    """NaN and infinite sample durations are refused at construction (SCNC-REC-TIME-01)."""
+    with pytest.raises(ValueError, match="dt_ms must be finite"):
+        BitstreamSpikeRecorder(dt_ms=dt_ms)
+
+
+def test_recorder_keeps_the_zero_duration_dry_run() -> None:
+    """The documented dt_ms == 0 dry run still records and reports a rate of 0."""
+    recorder = BitstreamSpikeRecorder(dt_ms=0.0, spikes=[1, 0, 1])
+    assert recorder.firing_rate_hz() == 0.0
+
+
 def test_recorder_as_array_dtype() -> None:
     """as_array should return uint8 dtype."""
     recorder = BitstreamSpikeRecorder()
@@ -71,7 +84,7 @@ def test_recorder_firing_rate_empty() -> None:
 
 
 def test_recorder_reset_clears() -> None:
-    """reset should clear all spikes."""
+    """Calling reset() clears every recorded spike."""
     recorder = BitstreamSpikeRecorder()
     recorder.record(1)
     recorder.reset()

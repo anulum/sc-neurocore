@@ -10,6 +10,37 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The bit-true C and Rust kernels mirror every integrator the RTL lowers:
+  `rk4`, `exp_euler` and `gauss_seidel` join `euler` and `map`, and the macro
+  steps of sub-stepped crossing models are mirrored (draws once per macro
+  step, graded value on the boundary). Every executable bundled schema using
+  these methods gives identical RTL and C traces at Q8.8 and Q16.16 (150 steps
+  each). The RTL's integrator scalings (`dt`, the RK4 stage factors and
+  `dt/6`) now round under the format's rounding mode like every other product:
+  with `rounding="nearest"` the Euler kernel rounded the `dt` product while the
+  RTL truncated it, so the two disagreed from the first step. With the default
+  truncation the RTL of all 80 bundled schemas at six formats is byte-identical.
+
+- Counter-based draws and graded spikes beyond the compiler:
+  - `sc-neurocore compile` takes `--data-width`, `--fraction` (both were
+    documented but missing), `--method`, `--function-lowering`, `--rng-seed`,
+    `--random-stream` and `--spike-value`; `from_equations` takes `rng_seed`,
+    `random_stream` and `spike_value`.
+  - Schemas: `threshold.spike_value` makes a schema neuron graded and
+    `UniversalNeuron(random_stream=...)` separates instances; the model profile
+    reports `philox-draws` (with its seed) and admits a seed override for a
+    schema that draws; the schema validator uses the model's real function
+    vocabulary, so `rand`, `sigmoid`, `exprel`, `clip` and conditionals no
+    longer raise unknown-name warnings.
+  - The Studio equation playground accepts a seed for equations that call
+    `rand()`, `randn()` or `poisson()`, keys their draws with it and reports
+    the Philox generator (`counter-draws`, or `counter-draws+diffusion-noise`
+    with `xi`).
+- Close the remaining review P3 items: the v2 accuracy report is linked from
+  `compile_to_verilog`; `BitstreamSpikeRecorder` (Python, Rust, Julia) refuses a
+  NaN or infinite `dt_ms`; eight C-emitter test modules are type-complete under
+  strict mypy and documented.
+
 - Fix the equation compiler findings of the 2026-10-19 reviews:
   - `randn()` near `u = 1` (word 0 close to `2^32`) was up to 1.84 LSB from the
     model at Q16.16; the radius there is now summed as a series, and the

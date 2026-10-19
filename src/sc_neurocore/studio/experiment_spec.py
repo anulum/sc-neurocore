@@ -58,6 +58,7 @@ from sc_neurocore.studio.model_run_contract import (
     resolve_drive_trace,
     resolve_model_run_inputs,
 )
+from sc_neurocore.neurons.equation_random import draws_in
 from sc_neurocore.studio.simulation import MAX_STEPS, _make_current_trace
 from sc_neurocore.studio.state_layout import declared_state
 
@@ -69,7 +70,9 @@ FRESH_SEED_BITS = 16
 
 Source = Literal["model", "ode"]
 Trial = Literal["replay", "fresh"]
-RandomnessKind = Literal["none", "seeded-model", "diffusion-noise"]
+RandomnessKind = Literal[
+    "none", "seeded-model", "diffusion-noise", "counter-draws", "counter-draws+diffusion-noise"
+]
 SeedSource = Literal["none", "request", "model-default", "playground-default", "drawn"]
 ExecutionMode = Literal["refused", "job_required"]
 
@@ -540,11 +543,17 @@ def resolve_ode_experiment(
         )
     initial_state = {name: float(init.get(name, 0.0)) for name in variables}
     expressions = list(equations) + [text for text in (threshold, reset) if text]
-    stochastic = any(_NOISE_PATTERN.search(text) is not None for text in expressions)
+    noise = any(_NOISE_PATTERN.search(text) is not None for text in expressions)
+    # rand(), randn() and poisson() are counter-based draws keyed by the same seed.
+    draws = draws_in([_EQUATION_PATTERN.sub(r"\2", text) for text in expressions])
+    stochastic = noise or draws
     if seed is not None and not stochastic:
         raise ExperimentRejected(
             field="seed",
-            reason="the equations reference no diffusion noise (xi); a seed is not accepted",
+            reason=(
+                "the equations reference no diffusion noise (xi) and no random draw "
+                "(rand, randn, poisson); a seed is not accepted"
+            ),
         )
     if stochastic:
         if trial == "fresh":
@@ -559,13 +568,28 @@ def resolve_ode_experiment(
         else:
             effective_seed = DEFAULT_NOISE_SEED
             seed_source = "playground-default"
+        generators = [
+            name
+            for name, used in (
+                ("Philox4x32-10 counter draws keyed by the seed", draws),
+                ("numpy.random.default_rng", noise),
+            )
+            if used
+        ]
+        kind: RandomnessKind = (
+            "counter-draws+diffusion-noise"
+            if draws and noise
+            else "counter-draws"
+            if draws
+            else "diffusion-noise"
+        )
         randomness: dict[str, Any] = {
-            "kind": "diffusion-noise",
+            "kind": kind,
             "seed": effective_seed,
             "seed_source": seed_source,
             "trial": trial,
             "effective_trial": "fresh" if trial == "fresh" else "replay",
-            "generator": "numpy.random.default_rng",
+            "generator": "; ".join(generators),
         }
     else:
         effective_seed = None

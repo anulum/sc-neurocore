@@ -498,6 +498,11 @@ sc-neurocore compile "dv/dt = -(v - E_L)/tau_m + I/C" \
   -o build/my_lif
 ```
 
+`--data-width` and `--fraction` set the format (also of the testbench),
+`--method` the integrator, `--function-lowering lut-v1|v2` the transcendental
+lowering, `--rng-seed` and `--random-stream` the key and stream of `rand()`,
+`randn()` and `poisson()`, and `--spike-value` a graded spike output.
+
 Hardware profiles provide checked default widths, fractions, overflow modes,
 and rounding modes. They are configuration inputs, not evidence that a design
 meets timing, area, power, or certification requirements. Those claims require
@@ -505,8 +510,13 @@ a named synthesis/place-and-route flow and its retained reports.
 
 ## 12. Current boundaries
 
-- The whole-neuron integer C/Rust generator mirrors only `euler` and `map`;
-  it rejects other integrators.
+- The whole-neuron integer C/Rust generator mirrors every integrator
+  (`euler`, `map`, `rk4`, `exp_euler`, `gauss_seidel`) and the macro steps of
+  sub-stepped crossing models; it does not mirror stochastic spike detection
+  (the RTL's LFSR) and refuses the rounding modes the RTL alone supports.
+- The integrator scalings (`dt`, the RK4 stage factors, `dt/6`) round under the
+  format's rounding mode like every product; before 2026-10-19 the RTL
+  truncated them while the kernel rounded the Euler `dt` product.
 - Registered and folded Verilog emission currently requires signed state.
 - The diffusion-noise symbol `xi` has no RTL or kernel lowering; an expression
   using it, the graded value included, is refused. `randn()` is the

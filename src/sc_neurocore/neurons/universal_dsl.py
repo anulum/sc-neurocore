@@ -249,7 +249,14 @@ class UniversalNeuron:
     method_override : str, optional
         Override the integration method.
     rng_seed_override : int, optional
-        Override the stochastic-threshold LFSR seed.
+        Override the seed: the stochastic-threshold LFSR seed and the Philox key
+        of ``rand()``, ``randn()`` and ``poisson()`` draws.
+    random_stream : int, optional
+        Instance stream of the draws, ``[0, 2**32)``; neurons of one schema
+        built with different streams draw independently from the same seed.
+
+    A schema's ``threshold.spike_value`` makes the spike graded, as
+    ``EquationNeuron(spike_value=...)`` does.
 
     Raises
     ------
@@ -267,6 +274,7 @@ class UniversalNeuron:
         dt_override: float | None = None,
         method_override: str | None = None,
         rng_seed_override: int | None = None,
+        random_stream: int = 0,
     ) -> None:
         """Initialise from a validated schema dictionary."""
         self._schema = deepcopy(schema)
@@ -349,6 +357,8 @@ class UniversalNeuron:
             rate_expression=rate_expression,
             probability_expression=probability_expression,
             rng_seed=rng_seed,
+            random_stream=random_stream,
+            spike_value=threshold_config.get("spike_value"),
         )
 
         logger.debug(

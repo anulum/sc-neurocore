@@ -14,18 +14,23 @@ from tests.c_fixed_emitter_support import *  # noqa: F403
 
 
 class TestLutIndexMath:
-    def test_symmetric_offset_and_shift(self):
+    """Look-up-table index arithmetic emitted for the transcendental tables."""
+
+    def test_symmetric_offset_and_shift(self) -> None:
+        """The exp table on [-16, 16) step 1/8 at Q8.8: offset 4096, right shift 5."""
         # exp uses [-16,16) step 0.125 → offset 16<<8=4096, shift 8-3=5
         _e, stmts, *_ = _c("exp(v)", state={"v": "s->v"})
         raw = next(s for s in stmts if "_raw" in s)
         assert "4096" in raw and ">> 5" in raw
 
-    def test_positive_log_offset_and_shift(self):
+    def test_positive_log_offset_and_shift(self) -> None:
+        """The log table on its positive grid at Q8.8: offset 1, right shift 3."""
         # log uses [1/256, 8+1/256) step 1/32 → offset 1, shift 8-5=3
         _e, stmts, *_ = _c("log(v)", state={"v": "s->v"})
         raw = next(s for s in stmts if "_raw" in s)
         assert "- 1" in raw and ">> 3" in raw
 
-    def test_lut_start_offsets_table_names(self):
+    def test_lut_start_offsets_table_names(self) -> None:
+        """lut_start numbers the tables, and the returned count continues from it."""
         _e, _s, tables, _fv, count, _u = _c("exp(v)", state={"v": "s->v"}, lut_start=3)
         assert "_exp_lut3" in tables and count == 4

@@ -752,11 +752,17 @@ def from_equations(
     input_unit: Any | None = None,
     detection: str = "level",
     noise_rng: np.random.Generator | None = None,
+    rng_seed: int = DEFAULT_LFSR16_SEED,
+    random_stream: int = 0,
+    spike_value: str | None = None,
 ) -> EquationNeuron:
     """Build an EquationNeuron from Brian2-style equation strings.
 
     ``noise_rng`` seeds the diffusion-noise symbol ``xi``; without it the
-    process-global ``numpy.random`` stream is used.
+    process-global ``numpy.random`` stream is used. ``rng_seed`` and
+    ``random_stream`` key the counter-based ``rand()``, ``randn()`` and
+    ``poisson()`` draws, and ``spike_value`` makes a spike graded, as for
+    :class:`EquationNeuron`.
 
     Examples
     --------
@@ -826,4 +832,7 @@ def from_equations(
         input_unit=input_unit,
         detection=detection,
         noise_rng=noise_rng,
+        rng_seed=rng_seed,
+        random_stream=random_stream,
+        spike_value=spike_value,
     )

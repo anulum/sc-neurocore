@@ -89,6 +89,7 @@ def test_public_signatures_remain_explicit_and_stable() -> None:
 def test_each_module_owns_one_compiler_responsibility() -> None:
     """Top-level definitions cannot drift back into a mixed compiler module."""
     assert _top_level_definitions(_MODULES["_verilog_integrators"]) == {
+        "_round_shift",
         "_emit_euler_deriv_wires",
         "_emit_exp_euler_deriv_wires",
         "_emit_gauss_seidel_deriv_wires",

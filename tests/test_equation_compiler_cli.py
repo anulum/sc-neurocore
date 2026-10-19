@@ -104,3 +104,47 @@ class TestCompileCLI:
         assert result == 0
         assert verilog_path.is_file()
         assert "module my_custom_lif" in verilog_path.read_text(encoding="utf-8")
+
+    def test_compile_passes_format_lowering_draws_and_graded_spike(self, tmp_path: Path) -> None:
+        """Width, fraction, map method, v2 lowering, seed, stream and spike value reach the RTL."""
+        output = tmp_path / "full"
+        with patch(
+            "sys.argv",
+            [
+                "sc-neurocore",
+                "compile",
+                "dv/dt = sin(I) + 0.1*randn()",
+                "--threshold",
+                "v > 0.5",
+                "--reset",
+                "v = 0",
+                "--method",
+                "map",
+                "--data-width",
+                "32",
+                "--fraction",
+                "16",
+                "--function-lowering",
+                "v2",
+                "--rng-seed",
+                "5",
+                "--random-stream",
+                "3",
+                "--spike-value",
+                "2.0 * v",
+                "--testbench",
+                "-o",
+                str(output),
+            ],
+        ):
+            result = main()
+
+        assert result == 0
+        verilog = (output / "sc_equation_neuron.v").read_text(encoding="utf-8")
+        assert "parameter [63:0] P_RNG_SEED = 64'd5" in verilog
+        assert "parameter [31:0] P_RNG_STREAM = 32'd3" in verilog
+        assert "output reg signed [31:0] spike_value_out" in verilog
+        assert "// v2 function unit: sin" in verilog
+        assert "Q16.16" in verilog
+        testbench = (output / "tb_sc_equation_neuron.v").read_text(encoding="utf-8")
+        assert "[31:0]" in testbench

@@ -15,6 +15,36 @@ from .verilog_compiler_config import Q88
 from .verilog_expr_emitter import _emit_expr
 
 
+def _round_shift(wide: str, width: int, q: Q88, name: str) -> list[str]:
+    """Narrow a ``width``-bit product to the word under the format's rounding mode.
+
+    The integrator scalings (``dt``, the RK4 stage factors and ``dt/6``) round as every
+    expression product does (:meth:`_VerilogExprEmitter._trunc`): ``truncate`` is an
+    arithmetic shift, ``nearest`` adds half a unit (one less for a negative product)
+    first, ``bankers`` clears the lowest bit of an exact tie. Returns the wire
+    declarations, the last of which is ``name``.
+    """
+    dw, frac = q.data_width, q.fraction
+    if frac == 0 or q.rounding == "truncate":
+        return [f"wire signed [{dw - 1}:0] {name} = ({wide} >>> {frac});"]
+    half = 1 << (frac - 1)
+    if q.rounding == "nearest":
+        return [
+            f"wire signed [{width - 1}:0] {name}_bias = "
+            f"{wide}[{width - 1}] ? {width}'sd{half - 1} : {width}'sd{half};",
+            f"wire signed [{width - 1}:0] {name}_half = {wide} + {name}_bias;",
+            f"wire signed [{dw - 1}:0] {name} = ({name}_half >>> {frac});",
+        ]
+    if q.rounding == "bankers":
+        return [
+            f"wire signed [{width - 1}:0] {name}_biased = {wide} + {half};",
+            f"wire {name}_guard = ({wide}[{frac - 1}:0] == {half});",
+            f"wire signed [{dw - 1}:0] {name} = ({name}_biased >>> {frac}) & "
+            f"(({name}_guard) ? ~{dw}'d1 : {{{dw}{{1'b1}}}});",
+        ]
+    raise ValueError(f"Unknown rounding mode: {q.rounding!r}")
+
+
 def _emit_euler_deriv_wires(
     neuron: EquationNeuron,
     state_var_map: dict[str, str],
@@ -65,15 +95,11 @@ def _emit_euler_deriv_wires(
             all_pipeline_regs.append(f"reg signed [{2 * data_width - 1}:0] {dt_reg};")
             deriv_name = f"d{safe_var}"
             deriv_trunc = f"_dt_trunc_{safe_var}"
-            all_intermediates.append(
-                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_reg} >>> {fraction});"
-            )
+            all_intermediates.extend(_round_shift(dt_reg, 2 * data_width, q, deriv_trunc))
         else:
             deriv_name = f"d{safe_var}"
             deriv_trunc = f"_dt_trunc_{safe_var}"
-            all_intermediates.append(
-                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
-            )
+            all_intermediates.extend(_round_shift(dt_tmp, 2 * data_width, q, deriv_trunc))
         deriv_wires.append(f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};")
     return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
 
@@ -147,13 +173,9 @@ def _emit_gauss_seidel_deriv_wires(
         if dt_should_pipe:
             dt_reg = f"{dt_tmp}_r"
             all_pipeline_regs.append(f"reg signed [{2 * data_width - 1}:0] {dt_reg};")
-            all_intermediates.append(
-                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_reg} >>> {fraction});"
-            )
+            all_intermediates.extend(_round_shift(dt_reg, 2 * data_width, q, deriv_trunc))
         else:
-            all_intermediates.append(
-                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
-            )
+            all_intermediates.extend(_round_shift(dt_tmp, 2 * data_width, q, deriv_trunc))
         deriv_wires.append(f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};")
     return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
 
@@ -284,7 +306,7 @@ def _emit_rk4_deriv_wires(
                 f"wire signed [{2 * data_width - 1}:0] {mul} = {k_wires[var]} * {scale_lit};"
             )
             trunc = f"_rk{tag}tr_{safe_var}"
-            inter.append(f"wire signed [{data_width - 1}:0] {trunc} = ({mul} >>> {fraction});")
+            inter.extend(_round_shift(mul, 2 * data_width, q, trunc))
             s_wire = f"_s{tag}_{safe_var}"
             inter.append(f"wire signed [{data_width - 1}:0] {s_wire} = {safe_var}_reg + {trunc};")
             stage_map[var] = s_wire
@@ -306,9 +328,10 @@ def _emit_rk4_deriv_wires(
         )
         scaled = f"_rk6mul_{safe_var}"
         inter.append(f"wire signed [{2 * data_width + 2}:0] {scaled} = {weighted} * {dt6_lit};")
-        deriv_wires.append(
-            f"wire signed [{data_width - 1}:0] d{safe_var} = ({scaled} >>> {fraction});"
-        )
+        # The last wire is d<var>; rounding wires (if any) precede it as intermediates.
+        *rounding, increment = _round_shift(scaled, 2 * data_width + 3, q, f"d{safe_var}")
+        inter.extend(rounding)
+        deriv_wires.append(increment)
     return deriv_wires, inter, regs, mc, tc
 
 

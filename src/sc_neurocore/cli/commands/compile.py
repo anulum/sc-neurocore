@@ -55,6 +55,29 @@ def add_compile_commands(
     equation.add_argument("--hp-precision", default=None)
     equation.add_argument("--hp-width", type=int, default=32)
     equation.add_argument("--hp-frac", type=int, default=16)
+    equation.add_argument("--data-width", type=int, default=16, help="Fixed-point word width")
+    equation.add_argument("--fraction", type=int, default=8, help="Fixed-point fractional bits")
+    equation.add_argument(
+        "--method",
+        choices=["euler", "map", "rk4", "exp_euler", "gauss_seidel"],
+        default="euler",
+        help="Integration method (map: the equation gives the next state)",
+    )
+    equation.add_argument(
+        "--function-lowering",
+        choices=["lut-v1", "v2"],
+        default="lut-v1",
+        help="Transcendental lowering: fixed tables (lut-v1) or v2 function units",
+    )
+    equation.add_argument(
+        "--rng-seed", type=int, default=None, help="Philox key of rand()/randn()/poisson() draws"
+    )
+    equation.add_argument(
+        "--random-stream", type=int, default=0, help="Instance stream of the draws, [0, 2**32)"
+    )
+    equation.add_argument(
+        "--spike-value", default=None, help="Graded spike: value expression sent on a spike"
+    )
     equation.set_defaults(handler=run_compile)
 
     nir = subparsers.add_parser(
@@ -345,7 +368,10 @@ def run_compile(args: argparse.Namespace) -> int:
     The command supports three compilation modes via CLI flags:
 
     1. **Standard** (default): combinational datapath at the configured
-       precision (``--data-width`` / ``--fraction``).
+       precision (``--data-width`` / ``--fraction``), integration ``--method``
+       and transcendental ``--function-lowering``. ``--rng-seed`` and
+       ``--random-stream`` key ``rand()``, ``randn()`` and ``poisson()``;
+       ``--spike-value`` adds a graded spike output.
     2. **Pipelined** (``--pipeline auto|N``): insert register stages at
        multiply outputs for high-frequency targets.  ``auto`` uses
        ``critical_path_depth()`` + ``pipeline_stages_needed()`` from
@@ -402,6 +428,9 @@ def run_compile(args: argparse.Namespace) -> int:
     from sc_neurocore.compiler.equation_compiler import compile_to_verilog
     from sc_neurocore.neurons.equation_builder import from_equations
 
+    random_options: dict[str, Any] = {"random_stream": args.random_stream}
+    if args.rng_seed is not None:
+        random_options["rng_seed"] = args.rng_seed
     neuron = from_equations(
         args.model,
         threshold=args.threshold,
@@ -409,6 +438,9 @@ def run_compile(args: argparse.Namespace) -> int:
         params=params,
         init=init,
         dt=args.dt,
+        method=args.method,
+        spike_value=args.spike_value,
+        **random_options,
     )
 
     # Auto pipeline: compute from ODE critical path
@@ -446,8 +478,11 @@ def run_compile(args: argparse.Namespace) -> int:
         verilog = compile_to_verilog(
             neuron,
             module_name=args.module_name,
+            data_width=args.data_width,
+            fraction=args.fraction,
             pipeline_stages=pipeline_stages,
             pipeline_points=pipeline_points_list,
+            function_lowering=args.function_lowering,
         )
 
     print(f"  State variables: {list(neuron.equations.keys())}")
@@ -479,7 +514,12 @@ def run_compile(args: argparse.Namespace) -> int:
 
     # Testbench
     if args.testbench:
-        tb_src = generate_testbench(neuron, module_name=args.module_name)
+        tb_src = generate_testbench(
+            neuron,
+            module_name=args.module_name,
+            data_width=args.data_width,
+            fraction=args.fraction,
+        )
         tb_path = os.path.join(out_dir, f"tb_{args.module_name}.v")
         with open(tb_path, "w") as f:
             f.write(tb_src)

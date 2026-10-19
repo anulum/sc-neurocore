@@ -20,6 +20,7 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import from_equations
 from sc_neurocore.studio.state_layout import (
     StateObservationError,
@@ -174,10 +175,12 @@ def simulate(
         Level a sine oscillates about; zero, and refused for any other
         protocol, unless given.
     seed : int or None
-        Seed of the diffusion-noise generator (the ``xi`` symbol). ``None``
-        draws from the process-global ``numpy.random`` stream, which is not
-        reproducible; the experiment contract always passes a seed for a
-        stochastic playground run and rejects one for noise-free equations.
+        Seed of the diffusion-noise generator (the ``xi`` symbol) and key of the
+        counter-based ``rand()``, ``randn()`` and ``poisson()`` draws. ``None``
+        draws ``xi`` from the process-global ``numpy.random`` stream, which is
+        not reproducible, and keys the draws with the default seed; the
+        experiment contract always passes a seed for a stochastic playground
+        run and rejects one for equations that draw nothing.
 
     Returns
     -------
@@ -211,6 +214,7 @@ def simulate(
         init=dict(init) if init else None,
         dt=dt,
         noise_rng=np.random.default_rng(seed) if seed is not None else None,
+        rng_seed=seed if seed is not None else DEFAULT_LFSR16_SEED,
     )
 
     var_names = list(neuron.state.keys())

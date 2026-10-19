@@ -10,9 +10,11 @@
 
 The generated C / Rust reproduces the exact two's-complement arithmetic of the
 Verilog RTL (see :mod:`sc_neurocore.compiler.verilog_compiler`): wrap-truncate
-fixed-point multiply, saturating (or wrapping) explicit-Euler or discrete-map
-commit, positive-period modulo, and transcendental look-up tables with the RTL's
-index arithmetic — all lowered by :mod:`sc_neurocore.compiler.c_fixed_emitter`.
+fixed-point multiply, saturating (or wrapping) commit of every integration
+method the RTL lowers (explicit Euler, discrete map, classical RK4, exponential
+Euler, Gauss–Seidel, and macro steps of sub-stepped crossing models),
+positive-period modulo, and transcendental look-up tables with the RTL's index
+arithmetic — all lowered by :mod:`sc_neurocore.compiler.c_fixed_emitter`.
 
 Two entry points:
 
@@ -104,8 +106,9 @@ def kernel_arithmetic_contract(
     rounding : str
         ``"truncate"`` or ``"nearest"`` (the multiply product policy).
     method : str
-        ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``) or ``"map"``
-        (``next = commit(f)``).
+        ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``), ``"map"``
+        (``next = commit(f)``), ``"rk4"`` (four wrapped stages),
+        ``"exp_euler"`` or ``"gauss_seidel"``; ``state_update`` states each.
     function_lowering : str
         ``"lut-v1"`` (look-up tables) or ``"v2"`` (integer function units): the
         lowering whose transcendentals are described.
@@ -127,10 +130,10 @@ def kernel_arithmetic_contract(
     """
     q = Q88(data_width=data_width, fraction=fraction, overflow=overflow, rounding=rounding)
     _validate_modes(q)
-    if method not in {"euler", "map"}:
+    if method not in KERNEL_METHODS:
         raise ValueError(
-            "bit-true neuron kernel currently supports method='euler' or method='map', "
-            f"got {method!r}"
+            "bit-true neuron kernel currently supports method "
+            f"{', '.join(repr(m) for m in KERNEL_METHODS)}, got {method!r}"
         )
     if 2 * data_width > 64:
         raise ValueError(
@@ -158,6 +161,25 @@ def kernel_arithmetic_contract(
         commit = f"saturation of the sum to [{min_word}, {max_word}]"
     if method == "map":
         update = f"next = commit(f(state)); commit = {commit}"
+    elif method == "exp_euler":
+        update = (
+            "d = wrap((f(state) * dt) * exprel(A(state) * dt)) evaluated as one expression, "
+            f"A the symbolic Jacobian; next = commit(reg + d); commit = {commit}"
+        )
+    elif method == "gauss_seidel":
+        update = (
+            "in declaration order d = fxmul(f(state), dt_q), each later variable reading "
+            f"the earlier ones at their committed next value; next = commit(reg + d); "
+            f"commit = {commit}"
+        )
+    elif method == "rk4":
+        update = (
+            "k_i = wrap(f(s_i)) to the word; s_1 = wrap(reg + narrow(k_1 * enc(dt/2))), "
+            "s_2 likewise from k_2, s_3 = wrap(reg + narrow(k_3 * enc(dt))); "
+            "d = narrow((k_1 + 2 k_2 + 2 k_3 + k_4) * enc(dt/6)); next = commit(reg + d); "
+            f"narrow = the exact product shifted right by {fraction} under the rounding "
+            f"mode and wrapped to the word; commit = {commit}"
+        )
     else:
         update = f"next = commit(reg + fxmul(f(state), dt_q)); commit = {commit}"
     return {
@@ -323,6 +345,7 @@ def _preamble_c(q: Q88) -> list[str]:
         f"#define WORD_BITS {dw}",
         f"#define MAX_VAL {max_val}",
         f"#define MIN_VAL ({min_val})",
+        f"#define HALF_BIAS ((uint64_t){(1 << (frac - 1)) if frac > 0 else 0}u)",
         "",
         "static inline int64_t sc_wrap(int64_t x, int bits) {",
         "    if (bits >= 64) { return x; }",
@@ -340,6 +363,22 @@ def _preamble_c(q: Q88) -> list[str]:
         "",
         f"static inline {ctype} fxmul(int64_t a, int64_t b) {{",
         *fxmul_body,
+        "}",
+        "",
+        "/* An exact product a*b narrowed to the word as the RTL's integrator scalings */",
+        "/* narrow it (no 2*WORD wrap): bits [FRAC, FRAC + WORD) of the rounded product, */",
+        "/* exact from the product mod 2**64 since FRAC + WORD <= 63. */",
+        "static inline int64_t fxmul_exact(int64_t a, int64_t b) {",
+        "    uint64_t product = (uint64_t)a * (uint64_t)b;",
+        *(
+            [
+                "    int negative = (a < 0) != (b < 0) && a != 0 && b != 0;",
+                "    product += negative ? HALF_BIAS - 1u : HALF_BIAS;",
+            ]
+            if q.rounding == "nearest" and frac > 0
+            else []
+        ),
+        "    return sc_wrap((int64_t)(product >> FRAC_BITS), WORD_BITS);",
         "}",
         "",
         f"static inline {ctype} fxmod(int64_t value, int64_t period) {{",
@@ -376,6 +415,7 @@ def _preamble_rust(q: Q88) -> list[str]:
         f"const WORD_BITS: u32 = {dw};",
         f"const MAX_VAL: i64 = {max_val};",
         f"const MIN_VAL: i64 = {min_val};",
+        f"const HALF_BIAS: u64 = {(1 << (frac - 1)) if frac > 0 else 0};",
         "",
         "fn sc_wrap(x: i64, bits: u32) -> i64 {",
         "    if bits >= 64 { return x; }",
@@ -391,6 +431,19 @@ def _preamble_rust(q: Q88) -> list[str]:
         "",
         f"fn fxmul(a: i64, b: i64) -> {rtype} {{",
         *fxmul_body,
+        "}",
+        "",
+        "fn fxmul_exact(a: i64, b: i64) -> i64 {",
+        "    let mut product: u64 = (a as u64).wrapping_mul(b as u64);",
+        *(
+            [
+                "    let negative = (a < 0) != (b < 0) && a != 0 && b != 0;",
+                "    product = product.wrapping_add(if negative { HALF_BIAS - 1 } else { HALF_BIAS });",
+            ]
+            if q.rounding == "nearest" and frac > 0
+            else []
+        ),
+        "    sc_wrap((product >> FRAC_BITS) as i64, WORD_BITS)",
         "}",
         "",
         f"fn fxmod(value: i64, period: i64) -> {rtype} {{",
@@ -702,10 +755,10 @@ def generate_bittrue_kernel_from_neuron(
         function_lowering=function_lowering,
     )
     _validate_modes(q)
-    if neuron.method not in {"euler", "map"}:
+    if neuron.method not in KERNEL_METHODS:
         raise ValueError(
-            "bit-true neuron kernel currently supports method='euler' or method='map', "
-            f"got {neuron.method!r}"
+            "bit-true neuron kernel currently supports method "
+            f"{', '.join(repr(m) for m in KERNEL_METHODS)}, got {neuron.method!r}"
         )
 
     if getattr(neuron, "_stochastic_threshold_enabled", False):
@@ -713,10 +766,13 @@ def generate_bittrue_kernel_from_neuron(
             "bit-true neuron kernel does not mirror stochastic spike detection "
             f"({neuron.detection!r}): the RTL draws from an LFSR the kernel does not model"
         )
-    if neuron.substeps > 1:
+    if neuron.substeps > 1 and not (
+        neuron.threshold_expr and getattr(neuron, "_edge_detection", False)
+    ):
+        # The RTL lowers sub-steps only for crossing, non-resetting models.
         raise ValueError(
-            "bit-true neuron kernel does not mirror macro-step sub-stepping "
-            f"(substeps={neuron.substeps})"
+            "bit-true neuron kernel mirrors substeps > 1 only for edge-crossing "
+            "(non-resetting) models, as the RTL does"
         )
     if getattr(neuron, "uses_diffusion_noise", False):
         raise ValueError(
@@ -747,13 +803,23 @@ def generate_bittrue_kernel_from_neuron(
     lut = 0
     deriv_stmts: list[str] = []
     derivs: dict[str, str] = {}
-    for var, expr in neuron.equations.items():
-        result, s, t, _fv, lut, _used = emit_c_fixed_expr(
-            expr, state_map, param_map, q, lang=language, lut_start=lut
+    increments: dict[str, str] | None = None
+    if neuron.method == "rk4":
+        deriv_stmts, increments, lut = _rk4_statements(
+            neuron, safe, state_map, param_map, q, language, tables
         )
-        derivs[var] = result
-        deriv_stmts.extend(s)
-        tables.update(t)
+    elif neuron.method in {"exp_euler", "gauss_seidel"}:
+        deriv_stmts, increments, lut = _sequential_statements(
+            neuron, safe, state_map, param_map, q, language, tables, dt_q
+        )
+    else:
+        for var, expr in neuron.equations.items():
+            result, s, t, _fv, lut, _used = emit_c_fixed_expr(
+                expr, state_map, param_map, q, lang=language, lut_start=lut
+            )
+            derivs[var] = result
+            deriv_stmts.extend(s)
+            tables.update(t)
 
     next_map = {v: f"_next_{safe[v]}" for v in neuron.equations}
     candidate_map = dict(next_map)
@@ -801,6 +867,7 @@ def generate_bittrue_kernel_from_neuron(
         tables=tables,
         init_q=init_q,
         spike_value_expr=spike_value_expr,
+        increments=increments,
     )
     source = _emit_neuron_c(ctx) if language == "c" else _emit_neuron_rust(ctx)
     if neuron.uses_random_draws:
@@ -857,6 +924,148 @@ def _with_random_state(source: str, neuron: EquationNeuron, language: str) -> st
     return "\n".join(out)
 
 
+KERNEL_METHODS: tuple[str, ...] = ("euler", "map", "rk4", "exp_euler", "gauss_seidel")
+
+
+def _rk4_statements(
+    neuron: EquationNeuron,
+    safe: dict[str, str],
+    state_map: dict[str, str],
+    param_map: dict[str, int],
+    q: Q88,
+    language: str,
+    tables: dict[str, list[int]],
+) -> tuple[list[str], dict[str, str], int]:
+    """Emit one classical RK4 step as the RTL's ``_emit_rk4_deriv_wires`` computes it.
+
+    Each stage derivative is wrapped to the word (the RTL's ``_k`` wires), each stage
+    state is ``wrap(reg + narrow(k * c))`` with ``c`` the encoded ``dt/2`` or ``dt``,
+    and the increment is ``narrow((k1 + 2 k2 + 2 k3 + k4) * enc(dt/6))``; ``narrow``
+    is the exact product shifted under the rounding mode and wrapped to the word, as
+    the RTL's ``_round_shift``.
+
+    Returns
+    -------
+    tuple
+        The statements, the increment name per variable and the next table number.
+    """
+    rust = language == "rust"
+    lut = 0
+    stmts: list[str] = []
+
+    def declare(name: str, value: str) -> str:
+        return f"let {name}: i64 = {value};" if rust else f"int64_t {name} = {value};"
+
+    def register(var: str) -> str:
+        return f"(self.{safe[var]} as i64)" if rust else f"((int64_t)s->{safe[var]})"
+
+    def stage(stage_map: dict[str, str], tag: str) -> dict[str, str]:
+        nonlocal lut
+        names: dict[str, str] = {}
+        for var, expr in neuron.equations.items():
+            result, s, t, _fv, lut, _used = emit_c_fixed_expr(
+                expr, stage_map, param_map, q, lang=language, lut_start=lut
+            )
+            stmts.extend(s)
+            tables.update(t)
+            name = f"_k{tag}_{safe[var]}"
+            stmts.append(declare(name, f"sc_wrap({result}, WORD_BITS)"))
+            names[var] = name
+        return names
+
+    def advance(k: dict[str, str], scale: int, tag: str) -> dict[str, str]:
+        stage_map = dict(state_map)
+        for var in neuron.equations:
+            name = f"_s{tag}_{safe[var]}"
+            stmts.append(
+                declare(
+                    name,
+                    f"sc_wrap({register(var)} + fxmul_exact({k[var]}, {scale}), WORD_BITS)",
+                )
+            )
+            stage_map[var] = name
+        return stage_map
+
+    half = signed_q(q, neuron.dt / 2.0)
+    whole = signed_q(q, neuron.dt)
+    sixth = signed_q(q, neuron.dt / 6.0)
+    k1 = stage(state_map, "1")
+    k2 = stage(advance(k1, half, "1"), "2")
+    k3 = stage(advance(k2, half, "2"), "3")
+    k4 = stage(advance(k3, whole, "3"), "4")
+    increments: dict[str, str] = {}
+    for var in neuron.equations:
+        weighted = f"({k1[var]} + 2 * {k2[var]} + 2 * {k3[var]} + {k4[var]})"
+        name = f"_d_{safe[var]}"
+        stmts.append(declare(name, f"fxmul_exact({weighted}, {sixth})"))
+        increments[var] = name
+    return stmts, increments, lut
+
+
+def _sequential_statements(
+    neuron: EquationNeuron,
+    safe: dict[str, str],
+    state_map: dict[str, str],
+    param_map: dict[str, int],
+    q: Q88,
+    language: str,
+    tables: dict[str, list[int]],
+    dt_q: int,
+) -> tuple[list[str], dict[str, str], int]:
+    """Emit the ``exp_euler`` or ``gauss_seidel`` increments as the RTL computes them.
+
+    ``exp_euler``: ``d = wrap((f * dt) * exprel(A * dt))``, the composed expression the
+    RTL's ``_emit_exp_euler_deriv_wires`` lowers, with ``A`` the neuron's Jacobian
+    string. ``gauss_seidel``: ``d = fxmul(f, dt)`` with the earlier-declared variables
+    read at their committed next value, as ``_emit_gauss_seidel_deriv_wires`` does.
+
+    Returns
+    -------
+    tuple
+        The statements, the increment name per variable and the next table number.
+    """
+    rust = language == "rust"
+    lut = 0
+    stmts: list[str] = []
+    increments: dict[str, str] = {}
+    render = dict(state_map)
+    for var, f_expr in neuron.equations.items():
+        if neuron.method == "exp_euler":
+            a_expr = neuron.jacobian_expressions[var]
+            dt = repr(neuron.dt)
+            expression = f"(({f_expr}) * {dt}) * exprel((({a_expr})) * {dt})"
+        else:
+            expression = f_expr
+        result, s, tbl, _fv, lut, _used = emit_c_fixed_expr(
+            expression, render, param_map, q, lang=language, lut_start=lut
+        )
+        stmts.extend(s)
+        tables.update(tbl)
+        name = f"_d_{safe[var]}"
+        value = (
+            f"sc_wrap({result}, WORD_BITS)"
+            if neuron.method == "exp_euler"
+            else f"(fxmul({result}, {dt_q}) as i64)"
+            if rust
+            else f"(int64_t)fxmul({result}, {dt_q})"
+        )
+        stmts.append(f"let {name}: i64 = {value};" if rust else f"int64_t {name} = {value};")
+        increments[var] = name
+        if neuron.method == "gauss_seidel":
+            # Later variables read this one's committed next value, as the RTL's
+            # <var>_next wire in their derivative.
+            committed = f"_gs_{safe[var]}"
+            register = f"(self.{safe[var]} as i64)" if rust else f"((int64_t)s->{safe[var]})"
+            if rust:
+                commit = _accumulate_bias(f"{register} + {name}", q.overflow, _rtype(q.data_width))
+                stmts.append(f"let {committed}: i64 = ({commit}) as i64;")
+            else:
+                commit = _accumulate_bias(f"{register} + {name}", q.overflow)
+                stmts.append(f"int64_t {committed} = {commit};")
+            render[var] = committed
+    return stmts, increments, lut
+
+
 class _KernelContext:
     """Everything the neuron-kernel renderers need, assembled once per generation."""
 
@@ -877,6 +1086,7 @@ class _KernelContext:
         tables: dict[str, list[int]],
         init_q: dict[str, int],
         spike_value_expr: str = "",
+        increments: dict[str, str] | None = None,
     ) -> None:
         self.module_name = module_name
         self.neuron = neuron
@@ -892,6 +1102,9 @@ class _KernelContext:
         self.tables = tables
         self.init_q = init_q
         self.spike_value_expr = spike_value_expr
+        # The RTL's d<var> wire per variable when the method computes it in statements
+        # (rk4); next = commit(reg + d). None for euler (fxmul(f, dt)) and map.
+        self.increments = increments
 
 
 def _emit_neuron_c(ctx: _KernelContext) -> str:
@@ -932,10 +1145,35 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
     lines.append("}")
     lines.append("")
     lines.append(f"int {m}_step({m}_state_t *s, {ctype} I_t) {{")
+    if ctx.neuron.substeps > 1:
+        # Every sub-step but the last advances the state, as the RTL's clock does
+        # inside a macro step; the last one goes through the spike decision below.
+        lines.append(f"    for (int _ss = 1; _ss < {ctx.neuron.substeps}; _ss++) {{")
+        body = _neuron_update_c(ctx)
+        lines.extend(f"    {line}" for line in body)
+        for var in ctx.neuron.equations:
+            lines.append(f"        s->{ctx.safe[var]} = _next_{ctx.safe[var]};")
+            lines.append(f"        s->{ctx.safe[var]}_out = _next_{ctx.safe[var]};")
+        lines.append("    }")
+    lines.extend(_neuron_update_c(ctx))
+    lines.extend(_neuron_commit_c(ctx))
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def _neuron_update_c(ctx: _KernelContext) -> list[str]:
+    """Emit the derivative statements and the committed next state of one (sub-)step."""
+    q = ctx.q
+    ctype = _ctype(q.data_width)
+    lines: list[str] = []
     for stmt in ctx.deriv_stmts:
         lines.append(f"    {stmt}")
     for var in ctx.neuron.equations:
-        if ctx.neuron.method == "map":
+        if ctx.increments is not None:
+            acc = _accumulate_bias(
+                f"((int64_t)s->{ctx.safe[var]}) + {ctx.increments[var]}", q.overflow
+            )
+        elif ctx.neuron.method == "map":
             acc = _accumulate_bias(ctx.derivs[var], q.overflow)
         else:
             acc = _accumulate_bias(
@@ -943,9 +1181,7 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
                 q.overflow,
             )
         lines.append(f"    {ctype} _next_{ctx.safe[var]} = {acc};")
-    lines.extend(_neuron_commit_c(ctx))
-    lines.append("}")
-    return "\n".join(lines)
+    return lines
 
 
 def _edge(ctx: _KernelContext) -> bool:
@@ -1051,10 +1287,33 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
     lines.append("    }")
     lines.append("")
     lines.append(f"    pub fn step(&mut self, I_t: {rtype}) -> i32 {{")
+    if ctx.neuron.substeps > 1:
+        lines.append(f"        for _ss in 1..{ctx.neuron.substeps} {{")
+        lines.extend(f"    {line}" for line in _neuron_update_rust(ctx))
+        for var in ctx.neuron.equations:
+            lines.append(f"            self.{ctx.safe[var]} = _next_{ctx.safe[var]};")
+            lines.append(f"            self.{ctx.safe[var]}_out = _next_{ctx.safe[var]};")
+        lines.append("        }")
+    lines.extend(_neuron_update_rust(ctx))
+    lines.extend(_neuron_commit_rust(ctx))
+    lines.append("    }")
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def _neuron_update_rust(ctx: _KernelContext) -> list[str]:
+    """Emit the derivative statements and the committed next state of one (sub-)step."""
+    q = ctx.q
+    rtype = _rtype(q.data_width)
+    lines: list[str] = []
     for stmt in ctx.deriv_stmts:
         lines.append(f"        {stmt}")
     for var in ctx.neuron.equations:
-        if ctx.neuron.method == "map":
+        if ctx.increments is not None:
+            acc = _accumulate_bias(
+                f"(self.{ctx.safe[var]} as i64) + {ctx.increments[var]}", q.overflow, rtype
+            )
+        elif ctx.neuron.method == "map":
             acc = _accumulate_bias(ctx.derivs[var], q.overflow, rtype)
         else:
             acc = _accumulate_bias(
@@ -1063,10 +1322,7 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
                 rtype,
             )
         lines.append(f"        let _next_{ctx.safe[var]}: {rtype} = {acc};")
-    lines.extend(_neuron_commit_rust(ctx))
-    lines.append("    }")
-    lines.append("}")
-    return "\n".join(lines)
+    return lines
 
 
 def _neuron_commit_rust(ctx: _KernelContext) -> list[str]:

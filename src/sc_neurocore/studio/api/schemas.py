@@ -30,9 +30,10 @@ class SimulateRequest(BaseModel):
     The body is fail-closed: unknown keys are rejected, the protocol must be
     one of the supported injection protocols (a typo never becomes
     ``constant``), the sine frequency is explicit, and the randomness
-    contract is explicit: ``seed`` fixes the diffusion-noise generator of a
-    stochastic run (``xi`` in the equations), ``trial`` selects replay of a
-    trial (cacheable) or a fresh trial whose drawn seed is reported.
+    contract is explicit: ``seed`` fixes the diffusion-noise generator and
+    keys the counter-based draws of a stochastic run (``xi``, ``rand()``,
+    ``randn()`` or ``poisson()`` in the equations), ``trial`` selects replay
+    of a trial (cacheable) or a fresh trial whose drawn seed is reported.
     """
 
     model_config = ConfigDict(extra="forbid")

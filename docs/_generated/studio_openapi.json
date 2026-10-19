@@ -2639,7 +2639,7 @@
       },
       "SimulateRequest": {
         "additionalProperties": false,
-        "description": "Request body for direct equation-playground simulation in Studio.\n\nThe body is fail-closed: unknown keys are rejected, the protocol must be\none of the supported injection protocols (a typo never becomes\n``constant``), the sine frequency is explicit, and the randomness\ncontract is explicit: ``seed`` fixes the diffusion-noise generator of a\nstochastic run (``xi`` in the equations), ``trial`` selects replay of a\ntrial (cacheable) or a fresh trial whose drawn seed is reported.",
+        "description": "Request body for direct equation-playground simulation in Studio.\n\nThe body is fail-closed: unknown keys are rejected, the protocol must be\none of the supported injection protocols (a typo never becomes\n``constant``), the sine frequency is explicit, and the randomness\ncontract is explicit: ``seed`` fixes the diffusion-noise generator and\nkeys the counter-based draws of a stochastic run (``xi``, ``rand()``,\n``randn()`` or ``poisson()`` in the equations), ``trial`` selects replay\nof a trial (cacheable) or a fresh trial whose drawn seed is reported.",
         "properties": {
           "current": {
             "default": 0.0,

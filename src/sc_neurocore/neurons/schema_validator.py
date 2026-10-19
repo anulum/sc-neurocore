@@ -34,11 +34,14 @@ Usage::
 from __future__ import annotations
 
 import json
+import keyword
 import logging
 import re
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.neurons.equation_namespace import build_eval_namespace
+from sc_neurocore.neurons.equation_random import RANDOM_CALLS
 from sc_neurocore.neurons.model_profile import PROFILE_SECTION, resolve_profile
 from sc_neurocore.neurons.schema_contracts import stateless_event_kind
 
@@ -84,8 +87,15 @@ class SchemaError:
         self.section = section
 
     def __repr__(self) -> str:
+        """Return ``LEVEL: [section] message``."""
         prefix = f"[{self.section}] " if self.section else ""
         return f"{self.level.upper()}: {prefix}{self.message}"
+
+
+# Keywords of the expression grammar (``a if c else b``, ``and``) are not names either.
+_EQUATION_FUNCTIONS = (
+    frozenset(build_eval_namespace()) | RANDOM_CALLS | {"xi"} | frozenset(keyword.kwlist)
+)
 
 
 def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaError]:
@@ -183,25 +193,9 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
 
         # Extract identifiers from equation (simple regex — not a full parser)
         idents = set(re.findall(r"\b([a-zA-Z_]\w*)\b", equation))
-        # Remove known math functions
-        math_funcs = {
-            "sin",
-            "cos",
-            "tan",
-            "exp",
-            "log",
-            "sqrt",
-            "abs",
-            "tanh",
-            "cosh",
-            "sinh",
-            "atan",
-            "asin",
-            "acos",
-            "min",
-            "max",
-            "pow",
-        }
+        # Remove the functions an equation may call: the model's maths namespace
+        # (the vocabulary the compiler also lowers) and the counter-based draws.
+        math_funcs = _EQUATION_FUNCTIONS
         unknown = idents - known_names - math_funcs
         if unknown:
             errors.append(

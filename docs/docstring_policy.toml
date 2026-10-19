@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1071
+expected_file_count = 1086
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4377,3 +4377,63 @@ rationale = "The two-function facade, its stable signatures, module ownership, d
 [[file]]
 path = "tests/test_equation_compiler_review_fixes.py"
 rationale = "Reproducers of the 2026-10-19 compiler review findings, each with a control: kernel traps, name clashes, PE edge history, xi, warm-up, contract and table width."
+
+[[file]]
+path = "src/sc_neurocore/neurons/schema_validator.py"
+rationale = "Static schema checks against the model's real function vocabulary, the model profile and the event-only contracts."
+
+[[file]]
+path = "src/sc_neurocore/studio/simulation.py"
+rationale = "The equation playground run: seeded diffusion noise and counter draws, observation layout and failure reporting."
+
+[[file]]
+path = "tests/test_bit_true_kernel_integrators.py"
+rationale = "C and Rust kernels equal the RTL for RK4, exp_euler, Gauss-Seidel, sub-steps and nearest rounding."
+
+[[file]]
+path = "tests/test_bit_true_kernel_modes_and_validation.py"
+rationale = "Rounding and overflow modes the kernel emits, the configurations it refuses, and every integrator mirrored."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_arithmetic.py"
+rationale = "Arithmetic operators of the bit-exact C expression emitter, with refusals."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_compare.py"
+rationale = "Comparisons of the bit-exact C expression emitter, with refusals."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_lut_index_math.py"
+rationale = "Table index offsets and shifts of the bit-exact C expression emitter."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_names.py"
+rationale = "Name resolution of the bit-exact C expression emitter: state, parameters, input, free names."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_pow.py"
+rationale = "Integer and root powers of the bit-exact C expression emitter, with refusals."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_rust_lang.py"
+rationale = "Rust syntax of the bit-exact expression emitter."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_signed_q.py"
+rationale = "Signed fixed-point encoding of real values, with wrap."
+
+[[file]]
+path = "tests/test_c_fixed_emitter_validation.py"
+rationale = "Configurations and syntax the bit-exact expression emitter accepts or refuses."
+
+[[file]]
+path = "tests/test_counter_draws_integration.py"
+rationale = "Counter draws and graded spikes in schemas, profiles, the validator, the builder and the Studio playground."
+
+[[file]]
+path = "tests/test_recorders/test_spike_recorder.py"
+rationale = "Binary spike recorder statistics and its refusals, including non-finite sample durations."
+
+[[file]]
+path = "tests/test_rtl_lowering_refusals.py"
+rationale = "What the RTL and the bit-true kernel both refuse, with the same messages."

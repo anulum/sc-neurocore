@@ -15,6 +15,7 @@ core tests, layer recorders, examples, and API documentation.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -30,7 +31,7 @@ class BitstreamSpikeRecorder:
     dt_ms:
         Duration represented by one recorded sample in milliseconds. A value of
         ``0.0`` is accepted for legacy zero-duration dry runs and produces a
-        firing rate of ``0.0``.
+        firing rate of ``0.0``; NaN and infinity are refused.
     spikes:
         Existing spike samples to seed the recorder with. Values must be binary
         integers where ``1`` means a spike occurred at that sample.
@@ -41,6 +42,10 @@ class BitstreamSpikeRecorder:
 
     def __post_init__(self) -> None:
         """Validate seeded recorder state."""
+        if not math.isfinite(self.dt_ms):
+            # NaN and infinity would surface later as a NaN rate or a histogram
+            # error with a non-finite range; refuse them where they are given.
+            raise ValueError("dt_ms must be finite.")
         if self.dt_ms < 0.0:
             raise ValueError("dt_ms must be non-negative.")
         for spike in self.spikes:

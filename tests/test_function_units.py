@@ -189,6 +189,6 @@ class TestFormats:
             fu.evaluate("exp", 0, dw, fr)
 
     def test_unknown_function_is_refused(self) -> None:
-        """Only the eleven units exist."""
+        """A name outside the unit registry has no v2 unit."""
         with pytest.raises(ValueError, match="no v2 unit"):
             fu.evaluate("gamma", 0, 16, 8)

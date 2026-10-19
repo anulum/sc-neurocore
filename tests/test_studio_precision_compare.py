@@ -171,7 +171,7 @@ def test_kernel_arithmetic_contract_states_the_operation_semantics() -> None:
     with pytest.raises(ValueError, match="rounding"):
         kernel_arithmetic_contract(rounding="bankers")
     with pytest.raises(ValueError, match="method"):
-        kernel_arithmetic_contract(method="rk4")
+        kernel_arithmetic_contract(method="leapfrog")
     with pytest.raises(ValueError, match="2\\*data_width <= 64"):
         kernel_arithmetic_contract(data_width=64, fraction=32)
     assert c_word_type(16) == "int16_t" and c_word_type(24) == "int32_t"

@@ -39,10 +39,11 @@ import ast
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
+from sc_neurocore.neurons.equation_random import draws_in
 from sc_neurocore.neurons.equation_refusals import EquationRefusal
 from sc_neurocore.neurons.schema_contracts import stateless_event_kind
 
@@ -68,8 +69,12 @@ Exactness = Literal[
 RandomnessKind = Literal[
     "none",
     "lfsr16-threshold",
+    "philox-draws",
     "diffusion-noise-global-rng",
+    "lfsr16-threshold+philox-draws",
     "lfsr16-threshold+diffusion-noise-global-rng",
+    "philox-draws+diffusion-noise-global-rng",
+    "lfsr16-threshold+philox-draws+diffusion-noise-global-rng",
 ]
 
 EXECUTABLE_METHODS: tuple[str, ...] = tuple(SUPPORTED_METHODS)
@@ -282,13 +287,17 @@ class RandomnessContract:
     ----------
     kind:
         ``none``; ``lfsr16-threshold`` (a model-scoped 16-bit LFSR decides
-        stochastic threshold trials from ``seed``); ``diffusion-noise-global-rng``
-        (an expression names ``xi``, drawn from NumPy's process-global stream);
-        or both.
+        stochastic threshold trials from ``seed``); ``philox-draws`` (an
+        expression calls ``rand``, ``randn`` or ``poisson``, counter-based
+        Philox draws keyed by ``seed``); ``diffusion-noise-global-rng`` (an
+        expression names ``xi``, drawn from NumPy's process-global stream); or
+        their combination joined by ``+`` in that order.
     seed:
-        Initial LFSR seed when the threshold is stochastic, else ``None``.
+        The LFSR seed or Philox key (the same ``threshold.rng_seed``) when the
+        threshold is stochastic or an expression draws, else ``None``.
     reproducible:
-        ``True`` only when every draw comes from the model-scoped seeded LFSR.
+        ``True`` unless an expression names ``xi``: the LFSR and the Philox draws
+        replay from the seed.
     """
 
     kind: RandomnessKind
@@ -631,7 +640,7 @@ def _all_expressions(schema: Mapping[str, Any]) -> list[str]:
             if isinstance(value, str):
                 expressions.append(value)
     threshold = _mapping(schema.get("threshold"))
-    for key in ("condition", "rate_expression", "probability_expression"):
+    for key in ("condition", "rate_expression", "probability_expression", "spike_value"):
         value = threshold.get(key)
         if isinstance(value, str):
             expressions.append(value)
@@ -938,23 +947,25 @@ def resolve_profile(schema: Mapping[str, Any], *, stem: str = "") -> ModelProfil
     )
 
     uses_xi = "xi" in read_names
+    draws = draws_in(_all_expressions(schema))
     stochastic = detection in {"escape_rate", "poisson"} and bool(stochastic_expression)
     seed_raw = threshold.get("rng_seed", DEFAULT_LFSR16_SEED)
     seed = seed_raw if isinstance(seed_raw, int) and not isinstance(seed_raw, bool) else None
-    if stochastic and seed is None:
+    if (stochastic or draws) and seed is None:
         problems.append(f"threshold.rng_seed must be an integer, got {seed_raw!r}")
-    randomness_kind: RandomnessKind
-    if stochastic and uses_xi:
-        randomness_kind = "lfsr16-threshold+diffusion-noise-global-rng"
-    elif stochastic:
-        randomness_kind = "lfsr16-threshold"
-    elif uses_xi:
-        randomness_kind = "diffusion-noise-global-rng"
-    else:
-        randomness_kind = "none"
+    components = [
+        name
+        for name, present in (
+            ("lfsr16-threshold", stochastic),
+            ("philox-draws", draws),
+            ("diffusion-noise-global-rng", uses_xi),
+        )
+        if present
+    ]
+    randomness_kind = cast(RandomnessKind, "+".join(components) or "none")
     randomness = RandomnessContract(
         kind=randomness_kind,
-        seed=seed if stochastic else None,
+        seed=seed if stochastic or draws else None,
         reproducible=not uses_xi,
     )
 

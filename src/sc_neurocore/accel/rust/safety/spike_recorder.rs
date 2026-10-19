@@ -23,6 +23,9 @@ impl BitstreamSpikeRecorder {
     }
 
     pub fn with_dt(dt_ms: f64) -> Result<Self, &'static str> {
+        if !dt_ms.is_finite() {
+            return Err("dt_ms must be finite");
+        }
         if dt_ms < 0.0 {
             return Err("dt_ms must be non-negative");
         }
@@ -111,6 +114,9 @@ mod tests {
         let mut state = BitstreamSpikeRecorder::new();
         assert!(state.record(2).is_err());
         assert!(BitstreamSpikeRecorder::with_dt(-1.0).is_err());
+        assert!(BitstreamSpikeRecorder::with_dt(f64::NAN).is_err());
+        assert!(BitstreamSpikeRecorder::with_dt(f64::INFINITY).is_err());
+        assert!(BitstreamSpikeRecorder::with_dt(0.0).is_ok());
         state.record(1).unwrap();
         state.reset();
         assert!(state.spikes.is_empty());

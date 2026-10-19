@@ -333,17 +333,23 @@ class TestMirrorAndProjection:
         assert "latency" not in _rtl(_lif(), Q1616)
 
     def test_a_neuron_without_a_mirror_says_why(self) -> None:
-        """A method without a bit-true mirror states the reason."""
+        """A neuron without a bit-true mirror (stochastic detection) states the reason."""
         contract = hardware_numeric_contract(
-            EquationNeuron(equations={"v": "-v"}, method="rk4", dt=0.5), Q88
+            EquationNeuron(
+                equations={"v": "-v + I"},
+                detection="poisson",
+                probability_expression="sigmoid(v)",
+                dt=0.5,
+            ),
+            Q88,
         )
         mirror = contract.to_public_dict()["bit_true_mirror"]
         assert contract.arithmetic is None
         assert mirror == {
             "available": False,
             "refusal": (
-                "bit-true neuron kernel currently supports method='euler' or "
-                "method='map', got 'rk4'"
+                "bit-true neuron kernel does not mirror stochastic spike detection "
+                "('poisson'): the RTL draws from an LFSR the kernel does not model"
             ),
             "evidence": "",
             "arithmetic": None,

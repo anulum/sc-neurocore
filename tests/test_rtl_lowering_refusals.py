@@ -36,6 +36,7 @@ def test_and_or_over_numbers_is_refused(language: str) -> None:
 
 @pytest.mark.parametrize("language", ["verilog", "c"])
 def test_a_truth_value_needs_a_format_that_holds_one(language: str) -> None:
+    """A comparison used as a number needs 1.0, which Q1.15 cannot hold."""
     neuron = _map("x * (x > 0.0)")
     with pytest.raises(ValueError, match=r"needs 1\.0, which Q1\.15 cannot hold"):
         if language == "verilog":
@@ -70,6 +71,7 @@ def test_a_sum_the_wide_datapath_cannot_hold_exactly_is_refused() -> None:
 def test_the_kernel_refuses_the_floor_divisors_the_rtl_refuses(
     expression: str, message: str
 ) -> None:
+    """Floor divisors the RTL refuses are refused by the kernel with the same message."""
     with pytest.raises(ValueError, match=message):
         emit_c_fixed_expr(expression, {"x": "s->x"}, {}, Q88(data_width=16, fraction=8))
     with pytest.raises(ValueError, match=message):
@@ -77,22 +79,26 @@ def test_the_kernel_refuses_the_floor_divisors_the_rtl_refuses(
 
 
 def test_the_kernel_refuses_what_it_does_not_mirror() -> None:
+    """Stochastic detection and resetting sub-steps are refused by the kernel."""
     poisson = EquationNeuron(
         equations={"v": "-v + I"}, detection="poisson", probability_expression="sigmoid(v)"
     )
     with pytest.raises(ValueError, match="does not mirror stochastic spike detection"):
         generate_bittrue_kernel_from_neuron(poisson)
-    substepped = EquationNeuron(
+    # Sub-steps are mirrored where the RTL lowers them (crossing, non-resetting) and
+    # refused with the RTL's condition otherwise.
+    resetting = EquationNeuron(
         equations={"v": "-v + I"},
         threshold="v > 1.0",
-        detection="crossing",
+        reset={"v": "0.0"},
         substeps=4,
         dt=0.25,
     )
-    with pytest.raises(ValueError, match=r"does not mirror macro-step sub-stepping \(substeps=4\)"):
-        generate_bittrue_kernel_from_neuron(substepped)
+    with pytest.raises(ValueError, match="substeps > 1 only for edge-crossing"):
+        generate_bittrue_kernel_from_neuron(resetting)
 
 
 def test_operators_neither_lowering_supports_are_refused() -> None:
+    """Shift operators are refused by both lowerings."""
     with pytest.raises(ValueError, match="Unsupported binary op: LShift"):
         emit_c_fixed_expr("x << 1", {"x": "s->x"}, {}, Q88(data_width=16, fraction=8))

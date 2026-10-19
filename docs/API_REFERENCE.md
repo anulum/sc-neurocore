@@ -7489,7 +7489,10 @@ Notes
 The command supports three compilation modes via CLI flags:
 
 1. **Standard** (default): combinational datapath at the configured
-   precision (``--data-width`` / ``--fraction``).
+   precision (``--data-width`` / ``--fraction``), integration ``--method``
+   and transcendental ``--function-lowering``. ``--rng-seed`` and
+   ``--random-stream`` key ``rand()``, ``randn()`` and ``poisson()``;
+   ``--spike-value`` adds a graded spike output.
 2. **Pipelined** (``--pipeline auto|N``): insert register stages at
    multiply outputs for high-frequency targets.  ``auto`` uses
    ``critical_path_depth()`` + ``pipeline_stages_needed()`` from
@@ -8223,7 +8226,9 @@ function_lowering : str, optional
     ``"lut-v1"`` (default) reads one sample of a fixed table per
     transcendental call; ``"v2"`` instantiates the function units of
     :mod:`sc_neurocore.compiler.function_units` (range reduction and
-    quadratic tables, errors in ``docs/validation/lut_accuracy_v1.md``).
+    quadratic tables). Measured errors: ``docs/validation/lut_accuracy_v1.md``
+    for ``"lut-v1"``, ``docs/validation/function_units_v2_accuracy.md`` for
+    ``"v2"``.
 
 ---
 
@@ -10236,8 +10241,9 @@ overflow : str
 rounding : str
     ``"truncate"`` or ``"nearest"`` (the multiply product policy).
 method : str
-    ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``) or ``"map"``
-    (``next = commit(f)``).
+    ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``), ``"map"``
+    (``next = commit(f)``), ``"rk4"`` (four wrapped stages),
+    ``"exp_euler"`` or ``"gauss_seidel"``; ``state_update`` states each.
 function_lowering : str
     ``"lut-v1"`` (look-up tables) or ``"v2"`` (integer function units): the
     lowering whose transcendentals are described.
@@ -26451,11 +26457,14 @@ validation before the expressions are compiled for runtime.
 - **__repr__**()
   - Human-readable representation of the neuron equations.
 
-### Function `from_equations(*equation_strings, threshold, reset, params, init, constants, dt, method, units, input_unit, detection, noise_rng)`
+### Function `from_equations(*equation_strings, threshold, reset, params, init, constants, dt, method, units, input_unit, detection, noise_rng, rng_seed, random_stream, spike_value)`
 Build an EquationNeuron from Brian2-style equation strings.
 
 ``noise_rng`` seeds the diffusion-noise symbol ``xi``; without it the
-process-global ``numpy.random`` stream is used.
+process-global ``numpy.random`` stream is used. ``rng_seed`` and
+``random_stream`` key the counter-based ``rand()``, ``randn()`` and
+``poisson()`` draws, and ``spike_value`` makes a spike graded, as for
+:class:`EquationNeuron`.
 
 Examples
 --------
@@ -27652,13 +27661,17 @@ Parameters
 ----------
 kind:
     ``none``; ``lfsr16-threshold`` (a model-scoped 16-bit LFSR decides
-    stochastic threshold trials from ``seed``); ``diffusion-noise-global-rng``
-    (an expression names ``xi``, drawn from NumPy's process-global stream);
-    or both.
+    stochastic threshold trials from ``seed``); ``philox-draws`` (an
+    expression calls ``rand``, ``randn`` or ``poisson``, counter-based
+    Philox draws keyed by ``seed``); ``diffusion-noise-global-rng`` (an
+    expression names ``xi``, drawn from NumPy's process-global stream); or
+    their combination joined by ``+`` in that order.
 seed:
-    Initial LFSR seed when the threshold is stochastic, else ``None``.
+    The LFSR seed or Philox key (the same ``threshold.rng_seed``) when the
+    threshold is stochastic or an expression draws, else ``None``.
 reproducible:
-    ``True`` only when every draw comes from the model-scoped seeded LFSR.
+    ``True`` unless an expression names ``xi``: the LFSR and the Philox draws
+    replay from the seed.
 
 - **to_public_dict**()
   - Return the JSON projection.
@@ -33223,6 +33236,7 @@ A single validation error.
 
 - **__init__**(level, message, section)
 - **__repr__**()
+  - Return ``LEVEL: &#91;section&#93; message``.
 
 ### Function `validate_schema_dict(data, name)`
 Validate a parsed schema dictionary.
@@ -33353,7 +33367,14 @@ dt_override : float, optional
 method_override : str, optional
     Override the integration method.
 rng_seed_override : int, optional
-    Override the stochastic-threshold LFSR seed.
+    Override the seed: the stochastic-threshold LFSR seed and the Philox key
+    of ``rand()``, ``randn()`` and ``poisson()`` draws.
+random_stream : int, optional
+    Instance stream of the draws, ``&#91;0, 2**32)``; neurons of one schema
+    built with different streams draw independently from the same seed.
+
+A schema's ``threshold.spike_value`` makes the spike graded, as
+``EquationNeuron(spike_value=...)`` does.
 
 Raises
 ------
@@ -33362,7 +33383,7 @@ ValueError
     profile refuses the schema or an override
     (:class:`~sc_neurocore.neurons.model_profile.ProfileAdmissionError`).
 
-- **__init__**(schema, \*, parameter_overrides, dt_override, method_override, rng_seed_override)
+- **__init__**(schema, \*, parameter_overrides, dt_override, method_override, rng_seed_override, random_stream)
   - Initialise from a validated schema dictionary.
 - **from_schema**(source, \*\*kwargs)
   - Create a UniversalNeuron from a schema file or bundled name.
@@ -36698,7 +36719,7 @@ Parameters
 dt_ms:
     Duration represented by one recorded sample in milliseconds. A value of
     ``0.0`` is accepted for legacy zero-duration dry runs and produces a
-    firing rate of ``0.0``.
+    firing rate of ``0.0``; NaN and infinity are refused.
 spikes:
     Existing spike samples to seed the recorder with. Values must be binary
     integers where ``1`` means a spike occurred at that sample.
@@ -40679,9 +40700,10 @@ Request body for direct equation-playground simulation in Studio.
 The body is fail-closed: unknown keys are rejected, the protocol must be
 one of the supported injection protocols (a typo never becomes
 ``constant``), the sine frequency is explicit, and the randomness
-contract is explicit: ``seed`` fixes the diffusion-noise generator of a
-stochastic run (``xi`` in the equations), ``trial`` selects replay of a
-trial (cacheable) or a fresh trial whose drawn seed is reported.
+contract is explicit: ``seed`` fixes the diffusion-noise generator and
+keys the counter-based draws of a stochastic run (``xi``, ``rand()``,
+``randn()`` or ``poisson()`` in the equations), ``trial`` selects replay
+of a trial (cacheable) or a fresh trial whose drawn seed is reported.
 
 
 ### Class `ModelSimulateRequest`
@@ -51048,10 +51070,12 @@ bias : float
     Level a sine oscillates about; zero, and refused for any other
     protocol, unless given.
 seed : int or None
-    Seed of the diffusion-noise generator (the ``xi`` symbol). ``None``
-    draws from the process-global ``numpy.random`` stream, which is not
-    reproducible; the experiment contract always passes a seed for a
-    stochastic playground run and rejects one for noise-free equations.
+    Seed of the diffusion-noise generator (the ``xi`` symbol) and key of the
+    counter-based ``rand()``, ``randn()`` and ``poisson()`` draws. ``None``
+    draws ``xi`` from the process-global ``numpy.random`` stream, which is
+    not reproducible, and keys the draws with the default seed; the
+    experiment contract always passes a seed for a stochastic playground
+    run and rejects one for equations that draw nothing.
 
 Returns
 -------

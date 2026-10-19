@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5341
+    "test_files": 5343
   },
   "documentation": {
     "public_pages": [
@@ -4224,6 +4224,7 @@
       "tests/test_bipolar_sc_float_to_bipolar_weights.py",
       "tests/test_bit_true_cosim_bit_true_cosim.py",
       "tests/test_bit_true_cosim_rust_matches_c.py",
+      "tests/test_bit_true_kernel_integrators.py",
       "tests/test_bit_true_kernel_modes_and_validation.py",
       "tests/test_bit_true_kernel_neuron_kernel_c.py",
       "tests/test_bit_true_kernel_neuron_kernel_rust.py",
@@ -4737,6 +4738,7 @@
       "tests/test_cosim_wilson_hr_tier_b_model_cosim.py",
       "tests/test_cosim_wong_wang.py",
       "tests/test_cosimulation.py",
+      "tests/test_counter_draws_integration.py",
       "tests/test_courage_nekorkin_map_backends.py",
       "tests/test_courage_nekorkin_map_engine_binding.py",
       "tests/test_covariance_engine_binding_runtime.py",
