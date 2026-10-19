@@ -16,7 +16,7 @@ from tests.model_stochastic_if_support import *  # noqa: F403
 class TestStochasticIFLIFLimit:
     """At sigma=0, model reduces to standard LIF. Verify LIF properties."""
 
-    def test_lif_membrane_equation(self):
+    def test_lif_membrane_equation(self) -> None:
         """dV/dt = (-(V-V_rest) + I) / tau_m. Verify one step."""
         n = StochasticIFNeuron(sigma=0.0, mu=0.0)
         v0 = n.v
@@ -25,7 +25,7 @@ class TestStochasticIFLIFLimit:
         expected = v0 + (-(v0 - n.v_rest) + I) / n.tau_m * n.dt
         assert abs(n.v - expected) < 1e-10
 
-    def test_lif_steady_state(self):
+    def test_lif_steady_state(self) -> None:
         """V_ss = V_rest + mu + I. At I=15, sigma=0: V_ss = -55 < threshold."""
         n = StochasticIFNeuron(sigma=0.0, mu=0.0)
         for _ in range(10000):

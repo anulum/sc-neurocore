@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Brunel & Hakim 1999 — Ornstein-Uhlenbeck driven IF
 
+"""Integrate-and-fire neuron driven by Gaussian white noise drawn from NumPy's global generator."""
+
 from __future__ import annotations
 
 import math
@@ -31,6 +33,7 @@ class StochasticIFNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        """Refuse non-finite voltages and drift, non-positive time constants and negative sigma."""
         for field in ("v", "v_rest", "v_reset", "v_threshold", "mu"):
             value = getattr(self, field)
             if not math.isfinite(value):
@@ -43,6 +46,18 @@ class StochasticIFNeuron:
             raise ValueError("sigma must be non-negative and finite")
 
     def step(self, current: float) -> int:
+        """Advance one Euler-Maruyama step with one ``np.random.randn()`` draw; return the spike.
+
+        Parameters
+        ----------
+        current : float
+            Finite input current of this step.
+
+        Returns
+        -------
+        int
+            1 when the voltage reached ``v_threshold`` (and was reset), else 0.
+        """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         noise = self.sigma * np.sqrt(self.dt / self.tau_m) * np.random.randn()
@@ -53,4 +68,5 @@ class StochasticIFNeuron:
         return 0
 
     def reset(self) -> None:
+        """Return the membrane voltage to ``v_rest``."""
         self.v = self.v_rest

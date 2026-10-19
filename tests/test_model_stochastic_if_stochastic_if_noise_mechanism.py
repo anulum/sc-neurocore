@@ -16,7 +16,7 @@ from tests.model_stochastic_if_support import *  # noqa: F403
 class TestStochasticIFNoiseMechanism:
     """Core: OU noise with amplitude sigma·sqrt(dt/tau_m)."""
 
-    def test_sigma_zero_is_deterministic(self):
+    def test_sigma_zero_is_deterministic(self) -> None:
         """sigma=0 → identical runs (no RNG)."""
         np.random.seed(42)
         n1 = StochasticIFNeuron(sigma=0.0)
@@ -26,7 +26,7 @@ class TestStochasticIFNoiseMechanism:
         t2 = [(n2.step(25.0), n2.v) for _ in range(200)]
         assert t1 == t2
 
-    def test_sigma_zero_constant_isi(self):
+    def test_sigma_zero_constant_isi(self) -> None:
         """sigma=0: deterministic LIF → perfectly constant ISI."""
         n = StochasticIFNeuron(sigma=0.0)
         spikes = _run(n, current=25.0, steps=10000)
@@ -35,7 +35,7 @@ class TestStochasticIFNoiseMechanism:
             cv = np.std(isis) / np.mean(isis)
             assert cv < 0.001, f"CV(ISI) = {cv:.4f} with sigma=0"
 
-    def test_sigma_nonzero_variable_isi(self):
+    def test_sigma_nonzero_variable_isi(self) -> None:
         """sigma>0: ISI has variability (CV > 0)."""
         n = StochasticIFNeuron(sigma=3.0)
         spikes = _run(n, current=25.0, steps=50000)
@@ -44,14 +44,14 @@ class TestStochasticIFNoiseMechanism:
         cv = np.std(isis) / np.mean(isis)
         assert cv > 0.05, f"CV(ISI) = {cv:.4f}, expected > 0.05 with noise"
 
-    def test_noise_amplitude_scales_with_sigma(self):
+    def test_noise_amplitude_scales_with_sigma(self) -> None:
         """Higher sigma → more ISI variability."""
         cv_low = _measure_cv(StochasticIFNeuron(sigma=1.0), 25.0, 50000)
         cv_high = _measure_cv(StochasticIFNeuron(sigma=5.0), 25.0, 50000)
         if cv_low is not None and cv_high is not None:
             assert cv_high > cv_low
 
-    def test_noise_enables_subthreshold_spiking(self):
+    def test_noise_enables_subthreshold_spiking(self) -> None:
         """At I=15 (subthreshold for deterministic), noise (sigma=10) triggers spikes."""
         n_det = StochasticIFNeuron(sigma=0.0)
         n_noisy = StochasticIFNeuron(sigma=10.0)
@@ -60,7 +60,7 @@ class TestStochasticIFNoiseMechanism:
         assert s_det == 0, "Deterministic should not spike at I=15"
         assert s_noisy > 10, "Noise should trigger spikes at subthreshold I"
 
-    def test_two_runs_differ(self):
+    def test_two_runs_differ(self) -> None:
         """Two neurons with same params produce different spike trains."""
         n1 = StochasticIFNeuron()
         n2 = StochasticIFNeuron()

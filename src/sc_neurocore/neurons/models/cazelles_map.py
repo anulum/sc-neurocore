@@ -231,6 +231,7 @@ class CazellesMapNeuron:
     b4: float = -1.0
 
     def __post_init__(self) -> None:
+        """Validate the map parameters and the initial state ``x``."""
         self._parameters().validate(self.x)
 
     def _parameters(self) -> _CazellesParameters:

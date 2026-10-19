@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_extended_neurons.py
 
+"""Re-export the extended neuron model classes for the split extended-neuron suites."""
+
 from __future__ import annotations
 
-"""Tests for all extended neuron models."""
 from sc_neurocore.neurons.models import (
     BrainScaleSAdExNeuron,
     ButeraRespiratoryNeuron,

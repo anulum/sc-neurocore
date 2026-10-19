@@ -14,23 +14,27 @@ from tests.model_stochastic_if_support import *  # noqa: F403
 
 
 class TestStochasticIFFI:
-    def test_subthreshold_deterministic_silent(self):
+    """Firing-rate versus input (F-I) behaviour of StochasticIFNeuron."""
+
+    def test_subthreshold_deterministic_silent(self) -> None:
         """I=10 with sigma=0 → no spikes (V_ss = V_rest + I = -60 < -50)."""
         n = StochasticIFNeuron(sigma=0.0)
         assert len(_run(n, current=10.0, steps=10000)) == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """Check that a default neuron driven at I=25 fires at least 50 times in 10000 steps."""
         n = StochasticIFNeuron()
         assert len(_run(n, current=25.0, steps=10000)) >= 50
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """Check that raising the input from 20 to 50 increases the spike count."""
         n20 = StochasticIFNeuron()
         n50 = StochasticIFNeuron()
         s20 = len(_run(n20, current=20.0, steps=50000))
         s50 = len(_run(n50, current=50.0, steps=50000))
         assert s50 > s20
 
-    def test_rate_increases_with_sigma(self):
+    def test_rate_increases_with_sigma(self) -> None:
         """More noise → more noise-driven spikes → higher rate (near threshold)."""
         n_low = StochasticIFNeuron(sigma=1.0)
         n_high = StochasticIFNeuron(sigma=10.0)

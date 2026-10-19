@@ -14,15 +14,18 @@ from tests.model_stochastic_if_support import *  # noqa: F403
 
 
 class TestStochasticIFParameters:
-    def test_tau_m_affects_dynamics(self):
+    """Effect of the time constant, input offset and step size on StochasticIFNeuron."""
+
+    def test_tau_m_affects_dynamics(self) -> None:
+        """Check that a shorter membrane time constant yields more spikes at I=25."""
         n_fast = StochasticIFNeuron(tau_m=5.0, sigma=0.0)
         n_slow = StochasticIFNeuron(tau_m=40.0, sigma=0.0)
         s_fast = len(_run(n_fast, current=25.0, steps=10000))
         s_slow = len(_run(n_slow, current=25.0, steps=10000))
         assert s_fast > s_slow
 
-    def test_mu_shifts_baseline(self):
-        """mu adds constant offset to the input."""
+    def test_mu_shifts_baseline(self) -> None:
+        """Check that mu adds a constant offset to the input current."""
         n = StochasticIFNeuron(sigma=0.0, mu=10.0)
         # Effective input = mu + I = 10 + 15 = 25, same as I=25 with mu=0
         n2 = StochasticIFNeuron(sigma=0.0, mu=0.0)
@@ -31,7 +34,8 @@ class TestStochasticIFParameters:
         assert s1 == s2
 
     @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """Check that the membrane potential stays finite for each tested step size."""
         n = StochasticIFNeuron(dt=dt)
         for _ in range(10000):
             n.step(25.0)

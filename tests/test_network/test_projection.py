@@ -16,6 +16,8 @@ matvec and delayed propagation are covered transitively by the model suite.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -30,7 +32,8 @@ def _pops(n: int = 2) -> tuple[Population, Population]:
 # ── validate_csr_topology ────────────────────────────────────────────
 
 
-def test_validate_csr_topology_accepts_and_normalises_valid_arrays():
+def test_validate_csr_topology_accepts_and_normalises_valid_arrays() -> None:
+    """Check that valid CSR arrays are returned as int64, int64 and float64 arrays."""
     indptr, indices, data = validate_csr_topology(
         np.array([0, 1, 2]), np.array([1, 0]), np.array([0.5, 0.25]), 2, 2
     )
@@ -61,7 +64,13 @@ def test_validate_csr_topology_accepts_and_normalises_valid_arrays():
         ),
     ],
 )
-def test_validate_csr_topology_rejects_malformed_arrays(indptr, indices, data, match):
+def test_validate_csr_topology_rejects_malformed_arrays(
+    indptr: np.ndarray[Any, Any],
+    indices: np.ndarray[Any, Any],
+    data: np.ndarray[Any, Any],
+    match: str,
+) -> None:
+    """Check that each malformed CSR input raises ValueError with its specific message."""
     with pytest.raises(ValueError, match=match):
         validate_csr_topology(indptr, indices, data, 2, 2)
 
@@ -69,20 +78,23 @@ def test_validate_csr_topology_rejects_malformed_arrays(indptr, indices, data, m
 # ── topology builder ─────────────────────────────────────────────────
 
 
-def test_prebuilt_csr_tuple_topology_is_validated():
+def test_prebuilt_csr_tuple_topology_is_validated() -> None:
+    """Check that a prebuilt CSR tuple topology is accepted and gives two synapses."""
     src, tgt = _pops(2)
     csr = (np.array([0, 1, 2]), np.array([1, 0]), np.array([0.5, 0.5]))
     proj = Projection(src, tgt, weight=0.5, topology=csr)
     assert proj.n_synapses == 2
 
 
-def test_same_size_only_topologies_reject_without_prebuilt_csr():
+def test_same_size_only_topologies_reject_without_prebuilt_csr() -> None:
+    """Check that the ring topology raises its same-size requirement error without a prebuilt CSR."""
     src, tgt = _pops(2)
     with pytest.raises(ValueError, match="requires same-size source/target"):
         Projection(src, tgt, weight=0.5, topology="ring")
 
 
-def test_unknown_topology_name_raises():
+def test_unknown_topology_name_raises() -> None:
+    """Check that an unrecognised topology name raises ValueError."""
     src, tgt = _pops(2)
     with pytest.raises(ValueError, match="Unknown topology"):
         Projection(src, tgt, weight=0.5, topology="banana")
@@ -91,21 +103,24 @@ def test_unknown_topology_name_raises():
 # ── delay-mode accessors ─────────────────────────────────────────────
 
 
-def test_max_delay_none_mode_is_zero():
+def test_max_delay_none_mode_is_zero() -> None:
+    """Check that a zero delay selects the 'none' mode with max_delay 0."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=0.0)
     assert proj.delay_mode == "none"
     assert proj.max_delay == 0
 
 
-def test_max_delay_uniform_mode_returns_steps():
+def test_max_delay_uniform_mode_returns_steps() -> None:
+    """Check that a scalar delay of 2 selects uniform mode with max_delay 2."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=2.0)
     assert proj.delay_mode == "uniform"
     assert proj.max_delay == 2
 
 
-def test_max_delay_per_synapse_without_state_raises():
+def test_max_delay_per_synapse_without_state_raises() -> None:
+    """Check that max_delay raises RuntimeError when per-synapse delays are missing."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0))
     proj._per_syn_delays = None  # simulate corrupted delay state
@@ -114,6 +129,7 @@ def test_max_delay_per_synapse_without_state_raises():
 
 
 def test_delay_steps_per_synapse_without_state_raises() -> None:
+    """Check that delay_steps raises RuntimeError when per-synapse delays are missing."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0))
     proj._per_syn_delays = None  # simulate corrupted delay state
@@ -124,7 +140,8 @@ def test_delay_steps_per_synapse_without_state_raises() -> None:
 # ── propagation ──────────────────────────────────────────────────────
 
 
-def test_weight_threshold_skips_subthreshold_synapses():
+def test_weight_threshold_skips_subthreshold_synapses() -> None:
+    """Check that weights at or below the threshold contribute no current."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", weight_threshold=1.0)
     out = proj.propagate(np.array([1, 1], dtype=np.float64))
@@ -132,7 +149,8 @@ def test_weight_threshold_skips_subthreshold_synapses():
     assert np.all(out == 0.0)
 
 
-def test_propagate_uniform_without_buffer_raises():
+def test_propagate_uniform_without_buffer_raises() -> None:
+    """Check that propagate raises RuntimeError when the uniform delay buffer is missing."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=2.0)
     proj._delay_buf = None  # simulate corrupted delay buffer
@@ -140,7 +158,8 @@ def test_propagate_uniform_without_buffer_raises():
         proj.propagate(np.array([1, 1], dtype=np.float64))
 
 
-def test_propagate_per_synapse_without_state_raises():
+def test_propagate_per_synapse_without_state_raises() -> None:
+    """Check that propagate raises RuntimeError when per-synapse delays are missing."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0))
     proj._per_syn_delays = None  # simulate corrupted delay state
@@ -151,7 +170,8 @@ def test_propagate_per_synapse_without_state_raises():
 # ── plasticity ───────────────────────────────────────────────────────
 
 
-def test_update_plasticity_noop_without_stdp():
+def test_update_plasticity_noop_without_stdp() -> None:
+    """Check that update_plasticity leaves weights unchanged without a plasticity rule."""
     src, tgt = _pops(2)
     proj = Projection(src, tgt, weight=0.5, topology="all_to_all")  # plasticity None
     before = proj.data.copy()
@@ -159,7 +179,8 @@ def test_update_plasticity_noop_without_stdp():
     np.testing.assert_array_equal(proj.data, before)
 
 
-def test_self_projection_stdp_enforces_weight_symmetry():
+def test_self_projection_stdp_enforces_weight_symmetry() -> None:
+    """Check that STDP on a self-projection keeps reverse-edge weights equal."""
     src = Population("LapicqueNeuron", 2)
     proj = Projection(src, src, weight=0.5, topology="all_to_all", plasticity="stdp")
     proj.update_plasticity(np.array([1, 1]), np.array([1, 1]))

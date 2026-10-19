@@ -6,10 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_network_monitors_stimulus.py
 
+"""Re-export monitor and stimulus classes for the split network monitor/stimulus suites.
+
+Covers SpikeMonitor, StateMonitor, RateMonitor, TimedArray, StepCurrent and
+PoissonInput.
+"""
+
 from __future__ import annotations
 
-"""Unit tests for SpikeMonitor, StateMonitor, RateMonitor,
-TimedArray, StepCurrent, PoissonInput."""
 import numpy as np
 from sc_neurocore import StochasticLIFNeuron
 from sc_neurocore.network.population import Population

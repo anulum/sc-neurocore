@@ -6,13 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_model_stochastic_if.py
 
-from __future__ import annotations
-
-"""Full pipeline test for StochasticIFNeuron (Brunel & Hakim 1999).
+"""Shared imports and run helpers for the split StochasticIFNeuron suites (Brunel & Hakim 1999).
 
 LIF with Ornstein-Uhlenbeck noise: dV/dt = (-(V-V_rest) + mu + I)/tau_m + sigma·ξ.
 sigma=0 → deterministic LIF (CV=0). sigma>0 → stochastic ISI variability.
-Noise enables subthreshold spike triggering."""
+Noise enables subthreshold spike triggering.
+"""
+
+from __future__ import annotations
+
 import numpy as np
 import pytest
 from sc_neurocore.neurons.models.stochastic_if import StochasticIFNeuron

@@ -14,10 +14,14 @@ from tests.model_stochastic_if_support import *  # noqa: F403
 
 
 class TestStochasticIFPipeline:
-    def test_population(self):
+    """Use of StochasticIFNeuron inside populations, networks and spike analysis."""
+
+    def test_population(self) -> None:
+        """Check that a population of ten stochastic IF neurons reports n=10."""
         assert Population(StochasticIFNeuron, n=10, label="sif").n == 10
 
-    def test_network_with_drive(self):
+    def test_network_with_drive(self) -> None:
+        """Check that a Poisson-driven population records spikes in a one-second run."""
         pop = Population(StochasticIFNeuron, n=10, label="sif")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=25.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,7 +29,7 @@ class TestStochasticIFPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_affects_target(self):
+    def test_projection_affects_target(self) -> None:
         """Verify projection wiring by comparing target spikes with/without projection.
 
         Both target populations get the same subthreshold drive.
@@ -50,7 +54,8 @@ class TestStochasticIFPipeline:
         # (projection adds excitatory input)
         assert mon_with.count >= mon_without.count
 
-    def test_analysis_pipeline(self):
+    def test_analysis_pipeline(self) -> None:
+        """Check spike count, ISI and firing rate of a 50000-step train for consistency."""
         n = StochasticIFNeuron()
         train = np.array([float(n.step(25.0)) for _ in range(50000)])
         sc = spike_count(train)

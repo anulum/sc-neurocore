@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Docstrings and strict typing: the StochasticIF and Cazelles model modules
+  and 12 native-dispatch, projection and StochasticIF test modules meet the
+  NumPy docstring convention and `mypy --strict`.
+
 - Checking whether a network can run natively no longer moves the caller's
   random generators: the state probe constructs and steps default neurons
   inside a generator transaction, and a model that draws from NumPy's global

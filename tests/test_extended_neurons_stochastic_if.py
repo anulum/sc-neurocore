@@ -14,6 +14,9 @@ from tests.extended_neurons_support import *  # noqa: F403
 
 
 class TestStochasticIF:
-    def test_fires(self):
+    """Smoke test for the stochastic integrate-and-fire neuron in the extended suite."""
+
+    def test_fires(self) -> None:
+        """Check that a neuron with mu=25 and sigma=2 emits at least one spike in 500 steps."""
         n = StochasticIFNeuron(mu=25.0, sigma=2.0)
         assert sum(n.step(0.0) for _ in range(500)) > 0

@@ -29021,6 +29021,7 @@ state.
 Cazelles et al. (2001) scalar four-branch bursting map.
 
 - **__post_init__**()
+  - Validate the map parameters and the initial state ``x``.
 - **step**(current)
   - Advance once; rejected candidates leave ``x`` unchanged.
 - **simulate**(n_steps, current, backend)
@@ -32369,8 +32370,11 @@ Brunel & Hakim 1999 — Ornstein-Uhlenbeck driven IF.
 Reference: Tuckwell, H.C. (1988). Introduction to Theoretical Neurobiology, Vol. 2. Cambridge Univ. Press.
 
 - **__post_init__**()
+  - Refuse non-finite voltages and drift, non-positive time constants and negative sigma.
 - **step**(current)
+  - Advance one Euler-Maruyama step with one ``np.random.randn()`` draw; return the spike.
 - **reset**()
+  - Return the membrane voltage to ``v_rest``.
 
 ---
 

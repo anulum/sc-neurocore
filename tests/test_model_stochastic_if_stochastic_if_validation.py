@@ -14,25 +14,33 @@ from tests.model_stochastic_if_support import *  # noqa: F403
 
 
 class TestStochasticIFValidation:
+    """Parameter and input validation of StochasticIFNeuron."""
+
     @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold", "mu"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_voltage_and_drive_parameters(self, field: str, value: float):
+    def test_rejects_non_finite_voltage_and_drive_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """Check that NaN or infinite voltage and drive parameters raise ValueError."""
         with pytest.raises(ValueError, match=field):
             StochasticIFNeuron(**{field: value})
 
     @pytest.mark.parametrize("field", ["tau_m", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
-    def test_rejects_non_positive_or_non_finite_timescales(self, field: str, value: float):
+    def test_rejects_non_positive_or_non_finite_timescales(self, field: str, value: float) -> None:
+        """Check that zero, negative or non-finite tau_m and dt raise ValueError."""
         with pytest.raises(ValueError, match=field):
             StochasticIFNeuron(**{field: value})
 
     @pytest.mark.parametrize("sigma", [-1.0, np.nan, np.inf, -np.inf])
-    def test_rejects_negative_or_non_finite_noise_scale(self, sigma: float):
+    def test_rejects_negative_or_non_finite_noise_scale(self, sigma: float) -> None:
+        """Check that a negative or non-finite sigma raises ValueError."""
         with pytest.raises(ValueError, match="sigma"):
             StochasticIFNeuron(sigma=sigma)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """Check that a non-finite current raises ValueError and leaves v unchanged."""
         neuron = StochasticIFNeuron(v=-60.0)
         before = neuron.v
         with pytest.raises(ValueError, match="current"):
