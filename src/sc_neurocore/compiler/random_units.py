@@ -200,6 +200,16 @@ def normal_value(word0: int, word1: int) -> float:
     return radius * math.cos(2.0 * math.pi * word1 / 4294967296.0)
 
 
+# Words with fewer than this many steps to 2**32 take the series radius of normal_code.
+NEAR_ONE = 1 << 24
+
+# Largest |normal_code / 2**fraction - normal_value| before rounding to the output word,
+# measured over every word0 within 20 000 of 2**32, the series boundary and 4000 drawn
+# words (largest seen 3.1e-8); a measured envelope, not a proof. A code is within half an
+# LSB plus this error of the model's value clipped to the word.
+NORMAL_TRANSFORM_ERROR = 2.0**-24
+
+
 def normal_code(word0: int, word1: int, data_width: int, fraction: int) -> int:
     """Return the code of ``randn()`` computed in integers, as the RTL and kernel compute it.
 
@@ -220,7 +230,13 @@ def normal_code(word0: int, word1: int, data_width: int, fraction: int) -> int:
     whole = log2u >> fu.P
     rest = log2u - (whole << fu.P)
     square = -2 * (whole * fu._LN2 + ((rest * fu._LN2) >> fu.P))  # -2 ln u, fraction P
-    radius = fu.isqrt(square << 26)  # fraction 28
+    # Near u = 1 the radius sqrt(-2 ln u) is steep, and the logarithm's absolute error
+    # becomes several LSB of the radius; there -ln u = -ln(1 - d/2**32) is summed as
+    # d/2**32 + d**2/2**65 + d**3/(3*2**96) at fraction 60 instead.
+    distance = (1 << 32) - 1 - word0
+    square_d = distance * distance
+    near = (distance << 28) + (square_d >> 5) + ((square_d >> 18) * distance) // (3 << 18)
+    radius = fu.isqrt(near >> 3 if distance < NEAR_ONE else square << 26)  # fraction 28
     turn = word1 >> 2  # 30 bits of a turn
     cosine = fu._turn_sine((turn + (1 << (fu.B - 2))) & ((1 << fu.B) - 1))  # fraction P
     return fu.saturate(fu.shift_round(radius * cosine, fraction - 58), data_width)
@@ -318,6 +334,8 @@ __all__ = [
     "MAX_POISSON_LAMBDA",
     "MULTIPLIER_0",
     "MULTIPLIER_1",
+    "NEAR_ONE",
+    "NORMAL_TRANSFORM_ERROR",
     "ROUNDS",
     "WEYL_0",
     "WEYL_1",

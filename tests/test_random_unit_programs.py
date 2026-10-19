@@ -13,8 +13,9 @@ The programs (emitted to Verilog, C and Rust) must equal the reference
 :func:`~sc_neurocore.compiler.random_units.uniform_code` and
 :func:`~sc_neurocore.compiler.random_units.normal_code`, including at the
 32-bit boundaries of the step counter and with a seed above ``2**63``; the
-integer normal must stay within 0.5 LSB of the floating-point Box–Muller value
-the Python model returns. Distribution checks state their sample size.
+integer normal must stay within half an LSB of the floating-point Box–Muller value
+the Python model returns, up to the measured transform error
+``NORMAL_TRANSFORM_ERROR``. Distribution checks state their sample size.
 """
 
 from __future__ import annotations
@@ -91,14 +92,47 @@ def test_poisson_count_by_inversion_at_the_word_ends() -> None:
     assert ru.poisson_count((1 << 32) - 1, 3.5) == len(thresholds)
 
 
-def test_integer_normal_is_within_half_an_lsb_of_the_model() -> None:
-    """Over 4000 draws at Q16.16 the integer Box–Muller equals the float one to 0.5 LSB."""
-    worst = 0.0
-    for step in range(4000):
-        w = ru.draw(1, step, 0, 2026)
-        model = max(-32768.0, min(32767.0, ru.normal_value(w[0], w[1])))
-        worst = max(worst, abs(ru.normal_code(w[0], w[1], 32, 16) / 65536 - model) * 65536)
-    assert worst <= 0.5
+def _near_one_words() -> list[tuple[int, int]]:
+    """Every word0 within 20 000 of 2**32, and the series boundary, with three phases."""
+    distances = [*range(20000), ru.NEAR_ONE - 1, ru.NEAR_ONE, ru.NEAR_ONE + 1]
+    return [((1 << 32) - 1 - d, w1) for d in distances for w1 in (0, (1 << 30) + 7, 1 << 31)]
+
+
+def test_integer_normal_transform_error_is_below_its_bound() -> None:
+    """At a 40-bit fraction the integer Box–Muller is within TRANSFORM_ERROR of the float one.
+
+    Words near 2**32 (u close to 1, where the radius is steep) and 4000 drawn
+    words; a measurement over these words, not a proof for all 2**64 pairs.
+    """
+    pairs = _near_one_words() + [ru.draw(1, s, 0, 2026)[:2] for s in range(4000)]
+    worst = max(
+        abs(ru.normal_code(w0, w1, 62, 40) / 2**40 - ru.normal_value(w0, w1)) for w0, w1 in pairs
+    )
+    assert worst <= ru.NORMAL_TRANSFORM_ERROR
+
+
+def test_integer_normal_at_q16_16_near_u_one() -> None:
+    """At Q16.16 every code is within half an LSB plus the transform error of the model.
+
+    Before the series radius, word0 = 2**32 - 6 with word1 = 0 was 1.84 LSB away.
+    """
+    bound = 0.5 + ru.NORMAL_TRANSFORM_ERROR * 65536
+    for w0, w1 in _near_one_words():
+        model = max(-32768.0, min(32767.0, ru.normal_value(w0, w1)))
+        assert abs(ru.normal_code(w0, w1, 32, 16) - model * 65536) <= bound, (w0, w1)
+
+
+def test_program_takes_the_series_radius_where_the_reference_does() -> None:
+    """Steps whose word0 lies within NEAR_ONE of 2**32: the program equals the reference."""
+    near_steps = [s for s in range(6000) if (1 << 32) - 1 - ru.draw(1, s, 0, 2026)[0] < ru.NEAR_ONE]
+    assert len(near_steps) >= 5
+    for step in near_steps:
+        words = ru.draw(1, step, 0, 2026)
+        bound = {"step": step, "seed": 2026, "stream": 0}
+        for dw, fr in ((16, 8), (32, 16), (32, 29)):
+            assert program("randn", 1, dw, fr).evaluate(0, bound) == ru.normal_code(
+                words[0], words[1], dw, fr
+            )
 
 
 def test_distributions() -> None:

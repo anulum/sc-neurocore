@@ -56,6 +56,12 @@ def compile_to_datapath(
     the parameter ``P_RNG_SEED``; with the same step and stream the PE draws exactly
     what the per-instance module draws. The folded network's neuron templates
     have no draws, so its sequencer does not drive these inputs.
+    A crossing-detection model without reset (rising-edge spikes) adds the input
+    ``thr_prev_in`` and the output ``thr_cond_out``: the caller stores
+    ``thr_cond_out`` per neuron and returns it on the next step, starting from
+    :meth:`EquationNeuron.initial_threshold_active` after reset, as the module's
+    ``_thr_prev`` register does. The folded network's templates reset on a spike,
+    so they never take this form.
 
     Pipelining is not supported here (a combinational PE has no register stages);
     the folded sequencer provides the one-cycle-per-neuron timing instead.
@@ -107,9 +113,17 @@ def compile_to_datapath(
     )
     # rand()/randn()/poisson() draw at (site, step, stream): the sequencer that streams a
     # neuron's state through the PE also supplies its step counter and stream number.
-    uses_random = any("rng_step" in line for line in core.intermediates)
+    uses_random = bool(getattr(neuron, "uses_random_draws", False))
     state_var_map = core.state_var_map
     stochastic_threshold = bool(core.escape_probability_verilog)
+    # A crossing (non-resetting) model fires on the rising edge of its condition, which
+    # needs the condition of the previous step: the module keeps it in _thr_prev, the PE
+    # takes it on thr_prev_in and returns the new one on thr_cond_out for the caller to store.
+    edge_detection = (
+        bool(core.threshold_verilog)
+        and not stochastic_threshold
+        and bool(getattr(neuron, "_edge_detection", False))
+    )
     # Partition parameters into those baked as module ``parameter`` defaults and those
     # carried on input ports (``param_ports``), so a folded population can stream
     # per-neuron parameters through the PE. Both keep the same ``P_<NAME>`` identifier,
@@ -154,11 +168,15 @@ def compile_to_datapath(
     if uses_random:
         lines.append("    input wire [63:0] rng_step,")
         lines.append("    input wire [31:0] P_RNG_STREAM,")
+    if edge_detection:
+        lines.append("    input wire thr_prev_in,")
     # State carried in on ports (named <var>_reg so the shared core wires match).
     for var in neuron.equations:
         safe_var = state_var_map[var]
         lines.append(f"    input wire signed [{data_width - 1}:0] {safe_var}_reg,")
     lines.append("    output wire spike_out,")
+    if edge_detection:
+        lines.append("    output wire thr_cond_out,")
     if core.spike_value:
         lines.append(f"    output wire signed [{data_width - 1}:0] spike_value_out,")
     for var in neuron.equations:
@@ -192,6 +210,9 @@ def compile_to_datapath(
     # Spike is the combinational threshold over the candidate next state.
     if stochastic_threshold:
         lines.append("assign spike_out = _escape_spike;")
+    elif edge_detection:
+        lines.append(f"assign thr_cond_out = ({core.threshold_verilog});")
+        lines.append("assign spike_out = thr_cond_out && !thr_prev_in;")
     elif core.threshold_verilog:
         lines.append(f"assign spike_out = ({core.threshold_verilog});")
     else:

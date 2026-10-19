@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1070
+expected_file_count = 1071
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4373,3 +4373,7 @@ rationale = "The folded processing element against the per-instance module, cycl
 [[file]]
 path = "tests/test_verilog_compiler_architecture.py"
 rationale = "The two-function facade, its stable signatures, module ownership, dependency direction and size ceilings."
+
+[[file]]
+path = "tests/test_equation_compiler_review_fixes.py"
+rationale = "Reproducers of the 2026-10-19 compiler review findings, each with a control: kernel traps, name clashes, PE edge history, xi, warm-up, contract and table width."

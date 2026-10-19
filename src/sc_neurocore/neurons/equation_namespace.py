@@ -85,6 +85,7 @@ def build_eval_namespace() -> dict[str, Any]:
         "sign": np.sign,
         "exprel": _exprel,
         "sigmoid": _sigmoid,
+        "expit": _sigmoid,
         "pi": math.pi,
         "clip": np.clip,
         "max": max,

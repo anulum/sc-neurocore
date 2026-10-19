@@ -34,10 +34,14 @@ Two entry points:
 
 from __future__ import annotations
 
+import math
+
 from ...neurons.equation_builder import EquationNeuron
 from ...hdl_gen._ident import sanitize_ident
 from ..c_fixed_emitter import emit_c_fixed_expr, signed_q
+from .. import expr_lut_tables
 from ..function_unit_ir import TABLE_PREFIX
+from ..lut_accuracy import GEOMETRY
 from ..verilog_compiler_config import Q88
 
 _NATIVE_WIDTHS = frozenset({8, 16, 32, 64})
@@ -77,6 +81,8 @@ def kernel_arithmetic_contract(
     overflow: str = "saturate",
     rounding: str = "truncate",
     method: str = "euler",
+    function_lowering: str = "lut-v1",
+    random_draws: tuple[int, int] | None = None,
 ) -> dict[str, object]:
     """State the fixed-point arithmetic a generated neuron kernel performs.
 
@@ -100,6 +106,12 @@ def kernel_arithmetic_contract(
     method : str
         ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``) or ``"map"``
         (``next = commit(f)``).
+    function_lowering : str
+        ``"lut-v1"`` (look-up tables) or ``"v2"`` (integer function units): the
+        lowering whose transcendentals are described.
+    random_draws : tuple of int, optional
+        ``(seed, stream)`` of a neuron that calls ``rand``, ``randn`` or
+        ``poisson``; ``None`` when it draws nothing.
 
     Returns
     -------
@@ -183,12 +195,7 @@ def kernel_arithmetic_contract(
             "positive period, one period added when negative"
         ),
         "integer_power": "repeated wrap-truncate multiplies (exponents 2 to 8)",
-        "transcendentals": (
-            "look-up tables on the RTL sample grids (exp, tanh, cosh, exprel, sigmoid, "
-            "sin, cos, cbrt: [-16, 16) step 0.125; log and sqrt on their own grids); "
-            f"argument truncated to {data_width} bits, index computed in "
-            f"{data_width + 1} bits and clamped to the table"
-        ),
+        "transcendentals": _transcendentals(function_lowering, data_width, fraction),
         "overflow": overflow,
         "rounding": rounding,
         "method": method,
@@ -208,13 +215,65 @@ def kernel_arithmetic_contract(
             f"one signed {data_width}-bit word per step ({c_word_type(data_width)}), "
             "held for the whole step"
         ),
-        "randomness": "none: the diffusion-noise symbol xi is not supported",
+        "randomness": _randomness(random_draws),
         "identity_evidence": (
             "the generated kernel mirrors the compile_to_verilog RTL; the Icarus "
             "Verilog co-simulation test checks equal per-cycle traces on the stimuli "
             "it runs, which is a check, not a proof"
         ),
     }
+
+
+def _transcendentals(function_lowering: str, data_width: int, fraction: int) -> str:
+    """Describe the transcendental lowering, with the index width of the actual grids."""
+    if function_lowering == "v2":
+        return (
+            "v2 function units: one straight-line 64-bit integer program per function "
+            "(range reduction, polynomial or table segments, reconstruction), the same "
+            "program in the RTL and the kernel; measured errors in "
+            "docs/validation/function_units_v2_accuracy.md"
+        )
+    if function_lowering != "lut-v1":
+        raise ValueError(f"unknown function_lowering {function_lowering!r}")
+    widths = sorted(
+        {
+            expr_lut_tables.lut_offset_width(
+                data_width,
+                round(grid.lo * (1 << fraction)),
+                max(0, round(-math.log2(grid.step)) - fraction),
+            )
+            for grid in GEOMETRY.values()
+        }
+    )
+    index = (
+        f"{widths[0]} bits"
+        if len(widths) == 1
+        else f"{widths[0]} to {widths[-1]} bits depending on the grid"
+    )
+    return (
+        "look-up tables on the RTL sample grids (exp, tanh, cosh, exprel, sigmoid, "
+        "sin, cos, cbrt: [-16, 16) step 0.125; log and sqrt on their own grids); "
+        f"argument truncated to {data_width} bits, index computed in {index} and "
+        "clamped to the table; measured errors in docs/validation/lut_accuracy_v1.md"
+    )
+
+
+def _randomness(random_draws: tuple[int, int] | None) -> str:
+    """Describe the counter-based draws of a neuron, or their absence."""
+    if random_draws is None:
+        return (
+            "none: the neuron calls no rand(), randn() or poisson(); the diffusion-noise "
+            "symbol xi is not supported"
+        )
+    seed, stream = random_draws
+    return (
+        f"counter-based Philox4x32-10 keyed by seed {seed}, counter (call site, step, "
+        f"stream {stream}); the step counter is reset to 0 and advances once per step; "
+        "rand() = floor(word0 * 2**fraction / 2**32); randn() = integer Box-Muller of "
+        "words 0 and 1, saturated; poisson(lam) = exact inversion of word 0 against "
+        "ceil(2**32 * CDF(k)) for a constant mean in [0, 100]; replayable from seed, stream "
+        "and step; the diffusion-noise symbol xi is not supported"
+    )
 
 
 def _validate_modes(q: Q88) -> None:
@@ -430,6 +489,15 @@ def generate_bittrue_kernel(
     """
     if language not in {"c", "rust"}:
         raise ValueError(f"language must be 'c' or 'rust', got {language!r}")
+    # Imported here: the neurons package imports the compiler at load time.
+    from sc_neurocore.neurons.equation_random import draws_in
+
+    if draws_in(list(equations.values())):
+        # This kernel has no step counter, seed or stream; the whole-neuron kernel has.
+        raise ValueError(
+            "generate_bittrue_kernel has no step counter for rand(), randn() or poisson(); "
+            "use generate_bittrue_kernel_from_neuron"
+        )
     q = Q88(data_width=data_width, fraction=fraction)
     _validate_modes(q)
 
@@ -650,6 +718,18 @@ def generate_bittrue_kernel_from_neuron(
             "bit-true neuron kernel does not mirror macro-step sub-stepping "
             f"(substeps={neuron.substeps})"
         )
+    if getattr(neuron, "uses_diffusion_noise", False):
+        raise ValueError(
+            "bit-true neuron kernel has no lowering of the diffusion-noise symbol xi; "
+            "use the counter-based randn() draw instead"
+        )
+
+    if neuron.uses_random_draws and "rng_step" in {*neuron.equations, *neuron.parameters}:
+        # The draws' step counter is the struct field ``rng_step``.
+        raise ValueError(
+            "a state or parameter named 'rng_step' collides with the step counter of the "
+            "random draws in the bit-true kernel; rename it"
+        )
 
     dt_q = signed_q(q, neuron.dt)
     if neuron.dt != 0.0 and dt_q == 0:
@@ -723,7 +803,7 @@ def generate_bittrue_kernel_from_neuron(
         spike_value_expr=spike_value_expr,
     )
     source = _emit_neuron_c(ctx) if language == "c" else _emit_neuron_rust(ctx)
-    if "rng_step" in source:
+    if neuron.uses_random_draws:
         source = _with_random_state(source, neuron, language)
     return source
 
@@ -903,18 +983,21 @@ def _neuron_commit_c(ctx: _KernelContext) -> list[str]:
         lines.append("    s->thr_prev = _cond;")
     else:
         lines.append(f"    int _spk = ({ctx.threshold_expr}) ? 1 : 0;")
-    # The reset expressions' own statements (table indices, function units, draws).
+    if ctx.spike_value_expr:
+        lines.append("    s->spike_value_out = 0;")
+    lines.append("    if (_spk) {")
+    # The reset and graded-value expressions are evaluated only on a spike, as the
+    # model evaluates them: an expression undefined off the spike (a reciprocal of a
+    # zero state) must not trap the kernel on a step that does not use it.
     for stmt in ctx.reset_stmts:
-        lines.append(f"    {stmt}")
+        lines.append(f"        {stmt}")
     for var, expr in ctx.reset_exprs.items():
         # A reset value is committed like a next state, under the overflow policy.
         reset = _accumulate_bias(expr, ctx.q.overflow)
-        lines.append(f"    {_ctype(ctx.q.data_width)} _rst_{ctx.safe[var]} = {reset};")
+        lines.append(f"        {_ctype(ctx.q.data_width)} _rst_{ctx.safe[var]} = {reset};")
     if ctx.spike_value_expr:
         value = _accumulate_bias(ctx.spike_value_expr, ctx.q.overflow)
-        lines.append(f"    {_ctype(ctx.q.data_width)} _spike_value = {value};")
-        lines.append("    s->spike_value_out = _spk ? _spike_value : 0;")
-    lines.append("    if (_spk) {")
+        lines.append(f"        s->spike_value_out = {value};")
     for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
         lines.append(f"        s->{ctx.safe[var]} = {rhs};")
@@ -1007,18 +1090,19 @@ def _neuron_commit_rust(ctx: _KernelContext) -> list[str]:
         lines.append("        self.thr_prev = _cond;")
     else:
         lines.append(f"        let _spk: i32 = if ({ctx.threshold_expr}) {{ 1 }} else {{ 0 }};")
-    # The reset expressions' own statements (table indices, function units, draws).
+    if ctx.spike_value_expr:
+        lines.append("        self.spike_value_out = 0;")
+    lines.append("        if _spk != 0 {")
+    # Evaluated only on a spike, as in the C kernel and the model.
     for stmt in ctx.reset_stmts:
-        lines.append(f"        {stmt}")
+        lines.append(f"            {stmt}")
     for var, expr in ctx.reset_exprs.items():
         reset = _accumulate_bias(expr, ctx.q.overflow, _rtype(ctx.q.data_width))
-        lines.append(f"        let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = {reset};")
+        lines.append(f"            let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = {reset};")
     if ctx.spike_value_expr:
         rtype = _rtype(ctx.q.data_width)
         value = _accumulate_bias(ctx.spike_value_expr, ctx.q.overflow, rtype)
-        lines.append(f"        let _spike_value: {rtype} = {value};")
-        lines.append("        self.spike_value_out = if _spk != 0 { _spike_value } else { 0 };")
-    lines.append("        if _spk != 0 {")
+        lines.append(f"            self.spike_value_out = {value};")
     for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
         lines.append(f"            self.{ctx.safe[var]} = {rhs};")

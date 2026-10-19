@@ -8169,6 +8169,12 @@ A neuron with ``rand()``, ``randn()`` or ``poisson()`` draws adds the inputs
 the parameter ``P_RNG_SEED``; with the same step and stream the PE draws exactly
 what the per-instance module draws. The folded network's neuron templates
 have no draws, so its sequencer does not drive these inputs.
+A crossing-detection model without reset (rising-edge spikes) adds the input
+``thr_prev_in`` and the output ``thr_cond_out``: the caller stores
+``thr_cond_out`` per neuron and returns it on the next step, starting from
+:meth:`EquationNeuron.initial_threshold_active` after reset, as the module's
+``_thr_prev`` register does. The folded network's templates reset on a spike,
+so they never take this form.
 
 Pipelining is not supported here (a combinational PE has no register stages);
 the folded sequencer provides the one-cycle-per-neuron timing instead.
@@ -10209,7 +10215,7 @@ Harnesses that drive a generated kernel (per-step input words, decoded
 state reads) must pass and read exactly this type; it is the type of the
 ``I_t`` step argument and of every ``<state>_out`` field.
 
-### Function `kernel_arithmetic_contract(*, data_width, fraction, overflow, rounding, method)`
+### Function `kernel_arithmetic_contract(*, data_width, fraction, overflow, rounding, method, function_lowering, random_draws)`
 State the fixed-point arithmetic a generated neuron kernel performs.
 
 The description is derived from the same configuration checks the
@@ -10232,6 +10238,12 @@ rounding : str
 method : str
     ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``) or ``"map"``
     (``next = commit(f)``).
+function_lowering : str
+    ``"lut-v1"`` (look-up tables) or ``"v2"`` (integer function units): the
+    lowering whose transcendentals are described.
+random_draws : tuple of int, optional
+    ``(seed, stream)`` of a neuron that calls ``rand``, ``randn`` or
+    ``poisson``; ``None`` when it draws nothing.
 
 Returns
 -------
@@ -12719,8 +12731,8 @@ Mirrors ``_VerilogExprEmitter._emit_lut_call``: index
 ``(code - round(lo * 2**fraction)) >> (fraction - log2(1/step))``, a left shift
 when that is negative, clamped to ``&#91;0, size - 1&#93;``, computed in a width that holds
 every shifted sum (``expr_lut_tables.lut_offset_width``); entries saturated to the
-word (``expr_lut_tables.saturate_entries``). Words up to 62 bits; wider words use
-:func:`lut_read_int`.
+word (``expr_lut_tables.saturate_entries``). Only formats for which
+:func:`fits_int64` holds; the others use :func:`lut_read_int`.
 
 Parameters
 ----------
@@ -12735,6 +12747,30 @@ Returns
 -------
 numpy.ndarray of int64
     The selected entries, as signed codes.
+
+Raises
+------
+ValueError
+    When the format's shifted index does not fit a signed 64-bit integer.
+
+### Function `fits_int64(function, data_width, fraction)`
+Return whether :func:`lut_read` computes this table's index exactly in int64.
+
+The index is ``(code - min_q)`` shifted by ``fraction - log2(1/step)``; the sum
+needs one bit more than the wider of the code and ``min_q``, and a left shift adds
+its amount. Every intermediate must stay within a signed 64-bit integer.
+
+Parameters
+----------
+function : str
+    A member of :func:`table_functions`.
+data_width, fraction : int
+    The fixed-point format.
+
+Returns
+-------
+bool
+    ``True`` when every intermediate fits in 63 magnitude bits.
 
 ### Function `lut_read_int(function, code, data_width, fraction)`
 Return the entry the RTL selects for one input code, in exact integer arithmetic.
@@ -26390,6 +26426,8 @@ validation before the expressions are compiled for runtime.
   - Initialise an equation-defined neuron from ODE strings.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
+- **uses_random_draws**()
+  - Whether any authored expression calls ``rand``, ``randn`` or ``poisson``.
 - **uses_diffusion_noise**()
   - Whether any authored expression references the diffusion-noise symbol ``xi``.
 - **step**(I, \*\*kwargs)
@@ -26546,6 +26584,21 @@ stream : int
   - Return the standard-normal draw of a call site at the current step.
 - **poisson**(lam, site)
   - Return the Poisson draw of a call site at the current step.
+
+### Function `draws_in(expressions)`
+Return whether any of the expressions calls ``rand``, ``randn`` or ``poisson``.
+
+Parameters
+----------
+expressions : Sequence&#91;str or None&#93;
+    Expressions to inspect; ``None`` entries are skipped.
+
+Returns
+-------
+bool
+    ``True`` when at least one random call is present. The test reads the
+    parsed calls, so a state or parameter whose name merely contains
+    ``rand`` or ``rng_step`` does not count.
 
 ### Function `number_random_sites(expressions)`
 Give every bare ``rand()``/``randn()`` call its own call-site number.

@@ -11,9 +11,10 @@
 Each neuron is compiled to RTL (Icarus Verilog) and to the bit-true C kernel
 (gcc with undefined-behaviour checks); the traces must be identical. Against
 the Python model, ``rand()`` must equal ``floor(model·2**fraction)`` at every
-step and ``randn()`` must be within 0.5 LSB. A reset expression with a table
-function checks the kernel's reset statements, which were not emitted before
-2026-10-19. Cases needing the toolchain skip without Icarus or gcc.
+step and ``randn()`` must be within half an LSB plus the transform error. A
+reset expression with a table function checks the kernel's reset statements,
+which were not emitted before 2026-10-19. Cases needing the toolchain skip
+without Icarus or gcc.
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from pathlib import Path
 
 import pytest
 
+from sc_neurocore.compiler import random_units as ru
 from sc_neurocore.compiler.c_expr_emitter import emit_c_expr
 from sc_neurocore.compiler.hardware_numeric_contract import hardware_numeric_contract
 from sc_neurocore.compiler.intelligence.bit_true_kernel import generate_bittrue_kernel_from_neuron
@@ -98,8 +100,8 @@ class TestCosim:
         assert rtl == c
         assert [int(row[1]) for row in rtl] == [int(v * 65536) for v in model]
 
-    def test_randn_is_within_half_an_lsb(self) -> None:
-        """Map neuron v = randn(): every RTL code is within 0.5 LSB of the model."""
+    def test_randn_is_within_half_an_lsb_plus_the_transform_error(self) -> None:
+        """Map neuron v = randn(): every RTL code is within 0.5 LSB + 2**-24 of the model."""
         neuron = EquationNeuron(
             equations={"v": "randn()"}, state={"v": 0.0}, dt=1.0, method="map", rng_seed=2026
         )
@@ -109,7 +111,8 @@ class TestCosim:
             neuron.step(0.0)
             model.append(neuron.state["v"])
         assert rtl == c
-        assert max(abs(int(row[1]) / 65536 - v) * 65536 for row, v in zip(rtl, model)) <= 0.5
+        bound = 0.5 + ru.NORMAL_TRANSFORM_ERROR * 65536
+        assert max(abs(int(row[1]) / 65536 - v) * 65536 for row, v in zip(rtl, model)) <= bound
 
     def test_poisson_equals_the_model_exactly(self) -> None:
         """Map neuron v = poisson(3.5): every RTL code is the model's count times 2**8."""

@@ -61,6 +61,7 @@ def test_namespace_exposes_the_expected_symbols() -> None:
         "sign",
         "exprel",
         "sigmoid",
+        "expit",
         "pi",
         "clip",
         "max",

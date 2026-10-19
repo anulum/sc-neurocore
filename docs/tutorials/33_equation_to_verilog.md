@@ -305,8 +305,12 @@ advanced on every step. The bit-true C and Rust kernels carry `rng_step` in
 their state and the constants `SC_RNG_SEED` and `SC_RNG_STREAM`. `rand()` is
 `floor(rand·2^fraction)` of the model's value exactly; `randn()` is an integer
 Box–Muller (`sqrt(-2 ln u1)·cos(2π u2)` with the v2 logarithm, square root and
-quarter-wave cosine) within 0.5 LSB of the model's floating-point value and
-saturated to the word. `poisson(lam)` inverts the distribution on word 0: the
+quarter-wave cosine; near `u1 = 1`, where the radius is steep, `-ln u1` is
+summed as a series), saturated to the word. Its code is within half an LSB plus
+the transform's own error, `NORMAL_TRANSFORM_ERROR = 2^-24` (measured, largest
+seen 3.1·10^-8), of the model's value clipped to the word, so at most
+`0.5 + 2^(fraction-24)` LSB: about 0.504 LSB at a 16-bit fraction, but up to
+32.5 LSB at Q3.29; a high fraction gains resolution, not accuracy. `poisson(lam)` inverts the distribution on word 0: the
 count is the number of thresholds `ceil(2^32·CDF(k))` at or below the word, so
 the model, the RTL and the kernel return the same count, the exact inversion of
 a 32-bit uniform. Its mean must be a constant in `[0, 100]` in compiled
@@ -350,9 +354,12 @@ registered RTL adds the output `spike_value_out` (a word of the data format,
 committed under the overflow policy like a reset value and registered with
 `spike_out`), the folded processing element drives it combinationally, and the
 bit-true C and Rust kernels keep it in `spike_value_out` of their state. A
-graded spike needs a threshold or a stochastic spike mechanism. In the
-multi-substep datapath the value is set on the macro boundary from the state
-after the last sub-step.
+graded spike needs a threshold or a stochastic spike mechanism, and a state
+named `spike_value` is refused with it (its output would be `spike_value_out`).
+In the multi-substep datapath the value is set on the macro boundary from the
+state after the last sub-step. The C and Rust kernels evaluate the value and the
+reset rules only on a spike, as the model does, so an expression undefined off
+the spike (a reciprocal of a zero state) does not trap them.
 
 ## 6. Folded combinational datapaths
 
@@ -373,7 +380,11 @@ pe = compile_to_datapath(
 Named `param_ports` must exist in the model. Unlisted parameters remain module
 parameters. A folded stochastic model receives an already-advanced
 `rng_sample` port because the population scheduler owns one RNG state per
-neuron.
+neuron. A crossing-detection model without reset (rising-edge spikes) needs
+the condition of the previous step: the PE takes it on `thr_prev_in` and
+returns the new one on `thr_cond_out`, which the caller stores per neuron and
+resets to `neuron.initial_threshold_active()`, as the module's `_thr_prev`
+register does.
 
 Folded datapaths are combinational and do not accept multiplier pipeline
 stages.
@@ -497,6 +508,9 @@ a named synthesis/place-and-route flow and its retained reports.
 - The whole-neuron integer C/Rust generator mirrors only `euler` and `map`;
   it rejects other integrators.
 - Registered and folded Verilog emission currently requires signed state.
+- The diffusion-noise symbol `xi` has no RTL or kernel lowering; an expression
+  using it, the graded value included, is refused. `randn()` is the
+  counter-based normal draw that compiles.
 - Folded datapaths do not support multiplier pipeline registers.
 - Stochastic-threshold registered RTL is signed and unpipelined.
 - Stochastic product rounding is rejected until the caller can provide and own

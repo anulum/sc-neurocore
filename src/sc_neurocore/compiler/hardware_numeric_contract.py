@@ -374,6 +374,10 @@ def hardware_numeric_contract(
             overflow=overflow,
             rounding=rounding,
             method=neuron.method,
+            function_lowering=function_lowering,
+            random_draws=(
+                (neuron.random_seed, neuron.random_stream) if neuron.uses_random_draws else None
+            ),
         )
         mirror_refusal = ""
     return HardwareNumericContract(

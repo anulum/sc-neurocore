@@ -70,7 +70,7 @@ from sc_neurocore.neurons._stochastic_threshold import (
 )
 from sc_neurocore.neurons.equation_evaluation import evaluate_condition, evaluate_scalar
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
-from sc_neurocore.neurons.equation_random import RandomDraws, number_random_sites
+from sc_neurocore.neurons.equation_random import RandomDraws, draws_in, number_random_sites
 from sc_neurocore.neurons.equation_refusals import EquationRefusal, EquationStateFailure
 from sc_neurocore.neurons.equation_program import compile_expression
 from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
@@ -205,6 +205,13 @@ class EquationNeuron:
             and rate_expression is None
         ):
             raise EquationRefusal("spike_value needs a threshold or a stochastic spike mechanism")
+        if self.spike_value_expr is not None and "spike_value" in self.equations:
+            # Every compiled form names a state's output <state>_out and the graded
+            # output spike_value_out; the two would be one port or struct field.
+            raise EquationRefusal(
+                "a state named 'spike_value' collides with the graded output spike_value_out; "
+                "rename the state"
+            )
         rate_expression = self.rate_expression
         probability_expression = self.probability_expression
         threshold = self.threshold_expr
@@ -361,6 +368,12 @@ class EquationNeuron:
         if self._compiled_threshold is None:
             return False
         env: dict[str, object] = dict(self._namespace)
+        # Draws of step 0, whatever step the running neuron has reached: the seed is a
+        # property of the initial state, as a reset or a compiled module sees it.
+        initial_draws = RandomDraws(self._random.seed, self._random.stream)
+        env["rand"] = initial_draws.rand
+        env["randn"] = initial_draws.randn
+        env["poisson"] = initial_draws.poisson
         env["xi"] = 0.0
         env.update(self.parameters)
         env.update(self.constants)
@@ -411,6 +424,20 @@ class EquationNeuron:
         return float(np.random.randn())
 
     @property
+    def uses_random_draws(self) -> bool:
+        """Whether any authored expression calls ``rand``, ``randn`` or ``poisson``."""
+        return draws_in(
+            [
+                *self.equations.values(),
+                *self.reset_rules.values(),
+                self.threshold_expr,
+                self.rate_expression,
+                self.probability_expression,
+                self.spike_value_expr,
+            ]
+        )
+
+    @property
     def uses_diffusion_noise(self) -> bool:
         """Whether any authored expression references the diffusion-noise symbol ``xi``."""
         expressions = list(self.equations.values()) + list(self.reset_rules.values())
@@ -420,6 +447,8 @@ class EquationNeuron:
             expressions.append(self.rate_expression)
         if self.probability_expression:
             expressions.append(self.probability_expression)
+        if self.spike_value_expr:
+            expressions.append(self.spike_value_expr)
         return any(re.search(r"\bxi\b", expression) is not None for expression in expressions)
 
     def _build_env(self, **kwargs: float) -> dict[str, object]:
@@ -481,6 +510,7 @@ class EquationNeuron:
             raise
 
         spike = 0
+        previous_spike_value = self.last_spike_value
         self.last_spike_value = 0.0
         if self._stochastic_threshold_enabled:
             stochastic_rng = self._stochastic_rng
@@ -525,6 +555,7 @@ class EquationNeuron:
             except Exception:
                 self.state = previous_state
                 stochastic_rng.restore(previous_rng)
+                self.last_spike_value = previous_spike_value
                 raise
         elif self._compiled_threshold:
             env_post = self._build_env(**kwargs)

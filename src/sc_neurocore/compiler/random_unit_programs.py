@@ -82,7 +82,17 @@ def _randn(p: Program, site: int, data_width: int, fraction: int) -> str:
     rest = p.sub(log2u, p.shl(whole, fu.P))
     natural = p.add(p.mul(whole, p.const(fu._LN2)), p.shr(p.mul(rest, p.const(fu._LN2)), fu.P))
     square = p.mul(p.const(-2), natural)
-    radius = _isqrt(p, p.shl(square, 26))
+    # Series radius near u = 1, as ru.normal_code computes it. Both sides are always
+    # computed, so a far word's distance is replaced by 0 before it is squared.
+    full_distance = p.sub(p.const((1 << 32) - 1), word0)
+    is_near = p.lt(full_distance, p.const(ru.NEAR_ONE))
+    distance = p.select(is_near, full_distance, p.const(0))
+    square_d = p.mul(distance, distance)
+    near = p.add(
+        p.add(p.shl(distance, 28), p.shr(square_d, 5)),
+        p.div(p.mul(p.shr(square_d, 18), distance), p.const(3 << 18)),
+    )
+    radius = _isqrt(p, p.select(is_near, p.shr(near, 3), p.shl(square, 26)))
     turn = p.shr(word1, 2)
     cosine = _turn_sine(p, p.mask(p.add(turn, p.const(1 << (fu.B - 2))), fu.B))
     return _saturate(p, _shift_round(p, p.mul(radius, cosine), fraction - 58), data_width)

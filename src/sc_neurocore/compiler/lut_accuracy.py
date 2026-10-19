@@ -172,8 +172,8 @@ def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> 
     ``(code - round(lo * 2**fraction)) >> (fraction - log2(1/step))``, a left shift
     when that is negative, clamped to ``[0, size - 1]``, computed in a width that holds
     every shifted sum (``expr_lut_tables.lut_offset_width``); entries saturated to the
-    word (``expr_lut_tables.saturate_entries``). Words up to 62 bits; wider words use
-    :func:`lut_read_int`.
+    word (``expr_lut_tables.saturate_entries``). Only formats for which
+    :func:`fits_int64` holds; the others use :func:`lut_read_int`.
 
     Parameters
     ----------
@@ -189,7 +189,17 @@ def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> 
     numpy.ndarray of int64
         The selected entries, as signed codes.
 
+    Raises
+    ------
+    ValueError
+        When the format's shifted index does not fit a signed 64-bit integer.
+
     """
+    if not fits_int64(function, data_width, fraction):
+        raise ValueError(
+            f"{function} at data_width={data_width}, fraction={fraction} needs more than 63 "
+            "bits for the shifted index; use lut_read_int"
+        )
     geometry = GEOMETRY[function]
     stored = expr_lut_tables.saturate_entries(_ENTRIES[function](data_width, fraction), data_width)
     entries = np.asarray(stored, dtype=np.int64)
@@ -199,6 +209,33 @@ def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> 
     index = offset >> shift if shift >= 0 else offset << -shift
     selected: IntArray = entries[np.clip(index, 0, geometry.size - 1)]
     return selected
+
+
+def fits_int64(function: str, data_width: int, fraction: int) -> bool:
+    """Return whether :func:`lut_read` computes this table's index exactly in int64.
+
+    The index is ``(code - min_q)`` shifted by ``fraction - log2(1/step)``; the sum
+    needs one bit more than the wider of the code and ``min_q``, and a left shift adds
+    its amount. Every intermediate must stay within a signed 64-bit integer.
+
+    Parameters
+    ----------
+    function : str
+        A member of :func:`table_functions`.
+    data_width, fraction : int
+        The fixed-point format.
+
+    Returns
+    -------
+    bool
+        ``True`` when every intermediate fits in 63 magnitude bits.
+
+    """
+    geometry = GEOMETRY[function]
+    min_q = round(geometry.lo * (1 << fraction))
+    shift = fraction - round(-math.log2(geometry.step))
+    offset_bits = max(data_width, abs(min_q).bit_length() + 1) + 1
+    return offset_bits + max(0, -shift) <= 63
 
 
 def lut_read_int(function: str, code: int, data_width: int, fraction: int) -> int:
@@ -424,7 +461,7 @@ def measure(function: str, data_width: int, fraction: int, lowering: str = LOWER
     codes, exhaustive = _codes(function, data_width, fraction)
     scale = float(1 << fraction)
     x = np.array([code / scale for code in codes], dtype=np.float64)
-    if data_width <= 62:
+    if fits_int64(function, data_width, fraction):
         selected = lut_read(function, np.array(codes, dtype=np.int64), data_width, fraction)
         table = selected.astype(np.float64) / scale
     else:
@@ -471,6 +508,7 @@ __all__ = [
     "LutAccuracy",
     "V2_EXHAUSTIVE_MAX_WIDTH",
     "TableGeometry",
+    "fits_int64",
     "lut_read",
     "lut_read_int",
     "measure",

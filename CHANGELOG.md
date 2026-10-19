@@ -10,6 +10,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Fix the equation compiler findings of the 2026-10-19 reviews:
+  - `randn()` near `u = 1` (word 0 close to `2^32`) was up to 1.84 LSB from the
+    model at Q16.16; the radius there is now summed as a series, and the
+    accuracy is stated as half an LSB plus a measured transform error of
+    `2^-24` (`random_units.NORMAL_TRANSFORM_ERROR`), which dominates at high
+    fractions. The earlier unrestricted 0.5 LSB statement was wrong.
+  - The C and Rust kernels evaluate reset and graded-value expressions only on
+    a spike, so an expression undefined off the spike no longer traps them.
+  - `xi` in any expression, the graded value included, is refused by the
+    registered module, the folded PE and both kernels instead of emitting an
+    unbound name; `uses_diffusion_noise` sees the graded value.
+  - The folded PE of a crossing neuron without reset takes its threshold
+    history on `thr_prev_in` and returns it on `thr_cond_out`.
+  - Compiling a neuron that has already stepped no longer changes the reset
+    state of its edge history: the initial threshold uses the draws of step 0.
+  - Draws are detected from the parsed calls, so a state named `rng_step`
+    without draws compiles in the kernels; with draws the clash is refused. A
+    state named `spike_value` is refused with a graded spike. The
+    `{var: derivative}` kernel refuses draws.
+  - `expit` runs in the Python model; the hardware contract describes the
+    function lowering in use, the actual table index widths and the draws'
+    seed and stream; the table measurement no longer overflows int64; a failed
+    stochastic step restores `last_spike_value`.
+
 - Random draws compile in pipelined and multi-substep registered modules:
   `rng_step` advances on the pipeline's valid cycle and on the macro
   boundary, so each logical step draws what the unpipelined module draws

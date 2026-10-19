@@ -50,6 +50,25 @@ def _calls(expression: str) -> list[tuple[str, ast.Call]]:
     return sorted(calls, key=lambda pair: (pair[1].lineno, pair[1].col_offset))
 
 
+def draws_in(expressions: Sequence[str | None]) -> bool:
+    """Return whether any of the expressions calls ``rand``, ``randn`` or ``poisson``.
+
+    Parameters
+    ----------
+    expressions : Sequence[str or None]
+        Expressions to inspect; ``None`` entries are skipped.
+
+    Returns
+    -------
+    bool
+        ``True`` when at least one random call is present. The test reads the
+        parsed calls, so a state or parameter whose name merely contains
+        ``rand`` or ``rng_step`` does not count.
+
+    """
+    return any(_calls(expression) for expression in expressions if expression is not None)
+
+
 def number_random_sites(expressions: Sequence[str | None]) -> list[str | None]:
     """Give every bare ``rand()``/``randn()`` call its own call-site number.
 
@@ -211,4 +230,4 @@ class RandomDraws:
         return float(ru.poisson_count(ru.draw(site, self.step, self.stream, self.seed)[0], lam))
 
 
-__all__ = ["RANDOM_CALLS", "RandomDraws", "number_random_sites"]
+__all__ = ["RANDOM_CALLS", "RandomDraws", "draws_in", "number_random_sites"]

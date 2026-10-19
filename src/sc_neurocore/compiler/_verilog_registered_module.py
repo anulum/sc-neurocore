@@ -153,7 +153,7 @@ def compile_to_verilog(
     # seed. ``rng_step`` counts logical steps, as EquationNeuron.step does: it advances on
     # the pipeline's valid cycle (the draws stay fixed while the stages fill) and on the
     # macro boundary (every sub-step of a macro step draws the same numbers).
-    uses_random = any("rng_step" in line for line in all_intermediates)
+    uses_random = bool(getattr(neuron, "uses_random_draws", False))
     if uses_random:
         param_decls = [
             *param_decls,
