@@ -10,6 +10,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Network monitors and repeated runs report the run that happened. A
+  `RateMonitor` bin divides by the time its whole steps cover (a 10 ms bin at
+  dt 3 ms is 9 ms: 333 Hz, not 300 Hz); `StateMonitor` and
+  `Population.get_states` read each model's `get_state()`, so an
+  `EquationNeuron` is no longer recorded as zeros; a second `Network.run`
+  continues the step index and delivers the last step's spikes (another dt is
+  refused); `SpikeMonitor.cross_correlation` keeps every requested lag;
+  `StateMonitor(record=[])` records no neuron instead of crashing; and
+  neurons built from one explicit initial state no longer share it.
+- Spike gating admits a model's purity before its probe copies or resets
+  anything, restores both process generators around the whole probe, and
+  treats a self-referential state as not comparable instead of raising
+  `RecursionError`.
+- `scale_free` starts from a star on `m + 1` nodes and attaches by actual
+  degree (seed nodes counted a degree they had no edge for); `ring_topology`
+  refuses `k > (n - 1) // 2`, which doubled the antipode or added self
+  connections.
+
 - `Network` dispatches to the native runner only what the runner
   reproduces. It returns voltages only, so a model with state besides `v`
   (AdEx's `w` stayed 0 after 1000 native steps; Rulkov's `x`, `y`) is

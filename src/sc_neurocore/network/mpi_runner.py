@@ -232,17 +232,28 @@ class MPIRunner:
             local_spikes[idx] = spikes
         return local_spikes
 
-    def run(self, n_steps: int, dt: float = 0.001) -> None:
+    def run(
+        self,
+        n_steps: int,
+        dt: float = 0.001,
+        start_step: int = 0,
+        carried_spikes: dict[int, np.ndarray[Any, Any]] | None = None,
+    ) -> dict[int, np.ndarray[Any, Any]]:
         """Run the distributed simulation for *n_steps* timesteps.
 
         Results are recorded via the network's monitors. Global monitors
-        aggregate on rank 0 only.
+        aggregate on rank 0 only. Monitors record steps ``start_step`` to
+        ``start_step + n_steps - 1``; ``carried_spikes`` (keyed by population
+        index) are the spikes of the step before, which the first step's
+        projections deliver. Returns the last step's spikes, keyed the same way.
         """
         np.random.seed(self.network.seed + self.rank)
         pop_id_to_idx = {id(p): i for i, p in enumerate(self._populations)}
         all_spikes: dict[int, np.ndarray[Any, Any]] = {
             i: np.zeros(p.n, dtype=np.int8) for i, p in enumerate(self._populations)
         }
+        for index, spikes in (carried_spikes or {}).items():
+            all_spikes[index] = np.asarray(spikes, dtype=np.int8).copy()
 
         for t in range(n_steps):
             pop_to_currents: dict[int, np.ndarray[Any, Any]] = {
@@ -273,8 +284,10 @@ class MPIRunner:
                 for mon in net.spike_monitors:
                     idx = pop_id_to_idx.get(id(mon.population))
                     if idx is not None and idx in all_spikes:
-                        mon.record(all_spikes[idx], t)
-                for mon in net.rate_monitors:  # type: ignore[assignment]
-                    idx = pop_id_to_idx.get(id(mon.population))
+                        mon.record(all_spikes[idx], start_step + t)
+                for rate_mon in net.rate_monitors:
+                    idx = pop_id_to_idx.get(id(rate_mon.population))
                     if idx is not None and idx in all_spikes:
-                        mon.record(all_spikes[idx], t, dt)  # type: ignore[call-arg]
+                        rate_mon.record(all_spikes[idx], start_step + t, dt)
+
+        return all_spikes

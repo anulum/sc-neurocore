@@ -25417,7 +25417,7 @@ Population firing rate in time bins.
 - **record**(spikes, t_step, dt)
   - Accumulate spikes; flush when a bin completes.
 - **rate**()
-  - Firing rate (Hz) per bin.
+  - Firing rate (Hz) per bin: spikes per neuron over the time the bin covered.
 - **t**()
   - Bin edge timestep array.
 
@@ -25441,7 +25441,7 @@ and ``fim_lambda`` are unsupported by this runner — the
 either is requested with ``backend='mpi'``.
 
 - **__init__**(network)
-- **run**(n_steps, dt)
+- **run**(n_steps, dt, start_step, carried_spikes)
   - Run the distributed simulation for *n_steps* timesteps.
 
 ---
@@ -25559,6 +25559,8 @@ delay : float, array-like, or 0
   - Create projection with CSR connectivity and optional delay/plasticity.
 - **n_synapses**()
   - Number of synaptic connections.
+- **has_pending**()
+  - Return whether delayed current is still in flight from earlier steps.
 - **delay_mode**()
   - Delay mode: 'none', 'uniform', or 'per_synapse'.
 - **delay_steps**()
@@ -25583,6 +25585,18 @@ A neuron a population can drive one timestep with a scalar input.
 - **step**(current)
   - Advance one timestep under *current* and return the spike flag.
 
+### Class `GeneratorTransaction`
+Restore the NumPy and standard ``random`` process-wide generators on exit.
+
+Everything a probe does inside — copying a neuron, resetting it, stepping
+it — may draw from or reseed them; the caller's streams are left exactly as
+they were, on success, on refusal and on error.
+
+- **__enter__**()
+  - Record both generator states.
+- **__exit__**(\*_exc)
+  - Restore both generator states; any exception propagates.
+
 ### Function `declares_purity(neuron)`
 Return whether a model's ``step`` is declared to touch only its own attributes.
 
@@ -25591,6 +25605,8 @@ class attribute ``quiescence_pure = True``.
 
 ### Function `state_signature(neuron)`
 Return the exact signature of every attribute a neuron carries.
+
+A value nested too deeply to read is :data:`INCOMPARABLE`.
 
 ### Function `quiescent_signature(neuron)`
 Return the signature of a state the zero-input map leaves unchanged.
@@ -25940,12 +25956,20 @@ ValueError
 ### Function `scale_free(n, m, weight, seed)`
 Generate a Barabasi-Albert preferential-attachment graph.
 
+The seed graph is a star on ``m + 1`` nodes (node 0 joined to nodes
+``1..m``), so every seed node has an edge and a degree. Each later node
+``s`` then joins ``m`` distinct earlier nodes, drawn without replacement
+with probability proportional to their actual degree in the graph built so
+far (Barabasi and Albert, Science 286:509, 1999). The graph is simple and
+undirected: every edge is emitted in both directions, with no self or
+parallel connections, so each row sum is that node's degree.
+
 Parameters
 ----------
 n : int
     Number of source and target nodes. Must be at least two.
 m : int
-    Number of existing nodes sampled for each new node. Must satisfy
+    Number of existing nodes each new node joins. Must satisfy
     ``1 <= m < n``.
 weight : float
     Finite synaptic weight assigned to every emitted edge.
@@ -25963,7 +25987,31 @@ ValueError
     If ``n``, ``m``, or ``weight`` falls outside the Barabasi-Albert domain.
 
 ### Function `ring_topology(n, k, weight)`
-Ring topology with k nearest neighbours in each direction.
+Build a simple ring: each node joins its ``k`` nearest neighbours on each side.
+
+The graph is simple and symmetric: ``2k`` distinct neighbours per node, no
+self connection and no doubled pair, which holds exactly when
+``0 <= k <= (n - 1) // 2`` (at ``k = n / 2`` for even ``n`` the two sides
+meet at the antipode, and at ``k >= n`` they reach the node itself).
+
+Parameters
+----------
+n : int
+    Number of nodes, at least 1.
+k : int
+    Neighbours on each side, ``0 <= k <= (n - 1) // 2``.
+weight : float
+    Finite weight of every connection.
+
+Returns
+-------
+CSR
+    ``(indptr, indices, data)`` with ``2 n k`` entries.
+
+Raises
+------
+ValueError
+    For a node count, neighbour count or weight outside the domain.
 
 ### Function `grid_topology(rows_count, cols_count, radius, weight)`
 2-D lattice connectivity within a Chebyshev (square) radius.

@@ -97,8 +97,10 @@ from sc_neurocore.network.stimulus import PoissonInput, StepCurrent, TimedArray
 # Poisson spike train input
 poisson = PoissonInput(n=80, rate_hz=50.0, weight=1.5, dt=0.001, seed=42)
 
-# Step current (on at 100ms, off at 400ms)
-step = StepCurrent(onset=0.1, offset=0.4, amplitude=5.0)
+# Step current, on at 100 ms and off at 400 ms. onset and offset are step
+# indices, not seconds: at dt = 1 ms, 100 ms is step round(0.100 / 0.001) = 100.
+dt = 0.001
+step = StepCurrent(onset=round(0.100 / dt), offset=round(0.400 / dt), amplitude=5.0)
 
 # Arbitrary time-varying current
 values = np.sin(np.linspace(0, 4*np.pi, 500)) * 3.0

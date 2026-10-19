@@ -263,6 +263,19 @@ class Projection:
         return len(self.data)
 
     @property
+    def has_pending(self) -> bool:
+        """Return whether delayed current is still in flight from earlier steps.
+
+        True when the uniform delay buffer holds a non-zero current or the
+        per-synapse spike history a spike; a runner that starts with empty
+        buffers would drop it.
+        """
+        if self._delay_buf is not None and bool(np.any(self._delay_buf)):
+            return True
+        history = getattr(self, "_spike_history", None)
+        return self._per_syn_delays is not None and history is not None and bool(np.any(history))
+
+    @property
     def delay_mode(self) -> str:
         """Delay mode: 'none', 'uniform', or 'per_synapse'."""
         return self._delay_mode

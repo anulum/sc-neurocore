@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1122
+expected_file_count = 1125
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4581,3 +4581,15 @@ rationale = "Network backend dispatch guards without the engine and stimulus-rou
 [[file]]
 path = "tests/network_execution_paths_support.py"
 rationale = "Shared fakes and helpers of the Network execution-path tests (Rust decode, MPI guards, engine detection)."
+
+[[file]]
+path = "tests/test_network_monitor_fidelity.py"
+rationale = "Network monitors record the run that happened: rate exposure, mapping state, continued clock, lags, independent states."
+
+[[file]]
+path = "tests/test_network_execution_paths_rust_mpi_workspace.py"
+rationale = "Network execution paths: release profile, Rust result decode and MPI runner invocation."
+
+[[file]]
+path = "tests/test_topology_ba_and_ring_domain.py"
+rationale = "Barabasi-Albert attaches by actual degree from a star seed; rings are simple graphs or refused."

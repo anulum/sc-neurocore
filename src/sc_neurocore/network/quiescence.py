@@ -104,8 +104,12 @@ def declares_purity(neuron: object) -> bool:
 INCOMPARABLE = "incomparable"
 
 
-def _value_signature(value: object) -> str:
+def _value_signature(value: object, _open: frozenset[int] = frozenset()) -> str:
     """Return a value's exact textual signature, or :data:`INCOMPARABLE`.
+
+    A sequence that contains itself (directly or through another) has no
+    finite signature and is :data:`INCOMPARABLE`; ``_open`` holds the
+    sequences being read.
 
     A random generator is the case that matters. Its object identity is stable
     while its stream advances on every draw, so a signature built from identity
@@ -130,7 +134,10 @@ def _value_signature(value: object) -> str:
             return INCOMPARABLE
         return f"ndarray:{value.shape}:{value.dtype}:{value.tobytes().hex()}"
     if isinstance(value, (list, tuple)):
-        items = [_value_signature(item) for item in value]
+        if id(value) in _open:
+            return INCOMPARABLE
+        inner = _open | {id(value)}
+        items = [_value_signature(item, inner) for item in value]
         if INCOMPARABLE in items:
             return INCOMPARABLE
         return f"{type(value).__name__}:[{','.join(items)}]"
@@ -154,10 +161,38 @@ def _global_generator_signature() -> tuple[object, ...]:
 
 
 def state_signature(neuron: object) -> StateSignature:
-    """Return the exact signature of every attribute a neuron carries."""
-    return tuple(
-        (name, _value_signature(getattr(neuron, name))) for name in _attribute_names(neuron)
-    )
+    """Return the exact signature of every attribute a neuron carries.
+
+    A value nested too deeply to read is :data:`INCOMPARABLE`.
+    """
+    signature = []
+    for name in _attribute_names(neuron):
+        try:
+            text = _value_signature(getattr(neuron, name))
+        except RecursionError:
+            text = INCOMPARABLE
+        signature.append((name, text))
+    return tuple(signature)
+
+
+class GeneratorTransaction:
+    """Restore the NumPy and standard ``random`` process-wide generators on exit.
+
+    Everything a probe does inside — copying a neuron, resetting it, stepping
+    it — may draw from or reseed them; the caller's streams are left exactly as
+    they were, on success, on refusal and on error.
+    """
+
+    def __enter__(self) -> GeneratorTransaction:
+        """Record both generator states."""
+        self._numpy = np.random.get_state()
+        self._stdlib = random.getstate()
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        """Restore both generator states; any exception propagates."""
+        np.random.set_state(self._numpy)
+        random.setstate(self._stdlib)
 
 
 def quiescent_signature(neuron: object) -> StateSignature | None:
@@ -254,6 +289,7 @@ def is_quiescent(neuron: object, signature: StateSignature | None) -> bool:
 __all__ = [
     "INCOMPARABLE",
     "QUIESCENT_DRIVE",
+    "GeneratorTransaction",
     "StateSignature",
     "Steppable",
     "declares_purity",

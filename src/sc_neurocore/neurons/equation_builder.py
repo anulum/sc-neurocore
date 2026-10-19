@@ -259,7 +259,10 @@ class EquationNeuron:
         self._namespace["poisson"] = self._random.poisson
         self._namespace["poisson_grid"] = self._random.poisson_grid
         raw_parameters = parameters or {}
-        raw_state = state or {k: 0.0 for k in equations}
+        # The neuron's own copy: it mutates its state as it steps, and a mapping
+        # shared with the caller (or with every neuron of a population built from
+        # one parameter set) would make them one trajectory.
+        raw_state = dict(state) if state else {k: 0.0 for k in equations}
         raw_constants = constants or {}
         previous_aliases = {f"{name}_prev" for name in equations}
         occupied_names = set(equations) | set(raw_parameters) | set(raw_state) | set(raw_constants)

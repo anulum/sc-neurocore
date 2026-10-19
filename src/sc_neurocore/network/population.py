@@ -20,7 +20,9 @@ import numpy as np
 from sc_neurocore.network.population_seeds import derive_population_seeds
 from sc_neurocore.neurons.seed_domain import seed_aliases, seed_domain
 from sc_neurocore.network.quiescence import (
+    GeneratorTransaction,
     StateSignature,
+    declares_purity,
     is_quiescent,
     quiescent_signature,
 )
@@ -115,6 +117,21 @@ def _per_neuron_kwargs(
         yield {**kw, "seed": seed}
 
 
+def _membrane_voltage(neuron: Any) -> float:
+    """Return a neuron's membrane voltage: its ``v`` attribute, else ``v`` of its state.
+
+    A model without either has no voltage to report and reads ``0.0``.
+    """
+    if hasattr(neuron, "v"):
+        return float(neuron.v)
+    get_state = getattr(neuron, "get_state", None)
+    if callable(get_state):
+        state = get_state()
+        if isinstance(state, dict) and "v" in state:
+            return float(state["v"])
+    return 0.0
+
+
 class Population:
     """A group of N identical neurons with vectorized state access."""
 
@@ -161,7 +178,7 @@ class Population:
     def _sync_voltages(self) -> None:
         """Pull membrane voltage from each neuron into the flat array."""
         for i, neuron in enumerate(self.neurons):
-            self._voltages[i] = getattr(neuron, "v", 0.0)
+            self._voltages[i] = _membrane_voltage(neuron)
 
     def quiescent_signature(self) -> StateSignature | None:
         """Return the state this population's model holds under zero input.
@@ -176,21 +193,27 @@ class Population:
         if self._quiescent_probed:
             return self._quiescent
         self._quiescent_probed = True
-        if not self.neurons:
+        # Purity is admitted before anything runs: an undeclared model is never
+        # copied, reset or stepped by the probe.
+        if not self.neurons or not declares_purity(self.neurons[0]):
             return self._quiescent
-        try:
-            resting = copy.deepcopy(self.neurons[0])
-        except Exception:
-            return self._quiescent
-        for name in ("reset", "reset_state"):
-            method = getattr(resting, name, None)
-            if callable(method):
-                try:
-                    method()
-                except Exception:
-                    return self._quiescent
-                break
-        self._quiescent = quiescent_signature(resting)
+        # The whole preparation is one transaction on the process-wide
+        # generators: a reset that reseeds them, or a copy hook that draws, would
+        # otherwise move the caller's streams before the probe even starts.
+        with GeneratorTransaction():
+            try:
+                resting = copy.deepcopy(self.neurons[0])
+            except Exception:
+                return self._quiescent
+            for name in ("reset", "reset_state"):
+                method = getattr(resting, name, None)
+                if callable(method):
+                    try:
+                        method()
+                    except Exception:
+                        return self._quiescent
+                    break
+            self._quiescent = quiescent_signature(resting)
         return self._quiescent
 
     def step_all(
@@ -217,12 +240,12 @@ class Population:
                     continue
                 raw = neuron.step(float(currents[i]))
                 spikes[i] = min(max(int(raw), 0), 1)
-                self._voltages[i] = getattr(neuron, "v", 0.0)
+                self._voltages[i] = _membrane_voltage(neuron)
         else:
             for i, neuron in enumerate(self.neurons):
                 raw = neuron.step(float(currents[i]))
                 spikes[i] = min(max(int(raw), 0), 1)
-                self._voltages[i] = getattr(neuron, "v", 0.0)
+                self._voltages[i] = _membrane_voltage(neuron)
         return spikes
 
     def reset_all(self) -> None:
@@ -240,15 +263,16 @@ class Population:
             return {}
         sample = self.neurons[0]
         if hasattr(sample, "get_state"):
-            keys = sample.get_state().keys()
-        elif hasattr(sample, "__dataclass_fields__"):
+            # The values come from the model's own state contract: a model that
+            # holds its state in a mapping (EquationNeuron) has no attribute v,
+            # and reading attributes returned zeros for a neuron that had moved.
+            states = [neuron.get_state() for neuron in self.neurons]
+            return {k: np.array([state[k] for state in states]) for k in states[0]}
+        if hasattr(sample, "__dataclass_fields__"):
             keys = [k for k in sample.__dataclass_fields__ if k not in ("dt",)]
         else:
             keys = ["v"]
-        result = {}
-        for k in keys:
-            result[k] = np.array([getattr(n, k, 0.0) for n in self.neurons])
-        return result
+        return {k: np.array([getattr(n, k, 0.0) for n in self.neurons]) for k in keys}
 
     def set_voltages(self, voltages: np.ndarray[Any, Any]) -> None:
         """Sync voltages from an external source (e.g. Rust backend) into neurons."""

@@ -70,6 +70,12 @@ class Network:
         self.seed = seed
         self.fim_lambda = fim_lambda
         self._spike_gating = False
+        # The run clock: a later run continues the step index of the earlier ones,
+        # at the same dt, and delivers the spikes of the last step through the
+        # projections as a single longer run would.
+        self._elapsed_steps = 0
+        self._clock_dt: float | None = None
+        self._last_spikes: dict[int, np.ndarray[Any, Any]] = {}
         for obj in objects:
             self.add(obj)
 
@@ -109,6 +115,10 @@ class Network:
         while every Python object went on reporting the caller's values.
         """
         incompatible: list[str] = []
+        if any(np.any(spikes) for spikes in self._last_spikes.values()):
+            incompatible.append("spikes of the previous run's last step still to deliver")
+        if any(projection.has_pending for projection in self.projections):
+            incompatible.append("delayed current of the previous run still in flight")
         if self.stimuli:
             # The runner has no stimulus input: StepCurrent, TimedArray and
             # PoissonInput would be dropped and the run would equal no input.
@@ -145,14 +155,21 @@ class Network:
     ) -> None:
         """Run the simulation for *duration* seconds at timestep *dt*.
 
+        A later call continues this one: monitors record the step index from
+        where the previous run stopped, the spikes of its last step are
+        delivered on the next step, and another *dt* is refused.
+
         *backend* selects execution: ``'auto'`` picks Rust when available
         and all models are supported, ``'rust'`` forces the Rust backend
         (raises if unavailable), ``'python'`` forces pure-Python,
         ``'mpi'`` runs MPI-distributed (requires mpi4py).
 
-        *spike_gating*: skip neurons with zero input and near-rest voltage.
-        Makes compute roughly proportional to active neuron count. Python
-        backend only.
+        *spike_gating*: skip a neuron only where skipping and stepping it are
+        the same thing: its input is exactly zero, its model declares a pure
+        step (the catalogue models, or ``quiescence_pure = True``), and its
+        whole state equals the state the model's zero-input step was measured
+        to leave unchanged. Compute then tends to the active neuron count
+        without changing the run. Python backend only.
 
         The Rust backend preserves spike events and final population voltages.
         Per-step traces from ``StateMonitor`` and ``RateMonitor``, FIM
@@ -172,15 +189,24 @@ class Network:
         projection's CSR arrays with one uniform delay, so embedded stimuli,
         per-synapse delays, ``weight_threshold`` and plasticity are refused too.
         """
+        if self._elapsed_steps and dt != self._clock_dt:
+            raise ValueError(
+                f"this network has run {self._elapsed_steps} steps at dt={self._clock_dt}; "
+                f"continuing at dt={dt} would break its time index. Build a new Network "
+                "for another dt"
+            )
         self._spike_gating = spike_gating
         if backend == "mpi":
-            return self._run_mpi(duration, dt)
-        if backend == "rust":
+            self._run_mpi(duration, dt)
+        elif backend == "rust":
             self._raise_for_rust_incompatibilities()
-            return self._run_rust(duration, dt)
-        if backend == "auto" and self._can_use_rust():
-            return self._run_rust(duration, dt)
-        return self._run_python(duration, dt, progress)
+            self._run_rust(duration, dt)
+        elif backend == "auto" and self._can_use_rust():
+            self._run_rust(duration, dt)
+        else:
+            self._run_python(duration, dt, progress)
+        self._elapsed_steps += int(round(duration / dt))
+        self._clock_dt = dt
 
     def _run_mpi(self, duration: float, dt: float) -> None:
         # MPIRunner does not honour spike_gating or fim_lambda; refuse
@@ -213,7 +239,10 @@ class Network:
 
         n_steps = int(round(duration / dt))
         runner = MPIRunner(self)
-        runner.run(n_steps, dt)
+        index = {id(pop): i for i, pop in enumerate(self.populations)}
+        carried = {index[pid]: s for pid, s in self._last_spikes.items() if pid in index}
+        final = runner.run(n_steps, dt, start_step=self._elapsed_steps, carried_spikes=carried)
+        self._last_spikes = {id(self.populations[i]): s for i, s in final.items()}
 
     def _run_rust(self, duration: float, dt: float) -> None:
         self._raise_for_rust_incompatibilities()
@@ -256,20 +285,31 @@ class Network:
                     for packed in spike_arr:
                         nid = int(packed >> 32)
                         t = int(packed & 0xFFFFFFFF)
-                        mon.record_event(nid, t)
+                        mon.record_event(nid, self._elapsed_steps + t)
+            # The last step's spikes, for a later run's first projection step.
+            last = np.zeros(pop.n, dtype=np.int8)
+            for packed in spike_arr:
+                if int(packed & 0xFFFFFFFF) == n_steps - 1:
+                    last[int(packed >> 32)] = 1
+            self._last_spikes[id(pop)] = last
 
     def _run_python(self, duration: float, dt: float, progress: bool = False) -> None:
         self._rng = np.random.default_rng(self.seed)
         n_steps = int(round(duration / dt))
 
         pop_to_currents = {id(p): np.zeros(p.n, dtype=np.float64) for p in self.populations}
-        last_spikes = {id(p): np.zeros(p.n, dtype=np.int8) for p in self.populations}
+        last_spikes = {
+            id(p): self._last_spikes.get(id(p), np.zeros(p.n, dtype=np.int8)).copy()
+            for p in self.populations
+        }
         report_interval = max(1, n_steps // 10) if progress else 0
+        start = self._elapsed_steps
 
-        for t in range(n_steps):
-            if report_interval and t % report_interval == 0:
-                pct = int(100 * t / n_steps)
-                sys.stdout.write(f"\r[{pct:3d}%] step {t}/{n_steps}")
+        for step in range(n_steps):
+            t = start + step
+            if report_interval and step % report_interval == 0:
+                pct = int(100 * step / n_steps)
+                sys.stdout.write(f"\r[{pct:3d}%] step {step}/{n_steps}")
                 sys.stdout.flush()
 
             for pid in pop_to_currents:
@@ -288,6 +328,7 @@ class Network:
             if self.fim_lambda > 0:
                 self._apply_fim(last_spikes)
 
+        self._last_spikes = last_spikes
         if report_interval:
             sys.stdout.write(f"\r[100%] step {n_steps}/{n_steps}\n")
             sys.stdout.flush()

@@ -104,3 +104,80 @@ def test_catalogue_models_keep_their_declared_purity() -> None:
     from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 
     assert declares_purity(LapicqueNeuron()) and quiescent_signature(LapicqueNeuron()) is not None
+
+
+class ReseedingResetNeuron:
+    """A declared-pure, quiescent neuron whose ``reset`` reseeds both process generators."""
+
+    quiescence_pure = True
+
+    def __init__(self) -> None:
+        self.v = 0.0
+
+    def reset(self) -> None:
+        """Return to rest and reseed the process-wide generators, as some models do."""
+        self.v = 0.0
+        random.seed(7)
+        np.random.seed(7)
+
+    def step(self, current: float) -> int:
+        """Integrate the input; spike at 1."""
+        self.v += current
+        if self.v >= 1.0:
+            self.v = 0.0
+            return 1
+        return 0
+
+
+def test_the_whole_probe_leaves_the_callers_streams_unchanged() -> None:
+    """RIGOR review 278 (NEURO-QUIES-RNG-01): the reset ran outside the restoration.
+
+    Population.quiescent_signature copied and reset the first neuron before the
+    probe restored anything, so a reset that reseeds moved both caller streams.
+    """
+    random.seed(42)
+    np.random.seed(42)
+    population = Population(ReseedingResetNeuron, 2)
+    assert population.quiescent_signature() is not None
+    assert random.random() == random.Random(42).random()
+    assert np.random.random() == np.random.RandomState(42).random_sample()
+
+
+def test_an_undeclared_model_is_not_even_reset_by_the_probe() -> None:
+    """Purity is admitted first: an undeclared model is not copied or reset at all."""
+
+    class UndeclaredReseeding(ReseedingResetNeuron):
+        """The same neuron without the purity declaration."""
+
+        quiescence_pure = False
+
+    random.seed(42)
+    population = Population(UndeclaredReseeding, 1)
+    assert population.quiescent_signature() is None
+    assert random.random() == random.Random(42).random()
+
+
+class CyclicStateNeuron:
+    """A declared-pure neuron holding a list that contains itself."""
+
+    quiescence_pure = True
+
+    def __init__(self) -> None:
+        self.v = 0.0
+        self.history: list[object] = []
+        self.history.append(self.history)
+
+    def step(self, current: float) -> int:
+        """Integrate the input; spike at 1."""
+        self.v += current
+        if self.v >= 1.0:
+            self.v = 0.0
+            return 1
+        return 0
+
+
+def test_a_cyclic_state_is_incomparable_not_a_crash() -> None:
+    """RIGOR review 278 (NEURO-QUIES-STATE-CYCLE-01): gated stepping raised RecursionError."""
+    assert quiescent_signature(CyclicStateNeuron()) is None
+    drive = [0.0, 0.5, 0.0, 0.6, 0.0]
+    assert _trains(CyclicStateNeuron, True, drive, 3) == _trains(CyclicStateNeuron, False, drive, 3)

@@ -168,12 +168,20 @@ def _validate_scale_free_parameters(n: int, m: int, weight: float) -> tuple[int,
 def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
     """Generate a Barabasi-Albert preferential-attachment graph.
 
+    The seed graph is a star on ``m + 1`` nodes (node 0 joined to nodes
+    ``1..m``), so every seed node has an edge and a degree. Each later node
+    ``s`` then joins ``m`` distinct earlier nodes, drawn without replacement
+    with probability proportional to their actual degree in the graph built so
+    far (Barabasi and Albert, Science 286:509, 1999). The graph is simple and
+    undirected: every edge is emitted in both directions, with no self or
+    parallel connections, so each row sum is that node's degree.
+
     Parameters
     ----------
     n : int
         Number of source and target nodes. Must be at least two.
     m : int
-        Number of existing nodes sampled for each new node. Must satisfy
+        Number of existing nodes each new node joins. Must satisfy
         ``1 <= m < n``.
     weight : float
         Finite synaptic weight assigned to every emitted edge.
@@ -195,21 +203,19 @@ def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
     degree = np.zeros(n, dtype=np.float64)
     row_list: list[int] = []
     col_list: list[int] = []
-    targets = list(range(m))
-    for t in targets:
-        degree[t] = 1.0
-    for src in range(m, n):
-        probs = degree[:src].copy()
-        total = float(probs.sum())
-        probs /= total
-        chosen = rng.choice(src, size=min(m, src), replace=False, p=probs)
-        for tgt in chosen:
-            row_list.append(src)
-            col_list.append(int(tgt))
-            row_list.append(int(tgt))
-            col_list.append(src)
-            degree[src] += 1
-            degree[int(tgt)] += 1
+
+    def join(a: int, b: int) -> None:
+        row_list.extend((a, b))
+        col_list.extend((b, a))
+        degree[a] += 1.0
+        degree[b] += 1.0
+
+    for leaf in range(1, m + 1):
+        join(0, leaf)
+    for src in range(m + 1, n):
+        weights_so_far = degree[:src] / float(degree[:src].sum())
+        for tgt in rng.choice(src, size=m, replace=False, p=weights_so_far):
+            join(src, int(tgt))
     rows = np.array(row_list, dtype=np.int64)
     cols = np.array(col_list, dtype=np.int64)
     weights = np.full(len(rows), weight, dtype=np.float64)
@@ -217,7 +223,45 @@ def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
 
 
 def ring_topology(n: int, k: int, weight: float) -> CSR:
-    """Ring topology with k nearest neighbours in each direction."""
+    """Build a simple ring: each node joins its ``k`` nearest neighbours on each side.
+
+    The graph is simple and symmetric: ``2k`` distinct neighbours per node, no
+    self connection and no doubled pair, which holds exactly when
+    ``0 <= k <= (n - 1) // 2`` (at ``k = n / 2`` for even ``n`` the two sides
+    meet at the antipode, and at ``k >= n`` they reach the node itself).
+
+    Parameters
+    ----------
+    n : int
+        Number of nodes, at least 1.
+    k : int
+        Neighbours on each side, ``0 <= k <= (n - 1) // 2``.
+    weight : float
+        Finite weight of every connection.
+
+    Returns
+    -------
+    CSR
+        ``(indptr, indices, data)`` with ``2 n k`` entries.
+
+    Raises
+    ------
+    ValueError
+        For a node count, neighbour count or weight outside the domain.
+    """
+    for name, value in (("n", n), ("k", k)):
+        if isinstance(value, bool) or not isinstance(value, Integral):
+            raise ValueError(f"{name} must be an integer")
+    n, k = int(n), int(k)
+    if n < 1:
+        raise ValueError("n must be at least 1 for ring topology")
+    if not 0 <= k <= (n - 1) // 2:
+        raise ValueError(
+            f"k must satisfy 0 <= k <= (n - 1) // 2 = {(n - 1) // 2} for a simple ring of "
+            f"{n} nodes; got {k}"
+        )
+    if isinstance(weight, bool) or not isinstance(weight, Real) or not np.isfinite(float(weight)):
+        raise ValueError("weight must be finite")
     row_list: list[int] = []
     col_list: list[int] = []
     for i in range(n):
@@ -228,7 +272,7 @@ def ring_topology(n: int, k: int, weight: float) -> CSR:
             col_list.append((i - j) % n)
     rows = np.array(row_list, dtype=np.int64)
     cols = np.array(col_list, dtype=np.int64)
-    weights = np.full(len(rows), weight, dtype=np.float64)
+    weights = np.full(len(rows), float(weight), dtype=np.float64)
     return _to_csr(n, n, rows, cols, weights)
 
 

@@ -92,15 +92,19 @@ class SpikeMonitor:
         trains = self.spike_trains
         ts_i = trains.get(i, np.array([], dtype=np.int64))
         ts_j = trains.get(j, np.array([], dtype=np.int64))
+        lags = np.arange(-max_lag, max_lag + 1)
         if ts_i.size == 0 or ts_j.size == 0:
-            lags = np.arange(-max_lag, max_lag + 1)
             return np.zeros(len(lags)), lags
         max_t = max(ts_i.max(), ts_j.max()) + 1
         bin_i = np.zeros(max_t, dtype=np.int8)
         bin_j = np.zeros(max_t, dtype=np.int8)
         bin_i[ts_i] = 1
         bin_j[ts_j] = 1
-        return _cc(bin_i, bin_j, max_lag_ms=max_lag, dt=1.0)
+        # One sample per timestep: the delegate takes dt in seconds and the lag in
+        # milliseconds, so a 1 ms sample makes max_lag_ms count timesteps. dt=1.0
+        # (one second per sample) collapsed every lag below 1000 steps to zero.
+        correlation, _lags_ms = _cc(bin_i, bin_j, max_lag_ms=float(max_lag), dt=0.001)
+        return correlation, lags
 
 
 class StateMonitor:
@@ -114,6 +118,14 @@ class StateMonitor:
     ) -> None:
         self.population = population
         self.variables = variables or ["v"]
+        if record is not None:
+            # An integer index array, empty included; refused before any run.
+            indices = np.asarray(record, dtype=np.int64).reshape(-1)
+            if indices.size and (indices.min() < 0 or indices.max() >= population.n):
+                raise IndexError(
+                    f"record indices must lie in [0, {population.n}); got {list(record)}"
+                )
+            record = [int(i) for i in indices]
         self.record = record
         self._data: dict[str, list[np.ndarray[Any, Any]]] = {v: [] for v in self.variables}
         self._t: list[int] = []
@@ -125,7 +137,7 @@ class StateMonitor:
         for v in self.variables:
             arr = states.get(v, np.zeros(self.population.n))
             if self.record is not None:
-                arr = arr[np.array(self.record)]
+                arr = arr[np.asarray(self.record, dtype=np.int64)]
             self._data[v].append(arr.copy())
 
     @property
@@ -147,28 +159,39 @@ class RateMonitor:
         self.bin_ms = bin_ms
         self._spike_counts: list[int] = []
         self._bin_edges: list[int] = []
+        self._exposures: list[float] = []
         self._current_count = 0
         self._steps_in_bin = 0
+        self._current_exposure = 0.0
 
     def record(self, spikes: np.ndarray[Any, Any], t_step: int, dt: float = 0.001) -> None:
-        """Accumulate spikes; flush when a bin completes."""
+        """Accumulate spikes; flush when a bin completes.
+
+        A bin holds the whole number of steps nearest below ``bin_ms`` (at least
+        one); its rate divides by the time those steps actually cover, so a
+        10 ms bin at dt 3 ms is a 9 ms bin and a 1 ms bin at dt 10 ms a 10 ms one.
+        """
         self._current_count += int(spikes.sum())
         self._steps_in_bin += 1
-        steps_per_bin = max(1, int(self.bin_ms / 1000.0 / dt))
+        self._current_exposure += dt
+        # The small epsilon keeps 0.003 / 0.001 = 2.9999999999999996 at 3 steps.
+        steps_per_bin = max(1, int(self.bin_ms / 1000.0 / dt + 1e-9))
         if self._steps_in_bin >= steps_per_bin:
             self._spike_counts.append(self._current_count)
             self._bin_edges.append(t_step)
+            self._exposures.append(self._current_exposure)
             self._current_count = 0
             self._steps_in_bin = 0
+            self._current_exposure = 0.0
 
     @property
     def rate(self) -> np.ndarray[Any, Any]:
-        """Firing rate (Hz) per bin."""
+        """Firing rate (Hz) per bin: spikes per neuron over the time the bin covered."""
         if not self._spike_counts:
             return np.array([], dtype=np.float64)
-        duration_s = self.bin_ms / 1000.0
         counts = np.array(self._spike_counts, dtype=np.float64)
-        return counts / (duration_s * self.population.n)
+        exposure = np.array(self._exposures, dtype=np.float64)
+        return counts / (exposure * self.population.n)
 
     @property
     def t(self) -> np.ndarray[Any, Any]:

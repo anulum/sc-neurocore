@@ -212,14 +212,15 @@ identical parameters are still independent.
 
 ### 4.1 Spike gating
 
-When `spike_gating=True`, `step_all` skips neurons that have no input current
-*and* sit within 1 % of their resting potential. This makes per-step compute
-roughly proportional to the **active** neuron count, which matters for
-sparse networks where most neurons are silent for most of the simulation.
-The skipped neurons do not advance — when the population is queried later,
-their voltages are stale until they receive input again. Models that track
-sub-threshold leak via internal calls to `step()` lose that leak during
-skipped steps.
+When `spike_gating=True`, `step_all` skips a neuron only where skipping it and
+stepping it are the same thing (`network/quiescence.py`): its input is exactly
+zero, its model declares a pure step (the catalogue models, or a user class
+with `quiescence_pure = True`), and its whole state equals the signature the
+model's zero-input step was measured to leave unchanged — exactly, not within
+a tolerance. A model with no such fixed point (a pacemaker, an oscillator) is
+never skipped. Per-step compute then tends to the **active** neuron count
+without the run differing from the same run ungated; the earlier near-rest
+heuristic, which froze leaks and countdowns, is gone.
 
 ---
 
@@ -294,15 +295,20 @@ tuple ready to feed into `Projection(..., topology=tuple)`.
 |-----------|-----------|-------------|------------|
 | `random_connectivity` | Erdős–Rényi | classic | no |
 | `small_world` | Watts–Strogatz simple graph: even `k < n`, rewired edges avoid self and existing neighbours, `n·k` entries | Watts & Strogatz 1998 | yes (added both directions) |
-| `scale_free` | Barabási–Albert preferential attachment | Barabási & Albert 1999 | yes |
-| `ring_topology` | Ring + k nearest neighbours both directions | — | yes |
+| `scale_free` | Barabási–Albert: star seed on `m+1` nodes, then `m` distinct targets per node, drawn by actual degree; simple graph | Barabási & Albert 1999 | yes |
+| `ring_topology` | Simple ring: `k` nearest neighbours each side, `0 <= k <= (n-1)//2` (no doubled antipode, no self connection) | — | yes |
 | `grid_topology` | 2-D lattice within a Chebyshev (square) radius: 8 neighbours at `r=1`, 24 at `r=2` | — | yes |
 | `all_to_all` | Dense | — | yes when `n_src == n_tgt` |
 
 `scale_free(n, m, weight, seed=...)` enforces the Barabasi-Albert domain before
 allocation or random sampling: `n` and `m` must be non-boolean integers,
 `n >= 2`, `1 <= m < n`, and `weight` must be finite. Invalid values raise
-`ValueError` before any CSR arrays are emitted.
+`ValueError` before any CSR arrays are emitted. The seed graph is a star on
+`m + 1` nodes, so every node that can be drawn has an edge, and each later node
+joins `m` distinct earlier nodes with probability proportional to the degree
+they actually have in the graph built so far. `ring_topology(n, k, weight)`
+refuses a `k` above `(n - 1) // 2`, where the two sides would meet at the
+antipode twice or reach the node itself; a multigraph ring is not offered.
 
 ### 6.1 Performance (this workstation, 2026-04-17)
 
@@ -372,20 +378,33 @@ Read-out helpers:
 | `raster_data()` | `(times, neuron_ids)` | tuple ready for raster plot |
 | `firing_rates(n_steps, dt)` | `np.ndarray[n]` | mean Hz per neuron |
 | `isi(neuron)` | `np.ndarray[int64]` | inter-spike intervals (timesteps) |
-| `cross_correlation(i, j, max_lag)` | `(corr, lags)` | delegates to `analysis.spike_stats.cross_correlation` |
+| `cross_correlation(i, j, max_lag)` | `(corr, lags)` | delegates to `analysis.spike_stats.cross_correlation` at one sample per timestep; `lags` are timesteps `-max_lag..max_lag` |
 
 ### 8.2 `StateMonitor`
 
 Captures `population.get_states()` snapshots at each call to `snapshot(t)`.
+The values come from each model's `get_state()`, so a model that holds its
+state in a mapping (`EquationNeuron`) is recorded as it is, not as zeros.
 Configure with `variables: list[str]` (default `["v"]`) and an optional
-`record: list[int]` to subset recorded neurons.
+`record: list[int]` to subset recorded neurons; an empty list records none,
+and an index outside the population is refused when the monitor is built.
 
 ### 8.3 `RateMonitor`
 
-Bins spike counts into fixed-duration windows (`bin_ms`), then converts
-to per-neuron mean rate (`Hz`). The bin-completion check uses
-`steps_per_bin = max(1, int(bin_ms / 1000.0 / dt))`, so a 10 ms bin at
-`dt=1 ms` flushes every 10 steps.
+Bins spike counts into windows of whole steps, then converts to per-neuron
+mean rate (`Hz`). A bin holds `max(1, floor(bin_ms / 1000 / dt))` steps, so a
+10 ms bin at `dt=1 ms` flushes every 10 steps, and its rate divides by the time
+those steps cover: a 10 ms bin at `dt=3 ms` is a 9 ms bin, a 1 ms bin at
+`dt=10 ms` a 10 ms one.
+
+### 8.4 Repeated runs
+
+A second `Network.run` continues the first: monitors record the step index
+from where the previous run stopped, and the spikes of its last step reach
+their targets through the projections on the next step, as in one longer run.
+Continuing at another `dt` is refused. A network with spikes or delayed
+current still in flight is not dispatched to the native runner, which starts
+empty.
 
 ---
 
