@@ -409,3 +409,41 @@ def test_failed_stochastic_step_restores_the_graded_value() -> None:
         neuron.step(1.0)
     assert neuron.last_spike_value == before
     assert neuron.state["v"] == 2.0
+
+
+@pytest.mark.parametrize(("name", "clash"), [("thr_prev", "thr_prev"), ("spike", "spike_out")])
+def test_kernel_refuses_a_state_that_takes_its_own_field(name: str, clash: str) -> None:
+    """NEURO-E4B-KERNEL-EDGE-NAME-01: a state named thr_prev or spike is refused, not duplicated."""
+    neuron = EquationNeuron(
+        equations={name: f"{name} + 0.1"},
+        state={name: 0.0},
+        method="map",
+        dt=1.0,
+        threshold=f"{name} > 0.5",
+        detection="crossing",
+    )
+    for language in ("c", "rust"):
+        with pytest.raises(ValueError, match=clash):
+            generate_bittrue_kernel_from_neuron(neuron, "m", language=language)
+
+
+def test_rtl_refuses_a_state_named_spike() -> None:
+    """A state named spike would declare spike_out twice; the RTL refuses it by name."""
+    neuron = EquationNeuron(
+        equations={"spike": "spike + 0.1"}, state={"spike": 0.0}, method="map", dt=1.0
+    )
+    with pytest.raises(ValueError, match="spike_out"):
+        compile_to_verilog(neuron, "m")
+
+
+def test_level_neuron_may_name_a_state_thr_prev() -> None:
+    """Without edge detection the kernel has no thr_prev field, so the name is free."""
+    neuron = EquationNeuron(
+        equations={"thr_prev": "thr_prev + 0.1"},
+        state={"thr_prev": 0.0},
+        method="map",
+        dt=1.0,
+        threshold="thr_prev > 0.5",
+        reset={"thr_prev": "0.0"},
+    )
+    assert "m_step" in generate_bittrue_kernel_from_neuron(neuron, "m")

@@ -786,6 +786,22 @@ def generate_bittrue_kernel_from_neuron(
             "a state or parameter named 'rng_step' collides with the step counter of the "
             "random draws in the bit-true kernel; rename it"
         )
+    # A state v owns the struct fields v and v_out; the kernel's own fields must differ.
+    own_fields = {"spike_out"}
+    if neuron.threshold_expr and getattr(neuron, "_edge_detection", False):
+        own_fields.add("thr_prev")
+    state_fields = {
+        field
+        for var in neuron.equations
+        for field in (sanitize_ident(var, context="state variable"),)
+        for field in (field, f"{field}_out")
+    }
+    clashes = sorted(state_fields & own_fields)
+    if clashes:
+        raise ValueError(
+            f"state fields {clashes} collide with the bit-true kernel's own fields "
+            "(spike_out, and thr_prev for an edge-crossing neuron); rename the state"
+        )
 
     dt_q = signed_q(q, neuron.dt)
     if neuron.dt != 0.0 and dt_q == 0:

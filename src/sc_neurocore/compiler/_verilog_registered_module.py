@@ -150,6 +150,11 @@ def compile_to_verilog(
                 "substeps > 1 is not supported with multiply pipelining (pipeline_stages > 0)"
             )
     substep_cnt_width = max(1, (substeps - 1).bit_length()) if substeps > 1 else 1
+    if "spike" in state_var_map.values():
+        # A state s has the output port s_out; the module's spike output is spike_out.
+        raise ValueError(
+            "a state named 'spike' collides with the module's spike_out port; rename the state"
+        )
 
     # rand()/randn()/poisson() draw from Philox at (site, step, stream) with the neuron's
     # seed. ``rng_step`` counts logical steps, as EquationNeuron.step does: it advances on

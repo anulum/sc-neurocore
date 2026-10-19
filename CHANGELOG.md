@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A state whose name takes a compiled form's own field is refused by name
+  instead of emitting a duplicate declaration: in the C and Rust kernels a
+  state named `spike` (field `spike_out`) or, for an edge-crossing neuron,
+  `thr_prev`; in the registered RTL a state named `spike` (port `spike_out`).
+
 - Add `poisson_grid(lam)`, a Poisson draw whose mean is a variable expression:
   the mean is floored to a multiple of 1/16 and clamped to `[0, 16]`, and word
   0 of the Philox block is inverted against the exact thresholds of that grid
