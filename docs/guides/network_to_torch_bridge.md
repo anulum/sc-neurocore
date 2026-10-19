@@ -40,8 +40,22 @@ the model's `v >= v_threshold` comparison and a hard reset to `v_reset`:
   - `entropy_source is None`
 
 Every neuron of a population must share its parameters; each starts from its
-own voltage. A step whose candidate voltage overflows to infinity still spikes
-and resets to `v_reset`, as the Python neuron does.
+own voltage and, for StochasticLIF, its own live refractory counter (a neuron
+whose counter is set through its state holds at `v_rest` for that many steps,
+as `step()` does). A StochasticLIF step whose candidate overflows to +infinity
+still spikes and resets to `v_reset`, as the Python neuron does.
+
+The models' runtime refusals are kept: a step refuses a non-finite voltage
+(StochasticLIF refuses the step after a candidate that overflowed negatively;
+the last step of a run may end there, as in the model), and the SC Lapicque
+flow refuses a non-finite `v_inf` or candidate in the step that forms it, and a
+voltage at or above threshold. These raise `ValueError` with the model's message.
+
+The step is evaluated in float64, the precision of the Python models, whatever
+the floating dtype of the input: a float32 input is widened exactly and gives the
+events and voltages the model gives for those float32 values (no float32
+overflow or rounding of `R`, `I` or `v`). Counts and traces are returned in the
+input's dtype; a gradient larger than that dtype holds rounds to infinity there.
 
 Not supported yet:
 
@@ -73,10 +87,8 @@ masked to zero.
 
 The weight parameters are float64, the precision of the CSR data, so a sync
 without training writes back every weight unchanged and a float64 run uses the
-network's own weights. The forward pass casts the weights to the input's dtype:
-a float32 run therefore uses float32-rounded weights, which can move an event
-whose input sits within float32 rounding of the threshold. Converting the
-bridge itself (for example `bridge.float()`) rounds the stored weights, and a
+network's own weights; the forward pass uses them in float64 for any input
+dtype. Converting the bridge itself (for example `bridge.float()`) rounds the stored weights, and a
 later sync writes those rounded values. Parallel CSR entries (one source
 reaching one target twice) and a nonzero `weight_threshold` are refused.
 

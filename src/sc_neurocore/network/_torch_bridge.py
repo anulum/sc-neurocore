@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import numpy as np
 import torch
@@ -64,6 +64,8 @@ class _PopulationSpec:
     state_kind: str
     init_voltage: tuple[float, ...]
     label: str
+    # Each neuron's live refractory counter: the steps it still holds at v_rest.
+    init_refractory: tuple[int, ...] = ()
 
 
 class _ExactResetCell(nn.Module):
@@ -80,6 +82,13 @@ class _ExactResetCell(nn.Module):
     The spike is ``candidate >= threshold`` in the forward pass (the models'
     comparison) with the surrogate's gradient in the backward pass; a spike
     resets to ``v_reset``.
+
+    The models' runtime refusals are kept: every step first refuses a non-finite
+    voltage (and, for the SC Lapicque flow, one at or above threshold), and the
+    flow refuses a non-finite ``v_inf`` or candidate in the step that forms it.
+    The Euler form, like StochasticLIF, lets an overflowing candidate spike and
+    reset, and a candidate that overflows negatively is refused when the next
+    step would use it.
     """
 
     def __init__(
@@ -105,10 +114,22 @@ class _ExactResetCell(nn.Module):
         self.surrogate_fn = surrogate_fn
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """Return the spike and the next voltage of one step."""
+        """Return the spike and the next voltage of one step.
+
+        Raises
+        ------
+        ValueError
+            Where the Python model refuses the step (see the class notes).
+        """
+        if not bool(torch.isfinite(v).all()):
+            raise ValueError("v must be finite")
         if self.form == "flow":
+            if bool((v >= self.threshold).any()):
+                raise ValueError("v must be below v_threshold for the SC LIF profile")
             v_inf = self.v_rest + self.resistance * current
             candidate = v_inf + (v - v_inf) * self.decay
+            if not bool(torch.isfinite(v_inf).all() and torch.isfinite(candidate).all()):
+                raise ValueError("SC Lapicque LIF voltage candidate must remain finite")
         else:
             leak = -(v - self.v_rest) * self.decay
             candidate = v + (leak + (self.resistance * current) * self.dt)
@@ -213,6 +234,9 @@ def _build_population_spec(
             raise NotImplementedError(
                 "Network.to_torch() supports StochasticLIFNeuron only with refractory_period == 0"
             )
+        # A live counter (set through the public state) still holds its neuron at
+        # v_rest for that many steps; the bridge carries it rather than drop it.
+        refractory = tuple(int(neuron.get_state()["refractory"]) for neuron in population.neurons)
         if sample.entropy_source is not None:
             raise NotImplementedError(
                 "Network.to_torch() does not support external entropy_source in StochasticLIFNeuron"
@@ -235,7 +259,7 @@ def _build_population_spec(
             threshold=_uniform(population, "v_threshold"),
             surrogate_fn=surrogate_fn,
         )
-        spec = _PopulationSpec(population, "v", voltages, population.label)
+        spec = _PopulationSpec(population, "v", voltages, population.label, refractory)
         return spec, cell
 
     raise NotImplementedError(
@@ -348,16 +372,20 @@ class NetworkTorchBridge(_TorchModuleBase):
         batch: int,
         device: torch.device,
         dtype: torch.dtype,
-    ) -> tuple[dict[int, torch.Tensor], dict[int, torch.Tensor]]:
+    ) -> tuple[dict[int, torch.Tensor], dict[int, torch.Tensor], dict[int, torch.Tensor]]:
         voltages: dict[int, torch.Tensor] = {}
         spikes: dict[int, torch.Tensor] = {}
+        holds: dict[int, torch.Tensor] = {}
         for pid, spec in self.population_specs.items():
             n = spec.population.n
             # Every batch member starts from each neuron's own voltage.
             per_neuron = torch.tensor(spec.init_voltage, dtype=dtype, device=device)
             voltages[pid] = per_neuron.expand(batch, n).clone()
             spikes[pid] = torch.zeros((batch, n), dtype=dtype, device=device)
-        return voltages, spikes
+            if any(spec.init_refractory):
+                counters = torch.tensor(spec.init_refractory, dtype=torch.int64, device=device)
+                holds[pid] = counters.expand(batch, n).clone()
+        return voltages, spikes, holds
 
     def forward(
         self,
@@ -365,7 +393,17 @@ class NetworkTorchBridge(_TorchModuleBase):
         *,
         return_traces: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Run the differentiable bridge on ``(T, batch, input_dim)`` current input."""
+        """Run the differentiable bridge on ``(T, batch, input_dim)`` current input.
+
+        The step is evaluated in float64, the Python models' precision, for any
+        floating input dtype; counts and traces are returned in the input's dtype.
+
+        Raises
+        ------
+        ValueError
+            For a malformed or non-finite input, or where the Python model would
+            refuse a step (a non-finite voltage, a non-finite Lapicque candidate).
+        """
         if inputs.ndim != 3:
             raise ValueError(
                 f"Expected inputs with shape (T, batch, input_dim), got {tuple(inputs.shape)}"
@@ -381,8 +419,13 @@ class NetworkTorchBridge(_TorchModuleBase):
 
         timesteps, batch, _ = inputs.shape
         device = inputs.device
-        dtype = inputs.dtype
-        voltages, last_spikes = self._initial_state(batch, device, dtype)
+        out_dtype = inputs.dtype
+        # The Python models step in float64; so does the bridge, whatever the input
+        # dtype (a wider float is exact; a narrower one would overflow or round where
+        # the model does not). Counts and traces return in the input's dtype.
+        dtype = torch.float64
+        inputs = inputs.to(dtype)
+        voltages, last_spikes, holds = self._initial_state(batch, device, dtype)
         spike_counts: dict[int, torch.Tensor] = {
             pid: torch.zeros(
                 (batch, self.population_specs[pid].population.n), dtype=dtype, device=device
@@ -418,6 +461,14 @@ class NetworkTorchBridge(_TorchModuleBase):
                 pid = id(population)
                 cell = self.population_cells[str(pid)]
                 spike, new_voltage = cell(currents[pid], voltages[pid])
+                if pid in holds:
+                    # A refractory neuron holds at v_rest and does not spike, as in
+                    # StochasticLIFNeuron.step (the check of v comes first there too).
+                    held = holds[pid] > 0
+                    spike = torch.where(held, torch.zeros_like(spike), spike)
+                    rest = torch.full_like(new_voltage, cast(_ExactResetCell, cell).v_rest)
+                    new_voltage = torch.where(held, rest, new_voltage)
+                    holds[pid] = holds[pid] - held.to(torch.int64)
                 voltages[pid] = new_voltage
                 new_spikes[pid] = spike
                 if pid in spike_counts:
@@ -428,13 +479,14 @@ class NetworkTorchBridge(_TorchModuleBase):
             last_spikes = new_spikes
 
         counts = torch.cat([spike_counts[pid] for pid in self._output_population_ids], dim=1)
+        counts = counts.to(out_dtype)
         if not return_traces:
             return counts
 
         stacked = {
-            label: torch.stack(items, dim=0)
+            label: torch.stack(items, dim=0).to(out_dtype)
             if items
-            else torch.empty(0, batch, 0, device=device, dtype=dtype)
+            else torch.empty(0, batch, 0, device=device, dtype=out_dtype)
             for label, items in traces.items()
         }
         return counts, stacked

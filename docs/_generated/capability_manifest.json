@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5360
+    "test_files": 5361
   },
   "documentation": {
     "public_pages": [
@@ -8398,6 +8398,7 @@
       "tests/test_topology_sheaf_consistency_defect.py",
       "tests/test_topology_winding_number.py",
       "tests/test_torch_bridge_fidelity.py",
+      "tests/test_torch_bridge_runtime_contract.py",
       "tests/test_torch_training_ad_ex_cell.py",
       "tests/test_torch_training_alif_cell.py",
       "tests/test_torch_training_alpha_cell.py",

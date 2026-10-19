@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `Network.to_torch()` steps in float64, the Python models' precision, for any
+  input dtype (a float32 bridge overflowed or rounded where the model did not),
+  keeps the models' runtime refusals of a non-finite voltage and Lapicque
+  candidate, and carries a StochasticLIF neuron's live refractory counter.
+
 - Compiler fidelity: a comparison used as a comparison operand
   (`(v > 0.25) > 0.5`) is 1.0 or 0.0 on RTL, C and Rust as in the model (the
   RTL and C never fired, the Rust kernel did not compile); a stochastic
