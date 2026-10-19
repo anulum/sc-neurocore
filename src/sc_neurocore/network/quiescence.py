@@ -30,11 +30,22 @@ heuristic bought its speed by returning different numbers.
 Scalar numbers are compared as exact rational values, without rounding integer
 registers through binary64. Opaque values anywhere inside a sequence or an
 object array disable skipping; pointer bytes are not a state comparison.
+
+A probe can only see the state it knows how to read. A model may also draw
+from generators or other state outside its instance (the standard ``random``
+module, a file, a clock), and one zero spike sampled from such a model proves
+nothing. Only models whose purity is declared are probed: the catalogue
+models of :mod:`sc_neurocore`, and a user class that sets
+``quiescence_pure = True`` to state that its ``step`` reads and writes nothing
+but its own attributes. Every other model is never skipped. The probe still
+restores, and refuses a model that moves, both the NumPy and the standard
+``random`` process-wide generators.
 """
 
 from __future__ import annotations
 
 import copy
+import random
 from typing import Protocol, runtime_checkable
 
 import numpy as np
@@ -57,18 +68,34 @@ StateSignature = tuple[tuple[str, str], ...]
 
 
 def _attribute_names(instance: object) -> list[str]:
-    """Return every attribute an instance carries, from its dict and its slots."""
+    """Return every attribute an instance carries, from its dict and its slots.
+
+    A private slot ``__x`` declared by class ``C`` is stored as ``_C__x`` (Python
+    name mangling, with the class name's leading underscores removed).
+    """
     names: list[str] = list(vars(instance)) if hasattr(instance, "__dict__") else []
     for klass in type(instance).__mro__:
         slots = getattr(klass, "__slots__", ())
         for slot in (slots,) if isinstance(slots, str) else slots:
-            if (
-                isinstance(slot, str)
-                and slot not in names
-                and slot not in ("__dict__", "__weakref__")
-            ):
+            if not isinstance(slot, str) or slot in ("__dict__", "__weakref__"):
+                continue
+            if slot.startswith("__") and not slot.endswith("__"):
+                slot = f"_{klass.__name__.lstrip('_')}{slot}"
+            if slot not in names:
                 names.append(slot)
     return names
+
+
+def declares_purity(neuron: object) -> bool:
+    """Return whether a model's ``step`` is declared to touch only its own attributes.
+
+    The catalogue models of :mod:`sc_neurocore` are; a user class declares it with a
+    class attribute ``quiescence_pure = True``.
+    """
+    model = type(neuron)
+    return model.__module__.startswith("sc_neurocore.") or (
+        getattr(model, "quiescence_pure", False) is True
+    )
 
 
 #: The signature of a value this module cannot compare by content. A state
@@ -170,7 +197,14 @@ def quiescent_signature(neuron: object) -> StateSignature | None:
     if not isinstance(probe, Steppable):
         # Not something a population can drive; nothing to hold still.
         return None
-    before = state_signature(probe)
+    if not declares_purity(probe):
+        # State outside the instance cannot be read, so its stillness cannot be shown.
+        return None
+    try:
+        before = state_signature(probe)
+    except AttributeError:
+        # An unset or unreadable attribute: the state cannot be compared.
+        return None
     if any(signature == INCOMPARABLE for _, signature in before):
         # Part of this model's state cannot be compared by content, so whether
         # it holds still cannot be established. An unestablished fixed point is
@@ -182,17 +216,21 @@ def quiescent_signature(neuron: object) -> StateSignature | None:
     # every later draw in the run it was measuring.
     entry_state = np.random.get_state()
     entry_stream = _global_generator_signature_of(entry_state)
+    entry_stdlib = random.getstate()
     try:
         emitted = probe.step(QUIESCENT_DRIVE)
         exit_stream = _global_generator_signature()
+        exit_stdlib = random.getstate()
+        after = state_signature(probe)
     except Exception:
         # A model that refuses a zero drive is not quiescent under one.
         return None
     finally:
         np.random.set_state(entry_state)
-    if before != state_signature(probe):
+        random.setstate(entry_stdlib)
+    if before != after:
         return None
-    if exit_stream != entry_stream:
+    if exit_stream != entry_stream or exit_stdlib != entry_stdlib:
         # The model drew from the process-wide generator, whose state is not
         # part of any instance. Skipping such a neuron would leave that draw
         # unmade and move every later draw in the process, so it is never
@@ -205,7 +243,12 @@ def quiescent_signature(neuron: object) -> StateSignature | None:
 
 def is_quiescent(neuron: object, signature: StateSignature | None) -> bool:
     """Return whether a neuron sits exactly at the measured quiescent state."""
-    return signature is not None and state_signature(neuron) == signature
+    if signature is None:
+        return False
+    try:
+        return state_signature(neuron) == signature
+    except AttributeError:
+        return False
 
 
 __all__ = [
@@ -213,6 +256,7 @@ __all__ = [
     "QUIESCENT_DRIVE",
     "StateSignature",
     "Steppable",
+    "declares_purity",
     "is_quiescent",
     "quiescent_signature",
     "state_signature",

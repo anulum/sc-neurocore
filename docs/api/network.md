@@ -115,9 +115,15 @@ def run(
 - `backend` ∈ `{"auto", "python", "rust", "mpi"}`. `"rust"` raises if the
   engine wheel is not importable or Python-only semantics are present;
   `"auto"` silently falls back to Python.
-- `spike_gating` (Python backend only) skips neurons with zero input current
-  whose voltage is within 1 % of resting potential. Useful for sparse
-  networks where most neurons are silent.
+- `spike_gating` (Python backend only) skips a neuron only where skipping it
+  and stepping it are the same: its input is exactly zero and its whole state
+  equals the measured fixed point of its model (`network/quiescence.py`, a
+  probe that steps a copy with zero input). Only models whose purity is
+  declared are probed: the `sc_neurocore` catalogue models, and a user class
+  that sets `quiescence_pure = True` to state that `step` touches nothing but
+  its own attributes; any other model is never skipped. A probe that moves the
+  NumPy or the standard `random` generator refuses the model and restores both.
+  Gated and ungated runs give the same spikes.
 
 The Python loop (`_run_python`) is the reference implementation; the Rust
 loop (`_run_rust`) round-trips populations and projections through

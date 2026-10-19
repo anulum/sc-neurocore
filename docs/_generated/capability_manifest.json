@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5348
+    "test_files": 5349
   },
   "documentation": {
     "public_pages": [
@@ -7142,6 +7142,7 @@
       "tests/test_quasirandom_emitter_halton16_emitter.py",
       "tests/test_quasirandom_emitter_quasi_random_emitter.py",
       "tests/test_quasirandom_emitter_sobol16_emitter.py",
+      "tests/test_quiescence_purity_contract.py",
       "tests/test_rall_dendrite.py",
       "tests/test_random_draws_cosim.py",
       "tests/test_random_unit_programs.py",

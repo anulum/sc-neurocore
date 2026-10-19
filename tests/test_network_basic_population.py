@@ -14,42 +14,51 @@ from tests.network_basic_support import *  # noqa: F403
 
 
 class TestPopulation:
-    def test_create_by_string(self):
+    """Construction, stepping, reset, state access and spike gating of a Population."""
+
+    def test_create_by_string(self) -> None:
+        """A model named by string builds n neurons labelled with the model name."""
         pop = Population("LapicqueNeuron", 5)
         assert pop.n == 5
         assert pop.label == "LapicqueNeuron"
 
-    def test_create_by_class(self):
+    def test_create_by_class(self) -> None:
+        """A model class builds n neurons with the given label."""
         from sc_neurocore.neurons.models import AdExNeuron
 
         pop = Population(AdExNeuron, 3, label="exc")
         assert pop.n == 3
         assert pop.label == "exc"
 
-    def test_unknown_model_string(self):
+    def test_unknown_model_string(self) -> None:
+        """An unknown model name is refused."""
         with pytest.raises(ValueError, match="Unknown model"):
             Population("NonexistentNeuron", 2)
 
-    def test_step_all_returns_spike_vector(self):
+    def test_step_all_returns_spike_vector(self) -> None:
+        """step_all returns one int8 spike per neuron."""
         pop = Population("LapicqueNeuron", 4)
         currents = np.array([10.0, 0.0, 10.0, 0.0])
         spikes = pop.step_all(currents)
         assert spikes.shape == (4,)
         assert spikes.dtype == np.int8
 
-    def test_reset_all(self):
+    def test_reset_all(self) -> None:
+        """reset_all returns every voltage to rest after driven steps."""
         pop = Population("LapicqueNeuron", 3)
         pop.step_all(np.array([100.0, 100.0, 100.0]))
         pop.reset_all()
         assert np.allclose(pop.voltages, 0.0)
 
-    def test_get_states(self):
+    def test_get_states(self) -> None:
+        """get_states returns one array per state variable, one entry per neuron."""
         pop = Population("LapicqueNeuron", 3)
         states = pop.get_states()
         assert "v" in states
         assert states["v"].shape == (3,)
 
-    def test_get_states_uses_neuron_get_state_when_available(self):
+    def test_get_states_uses_neuron_get_state_when_available(self) -> None:
+        """A model's own get_state() supplies the state keys."""
         # Neuron models exposing get_state() drive the state keys directly,
         # rather than the dataclass-field fallback used for plain dataclasses.
         from sc_neurocore.neurons.models import Izhikevich2007Neuron
@@ -59,16 +68,20 @@ class TestPopulation:
         assert "v" in states and "u" in states
         assert states["v"].shape == (3,)
 
-    def test_params_override(self):
+    def test_params_override(self) -> None:
+        """Constructor parameters reach every neuron."""
         pop = Population("LapicqueNeuron", 2, params={"v_threshold": 0.5})
         assert pop.neurons[0].v_threshold == 0.5
 
-    def test_spike_gating_skips_resting_silent_neuron_and_steps_active_neuron(self):
+    def test_spike_gating_skips_resting_silent_neuron_and_steps_active_neuron(self) -> None:
+        """A declared-pure model at its fixed point is skipped at zero input; a driven one steps."""
+
         # The call counter lives on the class. Counting on the instance would
         # move this model's state on every step, which is precisely what makes
         # a model non-quiescent, so the counter would have decided the question
         # it was there to observe.
         class GatedNeuron:
+            quiescence_pure = True
             calls: list[float] = []
 
             def __init__(self):
@@ -94,7 +107,9 @@ class TestPopulation:
         assert pop.voltages[1] == 1.25
         np.testing.assert_array_equal(spikes, np.array([0, 1], dtype=np.int8))
 
-    def test_get_states_falls_back_to_voltage_for_minimal_neuron(self):
+    def test_get_states_falls_back_to_voltage_for_minimal_neuron(self) -> None:
+        """A model with only v reports its voltages."""
+
         class MinimalVoltageNeuron:
             def __init__(self):
                 self.v = -0.25
@@ -108,7 +123,9 @@ class TestPopulation:
         assert set(states) == {"v"}
         np.testing.assert_allclose(states["v"], np.array([-0.5, 0.0, 0.75]))
 
-    def test_reset_all_prefers_reset_and_updates_voltage_cache(self):
+    def test_reset_all_prefers_reset_and_updates_voltage_cache(self) -> None:
+        """reset() is called when present and the voltage cache follows it."""
+
         class ResetNeuron:
             def __init__(self):
                 self.v = 1.0
@@ -127,7 +144,9 @@ class TestPopulation:
         assert [neuron.reset_calls for neuron in pop.neurons] == [1, 1]
         np.testing.assert_allclose(pop.voltages, np.array([-0.125, -0.125]))
 
-    def test_reset_all_uses_reset_state_when_reset_is_unavailable(self):
+    def test_reset_all_uses_reset_state_when_reset_is_unavailable(self) -> None:
+        """reset_state() is the fallback and the voltage cache follows it."""
+
         class ResetStateNeuron:
             def __init__(self):
                 self.v = 1.0
@@ -146,7 +165,9 @@ class TestPopulation:
         assert [neuron.reset_state_calls for neuron in pop.neurons] == [1, 1]
         np.testing.assert_allclose(pop.voltages, np.array([-0.375, -0.375]))
 
-    def test_get_states_uses_dataclass_fields_without_timestep_parameter(self):
+    def test_get_states_uses_dataclass_fields_without_timestep_parameter(self) -> None:
+        """A dataclass model reports its fields as state, without dt."""
+
         @dataclass
         class DataclassStateNeuron:
             v: float = -0.5
@@ -168,7 +189,8 @@ class TestPopulation:
         np.testing.assert_allclose(states["v"], np.array([-0.4, 0.6]))
         np.testing.assert_allclose(states["adaptation"], np.array([0.125, 0.5]))
 
-    def test_empty_population_exposes_empty_state_mapping(self):
+    def test_empty_population_exposes_empty_state_mapping(self) -> None:
+        """An empty population has no state arrays."""
         pop = Population("LapicqueNeuron", n=0, label="empty")
 
         assert pop.n == 0

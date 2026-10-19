@@ -25562,6 +25562,12 @@ A neuron a population can drive one timestep with a scalar input.
 - **step**(current)
   - Advance one timestep under *current* and return the spike flag.
 
+### Function `declares_purity(neuron)`
+Return whether a model's ``step`` is declared to touch only its own attributes.
+
+The catalogue models of :mod:`sc_neurocore` are; a user class declares it with a
+class attribute ``quiescence_pure = True``.
+
 ### Function `state_signature(neuron)`
 Return the exact signature of every attribute a neuron carries.
 

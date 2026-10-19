@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Spike gating probes only models whose purity is declared (the catalogue
+  models, or a user class with `quiescence_pure = True`); any other model is
+  never skipped. The probe also restores the standard `random` generator and
+  refuses a model that moved it, and reads private `__slots__` under their
+  mangled names. A user neuron drawing from `random` was skipped after one
+  sampled zero spike and a private slot crashed gated stepping.
+
 - `network.export_verilog` writes RTL that elaborates: each population is
   lowered by the equation compiler to a neuron module with the model's own
   update, `>=` threshold and hard reset (SC LIF Lapicque exact flow,

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1100
+expected_file_count = 1103
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4493,3 +4493,15 @@ rationale = "Files, names and refusals of the network Verilog exporter."
 [[file]]
 path = "tests/test_network_verilog_export_fidelity.py"
 rationale = "Exported network RTL elaborates (Icarus, Yosys) and spikes as the Python neurons; refusals write nothing."
+
+[[file]]
+path = "tests/test_quiescence_purity_contract.py"
+rationale = "Spike gating probes only declared-pure models, restores the stdlib generator and reads private slots."
+
+[[file]]
+path = "tests/test_network_spike_gating_equivalence.py"
+rationale = "Spike gating is exact: probe acceptance and refusals, gated equals ungated runs, catalogue probes."
+
+[[file]]
+path = "tests/test_network_basic_population.py"
+rationale = "Population construction, stepping, reset, state access and spike gating."

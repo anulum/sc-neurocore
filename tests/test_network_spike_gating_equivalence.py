@@ -69,6 +69,7 @@ def _instance(class_name: str) -> Any:
 class CountingQuiescent:
     """A model that holds still under zero input and counts every step."""
 
+    quiescence_pure = True
     steps = 0
 
     def __init__(self) -> None:
@@ -122,6 +123,8 @@ def _run(class_name: str, *, gated: bool, park: bool) -> list[tuple[str, str]]:
 
 
 class TestQuiescenceProbe:
+    """What the quiescence probe accepts, refuses and leaves untouched."""
+
     def test_slotted_state_is_checked_before_a_population_skips(self) -> None:
         """A changing register in slots must be visible without an instance dictionary."""
 
@@ -322,6 +325,8 @@ class TestQuiescenceProbe:
         class HoldsVectors:
             """A model whose state is an array and a list."""
 
+            quiescence_pure = True
+
             def __init__(self) -> None:
                 self.v = np.zeros(3)
                 self.history = [0.0, 0.0]
@@ -388,6 +393,8 @@ class TestQuiescenceProbe:
 
 
 class TestGatedRunsMatchUngatedRuns:
+    """Gated and ungated runs of the same network give the same spikes."""
+
     @pytest.mark.parametrize("class_name", REPRESENTATIVE_MODELS)
     def test_a_neuron_parked_near_rest_relaxes_identically(self, class_name: str) -> None:
         """The defect: the old gate froze exactly these neurons."""
@@ -426,6 +433,8 @@ class TestGatedRunsMatchUngatedRuns:
 
 
 class TestGatingStillSkips:
+    """Gating still skips a quiescent population and steps a driven one."""
+
     def test_a_quiescent_population_is_skipped_and_a_driven_one_is_not(self) -> None:
         """Gating must still buy something exactly where it is sound."""
         population = Population(CountingQuiescent, POPULATION)
@@ -470,6 +479,8 @@ class TestGatingStillSkips:
 
 
 class TestTheWholeCatalogue:
+    """Probe behaviour across the catalogue models."""
+
     def test_every_model_runs_identically_gated_and_ungated(self) -> None:
         """The guarantee, on the catalogue rather than on a chosen few.
 
