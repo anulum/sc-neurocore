@@ -7,7 +7,7 @@
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
 """Explicit per-neuron FPGA interconnect emission."""
 
-from typing import Sequence
+from typing import Callable, Sequence
 
 import numpy as np
 
@@ -34,8 +34,75 @@ from .fpga_scnir_hierarchy import (
     _hierarchy_weight_expr,
     _scnir_connection_stream_id,
 )
-from .neuron_graph import NeuronSpec
+from .neuron_graph import ConnectionSpec, NeuronSpec
 from .quantise_params import QuantisedGraph
+from .stdp import QuantisedSTDP
+
+
+def check_plastic_connection(
+    conn: ConnectionSpec, pop_by_name: dict[str, NeuronSpec], graded: set[str]
+) -> None:
+    """Refuse a plastic connection outside what the STDP datapath implements.
+
+    STDP needs spike-timed pre and post neurons: the source must be a binary
+    spiking population (not external, analogue or graded), and the connection
+    may carry no delay and no NIR threshold.
+
+    Raises
+    ------
+    ValueError
+        Naming the connection and what is not supported.
+    """
+    name = f"Connection {conn.src}->{conn.dst}"
+    src_pop = pop_by_name.get(conn.src)
+    if src_pop is None or _connection_sources_are_analogue(src_pop) or conn.src in graded:
+        raise ValueError(f"{name}: STDP needs a binary spiking source population")
+    if any(_normalise_connection_delay_steps(conn.delay_steps, src_pop.n_neurons, name)):
+        raise ValueError(f"{name}: STDP is not implemented on a delayed connection")
+    if conn.source_threshold is not None or conn.destination_threshold is not None:
+        raise ValueError(f"{name}: STDP is not implemented with NIR thresholds")
+
+
+def stdp_trace_lines(
+    name: str, trace: str, spike: str, rule: QuantisedSTDP, acc_width: int, data_width: int
+) -> list[str]:
+    """Return the wires of one trace's next value: ``sat((x * D) >>> f + spike · one)``."""
+    wide = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{trace}[DATA_WIDTH - 1]}}}}, {trace}}}"
+    return [
+        f"    wire signed [ACC_WIDTH - 1:0] {name}_raw = "
+        f"(({wide} * {_signed_hex(rule.decay, acc_width)}) >>> {rule.fraction})"
+        f" + ({spike} ? {_signed_hex(rule.one, acc_width)} : {acc_width}'sd0);",
+        f"    wire signed [DATA_WIDTH - 1:0] {name} = sat_acc({name}_raw);",
+    ]
+
+
+def stdp_weight_lines(
+    name: str,
+    weight: str,
+    pre_spike: str,
+    post_spike: str,
+    pre_next: str,
+    post_next: str,
+    rule: QuantisedSTDP,
+    acc_width: int,
+) -> list[str]:
+    """Return the wires of one synapse's next weight, clipped to ``[w_min, w_max]``."""
+
+    def wide(signal: str) -> str:
+        return f"{{{{(ACC_WIDTH - DATA_WIDTH){{{signal}[DATA_WIDTH - 1]}}}}, {signal}}}"
+
+    zero = f"{acc_width}'sd0"
+    depress = f"(({_signed_hex(rule.a_minus, acc_width)} * {wide(post_next)}) >>> {rule.fraction})"
+    potentiate = f"(({_signed_hex(rule.a_plus, acc_width)} * {wide(pre_next)}) >>> {rule.fraction})"
+    w_min = _signed_hex(rule.w_min, acc_width)
+    w_max = _signed_hex(rule.w_max, acc_width)
+    return [
+        f"    wire signed [ACC_WIDTH - 1:0] {name}_raw = {wide(weight)}"
+        f" - ({pre_spike} ? {depress} : {zero}) + ({post_spike} ? {potentiate} : {zero});",
+        f"    wire signed [ACC_WIDTH - 1:0] {name}_clip = ({name}_raw < {w_min}) ? {w_min} : "
+        f"(({name}_raw > {w_max}) ? {w_max} : {name}_raw);",
+        f"    wire signed [DATA_WIDTH - 1:0] {name} = {name}_clip[DATA_WIDTH - 1:0];",
+    ]
 
 
 def build_direct_interconnect(
@@ -122,6 +189,12 @@ def build_direct_interconnect(
     )
 
     graded_pops = {pop.name for pop in pops if population_graded(pop)}
+    # Plastic connections (trace STDP): global index and the rule's words.
+    plastic: dict[int, tuple[int, QuantisedSTDP]] = {}
+    for g, conn in enumerate(conns):
+        if conn.plasticity is not None:
+            check_plastic_connection(conn, pop_by_name, graded_pops)
+            plastic[id(conn)] = (g, conn.plasticity.quantised(data_width, fraction))
     max_terms = external_width if pops else 1
     delayed_source_depths: dict[tuple[str, int], int] = {}
     delay_vectors: dict[int, DelayVector] = {}
@@ -296,6 +369,9 @@ def build_direct_interconnect(
                     lines.append(f"            {prefix}_val_d{step} <= {prefix}_val_d{step - 1};")
         lines.extend(["        end", "    end", ""])
 
+    if plastic:
+        lines.extend(_stdp_block(conns, plastic, pop_by_name, neuron_prefix, acc_width, data_width))
+
     lines.append("    // Weighted fixed-point input accumulation")
     for pop in pops:
         feeding = [conn for conn in conns if conn.dst == pop.name]
@@ -400,6 +476,15 @@ def build_direct_interconnect(
                                 f"({spike_value} > {_signed_hex(threshold, data_width)} "
                                 f"? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
                             )
+                        elif id(conn) in plastic:
+                            # The weight this step uses is the one the previous step's
+                            # spikes just updated: the next value of the weight register.
+                            g = plastic[id(conn)][0]
+                            w_next = f"stdp{g}_w{neuron_idx}_{src_idx}_next"
+                            conn_terms.append(
+                                f"({src_spike} ? {{{{(ACC_WIDTH - DATA_WIDTH){{{w_next}"
+                                f"[DATA_WIDTH - 1]}}}}, {w_next}}} : {acc_width}'sd0)"
+                            )
                         else:
                             conn_terms.append(
                                 f"({src_spike} ? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
@@ -442,3 +527,75 @@ def build_direct_interconnect(
 
     lines.extend(["", "endmodule", ""])
     return "\n".join(lines)
+
+
+def _stdp_block(
+    conns: Sequence[ConnectionSpec],
+    plastic: dict[int, tuple[int, QuantisedSTDP]],
+    pop_by_name: dict[str, NeuronSpec],
+    neuron_prefix: Callable[[NeuronSpec, int], str],
+    acc_width: int,
+    data_width: int,
+) -> list[str]:
+    """Emit the traces and weights of every plastic connection of the direct top.
+
+    Each trace and weight register holds the value after the previous step; its
+    ``_next`` wire applies the spikes now on the neurons' outputs (this step's),
+    and the input currents read the ``_next`` weights, so the step after a spike
+    already uses the updated weight, as the folded interconnect and
+    :func:`sc_neurocore.nir_bridge.stdp.stdp_tick` do.
+    """
+    lines = ["    // Trace-based STDP: traces and weights, updated every step"]
+    resets: list[str] = []
+    latches: list[str] = []
+    for conn in conns:
+        if id(conn) not in plastic:
+            continue
+        g, rule = plastic[id(conn)]
+        src, dst = pop_by_name[conn.src], pop_by_name[conn.dst]
+        weights = np.asarray(conn.weights, dtype=np.int64)
+        for role, pop in (("pre", src), ("post", dst)):
+            for k in range(pop.n_neurons):
+                reg = f"stdp{g}_{role}{k}"
+                spike = f"{neuron_prefix(pop, k)}_spike"
+                lines.append(f"    reg signed [DATA_WIDTH - 1:0] {reg};")
+                lines.extend(
+                    stdp_trace_lines(f"{reg}_next", reg, spike, rule, acc_width, data_width)
+                )
+                resets.append(f"            {reg} <= {data_width}'sd0;")
+                latches.append(f"            {reg} <= {reg}_next;")
+        for j in range(dst.n_neurons):
+            for i in range(src.n_neurons):
+                if int(weights[j, i]) == 0:
+                    continue  # not a synapse: never learns
+                reg = f"stdp{g}_w{j}_{i}"
+                lines.append(f"    reg signed [DATA_WIDTH - 1:0] {reg};")
+                lines.extend(
+                    stdp_weight_lines(
+                        f"{reg}_next",
+                        reg,
+                        f"{neuron_prefix(src, i)}_spike",
+                        f"{neuron_prefix(dst, j)}_spike",
+                        f"stdp{g}_pre{i}_next",
+                        f"stdp{g}_post{j}_next",
+                        rule,
+                        acc_width,
+                    )
+                )
+                resets.append(
+                    f"            {reg} <= {_signed_hex(int(weights[j, i]), data_width)};"
+                )
+                latches.append(f"            {reg} <= {reg}_next;")
+    lines.extend(
+        [
+            "    always @(posedge clk or negedge rst_n) begin",
+            "        if (!rst_n) begin",
+            *resets,
+            "        end else if (en) begin",
+            *latches,
+            "        end",
+            "    end",
+            "",
+        ]
+    )
+    return lines

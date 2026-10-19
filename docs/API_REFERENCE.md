@@ -34004,6 +34004,24 @@ ValueError
 
 ## Module `nir_bridge.fpga_direct_interconnect`
 
+### Function `check_plastic_connection(conn, pop_by_name, graded)`
+Refuse a plastic connection outside what the STDP datapath implements.
+
+STDP needs spike-timed pre and post neurons: the source must be a binary
+spiking population (not external, analogue or graded), and the connection
+may carry no delay and no NIR threshold.
+
+Raises
+------
+ValueError
+    Naming the connection and what is not supported.
+
+### Function `stdp_trace_lines(name, trace, spike, rule, acc_width, data_width)`
+Return the wires of one trace's next value: ``sat((x * D) >>> f + spike · one)``.
+
+### Function `stdp_weight_lines(name, weight, pre_spike, post_spike, pre_next, post_next, rule, acc_width)`
+Return the wires of one synapse's next weight, clipped to ``&#91;w_min, w_max&#93;``.
+
 ### Function `build_direct_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids)`
 Generate direct-wired per-neuron top-level interconnect.
 
@@ -34490,6 +34508,9 @@ source_threshold : numpy.ndarray or None
     Optional threshold applied before the weight matrix.
 destination_threshold : numpy.ndarray or None
     Optional threshold applied after affine accumulation.
+plasticity : STDPRule or None
+    Optional trace-based STDP on the connection's synapses (its non-zero
+    initial weights); see :mod:`sc_neurocore.nir_bridge.stdp`.
 
 
 ### Class `HierarchyInstanceSpec`
@@ -34813,6 +34834,75 @@ Build a deterministic target-mapping report for a parsed NIR network.
 
 ### Function `write_silicon_mapping_report(output_dir, source, config)`
 Write `nir_silicon_mapping_report.json` in deterministic form.
+
+---
+
+## Module `nir_bridge.stdp`
+
+### Class `STDPRule`
+Pair STDP with exponential traces on one connection.
+
+Parameters
+----------
+a_plus : float
+    Potentiation amplitude per post spike, times the pre trace; at least 0.
+a_minus : float
+    Depression amplitude per pre spike, times the post trace; at least 0.
+tau : float
+    Trace time constant in ticks; positive.
+w_min, w_max : float
+    Weight bounds, ``w_min <= w_max``.
+
+Raises
+------
+ValueError
+    For a non-finite value, a negative amplitude, a non-positive ``tau`` or
+    bounds in the wrong order.
+
+- **__post_init__**()
+  - Validate the rule's domain.
+- **quantised**(data_width, fraction)
+  - Return the rule's words at a signed ``data_width``/``fraction`` format.
+
+### Class `QuantisedSTDP`
+An :class:`STDPRule` as the words the hardware holds.
+
+Parameters
+----------
+decay : int
+    ``round(exp(-1/tau) * 2**fraction)``.
+a_plus, a_minus : int
+    The amplitudes as words.
+w_min, w_max : int
+    The weight bounds as words.
+one : int
+    ``2**fraction``, a spike's contribution to a trace.
+fraction : int
+    Fractional bits.
+trace_max : int
+    The largest word; traces saturate there.
+
+
+### Function `stdp_tick(weights, mask, pre_trace, post_trace, pre_spikes, post_spikes, rule)`
+Apply one tick of the integer rule, as the generated RTL does.
+
+Parameters
+----------
+weights : sequence of sequence of int
+    Weight words, ``weights&#91;j&#93;&#91;i&#93;`` for target ``j`` and source ``i``.
+mask : sequence of sequence of bool
+    Which entries are synapses (non-zero at the start).
+pre_trace, post_trace : sequence of int
+    Trace words before this tick.
+pre_spikes, post_spikes : sequence of int
+    This tick's spikes (0 or 1) of the source and target neurons.
+rule : QuantisedSTDP
+    The rule's words.
+
+Returns
+-------
+tuple
+    ``(weights, pre_trace, post_trace)`` after the tick.
 
 ---
 

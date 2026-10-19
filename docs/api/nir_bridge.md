@@ -34,6 +34,34 @@ direct, with a warning. `tests/test_graded_spike_network.py` checks the direct
 current word for word against that arithmetic and the folded raster against
 the direct one.
 
+### Trace STDP
+
+::: sc_neurocore.nir_bridge.stdp
+    options:
+      show_root_heading: true
+      members:
+        - STDPRule
+        - QuantisedSTDP
+        - stdp_tick
+
+A `ConnectionSpec(..., plasticity=STDPRule(...))` learns on its synapses (the
+non-zero initial weights) with the rule of `Projection.update_plasticity`, in
+the network format: after each tick the pre and post traces decay by
+`round(exp(-1/tau)·2^f)` and take the tick's spikes, a pre spike subtracts
+`(A-·post) >>> f`, a post spike adds `(A+·pre) >>> f`, and the weight is clipped
+to `[w_min, w_max]`; the next tick uses the new weights. The direct interconnect
+keeps one register per trace and synapse and its currents read the next
+values; the folded one updates the same registers in its commit cycle from the
+tick's spikes. `stdp_tick` is that integer arithmetic: the tests compare every
+weight of both interconnects with it each tick (Icarus) and the integer rule
+with `Projection.update_plasticity` within rounding. The source must be a
+binary spiking population, and a plastic connection may carry no delay and no
+NIR threshold; anything else is refused. The address-event interconnect keeps
+no weight state, so a plastic network stays direct, with a warning. Weights
+and traces are registers, one per synapse and neuron: suited to the small and
+medium plastic layers the folded sequencer serves, not to a weight memory of
+millions of synapses.
+
 Malformed direct `NeuronGraph` inputs fail before SC-NIR conversion or HDL
 emission: the compiler rejects empty networks, non-matrix weights, inconsistent
 source/destination widths, invalid bias or threshold vectors, and invalid

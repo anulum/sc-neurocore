@@ -301,6 +301,8 @@ def compile_network_to_fpga(
     # The AER fan-out carries addresses, not values: a graded spike's value would be lost.
     graded_sources = {pop.name for pop in qgraph.populations if population_graded(pop)}
     has_graded_sources = any(conn.src in graded_sources for conn in qgraph.connections)
+    # Nor does it implement plasticity: an STDP connection stays on the direct path.
+    has_plastic_connections = any(conn.plasticity is not None for conn in qgraph.connections)
     folded_metrics: FoldedResourceMetrics | None = None
 
     if interconnect == "folded":
@@ -333,6 +335,7 @@ def compile_network_to_fpga(
         and not has_delayed_connections
         and not has_threshold_connections
         and not has_graded_sources
+        and not has_plastic_connections
     ):
         selected_interconnect = "aer"
         top_module = _build_top_aer(
@@ -352,6 +355,11 @@ def compile_network_to_fpga(
             warnings.append(
                 "Using direct interconnect because delayed recurrent connections require "
                 "registered one-step source semantics"
+            )
+        if interconnect is None and total_neurons > _AER_THRESHOLD and has_plastic_connections:
+            warnings.append(
+                "Using direct interconnect because STDP connections need per-synapse "
+                "weight state the address-event fan-out does not keep"
             )
         if interconnect is None and total_neurons > _AER_THRESHOLD and has_graded_sources:
             warnings.append(

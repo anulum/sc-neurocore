@@ -289,6 +289,7 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
                 delay_steps=conn.delay_steps,
                 source_threshold=q_source_threshold,
                 destination_threshold=q_destination_threshold,
+                plasticity=conn.plasticity,
             )
         )
 

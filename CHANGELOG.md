@@ -10,6 +10,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The FPGA network compiler learns: `ConnectionSpec(plasticity=STDPRule(...))`
+  applies trace-based pair STDP (the rule of `Projection.update_plasticity`) in
+  the network's fixed-point format, in the direct and the folded
+  interconnect. `nir_bridge.stdp.stdp_tick` is the integer golden; every
+  weight of both interconnects equals it each tick. Delayed, thresholded,
+  external, analogue or graded plastic sources are refused, and a plastic
+  network is never placed on the address-event interconnect.
+
 - The FPGA network compiler carries graded spikes: a population whose
   template has `spike_value` adds `(value · weight) >>> fraction` to its
   targets (a value of 1.0 is the binary case; a source threshold compares the

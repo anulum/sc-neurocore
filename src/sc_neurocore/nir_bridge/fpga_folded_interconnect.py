@@ -31,7 +31,13 @@ from .fpga_neuron_rtl import (
     population_graded,
     population_stream,
 )
+from .fpga_direct_interconnect import (
+    check_plastic_connection,
+    stdp_trace_lines,
+    stdp_weight_lines,
+)
 from .neuron_graph import ConnectionSpec, NeuronSpec
+from .stdp import QuantisedSTDP
 from .quantise_params import QuantisedGraph
 
 
@@ -62,6 +68,7 @@ def _folded_population_input(
     pop_names: set[str],
     is_first_pop: bool,
     graded_offsets: dict[str, int] | None = None,
+    plastic: dict[int, tuple[int, QuantisedSTDP]] | None = None,
     idx_signal: str,
     idx_w: int,
     suffix: str,
@@ -117,6 +124,7 @@ def _folded_population_input(
     n = pop.n_neurons
     product_width = 2 * data_width
     graded_offsets = graded_offsets or {}
+    plastic = plastic or {}
     if not feeding:
         if is_first_pop:
             return [], f"I_ext_flat[{idx_signal} * {data_width} +: {data_width}]"
@@ -168,7 +176,11 @@ def _folded_population_input(
             rw = f"rw{suffix}_{ci}_{src}"
             rom_regs.append((rw, data_width))
             for nrow in range(n):
-                rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
+                if id(conn) in plastic and int(weights[nrow, src]) != 0:
+                    # A plastic synapse reads its weight register (updated at each commit).
+                    rows[nrow].append(f"{rw} = stdp{plastic[id(conn)][0]}_w{nrow}_{src};")
+                else:
+                    rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
             # Full weight, sign-extended to ACC_WIDTH (gated paths contribute the whole
             # weight; only the un-thresholded external path multiplies by the input).
             rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
@@ -505,11 +517,8 @@ def build_folded_interconnect(
     # Global graded-value bus: one DATA_WIDTH word per neuron of each graded spiking
     # source population (the value its PE emits, zero without a spike), committed with
     # spike_bus. Empty when no graded source feeds a connection.
-    graded_src_names = {
-        conn.src
-        for conn in conns
-        if (sp := pop_by_name.get(conn.src)) is not None and population_graded(sp)
-    }
+    graded_src_names_all = {p.name for p in pops if population_graded(p)}
+    graded_src_names = {conn.src for conn in conns if conn.src in graded_src_names_all}
     graded_offsets: dict[str, int] = {}
     g_cursor = 0
     for pop in pops:
@@ -517,6 +526,14 @@ def build_folded_interconnect(
             graded_offsets[pop.name] = g_cursor
             g_cursor += pop.n_neurons
     g_total = g_cursor
+
+    # Plastic connections (trace STDP): traces and weights in registers, updated at
+    # each commit from the tick's spikes (spike_acc), so the next tick reads them.
+    plastic: dict[int, tuple[int, QuantisedSTDP]] = {}
+    for g, conn in enumerate(conns):
+        if conn.plasticity is not None:
+            check_plastic_connection(conn, pop_by_name, graded_src_names_all)
+            plastic[id(conn)] = (g, conn.plasticity.quantised(data_width, fraction))
 
     ext_width, ext_offsets, _ext_src_widths = _external_input_layout(conns, pop_by_name, pops)
     input_bus_width = max(1, ext_width * data_width)
@@ -671,6 +688,58 @@ def build_folded_interconnect(
             lines.append(f"    reg signed [{g_total * data_width - 1}:0] val_bus_hist_{d};")
         lines.append("")
 
+    stdp_resets: list[str] = []
+    stdp_commits: list[str] = []
+    for conn in conns:
+        if id(conn) not in plastic:
+            continue
+        g, rule = plastic[id(conn)]
+        src_pop, dst_pop = pop_by_name[conn.src], pop_by_name[conn.dst]
+        weights = np.asarray(conn.weights, dtype=np.int64)
+        lines.append(
+            f"    // STDP on {conn.src}->{conn.dst}: traces and weights, updated at commit"
+        )
+        for role, pop in (("pre", src_pop), ("post", dst_pop)):
+            for k in range(pop.n_neurons):
+                reg = f"stdp{g}_{role}{k}"
+                lines.append(f"    reg signed [DATA_WIDTH - 1:0] {reg};")
+                lines.extend(
+                    stdp_trace_lines(
+                        f"{reg}_next",
+                        reg,
+                        f"spike_acc[{spike_offsets[pop.name] + k}]",
+                        rule,
+                        acc_width,
+                        data_width,
+                    )
+                )
+                stdp_resets.append(f"            {reg} <= {data_width}'sd0;")
+                stdp_commits.append(f"                {reg} <= {reg}_next;")
+        for j in range(dst_pop.n_neurons):
+            for i in range(src_pop.n_neurons):
+                if int(weights[j, i]) == 0:
+                    continue
+                reg = f"stdp{g}_w{j}_{i}"
+                lines.append(f"    reg signed [DATA_WIDTH - 1:0] {reg};")
+                lines.extend(
+                    stdp_weight_lines(
+                        f"{reg}_next",
+                        reg,
+                        f"spike_acc[{spike_offsets[src_pop.name] + i}]",
+                        f"spike_acc[{spike_offsets[dst_pop.name] + j}]",
+                        f"stdp{g}_pre{i}_next",
+                        f"stdp{g}_post{j}_next",
+                        rule,
+                        acc_width,
+                    )
+                )
+                stdp_resets.append(
+                    f"            {reg} <= {_signed_hex(int(weights[j, i]), data_width)};"
+                )
+                stdp_commits.append(f"                {reg} <= {reg}_next;")
+    if plastic:
+        lines.append("")
+
     # Per-population state BRAMs (word width set by the population's neuron type).
     for pi, pop in enumerate(pops):
         sw = type_state_w[pop.neuron_type]
@@ -745,6 +814,7 @@ def build_folded_interconnect(
             pop_names=pop_names,
             is_first_pop=(pi == 0),
             graded_offsets=graded_offsets,
+            plastic=plastic,
             idx_signal="nidx",
             idx_w=idx_w,
             suffix=f"_{pi}",
@@ -852,6 +922,7 @@ def build_folded_interconnect(
         lines.append("            v_acc <= 0;")
         for d in range(1, max_analogue_delay + 1):
             lines.append(f"            v_bus_hist_{d} <= 0;")
+    lines.extend(stdp_resets)
     if g_total:
         lines.append("            val_bus <= 0;")
         lines.append("            val_acc <= 0;")
@@ -920,6 +991,7 @@ def build_folded_interconnect(
         lines.append("                v_bus <= v_acc;")
     if g_total:
         lines.append("                val_bus <= val_acc;")
+    lines.extend(stdp_commits)
     # Advance the delay shift-registers on the same commit edge (nonblocking, so every
     # stage samples its old source): hist_d <- hist_{d-1}, hist_1 <- the bus being retired.
     for d in range(max_delay, 0, -1):

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1144
+expected_file_count = 1146
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4669,3 +4669,11 @@ rationale = "Shared graphs, testbenches and Icarus co-simulation of the direct a
 [[file]]
 path = "src/sc_neurocore/nir_bridge/fpga_compiler.py"
 rationale = "compile_network_to_fpga: the public FPGA network compiler composing neuron RTL, weight ROMs and the direct, AER or folded interconnect."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/stdp.py"
+rationale = "Trace-based pair STDP for the FPGA network compiler: the rule, its fixed-point words and the integer golden stdp_tick."
+
+[[file]]
+path = "tests/test_stdp_network.py"
+rationale = "STDP in the network compiler: direct and folded weights bit for bit with the integer golden, golden versus the network rule, refusals."

@@ -15,6 +15,8 @@ from typing import Any
 
 import numpy as np
 
+from .stdp import STDPRule
+
 DelaySteps = int | tuple[int, ...]
 
 
@@ -73,6 +75,9 @@ class ConnectionSpec:
         Optional threshold applied before the weight matrix.
     destination_threshold : numpy.ndarray or None
         Optional threshold applied after affine accumulation.
+    plasticity : STDPRule or None
+        Optional trace-based STDP on the connection's synapses (its non-zero
+        initial weights); see :mod:`sc_neurocore.nir_bridge.stdp`.
     """
 
     src: str
@@ -82,6 +87,7 @@ class ConnectionSpec:
     delay_steps: DelaySteps = 0
     source_threshold: np.ndarray[Any, Any] | None = None
     destination_threshold: np.ndarray[Any, Any] | None = None
+    plasticity: STDPRule | None = None
 
 
 @dataclass(frozen=True, slots=True)
