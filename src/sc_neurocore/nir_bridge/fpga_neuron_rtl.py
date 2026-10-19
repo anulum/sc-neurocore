@@ -7,6 +7,7 @@
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
 """Neuron parameter binding and per-type RTL emission for FPGA compilation."""
 
+import json
 from dataclasses import replace
 from typing import Any, Sequence
 
@@ -228,14 +229,55 @@ def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, 
     return params
 
 
+def _template_semantics(pop: NeuronSpec) -> str:
+    """Return the population's template definition as canonical text, for module sharing.
+
+    Everything that shapes the emitted module is included — equations, threshold,
+    reset, method, initial values, detection, spike value, seed — except the default
+    parameters (the signature carries the resolved parameters) and the random stream
+    (each instance receives its own ``P_RNG_STREAM``).
+    """
+    template = _template_for(pop.neuron_type, pop)
+    semantics = {
+        key: value
+        for key, value in template.items()
+        if key not in ("default_params", "random_stream")
+    }
+    return json.dumps(semantics, sort_keys=True, default=repr)
+
+
 def _population_module_signature(pop: NeuronSpec) -> tuple[Any, ...]:
-    """Build the exact parameter signature for shared module reuse."""
+    """Build the exact parameter and template signature for shared module reuse."""
     params = _resolved_population_params(pop.neuron_type, pop)
     return (
         pop.neuron_type,
         float(pop.dt),
         tuple((name, params[name]) for name in sorted(params)),
+        _template_semantics(pop),
     )
+
+
+def check_shared_templates(pops: Sequence[NeuronSpec]) -> None:
+    """Refuse two populations of one neuron type whose templates define different neurons.
+
+    Populations of one type share one RTL module (one PE in the folded network), so
+    a second definition under the same type name would silently run the first one.
+
+    Raises
+    ------
+    ValueError
+        If two populations share a type but not their template definition.
+    """
+    seen: dict[str, tuple[str, str]] = {}
+    for pop in pops:
+        semantics = _template_semantics(pop)
+        first = seen.setdefault(pop.neuron_type, (pop.name, semantics))
+        if first[1] != semantics:
+            raise ValueError(
+                f"populations {first[0]!r} and {pop.name!r} share the neuron type "
+                f"{pop.neuron_type!r} but define different neurons; give each "
+                "definition its own type name"
+            )
 
 
 def build_neuron_module(

@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5354
+    "test_files": 5356
   },
   "documentation": {
     "public_pages": [
@@ -5290,6 +5290,7 @@
       "tests/test_folded_interconnect_multi_population_compile.py",
       "tests/test_folded_interconnect_threshold_bias_heterogeneous.py",
       "tests/test_folded_resource_metrics.py",
+      "tests/test_folded_signed_bus_words.py",
       "tests/test_formal_network_properties_counterexample_replays_antagonistic.py",
       "tests/test_formal_network_properties_counterexample_replays_population.py",
       "tests/test_formal_network_properties_counterexample_replays_rate_window.py",
@@ -7514,6 +7515,7 @@
       "tests/test_sensors_dvs_events_to_spike_trains.py",
       "tests/test_serve_server_spike_server_http.py",
       "tests/test_serve_server_spike_server_step.py",
+      "tests/test_shared_type_templates.py",
       "tests/test_shd_iterative_prune_protocol.py",
       "tests/test_short_term_plasticity_contracts.py",
       "tests/test_side_channel_docs.py",

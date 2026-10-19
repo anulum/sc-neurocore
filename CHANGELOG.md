@@ -10,6 +10,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The folded network interconnect reads graded spike values and analogue
+  voltages from its packed buses as signed words: a negative value or voltage
+  entered the product and the source-threshold comparison as a large positive
+  number (-0.5 times +1 gave +32767). Populations of one neuron type must now
+  share one template definition (equations, threshold, reset, method, initial
+  values, detection, spike value, seed); a second definition under the same
+  type name ran the first one's module and is now refused before any RTL.
+
 - `randn()` can be lowered at full precision: `random_precision="exact"`
   (on `compile_to_verilog`, `compile_to_datapath`, the bit-true C and Rust
   kernels, `hardware_numeric_contract` and `--random-precision exact` in the

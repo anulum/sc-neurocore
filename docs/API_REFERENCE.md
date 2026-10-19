@@ -34080,7 +34080,8 @@ NetworkCompilationResult
 Raises
 ------
 ValueError
-    If the graph is empty or contains unsupported neuron types.
+    If the graph is empty or contains unsupported neuron types, or if two
+    populations of one neuron type differ in parameters or template definition.
 
 ---
 
@@ -34280,7 +34281,8 @@ tuple&#91;dict&#91;str, str&#93;, str&#93;
 Raises
 ------
 ValueError
-    If the graph is outside the supported folded subset.
+    If the graph is outside the supported folded subset, or two populations
+    share a neuron type but define different neurons.
 
 ---
 
@@ -34301,6 +34303,17 @@ Return the Philox stream of one neuron: the template's base plus its global inde
 
 Every neuron of the network draws from its own stream with the same seed, so two
 neurons of one population never draw the same numbers.
+
+### Function `check_shared_templates(pops)`
+Refuse two populations of one neuron type whose templates define different neurons.
+
+Populations of one type share one RTL module (one PE in the folded network), so
+a second definition under the same type name would silently run the first one.
+
+Raises
+------
+ValueError
+    If two populations share a type but not their template definition.
 
 ### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction)`
 Build a Verilog module for one canonical neuron type.

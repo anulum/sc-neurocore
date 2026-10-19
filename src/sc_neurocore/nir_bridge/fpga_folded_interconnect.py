@@ -28,6 +28,7 @@ from .fpga_neuron_rtl import (
     _heterogeneous_param_names,
     _param_neuron_literal,
     _population_neuron,
+    check_shared_templates,
     population_graded,
     population_stream,
 )
@@ -189,8 +190,11 @@ def _folded_population_input(
                 # without a spike), weighted like a voltage, exactly as the direct path.
                 delay = delay_vector[src]
                 val_signal = "val_bus" if delay == 0 else f"val_bus_hist_{delay}"
+                # A part-select is unsigned in Verilog: $signed keeps a negative value
+                # negative in the product and the threshold comparison.
                 val_word = (
-                    f"{val_signal}[{(graded_offsets[conn.src] + src) * data_width} +: DATA_WIDTH]"
+                    f"$signed({val_signal}"
+                    f"[{(graded_offsets[conn.src] + src) * data_width} +: DATA_WIDTH])"
                 )
                 if source_thresholds is not None:
                     thr = _signed_hex(int(source_thresholds[src]), data_width)
@@ -214,7 +218,7 @@ def _folded_population_input(
                 # path's registered v_out (or its v_d{d} delay-chain) term.
                 delay = delay_vector[src]
                 v_signal = "v_bus" if delay == 0 else f"v_bus_hist_{delay}"
-                v_word = f"{v_signal}[{(analogue_base + src) * data_width} +: DATA_WIDTH]"
+                v_word = f"$signed({v_signal}[{(analogue_base + src) * data_width} +: DATA_WIDTH])"
                 if source_thresholds is not None:
                     thr = _signed_hex(int(source_thresholds[src]), data_width)
                     conn_terms.append(f"({v_word} > {thr} ? {rw_sext} : {acc_width}'sd0)")
@@ -477,12 +481,14 @@ def build_folded_interconnect(
     Raises
     ------
     ValueError
-        If the graph is outside the supported folded subset.
+        If the graph is outside the supported folded subset, or two populations
+        share a neuron type but define different neurons.
     """
     if not can_fold(qgraph, data_width=data_width):
         raise ValueError("graph is outside the folded interconnect's supported subset")
 
     pops = list(qgraph.populations)
+    check_shared_templates(pops)  # one PE per type runs one definition
     conns = list(qgraph.connections)
     pop_by_name = {p.name: p for p in pops}
     pop_names = set(pop_by_name)

@@ -32,7 +32,19 @@ produce the same raster. The address-event interconnect carries addresses
 only: a network with a graded source is not auto-selected for it and stays
 direct, with a warning. `tests/test_graded_spike_network.py` checks the direct
 current word for word against that arithmetic and the folded raster against
-the direct one.
+the direct one. Graded values and analogue voltages are signed words on both
+buses: the folded interconnect reads each from its packed bus as a signed word
+before the product and the source-threshold comparison, so a negative value
+times a negative weight excites, as on the direct path
+(`tests/test_folded_signed_bus_words.py`).
+
+Populations of one neuron type share one neuron module (one processing element
+when folded). Their templates must therefore define the same neuron — the same
+equations, threshold, reset, method, initial values, detection, spike value and
+seed; a second definition under the same type name is refused before any RTL is
+emitted, by `compile_network_to_fpga()` and by the folded builder. Give each
+definition its own type name. The random stream may differ: each instance
+receives its own `P_RNG_STREAM` (`tests/test_shared_type_templates.py`).
 
 ### Trace STDP
 

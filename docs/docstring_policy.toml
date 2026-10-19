@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1148
+expected_file_count = 1150
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4685,3 +4685,11 @@ rationale = "randn() at 60-bit internal precision: the integer reference of rand
 [[file]]
 path = "tests/test_exact_randn.py"
 rationale = "Exact randn mode: transform bound, code bound, program equals reference, RTL = C = Rust, standard mode unchanged."
+
+[[file]]
+path = "tests/test_folded_signed_bus_words.py"
+rationale = "Regression tests for signed graded and analogue bus words in the folded interconnect."
+
+[[file]]
+path = "tests/test_shared_type_templates.py"
+rationale = "Regression tests for one template definition per shared neuron type."

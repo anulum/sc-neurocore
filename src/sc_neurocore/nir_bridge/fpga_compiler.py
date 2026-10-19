@@ -78,6 +78,7 @@ from .fpga_neuron_rtl import (
     _population_params_are_uniform as _population_params_are_uniform,
     _representative_param as _representative_param,
     _resolved_population_params as _resolved_population_params,
+    check_shared_templates as check_shared_templates,
     _type_default_qparams as _type_default_qparams,
     build_neuron_module as _build_neuron_module,
 )
@@ -220,7 +221,8 @@ def compile_network_to_fpga(
     Raises
     ------
     ValueError
-        If the graph is empty or contains unsupported neuron types.
+        If the graph is empty or contains unsupported neuron types, or if two
+        populations of one neuron type differ in parameters or template definition.
     """
     _check_synthesis_resource_bounds(
         total_neurons=graph.total_neurons,
@@ -264,6 +266,7 @@ def compile_network_to_fpga(
             type_representative[pop.neuron_type] = pop
             type_signature[pop.neuron_type] = signature
         elif type_signature[pop.neuron_type] != signature:
+            check_shared_templates(graph.populations)
             raise ValueError(
                 f"Neuron type {pop.neuron_type!r} appears with different "
                 "parameters across populations; per-population RTL modules are "
