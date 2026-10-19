@@ -370,26 +370,33 @@ to per-neuron mean rate (`Hz`). The bin-completion check uses
 
 ## 9. Verilog export
 
-`export_verilog(network, output_dir, target="ice40") -> str` emits a
-top-level `sc_network_top` SystemVerilog module that wires one
-`sc_lif_array` instance per population. Each population's parameters are
-read from the **first** neuron in `pop.neurons` (`v_threshold`, `v_reset`,
-`tau`) and converted to fixed-point by multiplying by 256 (Q8.8). The
-allowed neuron model whitelist is `_LIF_MODELS` (17 LIF variants); any
-non-LIF model raises `SCHardwareError`.
+`export_verilog(network, output_dir, target="ice40") -> str` writes RTL that
+elaborates (Icarus, Yosys `hierarchy -check`) and steps as the Python neurons
+do. Each population is lowered by the equation compiler to a neuron module
+(`sc_net_pop<i>_neuron`, Q8.8) from an `EquationNeuron` with the model's own
+update, `>=` threshold and hard reset, and `sc_network_top` instantiates one
+module per neuron:
+
+- `SCLapicqueLIFNeuron`, or `LapicqueNeuron` in its SC LIF profile: the exact
+  flow `v_inf + (v - v_inf)·e^(-dt/tau)` with `v_inf = v_rest + R·I`;
+- `StochasticLIFNeuron` with `noise_std == 0` and `refractory_period == 0`:
+  forward Euler `v - (v - v_rest)·dt/tau_mem + R·I·dt`.
+
+Every neuron of a population must share its parameters and initial voltage.
+Other models, the 1907 Lapicque source profile, noise, refractoriness, an empty
+network and an empty population raise `SCHardwareError` before anything is
+written. The top has one 16-bit Q8.8 current word (`current_<i>`) and one
+spike bit (`spike_<i>`) per neuron.
 
 The exporter writes two files:
-- `sc_network_top.v` — module wrapper with one `pop_<i>` instance per
-  population
-- `params.vh` — `\`define POP_<i>_SIZE n` per population
+- `sc_network_top.v` — the neuron modules and the top
+- `params.vh` — the data width, fraction and `\`define POP_<i>_SIZE n`
 
 Limitations:
-- Only supports populations of LIF-family models
-- Does not emit projections or topology — only neuron arrays
-- Hard-codes Q8.8 scaling (see `cli.md` §9.1 for the related `dt=0.001`
-  underflow bug)
-- Not test-covered in `tests/test_network_*.py`; add coverage when the LIF
-  network export is exercised end-to-end
+- Projections and topology are not exported, only the neurons
+- Q8.8 quantises the parameters (`e^(-dt/tau)`, `dt/tau_mem`); spike trains
+  equal the model's exactly where the arithmetic is exact
+  (`tests/test_network_verilog_export_fidelity.py`)
 
 For full equation → Verilog compilation including state-machine generation
 and FPGA project files, use `sc-neurocore compile` (see `api/cli.md`) or

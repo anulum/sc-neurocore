@@ -10,6 +10,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `network.export_verilog` writes RTL that elaborates: each population is
+  lowered by the equation compiler to a neuron module with the model's own
+  update, `>=` threshold and hard reset (SC LIF Lapicque exact flow,
+  StochasticLIF forward Euler), one instance per neuron with a Q8.8 current
+  word. It instantiated an `sc_lif_array` no file defined and collapsed every
+  LIF-family model and parameter set into one file. Other models, the 1907
+  Lapicque profile, noise, refractoriness, per-neuron parameters, an empty
+  network or population are refused before anything is written.
+
 - `Network.to_torch()` steps as the supported models step: the SC LIF Lapicque
   profile by its exact flow and StochasticLIF by its forward-Euler update, both
   with the models' `>=` threshold and hard reset (surrogate gradient in the

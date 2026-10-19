@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1097
+expected_file_count = 1100
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4481,3 +4481,15 @@ rationale = "Network backends and features: Rust, MPI guards, FIM feedback, plas
 [[file]]
 path = "tests/test_notimplemented_guard_audit.py"
 rationale = "Every NotImplementedError raise is an approved fail-fast guard, matched by path, qualified name and message."
+
+[[file]]
+path = "src/sc_neurocore/network/export.py"
+rationale = "Network Verilog export: compiled neuron modules for supported model profiles, refusals before any write."
+
+[[file]]
+path = "tests/test_network_basic_export.py"
+rationale = "Files, names and refusals of the network Verilog exporter."
+
+[[file]]
+path = "tests/test_network_verilog_export_fidelity.py"
+rationale = "Exported network RTL elaborates (Icarus, Yosys) and spikes as the Python neurons; refusals write nothing."

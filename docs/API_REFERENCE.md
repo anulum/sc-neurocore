@@ -25315,7 +25315,28 @@ seed : int or None, optional
 ## Module `network.export`
 
 ### Function `export_verilog(network, output_dir, target)`
-Export a LIF-based network to Verilog files.
+Export the network's populations to Verilog files.
+
+Parameters
+----------
+network : Network
+    A network whose populations use supported models (see the module docs).
+output_dir : str
+    Directory for ``sc_network_top.v`` and ``params.vh``; created if needed.
+target : str, default "ice40"
+    Label written into the files.
+
+Returns
+-------
+str
+    Path of ``sc_network_top.v``.
+
+Raises
+------
+SCHardwareError
+    For an empty network, an empty population, an unsupported model or
+    configuration, or parameters that differ between neurons of a
+    population; nothing is written.
 
 ---
 
