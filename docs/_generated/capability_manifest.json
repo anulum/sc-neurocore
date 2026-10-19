@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5345
+    "test_files": 5346
   },
   "documentation": {
     "public_pages": [
@@ -7532,6 +7532,7 @@
       "tests/test_sleep_optimizer_sleep_report_generator_branches.py",
       "tests/test_sleep_optimizer_sleep_stage_detector.py",
       "tests/test_slr_placement.py",
+      "tests/test_small_world_simple_graph.py",
       "tests/test_snn_optimizer_dead_neuron_elimination.py",
       "tests/test_snn_optimizer_layer_fusion.py",
       "tests/test_snn_optimizer_optimize.py",

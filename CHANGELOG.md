@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `small_world` is a Watts-Strogatz simple graph: a rewired edge goes to a node
+  that is neither the source nor already its neighbour, the graph keeps `n·k`
+  entries in both directions, and an odd or too large degree, a probability
+  outside `[0, 1]` or `n < 1` is refused (one invalid call used to loop). It
+  could emit a parallel pair, which delivered twice the weight per spike.
+  `grid_topology` is documented as the Chebyshev (square) neighbourhood it is.
+
 - The network compiler accepts equation-defined populations: a `NeuronSpec`
   with a `template` (equations, threshold, reset, default parameters, and
   optionally method, detection, `spike_value`, `rng_seed` and a base

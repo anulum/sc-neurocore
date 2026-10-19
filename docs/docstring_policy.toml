@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1092
+expected_file_count = 1093
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4461,3 +4461,7 @@ rationale = "Quantisation of a neuron graph to fixed-point parameters and weight
 [[file]]
 path = "tests/test_folded_equation_populations.py"
 rationale = "Equation-defined populations: folded equals direct with and without draws, distinct streams, refusals."
+
+[[file]]
+path = "tests/test_small_world_simple_graph.py"
+rationale = "Watts-Strogatz as a simple graph with a validated domain, and the Chebyshev grid neighbourhood."

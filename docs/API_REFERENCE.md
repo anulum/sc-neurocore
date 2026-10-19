@@ -25823,7 +25823,38 @@ Rectangular step current between onset and offset timesteps.
 Erdos-Renyi random connectivity.
 
 ### Function `small_world(n, k, p_rewire, weight, seed)`
-Watts-Strogatz small-world graph (n-by-n adjacency).
+Generate a Watts-Strogatz small-world graph as a symmetric n-by-n CSR matrix.
+
+A ring lattice joins every node to its ``k / 2`` nearest neighbours on each
+side; then, for each lattice offset and node in turn, the edge to the
+neighbour at that offset is moved, with probability ``p_rewire``, to a node
+chosen uniformly among those that are neither the node itself nor already
+connected to it (the simple-graph rule of the Watts-Strogatz model). Every
+edge is emitted in both directions, so the matrix holds exactly ``n * k``
+entries and no parallel or self connections.
+
+Parameters
+----------
+n : int
+    Number of nodes, at least 1.
+k : int
+    Even lattice degree with ``0 <= k < n``.
+p_rewire : float
+    Rewiring probability in ``&#91;0, 1&#93;``.
+weight : float
+    Finite weight of every edge.
+seed : int, default=42
+    Seed of the rewiring draws.
+
+Returns
+-------
+CSR
+    ``(indptr, indices, data)`` of the symmetric adjacency matrix.
+
+Raises
+------
+ValueError
+    For a node count, degree, probability or weight outside the domain.
 
 ### Function `scale_free(n, m, weight, seed)`
 Generate a Barabasi-Albert preferential-attachment graph.
@@ -25854,7 +25885,25 @@ ValueError
 Ring topology with k nearest neighbours in each direction.
 
 ### Function `grid_topology(rows_count, cols_count, radius, weight)`
-2D lattice connectivity within Manhattan radius.
+2-D lattice connectivity within a Chebyshev (square) radius.
+
+Each cell connects to every other cell whose row and column both differ by
+at most ``radius`` (an 8-neighbourhood at radius 1, 24 cells at radius 2), so
+the matrix is symmetric.
+
+Parameters
+----------
+rows_count, cols_count : int
+    Lattice shape.
+radius : int
+    Chebyshev radius; 0 gives no connections.
+weight : float
+    Weight of every connection.
+
+Returns
+-------
+CSR
+    ``(indptr, indices, data)`` of the adjacency matrix.
 
 ### Function `all_to_all(n_src, n_tgt, weight)`
 Full connectivity (every source to every target).

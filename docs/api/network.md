@@ -67,7 +67,7 @@ The module re-exports 18 public symbols from
 | `small_world` | `topology.py` | Watts–Strogatz |
 | `scale_free` | `topology.py` | Barabási–Albert |
 | `ring_topology` | `topology.py` | Ring with k-NN |
-| `grid_topology` | `topology.py` | 2-D Manhattan-radius lattice |
+| `grid_topology` | `topology.py` | 2-D Chebyshev-radius (square) lattice |
 | `all_to_all` | `topology.py` | Dense connectivity |
 | `export_verilog` | `export.py` | Multi-population LIF → Verilog |
 | `MPIRunner` | `mpi_runner.py` | Distributed simulation runner |
@@ -272,10 +272,10 @@ tuple ready to feed into `Projection(..., topology=tuple)`.
 | Generator | Algorithm | Cited basis | Symmetric? |
 |-----------|-----------|-------------|------------|
 | `random_connectivity` | Erdős–Rényi | classic | no |
-| `small_world` | Watts–Strogatz | Watts & Strogatz 1998 | yes (added both directions) |
+| `small_world` | Watts–Strogatz simple graph: even `k < n`, rewired edges avoid self and existing neighbours, `n·k` entries | Watts & Strogatz 1998 | yes (added both directions) |
 | `scale_free` | Barabási–Albert preferential attachment | Barabási & Albert 1999 | yes |
 | `ring_topology` | Ring + k nearest neighbours both directions | — | yes |
-| `grid_topology` | 2-D lattice within Manhattan radius | — | no (loops add both directions only when within radius) |
+| `grid_topology` | 2-D lattice within a Chebyshev (square) radius: 8 neighbours at `r=1`, 24 at `r=2` | — | yes |
 | `all_to_all` | Dense | — | yes when `n_src == n_tgt` |
 
 `scale_free(n, m, weight, seed=...)` enforces the Barabasi-Albert domain before
