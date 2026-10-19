@@ -8505,8 +8505,13 @@ str
 
 ## Module `compiler.compiler_impl`
 
-### Function `compile_adaptive_precision(neuron, module_name, lp_width, lp_frac, hp_width, hp_frac, *, lp_precision, hp_precision, lp_parameter_count, hp_parameter_count, threshold_up_pct, threshold_down_pct, signed, overflow, rounding)`
+### Function `compile_adaptive_precision(neuron, module_name, lp_width, lp_frac, hp_width, hp_frac, *, lp_precision, hp_precision, lp_parameter_count, hp_parameter_count, threshold_up_pct, threshold_down_pct, signed, overflow, rounding, function_lowering, random_precision)`
 Compile an EquationNeuron to dual-datapath adaptive-precision Verilog.
+
+Both datapaths are compiled with the same ``signed``, ``overflow``,
+``rounding``, ``function_lowering`` and ``random_precision`` as
+:func:`~sc_neurocore.compiler.equation_compiler.compile_to_verilog` takes
+them, and the manifest records every one.
 
 ---
 
@@ -14665,6 +14670,12 @@ random_precision : str
   - Encode a float as a Verilog signed decimal literal.
 - **check_range**(value, label)
   - Return diagnostic messages when a value is outside the format.
+- **exact_code**(value)
+  - Return ``round(value · 2**fraction)`` exactly, before any range check.
+- **require_in_range**(value, label)
+  - Refuse a value outside the format, with the :meth:`check_range` message.
+- **check_time_step**(dt, method)
+  - Refuse a dt the datapath multiplies by but the format cannot hold.
 - **precision_report**(dt, params)
   - Build a fixed-point quantisation diagnostics report.
 
@@ -26731,7 +26742,7 @@ bool
 List all bundled schemas.
 
 ### Function `cmd_validate(args)`
-Validate schemas.
+Validate the named schema, or every bundled schema, and print the problems.
 
 ### Function `cmd_info(args)`
 Show model information.

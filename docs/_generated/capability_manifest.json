@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5356
+    "test_files": 5360
   },
   "documentation": {
     "public_pages": [
@@ -3892,6 +3892,7 @@
       "tests/test_adaptive_precision_adaptive_precision_api_surface.py",
       "tests/test_adaptive_precision_analyze_sensitivity.py",
       "tests/test_adaptive_precision_assign_lengths.py",
+      "tests/test_adaptive_precision_forwards_modes.py",
       "tests/test_adaptive_precision_hoeffding.py",
       "tests/test_adaptive_precision_layer_planning.py",
       "tests/test_adaptive_precision_layer_precision.py",
@@ -5098,6 +5099,7 @@
       "tests/test_evo_substrate/test_variation_mutation_engine.py",
       "tests/test_evo_substrate/variation_support.py",
       "tests/test_evolution_engine_binding_runtime.py",
+      "tests/test_exact_numeric_diagnostics.py",
       "tests/test_exact_randn.py",
       "tests/test_examples_nir_to_fpga.py",
       "tests/test_examples_pretrained_checkpoint_contract.py",
@@ -6690,6 +6692,7 @@
       "tests/test_native/test_learning_bridge_validation.py",
       "tests/test_native/test_learning_bridge_wgpu.py",
       "tests/test_native_lane_requirement_gate.py",
+      "tests/test_nested_comparison_values.py",
       "tests/test_network/test_projection.py",
       "tests/test_network/test_to_torch_bridge_input_validation.py",
       "tests/test_network/test_to_torch_bridge_projection_graph_rejects.py",
@@ -7023,6 +7026,7 @@
       "tests/test_poisson_engine_binding.py",
       "tests/test_poisson_grid.py",
       "tests/test_poisson_schema_dsl.py",
+      "tests/test_poisson_unit_fraction_formats.py",
       "tests/test_power_estimator_power_estimator.py",
       "tests/test_power_estimator_power_estimator_vcd_branches.py",
       "tests/test_precision_envelope_guard_hdl.py",

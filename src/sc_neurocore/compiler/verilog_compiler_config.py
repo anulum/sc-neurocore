@@ -231,6 +231,53 @@ class Q88:
             )
         return warnings
 
+    def exact_code(self, value: float) -> int:
+        """Return ``round(value · 2**fraction)`` exactly, before any range check.
+
+        Parameters
+        ----------
+        value : float
+            A finite value.
+
+        Returns
+        -------
+        int
+            The nearest code (ties to even, as Python's ``round``), unbounded:
+            compare it with the word's range to see whether it fits.
+        """
+        return round(Fraction(value) * (1 << self.fraction))
+
+    def require_in_range(self, value: float, label: str) -> None:
+        """Refuse a value outside the format, with the :meth:`check_range` message.
+
+        Raises
+        ------
+        ValueError
+            If ``value`` exceeds the format's range.
+        """
+        problems = self.check_range(value, label)
+        if problems:
+            raise ValueError(problems[0])
+
+    def check_time_step(self, dt: float, method: str) -> None:
+        """Refuse a dt the datapath multiplies by but the format cannot hold.
+
+        A map (``method="map"``) never multiplies by dt; every other method does,
+        and a wrapped dt (1.0 at Q1.15 is -1.0) would integrate a different step.
+
+        Raises
+        ------
+        ValueError
+            If ``method`` uses dt and ``dt`` is outside the format.
+        """
+        if method != "map":
+            self.require_in_range(dt, "dt")
+
+    def _relative_error_percent(self, code: int, value: float) -> float:
+        """Return ``|code/2**fraction - value| / |value|`` in percent, exactly then rounded."""
+        exact = Fraction(value)
+        return float(abs(Fraction(code, 1 << self.fraction) - exact) / abs(exact) * 100)
+
     def precision_report(self, dt: float, params: dict[str, float] | None = None) -> str:
         """Build a fixed-point quantisation diagnostics report.
 
@@ -256,16 +303,19 @@ class Q88:
             f"  Resolution: {self.resolution:.6f}",
         ]
 
-        # dt analysis
-        dt_raw = int(round(dt * (1 << self.fraction)))
-        dt_actual = dt_raw / (1 << self.fraction) if dt_raw != 0 else 0.0
+        # dt analysis, in exact arithmetic: a huge finite dt has an exact code
+        # (a host-float product would overflow) and is reported out of range.
+        dt_raw = self.exact_code(dt)
+        dt_actual = float(Fraction(dt_raw, 1 << self.fraction))
         dt_error = (
-            abs(dt_actual - dt) / abs(dt) * 100
+            self._relative_error_percent(dt_raw, dt)
             if dt != 0 and dt_raw != 0
             else (100.0 if dt != 0 else 0.0)
         )
         if dt == 0.0:
             dt_status = "✓ ZERO STEP"
+        elif self.check_range(dt, "dt"):
+            dt_status = "✗ OUT OF RANGE"
         elif dt_raw == 0:
             dt_status = "✗ UNDERFLOW"
         else:
@@ -281,9 +331,8 @@ class Q88:
             for name, val in params.items():
                 warnings_for_param = self.check_range(val, name)
                 range_warnings.extend(warnings_for_param)
-                q_val = int(round(val * (1 << self.fraction)))
-                q_actual = q_val / (1 << self.fraction)
-                err = abs(q_actual - val) / abs(val) * 100 if val != 0 else 0
+                q_val = self.exact_code(val)
+                err = self._relative_error_percent(q_val, val) if val != 0 else 0
                 lines.append(f"  {name}={val} → Q-value={q_val} (error={err:.1f}%)")
 
             for warning in range_warnings:

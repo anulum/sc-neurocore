@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1150
+expected_file_count = 1156
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4693,3 +4693,27 @@ rationale = "Regression tests for signed graded and analogue bus words in the fo
 [[file]]
 path = "tests/test_shared_type_templates.py"
 rationale = "Regression tests for one template definition per shared neuron type."
+
+[[file]]
+path = "src/sc_neurocore/compiler/compiler_impl.py"
+rationale = "Adaptive-precision dual-datapath compiler implementation."
+
+[[file]]
+path = "src/sc_neurocore/neurons/dsl_cli.py"
+rationale = "Command line interface of the neuron schema DSL."
+
+[[file]]
+path = "tests/test_adaptive_precision_forwards_modes.py"
+rationale = "Regression tests for lowering options forwarded through adaptive precision."
+
+[[file]]
+path = "tests/test_exact_numeric_diagnostics.py"
+rationale = "Regression tests for exact numeric diagnostics and dt range refusals."
+
+[[file]]
+path = "tests/test_nested_comparison_values.py"
+rationale = "Four-target co-simulation of comparisons used as numbers."
+
+[[file]]
+path = "tests/test_poisson_unit_fraction_formats.py"
+rationale = "RTL-versus-model tests of stochastic thresholds at Q1.f formats."

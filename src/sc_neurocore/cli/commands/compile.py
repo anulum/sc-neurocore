@@ -471,6 +471,11 @@ def run_compile(args: argparse.Namespace) -> int:
             compile_adaptive_precision,
         )
 
+        if pipeline_stages != 0 or pipeline_points_list:
+            # The wrapper times its LP/HP datapaths as single-cycle modules.
+            print("Error: --adaptive-precision does not support --pipeline/--pipeline-points")
+            return 1
+
         verilog = compile_adaptive_precision(
             neuron,
             module_name=args.module_name,
@@ -480,6 +485,8 @@ def run_compile(args: argparse.Namespace) -> int:
             hp_frac=args.hp_frac,
             lp_precision=getattr(args, "lp_precision", None),
             hp_precision=getattr(args, "hp_precision", None),
+            function_lowering=args.function_lowering,
+            random_precision=args.random_precision,
         )
     else:
         verilog = compile_to_verilog(

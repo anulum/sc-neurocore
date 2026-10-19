@@ -39,8 +39,16 @@ def compile_adaptive_precision(
     signed: bool = True,
     overflow: str = "saturate",
     rounding: str = "truncate",
+    function_lowering: str = "lut-v1",
+    random_precision: str = "standard",
 ) -> str:
-    """Compile an EquationNeuron to dual-datapath adaptive-precision Verilog."""
+    """Compile an EquationNeuron to dual-datapath adaptive-precision Verilog.
+
+    Both datapaths are compiled with the same ``signed``, ``overflow``,
+    ``rounding``, ``function_lowering`` and ``random_precision`` as
+    :func:`~sc_neurocore.compiler.equation_compiler.compile_to_verilog` takes
+    them, and the manifest records every one.
+    """
     lp_width, lp_frac, lp_q_label, lp_metadata, lp_precision_obj = _coerce_precision(
         lp_precision,
         default_width=lp_width,
@@ -69,6 +77,8 @@ def compile_adaptive_precision(
         signed=signed,
         overflow=overflow,
         rounding=rounding,
+        function_lowering=function_lowering,
+        random_precision=random_precision,
     )
 
     hp_verilog = compile_to_verilog(
@@ -79,6 +89,8 @@ def compile_adaptive_precision(
         signed=signed,
         overflow=overflow,
         rounding=rounding,
+        function_lowering=function_lowering,
+        random_precision=random_precision,
     )
 
     q_lp = Q88(data_width=lp_width, fraction=lp_frac, signed=signed)
@@ -140,6 +152,8 @@ def compile_adaptive_precision(
                 "signed": signed,
                 "overflow": overflow,
                 "rounding": rounding,
+                "function_lowering": function_lowering,
+                "random_precision": random_precision,
                 "lp_precision": lp_metadata,
                 "hp_precision": hp_metadata,
             },

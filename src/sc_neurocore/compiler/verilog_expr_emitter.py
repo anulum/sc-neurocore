@@ -391,10 +391,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
 
     def visit_Compare(self, node: ast.Compare) -> str:
         """Emit Verilog for comparison operators (>, >=, <, <=)."""
-        left: str = self.visit(node.left)
+        # A nested comparison is a number here: 1.0 or 0.0, as in the model.
+        left: str = self._value(node.left)
         results: list[str] = []
         for op, comp in zip(node.ops, node.comparators):
-            right: str = self.visit(comp)
+            right: str = self._value(comp)
             a, b = self._wide(left), self._wide(right)
             if isinstance(op, ast.Gt):
                 results.append(f"({a} > {b})")

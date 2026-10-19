@@ -60,7 +60,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
-    """Validate schemas."""
+    """Validate the named schema, or every bundled schema, and print the problems."""
     if args.model:
         errors = validate_schema(args.model)
         real_errors = [e for e in errors if e.level == "error"]
@@ -237,9 +237,9 @@ def cmd_precision(args: argparse.Namespace) -> None:
         report = q.precision_report(dt, params)
         print(report)
 
-        # Check compatibility: dt must not underflow AND all params in range
-        dt_raw = int(round(dt * (1 << q.fraction)))
-        range_ok = all(q.min_value <= v <= q.max_value for v in params.values())
+        # Check compatibility: dt in range and not underflowing, all params in range
+        dt_raw = q.exact_code(dt)
+        range_ok = all(q.min_value <= v <= q.max_value for v in (dt, *params.values()))
         if dt_raw > 0 and range_ok:
             compatible.append((mode_name, q.data_width, q.fraction))
 

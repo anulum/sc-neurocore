@@ -570,6 +570,7 @@ def generate_bittrue_kernel(
     safe = {v: sanitize_ident(v, context="state variable") for v in equations}
     ref = "self." if language == "rust" else "s->"
     state_map = {v: f"{ref}{safe[v]}" for v in equations}
+    q.require_in_range(1.0, "dt")  # this form steps by dt = 1.0, outside a Q1.f word
     dt_q = signed_q(q, 1.0)
 
     tables: dict[str, list[int]] = {}
@@ -824,8 +825,9 @@ def generate_bittrue_kernel_from_neuron(
             "(spike_out, and thr_prev for an edge-crossing neuron); rename the state"
         )
 
+    q.check_time_step(neuron.dt, neuron.method)  # a wrapped dt integrates another step
     dt_q = signed_q(q, neuron.dt)
-    if neuron.dt != 0.0 and dt_q == 0:
+    if neuron.dt != 0.0 and q.exact_code(neuron.dt) == 0:  # as the RTL emitters judge it
         raise ValueError(
             f"dt={neuron.dt} underflows in Q{data_width - fraction}.{fraction}; "
             "increase fraction or dt."

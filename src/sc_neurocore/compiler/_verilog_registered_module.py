@@ -77,7 +77,8 @@ def compile_to_verilog(
     q = Q88(data_width, fraction, signed, overflow, rounding, function_lowering, random_precision)
 
     if neuron.dt != 0.0:
-        dt_quantised = int(round(neuron.dt * (1 << fraction)))
+        q.check_time_step(neuron.dt, neuron.method)  # a wrapped dt runs another step
+        dt_quantised = q.exact_code(neuron.dt)
         if dt_quantised == 0:
             min_representable = 1.0 / (1 << fraction)
             raise ValueError(

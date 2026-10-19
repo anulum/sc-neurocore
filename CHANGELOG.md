@@ -10,6 +10,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Compiler fidelity: a comparison used as a comparison operand
+  (`(v > 0.25) > 0.5`) is 1.0 or 0.0 on RTL, C and Rust as in the model (the
+  RTL and C never fired, the Rust kernel did not compile); a stochastic
+  threshold at Q1.f compares with 1.0 one bit wider (Q1.15 fired every step);
+  a dt outside the format is refused by every emitter wherever it multiplies
+  (dt = 1.0 at Q1.15 was integrated as -1.0), a map excepted; the adaptive
+  precision compile forwards `function_lowering` and `random_precision` to both
+  datapaths and its manifest (the CLI wrote the standard randn unit for
+  `--random-precision exact`) and refuses `--pipeline`; the numeric contract's
+  divisor check rounds bankers' half to even as the RTL does and folds huge
+  finite values exactly, and `precision_report` and the `precision` CLI report a
+  huge dt or parameter instead of raising `OverflowError`.
+
 - The folded network interconnect reads graded spike values and analogue
   voltages from its packed buses as signed words: a negative value or voltage
   entered the product and the source-threshold comparison as a large positive

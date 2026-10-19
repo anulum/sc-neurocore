@@ -369,10 +369,11 @@ class _CFixedExprEmitter(ast.NodeVisitor):
 
     def visit_Compare(self, node: ast.Compare) -> str:
         """Emit comparison operators (>, >=, <, <=), chained with logical AND."""
-        left: str = self.visit(node.left)
+        # A nested comparison is a number here: 1.0 or 0.0, as in the model.
+        left: str = self._value(node.left)
         results: list[str] = []
         for op, comp in zip(node.ops, node.comparators):
-            right: str = self.visit(comp)
+            right: str = self._value(comp)
             if isinstance(op, ast.Gt):
                 results.append(f"({left} > {right})")
             elif isinstance(op, ast.GtE):

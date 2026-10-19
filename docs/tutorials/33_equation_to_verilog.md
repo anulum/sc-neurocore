@@ -139,7 +139,13 @@ verilog_q1616 = compile_to_verilog(neuron, data_width=32, fraction=16)
 
 A non-zero `dt` that quantises to zero is rejected. Increase the fractional
 width or choose a representable timestep. `dt=0.0` is a legal frozen-state
-recurrence.
+recurrence. A `dt` outside the format is rejected by every emitter wherever the
+step multiplies by it (every method but `map`): the word would hold it wrapped,
+and `dt=1.0` at Q1.15 would integrate with -1.0.
+
+A comparison is a truth value; used as a number — in arithmetic or as an
+operand of another comparison, as in `(v > 0.25) > 0.5` — it is 1.0 or 0.0 in
+the Q-format, as in the Python model, on RTL, C and Rust alike.
 
 Both Verilog emitters currently require `signed=True`. Earlier unsigned output
 mixed signed ports and expression arithmetic with unsigned next-state clamps;
@@ -521,7 +527,11 @@ sc-neurocore compile "dv/dt = -(v - E_L)/tau_m + I/C" \
 `--data-width` and `--fraction` set the format (also of the testbench),
 `--method` the integrator, `--function-lowering lut-v1|v2` the transcendental
 lowering, `--rng-seed` and `--random-stream` the key and stream of `rand()`,
-`randn()` and `poisson()`, and `--spike-value` a graded spike output.
+`randn()` and `poisson()`, `--random-precision exact` the exact `randn()`
+unit, and `--spike-value` a graded spike output. With `--adaptive-precision`
+both datapaths are compiled with the given `--function-lowering` and
+`--random-precision` (recorded in the manifest); `--pipeline` is refused there,
+since the wrapper times single-cycle datapaths.
 
 Hardware profiles provide checked default widths, fractions, overflow modes,
 and rounding modes. They are configuration inputs, not evidence that a design

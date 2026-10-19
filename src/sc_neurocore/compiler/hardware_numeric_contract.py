@@ -534,10 +534,16 @@ def _quantities(
             evaluated = fixed.evaluate(denominator)
             if evaluated is None or evaluated[0] != 0:
                 continue
+            try:
+                real = float(evaluated[1])
+            except OverflowError:
+                # Only an out-of-range operand folds past the float range, and that
+                # operand is already reported (and blocking) on its own.
+                continue
             yield EncodedQuantity(
                 kind="divisor",
                 name=f"{where}: {ast.unparse(denominator)}",
-                value=evaluated[1],
+                value=real,
                 rtl_value=0.0,
                 status="underflows_to_zero",
                 blocking=True,
@@ -548,9 +554,12 @@ class _FixedValue:
     """Evaluate a parameter-only expression as the RTL datapath computes it.
 
     Sums are exact; products and quotients are narrowed to the word as the
-    bit-true kernel narrows them. An expression that reads the state, the
-    input, or anything outside ``+ - * /`` and integer powers 2 to 8 is not
-    evaluated.
+    bit-true kernel narrows them, under the selected rounding (truncate,
+    nearest, or bankers' half-to-even exactly as the RTL's guard bit does it).
+    The real value beside each word is a :class:`~fractions.Fraction`, so a
+    huge finite parameter folds without a host-float overflow. An expression
+    that reads the state, the input, or anything outside ``+ - * /`` and
+    integer powers 2 to 8 is not evaluated.
     """
 
     def __init__(
@@ -559,30 +568,35 @@ class _FixedValue:
         self._values = values
         self._dw = data_width
         self._frac = fraction
-        self._nearest = rounding == "nearest" and fraction > 0
+        self._rounding = rounding if fraction > 0 else "truncate"
 
     def _wrap(self, value: int, bits: int) -> int:
         value &= (1 << bits) - 1
         return value - (1 << bits) if value >= 1 << (bits - 1) else value
 
-    def _encode(self, value: float) -> int:
+    def _encode(self, value: float | Fraction) -> int:
         return self._wrap(round(Fraction(value) * (1 << self._frac)), self._dw)
 
     def _mul(self, left: int, right: int) -> int:
         product = self._wrap(left * right, 2 * self._dw)
-        if self._nearest:
-            half = 1 << (self._frac - 1)
+        half = 1 << (self._frac - 1)
+        if self._rounding == "nearest":
             product = self._wrap(product + (half - 1 if product < 0 else half), 2 * self._dw)
+        elif self._rounding == "bankers":
+            # The RTL adds half, shifts, and clears the LSB on an exact tie.
+            tie = product & ((1 << self._frac) - 1) == half
+            word = self._wrap(self._wrap(product + half, 2 * self._dw) >> self._frac, self._dw)
+            return word & ~1 if tie else word
         return self._wrap(product >> self._frac, self._dw)
 
-    def evaluate(self, node: ast.AST) -> tuple[int, float] | None:
-        """Return the RTL word and the real value of ``node``, or ``None``."""
+    def evaluate(self, node: ast.AST) -> tuple[int, Fraction] | None:
+        """Return the RTL word and the exact real value of ``node``, or ``None``."""
         literal = _numeric_literal(node)
         if literal is not None:
-            return self._encode(literal), literal
+            return self._encode(literal), Fraction(literal)
         if isinstance(node, ast.Name):
             value = self._values.get(node.id)
-            return None if value is None else (self._encode(float(value)), float(value))
+            return None if value is None else (self._encode(float(value)), Fraction(float(value)))
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
             operand = self.evaluate(node.operand)
             if operand is None or isinstance(node.op, ast.UAdd):
@@ -614,10 +628,11 @@ class _FixedValue:
             return left[0] - right[0], left[1] - right[1]
         if isinstance(node.op, ast.Mult):
             return self._mul(left[0], right[0]), left[1] * right[1]
-        if not isinstance(node.op, ast.Div) or right[1] == 0.0:
+        if not isinstance(node.op, ast.Div) or right[1] == 0:
             return None
         if _numeric_literal(node.right) is not None:
-            word = self._mul(left[0], self._encode(1.0 / right[1]))
+            # The compiler multiplies by the float reciprocal of the literal.
+            word = self._mul(left[0], self._encode(1.0 / float(right[1])))
         elif right[0] == 0:
             return None
         else:

@@ -91,12 +91,19 @@ def _escape_threshold_wires(
     """
     one = 1 << fraction
     product_width = data_width + 16
+    # At Q1.f, 1.0 is 2**(data_width-1): a sized signed literal of the word width
+    # wraps to the most negative word, so the comparisons with 1.0 take one bit more.
+    if one >= 1 << (data_width - 1):
+        width = data_width + 1
+        probability = f"$signed({{_escape_probability[{data_width - 1}], _escape_probability}})"
+    else:
+        width, probability = data_width, "_escape_probability"
     return [
         (f"wire signed [{data_width - 1}:0] _escape_probability = {probability_expression};"),
         (
             f"wire [{data_width - 1}:0] _escape_probability_clamped = "
             f"_escape_probability[{data_width - 1}] ? {data_width}'d0 : "
-            f"((_escape_probability >= {data_width}'sd{one}) ? "
+            f"(({probability} >= {width}'sd{one}) ? "
             f"{data_width}'d{one} : _escape_probability);"
         ),
         (
@@ -107,7 +114,7 @@ def _escape_threshold_wires(
         (
             "wire [16:0] _escape_threshold = "
             f"(_escape_probability <= {data_width}'sd0) ? 17'd0 : "
-            f"((_escape_probability >= {data_width}'sd{one}) ? 17'd65536 : "
+            f"(({probability} >= {width}'sd{one}) ? 17'd65536 : "
             "({1'b0, _escape_threshold_floor} + 17'd1));"
         ),
         f"wire _escape_spike = {{1'b0, {sample_expression}}} < _escape_threshold;",

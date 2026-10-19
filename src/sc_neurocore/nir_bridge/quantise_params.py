@@ -188,7 +188,7 @@ def _check_dt_quantisation(
     """
     if dt == 0.0:
         return
-    dt_quantised = int(round(dt * (1 << q.fraction)))
+    dt_quantised = q.exact_code(dt)
     if dt_quantised == 0:
         min_rep = 1.0 / (1 << q.fraction)
         warnings.append(
