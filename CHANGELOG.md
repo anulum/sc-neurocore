@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The table-accuracy measurement of wide formats places each table cell where
+  the RTL indexes it; at fraction 0, where a 1/8 step is finer than one code,
+  it takes every code inside the table. Sampled cos at 32/0 and 62/0 reported
+  0.042 although the table's integer codes reach 0.46 (the exhaustive 16/0
+  value); the sampled result now equals it and is still stated as sampled.
+
 - Network monitors and repeated runs report the run that happened. A
   `RateMonitor` bin divides by the time its whole steps cover (a 10 ms bin at
   dt 3 ms is 9 ms: 333 Hz, not 300 Hz); `StateMonitor` and

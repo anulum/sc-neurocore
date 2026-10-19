@@ -21,8 +21,9 @@ of that width can hold more; where the function leaves the word, the table's
 saturated entry is therefore not counted as error. Formats up to
 :data:`EXHAUSTIVE_MAX_WIDTH` bits are evaluated at every input code. Wider formats
 are sampled: every table cell's first and last code, evenly spaced codes inside
-each cell, and evenly spaced codes outside the table's domain; the result says
-which.
+each cell (every code inside the table when the format's codes are coarser than
+its cells, as at fraction 0), and evenly spaced codes outside the table's
+domain; the result says which.
 
 ``lowering="v2"`` measures the function units of
 :mod:`sc_neurocore.compiler.function_units` the same way, reading each result
@@ -349,13 +350,18 @@ def _codes(function: str, data_width: int, fraction: int) -> tuple[list[int], bo
     if data_width <= EXHAUSTIVE_MAX_WIDTH:
         return list(range(low_code, high_code + 1)), True
     geometry = GEOMETRY[function]
-    step_codes = (
-        round(geometry.step * (1 << fraction)) if geometry.step * (1 << fraction) >= 1 else 0
-    )
-    starts = [
-        round(geometry.lo * (1 << fraction)) + k * step_codes for k in range(geometry.size + 1)
-    ]
+    # The cells as lut_read indexes them: index = (code - min_q) >> shift.
+    min_q = round(geometry.lo * (1 << fraction))
+    shift = fraction - round(-math.log2(geometry.step))
     picked = {low_code, high_code}
+    if shift >= 0:
+        starts = [min_q + (k << shift) for k in range(geometry.size + 1)]
+    else:
+        # Coarser codes than cells (fraction 0 against a 1/8 step): every code
+        # inside the table lands on its own cell, so all of them are taken.
+        in_table = -(-geometry.size >> -shift)  # ceil(size / 2**-shift) codes
+        starts = [min_q, min_q + in_table]
+        picked.update(range(min_q, min_q + in_table))
     for first, nxt in zip(starts[:-1], starts[1:]):
         picked.update(_spread(first, nxt - 1, _INTERIOR_SAMPLES_PER_CELL))
         picked.update((first - 1, first))

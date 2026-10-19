@@ -183,3 +183,19 @@ class TestContract:
         neuron = EquationNeuron(equations={"v": "tanh(v)"}, method="map", dt=1.0)
         with pytest.raises(ValueError, match="function_lowering must be"):
             hardware_numeric_contract(neuron, QFormat.from_string("Q8.8"), function_lowering="v3")
+
+
+@pytest.mark.parametrize(("function", "wide"), [("cos", 32), ("cos", 62), ("sin", 32)])
+def test_a_wide_coarse_format_samples_every_code_inside_the_table(function: str, wide: int) -> None:
+    """RIGOR review 269 (NEURO-E4B-LUT-SAMPLING-01): at fraction 0 the cell starts collapsed.
+
+    A 1/8 step rounds to 0 codes at fraction 0, so the sampled 32/0 and 62/0 cos
+    reported 0.042 at -16 although the 32 integer codes in the table reach 0.4597 at
+    -1. The wide result stays sampled (stated as such) and now equals the exhaustive
+    16/0 control, whose in-table codes are the same.
+    """
+    sampled = measure(function, wide, 0)
+    exhaustive = measure(function, 16, 0)
+    assert not sampled.exhaustive and exhaustive.exhaustive
+    assert sampled.max_error_in_table == exhaustive.max_error_in_table
+    assert sampled.max_error_in_table_at == exhaustive.max_error_in_table_at
