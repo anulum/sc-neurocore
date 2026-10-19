@@ -14,23 +14,30 @@ from tests.network_monitors_stimulus_support import *  # noqa: F403
 
 
 class TestStepCurrent:
-    def test_zero_outside_window(self):
+    """Window and amplitude behaviour of StepCurrent."""
+
+    def test_zero_outside_window(self) -> None:
+        """The current is zero before onset and after offset."""
         sc = StepCurrent(onset=100, offset=200, amplitude=5.0)
         assert sc.get_current(50) == 0.0
         assert sc.get_current(250) == 0.0
 
-    def test_amplitude_inside_window(self):
+    def test_amplitude_inside_window(self) -> None:
+        """The current equals the amplitude inside the window."""
         sc = StepCurrent(onset=100, offset=200, amplitude=5.0)
         assert sc.get_current(150) == 5.0
 
-    def test_onset_inclusive(self):
+    def test_onset_inclusive(self) -> None:
+        """The onset step already carries the amplitude."""
         sc = StepCurrent(onset=10, offset=20, amplitude=1.0)
         assert sc.get_current(10) == 1.0
 
-    def test_offset_exclusive(self):
+    def test_offset_exclusive(self) -> None:
+        """The offset step carries no current."""
         sc = StepCurrent(onset=10, offset=20, amplitude=1.0)
         assert sc.get_current(20) == 0.0
 
-    def test_negative_amplitude(self):
+    def test_negative_amplitude(self) -> None:
+        """A negative amplitude is returned unchanged inside the window."""
         sc = StepCurrent(onset=0, offset=100, amplitude=-3.0)
         assert sc.get_current(50) == -3.0

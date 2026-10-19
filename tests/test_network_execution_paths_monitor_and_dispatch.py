@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (monitor_and_dispatch) from former test_network_execution_paths.py
 
+"""Focused suite: monitor and backend-dispatch tests from former test_network_execution_paths.py."""
+
 from __future__ import annotations
 
 from tests.network_execution_paths_support import *  # noqa: F403
@@ -14,6 +16,7 @@ from tests.network_execution_paths_support import *  # noqa: F403
 def test_auto_backend_uses_python_for_state_monitors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The auto backend runs state monitors in Python and records their traces."""
     fake_runner = _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
     monitor = StateMonitor(pop, ["v"])
@@ -28,6 +31,7 @@ def test_auto_backend_uses_python_for_state_monitors(
 def test_forced_rust_rejects_state_monitors_until_step_traces_exist(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The forced Rust backend refuses a network with a StateMonitor."""
     _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
     monitor = StateMonitor(pop, ["v"])
@@ -39,6 +43,7 @@ def test_forced_rust_rejects_state_monitors_until_step_traces_exist(
 def test_forced_rust_rejects_rate_monitors_until_step_traces_exist(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The forced Rust backend refuses a network with a RateMonitor."""
     _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
     monitor = RateMonitor(pop)
@@ -50,6 +55,7 @@ def test_forced_rust_rejects_rate_monitors_until_step_traces_exist(
 def test_auto_backend_uses_python_for_spike_gating(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The auto backend runs spike gating in Python without creating a Rust runner."""
     fake_runner = _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
 
@@ -59,6 +65,7 @@ def test_auto_backend_uses_python_for_spike_gating(
 
 
 def test_forced_rust_rejects_spike_gating(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The forced Rust backend refuses spike gating."""
     _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
 
@@ -69,6 +76,7 @@ def test_forced_rust_rejects_spike_gating(monkeypatch: pytest.MonkeyPatch) -> No
 def test_auto_backend_uses_python_for_fim_feedback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The auto backend runs FIM feedback in Python without creating a Rust runner."""
     fake_runner = _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
 
@@ -78,6 +86,7 @@ def test_auto_backend_uses_python_for_fim_feedback(
 
 
 def test_forced_rust_rejects_fim_feedback(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The forced Rust backend refuses FIM feedback."""
     _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2)
 
@@ -88,6 +97,7 @@ def test_forced_rust_rejects_fim_feedback(monkeypatch: pytest.MonkeyPatch) -> No
 def test_auto_rust_dispatch_uses_model_identity_not_population_label(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Auto dispatch to Rust passes the model name, not the population label."""
     fake_runner = _install_fake_rust_engine(monkeypatch)
     pop = Population(_MODEL, 2, label="exc")
 

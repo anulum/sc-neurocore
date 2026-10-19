@@ -14,12 +14,16 @@ from tests.network_monitors_stimulus_support import *  # noqa: F403
 
 
 class TestStateMonitor:
-    def test_records_voltage(self):
+    """Variable selection of StateMonitor."""
+
+    def test_records_voltage(self) -> None:
+        """A monitor asked for v holds a storage slot for v."""
         pop = Population(StochasticLIFNeuron, n=5, label="test")
         mon = StateMonitor(pop, variables=["v"])
         assert "v" in mon._data
 
-    def test_default_variable_is_v(self):
+    def test_default_variable_is_v(self) -> None:
+        """Without explicit variables the monitor records v only."""
         pop = Population(StochasticLIFNeuron, n=3, label="test")
         mon = StateMonitor(pop)
         assert mon.variables == ["v"]

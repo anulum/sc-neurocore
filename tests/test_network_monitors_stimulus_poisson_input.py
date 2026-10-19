@@ -14,12 +14,16 @@ from tests.network_monitors_stimulus_support import *  # noqa: F403
 
 
 class TestPoissonInput:
-    def test_creation(self):
+    """Construction parameters of PoissonInput."""
+
+    def test_creation(self) -> None:
+        """The channel count and rate given at construction are stored."""
         pi = PoissonInput(n=20, rate_hz=100.0, weight=1.0, dt=0.001, seed=42)
         assert pi.n == 20
         assert pi.rate_hz == 100.0
 
-    def test_rate_stored(self):
+    def test_rate_stored(self) -> None:
+        """The rate and weight given at construction are stored."""
         pi = PoissonInput(n=5, rate_hz=50.0, weight=2.0, dt=0.001, seed=42)
         assert pi.rate_hz == 50.0
         assert pi.weight == 2.0

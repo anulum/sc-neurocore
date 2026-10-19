@@ -14,12 +14,16 @@ from tests.network_monitors_stimulus_support import *  # noqa: F403
 
 
 class TestRateMonitor:
-    def test_empty_after_init(self):
+    """Bin accumulation of RateMonitor."""
+
+    def test_empty_after_init(self) -> None:
+        """A new rate monitor holds no spike-count bins."""
         pop = Population(StochasticLIFNeuron, n=10, label="test")
         mon = RateMonitor(pop, bin_ms=10)
         assert len(mon._spike_counts) == 0
 
-    def test_bin_accumulation(self):
+    def test_bin_accumulation(self) -> None:
+        """Recording twenty steps with ten-millisecond bins fills at least one bin."""
         pop = Population(StochasticLIFNeuron, n=10, label="test")
         mon = RateMonitor(pop, bin_ms=10)
         # 10 ms bin at dt=1ms = 10 steps

@@ -14,21 +14,27 @@ from tests.network_monitors_stimulus_support import *  # noqa: F403
 
 
 class TestTimedArray:
-    def test_returns_value_at_step(self):
+    """Lookup and clamping of TimedArray."""
+
+    def test_returns_value_at_step(self) -> None:
+        """The current at a step is the array value at that index."""
         ta = TimedArray([0.0, 1.0, 2.0, 3.0], dt=0.001)
         assert ta.get_current(0) == 0.0
         assert ta.get_current(2) == 2.0
 
-    def test_clamps_past_end(self):
+    def test_clamps_past_end(self) -> None:
+        """Steps past the end return the last value."""
         ta = TimedArray([5.0, 10.0], dt=0.001)
         assert ta.get_current(100) == 10.0
 
-    def test_accepts_numpy_array(self):
+    def test_accepts_numpy_array(self) -> None:
+        """A NumPy array is accepted and indexed by step."""
         arr = np.linspace(0, 1, 50)
         ta = TimedArray(arr, dt=0.001)
         np.testing.assert_allclose(ta.get_current(25), arr[25])
 
-    def test_single_value(self):
+    def test_single_value(self) -> None:
+        """A one-element array returns its value at every step."""
         ta = TimedArray([42.0])
         assert ta.get_current(0) == 42.0
         assert ta.get_current(999) == 42.0

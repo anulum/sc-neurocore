@@ -14,7 +14,10 @@ from tests.network_basic_support import *  # noqa: F403
 
 
 class TestNetwork:
-    def test_run_basic(self):
+    """End-to-end runs of a Network with populations, stimuli and monitors."""
+
+    def test_run_basic(self) -> None:
+        """A single stimulated population with a spike monitor runs without error."""
         pop = Population("LapicqueNeuron", 5)
         stim = StepCurrent(onset=0, offset=50, amplitude=2.0)
         stim.target = pop
@@ -23,7 +26,8 @@ class TestNetwork:
         net.run(duration=0.05, dt=0.001)
         assert mon.count >= 0  # simulation ran without error
 
-    def test_two_populations(self):
+    def test_two_populations(self) -> None:
+        """Two populations joined by a projection run together without error."""
         exc = Population("LapicqueNeuron", 10, label="exc")
         inh = Population("LapicqueNeuron", 5, label="inh")
         proj = Projection(exc, inh, weight=0.5, probability=0.5)
@@ -35,7 +39,8 @@ class TestNetwork:
         net.run(duration=0.1, dt=0.001)
         assert mon_exc.count + mon_inh.count >= 0
 
-    def test_network_with_state_monitor(self):
+    def test_network_with_state_monitor(self) -> None:
+        """A state monitor records one voltage row per step for every neuron."""
         pop = Population("LapicqueNeuron", 3)
         stim = StepCurrent(onset=0, offset=50, amplitude=2.0)
         stim.target = pop
@@ -45,7 +50,8 @@ class TestNetwork:
         assert smon.traces["v"].shape[0] == 10
         assert smon.traces["v"].shape[1] == 3
 
-    def test_network_with_rate_monitor(self):
+    def test_network_with_rate_monitor(self) -> None:
+        """A rate monitor in a running network produces rate bins."""
         pop = Population("LapicqueNeuron", 5)
         stim = StepCurrent(onset=0, offset=500, amplitude=3.0)
         stim.target = pop
@@ -54,12 +60,14 @@ class TestNetwork:
         net.run(duration=0.05, dt=0.001)
         assert len(rmon.rate) > 0
 
-    def test_network_add_rejects_bad_type(self):
+    def test_network_add_rejects_bad_type(self) -> None:
+        """Adding an object of an unknown type raises TypeError."""
         net = Network()
         with pytest.raises(TypeError, match="Unknown object type"):
             net.add("not_a_valid_object")
 
-    def test_poisson_stimulus_in_network(self):
+    def test_poisson_stimulus_in_network(self) -> None:
+        """A Poisson input drives a population inside a network without error."""
         pop = Population("LapicqueNeuron", 10)
         pi = PoissonInput(n=10, rate_hz=500.0, weight=2.0, seed=7)
         pi.target = pop

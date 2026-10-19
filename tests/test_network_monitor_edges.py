@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
 from sc_neurocore.network.monitor import RateMonitor, SpikeMonitor, StateMonitor
+from sc_neurocore.network.population import Population
 
 
 class _Population:
@@ -29,7 +30,7 @@ class _Population:
 
 def test_spike_monitor_direct_event_and_degenerate_paths() -> None:
     """SpikeMonitor records direct events and handles zero duration and empty correlation."""
-    monitor = SpikeMonitor(_Population())
+    monitor = SpikeMonitor(cast(Population, _Population()))
 
     monitor.record_event(2, 5)
     assert monitor.count == 1
@@ -49,7 +50,7 @@ def test_spike_monitor_direct_event_and_degenerate_paths() -> None:
 
 def test_state_monitor_records_selected_subset() -> None:
     """StateMonitor with a record subset snapshots only the selected neurons."""
-    monitor = StateMonitor(_Population(), variables=["v"], record=[0, 2])
+    monitor = StateMonitor(cast(Population, _Population()), variables=["v"], record=[0, 2])
 
     monitor.snapshot(0)
 
@@ -58,7 +59,7 @@ def test_state_monitor_records_selected_subset() -> None:
 
 def test_rate_monitor_reports_empty_before_recording() -> None:
     """RateMonitor reports empty rate and bin-edge arrays before any recording."""
-    monitor = RateMonitor(_Population())
+    monitor = RateMonitor(cast(Population, _Population()))
 
     assert monitor.rate.size == 0
     assert monitor.t.size == 0

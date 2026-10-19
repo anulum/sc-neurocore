@@ -14,7 +14,10 @@ from tests.network_basic_support import *  # noqa: F403
 
 
 class TestProjection:
-    def test_propagate_basic(self):
+    """Projection propagation, delays and plasticity."""
+
+    def test_propagate_basic(self) -> None:
+        """All-to-all propagation of spikes yields positive target current."""
         src = Population("LapicqueNeuron", 3)
         tgt = Population("LapicqueNeuron", 3)
         proj = Projection(src, tgt, weight=1.0, probability=1.0, topology="all_to_all")
@@ -23,7 +26,8 @@ class TestProjection:
         assert current.shape == (3,)
         assert current.sum() > 0
 
-    def test_delay_buffer(self):
+    def test_delay_buffer(self) -> None:
+        """A uniform delay of two steps holds current back until the third step."""
         src = Population("LapicqueNeuron", 2)
         tgt = Population("LapicqueNeuron", 2)
         proj = Projection(src, tgt, weight=1.0, delay=2.0, topology="all_to_all")
@@ -35,7 +39,8 @@ class TestProjection:
         c3 = proj.propagate(np.zeros(2, dtype=np.int8))
         assert c3.sum() > 0  # delayed current arrives after 2 steps
 
-    def test_per_synapse_delay(self):
+    def test_per_synapse_delay(self) -> None:
+        """Per-synapse delays select per-synapse mode and deliver delayed current."""
         src = Population("LapicqueNeuron", 3)
         tgt = Population("LapicqueNeuron", 3)
         proj = Projection(src, tgt, weight=1.0, topology="all_to_all")
@@ -57,13 +62,15 @@ class TestProjection:
         assert sum(arrivals) > 0, "Per-synapse delay produced no output"
         assert arrivals[0] == 0.0 or arrivals[1] > 0 or arrivals[2] > 0
 
-    def test_per_synapse_delay_validates_length(self):
+    def test_per_synapse_delay_validates_length(self) -> None:
+        """A delay array whose length differs from the synapse count is refused."""
         src = Population("LapicqueNeuron", 2)
         tgt = Population("LapicqueNeuron", 2)
         with pytest.raises(ValueError, match="must match"):
             Projection(src, tgt, weight=1.0, delay=np.array([1, 2, 3]), topology="all_to_all")
 
-    def test_delay_mode_property(self):
+    def test_delay_mode_property(self) -> None:
+        """Zero delay reports mode none and a scalar delay reports mode uniform."""
         src = Population("LapicqueNeuron", 2)
         tgt = Population("LapicqueNeuron", 2)
         p0 = Projection(src, tgt, weight=1.0, delay=0.0, topology="all_to_all")
@@ -71,7 +78,8 @@ class TestProjection:
         p1 = Projection(src, tgt, weight=1.0, delay=3.0, topology="all_to_all")
         assert p1.delay_mode == "uniform"
 
-    def test_stdp_modifies_weights(self):
+    def test_stdp_modifies_weights(self) -> None:
+        """Repeated STDP updates change the projection weights."""
         src = Population("LapicqueNeuron", 2)
         tgt = Population("LapicqueNeuron", 2)
         proj = Projection(src, tgt, weight=0.5, probability=1.0, plasticity="stdp")

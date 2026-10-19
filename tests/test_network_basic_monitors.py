@@ -14,14 +14,18 @@ from tests.network_basic_support import *  # noqa: F403
 
 
 class TestMonitors:
-    def test_spike_monitor_count(self):
+    """Spike, state and rate monitor recording and analysis."""
+
+    def test_spike_monitor_count(self) -> None:
+        """Recorded spikes across two steps are counted in total."""
         pop = Population("LapicqueNeuron", 3)
         mon = SpikeMonitor(pop)
         mon.record(np.array([1, 0, 1], dtype=np.int8), 0)
         mon.record(np.array([0, 1, 0], dtype=np.int8), 1)
         assert mon.count == 3
 
-    def test_spike_monitor_trains(self):
+    def test_spike_monitor_trains(self) -> None:
+        """Spike trains hold one entry per recorded spike for each neuron."""
         pop = Population("LapicqueNeuron", 2)
         mon = SpikeMonitor(pop)
         mon.record(np.array([1, 0], dtype=np.int8), 0)
@@ -30,7 +34,8 @@ class TestMonitors:
         assert len(trains[0]) == 2
         assert len(trains[1]) == 1
 
-    def test_spike_monitor_raster(self):
+    def test_spike_monitor_raster(self) -> None:
+        """Raster data returns the time and neuron index of each spike."""
         pop = Population("LapicqueNeuron", 2)
         mon = SpikeMonitor(pop)
         mon.record(np.array([1, 0], dtype=np.int8), 0)
@@ -38,7 +43,8 @@ class TestMonitors:
         assert len(ts) == 1
         assert ids[0] == 0
 
-    def test_spike_monitor_firing_rates(self):
+    def test_spike_monitor_firing_rates(self) -> None:
+        """Firing rates are positive for a spiking neuron and zero for a silent one."""
         pop = Population("LapicqueNeuron", 2)
         mon = SpikeMonitor(pop)
         mon.record(np.array([1, 0], dtype=np.int8), 0)
@@ -47,7 +53,8 @@ class TestMonitors:
         assert rates[0] > 0
         assert rates[1] == 0.0
 
-    def test_spike_monitor_isi(self):
+    def test_spike_monitor_isi(self) -> None:
+        """Inter-spike intervals are the differences between successive spike steps."""
         pop = Population("LapicqueNeuron", 1)
         mon = SpikeMonitor(pop)
         mon.record(np.array([1], dtype=np.int8), 10)
@@ -56,7 +63,8 @@ class TestMonitors:
         intervals = mon.isi(0)
         np.testing.assert_array_equal(intervals, [10, 15])
 
-    def test_state_monitor_traces(self):
+    def test_state_monitor_traces(self) -> None:
+        """Each snapshot appends one row of voltages and one time stamp."""
         pop = Population("LapicqueNeuron", 2)
         mon = StateMonitor(pop, variables=["v"])
         mon.snapshot(0)
@@ -64,7 +72,8 @@ class TestMonitors:
         assert mon.traces["v"].shape == (2, 2)
         assert len(mon.t) == 2
 
-    def test_rate_monitor(self):
+    def test_rate_monitor(self) -> None:
+        """A regularly spiking neuron yields a non-empty, positive population rate."""
         pop = Population("LapicqueNeuron", 4)
         mon = RateMonitor(pop, bin_ms=10)
         for t in range(100):

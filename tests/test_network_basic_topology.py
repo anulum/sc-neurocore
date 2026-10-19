@@ -14,31 +14,39 @@ from tests.network_basic_support import *  # noqa: F403
 
 
 class TestTopology:
-    def test_random_connectivity(self):
+    """Connectivity generators returning CSR arrays."""
+
+    def test_random_connectivity(self) -> None:
+        """Random connectivity yields consistent CSR arrays with the given weight."""
         indptr, indices, data = topology.random_connectivity(5, 5, 0.5, 1.0, seed=0)
         assert indptr.shape == (6,)
         assert len(indices) == len(data)
         assert np.all(data == 1.0)
 
-    def test_all_to_all(self):
+    def test_all_to_all(self) -> None:
+        """All-to-all connectivity yields every pair with the given weight."""
         indptr, indices, data = topology.all_to_all(3, 4, 2.0)
         assert indptr[-1] == 12
         assert np.all(data == 2.0)
 
-    def test_ring_topology(self):
+    def test_ring_topology(self) -> None:
+        """A ring with one neighbour per side gives two connections per node."""
         indptr, indices, data = topology.ring_topology(6, 1, 0.5)
         assert indptr[-1] == 12  # 6 nodes * 2 connections each
 
-    def test_small_world(self):
+    def test_small_world(self) -> None:
+        """Small-world connectivity yields one row pointer per node plus one and some edges."""
         indptr, indices, data = topology.small_world(10, 4, 0.1, 1.0, seed=7)
         assert indptr.shape == (11,)
         assert len(indices) > 0
 
-    def test_scale_free(self):
+    def test_scale_free(self) -> None:
+        """Scale-free connectivity yields one row pointer per node plus one and some edges."""
         indptr, indices, data = topology.scale_free(10, 2, 1.0, seed=7)
         assert indptr.shape == (11,)
         assert len(indices) > 0
 
-    def test_grid_topology(self):
+    def test_grid_topology(self) -> None:
+        """A three-by-three grid yields one row pointer per node plus one."""
         indptr, indices, data = topology.grid_topology(3, 3, 1, 1.0)
         assert indptr.shape == (10,)  # 9 nodes + 1

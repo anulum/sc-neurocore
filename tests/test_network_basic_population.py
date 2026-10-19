@@ -84,12 +84,12 @@ class TestPopulation:
             quiescence_pure = True
             calls: list[float] = []
 
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = 0.0
                 self.v_rest = 0.0
                 self.v_threshold = 1.0
 
-            def step(self, current):
+            def step(self, current: float) -> bool:
                 type(self).calls.append(current)
                 self.v += current
                 return self.v >= self.v_threshold
@@ -111,7 +111,7 @@ class TestPopulation:
         """A model with only v reports its voltages."""
 
         class MinimalVoltageNeuron:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = -0.25
 
         pop = Population(MinimalVoltageNeuron, n=3, label="minimal")
@@ -127,11 +127,11 @@ class TestPopulation:
         """reset() is called when present and the voltage cache follows it."""
 
         class ResetNeuron:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = 1.0
                 self.reset_calls = 0
 
-            def reset(self):
+            def reset(self) -> None:
                 self.reset_calls += 1
                 self.v = -0.125
 
@@ -148,11 +148,11 @@ class TestPopulation:
         """reset_state() is the fallback and the voltage cache follows it."""
 
         class ResetStateNeuron:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = 1.0
                 self.reset_state_calls = 0
 
-            def reset_state(self):
+            def reset_state(self) -> None:
                 self.reset_state_calls += 1
                 self.v = -0.375
 

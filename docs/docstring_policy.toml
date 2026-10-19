@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1125
+expected_file_count = 1141
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4593,3 +4593,67 @@ rationale = "Network execution paths: release profile, Rust result decode and MP
 [[file]]
 path = "tests/test_topology_ba_and_ring_domain.py"
 rationale = "Barabasi-Albert attaches by actual degree from a star seed; rings are simple graphs or refused."
+
+[[file]]
+path = "tests/test_network_basic_monitors.py"
+rationale = "Declarative network engine tests (basic monitors); typed and documented."
+
+[[file]]
+path = "tests/test_network_basic_network.py"
+rationale = "Declarative network engine tests (basic network); typed and documented."
+
+[[file]]
+path = "tests/test_network_basic_projection.py"
+rationale = "Declarative network engine tests (basic projection); typed and documented."
+
+[[file]]
+path = "tests/test_network_basic_stimulus.py"
+rationale = "Declarative network engine tests (basic stimulus); typed and documented."
+
+[[file]]
+path = "tests/test_network_basic_topology.py"
+rationale = "Declarative network engine tests (basic topology); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitor_edges.py"
+rationale = "Declarative network engine tests (monitor edges); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitors_stimulus_poisson_input.py"
+rationale = "Declarative network engine tests (monitors stimulus poisson input); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitors_stimulus_rate_monitor.py"
+rationale = "Declarative network engine tests (monitors stimulus rate monitor); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitors_stimulus_spike_monitor.py"
+rationale = "Declarative network engine tests (monitors stimulus spike monitor); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitors_stimulus_state_monitor.py"
+rationale = "Declarative network engine tests (monitors stimulus state monitor); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitors_stimulus_step_current.py"
+rationale = "Declarative network engine tests (monitors stimulus step current); typed and documented."
+
+[[file]]
+path = "tests/test_network_monitors_stimulus_timed_array.py"
+rationale = "Declarative network engine tests (monitors stimulus timed array); typed and documented."
+
+[[file]]
+path = "tests/test_network_projection_delay_contract.py"
+rationale = "Declarative network engine tests (projection delay contract); typed and documented."
+
+[[file]]
+path = "tests/test_network_execution_paths_engine_detection.py"
+rationale = "Declarative network engine tests (execution paths engine detection); typed and documented."
+
+[[file]]
+path = "tests/test_network_execution_paths_monitor_and_dispatch.py"
+rationale = "Declarative network engine tests (execution paths monitor and dispatch); typed and documented."
+
+[[file]]
+path = "tests/test_network_population_probe_edges.py"
+rationale = "Declarative network engine tests (population probe edges); typed and documented."
