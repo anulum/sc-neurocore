@@ -16,7 +16,7 @@ from typing import Any
 import numpy as np
 
 from .population import Population
-from .rust_dispatch import network_divergences
+from .rust_dispatch import network_divergences, projection_divergences
 from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
 from .stimulus import TimedArray, PoissonInput, StepCurrent
@@ -92,16 +92,11 @@ class Network:
 
     def _can_use_rust(self) -> bool:
         """Return whether this network can preserve semantics on the Rust backend."""
-        if self.stimuli:
-            return False
         if self._rust_incompatibilities():
             return False
         if _get_rust_engine() is False:
             return False
-        for pop in self.populations:
-            if not _rust_supports_model(pop.model_name):
-                return False
-        return not any(p.plasticity for p in self.projections)
+        return all(_rust_supports_model(pop.model_name) for pop in self.populations)
 
     def _rust_incompatibilities(self) -> list[str]:
         """List what the Rust backend would silently skip or silently replace.
@@ -114,6 +109,11 @@ class Network:
         while every Python object went on reporting the caller's values.
         """
         incompatible: list[str] = []
+        if self.stimuli:
+            # The runner has no stimulus input: StepCurrent, TimedArray and
+            # PoissonInput would be dropped and the run would equal no input.
+            names = sorted({type(stim).__name__ for stim in self.stimuli})
+            incompatible.append(f"embedded stimuli ({', '.join(names)})")
         if self._spike_gating:
             incompatible.append("spike_gating")
         if self.fim_lambda > 0:
@@ -123,6 +123,7 @@ class Network:
         if self.rate_monitors:
             incompatible.append("RateMonitor")
         incompatible.extend(network_divergences(self.populations))
+        incompatible.extend(projection_divergences(self.projections))
         return incompatible
 
     def _raise_for_rust_incompatibilities(self) -> None:
@@ -165,6 +166,11 @@ class Network:
         cannot be reproduced there. ``'auto'`` runs those in Python and forced
         ``'rust'`` raises, naming the population and the attributes, rather
         than returning a run of the defaults under the caller's parameters.
+        It returns only voltages, so a model with state besides ``v`` (AdEx's
+        ``w``) is refused, as is ``LapicqueNeuron``, which names the 1907
+        source profile in the engine; it has no stimulus input, and takes a
+        projection's CSR arrays with one uniform delay, so embedded stimuli,
+        per-synapse delays, ``weight_threshold`` and plasticity are refused too.
         """
         self._spike_gating = spike_gating
         if backend == "mpi":

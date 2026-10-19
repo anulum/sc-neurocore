@@ -261,7 +261,7 @@ def test_step_local_uses_rust_dispatch_when_supported(monkeypatch: pytest.Monkey
     comm_mock.Get_rank.return_value = 0
     comm_mock.Get_size.return_value = 1
 
-    pop = Population("AdExNeuron", 3, label="A")
+    pop = Population("SCLapicqueLIFNeuron", 3, label="A")
     net = Network(pop, seed=42)
 
     def forbidden_python_step(_currents: np.ndarray[Any, Any], spike_gating: bool = False) -> None:
@@ -279,7 +279,7 @@ def test_step_local_uses_rust_dispatch_when_supported(monkeypatch: pytest.Monkey
     local_spikes = runner._step_local({0: currents}, {})
 
     assert runner._rust_dispatch_enabled is True
-    assert rust_instances[0].added == [("AdExNeuron", 3)]
+    assert rust_instances[0].added == [("SCLapicqueLIFNeuron", 3)]
     assert len(rust_instances[0].calls) == 1
     call_pop_index, call_currents = rust_instances[0].calls[0]
     assert call_pop_index == 0

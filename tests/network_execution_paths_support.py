@@ -6,11 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_network_execution_paths.py
 
-from __future__ import annotations
+"""Support for the execution-path tests of the Network orchestrator.
 
-"""Execution-path coverage for the Network simulation orchestrator: the Rust
-backend body, the MPI dispatch guards, the engine-detection helpers, and the
-pure-Python FIM / plasticity / torch-bridge paths."""
+The Rust backend body, the MPI dispatch guards, the engine-detection helpers,
+and the pure-Python FIM / plasticity / torch-bridge paths.
+"""
+
+from __future__ import annotations
 
 import builtins
 
@@ -52,12 +54,15 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-_MODEL = "AdExNeuron"
+# State v only: the runner returns voltages, so a model with more state is refused.
+_MODEL = "SCLapicqueLIFNeuron"
 
 
 class _FakeNetworkRunner:
-    """Stand-in Rust runner returning crafted voltages and packed spike events,
-    so the Rust result-decode body runs deterministically without the engine."""
+    """Stand-in Rust runner returning crafted voltages and packed spike events.
+
+    The Rust result-decode body then runs deterministically without the engine.
+    """
 
     instances: list[_FakeNetworkRunner] = []
 

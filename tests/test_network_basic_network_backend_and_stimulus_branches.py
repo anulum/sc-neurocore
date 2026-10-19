@@ -22,7 +22,10 @@ class TestNetworkBackendAndStimulusBranches:
     and the Rust-absent dispatch guards (forced via the module engine handle).
     """
 
-    def test_rust_backend_raises_when_engine_unavailable(self, monkeypatch):
+    def test_rust_backend_raises_when_engine_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A dispatchable network forced to Rust without the engine raises."""
         import sc_neurocore.network.network as network_mod
 
         monkeypatch.setattr(network_mod, "_RUST_ENGINE", False)
@@ -30,11 +33,14 @@ class TestNetworkBackendAndStimulusBranches:
         # reason the forced backend refuses. LapicqueNeuron reaches this
         # population through its source-profile constructor, which the bridge
         # cannot express at all, and would refuse one step earlier.
-        net = Network(Population("AdExNeuron", 2))
+        net = Network(Population("SCLapicqueLIFNeuron", 2))
         with pytest.raises(RuntimeError, match="Rust engine not available"):
             net.run(0.005, backend="rust")
 
-    def test_auto_backend_uses_python_when_rust_unavailable(self, monkeypatch):
+    def test_auto_backend_uses_python_when_rust_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Auto runs in Python when the engine is absent."""
         import sc_neurocore.network.network as network_mod
 
         monkeypatch.setattr(network_mod, "_RUST_ENGINE", False)
@@ -45,28 +51,32 @@ class TestNetworkBackendAndStimulusBranches:
     def test_a_bridgeable_network_is_not_dispatched_without_the_engine(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """With nothing else against Rust, the absent engine alone keeps auto in Python."""
         import sc_neurocore.network.network as network_mod
 
         monkeypatch.setattr(network_mod, "_RUST_ENGINE", False)
-        # AdExNeuron passes every compatibility check, so the absent engine is
-        # the only reason left to stay on the Python loop.
-        net = Network(Population("AdExNeuron", 2))
+        # SCLapicqueLIFNeuron (state v only) passes every compatibility check,
+        # so the absent engine is the only reason left to stay on the Python loop.
+        net = Network(Population("SCLapicqueLIFNeuron", 2))
         assert net._rust_incompatibilities() == []
         assert net._can_use_rust() is False
 
-    def test_python_backend_progress_reporting(self, capsys):
+    def test_python_backend_progress_reporting(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """``progress=True`` prints a percentage and the step count."""
         net = Network(Population("LapicqueNeuron", 2))
         net.run(0.02, dt=0.001, backend="python", progress=True)
         out = capsys.readouterr().out
         assert "%" in out
         assert "step" in out
 
-    def test_stimulus_without_target_and_no_population_is_skipped(self):
+    def test_stimulus_without_target_and_no_population_is_skipped(self) -> None:
+        """A stimulus without a target in a network without populations is skipped."""
         net = Network()
         net.add(TimedArray([1.0, 2.0, 3.0]))  # target None, no populations
         net.run(0.003, dt=0.001, backend="python")
 
-    def test_stimulus_targeting_foreign_population_is_skipped(self):
+    def test_stimulus_targeting_foreign_population_is_skipped(self) -> None:
+        """A stimulus aimed at a population outside the network is skipped."""
         net = Network(Population("LapicqueNeuron", 2))
         foreign = Population("LapicqueNeuron", 2)
         stim = TimedArray([1.0, 2.0, 3.0])
@@ -74,7 +84,8 @@ class TestNetworkBackendAndStimulusBranches:
         net.add(stim)
         net.run(0.003, dt=0.001, backend="python")
 
-    def test_timed_array_stimulus_applied_to_target(self):
+    def test_timed_array_stimulus_applied_to_target(self) -> None:
+        """A TimedArray with a target drives that population."""
         pop = Population("LapicqueNeuron", 2)
         net = Network(pop)
         stim = TimedArray([5.0, 5.0, 5.0])

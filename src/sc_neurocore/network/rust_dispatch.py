@@ -26,6 +26,19 @@ The comparison is deliberately conservative. Anything it cannot decide counts
 as a difference, because the cost of a wrong "yes" is a silently incorrect
 simulation while the cost of a wrong "no" is a slower, correct one.
 
+Two further limits of the boundary are checked here. The runner returns only
+the membrane voltages, so a model that evolves any other state (AdEx's ``w``,
+Rulkov's ``x`` and ``y``, a refractory counter, a generator) would leave that
+state at its initial value in every Python neuron after a native run: such a
+model is found by stepping a default neuron and seeing what besides ``v``
+moves. And one name builds a different model on each side: ``LapicqueNeuron``
+is the SC LIF compatibility profile in Python but the 1907 source profile in
+the engine. Neither is dispatched.
+
+:func:`projection_divergences` names what the runner would drop from a
+projection: it receives the CSR arrays and one uniform delay, so per-synapse
+delays, weight-threshold pruning and plasticity have no route across.
+
 One residual is stated rather than hidden: the check reads the neurons, so it
 sees a parameter changed in place after construction. It cannot see a change
 made *after* the check and before the bridge builds its own neurons, and it
@@ -36,12 +49,14 @@ is a parity question, held by the parity suites.
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Final
+from functools import cache
+from typing import Any, Final
 
 import numpy as np
 
 from sc_neurocore.network.population import Population
 from sc_neurocore.neurons import models as _model_registry
+from sc_neurocore.neurons.model_catalogue import load_descriptor
 
 #: Everything the native bridge receives about a population. The rest of what a
 #: population knows — its constructor parameters and its evolved state — has no
@@ -50,6 +65,17 @@ BRIDGE_CONSTRUCTOR_ARGUMENTS: Final = ("model_name", "n")
 
 #: How many differing attribute names a reason names before it summarises.
 _NAMED_ATTRIBUTE_LIMIT: Final = 4
+
+#: Model names the engine resolves to a different model than Python does.
+NATIVE_IDENTITY_DIFFERS: Final = {
+    "LapicqueNeuron": (
+        "the engine builds the 1907 source profile under this name while Python's "
+        "default is the SC LIF compatibility profile; use SCLapicqueLIFNeuron"
+    ),
+}
+
+#: Constant drives the state probe steps a default neuron through.
+_PROBE_DRIVE: Final = (0.0,) * 4 + (1.0,) * 16 + (20.0,) * 16 + (0.0,) * 8
 
 
 class _Missing:
@@ -163,6 +189,44 @@ def _summarise(names: list[str]) -> str:
     return f"{head} and {len(names) - _NAMED_ATTRIBUTE_LIMIT} more"
 
 
+@cache
+def evolving_state(model_name: str) -> tuple[str, ...] | None:
+    """Return the attributes besides ``v`` a default neuron changes as it steps.
+
+    Parameters
+    ----------
+    model_name : str
+        The model the bridge would build.
+
+    Returns
+    -------
+    tuple of str or None
+        The state variables the model's descriptor declares besides ``v``,
+        together with the attribute names that differ from a fresh default
+        neuron after stepping one through a fixed drive (0, 1, 20 and 0
+        again): a drive that never fires leaves an adaptation variable still,
+        so the declaration is read as well as the behaviour. ``None`` when the
+        model has no descriptor or cannot be built or stepped with a float
+        drive, which counts as a difference.
+    """
+    descriptor = load_descriptor(model_name)
+    if descriptor is None:
+        return None
+    declared = tuple(spec.name for spec in descriptor.state if spec.name != "v")
+    stepped = _reference_neuron(model_name)
+    fresh = _reference_neuron(model_name)
+    step: Any = getattr(stepped, "step", None)
+    if stepped is None or fresh is None or not callable(step):
+        return None
+    try:
+        for drive in _PROBE_DRIVE:
+            step(drive)
+    except Exception:
+        return None
+    moved = [name for name in _differing_attributes(stepped, fresh) if name != "v"]
+    return declared + tuple(name for name in moved if name not in declared)
+
+
 def population_divergence(population: Population) -> str:
     """Return why the native bridge cannot build this population, or ``""``.
 
@@ -186,6 +250,8 @@ def population_divergence(population: Population) -> str:
     >>> population_divergence(Population("AdExNeuron", 3, {"v_rest": -60.0}))
     "population 'AdExNeuron' carries v_rest, which the native bridge cannot receive"
     """
+    if population.model_name in NATIVE_IDENTITY_DIFFERS:
+        return f"population {population.label!r}: {NATIVE_IDENTITY_DIFFERS[population.model_name]}"
     reference = _reference_neuron(population.model_name)
     if reference is None:
         return (
@@ -202,12 +268,50 @@ def population_divergence(population: Population) -> str:
     differing: set[str] = set()
     for neuron in population.neurons:
         differing.update(_differing_attributes(neuron, reference))
-    if not differing:
-        return ""
-    return (
-        f"population {population.label!r} carries {_summarise(sorted(differing))}, "
-        f"which the native bridge cannot receive"
-    )
+    if differing:
+        return (
+            f"population {population.label!r} carries {_summarise(sorted(differing))}, "
+            f"which the native bridge cannot receive"
+        )
+    hidden = evolving_state(population.model_name)
+    if hidden is None:
+        return (
+            f"population {population.label!r}: model {population.model_name!r} cannot be "
+            "stepped to find the state the native bridge would not return"
+        )
+    if hidden:
+        return (
+            f"population {population.label!r} evolves {_summarise(list(hidden))} besides v; "
+            "the native bridge returns only voltages, so that state would stay at its "
+            "initial value"
+        )
+    return ""
+
+
+def projection_divergences(projections: Iterable[Any]) -> list[str]:
+    """Return one reason per projection feature the native runner would drop.
+
+    Parameters
+    ----------
+    projections : iterable of Projection
+        Every projection of the network.
+
+    Returns
+    -------
+    list of str
+        Empty when the runner, which receives the CSR arrays and one uniform
+        delay, reproduces every projection.
+    """
+    reasons: list[str] = []
+    for index, projection in enumerate(projections):
+        name = f"projection {index}"
+        if projection.delay_mode == "per_synapse":
+            reasons.append(f"{name} has per-synapse delays; the runner takes one uniform delay")
+        if float(projection.weight_threshold) != 0.0:
+            reasons.append(f"{name} prunes with weight_threshold; the runner does not")
+        if projection.plasticity:
+            reasons.append(f"{name} is plastic ({projection.plasticity}); the runner is not")
+    return reasons
 
 
 def network_divergences(populations: Iterable[Population]) -> list[str]:
@@ -228,6 +332,9 @@ def network_divergences(populations: Iterable[Population]) -> list[str]:
 
 __all__ = [
     "BRIDGE_CONSTRUCTOR_ARGUMENTS",
+    "NATIVE_IDENTITY_DIFFERS",
+    "evolving_state",
     "network_divergences",
     "population_divergence",
+    "projection_divergences",
 ]

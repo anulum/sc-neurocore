@@ -25627,6 +25627,25 @@ Return whether a neuron sits exactly at the measured quiescent state.
 
 ## Module `network.rust_dispatch`
 
+### Function `evolving_state(model_name)`
+Return the attributes besides ``v`` a default neuron changes as it steps.
+
+Parameters
+----------
+model_name : str
+    The model the bridge would build.
+
+Returns
+-------
+tuple of str or None
+    The state variables the model's descriptor declares besides ``v``,
+    together with the attribute names that differ from a fresh default
+    neuron after stepping one through a fixed drive (0, 1, 20 and 0
+    again): a drive that never fires leaves an adaptation variable still,
+    so the declaration is read as well as the behaviour. ``None`` when the
+    model has no descriptor or cannot be built or stepped with a float
+    drive, which counts as a difference.
+
 ### Function `population_divergence(population)`
 Return why the native bridge cannot build this population, or ``""``.
 
@@ -25649,6 +25668,20 @@ Examples
 ''
 >>> population_divergence(Population("AdExNeuron", 3, {"v_rest": -60.0}))
 "population 'AdExNeuron' carries v_rest, which the native bridge cannot receive"
+
+### Function `projection_divergences(projections)`
+Return one reason per projection feature the native runner would drop.
+
+Parameters
+----------
+projections : iterable of Projection
+    Every projection of the network.
+
+Returns
+-------
+list of str
+    Empty when the runner, which receives the CSR arrays and one uniform
+    delay, reproduces every projection.
 
 ### Function `network_divergences(populations)`
 Return one reason per population the native bridge cannot build faithfully.

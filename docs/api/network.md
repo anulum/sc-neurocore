@@ -133,22 +133,35 @@ final voltages back into each `Population`, then decodes packed spike events
 
 ### 3.3 Rust dispatch criteria (`_can_use_rust`)
 
-`Network._can_use_rust` returns `True` only when:
+`Network._can_use_rust` returns `True` only when `_rust_incompatibilities()`
+is empty and the engine can run every model:
 
-1. `len(self.stimuli) == 0` — no `TimedArray`/`PoissonInput`/`StepCurrent`
-   in this network.
-2. `spike_gating` is disabled.
-3. `fim_lambda == 0.0`.
-4. No `StateMonitor` or `RateMonitor` is attached, because those require
+1. No embedded stimulus (`TimedArray`, `PoissonInput`, `StepCurrent`): the
+   runner has no stimulus input and would run as if there were none.
+2. `spike_gating` is disabled and `fim_lambda == 0.0`.
+3. No `StateMonitor` or `RateMonitor` is attached, because those require
    per-step traces the Rust runner does not export yet.
-5. The Rust engine import succeeded (`_get_rust_engine()` is not `False`).
-6. Every `pop.model_name` (or its `*Neuron`-stripped form) is in
-   `NetworkRunner.supported_models()`.
-7. No projection has a non-empty `plasticity` field.
+4. Every population is what the runner builds from its model name alone
+   (no constructor parameters, derived seeds or moved state;
+   `rust_dispatch.population_divergence`).
+5. Every model's whole state is `v`: the runner returns only voltages, so a
+   model whose descriptor declares more state, or whose default neuron moves
+   anything besides `v` when stepped (AdEx's `w`, Rulkov's `x` and `y`, a
+   refractory counter, a generator), would keep that state at its initial
+   value (`rust_dispatch.evolving_state`).
+6. The model name means the same model on both sides: `LapicqueNeuron` is the
+   SC LIF compatibility profile in Python but the 1907 source profile in the
+   engine, so it is refused; `SCLapicqueLIFNeuron` is the same on both.
+7. No projection has per-synapse delays, a non-zero `weight_threshold` or
+   plasticity (`rust_dispatch.projection_divergences`): the runner takes the
+   CSR arrays and one uniform delay.
+8. The Rust engine import succeeded and every `pop.model_name` (or its
+   `*Neuron`-stripped form) is in `NetworkRunner.supported_models()`.
 
 When any of these fails and `backend="auto"`, the network falls back to
-Python without warning. Pass `backend="python"` explicitly when you need
-deterministic dispatch.
+Python without warning; a forced `backend="rust"` raises
+`NotImplementedError` naming every reason. Pass `backend="python"` explicitly
+when you need deterministic dispatch.
 
 ### 3.4 Backend matrix
 
@@ -157,7 +170,9 @@ deterministic dispatch.
 | Heterogeneous neuron models | ✅ any | ⚠️ only `supported_models()` | ✅ per-rank |
 | Stimuli | ✅ all | ❌ disqualifies Rust | ✅ rank 0 |
 | STDP / plasticity | ✅ | ❌ disqualifies Rust | ✅ |
-| Per-synapse delays | ✅ | ⚠️ uniform only via `add_projection(... max_delay)` | ✅ |
+| Per-synapse delays | ✅ | ❌ disqualifies Rust (uniform delay only) | ✅ |
+| `weight_threshold` pruning | ✅ | ❌ disqualifies Rust | ✅ |
+| Models with state besides `v` | ✅ | ❌ disqualifies Rust (voltages only) | ✅ |
 | SpikeMonitor | ✅ per step | ✅ decoded events after run | ✅ rank-local |
 | StateMonitor / RateMonitor | ✅ per step | ❌ disqualifies Rust | ⚠️ partial |
 | Spike gating | ✅ | ❌ | ❌ |

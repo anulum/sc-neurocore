@@ -10,6 +10,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `Network` dispatches to the native runner only what the runner
+  reproduces. It returns voltages only, so a model with state besides `v`
+  (AdEx's `w` stayed 0 after 1000 native steps; Rulkov's `x`, `y`) is
+  refused; `LapicqueNeuron` names the 1907 source profile in the engine and
+  is refused (`SCLapicqueLIFNeuron` is the same on both sides); embedded
+  stimuli, per-synapse delays, `weight_threshold` pruning and plasticity,
+  which the runner dropped, are refused. `auto` falls back to Python and a
+  forced `rust` raises naming each reason. In Python, `weight_threshold` now
+  also prunes projections with per-synapse delays.
+
 - The compiler encodes parameters, literals and initial states exactly
   (`round(Fraction(value)·2^fraction)`): a finite value as large as 1e308
   overflowed the float product and raised `OverflowError` in the RTL, the

@@ -29,18 +29,29 @@ from typing import Any
 import numpy as np
 import pytest
 
-from sc_neurocore.network import Network, Population, Projection, SpikeMonitor
+from sc_neurocore.network import (
+    Network,
+    PoissonInput,
+    Population,
+    Projection,
+    SpikeMonitor,
+    StepCurrent,
+    TimedArray,
+)
 from sc_neurocore.network.rust_dispatch import (
     BRIDGE_CONSTRUCTOR_ARGUMENTS,
     network_divergences,
     population_divergence,
+    projection_divergences,
 )
 from sc_neurocore.neurons import models as model_registry
 
-MODEL = "AdExNeuron"
+# A model whose whole state is v: the runner returns voltages only, so a model
+# with any other state (AdEx's w) is refused (see TestStateAndIdentity).
+MODEL = "SCLapicqueLIFNeuron"
 STOCHASTIC_MODEL = "PoissonNeuron"
 VECTOR_MODEL = "GLMNeuron"
-OVERRIDES = {"v_threshold": -45.0, "v_rest": -60.0}
+OVERRIDES = {"v_threshold": 1.5, "v_rest": 0.1}
 
 
 def _network(params: dict[str, Any] | None) -> tuple[Network, Population, Population]:
@@ -75,6 +86,8 @@ def _stub_population(
 
 
 class TestPopulationDivergence:
+    """Whether one population is what the bridge builds from its name."""
+
     def test_a_default_population_is_what_the_bridge_builds(self) -> None:
         """A population built with no parameters matches the bridge's own neurons."""
         assert population_divergence(Population(MODEL, 4)) == ""
@@ -94,7 +107,7 @@ class TestPopulationDivergence:
         """The check reads the neurons, so a parameter set after construction counts."""
         population = Population(MODEL, 4)
         assert population_divergence(population) == ""
-        population.neurons[2].v_threshold = -30.0
+        population.neurons[2].v_threshold = 3.0
         assert "v_threshold" in population_divergence(population)
 
     def test_an_empty_population_is_dispatchable(self) -> None:
@@ -157,7 +170,7 @@ class TestPopulationDivergence:
     def test_many_differing_attributes_are_summarised(self) -> None:
         """A long divergence names the first few attributes and counts the rest."""
         population = Population(MODEL, 2)
-        for index, name in enumerate(("v", "v_rest", "v_threshold", "a", "b")):
+        for index, name in enumerate(("v", "v_rest", "v_threshold", "tau", "dt")):
             setattr(population.neurons[0], name, float(index) + 0.5)
         reason = population_divergence(population)
         assert "and 1 more" in reason
@@ -374,6 +387,8 @@ class TestPopulationDivergence:
 
 
 class TestNetworkDivergences:
+    """One reason per population the bridge cannot build."""
+
     def test_a_default_network_reports_nothing(self) -> None:
         """Every population matching the bridge leaves the list empty."""
         _, source, target = _network(None)
@@ -392,6 +407,8 @@ class TestNetworkDivergences:
 
 
 class TestNetworkDispatch:
+    """Auto and forced dispatch follow the divergences."""
+
     def test_a_default_network_still_dispatches_to_rust(self) -> None:
         """The gate must not cost the dispatch it was added to protect."""
         network, _, _ = _network(None)
@@ -427,8 +444,13 @@ class TestNetworkDispatch:
         np.testing.assert_array_equal(results[1], results[0])
 
     def test_a_second_run_does_not_discard_the_state_of_the_first(self) -> None:
-        """After a run the neurons have moved, so the bridge can no longer stand in."""
-        network, _, _ = _network(None)
+        """After a run the neurons have moved, so the bridge can no longer stand in.
+
+        A quadratic integrate-and-fire neuron drifts from its default voltage
+        without input, so its first run (dispatched) leaves it off the default.
+        """
+        network = Network(Population("QuadraticIFNeuron", 3))
+        assert network._can_use_rust() is True
         network.run(0.02, dt=0.001, backend="auto")
         assert network._can_use_rust() is False
 
@@ -441,3 +463,105 @@ class TestNetworkDispatch:
         assert "'src'" in message
         assert "v_threshold" in message
         assert "backend='python'" in message
+
+
+class TestStateAndIdentity:
+    """RIGOR review 279: the runner returns voltages only, and one name, two models."""
+
+    def test_a_model_with_state_besides_v_is_refused(self) -> None:
+        """NEURO-RUST-DISPATCH-STATE-01: AdEx's w stayed 0 after a native run."""
+        reason = population_divergence(Population("AdExNeuron", 3))
+        assert "evolves w besides v" in reason
+        reason = population_divergence(Population("RulkovMapNeuron", 3))
+        assert "evolves" in reason and "x" in reason and "y" in reason
+
+    def test_auto_runs_adex_in_python_and_keeps_w(self) -> None:
+        """Auto falls back, so w after 1000 zero-input steps is the Python value."""
+        expected = Population("AdExNeuron", 1)
+        Network(expected).run(1.0, dt=0.001, backend="python")
+        actual = Population("AdExNeuron", 1)
+        Network(actual).run(1.0, dt=0.001, backend="auto")
+        assert actual.neurons[0].w == expected.neurons[0].w != 0.0
+
+    def test_forced_rust_refuses_adex(self) -> None:
+        """A forced run is refused before the runner starts."""
+        with pytest.raises(NotImplementedError, match="evolves w"):
+            Network(Population("AdExNeuron", 2)).run(0.01, dt=0.001, backend="rust")
+
+    def test_lapicque_names_another_model_in_the_engine(self) -> None:
+        """NEURO-RUST-DISPATCH-PROFILE-01: the engine's LapicqueNeuron is the 1907 profile."""
+        reason = population_divergence(Population("LapicqueNeuron", 2))
+        assert "1907" in reason and "SCLapicqueLIFNeuron" in reason
+        assert population_divergence(Population("SCLapicqueLIFNeuron", 2)) == ""
+
+
+def _edge(**options: Any) -> tuple[Network, Population]:
+    """Return a one-source, three-target network with weights 0.1, 0.5 and 1.0."""
+    source = Population(MODEL, 1, label="src")
+    target = Population(MODEL, 3, label="tgt")
+    csr = (np.array([0, 3]), np.array([0, 1, 2]), np.array([0.1, 0.5, 1.0]))
+    projection = Projection(source, target, 1.0, topology=csr, **options)
+    return Network(source, target, projection), target
+
+
+class TestWhatTheRunnerCannotCarry:
+    """RIGOR reviews 267 and 268: stimuli and projection features the runner drops."""
+
+    @pytest.mark.parametrize(
+        "stimulus",
+        [
+            lambda: StepCurrent(10, 40, 2.0),
+            lambda: TimedArray(np.full(50, 2.0)),
+            lambda: PoissonInput(2, rate_hz=500.0, weight=2.0, seed=1),
+        ],
+    )
+    def test_embedded_stimuli_are_refused(self, stimulus: Any) -> None:
+        """NEURO-STIM-FORCED-RUST-01: forced Rust ran as if there were no input."""
+        network = Network(Population(MODEL, 2), stimulus())
+        assert network._can_use_rust() is False
+        with pytest.raises(NotImplementedError, match="embedded stimuli"):
+            network.run(0.01, dt=0.001, backend="rust")
+
+    @pytest.mark.parametrize(
+        ("options", "named"),
+        [
+            ({"delay": np.array([0.0, 3.0, 1.0])}, "per-synapse delays"),
+            ({"weight_threshold": 0.5}, "weight_threshold"),
+            ({"plasticity": "stdp"}, "plastic"),
+        ],
+    )
+    def test_projection_features_the_runner_drops_are_refused(
+        self, options: dict[str, Any], named: str
+    ) -> None:
+        """NEURO-PROJ-RUST-DELAY/THRESHOLD/FORCED-STDP-01: each was silently dropped."""
+        network, _ = _edge(**options)
+        assert any(named in reason for reason in projection_divergences(network.projections))
+        assert network._can_use_rust() is False
+        with pytest.raises(NotImplementedError, match=named):
+            network.run(0.01, dt=0.001, backend="rust")
+
+    def test_a_uniform_delay_still_dispatches(self) -> None:
+        """The runner takes one uniform delay, so that projection is not refused."""
+        network, _ = _edge(delay=2.0)
+        assert projection_divergences(network.projections) == []
+        assert network._can_use_rust() is True
+
+
+def test_the_threshold_prunes_per_synapse_delays_in_python() -> None:
+    """NEURO-PROJ-THRESHOLD-DELAY-01: weights [.1, .5, 1], threshold .5 gave [.1, .5, 1].
+
+    With per-synapse delays the threshold was ignored; the scalar-delay control
+    already gave [0, 0, 1]. Both paths now prune the same synapses.
+    """
+    _, target = _edge()
+    source = Population(MODEL, 1)
+    csr = (np.array([0, 3]), np.array([0, 1, 2]), np.array([0.1, 0.5, 1.0]))
+    delayed = Projection(
+        source, target, 1.0, topology=csr, delay=np.array([1.0, 1.0, 1.0]), weight_threshold=0.5
+    )
+    scalar = Projection(source, target, 1.0, topology=csr, delay=1.0, weight_threshold=0.5)
+    spike = np.array([1], dtype=np.int8)
+    quiet = np.array([0], dtype=np.int8)
+    delayed_out = [delayed.propagate(spike), delayed.propagate(quiet)]
+    scalar_out = [scalar.propagate(spike), scalar.propagate(quiet)]
+    assert delayed_out[1].tolist() == scalar_out[1].tolist() == [0.0, 0.0, 1.0]

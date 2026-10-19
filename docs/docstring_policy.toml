@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1118
+expected_file_count = 1122
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -4565,3 +4565,19 @@ rationale = "Population seeds: distinct per neuron, reproducible, distinct gener
 [[file]]
 path = "src/sc_neurocore/neurons/models/lapicque.py"
 rationale = "LapicqueNeuron: the 1907 source polarisation profile and the SC LIF exact-flow profile."
+
+[[file]]
+path = "tests/test_network_rust_dispatch_fidelity.py"
+rationale = "Native network dispatch: only networks the runner reproduces (defaults, state v only, same model, no dropped stimuli or projection features)."
+
+[[file]]
+path = "tests/test_mpi_runner.py"
+rationale = "MPIRunner partitioning, rank-local Rust dispatch and spike exchange through mocked mpi4py."
+
+[[file]]
+path = "tests/test_network_basic_network_backend_and_stimulus_branches.py"
+rationale = "Network backend dispatch guards without the engine and stimulus-routing edge branches."
+
+[[file]]
+path = "tests/network_execution_paths_support.py"
+rationale = "Shared fakes and helpers of the Network execution-path tests (Rust decode, MPI guards, engine detection)."

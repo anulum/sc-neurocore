@@ -61,17 +61,22 @@ def _csr_delayed_matvec(
     spike_history: np.ndarray[Any, Any],
     hist_idx: int,
     n_out: int,
+    weight_threshold: float = 0.0,
 ) -> np.ndarray[Any, Any]:
     """CSR matrix-vector product with per-synapse delays.
 
     For each synapse k connecting source i to target j with delay d_k:
         current[j] += data[k] * spike_history[(hist_idx - d_k) % max_delay, i]
+    Synapses with |data[k]| <= weight_threshold are skipped, as in
+    :func:`_csr_matvec`.
     """
     out = np.zeros(n_out, dtype=np.float64)
     max_delay = spike_history.shape[0]
     n_rows = len(indptr) - 1
     for i in range(n_rows):
         for k in range(indptr[i], indptr[i + 1]):
+            if weight_threshold > 0.0 and abs(data[k]) <= weight_threshold:
+                continue
             d = delay_steps[k]
             read_idx = (hist_idx - d) % max_delay
             spike_val = spike_history[read_idx, i]
@@ -367,6 +372,7 @@ class Projection:
             self._spike_history,
             self._hist_idx,
             self.target.n,
+            wt,
         )
         self._hist_idx = (self._hist_idx + 1) % self._spike_history.shape[0]
         return current
