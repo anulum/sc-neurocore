@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Random draws compile in pipelined and multi-substep registered modules:
+  `rng_step` advances on the pipeline's valid cycle and on the macro
+  boundary, so each logical step draws what the unpipelined module draws
+  and every sub-step of a macro step draws the same numbers, as the Python
+  model does. A graded spike (`spike_value`) is set on the macro boundary of
+  a multi-substep module from the state after its last sub-step.
+
 - Add graded spikes: `EquationNeuron(spike_value=...)` evaluates an expression
   on a spike (on the state before reset) and keeps it as `last_spike_value`.
   The registered RTL emits `spike_value_out`, the folded PE drives it, and the

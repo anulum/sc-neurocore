@@ -318,8 +318,11 @@ A folded processing element (`compile_to_datapath`) takes the step counter and
 stream on the inputs `rng_step` and `P_RNG_STREAM` (with the parameter
 `P_RNG_SEED`), so the sequencer that streams a neuron's state also supplies
 its counter; given the same values it draws exactly what the per-instance
-module draws. Draws are refused where the step counter is not yet defined:
-pipelined or multi-substep modules and the HLS C++ lowering.
+module draws. In a pipelined module `rng_step` advances on the valid cycle, so
+the draws stay fixed while the multiply stages fill and each logical step
+draws what the unpipelined module draws; in a multi-substep module it advances
+on the macro boundary, so every sub-step of a macro step draws the same
+numbers, as the Python model does. The HLS C++ lowering refuses draws.
 
 ### Graded spikes
 
@@ -347,8 +350,9 @@ registered RTL adds the output `spike_value_out` (a word of the data format,
 committed under the overflow policy like a reset value and registered with
 `spike_out`), the folded processing element drives it combinationally, and the
 bit-true C and Rust kernels keep it in `spike_value_out` of their state. A
-graded spike needs a threshold or a stochastic spike mechanism; the
-multi-substep datapath refuses it.
+graded spike needs a threshold or a stochastic spike mechanism. In the
+multi-substep datapath the value is set on the macro boundary from the state
+after the last sub-step.
 
 ## 6. Folded combinational datapaths
 
@@ -497,9 +501,9 @@ a named synthesis/place-and-route flow and its retained reports.
 - Stochastic-threshold registered RTL is signed and unpipelined.
 - Stochastic product rounding is rejected until the caller can provide and own
   a rounding RNG stream.
-- `rand()`, `randn()` and `poisson()` compile only to unpipelined,
-  single-substep registered modules, folded processing elements and the
-  bit-true kernels; a compiled `poisson()` needs a constant mean. The folded
+- `rand()`, `randn()` and `poisson()` compile to registered modules (also
+  pipelined or multi-substep), folded processing elements and the bit-true
+  kernels; a compiled `poisson()` needs a constant mean. The folded
   network's neuron templates have no draws, and its sequencer does not yet
   assign step counters and streams.
 - A loaded-host compiler timing is not an FPGA timing, area, power, or energy

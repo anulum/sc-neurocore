@@ -31,6 +31,7 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import generate_bittrue_
 from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.neurons.equation_random import RandomDraws
 from tests.bit_true_cosim_support import HAS_COSIM, HAS_RUST, _c_main, _rows, _rust_main, _testbench
 from tests.test_folded_datapath import _dual_testbench
 
@@ -239,16 +240,82 @@ def test_folded_pe_draws_what_the_module_draws() -> None:
     assert match.group(1) == "0" and int(match.group(2)) > 0, out
 
 
+def _rtl(neuron: EquationNeuron, source: str, clocks: int, dw: int, fr: int) -> list[list[str]]:
+    """Return the rows of a compiled module ``m`` run for ``clocks`` clocks."""
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        (tmp / "m.v").write_text(source)
+        (tmp / "tb.v").write_text(_testbench(neuron, "m", 0.0, clocks, dw, fr))
+        subprocess.run(
+            ["iverilog", "-g2012", "-o", str(tmp / "s"), str(tmp / "m.v"), str(tmp / "tb.v")],
+            check=True,
+            capture_output=True,
+            timeout=120,
+        )
+        return _rows(
+            subprocess.run(
+                ["vvp", str(tmp / "s")], capture_output=True, text=True, timeout=120
+            ).stdout
+        )
+
+
+@pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog not available")
+class TestCounterPerLogicalStep:
+    """rng_step counts logical steps in pipelined and multi-substep modules."""
+
+    def test_pipelined_module_draws_what_the_unpipelined_module_draws(self) -> None:
+        """Each valid cycle of the pipelined module equals one step of the plain module."""
+        neuron = EquationNeuron(
+            equations={"v": "-v + 2.0*randn() + 0.5*poisson(2.0) + rand()*v"},
+            state={"v": 0.0},
+            dt=0.1,
+            threshold="v > 0.2",
+            reset={"v": "rand() - 0.5"},
+            rng_seed=77,
+            random_stream=5,
+        )
+        steps = 60
+        pipelined = compile_to_verilog(neuron, "m", 16, 8, pipeline_stages=1)
+        match = re.search(r"assign latency = \d+'d(\d+);", pipelined)
+        assert match, "pipelined module has no latency"
+        latency = int(match.group(1))
+        assert latency > 0
+        plain = _rtl(neuron, compile_to_verilog(neuron, "m", 16, 8), steps, 16, 8)
+        piped = _rtl(neuron, pipelined, steps * (latency + 1), 16, 8)
+        assert piped[latency :: latency + 1] == plain
+        assert sum(int(row[0]) for row in plain) > 0
+
+    def test_every_substep_of_a_macro_step_draws_the_same_number(self) -> None:
+        """dv/dt = rand(), dt = 1/4, four sub-steps: each macro step adds 4·(code >> 2).
+
+        The code is ``floor(u·2**16)`` of the model's draw at the macro step's counter, so
+        the RTL state equals the sum computed from the model's draws exactly; a counter
+        advancing per sub-step would add four different codes.
+        """
+        neuron = EquationNeuron(
+            equations={"v": "rand()"},
+            state={"v": 0.0},
+            dt=0.25,
+            threshold="v > 1000.0",
+            detection="crossing",
+            substeps=4,
+            rng_seed=8,
+            random_stream=2,
+        )
+        macro_steps = 12
+        rows = _rtl(neuron, compile_to_verilog(neuron, "m", 32, 16), macro_steps * 4, 32, 16)
+        draws = RandomDraws(8, 2)
+        expected = []
+        total = 0
+        for step in range(macro_steps):
+            draws.step = step
+            total += 4 * (int(draws.rand(0) * 65536) >> 2)
+            expected.append(str(total))
+        assert [row[1] for row in rows[3::4]] == expected
+
+
 class TestRefusals:
     """Where draws are not yet lowered, the compiler says so."""
-
-    def test_pipelined_module_refuses_draws(self) -> None:
-        """Pipelining would decouple the step counter from the step."""
-        neuron = EquationNeuron(
-            equations={"v": "rand() * v"}, state={"v": 1.0}, method="map", dt=1.0
-        )
-        with pytest.raises(NotImplementedError, match="one step per clock"):
-            compile_to_verilog(neuron, "m", pipeline_stages=1)
 
     def test_variable_poisson_mean_is_refused(self) -> None:
         """The unit's thresholds are built from a constant mean."""

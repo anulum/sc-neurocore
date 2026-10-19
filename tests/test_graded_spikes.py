@@ -53,8 +53,9 @@ def _replace_once(text: str, old: str, new: str) -> str:
     return text.replace(old, new)
 
 
-def _rtl_and_c(neuron: EquationNeuron, steps: int) -> tuple[list[list[str]], list[list[str]]]:
-    tb = _testbench(neuron, "m", 0.0, steps, 16, 8)
+def _rtl(neuron: EquationNeuron, clocks: int) -> list[list[str]]:
+    """Return the registered module's rows (spike, value, state) for ``clocks`` clocks."""
+    tb = _testbench(neuron, "m", 0.0, clocks, 16, 8)
     tb = _replace_once(
         tb, "    .spike_out(spike_out),", "    .spike_out(spike_out),\n    .spike_value_out(sv),"
     )
@@ -65,9 +66,6 @@ def _rtl_and_c(neuron: EquationNeuron, steps: int) -> tuple[list[list[str]], lis
     )
     tb = _replace_once(tb, "$unsigned(spike_out),", "$unsigned(spike_out), $signed(sv),")
     tb = tb.replace('$display("%0d ', '$display("%0d %0d ', 1)
-    main = _c_main(neuron, "m", 0, steps, 16)
-    main = _replace_once(main, '"%d ', '"%d %d ')
-    main = _replace_once(main, "spike, ", "spike, (int)st.spike_value_out, ")
     with tempfile.TemporaryDirectory() as d:
         tmp = Path(d)
         (tmp / "m.v").write_text(compile_to_verilog(neuron, "m", 16, 8))
@@ -78,11 +76,20 @@ def _rtl_and_c(neuron: EquationNeuron, steps: int) -> tuple[list[list[str]], lis
             capture_output=True,
             timeout=120,
         )
-        rtl = _rows(
+        return _rows(
             subprocess.run(
                 ["vvp", str(tmp / "s")], capture_output=True, text=True, timeout=120
             ).stdout
         )
+
+
+def _rtl_and_c(neuron: EquationNeuron, steps: int) -> tuple[list[list[str]], list[list[str]]]:
+    rtl = _rtl(neuron, steps)
+    main = _c_main(neuron, "m", 0, steps, 16)
+    main = _replace_once(main, '"%d ', '"%d %d ')
+    main = _replace_once(main, "spike, ", "spike, (int)st.spike_value_out, ")
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
         kernel = generate_bittrue_kernel_from_neuron(neuron, "m", data_width=16, fraction=8)
         (tmp / "m.c").write_text(kernel + "\n" + main)
         subprocess.run(
@@ -144,6 +151,42 @@ class TestCosim:
         assert spikes and all(abs(int(row[1])) > 128 for row in spikes)
         assert all(row[1] == "0" for row in rtl if row[0] == "0")
         assert {int(row[1]) > 0 for row in spikes} == {True, False}
+
+
+@pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog not available")
+def test_macro_step_value_equals_the_model() -> None:
+    """With substeps the value is set on the macro boundary from the last sub-step's state.
+
+    v climbs 0.25 per sub-step, two sub-steps per macro step, and crosses 1.2 once at 1.5
+    (macro step 3); no reset, so the crossing does not repeat. Every macro boundary row of
+    the RTL equals the model's spike, value and state; the clocks between carry no spike
+    and no value.
+    """
+    substeps = 2
+    neuron = EquationNeuron(
+        equations={"v": "1.0"},
+        state={"v": 0.0},
+        dt=0.25,
+        threshold="v > 1.2",
+        detection="crossing",
+        substeps=substeps,
+        spike_value="2.0 * v",
+    )
+    macro_steps = 8
+    rtl = _rtl(neuron, macro_steps * substeps)
+    model = []
+    for _ in range(macro_steps):
+        spike = neuron.step(0.0)
+        model.append(
+            [
+                str(spike),
+                str(int(neuron.last_spike_value * 256)),
+                str(int(neuron.state["v"] * 256)),
+            ]
+        )
+    assert rtl[substeps - 1 :: substeps] == model
+    assert [row[:2] for row in rtl[0::substeps]] == [["0", "0"]] * macro_steps
+    assert [row[1] for row in model if row[0] == "1"] == ["768"]
 
 
 @pytest.mark.skipif(not (HAS_COSIM and HAS_RUST), reason="gcc / rustc not available")
@@ -247,20 +290,6 @@ class TestModelAndRefusals:
         """Without a threshold or stochastic mechanism there is no spike to grade."""
         with pytest.raises(EquationRefusal, match="spike_value needs"):
             EquationNeuron(equations={"v": "v"}, method="map", dt=1.0, spike_value="v")
-
-    def test_substeps_are_refused(self) -> None:
-        """The macro-step datapath has no graded output yet."""
-        neuron = EquationNeuron(
-            equations={"v": "1.0"},
-            state={"v": 0.0},
-            dt=0.1,
-            threshold="v > 0.5",
-            detection="crossing",
-            substeps=2,
-            spike_value="v",
-        )
-        with pytest.raises(NotImplementedError, match="graded spike"):
-            compile_to_verilog(neuron, "m")
 
     def test_contract_reports_the_value_literal(self) -> None:
         """A literal of the value expression is encoded and therefore reported."""

@@ -148,18 +148,13 @@ def compile_to_verilog(
                 "substeps > 1 is not supported with multiply pipelining (pipeline_stages > 0)"
             )
     substep_cnt_width = max(1, (substeps - 1).bit_length()) if substeps > 1 else 1
-    if spike_value and substeps > 1:
-        raise NotImplementedError("a graded spike (spike_value) is not supported with substeps > 1")
 
-    # rand()/randn() draw from Philox at (site, step, stream) with the neuron's seed; the
-    # step counter advances once per step, as EquationNeuron.step advances it.
+    # rand()/randn()/poisson() draw from Philox at (site, step, stream) with the neuron's
+    # seed. ``rng_step`` counts logical steps, as EquationNeuron.step does: it advances on
+    # the pipeline's valid cycle (the draws stay fixed while the stages fill) and on the
+    # macro boundary (every sub-step of a macro step draws the same numbers).
     uses_random = any("rng_step" in line for line in all_intermediates)
     if uses_random:
-        if total_pipeline_latency > 0 or substeps > 1:
-            raise NotImplementedError(
-                "rand()/randn()/poisson() RTL needs one step per clock: pipeline_stages and substeps > 1 "
-                "are not supported with random draws"
-            )
         param_decls = [
             *param_decls,
             f"    parameter [63:0] P_RNG_SEED = 64'd{neuron.random_seed}",
@@ -314,13 +309,25 @@ def compile_to_verilog(
             step_lines.append(f"        {safe_var}_reg <= {safe_var}_next;")
             step_lines.append(f"        {safe_var}_out <= {safe_var}_next;")
         step_lines.append("        if (_macro_boundary) begin")
-        step_lines.append(
-            f"            if (({threshold_verilog}) && !_thr_prev) spike_out <= 1'b1;"
-        )
-        step_lines.append("            else spike_out <= 1'b0;")
+        if spike_value:
+            # The graded value of the macro step, taken from its last sub-step's state.
+            step_lines.append(f"            if (({threshold_verilog}) && !_thr_prev) begin")
+            step_lines.append("                spike_out <= 1'b1;")
+            step_lines.append(f"                spike_value_out <= {spike_value};")
+            step_lines.append("            end else begin")
+            step_lines.append("                spike_out <= 1'b0;")
+            step_lines.append(f"                spike_value_out <= {data_width}'sd0;")
+            step_lines.append("            end")
+        else:
+            step_lines.append(
+                f"            if (({threshold_verilog}) && !_thr_prev) spike_out <= 1'b1;"
+            )
+            step_lines.append("            else spike_out <= 1'b0;")
         step_lines.append(f"            _thr_prev <= ({threshold_verilog});")
         step_lines.append("        end else begin")
         step_lines.append("            spike_out <= 1'b0;")
+        if spike_value:
+            step_lines.append(f"            spike_value_out <= {data_width}'sd0;")
         step_lines.append("        end")
     elif threshold_verilog or stochastic_threshold:
         if stochastic_threshold:
@@ -402,7 +409,12 @@ def compile_to_verilog(
         lines.append(f"        _pl_cnt <= {cnt_w}'d0;")
     lines.append("    end else begin")
     if uses_random:
-        lines.append("        rng_step <= rng_step + 64'd1;")
+        if total_pipeline_latency > 0:
+            lines.append("        if (_pl_valid) rng_step <= rng_step + 64'd1;")
+        elif substeps > 1:
+            lines.append("        if (_macro_boundary) rng_step <= rng_step + 64'd1;")
+        else:
+            lines.append("        rng_step <= rng_step + 64'd1;")
 
     if total_pipeline_latency > 0:
         lines.append(f"        _pl_cnt <= _pl_valid ? {cnt_w}'d0 : (_pl_cnt + {cnt_w}'d1);")
