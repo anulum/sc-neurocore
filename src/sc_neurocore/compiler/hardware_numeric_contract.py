@@ -37,6 +37,7 @@ import ast
 import math
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
+from fractions import Fraction
 from typing import Literal
 
 from ..neurons.equation_builder import EquationNeuron
@@ -554,7 +555,7 @@ class _FixedValue:
         return value - (1 << bits) if value >= 1 << (bits - 1) else value
 
     def _encode(self, value: float) -> int:
-        return self._wrap(int(round(value * (1 << self._frac))), self._dw)
+        return self._wrap(round(Fraction(value) * (1 << self._frac)), self._dw)
 
     def _mul(self, left: int, right: int) -> int:
         product = self._wrap(left * right, 2 * self._dw)
@@ -622,7 +623,9 @@ def _encoded(
     if not math.isfinite(value):
         raise ValueError(f"{kind.replace('_', ' ')} {name} is not finite: {value!r}")
     scale = 1 << fraction
-    raw = int(round(value * scale))
+    # Exact: value * scale is a float product that overflows to inf for a large
+    # finite value (1e308 at fraction 8); the rational product rounds the same way.
+    raw = round(Fraction(value) * scale)
     word = raw & ((1 << data_width) - 1)
     if word >= 1 << (data_width - 1):
         word -= 1 << data_width

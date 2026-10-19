@@ -32,6 +32,7 @@ from sc_neurocore.exceptions import SCHardwareError
 from sc_neurocore.network.export import export_verilog
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.population import Population
+from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 
 _HAVE_ICARUS = shutil.which("iverilog") is not None and shutil.which("vvp") is not None
 
@@ -226,3 +227,40 @@ def test_yosys_elaborates_a_two_population_export(tmp_path: Path) -> None:
         ["yosys", "-q", "-p", script], capture_output=True, text=True, timeout=300
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+# RIGOR review 281.
+@pytest.mark.parametrize("source_first", [False, True])
+def test_every_neuron_profile_is_checked(source_first: bool, tmp_path: Path) -> None:
+    """NEURO-EXPORT-MODEL-01: [SC, 1907] was exported as SC (Python [8, 0], RTL [8, 8])."""
+    population = Population("SCLapicqueLIFNeuron", 2, params={"dt": 1.0})
+    sc = population.neurons[0]
+    population.neurons[0 if source_first else 1] = LapicqueNeuron(
+        profile="lapicque_1907",
+        tau=sc.tau,
+        dt=sc.dt,
+        resistance=sc.resistance,
+        v_rest=sc.v_rest,
+        v_reset=sc.v_reset,
+        v_threshold=sc.v_threshold,
+    )
+    with pytest.raises(SCHardwareError, match="lapicque_1907"):
+        export_verilog(Network(population), str(tmp_path / "out"))
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize(
+    ("params", "named"),
+    [
+        ({"v_threshold": 1e308}, "v_threshold=1e\\+308"),
+        ({"resistance": 1e308, "dt": 10.0}, "gain=inf"),
+    ],
+)
+def test_extreme_finite_parameters_are_refused_by_name(
+    params: dict[str, float], named: str, tmp_path: Path
+) -> None:
+    """NEURO-EXPORT-REFUSAL-01: OverflowError and a bare ValueError became SCHardwareError."""
+    network = Network(Population("StochasticLIFNeuron", 1, params=params))
+    with pytest.raises(SCHardwareError, match=named):
+        export_verilog(network, str(tmp_path / "out"))
+    assert not (tmp_path / "out").exists()

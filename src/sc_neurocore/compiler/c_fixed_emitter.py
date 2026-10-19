@@ -39,6 +39,7 @@ from __future__ import annotations
 import ast
 import math
 from collections.abc import Callable
+from fractions import Fraction
 
 from . import expr_lut_tables
 from .function_unit_ir import emit_c
@@ -63,7 +64,7 @@ def signed_q(q: Q88, value: float) -> int:
     what :meth:`Q88.encode_signed_literal` writes into the RTL, but as a Python
     ``int`` suitable for a C/Rust literal.
     """
-    raw = int(round(value * (1 << q.fraction)))
+    raw = round(Fraction(value) * (1 << q.fraction))  # exact; no float overflow
     mask = (1 << q.data_width) - 1
     raw &= mask
     if raw >= (1 << (q.data_width - 1)):

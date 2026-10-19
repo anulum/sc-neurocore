@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import math
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from sc_neurocore.exceptions import SCHardwareError
 
@@ -75,18 +75,19 @@ def _population_neuron(pop: Population) -> EquationNeuron:
         )
     if pop.n <= 0:
         raise SCHardwareError(f"population {pop.label!r} has no neurons to export")
-    sample: Any = pop.neurons[0]
     common = {
         "v_rest": _uniform(pop, "v_rest"),
         "v_reset": _uniform(pop, "v_reset"),
         "v_threshold": _uniform(pop, "v_threshold"),
     }
     if name in ("SCLapicqueLIFNeuron", "LapicqueNeuron"):
-        if getattr(sample, "profile", "sc_lif") != "sc_lif":
-            raise SCHardwareError(
-                f"population {pop.label!r}: the {sample.profile!r} Lapicque profile latches "
-                "one event and has no reset; only the SC LIF profile is exported"
-            )
+        # Every neuron's profile, not the first one's: one module steps them all.
+        for neuron in pop.neurons:
+            if getattr(neuron, "profile", "sc_lif") != "sc_lif":
+                raise SCHardwareError(
+                    f"population {pop.label!r}: the {neuron.profile!r} Lapicque profile "
+                    "latches one event and has no reset; only the SC LIF profile is exported"
+                )
         decay = math.exp(-_uniform(pop, "dt") / _uniform(pop, "tau"))
         parameters = {**common, "decay": decay, "r": _uniform(pop, "resistance")}
         update = "v_inf + (v - v_inf) * decay"
@@ -109,6 +110,12 @@ def _population_neuron(pop: Population) -> EquationNeuron:
             "gain": _uniform(pop, "resistance") * dt,
         }
         equations = {"v": "v - (v - v_rest) * leak + gain * I"}
+    for quantity, value in parameters.items():
+        if not math.isfinite(value):
+            raise SCHardwareError(
+                f"population {pop.label!r}: the lowered parameter {quantity}={value!r} is not "
+                "finite; no fixed-point format holds it"
+            )
     return EquationNeuron(
         equations=equations,
         parameters=parameters,

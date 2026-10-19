@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from fractions import Fraction
 
 
 # Transcendental lowerings: "lut-v1" (fixed tables, the default) and "v2" (function units).
@@ -153,7 +154,7 @@ class Q88:
         :meth:`check_range` before encoding externally supplied values.
 
         """
-        raw = int(round(value * (1 << self.fraction)))
+        raw = round(Fraction(value) * (1 << self.fraction))  # exact; no float overflow
         mask = (1 << self.data_width) - 1
         return raw & mask
 
@@ -182,7 +183,7 @@ class Q88:
         """
         if not self.signed:
             raise ValueError("signed Verilog literals require signed=True")
-        raw = int(round(value * (1 << self.fraction)))
+        raw = round(Fraction(value) * (1 << self.fraction))  # exact; no float overflow
         if raw < 0:
             raw = raw & ((1 << self.data_width) - 1)
         return f"{self.data_width}'sd{raw}"

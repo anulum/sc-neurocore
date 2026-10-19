@@ -10,6 +10,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The compiler encodes parameters, literals and initial states exactly
+  (`round(Fraction(value)·2^fraction)`): a finite value as large as 1e308
+  overflowed the float product and raised `OverflowError` in the RTL, the
+  kernel and the hardware numeric contract; it is now out of range like any
+  other value outside the format. `export_verilog` refuses it, and a derived
+  parameter that is not finite, by name with `SCHardwareError`, and checks
+  every neuron's Lapicque profile.
+
 - `Network.to_torch()` steps each model with its own operations in its own
   order (`(R·I)·dt`, the SC flow through `v_inf`), so a float64 run equals the
   Python voltages bit for bit and a resistance of 1e308 no longer turns a

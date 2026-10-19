@@ -414,3 +414,27 @@ class TestDerivedDivisors:
         nearest = hardware_numeric_contract(neuron, Q88, rounding="nearest")
         assert not [q for q in nearest.quantities if q.kind == "divisor"]
         assert hardware_numeric_contract(neuron, Q1616).representable is True
+
+
+def test_a_huge_finite_parameter_is_out_of_range_not_an_overflow() -> None:
+    """1e308 at Q8.8: value * 2**8 overflowed the float product; the encoding is exact now.
+
+    RIGOR review 281 (NEURO-EXPORT-REFUSAL-01): the contract, the kernel and the RTL
+    literal raised OverflowError for a finite parameter. The contract reports it as
+    out of range and blocking, and the compiler encodes it (wrapped) as any value
+    outside the format.
+    """
+    neuron = EquationNeuron(
+        equations={"v": "v - v * leak + I"},
+        parameters={"leak": 0.5, "v_threshold": 1e308},
+        state={"v": 0.0},
+        dt=1.0,
+        method="map",
+        threshold="v >= v_threshold",
+        reset={"v": "0.0"},
+    )
+    contract = hardware_numeric_contract(neuron, QFormat(8, 8))
+    assert not contract.representable
+    blocking = {quantity.name: quantity.status for quantity in contract.blocking}
+    assert blocking == {"v_threshold": "out_of_range"}
+    assert "module m" in compile_to_verilog(neuron, "m", 16, 8)
