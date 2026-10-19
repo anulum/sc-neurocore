@@ -1,0 +1,173 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v2",
+  "class_name": "BrunelWangNeuron",
+  "facet": "cosim",
+  "profile": "brunel_wang",
+  "claim_scope": "trace",
+  "subjects": [
+    {
+      "kind": "committed-rtl",
+      "path": "hdl/formal/catalogue/sc_brunel_wang.v",
+      "sha256": "bbe1e193f0b3486cc8d3a42aef94b77d47205ade4bc6a54f7d642dd844a00fbd",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/compiler",
+      "sha256": "a40323b146ac98de362f48fc14cafdc8d81a45a05f34e49406ba35a2509e53a9",
+      "scope": "tree"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_builder.py",
+      "sha256": "98a989ef5adcb53794d4946dfe33cc665b947b1742daf73dc2afbb9886edd511",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_namespace.py",
+      "sha256": "be0ac92fced3e204686cb72dc880281c1ca5a58c0b37212c6b902da819efff2a",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_safety.py",
+      "sha256": "b748e10e6aed1840e748a4a87beb0261c90c4602ba5424f8f38070a62f89c714",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_units_runtime.py",
+      "sha256": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/expression_derivative.py",
+      "sha256": "e6f4df6d2dce4597bc524ba3f75c924c28ab4e366bdda1e3ae22fc91d8937d96",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_contracts.py",
+      "sha256": "971ccd3e5a78cd11982cb07e41c763a633ee05e71a66be9f48b589878e30056c",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_validator.py",
+      "sha256": "21df7b0ea62e0674ff457188d970b20f65d0adc1802beebe2030e55aa3886893",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/universal_dsl.py",
+      "sha256": "72a0ae374db13a4bfbab9982b4487c95b23ccdf2b6ff674ca091d259e14b9527",
+      "scope": "file"
+    },
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/BrunelWangNeuron.toml",
+      "sha256": "fca94228cea2ea153cac5b4173398f3c6cf553e017011479fccb7338b08a3c98",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/brunel_wang.py",
+      "sha256": "83a8fdeb7f0ac9363d1485dcc69ca26067344eba3aec3bf8537e55916832ea10",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/brunel_wang.json",
+      "sha256": "13928513dcbd429988b5ce8131261f9406b56f7b131213fa9453d6839acc031e",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/brunel_wang.toml",
+      "sha256": "89d906aa1d850c8d5ef284bbfe928dd7ee6c428fdcb88a42890a6a67260361e0",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/facet_receipts.py",
+      "sha256": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/readiness.py",
+      "sha256": "003d04510cade55f34455b6aeb7560d882abbd5854a888d767f23f95f19bd638",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/receipt_execution.py",
+      "sha256": "757c044dfc80cf275874175106585096c3b80bd2226bb52978429e6ff5716049",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_cosim_brunel_wang.py",
+      "sha256": "da17db66a17d647b535a81201db822619fe1d50626a47638f51a4cfea9e05485",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt.py",
+      "sha256": "5699c0bcb3e7ac1f43674d44148e52d66a6da4863d4f3f3b9b5342d143b0f306",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state"
+  ],
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1",
+    "stdout": ".                                                                        [100%]\n1 passed in 2.27s\n",
+    "stderr": ""
+  },
+  "extra_tools": {
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "yosys": "Yosys 0.33 (git sha1 2584903a060)",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "sby": "usage: sby [options] [<jobname>.sby [tasknames] | <dirname>]"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "3.16.0",
+    "git_head": "3ff373de8cb2ab2a21522a105e880cd5efea1abd",
+    "dirty_subjects": ""
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v2",
+    "execution_contract": "pytest-junit.v1",
+    "junit_xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"1\" time=\"2.085\" timestamp=\"2026-10-19T22:25:54.224455+02:00\" hostname=\"aaarthuus\"><testcase classname=\"tests.test_cosim_brunel_wang\" name=\"test_q1616_rtl_preserves_events_and_bounded_state\" time=\"0.067\" /></testsuite></testsuites>"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "recorded_at": "2026-10-19T20:25:57Z",
+  "notes": "",
+  "receipt_sha256": "a85881f1614e583c3497160967786b54ce5c7bb16bfe7b7d5073fee165bc943c"
+}
