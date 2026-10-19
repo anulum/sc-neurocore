@@ -10,8 +10,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import math
-from sc_neurocore.neurons.seed_domain import LFSR16_DOMAIN, SeedDomain
+from sc_neurocore.neurons.seed_domain import LFSR16_ALIASES, LFSR16_DOMAIN, SeedDomain
 from typing import ClassVar
 from dataclasses import dataclass, field
 
@@ -53,6 +55,8 @@ class PoissonNeuron:
 
     #: The shared 16-bit LFSR's whole state space; the constructor refuses anything wider.
     SEED_DOMAIN: ClassVar[SeedDomain] = LFSR16_DOMAIN
+    #: Seed 0 runs as the hardware fallback 0xACE1, the state seed 0xACE1 starts.
+    SEED_ALIASES: ClassVar[Mapping[int, int]] = LFSR16_ALIASES
 
     rate_hz: float = 100.0
     dt_ms: float = 1.0

@@ -18,7 +18,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.network.population_seeds import derive_population_seeds
-from sc_neurocore.neurons.seed_domain import seed_domain
+from sc_neurocore.neurons.seed_domain import seed_aliases, seed_domain
 from sc_neurocore.network.quiescence import (
     StateSignature,
     is_quiescent,
@@ -108,8 +108,10 @@ def _per_neuron_kwargs(
     # Derive inside the domain the model declares, not the narrowest one any
     # model has: a model with a 63-bit domain was receiving 16-bit seeds only
     # because nothing published what it accepts.
-    domain = seed_domain(factory if isinstance(factory, type) else type(factory))
-    for seed in derive_population_seeds(base_seed, n, domain):
+    model = factory if isinstance(factory, type) else type(factory)
+    # Two request seeds that start one generator state (LFSR16's 0 and 0xACE1)
+    # would give two neurons one stream; the derivation skips the second.
+    for seed in derive_population_seeds(base_seed, n, seed_domain(model), seed_aliases(model)):
         yield {**kw, "seed": seed}
 
 

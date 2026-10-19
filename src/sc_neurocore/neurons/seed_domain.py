@@ -29,6 +29,8 @@ new rule imposed on it.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Final
 
 #: The domain every seeded model in the catalogue accepts, used where the
@@ -37,7 +39,14 @@ from typing import Final
 UNIVERSAL_SEED_DOMAIN: Final = (1, 65535)
 
 #: The 16-bit LFSR domain: the shared hardware generator's whole state space.
+#: Zero is accepted as a request for the hardware fallback state, so it holds
+#: 65536 request seeds but 65535 distinct generator states (see
+#: :data:`LFSR16_ALIASES`).
 LFSR16_DOMAIN: Final = (0, 65535)
+
+#: The LFSR16 request seed that starts another seed's state: zero runs as the
+#: documented fallback ``0xACE1`` (the recurrence's all-zero state is dead).
+LFSR16_ALIASES: Final[Mapping[int, int]] = MappingProxyType({0: 0xACE1})
 
 #: A NumPy-backed model's domain. `SeedSequence` accepts any non-negative
 #: integer; the upper bound is the largest a signed 64-bit field carries, which
@@ -107,6 +116,45 @@ def seed_domain(model: type[object] | None) -> SeedDomain:
     return (low, high)
 
 
+def seed_aliases(model: type[object] | None) -> dict[int, int]:
+    """Return the request seeds a model runs as another seed.
+
+    A model declares them with a ``SEED_ALIASES`` class attribute mapping a
+    request seed to the seed its generator actually starts from, as the 16-bit
+    LFSR models map ``0`` to the documented hardware fallback ``0xACE1``. Two
+    request seeds that alias start the same generator state.
+
+    Parameters
+    ----------
+    model : type or None
+        The model class, or ``None`` when the caller has no class to ask.
+
+    Returns
+    -------
+    dict of int to int
+        The declared aliases, or an empty mapping when the model declares none
+        or declares something that is not an integer-to-integer mapping.
+
+    Examples
+    --------
+    >>> from sc_neurocore.neurons.models.poisson import PoissonNeuron
+    >>> seed_aliases(PoissonNeuron)
+    {0: 44257}
+    >>> seed_aliases(None)
+    {}
+    """
+    declared = getattr(model, "SEED_ALIASES", None) if model is not None else None
+    if not isinstance(declared, Mapping):
+        return {}
+    aliases: dict[int, int] = {}
+    for request, start in declared.items():
+        for value in (request, start):
+            if not isinstance(value, int) or isinstance(value, bool):
+                return {}
+        aliases[request] = start
+    return aliases
+
+
 def check_seed(model_name: str, seed: int, domain: SeedDomain) -> int:
     """Return *seed* when the domain admits it, or raise :class:`SeedOutOfDomain`."""
     low, high = domain
@@ -116,6 +164,7 @@ def check_seed(model_name: str, seed: int, domain: SeedDomain) -> int:
 
 
 __all__ = [
+    "LFSR16_ALIASES",
     "LFSR16_DOMAIN",
     "NONZERO_SEED_DOMAIN",
     "NUMPY_SEED_DOMAIN",
@@ -123,5 +172,6 @@ __all__ = [
     "SeedDomain",
     "SeedOutOfDomain",
     "check_seed",
+    "seed_aliases",
     "seed_domain",
 ]

@@ -6,10 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Gerstner 2000 — stochastic threshold (escape noise model)
 
+"""Escape-noise neuron: exact RC membrane flow and a finite-step escape hazard."""
+
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import math
-from sc_neurocore.neurons.seed_domain import LFSR16_DOMAIN, SeedDomain
+from sc_neurocore.neurons.seed_domain import LFSR16_ALIASES, LFSR16_DOMAIN, SeedDomain
 from typing import ClassVar
 from dataclasses import dataclass
 
@@ -35,6 +39,8 @@ class EscapeRateNeuron:
 
     #: The shared 16-bit LFSR's whole state space; the constructor refuses anything wider.
     SEED_DOMAIN: ClassVar[SeedDomain] = LFSR16_DOMAIN
+    #: Seed 0 runs as the hardware fallback 0xACE1, the state seed 0xACE1 starts.
+    SEED_ALIASES: ClassVar[Mapping[int, int]] = LFSR16_ALIASES
 
     v: float = -70.0
     v_rest: float = -70.0
@@ -48,6 +54,7 @@ class EscapeRateNeuron:
     seed: int | None = DEFAULT_LFSR16_SEED
 
     def __post_init__(self) -> None:
+        """Validate the parameters and seed the canonical LFSR16."""
         self._validate_runtime_state()
         self._rng = Lfsr16Threshold(self.seed)
 
@@ -83,6 +90,23 @@ class EscapeRateNeuron:
         return probability
 
     def step(self, current: float) -> int:
+        """Advance one step and return the spike (1) or not (0).
+
+        The voltage follows the exact constant-current RC flow over ``dt``; the
+        spike is one LFSR16 trial with probability ``1 - exp(-rho(v) * dt)``,
+        ``rho(v) = rho_0 * exp((v - v_threshold) / delta_u)``. A spike resets
+        to ``v_reset``.
+
+        Parameters
+        ----------
+        current : float
+            Finite input current of this step.
+
+        Returns
+        -------
+        int
+            1 on a spike, 0 otherwise.
+        """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
@@ -189,6 +213,7 @@ class EscapeRateNeuron:
         return trace, events, self.v, self.rng_state
 
     def reset(self) -> None:
+        """Return to rest and restore the generator's initial seed."""
         self.v = self.v_rest
         self._rng.reset()
 

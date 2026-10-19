@@ -10,6 +10,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A population derives its neurons' seeds by distinct generator states: the
+  LFSR16 models (`PoissonNeuron`, `EscapeRateNeuron`) declare that seed 0 runs
+  as `0xACE1` (`SEED_ALIASES`), so the two are never both handed out and the
+  capacity is 65535 neurons. `Population(PoissonNeuron, 65536, seed=11)` gave
+  two neurons one stream; seeds before the first alias are unchanged.
+
 - The Studio equation playground sees `rand()`, `randn()` and `poisson()` in
   reset assignments (including `;`-separated ones): a seed is accepted and
   replayed, an unseeded run discloses its counter draws, and a fresh trial is

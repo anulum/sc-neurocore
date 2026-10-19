@@ -25479,8 +25479,8 @@ A group of N identical neurons with vectorized state access.
 
 ## Module `network.population_seeds`
 
-### Function `derive_population_seeds(base_seed, count, domain)`
-Derive one distinct seed per neuron, reproducibly.
+### Function `derive_population_seeds(base_seed, count, domain, aliases)`
+Derive one seed per neuron, each starting a distinct state, reproducibly.
 
 Parameters
 ----------
@@ -25489,18 +25489,28 @@ base_seed : int
     two populations built with the same base seed and count are identical.
 count : int
     How many neurons need a seed.
+domain : tuple of int, default UNIVERSAL_SEED_DOMAIN
+    The inclusive ``(low, high)`` seeds the model accepts (its
+    ``SEED_DOMAIN``); every derived seed lies in it.
+aliases : mapping of int to int, optional
+    Request seeds the model runs as another seed (its ``SEED_ALIASES``),
+    such as LFSR16's ``{0: 0xACE1}``. Two seeds that start the same state
+    are never both handed out.
 
 Returns
 -------
 list of int
-    ``count`` distinct seeds in ``&#91;1, 65535&#93;``, in neuron order.
+    ``count`` seeds in ``domain``, in neuron order, whose starting states
+    are pairwise distinct. The seeds of the first ``k`` neurons do not
+    depend on ``count``.
 
 Raises
 ------
 ValueError
-    If ``count`` is negative, or exceeds the number of distinct seeds the
-    domain holds. Refusing is deliberate: the alternative is handing two
-    neurons the same stream, which is the defect this exists to remove.
+    If ``count`` is negative, or exceeds the number of distinct states the
+    domain holds once aliases are merged (65535 for the LFSR16 models).
+    Refusing is deliberate: the alternative is handing two neurons the same
+    stream, which is the defect this exists to remove.
 
 ---
 
@@ -29466,14 +29476,17 @@ the finite-step escape hazard.
 Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
 
 - **__post_init__**()
+  - Validate the parameters and seed the canonical LFSR16.
 - **initial_seed**()
   - Return the concrete seed used by this instance.
 - **rng_state**()
   - Return the current canonical LFSR16 state.
 - **step**(current)
+  - Advance one step and return the spike (1) or not (0).
 - **simulate**(n_steps, current, backend)
   - Run a constant-current trace on Python or one real native backend.
 - **reset**()
+  - Return to rest and restore the generator's initial seed.
 
 ---
 
@@ -33435,6 +33448,33 @@ Examples
 (0, 65535)
 >>> seed_domain(None)
 (1, 65535)
+
+### Function `seed_aliases(model)`
+Return the request seeds a model runs as another seed.
+
+A model declares them with a ``SEED_ALIASES`` class attribute mapping a
+request seed to the seed its generator actually starts from, as the 16-bit
+LFSR models map ``0`` to the documented hardware fallback ``0xACE1``. Two
+request seeds that alias start the same generator state.
+
+Parameters
+----------
+model : type or None
+    The model class, or ``None`` when the caller has no class to ask.
+
+Returns
+-------
+dict of int to int
+    The declared aliases, or an empty mapping when the model declares none
+    or declares something that is not an integer-to-integer mapping.
+
+Examples
+--------
+>>> from sc_neurocore.neurons.models.poisson import PoissonNeuron
+>>> seed_aliases(PoissonNeuron)
+{0: 44257}
+>>> seed_aliases(None)
+{}
 
 ### Function `check_seed(model_name, seed, domain)`
 Return *seed* when the domain admits it, or raise :class:`SeedOutOfDomain`.
