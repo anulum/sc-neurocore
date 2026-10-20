@@ -1075,3 +1075,35 @@ staged overflow or underflow attempts and prevent shadow mutation.
 Active readback is fail-closed as well: invalid bank or entry selections on
 `read_data_lo` or `read_data_hi` return a bus error and latch
 `invalid_selection` rather than returning an ambiguous zero coefficient.
+
+## Function-unit integer programs
+
+`sc_neurocore.compiler.function_unit_ir.Program` represents shared signed
+64-bit arithmetic for Python evaluation and emission to Verilog, C and Rust.
+Operands have zero-based indices; repeated references read the same operand.
+The original `input()` and first positional argument retain index zero.
+
+```python
+from sc_neurocore.compiler.function_unit_ir import Program, emit_c, emit_verilog
+
+unit = Program()
+unit.output = unit.sub(unit.input(), unit.input(1))
+assert unit.evaluate(7, additional_inputs=(2,)) == 5
+
+rtl, rtl_output = emit_verilog(unit, "u", "x", additional_arguments=("y",))
+c, tables, c_output = emit_c(unit, "u", "x", additional_arguments=("y",))
+rust, tables, rust_output = emit_c(
+    unit, "u", "x", "rust", additional_arguments=("y",)
+)
+```
+
+The highest referenced index fixes the exact operand count, including any
+intervening indices. Evaluation and emission raise `ValueError` for missing
+or extra operands. A constant program still takes its original single input.
+Named `extern()` bindings, including random seed, stream and step values, are
+separate from indexed operands. Evaluation checks every referenced input and
+intermediate against the existing signed 64-bit invariant, even in unselected
+branches. Generated targets rely on the unit builder to preserve that invariant.
+
+This IR interface does not add equation functions: each function still needs
+its numerical contract, grammar entry and complete backend implementation.

@@ -54,7 +54,7 @@ class Step:
         Operand names, in operation order.
     value : int
         Constant value (``const``), constant shift (``shl``, ``shr``), mask bits
-        (``mask``) or coefficient position 0–2 (``table``).
+        (``mask``), operand index (``input``), or coefficient position 0–2 (``table``).
     table : str
         Table name for ``table``; input name for ``extern``.
 
@@ -69,7 +69,7 @@ class Step:
 
 @dataclass(slots=True)
 class Program:
-    """A straight-line program with one input and one output.
+    """A straight-line program with indexed inputs and one output.
 
     Parameters
     ----------
@@ -92,9 +92,32 @@ class Program:
         return name
 
     # -- construction -------------------------------------------------------------------------
-    def input(self) -> str:
-        """Return the program's input (the signed input code)."""
-        return self._add("input")
+    def input(self, index: int = 0) -> str:
+        """Return a reference to a signed input code.
+
+        Parameters
+        ----------
+        index : int, optional
+            Zero-based operand index. Repeated references read the same operand.
+
+        Returns
+        -------
+        str
+            The input step's local name.
+
+        Raises
+        ------
+        ValueError
+            If the index is not a non-negative integer (booleans excluded).
+        """
+        if isinstance(index, bool) or not isinstance(index, int) or index < 0:
+            raise ValueError("input index must be a non-negative integer")
+        return self._add("input", value=index)
+
+    def _check_input_count(self, count: int) -> None:
+        required = 1 + max((step.value for step in self.steps if step.op == "input"), default=0)
+        if count != required:
+            raise ValueError(f"program needs exactly {required} input code(s), got {count}")
 
     def const(self, value: int) -> str:
         """Return a constant; ``|value| < 2**63``."""
@@ -173,15 +196,25 @@ class Program:
         return self._add("table", (index,), coefficient, table)
 
     # -- evaluation ---------------------------------------------------------------------------
-    def evaluate(self, code: int, externs: dict[str, int] | None = None) -> int:
-        """Evaluate the program on one input code, checking every value fits 64 bits.
+    def evaluate(
+        self,
+        code: int,
+        externs: dict[str, int] | None = None,
+        *,
+        additional_inputs: Sequence[int] = (),
+    ) -> int:
+        """Evaluate signed input codes, checking every step fits 64 bits.
 
         Parameters
         ----------
         code : int
-            Signed input code.
+            Signed input code at index zero; retained for constant programs too.
         externs : dict[str, int], optional
             Values of the program's named external inputs.
+        additional_inputs : sequence of int, optional
+            Codes at indices one onwards, in order. The highest referenced index
+            determines the exact number required, including intervening indices.
+            These operands are separate from the named seed/step inputs.
 
         Returns
         -------
@@ -192,15 +225,19 @@ class Program:
         ------
         OverflowError
             If any intermediate leaves the signed 64-bit range.
+        ValueError
+            If any required operand is missing or extra operands are supplied.
 
         """
+        inputs = (code, *additional_inputs)
+        self._check_input_count(len(inputs))
         values: dict[str, int] = {}
         bound = externs or {}
         for step in self.steps:
             if step.op == "extern":
                 values[step.name] = _check(step, bound[step.table])
                 continue
-            values[step.name] = _check(step, _apply(step, values, code, self.tables))
+            values[step.name] = _check(step, _apply(step, values, inputs, self.tables))
         return values[self.output]
 
 
@@ -211,13 +248,13 @@ def _clamp_shift(amount: int) -> int:
 def _apply(
     step: Step,
     values: dict[str, int],
-    code: int,
+    inputs: Sequence[int],
     tables: dict[str, tuple[tuple[int, int, int], ...]],
 ) -> int:
     a = [values[name] for name in step.args]
     op = step.op
     if op == "input":
-        return code
+        return inputs[step.value]
     if op == "const":
         return step.value
     if op in ("add", "sub", "mul"):
@@ -270,10 +307,12 @@ def _v_clamp(amount: str) -> str:
     return f"(({amount} < 64'sd0) ? 64'sd0 : (({amount} > 64'sd63) ? 64'sd63 : {amount}))"
 
 
-def _verilog_expression(step: Step, a: list[str], argument: str, externs: dict[str, str]) -> str:
+def _verilog_expression(
+    step: Step, a: list[str], arguments: Sequence[str], externs: dict[str, str]
+) -> str:
     op = step.op
     if op == "input":
-        return f"$signed({argument})"
+        return f"$signed({arguments[step.value]})"
     if op == "extern":
         return f"$signed({externs[step.table]})"
     if op == "const":
@@ -300,7 +339,12 @@ def _verilog_expression(step: Step, a: list[str], argument: str, externs: dict[s
 
 
 def emit_verilog(
-    program: Program, prefix: str, argument: str, externs: dict[str, str] | None = None
+    program: Program,
+    prefix: str,
+    argument: str,
+    externs: dict[str, str] | None = None,
+    *,
+    additional_arguments: Sequence[str] = (),
 ) -> tuple[list[str], str]:
     """Emit the program as Verilog module items.
 
@@ -311,9 +355,11 @@ def emit_verilog(
     prefix : str
         Unique wire prefix for this call site.
     argument : str
-        Verilog expression of the signed input code.
+        Verilog expression of the signed input code at index zero.
     externs : dict[str, str], optional
         Verilog expression of each named external input (64 bits).
+    additional_arguments : sequence of str, optional
+        Signed input expressions at indices one onwards, in order.
 
     Returns
     -------
@@ -321,7 +367,14 @@ def emit_verilog(
         Module items (wire declarations and ``always @(*)`` table cases) and the
         name of the 64-bit output wire.
 
+    Raises
+    ------
+    ValueError
+        If the supplied operand count differs from the program's requirement.
+
     """
+    arguments = (argument, *additional_arguments)
+    program._check_input_count(len(arguments))
     lines: list[str] = []
     name = {step.name: f"{prefix}_{step.name}" for step in program.steps}
     for step in program.steps:
@@ -336,13 +389,13 @@ def emit_verilog(
             lines.append(f"    default: {target} = {_v_const(rows[-1][step.value])};")
             lines.append("endcase")
         else:
-            expression = _verilog_expression(step, a, argument, externs or {})
+            expression = _verilog_expression(step, a, arguments, externs or {})
             lines.append(f"wire signed [63:0] {target} = {expression};")
     return lines, name[program.output]
 
 
 def _c_expression(
-    step: Step, a: list[str], argument: str, rust: bool, externs: dict[str, str]
+    step: Step, a: list[str], arguments: Sequence[str], rust: bool, externs: dict[str, str]
 ) -> str:
     op = step.op
     one = "1i64" if rust else "(int64_t)1"
@@ -353,6 +406,7 @@ def _c_expression(
         return f"(({x}) < 0 ? 0 : (({x}) > 63 ? 63 : ({x})))"
 
     if op == "input":
+        argument = arguments[step.value]
         return f"({argument}) as i64" if rust else f"(int64_t)({argument})"
     if op == "extern":
         return f"({externs[step.table]}) as i64" if rust else f"(int64_t)({externs[step.table]})"
@@ -396,6 +450,8 @@ def emit_c(
     argument: str,
     lang: str = "c",
     externs: dict[str, str] | None = None,
+    *,
+    additional_arguments: Sequence[str] = (),
 ) -> tuple[list[str], dict[str, list[int]], str]:
     """Emit the program as C or Rust statements.
 
@@ -406,11 +462,13 @@ def emit_c(
     prefix : str
         Unique local-name prefix for this call site.
     argument : str
-        C/Rust expression of the signed input code.
+        C/Rust expression of the signed input code at index zero.
     lang : str
         ``"c"`` or ``"rust"``.
     externs : dict[str, str], optional
         C/Rust expression of each named external input (64-bit).
+    additional_arguments : sequence of str, optional
+        Signed input expressions at indices one onwards, in order.
 
     Returns
     -------
@@ -422,11 +480,14 @@ def emit_c(
     Raises
     ------
     ValueError
-        For a language other than ``"c"`` or ``"rust"``.
+        For a language other than ``"c"`` or ``"rust"``, or a supplied operand
+        count different from the program's requirement.
 
     """
     if lang not in ("c", "rust"):
         raise ValueError(f"unknown language {lang!r}")
+    arguments = (argument, *additional_arguments)
+    program._check_input_count(len(arguments))
     rust = lang == "rust"
     statements: list[str] = []
     arrays: dict[str, list[int]] = {}
@@ -444,7 +505,7 @@ def emit_c(
                 index = f"(({a[0]}) < 0 ? 0 : (({a[0]}) > {last} ? {last} : ({a[0]})))"
                 expression = f"{array}[({index}) * 3 + {step.value}]"
         else:
-            expression = _c_expression(step, a, argument, rust, externs or {})
+            expression = _c_expression(step, a, arguments, rust, externs or {})
         local = name[step.name]
         statements.append(
             f"let {local}: i64 = {expression};" if rust else f"int64_t {local} = {expression};"

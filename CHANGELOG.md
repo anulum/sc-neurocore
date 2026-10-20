@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+
+- Add indexed operands to function-unit integer programs, with matching Python, Verilog, C and Rust bindings and explicit refusal of missing or extra operands.
+
+
 ### Fixed
 
 - Retain and check every timed model trajectory across all five runtimes; reject non-finite states and inconsistent dimensions before writing benchmark evidence. Record CPU, RAM and runtime context with each report.

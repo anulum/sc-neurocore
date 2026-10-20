@@ -9265,21 +9265,21 @@ args : tuple&#91;str, ...&#93;
     Operand names, in operation order.
 value : int
     Constant value (``const``), constant shift (``shl``, ``shr``), mask bits
-    (``mask``) or coefficient position 0–2 (``table``).
+    (``mask``), operand index (``input``), or coefficient position 0–2 (``table``).
 table : str
     Table name for ``table``; input name for ``extern``.
 
 
 ### Class `Program`
-A straight-line program with one input and one output.
+A straight-line program with indexed inputs and one output.
 
 Parameters
 ----------
 tables : dict&#91;str, tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;&#93;
     Coefficient tables referenced by ``table`` steps.
 
-- **input**()
-  - Return the program's input (the signed input code).
+- **input**(index)
+  - Return a reference to a signed input code.
 - **const**(value)
   - Return a constant; ``|value| < 2**63``.
 - **add**(a, b)
@@ -9316,10 +9316,10 @@ tables : dict&#91;str, tuple&#91;tuple&#91;int, int, int&#93;, ...&#93;&#93;
   - Return ``when_true`` if ``condition`` is non-zero, else ``when_false``.
 - **lookup**(table, index, coefficient)
   - Return coefficient ``0``, ``1`` or ``2`` of ``tables&#91;table&#93;&#91;index&#93;``.
-- **evaluate**(code, externs)
-  - Evaluate the program on one input code, checking every value fits 64 bits.
+- **evaluate**(code, externs, \*, additional_inputs)
+  - Evaluate signed input codes, checking every step fits 64 bits.
 
-### Function `emit_verilog(program, prefix, argument, externs)`
+### Function `emit_verilog(program, prefix, argument, externs, *, additional_arguments)`
 Emit the program as Verilog module items.
 
 Parameters
@@ -9329,9 +9329,11 @@ program : Program
 prefix : str
     Unique wire prefix for this call site.
 argument : str
-    Verilog expression of the signed input code.
+    Verilog expression of the signed input code at index zero.
 externs : dict&#91;str, str&#93;, optional
     Verilog expression of each named external input (64 bits).
+additional_arguments : sequence of str, optional
+    Signed input expressions at indices one onwards, in order.
 
 Returns
 -------
@@ -9339,7 +9341,12 @@ tuple&#91;list&#91;str&#93;, str&#93;
     Module items (wire declarations and ``always @(*)`` table cases) and the
     name of the 64-bit output wire.
 
-### Function `emit_c(program, prefix, argument, lang, externs)`
+Raises
+------
+ValueError
+    If the supplied operand count differs from the program's requirement.
+
+### Function `emit_c(program, prefix, argument, lang, externs, *, additional_arguments)`
 Emit the program as C or Rust statements.
 
 Parameters
@@ -9349,11 +9356,13 @@ program : Program
 prefix : str
     Unique local-name prefix for this call site.
 argument : str
-    C/Rust expression of the signed input code.
+    C/Rust expression of the signed input code at index zero.
 lang : str
     ``"c"`` or ``"rust"``.
 externs : dict&#91;str, str&#93;, optional
     C/Rust expression of each named external input (64-bit).
+additional_arguments : sequence of str, optional
+    Signed input expressions at indices one onwards, in order.
 
 Returns
 -------
@@ -9365,7 +9374,8 @@ tuple&#91;list&#91;str&#93;, dict&#91;str, list&#91;int&#93;&#93;, str&#93;
 Raises
 ------
 ValueError
-    For a language other than ``"c"`` or ``"rust"``.
+    For a language other than ``"c"`` or ``"rust"``, or a supplied operand
+    count different from the program's requirement.
 
 ---
 

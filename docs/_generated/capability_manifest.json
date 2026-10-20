@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5367
+    "test_files": 5368
   },
   "documentation": {
     "public_pages": [
@@ -5327,6 +5327,7 @@
       "tests/test_fpga_weight_rom.py",
       "tests/test_frontiers.py",
       "tests/test_function_lowering_v2_cosim.py",
+      "tests/test_function_unit_ir.py",
       "tests/test_function_unit_programs.py",
       "tests/test_function_units.py",
       "tests/test_fusion/sensor_fusion_support.py",
