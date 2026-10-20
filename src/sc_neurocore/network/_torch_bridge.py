@@ -68,7 +68,7 @@ class _PopulationSpec:
     init_refractory: tuple[int, ...] = ()
 
 
-class _ExactResetCell(nn.Module):
+class _ExactResetCell(_TorchModuleBase):
     """The deterministic discrete update of a supported model, with a surrogate gradient.
 
     The candidate voltage is computed with the model's own operations in the
@@ -202,6 +202,27 @@ def _build_population_spec(
     population: Population,
     surrogate_fn: Callable[[torch.Tensor], torch.Tensor],
 ) -> tuple[_PopulationSpec, nn.Module]:
+    """Bind a supported population to its exact deterministic Torch cell.
+
+    Parameters
+    ----------
+    population : Population
+        Declared model instances and their live voltage/refractory state.
+    surrogate_fn : callable
+        Differentiable surrogate used without changing the forward spike event.
+
+    Returns
+    -------
+    tuple of _PopulationSpec and torch.nn.Module
+        Preserved population state and its registered runtime module. The
+        type-only base permits checking without Torch; at runtime the cell
+        inherits ``torch.nn.Module`` directly.
+
+    Raises
+    ------
+    NotImplementedError
+        The model, parameters or live state cannot be represented exactly.
+    """
     sample = population.neurons[0]
     voltages = tuple(float(neuron.v) for neuron in population.neurons)
     if population.model_name in ("LapicqueNeuron", "SCLapicqueLIFNeuron"):
@@ -212,7 +233,7 @@ def _build_population_spec(
                     "Network.to_torch() supports LapicqueNeuron only in its SC LIF profile; the "
                     f"{neuron.profile!r} source profile latches one event and has no hard reset"
                 )
-        cell: nn.Module = _ExactResetCell(
+        cell = _ExactResetCell(
             form="flow",
             decay=math.exp(-_uniform(population, "dt") / _uniform(population, "tau")),
             resistance=_uniform(population, "resistance"),
@@ -223,7 +244,7 @@ def _build_population_spec(
             surrogate_fn=surrogate_fn,
         )
         spec = _PopulationSpec(population, "v", voltages, population.label)
-        return spec, cell
+        return spec, cast(nn.Module, cell)
 
     if population.model_name == "StochasticLIFNeuron":
         if float(sample.noise_std) != 0.0:
@@ -260,7 +281,7 @@ def _build_population_spec(
             surrogate_fn=surrogate_fn,
         )
         spec = _PopulationSpec(population, "v", voltages, population.label, refractory)
-        return spec, cell
+        return spec, cast(nn.Module, cell)
 
     raise NotImplementedError(
         f"Network.to_torch() does not support model {population.model_name!r} yet"

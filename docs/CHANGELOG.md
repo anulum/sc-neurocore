@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Use the existing typed Torch module base for exact-reset cells so strict checking also works without the optional Torch dependency; runtime inheritance and numerical updates are unchanged.
+
 - Fix full-range signed current interpolation in the HDL dot-product mapper, including descending endpoint ranges; retain every product bit until signed division and compare real RTL against an exact integer reference.
 
 - Preserve every LIF, dense and delay-coded layer parameter in native IR text. Parse delay-coded layers, retain ordered tap offsets, and reject malformed explicit attributes instead of silently substituting defaults.
