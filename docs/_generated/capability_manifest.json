@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5366
+    "test_files": 5367
   },
   "documentation": {
     "public_pages": [
@@ -4140,6 +4140,7 @@
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_evidence_provenance.py",
       "tests/test_benchmark_harness_contracts.py",
+      "tests/test_benchmark_repetition_validation.py",
       "tests/test_benchmark_toolchain_probe.py",
       "tests/test_benchmarks/test_bench_autonomous_learning.py",
       "tests/test_benchmarks/test_bench_kl_refine.py",

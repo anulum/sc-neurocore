@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+
+- Retain and check every timed model trajectory across all five runtimes; reject non-finite states and inconsistent dimensions before writing benchmark evidence. Record CPU, RAM and runtime context with each report.
+
+
 - Declare the Studio remote panel in its federation manifest and content digest.
   Add a local remote-bundle command that verifies frozen frontend bytes and
   writes a reproducible archive with a digest-pinned deploy descriptor.

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for benchmark measurement context
 
+"""Verify the actual host context recorded with benchmark measurements."""
+
 from __future__ import annotations
 
 from benchmarks._benchmark_context import measurement_context
@@ -13,7 +15,6 @@ from benchmarks._benchmark_context import measurement_context
 
 def test_measurement_context_records_reproducibility_contract() -> None:
     """Benchmark artefacts must preserve isolation and host-load evidence."""
-
     load_before = [1.0, 2.0, 3.0]
     context = measurement_context(load_before)
 
@@ -26,3 +27,11 @@ def test_measurement_context_records_reproducibility_contract() -> None:
     assert "load_average_after" in context
     assert "cpu_governor" in context
     assert "cpu_frequency_mhz" in context
+
+    assert context["host"]
+    assert context["architecture"]
+    assert context["cpu_model"]
+    assert context["logical_cpu_count"]
+    assert context["operating_system"]
+    assert context["python_version"]
+    assert context["numpy_version"]

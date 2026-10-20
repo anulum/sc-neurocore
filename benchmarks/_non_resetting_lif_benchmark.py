@@ -15,6 +15,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+from functools import partial
 import importlib
 import json
 import os
@@ -23,11 +24,18 @@ import platform
 import statistics
 import shutil
 import subprocess
-import time
 from typing import Any, TypeAlias, cast
 
 import numpy as np
 import numpy.typing as npt
+
+from benchmarks._benchmark_context import load_average, measurement_context
+from benchmarks._repeated_measurements import (
+    RepetitionSummary,
+    compare_trajectories,
+    measure_repetitions,
+    summarize_repetitions,
+)
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
@@ -103,19 +111,6 @@ def _trace_hash(result: Mapping[str, object], state_keys: Sequence[str]) -> str:
     return digest.hexdigest()
 
 
-def _measure(
-    spec: BenchmarkSpec, backend: str, currents: FloatArray, repeats: int
-) -> tuple[list[int], Mapping[str, object]]:
-    spec.simulate(currents[: min(1000, len(currents))], backend=backend)
-    samples: list[int] = []
-    result: Mapping[str, object] = {}
-    for _ in range(repeats):
-        started = time.perf_counter_ns()
-        result = spec.simulate(currents, backend=backend)
-        samples.append(time.perf_counter_ns() - started)
-    return samples, result
-
-
 def _row(
     spec: BenchmarkSpec,
     backend: str,
@@ -123,12 +118,10 @@ def _row(
     result: Mapping[str, object],
     reference: Mapping[str, object],
     steps: int,
-) -> dict[str, Any]:
-    differences = [
-        np.abs(np.asarray(result[key]) - np.asarray(reference[key])) for key in spec.state_keys
-    ]
-    maximum = max(float(values.max(initial=0.0)) for values in differences)
-    event_match = np.array_equal(np.asarray(result["events"]), np.asarray(reference["events"]))
+) -> RepetitionSummary:
+    maximum, event_match, trace_match = compare_trajectories(
+        result, reference, spec.state_keys, spec.parity_atol[backend]
+    )
     median_ns = float(statistics.median(samples))
     event_count = int(np.asarray(result["events"]).sum())
     return {
@@ -137,10 +130,10 @@ def _row(
         "median_ns_per_step": median_ns / steps,
         "min_ns_per_step": min(samples) / steps,
         "max_ns_per_step": max(samples) / steps,
-        "trace_sha256": _trace_hash(result, spec.state_keys),
+        "trace_sha256": _trace_hash(result, spec.state_keys) if trace_match else None,
         "parity_atol": spec.parity_atol[backend],
         "parity_max_abs_diff": maximum,
-        "trace_matches_python": maximum <= spec.parity_atol[backend] and event_match,
+        "trace_matches_python": trace_match,
         "events": event_count,
         "spikes": event_count,
         "event_vector_matches_python": event_match,
@@ -239,8 +232,48 @@ def _go_library_version(library: Path) -> str:
     return line.rsplit(": ", 1)[-1]
 
 
+def toolchain_versions(go_library: Path) -> dict[str, str]:
+    """Record observed tools and the loaded Julia and Go runtime identities.
+
+    Parameters
+    ----------
+    go_library : pathlib.Path
+        Shared library actually used by the measured Go dispatcher.
+
+    Returns
+    -------
+    dict
+        Compiler CLI versions, the Go compiler embedded in the library and
+        the Julia version loaded in this process. CLI observations do not
+        establish the build provenance of the separately hashed Rust image.
+    """
+    return {
+        "rustc": _version(_toolchain_command("rustc", "--version")),
+        "go": _go_library_version(go_library),
+        "go_cli": _version(_toolchain_command("go", "version"), cwd=GO_MODULE),
+        "julia": _julia_runtime_version(),
+        "julia_cli": _version(_toolchain_command("julia", "--version")),
+        "mojo": _version(_mojo_command()),
+    }
+
+
 def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
-    """Execute all five real runtimes and write evidence only after parity."""
+    """Measure all five runtimes and require parity for every repetition.
+
+    Parameters
+    ----------
+    spec : BenchmarkSpec
+        Model dispatcher, state contract, native identities and full protocol.
+    argv : list of str or None
+        Command-line arguments, or the process arguments when omitted.
+
+    Returns
+    -------
+    int
+        Zero after writing complete evidence, two for an unavailable runtime,
+        or three for a mismatched trajectory. Invalid arguments are refused by
+        the argument parser before measurements begin.
+    """
     parser = argparse.ArgumentParser(description=spec.benchmark)
     parser.add_argument("--steps", type=int, default=spec.steps)
     parser.add_argument("--repeats", type=int, default=spec.repeats)
@@ -253,13 +286,17 @@ def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
         print(f"unavailable {spec.model} backends: {', '.join(unavailable)}")
         return 2
     currents = np.full(args.steps, spec.current, dtype=np.float64)
+    load_before = load_average()
     measurements = {
-        backend: _measure(spec, backend, currents, args.repeats) for backend in BACKENDS
+        backend: measure_repetitions(spec.simulate, currents, backend=backend, repeats=args.repeats)
+        for backend in BACKENDS
     }
-    reference = measurements["python"][1]
+    reference = measurements["python"][1][0]
     rows = {
-        backend: _row(spec, backend, samples, result, reference, args.steps)
-        for backend, (samples, result) in measurements.items()
+        backend: summarize_repetitions(
+            samples, results, partial(_row, spec, backend, reference=reference, steps=args.steps)
+        )
+        for backend, (samples, results) in measurements.items()
     }
     if not all(row["trace_matches_python"] for row in rows.values()):
         print(f"{spec.model} parity failed; evidence was not written")
@@ -281,16 +318,16 @@ def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
         "repeats": args.repeats,
         "current": spec.current,
         "backend_summary": rows,
-        "source_hashes": _source_hashes(spec.source_paths),
+        "measurement_context": measurement_context(load_before),
+        "source_hashes": _source_hashes(
+            (
+                *spec.source_paths,
+                "benchmarks/_repeated_measurements.py",
+                "benchmarks/_benchmark_context.py",
+            )
+        ),
         "binary_hashes": _binary_hashes(spec),
-        "tool_versions": {
-            "rustc": _version(_toolchain_command("rustc", "--version")),
-            "go": _go_library_version(REPOSITORY / spec.go_library),
-            "go_cli": _version(_toolchain_command("go", "version"), cwd=GO_MODULE),
-            "julia": _julia_runtime_version(),
-            "julia_cli": _version(_toolchain_command("julia", "--version")),
-            "mojo": _version(_mojo_command()),
-        },
+        "tool_versions": toolchain_versions(REPOSITORY / spec.go_library),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

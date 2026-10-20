@@ -11,21 +11,31 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import argparse
 from datetime import datetime, timezone
 import hashlib
+from functools import partial
 import importlib
 import json
 import os
 from pathlib import Path
 import platform
 import statistics
-import subprocess
-import time
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+
+from benchmarks._benchmark_context import load_average, measurement_context
+from benchmarks._non_resetting_lif_benchmark import toolchain_versions
+from benchmarks._repeated_measurements import (
+    RepetitionSummary,
+    compare_trajectories,
+    measure_repetitions,
+    summarize_repetitions,
+)
 
 from sc_neurocore.accel import sc_resetting_mat as backends
 
@@ -36,6 +46,9 @@ STEPS = 200_000
 REPEATS = 5
 CURRENT = 50.0
 SOURCE_PATHS = (
+    "benchmarks/_repeated_measurements.py",
+    "benchmarks/_non_resetting_lif_benchmark.py",
+    "benchmarks/_benchmark_context.py",
     "benchmarks/bench_model_sc_resetting_mat.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/trivial/sc_resetting_mat.rs",
@@ -75,7 +88,7 @@ def _source_hashes() -> dict[str, object]:
     return hashes
 
 
-def _trace_hash(result: dict[str, Any]) -> str:
+def _trace_hash(result: Mapping[str, object]) -> str:
     states = np.ascontiguousarray(
         np.column_stack(
             [np.asarray(result[key], dtype="<f8") for key in ("voltages", "theta1", "theta2")]
@@ -108,40 +121,17 @@ def _binary_hashes() -> dict[str, dict[str, Any]]:
     }
 
 
-def _version(command: list[str]) -> str:
-    try:
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
-    except OSError:
-        return "unavailable"
-    lines = (completed.stdout or completed.stderr).strip().splitlines()
-    return lines[0] if lines else f"exit {completed.returncode}"
-
-
-def _measure(backend: str, currents: FloatArray, repeats: int) -> tuple[list[int], dict[str, Any]]:
-    backends.simulate_sc_resetting_mat(currents[: min(1000, len(currents))], backend=backend)
-    samples: list[int] = []
-    result: dict[str, Any] = {}
-    for _ in range(repeats):
-        started = time.perf_counter_ns()
-        result = backends.simulate_sc_resetting_mat(currents, backend=backend)
-        samples.append(time.perf_counter_ns() - started)
-    return samples, result
-
-
 def _row(
     backend: str,
     samples: list[int],
-    result: dict[str, Any],
-    reference: dict[str, Any],
+    result: Mapping[str, object],
+    reference: Mapping[str, object],
     steps: int,
-) -> dict[str, Any]:
+) -> RepetitionSummary:
     tolerance = backends.PARITY_ATOL[backend]
-    differences = [
-        np.abs(np.asarray(result[key]) - np.asarray(reference[key]))
-        for key in ("voltages", "theta1", "theta2")
-    ]
-    max_difference = max(float(values.max(initial=0.0)) for values in differences)
-    event_match = np.array_equal(result["events"], reference["events"])
+    max_difference, event_match, trace_match = compare_trajectories(
+        result, reference, ("voltages", "theta1", "theta2"), tolerance
+    )
     median_ns = float(statistics.median(samples))
     return {
         "available": True,
@@ -149,10 +139,10 @@ def _row(
         "median_ns_per_step": median_ns / steps,
         "min_ns_per_step": min(samples) / steps,
         "max_ns_per_step": max(samples) / steps,
-        "trace_sha256": _trace_hash(result),
+        "trace_sha256": _trace_hash(result) if trace_match else None,
         "parity_atol": tolerance,
         "parity_max_abs_diff": max_difference,
-        "trace_matches_python": max_difference <= tolerance and event_match,
+        "trace_matches_python": trace_match,
         "events": int(np.asarray(result["events"]).sum()),
         "spikes": int(np.asarray(result["events"]).sum()),
         "event_vector_matches_python": event_match,
@@ -163,6 +153,18 @@ def _row(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Write evidence only when every runtime repetition matches the reference.
+
+    Parameters
+    ----------
+    argv : list of str or None
+        Command-line arguments, or the process arguments when omitted.
+
+    Returns
+    -------
+    int
+        Zero after writing evidence, or nonzero for unavailable or unequal runs.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--steps", type=int, default=STEPS)
     parser.add_argument("--repeats", type=int, default=REPEATS)
@@ -175,11 +177,19 @@ def main(argv: list[str] | None = None) -> int:
     if unavailable:
         print(f"unavailable SC resetting-MAT backends: {', '.join(unavailable)}")
         return 2
-    measurements = {name: _measure(name, currents, args.repeats) for name in BACKENDS}
-    reference = measurements["python"][1]
+    load_before = load_average()
+    measurements = {
+        name: measure_repetitions(
+            backends.simulate_sc_resetting_mat, currents, backend=name, repeats=args.repeats
+        )
+        for name in BACKENDS
+    }
+    reference = measurements["python"][1][0]
     rows = {
-        name: _row(name, samples, result, reference, args.steps)
-        for name, (samples, result) in measurements.items()
+        name: summarize_repetitions(
+            samples, results, partial(_row, name, reference=reference, steps=args.steps)
+        )
+        for name, (samples, results) in measurements.items()
     }
     if not all(row["trace_matches_python"] for row in rows.values()):
         print("SC resetting-MAT parity failed; evidence was not written")
@@ -201,14 +211,12 @@ def main(argv: list[str] | None = None) -> int:
         "repeats": args.repeats,
         "current": CURRENT,
         "backend_summary": rows,
+        "measurement_context": measurement_context(load_before),
         "source_hashes": _source_hashes(),
         "binary_hashes": _binary_hashes(),
-        "tool_versions": {
-            "rustc": _version(["rustc", "--version"]),
-            "go": _version(["go", "version"]),
-            "julia": _version([os.environ.get("PYTHON_JULIACALL_EXE", "julia"), "--version"]),
-            "mojo": _version(["mojo", "--version"]),
-        },
+        "tool_versions": toolchain_versions(
+            REPOSITORY / "src/sc_neurocore/accel/go/sc_resetting_mat/libsc_resetting_mat.so"
+        ),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

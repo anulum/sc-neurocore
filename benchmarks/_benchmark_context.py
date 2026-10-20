@@ -6,15 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Benchmark measurement context helpers
 
+"""Record observed hardware and execution context for benchmark artefacts."""
+
 from __future__ import annotations
 
 import os
+import platform
+
+import numpy as np
 from pathlib import Path
 
 
 def load_average() -> list[float] | None:
     """Return the current host load averages when the platform exposes them."""
-
     return list(os.getloadavg()) if hasattr(os, "getloadavg") else None
 
 
@@ -68,10 +72,43 @@ def _cpu_frequency_mhz() -> dict[str, float] | None:
 
 
 def measurement_context(load_average_before: list[float] | None) -> dict[str, object]:
-    """Return reproducibility metadata for local benchmark artefacts."""
+    """Return hardware, runtime and isolation context for a local measurement.
 
+    Parameters
+    ----------
+    load_average_before : list of float or None
+        Host load sampled immediately before the measured repetitions.
+
+    Returns
+    -------
+    dict
+        Observed CPU identity, memory, runtime versions, affinity, governor,
+        frequency and before/after load, with the non-isolated timing boundary.
+    """
     affinity = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else []
+    cpu_info = _read_text(Path("/proc/cpuinfo")) or ""
+    cpu_model = next(
+        (
+            line.split(":", 1)[1].strip()
+            for line in cpu_info.splitlines()
+            if line.startswith("model name")
+        ),
+        platform.processor() or "unavailable",
+    )
+    ram_bytes = (
+        int(os.sysconf("SC_PHYS_PAGES")) * int(os.sysconf("SC_PAGE_SIZE"))
+        if hasattr(os, "sysconf")
+        else None
+    )
     return {
+        "host": platform.node(),
+        "architecture": platform.machine(),
+        "cpu_model": cpu_model,
+        "logical_cpu_count": os.cpu_count(),
+        "ram_bytes": ram_bytes,
+        "operating_system": platform.platform(),
+        "python_version": platform.python_version(),
+        "numpy_version": np.__version__,
         "host_load": "workstation under concurrent load during capture",
         "cpu_isolation": (
             "taskset affinity only when launched with taskset; no kernel-reserved "

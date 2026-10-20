@@ -57,6 +57,38 @@ not an FPGA throughput or latency measurement.
 
 ---
 
+## Repeated model trajectories
+
+The source-bound MAT, resetting-MAT, non-resetting LIF and adaptive LIF
+benchmarks retain each timed trajectory before a runtime can reuse its output
+arrays. The default protocol remains 200,000 steps, five repetitions and all
+five runtimes: Python, Rust, Julia, Go and Mojo. Run them from the checkout:
+
+```bash
+python -m benchmarks.bench_model_mat --output mat.json
+python -m benchmarks.bench_model_sc_resetting_mat --output resetting-mat.json
+python -m benchmarks.bench_model_non_resetting_lif --output non-resetting-lif.json
+python -m benchmarks.bench_model_sc_non_resetting_adaptive_lif --output adaptive-lif.json
+```
+
+Each backend's `repetitions` array preserves one sample, state error, event
+comparison, final state and trajectory digest per run. Aggregate timing uses
+all samples, while aggregate parity requires every repetition to match the
+first complete Python trajectory. The summary digest identifies the last
+trajectory; individual digests remain beside their own samples. Incorrect
+state dimensions, non-finite states or unequal events refuse the result,
+including an intermediate failure followed by a successful final run.
+Trajectory copies and comparisons take place outside the timed simulation.
+
+The `measurement_context` records the observed CPU model, logical CPU count,
+RAM, architecture, operating system, Python and NumPy versions, affinity,
+governor, frequency and before/after load. Source hashes include the shared
+measurement and context modules; native binary identities remain separate.
+These commands label their output `local_regression_non_isolated` and make no
+production speed claim. An unavailable required runtime returns a refusal
+without writing a new result. Existing historical reports retain their
+original measurement context and do not qualify the current source.
+
 ## Stochastic network CLI records
 
 Run the maintained NumPy/native stochastic pipeline with its configured
