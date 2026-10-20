@@ -27,8 +27,16 @@ module sc_dotproduct_to_current_formal (
     );
 
 `ifdef FORMAL
-    // Constrain y_max >= y_min so range is non-negative
-    always @* assume(y_max >= y_min);
+    // Independent widened integer specification: no endpoint-order assumption.
+    wire signed [18:0] low = {{3{y_min[15]}}, y_min};
+    wire signed [18:0] high = {{3{y_max[15]}}, y_max};
+    wire signed [18:0] population = {18'd0, post_bits[0]}
+                                   + {18'd0, post_bits[1]}
+                                   + {18'd0, post_bits[2]};
+    wire signed [18:0] numerator = (high - low) * population;
+    wire signed [18:0] expected = low + numerator / 19'sd3;
+
+    always @* assert($signed(I_t) == expected);
 
     // 1. All post_bits zero => I_t == y_min
     always @* begin
@@ -42,10 +50,15 @@ module sc_dotproduct_to_current_formal (
             assert(I_t == y_max);
     end
 
-    // 3. I_t bounded: y_min <= I_t <= y_max (signed)
+    // 3. Interpolation stays between either ordering of the signed endpoints.
     always @* begin
-        assert(I_t >= y_min);
-        assert(I_t <= y_max);
+        if (y_min <= y_max) begin
+            assert(I_t >= y_min);
+            assert(I_t <= y_max);
+        end else begin
+            assert(I_t <= y_min);
+            assert(I_t >= y_max);
+        end
     end
 
     // 4. Cover: mid-range output reachable

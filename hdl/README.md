@@ -23,3 +23,13 @@ All modules target Yosys 0.63 + sv2v 0.0.13.
 
 Modules without formal proofs (`sc_dense_matrix_layer`, `sc_dense_layer_top`,
 `sc_neurocore_top`) are integration wrappers verified by simulation only.
+
+`sc_dotproduct_to_current` requires a positive `N_INPUTS` and maps each
+population count to `y_min + trunc((y_max-y_min)*count/N_INPUTS)`. Division
+truncates towards zero. Both endpoint orders and the complete signed
+`DATA_WIDTH` range are supported; the binary point is preserved. The RTL
+regression compares repository and packaged RTL with exact integer results for widths 1–64 and fan-ins 1–33,
+including extreme endpoints and every reachable count. The formal harness
+checks the full signed 16-bit domain for three inputs without an endpoint-order
+assumption. Run `pytest tests/test_dotproduct_current_rtl.py -q` with Icarus
+Verilog installed, or use `tb_sc_dotproduct_to_current.v` for a compact bench.

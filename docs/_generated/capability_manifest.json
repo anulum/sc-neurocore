@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5379
+    "test_files": 5380
   },
   "documentation": {
     "public_pages": [
@@ -4875,6 +4875,7 @@
       "tests/test_doctor_diagnostic_report.py",
       "tests/test_dopamine_stdp_contracts.py",
       "tests/test_dot_product.py",
+      "tests/test_dotproduct_current_rtl.py",
       "tests/test_dpi_neuron_backend_loading.py",
       "tests/test_dpi_neuron_backends_auto_dispatch.py",
       "tests/test_dpi_neuron_backends_backend_parity.py",

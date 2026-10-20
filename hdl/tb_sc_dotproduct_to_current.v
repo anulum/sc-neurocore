@@ -33,6 +33,27 @@ module tb_sc_dotproduct_to_current;
         .I_t       (I_t)
     );
 
+    // Check signed extrema and descending ranges with exact expected words.
+    task check_current;
+        input [2:0] bits;
+        input signed [15:0] low;
+        input signed [15:0] high;
+        input signed [15:0] expected;
+        begin
+            post_bits = bits;
+            y_min = low;
+            y_max = high;
+            #10;
+            if (I_t === expected) begin
+                pass_count = pass_count + 1;
+            end else begin
+                $display("[FAIL] bits=%b low=%0d high=%0d got=%0d expected=%0d",
+                         bits, low, high, I_t, expected);
+                fail_count = fail_count + 1;
+            end
+        end
+    endtask
+
     initial begin
         pass_count = 0;
         fail_count = 0;
@@ -86,12 +107,21 @@ module tb_sc_dotproduct_to_current;
             fail_count = fail_count + 1;
         end
 
+        check_current(3'b001, -16'sd30000, 16'sd30000, -16'sd10000);
+        check_current(3'b011, -16'sd30000, 16'sd30000, 16'sd10000);
+        check_current(3'b111, -16'sd30000, 16'sd30000, 16'sd30000);
+        check_current(3'b001, 16'sd30000, -16'sd30000, 16'sd10000);
+        check_current(3'b011, 16'sd30000, -16'sd30000, -16'sd10000);
+        check_current(3'b111, 16'sd30000, -16'sd30000, -16'sd30000);
+        check_current(3'b111, 16'sh8000, 16'sh7fff, 16'sh7fff);
+        check_current(3'b001, 16'sd0, -16'sd1, 16'sd0);
+
         $display("---------------------------------------");
         $display("tb_sc_dotproduct_to_current: %0d passed, %0d failed", pass_count, fail_count);
         if (fail_count == 0)
             $display("[PASS] All tests passed");
         else
-            $display("[FAIL] %0d test(s) failed", fail_count);
+            $fatal(1, "[FAIL] %0d test(s) failed", fail_count);
         $finish;
     end
 
