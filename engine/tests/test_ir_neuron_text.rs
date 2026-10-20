@@ -44,8 +44,8 @@ fn graph_with(params: ScOp) -> ScGraph {
         b.input(format!("input_{index}"), ty);
     }
     let mut g = b.build();
+    assert_eq!(g.fresh_id(), ValueId(4));
     g.push(params);
-    g.next_id = 5;
     let id = g.fresh_id();
     g.push(ScOp::Output {
         id,
@@ -134,7 +134,7 @@ fn lif_roundtrip_preserves_rest_reset_and_every_configuration_field() {
 
 #[test]
 fn dense_roundtrip_preserves_seed_geometry_and_current_mapping() {
-    for width in [8, 16, 24, 32] {
+    for width in [10, 16, 24, 32, 64] {
         for (inputs, neurons, length) in [(1, 1, 64), (3, 7, 1024)] {
             assert_roundtrip(&dense(DenseParams {
                 n_inputs: inputs,

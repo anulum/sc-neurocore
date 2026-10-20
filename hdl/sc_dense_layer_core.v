@@ -117,6 +117,7 @@ end
 
 
 // ----------------------------------------------------------------
+// Reset restores declared seeds independently of the run counter.
 // Bitstream encoders for x_inputs
 // ----------------------------------------------------------------
 // Each encoder receives a unique SEED_INIT derived from a prime-stride
@@ -131,7 +132,7 @@ generate
             .clk        (clk),
             .rst_n      (rst_n),
             .x_value    (x_inputs_arr[i]),
-            .t_index    (t_counter),
+            .t_index    (32'd0),
             .bit_out    (pre_bits_t[i])
         );
     end
@@ -153,7 +154,7 @@ generate
             .clk        (clk),
             .rst_n      (rst_n),
             .x_value    (weight_arr[i]),
-            .t_index    (t_counter),
+            .t_index    (32'd0),
             .bit_out    (w_bits_t[i])
         );
     end

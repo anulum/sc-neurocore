@@ -63,15 +63,25 @@ contain only clock/timing constraints. They do not contain `PACKAGE_PIN` or
 verified in this repository. Adding fabricated pins would create false hardware
 evidence.
 
-## Resource finding from the 2026-06-04 benchmark
+## Resource estimates and 2026-10-20 benchmark
 
-The isolated 2026-06-04 comparison benchmark measured the target contract across
-Python/Vivado-Tcl and Rust surfaces.
+The 2026-10-20 rerun measures project generation and native RTL emission on an
+Intel Core i5-11600K with 12 logical CPUs and 33,422,090,240 bytes of RAM,
+Linux 7.0.0-34. Python is 3.12.14 with NumPy 2.5.4; Rust is 1.98.1 in release
+mode. These are shared-host diagnostics. CPU affinity does not establish an
+exclusive reservation, and both reports explicitly refuse that claim.
 
-| Surface | Artefact | Median | Isolation evidence | Key contract result |
-| --- | --- | ---: | --- | --- |
-| Python + Vivado Tcl | `benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json` | 122.678 us/manifest | `cgroup_effective_cpuset=10-11`, `runtime_cpuset_shield_claimed=true` | deterministic ZU3EG/ZU9EG Tcl generation with `DSP48E2` baseline |
-| Rust | `benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json` | 130.836 us/emit | `cpu_affinity=10-11`, `cgroup_effective_cpuset=10-11`, `runtime_cpuset_shield_claimed=true` | 64x32 dense graph estimates 2,048 DSPs, exceeding the ZU3EG budget of 360 |
+| Surface | Artefact | Median | Protocol |
+| --- | --- | ---: | --- |
+| Python + Vivado Tcl | `benchmarks/results/local_python_2026-10-20_ultrascale_plus_target.json` | 418.415 us/manifest | two target manifests, 2,000 iterations, seven repetitions |
+| Rust | `benchmarks/results/local_rust_2026-10-20_ultrascale_plus_target.json` | 2541.783 us/emit | 64x32 Dense graph, 2,000 iterations, seven repetitions |
+
+Both reports retain every repetition, source hashes and observed load/frequency.
+The Rust emitter now includes per-neuron weights and declared-format probability
+conversion, so its emitted work differs from the June baseline. The original
+June reports remain historical records; their cpuset observations alone do not
+prove exclusive CPU ownership. None of these timings measures inference,
+Vivado synthesis, routed timing or a physical board.
 
 The 64x32 dense result is not a failure of the benchmark. It is the intended
 fail-closed hardware conclusion: a one-DSP-per-MAC implementation of that graph

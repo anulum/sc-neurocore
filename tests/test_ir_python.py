@@ -20,14 +20,16 @@ from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
 class TestIRPythonBridge:
     """Verify IR construction, verification, and emission from Python."""
 
-    def test_empty_graph(self):
+    def test_empty_graph(self) -> None:
+        """Construct an empty native graph with no ports or operations."""
         b = ScGraphBuilder("empty")
         g = b.build()
         assert len(g) == 0
         assert g.name == "empty"
         assert g.verify() is None
 
-    def test_synapse_pipeline(self):
+    def test_synapse_pipeline(self) -> None:
+        """Wire encoders, stochastic multiplication, count and normalization."""
         b = ScGraphBuilder("synapse")
         x = b.input("x", "rate")
         w = b.input("w", "rate")
@@ -43,10 +45,11 @@ class TestIRPythonBridge:
         assert g.num_outputs == 1
         assert g.verify() is None
 
-    def test_dense_layer_graph(self):
+    def test_dense_layer_graph(self) -> None:
+        """Build the complete row-major matrix and matching state ports."""
         b = ScGraphBuilder("dense")
-        x = b.input("x", "rate")
-        w = b.input("w", "rate")
+        x = b.input("x", "vec<rate,3>")
+        w = b.input("w", "vec<rate,21>")
         leak = b.input("leak", "i16")
         gain = b.input("gain", "i16")
         spikes = b.dense_forward(x, w, leak, gain, n_inputs=3, n_neurons=7)
@@ -57,7 +60,8 @@ class TestIRPythonBridge:
         assert g.num_outputs == 1
         assert g.verify() is None
 
-    def test_lif_step_graph(self):
+    def test_lif_step_graph(self) -> None:
+        """Retain the configured LIF operands through the Python builder."""
         b = ScGraphBuilder("lif")
         current = b.input("current", "i16")
         leak = b.input("leak", "i16")
@@ -71,7 +75,8 @@ class TestIRPythonBridge:
         assert g.num_outputs == 1
         assert g.verify() is None
 
-    def test_text_round_trip(self):
+    def test_text_round_trip(self) -> None:
+        """Read back a streamed graph without changing canonical text."""
         b = ScGraphBuilder("roundtrip_test")
         x = b.input("x", "rate")
         enc = b.encode(x, length=512, seed=0xACE1)
@@ -83,7 +88,8 @@ class TestIRPythonBridge:
         parsed = parse_ir(text)
         assert parsed.to_text() == text
 
-    def test_emit_sv_contains_module(self):
+    def test_emit_sv_contains_module(self) -> None:
+        """Emit the native synapse graph through the Python facade."""
         b = ScGraphBuilder("sv_test")
         x = b.input("x", "rate")
         w = b.input("w", "rate")
@@ -100,21 +106,24 @@ class TestIRPythonBridge:
         assert "sc_bitstream_encoder" in sv
         assert "sc_bitstream_synapse" in sv
 
-    def test_builder_consumed_after_build(self):
+    def test_builder_consumed_after_build(self) -> None:
+        """Reject mutation after the native builder has been consumed."""
         b = ScGraphBuilder("consumed")
         b.input("x", "rate")
         b.build()
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError, match="already consumed"):
             b.input("y", "rate")
 
-    def test_repr(self):
+    def test_repr(self) -> None:
+        """Expose the native graph identity in the Python representation."""
         b = ScGraphBuilder("repr_test")
         b.input("x", "rate")
         g = b.build()
         r = repr(g)
         assert "repr_test" in r
 
-    def test_constant_f64(self):
+    def test_constant_f64(self) -> None:
+        """Keep a real probability constant as a graph operation."""
         b = ScGraphBuilder("const_test")
         c = b.constant_f64(0.5, "rate")
         b.output("val", c)
@@ -122,7 +131,8 @@ class TestIRPythonBridge:
         assert len(g) == 2  # constant + output
         assert g.verify() is None
 
-    def test_scale_and_offset(self):
+    def test_scale_and_offset(self) -> None:
+        """Connect scalar arithmetic operations in a verified graph."""
         b = ScGraphBuilder("arith_test")
         x = b.input("x", "rate")
         scaled = b.scale(x, 2.0)

@@ -247,6 +247,7 @@ path:
 - `sc_bitstream_encoder.v`
 - `sc_bitstream_synapse.v`
 - `sc_dense_layer_core.v`
+- `sc_dense_matrix_layer.v`
 - `sc_dotproduct_to_current.v`
 - `sc_firing_rate_bank.v`
 - `sc_lif_neuron.v`

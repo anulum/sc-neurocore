@@ -1,0 +1,161 @@
+{
+  "benchmark": "ultrascale_plus_target_contract",
+  "benchmark_isolation_mode": "shared-host",
+  "checksum": 0,
+  "date_utc": "2026-10-20T17:00:55Z",
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "affinity_cpu_count": 12,
+    "affinity_cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "0-11",
+    "cpu_governors_sample": {
+      "0": "powersave",
+      "1": "powersave",
+      "2": "powersave",
+      "3": "powersave",
+      "4": "powersave",
+      "5": "powersave",
+      "6": "powersave",
+      "7": "powersave"
+    },
+    "load_average": [
+      23.79443359375,
+      17.7236328125,
+      17.88671875
+    ],
+    "runtime_cpuset_shield_claimed": false
+  },
+  "iterations": 2000,
+  "language": "Python",
+  "language_surfaces": [
+    "Python",
+    "Vivado Tcl"
+  ],
+  "manifest_count": 2,
+  "max_ns_per_manifest": 734885.52175,
+  "measurement_context": {
+    "architecture": "x86_64",
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cpu_frequency_mhz": {
+      "max_observed_mhz": 3800.048,
+      "min_observed_mhz": 3799.82,
+      "sampled_cpu_count": 12.0
+    },
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "host": "aaarthuus",
+    "host_load": "workstation under concurrent load during capture",
+    "load_average_after": [
+      23.79443359375,
+      17.7236328125,
+      17.88671875
+    ],
+    "load_average_before": [
+      18.19287109375,
+      16.375,
+      17.46142578125
+    ],
+    "logical_cpu_count": 12,
+    "numpy_version": "2.5.4",
+    "operating_system": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "python_version": "3.12.14",
+    "ram_bytes": 33422090240,
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+  },
+  "median_ns_per_manifest": 418415.467,
+  "min_ns_per_manifest": 340166.84925,
+  "qualification_scope": "Local shared-host emitter/project-generation diagnostic; not inference throughput, independent-core timing, synthesis, routed timing or hardware validation.",
+  "raw_report_sha256": "85574ff636c99cb8e3cea7316ac793127c397f8c5b1f06a353c359decf6d3391",
+  "repeats": 7,
+  "results_ns_per_manifest": [
+    385655.60225,
+    438907.84825,
+    734885.52175,
+    418415.467,
+    363122.16175,
+    340166.84925,
+    456033.5155
+  ],
+  "sku_baseline": {
+    "zu3eg": {
+      "bram_36k_budget": 216,
+      "dsp_budget": 360,
+      "dsp_primitive": "DSP48E2",
+      "ff_budget": 141120,
+      "lut_budget": 70560,
+      "name": "ZU3EG",
+      "part": "xczu3eg-sbva484-1-e",
+      "uram_budget": 0
+    },
+    "zu9eg": {
+      "bram_36k_budget": 912,
+      "dsp_budget": 2520,
+      "dsp_primitive": "DSP48E2",
+      "ff_budget": 548160,
+      "lut_budget": 274080,
+      "name": "ZU9EG",
+      "part": "xczu9eg-ffvb1156-2-e",
+      "uram_budget": 0
+    }
+  },
+  "source_base_sha": "d6c6ad394f7b97baa47c0dbb4828effa9b5168aa",
+  "source_files_sha256": {
+    "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
+    "benchmarks/bench_ultrascale_plus_target.py": "a64688c434f33b0ff573620dd4f8760e52768ffa23e4b7713b301ec7f89b7617",
+    "engine/examples/bench_ultrascale_plus_target.rs": "9428c4d9b142efd67a510e1c1918301cdbfca1d0928dd4f0a8eadf1cc05f6a86",
+    "engine/examples/benchmark_context.rs": "adec0956eca233873492d7abfc8cef2a415016d04c2d560ba03595a5de9bc076",
+    "engine/src/ir/bindings.rs": "5c01d8872aef3ba46f60ec1448bbb90b67c7a4687f8609d641f2f914913352fc",
+    "engine/src/ir/builder.rs": "14f9d26c2c41f83a68590c7ff1db5d5e6452509245815628befe03424bf6ea56",
+    "engine/src/ir/constant_words.rs": "82d15fc1fb109d5afc9c4a2a45663e51c0395b0a4ff95ac5250872c2735a0083",
+    "engine/src/ir/dense_contract.rs": "84123683113b9ee765cebf90d4419c16e0bc141b911b09ee15d1b34258301e1a",
+    "engine/src/ir/emit_mlir.rs": "67cfb0921b933f1d9e9d407aee12553a7fcbc217074e1790696fd5bb15118c97",
+    "engine/src/ir/emit_sv.rs": "75c33d3dcabe51b007090d9f9fc348b40cd9f9fd050454fc221c707020035a39",
+    "engine/src/ir/emit_sv/constants.rs": "2d241b1dab15f2c040e1ad54624aa1b52546225db84cb77623d648e65347bf00",
+    "engine/src/ir/emit_sv/dense.rs": "3a3a4b32ee6b74270116c3a340233c99a301472eda9f3da2c6d5fcf082d89b5a",
+    "engine/src/ir/emit_sv/probability.rs": "0d38e7add9b9b4b6dd684915516d7529174469c01c13ee0e6eaafc98ddb3253b",
+    "engine/src/ir/graph.rs": "e5ae9ef634d094ad92a885b404ebbd57d3110fed500baa0e0d025548648da551",
+    "engine/src/ir/mod.rs": "5db104c1ef6d7fdc9b9c1d7f5aa17fa18b83338de451f2d74bda511f72826721",
+    "engine/src/ir/parser.rs": "8cb71a3da968a80b481bd4d5f835572574046cab11db32ecea0758e4e8c00409",
+    "engine/src/ir/parser/neuron.rs": "cb8270da55e138d7e1b7aaf4968b2cb600d9720735dbe8e80c7c3fcf84401751",
+    "engine/src/ir/printer.rs": "50405887e74556313d690037ac252ff1dd587af1f3da7752a0753466b57d02ea",
+    "engine/src/ir/qformat.rs": "0ebd6a434df17c2438fb4ff75366260273f7745a5b0fd5675783fd12e13562da",
+    "engine/src/ir/qformat/block_floating.rs": "77fba17591c7af9573510953536b08adebbcc89c03c85d59e54464ba277713d2",
+    "engine/src/ir/qformat/dense_result.rs": "605cc0c9a6cf431778c9e1420a596790ac56c001a8d54ea3525689a6d5b1bce3",
+    "engine/src/ir/qformat/fixed_format.rs": "54d58daf03cd70fac8041fa95f4356d038f35949b58cdf6aa8cbe53abbc4a1ad",
+    "engine/src/ir/qformat/mixed_dense.rs": "013e1ce8616115f214118dccde1401f94f8a51c609468dc46c71d0c758338cc1",
+    "engine/src/ir/sv_target.rs": "e263525a69ad7ef1ded8a3a84f8664e93556a96fc42465e7db794c2d630e4dc5",
+    "engine/src/ir/verify.rs": "2317ef14c797badd1e930817700f2275d9d9009468b421841410953e5e0d52aa",
+    "tools/gen_vivado_project.py": "bb3119eb423309751c060e0f32e49363a10a52c89bbdb3f06568fcbe3814bb6a"
+  }
+}

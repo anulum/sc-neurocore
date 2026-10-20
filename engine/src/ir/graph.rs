@@ -118,7 +118,8 @@ impl Default for LifParams {
 // Dense layer parameters
 
 /// Parameters for a dense SC layer.
-/// Maps to `sc_dense_layer_core` Verilog module.
+/// Maps to the row-major `sc_dense_matrix_layer` Verilog module.
+/// State and current words have eight fractional bits; probability operands retain their own format.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DenseParams {
     pub n_inputs: usize,
@@ -275,7 +276,7 @@ pub enum ScOp {
 
     // Compound operations
     /// Dense SC layer: N_INPUTS → N_NEURONS with full SC pipeline.
-    /// Maps to `sc_dense_layer_core` in HDL.
+    /// Maps to `sc_dense_matrix_layer` in HDL.
     DenseForward {
         id: ValueId,
         /// Input values (`Vec<Rate>` or `Vec<FixedPoint>`).

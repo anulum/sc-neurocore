@@ -1,0 +1,164 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Typed native compute-graph contracts
+
+"""Static contracts for the compute-graph subset of the native PyO3 module.
+
+These protocols describe the real functions in engine/src/ir/bindings.rs.
+The module cast is the single extension boundary; no dynamic attribute fallback
+is provided for missing or misspelled members.
+"""
+
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Callable, Protocol, cast
+
+
+class NativeGraph(Protocol):
+    """Native graph properties and operation counts."""
+
+    @property
+    def name(self) -> str:
+        """Return the graph's module name."""
+        ...
+
+    def len(self) -> int:
+        """Count operations including ports and constants."""
+        ...
+
+    def num_inputs(self) -> int:
+        """Count declared module inputs."""
+        ...
+
+    def num_outputs(self) -> int:
+        """Count declared module outputs."""
+        ...
+
+
+class NativeBuilder(Protocol):
+    """Actual positional PyO3 graph-builder signatures."""
+
+    def input(self, name: str, ty: str) -> int:
+        """Declare an input using the native type parser."""
+        ...
+
+    def output(self, name: str, source_id: int) -> int:
+        """Forward an SSA value to an output port."""
+        ...
+
+    def constant_f64(self, value: float, ty: str) -> int:
+        """Quantize a floating scalar using its declared type."""
+        ...
+
+    def constant_i64(self, value: int, ty: str) -> int:
+        """Store an already encoded integer word."""
+        ...
+
+    def constant_f64_vec(self, values: list[float], ty: str) -> int:
+        """Store a typed vector, inferring shape from an element type."""
+        ...
+
+    def kuramoto_step(self, phases_id: int, omega_id: int, coupling_id: int, dt: float) -> int:
+        """Append a coupled oscillator step."""
+        ...
+
+    def graph_forward(
+        self, features_id: int, adjacency_id: int, n_nodes: int, n_features: int
+    ) -> int:
+        """Append degree-normalized graph aggregation."""
+        ...
+
+    def softmax_attention(self, q_id: int, k_id: int, v_id: int, dim_k: int) -> int:
+        """Append single-head attention."""
+        ...
+
+    def encode(self, prob_id: int, length: int, seed: int) -> int:
+        """Encode a typed probability into a streamed bit."""
+        ...
+
+    def bitwise_and(self, lhs_id: int, rhs_id: int) -> int:
+        """Append stochastic multiplication."""
+        ...
+
+    def popcount(self, input_id: int) -> int:
+        """Append Hamming weight extraction."""
+        ...
+
+    def lif_step(
+        self,
+        current_id: int,
+        leak_id: int,
+        gain_id: int,
+        noise_id: int,
+        data_width: int,
+        fraction: int,
+        v_rest: int,
+        v_reset: int,
+        v_threshold: int,
+        refractory_period: int,
+    ) -> int:
+        """Append a configured fixed-point LIF step."""
+        ...
+
+    def dense_forward(
+        self,
+        inputs_id: int,
+        weights_id: int,
+        leak_id: int,
+        gain_id: int,
+        n_inputs: int,
+        n_neurons: int,
+        data_width: int,
+        stream_length: int,
+        seed_base: int,
+        y_min: int,
+        y_max: int,
+    ) -> int:
+        """Append a seeded row-major dense matrix layer."""
+        ...
+
+    def scale(self, input_id: int, factor: float) -> int:
+        """Append multiplication by a real constant."""
+        ...
+
+    def offset(self, input_id: int, offset_val: float) -> int:
+        """Append addition of a real constant."""
+        ...
+
+    def div_const(self, input_id: int, divisor: int) -> int:
+        """Append division by an unsigned constant."""
+        ...
+
+    def build(self) -> NativeGraph:
+        """Consume the builder exactly once."""
+        ...
+
+
+class NativeIR(Protocol):
+    """Native module members used by the Python IR facade."""
+
+    ScGraphBuilder: Callable[[str], NativeBuilder]
+
+    def ir_verify(self, graph: NativeGraph) -> list[str] | None:
+        """Return native verification diagnostics or None."""
+        ...
+
+    def ir_print(self, graph: NativeGraph) -> str:
+        """Serialize all graph operations and parameters."""
+        ...
+
+    def ir_parse(self, text: str) -> NativeGraph:
+        """Parse persisted graph text or raise ValueError."""
+        ...
+
+    def ir_emit_sv(self, graph: NativeGraph) -> str:
+        """Emit synthesizable SystemVerilog or raise ValueError."""
+        ...
+
+
+native = cast(NativeIR, import_module("sc_neurocore_engine.sc_neurocore_engine"))

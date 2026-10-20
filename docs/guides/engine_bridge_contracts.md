@@ -593,8 +593,11 @@ captures identify each tested installation; a stored capture is a compatibility
 baseline only after its source, wheel and runtime profile have been qualified.
 
 `tests/fixtures/engine_abi_default.json` retains the complete measured metadata
-for the Linux x86-64, CPython 3.12, NumPy 2.2.3 release wheel with default engine
-features. Its provenance identifies the source, wheel, capture tool and loaded
+for the Linux x86-64, CPython 3.12, NumPy 2.5.3 release wheel with default engine
+features. The reference includes the corrected signed Q8 Dense default endpoint
+`y_max=256`; its only interface changes from the preceding capture are the
+three corresponding Python/native signature fields. Its provenance identifies
+the source, wheel, capture tool and loaded
 modules without including private installation paths. The matching wheel job
 compares its installed capture with this reference. Other matrix profiles retain
 their own captures; this reference does not certify their inherited Python

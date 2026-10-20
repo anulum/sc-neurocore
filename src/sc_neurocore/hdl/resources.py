@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# © Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Installed baseline HDL resources
 
 """Access to baseline HDL primitives shipped inside SC-NeuroCore wheels."""
 
@@ -21,6 +22,7 @@ BASELINE_PRIMITIVE_RTL: tuple[str, ...] = (
     "sc_bitstream_encoder.v",
     "sc_bitstream_synapse.v",
     "sc_dense_layer_core.v",
+    "sc_dense_matrix_layer.v",
     "sc_dotproduct_to_current.v",
     "sc_firing_rate_bank.v",
     "sc_lif_neuron.v",
@@ -29,14 +31,36 @@ _BASELINE_PRIMITIVE_SET = frozenset(BASELINE_PRIMITIVE_RTL)
 
 
 def list_baseline_primitive_rtl() -> tuple[str, ...]:
-    """Return the static baseline Verilog primitives bundled with the wheel."""
+    """Return the static baseline Verilog primitives bundled with the wheel.
 
+    Returns
+    -------
+    tuple of str
+        Allowed resource names, including the row-major dense matrix core.
+    """
     return BASELINE_PRIMITIVE_RTL
 
 
 def baseline_primitive_path(name: str) -> Traversable:
-    """Return an importlib resource handle for a known baseline primitive."""
+    """Return an importlib resource handle for a known baseline primitive.
 
+    Parameters
+    ----------
+    name : str
+        Filename from :func:`list_baseline_primitive_rtl`.
+
+    Returns
+    -------
+    Traversable
+        Existing resource within the installed package.
+
+    Raises
+    ------
+    ValueError
+        The name is not in the primitive catalogue.
+    FileNotFoundError
+        A catalogued primitive is absent from this installation.
+    """
     if name not in _BASELINE_PRIMITIVE_SET:
         raise ValueError(f"Unknown baseline HDL primitive: {name!r}")
     resource = files("sc_neurocore.hdl.primitives").joinpath(name)
@@ -46,6 +70,23 @@ def baseline_primitive_path(name: str) -> Traversable:
 
 
 def baseline_primitive_text(name: str) -> str:
-    """Read a known baseline primitive as UTF-8 text."""
+    """Read a known baseline primitive as UTF-8 text.
 
+    Parameters
+    ----------
+    name : str
+        Filename from :func:`list_baseline_primitive_rtl`.
+
+    Returns
+    -------
+    str
+        The complete synthesizable Verilog source.
+
+    Raises
+    ------
+    ValueError
+        The name is not in the primitive catalogue.
+    FileNotFoundError
+        The primitive is missing from this installation.
+    """
     return baseline_primitive_path(name).read_text(encoding="utf-8")

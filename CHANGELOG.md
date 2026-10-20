@@ -14,6 +14,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 - Use `SC_NEUROCORE_STUDIO_PROJECT_ROOT` consistently for Studio project storage and backup planning. Preserve the legacy directory by default and refuse unusable configuration before startup writes.
 
+### Changed
+
+- Native IR `dense_forward` now uses per-neuron, row-major weights and checks declared probability and signed Q8 formats before emitting RTL. Python's default `y_max` is 256, matching the Rust default and the previous emitted hardware; explicit endpoints must fit the signed state word. Regenerate graphs that relied on the previously ignored value 65535.
+
 ### Added
 
 - Add stable beta-one `softplus` to Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions, with full-word numerical domains and an explicit arithmetic error bound. Refuse extra smooth-unary derivative arguments instead of discarding them. Refresh complete compiler/expression benchmarks with measured hardware context.
@@ -24,6 +28,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 
 ### Fixed
+
+- Preserve constant word widths, binary points and vector shapes in native IR emission; reject non-finite, overflowing and malformed constants instead of silently coercing them.
+- Restore declared encoder seeds on every Dense reset, including a single reset clock or a pulse between clocks. Reject nonpositive dot-product fan-in with an explicit configuration diagnostic and align the full-pipeline Python reference with signed truncation and registered encoder latency.
 
 - Fix full-range signed current interpolation in the HDL dot-product mapper, including descending endpoint ranges; retain every product bit until signed division and compare real RTL against an exact integer reference.
 

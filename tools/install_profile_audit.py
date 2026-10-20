@@ -77,6 +77,7 @@ EXPECTED_STATIC_PRIMITIVES = (
     "hdl/primitives/sc_bitstream_encoder.v",
     "hdl/primitives/sc_bitstream_synapse.v",
     "hdl/primitives/sc_dense_layer_core.v",
+    "hdl/primitives/sc_dense_matrix_layer.v",
     "hdl/primitives/sc_dotproduct_to_current.v",
     "hdl/primitives/sc_firing_rate_bank.v",
     "hdl/primitives/sc_lif_neuron.v",

@@ -126,7 +126,13 @@ impl PyScGraphBuilder {
 
     /// Add a float-vector constant.
     fn constant_f64_vec(&mut self, values: Vec<f64>, ty: &str) -> PyResult<u32> {
-        let sc_type = parse_sc_type(ty)?;
+        let sc_type = match parse_sc_type(ty)? {
+            vector @ ir::graph::ScType::Vec { .. } => vector,
+            element => ir::graph::ScType::Vec {
+                element: Box::new(element),
+                count: values.len(),
+            },
+        };
         Ok(self
             .builder_mut()?
             .constant(ir::graph::ScConst::F64Vec(values), sc_type)
@@ -282,7 +288,7 @@ impl PyScGraphBuilder {
         stream_length=1024,
         seed_base=0xACE1u64,
         y_min=0,
-        y_max=65535
+        y_max=256
     ))]
     #[allow(clippy::too_many_arguments)]
     fn dense_forward(

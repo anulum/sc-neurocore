@@ -22493,11 +22493,50 @@ Finite AER strict-priority queue with hardware-equivalent traps.
 ### Function `list_baseline_primitive_rtl()`
 Return the static baseline Verilog primitives bundled with the wheel.
 
+Returns
+-------
+tuple of str
+    Allowed resource names, including the row-major dense matrix core.
+
 ### Function `baseline_primitive_path(name)`
 Return an importlib resource handle for a known baseline primitive.
 
+Parameters
+----------
+name : str
+    Filename from :func:`list_baseline_primitive_rtl`.
+
+Returns
+-------
+Traversable
+    Existing resource within the installed package.
+
+Raises
+------
+ValueError
+    The name is not in the primitive catalogue.
+FileNotFoundError
+    A catalogued primitive is absent from this installation.
+
 ### Function `baseline_primitive_text(name)`
 Read a known baseline primitive as UTF-8 text.
+
+Parameters
+----------
+name : str
+    Filename from :func:`list_baseline_primitive_rtl`.
+
+Returns
+-------
+str
+    The complete synthesizable Verilog source.
+
+Raises
+------
+ValueError
+    The name is not in the primitive catalogue.
+FileNotFoundError
+    The primitive is missing from this installation.
 
 ---
 

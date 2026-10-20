@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - UltraScale+ target benchmark evidence
+# SC-NeuroCore — UltraScale+ target benchmark evidence
+
+"""Measure target-project generation with observed hardware and scheduling context."""
 
 from __future__ import annotations
 
@@ -19,9 +21,11 @@ import time
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
-from gen_vivado_project import generate_tcl, load_manifest, sku_baseline
+from tools.gen_vivado_project import generate_tcl, load_manifest, sku_baseline
+from benchmarks._benchmark_context import load_average, measurement_context
 
 
 def _read_text(path: Path) -> str | None:
@@ -50,15 +54,15 @@ def _governors(affinity: list[int]) -> dict[str, str]:
 
 
 def _host_context() -> dict[str, Any]:
-    affinity = sorted(os.sched_getaffinity(0))
+    affinity = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else []
     cpuset = _cpuset()
     return {
         "affinity_cpus": affinity,
         "affinity_cpu_count": len(affinity),
         "cgroup_effective_cpuset": cpuset,
-        "load_average": list(os.getloadavg()),
+        "load_average": load_average(),
         "cpu_governors_sample": _governors(affinity),
-        "runtime_cpuset_shield_claimed": cpuset == "10-11" or affinity == [10, 11],
+        "runtime_cpuset_shield_claimed": False,
     }
 
 
@@ -93,6 +97,22 @@ def _write_fixture(root: Path, sku: str) -> Path:
 
 
 def run(iterations: int, repeats: int) -> dict[str, Any]:
+    """Measure actual UltraScale+ project generation with recorded host context.
+
+    Parameters
+    ----------
+    iterations : int
+        Generation calls per manifest in each repetition.
+    repeats : int
+        Number of measured repetitions.
+
+    Returns
+    -------
+    dict
+        Per-manifest elapsed samples, target baselines and physical host context.
+        Affinity observations carry no CPU exclusivity claim.
+    """
+    load_before = load_average()
     baseline = sku_baseline()
     medians: list[float] = []
     checksum = 0
@@ -118,7 +138,7 @@ def run(iterations: int, repeats: int) -> dict[str, Any]:
         "date_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "language": "Python",
         "language_surfaces": ["Python", "Vivado Tcl"],
-        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "benchmark_isolation_mode": "shared-host",
         "hardware_measurement_claimed": False,
         "iterations": iterations,
         "repeats": repeats,
@@ -126,13 +146,16 @@ def run(iterations: int, repeats: int) -> dict[str, Any]:
         "median_ns_per_manifest": ordered[len(ordered) // 2],
         "min_ns_per_manifest": ordered[0],
         "max_ns_per_manifest": ordered[-1],
+        "results_ns_per_manifest": medians,
         "checksum": checksum,
         "sku_baseline": baseline,
         "host_context": _host_context(),
+        "measurement_context": measurement_context(load_before),
     }
 
 
 def main() -> None:
+    """Write the measured target-project generation report requested by the CLI."""
     parser = argparse.ArgumentParser(description="Benchmark UltraScale+ target project generation.")
     parser.add_argument("--iterations", type=int, default=2_000)
     parser.add_argument("--repeats", type=int, default=7)

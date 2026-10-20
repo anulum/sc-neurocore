@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1279
+expected_file_count = 1288
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5209,3 +5209,39 @@ rationale = "Real application processes save and reopen exact project state acro
 [[file]]
 path = "src/sc_neurocore/studio/platform/backup_plan.py"
 rationale = "The backup and restore manifest describes configured identity, audit, job and project data, reports missing targets, and discloses local paths only when explicitly requested."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/ir.py"
+rationale = "The public graph facade keeps typed native calls, row-major operands and signed current words explicit."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/_ir_native.py"
+rationale = "Typed protocols describe the actual PyO3 graph subset and expose no dynamic attribute fallback."
+
+[[file]]
+path = "tests/test_ir_python.py"
+rationale = "Real native graph construction, lifecycle, serialization and emission remain documented at the public Python boundary."
+
+[[file]]
+path = "tests/test_ir_dense_rtl.py"
+rationale = "Actual installed matrix RTL matches Python encoder and neuron state and spikes for ascending and descending current ranges."
+
+[[file]]
+path = "tests/test_ir_constants_rtl.py"
+rationale = "Actual native builders and packaged RTL preserve declared constant words and probability scaling without overflow saturation."
+
+[[file]]
+path = "src/sc_neurocore/hdl/resources.py"
+rationale = "Installed HDL resource names include the matrix core and retain explicit missing-file and unknown-name refusals."
+
+[[file]]
+path = "benchmarks/bench_ultrascale_plus_target.py"
+rationale = "Actual target-project generation records physical hardware and distinguishes observed affinity from a CPU reservation."
+
+[[file]]
+path = "tests/test_ultrascale_plus_benchmark.py"
+rationale = "Actual target manifest generation records host hardware and never infers exclusive CPUs from affinity."
+
+[[file]]
+path = "tests/test_behavioral_equivalence_full_pipeline.py"
+rationale = "Compare the complete stochastic encoder, signed current and LIF trace against maintained RTL, including descending ranges and registered latency."

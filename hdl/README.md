@@ -33,3 +33,15 @@ including extreme endpoints and every reachable count. The formal harness
 checks the full signed 16-bit domain for three inputs without an endpoint-order
 assumption. Run `pytest tests/test_dotproduct_current_rtl.py -q` with Icarus
 Verilog installed, or use `tb_sc_dotproduct_to_current.v` for a compact bench.
+
+`sc_dense_matrix_layer` shares input bitstreams and assigns a distinct weight
+row to each neuron. `PROBABILITY_WIDTH` controls packed encoder thresholds;
+`DATA_WIDTH` and `FRACTION` control signed current and LIF words. The default
+probability width equals the state width for existing direct RTL consumers.
+IR emission selects 16-bit thresholds after converting the declared probability
+format and supplies both encoder seed bases. See [compute graph hardware words](../docs/api/sc-ir.md#dense-hardware-words).
+The native `test_ir_dense_hardware` regression compiles repository and packaged
+copies with Icarus and checks currents, encoder bits, membrane state and spikes
+cycle by cycle; `tests/test_ir_dense_rtl.py` repeats the installed Python-to-RTL
+boundary against the bit-true Python neurons. These are simulations, not board
+measurements or routed timing results.

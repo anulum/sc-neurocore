@@ -32,6 +32,7 @@ pub fn verify(graph: &ScGraph) -> Result<(), Vec<VerifyError>> {
     verify_ssa(graph, &mut errors);
     verify_operand_defs(graph, &mut errors);
     verify_no_cycles(graph, &mut errors);
+    verify_hardware_words(graph, &mut errors);
     if errors.is_empty() {
         Ok(())
     } else {
@@ -120,6 +121,40 @@ fn verify_no_cycles(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
                 message: format!("cycle detected involving {}", id),
             });
             break;
+        }
+    }
+}
+
+/// Reject malformed constant words and dense geometry before any HDL dimensions are formed.
+fn verify_hardware_words(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
+    for (op_index, op) in graph.ops.iter().enumerate() {
+        let result = match op {
+            ScOp::Constant { value, ty, .. } => {
+                super::constant_words::constant_words(value, ty).map(|_| ())
+            }
+            ScOp::DenseForward {
+                inputs,
+                weights,
+                leak,
+                gain,
+                params,
+                ..
+            } => super::dense_contract::validate_dense(
+                graph, *inputs, *weights, *leak, *gain, params,
+            ),
+            ScOp::Encode { prob, seed, .. } => {
+                if *seed == 0 {
+                    Err("Encode seed must be nonzero".into())
+                } else {
+                    super::dense_contract::value_type(graph, *prob)
+                        .and_then(super::dense_contract::probability_layout)
+                        .map(|_| ())
+                }
+            }
+            _ => Ok(()),
+        };
+        if let Err(message) = result {
+            errors.push(VerifyError { op_index, message });
         }
     }
 }

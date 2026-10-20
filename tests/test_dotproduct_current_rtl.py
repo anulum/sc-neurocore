@@ -136,3 +136,43 @@ def test_signed_current_rtl_matches_integer_interpolation(
 ) -> None:
     """Compare repository and packaged RTL with the same exact signed reference."""
     assert_current_rtl(tmp_path, width, n_inputs, ROOT / directory / "sc_dotproduct_to_current.v")
+
+
+@pytest.mark.parametrize("n_inputs", [0, -1])
+@pytest.mark.parametrize("directory", ["hdl", "src/sc_neurocore/hdl/primitives"])
+def test_nonpositive_input_count_reports_configuration_error(
+    tmp_path: Path, n_inputs: int, directory: str
+) -> None:
+    """Reject invalid geometry explicitly without a zero-width elaboration failure."""
+    bench = tmp_path / "invalid.sv"
+    bench.write_text(
+        "`timescale 1ns / 1ps\nmodule bench; wire signed [15:0] current; "
+        f"sc_dotproduct_to_current #(.N_INPUTS({n_inputs})) dut("
+        ".post_bits(1'b0),.y_min(16'sd0),.y_max(16'sd256),.I_t(current)); "
+        'initial begin #1; $fatal(1,"invalid configuration was accepted"); end endmodule\n'
+    )
+    executable = tmp_path / "invalid.vvp"
+    build = subprocess.run(
+        [
+            "iverilog",
+            "-g2012",
+            "-Wall",
+            "-s",
+            "bench",
+            "-o",
+            str(executable),
+            str(bench),
+            str(ROOT / directory / "sc_dotproduct_to_current.v"),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
+    assert build.stderr == "", build.stderr
+    run = subprocess.run(
+        ["vvp", str(executable)], capture_output=True, text=True, timeout=30, check=False
+    )
+    assert run.returncode != 0
+    assert "sc_dotproduct_to_current: N_INPUTS must be positive" in run.stdout + run.stderr
+    assert "invalid configuration was accepted" not in run.stdout + run.stderr

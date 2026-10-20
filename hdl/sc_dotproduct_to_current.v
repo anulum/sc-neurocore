@@ -35,11 +35,14 @@ module sc_dotproduct_to_current #(
     parameter integer N_INPUTS = 3,
     parameter integer DATA_WIDTH = 16
 )(
-    input wire [N_INPUTS-1:0]          post_bits,
+    input wire [(N_INPUTS > 0 ? N_INPUTS : 1)-1:0] post_bits,
     input wire signed [DATA_WIDTH-1:0] y_min,
     input wire signed [DATA_WIDTH-1:0] y_max,
     output reg signed [DATA_WIDTH-1:0] I_t
 );
+
+generate
+if (N_INPUTS > 0) begin : VALID_INPUT_COUNT
 
 // Width needed to count up to N_INPUTS
 localparam integer CNT_WIDTH = $clog2(N_INPUTS + 1);
@@ -82,5 +85,11 @@ always @* begin
     // modular addition is exact because the interpolated result fits the word.
     I_t = y_min + scaled_with_unused_carry[DATA_WIDTH-1:0];
 end
+
+end else begin : INVALID_INPUT_COUNT
+    initial $fatal(1, "sc_dotproduct_to_current: N_INPUTS must be positive");
+    always @* I_t = y_min;
+end
+endgenerate
 
 endmodule

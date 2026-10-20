@@ -10,14 +10,7 @@
 
 from __future__ import annotations
 
-from sc_neurocore_engine.sc_neurocore_engine import (
-    ScGraph as _ScGraph,
-    ScGraphBuilder as _ScGraphBuilder,
-    ir_verify as _verify,
-    ir_print as _print,
-    ir_parse as _parse,
-    ir_emit_sv as _emit_sv,
-)
+from sc_neurocore_engine._ir_native import NativeGraph as _ScGraph, native as _native
 
 
 class ScGraphBuilder:
@@ -38,7 +31,7 @@ class ScGraphBuilder:
     """
 
     def __init__(self, name: str) -> None:
-        self._builder = _ScGraphBuilder(name)
+        self._builder = _native.ScGraphBuilder(name)
 
     def input(self, name: str, ty: str = "rate") -> int:
         """Add a typed input port. Returns value ID."""
@@ -151,9 +144,16 @@ class ScGraphBuilder:
         stream_length: int = 1024,
         seed_base: int = 0xACE1,
         y_min: int = 0,
-        y_max: int = 65535,
+        y_max: int = 256,
     ) -> int:
-        """Add a dense layer forward pass."""
+        """Add a row-major dense layer with signed Q8 state and current words.
+
+        Inputs and weights are vectors of Rate or signed FixedPoint probabilities.
+        Weights contain ``n_neurons * n_inputs`` words. Their binary points may
+        differ from the state format. ``seed_base`` sets the input seeds; the
+        weight seed base is its 16-bit successor. Current endpoints must fit
+        ``data_width``. The default upper endpoint is 256 (one in Q8).
+        """
         return self._builder.dense_forward(
             inputs_id,
             weights_id,
@@ -181,7 +181,7 @@ class ScGraphBuilder:
         return self._builder.div_const(input_id, divisor)
 
     def build(self) -> ScGraph:
-        """Consume the builder and return a verified ScGraph."""
+        """Consume the builder and return a ScGraph for explicit verification."""
         raw = self._builder.build()
         return ScGraph(raw)
 
@@ -202,9 +202,11 @@ class ScGraph:
         return self._inner.name
 
     def __len__(self) -> int:
+        """Count all graph operations, including constants and ports."""
         return self._inner.len()
 
     def __repr__(self) -> str:
+        """Show the native graph name and operation count."""
         return repr(self._inner)
 
     @property
@@ -219,18 +221,18 @@ class ScGraph:
 
     def verify(self) -> list[str] | None:
         """Verify the graph. Returns None if valid, or list of error strings."""
-        return _verify(self._inner)
+        return _native.ir_verify(self._inner)
 
     def to_text(self) -> str:
         """Serialize to stable text format."""
-        return _print(self._inner)
+        return _native.ir_print(self._inner)
 
     def emit_sv(self) -> str:
         """Emit SystemVerilog from this graph."""
-        return _emit_sv(self._inner)
+        return _native.ir_emit_sv(self._inner)
 
 
 def parse_ir(text: str) -> ScGraph:
     """Parse an SC graph from its text format."""
-    raw = _parse(text)
+    raw = _native.ir_parse(text)
     return ScGraph(raw)

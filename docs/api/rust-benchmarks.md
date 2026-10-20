@@ -62,7 +62,7 @@ cargo bench --bench analysis_bench -- --quick
 | mixed_dense_q88_q1616_envelope_64x32 | 2.322 µs |
 | block_floating_dense_q16_envelope_64x32 | 8.748 µs |
 | dcls_q88_tent_kernel_16tap | 40.184 ns/sample |
-| ultrascale_plus_target_contract_64x32 | 130.836 µs/emit |
+| ultrascale_plus_target_contract_64x32 | 2541.783 µs/emit |
 | ultrascale_plus_dense_fold_plan_64x32 | 6.661 ns/plan |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
@@ -127,16 +127,18 @@ Python/PyTorch/SystemVerilog artefact is
 reported `overflow_count=0` and `active_tap_total=2808700`, matching the
 Python reference workload and DCLS Q8.8 saturation contract.
 
-`ultrascale_plus_target_contract_64x32` was measured on 2026-06-04 with the
-Rust benchmark process pinned to CPUs 10-11 inside a runtime cpuset shield. The
-committed raw artefact is
-`benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json`; the
-matching Python/Vivado-Tcl artefact is
-`benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json`. The
-Rust target report deliberately records `fits_dsp_budget=false`: a 64x32
-one-DSP-per-MAC dense graph estimates `2048` DSPs against the ZU3EG budget of
-`360`, so ZU3EG deployment needs a folded/time-multiplexed implementation or a
-larger target before any timing-closure claim is valid.
+`ultrascale_plus_target_contract_64x32` was rerun on 2026-10-20 with Rust 1.98.1
+release, Intel Core i5-11600K, 12 logical CPUs, 33,422,090,240 bytes of RAM and
+Linux 7.0.0-34. The seven 2,000-emission samples are in
+`benchmarks/results/local_rust_2026-10-20_ultrascale_plus_target.json`; the
+Python 3.12.14 / NumPy 2.5.4 project-generation counterpart is in
+`benchmarks/results/local_python_2026-10-20_ultrascale_plus_target.json`.
+Both are shared-host diagnostics with source hashes and measured load; neither
+claims exclusive cores or inference throughput. The corrected emitter generates
+per-neuron weights and probability conversions, so its work differs from the
+historical June run. The target estimator records 2,048 DSPs against a budget
+of 360 and requires folding or a larger target; it does not establish synthesis
+resource usage or timing closure.
 
 `ultrascale_plus_dense_fold_plan_64x32` was measured on 2026-06-04 with the
 same runtime cpuset shield. The committed raw artefact is

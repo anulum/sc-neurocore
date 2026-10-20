@@ -16,6 +16,10 @@
 //! - One port per `sc.input` / `sc.output` operation
 //! - Internal wiring for all intermediate values
 
+mod constants;
+mod dense;
+mod probability;
+
 use crate::ir::graph::*;
 use crate::ir::sv_target::{ResourceReport, SvTarget};
 
@@ -31,6 +35,13 @@ pub fn emit_systemverilog_with_target(
     graph: &ScGraph,
     target: SvTarget,
 ) -> Result<(String, ResourceReport), String> {
+    crate::ir::verify::verify(graph).map_err(|errors| {
+        errors
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("\n")
+    })?;
     let mut sv = String::new();
 
     // Header
@@ -80,7 +91,7 @@ pub fn emit_systemverilog_with_target(
     for op in &graph.ops {
         match op {
             ScOp::Input { .. } | ScOp::Output { .. } => {}
-            ScOp::Constant { id, value, .. } => emit_constant(&mut sv, *id, value, &target),
+            ScOp::Constant { id, value, ty } => constants::emit(&mut sv, *id, value, ty, &target)?,
             ScOp::Encode { id, .. } => {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
@@ -166,7 +177,8 @@ pub fn emit_systemverilog_with_target(
     for op in &graph.ops {
         match op {
             ScOp::Encode { id, prob, seed, .. } => {
-                let prob_wire = value_to_wire(graph, *prob);
+                let prob_wire = format!("encode_{inst_idx}_probability");
+                probability::emit(&mut sv, graph, *prob, 1, &prob_wire)?;
                 sv.push_str(&format!(
                     "    sc_bitstream_encoder #(\n\
                      \x20       .DATA_WIDTH(16),\n\
@@ -250,47 +262,15 @@ pub fn emit_systemverilog_with_target(
                 gain,
                 params,
             } => {
-                let inputs_wire = value_to_wire(graph, *inputs);
-                let weights_wire = value_to_wire(graph, *weights);
-                let leak_wire = value_to_wire(graph, *leak);
-                let gain_wire = value_to_wire(graph, *gain);
-                emit_dense_fold_plan_comment(&mut sv, &target, params);
-                emit_target_dsp_attribute(&mut sv, &target);
-                sv.push_str(&format!(
-                    "    sc_dense_layer_core #(\n\
-                     \x20       .N_INPUTS({}),\n\
-                     \x20       .N_NEURONS({}),\n\
-                     \x20       .DATA_WIDTH({})\n\
-                     \x20   ) u_dense_{} (\n\
-                     \x20       .clk(clk),\n\
-                     \x20       .rst_n(rst_n),\n\
-                     \x20       .start_pulse(1'b1),\n\
-                     \x20       .stream_len(32'd{}),\n\
-                     \x20       .x_input_fp({}),\n\
-                     \x20       .weight_fp({}),\n\
-                     \x20       .y_min_fp(16'd0),\n\
-                     \x20       .y_max_fp(16'd256),\n\
-                     \x20       .cfg_leak({}),\n\
-                     \x20       .cfg_gain({}),\n\
-                     \x20       .I_t(),\n\
-                     \x20       .spikes(v{}_spikes),\n\
-                     \x20       .step_valid(),\n\
-                     \x20       .run_done(v{}_done),\n\
-                     \x20       .running(v{}_running)\n\
-                     \x20   );\n\n",
-                    params.n_inputs,
-                    params.n_neurons,
-                    params.data_width,
+                dense::emit(
+                    &mut sv,
+                    graph,
                     inst_idx,
-                    params.stream_length,
-                    inputs_wire,
-                    weights_wire,
-                    leak_wire,
-                    gain_wire,
-                    id.0,
-                    id.0,
-                    id.0
-                ));
+                    *id,
+                    [*inputs, *weights, *leak, *gain],
+                    params,
+                    &target,
+                )?;
                 inst_idx += 1;
             }
             ScOp::DclsLayer {
@@ -1024,64 +1004,6 @@ fn signed_q_literal(value: i64, width: usize) -> String {
         format!("-{}'sd{}", width, value.unsigned_abs())
     } else {
         format!("{}'sd{}", width, value)
-    }
-}
-
-fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst, target: &SvTarget) {
-    match value {
-        ScConst::F64(v) => {
-            let fp = (*v * 256.0) as i64; // Q8.8
-            sv.push_str(&format!(
-                "    localparam signed [15:0] c{} = {};\n",
-                id.0,
-                signed_q_literal(fp, 16)
-            ));
-        }
-        ScConst::I64(v) => {
-            sv.push_str(&format!(
-                "    localparam signed [15:0] c{} = {};\n",
-                id.0,
-                signed_q_literal(*v, 16)
-            ));
-        }
-        ScConst::U64(v) => {
-            sv.push_str(&format!("    localparam [31:0] c{} = 32'd{};\n", id.0, v));
-        }
-        ScConst::F64Vec(vec) => {
-            let width = vec.len().saturating_mul(16);
-            if width == 0 {
-                sv.push_str(&format!("    wire [0:0] c{};\n", id.0));
-                return;
-            }
-            emit_ram_style_attribute(sv, target, width as u64);
-            sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
-            for (i, v) in vec.iter().enumerate() {
-                let fp = (*v * 256.0) as i64;
-                sv.push_str(&format!(
-                    "    assign c{}[{} +: 16] = {};\n",
-                    id.0,
-                    i * 16,
-                    signed_q_literal(fp, 16)
-                ));
-            }
-        }
-        ScConst::I64Vec(vec) => {
-            let width = vec.len().saturating_mul(16);
-            if width == 0 {
-                sv.push_str(&format!("    wire [0:0] c{};\n", id.0));
-                return;
-            }
-            emit_ram_style_attribute(sv, target, width as u64);
-            sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
-            for (i, v) in vec.iter().enumerate() {
-                sv.push_str(&format!(
-                    "    assign c{}[{} +: 16] = {};\n",
-                    id.0,
-                    i * 16,
-                    signed_q_literal(*v, 16)
-                ));
-            }
-        }
     }
 }
 

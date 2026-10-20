@@ -23,6 +23,8 @@
 
 pub(crate) mod bindings;
 pub mod builder;
+pub(crate) mod constant_words;
+pub(crate) mod dense_contract;
 pub mod emit_mlir;
 pub mod emit_sv;
 pub mod graph;

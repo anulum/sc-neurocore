@@ -21,7 +21,11 @@ module sc_dense_matrix_layer #(
     parameter integer N_INPUTS   = 16,
     parameter integer N_NEURONS  = 10,
     parameter integer DATA_WIDTH = 16,
-    parameter integer FRACTION   = 8
+    parameter integer FRACTION   = 8,
+    // Encoder threshold geometry is independent of signed state/current words.
+    parameter integer PROBABILITY_WIDTH = DATA_WIDTH,
+    parameter [15:0] INPUT_SEED_BASE = 16'hACE1,
+    parameter [15:0] WEIGHT_SEED_BASE = 16'hBEEF
 )(
     input wire                                       clk,
     input wire                                       rst_n,
@@ -30,11 +34,11 @@ module sc_dense_matrix_layer #(
     input wire                                       start_pulse,
     input wire [31:0]                                stream_len,
 
-    // Pixel/input values — packed bus: pixel[i] at [i*DATA_WIDTH +: DATA_WIDTH]
-    input wire [N_INPUTS*DATA_WIDTH-1:0]             x_input_fp,
+    // Pixel/input values — packed bus: pixel[i] at [i*PROBABILITY_WIDTH +: PROBABILITY_WIDTH]
+    input wire [N_INPUTS*PROBABILITY_WIDTH-1:0]             x_input_fp,
 
-    // Weight matrix — packed bus: W[j][i] at [(j*N_INPUTS+i)*DATA_WIDTH +: DATA_WIDTH]
-    input wire [N_NEURONS*N_INPUTS*DATA_WIDTH-1:0]   weight_fp,
+    // Weight matrix — packed bus: W[j][i] at [(j*N_INPUTS+i)*PROBABILITY_WIDTH +: PROBABILITY_WIDTH]
+    input wire [N_NEURONS*N_INPUTS*PROBABILITY_WIDTH-1:0]   weight_fp,
 
     // Current mapping range
     input wire [DATA_WIDTH-1:0]                      y_min_fp,
@@ -82,6 +86,8 @@ end
 assign step_valid = running;
 
 // ----------------------------------------------------------------
+// Reset always restores the declared seeds, including pulses between clocks.
+// The run counter must not participate in asynchronous reseeding.
 // Shared input encoders (one per pixel)
 // ----------------------------------------------------------------
 wire [N_INPUTS-1:0] pre_bits;
@@ -90,13 +96,13 @@ genvar i, j;
 generate
     for (i = 0; i < N_INPUTS; i = i + 1) begin : IN_ENC
         sc_bitstream_encoder #(
-            .DATA_WIDTH (DATA_WIDTH),
-            .SEED_INIT  (16'hACE1 + i * 7)
+            .DATA_WIDTH (PROBABILITY_WIDTH),
+            .SEED_INIT  (INPUT_SEED_BASE + i * 7)
         ) u_enc (
             .clk     (clk),
             .rst_n   (rst_n),
-            .x_value (x_input_fp[i*DATA_WIDTH +: DATA_WIDTH]),
-            .t_index (t_counter),
+            .x_value (x_input_fp[i*PROBABILITY_WIDTH +: PROBABILITY_WIDTH]),
+            .t_index (32'd0),
             .bit_out (pre_bits[i])
         );
     end
@@ -111,13 +117,13 @@ generate
         wire [N_INPUTS-1:0] w_bits;
         for (i = 0; i < N_INPUTS; i = i + 1) begin : W_ENC
             sc_bitstream_encoder #(
-                .DATA_WIDTH (DATA_WIDTH),
-                .SEED_INIT  (16'hBEEF + j * 13 * N_INPUTS + i * 13)
+                .DATA_WIDTH (PROBABILITY_WIDTH),
+                .SEED_INIT  (WEIGHT_SEED_BASE + j * 13 * N_INPUTS + i * 13)
             ) u_w_enc (
                 .clk     (clk),
                 .rst_n   (rst_n),
-                .x_value (weight_fp[(j*N_INPUTS + i)*DATA_WIDTH +: DATA_WIDTH]),
-                .t_index (t_counter),
+                .x_value (weight_fp[(j*N_INPUTS + i)*PROBABILITY_WIDTH +: PROBABILITY_WIDTH]),
+                .t_index (32'd0),
                 .bit_out (w_bits[i])
             );
         end

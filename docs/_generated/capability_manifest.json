@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5381
+    "test_files": 5384
   },
   "documentation": {
     "public_pages": [
@@ -5681,6 +5681,8 @@
       "tests/test_iqif_backends.py",
       "tests/test_iqif_engine_binding.py",
       "tests/test_iqif_schema_dsl.py",
+      "tests/test_ir_constants_rtl.py",
+      "tests/test_ir_dense_rtl.py",
       "tests/test_ir_neuron_text.py",
       "tests/test_ir_python.py",
       "tests/test_ir_type_checker_check_ir_types.py",
@@ -8510,6 +8512,7 @@
       "tests/test_twinsync/test_twinsync_twin_session.py",
       "tests/test_twinsync/test_twinsync_vector_clock.py",
       "tests/test_twinsync/twinsync_support.py",
+      "tests/test_ultrascale_plus_benchmark.py",
       "tests/test_ultrascale_plus_dense_folding.py",
       "tests/test_ultrascale_plus_flow.py",
       "tests/test_ultrascale_plus_resource_budget.py",

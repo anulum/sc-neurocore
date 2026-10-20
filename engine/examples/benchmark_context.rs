@@ -10,12 +10,14 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+/// Read the kernel load averages before or after the timed repetitions.
 pub fn load_average() -> String {
     fs::read_to_string("/proc/loadavg")
         .map(|content| content.trim().to_string())
         .unwrap_or_else(|_| "unavailable".to_string())
 }
 
+/// Record the compiler executable version used by the benchmark host.
 pub fn rust_version() -> String {
     Command::new("rustc")
         .arg("--version")
@@ -132,6 +134,7 @@ fn cpu_frequency_mhz() -> String {
     )
 }
 
+/// Escape a host observation as a JSON string literal.
 pub fn json_string(value: &str) -> String {
     let mut escaped = String::with_capacity(value.len() + 2);
     escaped.push('"');
@@ -152,15 +155,19 @@ pub fn json_string(value: &str) -> String {
     escaped
 }
 
+/// Record actual hardware and scheduling observations without claiming exclusive CPUs.
 pub fn measurement_context_json(load_average_before: &str) -> String {
     format!(
         concat!(
             "{{\n",
             "    \"host_load\": \"workstation under concurrent load during capture\",\n",
-            "    \"cpu_isolation\": \"runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation\",\n",
+            "    \"cpu_isolation\": \"affinity and cpuset observations do not establish exclusive CPU ownership\",\n",
+            "    \"cpu_model\": {cpu_model},\n",
+            "    \"ram_total\": {ram_total},\n",
+            "    \"kernel_release\": {kernel_release},\n",
             "    \"cpu_affinity\": {cpu_affinity},\n",
             "    \"cgroup_effective_cpuset\": {cgroup_effective_cpuset},\n",
-            "    \"runtime_cpuset_shield_claimed\": {runtime_cpuset_shield_claimed},\n",
+            "    \"runtime_cpuset_shield_claimed\": false,\n",
             "    \"load_average_before\": {load_average_before},\n",
             "    \"load_average_after\": {load_average_after},\n",
             "    \"cpu_governor\": {cpu_governor},\n",
@@ -172,8 +179,9 @@ pub fn measurement_context_json(load_average_before: &str) -> String {
         ),
         cpu_affinity = json_string(&cpu_affinity()),
         cgroup_effective_cpuset = json_string(&cgroup_effective_cpuset()),
-        runtime_cpuset_shield_claimed = cgroup_effective_cpuset() == cpu_affinity()
-            && cgroup_effective_cpuset() != "unavailable",
+        cpu_model = json_string(&read_proc_field("/proc/cpuinfo", "model name\t:")),
+        ram_total = json_string(&read_proc_field("/proc/meminfo", "MemTotal:")),
+        kernel_release = json_string(&read_proc_field("/proc/sys/kernel/osrelease", "")),
         load_average_before = json_string(load_average_before),
         load_average_after = json_string(&load_average()),
         cpu_governor = json_string(&cpu_governor()),

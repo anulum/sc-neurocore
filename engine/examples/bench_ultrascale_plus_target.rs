@@ -15,7 +15,7 @@ use sc_neurocore_engine::ir::graph::{DenseParams, ScConst, ScType};
 use sc_neurocore_engine::ir::sv_target::{SkuKind, SvTarget};
 use std::fs;
 use std::hint::black_box;
-use std::path::Path;
+use std::path::PathBuf;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const N_INPUTS: usize = 64;
@@ -121,13 +121,22 @@ fn main() {
         .expect("system clock must be after UNIX epoch")
         .as_secs();
 
+    let invocation = std::env::args().collect::<Vec<_>>();
+    let output_path = invocation.get(1).map(PathBuf::from).unwrap_or_else(|| {
+        PathBuf::from(format!(
+            "benchmarks/results/local_rust_{timestamp_unix}_ultrascale_plus_target.json"
+        ))
+    });
     let report = format!(
         concat!(
             "{{\n",
             "  \"benchmark\": \"ultrascale_plus_target_contract\",\n",
             "  \"language\": \"Rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix},\n",
-            "  \"command\": \"taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_ultrascale_plus_target\",\n",
+            "  \"command\": {command},\n",
+            "  \"command_argv\": [{command_argv}],\n",
+            "  \"build_profile\": \"{build_profile}\",\n",
+            "  \"hardware_measurement_claimed\": false,\n",
             "  \"rustc\": \"{rust_version}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
@@ -156,6 +165,17 @@ fn main() {
             "}}\n"
         ),
         timestamp_unix = timestamp_unix,
+        command = benchmark_context::json_string(&invocation.join(" ")),
+        command_argv = invocation
+            .iter()
+            .map(|value| benchmark_context::json_string(value))
+            .collect::<Vec<_>>()
+            .join(", "),
+        build_profile = if cfg!(debug_assertions) {
+            "debug"
+        } else {
+            "release"
+        },
         rust_version = rust_version(),
         os = std::env::consts::OS,
         arch = std::env::consts::ARCH,
@@ -177,10 +197,9 @@ fn main() {
         results = values_json(&ns_per_emit),
     );
 
-    let path = Path::new("benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json");
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent).expect("benchmark result directory must be writable");
     }
-    fs::write(path, &report).expect("benchmark result artefact must be writable");
+    fs::write(output_path, &report).expect("benchmark result artefact must be writable");
     print!("{report}");
 }
