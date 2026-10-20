@@ -651,7 +651,7 @@ schema-A `ui_module` contract is:
 
 ```json
 {
-  "remote_entry": "/studios/sc-neurocore/remoteEntry.js",
+  "remote_entry": "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js",
   "exposes": ["./SnnStudioPanel"],
   "federation": "module-federation-2"
 }
@@ -660,6 +660,32 @@ schema-A `ui_module` contract is:
 `npm run build` fails unless the emitted remote exports the `get`/`init`
 container contract, retains the own identity and expose, contains no
 `demo_studio` reference, and resolves its entry imports inside `dist/`.
+
+Build a local pull-deploy candidate after building the frontend:
+
+```bash
+# Repository root, Python >=3.11 with the federation extra and Node.js installed.
+python -m tools.build_studio_remote --output-dir dist/studio-remote-candidate
+```
+
+The destination must be new. The command snapshots the frontend, runs the same
+Node federation verifier on those bytes, and emits
+`sc-neurocore-studio-remote.tar.gz` plus `studio-deploy.json`. The archive puts
+`remoteEntry.js`, its assets and the producer's split-envelope `manifest.json`
+at the root. Its descriptor pins the archive SHA-256, every member's digest
+and size, and the declared backend version/era/SDK contract. Archive ordering,
+permissions, ownership and timestamps are normalised; equal input bytes produce
+equal output bytes. Links, special files, reserved filenames and builds larger
+than 256 MiB are refused. Existing release directories are preserved.
+
+This command performs no publication or deployment. A release operator may
+later attach both files to an authorised `studio-remote-v<semver>` release.
+A source-version match alone does not qualify the backend: retain exact
+installed-wheel, frontend, compiler and host acceptance receipts for a release.
+The v2 manifest requires explicit v2 host admission. The current SCPN Studio
+opaque sandbox has no general compute/storage bridge; full remote-workbench
+execution needs that separately agreed integration. A bundle or local harness
+render does not establish installed-backend host acceptance or rollback.
 
 Frontend contract tests:
 

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1252
+expected_file_count = 1255
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -5101,3 +5101,15 @@ rationale = "Operator status: route-policy inventory, identity mode, audit, logi
 [[file]]
 path = "tests/test_studio_storage_preflight.py"
 rationale = "Isolated-storage startup preflight: refusals, the storage-backed facade and the API locks beside the identity store."
+
+[[file]]
+path = "tools/build_studio_remote.py"
+rationale = "Producer CLI freezes and verifies frontend bytes, writes deterministic archives and binds the deploy descriptor to their hashes."
+
+[[file]]
+path = "tools/emit_studio_manifest.py"
+rationale = "Schema-A and architecture-map producer used by the release bundle, including drift refusal."
+
+[[file]]
+path = "tests/test_federation/test_studio_remote_bundle.py"
+rationale = "Real filesystem, Node verifier, CLI and archive contracts for producer release bytes and refusals."

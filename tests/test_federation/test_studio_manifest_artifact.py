@@ -75,6 +75,11 @@ def test_artifact_is_schema_a_envelope_well_formed() -> None:
     assert payload["studio_version"] == SOURCE_VERSION
     assert payload["contract_era"] == "v2"
     assert payload["platform_sdk"] == ">=0.11,<0.12"
+    assert payload["ui_module"] == {
+        "remote_entry": "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js",
+        "exposes": ["./SnnStudioPanel"],
+        "federation": "module-federation-2",
+    }
     assert _DIGEST_RE.match(payload["content_digest"]), payload["content_digest"]
     verbs = [verb["verb"] if isinstance(verb, dict) else verb for verb in payload["verbs"]]
     assert len(verbs) == len(set(verbs)) == 8, "the SC-NeuroCore vertical advertises eight verbs"

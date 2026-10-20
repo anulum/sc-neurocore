@@ -11,7 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const frontendRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const distRoot = join(frontendRoot, "dist");
+const distRoot = process.argv[2] ? resolve(process.argv[2]) : join(frontendRoot, "dist");
 const remoteEntryPath = join(distRoot, "remoteEntry.js");
 
 async function filesBelow(directory, prefix = "") {

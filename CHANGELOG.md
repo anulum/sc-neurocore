@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Declare the Studio remote panel in its federation manifest and content digest.
+  Add a local remote-bundle command that verifies frozen frontend bytes and
+  writes a reproducible archive with a digest-pinned deploy descriptor.
+
 - Preserve diffusion-noise scaling for every positive equation timestep,
   including values below `1e-12` and subnormal floats. Keep zero-step Euler
   states frozen and reject timesteps outside the selected hardware format.

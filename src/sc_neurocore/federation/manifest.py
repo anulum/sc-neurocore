@@ -12,8 +12,8 @@ Authors SC-NeuroCore's :class:`scpn_studio_platform.manifest.CapabilityManifest`
 the verbs it advertises, the evidence schemas they emit, and the content-addressed
 digest of that declared surface. The digest is computed with the platform's
 :func:`scpn_studio_platform.manifest.content_digest` over the canonical JSON of the
-declared verbs and evidence schemas, so it is reproducible across checkouts and
-independent of git state — the ``capability_manifest`` count-drift gotcha does not
+declared verbs, evidence schemas and UI contract, so it is reproducible
+across checkouts and independent of git state — the ``capability_manifest`` count-drift gotcha does not
 apply here.
 
 This federation manifest is distinct from the local FastAPI Studio web app under
@@ -28,6 +28,7 @@ from importlib.metadata import PackageNotFoundError, version
 from scpn_studio_platform.manifest import (
     CapabilityManifest,
     TransportProfile,
+    UiModule,
     content_digest,
 )
 
@@ -38,6 +39,13 @@ PLATFORM_SDK_RANGE = ">=0.11,<0.12"
 
 PROTOCOL_VERSION = "1"
 """The SYNAPSE wire protocol version the studio pins."""
+
+STUDIO_UI = UiModule(
+    remote_entry="https://www.anulum.org/studios/sc-neurocore/remoteEntry.js",
+    exposes=("./SnnStudioPanel",),
+    federation="module-federation-2",
+)
+"""The producer-owned remote contract; declaration does not attest host adoption."""
 
 
 def _resolve_studio_version() -> str:
@@ -69,9 +77,9 @@ STUDIO_VERSION = _resolve_studio_version()
 def declared_surface() -> dict[str, bytes]:
     """Return the content-addressable declared surface of the SC-NeuroCore studio.
 
-    The surface is the canonical JSON of each advertised verb plus the evidence
-    schema list, keyed by a stable logical path. Hashing surface *content* (not git
-    state) is what makes the digest reproducible across checkouts.
+    The surface is the canonical JSON of each advertised verb, the evidence
+    schema list and the UI module, keyed by a stable logical path. Hashing surface
+    *content* (not git state) makes the digest reproducible across checkouts.
 
     Returns
     -------
@@ -87,6 +95,9 @@ def declared_surface() -> dict[str, bytes]:
     }
     surface["evidence/schemas"] = json.dumps(
         list(evidence_schemas()), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    surface["ui/module"] = json.dumps(
+        STUDIO_UI.to_dict(), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return surface
 
@@ -115,5 +126,5 @@ def build_manifest(*, studio_version: str = STUDIO_VERSION) -> CapabilityManifes
         transport_profile=TransportProfile.LOCAL_FIRST,
         verbs=NEUROCORE_VERBS,
         evidence_types=evidence_schemas(),
-        ui_module=None,
+        ui_module=STUDIO_UI,
     )

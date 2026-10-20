@@ -54,6 +54,12 @@ def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
     assert manifest.studio == STUDIO_ID == "sc-neurocore"
     assert manifest.studio_version == SOURCE_VERSION
     assert manifest.platform_sdk == ">=0.11,<0.12"
+    assert manifest.ui_module is not None
+    assert manifest.ui_module.to_dict() == {
+        "remote_entry": "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js",
+        "exposes": ["./SnnStudioPanel"],
+        "federation": "module-federation-2",
+    }
     assert len(manifest.verbs) == len(NEUROCORE_VERBS) == 8
     assert tuple(manifest.evidence_types) == evidence_schemas()
     # content digest is over the declared surface, not git state — reproducible.

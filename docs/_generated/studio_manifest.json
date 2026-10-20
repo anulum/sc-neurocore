@@ -968,7 +968,7 @@
     ]
   },
   "schema_a": {
-    "content_digest": "sha256:2623169357cf4bf0331312817a8dd370c6c97008ed76d8531c18583558258ab7",
+    "content_digest": "sha256:0878cf0d99616525a80804468d2b536c5e83214aea671b8468863b82e34e67c6",
     "contract_era": "v2",
     "enumeration": "language-agnostic",
     "evidence_types": [
@@ -985,6 +985,13 @@
     "studio": "sc-neurocore",
     "studio_version": "3.16.0",
     "transport_profile": "local-first",
+    "ui_module": {
+      "exposes": [
+        "./SnnStudioPanel"
+      ],
+      "federation": "module-federation-2",
+      "remote_entry": "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js"
+    },
     "verbs": [
       {
         "backends": [

@@ -21284,9 +21284,9 @@ ValueError
 ### Function `declared_surface()`
 Return the content-addressable declared surface of the SC-NeuroCore studio.
 
-The surface is the canonical JSON of each advertised verb plus the evidence
-schema list, keyed by a stable logical path. Hashing surface *content* (not git
-state) is what makes the digest reproducible across checkouts.
+The surface is the canonical JSON of each advertised verb, the evidence
+schema list and the UI module, keyed by a stable logical path. Hashing surface
+*content* (not git state) makes the digest reproducible across checkouts.
 
 Returns
 -------

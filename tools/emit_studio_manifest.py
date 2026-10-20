@@ -41,7 +41,6 @@ class _CapabilityManifestModule(Protocol):
 
 def _load_capability_manifest_module() -> _CapabilityManifestModule:
     """Load the repository capability-manifest helper without requiring ``tools`` as a package."""
-
     path = Path(__file__).resolve().with_name("capability_manifest.py")
     spec = importlib.util.spec_from_file_location("_sc_neurocore_capability_manifest", path)
     if spec is None or spec.loader is None:  # pragma: no cover - importlib contract guard.
@@ -54,14 +53,12 @@ def _load_capability_manifest_module() -> _CapabilityManifestModule:
 
 def build_architecture_map_extension() -> dict[str, Any]:
     """Return the real architecture-map.v2 block used by the Studio federation envelope."""
-
     repo = Path(__file__).resolve().parents[1]
     return _load_capability_manifest_module().build_architecture_map(repo)
 
 
 def _normalise_env_dependent_fields(payload: dict[str, Any]) -> dict[str, Any]:
     """Remove environment-stamped fields that do not affect the Studio contract digest."""
-
     schema_a = payload.get("schema_a")
     if isinstance(schema_a, dict):
         schema_a.pop("studio_version", None)
