@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Studio backup planning
+# SC-NeuroCore — Studio backup planning
 
 """Backup and restore planning manifest for SC-NeuroCore Studio."""
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -19,6 +20,7 @@ from sc_neurocore.studio.platform.settings import (
     build_default_studio_runtime_settings,
 )
 from sc_neurocore.studio.platform.storage_mode import StudioStorageMode
+from sc_neurocore.studio.project_paths import PROJECT_ROOT_ENV, resolve_studio_project_root
 
 STUDIO_BACKUP_PLAN_SCHEMA_VERSION = "studio.backup-plan.v1"
 
@@ -68,7 +70,6 @@ class StudioBackupPlanItem:
 
     def to_public_dict(self, *, include_local_paths: bool = False) -> dict[str, object]:
         """Return a JSON-serializable item payload."""
-
         payload: dict[str, object] = {
             "backup_actions": list(self.backup_actions),
             "configured": self.configured,
@@ -112,19 +113,16 @@ class StudioBackupPlan:
     @property
     def missing_required_count(self) -> int:
         """Return the number of required targets that are not configured."""
-
         return sum(1 for item in self.items if item.required and not item.configured)
 
     @property
     def missing_existing_count(self) -> int:
         """Return the number of configured targets that do not exist yet."""
-
         return sum(1 for item in self.items if item.configured and not item.exists)
 
     @property
     def ready_for_restore_drill(self) -> bool:
         """Return whether required targets and their runtime authority are ready."""
-
         return (
             self.storage_mode == "embedded"
             and self.missing_required_count == 0
@@ -133,7 +131,6 @@ class StudioBackupPlan:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable backup-plan payload."""
-
         return {
             "deployment_profile": self.deployment_profile,
             "include_local_paths": self.include_local_paths,
@@ -166,24 +163,20 @@ def build_studio_backup_plan(
         Include resolved local paths in the serialized plan. Keep this disabled
         for deployment logs that may leave the host.
     project_root:
-        Optional Studio project workspace root for tests and embedded tools.
+        Optional Studio project workspace root for embedded tools. Otherwise use
+        the same configured or legacy directory as project persistence.
 
     Returns
     -------
     StudioBackupPlan
         Backup and restore manifest for the active Studio runtime profile.
     """
-
     runtime_settings = build_default_studio_runtime_settings() if settings is None else settings
     required_for_production = runtime_settings.deployment_profile == "production"
     resolved_project_root = (
-        (
-            Path.home() / ".sc-neurocore" / "studio" / "projects"
-            if project_root is None
-            else project_root
-        )
-        .expanduser()
-        .resolve()
+        resolve_studio_project_root()
+        if project_root is None
+        else project_root.expanduser().resolve()
     )
     items = (
         _file_item(
@@ -220,7 +213,11 @@ def build_studio_backup_plan(
         _explicit_directory_item(
             item_id="project_workspace",
             description="Saved Studio project JSON workspaces.",
-            source_label="Studio project workspace default",
+            source_label=(
+                PROJECT_ROOT_ENV
+                if project_root is None and PROJECT_ROOT_ENV in os.environ
+                else "Studio project workspace default"
+            ),
             path=resolved_project_root,
             required=False,
             backup_actions=(
@@ -229,6 +226,7 @@ def build_studio_backup_plan(
             ),
             restore_actions=(
                 "Restore project JSON files before opening saved Studio workspaces.",
+                "Set SC_NEUROCORE_STUDIO_PROJECT_ROOT to a restored non-default directory before launch.",
                 "Verify project names through the Studio project list endpoint after restore.",
             ),
         ),

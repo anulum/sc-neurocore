@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 - Use the existing typed Torch module base for exact-reset cells so strict checking also works without the optional Torch dependency; runtime inheritance and numerical updates are unchanged.
 
+- Use `SC_NEUROCORE_STUDIO_PROJECT_ROOT` consistently for Studio project storage and backup planning. Preserve the legacy directory by default and refuse unusable configuration before startup writes.
+
 ### Added
 
 - Add stable beta-one `softplus` to Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions, with full-word numerical domains and an explicit arithmetic error bound. Refuse extra smooth-unary derivative arguments instead of discarding them. Refresh complete compiler/expression benchmarks with measured hardware context.

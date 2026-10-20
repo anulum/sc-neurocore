@@ -62,6 +62,29 @@ To use a different port:
 sc-neurocore studio --port 9000
 ```
 
+## Project directory and recovery
+
+Server projects use `~/.sc-neurocore/studio/projects` by default. To select a
+different directory, set `SC_NEUROCORE_STUDIO_PROJECT_ROOT` before launching
+Studio. For example, on Linux:
+
+```bash
+export SC_NEUROCORE_STUDIO_PROJECT_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/sc-neurocore/studio/projects"
+sc-neurocore studio
+```
+
+The configured value must be a nonempty absolute directory path; a literal
+`~/projects` value is refused. Studio resolves filesystem aliases and refuses
+an existing file or an unresolvable path before creating runtime state.
+Selecting a directory leaves existing projects in their original location;
+move or restore them deliberately while Studio is stopped.
+
+`sc-neurocore studio-backup-plan` uses the same configured directory. Add
+`--include-local-paths` to inspect the exact local locations. When restoring
+projects to a different directory, set the same environment variable before
+relaunching and check the saved-project list. Browser session storage remains
+separate from server projects.
+
 ## Two Modes
 
 ### Model Mode

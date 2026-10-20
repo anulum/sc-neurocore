@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Project save/load and pipeline for Studio (Block 6)
+# SC-NeuroCore — Studio project persistence and graph pipeline
 
 """Studio project storage and the graph-to-target pipeline.
 
@@ -28,6 +28,7 @@ from typing import Any
 from sc_neurocore.hdl_gen._ident import sanitize_ident
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.project_manifest import build_project_save_manifest
+from sc_neurocore.studio.project_paths import resolve_studio_project_root
 from sc_neurocore.studio.synthesis import EdaProcessLimits
 from sc_neurocore.studio.workspace_lock import DEFAULT_LOCK_TIMEOUT
 from sc_neurocore.studio.workspace_schema import PROJECT_PAYLOAD_VERSION, WorkspaceSchemaError
@@ -107,7 +108,7 @@ def _ensure_dir() -> None:
 
 def _projects_root() -> Path:
     """Return the resolved Studio project root."""
-    return Path(_PROJECTS_DIR).expanduser().resolve()
+    return resolve_studio_project_root(legacy_root=Path(_PROJECTS_DIR))
 
 
 def _safe_name(name: str) -> str:

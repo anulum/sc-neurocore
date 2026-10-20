@@ -43,6 +43,7 @@ from sc_neurocore.studio.platform.storage_mode import require_available_storage
 from sc_neurocore.studio.platform.storage_preflight import require_isolated_preflight
 from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 from sc_neurocore.studio.synthesis import EdaProcessLimits
+from sc_neurocore.studio.project_paths import resolve_studio_project_root
 
 DEFAULT_STUDIO_JOB_KINDS = frozenset(
     {"analysis", "compiler", "evidence", "model_scan", "synthesis", "training"}
@@ -141,8 +142,15 @@ def build_studio_api_context(
     -------
     StudioApiContext
         Shared mutable runtime state.
+
+    Raises
+    ------
+    StudioProjectRootRefused
+        The process-wide project directory is unusable. Refuse before creating
+        runtime collaborators or persistent state.
     """
     settings = runtime_settings or build_default_studio_runtime_settings()
+    resolve_studio_project_root()
     require_available_storage(settings.storage_mode)
     # Isolated startup is checked before any collaborator or file exists.
     isolated = require_isolated_preflight(settings) if settings.storage_mode == "isolated" else None

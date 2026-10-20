@@ -41476,6 +41476,12 @@ Returns
 StudioApiContext
     Shared mutable runtime state.
 
+Raises
+------
+StudioProjectRootRefused
+    The process-wide project directory is unusable. Refuse before creating
+    runtime collaborators or persistent state.
+
 ---
 
 ## Module `studio.api.schemas`
@@ -44976,7 +44982,8 @@ include_local_paths:
     Include resolved local paths in the serialized plan. Keep this disabled
     for deployment logs that may leave the host.
 project_root:
-    Optional Studio project workspace root for tests and embedded tools.
+    Optional Studio project workspace root for embedded tools. Otherwise use
+    the same configured or legacy directory as project persistence.
 
 Returns
 -------
@@ -51423,6 +51430,39 @@ Return the durable JSON representation for a saved project payload.
 The writer keeps the human-readable indentation used by existing Studio
 project files, while rejecting non-standard JSON values such as NaN and
 Infinity so saved projects remain portable across runtimes.
+
+---
+
+## Module `studio.project_paths`
+
+### Class `StudioProjectRootRefused`
+A deliberate refusal of an unusable process-wide project directory.
+
+
+### Function `resolve_studio_project_root(*, environ, legacy_root)`
+Resolve the configured project directory without creating or moving data.
+
+Parameters
+----------
+environ : mapping of str to str, optional
+    Process configuration. A configured ``SC_NEUROCORE_STUDIO_PROJECT_ROOT``
+    must be a nonempty absolute path, set before starting the application.
+    When omitted, read the actual process environment.
+legacy_root : pathlib.Path, optional
+    Existing project location when the override is absent. The default is
+    ``~/.sc-neurocore/studio/projects``. Keeping this fallback preserves
+    existing user data; selecting another root never migrates it silently.
+
+Returns
+-------
+pathlib.Path
+    Absolute canonical directory shared by project I/O and backup planning.
+
+Raises
+------
+StudioProjectRootRefused
+    The configured value is empty, relative, unresolvable, or an existing
+    filesystem object that is not a directory.
 
 ---
 

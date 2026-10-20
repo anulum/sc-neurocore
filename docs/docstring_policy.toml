@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1276
+expected_file_count = 1279
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5197,3 +5197,15 @@ rationale = "Verify real Studio CLI HTTP readiness and occupied-port refusal bef
 [[file]]
 path = "tests/test_dotproduct_current_rtl.py"
 rationale = "The actual current-mapper RTL matches exact signed integer interpolation over full endpoint ranges, both orders, multiple widths and every population count."
+
+[[file]]
+path = "src/sc_neurocore/studio/project_paths.py"
+rationale = "Project persistence and recovery planning resolve one explicitly configured absolute directory, preserve the legacy default, and refuse unusable configuration before startup writes."
+
+[[file]]
+path = "tests/test_studio_project_paths.py"
+rationale = "Real application processes save and reopen exact project state across restarts and isolated namespaces; the backup CLI agrees on the directory and startup refuses invalid configuration without creating runtime state."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/backup_plan.py"
+rationale = "The backup and restore manifest describes configured identity, audit, job and project data, reports missing targets, and discloses local paths only when explicitly requested."
