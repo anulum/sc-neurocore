@@ -111,7 +111,7 @@ pub fn print(graph: &ScGraph) -> String {
             } => {
                 out.push_str(&format!(
                     "{} = sc.lif_step {}, leak={}, gain={}, noise={}, \
-                     dw={}, frac={}, vt={}, rp={} : (bool, fixed<{},{}>)\n",
+                     dw={}, frac={}, vr={}, reset={}, vt={}, rp={} : (bool, fixed<{},{}>)\n",
                     id,
                     current,
                     leak,
@@ -119,6 +119,8 @@ pub fn print(graph: &ScGraph) -> String {
                     noise,
                     params.data_width,
                     params.fraction,
+                    params.v_rest,
+                    params.v_reset,
                     params.v_threshold,
                     params.refractory_period,
                     params.data_width,
@@ -135,7 +137,8 @@ pub fn print(graph: &ScGraph) -> String {
             } => {
                 out.push_str(&format!(
                     "{} = sc.dense_forward {}, weights={}, leak={}, gain={}, \
-                     ni={}, nn={}, len={} : vec<bool,{}>\n",
+                     ni={}, nn={}, len={}, dw={}, input_seed={}, weight_seed={}, \
+                     y_min={}, y_max={} : vec<bool,{}>\n",
                     id,
                     inputs,
                     weights,
@@ -144,6 +147,11 @@ pub fn print(graph: &ScGraph) -> String {
                     params.n_inputs,
                     params.n_neurons,
                     params.stream_length,
+                    params.data_width,
+                    params.input_seed_base,
+                    params.weight_seed_base,
+                    params.y_min,
+                    params.y_max,
                     params.n_neurons
                 ));
             }
@@ -157,7 +165,7 @@ pub fn print(graph: &ScGraph) -> String {
             } => {
                 out.push_str(&format!(
                     "{} = sc.dcls_layer {}, weights={}, centre={}, sigma={}, \
-                     taps={}, depth={}, dw={}, frac={} : fixed<{},{}>\n",
+                     taps={}, depth={}, dw={}, frac={}, ptr={}, offsets=[{}] : fixed<{},{}>\n",
                     id,
                     spike,
                     weights,
@@ -167,6 +175,13 @@ pub fn print(graph: &ScGraph) -> String {
                     params.delay_depth,
                     params.data_width,
                     params.fraction,
+                    params.ptr_width,
+                    params
+                        .tap_offsets
+                        .iter()
+                        .map(u32::to_string)
+                        .collect::<Vec<_>>()
+                        .join(";"),
                     params.data_width,
                     params.fraction
                 ));

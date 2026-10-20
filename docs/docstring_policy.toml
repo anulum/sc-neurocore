@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1274
+expected_file_count = 1275
+
+[[file]]
+path = "tests/test_ir_neuron_text.py"
+rationale = "Configured LIF, dense and delay-coded native graphs retain their parameters through Python serialization, parsing and hardware emission, while corrupt attributes are refused."
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"

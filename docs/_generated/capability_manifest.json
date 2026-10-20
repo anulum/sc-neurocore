@@ -973,12 +973,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 31,
     "public_api_exports": 45,
-    "public_documentation_pages": 645,
+    "public_documentation_pages": 646,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5378
+    "test_files": 5379
   },
   "documentation": {
     "public_pages": [
@@ -1317,6 +1317,7 @@
       "docs/api/rust-benchmarks.md",
       "docs/api/rust-engine.md",
       "docs/api/safety_cert.md",
+      "docs/api/sc-ir.md",
       "docs/api/sc_compte_wm_network.md",
       "docs/api/sc_inference.md",
       "docs/api/scnir.md",
@@ -5679,6 +5680,7 @@
       "tests/test_iqif_backends.py",
       "tests/test_iqif_engine_binding.py",
       "tests/test_iqif_schema_dsl.py",
+      "tests/test_ir_neuron_text.py",
       "tests/test_ir_python.py",
       "tests/test_ir_type_checker_check_ir_types.py",
       "tests/test_ir_type_checker_types_compatible.py",

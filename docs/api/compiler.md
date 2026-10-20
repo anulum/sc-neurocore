@@ -19,6 +19,9 @@ The root package boundary is defined in
 `sc_neurocore.compiler` modules are package-facade exports, direct public
 modules, compatibility facades, or internal build tools.
 
+Native compute-graph text and its hardware parameter roundtrip are described
+in [Compute graph text](sc-ir.md).
+
 ---
 
 ## 1. Mathematical Formalism

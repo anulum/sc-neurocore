@@ -14,6 +14,9 @@
 
 use crate::ir::graph::*;
 
+#[path = "parser/neuron.rs"]
+mod neuron;
+
 /// Parse error with line number.
 #[derive(Debug, Clone)]
 pub struct ParseError {
@@ -29,12 +32,10 @@ impl std::fmt::Display for ParseError {
 
 /// Parse an SC IR text file into a graph.
 ///
-/// This parser handles the subset of the text format needed for
-/// round-trip testing: `sc.input`, `sc.output`, `sc.constant`, `sc.encode`,
-/// `sc.and`, `sc.popcount`, and `sc.dense_forward`.
-///
-/// Complex ops (`LifStep`, `Scale`, `Offset`, `DivConst`) are parsed by
-/// recognizing the op name and extracting key-value parameters.
+/// Compound LIF, dense and delay-coded layer operations preserve every
+/// hardware parameter. Omitted legacy LIF/dense attributes use their historical
+/// defaults; explicitly malformed values are errors. Delay-coded layers require
+/// their ordered tap-offset list, which older printers did not retain.
 pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
     let lines: Vec<&str> = text.lines().collect();
     if lines.is_empty() {
@@ -80,7 +81,9 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
         } else if trimmed.contains("= sc.popcount") {
             parse_popcount(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.dense_forward") {
-            parse_dense_forward(trimmed, &mut graph, line_idx + 1)?;
+            neuron::parse(trimmed, &mut graph, line_idx + 1, "sc.dense_forward")?;
+        } else if trimmed.contains("= sc.dcls_layer") {
+            neuron::parse(trimmed, &mut graph, line_idx + 1, "sc.dcls_layer")?;
         } else if trimmed.contains("= sc.graph_forward") {
             parse_graph_forward(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.softmax_attention") {
@@ -88,7 +91,7 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
         } else if trimmed.contains("= sc.kuramoto_step") {
             parse_kuramoto_step(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.lif_step") {
-            parse_lif_step(trimmed, &mut graph, line_idx + 1)?;
+            neuron::parse(trimmed, &mut graph, line_idx + 1, "sc.lif_step")?;
         } else if trimmed.contains("= sc.scale") {
             parse_scale(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.offset") {
@@ -395,119 +398,6 @@ fn parse_popcount(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pa
 
     graph.next_id = graph.next_id.max(id.0 + 1);
     graph.push(ScOp::Popcount { id, input });
-    Ok(())
-}
-
-fn parse_dense_forward(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
-    let parts: Vec<&str> = text.splitn(2, "= sc.dense_forward").collect();
-    if parts.len() != 2 {
-        return Err(make_err(line, "malformed sc.dense_forward"));
-    }
-    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
-    let rest = parts[1].trim();
-
-    let tokens: Vec<&str> = rest.split_whitespace().collect();
-    let inputs = parse_value_id(
-        tokens
-            .first()
-            .ok_or_else(|| make_err(line, "missing inputs"))?,
-    )
-    .map_err(|e| make_err(line, e))?;
-
-    let weights_str =
-        extract_kv(rest, "weights").ok_or_else(|| make_err(line, "missing weights"))?;
-    let weights = parse_value_id(&weights_str).map_err(|e| make_err(line, e))?;
-
-    let leak_str = extract_kv(rest, "leak").ok_or_else(|| make_err(line, "missing leak"))?;
-    let leak = parse_value_id(&leak_str).map_err(|e| make_err(line, e))?;
-
-    let gain_str = extract_kv(rest, "gain").ok_or_else(|| make_err(line, "missing gain"))?;
-    let gain = parse_value_id(&gain_str).map_err(|e| make_err(line, e))?;
-
-    let ni = extract_kv(rest, "ni")
-        .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(3);
-    let nn = extract_kv(rest, "nn")
-        .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(7);
-    let len = extract_kv(rest, "len")
-        .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(1024);
-
-    let params = DenseParams {
-        n_inputs: ni,
-        n_neurons: nn,
-        stream_length: len,
-        ..DenseParams::default()
-    };
-
-    graph.next_id = graph.next_id.max(id.0 + 1);
-    graph.push(ScOp::DenseForward {
-        id,
-        inputs,
-        weights,
-        leak,
-        gain,
-        params,
-    });
-    Ok(())
-}
-
-fn parse_lif_step(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
-    let parts: Vec<&str> = text.splitn(2, "= sc.lif_step").collect();
-    if parts.len() != 2 {
-        return Err(make_err(line, "malformed sc.lif_step"));
-    }
-    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
-    let rest = parts[1].trim();
-
-    let tokens: Vec<&str> = rest.split_whitespace().collect();
-    let current = parse_value_id(
-        tokens
-            .first()
-            .ok_or_else(|| make_err(line, "missing current"))?,
-    )
-    .map_err(|e| make_err(line, e))?;
-
-    let leak_str = extract_kv(rest, "leak").ok_or_else(|| make_err(line, "missing leak"))?;
-    let leak = parse_value_id(&leak_str).map_err(|e| make_err(line, e))?;
-
-    let gain_str = extract_kv(rest, "gain").ok_or_else(|| make_err(line, "missing gain"))?;
-    let gain = parse_value_id(&gain_str).map_err(|e| make_err(line, e))?;
-
-    let noise_str = extract_kv(rest, "noise").ok_or_else(|| make_err(line, "missing noise"))?;
-    let noise = parse_value_id(&noise_str).map_err(|e| make_err(line, e))?;
-
-    let dw = extract_kv(rest, "dw")
-        .and_then(|s| s.parse::<u32>().ok())
-        .unwrap_or(16);
-    let frac = extract_kv(rest, "frac")
-        .and_then(|s| s.parse::<u32>().ok())
-        .unwrap_or(8);
-    let vt = extract_kv(rest, "vt")
-        .and_then(|s| s.parse::<i64>().ok())
-        .unwrap_or(256);
-    let rp = extract_kv(rest, "rp")
-        .and_then(|s| s.parse::<u32>().ok())
-        .unwrap_or(2);
-
-    let params = LifParams {
-        data_width: dw,
-        fraction: frac,
-        v_threshold: vt,
-        refractory_period: rp,
-        ..LifParams::default()
-    };
-
-    graph.next_id = graph.next_id.max(id.0 + 1);
-    graph.push(ScOp::LifStep {
-        id,
-        current,
-        leak,
-        gain,
-        noise,
-        params,
-    });
     Ok(())
 }
 

@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Preserve every LIF, dense and delay-coded layer parameter in native IR text. Parse delay-coded layers, retain ordered tap offsets, and reject malformed explicit attributes instead of silently substituting defaults.
+
 - Open the local Studio browser only after its server is listening; refuse an occupied port without opening a page.
 
 - Add stable beta-one `softplus` across Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions. Document the full signed-word domain and separate arithmetic error bound; exercise actual native outputs and refresh both full benchmark protocols with hardware context. Fix smooth unary differentiation silently discarding extra positional arguments.
