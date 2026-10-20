@@ -21,6 +21,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Open the local Studio browser only after its server is listening; refuse an occupied port without opening a page.
+
 - Retain and check every timed model trajectory across all five runtimes; reject non-finite states and inconsistent dimensions before writing benchmark evidence. Record CPU, RAM and runtime context with each report.
 
 

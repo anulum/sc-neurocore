@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Open the local Studio browser only after its server is listening; refuse an occupied port without opening a page.
+
 - Add stable beta-one `softplus` across Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions. Document the full signed-word domain and separate arithmetic error bound; exercise actual native outputs and refresh both full benchmark protocols with hardware context. Fix smooth unary differentiation silently discarding extra positional arguments.
 
 - Add opt-in v2 `atan2(y, x)` through the equation runtime, Verilog, fixed C/Rust and C++ expression paths. Preserve both operands and the fixed-point zero convention, reject invalid domains and unproven derivative branch cuts, and report two-dimensional accuracy. Refresh source-bound compiler/expression benchmarks with CPU and RAM context. Remove redundant Rust expression parentheses so generated units compile with warnings denied.

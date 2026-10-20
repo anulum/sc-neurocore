@@ -41,6 +41,9 @@ root `http://127.0.0.1:8001/` redirects there. The Studio starts in **Model
 mode** with <!-- count:studio_catalogue_models -->185<!-- /count --> neuron models browsable by category. Switch to **ODE mode** to
 write custom equations.
 
+The launcher opens the selected page after the local server is listening. If
+the port is already in use, startup fails without opening a browser.
+
 The first screen opens on an operator workbench rather than a landing page. It
 shows the saved-project/session state, selected model or ODE mode, simulation
 state, audit/capability evidence health, compile/synthesis readiness, and

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1273
+expected_file_count = 1274
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -5185,3 +5185,7 @@ rationale = "Exercise stable softplus precision, derivatives and actual generate
 [[file]]
 path = "tests/test_expression_derivative_softplus.py"
 rationale = "Exercise stable softplus precision, derivatives and actual generated native compiler paths."
+
+[[file]]
+path = "tests/test_cli_studio_startup.py"
+rationale = "Verify real Studio CLI HTTP readiness and occupied-port refusal before browser opening."

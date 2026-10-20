@@ -35,21 +35,19 @@ def _expected_entry(origin: str) -> tuple[str, tuple[str, ...]]:
     )
 
 
-# The server and the browser are the command's two effects that cannot run in a
-# test process: uvicorn.run blocks serving forever and webbrowser.open launches
-# a desktop browser. Both are replaced so the arguments they receive are checked.
 def test_studio_launches_uvicorn(capsys: pytest.CaptureFixture[str]) -> None:
-    """Launch the single application and announce unprotected development."""
-    url, announcement = _expected_entry("http://127.0.0.1:8001")
+    """Configure one application without opening a browser before serving."""
+    _, announcement = _expected_entry("http://127.0.0.1:8001")
     with (
-        mock.patch("uvicorn.run") as m_uvicorn,
+        mock.patch("uvicorn.Server.run", autospec=True) as m_uvicorn,
         mock.patch("webbrowser.open") as m_browser,
     ):
         rc = run_cli("studio")
     assert rc == 0
     m_uvicorn.assert_called_once()
-    assert m_uvicorn.call_args.args[0].state.studio_runtime_settings.enforce_route_policies is False
-    m_browser.assert_called_once_with(url)
+    server = m_uvicorn.call_args.args[0]
+    assert server.config.app.state.studio_runtime_settings.enforce_route_policies is False
+    m_browser.assert_not_called()
     output = capsys.readouterr().out
     assert "UNPROTECTED local development" in output
     assert output.splitlines()[-len(announcement) :] == list(announcement)
@@ -65,15 +63,14 @@ def test_studio_missing_fastapi(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_studio_command_routes_custom_port() -> None:
     """Pass the selected port to the server and announce its matching entry URL."""
-    url, _ = _expected_entry("http://127.0.0.1:9000")
     with (
-        mock.patch("uvicorn.run") as run_server,
+        mock.patch("uvicorn.Server.run", autospec=True) as run_server,
         mock.patch("webbrowser.open") as open_browser,
     ):
         rc = run_cli("studio", "--port", "9000")
     assert rc == 0
-    open_browser.assert_called_once_with(url)
-    assert run_server.call_args.kwargs["port"] == 9000
+    open_browser.assert_not_called()
+    assert run_server.call_args.args[0].config.port == 9000
 
 
 def test_studio_backup_plan_reports_invalid_configuration(

@@ -122,6 +122,7 @@ def run_studio(args: argparse.Namespace) -> int:
         print("Install with: uv pip install sc-neurocore[studio]")
         return 1
 
+    import asyncio
     import webbrowser
 
     from sc_neurocore.studio.platform.settings import (
@@ -169,8 +170,20 @@ def run_studio(args: argparse.Namespace) -> int:
     )
     for line in announcement:
         print(line)
-    webbrowser.open(url)
-    uvicorn.run(app, host="127.0.0.1", port=int(args.port), log_level="warning")
+
+    async def _open_browser_once() -> None:
+        """Open the entry after binding without blocking its HTTP event loop."""
+        config.callback_notify = None
+        await asyncio.to_thread(webbrowser.open, url)
+
+    config = uvicorn.Config(
+        app,
+        host="127.0.0.1",
+        port=port,
+        log_level="warning",
+        callback_notify=_open_browser_once,
+    )
+    uvicorn.Server(config).run()
     return 0
 
 
