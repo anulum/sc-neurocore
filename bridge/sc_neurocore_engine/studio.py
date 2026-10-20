@@ -18,11 +18,13 @@ def get_batch_simulate() -> Callable[..., Any]:
     """Return the Rust Studio batch-simulation function or raise ImportError."""
     from sc_neurocore_engine.sc_neurocore_engine import py_batch_simulate
 
-    return py_batch_simulate
+    function: Callable[..., Any] = py_batch_simulate
+    return function
 
 
 def get_ei_network_simulator() -> Callable[..., Any]:
     """Return the Rust Studio E-I network function or raise ImportError."""
     from sc_neurocore_engine.sc_neurocore_engine import py_simulate_ei_network
 
-    return py_simulate_ei_network
+    function: Callable[..., Any] = py_simulate_ei_network
+    return function

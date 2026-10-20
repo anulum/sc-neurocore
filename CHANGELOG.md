@@ -10,6 +10,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `NetworkRunner.add_projection` admits its CSR arrays before allocating:
+  population indices, `n_source + 1` row offsets starting at 0 and never
+  decreasing, equal column and value lengths, a last offset within them, and
+  every used column inside the target population. Malformed connectivity now
+  raises `ValueError` and leaves the runner unchanged; before, it silently
+  dropped driven connections or aborted the process on short storage.
+
 - `EquationNeuron(..., threshold_rng="philox")` is an optional generator for
   Poisson and escape-rate thresholds: a step fires when `rand()` of the reserved
   call site `2**31` is below the probability, keyed by the neuron's seed and

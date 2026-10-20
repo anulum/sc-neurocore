@@ -20,6 +20,70 @@ pub struct ProjectionRunner {
     buf_idx: usize,
 }
 
+/// Admit signed CSR connectivity from `n_src` source rows into `n_tgt` target columns.
+///
+/// Returns the unsigned row offsets and column indices when `row_offsets` has
+/// exactly `n_src + 1` entries starting at zero and never decreasing, the last
+/// offset lies within both `col_indices` and `values` (which have equal
+/// lengths), and every used column is in `0..n_tgt`. Every other input is
+/// refused with a message naming the first violation, so no driven connection
+/// is silently dropped and propagation never indexes outside the storage.
+pub fn admit_csr(
+    n_src: usize,
+    n_tgt: usize,
+    row_offsets: &[i64],
+    col_indices: &[i64],
+    values: &[f64],
+) -> Result<(Vec<usize>, Vec<usize>), String> {
+    if row_offsets.len() != n_src + 1 {
+        return Err(format!(
+            "row_offsets has {} entries; a source population of {n_src} neurons needs {}",
+            row_offsets.len(),
+            n_src + 1
+        ));
+    }
+    if row_offsets[0] != 0 {
+        return Err(format!(
+            "row_offsets must start at 0, got {}",
+            row_offsets[0]
+        ));
+    }
+    if let Some(i) = (0..n_src).find(|&i| row_offsets[i + 1] < row_offsets[i]) {
+        return Err(format!(
+            "row_offsets must not decrease: entry {} is {} after {}",
+            i + 1,
+            row_offsets[i + 1],
+            row_offsets[i]
+        ));
+    }
+    if col_indices.len() != values.len() {
+        return Err(format!(
+            "col_indices has {} entries but values has {}",
+            col_indices.len(),
+            values.len()
+        ));
+    }
+    let used = row_offsets[n_src];
+    if used as u64 > col_indices.len() as u64 {
+        return Err(format!(
+            "the last row offset {used} exceeds the {} stored connections",
+            col_indices.len()
+        ));
+    }
+    let used = used as usize;
+    if let Some(k) =
+        (0..used).find(|&k| col_indices[k] < 0 || col_indices[k] as u64 >= n_tgt as u64)
+    {
+        return Err(format!(
+            "col_indices[{k}] = {} is outside a target population of {n_tgt} neurons",
+            col_indices[k]
+        ));
+    }
+    let offsets = row_offsets.iter().map(|&x| x as usize).collect();
+    let columns = col_indices.iter().map(|&x| x as usize).collect();
+    Ok((offsets, columns))
+}
+
 impl ProjectionRunner {
     pub fn new(
         src_pop: usize,

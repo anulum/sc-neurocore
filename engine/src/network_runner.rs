@@ -21,7 +21,7 @@ mod population_runner;
 pub use population_runner::PopulationRunner;
 
 mod projection_runner;
-pub use projection_runner::ProjectionRunner;
+pub use projection_runner::{admit_csr, ProjectionRunner};
 
 mod simulation_results;
 pub use simulation_results::SimResults;

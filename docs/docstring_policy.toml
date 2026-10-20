@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1247
+expected_file_count = 1249
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -5081,3 +5081,11 @@ rationale = "Lowers a Philox stochastic threshold to a level threshold on rand()
 [[file]]
 path = "tests/test_philox_threshold.py"
 rationale = "Model, RTL, C and Rust tests of the Philox stochastic threshold."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/studio.py"
+rationale = "Stable bridge getters for the Studio batch and E-I network engine functions, typed for strict callers."
+
+[[file]]
+path = "tests/test_network_runner_engine_binding.py"
+rationale = "Installed NetworkRunner and batch contracts, including CSR projection admission and its refusals (review 291)."

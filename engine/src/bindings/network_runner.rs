@@ -44,6 +44,12 @@ impl PyNetworkRunner {
         Ok(self.inner.add_population(pop))
     }
 
+    /// Append a CSR projection after admission; malformed connectivity raises ValueError.
+    ///
+    /// The populations must exist, `row_offsets` must hold one more entry than
+    /// the source population has neurons, start at 0 and never decrease, and
+    /// every used column must index the target population. A refusal leaves the
+    /// runner's topology and state unchanged.
     #[pyo3(signature = (src, tgt, row_offsets, col_indices, values, delay=0))]
     fn add_projection(
         &mut self,
@@ -53,11 +59,10 @@ impl PyNetworkRunner {
         col_indices: Vec<i64>,
         values: Vec<f64>,
         delay: usize,
-    ) {
-        let ro: Vec<usize> = row_offsets.iter().map(|&x| x as usize).collect();
-        let ci: Vec<usize> = col_indices.iter().map(|&x| x as usize).collect();
-        let proj = network_runner::ProjectionRunner::new(src, tgt, ro, ci, values, delay);
-        self.inner.add_projection(proj);
+    ) -> PyResult<()> {
+        self.inner
+            .admit_projection(src, tgt, &row_offsets, &col_indices, values, delay)
+            .map_err(PyValueError::new_err)
     }
 
     /// Step one population after input and worker admission, preserving refusals.

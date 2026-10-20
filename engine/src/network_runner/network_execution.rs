@@ -9,7 +9,7 @@
 //! Multi-population simulation orchestration over populations and projections.
 
 use super::simulation_results::pack_spike_event;
-use super::{PopulationRunner, ProjectionRunner, SimResults};
+use super::{admit_csr, PopulationRunner, ProjectionRunner, SimResults};
 
 pub struct NetworkRunner {
     pub populations: Vec<PopulationRunner>,
@@ -63,6 +63,40 @@ impl NetworkRunner {
 
     pub fn add_projection(&mut self, proj: ProjectionRunner) {
         self.projections.push(proj);
+    }
+
+    /// Admit and append a signed CSR projection, leaving the network unchanged on refusal.
+    ///
+    /// Both population indices must exist and the connectivity must pass
+    /// [`admit_csr`] against their sizes; only then
+    /// is the projection (and its delay buffer) allocated and appended.
+    pub fn admit_projection(
+        &mut self,
+        src: usize,
+        tgt: usize,
+        row_offsets: &[i64],
+        col_indices: &[i64],
+        values: Vec<f64>,
+        delay: usize,
+    ) -> Result<(), String> {
+        let n_pops = self.populations.len();
+        let source = self.populations.get(src).ok_or_else(|| {
+            format!("projection source population index {src} out of range ({n_pops} populations)")
+        })?;
+        let target = self.populations.get(tgt).ok_or_else(|| {
+            format!("projection target population index {tgt} out of range ({n_pops} populations)")
+        })?;
+        let (offsets, columns) = admit_csr(
+            source.len(),
+            target.len(),
+            row_offsets,
+            col_indices,
+            &values,
+        )?;
+        self.add_projection(ProjectionRunner::new(
+            src, tgt, offsets, columns, values, delay,
+        ));
+        Ok(())
     }
 
     /// Validate population selection and current shape before worker admission.

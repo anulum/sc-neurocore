@@ -131,6 +131,16 @@ loop (`_run_rust`) round-trips populations and projections through
 final voltages back into each `Population`, then decodes packed spike events
 (`u64 = neuron_id<<32 | timestep`) back into Python `SpikeMonitor` records.
 
+`NetworkRunner.add_projection(src, tgt, row_offsets, col_indices, values,
+delay=0)` admits the CSR arrays before allocating anything. Both population
+indices must exist. `row_offsets` must have one more entry than the source
+population has neurons, start at 0 and never decrease. `col_indices` and
+`values` must have equal lengths, and the last offset must not exceed them.
+Every used column must index the target population. Any other input raises
+`ValueError` naming the first violation, and the runner keeps its topology
+and state. Malformed connectivity therefore cannot silently drop a driven
+connection or index outside its storage.
+
 ### 3.3 Rust dispatch criteria (`_can_use_rust`)
 
 `Network._can_use_rust` returns `True` only when `_rust_incompatibilities()`
