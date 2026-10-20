@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio operator status tests
 
+"""The operator status payload and its admin-only endpoint report real platform health."""
+
 from __future__ import annotations
 
 import os
@@ -40,6 +42,7 @@ from sc_neurocore.studio.platform import (
 
 
 def _capability_registry() -> CapabilityRegistry:
+    """Return a registry of one ready, one degraded and one missing-requirement capability."""
     registry = CapabilityRegistry()
     registry.register(
         CapabilityDescriptor(
@@ -81,6 +84,7 @@ def _capability_registry() -> CapabilityRegistry:
 
 
 def _job_status(tmp_path: Path, *, configured: bool) -> StudioJobStatusSnapshot:
+    """Return the status snapshot of a real training job manager under ``tmp_path``."""
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"training"}),
@@ -91,6 +95,7 @@ def _job_status(tmp_path: Path, *, configured: bool) -> StudioJobStatusSnapshot:
 
 
 def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> None:
+    """The operator status reports profile, route-policy counts, identity, audit, login throttle and job health."""
     registry = _capability_registry()
     status = build_studio_operator_status(
         settings=StudioRuntimeSettings(
@@ -134,16 +139,20 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     # authenticated network tutorial notebook; 149 since the seven
     # authenticated fitting and cohort job routes of the experiment laboratory
     # and the public training target-profile catalogue, which was served
-    # without a policy until the route-policy gate caught it.
+    # without a policy until the route-policy gate caught it; 155 since the
+    # single-operator lab profile (7014fa6a3) classified the six served
+    # frontend and API-document reads (/, /docs, /redoc, /openapi.json and
+    # GET/HEAD /studios/sc-neurocore) as public and made one public read
+    # authenticated.
     assert payload["route_policies"] == {
         "admin_count": 28,
-        "authenticated_count": 86,
+        "authenticated_count": 87,
         "enforced": True,
-        "protected_audit_action_count": 114,
-        "protected_count": 114,
+        "protected_audit_action_count": 115,
+        "protected_count": 115,
         "protected_routes_audited": True,
-        "public_count": 35,
-        "total_count": 149,
+        "public_count": 40,
+        "total_count": 155,
     }
     assert payload["identity"] == {
         "configured": True,
@@ -224,6 +233,7 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
 
 
 def test_build_studio_operator_status_reports_header_identity_mode(tmp_path: Path) -> None:
+    """Allowing header principals is reported as the header identity mode."""
     status = build_studio_operator_status(
         settings=StudioRuntimeSettings(allow_header_principal=True),
         capabilities=(),
@@ -245,6 +255,7 @@ def test_build_studio_operator_status_reports_header_identity_mode(tmp_path: Pat
 
 
 def test_build_studio_operator_status_reports_disabled_identity_mode(tmp_path: Path) -> None:
+    """Without an identity file or header principals the identity mode is reported disabled."""
     status = build_studio_operator_status(
         settings=StudioRuntimeSettings(allow_header_principal=False),
         capabilities=(),
@@ -266,6 +277,7 @@ def test_build_studio_operator_status_reports_disabled_identity_mode(tmp_path: P
 
 
 def test_build_studio_operator_status_counts_route_policy_inventory(tmp_path: Path) -> None:
+    """Route-policy counts follow a hand-built registry of public, authenticated and admin routes."""
     registry = RoutePolicyRegistry()
     registry.register(
         "GET",
@@ -318,6 +330,7 @@ def test_build_studio_operator_status_counts_route_policy_inventory(tmp_path: Pa
 
 
 def test_operator_status_endpoint_is_admin_protected() -> None:
+    """The operator status endpoint refuses an anonymous caller and serves an admin principal."""
     app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
     client = TestClient(app, base_url="http://127.0.0.1")
 

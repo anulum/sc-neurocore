@@ -37,6 +37,7 @@ from sc_neurocore.studio.platform.storage_preflight import (
 
 
 def _boundary(tmp_path: Path, *, api_uid: int) -> StorageBoundaryConfiguration:
+    """Return an isolated storage boundary with distinct storage, API and worker UIDs under ``tmp_path``."""
     uids = sorted({api_uid, os.getuid() + 11, os.getuid() + 12} - {api_uid})
     return StorageBoundaryConfiguration(
         storage_uid=uids[0],
@@ -59,6 +60,7 @@ def _boundary(tmp_path: Path, *, api_uid: int) -> StorageBoundaryConfiguration:
 
 
 def _launcher(tmp_path: Path, *, accept: bool = True) -> LauncherClientSettings:
+    """Return launcher client settings whose socket lives under ``tmp_path``."""
     return LauncherClientSettings(
         socket_path=tmp_path / "launcher" / "launcher.sock",
         launcher_uid=os.getuid() + 13,
@@ -73,6 +75,7 @@ def _launcher(tmp_path: Path, *, accept: bool = True) -> LauncherClientSettings:
 
 
 def _settings(tmp_path: Path, *, api_uid: int) -> StudioRuntimeSettings:
+    """Return isolated-storage runtime settings with enforced route policies and no header principals."""
     return StudioRuntimeSettings(
         storage_mode="isolated",
         storage_boundary=_boundary(tmp_path, api_uid=api_uid),
@@ -177,8 +180,10 @@ def test_a_passing_preflight_builds_the_isolated_facade_and_no_local_job_state(
 ) -> None:
     """The API context holds the storage-backed facade; no job root or ledger appears.
 
-    The one file the API process adds is its lock beside the identity store,
-    which marks the serving process and holds no job state.
+    The files the API process adds are its two locks beside the identity
+    store, one on the store's path and one on its inode (so an atomic
+    replacement of the store cannot admit a second process); they mark the
+    serving process and hold no job state.
     """
     (tmp_path / "spool").mkdir()
     (tmp_path / "spool").chmod(0o750)
@@ -204,4 +209,6 @@ def test_a_passing_preflight_builds_the_isolated_facade_and_no_local_job_state(
     context = build_studio_api_context(app, settings)
     assert isinstance(context.studio_job_manager, IsolatedJobManager)
     assert app.state.studio_job_manager is context.studio_job_manager
-    assert sorted(tmp_path.iterdir()) == sorted([*before, api_lock_path(identity)])
+    store = identity.stat()
+    inode_lock = tmp_path / f".studio-api-{store.st_dev:x}-{store.st_ino:x}.lock"
+    assert sorted(tmp_path.iterdir()) == sorted([*before, api_lock_path(identity), inode_lock])

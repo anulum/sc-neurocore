@@ -192,7 +192,9 @@ def test_http_security_and_scientific_routes_use_real_isolated_manager(
     install_studio_security_middleware(application, context)
     application.include_router(build_fits_router(context))
     with TestClient(
-        application, base_url="http://127.0.0.1", headers={"x-studio-principal": "alice"}
+        application,
+        base_url="http://127.0.0.1",
+        headers={"x-studio-principal": "alice", "sec-fetch-site": "none"},
     ) as client:
         submitted = client.post("/api/fits/jobs", json=_body(generations=2, population=4))
         assert submitted.status_code == 202, submitted.text
