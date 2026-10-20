@@ -35,7 +35,16 @@ def test_oversized_numeric_constant_is_rejected() -> None:
 
 @pytest.mark.parametrize(
     "expression",
-    ["exp(v, w)", "log(v, table)", "clip(v, 0, 1, w)", "tanh(v, None, w)", "sin(v, [0.0])"],
+    [
+        "exp(v, w)",
+        "log(v, table)",
+        "clip(v, 0, 1, w)",
+        "tanh(v, None, w)",
+        "sin(v, [0.0])",
+        "atan2(v, w, table)",
+        "atan2(v, w, [0.0])",
+        "atan2(v, w, None, table)",
+    ],
 )
 def test_an_array_function_cannot_be_given_an_output_argument(expression: str) -> None:
     """No value but the literal ``None`` reaches the output-array parameter of an array function.
@@ -54,6 +63,8 @@ def test_an_array_function_cannot_be_given_an_output_argument(expression: str) -
         "clip(v, None, 0, None)",
         "clip(v)",
         "user_function(v, w, 1)",
+        "atan2(v, w)",
+        "atan2(v, w, None)",
         "sqrt(v, w)",
     ):
         validator.validate(accepted)

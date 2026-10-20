@@ -136,7 +136,8 @@ class TestV2Measurement:
         bounds = {"cosh": 0.63, "sinh": 0.63, "tan": 0.52}
         for function in table_functions("v2"):
             result = measure(function, 16, 8, "v2")
-            assert result.exhaustive and result.lowering == "v2"
+            assert result.lowering == "v2"
+            assert result.exhaustive == (function != "atan2")
             assert result.max_error / result.resolution <= (bounds.get(function, 0.501))
 
     def test_v2_improves_every_shared_function_at_q16_16(self) -> None:

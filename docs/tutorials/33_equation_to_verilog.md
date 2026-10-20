@@ -508,17 +508,16 @@ governor, and host load.
 
 | Workload | Median compile time |
 | --- | ---: |
-| Euler registered | 0.114013 ms |
-| Euler folded with parameter port | 0.301826 ms |
-| RK4 registered | 0.401448 ms |
-| Four-substep RK4 registered | 0.730636 ms |
-| Escape-rate registered | 4.565140 ms |
-| Square-root map registered | 0.260231 ms |
-| Negative half-LSB nearest map registered | 0.136080 ms |
+| Euler registered | 0.340092 ms |
+| Euler folded with parameter port | 0.298532 ms |
+| RK4 registered | 0.653103 ms |
+| Four-substep RK4 registered | 1.353286 ms |
+| Escape-rate registered | 2.651926 ms |
+| Square-root map registered | 0.249005 ms |
+| Negative half-LSB nearest map registered | 0.168758 ms |
+| Quadrant-aware angle map registered | 2.649831 ms |
 
-The run used all 12 logical CPUs as an allowed affinity mask, the `powersave`
-governor, and a loaded workstation with another repository lane active. No core
-was reserved. These measurements are local regression evidence, not
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.14. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact. These measurements are local regression evidence, not
 promotion-grade latency or throughput claims.
 
 ## 11. CLI and hardware profiles

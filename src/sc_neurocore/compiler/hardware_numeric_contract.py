@@ -42,8 +42,7 @@ from typing import Literal
 
 from ..neurons.equation_builder import EquationNeuron
 from . import expr_lut_tables
-from .diffusion_noise import lower_diffusion_noise
-from .philox_threshold import lower_philox_threshold
+from .equation_lowering import equation_expressions as _expressions, prepare_neuron
 from .lut_accuracy import LutAccuracy, measure
 from .intelligence.bit_true_kernel import (
     generate_bittrue_kernel_from_neuron,
@@ -187,10 +186,11 @@ class FunctionUnit:
     Parameters
     ----------
     function : str
-        The unit (``exp``, ``log``, ``sqrt``, ``sin``, ``cos``, ``sigmoid``, ``tanh``,
-        ``cosh``, ``sinh``, ``exprel`` or ``cbrt``).
+        A registered unary or binary function unit, including ``atan2``.
     accuracy : LutAccuracy
         Its error at the contract's format against the Python model's function.
+        Binary measurements retain both operand ranges, the worst tuple, and
+        distinguish a sampled maximum from the declared arithmetic bound.
 
     """
 
@@ -364,13 +364,14 @@ def hardware_numeric_contract(
         raise ValueError(f"function_lowering must be 'lut-v1' or 'v2', got {function_lowering!r}")
     data_width, fraction = q_format.total_bits, q_format.fraction_bits
     # Counter-based draws: xi and a Philox threshold become ordinary rand()/randn().
-    neuron = lower_philox_threshold(lower_diffusion_noise(neuron))
+    authored_neuron = neuron
+    neuron = prepare_neuron(neuron)
     quantities = _deduplicated(
         _quantities(neuron, data_width=data_width, fraction=fraction, rounding=rounding)
     )
     try:
         generate_bittrue_kernel_from_neuron(
-            neuron,
+            authored_neuron,
             data_width=data_width,
             fraction=fraction,
             overflow=overflow,
@@ -418,26 +419,6 @@ def hardware_numeric_contract(
         ),
         random_precision=random_precision,
     )
-
-
-def _expressions(neuron: EquationNeuron) -> Iterator[tuple[str, str]]:
-    """Yield every expression the compiler lowers, with where it appears."""
-    for variable, expression in neuron.equations.items():
-        yield f"equation {variable}", expression
-    if neuron.method == "exp_euler":
-        # The exponential-Euler datapath also lowers each diagonal Jacobian term.
-        for variable, expression in neuron.jacobian_expressions.items():
-            yield f"jacobian {variable}", expression
-    if neuron.threshold_expr:
-        yield "threshold", neuron.threshold_expr
-    for variable, expression in neuron.reset_rules.items():
-        yield f"reset {variable}", expression
-    if neuron.rate_expression:
-        yield "escape rate", neuron.rate_expression
-    if neuron.probability_expression:
-        yield "spike probability", neuron.probability_expression
-    if neuron.spike_value_expr:
-        yield "spike value", neuron.spike_value_expr
 
 
 def _literals(

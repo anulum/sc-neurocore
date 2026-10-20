@@ -358,6 +358,15 @@ def _unit_arctan(p: Program, code: str, data_width: int, fraction: int) -> str:
     return _saturate(p, _shift_round(p, signed, fraction - fu.P), data_width)
 
 
+def _unit_atan2(p: Program, y: str, x: str, data_width: int, fraction: int) -> str:
+    value = _atan_internal(p, _abs(p, y), _max(p, _abs(p, x), p.const(1)))
+    axis = p.select(p.eq(y, p.const(0)), p.const(0), p.const(fu._HALF_PI))
+    value = p.select(p.eq(x, p.const(0)), axis, value)
+    value = p.select(p.lt(x, p.const(0)), p.sub(p.const(2 * fu._HALF_PI), value), value)
+    signed = p.select(p.lt(y, p.const(0)), p.neg(value), value)
+    return _saturate(p, _shift_round(p, signed, fraction - fu.P), data_width)
+
+
 def _arcsin_internal(p: Program, code: str, fraction: int) -> str:
     magnitude = _min(p, _abs(p, code), p.const(1 << fraction))
     x = p.shl(magnitude, fu.P - fraction)
@@ -441,6 +450,8 @@ _BUILDERS: dict[str, Builder] = {
     "sign": _unit_sign,
 }
 
+_BINARY_BUILDERS: dict[str, Callable[[Program, str, str, int, int], str]] = {"atan2": _unit_atan2}
+
 
 @cache
 def program(function: str, data_width: int, fraction: int) -> Program:
@@ -456,7 +467,7 @@ def program(function: str, data_width: int, fraction: int) -> Program:
     Returns
     -------
     Program
-        The program; its input is the signed input code, its output the result code.
+        The program; operands are indexed in function-call order, output is the result code.
 
     Raises
     ------
@@ -464,11 +475,14 @@ def program(function: str, data_width: int, fraction: int) -> Program:
         For an unknown function or a format the units cannot mirror.
 
     """
-    if function not in _BUILDERS:
+    if function not in _BUILDERS and function not in _BINARY_BUILDERS:
         raise ValueError(f"no v2 unit for {function!r}")
     fu.check_format(data_width, fraction)
     p = Program(tables={name: fu.table(name) for name in fu.SEGMENT_BITS})
-    p.output = _BUILDERS[function](p, p.input(), data_width, fraction)
+    if function in _BINARY_BUILDERS:
+        p.output = _BINARY_BUILDERS[function](p, p.input(), p.input(1), data_width, fraction)
+    else:
+        p.output = _BUILDERS[function](p, p.input(), data_width, fraction)
     return p
 
 

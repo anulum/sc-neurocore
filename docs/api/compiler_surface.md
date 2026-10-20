@@ -38,6 +38,7 @@ can change without a deprecation window.
 | `compiler_impl` | internal build tool | Legacy implementation module behind documented compiler entry points. |
 | `constraint_gen` | direct public module | Timing constraint generator has direct tests and documentation. |
 | `deployment` | direct public module | Deployment facade aggregates constraints, drivers, evidence, and multi-target helpers. |
+| `equation_lowering` | internal build tool | Validates authored callable bindings and prepares diffusion and threshold intrinsics for every neuron compiler entry point. |
 | `equation_compiler` | public facade | Package-level exports provide equation-to-FPGA helpers. |
 | `equivalence_check` | internal build tool | SymbiYosys equivalence runner behind the hardware evidence pipeline. |
 | `equivalence_miter` | internal build tool | Sequential-equivalence miter builder feeding the equivalence runner. |

@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add opt-in v2 `atan2(y, x)` through the equation runtime, Verilog, fixed C/Rust and C++ expression paths. Preserve both operands and the fixed-point zero convention, reject invalid domains and unproven derivative branch cuts, and report two-dimensional accuracy. Refresh source-bound compiler/expression benchmarks with CPU and RAM context. Remove redundant Rust expression parentheses so generated units compile with warnings denied.
+
+
 - The integer-power bound of equation programs also covers a computed
   exponent. A re-reading showed that `2 ** (60 * 60 * 60)` passed, because
   the bound was applied only where the base was itself a power.
@@ -41,7 +44,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The cost of equation programs has a committed benchmark,
   `benchmarks/bench_equation_program.py`. Its receipt
   `benchmarks/results/bench_equation_program.json` (loaded development host)
-  puts a program at between 1.9 and 2.7 times the same arithmetic written as
+  puts a program at between 1.2 and 3.3 times the same arithmetic written as
   a Python function.
 
 - Published claims are bound to their sources after an outside review. The

@@ -40,7 +40,7 @@ The approximation error of every unit against the Python model is measured by
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from functools import cache
 
 LOWERING = "v2"
@@ -53,34 +53,6 @@ SIGMOID_RANGE_BITS = 5  # the sigmoid table covers [0, 32)
 ERF_RANGE_BITS = 2  # the erf table covers [0, 4); erf(4) = 1 - 1.5e-8
 MAX_WIDTH = 32
 _ONE = 1 << P
-
-FUNCTIONS = (
-    "exp",
-    "log",
-    "sqrt",
-    "sin",
-    "cos",
-    "sigmoid",
-    "tanh",
-    "cosh",
-    "sinh",
-    "exprel",
-    "cbrt",
-    "exp2",
-    "log2",
-    "log10",
-    "expm1",
-    "log1p",
-    "tan",
-    "arctan",
-    "arcsin",
-    "arccos",
-    "erf",
-    "floor",
-    "ceil",
-    "trunc",
-    "sign",
-)
 
 
 def check_format(data_width: int, fraction: int) -> None:
@@ -882,6 +854,44 @@ def arctan(code: int, data_width: int, fraction: int) -> int:
     return saturate(shift_round(value, fraction - P), data_width)
 
 
+def atan2(y: int, x: int, data_width: int, fraction: int) -> int:
+    """Return the saturated code of the quadrant-aware angle ``atan2(y, x)``.
+
+    Parameters
+    ----------
+    y, x : int
+        Signed codes, respectively vertical and horizontal coordinates.
+        Fixed-point zero has the positive-zero convention; the origin returns 0.
+    data_width, fraction : int
+        The common input and output format, checked by :func:`evaluate`.
+
+    Returns
+    -------
+    int
+        Angle in radians, rounded half up and saturated to the signed word.
+        The conservative arithmetic error bound against the clipped real angle
+        is ``0.5 * 2**-fraction + 8 * 2**-P``; see the accuracy report.
+
+    Notes
+    -----
+    Reduces to the existing quadratic arctangent table on [0, 1]. No argument
+    ratio is formed in floating point. IEEE signed zeros and infinities are not
+    representable input codes. NumPy documents the operand order at
+    https://numpy.org/doc/stable/reference/generated/numpy.arctan2.html.
+    """
+    if y == 0:
+        value = 2 * _HALF_PI if x < 0 else 0
+    elif x == 0:
+        value = _HALF_PI
+    else:
+        value = _atan_internal(abs(y), abs(x))
+        if x < 0:
+            value = 2 * _HALF_PI - value
+    if y < 0:
+        value = -value
+    return saturate(shift_round(value, fraction - P), data_width)
+
+
 def _arcsin_internal(code: int, fraction: int) -> int:
     """Return ``arcsin x`` at fraction ``P``, ``±π/2`` for ``|x| >= 1``."""
     magnitude = min(-code if code < 0 else code, 1 << fraction)
@@ -1065,9 +1075,21 @@ UNITS: dict[str, Callable[[int, int, int], int]] = {
     "sign": sign,
 }
 
+BINARY_UNITS: dict[str, Callable[[int, int, int, int], int]] = {"atan2": atan2}
+UNARY_FUNCTIONS = tuple(UNITS)
+FUNCTIONS = (*UNARY_FUNCTIONS, *BINARY_UNITS)
+FUNCTION_ARITY = {name: 1 for name in UNITS} | {name: 2 for name in BINARY_UNITS}
 
-def evaluate(function: str, code: int, data_width: int, fraction: int) -> int:
-    """Evaluate one ``v2`` unit on one input code.
+
+def evaluate(
+    function: str,
+    code: int,
+    data_width: int,
+    fraction: int,
+    *,
+    additional_inputs: Sequence[int] = (),
+) -> int:
+    """Evaluate one ``v2`` unit on its signed input codes.
 
     Parameters
     ----------
@@ -1077,6 +1099,8 @@ def evaluate(function: str, code: int, data_width: int, fraction: int) -> int:
         Signed input code of the format.
     data_width, fraction : int
         The format.
+    additional_inputs : sequence of int, optional
+        Further operands in order; ``atan2`` takes its horizontal coordinate here.
 
     Returns
     -------
@@ -1086,18 +1110,28 @@ def evaluate(function: str, code: int, data_width: int, fraction: int) -> int:
     Raises
     ------
     ValueError
-        For an unknown function or a format :func:`check_format` refuses.
+        For an unknown function, wrong operand count, a format
+        :func:`check_format` refuses, or binary input codes outside the word.
 
     """
-    if function not in UNITS:
+    if function not in FUNCTION_ARITY:
         raise ValueError(f"no v2 unit for {function!r}")
     check_format(data_width, fraction)
+    if 1 + len(additional_inputs) != FUNCTION_ARITY[function]:
+        raise ValueError(f"{function} needs exactly {FUNCTION_ARITY[function]} input code(s)")
+    if function in BINARY_UNITS:
+        low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
+        if any(not low <= value <= high for value in (code, *additional_inputs)):
+            raise ValueError(f"{function} input code outside signed {data_width}-bit domain")
+        return BINARY_UNITS[function](code, additional_inputs[0], data_width, fraction)
     return UNITS[function](code, data_width, fraction)
 
 
 __all__ = [
     "B",
     "FUNCTIONS",
+    "FUNCTION_ARITY",
+    "UNARY_FUNCTIONS",
     "LOWERING",
     "MAX_WIDTH",
     "P",

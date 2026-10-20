@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- Add opt-in v2 `atan2(y, x)` to Python equations, Verilog, fixed C/Rust and portable C++ expressions, with two-operand accuracy reports and explicit derivative branch-cut refusals. Preserve numeric name binding through compiler-inserted noise and integrator calls. Refresh compiler/expression benchmarks with measured CPU and RAM context; emit Rust units without redundant parentheses.
+
 - Add indexed operands to function-unit integer programs, with matching Python, Verilog, C and Rust bindings and explicit refusal of missing or extra operands.
 
 

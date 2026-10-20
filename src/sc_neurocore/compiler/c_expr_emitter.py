@@ -188,13 +188,19 @@ class CExprEmitter(ast.NodeVisitor):
             raise ValueError(f"Unsupported function '{fname}' in C/C++ compilation.")
         if not node.args:
             raise ValueError(f"Function {fname} requires at least 1 argument")
-        check_call_arguments(fname, node)
+        check_call_arguments(fname, node, bound_names={*self.state_vars, *self.param_map})
         if fname in RANDOM_FUNCTIONS:
             raise ValueError(
                 f"Function '{fname}' has no C/C++ (HLS) lowering; use the RTL or bit-true kernel."
             )
         arg: str = self.visit(node.args[0])
 
+        if fname == "atan2":
+            second = self.visit(node.args[1])
+            zero = f"{self.fp_type}(0.0)"
+            y = f"(({arg} == {zero}) ? {zero} : {arg})"
+            x = f"(({second} == {zero}) ? {zero} : {second})"
+            return f"{self.math_ns}::atan2({y}, {x})"
         if fname in _DIRECT_MATH_FUNCTIONS:
             return f"{self.math_ns}::{_DIRECT_MATH_FUNCTIONS[fname]}({arg})"
         if fname in ("sigmoid", "expit"):

@@ -30,6 +30,7 @@ EXPECTED_CASES = {
     "euler_folded_parameter_port",
     "sqrt_map_registered",
     "nearest_half_map_registered",
+    "atan2_map_registered",
 }
 
 
@@ -75,7 +76,7 @@ def test_committed_evidence_binds_every_compiler_source() -> None:
 
 
 def test_committed_cases_have_complete_deterministic_samples() -> None:
-    """All seven public workloads retain timings and stable output identities."""
+    """All eight public workloads retain timings and stable output identities."""
     payload = _payload()
     cases = _mapping(payload["cases"])
     workload = _mapping(payload["workload"])
@@ -131,6 +132,11 @@ def test_reduced_cli_executes_real_compiler_paths(tmp_path: Path) -> None:
     )
     payload = _payload(output)
 
+    context = _mapping(payload["measurement_context"])
+    assert context["cpu_model"] and context["host"]
+    memory = context["ram_bytes"]
+    assert isinstance(memory, int) and memory > 0
+    assert context["production_rerun_requirement"]
     assert completed.returncode == 0
     assert set(_mapping(payload["cases"])) == EXPECTED_CASES
     assert _mapping(payload["workload"])["samples_per_case"] == 2

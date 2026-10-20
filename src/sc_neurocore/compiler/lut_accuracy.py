@@ -288,13 +288,20 @@ class LutAccuracy:
     max_error : float
         Largest ``|table - clip(f)|`` over the evaluated inputs, in real units.
     max_error_at : float
-        An input where ``max_error`` occurs.
+        An input where ``max_error`` occurs (first coordinate for binary calls;
+        ``worst_inputs`` holds the complete tuple).
     max_error_in_table : float
         The same, over inputs inside the table's domain only.
     max_error_in_table_at : float
         An input where ``max_error_in_table`` occurs.
     resolution : float
         One least significant bit, ``2**-fraction``.
+    operand_ranges : tuple of pairs, optional
+        Inclusive ranges of all operands for a multivariate measurement.
+    worst_inputs : tuple of float, optional
+        Complete operand tuple at the measured maximum, in call order.
+    declared_error_bound : float or None, optional
+        Arithmetic error bound in real units, separate from the sampled maximum.
 
     """
 
@@ -313,6 +320,9 @@ class LutAccuracy:
     max_error_in_table: float
     max_error_in_table_at: float
     resolution: float
+    operand_ranges: tuple[tuple[float, float], ...] = ()
+    worst_inputs: tuple[float, ...] = ()
+    declared_error_bound: float | None = None
 
     @property
     def q_format(self) -> str:
@@ -321,7 +331,7 @@ class LutAccuracy:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return the JSON projection, errors also in least significant bits."""
-        return {
+        result: dict[str, object] = {
             "function": self.function,
             "q_format": self.q_format,
             "lowering": self.lowering,
@@ -337,6 +347,25 @@ class LutAccuracy:
             "max_error_in_table_at": self.max_error_in_table_at,
             "reference": "Python model function, clipped to the word's range",
         }
+        if self.operand_ranges:
+            for key in (
+                "table_domain",
+                "max_error_in_table",
+                "max_error_in_table_lsb",
+                "max_error_in_table_at",
+            ):
+                result.pop(key)
+            result.update(
+                {
+                    "input_arity": len(self.operand_ranges),
+                    "operand_ranges": [list(pair) for pair in self.operand_ranges],
+                    "max_error_at_inputs": list(self.worst_inputs),
+                    "declared_error_bound": self.declared_error_bound,
+                    "domain": "signed word codes in call order; fixed-point zero is positive zero",
+                    "domain_cardinality": 1 << (self.data_width * len(self.operand_ranges)),
+                }
+            )
+        return result
 
 
 def _codes(function: str, data_width: int, fraction: int) -> tuple[list[int], bool]:
@@ -400,6 +429,8 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
     if function not in fu.FUNCTIONS:
         raise ValueError(f"no v2 unit for {function!r}")
     fu.check_format(data_width, fraction)
+    if function == "atan2":
+        return _measure_atan2(data_width, fraction)
     codes, exhaustive = _v2_codes(function, data_width, fraction)
     scale = float(1 << fraction)
     x = codes.astype(np.float64) / scale
@@ -431,7 +462,60 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
     )
 
 
-@lru_cache(maxsize=256)
+def _measure_atan2(data_width: int, fraction: int) -> LutAccuracy:
+    low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
+    exhaustive = data_width <= 8
+    if exhaustive:
+        axis = np.arange(low, high + 1, dtype=np.int64)
+    else:
+        edges = {0, low, high, *range(-8, 9)}
+        for bit in range(data_width):
+            edges.update(sign * (1 << bit) + delta for sign in (-1, 1) for delta in (-1, 0, 1))
+        spread = np.linspace(low, high, 257).astype(np.int64)
+        axis = np.unique(np.concatenate([spread, np.array(sorted(edges), dtype=np.int64)]))
+        axis = axis[(axis >= low) & (axis <= high)]
+    y = np.repeat(axis, len(axis))
+    x = np.tile(axis, len(axis))
+    scale = float(1 << fraction)
+    actual = (
+        np.array(
+            [
+                fu.evaluate("atan2", int(a), data_width, fraction, additional_inputs=(int(b),))
+                for a, b in zip(y, x)
+            ],
+            dtype=np.float64,
+        )
+        / scale
+    )
+    reference = np.clip(np.arctan2(y / scale, x / scale), low / scale, high / scale)
+    error = np.abs(actual - reference)
+    worst = int(np.argmax(error))
+    bound = 0.5 / scale + 8.0 / (1 << fu.P)
+    if float(error[worst]) > bound:
+        raise ValueError("atan2 measurement exceeds its declared arithmetic error bound")
+    return LutAccuracy(
+        function="atan2",
+        data_width=data_width,
+        fraction=fraction,
+        lowering="v2",
+        exhaustive=exhaustive,
+        codes_evaluated=len(y),
+        input_min=low / scale,
+        input_max=high / scale,
+        table_min=low / scale,
+        table_max=(high + 1) / scale,
+        max_error=float(error[worst]),
+        max_error_at=float(y[worst] / scale),
+        max_error_in_table=float(error[worst]),
+        max_error_in_table_at=float(y[worst] / scale),
+        resolution=1.0 / scale,
+        operand_ranges=((low / scale, high / scale),) * 2,
+        worst_inputs=(float(y[worst] / scale), float(x[worst] / scale)),
+        declared_error_bound=bound,
+    )
+
+
+@lru_cache(maxsize=512)
 def measure(function: str, data_width: int, fraction: int, lowering: str = LOWERING) -> LutAccuracy:
     """Measure one table or unit at one format against the Python model's function.
 

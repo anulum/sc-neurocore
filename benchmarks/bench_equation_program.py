@@ -37,7 +37,10 @@ import timeit
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
+
+from benchmarks._benchmark_context import load_average, measurement_context
 
 from sc_neurocore.neurons.equation_builder import EquationNeuron  # noqa: E402
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace  # noqa: E402
@@ -46,6 +49,7 @@ from sc_neurocore.neurons.equation_program import compile_expression  # noqa: E4
 DEFAULT_OUTPUT = ROOT / "benchmarks/results/bench_equation_program.json"
 SOURCE_PATHS = (
     "benchmarks/bench_equation_program.py",
+    "benchmarks/_benchmark_context.py",
     "src/sc_neurocore/neurons/equation_builder.py",
     "src/sc_neurocore/neurons/equation_evaluation.py",
     "src/sc_neurocore/neurons/equation_namespace.py",
@@ -102,6 +106,7 @@ EXPRESSIONS: dict[str, tuple[str, Reference]] = {
     ),
     "threshold": ("v >= v_th", lambda e: e["v"] >= e["v_th"]),
     "conditional": ("v + 1 if v < 10 else -v", lambda e: e["v"] + 1 if e["v"] < 10 else -e["v"]),
+    "angle": ("atan2(v, I)", lambda e: e["atan2"](e["v"], e["I"])),
 }
 ADEX_NEURON: dict[str, Any] = {
     "equations": {"v": ADEX, "w": "(a*(v-E_L) - w)/tau_w"},
@@ -238,6 +243,7 @@ def build_payload(calls: int, steps: int, repeats: int) -> dict[str, Any]:
     """
     if min(calls, steps, repeats) <= 0:
         raise ValueError("calls, steps and repeats must be positive")
+    load_before = load_average()
     expressions = {name: measure_expression(name, calls, repeats) for name in EXPRESSIONS}
     ratios = [entry["ratio_of_minima"] for entry in expressions.values()]
     return {
@@ -257,6 +263,7 @@ def build_payload(calls: int, steps: int, repeats: int) -> dict[str, Any]:
             "affinity": sorted(os.sched_getaffinity(0)),
             "load_average": list(os.getloadavg()),
         },
+        "measurement_context": measurement_context(load_before),
         "source_sha256": {
             path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in SOURCE_PATHS
         },

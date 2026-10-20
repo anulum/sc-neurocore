@@ -116,6 +116,31 @@ def test_constant_program_keeps_its_original_argument() -> None:
         p.evaluate(0, additional_inputs=(1,))
 
 
+def test_rust_conditionals_and_table_indices_compile_with_warnings_denied(tmp_path: Path) -> None:
+    """Shared expression rendering needs no lint suppression for selects or division."""
+    p = Program(tables={"a": ((1, 2, 3), (4, 5, 6))})
+    x = p.input()
+    coefficient = p.lookup("a", p.mask(x, 1), 0)
+    p.output = p.select(p.lt(x, p.const(0)), p.div(p.const(7), x), coefficient)
+    lines, arrays, output = emit_c(p, "u", "x", "rust")
+    tables = "\n".join(
+        f"let {name}: [i64; {len(values)}] = [" + ",".join(f"{value}i64" for value in values) + "];"
+        for name, values in arrays.items()
+    )
+    source = tmp_path / "unit.rs"
+    source.write_text(
+        f"fn f(x:i64)->i64{{\n{tables}\n"
+        + "\n".join(lines)
+        + f"\n{output}\n}}\n"
+        + 'fn main(){for x in [-4i64,-1,0,1,4] {println!("{}",f(x));}}\n'
+    )
+    executable = tmp_path / "unit"
+    _run(
+        ["rustc", "-D", "warnings", "-C", "overflow-checks=on", str(source), "-o", str(executable)]
+    )
+    assert [int(value) for value in _run([str(executable)]).split()] == [-1, -7, 1, 4, 1]
+
+
 def _run(command: list[str]) -> str:
     return subprocess.run(command, check=True, capture_output=True, text=True, timeout=60).stdout
 

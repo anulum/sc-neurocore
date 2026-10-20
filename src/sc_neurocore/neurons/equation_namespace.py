@@ -40,6 +40,25 @@ def _sqrt(x: Any) -> Any:
     return np.sqrt(x)
 
 
+def _atan2(y: Any, x: Any) -> Any:
+    """Return real finite-coordinate angles with the fixed-point zero convention.
+
+    IEEE negative zero has no distinct fixed-point code. Canonicalising both
+    zeros keeps the Python equation and generated datapaths on the same branch
+    of the negative x-axis. Non-finite and complex coordinates are outside this
+    function's compilation domain and raise ``EquationRefusal``.
+    """
+    first, second = np.asarray(y), np.asarray(x)
+    if (
+        np.iscomplexobj(first)
+        or np.iscomplexobj(second)
+        or not np.all(np.isfinite(first))
+        or not np.all(np.isfinite(second))
+    ):
+        raise EquationRefusal("atan2 needs finite real coordinates")
+    return np.arctan2(np.where(first == 0, 0.0, first), np.where(second == 0, 0.0, second))
+
+
 def _exprel(x: Any) -> Any:
     """(exp(x) - 1) / x with the removable-singularity limit exprel(0) = 1.
 
@@ -71,6 +90,7 @@ def build_eval_namespace() -> dict[str, Any]:
         "sinh": np.sinh,
         "tan": np.tan,
         "arctan": np.arctan,
+        "atan2": _atan2,
         "arcsin": np.arcsin,
         "arccos": np.arccos,
         "exp2": np.exp2,

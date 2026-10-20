@@ -315,10 +315,10 @@ from a checked tree to a program (`equation_program.py`), the numpy evaluation
 namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 (`equation_namespace.py`), and the strict pint-backed unit runtime
 (`equation_units_runtime.py`). A program costs more per evaluation than
-bytecode. `benchmarks/bench_equation_program.py` times six expressions as
+bytecode. `benchmarks/bench_equation_program.py` times seven expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 1.9 and 2.7 times the function,
+development host, puts a program at between 1.2 and 3.3 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
@@ -832,16 +832,16 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.114013 ms | 50 |
-| Euler folded with parameter port | 0.301826 ms | 38 |
-| RK4 registered | 0.401448 ms | 90 |
-| Four-substep RK4 registered | 0.730636 ms | 136 |
-| Escape-rate registered | 4.565140 ms | 900 |
-| Square-root map registered | 0.260231 ms | 65 |
-| Negative half-LSB nearest map registered | 0.136080 ms | 45 |
+| Euler registered | 0.340092 ms | 50 |
+| Euler folded with parameter port | 0.298532 ms | 38 |
+| RK4 registered | 0.653103 ms | 92 |
+| Four-substep RK4 registered | 1.353286 ms | 136 |
+| Escape-rate registered | 2.651926 ms | 902 |
+| Square-root map registered | 0.249005 ms | 65 |
+| Negative half-LSB nearest map registered | 0.168758 ms | 45 |
+| Quadrant-aware angle map registered | 2.649831 ms | 3225 |
 
-The run used a 12-logical-CPU affinity mask, the `powersave` governor, and a
-loaded workstation with another repository lane active. No CPU was reserved.
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.14. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
@@ -1107,3 +1107,43 @@ branches. Generated targets rely on the unit builder to preserve that invariant.
 
 This IR interface does not add equation functions: each function still needs
 its numerical contract, grammar entry and complete backend implementation.
+
+## Quadrant-aware angles
+
+`atan2(y, x)` returns an angle in radians, with the vertical coordinate first.
+The Python equation runtime accepts finite real coordinates and broadcasts
+arrays through NumPy. Both zeros are canonical positive zeros, matching the
+single zero code of fixed-point datapaths; the origin returns zero. Complex
+coordinates and NaN or infinity raise an equation refusal.
+
+```python
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
+
+neuron = EquationNeuron(
+    equations={"v": "atan2(I, x)", "x": "-x"},
+    state={"v": 0.0, "x": 2.0}, method="map", dt=1.0,
+)
+rtl = compile_to_verilog(neuron, "angle", function_lowering="v2")
+```
+
+The fixed C and Rust kernels mirror the same v2 unit and operand order.
+`lut-v1` refuses this function explicitly. Calls take exactly two positional
+arguments; compiled expressions refuse keywords and output-array arguments.
+Each fixed operand is narrowed to its declared signed word before the unit;
+the angle is rounded half up and saturated to that word.
+
+The unit reduces to a quadratic arctangent table on [0, 1], restores the
+quadrant, and has a conservative arithmetic error bound of
+`0.5 * 2**-fraction + 8 * 2**-30` radians against the clipped real angle.
+[The accuracy report](../validation/function_units_v2_accuracy.md) states the
+actual measured maxima. Numeric contracts include both operand ranges and
+the complete worst measured pair. A sampled Cartesian grid is labelled as
+sampled, including at 16-bit widths; it is not an exhaustive global maximum.
+
+Symbolic differentiation accepts state-dependent calls only when a positive
+horizontal coordinate or a nonzero vertical coordinate is provable. It refuses
+unproven domains that could cross the origin or negative horizontal axis.
+State-independent angle terms can still serve as coefficients. The portable
+C++ expression path uses the target math library with the same zero convention;
+its floating result is distinct from the bit-true fixed unit approximation.

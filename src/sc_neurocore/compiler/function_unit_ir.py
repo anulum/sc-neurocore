@@ -418,7 +418,7 @@ def _c_expression(
         return f"{a[0]} {_BINARY[op]} {a[1]}"
     if op == "div":
         if rust:
-            return f"(if {a[1]} == 0 {{ 0 }} else {{ {a[0]} / {a[1]} }})"
+            return f"if {a[1]} == 0 {{ 0 }} else {{ {a[0]} / {a[1]} }}"
         return f"(({a[1]}) == 0 ? 0 : ({a[0]} / {a[1]}))"
     if op == "neg":
         return f"-{a[0]}"
@@ -440,7 +440,7 @@ def _c_expression(
             else f"(int64_t)({a[0]} {_COMPARE[op]} {a[1]})"
         )
     if rust:
-        return f"(if {a[0]} != 0 {{ {a[1]} }} else {{ {a[2]} }})"
+        return f"if {a[0]} != 0 {{ {a[1]} }} else {{ {a[2]} }}"
     return f"(({a[0]}) != 0 ? ({a[1]}) : ({a[2]}))"  # select
 
 
@@ -499,7 +499,9 @@ def emit_c(
             arrays.setdefault(array, [v for row in program.tables[step.table] for v in row])
             last = len(program.tables[step.table]) - 1
             if rust:
-                index = f"(if {a[0]} < 0 {{ 0 }} else if {a[0]} > {last} {{ {last} }} else {{ {a[0]} }})"
+                index = (
+                    f"if {a[0]} < 0 {{ 0 }} else if {a[0]} > {last} {{ {last} }} else {{ {a[0]} }}"
+                )
                 expression = f"{array}[({index}) as usize * 3 + {step.value}]"
             else:
                 index = f"(({a[0]}) < 0 ? 0 : (({a[0]}) > {last} ? {last} : ({a[0]})))"

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import ast
 import math
+from collections.abc import Sequence
 
 from ..hdl_gen._ident import sanitize_ident
 from . import expr_lut_tables
@@ -455,7 +456,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         if unit is not None and (
             self.q.function_lowering == "v2" or fname in expr_lut_tables.EXACT_FUNCTIONS
         ):
-            return self._emit_unit(unit, arg)
+            return self._emit_unit(
+                unit, arg, additional=[self._value(value) for value in node.args[1:]]
+            )
         if fname in expr_lut_tables.V2_ONLY_FUNCTIONS:
             raise ValueError(f"Function '{fname}' needs function_lowering='v2'.")
         if fname == "exp":
@@ -504,7 +507,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             result = f"(({self._wide(result)} {cmp} {self._wide(b)}) ? {result} : {b})"
         return result
 
-    def _emit_unit(self, function: str, arg: str) -> str:
+    def _emit_unit(self, function: str, arg: str, *, additional: Sequence[str] = ()) -> str:
         """Emit one ``v2`` function unit inline; return the ``data_width``-bit result wire.
 
         The unit's 64-bit integer program
@@ -518,7 +521,14 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         arg_w = f"{prefix}_arg"
         self.intermediates.append(f"// v2 function unit: {function}")
         self.intermediates.append(f"wire signed [{dw - 1}:0] {arg_w} = {arg};")
-        lines, out = emit_verilog(program(function, dw, self.q.fraction), prefix, arg_w)
+        extra_args = []
+        for index, value in enumerate(additional, 1):
+            name = f"{prefix}_arg{index}"
+            self.intermediates.append(f"wire signed [{dw - 1}:0] {name} = {value};")
+            extra_args.append(name)
+        lines, out = emit_verilog(
+            program(function, dw, self.q.fraction), prefix, arg_w, additional_arguments=extra_args
+        )
         self.intermediates.extend(lines)
         result = f"{prefix}_out"
         self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {out}[{dw - 1}:0];")

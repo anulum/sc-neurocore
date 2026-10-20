@@ -90,13 +90,29 @@ from what the code measures. The units are those of
 `compile_to_verilog(..., function_lowering="v2")` and mirrored bit for bit by the
 bit-true C/Rust kernel.
 
-Each cell is the largest absolute error in least significant bits of the result
+Each unary cell is the largest absolute error in least significant bits of the result
 against the Python model's function clipped to the word's range, over every input
 the format holds (formats up to {exhaustive} bits) or over 65 536 codes spread over
 the word plus every code within 4096 of zero (wider formats; a sampled maximum can
 miss the worst code). Correct rounding is 0.5 LSB. `log`, `sqrt` and `x ** (1/3)`
 are measured on the inputs the Python model evaluates; the units are defined for
 32-bit words or narrower with `data_width + fraction <= 61`.
+
+`atan2(y, x)` uses both signed input codes. Its Cartesian domain is exhausted for
+words up to 8 bits. Wider words use the Cartesian product of 257 evenly spaced
+codes, powers of two and adjacent codes, and codes -8 through 8, clipped to the
+word; these cells are sampled and marked (s). They do not prove the global maximum.
+Numeric contracts record both input ranges and the measured worst pair.
+
+The separate conservative arithmetic bound for `atan2` is
+`0.5 * 2**-fraction + 8 * 2**-30` radians against the word-clipped real angle.
+Range reduction has less than one internal LSB of ratio error. The 512-segment
+quadratic interpolation remainder is at most `h**3 / (36*sqrt(3))`, where
+`h=1/512`, using `abs(atan'''(x)) <= 2` on [0, 1]. Coefficient quantisation,
+two floor shifts and quadrant constants add fewer than eight internal LSBs
+in total; final rounding adds at most half an output LSB. Saturation cannot
+increase the difference from the clipped reference. The origin returns zero;
+fixed-point codes have no IEEE signed-zero or infinity representation.
 
 """
 

@@ -41,12 +41,11 @@ import re
 
 from ...neurons.equation_builder import EquationNeuron
 from ...hdl_gen._ident import sanitize_ident
-from ..c_fixed_emitter import emit_c_fixed_expr, signed_q
+from ..c_fixed_emitter import _emit_c_fixed_expr, emit_c_fixed_expr, signed_q
 from .. import expr_lut_tables
 from ..function_unit_ir import TABLE_PREFIX
 from ..lut_accuracy import GEOMETRY
-from ..diffusion_noise import lower_diffusion_noise
-from ..philox_threshold import lower_philox_threshold
+from ..equation_lowering import prepare_neuron
 from ..verilog_compiler_config import Q88
 
 _NATIVE_WIDTHS = frozenset({8, 16, 32, 64})
@@ -784,7 +783,7 @@ def generate_bittrue_kernel_from_neuron(
         )
 
     # Counter-based draws: xi and a Philox threshold become ordinary rand()/randn().
-    neuron = lower_philox_threshold(lower_diffusion_noise(neuron))
+    neuron = prepare_neuron(neuron)
     if getattr(neuron, "_stochastic_threshold_enabled", False):
         raise ValueError(
             "bit-true neuron kernel does not mirror stochastic spike detection "
@@ -851,7 +850,7 @@ def generate_bittrue_kernel_from_neuron(
         )
     else:
         for var, expr in neuron.equations.items():
-            result, s, t, _fv, lut, _used = emit_c_fixed_expr(
+            result, s, t, _fv, lut, _used = _emit_c_fixed_expr(
                 expr, state_map, param_map, q, lang=language, lut_start=lut
             )
             derivs[var] = result
@@ -870,7 +869,7 @@ def generate_bittrue_kernel_from_neuron(
     threshold_expr = ""
     threshold_stmts: list[str] = []
     if neuron.threshold_expr:
-        threshold_expr, threshold_stmts, t, _fv, lut, _used = emit_c_fixed_expr(
+        threshold_expr, threshold_stmts, t, _fv, lut, _used = _emit_c_fixed_expr(
             neuron.threshold_expr, candidate_map, param_map, q, lang=language, lut_start=lut
         )
         tables.update(t)
@@ -878,7 +877,7 @@ def generate_bittrue_kernel_from_neuron(
     reset_exprs: dict[str, str] = {}
     reset_stmts: list[str] = []
     for var, expr in neuron.reset_rules.items():
-        result, s, t, _fv, lut, _used = emit_c_fixed_expr(
+        result, s, t, _fv, lut, _used = _emit_c_fixed_expr(
             expr, candidate_map, param_map, q, lang=language, lut_start=lut
         )
         reset_exprs[var] = result
@@ -888,7 +887,7 @@ def generate_bittrue_kernel_from_neuron(
     spike_value_expr = ""
     spike_value_source = neuron.spike_value_expr
     if spike_value_source:
-        spike_value_expr, s, t, _fv, lut, _used = emit_c_fixed_expr(
+        spike_value_expr, s, t, _fv, lut, _used = _emit_c_fixed_expr(
             spike_value_source, candidate_map, param_map, q, lang=language, lut_start=lut
         )
         reset_stmts.extend(s)
@@ -1013,7 +1012,7 @@ def _rk4_statements(
         nonlocal lut
         names: dict[str, str] = {}
         for var, expr in neuron.equations.items():
-            result, s, t, _fv, lut, _used = emit_c_fixed_expr(
+            result, s, t, _fv, lut, _used = _emit_c_fixed_expr(
                 expr, stage_map, param_map, q, lang=language, lut_start=lut
             )
             stmts.extend(s)
@@ -1086,7 +1085,7 @@ def _sequential_statements(
             expression = f"(({f_expr}) * {dt}) * exprel((({a_expr})) * {dt})"
         else:
             expression = f_expr
-        result, s, tbl, _fv, lut, _used = emit_c_fixed_expr(
+        result, s, tbl, _fv, lut, _used = _emit_c_fixed_expr(
             expression, render, param_map, q, lang=language, lut_start=lut
         )
         stmts.extend(s)

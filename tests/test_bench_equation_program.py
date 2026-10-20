@@ -61,6 +61,10 @@ def test_a_real_run_times_every_case_and_checks_values_first(tmp_path: Path) -> 
         == 0
     )
     payload = json.loads(output.read_text(encoding="utf-8"))
+    context = payload["measurement_context"]
+    assert context["cpu_model"] and context["host"]
+    assert isinstance(context["ram_bytes"], int) and context["ram_bytes"] > 0
+    assert context["production_rerun_requirement"]
     assert set(payload["expressions"]) == set(benchmark.EXPRESSIONS)
     assert set(payload["neurons"]) == set(benchmark.NEURONS)
     assert payload["configuration"] == {"calls": 200, "steps": 50, "repeats": 2}

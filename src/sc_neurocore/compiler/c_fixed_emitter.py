@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import ast
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from fractions import Fraction
 
 from . import expr_lut_tables
@@ -405,7 +405,9 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         if unit is not None and (
             self.q.function_lowering == "v2" or fname in expr_lut_tables.EXACT_FUNCTIONS
         ):
-            return self._emit_unit(unit, arg)
+            return self._emit_unit(
+                unit, arg, additional=[self._value(value) for value in node.args[1:]]
+            )
         if fname in expr_lut_tables.V2_ONLY_FUNCTIONS:
             raise ValueError(f"Function '{fname}' needs function_lowering='v2'.")
         lut_name = {"sigmoid": "sigmoid", "expit": "sigmoid"}.get(fname, fname)
@@ -471,7 +473,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         self.tables.update(arrays)
         return self._wide(out)
 
-    def _emit_unit(self, function: str, arg: str) -> str:
+    def _emit_unit(self, function: str, arg: str, *, additional: Sequence[str] = ()) -> str:
         """Emit one ``v2`` function unit as statements mirroring the RTL unit; return its result.
 
         The argument is first truncated to the word, as the RTL hoists it to a
@@ -482,8 +484,17 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         self._lut_count += 1
         argument = f"{prefix}_arg"
         self.statements.append(self._local(argument, f"sc_wrap({arg}, {self.q.data_width})"))
+        extra_args = []
+        for index, value in enumerate(additional, 1):
+            name = f"{prefix}_arg{index}"
+            self.statements.append(self._local(name, f"sc_wrap({value}, {self.q.data_width})"))
+            extra_args.append(name)
         statements, arrays, out = emit_c(
-            program(function, self.q.data_width, self.q.fraction), prefix, argument, self.lang
+            program(function, self.q.data_width, self.q.fraction),
+            prefix,
+            argument,
+            self.lang,
+            additional_arguments=extra_args,
         )
         self.statements.extend(statements)
         self.tables.update(arrays)
@@ -564,6 +575,24 @@ def emit_c_fixed_expr(
         order), the next free LUT index, and whether the input current was read.
 
     """
+    tree = ast.parse(expr_str, mode="eval")
+    expr_lut_tables.check_call_bindings(tree, {*state_map, *param_map})
+    return _emit_c_fixed_expr(
+        expr_str, state_map, param_map, q, lang=lang, input_ref=input_ref, lut_start=lut_start
+    )
+
+
+def _emit_c_fixed_expr(
+    expr_str: str,
+    state_map: dict[str, str],
+    param_map: dict[str, int],
+    q: Q88,
+    *,
+    lang: str = "c",
+    input_ref: str = "I_t",
+    lut_start: int = 0,
+) -> tuple[str, list[str], dict[str, list[int]], list[str], int, bool]:
+    """Emit a prepared expression whose authored bindings were already checked."""
     tree = ast.parse(expr_str, mode="eval")
     emitter = _CFixedExprEmitter(
         state_map, param_map, q, lang=lang, input_ref=input_ref, lut_start=lut_start

@@ -13,8 +13,7 @@ from __future__ import annotations
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
 from ._verilog_neuron_core import _build_neuron_core, _escape_threshold_wires
-from .diffusion_noise import lower_diffusion_noise
-from .philox_threshold import lower_philox_threshold
+from .equation_lowering import prepare_neuron
 from .verilog_compiler_config import Q88
 
 
@@ -77,7 +76,7 @@ def compile_to_verilog(
             "unsigned equation-to-Verilog emission is not supported; signed must be True"
         )
     q = Q88(data_width, fraction, signed, overflow, rounding, function_lowering, random_precision)
-    neuron = lower_philox_threshold(lower_diffusion_noise(neuron))  # draws -> rand()/randn()
+    neuron = prepare_neuron(neuron)  # draws -> rand()/randn()
 
     if neuron.dt != 0.0:
         q.check_time_step(neuron.dt, neuron.method)  # a wrapped dt runs another step

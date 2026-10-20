@@ -8579,6 +8579,46 @@ ValueError
 
 ---
 
+## Module `compiler.equation_lowering`
+
+### Function `equation_expressions(neuron)`
+Yield model expressions and their locations in the hardware contract.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Model before or after intrinsic lowering.
+
+Yields
+------
+tuple of str
+    Location and expression, including exponential-Euler Jacobians and events.
+
+### Function `prepare_neuron(neuron)`
+Check authored bindings, then lower implicit noise and Philox thresholds.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Original model supplied to a compiler entry point.
+
+Returns
+-------
+EquationNeuron
+    Lowered model; the original is preserved by the intrinsic transforms.
+
+Raises
+------
+ValueError
+    If an authored call names a numeric state, parameter or constant.
+
+Notes
+-----
+Internal calls introduced afterward, such as ``randn`` for ``xi`` and
+``exprel`` for exponential Euler, are independent of numeric model bindings.
+
+---
+
 ## Module `compiler.equivalence_check`
 
 ### Class `EquivalenceResult`
@@ -8848,7 +8888,22 @@ ValueError
     If the mean is not a compile-time constant: the unit's thresholds are
     computed from it when the unit is built.
 
-### Function `check_call_arguments(fname, node)`
+### Function `check_call_bindings(tree, bound_names)`
+Refuse authored function calls shadowed by numeric equation bindings.
+
+Parameters
+----------
+tree : ast.AST
+    Authored expression, before compiler intrinsics are inserted.
+bound_names : collection of str
+    Numeric state, parameter and constant names visible to the expression.
+
+Raises
+------
+ValueError
+    If a supported function call resolves to a numeric binding in Python.
+
+### Function `check_call_arguments(fname, node, *, bound_names)`
 Refuse a call whose arguments the Python model would not accept as lowered.
 
 Parameters
@@ -8857,6 +8912,9 @@ fname : str
     The called function, a member of :data:`SUPPORTED_FUNCTIONS`.
 node : ast.Call
     The call node.
+bound_names : collection of str, optional
+    Names bound to numeric state, parameters or constants in this expression.
+    They cannot also be used as callable namespace functions.
 
 Raises
 ------
@@ -8865,6 +8923,8 @@ ValueError
     outside :data:`FUNCTION_ARITY` for ``fname``. Every backend lowers only
     positional arguments, so a keyword or an extra argument would otherwise be
     dropped without notice.
+    Numeric bindings shadow functions in the Python equation runtime, so
+    calls through those names are refused instead of compiling different maths.
 
 ### Function `lut_offset_width(data_width, min_q, left_shift)`
 Return the signed width that holds a LUT argument plus its table offset, shifted.
@@ -9394,7 +9454,7 @@ data_width, fraction : int
 Returns
 -------
 Program
-    The program; its input is the signed input code, its output the result code.
+    The program; operands are indexed in function-call order, output is the result code.
 
 Raises
 ------
@@ -9887,6 +9947,31 @@ Returns
 int
     The result code.
 
+### Function `atan2(y, x, data_width, fraction)`
+Return the saturated code of the quadrant-aware angle ``atan2(y, x)``.
+
+Parameters
+----------
+y, x : int
+    Signed codes, respectively vertical and horizontal coordinates.
+    Fixed-point zero has the positive-zero convention; the origin returns 0.
+data_width, fraction : int
+    The common input and output format, checked by :func:`evaluate`.
+
+Returns
+-------
+int
+    Angle in radians, rounded half up and saturated to the signed word.
+    The conservative arithmetic error bound against the clipped real angle
+    is ``0.5 * 2**-fraction + 8 * 2**-P``; see the accuracy report.
+
+Notes
+-----
+Reduces to the existing quadratic arctangent table on &#91;0, 1&#93;. No argument
+ratio is formed in floating point. IEEE signed zeros and infinities are not
+representable input codes. NumPy documents the operand order at
+https://numpy.org/doc/stable/reference/generated/numpy.arctan2.html.
+
 ### Function `arcsin(code, data_width, fraction)`
 Return the code of ``arcsin x = arctan(x / sqrt(1 - x²))``; ``±π/2`` for ``|x| >= 1``.
 
@@ -9992,8 +10077,8 @@ Returns
 int
     The result code.
 
-### Function `evaluate(function, code, data_width, fraction)`
-Evaluate one ``v2`` unit on one input code.
+### Function `evaluate(function, code, data_width, fraction, *, additional_inputs)`
+Evaluate one ``v2`` unit on its signed input codes.
 
 Parameters
 ----------
@@ -10003,6 +10088,8 @@ code : int
     Signed input code of the format.
 data_width, fraction : int
     The format.
+additional_inputs : sequence of int, optional
+    Further operands in order; ``atan2`` takes its horizontal coordinate here.
 
 Returns
 -------
@@ -10012,7 +10099,8 @@ int
 Raises
 ------
 ValueError
-    For an unknown function or a format :func:`check_format` refuses.
+    For an unknown function, wrong operand count, a format
+    :func:`check_format` refuses, or binary input codes outside the word.
 
 ---
 
@@ -10104,10 +10192,11 @@ One ``v2`` function unit the datapath instantiates, with its measured error.
 Parameters
 ----------
 function : str
-    The unit (``exp``, ``log``, ``sqrt``, ``sin``, ``cos``, ``sigmoid``, ``tanh``,
-    ``cosh``, ``sinh``, ``exprel`` or ``cbrt``).
+    A registered unary or binary function unit, including ``atan2``.
 accuracy : LutAccuracy
     Its error at the contract's format against the Python model's function.
+    Binary measurements retain both operand ranges, the worst tuple, and
+    distinguish a sampled maximum from the declared arithmetic bound.
 
 - **to_public_dict**()
   - Return the JSON projection.
@@ -12857,13 +12946,20 @@ table_min, table_max : float
 max_error : float
     Largest ``|table - clip(f)|`` over the evaluated inputs, in real units.
 max_error_at : float
-    An input where ``max_error`` occurs.
+    An input where ``max_error`` occurs (first coordinate for binary calls;
+    ``worst_inputs`` holds the complete tuple).
 max_error_in_table : float
     The same, over inputs inside the table's domain only.
 max_error_in_table_at : float
     An input where ``max_error_in_table`` occurs.
 resolution : float
     One least significant bit, ``2**-fraction``.
+operand_ranges : tuple of pairs, optional
+    Inclusive ranges of all operands for a multivariate measurement.
+worst_inputs : tuple of float, optional
+    Complete operand tuple at the measured maximum, in call order.
+declared_error_bound : float or None, optional
+    Arithmetic error bound in real units, separate from the sampled maximum.
 
 - **q_format**()
   - Return the format label ``Q<integer bits>.<fraction bits>``.

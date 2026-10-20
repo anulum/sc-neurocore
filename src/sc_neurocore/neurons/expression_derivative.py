@@ -28,6 +28,11 @@ A genuine dependence on such a term raises
 :class:`ExpressionDifferentiationError` rather than silently linearising through a
 kink — an exponential step through a non-differentiable term would be a
 fabrication, not a faithful discretisation.
+
+``atan2(y, x)`` is differentiable away from the origin and negative x-axis.
+State-dependent calls require a provably positive x or provably nonzero y;
+otherwise differentiation refuses the unproven domain instead of crossing its
+branch cut. State-independent calls retain the usual opaque coefficient rule.
 """
 
 from __future__ import annotations
@@ -260,10 +265,26 @@ class _Converter:
                 return self._opaque(node)
             return builder(self.convert(node.left), self.convert(node.right))
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id == "atan2":
+                return self._atan2(node)
             func = _SMOOTH_FUNCS.get(node.func.id)
             if func is not None:
                 return func(*[self.convert(arg) for arg in node.args])
         return self._opaque(node)
+
+    def _atan2(self, node: ast.Call) -> sympy.Expr:
+        if len(node.args) != 2 or node.keywords:
+            raise ExpressionDifferentiationError("atan2 needs exactly two positional arguments")
+        if not any(isinstance(sub, ast.Name) and sub.id == self._wrt for sub in ast.walk(node)):
+            return self._opaque(node)
+        y, x = (self.convert(value) for value in node.args)
+        if x.is_positive is not True and y.is_nonzero is not True:
+            raise ExpressionDifferentiationError(
+                "atan2 derivative needs a provably positive x or nonzero y; "
+                "the origin and negative x-axis are not differentiable"
+            )
+        call = cast(Callable[..., object], sympy.atan2)
+        return cast(sympy.Expr, call(y, x, evaluate=False))
 
     def _opaque(self, node: ast.expr) -> sympy.Expr:
         """Stand an opaque sub-expression in as a constant, if it is one."""

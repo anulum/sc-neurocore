@@ -30,6 +30,9 @@ from __future__ import annotations
 
 import ast
 import math
+from collections.abc import Collection
+
+from .function_units import FUNCTION_ARITY as UNIT_ARITY
 
 # Function names the expression grammar accepts. Backends must implement every
 # entry (transcendentals via the LUT generators below; abs/clip/max/min inline).
@@ -53,6 +56,7 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "log1p",
         "tan",
         "arctan",
+        "atan2",
         "arcsin",
         "arccos",
         "erf",
@@ -73,7 +77,20 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
 
 # Functions only the v2 function units lower; lut-v1 has no table for them.
 V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
-    {"sinh", "exp2", "log2", "log10", "expm1", "log1p", "tan", "arctan", "arcsin", "arccos", "erf"}
+    {
+        "sinh",
+        "exp2",
+        "log2",
+        "log10",
+        "expm1",
+        "log1p",
+        "tan",
+        "arctan",
+        "atan2",
+        "arcsin",
+        "arccos",
+        "erf",
+    }
 )
 
 # Counter-based random draws (sc_neurocore.compiler.random_units). Their last argument
@@ -169,6 +186,7 @@ V2_UNIT_FOR: dict[str, str] = {
     "log1p": "log1p",
     "tan": "tan",
     "arctan": "arctan",
+    "atan2": "atan2",
     "arcsin": "arcsin",
     "arccos": "arccos",
     "erf": "erf",
@@ -192,6 +210,7 @@ FUNCTION_ARITY: dict[str, tuple[int, int | None]] = {
     "clip": (3, 3),
     "max": (2, None),
     "min": (2, None),
+    **{name: (UNIT_ARITY[unit], UNIT_ARITY[unit]) for name, unit in V2_UNIT_FOR.items()},
 }
 
 # Named constants the Python model binds (``equation_namespace``). A state
@@ -199,7 +218,32 @@ FUNCTION_ARITY: dict[str, tuple[int, int | None]] = {
 NAMED_CONSTANTS: dict[str, float] = {"pi": math.pi}
 
 
-def check_call_arguments(fname: str, node: ast.Call) -> None:
+def check_call_bindings(tree: ast.AST, bound_names: Collection[str]) -> None:
+    """Refuse authored function calls shadowed by numeric equation bindings.
+
+    Parameters
+    ----------
+    tree : ast.AST
+        Authored expression, before compiler intrinsics are inserted.
+    bound_names : collection of str
+        Numeric state, parameter and constant names visible to the expression.
+
+    Raises
+    ------
+    ValueError
+        If a supported function call resolves to a numeric binding in Python.
+    """
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in SUPPORTED_FUNCTIONS
+            and node.func.id in bound_names
+        ):
+            check_call_arguments(node.func.id, node, bound_names=bound_names)
+
+
+def check_call_arguments(fname: str, node: ast.Call, *, bound_names: Collection[str] = ()) -> None:
     """Refuse a call whose arguments the Python model would not accept as lowered.
 
     Parameters
@@ -208,6 +252,9 @@ def check_call_arguments(fname: str, node: ast.Call) -> None:
         The called function, a member of :data:`SUPPORTED_FUNCTIONS`.
     node : ast.Call
         The call node.
+    bound_names : collection of str, optional
+        Names bound to numeric state, parameters or constants in this expression.
+        They cannot also be used as callable namespace functions.
 
     Raises
     ------
@@ -216,8 +263,12 @@ def check_call_arguments(fname: str, node: ast.Call) -> None:
         outside :data:`FUNCTION_ARITY` for ``fname``. Every backend lowers only
         positional arguments, so a keyword or an extra argument would otherwise be
         dropped without notice.
+        Numeric bindings shadow functions in the Python equation runtime, so
+        calls through those names are refused instead of compiling different maths.
 
     """
+    if fname in bound_names:
+        raise ValueError(f"Function '{fname}' is shadowed by a numeric binding")
     if node.keywords:
         raise ValueError(
             f"Function {fname} takes positional arguments only in compiled expressions"

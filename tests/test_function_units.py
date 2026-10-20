@@ -64,7 +64,7 @@ _DOMAIN = {
     "arccos": lambda x: -1 <= x <= 1,
 }
 # Largest error in least significant bits, 16-bit formats, every code (measured, rounded up).
-_BOUND_16 = {name: 0.51 for name in fu.FUNCTIONS} | {"cosh": 0.63, "sinh": 0.63, "tan": 0.52}
+_BOUND_16 = {name: 0.51 for name in fu.UNARY_FUNCTIONS} | {"cosh": 0.63, "sinh": 0.63, "tan": 0.52}
 
 
 def _max_error_lsb(
@@ -89,13 +89,13 @@ class TestAccuracy:
     """Measured error against the Python model stays within the stated bounds."""
 
     @pytest.mark.parametrize(("dw", "fr"), [(16, 8), (16, 12)], ids=["Q8.8", "Q4.12"])
-    @pytest.mark.parametrize("function", fu.FUNCTIONS)
+    @pytest.mark.parametrize("function", fu.UNARY_FUNCTIONS)
     def test_every_code_of_16_bit_formats(self, function: str, dw: int, fr: int) -> None:
         """Every input code is within the stated bound (correct rounding is 0.5 LSB)."""
         codes = range(-(1 << (dw - 1)), 1 << (dw - 1))
         assert _max_error_lsb(function, dw, fr, codes) <= _BOUND_16[function]
 
-    @pytest.mark.parametrize("function", fu.FUNCTIONS)
+    @pytest.mark.parametrize("function", fu.UNARY_FUNCTIONS)
     def test_sampled_q16_16(self, function: str) -> None:
         """At Q16.16 bounded functions stay within 0.6 LSB; exp-like ones within 2**-28 relative."""
         codes = list(range(-(1 << 31), 1 << 31, 1 << 20)) + list(range(-(1 << 20), 1 << 20, 4099))

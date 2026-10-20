@@ -34,7 +34,7 @@ from sc_neurocore.compiler.function_unit_programs import program
 class TestProgramsEqualReference:
     """Program evaluation equals the reference and never leaves 64 bits."""
 
-    @pytest.mark.parametrize("function", fu.FUNCTIONS)
+    @pytest.mark.parametrize("function", fu.UNARY_FUNCTIONS)
     def test_every_code_q8_8(self, function: str) -> None:
         """All 65 536 codes of Q8.8."""
         unit = program(function, 16, 8)
@@ -42,7 +42,7 @@ class TestProgramsEqualReference:
             assert unit.evaluate(code) == fu.evaluate(function, code, 16, 8), code
 
     @pytest.mark.parametrize(("dw", "fr"), [(32, 16), (32, 24), (8, 4)])
-    @pytest.mark.parametrize("function", fu.FUNCTIONS)
+    @pytest.mark.parametrize("function", fu.UNARY_FUNCTIONS)
     def test_sampled_other_formats(self, function: str, dw: int, fr: int) -> None:
         """Extremes, a grid over the word and a dense window around zero."""
         unit = program(function, dw, fr)
@@ -168,7 +168,7 @@ def _run_c(function: str, lang: str) -> list[int]:
 
 
 @pytest.mark.skipif(shutil.which("gcc") is None, reason="gcc not available")
-@pytest.mark.parametrize("function", fu.FUNCTIONS)
+@pytest.mark.parametrize("function", fu.UNARY_FUNCTIONS)
 def test_emitted_c_equals_reference(function: str) -> None:
     """Compiled C (with undefined-behaviour checks) returns the reference codes."""
     assert _run_c(function, "c") == [fu.evaluate(function, c, 16, 8) for c in _CODES]

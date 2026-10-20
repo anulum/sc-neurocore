@@ -101,6 +101,7 @@ _INPUT_ARGUMENTS = {
     "log1p": 1,
     "tan": 1,
     "arctan": 1,
+    "atan2": 2,
     "arcsin": 1,
     "arccos": 1,
     "erf": 1,

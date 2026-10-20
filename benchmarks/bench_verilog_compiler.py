@@ -8,7 +8,7 @@
 
 """Measure representative registered and folded Verilog compilation paths.
 
-The benchmark rotates seven deterministic workloads and binds results to every
+The benchmark rotates eight deterministic workloads and binds results to every
 compiler source file. It records ordinary loaded-host timings only; it does not
 claim isolated-core throughput or cross-language performance.
 """
@@ -30,12 +30,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from benchmarks._benchmark_context import measurement_context
 from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 
-ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "benchmarks/results/bench_verilog_compiler.json"
 SOURCE_PATHS = (
     "src/sc_neurocore/compiler/verilog_compiler.py",
@@ -46,6 +49,10 @@ SOURCE_PATHS = (
     "src/sc_neurocore/compiler/verilog_compiler_config.py",
     "src/sc_neurocore/compiler/verilog_expr_emitter.py",
     "src/sc_neurocore/compiler/expr_lut_tables.py",
+    "src/sc_neurocore/compiler/equation_lowering.py",
+    "src/sc_neurocore/compiler/function_units.py",
+    "src/sc_neurocore/compiler/function_unit_ir.py",
+    "src/sc_neurocore/compiler/function_unit_programs.py",
     "src/sc_neurocore/compiler/equation_compiler.py",
     "src/sc_neurocore/compiler/fpga_wrapper.py",
     "src/sc_neurocore/compiler/testbench_gen.py",
@@ -67,6 +74,7 @@ SOURCE_PATHS = (
     "src/sc_neurocore/neurons/universal_dsl.py",
     "src/sc_neurocore/refusals.py",
     "benchmarks/bench_verilog_compiler.py",
+    "benchmarks/_benchmark_context.py",
 )
 
 
@@ -181,6 +189,12 @@ def _cases() -> tuple[CompilerCase, ...]:
         dt=1.0,
         method="map",
     )
+    angle_map = EquationNeuron(
+        equations={"v": "atan2(I, x)", "x": "-x"},
+        state={"v": 0.0, "x": 2.0},
+        dt=1.0,
+        method="map",
+    )
     return (
         CompilerCase("euler_registered", lambda: compile_to_verilog(lif, module_name="bench_lif")),
         CompilerCase("rk4_registered", lambda: compile_to_verilog(rk4, module_name="bench_rk4")),
@@ -215,6 +229,12 @@ def _cases() -> tuple[CompilerCase, ...]:
                 nearest_half_map,
                 module_name="bench_nearest_half_map",
                 rounding="nearest",
+            ),
+        ),
+        CompilerCase(
+            "atan2_map_registered",
+            lambda: compile_to_verilog(
+                angle_map, module_name="bench_atan2_map", function_lowering="v2"
             ),
         ),
     )
@@ -316,6 +336,7 @@ def run_benchmark(
             "scaling_governor": _read_first_line(frequency_root / "scaling_governor"),
             "scaling_current_khz_after": _read_first_line(frequency_root / "scaling_cur_freq"),
         },
+        "measurement_context": measurement_context(load_before),
         "source_sha256": _source_hashes(),
         "cases": rows,
         "interpretation": (

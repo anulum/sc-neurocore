@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5368
+    "test_files": 5373
   },
   "documentation": {
     "public_pages": [
@@ -5167,6 +5167,7 @@
       "tests/test_expr_lut_tables_sample_points.py",
       "tests/test_expr_lut_tables_supported_functions.py",
       "tests/test_expression_derivative.py",
+      "tests/test_expression_derivative_atan2.py",
       "tests/test_extended_neurons_brain_scale_s_ad_ex.py",
       "tests/test_extended_neurons_butera.py",
       "tests/test_extended_neurons_chay.py",
@@ -5326,10 +5327,14 @@
       "tests/test_fpga_synthesis_bounds.py",
       "tests/test_fpga_weight_rom.py",
       "tests/test_frontiers.py",
+      "tests/test_function_lowering_atan2_cosim.py",
+      "tests/test_function_lowering_call_bindings.py",
       "tests/test_function_lowering_v2_cosim.py",
       "tests/test_function_unit_ir.py",
       "tests/test_function_unit_programs.py",
+      "tests/test_function_unit_programs_atan2.py",
       "tests/test_function_units.py",
+      "tests/test_function_units_atan2.py",
       "tests/test_fusion/sensor_fusion_support.py",
       "tests/test_fusion/test_sensor_fusion_bitstream_decorrelator.py",
       "tests/test_fusion/test_sensor_fusion_cochlea_adapter.py",
