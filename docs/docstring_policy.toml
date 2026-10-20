@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1269
+expected_file_count = 1273
 
 [[file]]
 path = "benchmarks/bench_equation_program.py"
@@ -5169,3 +5169,19 @@ rationale = "Exercise authored callable bindings, binary numerical domains and a
 [[file]]
 path = "src/sc_neurocore/compiler/equation_lowering.py"
 rationale = "Exercise authored callable bindings, binary numerical domains and actual compiler entry points with strict source-bound parity."
+
+[[file]]
+path = "tests/test_function_units_softplus.py"
+rationale = "Exercise stable softplus precision, derivatives and actual generated native compiler paths."
+
+[[file]]
+path = "tests/test_function_unit_programs_softplus.py"
+rationale = "Exercise stable softplus precision, derivatives and actual generated native compiler paths."
+
+[[file]]
+path = "tests/test_function_lowering_softplus_cosim.py"
+rationale = "Exercise stable softplus precision, derivatives and actual generated native compiler paths."
+
+[[file]]
+path = "tests/test_expression_derivative_softplus.py"
+rationale = "Exercise stable softplus precision, derivatives and actual generated native compiler paths."

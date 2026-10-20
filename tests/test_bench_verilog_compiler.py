@@ -31,6 +31,7 @@ EXPECTED_CASES = {
     "sqrt_map_registered",
     "nearest_half_map_registered",
     "atan2_map_registered",
+    "softplus_exp_euler_registered",
 }
 
 
@@ -76,7 +77,7 @@ def test_committed_evidence_binds_every_compiler_source() -> None:
 
 
 def test_committed_cases_have_complete_deterministic_samples() -> None:
-    """All eight public workloads retain timings and stable output identities."""
+    """All nine public workloads retain timings and stable output identities."""
     payload = _payload()
     cases = _mapping(payload["cases"])
     workload = _mapping(payload["workload"])

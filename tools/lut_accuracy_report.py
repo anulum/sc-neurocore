@@ -114,6 +114,34 @@ in total; final rounding adds at most half an output LSB. Saturation cannot
 increase the difference from the clipped reference. The origin returns zero;
 fixed-point codes have no IEEE signed-zero or infinity representation.
 
+`softplus(x) = log(1 + exp(x))` has one signed-word operand and uses
+`max(x, 0) + log1p(exp(-abs(x)))`. There is no threshold approximation or
+word-width saturation of the exponential before the logarithm. Its separate
+conservative arithmetic bound is `0.5 * 2**-fraction + 16 * 2**-30` against
+the word-clipped real result. The following budgets are in internal 2**-30 units:
+
+* Each reused 512-segment quadratic has coefficient error below 0.501 per
+  coefficient (checked against 60-digit coefficients). The weighted coefficient
+  sum contributes less than 1.503 and the two Horner floor shifts less than 2.
+  The interpolation remainder is bounded by `M*h**3/(72*sqrt(3))`, `h=1/512`;
+  `M < 1` for `exp2`, `M < 3` for `log2(1+u)`. Both totals are below 4.
+* In the negative exponential, two argument-reduction floor operations and
+  final rounding keep the total error below 8. The stored log2(e) constant has
+  real error below 2**-50, not 61-bit accuracy. Its effect is bounded uniformly
+  by `t*exp(-t) <= 1/e`, rather than by the largest input magnitude. Discarded
+  negative tails are below one internal unit.
+* The logarithm's interpolant error contributes less than 4*ln(2). Mantissa
+  normalisation, the ln(2) coefficient, and the product floor contribute less
+  than 1 each, giving less than 6 in total. Since the argument is at least 1,
+  the logarithm cannot amplify the exponential's absolute error.
+
+These budgets sum to less than 14; 16 leaves a conservative margin. Adding
+the positive input part is exact, and final format rounding adds at most half
+an output LSB. Nonnegative clipping and word saturation cannot increase error
+against the clipped reference. The 64-bit intermediate stays below 2**62 on
+all admitted formats. Numeric contracts state the complete scalar input range
+and measured worst input; wider sampled cells still do not prove a global maximum.
+
 """
 
 

@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add stable beta-one `softplus` across Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions. Document the full signed-word domain and separate arithmetic error bound; exercise actual native outputs and refresh both full benchmark protocols with hardware context. Fix smooth unary differentiation silently discarding extra positional arguments.
+
 - Add opt-in v2 `atan2(y, x)` through the equation runtime, Verilog, fixed C/Rust and C++ expression paths. Preserve both operands and the fixed-point zero convention, reject invalid domains and unproven derivative branch cuts, and report two-dimensional accuracy. Refresh source-bound compiler/expression benchmarks with CPU and RAM context. Remove redundant Rust expression parentheses so generated units compile with warnings denied.
 
 
@@ -44,7 +46,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The cost of equation programs has a committed benchmark,
   `benchmarks/bench_equation_program.py`. Its receipt
   `benchmarks/results/bench_equation_program.json` (loaded development host)
-  puts a program at between 1.2 and 3.3 times the same arithmetic written as
+  puts a program at between 0.9 and 3.2 times the same arithmetic written as
   a Python function.
 
 - Published claims are bound to their sources after an outside review. The

@@ -107,6 +107,7 @@ EXPRESSIONS: dict[str, tuple[str, Reference]] = {
     "threshold": ("v >= v_th", lambda e: e["v"] >= e["v_th"]),
     "conditional": ("v + 1 if v < 10 else -v", lambda e: e["v"] + 1 if e["v"] < 10 else -e["v"]),
     "angle": ("atan2(v, I)", lambda e: e["atan2"](e["v"], e["I"])),
+    "softplus": ("softplus(v)", lambda e: e["softplus"](e["v"])),
 }
 ADEX_NEURON: dict[str, Any] = {
     "equations": {"v": ADEX, "w": "(a*(v-E_L) - w)/tau_w"},

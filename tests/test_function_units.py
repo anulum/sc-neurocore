@@ -42,6 +42,7 @@ _REFERENCE = {
     "log10": np.log10,
     "expm1": np.expm1,
     "log1p": np.log1p,
+    "softplus": _NS["softplus"],
     "tan": np.tan,
     "arctan": np.arctan,
     "arcsin": np.arcsin,

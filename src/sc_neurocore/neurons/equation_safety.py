@@ -102,6 +102,7 @@ _INPUT_ARGUMENTS = {
     "tan": 1,
     "arctan": 1,
     "atan2": 2,
+    "softplus": 1,
     "arcsin": 1,
     "arccos": 1,
     "erf": 1,

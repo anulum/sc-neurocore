@@ -242,3 +242,13 @@ def test_exact_rounding_functions_are_refused(expr: str) -> None:
     """Steps have no derivative to linearise through; a dependence on them is refused."""
     with pytest.raises(ExpressionDifferentiationError):
         differentiate(expr, "x")
+
+
+@pytest.mark.parametrize(
+    "function", ["exp", "log", "log1p", "expm1", "exprel", "sigmoid", "softplus", "arctan", "erf"]
+)
+@pytest.mark.parametrize("arguments", ["", "v, 2", "v, extra=2"])
+def test_smooth_unary_calls_cannot_drop_or_invent_arguments(function: str, arguments: str) -> None:
+    """The derivative API refuses a call the authored unary model cannot evaluate as compiled."""
+    with pytest.raises(ExpressionDifferentiationError, match="exactly one positional argument"):
+        differentiate(f"{function}({arguments})", "v")

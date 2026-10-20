@@ -59,6 +59,15 @@ def _atan2(y: Any, x: Any) -> Any:
     return np.arctan2(np.where(first == 0, 0.0, first), np.where(second == 0, 0.0, second))
 
 
+def _softplus(x: Any) -> Any:
+    """Evaluate beta-one softplus on finite real inputs, including underflowing tails."""
+    values = np.asarray(x)
+    if np.iscomplexobj(values) or not np.all(np.isfinite(values)):
+        raise EquationRefusal("softplus needs finite real inputs")
+    with np.errstate(under="ignore"):
+        return np.logaddexp(0.0, values)
+
+
 def _exprel(x: Any) -> Any:
     """(exp(x) - 1) / x with the removable-singularity limit exprel(0) = 1.
 
@@ -98,6 +107,7 @@ def build_eval_namespace() -> dict[str, Any]:
         "log10": np.log10,
         "expm1": np.expm1,
         "log1p": np.log1p,
+        "softplus": _softplus,
         "erf": scipy.special.erf,
         "floor": np.floor,
         "ceil": np.ceil,

@@ -242,6 +242,8 @@ the tables with function units that reduce the argument and interpolate:
 | `x ** (1/3)` | `2^(log2|x|/3)` with the sign of `x` |
 | `exp2`, `log2`, `log10` | the `exp` and `log` reductions without the `log2(e)` and `ln 2` factors (`log10 = log2 · log10 2`) |
 | `expm1`, `log1p` | the exponential minus an exact one; the logarithm of the exact integer `1 + x` |
+| `softplus` | stable `max(x, 0) + log1p(exp(-abs(x)))`, retaining 30-bit intermediate precision |
+| `atan2(y, x)` | quadrant-aware angle, reduced to the arctangent table; the origin returns zero |
 | `tan` | sine and cosine of the reduced turn, divided and rounded once; saturated at the poles |
 | `arctan` | quadratic table on `[0, 1]`, `arctan x = π/2 - arctan(1/x)` above 1 |
 | `arcsin`, `arccos` | `arctan(x / sqrt(1 - x²))` with an exact square root; `arccos = π/2 - arcsin` |
@@ -255,10 +257,12 @@ equal the separately written integer reference `sc_neurocore.compiler.function_u
 (checked by Icarus, gcc with undefined-behaviour checks, and rustc with overflow
 checks). The units accept words of at most 32 bits with
 `data_width + fraction <= 61`; other formats are refused. `sinh`, `tan`,
-`arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p` and `erf`
+`arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p`, `softplus`, `atan2` and `erf`
 exist only in `v2`; the exact `floor`, `ceil`, `trunc` and `sign` work in both
-lowerings. These names are bound in the Python model to the NumPy functions of
-the same name (`erf` to `scipy.special.erf`). `log` of a non-positive input is the most negative code, `sqrt` of a negative
+lowerings. Most names are bound in the Python model to the NumPy functions of
+the same name (`erf` to `scipy.special.erf`). `softplus` uses
+`numpy.logaddexp(0, x)` for finite real inputs, and `atan2` canonicalises signed
+zeros. `log` of a non-positive input is the most negative code, `sqrt` of a negative
 input is 0, and `x ** (1/3)` of a negative input is `-(|x| ** (1/3))`; `log2`,
 `log10` and `log1p` follow `log`, and `arcsin`/`arccos` of `|x| > 1` take their
 values at `±1`. The Python model raises or returns NaN for these inputs.
@@ -272,6 +276,14 @@ limited by the 30-bit internal fraction, a few LSB at the top of the range.
 unit and format. `lut-v1` remains the default and its RTL is unchanged; `v2` costs
 more logic (64-bit intermediates and coefficient tables) and its synthesis cost is
 not yet measured.
+
+`softplus(x)` has no beta or threshold arguments. Its derivative is the stable
+`sigmoid(x)`, including in exponential Euler. The integer error bound is
+`0.5 * 2**-fraction + 16 * 2**-30` against the clipped real function. The
+accuracy report derives that bound independently of its measured maxima.
+Calls require one positional argument; derivative construction refuses extra
+arguments instead of silently ignoring them. Portable C++ uses the stable
+identity above, with its target math library rather than the integer tables.
 
 ### Random draws
 
@@ -508,14 +520,15 @@ governor, and host load.
 
 | Workload | Median compile time |
 | --- | ---: |
-| Euler registered | 0.340092 ms |
-| Euler folded with parameter port | 0.298532 ms |
-| RK4 registered | 0.653103 ms |
-| Four-substep RK4 registered | 1.353286 ms |
-| Escape-rate registered | 2.651926 ms |
-| Square-root map registered | 0.249005 ms |
-| Negative half-LSB nearest map registered | 0.168758 ms |
-| Quadrant-aware angle map registered | 2.649831 ms |
+| Euler registered | 0.442847 ms |
+| Euler folded with parameter port | 0.243867 ms |
+| RK4 registered | 0.586510 ms |
+| Four-substep RK4 registered | 1.144604 ms |
+| Escape-rate registered | 2.194242 ms |
+| Square-root map registered | 0.208785 ms |
+| Negative half-LSB nearest map registered | 0.153899 ms |
+| Quadrant-aware angle map registered | 2.199175 ms |
+| Softplus exponential Euler registered | 6.857834 ms |
 
 The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.14. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact. These measurements are local regression evidence, not
 promotion-grade latency or throughput claims.

@@ -201,6 +201,15 @@ class CExprEmitter(ast.NodeVisitor):
             y = f"(({arg} == {zero}) ? {zero} : {arg})"
             x = f"(({second} == {zero}) ? {zero} : {second})"
             return f"{self.math_ns}::atan2({y}, {x})"
+        if fname == "softplus":
+            zero = f"{self.fp_type}(0.0)"
+            value = "sc_softplus_x"
+            positive = f"(({value} > {zero}) ? {value} : {zero})"
+            decayed = f"{self.math_ns}::exp(-{self.math_ns}::abs({value}))"
+            return (
+                f"([](auto {value}) {{ return {positive} + "
+                f"{self.math_ns}::log1p({decayed}); }})({arg})"
+            )
         if fname in _DIRECT_MATH_FUNCTIONS:
             return f"{self.math_ns}::{_DIRECT_MATH_FUNCTIONS[fname]}({arg})"
         if fname in ("sigmoid", "expit"):

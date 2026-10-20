@@ -9608,7 +9608,7 @@ code : int
 fraction : int
     Fraction bits of the input.
 out_fraction : int
-    Fraction bits of the result (``<= fraction + 2``).
+    Fraction bits of the result (up to ``max(P, fraction + 2)``).
 
 Returns
 -------
@@ -9917,6 +9917,29 @@ Returns
 int
     The result code, saturated to the word.
 
+### Function `softplus(code, data_width, fraction)`
+Return the saturated code of ``log(1 + exp(x))`` without exponential overflow.
+
+Parameters
+----------
+code : int
+    Signed input code; its domain is checked by :func:`evaluate`.
+data_width, fraction : int
+    The common input/output format, checked by :func:`evaluate`.
+
+Returns
+-------
+int
+    Non-negative result code, rounded half up and saturated to the word.
+    The arithmetic error against the clipped real function is bounded by
+    ``0.5 * 2**-fraction + 16 * 2**-P``; see the generated accuracy report.
+
+Notes
+-----
+Uses ``max(x, 0) + log(1 + exp(-abs(x)))`` at internal precision ``P``.
+The bounded exponential is never saturated to the caller's narrower word.
+The definition has beta=1 and no linear-tail threshold approximation.
+
 ### Function `tan(code, data_width, fraction)`
 Return the code of ``tan x = sin x / cos x``, rounded half away from zero; saturated at the poles.
 
@@ -10100,7 +10123,7 @@ Raises
 ------
 ValueError
     For an unknown function, wrong operand count, a format
-    :func:`check_format` refuses, or binary input codes outside the word.
+    :func:`check_format` refuses, or binary/``softplus`` input codes outside the declared word domain.
 
 ---
 
@@ -12955,7 +12978,7 @@ max_error_in_table_at : float
 resolution : float
     One least significant bit, ``2**-fraction``.
 operand_ranges : tuple of pairs, optional
-    Inclusive ranges of all operands for a multivariate measurement.
+    Inclusive ranges of all operands when an explicit function domain is reported.
 worst_inputs : tuple of float, optional
     Complete operand tuple at the measured maximum, in call order.
 declared_error_bound : float or None, optional

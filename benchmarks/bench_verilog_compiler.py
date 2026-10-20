@@ -8,7 +8,7 @@
 
 """Measure representative registered and folded Verilog compilation paths.
 
-The benchmark rotates eight deterministic workloads and binds results to every
+The benchmark rotates nine deterministic workloads and binds results to every
 compiler source file. It records ordinary loaded-host timings only; it does not
 claim isolated-core throughput or cross-language performance.
 """
@@ -195,6 +195,12 @@ def _cases() -> tuple[CompilerCase, ...]:
         dt=1.0,
         method="map",
     )
+    softplus = EquationNeuron(
+        equations={"v": "softplus(v) - v + I"},
+        state={"v": -0.25},
+        dt=0.125,
+        method="exp_euler",
+    )
     return (
         CompilerCase("euler_registered", lambda: compile_to_verilog(lif, module_name="bench_lif")),
         CompilerCase("rk4_registered", lambda: compile_to_verilog(rk4, module_name="bench_rk4")),
@@ -235,6 +241,12 @@ def _cases() -> tuple[CompilerCase, ...]:
             "atan2_map_registered",
             lambda: compile_to_verilog(
                 angle_map, module_name="bench_atan2_map", function_lowering="v2"
+            ),
+        ),
+        CompilerCase(
+            "softplus_exp_euler_registered",
+            lambda: compile_to_verilog(
+                softplus, module_name="bench_softplus", function_lowering="v2"
             ),
         ),
     )

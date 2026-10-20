@@ -297,7 +297,7 @@ class LutAccuracy:
     resolution : float
         One least significant bit, ``2**-fraction``.
     operand_ranges : tuple of pairs, optional
-        Inclusive ranges of all operands for a multivariate measurement.
+        Inclusive ranges of all operands when an explicit function domain is reported.
     worst_inputs : tuple of float, optional
         Complete operand tuple at the measured maximum, in call order.
     declared_error_bound : float or None, optional
@@ -443,6 +443,9 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
         reference = np.clip(_reference(function)(x), word_min, word_max)
     error = np.abs(values / scale - reference)
     worst = int(np.argmax(error))
+    bound = 0.5 / scale + 16.0 / (1 << fu.P) if function == "softplus" else None
+    if bound is not None and float(error[worst]) > bound:
+        raise ValueError("softplus measurement exceeds its declared arithmetic error bound")
     return LutAccuracy(
         function=function,
         data_width=data_width,
@@ -459,6 +462,9 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
         max_error_in_table=float(error[worst]),
         max_error_in_table_at=float(x[worst]),
         resolution=1.0 / scale,
+        operand_ranges=((word_min, word_max),) if bound is not None else (),
+        worst_inputs=(float(x[worst]),) if bound is not None else (),
+        declared_error_bound=bound,
     )
 
 

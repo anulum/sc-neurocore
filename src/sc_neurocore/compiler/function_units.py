@@ -289,7 +289,7 @@ def exp_scaled(code: int, fraction: int, out_fraction: int) -> int:
     fraction : int
         Fraction bits of the input.
     out_fraction : int
-        Fraction bits of the result (``<= fraction + 2``).
+        Fraction bits of the result (up to ``max(P, fraction + 2)``).
 
     Returns
     -------
@@ -800,6 +800,36 @@ def log1p(code: int, data_width: int, fraction: int) -> int:
     return log(code + (1 << fraction), data_width, fraction)
 
 
+def softplus(code: int, data_width: int, fraction: int) -> int:
+    """Return the saturated code of ``log(1 + exp(x))`` without exponential overflow.
+
+    Parameters
+    ----------
+    code : int
+        Signed input code; its domain is checked by :func:`evaluate`.
+    data_width, fraction : int
+        The common input/output format, checked by :func:`evaluate`.
+
+    Returns
+    -------
+    int
+        Non-negative result code, rounded half up and saturated to the word.
+        The arithmetic error against the clipped real function is bounded by
+        ``0.5 * 2**-fraction + 16 * 2**-P``; see the generated accuracy report.
+
+    Notes
+    -----
+    Uses ``max(x, 0) + log(1 + exp(-abs(x)))`` at internal precision ``P``.
+    The bounded exponential is never saturated to the caller's narrower word.
+    The definition has beta=1 and no linear-tail threshold approximation.
+    """
+    decayed = exp_scaled(-abs(code), fraction, P)
+    logarithm = log2_internal((1 << P) + decayed, P)
+    correction = max(0, (logarithm * _LN2) >> P)
+    total = (max(code, 0) << (P - fraction)) + correction
+    return saturate(shift_round(total, fraction - P), data_width)
+
+
 def tan(code: int, data_width: int, fraction: int) -> int:
     """Return the code of ``tan x = sin x / cos x``, rounded half away from zero; saturated at the poles.
 
@@ -1064,6 +1094,7 @@ UNITS: dict[str, Callable[[int, int, int], int]] = {
     "log10": log10,
     "expm1": expm1,
     "log1p": log1p,
+    "softplus": softplus,
     "tan": tan,
     "arctan": arctan,
     "arcsin": arcsin,
@@ -1111,7 +1142,7 @@ def evaluate(
     ------
     ValueError
         For an unknown function, wrong operand count, a format
-        :func:`check_format` refuses, or binary input codes outside the word.
+        :func:`check_format` refuses, or binary/``softplus`` input codes outside the declared word domain.
 
     """
     if function not in FUNCTION_ARITY:
@@ -1119,10 +1150,11 @@ def evaluate(
     check_format(data_width, fraction)
     if 1 + len(additional_inputs) != FUNCTION_ARITY[function]:
         raise ValueError(f"{function} needs exactly {FUNCTION_ARITY[function]} input code(s)")
-    if function in BINARY_UNITS:
+    if function in BINARY_UNITS or function == "softplus":
         low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
         if any(not low <= value <= high for value in (code, *additional_inputs)):
             raise ValueError(f"{function} input code outside signed {data_width}-bit domain")
+    if function in BINARY_UNITS:
         return BINARY_UNITS[function](code, additional_inputs[0], data_width, fraction)
     return UNITS[function](code, data_width, fraction)
 

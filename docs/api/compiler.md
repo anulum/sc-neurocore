@@ -244,6 +244,7 @@ closed rather than attaching an invalid unsigned fixed-point contract to RTL.
 | Category | Functions |
 |----------|-----------|
 | Transcendental | `exp`, `log`, `sqrt`, `tanh`, `cosh`, `exprel`, `sigmoid`/`expit`, `sin`, `cos` |
+| Stable activation and angle (v2 only) | `softplus(x)`, `atan2(y, x)` |
 | Arithmetic | `abs`, `clip(x, lo, hi)`, `max(a, b)`, `min(a, b)` |
 | Polynomial | `x**2` through `x**8` |
 | Operators | `+`, `-`, `*`, `/`, `%` by a finite positive numeric literal, unary `-` |
@@ -315,10 +316,10 @@ from a checked tree to a program (`equation_program.py`), the numpy evaluation
 namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 (`equation_namespace.py`), and the strict pint-backed unit runtime
 (`equation_units_runtime.py`). A program costs more per evaluation than
-bytecode. `benchmarks/bench_equation_program.py` times seven expressions as
+bytecode. `benchmarks/bench_equation_program.py` times eight expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 1.2 and 3.3 times the function,
+development host, puts a program at between 0.9 and 3.2 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
@@ -832,14 +833,15 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.340092 ms | 50 |
-| Euler folded with parameter port | 0.298532 ms | 38 |
-| RK4 registered | 0.653103 ms | 92 |
-| Four-substep RK4 registered | 1.353286 ms | 136 |
-| Escape-rate registered | 2.651926 ms | 902 |
-| Square-root map registered | 0.249005 ms | 65 |
-| Negative half-LSB nearest map registered | 0.168758 ms | 45 |
-| Quadrant-aware angle map registered | 2.649831 ms | 3225 |
+| Euler registered | 0.442847 ms | 50 |
+| Euler folded with parameter port | 0.243867 ms | 38 |
+| RK4 registered | 0.586510 ms | 92 |
+| Four-substep RK4 registered | 1.144604 ms | 136 |
+| Escape-rate registered | 2.194242 ms | 902 |
+| Square-root map registered | 0.208785 ms | 65 |
+| Negative half-LSB nearest map registered | 0.153899 ms | 45 |
+| Quadrant-aware angle map registered | 2.199175 ms | 3225 |
+| Softplus exponential Euler registered | 6.857834 ms | 11374 |
 
 The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.14. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
@@ -1147,3 +1149,39 @@ unproven domains that could cross the origin or negative horizontal axis.
 State-independent angle terms can still serve as coefficients. The portable
 C++ expression path uses the target math library with the same zero convention;
 its floating result is distinct from the bit-true fixed unit approximation.
+
+## Stable softplus
+
+`softplus(x)` means `log(1 + exp(x))`, with no beta or threshold parameter.
+The unitless Python equation runtime evaluates finite real inputs with
+`numpy.logaddexp(0, x)`, including broadcast arrays. Complex or nonfinite
+inputs are refused. Negligible negative tails may underflow to zero without
+overriding the caller's other floating-point error settings.
+
+```python
+neuron = EquationNeuron(
+    equations={"v": "softplus(v) - v + I"}, state={"v": -0.25},
+    method="exp_euler", dt=0.125,
+)
+rtl = compile_to_verilog(neuron, "softplus_neuron", function_lowering="v2")
+```
+
+The v2 RTL and bit-true C/Rust kernels use the stable identity
+`max(x, 0) + log1p(exp(-abs(x)))` with shared 30-bit internal arithmetic.
+They retain the full intermediate exponential and logarithm precision before
+one final format rounding and saturation. The input is narrowed to the
+declared signed word first. The conservative error bound is
+`0.5 * 2**-fraction + 16 * 2**-30` against the word-clipped real result;
+[the accuracy report](../validation/function_units_v2_accuracy.md) gives its
+arithmetic derivation and separately labelled exhaustive or sampled maxima.
+Numeric contracts report the scalar word domain and complete worst measured input.
+
+Symbolic differentiation preserves the `softplus` call and uses `sigmoid(x)`
+for its derivative, keeping exponential Euler stable at large positive states.
+Recognised smooth unary functions require exactly one positional argument;
+extra arguments and keywords are refused instead of being silently discarded.
+`lut-v1` refuses `softplus`; the default lowering remains unchanged.
+Portable C++ expressions use the same stable identity with the target math
+library. A captureless C++14 lambda evaluates each argument once, preserving
+its type and keeping nested output growth linear. Those floating results differ from fixed-point approximations;
+portable C++ execution does not establish vendor HLS synthesis or FPGA timing.

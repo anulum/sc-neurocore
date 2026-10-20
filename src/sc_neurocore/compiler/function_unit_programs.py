@@ -330,6 +330,15 @@ def _unit_log1p(p: Program, code: str, data_width: int, fraction: int) -> str:
     return _unit_log(p, p.add(code, p.const(1 << fraction)), data_width, fraction)
 
 
+def _unit_softplus(p: Program, code: str, data_width: int, fraction: int) -> str:
+    """Build stable softplus with a bounded exponential and one final word rounding."""
+    decayed = _exp_scaled(p, p.neg(_abs(p, code)), fraction, fu.P)
+    logarithm = _log2_internal(p, p.add(p.const(1 << fu.P), decayed), fu.P)
+    correction = _max(p, p.shr(p.mul(logarithm, p.const(fu._LN2)), fu.P), p.const(0))
+    total = p.add(p.shl(_max(p, code, p.const(0)), fu.P - fraction), correction)
+    return _saturate(p, _shift_round(p, total, fraction - fu.P), data_width)
+
+
 def _unit_tan(p: Program, code: str, data_width: int, fraction: int) -> str:
     turn = _turns(p, code, fraction)
     sine = _turn_sine(p, turn)
@@ -439,6 +448,7 @@ _BUILDERS: dict[str, Builder] = {
     "log10": _unit_log10,
     "expm1": _unit_expm1,
     "log1p": _unit_log1p,
+    "softplus": _unit_softplus,
     "tan": _unit_tan,
     "arctan": _unit_arctan,
     "arcsin": _unit_arcsin,

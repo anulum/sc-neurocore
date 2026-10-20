@@ -114,6 +114,7 @@ _DSL_FUNCTIONS: dict[str, Callable[..., sympy.Expr]] = {
     "log10": _dsl_function("log10", lambda f, x: _as_expr(1 / (_float(_LN10) * x))),
     "expm1": _dsl_function("expm1", lambda f, x: _as_expr(sympy.exp(x))),
     "log1p": _dsl_function("log1p", lambda f, x: _as_expr(1 / (1 + x))),
+    "softplus": _dsl_function("softplus", lambda f, x: _sigmoid_expr(x)),
     "arctan": _dsl_function("arctan", lambda f, x: _as_expr(1 / (1 + x**2))),
     "arcsin": _dsl_function("arcsin", lambda f, x: _as_expr(1 / sympy.sqrt(1 - x**2))),
     "arccos": _dsl_function("arccos", lambda f, x: _as_expr(-1 / sympy.sqrt(1 - x**2))),
@@ -269,6 +270,10 @@ class _Converter:
                 return self._atan2(node)
             func = _SMOOTH_FUNCS.get(node.func.id)
             if func is not None:
+                if len(node.args) != 1 or node.keywords:
+                    raise ExpressionDifferentiationError(
+                        f"{node.func.id} needs exactly one positional argument"
+                    )
                 return func(*[self.convert(arg) for arg in node.args])
         return self._opaque(node)
 
