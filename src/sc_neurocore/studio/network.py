@@ -24,6 +24,7 @@ external input, so no setting of the Studio's controls produced a spike.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -41,7 +42,7 @@ try:
     from sc_neurocore_engine.studio import get_ei_network_simulator
 except ImportError:
 
-    def get_ei_network_simulator() -> object:
+    def get_ei_network_simulator() -> Callable[..., Any]:
         """Return the optional Rust E-I network simulator or raise when unavailable."""
         raise ImportError("Studio Rust E-I network simulator unavailable")
 

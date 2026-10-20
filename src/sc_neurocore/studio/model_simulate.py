@@ -19,6 +19,7 @@ step and returns the complete raw result next to a separate display projection
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -27,7 +28,7 @@ try:
     from sc_neurocore_engine.studio import get_batch_simulate
 except ImportError:
 
-    def get_batch_simulate() -> object:
+    def get_batch_simulate() -> Callable[..., Any]:
         """Return the optional Rust batch simulator or raise when unavailable."""
         raise ImportError("Studio Rust batch simulator unavailable")
 

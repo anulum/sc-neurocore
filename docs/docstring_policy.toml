@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1288
+expected_file_count = 1289
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5245,3 +5245,7 @@ rationale = "Actual target manifest generation records host hardware and never i
 [[file]]
 path = "tests/test_behavioral_equivalence_full_pipeline.py"
 rationale = "Compare the complete stochastic encoder, signed current and LIF trace against maintained RTL, including descending ranges and registered latency."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_simulate.py"
+rationale = "Model simulation documents its public inputs, result schema and optional native execution boundary."

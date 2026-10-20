@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Match optional Studio simulator getter types to the native bridge callable contract, including installations without the optional engine.
+
 ### Changed
 
 - Native IR `dense_forward` now uses per-neuron, row-major weights and checks declared probability and signed Q8 formats before emitting RTL. Python's default `y_max` is 256, matching the Rust default and the previous emitted hardware; explicit endpoints must fit the signed state word. Regenerate graphs that relied on the previously ignored value 65535.
