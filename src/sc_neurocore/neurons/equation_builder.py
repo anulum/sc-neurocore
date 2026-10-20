@@ -336,7 +336,8 @@ class EquationNeuron:
 
         self.initial_state = deepcopy(self.state)
         # xi = N(0, 1) / sqrt(dt): xi * dt then has variance dt (Euler-Maruyama).
-        self._xi_scale = 1.0 / max(self.dt, 1e-12) ** 0.5
+        noise_dt = self.dt if self.dt > 0.0 else max(self.dt, 1e-12)
+        self._xi_scale = 1.0 / noise_dt**0.5
         self._noise_rng = noise_rng
         self._xi_substep = 0
 

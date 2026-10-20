@@ -65,6 +65,66 @@ def test_xi_is_the_site_draw_over_sqrt_dt() -> None:
         assert neuron.state["v"] - before == pytest.approx(_draw(step) * 2.0 * 0.25, abs=1e-15)
 
 
+@pytest.mark.parametrize("dt", [1e-12, 1e-14, 1e-16, math.ulp(0.0)])
+@pytest.mark.parametrize("supplied_generator", [False, True])
+def test_small_positive_dt_preserves_the_diffusion_scale(
+    dt: float, supplied_generator: bool
+) -> None:
+    """Use the admitted timestep for every Euler noise increment, including subnormal dt.
+
+    Parameters
+    ----------
+    dt : float
+        Positive timestep at the former floor, below it or at the smallest float.
+    supplied_generator : bool
+        Exercise either reproducible Philox draws or a caller-owned NumPy generator.
+    """
+    generator = np.random.default_rng(_SEED) if supplied_generator else None
+    reference = np.random.default_rng(_SEED)
+    neuron = from_equations(
+        "dv/dt = xi", init={"v": 0.0}, dt=dt, rng_seed=_SEED, noise_rng=generator
+    )
+    for step in range(5):
+        draw = float(reference.standard_normal()) if supplied_generator else _draw(step)
+        before = neuron.state["v"]
+        neuron.step(0.0)
+        assert neuron.state["v"] - before == pytest.approx(draw * math.sqrt(dt), rel=5e-15, abs=0.0)
+
+
+@pytest.mark.parametrize("equation", ["1.0", "xi"])
+def test_zero_euler_dt_preserves_the_frozen_state(equation: str) -> None:
+    """Keep zero-timestep Euler states frozen with deterministic or diffusion input.
+
+    Parameters
+    ----------
+    equation : str
+        A deterministic derivative or the diffusion-noise symbol.
+    """
+    neuron = from_equations(f"dv/dt = {equation}", init={"v": 0.25}, dt=0.0, rng_seed=_SEED)
+    for _ in range(3):
+        neuron.step(0.0)
+        assert neuron.state["v"] == 0.25
+
+
+@pytest.mark.parametrize("target", ["rtl", "c", "rust"])
+def test_small_dt_outside_the_selected_format_is_refused(target: str) -> None:
+    """Refuse an unrepresentable timestep before emitting the selected hardware kernel.
+
+    Parameters
+    ----------
+    target : str
+        Registered Verilog or generated C/Rust kernel public entry point.
+    """
+    neuron = from_equations("dv/dt = xi", init={"v": 0.0}, dt=1e-14, rng_seed=_SEED)
+    with pytest.raises(ValueError, match="dt"):
+        if target == "rtl":
+            compile_to_verilog(neuron, "m", 32, 16)
+        else:
+            generate_bittrue_kernel_from_neuron(
+                neuron, "m", data_width=32, fraction=16, language=target
+            )
+
+
 def test_an_euler_increment_has_variance_dt() -> None:
     """Over 4000 steps the increment's variance is dt (white noise), not dt**2 as before."""
     for dt in (0.25, 0.01):

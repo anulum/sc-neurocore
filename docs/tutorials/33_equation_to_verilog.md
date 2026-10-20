@@ -567,6 +567,8 @@ a named synthesis/place-and-route flow and its retained reports.
   stages; the compiler lowers it as `randn(XI_SITE) * (1/sqrt(dt))` on RTL, C and
   Rust (`compiler.diffusion_noise`), in either `random_precision`. Refused: `xi`
   drawn from a caller's `noise_rng` (Python only) and `xi` with `substeps > 1`.
+  Positive timesteps, including values below `1e-12`, retain their exact noise
+  scale. A zero Euler timestep keeps the state frozen.
   Explicit call sites must lie below `2**31`. Before 2026-10-19 `xi` came from
   NumPy's global generator and was `N(0, 1)` regardless of `dt`.
 - Folded datapaths do not support multiplier pipeline registers.

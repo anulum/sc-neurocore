@@ -10,6 +10,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Preserve diffusion-noise scaling for every positive equation timestep,
+  including values below `1e-12` and subnormal floats. Keep zero-step Euler
+  states frozen and reject timesteps outside the selected hardware format.
+
 - `NetworkRunner.add_projection` admits its CSR arrays before allocating:
   population indices, `n_source + 1` row offsets starting at 0 and never
   decreasing, equal column and value lengths, a last offset within them, and
