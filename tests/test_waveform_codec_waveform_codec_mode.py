@@ -22,6 +22,7 @@ class TestWaveformCodecMode:
             WaveformCodec(mode="turbo")
 
     def test_invalid_mode_empty_string(self) -> None:
+        """An empty mode name is refused with the mode message."""
         with pytest.raises(ValueError, match="mode must be"):
             WaveformCodec(mode="")
 
@@ -87,9 +88,9 @@ class TestWaveformCodecMode:
         waveform = _make_waveform()
         for mode, expected in expected_bytes.items():
             data, _ = WaveformCodec(mode=mode).compress(waveform)
-            # Header: WFCX(4) + IIHHBBBB = 4+4+4+2+2+1+1+1+1 = 20 bytes
+            # Header: WFC2(4) + IIHHBBBB = 4+4+4+2+2+1+1+1+1 = 20 bytes
             # mode_byte is last byte of the fixed header (offset 19)
-            assert data[:4] == b"WFCX", f"magic mismatch for mode={mode}"
+            assert data[:4] == b"WFC2", f"magic mismatch for mode={mode}"
             mode_byte = struct.unpack("B", data[19:20])[0]
             assert mode_byte == expected, f"mode={mode}: expected byte {expected}, got {mode_byte}"
 

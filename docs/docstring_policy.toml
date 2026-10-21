@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1289
+expected_file_count = 1295
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5249,3 +5249,27 @@ rationale = "Compare the complete stochastic encoder, signed current and LIF tra
 [[file]]
 path = "src/sc_neurocore/studio/model_simulate.py"
 rationale = "Model simulation documents its public inputs, result schema and optional native execution boundary."
+
+[[file]]
+path = "tests/test_waveform_codec_decoder_lossless.py"
+rationale = "WaveformCodec decoder and lossless-mode round trips and stream refusals."
+
+[[file]]
+path = "tests/test_waveform_codec_waveform_codec.py"
+rationale = "WaveformCodec compression, validation and stream-layout tests."
+
+[[file]]
+path = "tests/test_waveform_codec_waveform_codec_mode.py"
+rationale = "WaveformCodec mode selection and header tests."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/__init__.py"
+rationale = "Public spike-codec package exports."
+
+[[file]]
+path = "tests/test_quantum_codec_coverage_closure.py"
+rationale = "Coverage closure of quantum and waveform codec optional paths."
+
+[[file]]
+path = "tests/test_waveform_codec_backends.py"
+rationale = "WaveformCodec Rust and NumPy backends produce identical streams."

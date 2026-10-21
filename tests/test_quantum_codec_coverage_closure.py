@@ -25,7 +25,6 @@ from sc_neurocore.spike_codec.waveform_codec import WaveformCodec
 
 def test_dashboard_helpers_cover_zero_and_colour_bands() -> None:
     """Terminal bars handle zero maxima and low, medium, and high bands."""
-
     assert "▁" in dashboard._heat_char(1.0, 0.0)
     assert dashboard._bar(1.0, 0.0, width=3) == "░░░"
     assert dashboard._YELLOW in dashboard._bar(0.5, 1.0)
@@ -83,7 +82,6 @@ def test_local_llm_guidance_accepts_valid_directive_and_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Local LLM responses are normalized, allowlisted, and exception-safe."""
-
     brain = object.__new__(gotm_brain.GOTMBrain)
     brain._llm_endpoint = object()
     monkeypatch.setattr(gotm_brain, "HAS_LLM", True)
@@ -102,7 +100,6 @@ def test_local_llm_guidance_accepts_valid_directive_and_fails_closed(
 
 def test_kane_mapper_repr_exposes_physical_layout() -> None:
     """Mapper representation reports spacing, depth, and topology."""
-
     rendered = repr(KaneSiliconMapper())
     assert "spacing=" in rendered
     assert "depth=" in rendered
@@ -111,7 +108,6 @@ def test_kane_mapper_repr_exposes_physical_layout() -> None:
 
 def test_radical_pair_constructor_and_tensor_validation_boundaries() -> None:
     """Radical-pair models reject invalid quadrature, tensors, and bath size."""
-
     with pytest.raises(ValueError, match="quadrature_order"):
         RadicalPairModel(RadicalPairParams(quadrature_order=1))
 
@@ -141,7 +137,6 @@ def test_radical_pair_constructor_and_tensor_validation_boundaries() -> None:
 
 def test_radical_pair_recombination_state_and_repr_boundaries() -> None:
     """Recombination inputs fail closed and state metadata remains inspectable."""
-
     with pytest.raises(ValueError, match="recombination_rate"):
         RadicalPairModel(RadicalPairParams(recombination_rate=0.0)).singlet_yield()
     with pytest.raises(ValueError, match="lifetime_us"):
@@ -155,7 +150,6 @@ def test_radical_pair_recombination_state_and_repr_boundaries() -> None:
 
 def test_spin_pool_rejects_zero_norm_and_invalid_exact_couplings() -> None:
     """MPS export and exact evolution reject degenerate or malformed state."""
-
     pool = SpinPoolMPS(n_sites=2)
     pool.tensors = [
         np.zeros((1, 2, 1), dtype=np.complex128),
@@ -177,7 +171,6 @@ def test_spin_pool_heisenberg_handles_identity_and_reversed_sites(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Heisenberg routing skips identity pairs and normalizes reversed sites."""
-
     pool = SpinPoolMPS(n_sites=2)
     called: list[tuple[int, int, float]] = []
     monkeypatch.setattr(
@@ -206,7 +199,6 @@ def test_waveform_codec_uses_optional_zstd_and_wavelet_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Installed optional compressors and wavelets execute their maintained path."""
-
     zstandard = ModuleType("zstandard")
     zstandard.ZstdCompressor = _ZstdCompressor  # type: ignore[attr-defined]
     pywt = ModuleType("pywt")
@@ -220,6 +212,7 @@ def test_waveform_codec_uses_optional_zstd_and_wavelet_paths(
     snippet = codec._compress_snippets(
         [np.array([1.0, -1.0])],
         [0],
+        [1.0],
         [np.array([0.25, -0.25])],
     )
     background = codec._compress_background(np.arange(32, dtype=np.float64).reshape(16, 2))

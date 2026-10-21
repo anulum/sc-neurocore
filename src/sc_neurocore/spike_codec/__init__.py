@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Spike train compression codec
 
-"""Neural data compression: spike rasters (50-750x) and raw waveforms (10-24x)."""
+"""Neural data compression: spike-raster codecs and a raw-waveform codec with lossy and lossless modes."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from .codec import SpikeCodec, CompressionResult
 from .delta_codec import DeltaSpikeCodec, DeltaCompressionResult
 from .streaming_codec import StreamingSpikeCodec, StreamingCompressionResult
 from .aer_codec import AERSpikeCodec, AERCompressionResult
-from .waveform_codec import WaveformCodec, WaveformCompressionResult
+from .waveform_codec import WaveformCodec, WaveformCompressionResult, WaveformDecodeResult
 from .registry import get_codec, list_codecs, recommend_codec
 
 _LAZY_EXPORTS = {
@@ -52,6 +52,7 @@ __all__ = [
     "AERCompressionResult",
     "WaveformCodec",
     "WaveformCompressionResult",
+    "WaveformDecodeResult",
     "get_codec",
     "list_codecs",
     "recommend_codec",

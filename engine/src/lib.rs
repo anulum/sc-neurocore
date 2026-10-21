@@ -37,6 +37,8 @@ pub use hdc_binding::PyBitStreamTensor;
 pub mod brunel;
 #[path = "bindings/coba_lif.rs"]
 mod coba_lif_binding;
+pub mod codecs;
+pub use codecs::predictive_coding;
 pub mod connectome;
 pub mod conv;
 pub mod cordiv;
@@ -108,9 +110,6 @@ pub mod ping;
 mod ping_binding;
 #[path = "bindings/poisson.rs"]
 mod poisson_binding;
-pub mod predictive_coding;
-#[path = "bindings/predictive_coding.rs"]
-mod predictive_coding_binding;
 pub mod pyo3_neurons;
 pub mod quantum;
 pub mod rall_dendrite;
@@ -179,7 +178,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ei_network_binding::register(m)?;
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
     cordiv_binding::register(m)?;
-    predictive_coding_binding::register(m)?;
+    codecs::register(m)?;
     phi_binding::register(m)?;
     cortical_column_binding::register(m)?;
     rall_dendrite_binding::register(m)?;

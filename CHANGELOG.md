@@ -10,6 +10,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `WaveformCodec` gains `decompress` for every mode and an exact `lossless` mode (per-channel ADC-level mapping, fixed polynomial prediction, block-adaptive Rice codes). Stream format `WFC2` adds per-snippet template scales, the background's first row, closed-loop background quantisation and a CRC-32 trailer; corrupted streams and headers declaring more than `max_samples` raise `ValueError`. Legacy `WFCX` streams decode their spike raster only. Noise thresholds, detection, template matching, background extraction and quantisation and the lossless coder run in Rust in `sc_neurocore_engine` (`backend="auto"|"rust"|"python"`), writing byte-identical streams to the NumPy reference. On the public Neuralink compression-challenge data (743 files, 62.6 minutes) the lossless mode measures 3.33x with every file byte-identical after decoding, encoding in 10.1 s with the Rust kernels; the BCI guide's stale 24x synthetic figure is replaced by measured values.
+
 - Match optional Studio simulator getter types to the native bridge callable contract, including installations without the optional engine.
 
 - Use the existing typed Torch module base for exact-reset cells so strict checking also works without the optional Torch dependency; runtime inheritance and numerical updates are unchanged.

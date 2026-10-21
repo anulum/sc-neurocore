@@ -14,7 +14,10 @@ from tests.waveform_codec_support import *  # noqa: F403
 
 
 class TestWaveformCodec:
+    """Compression results, validation and stream layout of ``WaveformCodec``."""
+
     def test_compress_returns_bytes(self) -> None:
+        """Compression returns a non-empty byte stream with a ratio above one."""
         waveform = _make_waveform()
         codec = WaveformCodec()
         data, result = codec.compress(waveform)
@@ -23,6 +26,7 @@ class TestWaveformCodec:
         assert result.compression_ratio > 1.0
 
     def test_detects_spikes(self) -> None:
+        """Injected spikes are detected and give at least one template."""
         waveform = _make_waveform(spike_rate=5.0)
         codec = WaveformCodec(threshold_sigma=4.0)
         _, result = codec.compress(waveform)
@@ -30,12 +34,14 @@ class TestWaveformCodec:
         assert result.n_templates >= 1
 
     def test_compression_ratio_reasonable(self) -> None:
+        """A 32-channel synthetic recording compresses more than five-fold."""
         waveform = _make_waveform(T=5000, N=32)
         codec = WaveformCodec(quantize_bits=4)
         _, result = codec.compress(waveform)
         assert result.compression_ratio > 5.0
 
     def test_spike_timing_lossless(self) -> None:
+        """The result reports spike timing as kept exactly."""
         waveform = _make_waveform()
         codec = WaveformCodec()
         _, result = codec.compress(waveform)
@@ -51,12 +57,14 @@ class TestWaveformCodec:
         assert result.compression_ratio > 1.0
 
     def test_different_quantization(self) -> None:
+        """Fewer background bits give a higher compression ratio."""
         waveform = _make_waveform()
         r4 = WaveformCodec(quantize_bits=4).compress(waveform)[1]
         r8 = WaveformCodec(quantize_bits=8).compress(waveform)[1]
         assert r4.compression_ratio > r8.compression_ratio
 
     def test_result_fields(self) -> None:
+        """The result carries the input dimensions and the spike section size."""
         waveform = _make_waveform()
         _, result = WaveformCodec().compress(waveform)
         assert result.n_channels == 16
@@ -156,10 +164,11 @@ class TestWaveformCodec:
         templates = [np.array([1.0, -1.0, 0.5], dtype=np.float32)]
         residuals = [np.array([0.25, -0.25, 0.0], dtype=np.float32)]
 
-        encoded = codec._compress_snippets(templates, [0], residuals)
+        encoded = codec._compress_snippets(templates, [0], [1.0], residuals)
 
         offset = 2 + 4 + len(templates) * codec.snippet_samples
-        offset += 4 + 1
+        offset += 4 + 1  # snippet count and the one-byte varint template ID
+        offset += 4  # one float32 template scale per snippet (format WFC2)
         _, padded_flat_len = struct.unpack("!fI", encoded[offset : offset + 8])
         assert padded_flat_len == 4
 
@@ -173,7 +182,7 @@ class TestWaveformCodec:
         templates = [np.array([1.0, -1.0, 0.5, -0.25], dtype=np.float32)]
         residuals = [np.array([0.25, -0.25, 0.0, 0.125], dtype=np.float32)]
 
-        snippets = codec._compress_snippets(templates, [0], residuals)
+        snippets = codec._compress_snippets(templates, [0], [1.0], residuals)
         background = codec._compress_background(np.ones((16, 2), dtype=np.float32))
 
         assert len(snippets) > 0
@@ -201,8 +210,8 @@ class TestWaveformCodec:
 
         def fake_template_match(
             snippets: list[np.ndarray[Any, Any]],
-        ) -> tuple[list[np.ndarray[Any, Any]], list[int], list[np.ndarray[Any, Any]]]:
-            return [], [], []
+        ) -> tuple[list[np.ndarray[Any, Any]], list[int], list[float], list[np.ndarray[Any, Any]]]:
+            return [], [], [], []
 
         monkeypatch.setattr(codec, "_detect_spikes", fake_detect_spikes)
         monkeypatch.setattr(codec, "_extract_snippets", fake_extract_snippets)

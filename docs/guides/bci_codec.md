@@ -6,9 +6,9 @@ Two compression layers: raw waveform (10-bit ADC) and spike raster (binary).
 
 | System | Channels | Raw Rate | Uplink | Gap | Solution |
 |--------|----------|----------|--------|-----|----------|
-| Neuralink N1 | 1,024 | 205 Mbps | 10-20 Mbps | 10-20x | **WaveformCodec (25x)** |
+| Neuralink N1 | 1,024 | 205 Mbps | 10-20 Mbps | 10-20x | WaveformCodec (see measured results) |
 | Neuralink next-gen | 3,072 | 614 Mbps | 10-20 Mbps | 30-60x | WaveformCodec + better bg |
-| Neuropixels 2.0 | 384 | 77 Mbps | storage | archival | WaveformCodec (25x) |
+| Neuropixels 2.0 | 384 | 77 Mbps | storage | archival | WaveformCodec `lossless` |
 | Closed-loop BCI | 256-1024 | 51-205 Mbps | on-chip | <1ms | StreamingCodec |
 
 ## WaveformCodec: Raw Electrode Compression (NEW)
@@ -50,28 +50,96 @@ print(f"{result.compression_ratio:.1f}x, {result.n_spikes_detected} spikes detec
 axis 0 and channels on axis 1. NaN/Inf samples, vectors, empty recordings, and
 header-unsafe constructor ranges fail before compression state is derived.
 
+### Modes and decoding
+
+| Mode | Kept | Exact? |
+|------|------|--------|
+| `spike` | spike times | spike times exact; no waveform |
+| `waveform` | spike times + template-coded snippets | lossy |
+| `full` (default) | + downsampled background | lossy |
+| `lossless` | every int16 sample | exact |
+
+```python
+codec = WaveformCodec(mode="lossless")
+data, result = codec.compress(raw_int16)          # integer samples in the int16 range
+decoded = WaveformCodec.decompress(data)          # any mode
+assert decoded.lossless_waveform and (decoded.waveform == raw_int16).all()
+```
+
+`lossless` maps each channel onto its ADC levels (an affine lattice, or the
+table of values actually used when a 10-bit ADC is scaled to 16 bits by a
+non-integer factor), predicts with the best fixed polynomial of order 0-3 and
+codes residuals with block-adaptive Rice codes. Streams (format `WFC2`) end
+with a CRC-32; a corrupted stream raises `ValueError` instead of decoding.
+`decompress(..., max_samples=...)` (default `2**28`) refuses headers declaring
+more samples before allocating.
+
+### Rust kernels
+
+Noise thresholds, spike detection, template matching, background extraction
+and quantisation, and the lossless coder run in Rust (`sc_neurocore_engine`)
+when the installed engine provides them; `backend="auto"` (default) selects
+them, `backend="python"` forces the NumPy reference and `backend="rust"`
+refuses to run without them. Both backends write byte-identical streams: the
+float32 operations are the same IEEE operations, rounding is half to even, and
+dot products are correctly rounded sums (`math.fsum` in Python, the same
+algorithm in Rust). The zstd/zlib byte compressors and the optional wavelet
+denoising stay in Python.
+
+### Measured on the Neuralink compression-challenge data
+
+The public challenge data (`data.zip`, 743 single-electrode WAV files, about
+62.6 minutes at 19,531 Hz, 10-bit levels in 16-bit samples, 146,800,526
+bytes) was retrieved from the Internet Archive copy of the original Neuralink
+URL; its SHA-1 matches the archive's record of the original. The challenge
+asks for lossless compression; its ratio is original file bytes divided by
+compressed bytes. Measured 2026-10-22 on one workstation, one file at a time:
+
+| Codec | Ratio | Exact |
+|-------|-------|-------|
+| `WaveformCodec(mode="lossless")` (WAV header stored verbatim) | **3.33x** | all 743 files byte-identical after decoding |
+| `xz -9e` | 2.75x | yes |
+| `zstd -19` | 2.48x | yes |
+| `WaveformCodec(mode="full")`, median-centred input | 48.3x | no: RMS error 551 ADC units against a signal RMS of 3,234 |
+| `WaveformCodec(mode="spike")`, median-centred input | 3,118x | spike times only (7,729 spikes detected in 62.6 min) |
+
+Time for the whole 62.6 minutes of recordings on the same workstation
+(Python 3.12, one core), both backends producing identical bytes:
+
+| Step | NumPy backend | Rust backend |
+|------|---------------|--------------|
+| `lossless` encode | 86.4 s | 10.1 s |
+| `lossless` decode | 6.2 s | 1.6 s |
+| `full` encode | 41.4 s | 1.2 s |
+| `spike` encode | 10.5 s | 0.38 s |
+
+The lossy ratios are not comparable with the challenge, which requires every
+sample back. The spike-mode ratio depends on the detector: without removing
+each file's DC offset the detector finds only 1,864 spikes in the same data.
+
 ### Measured Results (synthetic 1024-channel, 1 second at 20 kHz)
+
+`examples/demo_waveform_codec.py --channels 1024 --duration 1.0`, `full` mode,
+format `WFC2`, measured 2026-10-22 (the previous format `WFCX` gave 89.7x on
+the same synthetic data; the earlier 24x figure on this page was stale).
+Encoding one second of 1024 channels took 1.11 s with the Rust backend and
+7.9 s with the NumPy backend; in the Rust run about 0.5 s is zstd level 19
+in Python:
 
 | Metric | Value |
 |--------|-------|
 | Raw data | 40,960,000 bytes (328 Mbit) |
-| Compressed | 1,703,435 bytes (13.6 Mbit) |
-| **Compression ratio** | **24x** |
-| Spikes detected | 3,087 |
+| Compressed | 442,002 bytes (3.5 Mbit) |
+| **Compression ratio** | **92.7x** (lossy) |
+| Spikes detected | 1,931 |
 | Templates learned | 16 |
-| Spike timing | LOSSLESS |
+| Spike timing | exact |
 | Bluetooth capacity | 15 Mbit/s |
-| **Fits in uplink** | **YES (9% used)** |
+| **Fits in uplink** | **YES (24% used)** |
 
-### Scaling
-
-| Channels | Raw Mbit/s | Compressed Mbit/s | Fits Bluetooth |
-|----------|-----------|-------------------|---------------|
-| 128 | 26 | 1.0 | YES |
-| 256 | 51 | 2.0 | YES |
-| 384 | 77 | 3.0 | YES |
-| 1024 | 205 | 8.0 | YES |
-| 3072 | 614 | 23.9 | NO |
+The demo's channel-count table scales the measured 1024-channel ratio
+linearly; it is an extrapolation, not a measurement per channel count. On
+real recordings the ratio is far lower (see the Neuralink measurement above).
 
 ### Run the Demo
 
@@ -133,7 +201,9 @@ Realistic SpikeInterface benchmarks (physiological spike trains):
 | BCI-scale 50 units 0.5-3 Hz | ISI | 756x |
 | High-density 100 units 1-10 Hz | ISI | 317x |
 
-All above Neuralink's 200x target.
+These are spike-raster ratios (binary events already detected). They are not
+comparable with Neuralink's compression challenge, which asks for lossless
+compression of the raw electrode samples (see the measured results above).
 
 ## ISI Codec (Baseline)
 

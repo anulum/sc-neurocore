@@ -17,7 +17,7 @@ const WAVEFORM_CODEC_MAX_HEADER_COUNT = 65535
 const WAVEFORM_CODEC_MAX_TEMPLATES = WAVEFORM_CODEC_MAX_HEADER_COUNT
 const WAVEFORM_CODEC_MIN_QUANTIZE_BITS = 1
 const WAVEFORM_CODEC_MAX_QUANTIZE_BITS = 8
-const WAVEFORM_CODEC_VALID_MODES = ("full", "waveform", "spike")
+const WAVEFORM_CODEC_VALID_MODES = ("full", "waveform", "spike", "lossless")
 
 mutable struct WaveformCodecState
     original_bytes::Float64

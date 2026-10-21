@@ -79,8 +79,17 @@ timestamps. Compatible with `comm.aer_udp` protocol. O(n_spikes) bytes.
 ## Waveform Codec (Raw Electrode)
 
 End-to-end raw waveform compression: spike detection + template matching +
-background LFP compression. 24x on 1024-channel Neuralink-scale data.
-Spike timing is lossless. Fits in Bluetooth uplink. The codec validates inputs
+background LFP compression, plus an exact `lossless` mode. Four modes:
+`spike` (spike timing only), `waveform` (timing + snippet templates),
+`full` (timing + snippets + background, lossy) and `lossless` (every int16
+sample exactly). `WaveformCodec.decompress(data)` decodes every mode and returns
+a `WaveformDecodeResult`. Streams use format `WFC2` with a CRC-32 trailer;
+a corrupted stream raises `ValueError`, and `max_samples` (default `2**28`)
+bounds what a header may declare. Legacy `WFCX` streams decode their spike
+raster only. The heavy kernels run in Rust when `sc_neurocore_engine`
+provides them (`backend="auto"`, `"rust"` or `"python"`); both backends write
+byte-identical streams. Measured ratios on the public Neuralink compression-challenge
+recordings are in the [BCI codec guide](../guides/bci_codec.md). The codec validates inputs
 before telemetry sections are built: raw samples must be a finite, non-empty
 `(time, channel)` matrix, `snippet_samples` must fit the one-byte header
 (1-255), `max_templates` must fit the two-byte template count (1-65535),
@@ -93,3 +102,4 @@ before telemetry sections are built: raw samples must be a finite, non-empty
       members:
         - WaveformCodec
         - WaveformCompressionResult
+        - WaveformDecodeResult

@@ -19,6 +19,15 @@ func TestDefaultConfigIsValid(t *testing.T) {
 	}
 }
 
+// TestLosslessModeIsValid accepts the lossless mode added with the WFC2 decoder.
+func TestLosslessModeIsValid(t *testing.T) {
+	config := DefaultConfig()
+	config.Mode = "lossless"
+	if err := ValidateConfig(config); err != nil {
+		t.Fatalf("lossless mode should be valid: %v", err)
+	}
+}
+
 func TestValidateConfigRejectsHeaderUnsafeRanges(t *testing.T) {
 	cases := []struct {
 		name   string

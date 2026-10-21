@@ -39963,6 +39963,24 @@ window_size : int
 Result of waveform compression.
 
 
+### Class `WaveformDecodeResult`
+Result of ``WaveformCodec.decompress``.
+
+Attributes
+----------
+mode : str
+    Mode the stream was written in.
+spike_raster : ndarray of shape (T, N), int8, or None
+    Detected spikes, exact; ``None`` for a ``lossless`` stream, which
+    detects none.
+waveform : ndarray of shape (T, N) or None
+    ``lossless``: the input samples exactly, int16. ``full``: background
+    plus snippet reconstruction, float32 (lossy). ``waveform``: snippet
+    reconstruction on zeros, float32 (lossy). ``spike``: ``None``.
+lossless_waveform : bool
+    True only when ``waveform`` equals the input sample for sample.
+
+
 ### Class `WaveformCodec`
 End-to-end neural waveform codec.
 
@@ -39990,10 +40008,21 @@ mode : str
     - ``"full"``: spike timing + waveform templates + background LFP (~137x)
     - ``"waveform"``: spike timing + waveform templates, no background (~1700x)
     - ``"spike"``: spike timing only, Neuralink-equivalent (~4500x)
+    - ``"lossless"``: every input sample exactly (integer input only)
+backend : str
+    ``"auto"`` (default: Rust kernels when installed, else NumPy),
+    ``"rust"`` (refuses when the engine lacks the kernels) or
+    ``"python"``. Streams are byte-identical across backends.
 
-- **__init__**(threshold_sigma, snippet_samples, max_templates, template_threshold, quantize_bits, mode)
+    The ratios above were measured on synthetic data (2026-04-07). On the
+    public Neuralink compression-challenge recordings the lossy ratios are
+    different and depend on spike detection; see the benchmark records.
+
+- **__init__**(threshold_sigma, snippet_samples, max_templates, template_threshold, quantize_bits, mode, backend)
 - **compress**(waveform)
   - Compress raw electrode waveform.
+- **decompress**(data, \*, max_samples, backend)
+  - Decode a stream written by ``compress``.
 
 ---
 

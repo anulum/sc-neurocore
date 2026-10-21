@@ -30,6 +30,7 @@ var WAVEFORM_CODEC_VALID_MODES = map[string]struct{}{
 	"full":     {},
 	"waveform": {},
 	"spike":    {},
+	"lossless": {},
 }
 
 type Config struct {

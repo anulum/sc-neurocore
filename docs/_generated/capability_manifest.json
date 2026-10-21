@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5384
+    "test_files": 5386
   },
   "documentation": {
     "public_pages": [
@@ -8615,6 +8615,8 @@
       "tests/test_viz_plots_voltage_trace.py",
       "tests/test_viz_plots_weight_matrix.py",
       "tests/test_viz_web_viz.py",
+      "tests/test_waveform_codec_backends.py",
+      "tests/test_waveform_codec_decoder_lossless.py",
       "tests/test_waveform_codec_polyglot_contracts.py",
       "tests/test_waveform_codec_waveform_codec.py",
       "tests/test_waveform_codec_waveform_codec_mode.py",
