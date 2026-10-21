@@ -324,7 +324,7 @@ jobs:
       # here. The release is installed first so that 1.11.9 below stays first on
       # PATH for juliacall; the tests reach 1.13 through the variable only.
       - id: julia-release
-        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
           version: "1.13"
           show-versioninfo: "never"
@@ -334,7 +334,7 @@ jobs:
       # attempting an uncontrolled fallback download. Install the exact
       # compatible runtime once and put it first on PATH for every matrix leg.
       - id: julia-1-11
-        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
           version: "1.11.9"
           show-versioninfo: "never"
@@ -1027,7 +1027,7 @@ jobs:
           python-version: "3.12.14"
           cache: pip
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
           version: "1.11.9"
           show-versioninfo: "never"
