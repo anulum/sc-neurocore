@@ -20,6 +20,7 @@ pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ir_print, m)?)?;
     m.add_function(wrap_pyfunction!(ir_parse, m)?)?;
     m.add_function(wrap_pyfunction!(ir_emit_sv, m)?)?;
+    m.add_function(wrap_pyfunction!(ir_emit_mlir, m)?)?;
     Ok(())
 }
 
@@ -229,6 +230,11 @@ impl PyScGraphBuilder {
         Ok(self.builder_mut()?.popcount(ir::graph::ValueId(input_id)).0)
     }
 
+    /// Decode binary observations to a Q8.8 probability.
+    fn decode(&mut self, input_id: u32) -> PyResult<u32> {
+        Ok(self.builder_mut()?.decode(ir::graph::ValueId(input_id)).0)
+    }
+
     /// Add a LIF neuron step.
     #[pyo3(signature = (
         current_id,
@@ -346,7 +352,7 @@ impl PyScGraphBuilder {
             .0)
     }
 
-    /// Add a divide-by-constant operation.
+    /// Divide a packed unsigned bit pattern by a positive constant; return u64 bits.
     fn div_const(&mut self, input_id: u32, divisor: u64) -> PyResult<u32> {
         Ok(self
             .builder_mut()?
@@ -393,6 +399,12 @@ fn ir_parse(text: &str) -> PyResult<PyScGraph> {
 #[pyfunction]
 fn ir_emit_sv(graph: PyRef<'_, PyScGraph>) -> PyResult<String> {
     ir::emit_sv::emit(&graph.inner).map_err(PyValueError::new_err)
+}
+
+/// Emit typed CIRCT MLIR from an IR graph.
+#[pyfunction]
+fn ir_emit_mlir(graph: PyRef<'_, PyScGraph>) -> PyResult<String> {
+    ir::emit_mlir::emit(&graph.inner).map_err(PyValueError::new_err)
 }
 
 /// Parse a Python type string into ScType.

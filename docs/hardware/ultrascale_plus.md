@@ -63,9 +63,9 @@ contain only clock/timing constraints. They do not contain `PACKAGE_PIN` or
 verified in this repository. Adding fabricated pins would create false hardware
 evidence.
 
-## Resource estimates and 2026-10-20 benchmark
+## Resource estimates and 2026-10-22 benchmark
 
-The 2026-10-20 rerun measures project generation and native RTL emission on an
+The 2026-10-22 rerun measures project generation and native RTL emission on an
 Intel Core i5-11600K with 12 logical CPUs and 33,422,090,240 bytes of RAM,
 Linux 7.0.0-34. Python is 3.12.14 with NumPy 2.5.4; Rust is 1.98.1 in release
 mode. These are shared-host diagnostics. CPU affinity does not establish an
@@ -73,8 +73,8 @@ exclusive reservation, and both reports explicitly refuse that claim.
 
 | Surface | Artefact | Median | Protocol |
 | --- | --- | ---: | --- |
-| Python + Vivado Tcl | `benchmarks/results/local_python_2026-10-20_ultrascale_plus_target.json` | 418.415 us/manifest | two target manifests, 2,000 iterations, seven repetitions |
-| Rust | `benchmarks/results/local_rust_2026-10-20_ultrascale_plus_target.json` | 2541.783 us/emit | 64x32 Dense graph, 2,000 iterations, seven repetitions |
+| Python + Vivado Tcl | `benchmarks/results/local_python_2026-10-22_ultrascale_plus_target.json` | 279.706 us/manifest | two target manifests, 2,000 iterations, seven repetitions |
+| Rust | `benchmarks/results/local_rust_2026-10-22_ultrascale_plus_target.json` | 2945.496 us/emit | 64x32 Dense graph, 2,000 iterations, seven repetitions |
 
 Both reports retain every repetition, source hashes and observed load/frequency.
 The Rust emitter now includes per-neuron weights and declared-format probability

@@ -78,6 +78,8 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
             parse_and(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.reduce") {
             parse_reduce(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.decode") {
+            parse_decode(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.popcount") {
             parse_popcount(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.dense_forward") {
@@ -383,6 +385,27 @@ fn parse_and(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseEr
 
     graph.next_id = graph.next_id.max(id.0 + 1);
     graph.push(ScOp::BitwiseAnd { id, lhs, rhs });
+    Ok(())
+}
+
+/// Parse the explicit probability decoder without reinterpreting integer division.
+fn parse_decode(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
+    let (result, operands) = text
+        .split_once("= sc.decode")
+        .ok_or_else(|| make_err(line, "malformed sc.decode"))?;
+    let (input, ty) = operands
+        .split_once(':')
+        .ok_or_else(|| make_err(line, "sc.decode requires a rate result type"))?;
+    if ty.trim() != "rate" {
+        return Err(make_err(line, "sc.decode result must be rate"));
+    }
+    let id = parse_value_id(result).map_err(|e| make_err(line, e))?;
+    let input = parse_value_id(input).map_err(|e| make_err(line, e))?;
+    graph.next_id = graph.next_id.max(
+        id.0.checked_add(1)
+            .ok_or_else(|| make_err(line, "result ValueId overflow"))?,
+    );
+    graph.push(ScOp::Decode { id, input });
     Ok(())
 }
 

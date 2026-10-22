@@ -34,7 +34,7 @@ pub enum SvTarget {
     },
 }
 
-/// Conservative compiler-side resource estimate.
+/// Static planning estimate; resource and timing sign-off require synthesis.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResourceReport {
     pub target_name: String,
@@ -265,11 +265,24 @@ impl SvTarget {
                 ScOp::Constant { value, .. } => {
                     bram_bits = bram_bits.saturating_add(constant_bits(value));
                 }
+                ScOp::Popcount { input, .. } | ScOp::Decode { input, .. } => {
+                    // Retain the existing LUT planning heuristic; count declared
+                    // temporal storage rather than treating a counter as eight FFs.
+                    lut_estimated = lut_estimated.saturating_add(16);
+                    if let Ok(shape) = super::stream_contract::shape(graph, *input) {
+                        if let (Some(window), Ok(observations)) =
+                            (shape.window, shape.opportunities())
+                        {
+                            let accumulator = 64 - observations.leading_zeros();
+                            let phase = (64 - (window - 1).leading_zeros()).max(1);
+                            ff_estimated = ff_estimated.saturating_add(64 + accumulator + phase);
+                        }
+                    }
+                }
                 ScOp::Input { .. }
                 | ScOp::Output { .. }
                 | ScOp::Encode { .. }
                 | ScOp::BitwiseAnd { .. }
-                | ScOp::Popcount { .. }
                 | ScOp::BitwiseXor { .. }
                 | ScOp::Reduce { .. }
                 | ScOp::GraphForward { .. }

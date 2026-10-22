@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Preserve temporal native-IR bitstream windows and actual packed widths in population counts. Add explicit Q8.8 `decode` and Python `ScGraph.emit_mlir()`; keep integer `div_const` semantics, reject incompatible shapes/windows and zero divisors, and compile the public synapse example to real RTL. Check both direct RTL and native CIRCT against numerical references, including full encoder periods and wide-word division.
+
 - Add per-user desktop profile paths and bounded, versioned configuration. Preserve legacy projects, refuse unusable profile roots and retain the selected origin and project directory through atomic private writes.
 
 - Match optional Studio simulator getter types to the native bridge callable contract, including installations without the optional engine.

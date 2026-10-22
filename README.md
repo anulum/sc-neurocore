@@ -177,7 +177,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 31 |
-| Python test files | 5391 |
+| Python test files | 5393 |
 | Public documentation pages | 646 |
 | GitHub Actions workflows | 23 |
 
@@ -678,7 +678,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **dependency-audit.yml** | Complete audit of every committed dependency lock, per ecosystem |
 | **hdc-reference.yml** | Hyperdimensional-computing reference comparison |
 | **fuzz.yml** | Rust engine fuzzing with nightly cargo-fuzz targets |
-| **mlir-circt.yml** | MLIR/CIRCT canary for compiler lowering paths |
+| **mlir-circt.yml** | Python MLIR round-trip and native IR numerical CIRCT/RTL comparisons |
 | **nir-canary.yml** | Latest NIR compatibility canary |
 | **scorecard.yml** | OpenSSF Scorecard |
 | **security-scanners.yml** | pip-audit, cargo-audit, Semgrep, and release security scans |

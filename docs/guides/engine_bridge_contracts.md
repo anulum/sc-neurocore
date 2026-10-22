@@ -813,3 +813,15 @@ system and engine-feature profile used for comparison; inherited Python protocol
 members and optional native exports can vary with that profile. Matching names
 or successful global-reference serialization does not establish matching model
 dynamics or support for serializing a live neuron instance.
+
+
+## Native graph observation windows
+
+The typed `sc_neurocore_engine.ir` bridge exposes `popcount` for integer counts
+and `decode` for normalized Q8.8 probability words. Temporal stream lengths
+count clock samples; packed integer widths count simultaneous bits. A completed
+window holds until the next completion, and asynchronous reset discards a
+partial window. `ScGraph.emit_mlir()` uses the native CIRCT emitter; primitive
+circuits are checked by actual CIRCT lowering and RTL simulation alongside the
+direct SystemVerilog path. See [the IR contract](../api/sc-ir.md) for prior-bit
+encoder latency, finite-period probability and raw Q8 state words.

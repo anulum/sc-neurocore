@@ -1,0 +1,164 @@
+{
+  "benchmark": "ultrascale_plus_target_contract",
+  "benchmark_isolation_mode": "shared-host",
+  "captured_report_sha256": "d1fd243e98c805ac91be0cb5d57b251dee061e7aa3dcb82c67a40750d581e7b3",
+  "checksum": 0,
+  "date_utc": "2026-10-22T19:09:58Z",
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "affinity_cpu_count": 12,
+    "affinity_cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "0-11",
+    "cpu_governors_sample": {
+      "0": "powersave",
+      "1": "powersave",
+      "2": "powersave",
+      "3": "powersave",
+      "4": "powersave",
+      "5": "powersave",
+      "6": "powersave",
+      "7": "powersave"
+    },
+    "load_average": [
+      23.82666015625,
+      19.208984375,
+      18.73876953125
+    ],
+    "runtime_cpuset_shield_claimed": false
+  },
+  "iterations": 2000,
+  "language": "Python",
+  "language_surfaces": [
+    "Python",
+    "Vivado Tcl"
+  ],
+  "manifest_count": 2,
+  "max_ns_per_manifest": 382686.69775,
+  "measurement_context": {
+    "architecture": "x86_64",
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cpu_frequency_mhz": {
+      "max_observed_mhz": 4100.227,
+      "min_observed_mhz": 4099.615,
+      "sampled_cpu_count": 12.0
+    },
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "host": "aaarthuus",
+    "host_load": "workstation under concurrent load during capture",
+    "load_average_after": [
+      23.82666015625,
+      19.208984375,
+      18.73876953125
+    ],
+    "load_average_before": [
+      23.814453125,
+      19.033203125,
+      18.6767578125
+    ],
+    "logical_cpu_count": 12,
+    "numpy_version": "2.5.4",
+    "operating_system": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "python_version": "3.12.14",
+    "ram_bytes": 33422090240,
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+  },
+  "median_ns_per_manifest": 279705.704,
+  "min_ns_per_manifest": 244108.18325,
+  "repeats": 7,
+  "reproduction_command": "python benchmarks/bench_ultrascale_plus_target.py --iterations 2000 --repeats 7 --json benchmarks/results/local_python_2026-10-22_ultrascale_plus_target.json",
+  "results_ns_per_manifest": [
+    382686.69775,
+    309274.6415,
+    244108.18325,
+    278072.2895,
+    279705.704,
+    276151.1775,
+    337570.166
+  ],
+  "sku_baseline": {
+    "zu3eg": {
+      "bram_36k_budget": 216,
+      "dsp_budget": 360,
+      "dsp_primitive": "DSP48E2",
+      "ff_budget": 141120,
+      "lut_budget": 70560,
+      "name": "ZU3EG",
+      "part": "xczu3eg-sbva484-1-e",
+      "uram_budget": 0
+    },
+    "zu9eg": {
+      "bram_36k_budget": 912,
+      "dsp_budget": 2520,
+      "dsp_primitive": "DSP48E2",
+      "ff_budget": 548160,
+      "lut_budget": 274080,
+      "name": "ZU9EG",
+      "part": "xczu9eg-ffvb1156-2-e",
+      "uram_budget": 0
+    }
+  },
+  "source_base_sha": "4535a6160d1e070733319f7c4923b601dd1ba9a4",
+  "source_hashes": {
+    "benchmarks/bench_ultrascale_plus_target.py": "a64688c434f33b0ff573620dd4f8760e52768ffa23e4b7713b301ec7f89b7617",
+    "engine/examples/bench_ultrascale_plus_target.rs": "9428c4d9b142efd67a510e1c1918301cdbfca1d0928dd4f0a8eadf1cc05f6a86",
+    "engine/src/ir/bindings.rs": "d1c1ed50365ddb4730ac003335a380864296c9996854719cd0a250a7f9aa7970",
+    "engine/src/ir/builder.rs": "86a00020631417bbe25ecfa59543abb19dedcf3b3d5d826267da0c1258226901",
+    "engine/src/ir/constant_words.rs": "82d15fc1fb109d5afc9c4a2a45663e51c0395b0a4ff95ac5250872c2735a0083",
+    "engine/src/ir/dense_contract.rs": "3160e14425bfed34ebb8f58da8761b854f0fb21fde4dc35dfaa5afdaaed57f9c",
+    "engine/src/ir/emit_mlir.rs": "b504669c648b377e85f43c54bd3b189ea3e3c9016be8a9880d3914f37f63c9de",
+    "engine/src/ir/emit_mlir/divide.rs": "6348ef0091f83e75f5ab136cf366422bbbda1d0afb0d1acdb0fb5c8701367d38",
+    "engine/src/ir/emit_mlir/primitives.rs": "13fdffb79a7901a1aeabae7a4be1f569921bdc89b1c4a2d52539b94a07bdb63e",
+    "engine/src/ir/emit_sv.rs": "65a501ebc31a7460b109b2a7fb77e31678594dc62db0e53349fec758ec9e5204",
+    "engine/src/ir/emit_sv/constants.rs": "2d241b1dab15f2c040e1ad54624aa1b52546225db84cb77623d648e65347bf00",
+    "engine/src/ir/emit_sv/count.rs": "1d98fa36aa230373a48582734d9f219cb665ccd8c6544db06e9787dff833695d",
+    "engine/src/ir/emit_sv/dense.rs": "3a3a4b32ee6b74270116c3a340233c99a301472eda9f3da2c6d5fcf082d89b5a",
+    "engine/src/ir/emit_sv/divide.rs": "b576291fc4de5e9b0e5aac16e2768162320290549566ef63c0ea934da02f69fc",
+    "engine/src/ir/emit_sv/probability.rs": "0d38e7add9b9b4b6dd684915516d7529174469c01c13ee0e6eaafc98ddb3253b",
+    "engine/src/ir/graph.rs": "21b248e3016c3e652d09a50568895f30a1bf2b255cf28de89ffe41b38d1ef4de",
+    "engine/src/ir/mod.rs": "6d25a35ef62655f80445f838a1aafe6db8e789674f40830be664b751cb88a707",
+    "engine/src/ir/parser.rs": "76fa791f630c2ef00dcc74194c9d64caf36b7391320f50637b459a8ef0cddfda",
+    "engine/src/ir/parser/neuron.rs": "cb8270da55e138d7e1b7aaf4968b2cb600d9720735dbe8e80c7c3fcf84401751",
+    "engine/src/ir/printer.rs": "49bf2bbd2b2d0034ed5280aae36efb436461197a9806b8a3a13273b3f366debd",
+    "engine/src/ir/qformat.rs": "0ebd6a434df17c2438fb4ff75366260273f7745a5b0fd5675783fd12e13562da",
+    "engine/src/ir/qformat/block_floating.rs": "77fba17591c7af9573510953536b08adebbcc89c03c85d59e54464ba277713d2",
+    "engine/src/ir/qformat/dense_result.rs": "605cc0c9a6cf431778c9e1420a596790ac56c001a8d54ea3525689a6d5b1bce3",
+    "engine/src/ir/qformat/fixed_format.rs": "54d58daf03cd70fac8041fa95f4356d038f35949b58cdf6aa8cbe53abbc4a1ad",
+    "engine/src/ir/qformat/mixed_dense.rs": "013e1ce8616115f214118dccde1401f94f8a51c609468dc46c71d0c758338cc1",
+    "engine/src/ir/stream_contract.rs": "921adc60c6fbb9e010fa0455b009c49c3fc0fb3f244dd80b95c5e10251a157c4",
+    "engine/src/ir/sv_target.rs": "2c40187080f49d01737b6e1c0faa7b15ab3f62c3ce768f44ab8a54fd9f547ee9",
+    "engine/src/ir/verify.rs": "10b0ff7d5514e0f6e13a75f4b2afa6e0a7c67aa4e862c28c08bfa129c7ef0069",
+    "tools/gen_vivado_project.py": "bb3119eb423309751c060e0f32e49363a10a52c89bbdb3f06568fcbe3814bb6a"
+  }
+}

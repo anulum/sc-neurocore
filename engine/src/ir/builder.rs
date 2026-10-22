@@ -72,6 +72,12 @@ impl ScGraphBuilder {
         self.graph.push(ScOp::Popcount { id, input })
     }
 
+    /// Decode a packed word or temporal bitstream window to a Q8.8 probability.
+    pub fn decode(&mut self, input: ValueId) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::Decode { id, input })
+    }
+
     /// Add a LIF neuron step.
     pub fn lif_step(
         &mut self,
@@ -209,7 +215,8 @@ impl ScGraphBuilder {
         })
     }
 
-    /// Add a constant integer division.
+    /// Divide a packed integer's unsigned bit pattern by a positive constant.
+    /// Retain the low 64 quotient bits; verify rejects invalid or temporal operands.
     pub fn div_const(&mut self, input: ValueId, divisor: u64) -> ValueId {
         let id = self.graph.fresh_id();
         self.graph.push(ScOp::DivConst { id, input, divisor })

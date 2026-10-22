@@ -24,8 +24,7 @@ class ScGraphBuilder:
         x_enc = b.encode(x, length=1024, seed=0xACE1)
         w_enc = b.encode(w, length=1024, seed=0xBEEF)
         product = b.bitwise_and(x_enc, w_enc)
-        count = b.popcount(product)
-        rate = b.div_const(count, 1024)
+        rate = b.decode(product)
         b.output("firing_rate", rate)
         graph = b.build()
     """
@@ -38,7 +37,20 @@ class ScGraphBuilder:
         return self._builder.input(name, ty)
 
     def output(self, name: str, source_id: int) -> int:
-        """Add an output port."""
+        """Expose an existing graph value as a named output port.
+
+        Parameters
+        ----------
+        name : str
+            Name of the emitted hardware output port.
+        source_id : int
+            Identifier of the graph value connected to the port.
+
+        Returns
+        -------
+        int
+            Identifier of the appended output operation.
+        """
         return self._builder.output(name, source_id)
 
     def constant_f64(self, value: float, ty: str = "rate") -> int:
@@ -100,8 +112,21 @@ class ScGraphBuilder:
         return self._builder.bitwise_and(lhs_id, rhs_id)
 
     def popcount(self, input_id: int) -> int:
-        """Add Hamming weight extraction."""
+        """Append a u64 packed population count or a held temporal window count.
+
+        Temporal windows start after reset and sample the bits before each
+        rising clock edge. The returned integer identifies the graph value.
+        """
         return self._builder.popcount(input_id)
+
+    def decode(self, input_id: int) -> int:
+        """Append an explicit Q8.8 probability decoder.
+
+        The circuit floors ``count * 256 / observations``. A temporal stream
+        holds its completed-window result until the next window completes.
+        The returned integer identifies the graph value, not its measured rate.
+        """
+        return self._builder.decode(input_id)
 
     def lif_step(
         self,
@@ -177,7 +202,12 @@ class ScGraphBuilder:
         return self._builder.offset(input_id, offset_val)
 
     def div_const(self, input_id: int, divisor: int) -> int:
-        """Divide by a constant."""
+        """Divide a packed integer word by a positive unsigned constant.
+
+        The result retains the low 64 quotient bits after full-width division.
+        Signed integer storage is interpreted as an unsigned bit pattern.
+        Temporal streams require population counting or decoding first.
+        """
         return self._builder.div_const(input_id, divisor)
 
     def build(self) -> ScGraph:
@@ -198,7 +228,7 @@ class ScGraph:
 
     @property
     def name(self) -> str:
-        """Graph name."""
+        """Return the graph name used for the emitted hardware module."""
         return self._inner.name
 
     def __len__(self) -> int:
@@ -230,6 +260,10 @@ class ScGraph:
     def emit_sv(self) -> str:
         """Emit SystemVerilog from this graph."""
         return _native.ir_emit_sv(self._inner)
+
+    def emit_mlir(self) -> str:
+        """Emit CIRCT HW/Comb/Seq text through the native compiler entry point."""
+        return _native.ir_emit_mlir(self._inner)
 
 
 def parse_ir(text: str) -> ScGraph:

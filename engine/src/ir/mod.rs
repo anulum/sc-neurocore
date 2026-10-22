@@ -31,5 +31,6 @@ pub mod graph;
 pub mod parser;
 pub mod printer;
 pub mod qformat;
+pub(crate) mod stream_contract;
 pub mod sv_target;
 pub mod verify;

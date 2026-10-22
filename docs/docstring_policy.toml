@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1305
+expected_file_count = 1309
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5313,3 +5313,19 @@ rationale = "Actual XDG directories remain private, existing projects remain unt
 [[file]]
 path = "tests/test_studio_desktop_configuration.py"
 rationale = "Actual configuration writes preserve private permissions and replacement atomicity; corrupt, oversized and unsupported documents remain unchanged on refusal."
+
+[[file]]
+path = "tools/check_ir_circt.py"
+rationale = "Native-generated circuits are lowered by real CIRCT and simulated against exact ordered observations; empty corpora and tool failures are refused."
+
+[[file]]
+path = "tests/test_tools/test_check_ir_circt.py"
+rationale = "The numerical gate refuses missing inputs, missing or corrupted samples and vacuous corpora without confusing simulator metadata with circuit output."
+
+[[file]]
+path = "tests/test_ir_streaming_runtime.py"
+rationale = "Installed native builders retain temporal windows and probability decoding through Python, stable graph text, real RTL and the executable example."
+
+[[file]]
+path = "examples/03_ir_compile_demo.py"
+rationale = "The executable public example builds typed synapse and matrix graphs, verifies their saved text and emits compilable hardware through the installed native bridge."

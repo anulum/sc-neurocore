@@ -35004,6 +35004,15 @@
               "signature": null,
               "signature_error": "ValueError: no signature found for builtin <method '__subclasshook__' of 'object' objects>"
             },
+            "emit_mlir": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "emit_mlir",
+              "__qualname__": "ScGraph.emit_mlir",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self) -> 'str'",
+              "signature_error": null
+            },
             "emit_sv": {
               "__module__": "sc_neurocore_engine.ir",
               "__name__": "emit_sv",
@@ -35326,6 +35335,15 @@
               "__text_signature__": null,
               "kind": "function",
               "signature": "(self, value: 'int', ty: 'str' = 'i32') -> 'int'",
+              "signature_error": null
+            },
+            "decode": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "decode",
+              "__qualname__": "ScGraphBuilder.decode",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self, input_id: 'int') -> 'int'",
               "signature_error": null
             },
             "dense_forward": {
@@ -93894,6 +93912,15 @@
               "signature": "(self, /, value, ty)",
               "signature_error": null
             },
+            "decode": {
+              "__module__": null,
+              "__name__": "decode",
+              "__qualname__": "ScGraphBuilder.decode",
+              "__text_signature__": "($self, input_id)",
+              "kind": "method_descriptor",
+              "signature": "(self, /, input_id)",
+              "signature_error": null
+            },
             "dense_forward": {
               "__module__": null,
               "__name__": "dense_forward",
@@ -104466,6 +104493,22 @@
           "signature": "(v, v_rest, v_reset, v_threshold, v_rh, delta_t, tau, dt, refractory_period, refractory_remaining, source_profile, n_steps, current)",
           "signature_error": null
         },
+        "ir_emit_mlir": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "ir_emit_mlir",
+          "__qualname__": "ir_emit_mlir",
+          "__text_signature__": "(graph)",
+          "aliases": [
+            "sc_neurocore_engine.sc_neurocore_engine.ir_emit_mlir"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(graph)",
+          "signature_error": null
+        },
         "ir_emit_sv": {
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "ir_emit_sv",
@@ -108613,7 +108656,7 @@
     }
   },
   "provenance": {
-    "base_wheel_sha256": "8b30dfa0bc8af37de09f19c3abd48a82f9d052b55465e8609af2e8bed63ee5a1",
+    "base_wheel_sha256": "c8aff2775df21cb587087d8c24ed2e236ad3b89ae5a54d8bc96defd3eaee1952",
     "capture_tool_sha256": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de",
     "modules": {
       "sc_neurocore_engine": {
@@ -108624,11 +108667,12 @@
       "sc_neurocore_engine.sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-        "sha256": "9e56cad0c4996702a3e356a56c3561aaaebed8001cda3d6306e4f575c9b46493"
+        "sha256": "906a5b7011e37b0b08ce555a11474c1cfdfb9a8d3ddc8a119d4b125d412f5cbd"
       }
     },
+    "native_wheel_source_base_sha": "4535a6160d1e070733319f7c4923b601dd1ba9a4",
     "python": "3.12.14",
-    "qualification_scope": "Complete measured interface metadata for this installed reference profile. The default Dense endpoint intentionally changes from 65535 to 256; numerical/state/instance behavior and other runtime profiles require separate contracts.",
+    "qualification_scope": "Complete measured interface metadata for this installed reference profile. The default Dense endpoint intentionally changes from 65535 to 256; numerical/state/instance behavior and other runtime profiles require separate contracts. Recaptured from the normally installed default release with temporal IR decode/MLIR exports; committed lossless and spike-event codec exports are retained. This records interface metadata and does not accept other runtime profiles or the whole compiler programme.",
     "reference_profile": {
       "architecture": "x86_64",
       "build_profile": "release",
@@ -108640,19 +108684,19 @@
       "operating_system": "Linux",
       "python_minor": "3.12"
     },
-    "source_base_sha": "d6c6ad394f7b97baa47c0dbb4828effa9b5168aa",
+    "source_base_sha": "5dbdd1f80f4c381e51842019f81429a1a18fb942",
     "source_files_sha256": {
       "bridge/.cargo/config.toml": "41a0cf98caba4b36d392af91ff1968990d09e8c5c361149e1110e60d3cd45585",
       "bridge/pyproject.toml": "064fee0d8c1c92b5b43b18067adb88023185316fdaafd1d9cf4a0a3a15716b4e",
       "bridge/sc_neurocore_engine/__init__.py": "0883369361a12844a632927f11ae8f3f80c9a97ba4fb7f6b80005841247a54d7",
-      "bridge/sc_neurocore_engine/_ir_native.py": "5995086ceb4ca5dfe2d980eec4fd272e74033ac239411e055a88a4a16e03b2f0",
+      "bridge/sc_neurocore_engine/_ir_native.py": "3ced066e74a4e6ca2f0c0db1e18b9c8bc9ab5dce53d3f7487d0db885674872db",
       "bridge/sc_neurocore_engine/attention.py": "650f62b8063d90623a847d13a9e68bfaf3d0a8a59c43f71ed058cc201397d694",
       "bridge/sc_neurocore_engine/compat.py": "87729b6d0f3a7ad72ec1f6895b213c3c24fa82f801e0d04f68b35d0a75318e7f",
       "bridge/sc_neurocore_engine/dna.py": "714fc5497401b335a735303b9f46668222a554df78b643aa208c786504dd1474",
       "bridge/sc_neurocore_engine/grad.py": "2a617661fa64eaab31b5c8e733aaffe04fc3fadf354933a21fe907c1e9127069",
       "bridge/sc_neurocore_engine/graphs.py": "688e90ce91d85d0e17ee49e2486fa71bec775fb15e2a85dbd82724dd413892dd",
       "bridge/sc_neurocore_engine/hdc.py": "32b0dfacad9ef367e9667e549bb2d0b08ce8fcf0d9dfdd87749fcd76ff4a7f34",
-      "bridge/sc_neurocore_engine/ir.py": "61a60e59fd68878017ff3944f6f52ddee986b89d26c271264491f00af18a694a",
+      "bridge/sc_neurocore_engine/ir.py": "edc82c8986b0f8cf126df5e7f3f3fdf8685449dad0f7e4038488316ab565bd63",
       "bridge/sc_neurocore_engine/layers.py": "6344286121a917306c577f0b0a5aec40fe1451d72f95cf7ddda44da7831add00",
       "bridge/sc_neurocore_engine/network.py": "e559ab8d8c6c8513abe50404f545236d85f91094d252c3ad2cbf3c897385f631",
       "bridge/sc_neurocore_engine/neurons.py": "c243d7d25d9a5c3bdb4783ffc8c65ff197993c18a376651bd6b87946a03362d5",
@@ -108662,7 +108706,7 @@
       "bridge/sc_neurocore_engine/scpn.py": "027b9bf124562cd748a2dd245933e92206d1b79d0bb84177b611c60607083588",
       "bridge/sc_neurocore_engine/studio.py": "ca4afc68c69609826eac0e6fc41b364e86b9bc22d4ca0847e36f7f593dc6616e",
       "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
-      "engine/Cargo.toml": "a78c5d57ef53ae86b3c285d3b078b488b4bf84ddbaa4957a57bac32ffc5941d6",
+      "engine/Cargo.toml": "4e3b406ee85f5b2773e37b63469aef0a677744425103044833f081fa5ae747fa",
       "engine/src/adc_to_spike.rs": "1e8ccc32cf7686197739aca5140810e64e24278a95780f60d14e50a228bf6e34",
       "engine/src/analysis/basic.rs": "381b14051d9c8cf331f563eaefe76e0c3946aafed856b0c73c9fcac139fee2c9",
       "engine/src/analysis/bindings.rs": "17b2933e8ec52a076a2d523fe373994c76c3cbe3fe74cfe18de1c912444b9321",
@@ -108912,6 +108956,7 @@
       "engine/src/bindings/simple_spiking/morris_lecar.rs": "9461ac2f21f329f6b4a7657124324c71878b0c5aeb936ead019ab887108a8858",
       "engine/src/bindings/simple_spiking/sc_unit_capacitance_respiratory.rs": "011e82526b8335eb890b52da2580ac12bad96d9417bece7823a1148e60e39a1a",
       "engine/src/bindings/simple_spiking/sherman_rinzel_keizer.rs": "b8b229b391007c55636c67415907dceb011fafa62de3ec37de98ac23d1f54b96",
+      "engine/src/bindings/spike_events.rs": "80306fbc3e99144c1cb13ede481d71263ae92b0b546d99489e795890ab8a77b2",
       "engine/src/bindings/stdp_synapse.rs": "257d001b7d412bc2451e5efbe84d45c02bafa93e4c3f2d1bdd26c7b6820d07f2",
       "engine/src/bindings/stochastic/benda_herz.rs": "453204f79ec3c34775da22051fb68e6c6f2a54d78c530f277ab7ad76a00997c5",
       "engine/src/bindings/stochastic/galves_locherbach.rs": "6710931ea3694732d54477e835f085ce989e0c6825997edc3e492685e3b163ba",
@@ -108952,12 +108997,15 @@
       "engine/src/bindings/trivial/sfa.rs": "38f6bd5dfc44d0e5edaed6f5ed541a5aba0932f71ac22516bb02ec61bdc12aa7",
       "engine/src/bindings/trivial/sigma_delta.rs": "48f72f0ab4d7ae8a8cb3872a2822752aff8db7156ba900234c476da4a3b89d61",
       "engine/src/bindings/trivial/theta.rs": "95abe0360b9cd6440b6ef76e0e3b2c627e4d4e74496827525e4f75a30721c152",
+      "engine/src/bindings/waveform_codec.rs": "aa62a89518191090db0217905e7f74921c208d319ba740fd407844e4742c4118",
+      "engine/src/bindings/waveform_stream.rs": "e50d56285c1b2f3825c8cf76d528f2b0bfc0a29cfc19ad51ffd15f89016673de",
       "engine/src/bindings/wilson_cowan.rs": "b96579ececbecbb570f76cd4aa5d877900ef8666267e5a683b5ab662850b0004",
       "engine/src/bindings/wilson_hr.rs": "abe8c8754262ccc21185dfd9e45ec05f01f0e12280e418756250e008abfac54c",
       "engine/src/bindings/wong_wang.rs": "59d69deca4c6238c00de600a7aaa0bb3cbd2a33551a789ac25c59c7a790ba29b",
       "engine/src/bitstream.rs": "0f32073ae7a07e59efc3995932a1617d5a733c97ae46bb0ffa86cde205e4de29",
       "engine/src/bitstream/hdc.rs": "4fcc9c30c645c1665c199c928bbcc43a1dfefa1e7c2a28ceb0c5ec94423b579a",
       "engine/src/brunel.rs": "b703cba346ecf36432d3167e3665d29ad7baea13f8a27f82aec4d50ef19afd43",
+      "engine/src/codecs/mod.rs": "c2828ab2fa5e10ae8ebb2c58ddc5c7a0c0156821f387b6e8e6008ed7206c63ed",
       "engine/src/connectome.rs": "666d1b867d4d2d56d888592794e5debd13a04325f857cfc655fd20233616f061",
       "engine/src/conv.rs": "33542ebfeaa1d5f2687783fe116b3f3614e35820579e24500b104477530537ef",
       "engine/src/cordiv.rs": "04f10f9b2e40c9bf0e104fcd8aee1f6325d6fbd3004be65d8fcf272f41f66923",
@@ -108981,31 +109029,36 @@
       "engine/src/grad/mod.rs": "414e124cba8ff5b372726ddc37104dc2d3e3414ba3aeb9f74dcd955bb3589e69",
       "engine/src/grad/surrogate.rs": "958fad43a3887d74eb19e409faaa36f5cf28f3cc75776731c7a7b3f0a62e755a",
       "engine/src/graph.rs": "7780d8f17a78ae2d4f39c1ff42d0c8dae021fd77ed15ac04bb875823b7c68312",
-      "engine/src/ir/bindings.rs": "5c01d8872aef3ba46f60ec1448bbb90b67c7a4687f8609d641f2f914913352fc",
-      "engine/src/ir/builder.rs": "14f9d26c2c41f83a68590c7ff1db5d5e6452509245815628befe03424bf6ea56",
+      "engine/src/ir/bindings.rs": "d1c1ed50365ddb4730ac003335a380864296c9996854719cd0a250a7f9aa7970",
+      "engine/src/ir/builder.rs": "86a00020631417bbe25ecfa59543abb19dedcf3b3d5d826267da0c1258226901",
       "engine/src/ir/constant_words.rs": "82d15fc1fb109d5afc9c4a2a45663e51c0395b0a4ff95ac5250872c2735a0083",
-      "engine/src/ir/dense_contract.rs": "84123683113b9ee765cebf90d4419c16e0bc141b911b09ee15d1b34258301e1a",
-      "engine/src/ir/emit_mlir.rs": "67cfb0921b933f1d9e9d407aee12553a7fcbc217074e1790696fd5bb15118c97",
-      "engine/src/ir/emit_sv.rs": "75c33d3dcabe51b007090d9f9fc348b40cd9f9fd050454fc221c707020035a39",
+      "engine/src/ir/dense_contract.rs": "3160e14425bfed34ebb8f58da8761b854f0fb21fde4dc35dfaa5afdaaed57f9c",
+      "engine/src/ir/emit_mlir.rs": "b504669c648b377e85f43c54bd3b189ea3e3c9016be8a9880d3914f37f63c9de",
+      "engine/src/ir/emit_mlir/divide.rs": "6348ef0091f83e75f5ab136cf366422bbbda1d0afb0d1acdb0fb5c8701367d38",
+      "engine/src/ir/emit_mlir/primitives.rs": "13fdffb79a7901a1aeabae7a4be1f569921bdc89b1c4a2d52539b94a07bdb63e",
+      "engine/src/ir/emit_sv.rs": "65a501ebc31a7460b109b2a7fb77e31678594dc62db0e53349fec758ec9e5204",
       "engine/src/ir/emit_sv/constants.rs": "2d241b1dab15f2c040e1ad54624aa1b52546225db84cb77623d648e65347bf00",
+      "engine/src/ir/emit_sv/count.rs": "1d98fa36aa230373a48582734d9f219cb665ccd8c6544db06e9787dff833695d",
       "engine/src/ir/emit_sv/dense.rs": "3a3a4b32ee6b74270116c3a340233c99a301472eda9f3da2c6d5fcf082d89b5a",
+      "engine/src/ir/emit_sv/divide.rs": "b576291fc4de5e9b0e5aac16e2768162320290549566ef63c0ea934da02f69fc",
       "engine/src/ir/emit_sv/probability.rs": "0d38e7add9b9b4b6dd684915516d7529174469c01c13ee0e6eaafc98ddb3253b",
-      "engine/src/ir/graph.rs": "e5ae9ef634d094ad92a885b404ebbd57d3110fed500baa0e0d025548648da551",
-      "engine/src/ir/mod.rs": "5db104c1ef6d7fdc9b9c1d7f5aa17fa18b83338de451f2d74bda511f72826721",
-      "engine/src/ir/parser.rs": "8cb71a3da968a80b481bd4d5f835572574046cab11db32ecea0758e4e8c00409",
+      "engine/src/ir/graph.rs": "21b248e3016c3e652d09a50568895f30a1bf2b255cf28de89ffe41b38d1ef4de",
+      "engine/src/ir/mod.rs": "6d25a35ef62655f80445f838a1aafe6db8e789674f40830be664b751cb88a707",
+      "engine/src/ir/parser.rs": "76fa791f630c2ef00dcc74194c9d64caf36b7391320f50637b459a8ef0cddfda",
       "engine/src/ir/parser/neuron.rs": "cb8270da55e138d7e1b7aaf4968b2cb600d9720735dbe8e80c7c3fcf84401751",
-      "engine/src/ir/printer.rs": "50405887e74556313d690037ac252ff1dd587af1f3da7752a0753466b57d02ea",
+      "engine/src/ir/printer.rs": "49bf2bbd2b2d0034ed5280aae36efb436461197a9806b8a3a13273b3f366debd",
       "engine/src/ir/qformat.rs": "0ebd6a434df17c2438fb4ff75366260273f7745a5b0fd5675783fd12e13562da",
       "engine/src/ir/qformat/block_floating.rs": "77fba17591c7af9573510953536b08adebbcc89c03c85d59e54464ba277713d2",
       "engine/src/ir/qformat/dense_result.rs": "605cc0c9a6cf431778c9e1420a596790ac56c001a8d54ea3525689a6d5b1bce3",
       "engine/src/ir/qformat/fixed_format.rs": "54d58daf03cd70fac8041fa95f4356d038f35949b58cdf6aa8cbe53abbc4a1ad",
       "engine/src/ir/qformat/mixed_dense.rs": "013e1ce8616115f214118dccde1401f94f8a51c609468dc46c71d0c758338cc1",
-      "engine/src/ir/sv_target.rs": "e263525a69ad7ef1ded8a3a84f8664e93556a96fc42465e7db794c2d630e4dc5",
-      "engine/src/ir/verify.rs": "2317ef14c797badd1e930817700f2275d9d9009468b421841410953e5e0d52aa",
+      "engine/src/ir/stream_contract.rs": "921adc60c6fbb9e010fa0455b009c49c3fc0fb3f244dd80b95c5e10251a157c4",
+      "engine/src/ir/sv_target.rs": "2c40187080f49d01737b6e1c0faa7b15ab3f62c3ce768f44ab8a54fd9f547ee9",
+      "engine/src/ir/verify.rs": "10b0ff7d5514e0f6e13a75f4b2afa6e0a7c67aa4e862c28c08bfa129c7ef0069",
       "engine/src/layer.rs": "4735a006238c2ee49d2850200c2c97a07fc5ccc3785dc6a2ad5db33d20decb05",
       "engine/src/learning_bindings.rs": "215cbeb17fac59eaa5924bead913c1ad2e2e1490cdc7178ffd855c9ea3b4cc05",
       "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
-      "engine/src/lib.rs": "ec3a60351515b70cea388f0db68d0ad95ef02966d2bf79d6467dde5581ef181a",
+      "engine/src/lib.rs": "b18e8d7738889e66fe67542c5036b757b2c9725a66283c60c03f46d6a9e6e4c6",
       "engine/src/network_runner.rs": "aebc603b06925a43456beabef437d6eaeb08f3cdbf7ead092fd25132d2a2c020",
       "engine/src/network_runner/input_adapters.rs": "02d15b8b382ef13f1c22aeb2e10ed91e6d7ed798b80295931ffe9cc1455c4604",
       "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
@@ -109267,17 +109320,21 @@
       "engine/src/simd/rvv.rs": "2eeae10a90fbc2f539d948d0f667698260ae29c2f403dc659536549bf70e2dc9",
       "engine/src/simd/sve.rs": "519052f48cc89f686bea841a0c1d718ad79b69fe8546f63ffa50bb9efac47ab7",
       "engine/src/sobol.rs": "8c103466daf5734cd80199edd5c0e02dcd647965ebd31f5b3216bb38d025db25",
+      "engine/src/spike_events.rs": "fb18bd8e1382ffa1155c62f8b7f0771e9f7696573ae7a82f8872e5ca477970f3",
       "engine/src/supervisor.rs": "811e408d1f07cadef76815949a2133ac1423a993844d1135e4c3b46c1313e7a5",
       "engine/src/synapses/mod.rs": "adde92c6b5fb2e6e36060fbdc7e4874c7d0fa9c0d654f3cd1708e31b052b71e8",
       "engine/src/topology.rs": "177592142138f29565125e38c798c7007a342a759e1c1d2ec406a94aaa1e3815",
+      "engine/src/waveform_codec.rs": "e78074f8675bc80810be07cce79dab1f3f63eaf587cbbb00d4d49c12475a2a60",
+      "engine/src/waveform_stream.rs": "bb55be0f12b833531c473988c48bf873b901a2428084935aca4b4349fdce98a9",
+      "engine/src/waveform_stream_gpu.rs": "ad2ab8562c8339ab1cdb4b694e7029f5cd1589fb34dd6e8cdc32a11d967a107c",
       "engine/src/wilson_cowan.rs": "86c4742f5095e497daff90c3b20870e1467cc47bd5be0c1c6fd9b8ab619c34ec",
       "engine/src/wong_wang.rs": "f05c3f21bb6a96d26e71d9291035d1e67b81e0a61d5edb5bf6c5839b22c7c2e1",
       "requirements/wheels-test.txt": "64a57340f0f8037303a09e8cb7844fffebff87e5082776b6d8050af27883ab2a",
       "tools/engine_abi_contracts.py": "65b03223948b078b3ceb651b7f22297b67a00ce172d911adff9ffc1bbd34c307",
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
-    "source_manifest_sha256": "044dd610d1853d928c3c17d078888abc14470d7424ef797c9332d8290209c32f",
-    "wheel_sha256": "9c7eaaf673a838177d24fbf2816e8bb0b67e80f0faa7407420a819393f1facd6"
+    "source_manifest_sha256": "b18ee9a3e889ea48f6683fc13ffeeed0f9f48781b2b562edc0c6f2d90a8ce295",
+    "wheel_sha256": "8225bdbc8179e926ed8a3cbd598dcfbce66ed34b151cf4a3e5700eab21518253"
   },
   "schema": 1
 }

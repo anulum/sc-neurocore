@@ -29,15 +29,14 @@ class TestIRPythonBridge:
         assert g.verify() is None
 
     def test_synapse_pipeline(self) -> None:
-        """Wire encoders, stochastic multiplication, count and normalization."""
+        """Wire encoders, stochastic multiplication and explicit rate decoding."""
         b = ScGraphBuilder("synapse")
         x = b.input("x", "rate")
         w = b.input("w", "rate")
         x_enc = b.encode(x, length=1024, seed=0xACE1)
         w_enc = b.encode(w, length=1024, seed=0xBEEF)
         product = b.bitwise_and(x_enc, w_enc)
-        count = b.popcount(product)
-        rate = b.div_const(count, 1024)
+        rate = b.decode(product)
         b.output("rate_out", rate)
         g = b.build()
 

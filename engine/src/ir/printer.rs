@@ -95,6 +95,9 @@ pub fn print(graph: &ScGraph) -> String {
             ScOp::Popcount { id, input } => {
                 out.push_str(&format!("{} = sc.popcount {} : u64\n", id, input));
             }
+            ScOp::Decode { id, input } => {
+                out.push_str(&format!("{} = sc.decode {} : rate\n", id, input));
+            }
             ScOp::Reduce { id, input, mode } => {
                 out.push_str(&format!(
                     "{} = sc.reduce {}, mode={} : rate\n",

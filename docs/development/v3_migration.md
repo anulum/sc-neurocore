@@ -135,14 +135,18 @@ w = b.input("w_prob", "rate")
 x_enc = b.encode(x, length=1024, seed=0xACE1)
 w_enc = b.encode(w, length=1024, seed=0xBEEF)
 product = b.bitwise_and(x_enc, w_enc)
-count = b.popcount(product)
-rate = b.div_const(count, 1024)
+rate = b.decode(product)
 b.output("firing_rate", rate)
 
 graph = b.build()
 assert graph.verify() is None
 sv_code = graph.emit_sv()
 ```
+
+`decode` returns a Q8.8 probability word from completed observation windows;
+`div_const` retains integer division. Regenerate graphs from the earlier
+firing-rate example with `decode(product)` to request normalized output. For reset, latency and the encoder's
+finite-period distribution, see [the native IR contract](../api/sc-ir.md).
 
 ### Co-Simulation
 

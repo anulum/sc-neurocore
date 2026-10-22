@@ -89,6 +89,10 @@ class NativeBuilder(Protocol):
         """Append Hamming weight extraction."""
         ...
 
+    def decode(self, input_id: int) -> int:
+        """Decode binary observations to a Q8.8 Rate result."""
+        ...
+
     def lif_step(
         self,
         current_id: int,
@@ -131,7 +135,7 @@ class NativeBuilder(Protocol):
         ...
 
     def div_const(self, input_id: int, divisor: int) -> int:
-        """Append division by an unsigned constant."""
+        """Append unsigned packed-word division with a low-64-bit quotient."""
         ...
 
     def build(self) -> NativeGraph:
@@ -158,6 +162,10 @@ class NativeIR(Protocol):
 
     def ir_emit_sv(self, graph: NativeGraph) -> str:
         """Emit synthesizable SystemVerilog or raise ValueError."""
+        ...
+
+    def ir_emit_mlir(self, graph: NativeGraph) -> str:
+        """Emit native CIRCT MLIR or raise ValueError."""
         ...
 
 

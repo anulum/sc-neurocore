@@ -62,7 +62,7 @@ cargo bench --bench analysis_bench -- --quick
 | mixed_dense_q88_q1616_envelope_64x32 | 2.322 µs |
 | block_floating_dense_q16_envelope_64x32 | 8.748 µs |
 | dcls_q88_tent_kernel_16tap | 40.184 ns/sample |
-| ultrascale_plus_target_contract_64x32 | 2541.783 µs/emit |
+| ultrascale_plus_target_contract_64x32 | 2945.496 µs/emit |
 | ultrascale_plus_dense_fold_plan_64x32 | 6.661 ns/plan |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
@@ -127,12 +127,12 @@ Python/PyTorch/SystemVerilog artefact is
 reported `overflow_count=0` and `active_tap_total=2808700`, matching the
 Python reference workload and DCLS Q8.8 saturation contract.
 
-`ultrascale_plus_target_contract_64x32` was rerun on 2026-10-20 with Rust 1.98.1
+`ultrascale_plus_target_contract_64x32` was rerun on 2026-10-22 with Rust 1.98.1
 release, Intel Core i5-11600K, 12 logical CPUs, 33,422,090,240 bytes of RAM and
 Linux 7.0.0-34. The seven 2,000-emission samples are in
-`benchmarks/results/local_rust_2026-10-20_ultrascale_plus_target.json`; the
+`benchmarks/results/local_rust_2026-10-22_ultrascale_plus_target.json`; the
 Python 3.12.14 / NumPy 2.5.4 project-generation counterpart is in
-`benchmarks/results/local_python_2026-10-20_ultrascale_plus_target.json`.
+`benchmarks/results/local_python_2026-10-22_ultrascale_plus_target.json`.
 Both are shared-host diagnostics with source hashes and measured load; neither
 claims exclusive cores or inference throughput. The corrected emitter generates
 per-neuron weights and probability conversions, so its work differs from the

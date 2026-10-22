@@ -22,6 +22,7 @@ pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<&ScType, String
             {
                 Some(ty)
             }
+            ScOp::Decode { id: result, .. } if *result == id => Some(&ScType::Rate),
             _ => None,
         })
         .ok_or_else(|| format!("{id} needs a declared numeric input or constant type"))

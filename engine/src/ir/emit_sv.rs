@@ -17,7 +17,9 @@
 //! - Internal wiring for all intermediate values
 
 mod constants;
+mod count;
 mod dense;
+mod divide;
 mod probability;
 
 use crate::ir::graph::*;
@@ -95,8 +97,13 @@ pub fn emit_systemverilog_with_target(
             ScOp::Encode { id, .. } => {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
-            ScOp::BitwiseAnd { id, .. } => {
-                sv.push_str(&format!("    wire v{};\n", id.0));
+            ScOp::BitwiseAnd { id, .. } | ScOp::BitwiseXor { id, .. } => {
+                let width = find_value_width(graph, *id);
+                if width == 1 {
+                    sv.push_str(&format!("    wire v{};\n", id.0));
+                } else {
+                    sv.push_str(&format!("    wire [{}:0] v{};\n", width - 1, id.0));
+                }
             }
             ScOp::Popcount { id, .. } => {
                 sv.push_str(&format!("    logic [63:0] v{};\n", id.0));
@@ -133,8 +140,8 @@ pub fn emit_systemverilog_with_target(
                     id.0
                 ));
             }
-            ScOp::BitwiseXor { id, .. } => {
-                sv.push_str(&format!("    wire v{};\n", id.0));
+            ScOp::Decode { id, .. } => {
+                sv.push_str(&format!("    wire [15:0] v{};\n", id.0));
             }
             ScOp::Reduce { id, .. } => {
                 sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
@@ -197,6 +204,13 @@ pub fn emit_systemverilog_with_target(
             ScOp::BitwiseAnd { id, lhs, rhs } => {
                 let lhs_wire = value_to_wire(graph, *lhs);
                 let rhs_wire = value_to_wire(graph, *rhs);
+                if find_value_width(graph, *id) != 1 {
+                    sv.push_str(&format!(
+                        "    assign v{} = {} & {};\n",
+                        id.0, lhs_wire, rhs_wire
+                    ));
+                    continue;
+                }
                 sv.push_str(&format!(
                     "    sc_bitstream_synapse u_syn_{} (\n\
                      \x20       .pre_bit({}),\n\
@@ -415,24 +429,17 @@ pub fn emit_systemverilog_with_target(
             }
             ScOp::DivConst { id, input, divisor } => {
                 let in_wire = value_to_wire(graph, *input);
-                sv.push_str(&format!(
-                    "    assign v{} = {} / {};\n",
-                    id.0, in_wire, divisor
-                ));
+                divide::emit(
+                    &mut sv,
+                    &format!("v{}", id.0),
+                    &in_wire,
+                    find_value_width(graph, *input),
+                    *divisor,
+                    64,
+                );
             }
-            ScOp::Popcount { id, input } => {
-                let in_wire = value_to_wire(graph, *input);
-                sv.push_str(&format!(
-                    "    // Combinatorial popcount for v{id}\n\
-                     \x20   always_comb begin\n\
-                     \x20       v{id} = 64'd0;\n\
-                     \x20       for (integer _pc_i = 0; _pc_i < 64; _pc_i = _pc_i + 1)\n\
-                     \x20           v{id} = v{id} + {{63'd0, {wire}[_pc_i]}};\n\
-                     \x20   end\n\n",
-                    id = id.0,
-                    wire = in_wire,
-                ));
-            }
+            ScOp::Popcount { id, input } => count::emit(&mut sv, graph, *id, *input, false)?,
+            ScOp::Decode { id, input } => count::emit(&mut sv, graph, *id, *input, true)?,
             _ => {}
         }
     }
@@ -446,13 +453,19 @@ fn type_to_width(ty: &ScType) -> usize {
     ty.bit_width()
 }
 
-fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
+pub(crate) fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
     for op in &graph.ops {
         if op.result_id() == id {
             return match op {
                 ScOp::Input { ty, .. } => type_to_width(ty),
                 ScOp::Constant { ty, .. } => type_to_width(ty),
-                ScOp::Encode { .. } | ScOp::BitwiseAnd { .. } | ScOp::BitwiseXor { .. } => 1,
+                ScOp::Encode { .. } => 1,
+                ScOp::BitwiseAnd { .. } | ScOp::BitwiseXor { .. } => {
+                    crate::ir::stream_contract::shape(graph, id)
+                        .map(|s| s.width)
+                        .unwrap_or(1)
+                }
+                ScOp::Decode { .. } => 16,
                 ScOp::Popcount { .. } | ScOp::Reduce { .. } => 64,
                 ScOp::LifStep { params, .. } => params.data_width as usize,
                 ScOp::DenseForward { params, .. } => params.n_neurons,

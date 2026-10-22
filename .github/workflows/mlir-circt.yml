@@ -19,6 +19,14 @@ on:
       - "tests/test_mlir_circt_roundtrip.py"
       - "tests/test_mlir_emitter.py"
       - "tests/test_compiler_pipeline_contracts.py"
+      - "engine/src/ir/**"
+      - "engine/tests/test_ir_streaming*.rs"
+      - "engine/tests/common/ir_stream.rs"
+      - "engine/tests/common/ir_rtl.rs"
+      - "engine/Cargo.toml"
+      - "Cargo.lock"
+      - "tools/check_ir_circt.py"
+      - "tests/test_tools/test_check_ir_circt.py"
       - ".github/workflows/mlir-circt.yml"
   pull_request:
     paths:
@@ -27,6 +35,14 @@ on:
       - "tests/test_mlir_circt_roundtrip.py"
       - "tests/test_mlir_emitter.py"
       - "tests/test_compiler_pipeline_contracts.py"
+      - "engine/src/ir/**"
+      - "engine/tests/test_ir_streaming*.rs"
+      - "engine/tests/common/ir_stream.rs"
+      - "engine/tests/common/ir_rtl.rs"
+      - "engine/Cargo.toml"
+      - "Cargo.lock"
+      - "tools/check_ir_circt.py"
+      - "tests/test_tools/test_check_ir_circt.py"
       - ".github/workflows/mlir-circt.yml"
 
 concurrency:
@@ -46,6 +62,20 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
+
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+        with:
+          toolchain: "1.98.1"
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: engine
+          cache-bin: false
+
+      - name: Install RTL simulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
 
       - name: Install CIRCT (circt-opt)
         run: |
@@ -68,3 +98,19 @@ jobs:
           pytest tests/test_mlir_circt_roundtrip.py \
                  tests/test_mlir_emitter.py \
                  tests/test_compiler_pipeline_contracts.py -q
+
+      - name: Run native IR numerical reference tests
+        env:
+          SCN_IR_CIRCT_RECEIPT_DIR: ${{ runner.temp }}/native-ir-circt
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+          CMAKE_BUILD_PARALLEL_LEVEL: "1"
+        run: >
+          cargo test --locked --manifest-path engine/Cargo.toml --jobs 1
+          --test test_ir_streaming --test test_ir_streaming_words
+          --test test_ir_streaming_admission -- --test-threads=1
+
+      - name: Lower and simulate every native CIRCT reference circuit
+        run: python tools/check_ir_circt.py "${{ runner.temp }}/native-ir-circt"
+
+      - name: Check numerical gate refusal regressions
+        run: python -m pytest tests/test_tools/test_check_ir_circt.py -q

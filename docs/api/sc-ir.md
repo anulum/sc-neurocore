@@ -61,13 +61,21 @@ Before the 16-bit encoder, each signed probability word is converted to
 `floor(clamp(raw / 2**frac, 0, 1) * 65535)`. Intermediate products retain the
 full declared width. The existing encoder compares its 16-bit LFSR state
 strictly below that threshold; it is not a new random-number generator or a
-claim of independent samples. Inputs and weights retain their separate binary
-points even when the neuron word has another width.
+claim of independent samples. Over a complete 65535-state LFSR period, the
+realized fraction of ones is `max(T - 1, 0) / 65535`, where
+`T = floor(clamp(raw / 2**frac, 0, 1) * 65535)`. Thus an input probability of
+1 produces 65534 ones per period, not an all-ones stream; a threshold of 1
+produces no ones. This retains the existing strict comparator. Finite windows
+and the reset-prefix pipeline can differ from the full-period fraction.
+Inputs and weights retain their separate binary points even when the neuron
+word has another width.
 
 State, leak, gain and current endpoints use signed words with eight fractional
 bits. `dw` may be 10 through 64, so the fixed threshold 256 is representable.
 Leak and gain must be matching `fixed<dw,8>` or raw `i<dw>` words (`rate` also
-matches at `dw=16`). Both current endpoints must fit the signed word; ascending
+matches at `dw=16`). For a raw `i16` state coefficient, integer 256 means 1.0
+in Q8, not a physical coefficient of 256; no implicit integer-to-Q8 scaling is
+performed. Both current endpoints must fit the signed word; ascending
 and descending ranges use signed division toward zero. Stream lengths must
 fit a positive 32-bit count. Invalid shapes, formats, endpoints and absorbing
 zero seeds are diagnostics from both graph verification and HDL emission.
@@ -101,3 +109,54 @@ in generated buses. Non-finite floats, overflow, malformed scalar/vector shapes
 and invalid word geometry are rejected instead of being saturated or silently
 narrowed to 16 bits. `rate` retains its Q8.8 storage; probability clipping occurs
 at the encoder boundary.
+
+
+## Clocked streams and packed words
+
+`bitstream<N>` denotes one physical bit per clock with a positive observation
+window of N clocks. Its length is temporal, not a 64-bit packed storage width.
+`u<W>`, `i<W>` and `bool` denote packed words; vectors concatenate their element
+buses. AND and XOR preserve the operand type and require identical shapes,
+including identical temporal window lengths.
+
+`sc.popcount %input : u64` counts the actual physical width of a packed word
+combinationally. For a temporal stream, it accumulates samples present immediately
+before rising clock edges over consecutive, non-overlapping windows. The completed
+count becomes visible after the final edge and holds until the next completed
+window. A vector of temporal streams counts all its lanes on each edge.
+Asserting active-low reset clears phase, the partial sum and the held result
+asynchronously, including between clock edges. The first window begins at the
+first rising edge following reset release.
+
+`sc.decode %input : rate`, exposed as Rust `ScGraphBuilder::decode` and Python
+`ScGraphBuilder.decode`, performs the same observation and returns signed Q8.8
+storage containing `floor(count * 256 / observations)`, from 0 through 256.
+The denominator is the packed bus width, or the number of stream lanes times
+its temporal window length. Counting and scaling preserve all intermediate bits;
+the result is a normalised probability, not integer division of a count by its
+window. A decoded Rate can feed another encoder without losing its binary point.
+`div_const` retains unsigned integer division of a finite packed integer word,
+returning the low 64 quotient bits after full-width division. It rejects a zero
+divisor, invalid bus geometry and probability or temporal-stream operands.
+Signed integer storage is interpreted as an unsigned bit pattern.
+Count or decode a temporal stream before dividing its result. Integer division
+does not perform fixed-point normalisation.
+
+Encoders register their output bit on the rising edge. A downstream counter
+on that same edge therefore consumes the preceding registered bit. The first
+encoder-fed window includes the reset-defined zero prefix; subsequent windows
+are contiguous. This pipeline latency also applies when a decoded result feeds
+a new encoder. The encoder retains its existing deterministic 16-bit LFSR and
+strict comparison; decoding does not establish independent random samples.
+
+The Rust public builder, text parser/printer, Python bridge and direct
+SystemVerilog emitter share these contracts. Primitive CIRCT lowering uses
+HW/Comb/Seq operations, with signed probability clipping and asynchronous
+register resets. Compound neuron lowering and complete compiler acceptance
+remain separate from the primitive numerical checks.
+
+Target resource reports remain compiler planning estimates. Temporal counting
+includes the declared phase, accumulator and held-count storage before synthesis
+optimization. Packed counting is combinational. LUT and critical-path heuristics
+are not post-synthesis utilization or timing measurements; use synthesis and
+post-route reports for platform capacity or clock-frequency decisions.

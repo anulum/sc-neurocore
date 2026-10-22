@@ -403,6 +403,7 @@ nav:
           - Temporal Properties: api/temporal_properties.md
       - Hardware Compilation:
           - Chip Compiler: api/chip_compiler.md
+          - SC Intermediate Representation: api/sc-ir.md
       - Transformers & SSM:
           - Spiking Transformers: api/spikformer.md
       - Architecture Search:

@@ -153,6 +153,9 @@ fn verify_hardware_words(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
             }
             _ => Ok(()),
         };
+        if let Err(message) = super::stream_contract::validate(graph, op) {
+            errors.push(VerifyError { op_index, message });
+        }
         if let Err(message) = result {
             errors.push(VerifyError { op_index, message });
         }

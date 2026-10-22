@@ -6,27 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — IR Compilation Demo
 
-"""
-SC-NeuroCore IR Compilation Demo
-=================================
+"""Build, verify, round-trip and emit synapse and Dense compute graphs.
 
-Builds an SC compute graph from Python, verifies it,
-prints its text representation, and emits synthesizable
-SystemVerilog targeting the existing HDL modules.
-
-Usage:
-    cd 03_CODE/sc-neurocore
-    $env:PYTHONPATH='src'
-    .\\.venv\\Scripts\\python examples/02_ir_compile_demo.py
+Run with the installed Rust engine:
+``python examples/03_ir_compile_demo.py --output-dir ./generated-ir``.
 """
 
 from __future__ import annotations
 
+import argparse
 import pathlib
 import sys
 
 try:
-    from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
+    from sc_neurocore_engine.ir import ScGraph, ScGraphBuilder, parse_ir
 except ImportError:
     print(
         "This example requires the Rust engine. Install with: cd bridge && maturin develop --release"
@@ -34,8 +27,8 @@ except ImportError:
     sys.exit(0)
 
 
-def build_synapse_graph() -> "ScGraph":  # noqa: F821
-    """Build a minimal synapse: encode two probabilities, AND, popcount."""
+def build_synapse_graph() -> ScGraph:
+    """Build a synapse with encoded probabilities, AND and Q8.8 rate decoding."""
     b = ScGraphBuilder("sc_synapse")
 
     # Inputs: two rate-coded probabilities
@@ -50,8 +43,7 @@ def build_synapse_graph() -> "ScGraph":  # noqa: F821
     product = b.bitwise_and(x_bits, w_bits)
 
     # Extract firing rate
-    count = b.popcount(product)
-    rate = b.div_const(count, 1024)
+    rate = b.decode(product)
 
     # Output
     b.output("firing_rate", rate)
@@ -59,12 +51,12 @@ def build_synapse_graph() -> "ScGraph":  # noqa: F821
     return b.build()
 
 
-def build_dense_graph() -> "ScGraph":  # noqa: F821
+def build_dense_graph() -> ScGraph:
     """Build a dense layer with 3 inputs, 7 neurons."""
     b = ScGraphBuilder("sc_dense_layer")
 
-    x = b.input("x_input", "rate")
-    w = b.input("weights", "rate")
+    x = b.input("x_input", "vec<rate,3>")
+    w = b.input("weights", "vec<rate,21>")
     leak = b.input("leak_k", "i16")
     gain = b.input("gain_k", "i16")
 
@@ -83,6 +75,12 @@ def build_dense_graph() -> "ScGraph":  # noqa: F821
 
 
 def main() -> None:
+    """Verify both graph examples and write emitted RTL to the selected directory."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir", type=pathlib.Path, default=pathlib.Path(__file__).parent / "output"
+    )
+    args = parser.parse_args()
     print("SC-NeuroCore IR Compilation Demo")
     print("=" * 50)
 
@@ -114,8 +112,8 @@ def main() -> None:
     sv = synapse.emit_sv()
     print(f"\n   SystemVerilog: {len(sv)} characters")
 
-    out_dir = pathlib.Path(__file__).parent / "output"
-    out_dir.mkdir(exist_ok=True)
+    out_dir: pathlib.Path = args.output_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
     synapse_path = out_dir / "generated_synapse.sv"
     synapse_path.write_text(sv, encoding="utf-8")
     print(f"   Wrote: {synapse_path}")

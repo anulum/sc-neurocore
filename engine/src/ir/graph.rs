@@ -15,7 +15,7 @@ use std::fmt;
 /// Type system for SC IR values.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScType {
-    /// Packed u64 bitstream of a given length.
+    /// One bit per clock, observed over a positive window of this many cycles.
     Bitstream { length: usize },
     /// Q-format signed fixed-point. E.g. `FixedPoint { width: 16, frac: 8 }` = Q8.8.
     FixedPoint { width: u32, frac: u32 },
@@ -253,9 +253,18 @@ pub enum ScOp {
         rhs: ValueId,
     },
 
-    /// Population count: count 1-bits in a bitstream.
-    /// Part of `sc_dotproduct_to_current` in HDL.
+    /// Count bits in a packed word or a completed temporal stream window.
+    /// Temporal results hold between windows and asynchronously reset to zero.
     Popcount { id: ValueId, input: ValueId },
+
+    /// Decode binary observations to a Q8.8 Rate, flooring count * 256 / observations.
+    /// Uses the same counting windows as Popcount; division remains integer-valued.
+    Decode {
+        /// Identifier of the decoded Q8.8 probability result.
+        id: ValueId,
+        /// Packed word or temporal bitstream whose binary observations are counted.
+        input: ValueId,
+    },
 
     // Neuron
     /// Single LIF neuron step.
@@ -368,7 +377,7 @@ pub enum ScOp {
         offset: f64,
     },
 
-    /// Integer division by a constant (for rate computation).
+    /// Unsigned packed-word division by a positive constant, with a u64 result.
     DivConst {
         id: ValueId,
         input: ValueId,
@@ -387,6 +396,7 @@ impl ScOp {
             | Self::BitwiseAnd { id, .. }
             | Self::BitwiseXor { id, .. }
             | Self::Popcount { id, .. }
+            | Self::Decode { id, .. }
             | Self::Reduce { id, .. }
             | Self::LifStep { id, .. }
             | Self::DenseForward { id, .. }
@@ -409,7 +419,9 @@ impl ScOp {
             Self::BitwiseAnd { lhs, rhs, .. } | Self::BitwiseXor { lhs, rhs, .. } => {
                 vec![*lhs, *rhs]
             }
-            Self::Popcount { input, .. } | Self::Reduce { input, .. } => vec![*input],
+            Self::Popcount { input, .. }
+            | Self::Decode { input, .. }
+            | Self::Reduce { input, .. } => vec![*input],
             Self::LifStep {
                 current,
                 leak,
@@ -461,6 +473,7 @@ impl ScOp {
             Self::BitwiseAnd { .. } => "sc.and",
             Self::BitwiseXor { .. } => "sc.xor",
             Self::Popcount { .. } => "sc.popcount",
+            Self::Decode { .. } => "sc.decode",
             Self::Reduce { .. } => "sc.reduce",
             Self::LifStep { .. } => "sc.lif_step",
             Self::DenseForward { .. } => "sc.dense_forward",

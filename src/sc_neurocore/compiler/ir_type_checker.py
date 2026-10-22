@@ -24,7 +24,7 @@ Compatible connections:
 - Rate → Rate (probability domain)
 - Spike → Spike (spiking domain)
 - Rate → Bitstream (requires encoder)
-- Bitstream → Rate (requires decoder/popcount)
+- Bitstream → Rate (requires explicit normalized decoder; popcount alone is an integer count)
 - Spike → Bitstream (direct embedding)
 """
 

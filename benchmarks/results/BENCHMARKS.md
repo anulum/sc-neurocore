@@ -49,8 +49,8 @@ kernel-reserved isolated-core claims.
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
 | DCLS Q8.8 tent-kernel layer | Rust | 4096 samples x 100 iterations x 7 repeats | 40.184 ns/sample | cpuset 10-11, overflow_count=0, active_tap_total=2808700 |
-| UltraScale+ target contract | Python+Vivado Tcl | 2 manifests x 2000 iterations x 7 repeats | 418.415 us/manifest | 2026-10-20 shared host, CPU/RAM/context recorded, ZU3EG/ZU9EG Tcl |
-| UltraScale+ target contract | Rust | 64x32 graph x 2000 iterations x 7 repeats | 2541.783 us/emit | 2026-10-20 shared host, per-neuron weights and probability conversion, resource estimates only |
+| UltraScale+ target contract | Python+Vivado Tcl | 2 manifests x 2000 iterations x 7 repeats | 279.706 us/manifest | 2026-10-22 shared host, CPU/RAM/context recorded, ZU3EG/ZU9EG Tcl |
+| UltraScale+ target contract | Rust | 64x32 graph x 2000 iterations x 7 repeats | 2945.496 us/emit | 2026-10-22 shared host, per-neuron weights and probability conversion, resource estimates only |
 | UltraScale+ dense folding | Python+SystemVerilog | 64x32 plan x 20000 iterations x 7 repeats | 2.447 us/plan | cpuset 10-11, 320 DSP/cycle, 7 compute cycles, bounded Yosys 240 cells |
 | UltraScale+ dense folding | Rust | 64x32 plan x 20000 iterations x 7 repeats | 6.661 ns/plan | cpuset 10-11, 320 DSP/cycle, 7 compute cycles |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
@@ -86,12 +86,12 @@ The run records `hardware_measurement_claimed=false` and
 This is local contract, bounded-formal, and synthesis-estimate evidence, not
 Vivado ZU3EG timing evidence.
 
-## UltraScale+ target contract - 2026-10-20
+## UltraScale+ target contract - 2026-10-22
 
 | Artefact | Surfaces | Median |
 | --- | --- | ---: |
-| `local_python_2026-10-20_ultrascale_plus_target.json` | Python, Vivado Tcl | 418.415 us/manifest |
-| `local_rust_2026-10-20_ultrascale_plus_target.json` | Rust release | 2541.783 us/emit |
+| `local_python_2026-10-22_ultrascale_plus_target.json` | Python, Vivado Tcl | 279.706 us/manifest |
+| `local_rust_2026-10-22_ultrascale_plus_target.json` | Rust release | 2945.496 us/emit |
 
 Measured hardware: Intel Core i5-11600K, 12 logical CPUs, 33,422,090,240 bytes
 RAM, Linux 7.0.0-34. Toolchains: Python 3.12.14, NumPy 2.5.4, Rust 1.98.1.
