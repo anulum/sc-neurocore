@@ -63,7 +63,7 @@ pub const INCLUDE_RATIO: u64 = 16;
 /// then follows slow changes of the signal).
 pub const COUNT_LIMIT: u32 = 1 << 16;
 
-const PROB_INIT: u16 = 1 << (PROB_BITS - 1);
+pub(crate) const PROB_INIT: u16 = 1 << (PROB_BITS - 1);
 const TOP: u32 = 1 << 24;
 const OVERRUN: &str = "corrupted lossless packet: range coder ran past its bytes";
 
@@ -79,7 +79,7 @@ fn adapt(prob: u32, mask: u32) -> u16 {
     (prob + (up & !mask) - (down & mask)) as u16
 }
 
-struct RangeEncoder {
+pub(crate) struct RangeEncoder {
     low: u64,
     range: u32,
     cache: u8,
@@ -88,7 +88,7 @@ struct RangeEncoder {
 }
 
 impl RangeEncoder {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         RangeEncoder {
             low: 0,
             range: u32::MAX,
@@ -127,7 +127,7 @@ impl RangeEncoder {
 
     /// Code one adaptive bit without data-dependent branches (masks instead of jumps).
     #[inline(always)]
-    fn bit(&mut self, prob: &mut u16, bit: bool) {
+    pub(crate) fn bit(&mut self, prob: &mut u16, bit: bool) {
         let p = u32::from(*prob);
         let bound = (self.range >> PROB_BITS) * p;
         let mask = u32::from(bit).wrapping_neg();
@@ -137,7 +137,31 @@ impl RangeEncoder {
         self.normalize();
     }
 
-    fn direct(&mut self, value: u64, count: u32) {
+    /// Code one bit with a 16-bit probability (`prob` is the chance of a 0 in 1/65536) adapted
+    /// by `shift`; for rare events, where 12-bit probabilities cost too much per zero.
+    /// Probabilities stay in [15, 65521] for `shift` 4, so two renormalisation steps suffice.
+    #[inline(always)]
+    pub(crate) fn bit_precise(&mut self, prob: &mut u16, bit: bool, shift: u32) {
+        let p = u32::from(*prob);
+        let bound = (self.range >> 16) * p;
+        if bit {
+            self.low += u64::from(bound);
+            self.range -= bound;
+            *prob = (p - (p >> shift)) as u16;
+        } else {
+            self.range = bound;
+            *prob = (p + ((65536 - p) >> shift)) as u16;
+        }
+        for _ in 0..2 {
+            if self.range < TOP {
+                self.range <<= 8;
+                self.shift_low();
+            }
+        }
+        debug_assert!(self.range >= TOP);
+    }
+
+    pub(crate) fn direct(&mut self, value: u64, count: u32) {
         for i in (0..count).rev() {
             self.range >>= 1;
             if (value >> i) & 1 == 1 {
@@ -147,7 +171,7 @@ impl RangeEncoder {
         }
     }
 
-    fn finish(mut self) -> Vec<u8> {
+    pub(crate) fn finish(mut self) -> Vec<u8> {
         for _ in 0..5 {
             self.shift_low();
         }
@@ -158,17 +182,17 @@ impl RangeEncoder {
 /// Binary range decoder. Reading never fails: past the end of its bytes it reads zeros and sets
 /// `overrun`, which the caller checks after every sample and before reporting any other error,
 /// so the hot path carries no error values (the reported error equals the reference's).
-struct RangeDecoder<'a> {
+pub(crate) struct RangeDecoder<'a> {
     data: &'a [u8],
     pos: usize,
     range: u32,
     code: u32,
-    overrun: bool,
+    pub(crate) overrun: bool,
 }
 
 impl<'a> RangeDecoder<'a> {
     /// `data` has passed the packet framing checks (at least 5 bytes, first byte zero).
-    fn new(data: &'a [u8]) -> Self {
+    pub(crate) fn new(data: &'a [u8]) -> Self {
         let mut decoder = RangeDecoder {
             data,
             pos: 0,
@@ -206,7 +230,7 @@ impl<'a> RangeDecoder<'a> {
 
     /// Decode one adaptive bit without data-dependent branches.
     #[inline(always)]
-    fn bit(&mut self, prob: &mut u16) -> bool {
+    pub(crate) fn bit(&mut self, prob: &mut u16) -> bool {
         let p = u32::from(*prob);
         let bound = (self.range >> PROB_BITS) * p;
         let bit = self.code >= bound;
@@ -218,7 +242,31 @@ impl<'a> RangeDecoder<'a> {
         bit
     }
 
-    fn direct(&mut self, count: u32) -> u64 {
+    /// Decode a bit coded by [`RangeEncoder::bit_precise`].
+    #[inline(always)]
+    pub(crate) fn bit_precise(&mut self, prob: &mut u16, shift: u32) -> bool {
+        let p = u32::from(*prob);
+        let bound = (self.range >> 16) * p;
+        let bit = self.code >= bound;
+        if bit {
+            self.code -= bound;
+            self.range -= bound;
+            *prob = (p - (p >> shift)) as u16;
+        } else {
+            self.range = bound;
+            *prob = (p + ((65536 - p) >> shift)) as u16;
+        }
+        for _ in 0..2 {
+            if self.range < TOP {
+                self.range <<= 8;
+                self.code = (self.code << 8) | u32::from(self.next());
+            }
+        }
+        debug_assert!(self.range >= TOP);
+        bit
+    }
+
+    pub(crate) fn direct(&mut self, count: u32) -> u64 {
         let mut value = 0_u64;
         for _ in 0..count {
             self.range >>= 1;
@@ -242,6 +290,11 @@ impl<'a> RangeDecoder<'a> {
         }
     }
 
+    /// Whether every byte was read and none past the end.
+    pub(crate) fn consumed_exactly(&self) -> bool {
+        !self.overrun && self.pos == self.data.len()
+    }
+
     fn finish(self) -> Result<(), String> {
         if self.overrun {
             return Err(OVERRUN.into());
@@ -254,13 +307,13 @@ impl<'a> RangeDecoder<'a> {
 }
 
 #[derive(Clone)]
-struct ResidualModel {
+pub(crate) struct ResidualModel {
     tree: [u16; 64],
     escape: [u16; MAX_ESCAPE_BITS],
 }
 
 impl ResidualModel {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         ResidualModel {
             tree: [PROB_INIT; 64],
             escape: [PROB_INIT; MAX_ESCAPE_BITS],
@@ -270,7 +323,7 @@ impl ResidualModel {
     /// Code `u`: values below 63 through the tree, larger ones as the escape symbol plus the
     /// Elias-gamma code of `u - 61` (escape value 1 is reserved, see [`Self::put_marker`]).
     #[inline(always)]
-    fn put(&mut self, encoder: &mut RangeEncoder, u: u64) {
+    pub(crate) fn put(&mut self, encoder: &mut RangeEncoder, u: u64) {
         let symbol = u.min(TREE_ESCAPE);
         self.put_symbol(encoder, symbol);
         if symbol == TREE_ESCAPE {
@@ -305,7 +358,7 @@ impl ResidualModel {
 
     /// Decode one item: `Some(u)` for a residual, `None` for the reserved marker.
     #[inline(always)]
-    fn get(&mut self, decoder: &mut RangeDecoder<'_>) -> Result<Option<u64>, String> {
+    pub(crate) fn get(&mut self, decoder: &mut RangeDecoder<'_>) -> Result<Option<u64>, String> {
         let mut node = 1_usize;
         for _ in 0..6 {
             node = node * 2 + usize::from(decoder.bit(&mut self.tree[node]));
@@ -332,7 +385,7 @@ impl ResidualModel {
     }
 }
 
-fn zigzag(value: i64) -> u64 {
+pub(crate) fn zigzag(value: i64) -> u64 {
     if value >= 0 {
         (value as u64) << 1
     } else {
@@ -340,7 +393,7 @@ fn zigzag(value: i64) -> u64 {
     }
 }
 
-fn unzigzag(value: u64) -> i64 {
+pub(crate) fn unzigzag(value: u64) -> i64 {
     if value & 1 == 0 {
         (value >> 1) as i64
     } else {
@@ -570,7 +623,7 @@ impl GroupState {
     }
 }
 
-fn group_bounds(channels: usize, groups: usize) -> Vec<(usize, usize)> {
+pub(crate) fn group_bounds(channels: usize, groups: usize) -> Vec<(usize, usize)> {
     (0..groups)
         .map(|g| (g * channels / groups, (g + 1) * channels / groups))
         .collect()
@@ -625,7 +678,7 @@ impl StreamEncoder {
     /// level table (the input is not a `bits`-bit ADC stream) is found in a validation pass
     /// before any state changes; the encoder then returns an error and stays unchanged.
     pub fn encode(&mut self, window: &[i16], samples: usize) -> Result<Vec<u8>, String> {
-        if window.len() != samples * self.channels {
+        if samples.checked_mul(self.channels) != Some(window.len()) {
             return Err("window size does not match samples x channels".into());
         }
         let (bits, channels) = (self.bits, self.channels);
@@ -814,6 +867,17 @@ impl StreamDecoder {
         }
         if pos != packet.len() {
             return Err("corrupted lossless packet: trailing bytes".into());
+        }
+        // Every sample costs at least 0.134 bits (six tree decisions at probability 4033/4096),
+        // so a group body of n bytes holds fewer than 64 * (n + 8) samples. A larger request is
+        // refused before any allocation or state change.
+        for ((start, end, _), body) in self.groups.iter().zip(&slices) {
+            if samples as u128 * (end - start) as u128 > 64 * (body.len() as u128 + 8) {
+                return Err(
+                    "corrupted lossless packet: more samples requested than the packet can hold"
+                        .into(),
+                );
+            }
         }
         let (bits, channels) = (self.bits, self.channels);
         let mut window = vec![0_i16; samples * channels];

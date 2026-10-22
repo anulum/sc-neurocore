@@ -178,6 +178,28 @@ def test_range_coder_byte_count_is_checked(backend: str) -> None:
             LosslessStreamDecoder(1, 10, 1, backend).decode(packet, samples)
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_oversized_sample_requests_are_refused_before_allocation(backend: str) -> None:
+    """A request the packet cannot hold (e.g. 2**63 samples) is refused; the decoder stays usable."""
+    packet = LosslessStreamEncoder(2, 1, 1, backend).encode(np.zeros((1, 2), dtype=np.int16))
+    decoder = LosslessStreamDecoder(2, 1, 1, backend)
+    for samples in (1 << 63, 1000):
+        with pytest.raises(ValueError, match="more samples requested than the packet can hold"):
+            decoder.decode(packet, samples)
+    np.testing.assert_array_equal(decoder.decode(packet, 1), np.zeros((1, 2), dtype=np.int16))
+
+
+def test_adc_detection_refuses_values_it_would_change() -> None:
+    """Fractional or out-of-range samples are refused instead of being cast to int16."""
+    for backend in BACKENDS:
+        for values, message in [([0.1, 0.2], "integer samples"), ([0, 65536], "int16 range")]:
+            with pytest.raises(ValueError, match=message):
+                detect_adc_bits(np.array(values), backend)
+        assert detect_adc_bits(np.array([64.0, -64.0]), backend) == 1, (
+            "integral floats are accepted"
+        )
+
+
 def test_adc_detection_agrees() -> None:
     """Both backends find 10 bits for an ADC stream and 16 for full-range noise."""
     rng = np.random.default_rng(3)

@@ -34,7 +34,9 @@ from dataclasses import dataclass
 import numpy as np
 
 from .codec import SpikeCodec, CompressionResult
-from ..world_model.spike_predictor import predict_and_xor_world_model, xor_and_recover_world_model
+
+# ``sc_neurocore.world_model`` is not part of the base distribution, so the world-model
+# predictor imports it only when it is used; every other predictor works without it.
 
 # Rust backend (optional, ~100x faster for LFSR predictor)
 _HAS_RUST = False
@@ -408,6 +410,8 @@ class PredictiveSpikeCodec:
         original_bits = T * N
 
         if self.predictor == "world_model":
+            from ..world_model.spike_predictor import predict_and_xor_world_model
+
             errors, correct_predictions = predict_and_xor_world_model(
                 spikes,
                 N,
@@ -513,6 +517,8 @@ class PredictiveSpikeCodec:
             alpha, seed = struct.unpack("!dH", data[5:15])
             error_data = data[15:]
             errors = self.base_codec.decompress(error_data, T, N)
+            from ..world_model.spike_predictor import xor_and_recover_world_model
+
             return xor_and_recover_world_model(
                 errors,
                 N,

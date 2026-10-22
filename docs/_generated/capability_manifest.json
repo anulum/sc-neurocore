@@ -976,9 +976,9 @@
     "public_documentation_pages": 646,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
-    "rust_pyo3_model_wrappers": 210,
+    "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5387
+    "test_files": 5389
   },
   "documentation": {
     "public_pages": [
@@ -3132,6 +3132,8 @@
       "SmoothMuscleCell",
       "SpiNNaker2Neuron",
       "SpiNNakerLIFNeuron",
+      "SpikeEventDecoder",
+      "SpikeEventEncoder",
       "SpikeResponseNeuron",
       "StdpSynapse",
       "StellateCell",
@@ -7605,6 +7607,7 @@
       "tests/test_spike_alu_spike_gate.py",
       "tests/test_spike_alu_spike_register.py",
       "tests/test_spike_alu_spike_sort.py",
+      "tests/test_spike_codec_base_distribution_import.py",
       "tests/test_spike_codec_huffman_encoder.py",
       "tests/test_spike_codec_spike_codec.py",
       "tests/test_spike_codec_spike_codec_huffman.py",
@@ -7614,6 +7617,7 @@
       "tests/test_spike_dsp_spike_fir.py",
       "tests/test_spike_dsp_spike_iir.py",
       "tests/test_spike_dsp_spike_wavelet.py",
+      "tests/test_spike_events.py",
       "tests/test_spike_gnn_spike_gnn_layer.py",
       "tests/test_spike_gnn_spike_graph_conv.py",
       "tests/test_spike_norm_membrane_potential_bn.py",

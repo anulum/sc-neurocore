@@ -188,6 +188,80 @@ The lossy ratios are not comparable with the challenge, which requires every
 sample back. The spike-mode ratio depends on the detector: without removing
 each file's DC offset the detector finds only 1,864 spikes in the same data.
 
+### Spike-event layer for narrow links (Bluetooth)
+
+A Bluetooth-class link cannot carry broadband electrode data, but BCI decoders
+use far less: which channels crossed a spike threshold in each short bin, and
+the spike-band power. `SpikeEventEncoder` and `SpikeEventDecoder`
+(`sc_neurocore.spike_codec.spike_events`) compute and code both from raw int16
+samples, window by window:
+
+```python
+from sc_neurocore.spike_codec.spike_events import SpikeEventDecoder, SpikeEventEncoder
+
+encoder = SpikeEventEncoder(1024, 19531.0, power_bins=20, power_shift=6)
+s = encoder.settings                               # bin_samples 20 (about 1 ms), warm-up 1953
+decoder = SpikeEventDecoder(1024, s["bin_samples"], power_bins=s["power_bins"])
+for window in windows:                             # (samples, 1024) int16, e.g. 200 rows = 10 ms
+    events = decoder.decode(encoder.encode(window), len(window))
+    events.events                                  # uint8 (bins, channels): threshold crossings
+    events.power                                   # int32 (periods, channels): spike-band power
+```
+
+- Detection: second-order Butterworth high-pass at 250 Hz with Q14
+  coefficients; noise from a streaming estimate of the median of the filtered
+  `|y|` (steps shrinking from 1/32 to 1/4096 over a 100 ms warm-up); an event
+  is a downward crossing of `-4.5 * median / 0.6745`, at most one per channel
+  per refractory period (default one bin). `timing="sample"` adds each event's
+  sample offset inside its bin.
+- Spike-band power: mean `|z|` of the high-passed signal through a 1000 Hz
+  second-order low-pass, every `power_bins` bins, shifted right by
+  `power_shift` (6 turns int16 units of a 10-bit ADC into ADC levels).
+- Coding: per channel and bin one adaptive binary decision with a 16-bit
+  probability (rare events cost little when nothing happens), the optional
+  offsets through an adaptive tree, band power as zigzagged differences, all
+  through the range coder of the lossless coder. All arithmetic is integer, so
+  the Rust engine and the pure-Python reference write identical packets.
+
+Measured 2026-10-22 on the 743 challenge recordings (one workstation):
+
+- Rate with the defaults: 4.9 events/s per channel on average, median 0.61;
+  52 % of the channels exceed 0.5 events/s. Window lengths do not change the
+  events.
+- Synthetic spikes of known shape (the median raw waveform around detected
+  events) added at 10 Hz to 186 of the recordings: share found by this
+  detector / by an offline float reference (scipy Butterworth, global median of
+  the whole file, same threshold and refractory period):
+
+  | Spike size (noise SD) | 3 | 4 | 5 | 6 | 8 |
+  |------------------------|---|---|---|---|---|
+  | This detector | 8.9 % | 36.6 % | 73.7 % | 95.1 % | 99.9 % |
+  | Offline reference | 8.6 % | 36.0 % | 73.8 % | 95.5 % | 99.9 % |
+
+  Events not injected and not present before: 6-11 per 186 five-second
+  recordings. On the unmodified recordings the two detectors share 15,546
+  events (this detector 18,002, reference 22,038); the differences are
+  crossings near the threshold, which the streaming noise estimate places
+  slightly differently from a median over the whole file.
+- Bit rate for 1024 channels (recordings replayed and time-shifted), 1 ms
+  bins:
+
+  | Content | 1 ms packets | 10 ms packets |
+  |---------|-------------:|--------------:|
+  | events | 111 kbit/s | 51 kbit/s |
+  | events with sample offsets | 131 kbit/s | 71 kbit/s |
+  | events + band power every 20 ms (`power_shift=6`) | 217 kbit/s | 157 kbit/s |
+
+  Each packet costs about 9 bytes of framing and coder flush per group, so
+  packets of 10 ms or more (Bluetooth sends at connection intervals anyway)
+  keep 1 ms timing at half the rate of 1 ms packets. Encoding 1024 channels
+  took 0.3-0.5 s of one core per second of signal through the Python wrapper.
+
+`WaveformCodec`'s `spike` and `waveform` modes threshold the unfiltered signal,
+where the field potential inflates the noise estimate (1,864 spikes in the
+62.6 minutes instead of about 18,000); use the spike-event layer for spike
+detection.
+
 ### Measured Results (synthetic 1024-channel, 1 second at 20 kHz)
 
 `examples/demo_waveform_codec.py --channels 1024 --duration 1.0`, `full` mode,

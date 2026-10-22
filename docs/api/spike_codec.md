@@ -124,3 +124,22 @@ samples. Rust (`backend="auto"`/`"rust"`) and the pure-Python reference
         - detect_adc_bits
         - level_of
         - nominal_value
+
+## Spike-Event Layer (Bluetooth-Class Links)
+
+Threshold-crossing events in 1 ms bins and spike-band power, computed from raw
+int16 samples with integer filters and a streaming noise estimate, coded with
+the range coder of the lossless coder. Rust and the pure-Python reference write
+identical packets. Validation and bit rates are in the
+[BCI codec guide](../guides/bci_codec.md).
+
+::: sc_neurocore.spike_codec.spike_events
+    options:
+      show_root_heading: true
+      members:
+        - SpikeEventEncoder
+        - SpikeEventDecoder
+        - SpikeEventWindow
+        - highpass_coefficients
+        - lowpass_coefficients
+        - threshold_factor

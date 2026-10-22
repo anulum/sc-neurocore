@@ -39927,6 +39927,102 @@ str — codec name
 
 ---
 
+## Module `spike_codec.spike_events`
+
+### Class `SpikeEventWindow`
+Events and spike-band power decoded from one packet.
+
+Attributes
+----------
+first_bin : int
+    Absolute index of the first bin in ``events``.
+events : ndarray
+    uint8 ``(bins, channels)``: 1 where the channel has an event in the bin.
+offsets : ndarray or None
+    int16 ``(bins, channels)`` sample offsets inside the bin, -1 without an event; None
+    unless the stream uses ``timing="sample"``.
+first_period : int
+    Absolute index of the first band-power period in ``power``.
+power : ndarray
+    int32 ``(periods, channels)`` spike-band power values.
+
+
+### Class `SpikeEventEncoder`
+Stateful encoder of threshold-crossing events and spike-band power.
+
+Parameters
+----------
+channels : int
+    Channels per window.
+sample_rate_hz : float
+    Sampling rate of the raw stream.
+bin_samples : int or None
+    Samples per event bin (1..1024); None gives about 1 ms.
+refractory_samples : int or None
+    Minimum distance between two events of a channel (at least ``bin_samples``); None
+    equals ``bin_samples``.
+threshold_sigma : float
+    Threshold in noise standard deviations (MAD estimate), in (0, 100&#93;.
+highpass_hz : float
+    Cutoff of the detection high-pass.
+lowpass_hz : float
+    Upper cutoff of the spike band for the band power.
+warmup_samples : int or None
+    Samples before the first event may be reported (the noise estimate settles); None
+    gives about 100 ms.
+timing : str
+    ``"bin"`` sends which bins hold an event; ``"sample"`` adds each event's sample
+    offset inside its bin.
+power_bins : int
+    Bins per band-power value (0 disables band power, at most 65535).
+power_shift : int
+    Right shift of the band-power values (0..15; e.g. 6 for a 10-bit ADC scaled to int16).
+groups : int
+    Contiguous channel groups, each with its own range coder (coded in parallel in Rust).
+backend : str
+    ``"auto"`` (Rust when installed), ``"rust"`` or ``"python"``; identical packets.
+
+- **__init__**(channels, sample_rate_hz, \*, bin_samples, refractory_samples, threshold_sigma, highpass_hz, lowpass_hz, warmup_samples, timing, power_bins, power_shift, groups, backend)
+- **encode**(window)
+  - Encode a ``(samples, channels)`` window of int16-range integers into a packet.
+
+### Class `SpikeEventDecoder`
+Stateful decoder matching ``SpikeEventEncoder``.
+
+Parameters
+----------
+channels, bin_samples, power_bins, groups : int
+    As given to (or derived by) the encoder; ``encoder.settings`` holds the values.
+timing : str
+    ``"bin"`` or ``"sample"``, as for the encoder.
+backend : str
+    ``"auto"``, ``"rust"`` or ``"python"``.
+
+- **__init__**(channels, bin_samples, \*, timing, power_bins, groups, backend)
+- **decode**(packet, samples)
+  - Decode the packet of a window of ``samples`` samples.
+
+### Function `highpass_coefficients(cutoff_hz, rate_hz)`
+Return the Q14 coefficients ``(b0, b1, b2, a1, a2)`` of the second-order Butterworth high-pass.
+
+Raises
+------
+ValueError
+    If the cutoff is outside ``&#91;rate / 1000, 0.45 * rate)`` or the quantised filter is unstable.
+
+### Function `lowpass_coefficients(cutoff_hz, rate_hz)`
+Return the Q14 coefficients ``(b0, b1, b2, a1, a2)`` of the second-order Butterworth low-pass.
+
+Raises
+------
+ValueError
+    If the cutoff is outside ``&#91;rate / 1000, 0.45 * rate)`` or the quantised filter is unstable.
+
+### Function `threshold_factor(threshold_sigma)`
+Return ``threshold_sigma / 0.6745`` in Q12, the factor applied to the median ``|y|``.
+
+---
+
 ## Module `spike_codec.streaming_codec`
 
 ### Class `StreamingCompressionResult`
@@ -40079,6 +40175,11 @@ Returns
 -------
 int
     The ADC width; 16 always qualifies.
+
+Raises
+------
+ValueError
+    For non-integer samples or samples outside the int16 range.
 
 ---
 

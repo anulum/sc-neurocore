@@ -84,8 +84,19 @@ def detect_adc_bits(samples: np.ndarray[Any, Any], backend: str = "auto") -> int
     -------
     int
         The ADC width; 16 always qualifies.
+
+    Raises
+    ------
+    ValueError
+        For non-integer samples or samples outside the int16 range.
     """
-    flat = np.ascontiguousarray(np.asarray(samples, dtype=np.int16).reshape(-1))
+    array = np.asarray(samples)
+    if array.size and not np.issubdtype(array.dtype, np.integer):
+        if not bool(np.all(np.isfinite(array))) or not bool(np.all(array == np.round(array))):
+            raise ValueError("ADC detection needs integer samples")
+    if array.size and (array.min() < -32768 or array.max() > 32767):
+        raise ValueError("ADC detection needs samples in the int16 range")
+    flat = np.ascontiguousarray(array.astype(np.int16).reshape(-1))
     native = _native(backend)
     if native is not None:
         return int(native.waveform_codec_detect_adc_bits(flat))
@@ -168,6 +179,19 @@ class _RangeEncoder:
             probs[index] = prob + (((1 << PROB_BITS) - prob) >> ADAPT_SHIFT)
         self._normalize()
 
+    def bit_precise(self, probs: list[int], index: int, bit: int, shift: int) -> None:
+        """Code a bit with a 16-bit probability adapted by ``shift`` (rare events)."""
+        prob = probs[index]
+        bound = (self.range >> 16) * prob
+        if bit:
+            self.low += bound
+            self.range -= bound
+            probs[index] = prob - (prob >> shift)
+        else:
+            self.range = bound
+            probs[index] = prob + ((65536 - prob) >> shift)
+        self._normalize()
+
     def direct(self, value: int, count: int) -> None:
         for i in range(count - 1, -1, -1):
             self.range >>= 1
@@ -218,6 +242,22 @@ class _RangeDecoder:
             self.code -= bound
             self.range -= bound
             probs[index] = prob - (prob >> ADAPT_SHIFT)
+            bit = 1
+        self._normalize()
+        return bit
+
+    def bit_precise(self, probs: list[int], index: int, shift: int) -> int:
+        """Decode a bit coded by ``_RangeEncoder.bit_precise``."""
+        prob = probs[index]
+        bound = (self.range >> 16) * prob
+        if self.code < bound:
+            self.range = bound
+            probs[index] = prob + ((65536 - prob) >> shift)
+            bit = 0
+        else:
+            self.code -= bound
+            self.range -= bound
+            probs[index] = prob - (prob >> shift)
             bit = 1
         self._normalize()
         return bit
@@ -462,6 +502,11 @@ class _PyDecoder:
             pos += 4 + length
         if pos != len(packet):
             raise ValueError("corrupted lossless packet: trailing bytes")
+        for group, body in zip(self.groups, bodies, strict=True):
+            if samples * (group.end - group.start) > 64 * (len(body) + 8):
+                raise ValueError(
+                    "corrupted lossless packet: more samples requested than the packet can hold"
+                )
         try:
             return self._decode_groups(bodies, samples)
         except ValueError:

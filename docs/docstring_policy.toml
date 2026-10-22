@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1297
+expected_file_count = 1300
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5281,3 +5281,15 @@ rationale = "Streaming lossless coder: Python reference of the Rust stream coder
 [[file]]
 path = "tests/test_waveform_stream.py"
 rationale = "Streaming lossless coder: Rust and Python packet identity, refusals and hostile packets."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/spike_events.py"
+rationale = "Spike-event layer: Python reference of the Rust event coder and its public wrappers."
+
+[[file]]
+path = "tests/test_spike_events.py"
+rationale = "Spike-event layer: detection, Rust and Python packet identity, refusals and hostile packets."
+
+[[file]]
+path = "tests/test_spike_codec_base_distribution_import.py"
+rationale = "Codec package imports and round-trips with the packages excluded from the wheel blocked."

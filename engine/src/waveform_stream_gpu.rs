@@ -169,7 +169,16 @@ impl GpuStreamEncoder {
             pipeline("encode"),
             pipeline("compact_out"),
         );
-        let max_words = (12 * max_samples + 8).div_ceil(4);
+        let max_words = (12 * max_samples as u128 + 8).div_ceil(4);
+        // The largest buffers hold 4 * channels * max_words bytes; refuse sizes the device or
+        // the shader's 32-bit indices cannot hold instead of letting buffer creation fail.
+        let largest = 4 * channels as u128 * max_words;
+        if largest > u128::from(limits.max_buffer_size).min(u128::from(u32::MAX)) {
+            return Err(format!(
+                "{channels} channels with windows of {max_samples} samples need {largest}-byte buffers, above the GPU limit"
+            ));
+        }
+        let max_words = max_words as usize;
         if table_bytes > u64::from(limits.max_storage_buffer_binding_size) {
             return Err(format!(
                 "{channels} channels of {bits}-bit level tables need {table_bytes} bytes, above the GPU binding limit"
@@ -290,7 +299,7 @@ impl GpuStreamEncoder {
     /// one group per channel). A contradicting sample refuses the window with the encoder
     /// state unchanged.
     pub fn encode(&mut self, window: &[i16], samples: usize) -> Result<Vec<u8>, String> {
-        if window.len() != samples * self.channels {
+        if samples.checked_mul(self.channels) != Some(window.len()) {
             return Err("window size does not match samples x channels".into());
         }
         if samples > self.max_samples {
