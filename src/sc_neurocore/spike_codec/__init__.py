@@ -18,6 +18,7 @@ from .delta_codec import DeltaSpikeCodec, DeltaCompressionResult
 from .streaming_codec import StreamingSpikeCodec, StreamingCompressionResult
 from .aer_codec import AERSpikeCodec, AERCompressionResult
 from .waveform_codec import WaveformCodec, WaveformCompressionResult, WaveformDecodeResult
+from .waveform_stream import LosslessStreamDecoder, LosslessStreamEncoder
 from .registry import get_codec, list_codecs, recommend_codec
 
 _LAZY_EXPORTS = {
@@ -53,6 +54,8 @@ __all__ = [
     "WaveformCodec",
     "WaveformCompressionResult",
     "WaveformDecodeResult",
+    "LosslessStreamEncoder",
+    "LosslessStreamDecoder",
     "get_codec",
     "list_codecs",
     "recommend_codec",

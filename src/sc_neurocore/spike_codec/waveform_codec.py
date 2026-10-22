@@ -45,6 +45,7 @@ from typing import Any
 import numpy as np
 
 from .codec import SpikeCodec
+from .waveform_stream import LosslessStreamDecoder, LosslessStreamEncoder, detect_adc_bits
 
 WAVEFORM_CODEC_MIN_SNIPPET_SAMPLES = 1
 WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES = 255
@@ -53,8 +54,14 @@ WAVEFORM_CODEC_MAX_HEADER_COUNT = 65535
 WAVEFORM_CODEC_MAX_TEMPLATES = WAVEFORM_CODEC_MAX_HEADER_COUNT
 WAVEFORM_CODEC_MIN_QUANTIZE_BITS = 1
 WAVEFORM_CODEC_MAX_QUANTIZE_BITS = 8
-WAVEFORM_CODEC_VALID_MODES = ("full", "waveform", "spike", "lossless")
-WAVEFORM_CODEC_MODE_BYTES = {"full": 0, "waveform": 1, "spike": 2, "lossless": 3}
+WAVEFORM_CODEC_VALID_MODES = ("full", "waveform", "spike", "lossless", "lossless_rice")
+WAVEFORM_CODEC_MODE_BYTES = {
+    "full": 0,
+    "waveform": 1,
+    "spike": 2,
+    "lossless_rice": 3,
+    "lossless": 4,
+}
 WAVEFORM_CODEC_MODES_BY_BYTE = {value: key for key, value in WAVEFORM_CODEC_MODE_BYTES.items()}
 # Background downsampling factor of the ``full`` mode.
 WAVEFORM_CODEC_BACKGROUND_DOWNSAMPLE = 16
@@ -155,7 +162,13 @@ class WaveformCodec:
         - ``"full"``: spike timing + waveform templates + background LFP (~137x)
         - ``"waveform"``: spike timing + waveform templates, no background (~1700x)
         - ``"spike"``: spike timing only, Neuralink-equivalent (~4500x)
-        - ``"lossless"``: every input sample exactly (integer input only)
+        - ``"lossless"``: every input sample exactly (integer input only), with the
+          streaming coder of ``waveform_stream`` (ADC levels, sign-sign LMS, range coder)
+        - ``"lossless_rice"``: every input sample exactly, with the earlier per-channel
+          fixed predictor and Rice codes (faster to build, about 3-4 % larger)
+    adc_bits : int or None
+        ADC width for ``"lossless"`` (1..16); ``None`` detects the smallest width whose
+        level mapping is one-to-one on the input.
     backend : str
         ``"auto"`` (default: Rust kernels when installed, else NumPy),
         ``"rust"`` (refuses when the engine lacks the kernels) or
@@ -178,11 +191,16 @@ class WaveformCodec:
         quantize_bits: int = 6,
         mode: str = "full",
         backend: str = "auto",
+        adc_bits: int | None = None,
     ):
         if mode not in WAVEFORM_CODEC_VALID_MODES:
             raise ValueError(
-                f"mode must be 'full', 'waveform', 'spike' or 'lossless', got {mode!r}"
+                "mode must be 'full', 'waveform', 'spike', 'lossless' or 'lossless_rice', "
+                f"got {mode!r}"
             )
+        if adc_bits is not None:
+            self._require_int_range("adc_bits", adc_bits, minimum=1, maximum=16)
+        self.adc_bits = adc_bits
         self.threshold_sigma = self._require_positive_float("threshold_sigma", threshold_sigma)
         self.snippet_samples = self._require_int_range(
             "snippet_samples",
@@ -274,6 +292,8 @@ class WaveformCodec:
             mode, if a sample is not an integer in the int16 range.
         """
         if self.mode == "lossless":
+            return self._compress_lossless_stream(waveform)
+        if self.mode == "lossless_rice":
             return self._compress_lossless(waveform)
         waveform = np.asarray(waveform, dtype=np.float32)
         waveform = self._validate_waveform(waveform)
@@ -657,17 +677,52 @@ class WaveformCodec:
             WAVEFORM_CODEC_MODE_BYTES[self.mode],
         )
 
-    def _compress_lossless(
-        self, waveform: np.ndarray[Any, Any]
-    ) -> tuple[bytes, WaveformCompressionResult]:
-        """Encode every sample exactly: lattice, fixed predictor, adaptive Rice codes."""
-        raw = np.asarray(waveform)
-        checked = self._validate_waveform(np.asarray(raw, dtype=np.float64))
+    def _lossless_samples(self, waveform: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Return the input as int64 after checking it is a finite int16-range integer matrix."""
+        checked = self._validate_waveform(np.asarray(waveform, dtype=np.float64))
         if not bool(np.all(checked == np.round(checked))):
             raise ValueError("lossless mode needs integer samples")
         if checked.min() < -32768 or checked.max() > 32767:
             raise ValueError("lossless mode needs samples in the int16 range")
-        samples = checked.astype(np.int64)
+        return checked.astype(np.int64)
+
+    def _compress_lossless_stream(
+        self, waveform: np.ndarray[Any, Any]
+    ) -> tuple[bytes, WaveformCompressionResult]:
+        """Encode every sample exactly with the streaming coder as one packet."""
+        samples = self._lossless_samples(waveform).astype(np.int16)
+        T, N = samples.shape
+        bits = (
+            self.adc_bits if self.adc_bits is not None else detect_adc_bits(samples, self.backend)
+        )
+        packet = LosslessStreamEncoder(N, bits, 1, self.backend).encode(samples)
+        body = bytes([bits]) + packet
+        encoded = _seal(self._header(T, N, 0, 0, 0) + struct.pack("!I", len(body)) + body)
+        return encoded, self._lossless_result(T, N, len(encoded))
+
+    def _lossless_result(self, T: int, N: int, size: int) -> WaveformCompressionResult:
+        """Return the result record of a lossless stream of ``size`` bytes."""
+        original_bytes = T * N * 2
+        return WaveformCompressionResult(
+            original_bytes=original_bytes,
+            compressed_bytes=size,
+            compression_ratio=original_bytes / max(size, 1),
+            n_channels=N,
+            n_samples=T,
+            n_spikes_detected=0,
+            n_templates=0,
+            spike_bytes=0,
+            snippet_bytes=0,
+            background_bytes=0,
+            lossless_spikes=False,
+            lossless_waveform=True,
+        )
+
+    def _compress_lossless(
+        self, waveform: np.ndarray[Any, Any]
+    ) -> tuple[bytes, WaveformCompressionResult]:
+        """Encode every sample exactly: lattice, fixed predictor, adaptive Rice codes."""
+        samples = self._lossless_samples(waveform)
         T, N = samples.shape
         if self._native is not None:
             channels = [
@@ -682,21 +737,7 @@ class WaveformCodec:
             channels = [_encode_lossless_channel(samples[:, ch]) for ch in range(N)]
         body = b"".join(struct.pack("!I", len(c)) + c for c in channels)
         encoded = _seal(self._header(T, N, 0, 0, 0) + struct.pack("!I", len(body)) + body)
-        original_bytes = T * N * 2
-        return encoded, WaveformCompressionResult(
-            original_bytes=original_bytes,
-            compressed_bytes=len(encoded),
-            compression_ratio=original_bytes / max(len(encoded), 1),
-            n_channels=N,
-            n_samples=T,
-            n_spikes_detected=0,
-            n_templates=0,
-            spike_bytes=0,
-            snippet_bytes=0,
-            background_bytes=0,
-            lossless_spikes=False,
-            lossless_waveform=True,
-        )
+        return encoded, self._lossless_result(T, N, len(encoded))
 
     @classmethod
     def decompress(
@@ -733,13 +774,13 @@ class WaveformCodec:
         """
         native = _native_kernels(backend)
         try:
-            return cls._decompress(bytes(data), max_samples, native)
+            return cls._decompress(bytes(data), max_samples, native, backend)
         except (IndexError, OverflowError, struct.error) as exc:
             raise ValueError(f"malformed WaveformCodec stream: {exc}") from exc
 
     @classmethod
     def _decompress(
-        cls, data: bytes, max_samples: int, native: ModuleType | None
+        cls, data: bytes, max_samples: int, native: ModuleType | None, backend: str
     ) -> WaveformDecodeResult:
         """Decode an intact stream; ``decompress`` maps parse errors to ValueError."""
         header_size = 4 + struct.calcsize(_HEADER_FORMAT)
@@ -767,9 +808,16 @@ class WaveformCodec:
                 f"max_samples={max_samples} in total"
             )
         reader = _SectionReader(data, header_size)
+        if mode in ("lossless", "lossless_rice") and magic != cls.HEADER_MAGIC:
+            raise ValueError("lossless streams exist only in the WFC2 format")
         if mode == "lossless":
-            if magic != cls.HEADER_MAGIC:
-                raise ValueError("lossless streams exist only in the WFC2 format")
+            body = reader.section()
+            reader.finish()
+            if not body or not 1 <= body[0] <= 16:
+                raise ValueError("lossless stream has an invalid ADC width")
+            decoded = LosslessStreamDecoder(N, body[0], 1, backend).decode(body[1:], T)
+            return WaveformDecodeResult(mode, None, decoded, True)
+        if mode == "lossless_rice":
             body_reader = _SectionReader(reader.section(), 0)
             if native is not None:
                 columns = [

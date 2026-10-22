@@ -27,10 +27,11 @@ const (
 )
 
 var WAVEFORM_CODEC_VALID_MODES = map[string]struct{}{
-	"full":     {},
-	"waveform": {},
-	"spike":    {},
-	"lossless": {},
+	"full":          {},
+	"waveform":      {},
+	"spike":         {},
+	"lossless":      {},
+	"lossless_rice": {},
 }
 
 type Config struct {

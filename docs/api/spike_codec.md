@@ -79,10 +79,11 @@ timestamps. Compatible with `comm.aer_udp` protocol. O(n_spikes) bytes.
 ## Waveform Codec (Raw Electrode)
 
 End-to-end raw waveform compression: spike detection + template matching +
-background LFP compression, plus an exact `lossless` mode. Four modes:
+background LFP compression, plus exact lossless modes. Five modes:
 `spike` (spike timing only), `waveform` (timing + snippet templates),
-`full` (timing + snippets + background, lossy) and `lossless` (every int16
-sample exactly). `WaveformCodec.decompress(data)` decodes every mode and returns
+`full` (timing + snippets + background, lossy), `lossless` (every int16
+sample exactly, with the streaming lossless coder below) and `lossless_rice`
+(every int16 sample exactly, with the earlier block Rice coder). `WaveformCodec.decompress(data)` decodes every mode and returns
 a `WaveformDecodeResult`. Streams use format `WFC2` with a CRC-32 trailer;
 a corrupted stream raises `ValueError`, and `max_samples` (default `2**28`)
 bounds what a header may declare. Legacy `WFCX` streams decode their spike
@@ -103,3 +104,23 @@ before telemetry sections are built: raw samples must be a finite, non-empty
         - WaveformCodec
         - WaveformCompressionResult
         - WaveformDecodeResult
+
+## Streaming Lossless Coder (Live Electrode Streams)
+
+Stateful lossless coding of a multi-channel int16 stream, window by window:
+ADC levels with dense numbering (missing codes leave it), a sign-sign LMS
+predictor and an adaptive binary range coder. State persists across windows,
+so 1 ms packets cost no ratio; every packet decodes to exactly the encoded
+samples. Rust (`backend="auto"`/`"rust"`) and the pure-Python reference
+(`"python"`) write identical packets. Details and measurements are in the
+[BCI codec guide](../guides/bci_codec.md).
+
+::: sc_neurocore.spike_codec.waveform_stream
+    options:
+      show_root_heading: true
+      members:
+        - LosslessStreamEncoder
+        - LosslessStreamDecoder
+        - detect_adc_bits
+        - level_of
+        - nominal_value

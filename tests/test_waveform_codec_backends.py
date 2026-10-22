@@ -68,7 +68,7 @@ def test_lossy_streams_and_decodes_are_identical(mode: str, max_templates: int) 
 
 
 def test_lossless_streams_and_decodes_are_identical() -> None:
-    """The lossless mode writes the same bytes and returns the same samples on both backends."""
+    """Both lossless modes write the same bytes and return the same samples on both backends."""
     rng = np.random.default_rng(12)
     t = np.arange(20000)
     cases = [
@@ -78,21 +78,22 @@ def test_lossless_streams_and_decodes_are_identical() -> None:
         np.full((9, 2), -32768, dtype=np.int16),
         np.array([[5]], dtype=np.int16),
     ]
-    for samples in cases:
-        streams = {
-            backend: WaveformCodec(mode="lossless", backend=backend).compress(samples)[0]
-            for backend in BACKENDS
-        }
-        assert streams["python"] == streams["rust"]
-        for backend in BACKENDS:
-            decoded = WaveformCodec.decompress(streams["python"], backend=backend).waveform
-            np.testing.assert_array_equal(decoded, samples)
+    for mode in ("lossless", "lossless_rice"):
+        for samples in cases:
+            streams = {
+                backend: WaveformCodec(mode=mode, backend=backend).compress(samples)[0]
+                for backend in BACKENDS
+            }
+            assert streams["python"] == streams["rust"]
+            for backend in BACKENDS:
+                decoded = WaveformCodec.decompress(streams["python"], backend=backend).waveform
+                np.testing.assert_array_equal(decoded, samples)
 
 
 def test_rust_and_python_refuse_the_same_corrupted_lossless_section() -> None:
     """A sealed stream with an out-of-table level is refused by both decoders."""
     samples = np.round(np.arange(600) % 37 * 64.06).astype(np.int16).reshape(-1, 1)
-    body = WaveformCodec(mode="lossless", backend="python").compress(samples)[0][:-4]
+    body = WaveformCodec(mode="lossless_rice", backend="python").compress(samples)[0][:-4]
     start = 4 + 16 + 4 + 4
     broken = wc._seal(body[:start] + bytes([9]) + body[start + 1 :])
     for backend in BACKENDS:
@@ -162,7 +163,7 @@ def test_rice_parameter_ties_choose_the_smallest() -> None:
     rng = np.random.default_rng(14)
     walk = (np.cumsum(rng.choice([-1, 1], size=6000)) + 1000).astype(np.int16).reshape(-1, 1)
     streams = {
-        backend: WaveformCodec(mode="lossless", backend=backend).compress(walk)[0]
+        backend: WaveformCodec(mode="lossless_rice", backend=backend).compress(walk)[0]
         for backend in BACKENDS
     }
     header = 4 + 16 + 4 + 4

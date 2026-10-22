@@ -57,7 +57,8 @@ header-unsafe constructor ranges fail before compression state is derived.
 | `spike` | spike times | spike times exact; no waveform |
 | `waveform` | spike times + template-coded snippets | lossy |
 | `full` (default) | + downsampled background | lossy |
-| `lossless` | every int16 sample | exact |
+| `lossless` | every int16 sample (streaming coder) | exact |
+| `lossless_rice` | every int16 sample (earlier block Rice coder) | exact |
 
 ```python
 codec = WaveformCodec(mode="lossless")
@@ -66,13 +67,54 @@ decoded = WaveformCodec.decompress(data)          # any mode
 assert decoded.lossless_waveform and (decoded.waveform == raw_int16).all()
 ```
 
-`lossless` maps each channel onto its ADC levels (an affine lattice, or the
-table of values actually used when a 10-bit ADC is scaled to 16 bits by a
-non-integer factor), predicts with the best fixed polynomial of order 0-3 and
-codes residuals with block-adaptive Rice codes. Streams (format `WFC2`) end
-with a CRC-32; a corrupted stream raises `ValueError` instead of decoding.
-`decompress(..., max_samples=...)` (default `2**28`) refuses headers declaring
-more samples before allocating.
+`lossless` stores the recording with the streaming lossless coder described
+below (`adc_bits=None` detects the ADC width; pass it to fix it).
+`lossless_rice` keeps the earlier coder: each channel mapped onto its ADC
+levels (an affine lattice or the table of values used), the best fixed
+polynomial predictor of order 0-3 and block-adaptive Rice codes. Streams
+(format `WFC2`) end with a CRC-32; a corrupted stream raises `ValueError`
+instead of decoding. `decompress(..., max_samples=...)` (default `2**28`)
+refuses headers declaring more samples before allocating.
+
+### Streaming lossless coder
+
+`LosslessStreamEncoder` and `LosslessStreamDecoder`
+(`sc_neurocore.spike_codec.waveform_stream`) code a live multi-channel stream
+window by window. State persists across windows, so a 1 ms window compresses
+as well as a whole recording, and every packet decodes to exactly the samples
+that were encoded:
+
+```python
+from sc_neurocore.spike_codec.waveform_stream import (
+    LosslessStreamDecoder, LosslessStreamEncoder, detect_adc_bits,
+)
+
+bits = detect_adc_bits(first_window)               # e.g. 10 for a 10-bit ADC
+encoder = LosslessStreamEncoder(1024, bits, groups=8)
+decoder = LosslessStreamDecoder(1024, bits, groups=8)
+for window in windows:                             # (samples, 1024) int16, e.g. 20 rows = 1 ms
+    packet = encoder.encode(window)
+    assert (decoder.decode(packet, len(window)) == window).all()
+```
+
+1. Each sample maps to its ADC level; the exact int16 value of a level is
+   sent once per channel group.
+2. Levels are numbered densely: a level far rarer than both neighbours (an
+   ADC missing code) leaves the numbering, so a signal crossing it moves by
+   one rank instead of two; encoder and decoder apply the same rule to the
+   same counts.
+3. A sign-sign LMS filter of order 16 predicts the next rank difference.
+4. An adaptive binary tree with an Elias-gamma escape codes the prediction
+   error through an LZMA-style binary range coder.
+
+All arithmetic is integer, so the Rust engine and the pure-Python reference
+write identical bytes. Channel groups have their own range coders and run in
+parallel in Rust. A sample that contradicts the stream's ADC levels is refused
+before any state changes; a packet whose content is corrupted breaks the
+decoder, which then refuses every later packet (start a new decoder, as for any
+stateful stream codec after a lost packet). With the engine's `gpu` feature,
+`GpuStreamEncoder` (Rust only) encodes one range coder per channel on a GPU and
+writes the same packets as the CPU encoder with `groups == channels`.
 
 ### Rust kernels
 
@@ -97,7 +139,8 @@ compressed bytes. Measured 2026-10-22 on one workstation, one file at a time:
 
 | Codec | Ratio | Exact |
 |-------|-------|-------|
-| `WaveformCodec(mode="lossless")` (WAV header stored verbatim) | **3.33x** | all 743 files byte-identical after decoding |
+| `WaveformCodec(mode="lossless")` (WAV header stored verbatim) | **3.457x** | all 743 files byte-identical after decoding |
+| `WaveformCodec(mode="lossless_rice")` (WAV header stored verbatim) | 3.33x | all 743 files byte-identical after decoding |
 | `xz -9e` | 2.75x | yes |
 | `zstd -19` | 2.48x | yes |
 | `WaveformCodec(mode="full")`, median-centred input | 48.3x | no: RMS error 551 ADC units against a signal RMS of 3,234 |
@@ -108,10 +151,38 @@ Time for the whole 62.6 minutes of recordings on the same workstation
 
 | Step | NumPy backend | Rust backend |
 |------|---------------|--------------|
-| `lossless` encode | 86.4 s | 10.1 s |
-| `lossless` decode | 6.2 s | 1.6 s |
+| `lossless` encode | not timed (reference only) | 3.6 s |
+| `lossless` decode | not timed (reference only) | 3.0 s |
+| `lossless_rice` encode | 86.4 s | 10.1 s |
+| `lossless_rice` decode | 6.2 s | 1.6 s |
 | `full` encode | 41.4 s | 1.2 s |
 | `spike` encode | 10.5 s | 0.38 s |
+
+Other lossless coders on the same 743 files, built from source and measured
+the same way (every file decoded and compared; coder binaries not counted):
+
+| Coder | Ratio |
+|-------|-------|
+| FLAC `-8` on the int16 files / on the 10-bit levels | 1.40x / 2.94x |
+| WavPack `-hh -x6` (int16 / levels) | 1.50x / 3.39x |
+| Monkey's Audio 13.43 `-c4000` (int16 / levels) | 1.50x / 3.41x |
+| phoboslab brainwire (delta + Rice) | 3.355x |
+| hxrdxk neuralink-codec (sign-sign LMS + range coder, priors tuned to this data) | 3.463x |
+| Sac `--normal --sparse-pcm` (offline, about 2 CPU-seconds per 5 s file) | 3.466x |
+| Sac `--high --sparse-pcm` (offline, about 34 CPU-seconds per 5 s file) | 3.470x |
+
+On the level files the ADC table was given to the audio coders for free. Our
+coder is within 0.2-0.4 % of the best offline results while coding 1 ms
+windows in real time; the noise in these recordings (about 4.6 bits per
+sample after prediction) bounds every lossless coder near 3.5x.
+
+Real-time speed of the streaming coder, pure Rust, one channel group,
+measured 2026-10-22: one core of a Xeon E5-2640 (ML350) codes 1024 channels at
+19,531 Hz with 1 ms windows in 1.69 ms (encode) and 1.64 ms (decode) per window
+(real-time factor 0.60), so two cores carry 1024 channels; channel groups
+spread larger arrays over more cores. A GTX 1060 runs the GPU encoder at
+real-time factors 2.6 (1024 channels) and 1.15 (4096 channels) with 10 ms
+windows (one workstation, other jobs running).
 
 The lossy ratios are not comparable with the challenge, which requires every
 sample back. The spike-mode ratio depends on the detector: without removing

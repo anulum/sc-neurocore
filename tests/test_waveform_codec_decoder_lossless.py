@@ -24,11 +24,11 @@ from sc_neurocore.spike_codec.waveform_codec import WaveformCodec
 from tests.waveform_codec_support import _make_waveform
 
 
-def _lossless_round_trip(samples: np.ndarray[Any, Any]) -> bytes:
+def _lossless_round_trip(samples: np.ndarray[Any, Any], mode: str = "lossless") -> bytes:
     """Compress losslessly, check the exact round trip and return the stream."""
-    data, result = WaveformCodec(mode="lossless").compress(samples)
+    data, result = WaveformCodec(mode=mode).compress(samples)
     decoded = WaveformCodec.decompress(data)
-    assert decoded.mode == "lossless"
+    assert decoded.mode == mode
     assert decoded.lossless_waveform
     assert decoded.spike_raster is None
     assert decoded.waveform is not None
@@ -56,7 +56,7 @@ class TestLosslessMode:
         scaled = np.round(levels * 64.0626)
         assert np.abs(scaled).max() < 32767
         samples = scaled.astype(np.int16).reshape(-1, 1)
-        data = _lossless_round_trip(samples)
+        data = _lossless_round_trip(samples, "lossless_rice")
         header = 4 + struct.calcsize("!IIHHBBBB") + 4 + 4
         assert data[header] == 1, "value-table mapping expected"
         assert samples.nbytes / len(data) > 4.0
@@ -65,7 +65,7 @@ class TestLosslessMode:
         """Dense values on a lattice of step 4 use the affine mapping."""
         rng = np.random.default_rng(2)
         samples = (rng.integers(-1000, 1000, size=(5000, 1)) * 4 + 3).astype(np.int16)
-        data = _lossless_round_trip(samples)
+        data = _lossless_round_trip(samples, "lossless_rice")
         header = 4 + struct.calcsize("!IIHHBBBB") + 4 + 4
         assert data[header] == 0, "affine mapping expected"
         offset, step = struct.unpack("!iI", data[header + 1 : header + 9])
@@ -250,9 +250,10 @@ class TestMalformedStreams:
         full = WaveformCodec(mode="full").compress(_make_waveform(T=2000, N=2))[0]
         with pytest.raises(ValueError, match="legacy WFCX"):
             WaveformCodec.decompress(b"WFCX" + _body(full)[4:])
-        lossless = WaveformCodec(mode="lossless").compress(np.zeros((4, 1), dtype=np.int16))[0]
-        with pytest.raises(ValueError, match="only in the WFC2"):
-            WaveformCodec.decompress(b"WFCX" + _body(lossless)[4:])
+        for mode in ("lossless", "lossless_rice"):
+            lossless = WaveformCodec(mode=mode).compress(np.zeros((4, 1), dtype=np.int16))[0]
+            with pytest.raises(ValueError, match="only in the WFC2"):
+                WaveformCodec.decompress(b"WFCX" + _body(lossless)[4:])
 
     @pytest.mark.parametrize(
         ("mutate", "message"),
@@ -368,7 +369,7 @@ class TestMalformedStreams:
             wc._inflate(wc._ZSTD_MAGIC + b"\x00" * 8)
 
     def _lossless_channel(self, samples: np.ndarray[Any, Any]) -> tuple[bytes, int]:
-        body = _body(WaveformCodec(mode="lossless").compress(samples)[0])
+        body = _body(WaveformCodec(mode="lossless_rice").compress(samples)[0])
         start = 4 + struct.calcsize("!IIHHBBBB") + 4 + 4
         return body, start
 

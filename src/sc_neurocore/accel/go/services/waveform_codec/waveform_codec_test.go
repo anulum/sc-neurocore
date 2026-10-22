@@ -19,12 +19,14 @@ func TestDefaultConfigIsValid(t *testing.T) {
 	}
 }
 
-// TestLosslessModeIsValid accepts the lossless mode added with the WFC2 decoder.
-func TestLosslessModeIsValid(t *testing.T) {
-	config := DefaultConfig()
-	config.Mode = "lossless"
-	if err := ValidateConfig(config); err != nil {
-		t.Fatalf("lossless mode should be valid: %v", err)
+// TestLosslessModesAreValid accepts the streaming lossless mode and the earlier Rice mode.
+func TestLosslessModesAreValid(t *testing.T) {
+	for _, mode := range []string{"lossless", "lossless_rice"} {
+		config := DefaultConfig()
+		config.Mode = mode
+		if err := ValidateConfig(config); err != nil {
+			t.Fatalf("%s mode should be valid: %v", mode, err)
+		}
 	}
 }
 

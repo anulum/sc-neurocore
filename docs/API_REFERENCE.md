@@ -40008,7 +40008,13 @@ mode : str
     - ``"full"``: spike timing + waveform templates + background LFP (~137x)
     - ``"waveform"``: spike timing + waveform templates, no background (~1700x)
     - ``"spike"``: spike timing only, Neuralink-equivalent (~4500x)
-    - ``"lossless"``: every input sample exactly (integer input only)
+    - ``"lossless"``: every input sample exactly (integer input only), with the
+      streaming coder of ``waveform_stream`` (ADC levels, sign-sign LMS, range coder)
+    - ``"lossless_rice"``: every input sample exactly, with the earlier per-channel
+      fixed predictor and Rice codes (faster to build, about 3-4 % larger)
+adc_bits : int or None
+    ADC width for ``"lossless"`` (1..16); ``None`` detects the smallest width whose
+    level mapping is one-to-one on the input.
 backend : str
     ``"auto"`` (default: Rust kernels when installed, else NumPy),
     ``"rust"`` (refuses when the engine lacks the kernels) or
@@ -40018,11 +40024,61 @@ backend : str
     public Neuralink compression-challenge recordings the lossy ratios are
     different and depend on spike detection; see the benchmark records.
 
-- **__init__**(threshold_sigma, snippet_samples, max_templates, template_threshold, quantize_bits, mode, backend)
+- **__init__**(threshold_sigma, snippet_samples, max_templates, template_threshold, quantize_bits, mode, backend, adc_bits)
 - **compress**(waveform)
   - Compress raw electrode waveform.
 - **decompress**(data, \*, max_samples, backend)
   - Decode a stream written by ``compress``.
+
+---
+
+## Module `spike_codec.waveform_stream`
+
+### Class `LosslessStreamEncoder`
+Stateful lossless encoder for a multi-channel int16 stream.
+
+Parameters
+----------
+channels : int
+    Channels per window.
+adc_bits : int
+    ADC width 1..16 (16 accepts any int16 stream; see ``detect_adc_bits``).
+groups : int
+    Contiguous channel groups, each with its own range coder (coded in parallel in Rust).
+backend : str
+    ``"auto"`` (Rust when installed), ``"rust"`` or ``"python"``; identical packets.
+
+- **__init__**(channels, adc_bits, groups, backend)
+- **encode**(window)
+  - Encode a ``(samples, channels)`` window of int16-range integers into a packet.
+
+### Class `LosslessStreamDecoder`
+Stateful lossless decoder matching ``LosslessStreamEncoder`` (same parameters).
+
+- **__init__**(channels, adc_bits, groups, backend)
+- **decode**(packet, samples)
+  - Decode a packet of ``samples`` rows into an int16 ``(samples, channels)`` window.
+
+### Function `level_of(sample, bits)`
+Return the ADC level of an int16 sample for a ``bits``-bit ADC scaled to int16.
+
+### Function `nominal_value(level, bits)`
+Return the nominal int16 value of an ADC level (inverse scaling, rounded half up).
+
+### Function `detect_adc_bits(samples, backend)`
+Return the smallest ADC width in 1..16 whose level mapping is one-to-one on ``samples``.
+
+Parameters
+----------
+samples : ndarray
+    Integer samples in the int16 range (any shape).
+backend : str
+    ``"auto"``, ``"rust"`` or ``"python"``.
+
+Returns
+-------
+int
+    The ADC width; 16 always qualifies.
 
 ---
 

@@ -15,8 +15,8 @@ pub const WAVEFORM_CODEC_MAX_HEADER_COUNT: f64 = 65535.0;
 pub const WAVEFORM_CODEC_MAX_TEMPLATES: f64 = WAVEFORM_CODEC_MAX_HEADER_COUNT;
 pub const WAVEFORM_CODEC_MIN_QUANTIZE_BITS: f64 = 1.0;
 pub const WAVEFORM_CODEC_MAX_QUANTIZE_BITS: f64 = 8.0;
-// Mode bytes: full 0, waveform 1, spike 2, lossless 3.
-pub const WAVEFORM_CODEC_VALID_MODES: [f64; 4] = [0.0, 1.0, 2.0, 3.0];
+// Mode bytes: full 0, waveform 1, spike 2, lossless_rice 3, lossless (streaming coder) 4.
+pub const WAVEFORM_CODEC_VALID_MODES: [f64; 5] = [0.0, 1.0, 2.0, 3.0, 4.0];
 
 #[derive(Debug, Clone)]
 pub struct WaveformCodec {
@@ -225,7 +225,7 @@ pub fn validate_waveform_codec(state: &WaveformCodec) -> bool {
             WAVEFORM_CODEC_MIN_QUANTIZE_BITS,
             WAVEFORM_CODEC_MAX_QUANTIZE_BITS,
         )
-        && finite_integer_in_range(state.mode, 0.0, 3.0)
+        && finite_integer_in_range(state.mode, 0.0, 4.0)
         && WAVEFORM_CODEC_VALID_MODES.contains(&state.mode)
 }
 
@@ -275,12 +275,14 @@ mod tests {
 
     #[test]
     fn test_waveform_codec_accepts_lossless_and_rejects_unknown_mode() {
-        let mut state = WaveformCodec::new();
-        state.mode = 3.0;
-        assert!(validate_waveform_codec(&state));
+        for mode in [3.0, 4.0] {
+            let mut state = WaveformCodec::new();
+            state.mode = mode;
+            assert!(validate_waveform_codec(&state));
+        }
 
         let mut state = WaveformCodec::new();
-        state.mode = 4.0;
+        state.mode = 5.0;
         assert!(!validate_waveform_codec(&state));
     }
 

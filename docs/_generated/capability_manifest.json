@@ -976,9 +976,9 @@
     "public_documentation_pages": 646,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
-    "rust_pyo3_model_wrappers": 208,
+    "rust_pyo3_model_wrappers": 210,
     "studio_catalogue_models": 185,
-    "test_files": 5386
+    "test_files": 5387
   },
   "documentation": {
     "public_pages": [
@@ -3154,6 +3154,8 @@
       "UpperMotorNeuron",
       "VIPNeuron",
       "WangBuzsakiNeuron",
+      "WaveformLosslessDecoder",
+      "WaveformLosslessEncoder",
       "WendlingNeuron",
       "WilsonCowanUnit",
       "WilsonHRNeuron",
@@ -8620,6 +8622,7 @@
       "tests/test_waveform_codec_polyglot_contracts.py",
       "tests/test_waveform_codec_waveform_codec.py",
       "tests/test_waveform_codec_waveform_codec_mode.py",
+      "tests/test_waveform_stream.py",
       "tests/test_whitebox_taps_expose_state_taps.py",
       "tests/test_whitebox_taps_state_tap.py",
       "tests/test_wilson_cowan_accel_dispatch_contracts.py",

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1295
+expected_file_count = 1297
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5273,3 +5273,11 @@ rationale = "Coverage closure of quantum and waveform codec optional paths."
 [[file]]
 path = "tests/test_waveform_codec_backends.py"
 rationale = "WaveformCodec Rust and NumPy backends produce identical streams."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/waveform_stream.py"
+rationale = "Streaming lossless coder: Python reference of the Rust stream coder and its public wrappers."
+
+[[file]]
+path = "tests/test_waveform_stream.py"
+rationale = "Streaming lossless coder: Rust and Python packet identity, refusals and hostile packets."

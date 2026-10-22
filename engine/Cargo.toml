@@ -76,6 +76,13 @@ pyo3-build-config = "0.29"
 name = "bench_block_floating_dense"
 
 [[example]]
+name = "bench_waveform_stream"
+
+[[example]]
+name = "bench_waveform_stream_gpu"
+required-features = ["gpu"]
+
+[[example]]
 name = "bench_dcls_q88"
 
 [[example]]
