@@ -42742,6 +42742,78 @@ that the learnable-delay kernel is hardware-faithful across the whole stack.
 
 ---
 
+## Module `studio.desktop.configuration`
+
+### Class `DesktopConfiguration`
+The admitted loopback port and durable project namespace.
+
+Attributes
+----------
+port : int
+    Reserved listening port, retained to preserve browser storage origin.
+project_root : pathlib.Path
+    Absolute project location selected before the backend starts.
+
+
+### Function `read_configuration(path)`
+Read a bounded configuration without overwriting unknown schema versions.
+
+Parameters
+----------
+path : pathlib.Path
+    Configuration file in the user's XDG configuration directory.
+
+Returns
+-------
+DesktopConfiguration or None
+    Valid retained configuration, or no prior successful launch.
+
+Raises
+------
+DesktopStartRefused
+    The file is unreadable, malformed, oversized, or unsupported.
+StudioProjectRootRefused
+    The retained project directory is unusable.
+
+### Function `write_configuration(path, configuration)`
+Atomically retain an admitted origin and namespace with private permissions.
+
+Parameters
+----------
+path : pathlib.Path
+    File whose parent directory was prepared by the desktop launcher.
+configuration : DesktopConfiguration
+    Configuration from a backend that passed readiness admission.
+
+Raises
+------
+OSError
+    The write or atomic replacement failed. The previous file is preserved
+    unless replacement completed.
+
+---
+
+## Module `studio.desktop.paths`
+
+### Class `DesktopPaths`
+XDG directories and the legacy project location for one desktop user.
+
+Attributes
+----------
+config, data, state, cache : pathlib.Path
+    Canonical per-user locations outside the application installation.
+legacy_projects : pathlib.Path
+    Existing standalone project namespace; never moved automatically.
+
+- **from_environment**(environ)
+  - Resolve per-user paths without creating directories.
+- **prepare**()
+  - Create private profile directories without touching installation resources.
+- **project_root**(environ, stored)
+  - Select an explicit, stored, existing legacy, or new XDG project root.
+
+---
+
 ## Module `studio.event_training_budget`
 
 ### Function `admit_event_training_input(contract, batch_size)`

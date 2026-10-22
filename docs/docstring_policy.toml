@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1300
+expected_file_count = 1305
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5293,3 +5293,23 @@ rationale = "Spike-event layer: detection, Rust and Python packet identity, refu
 [[file]]
 path = "tests/test_spike_codec_base_distribution_import.py"
 rationale = "Codec package imports and round-trips with the packages excluded from the wheel blocked."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/__init__.py"
+rationale = "The desktop startup refusal retains the common authored-refusal contract without importing the optional Qt runtime."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/paths.py"
+rationale = "Desktop configuration, data, state and caches follow XDG while explicit and existing legacy project locations are preserved without migration."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/configuration.py"
+rationale = "A bounded versioned file atomically preserves the admitted browser origin and project directory; malformed or future configuration is refused without replacement."
+
+[[file]]
+path = "tests/test_studio_desktop_paths.py"
+rationale = "Actual XDG directories remain private, existing projects remain untouched, and relative profile configuration refuses before directory preparation."
+
+[[file]]
+path = "tests/test_studio_desktop_configuration.py"
+rationale = "Actual configuration writes preserve private permissions and replacement atomicity; corrupt, oversized and unsupported documents remain unchanged on refusal."

@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add per-user desktop profile paths and bounded, versioned configuration. Preserve legacy projects, refuse unusable profile roots and retain the selected origin and project directory through atomic private writes.
+
 - Match optional Studio simulator getter types to the native bridge callable contract, including installations without the optional engine.
 
 ### Changed
