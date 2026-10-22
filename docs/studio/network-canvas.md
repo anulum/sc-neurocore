@@ -594,4 +594,4 @@ fails while running answers 422 with the failure.
 | Property editor for a population's model, count, type, drive and params | driven by `GET /api/graph/models/{name}`; parsed in the browser, admitted by the server |
 | Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph; add, connect, edit, delete and undo without a pointer, surviving save and reopen |
 | Layout independence | positions are saved with the graph and excluded from the run's specification and `graph_sha256` |
-| Compiled (hardware) execution of a graph | separate unit; the pipeline compiles a fixed equation |
+| Compiled (hardware) execution of a graph | separate, narrower lowering/co-simulation/synthesis pipeline; unsupported graphs are refused, not mapped to a template |

@@ -9,12 +9,19 @@ physical board deployment needs separate validation.
 
 ## Quick Start
 
-1. Write your ODE in the Equation Editor (switch to ODE mode)
-2. Click **Build IR** to build the intermediate representation
-3. Click **Emit SystemVerilog** to emit SystemVerilog
-4. Open the **FPGA synthesis** view
-5. Select your target FPGA (ice40, ECP5, Gowin, Xilinx)
-6. Click **Synthesise** for exact Yosys results, or **Estimate** for a quick heuristic
+1. Start with a schema-backed catalogue model or a supported direct Python
+   equation compilation; inspect the current RTL and traceability.
+2. For catalogue models, obtain the current bit-exact RTL/C parity report.
+3. Open **FPGA synthesis** and read tool availability and prerequisites.
+4. Choose a target profile (ice40, ECP5, Gowin or Xilinx).
+5. Run the admitted **Synthesise** / **Synthesise + Route** workflow and read
+   its actual outcome, fit and artifact report.
+6. Use **Estimate** only as a labelled heuristic for the applicable IR source.
+
+The Rust **Build IR** adapter currently creates a fixed LIF template; it does
+not establish translation of arbitrary ODEs. See the
+[hardware user guide](manual/hardware.md) before interpreting IR, precision,
+synthesis or physical-device claims.
 
 ## Workflows
 
@@ -52,15 +59,15 @@ This gives a rough sizing before committing to a full synthesis run.
 ### End-to-End Pipeline
 
 ```
-ODE equation
-  → [IR button] SC Intermediate Representation
-  → [SV button] SystemVerilog
-  → [FPGA synthesis view → Synthesise + Route] Yosys resource report
-  → [same isolated job] nextpnr routed-design and timing report (ice40/ECP5 only)
+Schema-backed catalogue model
+  → [Generate RTL] source plus traceability
+  → [Run RTL co-sim] current bit-exact RTL/C report
+  → [Synthesise + Route] Yosys resource report
+  → [same isolated job] nextpnr routing/timing report (ice40/ECP5 only)
 ```
 
-From differential equation to FPGA resource estimate in seconds, from a
-single browser tab.
+Direct ODE synthesis has its own admitted-source path. Neither source emission
+nor a resource estimate establishes timing closure or operation on a board.
 
 ## Supported FPGA Targets
 

@@ -1,113 +1,70 @@
 # Tutorial: Visual SNN Studio Quickstart
 
-This tutorial walks through the complete Studio workflow: browse neuron
-models, design a network, train it, compile to Verilog, and estimate
-FPGA resources — all from a browser.
+Run a catalogue neuron, compare an input change, then save and reproduce the
+experiment. No training dataset, Rust compiler or FPGA tool is required for
+this exercise. Studio is a development preview; advanced actions depend on
+the current model and deployment capabilities.
 
-**Time:** 10 minutes
-**Prerequisites:** `pip install sc-neurocore[studio]`
+## 1. Open Studio
 
-## 1. Launch the Studio
+From your activated environment with the `studio` extra installed:
 
 ```bash
 sc-neurocore studio
 ```
 
-Your browser opens at `http://127.0.0.1:8001/studios/sc-neurocore/`. The
-interface starts in **Models** mode with the first of <!-- count:studio_catalogue_models -->185<!-- /count --> neuron models
-selected and a live voltage trace displayed.
+Open `http://127.0.0.1:8001/studios/sc-neurocore/` if the browser does not open.
+If API documentation appears instead, check the
+[frontend installation](../studio/manual/installation.md).
 
-## 2. Explore Neuron Models
+## 2. Run a small experiment
 
-The left panel lists all models by category. Click any model to load it:
+1. Choose **Models**, then **SCLapicqueLIFNeuron**.
+2. Keep model parameters at their defaults. Use constant current **1.2**,
+   duration **50 ms** and timestep **0.1 ms** in the available controls.
+3. Leave the seed empty for this deterministic run.
+4. Run with **Space** outside a text field or the workbench's run action.
+5. Wait for success, inspect **Trace**, spike count, final state and **Data table**.
 
-1. Click **AdExNeuron** — an adaptive exponential integrate-and-fire model
-2. Adjust the **current** slider (parameter sliders, left panel) to 15.0 nA
-3. Watch the trace update live — you should see adaptation: initial
-   burst followed by regular tonic spiking
-4. Click **Characterize** (Analyse group) to run a one-click characterisation
-5. The **Characterization** view shows: firing pattern, f-I curve, top sensitivities
+Read units from the model. Zero spikes can be a valid result. An older trace
+remaining on screen does not mean a failed rerun succeeded.
+The [full first-experiment procedure](../studio/manual/first-experiment.md)
+explains the controls and checks.
 
-## 3. Compare Models
+## 3. Compare one change
 
-1. Open the **Multi-model** view (Neuron group of the view switcher)
-2. Select 2-3 models from the multi-model picker (left panel):
-   - StochasticLIFNeuron (simple, fast)
-   - AdExNeuron (adaptive)
-   - HodgkinHuxleyNeuron (biophysical)
-3. All traces overlay in one plot for direct comparison
+Export the baseline with **JSON**, change only the current to **0**, and run
+again. Compare the trajectories and reported spikes. Restore the baseline
+current and rerun before exporting that experiment.
 
-## 4. Write a Custom ODE
+## 4. Save and reproduce
 
-1. Switch the source to **ODE** (the Models / ODE switch at the top)
-2. Select the **Hodgkin-Huxley** template from the dropdown
-3. The Monaco editor shows the four coupled ODEs
-4. Adjust parameters via sliders — tau_m, C, E_L
-5. Choose a parameter in **Sweep X**, open the **Bifurcation** view and click
-   **Run async analysis** to generate a bifurcation diagram
+1. Use **Projects → Save** with a new name, then **Refresh** and reopen it.
+2. Check the restored inputs; a project save keeps settings, not every result.
+3. Download **JSON**, **CSV** and **Replay pack**, and check the saved files.
+4. Replay the pack with the activated environment and its actual filename:
 
-## 5. Design a Network
+```bash
+python -m sc_neurocore.studio.replay_pack pack.json --json
+```
 
-1. Open the **Network canvas** view (Network group)
-2. Click **+ Exc** to add an excitatory population (80 neurons)
-3. Click **+ Inh** to add an inhibitory population (20 neurons)
-4. Drag from the excitatory node handle to the inhibitory node to create
-   a projection
-5. Drag from inhibitory back to excitatory for reciprocal inhibition
-6. Click **Simulate** — the status bar shows spike count and firing rates
+Exit 0 means a match under the reported rules, 1 an executed mismatch, and 2 a
+refusal before execution. **Sessions → Save** is separate browser-local storage.
+See [Projects and evidence](../studio/manual/projects-and-evidence.md).
 
-## 6. Train with Surrogate Gradients
+## 5. Choose your next workflow
 
-1. Open the **Training** view (Research group)
-2. Set dataset to **Synthetic** (fast, for demo)
-3. Set epochs to **5**, surrogate to **atan_surrogate**
-4. Click **Train** in the training panel
-5. Watch loss and accuracy curves update live as each epoch completes
-6. Layer spike rate bars show activity per spiking layer
-7. Click **Stop** to abort early if needed
+| Goal | Continue here |
+|---|---|
+| Custom ODEs, sweeps, precision and comparisons | [Experiments and analysis](../studio/manual/experiments.md) |
+| Populations, projections, training, candidates or fitting | [Networks and training](../studio/manual/networks-and-training.md) |
+| RTL, parity, FPGA target profiles and synthesis | [Hardware workflow](../studio/manual/hardware.md) |
+| Login, jobs, recovery or a failed operation | [Troubleshooting](../studio/manual/troubleshooting.md) |
 
-## 7. Compile to Verilog
+The current Rust **Build IR** adapter constructs a fixed LIF graph and is not a
+translation of arbitrary entered equations. Structural IR verification does
+not establish source fidelity. Use the hardware guide's separate catalogue
+and direct-Python compiler procedures and retain their qualification limits.
 
-1. Switch to **ODE** mode
-2. Select the **LIF** template
-3. Click **Build IR** — the Compiler Inspector shows the SC Intermediate
-   Representation with a verification badge
-4. Click **Emit SystemVerilog** — SystemVerilog source appears in the right pane
-5. This Verilog is synthesisable — it maps the ODE to Q8.8 fixed-point
-   hardware
-
-## 8. Synthesise to FPGA
-
-1. Open the **FPGA synthesis** view (Code and hardware group)
-2. Select target: **ice40** (iCE40 UP5K)
-3. Click **Synthesise** (requires Yosys installed)
-4. Resource bars show LUT, FF, BRAM, DSP utilisation
-5. Click **All Targets** for a side-by-side comparison across all 4 targets
-6. If Yosys is not installed, click **Estimate** for a heuristic from the IR
-
-## 9. Full Pipeline
-
-1. Go back to the **Network canvas** view
-2. With your network designed, click **Pipeline → ICE40**
-3. The pipeline chains: validate → simulate → lower → co-simulate → synthesise,
-   and builds hardware only for a network it can reproduce (LIF and perfect
-   integrator populations with constant drive); anything else is refused with
-   every reason
-4. The result under the canvas shows the step it ended at and what the
-   co-simulation of the RTL established
-
-## 10. Save Your Work
-
-1. In the left sidebar under **Projects**, click **Save**
-2. Enter a project name
-3. The entire state — equations, parameters, network graph, synthesis
-   target — is saved as JSON on the server
-4. Click **Refresh** to see saved projects, click a name to restore
-
-## What's Next
-
-- [Studio Guide](../guides/studio.md) — full API reference, all 18+ views, protocols
-- [Synthesis Dashboard](../studio/synthesis-dashboard.md) — FPGA targets, multi-target details
-- [Training Monitor](../studio/training-monitor.md) — surrogates, cell types, SSE streaming
-- [Network Canvas](../studio/network-canvas.md) — NIR format, population/projection API
-- [Integration](../studio/integration.md) — pipeline details, project storage format
+[Complete user manual](../studio/manual/index.md) ·
+[Technical Studio guide](../guides/studio.md)

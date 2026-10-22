@@ -149,6 +149,16 @@ nav:
       - Brian2 Parity: validation/cross_framework_brian2.md
       - NeuroBench SHD: validation/neurobench_shd.md
   - Studio (Experimental):
+      - User Manual:
+          - Start Here: studio/manual/index.md
+          - Install and Launch: studio/manual/installation.md
+          - First Experiment: studio/manual/first-experiment.md
+          - Experiments and Analysis: studio/manual/experiments.md
+          - Networks and Training: studio/manual/networks-and-training.md
+          - Projects, Recovery and Evidence: studio/manual/projects-and-evidence.md
+          - Hardware and Target Catalogue: studio/manual/hardware.md
+          - Troubleshooting: studio/manual/troubleshooting.md
+          - Glossary: studio/manual/glossary.md
       - Overview: studio/index.md
       - Compiler Inspector: studio/compiler-inspector.md
       - Hardware Numeric Contract: studio/numeric-contract.md

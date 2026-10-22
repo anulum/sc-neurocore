@@ -1,16 +1,20 @@
 # First-Time Onboarding
 
 On first visit, the Studio displays a guided tour introducing key
-features. The overlay walks through 8 steps covering the full workflow
-from model selection to FPGA deployment. It appears once and doesn't
+features. The overlay introduces model selection, analysis, network design,
+training and the hardware workflow; it does not qualify physical FPGA deployment.
+It appears once and doesn't
 return (state stored in `localStorage`).
+
+For a complete sequence with expected outcomes and recovery steps, use the
+[user manual](manual/index.md) and [first experiment](manual/first-experiment.md).
 
 ## Tour Steps
 
 | Step | Title | What It Explains |
 |------|-------|-----------------|
 | 1 | Welcome | What the Studio does — design, train, compile, deploy SNNs |
-| 2 | Model Browser | 179 runtime catalogue entries with parameter sliders |
+| 2 | Model Browser | Catalogue models available in the current build, with parameter controls |
 | 3 | ODE Mode | Custom equations with syntax highlighting |
 | 4 | Analysis Views | 18+ views: trace, phase, ISI, f-I, bifurcation, heatmap |
 | 5 | FPGA Pipeline | Compiler Inspector → Synthesis Dashboard |

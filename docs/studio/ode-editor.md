@@ -2,8 +2,9 @@
 
 The equation editor uses [Monaco](https://microsoft.github.io/monaco-editor/)
 (the VS Code engine) with a custom language definition for neuron ODE
-equations. Syntax highlighting makes equations readable at a glance and
-catches typos before simulation.
+equations. Syntax highlighting distinguishes expressions visually; the
+simulation/compilation admission checks validate them. Colouring alone does
+not establish that a name, function or equation is accepted.
 
 ## Language: `sc-ode`
 
@@ -30,12 +31,12 @@ configuration needed.
 ## Writing Equations
 
 The editor expects one ODE per line in the form `dX/dt = ...`, followed
-by `threshold:` and `reset:` directives:
+by `# threshold:` and `# reset:` directives:
 
 ```
 dv/dt = -(v - E_L) / tau_m + I / C_m
-threshold: v >= V_threshold
-reset: v = E_L
+# threshold: v >= V_threshold
+# reset: v = E_L
 ```
 
 Multi-variable models work the same way:
@@ -44,8 +45,8 @@ Multi-variable models work the same way:
 # Adaptive Exponential (AdEx)
 dv/dt = -(v - E_L) / tau_m + delta_T * exp((v - V_T) / delta_T) / tau_m - w / C_m + I / C_m
 dw/dt = a * (v - E_L) / tau_w - w / tau_w
-threshold: v >= V_threshold
-reset: v = V_reset; w = w + b
+# threshold: v >= V_threshold
+# reset: v = V_reset; w = w + b
 ```
 
 ## Parameter Recognition
@@ -81,12 +82,17 @@ The Monaco instance is configured for equation editing:
 
 The Studio has two input modes:
 
-1. **Model browser** — select from 118 built-in neuron models,
+1. **Model browser** — select from the current catalogue of neuron models,
    adjust parameters with sliders
 2. **ODE mode** — write custom equations in the Monaco editor
 
-Toggle with the **ODE** button in the header. Both modes feed into
-the same simulation engine and all analysis views work with either.
+Use the **Models / ODE** source switch. The modes have different capability
+and numerical contracts; not every analysis is offered for both. Phase/ISI
+views depend on returned state/spike data, characterisation is model-only,
+and precision/IR-inspector views are offered in ODE mode. Read
+[Experiments and analysis](manual/experiments.md) and the
+[compiler limitation](manual/hardware.md#custom-equations-and-the-compiler-inspector)
+before treating an ODE run as hardware evidence.
 
 ## Implementation
 

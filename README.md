@@ -178,7 +178,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 31 |
 | Python test files | 5393 |
-| Public documentation pages | 646 |
+| Public documentation pages | 655 |
 | GitHub Actions workflows | 23 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -390,7 +390,8 @@ sc-neurocore studio              # opens browser at http://127.0.0.1:8001
 For measured comparisons and their evidence limits, see
 [Cross-Framework Evidence](docs/benchmarks/cross_framework.md).
 
-Full documentation: [Studio Guide](https://anulum.github.io/sc-neurocore/studio/)
+User manual: [SNN Studio](docs/studio/manual/index.md).
+Technical overview: [Studio Guide](https://anulum.github.io/sc-neurocore/studio/)
 
 ## Docker
 

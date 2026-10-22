@@ -9,6 +9,18 @@ spiking neural network workflow: model design, network building, surrogate
 gradient training, SystemVerilog compilation, and FPGA synthesis evidence.
 Physical deployment requires separate board validation.
 
+## Getting started
+
+Follow the [SNN Studio user manual](manual/index.md) for a sequential guide:
+installation, a first experiment, analysis, networks/training, saving and
+recovery, reproducibility, hardware and troubleshooting. Start with the
+[first experiment](manual/first-experiment.md) if the interface is already open.
+
+The [hardware chapter](manual/hardware.md) distinguishes emitted source,
+co-simulation, synthesis and physical-device evidence, including the current
+custom-equation IR limitation. This overview retains the detailed platform and
+UI contracts for reference.
+
 ## Benchmark contributions
 
 `POST /api/benchmarks/run` measures the DCLS kernel locally and returns a
@@ -307,7 +319,7 @@ cd studio/frontend && npm run dev  # http://localhost:5173
 ├──────────────────────────────────────────────────────────────────┤
 │                    FastAPI Backend (Python)                       │
 ├──────────┬──────────┬──────────┬──────────┬──────────────────────┤
-│ 118      │ PyTorch  │ equation │ Yosys    │ Project              │
+│ Models   │ PyTorch  │ equation │ Yosys    │ Project              │
 │ neurons  │ training │ compiler │ nextpnr  │ save/load            │
 ├──────────┴──────────┴──────────┴──────────┴──────────────────────┤
 │              SC-NeuroCore Python + Rust Engine                    │
@@ -917,10 +929,10 @@ status and checkpoint payloads.
 
 ### Compiler Inspector
 
-Build SC Intermediate Representation from ODE equations, verify the
-graph, and emit synthesisable SystemVerilog. View the IR text and
-generated Verilog side-by-side with a verification badge. Direct
-equation-to-Verilog output includes a source-to-RTL traceability strip with
+The current Rust **Build IR** adapter constructs a fixed LIF template, not
+an equivalent graph for arbitrary entered equations. Its verification badge
+reports structural checks; emitted text still requires real tool qualification.
+The separate direct Python equation-to-Verilog output includes a source-to-RTL traceability strip with
 source, RTL, and manifest digests plus controlled terminal status for evidence
 review. The strip can export a compile evidence bundle with replay metadata for
 the direct SystemVerilog emit route. Adaptive-precision formal-bundle manifests
@@ -956,7 +968,7 @@ each supported target and the aggregate matrix.
 One-click pipeline from the Network Canvas:
 
 ```
-Network Graph → Validate → Simulate → Compile → Synthesise
+Network Graph → Validate → Simulate → Lower → Co-simulate → Synthesise
 ```
 
 The Network Canvas displays the worker-backed pipeline evidence contract beside
@@ -1053,11 +1065,11 @@ slower for large networks.
 
 <p align="center">
   <a href="https://www.anulum.li">
-    <img src="assets/anulum_logo_company.jpg" height="70" alt="ANULUM">
+    <img src="../assets/anulum_logo_company.jpg" height="70" alt="ANULUM">
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://www.anulum.li">
-    <img src="assets/fortis_studio_logo.jpg" height="70" alt="Fortis Studio">
+    <img src="../assets/fortis_studio_logo.jpg" height="70" alt="Fortis Studio">
   </a>
   <br>
   <em>Developed by <a href="https://www.anulum.li">ANULUM</a> / Fortis Studio</em>

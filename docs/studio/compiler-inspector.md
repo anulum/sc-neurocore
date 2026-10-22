@@ -8,15 +8,29 @@ and Q8.8 fixed-point parameter encoding.
 The inspector keeps the generated RTL and its source traceability visible
 for review before downstream synthesis or hardware validation.
 
-## Quick Start
+## Current equation-translation boundary
 
-1. Switch to **ODE mode** and enter your equations
-2. Click **Build IR** to build the stochastic computing IR graph
-3. The left pane shows the IR text; the right pane shows SystemVerilog
-4. A green/red badge indicates verification status
-5. Click **Emit SystemVerilog** for direct equation-to-Verilog via the Python compiler
-6. Inspect the source-to-RTL traceability strip for the source digest,
-   RTL digest, module name, and compile evidence class
+The Studio Rust `build_ir_from_equation` adapter currently constructs a fixed
+LIF graph. Submitted equations, threshold and reset are not lowered into their
+corresponding operations. A structurally valid IR graph therefore does not
+establish that the entered equations were compiled. Treat **Build IR** as
+inspection of that template, not general equation-to-hardware evidence.
+
+The direct Python equation compiler is a separate route with its own
+supported-operation contract and source-to-RTL traceability. Generated source
+still needs numerical, RTL and tool qualification. For a task-oriented path,
+read the [hardware user guide](manual/hardware.md).
+
+## Inspection workflow
+
+1. Switch to **ODE mode** and retain the equations and numerical inputs.
+2. Use **Build IR** only with the fixed-template limitation above in mind.
+3. Inspect its IR text, emitted source and structural-verification diagnostics.
+4. Use **Generate RTL** / the direct Python path when evaluating supported
+   equation compilation; **Emit SystemVerilog** also invokes the direct path.
+5. Inspect source/RTL digests, module name and compile evidence class.
+6. Qualify emitted source through the appropriate simulation and tool workflow;
+   neither a green structural badge nor source emission proves synthesisability.
 
 ## What the IR Represents
 
@@ -52,7 +66,7 @@ in the red banner above the split pane.
 
 ## Q8.8 Fixed-Point Encoding
 
-All ODE parameters are converted to Q8.8 signed fixed-point format:
+The current Rust template uses Q8.8 constants. In this format:
 
 - 8 integer bits + 8 fractional bits = 16-bit signed
 - Range: -128.0 to +127.996
@@ -74,18 +88,18 @@ SystemVerilog module.
 
 ## Two Compilation Paths
 
-1. **Rust IR path** (`IR` button): Equation → ScGraphBuilder → IR → SystemVerilog.
-   Uses the Rust IR compiler with SSA verification. Produces hardware-level
-   stochastic computing operations (encode, bitwise_and, popcount, lif_step).
+1. **Rust IR inspector** (**Build IR**): fixed LIF template → ScGraphBuilder
+   → IR → SystemVerilog. Uses structural verification; it does not currently
+   translate arbitrary submitted equations into equivalent hardware operations.
 
 2. **Python compiler path** (`SV` button): Equation → AST → Q8.8 Verilog.
    Uses `equation_compiler.py` to generate Verilog directly from the equation
    AST. Produces register-transfer-level Verilog with explicit fixed-point
    arithmetic.
 
-Both paths produce synthesisable output. The Rust IR path is more suitable
-for stochastic computing architectures; the Python path targets conventional
-fixed-point RTL.
+Source emission is a separate result from successful tool compilation,
+co-simulation and synthesis. Do not infer equation fidelity from template
+verification or physical device support from either path.
 
 ## Source-to-RTL Traceability
 
@@ -128,9 +142,10 @@ deterministic across NumPy runtime and coverage-instrumented environments.
 
 ## Co-Simulation
 
-The co-simulation view (accessible via the existing Q8.8 tab or the
-`/api/ir/cosim` endpoint) runs both a float64 Python simulation and a
-Q8.8 fixed-point simulation side by side. It reports:
+The **Q8.8 precision** view and `/api/ir/cosim` compare a float64 run with
+execution of the generated bit-true fixed-point kernel under the selected
+numeric contract. This is separate from RTL-versus-C catalogue co-simulation.
+It reports:
 
 - **max_error**: worst-case absolute difference
 - **mean_error**: average difference

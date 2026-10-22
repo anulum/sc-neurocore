@@ -16,6 +16,18 @@ Both are built from the resolved experiment — the same
 protocol, the initial state, the parameter overrides and the randomness travel
 with the export instead of being reconstructed from a guess.
 
+## Which run an export describes
+
+The toolbar builds an export request from the current controls. The replay-pack
+endpoint resolves and executes that request; it does not take the last displayed
+simulation response as its payload. In particular, **fresh** can draw a new
+stochastic trial at export time. Preserve the original JSON result. To export
+the same observed trial, copy its effective seed into the controls, select
+**replay**, then export and compare the pack's expectation with the original.
+The pack pins the trial it executes; that fact alone does not identify it with
+an earlier fresh run. Code and notebook exports also describe their submitted
+request. See the [user manual](manual/projects-and-evidence.md#replay-a-run).
+
 ## The script
 
 Distribution builds include the model descriptor corpus. Model reference pages
