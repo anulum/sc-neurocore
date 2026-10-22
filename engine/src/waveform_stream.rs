@@ -25,9 +25,12 @@
 //! range coder with 12-bit probabilities.
 //!
 //! Every operation is integer arithmetic, so the Python reference produces identical bytes.
-//! State persists across windows: a window (packet) costs only its range-coder flush, so a
-//! 1 ms window compresses as well as a whole recording. Channels split into contiguous groups;
-//! each group has its own range coder and level table and can be coded in parallel.
+//! State persists across windows, so prediction and probabilities carry on from packet to
+//! packet; each packet adds about 9 bytes per channel group (a 4-byte length and the
+//! range-coder flush). Short packets therefore cost little only when many channels share a
+//! group (1024 channels in one group: 3.4646x with 1 ms windows against 3.4668x with 10 ms),
+//! while a single channel in 1 ms packets falls below 2x. Channels split into contiguous
+//! groups; each group has its own range coder and level table and can be coded in parallel.
 
 use rayon::prelude::*;
 

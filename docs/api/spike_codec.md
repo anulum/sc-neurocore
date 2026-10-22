@@ -109,9 +109,10 @@ before telemetry sections are built: raw samples must be a finite, non-empty
 
 Stateful lossless coding of a multi-channel int16 stream, window by window:
 ADC levels with dense numbering (missing codes leave it), a sign-sign LMS
-predictor and an adaptive binary range coder. State persists across windows,
-so 1 ms packets cost no ratio; every packet decodes to exactly the encoded
-samples. Rust (`backend="auto"`/`"rust"`) and the pure-Python reference
+predictor and an adaptive binary range coder. State persists across windows;
+each packet adds about 9 bytes per channel group, so 1 ms packets cost little
+only when many channels share a group. Every packet decodes to exactly the
+encoded samples. Rust (`backend="auto"`/`"rust"`) and the pure-Python reference
 (`"python"`) write identical packets. Details and measurements are in the
 [BCI codec guide](../guides/bci_codec.md).
 

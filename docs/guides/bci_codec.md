@@ -80,9 +80,20 @@ refuses headers declaring more samples before allocating.
 
 `LosslessStreamEncoder` and `LosslessStreamDecoder`
 (`sc_neurocore.spike_codec.waveform_stream`) code a live multi-channel stream
-window by window. State persists across windows, so a 1 ms window compresses
-as well as a whole recording, and every packet decodes to exactly the samples
-that were encoded:
+window by window. State persists across windows, so prediction and
+probabilities carry on from packet to packet, and every packet decodes to
+exactly the samples that were encoded. Each packet adds about 9 bytes per
+channel group (a 4-byte length and the range-coder flush), so short packets
+cost little only when many channels share a group:
+
+| Stream (10-bit challenge recordings) | 1 ms packets | 10 ms packets |
+|--------------------------------------|-------------:|--------------:|
+| 1024 channels, one group (replayed, 2 s) | 3.4646x | 3.4668x |
+| one channel, first 1000 samples of one file | 1.94x | (one 1000-sample packet: 3.23x) |
+
+The 1024-channel row is one core of the ML350 on 2026-10-22; the single-channel
+row is from the independent review of the coder (codex fcd7). Both ratios count
+packet bytes only; the 3.457x below codes each whole file as one packet.
 
 ```python
 from sc_neurocore.spike_codec.waveform_stream import (
@@ -171,10 +182,12 @@ the same way (every file decoded and compared; coder binaries not counted):
 | Sac `--normal --sparse-pcm` (offline, about 2 CPU-seconds per 5 s file) | 3.466x |
 | Sac `--high --sparse-pcm` (offline, about 34 CPU-seconds per 5 s file) | 3.470x |
 
-On the level files the ADC table was given to the audio coders for free. Our
-coder is within 0.2-0.4 % of the best offline results while coding 1 ms
-windows in real time; the noise in these recordings (about 4.6 bits per
-sample after prediction) bounds every lossless coder near 3.5x.
+On the level files the ADC table was given to the audio coders for free. All
+ratios in this table code each file as one packet (the challenge's framing);
+there our coder is within 0.2-0.4 % of the best offline results, and unlike
+them it also streams (short packets cost little with many channels per
+group, see above). The noise in these recordings (about 4.6 bits per sample
+after prediction) bounds every lossless coder near 3.5x.
 
 Real-time speed of the streaming coder, pure Rust, one channel group,
 measured 2026-10-22: one core of a Xeon E5-2640 (ML350) codes 1024 channels at

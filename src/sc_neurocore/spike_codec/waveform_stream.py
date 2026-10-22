@@ -8,8 +8,11 @@
 
 """Streaming lossless coder for multi-channel int16 electrode data (any BCI system).
 
-The coder keeps state across windows, so a short window (e.g. 1 ms) compresses as well as a
-whole recording, and every packet decodes to exactly the samples that were encoded:
+The coder keeps state across windows, so prediction and probabilities carry on from packet to
+packet, and every packet decodes to exactly the samples that were encoded. Each packet adds
+about 9 bytes per channel group (a 4-byte length and the range-coder flush), so short packets
+cost little only when many channels share a group (1024 channels in one group: 3.4646x with
+1 ms windows against 3.4668x with 10 ms; one channel in 1 ms packets falls below 2x):
 
 1. Each sample maps to its ADC level ``round((x + 32768) * (2**adc_bits - 1) / 65535)``; the
    exact 16-bit value of a level is sent once, as a deviation from the level's nominal value.
