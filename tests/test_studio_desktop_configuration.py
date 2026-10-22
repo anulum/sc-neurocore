@@ -11,7 +11,10 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -81,6 +84,61 @@ def test_configuration_failed_replacement_cleans_only_its_temporary_file(tmp_pat
     assert set(tmp_path.iterdir()) == {path}
     assert set(path.iterdir()) == {original}
     assert original.read_bytes() == b"retained data"
+
+
+def test_configuration_refuses_a_fifo_without_waiting_for_a_writer(tmp_path: Path) -> None:
+    """Refuse a real reader-only FIFO in a bounded, independently reaped process.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Disposable profile with no process holding the FIFO's write end.
+    """
+    path = tmp_path / "desktop.json"
+    os.mkfifo(path)
+    source = Path(__file__).resolve().parents[1] / "src"
+    code = (
+        "import sys; from pathlib import Path; "
+        "sys.path.insert(0, sys.argv[1]); "
+        "from sc_neurocore.studio.desktop.configuration import read_configuration; "
+        "from sc_neurocore.studio.desktop import DesktopStartRefused\n"
+        "try:\n"
+        "    read_configuration(Path(sys.argv[2]))\n"
+        "except DesktopStartRefused as refusal:\n"
+        "    print(str(refusal))\n"
+        "else:\n"
+        "    raise SystemExit('A FIFO must not be accepted as configuration.')\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", code, str(source), str(path)],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip() == "The desktop configuration must be a regular file."
+    assert stat.S_ISFIFO(path.lstat().st_mode)
+    assert set(tmp_path.iterdir()) == {path}
+
+
+def test_configuration_reads_a_regular_file_through_a_profile_symlink(tmp_path: Path) -> None:
+    """Keep an existing regular symlink target unchanged while reading its profile.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Disposable profile whose retained file has a user-managed alias.
+    """
+    target = tmp_path / "retained.json"
+    original = DesktopConfiguration(18031, tmp_path / "projects")
+    write_configuration(target, original)
+    before = target.read_bytes()
+    path = tmp_path / "desktop.json"
+    path.symlink_to(target)
+    assert read_configuration(path) == original
+    assert path.is_symlink() and path.readlink() == target
+    assert target.read_bytes() == before
 
 
 def test_configuration_missing_parent_does_not_create_profile_state(tmp_path: Path) -> None:

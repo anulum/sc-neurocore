@@ -42771,7 +42771,7 @@ DesktopConfiguration or None
 Raises
 ------
 DesktopStartRefused
-    The file is unreadable, malformed, oversized, or unsupported.
+    The file is unreadable, non-regular, malformed, oversized, or unsupported.
 StudioProjectRootRefused
     The retained project directory is unusable.
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -55,12 +56,16 @@ def read_configuration(path: Path) -> DesktopConfiguration | None:
     Raises
     ------
     DesktopStartRefused
-        The file is unreadable, malformed, oversized, or unsupported.
+        The file is unreadable, non-regular, malformed, oversized, or unsupported.
     StudioProjectRootRefused
         The retained project directory is unusable.
     """
     try:
-        with path.open("rb") as stream:
+        with open(
+            path, "rb", opener=lambda name, flags: os.open(name, flags | os.O_NONBLOCK)
+        ) as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise DesktopStartRefused("The desktop configuration must be a regular file.")
             raw = stream.read(MAX_CONFIGURATION_BYTES + 1)
     except FileNotFoundError:
         return None

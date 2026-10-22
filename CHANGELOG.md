@@ -41,6 +41,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Refuse non-regular desktop configuration before reading it, including named pipes without a writer. Keep existing regular-file symlinks readable and preserve refused paths.
+
 - Preserve constant word widths, binary points and vector shapes in native IR emission; reject non-finite, overflowing and malformed constants instead of silently coercing them.
 - Restore declared encoder seeds on every Dense reset, including a single reset clock or a pulse between clocks. Reject nonpositive dot-product fan-in with an explicit configuration diagnostic and align the full-pipeline Python reference with signed truncation and registered encoder latency.
 
