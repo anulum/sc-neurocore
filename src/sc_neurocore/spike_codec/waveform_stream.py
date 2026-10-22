@@ -37,6 +37,7 @@ reference it is tested against (identical bytes) and is far too slow for real-ti
 from __future__ import annotations
 
 import importlib
+import operator
 from types import ModuleType
 from typing import Any
 
@@ -130,6 +131,17 @@ def _native(backend: str) -> ModuleType | None:
             "backend 'rust' needs sc_neurocore_engine with the streaming lossless coder"
         )
     return None
+
+
+def _sample_count(samples: Any) -> int:
+    """Return ``samples`` as an int in ``[0, 2**64)``; refuse anything else before any decoding."""
+    try:
+        count = operator.index(samples)
+    except TypeError:
+        raise ValueError(f"samples must be an integer, got {samples!r}") from None
+    if not 0 <= count < 1 << 64:
+        raise ValueError(f"samples must be in [0, 2**64), got {count}")
+    return count
 
 
 def _validate(channels: int, adc_bits: int, groups: int) -> None:
@@ -632,6 +644,8 @@ class LosslessStreamDecoder:
         ValueError
             For a malformed packet. A framing error (group lengths, trailing bytes, range-coder
             start) leaves the decoder unchanged; content found invalid while decoding breaks the
-            stream state, and the decoder then refuses every later packet (start a new one).
+            stream state, and the decoder then refuses every later packet (start a new one). A
+            sample count that is not an integer in ``[0, 2**64)`` is refused before decoding.
         """
-        return np.asarray(self._coder.decode(bytes(packet), samples), dtype=np.int16)
+        count = _sample_count(samples)
+        return np.asarray(self._coder.decode(bytes(packet), count), dtype=np.int16)

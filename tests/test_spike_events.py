@@ -291,6 +291,22 @@ def test_oversized_sample_requests_are_refused_before_allocation(backend: str) -
 
 
 @pytest.mark.parametrize("backend", BACKENDS)
+def test_invalid_sample_counts_are_refused_before_decoding(backend: str) -> None:
+    """The review's repro: a count of -1 is refused and does not move the decoder backwards."""
+    encoder = SpikeEventEncoder(1, RATE, power_bins=0, backend=backend)
+    decoder = SpikeEventDecoder(1, 20, power_bins=0, backend=backend)
+    zeros = np.zeros((20, 1), dtype=np.int16)
+    assert decoder.decode(encoder.encode(zeros[:5]), 5).events.shape == (0, 1)
+    empty = encoder.encode(zeros[:0])
+    for samples in (-1, 2.5, None, 1 << 64):
+        with pytest.raises(ValueError, match="samples must be"):
+            decoder.decode(empty, samples)
+    assert decoder.decode(empty, 0).events.shape == (0, 1)
+    window = decoder.decode(encoder.encode(zeros[:15]), 15)
+    assert window.first_bin == 0 and window.events.shape == (1, 1)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_framing_errors_leave_the_decoder_unchanged(backend: str) -> None:
     """Group framing is checked before any state changes."""
     data = _recording(400, [[], []])

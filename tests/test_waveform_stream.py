@@ -189,6 +189,20 @@ def test_oversized_sample_requests_are_refused_before_allocation(backend: str) -
     np.testing.assert_array_equal(decoder.decode(packet, 1), np.zeros((1, 2), dtype=np.int16))
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_invalid_sample_counts_are_refused_before_decoding(backend: str) -> None:
+    """Negative, fractional, non-numeric and too large counts are refused; the decoder stays usable."""
+    data = _adc_stream(40, 2, 12)
+    encoder = LosslessStreamEncoder(2, 10, 1, backend)
+    decoder = LosslessStreamDecoder(2, 10, 1, backend)
+    first, second = encoder.encode(data[:20]), encoder.encode(data[20:])
+    np.testing.assert_array_equal(decoder.decode(first, np.int64(20)), data[:20])
+    for samples in (-1, 1.5, "20", 1 << 64):
+        with pytest.raises(ValueError, match="samples must be"):
+            decoder.decode(second, samples)
+    np.testing.assert_array_equal(decoder.decode(second, 20), data[20:])
+
+
 def test_adc_detection_refuses_values_it_would_change() -> None:
     """Fractional or out-of-range samples are refused instead of being cast to int16."""
     for backend in BACKENDS:

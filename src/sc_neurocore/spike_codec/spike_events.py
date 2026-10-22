@@ -45,6 +45,7 @@ from .waveform_stream import (
     _RangeDecoder,
     _RangeEncoder,
     _ResidualModel,
+    _sample_count,
     _unzigzag,
     _zigzag,
 )
@@ -611,9 +612,11 @@ class SpikeEventDecoder:
         ------
         ValueError
             For a malformed packet. Framing errors leave the decoder unchanged; content found
-            invalid while decoding breaks it, and every later packet is refused.
+            invalid while decoding breaks it, and every later packet is refused. A sample count
+            that is not an integer in ``[0, 2**64)`` is refused before decoding.
         """
-        first_bin, events, offsets, first_period, power = self._coder.decode(bytes(packet), samples)
+        count = _sample_count(samples)
+        first_bin, events, offsets, first_period, power = self._coder.decode(bytes(packet), count)
         return SpikeEventWindow(
             int(first_bin),
             np.asarray(events, dtype=np.uint8),
