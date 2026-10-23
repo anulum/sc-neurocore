@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refresh the equation-program benchmark with rounding and Heaviside cases: checked expressions take between 0.4 and 3.0 times their direct Python references on the recorded shared host. These are local regression timings, not production speed claims; see `benchmarks/results/bench_equation_program.json`.
+
 - Add opt-in compiler v2 `round(x)` with ties to even and `heaviside(x, at_zero)` with a dynamic zero value across Python, generated C/Rust/C++, RTL and native IR/source replay. Fixed-point results saturate to the signed word; strict-unit rounding uses base units. The default `lut-v1` lowering is unchanged.
 
 - Describe the Studio simulation input receipt using its public contract name.

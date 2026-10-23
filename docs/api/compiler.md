@@ -322,7 +322,7 @@ namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 bytecode. `benchmarks/bench_equation_program.py` times eight expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 0.9 and 3.2 times the function,
+development host, puts a program at between 0.4 and 3.0 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
