@@ -6,15 +6,16 @@
   "scripts": {
     "dev": "vite",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run && npm run test:build",
     "test:e2e": "playwright test && npm run test:federation",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "test:e2e:export": "npm run build && playwright test --config playwright.export.config.ts",
     "test:e2e:graph": "npm run build && playwright test --config playwright.graph.config.ts",
     "test:federation": "npm run build && playwright test --config playwright.federation.config.ts",
-    "build": "tsc -b && vite build && npm run verify:federation",
+    "build": "tsc -b && vite build && node scripts/normalize-federation-types.ts dist/@mf-types.zip && npm run verify:federation",
     "verify:federation": "node scripts/verify-federation-build.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:build": "node --test --experimental-test-coverage --test-coverage-include=**/scripts/normalize-federation-types.ts --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 scripts/normalize-federation-types.node-test.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -34,10 +35,12 @@
     "@module-federation/runtime": "2.9.0",
     "@module-federation/vite": "1.22.1",
     "@playwright/test": "1.63.0",
+    "@types/adm-zip": "0.5.7",
     "@types/node": "26.6.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
+    "adm-zip": "0.6.1",
     "eslint": "10.11.0",
     "eslint-plugin-jsdoc": "64.5.4",
     "happy-dom": "20.14.5",

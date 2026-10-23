@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Make generated Studio federation type archives independent of build time and
+  host timezone while preserving declarations and archive metadata. Add real
+  command acceptance with complete coverage and retain strict TypeScript checks.
+
 - Export complete sealed Linux desktop bundles as reproducible gzip archives, preserving
   payload permissions, links and build identities. Refuse changed inputs and existing
   output files, and exercise installation from the extracted runtime.

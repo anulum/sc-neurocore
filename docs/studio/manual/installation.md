@@ -74,7 +74,8 @@ A graphical login and the system libraries required by
 A missing system library is separate from a missing Python package.
 
 From the repository root, use a dedicated Python environment. Build the UI using
-the repository's locked frontend dependencies, then install the desktop extras:
+the repository's locked frontend dependencies and qualified Node.js 26.9.0
+profile, then install the desktop extras:
 
 ```bash
 uv venv --python 3.12 .venv-studio
@@ -294,6 +295,14 @@ source and dependency provenance separately, and supply the archive checksum
 through a trusted channel. A checksum alone does not authenticate its publisher.
 Public desktop release, signing, a declared minimum Linux baseline and complete
 compiler acceptance remain separate requirements.
+
+When building the frontend from source, `npm run build` also normalizes the ZIP
+entry timestamps in the generated federation declarations. It retains the type
+names, declaration contents, permissions and comments; a different build time or
+host timezone therefore does not change that archive. The frontend's
+`npm run test:build` command checks the real archive command, preservation and
+refusals with complete coverage of the normalizer. Dependency versions, the
+Node.js toolchain and all other source inputs still need their own provenance.
 
 ### Configure a lab instance
 
