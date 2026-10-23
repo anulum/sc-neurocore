@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import threading
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,7 @@ from sc_neurocore.studio.model_run_contract import (
     model_parameter_contracts,
     model_timestep_parameter,
 )
+from sc_neurocore.studio.catalogue_readiness import ReceiptSnapshot, receipt_verified_detail
 from sc_neurocore.studio.model_numeric_contracts import (
     bit_true_mirrored,
     studio_numeric_contracts,
@@ -134,11 +136,13 @@ def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
     }
 
 
-def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
+def _descriptor_summary(
+    descriptor: ModelDescriptor, *, snapshot: ReceiptSnapshot | None = None
+) -> dict[str, Any]:
     """Build a catalogue list entry from a declared descriptor."""
     tier = descriptor_completeness_tier(descriptor)
     tiers = completeness_tiers(descriptor)
-    verified = _verified_summary(descriptor.class_name)
+    verified = _verified_summary(descriptor.class_name, snapshot=snapshot)
     return {
         "name": descriptor.class_name,
         "module": descriptor.module,
@@ -186,7 +190,8 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
 
 def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build a full catalogue detail view from a declared descriptor."""
-    detail = _descriptor_summary(descriptor)
+    snapshot = ReceiptSnapshot()
+    detail = _descriptor_summary(descriptor, snapshot=snapshot)
     detail.update(
         {
             "docstring": descriptor.summary,
@@ -219,7 +224,7 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
                 ),
                 "reproducible": descriptor.reproducibility.is_reproducible,
             },
-            "readiness": _readiness_detail(descriptor),
+            "readiness": _readiness_detail(descriptor, snapshot=snapshot),
             "documentation_slug": descriptor.documentation_slug,
             "compile_configuration": _compile_configuration(descriptor),
             "profile_contract": _profile_contract(descriptor),
@@ -360,7 +365,9 @@ def _canonical_schema_name(class_name: str) -> str:
         return ""
 
 
-def _verified_summary(class_name: str) -> dict[str, Any]:
+def _verified_summary(
+    class_name: str, *, snapshot: ReceiptSnapshot | None = None
+) -> dict[str, Any]:
     """Return the verified (receipt-bound) tiers for a browse entry.
 
     The declared tiers above come from the descriptor's own flags; these come
@@ -378,7 +385,7 @@ def _verified_summary(class_name: str) -> dict[str, Any]:
             "verified_silicon_label": "none",
             "verified_profile": None,
         }
-    detail = _verified_detail(class_name)
+    detail = _verified_detail(class_name, snapshot=snapshot)
     return {
         "verified_science_tier": detail["science_tier"],
         "verified_science_label": detail["science_label"],
@@ -388,7 +395,7 @@ def _verified_summary(class_name: str) -> dict[str, Any]:
     }
 
 
-def _verified_detail(class_name: str) -> dict[str, Any]:
+def _verified_detail(class_name: str, *, snapshot: ReceiptSnapshot | None = None) -> dict[str, Any]:
     """Return the per-facet verification block, re-derived or sealed.
 
     A checkout re-derives it from the receipts on every read (``source``
@@ -399,7 +406,10 @@ def _verified_detail(class_name: str) -> dict[str, Any]:
     from sc_neurocore.neurons.readiness import REPO_ROOT
 
     if checkout_available(REPO_ROOT):
-        return {**_receipt_verified_detail(class_name), "source": SOURCE_RECEIPTS}
+        return {
+            **_receipt_verified_detail(class_name, snapshot=snapshot),
+            "source": SOURCE_RECEIPTS,
+        }
     return sealed_detail(class_name)
 
 
@@ -408,37 +418,20 @@ def readiness_seal_payload() -> dict[str, Any]:
     from sc_neurocore.neurons.model_identity import identity_registry
 
     registered = [name for name in _CLASS_TO_MODULE if name in identity_registry()]
-    return build_seal(registered, _receipt_verified_detail)
+    return build_seal(registered, partial(_receipt_verified_detail, snapshot=ReceiptSnapshot()))
 
 
-def _receipt_verified_detail(class_name: str) -> dict[str, Any]:
+def _receipt_verified_detail(
+    class_name: str, *, snapshot: ReceiptSnapshot | None = None
+) -> dict[str, Any]:
     """Return the per-facet verification block derived from the receipts now.
 
     The block names the profile the receipts were read for; a receipt of
     another profile of the same class never appears here.
     """
-    from sc_neurocore.neurons.readiness import verify_model
-
-    record = verify_model(class_name, profile=_selected_profile(class_name))
-    return {
-        "profile": record.profile,
-        "science_tier": record.verified_science,
-        "science_label": record.verified_science_label,
-        "silicon_tier": record.verified_silicon,
-        "silicon_label": record.verified_silicon_label,
-        "facets": [
-            {
-                "facet": facet.facet,
-                "declared": facet.declared,
-                "status": facet.status,
-                "receipt": facet.receipt,
-                "changed_subjects": list(facet.changed_subjects),
-                "problems": list(facet.problems),
-                "evidence": [reference.to_public_dict() for reference in facet.evidence],
-            }
-            for facet in record.facets
-        ],
-    }
+    return receipt_verified_detail(
+        class_name, profile=_selected_profile(class_name), snapshot=snapshot
+    )
 
 
 def _verified_perfect(science: int, silicon: int | None, target: str | None) -> bool:
@@ -448,7 +441,9 @@ def _verified_perfect(science: int, silicon: int | None, target: str | None) -> 
     return silicon >= SILICON_RUNGS.index(target)
 
 
-def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
+def _readiness_detail(
+    descriptor: ModelDescriptor, *, snapshot: ReceiptSnapshot | None = None
+) -> dict[str, Any]:
     """Build the auditable dual-axis readiness view for a declared descriptor.
 
     Surfaces the declared science (S0-S5) and silicon (H0-H5) tiers together
@@ -462,7 +457,7 @@ def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
     the same rule to the verified tiers, and only it may be shown as perfect.
     """
     tiers = completeness_tiers(descriptor)
-    verified = _verified_detail(descriptor.class_name)
+    verified = _verified_detail(descriptor.class_name, snapshot=snapshot)
     return {
         "science_tier": tiers.science,
         "science_label": tiers.science_label,
@@ -655,11 +650,12 @@ def list_models() -> list[dict[str, Any]]:
 
 def _build_model_list() -> list[dict[str, Any]]:
     result = []
+    snapshot = ReceiptSnapshot()
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
             descriptor = load_descriptor(name)
             entry = (
-                _descriptor_summary(descriptor)
+                _descriptor_summary(descriptor, snapshot=snapshot)
                 if descriptor is not None
                 else _introspected_summary(name)
             )

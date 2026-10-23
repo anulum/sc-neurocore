@@ -10,6 +10,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Read each facet receipt once per Studio catalogue, model-detail or seal operation,
+  retaining per-model verification and fresh inputs for later detail requests.
+- Refresh four co-simulation receipts through executed Python-to-generated-RTL
+  validators against the current compiler and synchronise installed readiness.
+
 - Discover Studio interface resources without importing the scientific API,
   preserving packaged-asset precedence and existing frontend imports.
 

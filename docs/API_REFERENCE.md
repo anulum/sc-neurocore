@@ -42523,6 +42523,36 @@ dict
 
 ---
 
+## Module `studio.catalogue_readiness`
+
+### Class `ReceiptSnapshot`
+Load one receipt inventory lazily for one catalogue, detail or seal operation.
+
+- **__init__**(directory)
+  - Select an input directory without reading or verifying any receipt.
+- **read**()
+  - Read the inventory once, retrying normally after a failed parse.
+
+### Function `receipt_verified_detail(class_name, *, profile, snapshot)`
+Verify a model against receipt inputs and retain all per-facet diagnostics.
+
+Parameters
+----------
+class_name : str
+    Registered canonical class name.
+profile : str or None
+    Exact Studio schema profile, or the verifier's normal profile selection.
+snapshot : ReceiptSnapshot or None
+    Operation-local parsed inputs; an independent call reads fresh inputs.
+
+Returns
+-------
+dict
+    Verified profile, science/silicon tiers and every facet's status,
+    receipt, changed subjects, problems and evidence references.
+
+---
+
 ## Module `studio.characterize`
 
 ### Function `characterize_model(simulate_fn, base_config)`

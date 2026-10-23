@@ -43,9 +43,16 @@ verified perfect.
 
 ## Verified readiness in an installation
 
-In a checkout, the verified tiers are re-derived on every read: a facet receipt
-counts only while every subject it recorded still has the digest it had. Some
-of those subjects, such as the validator tests and benchmark scripts, are not
+In a checkout, a model detail re-derives its verified tiers from current inputs:
+a facet receipt counts only while every subject it recorded still has the
+digest it had. One catalogue build, model-detail request or readiness-seal
+operation shares a parsed receipt inventory across its verifications. Each
+model still receives its own profile selection, seal and subject-digest checks;
+the parsed inventory is discarded after the operation. The catalogue list is
+cached after its first build, while later model-detail requests read fresh
+receipt inputs. A malformed receipt remains an explicit metadata error.
+
+Some of those subjects, such as the validator tests and benchmark scripts, are not
 part of an installed distribution, so an installation cannot repeat the check.
 Before this was addressed, an installed Studio found those subjects missing
 and showed receipt-bound tiers as lost: Lapicque as S3 instead of S5, four

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1313
+expected_file_count = 1315
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5346,5 +5346,15 @@ allow_missing = []
 
 [[file]]
 path = "tests/test_studio_frontend_resources.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "src/sc_neurocore/studio/catalogue_readiness.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_catalogue_receipt_batch.py"
 require_module_docstring = true
 allow_missing = []
