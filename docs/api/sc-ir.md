@@ -261,6 +261,12 @@ error. A panic-aborting application cannot recover from the legacy call.
 The Python graph API does not expose either allocator or a builder resumed from
 a parsed graph; this addition is a native Rust API, not a new Python method.
 
+Division by the constant one preserves the unsigned physical input bits, even
+for a signed constant. Both backends lower this identity to explicit zero
+extension or low-bit extraction for the destination width. This also applies
+to the scaling division in a one-tick decode; it does not change reset or
+window-completion timing.
+
 ## Scalar register transactions
 
 Rust `ScGraphBuilder::state(initial, ty)` and Python `state(initial, ty)`

@@ -18,6 +18,15 @@ pub(super) fn emit(
     output_width: usize,
 ) {
     let p = output.trim_start_matches('%');
+    if divisor == 1 {
+        if input_width < output_width {
+            let pad = output_width - input_width;
+            m.push_str(&format!("  %{p}_padding = hw.constant 0 : i{pad}\n  {output} = comb.concat %{p}_padding, {numerator} : i{pad}, i{input_width}\n"));
+        } else {
+            m.push_str(&format!("  {output} = comb.extract {numerator} from 0 : (i{input_width}) -> i{output_width}\n"));
+        }
+        return;
+    }
     if input_width <= 64 {
         let word = if input_width < 64 {
             let pad = 64 - input_width;

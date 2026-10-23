@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Lower native constant division by one to unsigned bit-preserving wiring in
+  direct SystemVerilog and CIRCT, avoiding a wide-division simulator discrepancy
+  on Windows while retaining the original numeric expectations. Zero-extend
+  short signed words and preserve single-tick decoder timing.
+
 - Add typed native-IR scalar registers with atomic next-state stores, Boolean
   enables and asynchronous reset. Preserve state bindings in text and expose
   matching Rust/Python builders, direct SystemVerilog and CIRCT lowering;

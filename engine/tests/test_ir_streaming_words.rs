@@ -200,3 +200,47 @@ fn computed_words_keep_their_u64_bit_observation_type() {
         &["OBS 0 0".into(), "OBS 255 4".into(), "OBS 63 8".into()],
     );
 }
+
+/// Constant division observes physical signed words and zero-extends instead of sign-extending.
+#[test]
+fn division_by_one_zero_extends_signed_constants() {
+    for width in [1, 8, 16, 63, 64] {
+        let minimum = i64::MIN >> (64 - width);
+        let words = if width == 1 {
+            vec![0, -1]
+        } else {
+            vec![-1, -2, minimum]
+        };
+        for raw in words {
+            let mut b = ScGraphBuilder::new("signed_identity");
+            let value = b.constant(ScConst::I64(raw), ScType::SInt { width });
+            let quotient = b.div_const(value, 1);
+            b.output("quotient", quotient);
+            let mask = u64::MAX >> (64 - width);
+            let expected = (raw as u64) & mask;
+            let bench = "module tb; wire [63:0] quotient; signed_identity dut(.clk(1'b0),.rst_n(1'b1),.quotient(quotient)); initial begin #1; $display(\"OBS %0d\",quotient); $finish; end endmodule";
+            run(
+                &format!("signed-identity-{width}-{raw}"),
+                &b.build(),
+                bench,
+                &[format!("OBS {expected}")],
+            );
+        }
+    }
+}
+
+/// A one-tick decode uses the same identity division while retaining reset and completion timing.
+#[test]
+fn one_tick_decode_commits_scaled_bits_after_each_clock() {
+    let mut b = ScGraphBuilder::new("one_tick_decode");
+    let bits = b.input("bits", ScType::Bitstream { length: 1 });
+    let rate = b.decode(bits);
+    b.output("rate", rate);
+    let bench = "module tb; reg clk=0,rst_n=1,bits=0; wire [15:0] rate; one_tick_decode dut(.*); initial begin #1; rst_n=0; #1; $display(\"OBS %0d\",rate); rst_n=1; bits=1; #1; $display(\"OBS %0d\",rate); #1; clk=1; #1; $display(\"OBS %0d\",rate); clk=0; bits=0; #1; $display(\"OBS %0d\",rate); clk=1; #1; $display(\"OBS %0d\",rate); clk=0; bits=1; #1; clk=1; #1; $display(\"OBS %0d\",rate); #1; rst_n=0; #1; $display(\"OBS %0d\",rate); $finish; end endmodule";
+    run(
+        "one-tick-decode",
+        &b.build(),
+        bench,
+        &[0, 0, 256, 256, 0, 256, 0].map(|value| format!("OBS {value}")),
+    );
+}

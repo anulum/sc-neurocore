@@ -17,6 +17,10 @@ pub(super) fn emit(
     divisor: u64,
     output_width: usize,
 ) {
+    if divisor == 1 {
+        sv.push_str(&format!("    assign {output} = $unsigned({numerator});\n"));
+        return;
+    }
     if input_width <= 64 {
         sv.push_str(&format!(
             "    assign {output} = {numerator} / 64'd{divisor};\n"
