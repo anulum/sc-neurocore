@@ -42763,6 +42763,18 @@ that the learnable-delay kernel is hardware-faithful across the whole stack.
 
 ---
 
+## Module `studio.desktop.__main__`
+
+### Function `main()`
+Open the application and keep Qt running until owned backend cleanup finishes.
+
+Returns
+-------
+int
+    Qt's exit status, or one when the runtime/profile cannot be opened.
+
+---
+
 ## Module `studio.desktop.backend`
 
 ### Function `main()`
@@ -42887,6 +42899,38 @@ Own one backend and retain custody across startup failure and window exit.
   - Start and admit the actual backend before retaining its browser origin.
 - **close**()
   - Stop the owned group and preserve an honest report of any survivors.
+
+---
+
+## Module `studio.desktop.webview`
+
+### Class `DesktopRequestPolicy`
+Admit only owned HTTP/WebSocket traffic and local renderer resources.
+
+- **__init__**(origin, parent)
+  - Bind a renderer to its admitted backend origin.
+- **interceptRequest**(info)
+  - Block remote/file requests while permitting owned API and UI resources.
+
+### Class `DesktopPage`
+Keep application navigation local; user-selected external links use the OS.
+
+- **__init__**(profile, origin, parent)
+  - Use one persistent profile without exposing any native web channel.
+- **acceptNavigationRequest**(url, navigation_type, is_main_frame)
+  - Admit owned navigation and open only user-selected HTTP links externally.
+
+---
+
+## Module `studio.desktop.window`
+
+### Class `StudioWindow`
+Own one persistent browser profile and the backend serving its interface.
+
+- **__init__**(backend)
+  - Show startup immediately and begin actual backend admission asynchronously.
+- **closeEvent**(event)
+  - Keep Qt alive until startup and owned backend cleanup have finished.
 
 ---
 

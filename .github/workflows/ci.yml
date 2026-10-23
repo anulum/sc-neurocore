@@ -72,7 +72,8 @@ jobs:
             -r requirements/lint.txt \
             -r requirements/runtime.txt \
             -r requirements/hub.txt \
-            -r requirements/hdl.txt
+            -r requirements/hdl.txt \
+            -r requirements/studio-desktop-linux-x86_64.txt
 
       - name: Documentation policy scope
         run: python -m tools.docstring_policy_guard
@@ -453,6 +454,17 @@ jobs:
           python tools/ci_install_dev.py
           python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
 
+      - name: Install native Studio desktop dependencies
+        if: matrix.primary
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xauth openbox wmctrl xdotool curl xdg-utils \
+            libegl1 libgl1 libnss3 libasound2t64 libxcb-cursor0 \
+            libxkbcommon-x11-0 libxcomposite1 libxdamage1 libxrandr2 libxtst6 \
+            libdbus-1-3 fonts-dejavu-core
+          python -m pip install --require-hashes --only-binary :all: \
+            -r requirements/studio-desktop-linux-x86_64.txt
+
       - name: Build autonomous_learning cdylib
         shell: bash
         run: |
@@ -617,6 +629,57 @@ jobs:
             tests/test_tools/test_engine_abi_inventory_capture_admission.py
           python -m coverage combine --keep "${{ runner.temp }}"
           python -m coverage report --show-missing
+
+      - name: Native Studio application and exact coverage
+        if: matrix.primary
+        shell: bash
+        env:
+          COVERAGE_FILE: ${{ runner.temp }}/studio-native/.coverage
+          COVERAGE_RCFILE: ${{ github.workspace }}/studio/desktop/coverage.ini
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+          QT_QPA_PLATFORM: xcb
+          MYPYPATH: src:bridge:.
+          QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          files=(
+            src/sc_neurocore/studio/desktop/{__main__,window,webview}.py
+            studio/desktop/tests/{conftest,native_dialog_controller,test_entry}.py
+            studio/desktop/tests/test_{window,webview,downloads,window_downloads,window_cleanup,window_configuration}.py
+          )
+          ruff check "${files[@]}"
+          ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' --select D,E902 --ignore-noqa --no-cache "${files[@]}"
+          ruff format --check "${files[@]}"
+          mypy --strict --explicit-package-bases "${files[@]}"
+          namespace="$RUNNER_TEMP/studio-native"
+          mkdir -p "$namespace"/{home,tmp,config,data,state,cache,runtime}
+          chmod 700 "$namespace/runtime"
+          export HOME="$namespace/home" TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          export XDG_RUNTIME_DIR="$namespace/runtime"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$namespace/runtime/private-bus"
+          xvfb-run -a --server-args='-screen 0 1600x1100x24' \
+            python -m coverage run -m pytest -q \
+            studio/desktop/tests/test_window.py studio/desktop/tests/test_webview.py \
+            studio/desktop/tests/test_downloads.py studio/desktop/tests/test_window_downloads.py \
+            studio/desktop/tests/test_window_cleanup.py studio/desktop/tests/test_window_configuration.py \
+            studio/desktop/tests/test_entry.py --basetemp="$namespace/pytest"
+          python -m coverage combine --keep "$namespace"
+          python -m coverage report --show-missing
+
+      - name: Preserve native Studio diagnostics
+        if: always() && matrix.primary
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-native-diagnostics
+          path: |
+            ${{ runner.temp }}/studio-native/.coverage*
+            ${{ runner.temp }}/studio-native/pytest/**/*.log
+            ${{ runner.temp }}/studio-native/pytest/**/*.json
+          include-hidden-files: true
+          retention-days: 7
 
       - name: Retrieve actual Windows refusal coverage
         if: matrix.primary

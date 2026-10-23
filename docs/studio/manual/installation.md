@@ -15,7 +15,8 @@
 | Installed Python package | A page served by your local Studio process | Python environment and the `studio` extra; a wheel with built UI assets |
 | Source checkout | The built UI, or a frontend development server | Developer toolchain and a UI build; see the [technical guide](../../guides/studio.md#development) |
 | Federated host | The Studio panel supplied by your host | The host's admitted plugin/backend contract and operator configuration |
-| Linux desktop preview | A native window with a bundled backend/runtime | Under qualification; this manual does not identify a released desktop installer or promise clean-machine compatibility |
+| Linux desktop from source | A native window with a local backend | Python, the `studio` and `desktop` extras, system graphics libraries and built UI assets |
+| Bundled Linux desktop preview | A native window with a bundled backend/runtime | Installer qualification is separate; no released desktop installer or clean-machine compatibility is claimed here |
 
 The packaged browser interface does not need Node.js to run. Node.js is needed
 when building the frontend from source. Optional training, compiler and FPGA
@@ -62,6 +63,61 @@ If the UI assets are absent, development launch falls back to API documentation.
 Lab/production profiles expose `/openapi.json` instead of interactive API docs.
 Seeing API documentation is not the same as loading the Studio interface.
 Use a wheel containing the built frontend or follow the source build procedure.
+
+## Launch a native Linux window from source
+
+The source desktop uses the same Studio interface inside its own Qt window.
+The first desktop target is Linux x86_64. The qualified dependency profile uses
+CPython 3.12 and Qt 6.12; it does not establish support for every Linux distribution.
+A graphical login and the system libraries required by
+[Qt on Linux](https://doc.qt.io/qt-6/linux-requirements.html) are necessary.
+A missing system library is separate from a missing Python package.
+
+From the repository root, use a dedicated Python environment. Build the UI using
+the repository's locked frontend dependencies, then install the desktop extras:
+
+```bash
+python3.12 -m venv .venv-studio
+source .venv-studio/bin/activate
+(cd studio/frontend && npm ci && npm run build)
+python -m pip install --require-hashes --only-binary :all: \
+  -r requirements/studio-desktop-linux-x86_64.txt
+python -m pip install -e '.[studio,desktop]'
+snn-studio
+```
+
+The equivalent module command is:
+
+```bash
+python -m sc_neurocore.studio.desktop
+```
+
+The window first displays **Starting Studio…**, then opens the interface after
+its backend and UI assets have been checked. The desktop retains its local port
+in the profile, so reopening the same profile retains the browser-storage origin.
+If another application occupies that port, close that application or resolve the
+conflict before retrying. Two instances cannot own the same desktop profile.
+
+Use **File → Quit** or the window's close button to stop the desktop and its
+owned backend. Keep the window open while **Closing Studio…** is displayed.
+If cleanup cannot be confirmed, Studio keeps a visible retry message; use
+**Close** again. Normal shutdown releases the profile and retains your projects
+and configuration. Closing a separately opened browser tab does not send this
+desktop shutdown request.
+
+A missing-Qt message means the selected interpreter lacks the desktop runtime;
+activate the environment where you installed it. A directory-permissions refusal
+means the selected XDG/profile directories cannot be prepared. Do not delete an
+existing profile to clear either error. Startup, page-load and renderer failures
+remain visible in the native window. When available, its diagnostic log is
+`$XDG_STATE_HOME/sc-neurocore/studio/desktop.log`, or
+`~/.local/state/sc-neurocore/studio/desktop.log` when that variable is unset.
+
+This source workflow requires an existing Python environment. The separately
+bundled runtime, menu registration, update, uninstall and rollback workflow
+must pass installer acceptance before it is presented as a released application.
+Optional scientific compiler and physical-hardware capabilities retain their
+own requirements and readiness indicators.
 
 ## First launch
 

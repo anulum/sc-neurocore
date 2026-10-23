@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add the optional `snn-studio` native Linux window with persistent browser storage,
+  owned backend shutdown, native export dialogs and restricted navigation. Add
+  hashlocked Qt dependencies, desktop integration checks and source-launch guidance.
+
 - Add owned Linux desktop backend admission, retained user profiles and origins,
   and verified cancellation, worker shutdown and process-group cleanup.
 

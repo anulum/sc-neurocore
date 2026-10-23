@@ -971,7 +971,7 @@
   "counts": {
     "github_workflows": 23,
     "model_documentation_pages": 200,
-    "optional_extras": 31,
+    "optional_extras": 32,
     "public_api_exports": 45,
     "public_documentation_pages": 655,
     "python_model_classes": 183,
@@ -3229,6 +3229,7 @@
       "chemistry",
       "compression",
       "core",
+      "desktop",
       "dev",
       "dev-full",
       "docs",

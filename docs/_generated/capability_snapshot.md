@@ -12,7 +12,7 @@
 | Studio catalogue models | 185 |
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
-| Optional extras | 31 |
+| Optional extras | 32 |
 | Python test files | 5405 |
 | Public documentation pages | 655 |
 | GitHub Actions workflows | 23 |
