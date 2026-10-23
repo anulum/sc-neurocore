@@ -23,6 +23,25 @@ impl ScGraphBuilder {
         }
     }
 
+    /// Declare current register storage, with an earlier exact-type constant reset word.
+    /// Verification requires exactly one subsequent Store for this State.
+    pub fn state(&mut self, initial: ValueId, ty: ScType) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::State { id, initial, ty })
+    }
+
+    /// Bind one atomic next-state update, optionally holding when Boolean enable is false.
+    /// The returned terminator identifier cannot be consumed as a numeric value.
+    pub fn store(&mut self, state: ValueId, next: ValueId, enable: Option<ValueId>) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::Store {
+            id,
+            state,
+            next,
+            enable,
+        })
+    }
+
     /// Append explicit scalar arithmetic, conversion, rounding or saturation.
     pub fn word(&mut self, op: super::word::WordOp) -> ValueId {
         let id = self.graph.fresh_id();

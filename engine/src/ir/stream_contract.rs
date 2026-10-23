@@ -36,7 +36,9 @@ pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<ScType, String>
     for op in &graph.ops {
         let ty = match op {
             ScOp::Word { op, .. } => Some(op.result_type().clone()),
-            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } => Some(ty.clone()),
+            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } | ScOp::State { ty, .. } => {
+                Some(ty.clone())
+            }
             ScOp::Encode { length, .. } => Some(ScType::Bitstream { length: *length }),
             ScOp::BitwiseAnd { lhs, .. } | ScOp::BitwiseXor { lhs, .. } => types.get(lhs).cloned(),
             ScOp::Popcount { .. } | ScOp::DivConst { .. } => Some(ScType::UInt { width: 64 }),

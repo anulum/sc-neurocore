@@ -21,6 +21,7 @@ mod count;
 mod dense;
 mod divide;
 mod probability;
+mod state;
 mod word;
 
 use crate::ir::graph::*;
@@ -93,6 +94,10 @@ pub fn emit_systemverilog_with_target(
     // Wire declarations for intermediate values
     for op in &graph.ops {
         match op {
+            ScOp::State { id, ty, .. } => {
+                sv.push_str(&format!("    reg [{}:0] v{};\n", ty.bit_width() - 1, id.0))
+            }
+            ScOp::Store { .. } => {}
             ScOp::Word { id, op } => {
                 sv.push_str(&format!(
                     "    wire [{}:0] v{};\n",
@@ -191,6 +196,12 @@ pub fn emit_systemverilog_with_target(
     // Module instantiations
     for op in &graph.ops {
         match op {
+            ScOp::Store {
+                state,
+                next,
+                enable,
+                ..
+            } => state::emit(&mut sv, graph, *state, *next, *enable)?,
             ScOp::Word { id, op } => word::emit(&mut sv, graph, *id, op)?,
             ScOp::Encode { id, prob, seed, .. } => {
                 let prob_wire = format!("encode_{inst_idx}_probability");
@@ -494,6 +505,8 @@ pub(crate) fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                         .unwrap_or(64)
                 }
                 ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::DivConst { .. } => 64,
+                ScOp::State { ty, .. } => ty.bit_width(),
+                ScOp::Store { .. } => 0,
                 ScOp::Output { source, .. } => find_value_width(graph, *source),
             };
         }

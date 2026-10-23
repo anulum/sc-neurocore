@@ -35454,6 +35454,24 @@
               "signature": "(self, q_id: 'int', k_id: 'int', v_id: 'int', dim_k: 'int') -> 'int'",
               "signature_error": null
             },
+            "state": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "state",
+              "__qualname__": "ScGraphBuilder.state",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self, initial: 'int', ty: 'str') -> 'int'",
+              "signature_error": null
+            },
+            "store": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "store",
+              "__qualname__": "ScGraphBuilder.store",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self, state: 'int', next: 'int', enable: 'int | None' = None) -> 'int'",
+              "signature_error": null
+            },
             "word_binary": {
               "__module__": "sc_neurocore_engine.ir",
               "__name__": "word_binary",
@@ -94101,6 +94119,24 @@
               "signature": "(self, /, q_id, k_id, v_id, dim_k)",
               "signature_error": null
             },
+            "state": {
+              "__module__": null,
+              "__name__": "state",
+              "__qualname__": "ScGraphBuilder.state",
+              "__text_signature__": "($self, initial, ty)",
+              "kind": "method_descriptor",
+              "signature": "(self, /, initial, ty)",
+              "signature_error": null
+            },
+            "store": {
+              "__module__": null,
+              "__name__": "store",
+              "__qualname__": "ScGraphBuilder.store",
+              "__text_signature__": "($self, state, next, enable=None)",
+              "kind": "method_descriptor",
+              "signature": "(self, /, state, next, enable=None)",
+              "signature_error": null
+            },
             "word_binary": {
               "__module__": null,
               "__name__": "word_binary",
@@ -109485,6 +109521,12 @@
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
     "source_manifest_sha256": "5b503064269c5eb7e03c4c33bff8e63f188044fa88a2abce888b552264955c1a",
+    "state_store_additive_capture": {
+      "artifact_sha256": "ac57453b585c00dfbda97014a24a83eb8dd9e1a32e9eb55851f40ea4fbdb2c6e",
+      "boundary": "real source facade + Cargo PyO3 artifact, NOT installed wheel",
+      "existing_rows": "preserved exactly; only four measured State/Store members added",
+      "normal_installed_qualification": "hosted CI required"
+    },
     "wheel_sha256": "f2762d5ecb230ca767a1d915f56d781754bc9aea8e6ca77627ad4159e7f3cb8a"
   },
   "schema": 1

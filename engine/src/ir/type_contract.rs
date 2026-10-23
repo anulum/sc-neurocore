@@ -81,7 +81,7 @@ pub(crate) fn verify(graph: &ScGraph, errors: &mut Vec<VerifyError>) -> bool {
     let before = errors.len();
     for (op_index, op) in graph.ops.iter().enumerate() {
         let ty = match op {
-            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } => ty,
+            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } | ScOp::State { ty, .. } => ty,
             ScOp::Word { op, .. } => op.result_type(),
             _ => continue,
         };

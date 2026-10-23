@@ -32,6 +32,53 @@ class ScGraphBuilder:
     def __init__(self, name: str) -> None:
         self._builder = _native.ScGraphBuilder(name)
 
+    def state(self, initial: int, ty: str) -> int:
+        """Declare current register storage with an asynchronous constant reset.
+
+        Parameters
+        ----------
+        initial : int
+            SSA identifier of an earlier scalar constant with exactly type ty.
+        ty : str
+            Bool, rate, fixed-point, signed or unsigned scalar of 1 to 64 bits.
+
+        Returns
+        -------
+        int
+            Identifier of the current register value.
+
+        Notes
+        -----
+        Verification requires exactly one subsequent store. All stores commit
+        simultaneously at the rising clock edge. Active-low rst_n restores the
+        quantised constant asynchronously, regardless of the store enable.
+        """
+        return self._builder.state(initial, ty)
+
+    def store(self, state: int, next: int, enable: int | None = None) -> int:
+        """Bind one atomic update to a declared state register.
+
+        Parameters
+        ----------
+        state : int
+            SSA identifier returned by state().
+        next : int
+            SSA value with exactly the register type, including binary point.
+        enable : int or None, optional
+            SSA Bool value; false holds the current state. None always updates.
+
+        Returns
+        -------
+        int
+            Terminator identifier, which cannot be consumed by another operation.
+
+        Notes
+        -----
+        Missing or duplicate drivers, wrong types, non-State targets and
+        terminator operands are rejected by graph verification and emission.
+        """
+        return self._builder.store(state, next, enable)
+
     def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:
         """Append modulo-width integer arithmetic.
 

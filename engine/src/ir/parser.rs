@@ -16,6 +16,8 @@ use crate::ir::graph::*;
 
 #[path = "parser/neuron.rs"]
 mod neuron;
+#[path = "parser/state.rs"]
+mod state;
 #[path = "parser/word.rs"]
 mod word;
 
@@ -66,7 +68,9 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
             continue;
         }
 
-        if trimmed.contains("= sc.word ") {
+        if trimmed.contains("= sc.state ") || trimmed.contains("= sc.store ") {
+            state::parse(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.word ") {
             word::parse(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.input") {
             parse_input(trimmed, &mut graph, line_idx + 1)?;
@@ -222,6 +226,24 @@ fn parse_finite_f64(s: &str, line: usize) -> Result<f64, ParseError> {
 }
 
 fn parse_scalar_constant(val_str: &str, ty: &ScType, line: usize) -> Result<ScConst, ParseError> {
+    if let Some(word) = val_str
+        .strip_prefix("i64(")
+        .and_then(|s| s.strip_suffix(')'))
+    {
+        return word
+            .parse::<i64>()
+            .map(ScConst::I64)
+            .map_err(|e| make_err(line, e.to_string()));
+    }
+    if let Some(word) = val_str
+        .strip_prefix("u64(")
+        .and_then(|s| s.strip_suffix(')'))
+    {
+        return word
+            .parse::<u64>()
+            .map(ScConst::U64)
+            .map_err(|e| make_err(line, e.to_string()));
+    }
     if val_str.contains('.') || matches!(ty, ScType::Rate) {
         return parse_finite_f64(val_str, line).map(ScConst::F64);
     }

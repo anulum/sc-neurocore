@@ -43,6 +43,14 @@ class NativeGraph(Protocol):
 class NativeBuilder(Protocol):
     """Actual positional PyO3 graph-builder signatures."""
 
+    def state(self, initial: int, ty: str) -> int:
+        """Declare a scalar register with an earlier constant reset value."""
+        ...
+
+    def store(self, state: int, next: int, enable: int | None = None) -> int:
+        """Bind one atomic update, optionally enabled by a Boolean value."""
+        ...
+
     def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:
         """Append modulo-width integer arithmetic."""
         ...

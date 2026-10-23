@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1315
+expected_file_count = 1316
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5358,3 +5358,8 @@ allow_missing = []
 path = "tests/test_studio_catalogue_receipt_batch.py"
 require_module_docstring = true
 allow_missing = []
+
+
+[[file]]
+path = "tests/test_ir_state_runtime.py"
+rationale = "Public Python register transactions exercise native atomic state, reset and enable through persisted IR and actual RTL, with invalid transaction refusals."

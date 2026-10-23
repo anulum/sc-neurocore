@@ -37,6 +37,7 @@ pub fn verify(graph: &ScGraph) -> Result<(), Vec<VerifyError>> {
     }
     verify_hardware_words(graph, &mut errors);
     super::word_contract::verify(graph, &mut errors);
+    super::state_contract::verify(graph, &mut errors);
     if errors.is_empty() {
         Ok(())
     } else {
@@ -74,7 +75,9 @@ fn verify_operand_defs(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
                 });
             }
         }
-        defined.insert(op.result_id());
+        if !matches!(op, ScOp::Output { .. } | ScOp::Store { .. }) {
+            defined.insert(op.result_id());
+        }
     }
 }
 

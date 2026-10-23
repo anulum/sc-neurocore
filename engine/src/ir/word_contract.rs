@@ -142,7 +142,9 @@ pub(crate) fn verify(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
                 }
                 Some(op.result_type().clone())
             }
-            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } => Some(ty.clone()),
+            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } | ScOp::State { ty, .. } => {
+                Some(ty.clone())
+            }
             ScOp::Encode { length, .. } => Some(ScType::Bitstream { length: *length }),
             ScOp::BitwiseAnd { lhs, .. } | ScOp::BitwiseXor { lhs, .. } => types.get(lhs).cloned(),
             ScOp::Popcount { .. } | ScOp::DivConst { .. } => Some(ScType::UInt { width: 64 }),

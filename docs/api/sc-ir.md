@@ -110,6 +110,13 @@ and invalid word geometry are rejected instead of being saturated or silently
 narrowed to 16 bits. `rate` retains its Q8.8 storage; probability clipping occurs
 at the encoder boundary.
 
+When a raw integer constructor could otherwise be read as a float or another
+integer variant, the printer uses `i64(N)` or `u64(N)`. In particular,
+`sc.constant i64(1) : rate` means the raw Q8.8 word 1; legacy
+`sc.constant 1 : rate` retains its historical real-valued meaning of 1.0,
+encoded as 256. Both explicit tags preserve their constructor across text
+round-trips and refuse malformed or overflowing literals.
+
 
 ## Clocked streams and packed words
 
@@ -253,3 +260,59 @@ extend externally supplied graphs should use `try_fresh_id()` and handle its
 error. A panic-aborting application cannot recover from the legacy call.
 The Python graph API does not expose either allocator or a builder resumed from
 a parsed graph; this addition is a native Rust API, not a new Python method.
+
+## Scalar register transactions
+
+Rust `ScGraphBuilder::state(initial, ty)` and Python `state(initial, ty)`
+declare current register storage. The initial value must be an earlier scalar
+constant of exactly the same type. Supported storage types are `bool`, `rate`,
+`fixed<width,frac>`, `iN` and `uN`, with widths from 1 to 64 bits. Floating reset
+constants use the existing quantisation toward zero; integer constants are
+already raw words. Wider arithmetic intermediates remain available through
+explicit word operations and must be converted to the state type before storage.
+
+Each register requires exactly one `store(state, next, enable)` binding.
+Python defaults enable to `None`; Rust uses `Option<ValueId>`. A present control
+must be `bool`: false holds the current value and true permits the update.
+The next value must match the complete state type, including binary point and
+signedness. A store returns a unique terminator identifier, which cannot feed
+an output, arithmetic, another store or a state declaration. Outputs also remain
+non-value terminators. Missing or duplicate drivers, non-State targets and
+malformed types are errors from verification and both emitters.
+
+All registers capture their next values simultaneously on the rising edge of
+`clk`. Each expression observes the preceding committed state until that edge;
+a two-state swap therefore exchanges both values without sequential overwrite.
+Active-low `rst_n` restores every initial word asynchronously, including pulses
+between edges, and takes priority over enable. Direct SystemVerilog uses
+nonblocking assignments; CIRCT uses `seq.firreg` and an explicit hold mux when
+enabled. Register feedback does not introduce combinational SSA cycles.
+
+```python
+from sc_neurocore_engine.ir import ScGraphBuilder
+
+b = ScGraphBuilder("accumulator")
+enabled = b.input("enabled", "bool")
+zero = b.constant_i64(0, "i16")
+one = b.constant_i64(1, "i16")
+current = b.state(zero, "i16")
+next_value = b.word_binary("add", current, one, "i16")
+b.store(current, next_value, enabled)
+b.output("count", current)
+graph = b.build()
+assert graph.verify() is None
+```
+
+The lossless text records every binding and the absence of enable explicitly:
+
+```text
+%0 = sc.constant -320 : fixed<16,8>
+%1 = sc.state %0 : fixed<16,8>
+%2 = sc.store %1, %1, enable=none
+```
+
+Resource planning adds each declared register's width to the flip-flop estimate
+and one width of mux logic for an enabled store. These are static estimates;
+board resource usage, clock frequency and routed timing require actual synthesis
+and implementation reports. Register transactions provide an IR building block;
+they do not establish general equation, integrator, event or RNG lowering.

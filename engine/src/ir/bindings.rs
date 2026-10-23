@@ -93,6 +93,25 @@ impl PyScGraphBuilder {
         }
     }
 
+    /// Declare current register storage reset to an earlier exact-type constant.
+    fn state(&mut self, initial: u32, ty: &str) -> PyResult<u32> {
+        let ty = parse_sc_type(ty)?;
+        Ok(self.builder_mut()?.state(ir::graph::ValueId(initial), ty).0)
+    }
+
+    /// Bind an atomic next-state update; false enable holds and reset always wins.
+    #[pyo3(signature = (state, next, enable=None))]
+    fn store(&mut self, state: u32, next: u32, enable: Option<u32>) -> PyResult<u32> {
+        Ok(self
+            .builder_mut()?
+            .store(
+                ir::graph::ValueId(state),
+                ir::graph::ValueId(next),
+                enable.map(ir::graph::ValueId),
+            )
+            .0)
+    }
+
     /// Append raw arithmetic with explicit, identical operand and result types.
     fn word_binary(&mut self, kind: &str, lhs: u32, rhs: u32, ty: &str) -> PyResult<u32> {
         let kind = kind.parse().map_err(PyValueError::new_err)?;

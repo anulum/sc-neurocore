@@ -32,6 +32,7 @@ pub(crate) mod identifiers;
 pub mod parser;
 pub mod printer;
 pub mod qformat;
+pub(crate) mod state_contract;
 pub(crate) mod stream_contract;
 pub mod sv_target;
 pub(crate) mod type_contract;

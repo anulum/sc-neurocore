@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add typed native-IR scalar registers with atomic next-state stores, Boolean
+  enables and asynchronous reset. Preserve state bindings in text and expose
+  matching Rust/Python builders, direct SystemVerilog and CIRCT lowering;
+  reject invalid drivers, types and use of terminators as values.
+- Preserve raw integer reset words during graph persistence, including Q8.8
+  Rate values, with explicit integer constructor tags where text is ambiguous.
+  Retain the historical meaning of untagged Rate literals.
+
 - Read each facet receipt once per Studio catalogue, model-detail or seal operation,
   retaining per-model verification and fresh inputs for later detail requests.
 - Refresh four co-simulation receipts through executed Python-to-generated-RTL

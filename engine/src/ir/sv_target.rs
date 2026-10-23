@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Commercial license available
-// Copyright (C) 2020-2026 Miroslav Sotek. All rights reserved.
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore - SystemVerilog target metadata
@@ -223,6 +224,16 @@ impl SvTarget {
 
         for op in &graph.ops {
             match op {
+                ScOp::State { ty, .. } => {
+                    ff_estimated = ff_estimated.saturating_add(saturating_u32(ty.bit_width()));
+                }
+                ScOp::Store { state, enable, .. } => {
+                    if enable.is_some() {
+                        lut_estimated = lut_estimated.saturating_add(saturating_u32(
+                            super::emit_sv::find_value_width(graph, *state),
+                        ));
+                    }
+                }
                 ScOp::Word { op, .. } => {
                     use super::word::{WordBinaryOp, WordOp};
                     let width = op

@@ -217,10 +217,30 @@ impl fmt::Display for ReduceMode {
 
 /// A single operation in the SC compute graph.
 ///
-/// Each variant produces exactly one value identified by `id`.
+/// Each variant owns a unique `id`; Output and Store are non-value terminators.
 /// Input operands reference values produced by earlier operations.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScOp {
+    /// Current scalar register value, asynchronously reset to an earlier exact-type constant.
+    State {
+        /// Identifier of the current register word.
+        id: ValueId,
+        /// Earlier constant whose exact type and raw bits define reset.
+        initial: ValueId,
+        /// Scalar storage type, including signedness and binary point.
+        ty: ScType,
+    },
+    /// Atomic next-state binding. Its identifier is a terminator, never a numeric value.
+    Store {
+        /// Unique terminator identifier; it cannot be read as a value.
+        id: ValueId,
+        /// Register declared by an earlier State operation.
+        state: ValueId,
+        /// Exact-type value committed simultaneously with every other register.
+        next: ValueId,
+        /// Optional Boolean control; false holds storage, reset takes priority.
+        enable: Option<ValueId>,
+    },
     /// Explicitly typed scalar arithmetic and conversion.
     Word {
         /// Unique SSA result identifier.
@@ -408,7 +428,9 @@ impl ScOp {
     /// Return the ValueId produced by this operation.
     pub fn result_id(&self) -> ValueId {
         match self {
-            Self::Word { id, .. }
+            Self::State { id, .. }
+            | Self::Store { id, .. }
+            | Self::Word { id, .. }
             | Self::Input { id, .. }
             | Self::Output { id, .. }
             | Self::Constant { id, .. }
@@ -433,6 +455,17 @@ impl ScOp {
     /// Return all ValueIds consumed by this operation.
     pub fn operands(&self) -> Vec<ValueId> {
         match self {
+            Self::State { initial, .. } => vec![*initial],
+            Self::Store {
+                state,
+                next,
+                enable,
+                ..
+            } => {
+                let mut operands = vec![*state, *next];
+                operands.extend(*enable);
+                operands
+            }
             Self::Word { op, .. } => op.operands(),
             Self::Input { .. } | Self::Constant { .. } => vec![],
             Self::Output { source, .. } => vec![*source],
@@ -487,6 +520,8 @@ impl ScOp {
     /// Human-readable operation name for the text format.
     pub fn op_name(&self) -> &'static str {
         match self {
+            Self::State { .. } => "sc.state",
+            Self::Store { .. } => "sc.store",
             Self::Word { .. } => "sc.word",
             Self::Input { .. } => "sc.input",
             Self::Output { .. } => "sc.output",

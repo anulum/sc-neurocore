@@ -161,9 +161,36 @@ jobs:
           cargo test --locked --release --manifest-path engine/Cargo.toml --jobs 1
           --test test_ir_value_ids -- --test-threads=1
 
+      - name: Record source-bound IR target diagnostics
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/ir-target-diagnostic"
+          git rev-parse HEAD > "$RUNNER_TEMP/ir-target-diagnostic/source.txt"
+          lscpu > "$RUNNER_TEMP/ir-target-diagnostic/cpu.txt"
+          free -m > "$RUNNER_TEMP/ir-target-diagnostic/memory.txt"
+          cargo run --locked --release --manifest-path engine/Cargo.toml --jobs 1 \
+            --example bench_ultrascale_plus_target -- "$RUNNER_TEMP/ir-target-diagnostic/rust.json"
+          python benchmarks/bench_ultrascale_plus_target.py \
+            --json "$RUNNER_TEMP/ir-target-diagnostic/python.json"
+
+      - name: Retain IR target diagnostic evidence
+        if: runner.os == 'Linux' && always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ir-target-diagnostic-${{ github.sha }}
+          path: ${{ runner.temp }}/ir-target-diagnostic
+          if-no-files-found: error
+
       - name: Run engine unit tests on Windows
         if: runner.os == 'Windows'
         run: cargo test --manifest-path engine/Cargo.toml
+
+      - name: Verify Python register transactions through real RTL
+        if: runner.os == 'Linux' || runner.os == 'Windows'
+        env:
+          SC_NEUROCORE_REQUIRE_ENGINE: "1"
+        run: python -m pytest tests/test_ir_state_runtime.py -q
 
       - name: Run v3 integration tests
         run: >

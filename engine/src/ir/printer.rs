@@ -50,6 +50,20 @@ pub fn print(graph: &ScGraph) -> String {
     for op in &graph.ops {
         out.push_str("  ");
         match op {
+            ScOp::State { id, initial, ty } => {
+                out.push_str(&format!("{id} = sc.state {initial} : {ty}\n"));
+            }
+            ScOp::Store {
+                id,
+                state,
+                next,
+                enable,
+            } => {
+                let enable = enable.map_or_else(|| "none".into(), |id| id.to_string());
+                out.push_str(&format!(
+                    "{id} = sc.store {state}, {next}, enable={enable}\n"
+                ));
+            }
             ScOp::Word { id, op } => {
                 out.push_str(&format!("{id} = sc.word {op}\n"));
             }
@@ -62,6 +76,19 @@ pub fn print(graph: &ScGraph) -> String {
             ScOp::Constant { id, value, ty } => {
                 let val_str = match value {
                     ScConst::F64(v) => fmt_f64(*v),
+                    ScConst::I64(v)
+                        if !matches!(ty, ScType::SInt { .. } | ScType::FixedPoint { .. }) =>
+                    {
+                        format!("i64({v})")
+                    }
+                    ScConst::U64(v)
+                        if matches!(
+                            ty,
+                            ScType::Rate | ScType::SInt { .. } | ScType::FixedPoint { .. }
+                        ) =>
+                    {
+                        format!("u64({v})")
+                    }
                     ScConst::I64(v) => format!("{v}"),
                     ScConst::U64(v) => format!("{v}"),
                     ScConst::F64Vec(v) => format!(

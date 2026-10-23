@@ -17,7 +17,9 @@ pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<&ScType, String
         .ops
         .iter()
         .find_map(|op| match op {
-            ScOp::Input { id: result, ty, .. } | ScOp::Constant { id: result, ty, .. }
+            ScOp::Input { id: result, ty, .. }
+            | ScOp::Constant { id: result, ty, .. }
+            | ScOp::State { id: result, ty, .. }
                 if *result == id =>
             {
                 Some(ty)
