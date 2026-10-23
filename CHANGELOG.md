@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Pin the complete Linux desktop and backend dependency closure with download
+  hashes. Install the root package without resolving different runtime versions
+  and document application-specific Linux sandbox policy requirements.
+
 - Add public equation-to-native-IR compilation and source replay with typed scalar
   state, runtime range checks and product registers. Preserve authored integration,
   event, random-stream and timestep behavior through direct SystemVerilog and CIRCT.

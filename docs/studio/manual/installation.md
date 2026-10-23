@@ -67,8 +67,8 @@ Use a wheel containing the built frontend or follow the source build procedure.
 ## Launch a native Linux window from source
 
 The source desktop uses the same Studio interface inside its own Qt window.
-The first desktop target is Linux x86_64. The qualified dependency profile uses
-CPython 3.12 and Qt 6.12; it does not establish support for every Linux distribution.
+The first desktop target is Linux x86_64. The pinned dependency profile uses
+CPython 3.12.14 and Qt 6.12; it does not establish support for every Linux distribution.
 A graphical login and the system libraries required by
 [Qt on Linux](https://doc.qt.io/qt-6/linux-requirements.html) are necessary.
 A missing system library is separate from a missing Python package.
@@ -78,14 +78,25 @@ the repository's locked frontend dependencies and qualified Node.js 26.9.0
 profile, then install the desktop extras:
 
 ```bash
-uv venv --python 3.12 .venv-studio
+uv venv --python 3.12.14 .venv-studio
 source .venv-studio/bin/activate
+uv pip install --require-hashes --only-binary :all: -r requirements/build.txt
 (cd studio/frontend && npm ci && npm run build)
 uv pip install --require-hashes --only-binary :all: \
-  -r requirements/studio-desktop-linux-x86_64.txt
-uv pip install -e '.[studio,desktop]'
+  -r requirements/studio-bundle-linux-x86_64.txt
+uv pip install --no-deps --no-build-isolation -e '.[studio,desktop]'
 snn-studio
 ```
+
+The complete desktop dependency file pins all third-party packages needed by
+both the backend and the native window, including their accepted download hashes.
+It targets CPython 3.12.14 on Linux x86_64 with a manylinux 2.39 resolution target.
+The smaller `studio-desktop-linux-x86_64.txt` file pins Qt alone; it does not
+provide this complete backend dependency closure. Install the root package after
+the locked dependencies with `--no-deps` so that step retains their versions.
+The build tools are installed separately above; they are not application-runtime
+dependencies. Optional scientific engines, training frameworks and hardware
+toolchains retain their own installation and qualification requirements.
 
 The equivalent module command is:
 
@@ -118,6 +129,24 @@ This source workflow requires an existing Python environment. The bundled
 workflow below carries its own interpreter and registers a menu entry.
 Optional scientific compiler and physical-hardware capabilities retain their
 own requirements and readiness indicators.
+
+### Linux sandbox policy
+
+Qt WebEngine uses Chromium's Linux sandbox. A host policy that refuses its user
+namespaces can prevent the window from opening even when all Python and Qt
+packages are present. Ubuntu 24.04 enables additional AppArmor restrictions on
+unprivileged user namespaces. Its standard profiles cover specific executable
+paths, so a separately bundled Python interpreter may require its own profile.
+See the [Ubuntu release notes](https://documentation.ubuntu.com/release-notes/24.04/)
+and [Qt platform notes](https://doc.qt.io/qt-6/qtwebengine-platform-notes.html).
+
+If startup reports a sandbox, namespace or AppArmor denial, retain the error and
+the exact runtime executable path for your host operator. The operator should
+review a per-application policy for that installation. This is separate from
+installing a missing Python package. Keep the Chromium sandbox enabled; disabling
+it or changing system-wide namespace policy is not part of this installation
+procedure. A software-rendering option alone does not establish that the sandbox
+can start. Visible-window qualification must use the intended host policy.
 
 ## Install a bundled Linux desktop preview
 

@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Complete Linux desktop dependency profile
+
+# Compile alongside pyproject.toml with --extra studio --extra desktop.
+# Target: CPython 3.12.14, Linux x86_64, manylinux_2_39.
+# The root package, scientific engine and interpreter are separate artifacts.
+-c runtime.txt
+-c hub.txt
+-c hdl.txt
+-c studio-desktop-linux-x86_64.txt
+
+# Preserve the qualified client/certificate closure where shared locks have no pin.
+httpx2==2.15.1
+httpcore2==2.15.1
+truststore==0.10.5
