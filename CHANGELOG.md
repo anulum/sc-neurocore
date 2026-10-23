@@ -12,6 +12,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add owned Linux desktop backend admission, retained user profiles and origins,
+  and verified cancellation, worker shutdown and process-group cleanup.
+
 - Keep unreadable Studio worker processes in the survivor set instead of reporting
   them as exited when process metadata cannot be read.
 

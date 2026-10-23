@@ -27,6 +27,35 @@ files as an initial remedy.
 | Login/authorisation refused | Correct deployment, account, expiry and role | Reauthenticate through the admitted login; do not place a bearer token in a URL |
 | Standalone works, host panel fails | Host/plugin/backend versions and capabilities | Give the host operator those versions; preserve sandbox and origin checks |
 
+### Desktop configuration cannot be saved
+
+If the Linux desktop preview reports **Studio could not save its desktop
+configuration**, preserve the existing configuration and project data. Check
+write access to the profile's configuration directory, normally
+`~/.config/sc-neurocore/studio`, or the directory beneath `XDG_CONFIG_HOME`
+when configured. Saving requires write access to the directory as well as
+access to the existing `desktop.json` file.
+
+Close the application, have the owner of that directory correct its permissions,
+then retry with the same desktop profile. Keeping the retained configuration
+preserves the browser origin used by that profile's sessions.
+
+### Desktop startup checks fail
+
+The desktop checks the backend's health and the exact interface bytes before
+showing the workbench. Keep the reported message and the installed build/version
+when asking the operator for help.
+
+| Message | Next step |
+|---|---|
+| Backend readiness deadline expired | Retry after checking available system resources; retain the startup log if the refusal repeats |
+| Backend did not report healthy startup | Check the backend's startup log and the installed build with the operator |
+| Served interface does not match this installation | Have the operator verify the backend and UI belong to the same build, then install that matching build |
+
+The startup log is normally `~/.local/state/sc-neurocore/studio/backend.log`,
+or beneath the configured `XDG_STATE_HOME`. Preserve configuration and projects
+while resolving a build mismatch so the same profile can reopen its sessions.
+
 ## Simulation and analysis
 
 | Symptom | Likely checks, not a diagnosis | Next step |

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1319
+expected_file_count = 1328
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5376,5 +5376,50 @@ allow_missing = []
 
 [[file]]
 path = "tests/test_studio_jobs_fault_paths.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/backend.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/runtime.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_runtime.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_backend.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_backend_listener.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_backend_resources.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_startup.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_http_admission.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_desktop_cleanup.py"
 require_module_docstring = true
 allow_missing = []

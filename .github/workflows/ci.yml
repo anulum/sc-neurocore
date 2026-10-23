@@ -443,6 +443,10 @@ jobs:
         working-directory: studio/frontend
         run: npm ci
 
+      - name: Build Studio UI for desktop backend admission
+        working-directory: studio/frontend
+        run: npm run build
+
       - name: Install package
         run: |
           python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt

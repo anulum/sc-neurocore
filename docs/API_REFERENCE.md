@@ -42763,6 +42763,28 @@ that the learnable-delay kernel is hardware-faithful across the whole stack.
 
 ---
 
+## Module `studio.desktop.backend`
+
+### Function `main()`
+Run a descriptor-owned local backend and collect its lifetime guard.
+
+Returns
+-------
+int
+    Zero after a clean server/job shutdown; nonzero for refused startup or
+    unverified worker cleanup. Arguments are internal launcher descriptors,
+    not a public network control interface.
+
+Raises
+------
+DesktopStartRefused
+    The inherited listener is not an IPv4 loopback stream socket or the
+    installation has no built Studio interface.
+OSError
+    A required descriptor or readiness write failed.
+
+---
+
 ## Module `studio.desktop.configuration`
 
 ### Class `DesktopConfiguration`
@@ -42832,6 +42854,39 @@ legacy_projects : pathlib.Path
   - Create private profile directories without touching installation resources.
 - **project_root**(environ, stored)
   - Select an explicit, stored, existing legacy, or new XDG project root.
+
+---
+
+## Module `studio.desktop.runtime`
+
+### Class `DesktopInstance`
+Admitted backend identity for the window that owns it.
+
+Attributes
+----------
+pid : int
+    Direct owned child process, also its session/group leader.
+origin : str
+    Stable IPv4 loopback origin used by HTTP, WebSocket and browser storage.
+version, ui_sha256 : str
+    Source package version and exact served interface entry digest.
+project_root : pathlib.Path
+    Selected project namespace, outside installation resources.
+
+
+### Class `DesktopBackend`
+Own one backend and retain custody across startup failure and window exit.
+
+- **__init__**(environ)
+  - Resolve one profile without starting a process or creating directories.
+- **returncode**()
+  - Return child exit status, or ``None`` before startup or while running.
+- **cancel_startup**()
+  - Request startup cancellation; the starting thread retains process cleanup.
+- **start**(\*, timeout_seconds)
+  - Start and admit the actual backend before retaining its browser origin.
+- **close**()
+  - Stop the owned group and preserve an honest report of any survivors.
 
 ---
 
