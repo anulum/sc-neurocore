@@ -10,6 +10,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Discover Studio interface resources without importing the scientific API,
+  preserving packaged-asset precedence and existing frontend imports.
+
 - Refresh hash-locked certifi, Pillow and virtualenv dependencies for current
   advisories, and update Semgrep's OpenTelemetry API, SDK, exporter and
   instrumentation together through the existing overrides. Pillow 13 remains

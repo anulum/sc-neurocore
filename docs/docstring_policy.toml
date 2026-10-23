@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1311
+expected_file_count = 1313
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5338,3 +5338,13 @@ rationale = "Normally installed public scalar builders preserve typed text and r
 [[file]]
 path = "tests/test_tools/test_ci_julia_runtime_contract.py"
 rationale = "The pinned Julia CI action must keep both supported native runtimes, their explicit executable handoff and the JuliaCall host runtime contract."
+
+[[file]]
+path = "src/sc_neurocore/studio/frontend_resources.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_frontend_resources.py"
+require_module_docstring = true
+allow_missing = []

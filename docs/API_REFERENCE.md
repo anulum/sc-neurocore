@@ -41588,15 +41588,6 @@ context:
 ### Function `mount_studio_api_docs(app, *, security_headers)`
 Serve interactive API docs under a CSP with exact bootstrap-script hashes.
 
-### Function `studio_frontend_candidates(app_module_file)`
-Return where a built frontend is looked for, in order.
-
-The packaged build comes first, so an installation serves its own; the
-checkout's build follows, found from the application module.
-
-### Function `studio_frontend_dir(candidates)`
-Return the first candidate holding a built frontend, or ``None``.
-
 ### Function `studio_entry(origin, dist_dir, *, api_docs_enabled)`
 Return the page a launched Studio opens and the lines announcing it.
 
@@ -43505,6 +43496,36 @@ dict
     Every pattern except ``silent`` also carries ``rate_hz``; every pattern
     with at least three spikes carries ``isi_cv``; a burst additionally
     carries ``burst_isi_ms`` and ``inter_burst_ms``.
+
+---
+
+## Module `studio.frontend_resources`
+
+### Function `studio_frontend_candidates(app_module_file)`
+Return packaged assets before the application module's checkout candidates.
+
+Parameters
+----------
+app_module_file : str
+    Application module path in the selected installation.
+
+Returns
+-------
+tuple of pathlib.Path
+    Packaged interface, source-layout build and flat-layout build candidates.
+
+### Function `studio_frontend_dir(candidates)`
+Return the first candidate containing an interface entry file.
+
+Parameters
+----------
+candidates : sequence of pathlib.Path
+    Ordered installation or checkout locations.
+
+Returns
+-------
+pathlib.Path or None
+    First built interface, or no interface when every candidate is absent.
 
 ---
 

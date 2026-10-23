@@ -31,11 +31,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from sc_neurocore.studio.platform.settings import DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
+from sc_neurocore.studio.frontend_resources import (
+    studio_frontend_candidates as studio_frontend_candidates,
+    studio_frontend_dir as studio_frontend_dir,
+)
 
 #: Where the built frontend expects to be served; its assets name this path.
 STUDIO_UI_PATH = "/studios/sc-neurocore"
 
-_PACKAGED_UI = Path(__file__).resolve().parents[1] / "frontend_dist"
 _DOCS_FAVICON = "https://fastapi.tiangolo.com/img/favicon.png"
 _REDOC_LOGO = "https://cdn.redoc.ly/redoc/logo-mini.svg"
 
@@ -135,28 +138,6 @@ def mount_studio_api_docs(app: FastAPI, *, security_headers: Mapping[str, str]) 
             security_headers,
             image_sources=(_DOCS_FAVICON, _REDOC_LOGO),
         )
-
-
-def studio_frontend_candidates(app_module_file: str) -> tuple[Path, ...]:
-    """Return where a built frontend is looked for, in order.
-
-    The packaged build comes first, so an installation serves its own; the
-    checkout's build follows, found from the application module.
-    """
-    anchor = Path(app_module_file).resolve().parent
-    return (
-        _PACKAGED_UI,
-        anchor.parents[2] / "studio" / "frontend" / "dist",
-        anchor.parents[3] / "studio" / "frontend" / "dist",
-    )
-
-
-def studio_frontend_dir(candidates: Sequence[Path]) -> Path | None:
-    """Return the first candidate holding a built frontend, or ``None``."""
-    for candidate in candidates:
-        if (candidate / "index.html").is_file():
-            return candidate
-    return None
 
 
 def studio_entry(
