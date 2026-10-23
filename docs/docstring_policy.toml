@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1309
+expected_file_count = 1310
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5329,3 +5329,8 @@ rationale = "Installed native builders retain temporal windows and probability d
 [[file]]
 path = "examples/03_ir_compile_demo.py"
 rationale = "The executable public example builds typed synapse and matrix graphs, verifies their saved text and emits compilable hardware through the installed native bridge."
+
+
+[[file]]
+path = "tests/test_ir_scalar_runtime.py"
+rationale = "Normally installed public scalar builders preserve typed text and real RTL results; invalid names, implicit coercions and unrepresentable literal bounds refuse through the native boundary."

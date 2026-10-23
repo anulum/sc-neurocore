@@ -93,6 +93,121 @@ impl PyScGraphBuilder {
         }
     }
 
+    /// Append raw arithmetic with explicit, identical operand and result types.
+    fn word_binary(&mut self, kind: &str, lhs: u32, rhs: u32, ty: &str) -> PyResult<u32> {
+        let kind = kind.parse().map_err(PyValueError::new_err)?;
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Binary {
+                kind,
+                lhs: ir::graph::ValueId(lhs),
+                rhs: ir::graph::ValueId(rhs),
+                ty,
+            })
+            .0)
+    }
+
+    /// Append two's-complement negation or bitwise complement.
+    fn word_unary(&mut self, kind: &str, input: u32, ty: &str) -> PyResult<u32> {
+        let kind = kind.parse().map_err(PyValueError::new_err)?;
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Unary {
+                kind,
+                input: ir::graph::ValueId(input),
+                ty,
+            })
+            .0)
+    }
+
+    /// Compare integer words using their declared signedness.
+    fn word_compare(&mut self, predicate: &str, lhs: u32, rhs: u32) -> PyResult<u32> {
+        let predicate = predicate.parse().map_err(PyValueError::new_err)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Compare {
+                predicate,
+                lhs: ir::graph::ValueId(lhs),
+                rhs: ir::graph::ValueId(rhs),
+            })
+            .0)
+    }
+
+    /// Change integer width, extending according to the input signedness.
+    fn word_resize(&mut self, input: u32, ty: &str) -> PyResult<u32> {
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Resize {
+                input: ir::graph::ValueId(input),
+                ty,
+            })
+            .0)
+    }
+
+    /// Change scalar interpretation without changing physical bits.
+    fn word_bitcast(&mut self, input: u32, ty: &str) -> PyResult<u32> {
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Bitcast {
+                input: ir::graph::ValueId(input),
+                ty,
+            })
+            .0)
+    }
+
+    /// Select identically typed scalar words with a Boolean condition.
+    fn word_select(
+        &mut self,
+        condition: u32,
+        when_true: u32,
+        when_false: u32,
+        ty: &str,
+    ) -> PyResult<u32> {
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Select {
+                condition: ir::graph::ValueId(condition),
+                when_true: ir::graph::ValueId(when_true),
+                when_false: ir::graph::ValueId(when_false),
+                ty,
+            })
+            .0)
+    }
+
+    /// Divide by a power of two using a named rounding rule.
+    fn word_round(&mut self, input: u32, shift: u32, mode: &str, ty: &str) -> PyResult<u32> {
+        let mode = mode.parse().map_err(PyValueError::new_err)?;
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Round {
+                input: ir::graph::ValueId(input),
+                shift,
+                mode,
+                ty,
+            })
+            .0)
+    }
+
+    /// Saturate integer words to ordered, inclusive literal bounds.
+    fn word_clamp(&mut self, input: u32, min: i64, max: i64, ty: &str) -> PyResult<u32> {
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word(ir::word::WordOp::Clamp {
+                input: ir::graph::ValueId(input),
+                min,
+                max,
+                ty,
+            })
+            .0)
+    }
+
     /// Add a typed input port. Returns value ID.
     fn input(&mut self, name: &str, ty: &str) -> PyResult<u32> {
         let sc_type = parse_sc_type(ty)?;
@@ -412,6 +527,7 @@ fn ir_emit_mlir(graph: PyRef<'_, PyScGraph>) -> PyResult<String> {
 /// Accepted formats: "bool", "rate", "u32", "u64", "i16", "i32",
 /// "bitstream", "bitstream<1024>", "fixed<16,8>", "vec<bool,7>".
 fn parse_sc_type(s: &str) -> PyResult<ir::graph::ScType> {
+    ir::type_contract::check_text_depth(s).map_err(PyValueError::new_err)?;
     let s = s.trim();
     let lower = s.to_ascii_lowercase();
     match lower.as_str() {

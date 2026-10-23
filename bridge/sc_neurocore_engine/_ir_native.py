@@ -43,6 +43,38 @@ class NativeGraph(Protocol):
 class NativeBuilder(Protocol):
     """Actual positional PyO3 graph-builder signatures."""
 
+    def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:
+        """Append modulo-width integer arithmetic."""
+        ...
+
+    def word_unary(self, kind: str, input: int, ty: str) -> int:
+        """Append integer negation or complement."""
+        ...
+
+    def word_compare(self, predicate: str, lhs: int, rhs: int) -> int:
+        """Append an integer comparison returning Bool."""
+        ...
+
+    def word_resize(self, input: int, ty: str) -> int:
+        """Resize an integer word explicitly."""
+        ...
+
+    def word_bitcast(self, input: int, ty: str) -> int:
+        """Reinterpret a scalar word without changing its bits."""
+        ...
+
+    def word_select(self, condition: int, when_true: int, when_false: int, ty: str) -> int:
+        """Select a scalar word using a Boolean condition."""
+        ...
+
+    def word_round(self, input: int, shift: int, mode: str, ty: str) -> int:
+        """Divide an integer word by a power of two."""
+        ...
+
+    def word_clamp(self, input: int, min: int, max: int, ty: str) -> int:
+        """Saturate an integer word at explicit inclusive bounds."""
+        ...
+
     def input(self, name: str, ty: str) -> int:
         """Declare an input using the native type parser."""
         ...

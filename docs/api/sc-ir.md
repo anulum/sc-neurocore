@@ -160,3 +160,79 @@ includes the declared phase, accumulator and held-count storage before synthesis
 optimization. Packed counting is combinational. LUT and critical-path heuristics
 are not post-synthesis utilization or timing measurements; use synthesis and
 post-route reports for platform capacity or clock-frequency decisions.
+
+
+## Explicit scalar words
+
+`ScGraphBuilder.word(WordOp)` in Rust and the Python `word_*` builder methods
+construct typed scalar circuits. Both SystemVerilog and CIRCT emission implement
+the same operations. A stored instruction retains its operands, result geometry,
+rounding mode and saturation bounds:
+
+```text
+sc.graph @square_q8 {
+  %0 = sc.input "x" : i16
+  %1 = sc.word resize %0 : i32
+  %2 = sc.word mul %1, %1 : i32
+  %3 = sc.word round %2, 8, half_even : i32
+  %4 = sc.word clamp %3, -32768, 32767 : i32
+  %5 = sc.word resize %4 : i16
+  %6 = sc.word bitcast %5 : fixed<16,8>
+  sc.output "square" %6
+}
+```
+
+Arithmetic requires identically typed raw integers (`iN` or `uN`). `add`, `sub`,
+`mul` and `neg` retain the low N bits; they do not saturate. To preserve a full
+product, resize both operands before multiplication. `div` truncates toward
+zero for signed integers; `rem` has the numerator's sign. Both return zero for
+a zero divisor. Signed minimum divided by minus one wraps to the same minimum.
+Variable division uses an exact restoring circuit, including words wider than
+64 bits; it does not approximate division using a rounded reciprocal.
+
+`and`, `or`, `xor`, `not`, `shl`, `lshr` and signed-only `ashr` operate on bits.
+Shift counts are unsigned physical words, even when the input type is signed.
+A count at least N yields zero for logical shifts or sign fill for `ashr`.
+`cmp_eq`, `cmp_ne`, `cmp_lt`, `cmp_le`, `cmp_gt`, `cmp_ge` produce `bool`; ordering
+uses operand signedness. Python spells these `word_compare("lt", lhs, rhs)`.
+
+| Operation | Python method | Meaning |
+|---|---|---|
+| `resize` | `word_resize(input, ty)` | Sign/zero extend according to the input type, or discard high bits |
+| `bitcast` | `word_bitcast(input, ty)` | Preserve physical width and bits, changing scalar interpretation |
+| `select` | `word_select(condition, true, false, ty)` | Boolean condition, identical scalar branch types |
+| `round` | `word_round(input, shift, mode, ty)` | Divide by `2**shift` with explicit rounding and no intermediate overflow |
+| `clamp` | `word_clamp(input, min, max, ty)` | Inclusive saturation at ordered, representable signed-64-bit literal bounds |
+
+A bitcast does not rescale fixed-point data. Arithmetic on `fixed<width,frac>`
+or `rate` therefore requires a bitcast to an integer first, followed by explicit
+rescaling at the source-defined boundary. Temporal bitstreams and vectors are
+not scalar words. Boolean conditions must be `bool`, not a numeric 0/1 word.
+
+Rounding names are `floor`, `toward_zero`, `half_up` (ties toward positive
+infinity), `half_away` (ties away from zero), and `half_even`. A zero shift is
+identity; otherwise the shift is less than N. `clamp` is separate from arithmetic
+so that the equation frontend can preserve the original commit boundaries.
+These word operations provide arithmetic circuits; they do not by themselves
+establish arbitrary equation, integration-method or state-machine lowering.
+Resource reports remain planning heuristics; use synthesis and post-route
+reports for actual FPGA utilization and timing.
+
+Module and port names must be ASCII HDL identifiers and cannot be language
+keywords. Ports are unique across inputs and outputs. `clk`, `rst_n`, `sc_*`,
+`encode_*`, `decode_*`, `dense_*`, `u_*`, and `v`/`c` followed by a digit are reserved for
+compiler-generated signals. Verification and both emitters refuse collisions
+with a diagnostic; public names are never silently changed.
+
+Clamp bounds use the signed-64-bit literal interface even for a wider data
+word. Bounds above `2**63 - 1` or below `-2**63` cannot be supplied; the Python
+native boundary raises `OverflowError` before appending an operation. A wide
+word can still be clamped to a representable interval. Wider bound literals
+require a future width-tagged constant interface.
+
+All declared input, constant and word-result types are checked even when the
+value is unused. Widths and vector counts must be positive, fixed-point
+fractions must be smaller than their width, and the total physical width must
+fit positive Verilog indexing. Vector nesting is limited to 64 wrappers and
+checked before either text constructor recurses. Exhausted parsed value IDs
+produce a parse diagnostic instead of wrapping the parser allocator.

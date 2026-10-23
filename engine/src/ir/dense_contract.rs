@@ -22,6 +22,7 @@ pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<&ScType, String
             {
                 Some(ty)
             }
+            ScOp::Word { id: result, op } if *result == id => Some(op.result_type()),
             ScOp::Decode { id: result, .. } if *result == id => Some(&ScType::Rate),
             _ => None,
         })

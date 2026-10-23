@@ -209,6 +209,13 @@ impl fmt::Display for ReduceMode {
 /// Input operands reference values produced by earlier operations.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScOp {
+    /// Explicitly typed scalar arithmetic and conversion.
+    Word {
+        /// Unique SSA result identifier.
+        id: ValueId,
+        /// Scalar instruction and its declared result type.
+        op: super::word::WordOp,
+    },
     // Data flow
     /// Module input port. No operands; value comes from external I/O.
     Input {
@@ -389,7 +396,8 @@ impl ScOp {
     /// Return the ValueId produced by this operation.
     pub fn result_id(&self) -> ValueId {
         match self {
-            Self::Input { id, .. }
+            Self::Word { id, .. }
+            | Self::Input { id, .. }
             | Self::Output { id, .. }
             | Self::Constant { id, .. }
             | Self::Encode { id, .. }
@@ -413,6 +421,7 @@ impl ScOp {
     /// Return all ValueIds consumed by this operation.
     pub fn operands(&self) -> Vec<ValueId> {
         match self {
+            Self::Word { op, .. } => op.operands(),
             Self::Input { .. } | Self::Constant { .. } => vec![],
             Self::Output { source, .. } => vec![*source],
             Self::Encode { prob, .. } => vec![*prob],
@@ -466,6 +475,7 @@ impl ScOp {
     /// Human-readable operation name for the text format.
     pub fn op_name(&self) -> &'static str {
         match self {
+            Self::Word { .. } => "sc.word",
             Self::Input { .. } => "sc.input",
             Self::Output { .. } => "sc.output",
             Self::Constant { .. } => "sc.constant",

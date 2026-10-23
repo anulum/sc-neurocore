@@ -14,6 +14,7 @@ use crate::ir::graph::*;
 
 mod divide;
 mod primitives;
+mod word;
 
 /// Emit CIRCT-compatible MLIR from an SC graph.
 pub fn emit(graph: &ScGraph) -> Result<String, String> {
@@ -65,6 +66,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             continue;
         }
         match op {
+            ScOp::Word { id, op } => word::emit(&mut mlir, graph, *id, op)?,
             ScOp::Input { .. } | ScOp::Output { .. } => {}
             ScOp::Encode { .. }
             | ScOp::BitwiseAnd { .. }

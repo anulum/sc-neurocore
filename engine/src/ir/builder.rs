@@ -23,6 +23,12 @@ impl ScGraphBuilder {
         }
     }
 
+    /// Append explicit scalar arithmetic, conversion, rounding or saturation.
+    pub fn word(&mut self, op: super::word::WordOp) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::Word { id, op })
+    }
+
     /// Add a module input port.
     pub fn input(&mut self, name: impl Into<String>, ty: ScType) -> ValueId {
         let id = self.graph.fresh_id();

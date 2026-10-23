@@ -49,8 +49,8 @@ kernel-reserved isolated-core claims.
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
 | DCLS Q8.8 tent-kernel layer | Rust | 4096 samples x 100 iterations x 7 repeats | 40.184 ns/sample | cpuset 10-11, overflow_count=0, active_tap_total=2808700 |
-| UltraScale+ target contract | Python+Vivado Tcl | 2 manifests x 2000 iterations x 7 repeats | 279.706 us/manifest | 2026-10-22 shared host, CPU/RAM/context recorded, ZU3EG/ZU9EG Tcl |
-| UltraScale+ target contract | Rust | 64x32 graph x 2000 iterations x 7 repeats | 2945.496 us/emit | 2026-10-22 shared host, per-neuron weights and probability conversion, resource estimates only |
+| UltraScale+ target contract | Python+Vivado Tcl | 2 manifests x 2000 iterations x 7 repeats | 963.964 us/manifest | 2026-10-22–23 scalar-IR rerun, shared host, CPU/RAM/context recorded |
+| UltraScale+ target contract | Rust | 64x32 graph x 2000 iterations x 7 repeats | 4670.093 us/emit | 2026-10-22–23 scalar-IR rerun, shared host, resource estimates only |
 | UltraScale+ dense folding | Python+SystemVerilog | 64x32 plan x 20000 iterations x 7 repeats | 2.447 us/plan | cpuset 10-11, 320 DSP/cycle, 7 compute cycles, bounded Yosys 240 cells |
 | UltraScale+ dense folding | Rust | 64x32 plan x 20000 iterations x 7 repeats | 6.661 ns/plan | cpuset 10-11, 320 DSP/cycle, 7 compute cycles |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
@@ -134,3 +134,27 @@ The same simulation retargets the selection registers after a valid shadow load
 and verifies that commit still applies the originally accepted bank and entry.
 Upstream PCIe hard IP must decode MMIO transactions into the single-clock
 strobes exposed by the generated wrapper.
+
+## Scalar native IR qualification rerun — 2026-10-22–23
+
+The existing target-contract protocols were rerun after scalar arithmetic and
+declared-type admission changes. The Python workload generates two target
+manifests; Rust emits a 64x32 Dense graph. Their timings measure different work.
+
+| Report | Median | Protocol |
+| --- | ---: | --- |
+| [Python](local_python_2026-10-22_scalar_ir_target.json) | 963.964 us/manifest | 2 manifests x 2,000 iterations x 7 repeats |
+| [Rust](local_rust_2026-10-22_scalar_ir_target.json) | 4670.093 us/emit | 64x32 graph x 2,000 iterations x 7 repeats |
+
+Hardware: Intel Core i5-11600K, 12 logical CPUs, 33,422,090,240 bytes RAM,
+Linux 7.0.0-34. Python 3.12.14/NumPy 2.5.4 and Rust 1.98.1 release were used.
+Both jobs used a 100% CPU quota and observed about 3.7 GHz with the powersave
+governor. Load averages were 56.98–53.98 for Python and 31.39–30.18 for Rust.
+All repetitions, commands, execution limits and source hashes are retained.
+These are shared-host diagnostics; they establish no performance regression,
+exclusive-core result, inference throughput or board measurement. Earlier
+reports remain historical records. The resource estimate remains
+2,048 DSPs against ZU3EG's 360-DSP budget, requiring folding or a larger target.
+
+The report filenames retain the campaign start date, 2026-10-22; each capture
+records its actual timestamp.

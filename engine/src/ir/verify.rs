@@ -29,10 +29,14 @@ impl std::fmt::Display for VerifyError {
 /// or a list of all errors found.
 pub fn verify(graph: &ScGraph) -> Result<(), Vec<VerifyError>> {
     let mut errors = Vec::new();
+    super::identifiers::verify(graph, &mut errors);
     verify_ssa(graph, &mut errors);
     verify_operand_defs(graph, &mut errors);
-    verify_no_cycles(graph, &mut errors);
+    if !super::type_contract::verify(graph, &mut errors) {
+        return Err(errors);
+    }
     verify_hardware_words(graph, &mut errors);
+    super::word_contract::verify(graph, &mut errors);
     if errors.is_empty() {
         Ok(())
     } else {
@@ -54,7 +58,7 @@ fn verify_ssa(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
     }
 }
 
-/// Check that every operand references a value defined by an earlier op.
+/// Check every operand is defined earlier. With unique IDs this also proves acyclicity.
 fn verify_operand_defs(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
     let mut defined: HashSet<ValueId> = HashSet::new();
     for (idx, op) in graph.ops.iter().enumerate() {
@@ -71,57 +75,6 @@ fn verify_operand_defs(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
             }
         }
         defined.insert(op.result_id());
-    }
-}
-
-/// Check that the operation list is acyclic (topological order).
-/// Since we enforce operand-before-use in `verify_operand_defs`,
-/// this is automatically satisfied if that check passes.
-/// This function is a belt-and-suspenders DFS cycle check.
-fn verify_no_cycles(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
-    // Build adjacency from result_id → operand ids
-    let mut adj: HashMap<ValueId, Vec<ValueId>> = HashMap::new();
-    for op in &graph.ops {
-        adj.insert(op.result_id(), op.operands());
-    }
-
-    let mut visited: HashSet<ValueId> = HashSet::new();
-    let mut in_stack: HashSet<ValueId> = HashSet::new();
-
-    fn dfs(
-        node: ValueId,
-        adj: &HashMap<ValueId, Vec<ValueId>>,
-        visited: &mut HashSet<ValueId>,
-        in_stack: &mut HashSet<ValueId>,
-    ) -> bool {
-        if in_stack.contains(&node) {
-            return true; // cycle
-        }
-        if visited.contains(&node) {
-            return false;
-        }
-        visited.insert(node);
-        in_stack.insert(node);
-        if let Some(deps) = adj.get(&node) {
-            for dep in deps {
-                if dfs(*dep, adj, visited, in_stack) {
-                    return true;
-                }
-            }
-        }
-        in_stack.remove(&node);
-        false
-    }
-
-    for op in &graph.ops {
-        let id = op.result_id();
-        if dfs(id, &adj, &mut visited, &mut in_stack) {
-            errors.push(VerifyError {
-                op_index: 0,
-                message: format!("cycle detected involving {}", id),
-            });
-            break;
-        }
     }
 }
 

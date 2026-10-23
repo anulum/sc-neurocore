@@ -140,6 +140,16 @@ historical June run. The target estimator records 2,048 DSPs against a budget
 of 360 and requires folding or a larger target; it does not establish synthesis
 resource usage or timing closure.
 
+The later scalar-IR qualification rerun of the same target protocols records
+4670.093 us/emit for Rust and 963.964 us/manifest for Python. The complete
+seven-repeat reports are
+`benchmarks/results/local_rust_2026-10-22_scalar_ir_target.json` and
+`benchmarks/results/local_python_2026-10-22_scalar_ir_target.json`. Hardware and
+versions match the workstation described above; the 100% CPU quota, observed
+3.7 GHz powersave governor and concurrent load are recorded in each report.
+The two workloads differ. These numbers are shared-host diagnostics, without
+an exclusive timing, inference throughput or board measurement claim.
+
 `ultrascale_plus_dense_fold_plan_64x32` was measured on 2026-06-04 with the
 same runtime cpuset shield. The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json`; the

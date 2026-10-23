@@ -21,6 +21,7 @@ mod count;
 mod dense;
 mod divide;
 mod probability;
+mod word;
 
 use crate::ir::graph::*;
 use crate::ir::sv_target::{ResourceReport, SvTarget};
@@ -92,6 +93,13 @@ pub fn emit_systemverilog_with_target(
     // Wire declarations for intermediate values
     for op in &graph.ops {
         match op {
+            ScOp::Word { id, op } => {
+                sv.push_str(&format!(
+                    "    wire [{}:0] v{};\n",
+                    op.result_type().bit_width() - 1,
+                    id.0
+                ));
+            }
             ScOp::Input { .. } | ScOp::Output { .. } => {}
             ScOp::Constant { id, value, ty } => constants::emit(&mut sv, *id, value, ty, &target)?,
             ScOp::Encode { id, .. } => {
@@ -183,6 +191,7 @@ pub fn emit_systemverilog_with_target(
     // Module instantiations
     for op in &graph.ops {
         match op {
+            ScOp::Word { id, op } => word::emit(&mut sv, graph, *id, op)?,
             ScOp::Encode { id, prob, seed, .. } => {
                 let prob_wire = format!("encode_{inst_idx}_probability");
                 probability::emit(&mut sv, graph, *prob, 1, &prob_wire)?;
@@ -457,6 +466,7 @@ pub(crate) fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
     for op in &graph.ops {
         if op.result_id() == id {
             return match op {
+                ScOp::Word { op, .. } => op.result_type().bit_width(),
                 ScOp::Input { ty, .. } => type_to_width(ty),
                 ScOp::Constant { ty, .. } => type_to_width(ty),
                 ScOp::Encode { .. } => 1,

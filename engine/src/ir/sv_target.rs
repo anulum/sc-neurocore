@@ -223,6 +223,26 @@ impl SvTarget {
 
         for op in &graph.ops {
             match op {
+                ScOp::Word { op, .. } => {
+                    use super::word::{WordBinaryOp, WordOp};
+                    let width = op
+                        .operands()
+                        .iter()
+                        .map(|id| super::emit_sv::find_value_width(graph, *id))
+                        .max()
+                        .unwrap_or(1);
+                    let width = saturating_u32(width);
+                    // Planning heuristic only; post-route reports determine actual resources.
+                    let gates = match op {
+                        WordOp::Binary {
+                            kind: WordBinaryOp::Mul | WordBinaryOp::Div | WordBinaryOp::Rem,
+                            ..
+                        } => width.saturating_mul(width).saturating_mul(2),
+                        WordOp::Resize { .. } | WordOp::Bitcast { .. } => 0,
+                        _ => width.saturating_mul(3),
+                    };
+                    lut_estimated = lut_estimated.saturating_add(gates);
+                }
                 ScOp::DenseForward { params, .. } => {
                     let macs = saturating_u32(params.n_inputs.saturating_mul(params.n_neurons));
                     dsp_estimated = dsp_estimated.saturating_add(macs);

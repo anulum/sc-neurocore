@@ -281,7 +281,9 @@ fn new_ops_verify() {
     let a = b.input("a", ScType::Rate);
     let c = b.input("b", ScType::Rate);
     let d = b.input("c", ScType::Rate);
-    let _ = b.bitwise_xor(a, c);
+    let bits_a = b.input("bits_a", ScType::UInt { width: 16 });
+    let bits_b = b.input("bits_b", ScType::UInt { width: 16 });
+    let _ = b.bitwise_xor(bits_a, bits_b);
     let _ = b.reduce(a, ReduceMode::Sum);
     let _ = b.graph_forward(a, c, 4, 2);
     let _ = b.softmax_attention(a, c, d, 32);

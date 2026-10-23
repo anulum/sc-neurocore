@@ -63,7 +63,7 @@ contain only clock/timing constraints. They do not contain `PACKAGE_PIN` or
 verified in this repository. Adding fabricated pins would create false hardware
 evidence.
 
-## Resource estimates and 2026-10-22 benchmark
+## Resource estimates and earlier 2026-10-22 benchmark
 
 The 2026-10-22 rerun measures project generation and native RTL emission on an
 Intel Core i5-11600K with 12 logical CPUs and 33,422,090,240 bytes of RAM,
@@ -88,6 +88,22 @@ fail-closed hardware conclusion: a one-DSP-per-MAC implementation of that graph
 cannot be honestly claimed to fit ZU3EG. ZU3EG deployment for that workload
 requires a folded or time-multiplexed dense implementation, a smaller layer, or
 a larger target.
+
+### Scalar-IR qualification rerun — 2026-10-22–23
+
+The later rerun retains the same Intel Core i5-11600K, 12 logical CPUs,
+33,422,090,240 bytes RAM, Linux 7.0.0-34, Python 3.12.14/NumPy 2.5.4 and
+Rust 1.98.1 release reference. It records 963.964 us/manifest for Python and
+4670.093 us/emit for Rust in
+`benchmarks/results/local_python_2026-10-22_scalar_ir_target.json` and
+`benchmarks/results/local_rust_2026-10-22_scalar_ir_target.json`.
+Each contains all seven 2,000-iteration repetitions, source hashes, commands,
+execution limits and observed load. Both use a 100% CPU quota; observed
+frequency was about 3.7 GHz with the powersave governor. Python load ranged
+56.98–53.98 and Rust load 31.39–30.18. These are different workloads under
+concurrent load, so no cross-language speedup or isolated regression follows.
+The unchanged estimator still requires folding or a larger target for the
+64x32 workload. No timing here measures inference or physical hardware.
 
 ## Dense folding contract
 

@@ -177,7 +177,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 31 |
-| Python test files | 5393 |
+| Python test files | 5394 |
 | Public documentation pages | 655 |
 | GitHub Actions workflows | 23 |
 
@@ -380,7 +380,7 @@ sc-neurocore studio              # opens browser at http://127.0.0.1:8001
 |---------|-------------|
 | **160-entry Model Browser** | Browse every registered catalogue entry by category, simulate with parameter sliders |
 | **18+ Analysis Views** | Trace, phase portrait, ISI, f-I curve, bifurcation, heatmap, STA, frequency response, characterisation dashboard |
-| **Compiler Inspector** | Build SC IR from equations, verify, emit SystemVerilog |
+| **Compiler Inspector** | Verify SC IR and emit SystemVerilog |
 | **Synthesis Dashboard** | One-click Yosys synthesis to ice40/ECP5/Gowin/Xilinx, multi-target comparison, resource bars |
 | **Training Monitor** | Live loss/accuracy curves via SSE, 6 surrogate gradients, per-layer spike rates |
 | **Network Canvas** | Drag-and-drop populations and projections (React Flow), NIR export/import |
@@ -618,6 +618,14 @@ and the seed constants in `hdl/sc_bitstream_encoder.v`.
 - **Seed strategy**: Input encoders `0xACE1 + i*7`, weight encoders `0xBEEF + i*13`
 - **Fixed-point**: Q8.8 (DATA_WIDTH=16, FRACTION=8), signed two's complement
 - **Overflow**: Explicit bit-width masking via `_mask()` function
+
+## Native compute graph IR
+
+The Rust and Python graph builders provide typed integer circuits with explicit
+casts, rounding and saturation, text round trips, and SystemVerilog/CIRCT
+emission. See the [scalar word and naming contract](docs/api/sc-ir.md).
+Equation export uses the separate equation compiler; arbitrary equation-to-native-IR
+lowering is not provided by these graph operations.
 
 ## Examples
 

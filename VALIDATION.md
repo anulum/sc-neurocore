@@ -164,3 +164,24 @@ Verilog modules in `hdl/` are verified via:
 - Formal assertions (SystemVerilog `assert property`)
 - Testbenches in `tb/` with golden-vector comparison
 - Co-simulation parity checks against Python reference
+
+
+## Typed scalar native IR
+
+Local Linux qualification exercises the default-feature Rust graph API, normal
+release-wheel Python calls, persisted text, direct RTL and pinned CIRCT 1.152.0.
+The focused native regression cohort has 69 passing tests. The installed graph
+and tool cohort has 113 passing tests, and the retained CPU codec cohort has 67.
+The numerical CIRCT corpus contains 94 circuits and 9,095 exact observations.
+Direct RTL and CIRCT are each compared with independent encoded-integer references.
+Signed/unsigned widths through 128 bits, division by zero, signed minimum,
+oversized shifts, rounding ties, casts and saturation bounds are included.
+Unused malformed declarations, bounded vector nesting and parser ID exhaustion
+are refused before hardware dimensions or wrapped identifiers can be emitted.
+Six seeded arithmetic/type/admission faults are caught by public numerical or refusal
+gates. Source-leaf instrumentation is separate from default-crate execution;
+LLVM branch counts of zero are not branch coverage evidence.
+
+The public API and dedicated tests are documented in [the native IR contract](docs/api/sc-ir.md).
+These results cover scalar graph circuits. Equation/state/integrator lowering,
+full compiler acceptance and physical board measurements have separate evidence.

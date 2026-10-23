@@ -32,6 +32,191 @@ class ScGraphBuilder:
     def __init__(self, name: str) -> None:
         self._builder = _native.ScGraphBuilder(name)
 
+    def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:
+        """Append modulo-width integer arithmetic.
+
+        Parameters
+        ----------
+        kind : str
+            One of add, sub, mul, div, rem, and, or, xor, shl, lshr, ashr.
+        lhs, rhs : int
+            SSA operands with the same declared integer type.
+        ty : str
+            Explicit signed iN or unsigned uN result type.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Division truncates toward zero and returns zero for a zero divisor.
+        MIN / -1 wraps. Shift counts use unsigned physical bits; shifts beyond
+        the width return zero, or the sign fill for ashr.
+        """
+        return self._builder.word_binary(kind, lhs, rhs, ty)
+
+    def word_unary(self, kind: str, input: int, ty: str) -> int:
+        """Append integer negation or complement.
+
+        Parameters
+        ----------
+        kind : str
+            neg or not.
+        input : int
+            SSA integer operand.
+        ty : str
+            Explicit result type, identical to the operand.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Negation wraps at the declared width.
+        """
+        return self._builder.word_unary(kind, input, ty)
+
+    def word_compare(self, predicate: str, lhs: int, rhs: int) -> int:
+        """Append an integer comparison returning Bool.
+
+        Parameters
+        ----------
+        predicate : str
+            eq, ne, lt, le, gt or ge.
+        lhs, rhs : int
+            SSA operands with identical integer types.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Ordering follows operand signedness. The result is one Boolean bit.
+        """
+        return self._builder.word_compare(predicate, lhs, rhs)
+
+    def word_resize(self, input: int, ty: str) -> int:
+        """Resize an integer word explicitly.
+
+        Parameters
+        ----------
+        input : int
+            SSA integer or Boolean operand.
+        ty : str
+            Explicit iN or uN destination type.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Widening sign-extends signed inputs and zero-extends unsigned or Bool
+        inputs. Narrowing discards high bits. No saturation or rescaling occurs.
+        """
+        return self._builder.word_resize(input, ty)
+
+    def word_bitcast(self, input: int, ty: str) -> int:
+        """Reinterpret a scalar word without changing its bits.
+
+        Parameters
+        ----------
+        input : int
+            SSA scalar operand.
+        ty : str
+            Scalar destination type with the same physical width.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Supports fixed-point, rate, integer and Bool scalars. This operation
+        does not move a binary point or quantize a value.
+        """
+        return self._builder.word_bitcast(input, ty)
+
+    def word_select(self, condition: int, when_true: int, when_false: int, ty: str) -> int:
+        """Select a scalar word using a Boolean condition.
+
+        Parameters
+        ----------
+        condition : int
+            SSA Bool operand.
+        when_true, when_false : int
+            SSA branch operands with identical scalar types.
+        ty : str
+            Explicit branch and result type.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Both branches are hardware values, not short-circuit expressions.
+        """
+        return self._builder.word_select(condition, when_true, when_false, ty)
+
+    def word_round(self, input: int, shift: int, mode: str, ty: str) -> int:
+        """Divide an integer word by a power of two.
+
+        Parameters
+        ----------
+        input : int
+            SSA integer operand.
+        shift : int
+            Nonnegative exponent smaller than the word width.
+        mode : str
+            floor, half_up, toward_zero, half_even or half_away.
+        ty : str
+            Explicit type, identical to the operand.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        half_up rounds ties toward positive infinity; half_away rounds ties
+        away from zero. Rounding introduces no intermediate overflow.
+        """
+        return self._builder.word_round(input, shift, mode, ty)
+
+    def word_clamp(self, input: int, min: int, max: int, ty: str) -> int:
+        """Saturate an integer word at explicit inclusive bounds.
+
+        Parameters
+        ----------
+        input : int
+            SSA integer operand.
+        min, max : int
+            Ordered signed-64-bit literals fitting the integer type.
+        ty : str
+            Explicit type, identical to the operand.
+
+        Returns
+        -------
+        int
+            Identifier of the appended graph value.
+
+        Notes
+        -----
+        Apply only where the source commits saturation; arithmetic itself wraps.
+        """
+        return self._builder.word_clamp(input, min, max, ty)
+
     def input(self, name: str, ty: str = "rate") -> int:
         """Add a typed input port. Returns value ID."""
         return self._builder.input(name, ty)

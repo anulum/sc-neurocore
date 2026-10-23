@@ -21,6 +21,8 @@ on:
       - "tests/test_compiler_pipeline_contracts.py"
       - "engine/src/ir/**"
       - "engine/tests/test_ir_streaming*.rs"
+      - "engine/tests/test_ir_scalar*.rs"
+      - "engine/tests/test_ir_type_geometry.rs"
       - "engine/tests/common/ir_stream.rs"
       - "engine/tests/common/ir_rtl.rs"
       - "engine/Cargo.toml"
@@ -37,6 +39,8 @@ on:
       - "tests/test_compiler_pipeline_contracts.py"
       - "engine/src/ir/**"
       - "engine/tests/test_ir_streaming*.rs"
+      - "engine/tests/test_ir_scalar*.rs"
+      - "engine/tests/test_ir_type_geometry.rs"
       - "engine/tests/common/ir_stream.rs"
       - "engine/tests/common/ir_rtl.rs"
       - "engine/Cargo.toml"
@@ -107,7 +111,9 @@ jobs:
         run: >
           cargo test --locked --manifest-path engine/Cargo.toml --jobs 1
           --test test_ir_streaming --test test_ir_streaming_words
-          --test test_ir_streaming_admission -- --test-threads=1
+          --test test_ir_streaming_admission
+          --test test_ir_scalar_words --test test_ir_scalar_admission
+          --test test_ir_scalar_text --test test_ir_type_geometry -- --test-threads=1
 
       - name: Lower and simulate every native CIRCT reference circuit
         run: python tools/check_ir_circt.py "${{ runner.temp }}/native-ir-circt"

@@ -50,6 +50,9 @@ pub fn print(graph: &ScGraph) -> String {
     for op in &graph.ops {
         out.push_str("  ");
         match op {
+            ScOp::Word { id, op } => {
+                out.push_str(&format!("{id} = sc.word {op}\n"));
+            }
             ScOp::Input { id, name, ty } => {
                 out.push_str(&format!("{} = sc.input \"{}\" : {}\n", id, name, ty));
             }

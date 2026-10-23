@@ -16,6 +16,8 @@ use crate::ir::graph::*;
 
 #[path = "parser/neuron.rs"]
 mod neuron;
+#[path = "parser/word.rs"]
+mod word;
 
 /// Parse error with line number.
 #[derive(Debug, Clone)]
@@ -64,7 +66,9 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
             continue;
         }
 
-        if trimmed.contains("= sc.input") {
+        if trimmed.contains("= sc.word ") {
+            word::parse(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.input") {
             parse_input(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.starts_with("sc.output") {
             parse_output(trimmed, &mut graph, line_idx + 1)?;
@@ -122,6 +126,7 @@ fn parse_value_id(s: &str) -> Result<ValueId, String> {
 }
 
 fn parse_type(s: &str) -> Result<ScType, String> {
+    super::type_contract::check_text_depth(s)?;
     let s = s.trim();
     if s == "rate" {
         return Ok(ScType::Rate);
@@ -182,6 +187,15 @@ fn extract_kv(text: &str, key: &str) -> Option<String> {
         let end = rest.find([',', ' ', ':']).unwrap_or(rest.len());
         rest[..end].to_string()
     })
+}
+
+/// Advance the parser allocator without wrapping an externally supplied value ID.
+fn reserve_id(graph: &mut ScGraph, id: ValueId, line: usize) -> Result<(), ParseError> {
+    let next =
+        id.0.checked_add(1)
+            .ok_or_else(|| make_err(line, "value ID overflow"))?;
+    graph.next_id = graph.next_id.max(next);
+    Ok(())
 }
 
 fn make_err(line: usize, msg: impl Into<String>) -> ParseError {
@@ -278,7 +292,7 @@ fn parse_input(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Parse
         .ok_or_else(|| make_err(line, "missing type"))?;
     let ty = parse_type(&rest[colon_pos + 1..]).map_err(|e| make_err(line, e))?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Input { id, name, ty });
     Ok(())
 }
@@ -298,7 +312,7 @@ fn parse_output(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
     let source = parse_value_id(after_name).map_err(|e| make_err(line, e))?;
 
     let id = ValueId(graph.next_id);
-    graph.next_id += 1;
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Output { id, name, source });
     Ok(())
 }
@@ -323,7 +337,7 @@ fn parse_constant(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pa
         parse_scalar_constant(val_str, &ty, line)?
     };
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Constant { id, value, ty });
     Ok(())
 }
@@ -359,7 +373,7 @@ fn parse_encode(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
             .map_err(|e| make_err(line, e.to_string()))?
     };
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Encode {
         id,
         prob,
@@ -383,7 +397,7 @@ fn parse_and(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseEr
     let lhs = parse_value_id(operands[0]).map_err(|e| make_err(line, e))?;
     let rhs = parse_value_id(operands[1]).map_err(|e| make_err(line, e))?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::BitwiseAnd { id, lhs, rhs });
     Ok(())
 }
@@ -401,10 +415,7 @@ fn parse_decode(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
     }
     let id = parse_value_id(result).map_err(|e| make_err(line, e))?;
     let input = parse_value_id(input).map_err(|e| make_err(line, e))?;
-    graph.next_id = graph.next_id.max(
-        id.0.checked_add(1)
-            .ok_or_else(|| make_err(line, "result ValueId overflow"))?,
-    );
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Decode { id, input });
     Ok(())
 }
@@ -419,7 +430,7 @@ fn parse_popcount(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pa
     let input_str = rest.split(':').next().unwrap_or("").trim();
     let input = parse_value_id(input_str).map_err(|e| make_err(line, e))?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Popcount { id, input });
     Ok(())
 }
@@ -443,7 +454,7 @@ fn parse_scale(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Parse
     let factor_str = extract_kv(rest, "factor").ok_or_else(|| make_err(line, "missing factor"))?;
     let factor = parse_finite_f64(&factor_str, line)?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Scale { id, input, factor });
     Ok(())
 }
@@ -467,7 +478,7 @@ fn parse_offset(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
     let offset_str = extract_kv(rest, "offset").ok_or_else(|| make_err(line, "missing offset"))?;
     let offset = parse_finite_f64(&offset_str, line)?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Offset { id, input, offset });
     Ok(())
 }
@@ -486,7 +497,7 @@ fn parse_xor(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseEr
     let lhs = parse_value_id(operands[0]).map_err(|e| make_err(line, e))?;
     let rhs = parse_value_id(operands[1]).map_err(|e| make_err(line, e))?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::BitwiseXor { id, lhs, rhs });
     Ok(())
 }
@@ -513,7 +524,7 @@ fn parse_reduce(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
         _ => ReduceMode::Sum,
     };
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::Reduce { id, input, mode });
     Ok(())
 }
@@ -544,7 +555,7 @@ fn parse_graph_forward(text: &str, graph: &mut ScGraph, line: usize) -> Result<(
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(4);
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::GraphForward {
         id,
         features,
@@ -579,7 +590,7 @@ fn parse_softmax_attention(text: &str, graph: &mut ScGraph, line: usize) -> Resu
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(64);
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::SoftmaxAttention { id, q, k, v, dim_k });
     Ok(())
 }
@@ -611,7 +622,7 @@ fn parse_kuramoto_step(text: &str, graph: &mut ScGraph, line: usize) -> Result<(
         None => 0.01,
     };
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::KuramotoStep {
         id,
         phases,
@@ -644,7 +655,7 @@ fn parse_div_const(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), P
         .parse::<u64>()
         .map_err(|e| make_err(line, e.to_string()))?;
 
-    graph.next_id = graph.next_id.max(id.0 + 1);
+    reserve_id(graph, id, line)?;
     graph.push(ScOp::DivConst { id, input, divisor });
     Ok(())
 }
