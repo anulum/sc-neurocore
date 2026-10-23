@@ -145,9 +145,11 @@ jobs:
         run: |
           files=(
             src/sc_neurocore/studio/desktop/{bundle,installation,installation_registration,install}.py
+            src/sc_neurocore/studio/desktop/archive.py
             studio/desktop/tests/{installation_fixtures,installation_diagnostics}.py
             studio/desktop/tests/test_{bundle,bundle_inventory,install,installation}.py
             studio/desktop/tests/test_installation_{compatibility,recovery,registration,menu,ownership,identity}.py
+            studio/desktop/tests/test_archive.py
           )
           ruff check "${files[@]}"
           ruff format --check "${files[@]}"
@@ -155,6 +157,24 @@ jobs:
             --select D,E902 --ignore-noqa --no-cache "${files[@]}"
           mypy --strict --explicit-package-bases "${files[@]}"
           bandit -q -c pyproject.toml src/sc_neurocore/studio/desktop/{bundle,installation,installation_registration,install}.py
+          bandit -q -c pyproject.toml src/sc_neurocore/studio/desktop/archive.py
+      - name: Reproduce complete delivery archives and install extracted bytes
+        env:
+          COVERAGE_RCFILE: ${{ github.workspace }}/studio/desktop/archive-coverage.ini
+          COVERAGE_FILE: ${{ runner.temp }}/studio-installation/archive-qualification/.coverage
+          SC_NEUROCORE_DESKTOP_STACK_LOG: ${{ runner.temp }}/studio-installation/archive-qualification/stacks.txt
+        run: |
+          namespace="$RUNNER_TEMP/studio-installation/archive-qualification"
+          mkdir -p "$namespace"/{home,tmp,config,data,state,cache}
+          export HOME="$namespace/home" TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          timeout --kill-after=10 900 python -B -m coverage run -m pytest -x -vv \
+            -o faulthandler_timeout=0 -p studio.desktop.tests.installation_diagnostics \
+            -p no:cacheprovider studio/desktop/tests/test_archive.py --basetemp="$namespace/pytest"
+          python -B -m coverage combine --keep "$namespace"
+          python -B -m coverage report --show-missing
+          python -B -m coverage json -o "$namespace/coverage.json"
       - name: Exercise real installation and require complete branch coverage
         env:
           COVERAGE_FILE: ${{ runner.temp }}/studio-installation/.coverage
@@ -192,6 +212,9 @@ jobs:
             ${{ runner.temp }}/studio-installation/inputs.json
             ${{ runner.temp }}/studio-installation/coverage.json
             ${{ runner.temp }}/studio-installation/stacks.txt
+            ${{ runner.temp }}/studio-installation/archive-qualification/.coverage*
+            ${{ runner.temp }}/studio-installation/archive-qualification/coverage.json
+            ${{ runner.temp }}/studio-installation/archive-qualification/stacks.txt
             ${{ runner.temp }}/studio-installation/pytest/**/*.json
             ${{ runner.temp }}/studio-installation/pytest/**/*.txt
             ${{ runner.temp }}/studio-installation/pytest/**/*.png

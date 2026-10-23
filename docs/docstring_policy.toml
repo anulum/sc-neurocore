@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1363
+expected_file_count = 1365
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5587,3 +5587,11 @@ rationale = "Exercise native menu launch and preserve occupied registration path
 [[file]]
 path = "studio/desktop/tests/test_installation_menu.py"
 rationale = "Actual freedesktop launch opens the independently installed native window, owns its HTTP backend, refuses live upgrade and quits without retaining its process locks."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/archive.py"
+rationale = "Complete sealed bundle export retains actual payload bytes and refuses source changes or output replacement."
+
+[[file]]
+path = "studio/desktop/tests/test_archive.py"
+rationale = "Actual complete runtime archives reproduce byte-for-byte, round-trip through extraction and install with the independent bundled interpreter."

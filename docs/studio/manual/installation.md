@@ -77,12 +77,12 @@ From the repository root, use a dedicated Python environment. Build the UI using
 the repository's locked frontend dependencies, then install the desktop extras:
 
 ```bash
-python3.12 -m venv .venv-studio
+uv venv --python 3.12 .venv-studio
 source .venv-studio/bin/activate
 (cd studio/frontend && npm ci && npm run build)
-python -m pip install --require-hashes --only-binary :all: \
+uv pip install --require-hashes --only-binary :all: \
   -r requirements/studio-desktop-linux-x86_64.txt
-python -m pip install -e '.[studio,desktop]'
+uv pip install -e '.[studio,desktop]'
 snn-studio
 ```
 
@@ -269,6 +269,33 @@ has its own sessions. Browser and desktop storage are not interchangeable
 merely because both display the same project name.
 
 ## Operator and lab use
+
+### Export a complete desktop bundle
+
+Operators can export an existing sealed preview bundle from an environment
+containing the desktop archive exporter:
+
+```bash
+python -m sc_neurocore.studio.desktop.archive \
+  "/absolute/path/to/sealed-bundle" "/absolute/path/to/snn-studio.tar.gz"
+```
+
+Choose a new output filename outside the input bundle. The command checks every
+sealed entry, retains its permissions and internal links, then prints the archive's
+SHA-256, size and original bundle build identity. It refuses an existing output
+file, a changed input or a failed write. A failed export leaves no partial output
+at the requested filename. Extracted contents are the bundle itself, with
+`install.sh` at the extraction root.
+
+Two exports of the same sealed input with the same Python/zlib toolchain produce
+identical archive bytes, independent of output filename or export time. This
+does not rebuild dependencies or qualify their origin. Retain the actual runtime,
+source and dependency provenance separately, and supply the archive checksum
+through a trusted channel. A checksum alone does not authenticate its publisher.
+Public desktop release, signing, a declared minimum Linux baseline and complete
+compiler acceptance remain separate requirements.
+
+### Configure a lab instance
 
 The default unprotected local-development launch is separate from the supported
 single-user loopback lab configuration. For identity-based use, the operator

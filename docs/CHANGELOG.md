@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Export complete sealed Linux desktop bundles as reproducible gzip archives, preserving
+  payload permissions, links and build identities. Refuse changed inputs and existing
+  output files, and exercise installation from the extracted runtime.
+
 - Add verified per-user Linux desktop installation, versioned updates, compatible
   rollback and removal that retains research profiles. Refuse changed or unreadable
   payloads and foreign launch files. Add complete-runtime installation acceptance

@@ -42775,6 +42775,63 @@ int
 
 ---
 
+## Module `studio.desktop.archive`
+
+### Class `BundleArchive`
+Identity of a completely written delivery archive.
+
+Attributes
+----------
+build_id : str
+    Verified input bundle identity, including its existing data-family key.
+sha256 : str
+    SHA-256 of the compressed archive bytes, not a publisher signature.
+size_bytes : int
+    Complete compressed archive length in bytes.
+
+
+### Function `create_bundle_archive(root, destination)`
+Publish a reproducible gzip/tar archive of an already sealed real bundle.
+
+Parameters
+----------
+root : pathlib.Path
+    Complete existing payload accepted by ``verify_bundle``.
+destination : pathlib.Path
+    New archive path in an existing directory outside the input bundle.
+    Existing files and symlinks are never replaced.
+
+Returns
+-------
+BundleArchive
+    Exact compressed byte identity and the unchanged input build identity.
+
+Raises
+------
+DesktopStartRefused
+    Output placement is invalid, input changes while read, or sealing refuses.
+OSError
+    Reading, writing or atomic no-replace publication fails. No partial
+    destination is published; this operation owns only its temporary file.
+
+Notes
+-----
+Member order, timestamps, owner names/IDs, gzip filename and compression
+level are fixed. Byte reproducibility assumes the same Python/zlib toolchain.
+Ordinary modes, internal symlinks and all sealed bytes are retained. This
+exports accepted inputs; it does not assemble or qualify a scientific runtime.
+
+### Function `main()`
+Export a complete sealed payload through the operator's module command.
+
+Returns
+-------
+int
+    Zero after publication, one after an authored or filesystem refusal.
+    Invalid arguments use argparse's normal exit status.
+
+---
+
 ## Module `studio.desktop.backend`
 
 ### Function `main()`
