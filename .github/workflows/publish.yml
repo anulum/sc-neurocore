@@ -89,7 +89,7 @@ jobs:
         with:
           name: python-dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           packages-dir: dist/
           skip-existing: true
@@ -198,7 +198,7 @@ jobs:
           pattern: engine-wheel-*
           merge-multiple: true
           path: dist-engine/
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           packages-dir: dist-engine/
           password: ${{ secrets.PYPI_ENGINE_TOKEN }}
