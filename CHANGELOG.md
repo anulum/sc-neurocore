@@ -1,5 +1,7 @@
 # Changelog
 
+- Restore the engine-test inventory for the five published native IR suites and bind the historical NIR graph benchmark gate to its measured source snapshot, including all eight per-file hashes. Upgrade the workstation notebook converter to 7.17.2 for GHSA-pjvx-prjx-h659 and verify the exact development documentation stylesheet policy. Refresh the pinned Rust cache and PyPI publishing Actions, and update crossbeam-channel to 0.5.17.
+
 - Restored `GLIFNeuron` to the Teeter et al. five-state GLIF5 equations across
   Python, production and safety Rust, Julia, Go, Mojo, paired schemas, receipts,
   benchmarks, Q32.32 RTL, Yosys, and bounded formal evidence. The former

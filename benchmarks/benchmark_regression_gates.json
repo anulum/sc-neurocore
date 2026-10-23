@@ -3796,7 +3796,7 @@
         "polyglot_applicability.rust": "not_applicable",
         "schema_version": "sc-neurocore.nir-graph-modularisation-benchmark.v1",
         "source_file_count": 8,
-        "source_sha256": "042655983fc833b9bdd3ab1184ff81e696a21584047c12467cc7127be4ebb205"
+        "source_sha256": "0e9e79a2e9e12ac7ce02a6a2e289e24a768c25f893d4624743783883665cbd5c"
       },
       "id": "nir-graph-modularisation-local-diagnostics",
       "required_numbers": [
@@ -3813,7 +3813,17 @@
         "results.candidate.graph_lowering_ns.median",
         "results.candidate.fpga_compilation_ns.median",
         "results.candidate.max_rss_kib.median"
-      ]
+      ],
+      "source_hashes": {
+        "src/sc_neurocore/nir_bridge/neuron_graph.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_builder.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_builder.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_connections.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_connections.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_contracts.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_contracts.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_dense.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_dense.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_hierarchy.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_hierarchy.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_metadata.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_metadata.py",
+        "src/sc_neurocore/nir_bridge/neuron_graph_nodes.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_nodes.py"
+      }
     },
     {
       "artefact": "benchmarks/results/bench_bioware.json",

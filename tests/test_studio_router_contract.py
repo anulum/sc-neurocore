@@ -271,7 +271,11 @@ def test_development_retains_interactive_docs_with_hashed_bootstrap_scripts() ->
                 if (values := part.split())
             }
             assert directives["script-src"] == {"'self'", "https://cdn.jsdelivr.net", *hashes}
-            assert "https://cdn.jsdelivr.net" in directives["style-src"]
+            assert directives["style-src"] == {
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.jsdelivr.net",
+            }
             favicon = "https://fastapi.tiangolo.com/img/favicon.png"
             assert markup.images == [favicon]
             image_sources = {favicon}
