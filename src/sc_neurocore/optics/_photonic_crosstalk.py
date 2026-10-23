@@ -36,15 +36,15 @@ try:
     )
 except ImportError:
 
-    def get_crosstalk_analyzer() -> object:
+    def get_crosstalk_analyzer() -> Callable[..., Any]:
         """Return the optional Rust scalar crosstalk analyzer or raise."""
         raise ImportError("Rust photonic crosstalk backend unavailable")
 
-    def get_crosstalk_bank_analyzer() -> object:
+    def get_crosstalk_bank_analyzer() -> Callable[..., Any]:
         """Return the optional Rust crosstalk-bank analyzer or raise."""
         raise ImportError("Rust photonic crosstalk bank backend unavailable")
 
-    def get_crosstalk_pair_analyzer() -> object:
+    def get_crosstalk_pair_analyzer() -> Callable[..., Any]:
         """Return the optional Rust crosstalk-pair analyzer or raise."""
         raise ImportError("Rust photonic crosstalk pair backend unavailable")
 
