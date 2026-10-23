@@ -18,17 +18,22 @@ HDC vector class with operator overloading:
 from __future__ import annotations
 
 import threading
+from typing import TYPE_CHECKING as _TYPE_CHECKING
 from typing import Sequence
 
 from sc_neurocore_engine.sc_neurocore_engine import (
     BitStreamTensor as _RustBitStreamTensor,
 )
 
+if _TYPE_CHECKING:
+    from ._binding_types import BitStreamTensor as _TensorType
+
 _seed_counter = 0
 _seed_lock = threading.Lock()
 
 
 def _next_seed() -> int:
+    """Allocate the next process-local hypervector seed under the shared lock."""
     global _seed_counter
     with _seed_lock:
         _seed_counter += 1
@@ -40,30 +45,66 @@ class HDCVector:
 
     __slots__ = ("_tensor",)
 
-    def __init__(self, dimension: int = 10_000, *, seed: int | None = None):
-        self._tensor = _RustBitStreamTensor(dimension, seed if seed is not None else _next_seed())
+    def __init__(self, dimension: int = 10_000, *, seed: int | None = None) -> None:
+        """Construct a native random binary hypervector.
+
+        Parameters
+        ----------
+        dimension : int, optional
+            Positive logical number of bits, default 10000.
+        seed : int or None, optional
+            Replayable native seed; None allocates a process-local seed.
+        """
+        self._tensor: _TensorType = _RustBitStreamTensor(
+            dimension, seed if seed is not None else _next_seed()
+        )
 
     # ── factories ─────────────────────────────────────────────────────
 
     @classmethod
     def _from_rust(cls, tensor: _RustBitStreamTensor) -> HDCVector:
+        """Wrap an existing native tensor without copying its packed words.
+
+        Parameters
+        ----------
+        tensor : BitStreamTensor
+            Actual native tensor returned by an HDC operation.
+
+        Returns
+        -------
+        HDCVector
+            Facade retaining the supplied native tensor.
+        """
         obj = object.__new__(cls)
         obj._tensor = tensor
         return obj
 
     @classmethod
     def from_packed(cls, data: list[int], length: int) -> HDCVector:
-        """Create from pre-packed u64 words."""
+        """Construct a hypervector from native packed uint64 words.
+
+        Parameters
+        ----------
+        data : list of int
+            Packed words with zero unused high bits.
+        length : int
+            Positive logical bit count.
+
+        Returns
+        -------
+        HDCVector
+            Native tensor exposed through the vector facade.
+        """
         return cls._from_rust(_RustBitStreamTensor.from_packed(data, length))
 
     # ── operators ─────────────────────────────────────────────────────
 
     def __mul__(self, other: HDCVector) -> HDCVector:
-        """Bind (XOR)."""
+        """Return the hypervector bound to other by bitwise XOR."""
         return self.xor(other)
 
     def __add__(self, other: HDCVector) -> HDCVector:
-        """Bundle (majority vote of two vectors)."""
+        """Return a new vector formed by bundling these two hypervectors."""
         return HDCVector.bundle([self, other])
 
     # ── core ops ──────────────────────────────────────────────────────
@@ -94,13 +135,29 @@ class HDCVector:
 
     @property
     def dimension(self) -> int:
+        """Return the logical number of bits in the native tensor.
+
+        Returns
+        -------
+        int
+            Logical dimension, excluding unused packed high bits.
+        """
         return self._tensor.length
 
     def popcount(self) -> int:
+        """Count the set bits in the native tensor.
+
+        Returns
+        -------
+        int
+            Number of active bits within the logical dimension.
+        """
         return self._tensor.popcount()
 
     def __len__(self) -> int:
+        """Return the logical bit count of the wrapped native tensor."""
         return self._tensor.length
 
     def __repr__(self) -> str:
+        """Describe the hypervector using its dimension and current set-bit count."""
         return f"HDCVector(dim={self.dimension}, popcount={self.popcount()})"

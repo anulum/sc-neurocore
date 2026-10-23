@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1340
+expected_file_count = 1347
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5495,3 +5495,31 @@ path = "studio/desktop/tests/test_entry.py"
 rationale = "Exercise the actual module and installed GUI script, missing Qt and unusable profiles, then verify native close releases the owned backend and retained profile."
 require_module_docstring = true
 allow_missing = []
+
+[[file]]
+path = "bridge/sc_neurocore_engine/neurons.py"
+rationale = "Typed native facade arguments, results and state are documented against the actual PyO3 binding contracts."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/hdc.py"
+rationale = "Typed native facade arguments, results and state are documented against the actual PyO3 binding contracts."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/petri_net.py"
+rationale = "Typed native facade arguments, results and state are documented against the actual PyO3 binding contracts."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/graphs.py"
+rationale = "Typed native facade arguments, results and state are documented against the actual PyO3 binding contracts."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/grad.py"
+rationale = "Typed native facade arguments, results and state are documented against the actual PyO3 binding contracts."
+
+[[file]]
+path = "bridge/sc_neurocore_engine/layers.py"
+rationale = "Typed native facade arguments, results and state are documented against the actual PyO3 binding contracts."
+
+[[file]]
+path = "tests/equivalence/test_neuron_equiv.py"
+rationale = "Actual native neuron transitions and named state remain consistent through spiking and both reset aliases."

@@ -11,14 +11,11 @@
 from __future__ import annotations
 
 import fcntl
-import os
-import time
 
 import pytest
 
 from sc_neurocore.studio.desktop.runtime import DesktopBackend
 from studio.desktop.tests.test_window import _close_button, _message, _shown, _wait
-from tests.test_studio_jobs_guard_cleanup import _children, _runs
 
 pytestmark = pytest.mark.usefixtures("application")
 
@@ -41,19 +38,9 @@ def test_readonly_configuration_is_visible_and_native_close_preserves_the_profil
     finally:
         closed = previous.close()
         assert closed is not None and closed.reaped and closed.returncode == 0
-    with _shown(desktop_backend) as window:
-        deadline = time.monotonic() + 30
-        children: list[int] = []
-        while not children:
-            children = [
-                pid
-                for pid in _children(os.getpid())
-                if _runs(pid, "sc_neurocore.studio.desktop.backend")
-            ]
-            assert time.monotonic() < deadline
-            time.sleep(0.005)
-        desktop_backend.paths.config.chmod(0o500)
-        try:
+    desktop_backend.paths.config.chmod(0o500)
+    try:
+        with _shown(desktop_backend) as window:
             _wait(lambda: _message(window, "Studio could not save its desktop configuration."))
             assert window.isVisible() and window.instance is None and window.view is None
             assert desktop_backend.returncode == 0
@@ -62,5 +49,5 @@ def test_readonly_configuration_is_visible_and_native_close_preserves_the_profil
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             _close_button(window)
             assert configuration.read_bytes() == original
-        finally:
-            desktop_backend.paths.config.chmod(0o700)
+    finally:
+        desktop_backend.paths.config.chmod(0o700)

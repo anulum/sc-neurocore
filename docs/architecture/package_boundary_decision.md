@@ -85,6 +85,7 @@ they satisfy the same promotion gate:
 | `mpi` | optional extra | Distributed simulation through `mpi4py`. |
 | `lava` | optional extra | Intel Lava bridge profile, constrained to Python versions supported by Lava. |
 | `studio` | optional extra | Local web studio runtime dependencies. |
+| `desktop` | optional extra | Qt runtime for the native Studio window, separate from the browser Studio dependency profile. |
 | `federation` | optional extra | SCPN Studio platform federation vertical. |
 | `docs` | contributor extra | Documentation build dependencies. |
 | `compression` | optional extra | Wavelet and compressed-raster codec support. |

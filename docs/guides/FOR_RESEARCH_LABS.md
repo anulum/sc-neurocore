@@ -125,7 +125,7 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-90 SymbiYosys proof jobs and 447 formal statements (296 assert, 115 assume,
+90 SymbiYosys proof jobs and 449 formal statements (299 assert, 114 assume,
 36 cover) across the HDL formal tree.
 
 ### Prerequisites for physical deployment
@@ -183,7 +183,7 @@ path; validate the exact model, quantisation and target separately.
 ## Rust Engine (Optional, Recommended)
 
 The Rust SIMD engine provides committed SIMD benchmark artefacts, AVX-512,
-AVX2, or NEON auto-dispatch, 187 Rust PyO3 model wrappers, and a 163-model
+AVX2, or NEON auto-dispatch, 212 Rust PyO3 model wrappers, and a 180-model
 NetworkRunner dispatch list.
 
 ```bash
