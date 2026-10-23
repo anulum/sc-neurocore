@@ -167,9 +167,15 @@ def restore_source(payload: str) -> tuple[EquationNeuron, Q88, str, int, list[st
         )
         if units == "strict":
             display = _mapping(model["display_state_units"])
-            neuron._display_state_units = {
-                key: UNIT_REGISTRY(_text(unit)).units for key, unit in display.items()
-            }
+            if display.keys() != neuron._display_state_units.keys():
+                raise ValueError("equation display units must name every declared state exactly")
+            display_units = {key: UNIT_REGISTRY(_text(unit)).units for key, unit in display.items()}
+            if any(
+                not unit.is_compatible_with(neuron._base_state_units[key])
+                for key, unit in display_units.items()
+            ):
+                raise ValueError("equation display units must match the state dimensions")
+            neuron._display_state_units = display_units
         if model_source(neuron, q, name, stages, tuple(points)) != payload:
             raise ValueError("equation source is noncanonical or contains unsupported fields")
         return neuron, q, name, stages, points

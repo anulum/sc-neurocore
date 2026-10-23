@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Reject missing, unknown or dimensionally incompatible display units when replaying
+  persisted equation graphs, including source metadata with valid native checksums.
+
 - Pin the complete Linux desktop and backend dependency closure with download
   hashes. Install the root package without resolving different runtime versions
   and document application-specific Linux sandbox policy requirements.

@@ -184,3 +184,43 @@ def test_public_equation_replay_requires_model_source_and_valid_json() -> None:
         recompile_ir(plain)
     with pytest.raises(ValueError, match="invalid equation source contract"):
         recompile_ir(_payload(text, "{"))
+
+
+@pytest.mark.parametrize(
+    "display_units",
+    [
+        {"v": "kilogram"},
+        {"v": "millivolt", "ghost": "volt"},
+        {},
+    ],
+    ids=["incompatible-dimension", "unknown-state", "missing-state"],
+)
+def test_public_equation_replay_refuses_invalid_display_units(
+    display_units: dict[str, str],
+) -> None:
+    """Require declared state names and physical dimensions despite valid native checksums.
+
+    Parameters
+    ----------
+    display_units : dict of str to str
+        Changed strict-unit presentation map in an otherwise valid source contract.
+    """
+    from sc_neurocore.neurons._units import UNIT_REGISTRY, require_pint
+
+    require_pint()
+    neuron = EquationNeuron(
+        {"v": "(I - v) / tau"},
+        state={"v": 1000.0 * UNIT_REGISTRY.millivolt},
+        parameters={"tau": 2.0 * UNIT_REGISTRY.second},
+        dt=0.5 * UNIT_REGISTRY.second,
+        units="strict",
+        input_unit=1.0 * UNIT_REGISTRY.volt,
+    )
+    original = compile_to_ir(neuron)
+    payload = original.graph.source_payload
+    assert payload is not None
+    raw = json.loads(payload)
+    raw["model"]["display_state_units"] = display_units
+    altered = json.dumps(raw, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    with pytest.raises(ValueError, match="display units"):
+        recompile_ir(_payload(original.graph.to_text(), altered))

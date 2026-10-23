@@ -2,7 +2,7 @@
   "cases": {
     "bench_euler": {
       "clocks_per_timestep": 1,
-      "median_ms": 2.056699,
+      "median_ms": 6.786565,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -68,22 +68,22 @@
       "output_sha256": "3e7c8d2ffbddb05afaf9bac7039746a0c87ce2e40937452b19ea9e2d1626687f",
       "pipeline_registers": 0,
       "samples_ns": [
-        1841883,
-        3687235,
-        2340389,
-        2028167,
-        6894608,
-        1912748,
-        2092773,
-        2056699,
-        2183888,
-        1993302,
-        1952416
+        11935372,
+        11263559,
+        6786565,
+        3940809,
+        2665288,
+        4225846,
+        5199753,
+        3256171,
+        21141082,
+        26145982,
+        14959177
       ]
     },
     "bench_macro": {
       "clocks_per_timestep": 3,
-      "median_ms": 3.611117,
+      "median_ms": 8.135412,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -152,22 +152,22 @@
       "output_sha256": "9ed71eccc810c2975c167ed4e75015f905b55cff944b93bd7e3eedc34698d1a4",
       "pipeline_registers": 0,
       "samples_ns": [
-        58203317,
-        4656716,
-        3744524,
-        3614604,
-        3432741,
-        3421220,
-        3611117,
-        3423481,
-        3616186,
-        3520264,
-        3433936
+        8717969,
+        5468076,
+        8135412,
+        5559816,
+        3244038,
+        6751209,
+        7856670,
+        9493163,
+        44810344,
+        11191218,
+        19592483
       ]
     },
     "bench_random": {
       "clocks_per_timestep": 1,
-      "median_ms": 7.799009,
+      "median_ms": 25.45798,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -238,22 +238,22 @@
       "output_sha256": "89d8cd010a4030c7dc776abf1f0795b1a8a4d3211f5a028e340c396b024c548f",
       "pipeline_registers": 0,
       "samples_ns": [
-        105526046,
-        384212166,
-        11411833,
-        7694164,
-        7233776,
-        7769025,
-        7610769,
-        7799009,
-        8236160,
-        7836222,
-        7253043
+        24527065,
+        53687564,
+        23300779,
+        14322341,
+        62250577,
+        13535203,
+        25262967,
+        25457980,
+        63324959,
+        31799974,
+        93410111
       ]
     },
     "bench_rk4": {
       "clocks_per_timestep": 5,
-      "median_ms": 10.425749,
+      "median_ms": 30.698819,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -341,30 +341,30 @@
       "output_sha256": "62d20072f11f4790bb3cb391472be1aae656efc836f50149050f94cbeb969a82",
       "pipeline_registers": 4,
       "samples_ns": [
-        93547809,
-        180644170,
-        11344611,
-        10527136,
-        10051306,
-        9815641,
-        10129930,
-        10147569,
-        10165962,
-        10425749,
-        10493188
+        46424836,
+        29228963,
+        30139606,
+        13716960,
+        16180460,
+        30698819,
+        18886573,
+        347604853,
+        134880438,
+        62316757,
+        126254489
       ]
     }
   },
   "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json benchmarks/results/local_python_2026-10-23_equation_ir.json",
   "cross_language_comparison": false,
-  "generated_at": "2026-10-23T17:27:35.192490+00:00",
+  "generated_at": "2026-10-23T18:37:27.055059+00:00",
   "hardware_measurement_claimed": false,
   "implementation_scope": "Python model frontend with maintained Rust graph backend",
   "isolation": "shared loaded host; no exclusive core reservation",
   "load_average_after": [
-    61.47900390625,
-    60.63916015625,
-    59.06689453125
+    47.9619140625,
+    47.58251953125,
+    46.5673828125
   ],
   "measurement_context": {
     "architecture": "x86_64",
@@ -384,8 +384,8 @@
       11
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3700.037,
-      "min_observed_mhz": 3699.962,
+      "max_observed_mhz": 3800.038,
+      "min_observed_mhz": 3799.961,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -396,14 +396,14 @@
     "host": "aaarthuus",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      61.47900390625,
-      60.63916015625,
-      59.06689453125
+      47.9619140625,
+      47.58251953125,
+      46.5673828125
     ],
     "load_average_before": [
-      61.47900390625,
-      60.63916015625,
-      59.06689453125
+      47.9619140625,
+      47.58251953125,
+      46.5673828125
     ],
     "logical_cpu_count": 12,
     "numpy_version": "2.5.3",
@@ -417,7 +417,7 @@
   "performance_promotion_claimed": false,
   "samples_per_case": 11,
   "schema_version": 1,
-  "source_base_sha": "1138bd172cd5b8d8fe5bc343999f7dfb7fe5541b",
+  "source_base_sha": "16f8f15f52232810c2dd1615b1746f13a2aa46d6",
   "source_sha256": {
     "Cargo.lock": "25a5d602f99d9028a96c521b0603b1a1f9eb1277f0943c8aa0b6f04d2d8d1fbc",
     "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
@@ -616,7 +616,7 @@
     "src/sc_neurocore/compiler/native_equation/expressions.py": "e0c734753eaabe86f179e0122c568f8dc7c4236f328661071cd03c9ea30307c4",
     "src/sc_neurocore/compiler/native_equation/functions.py": "71c2d526b1135c14359c1ba202427ebb3c871da024fe686952715f0c5de397aa",
     "src/sc_neurocore/compiler/native_equation/integrators.py": "86a8874460467a7919dafcecbcdc5c9437cbd666b71f028d15e80000246ecf79",
-    "src/sc_neurocore/compiler/native_equation/replay.py": "31a2bebce3a23cce084b4856820cb7801558845328e1350ef526fca88b133b29",
+    "src/sc_neurocore/compiler/native_equation/replay.py": "a2964423652be6720d655586702bd52cb3166fbfa3fce70146b9e8e5556408a5",
     "src/sc_neurocore/compiler/native_equation/scheduling.py": "e9fde245f1a0169261a228ad2679a7a99bb1a620c03d9056cc2abef603835a3c",
     "src/sc_neurocore/compiler/native_equation/source.py": "68786d3e21edcdc3c7a057f0a7773089fdeb69856ebbc624098463dfb6e188dd",
     "src/sc_neurocore/compiler/native_equation/transactions.py": "f4e124f9c299f4f7924ede0c79c6006d6376c6fb59480869cac369d397824122",

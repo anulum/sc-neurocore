@@ -143,7 +143,9 @@ or establish that an untrusted description matches a graph's behavior.
 `recompile_ir(text)` additionally reconstructs the original model and numerical
 configuration, recompiles it, and requires exact canonical graph-text equality.
 Strict-unit models repeat dimensional validation using their base values and
-retain their separate display units. Malformed, extra, duplicate or
+retain their separate display units. Display units must name exactly the declared
+states and have dimensions compatible with those states; a valid source checksum
+does not make an unknown state or an incompatible unit admissible. Malformed, extra, duplicate or
 noncanonical source fields refuse. A validly rehashed different equation still
 fails if it does not reproduce the graph.
 
