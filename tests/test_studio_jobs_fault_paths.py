@@ -16,6 +16,7 @@ filesystem entries at the point where the job manager observes them.
 from __future__ import annotations
 
 import ctypes
+import errno
 import os
 import signal
 import socket
@@ -49,6 +50,7 @@ from sc_neurocore.studio.platform.jobs_ledger_supervisor import (
 )
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.platform.jobs_reaper import ReapReport, reap_process_group
+from tests.studio_seccomp_support import Refusal, run_refused
 
 #: A process id no live process holds on this host during the test.
 ABSENT_PID = 4_194_000
@@ -63,6 +65,7 @@ class RefusedThread(threading.Thread):
     """A thread the interpreter refuses to start, as it does at its thread limit."""
 
     def start(self) -> None:
+        """Refuse thread creation before any worker can execute."""
         raise RuntimeError("can't start new thread")
 
 
@@ -70,6 +73,7 @@ class StartedThenRefusedThread(threading.Thread):
     """A thread that starts and whose start still reports an error."""
 
     def start(self) -> None:
+        """Start the real thread before reporting a creation failure."""
         super().start()
         raise RuntimeError("thread start reported an error after starting")
 
@@ -91,6 +95,8 @@ def _manager(root: Path, **options: Any) -> StudioJobManager:
 
 
 class TestSupervisorLiveness:
+    """Keep absent supervisor metadata distinct from confirmed process exit."""
+
     def _identity(self, pid: int) -> str:
         return f"{socket.gethostname()}:{pid}:12345"
 
@@ -119,6 +125,8 @@ class TestSupervisorLiveness:
         assert len(calls) == 2
 
     def test_unreadable_process_metadata_is_unknown(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Report unknown supervisor liveness when its identity metadata cannot be read."""
+
         def refused(*_args: object, **_kwargs: object) -> None:
             raise PermissionError("proc entry of another identity")
 
@@ -130,6 +138,8 @@ class TestSupervisorLiveness:
 
 
 def test_a_group_this_identity_may_not_signal_is_not_gone(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Retain a process group when the caller lacks permission for its signal probe."""
+
     def killpg(group: int, number: int) -> None:
         raise PermissionError("operation not permitted")
 
@@ -158,6 +168,8 @@ def test_a_process_that_exits_after_the_listing_is_not_a_survivor(
 
 
 class TestWorkerGroupStopped:
+    """Recheck a worker group after its recorded members cannot be identified."""
+
     def _call(self) -> bool:
         boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
         group = _absent_pid()
@@ -207,22 +219,58 @@ class UnstoppableChild:
         self._refuse_kill = refuse_kill
 
     def poll(self) -> int | None:
+        """Keep the configured child in its running state.
+
+        Returns
+        -------
+        None
+            No terminal return code is available.
+        """
         return None
 
     def terminate(self) -> None:
+        """Refuse termination when configured; otherwise leave the child running.
+
+        Raises
+        ------
+        PermissionError
+            The configured termination signal is refused.
+        """
         if self._refuse_terminate:
             raise PermissionError("signal refused by a security policy")
 
     def kill(self) -> None:
+        """Refuse killing when configured; otherwise leave the child running.
+
+        Raises
+        ------
+        PermissionError
+            The configured kill signal is refused.
+        """
         if self._refuse_kill:
             raise PermissionError("signal refused by a security policy")
 
     def wait(self, timeout: float | None = None) -> int:
+        """Report that the child never becomes collectable.
+
+        Parameters
+        ----------
+        timeout : float, optional
+            Waiting budget included in the reported timeout.
+
+        Raises
+        ------
+        subprocess.TimeoutExpired
+            This child remains running for every waiting budget.
+        """
         raise subprocess.TimeoutExpired("worker", timeout or 0.0)
 
 
 class TestReaper:
+    """Report signal and collection outcomes without losing surviving workers."""
+
     def test_signalling_a_group_that_is_gone_is_not_an_error(self) -> None:
+        """Accept a signal target that disappeared before the signal was sent."""
         jobs_reaper._signal_group(_absent_pid(), signal.SIGTERM)
 
     @pytest.mark.parametrize(
@@ -234,6 +282,7 @@ class TestReaper:
         self, refuse_terminate: bool, refuse_kill: bool
     ) -> None:
         # A stand-in for the one Popen that cannot be produced: the kernel refusing both signals.
+        """Report the surviving direct child without claiming its supervisor group."""
         child: Any = UnstoppableChild(refuse_terminate=refuse_terminate, refuse_kill=refuse_kill)
         report = reap_process_group(
             child,
@@ -245,6 +294,7 @@ class TestReaper:
         assert report.group_id is None
 
     def test_collecting_a_child_that_is_still_running_does_not_block(self) -> None:
+        """Leave an executing child's return code unset without waiting for its exit."""
         child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
         try:
             started = time.monotonic()
@@ -260,9 +310,12 @@ class TestReaper:
 
 
 class TestThreadStartRefused:
+    """Retain failed job state when supervisor or worker thread startup fails."""
+
     def test_a_supervisor_that_cannot_start_fails_the_job(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Persist supervisor startup failure and release the job completion waiter."""
         manager = _manager(tmp_path / "jobs")
         monkeypatch.setattr(jobs_manager_thread, "threading", _threading_with(RefusedThread))
         with pytest.raises(RuntimeError, match="can't start new thread"):
@@ -275,6 +328,7 @@ class TestThreadStartRefused:
     def test_a_worker_that_cannot_start_fails_the_job(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Retain the worker startup refusal after its supervisor has started."""
         manager = _manager(tmp_path / "jobs")
         created: list[int] = []
 
@@ -294,6 +348,7 @@ class TestThreadStartRefused:
     def test_a_worker_whose_start_errs_after_starting_is_still_supervised(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Cancel the executing worker while retaining its reported startup error."""
         manager = _manager(tmp_path / "jobs")
         created: list[int] = []
 
@@ -358,9 +413,12 @@ def _submit(
 
 
 class TestProcessSupervision:
+    """Retain worker cleanup outcomes beside process-job failures and cancellation."""
+
     def test_a_worker_whose_registration_cannot_start_is_reaped_and_failed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Record registration failure and any survivor reported after real reaping."""
         manager = _manager(tmp_path / "jobs")
         reports = _unreaped_after_reaping(monkeypatch)
 
@@ -379,6 +437,7 @@ class TestProcessSupervision:
     def test_a_ledger_that_cannot_be_read_fails_the_job_and_stops_the_worker(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Stop work after ledger observation fails and retain any reported survivor."""
         manager = _manager(tmp_path / "jobs")
         reports = _unreaped_after_reaping(monkeypatch)
         job_id = _submit(manager, "process_sleep_task", {"seconds": 10.0})
@@ -406,6 +465,7 @@ class TestProcessSupervision:
     def test_a_cancelled_worker_that_survives_is_reported(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Keep cancellation terminal while disclosing that worker cleanup was incomplete."""
         manager = _manager(tmp_path / "jobs")
         _unreaped_after_reaping(monkeypatch)
         job_id = _submit(manager, "process_sleep_task", {"seconds": 10.0})
@@ -421,6 +481,7 @@ class TestProcessSupervision:
     def test_a_timed_out_worker_that_survives_is_reported(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Keep the timeout reason together with its unreaped process-group report."""
         manager = _manager(tmp_path / "jobs")
         _unreaped_after_reaping(monkeypatch)
         job_id = _submit(manager, "process_sleep_task", {"seconds": 10.0}, timeout_seconds=1.0)
@@ -432,6 +493,7 @@ class TestProcessSupervision:
     def test_a_finished_worker_whose_group_survives_is_failed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Refuse successful completion when the worker's process group remains unreaped."""
         manager = _manager(tmp_path / "jobs")
         _unreaped_after_reaping(monkeypatch)
         job_id = _submit(manager, "process_echo_task", {"model": "lif"})
@@ -444,6 +506,7 @@ class TestProcessSupervision:
     def test_a_process_supervisor_that_cannot_start_fails_the_job(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Persist failed process-supervisor startup and release its completion waiter."""
         manager = _manager(tmp_path / "jobs")
         monkeypatch.setattr(jobs_manager_process, "threading", _threading_with(RefusedThread))
         with pytest.raises(RuntimeError, match="can't start new thread"):
@@ -456,6 +519,7 @@ class TestProcessSupervision:
 def test_a_registration_thread_that_cannot_start_closes_the_worker_pipe(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Close the startup grant pipe so the actual child can observe end of input."""
     manager = _manager(tmp_path / "jobs")
     child = subprocess.Popen(
         [sys.executable, "-c", "import sys; sys.stdin.read()"], stdin=subprocess.PIPE
@@ -530,10 +594,14 @@ def _exchange_after_move(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestOwnedDirectoryRemoval:
+    """Remove job directories only while their filesystem identity remains owned."""
+
     def test_a_missing_directory_is_not_reported_removed(self, tmp_path: Path) -> None:
+        """Return no removal claim for an absent directory."""
         assert jobs_purge_recovery._remove_owned_directory(tmp_path / "missing", 1, 1) is False
 
     def test_a_directory_with_another_identity_is_left_alone(self, tmp_path: Path) -> None:
+        """Preserve another inode and its contents at the requested cleanup path."""
         target = tmp_path / "staged"
         target.mkdir()
         (target / "kept.txt").write_text("not ours")
@@ -549,6 +617,7 @@ class TestOwnedDirectoryRemoval:
     def test_a_path_exchanged_while_it_was_cleared_is_not_removed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Preserve a replacement directory installed during descriptor-based cleanup."""
         target = tmp_path / "staged"
         target.mkdir()
         identity = target.stat()
@@ -562,6 +631,8 @@ class TestOwnedDirectoryRemoval:
 
 
 class TestPurgeRecoveryPhases:
+    """Recover retained job artifacts without erasing unresolved purge intentions."""
+
     def _departed(self) -> str:
         return subprocess.run(
             [
@@ -594,6 +665,7 @@ class TestPurgeRecoveryPhases:
     def test_a_staged_directory_is_restored_when_the_purge_never_committed(
         self, tmp_path: Path
     ) -> None:
+        """Restore staged artifacts and clear the uncommitted purge intention."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         work_dir = tmp_path / job_id
@@ -607,6 +679,7 @@ class TestPurgeRecoveryPhases:
     def test_both_the_original_and_a_staged_copy_leave_the_intent_pending(
         self, tmp_path: Path
     ) -> None:
+        """Keep the prepared intention when both possible artifact locations exist."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         identity = (tmp_path / job_id).stat()
@@ -618,6 +691,7 @@ class TestPurgeRecoveryPhases:
     def test_a_restore_that_loses_its_race_leaves_the_intent_pending(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Keep staged evidence and the prepared intention when restore is occupied."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         work_dir = tmp_path / job_id
@@ -633,6 +707,7 @@ class TestPurgeRecoveryPhases:
     def test_a_cleanup_that_cannot_prove_removal_is_marked_ambiguous(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Mark cleanup ambiguous when another directory replaces the staged inode."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         work_dir = tmp_path / job_id
@@ -647,6 +722,7 @@ class TestPurgeRecoveryPhases:
         assert (staged / "replacement.txt").read_text() == "another directory"
 
     def test_recovery_for_one_job_leaves_other_intents_untouched(self, tmp_path: Path) -> None:
+        """Recover only the selected job while retaining another prepared intention."""
         manager = _manager(tmp_path)
         first, second = _completed_job(manager), _completed_job(manager)
         for job_id in (first, second):
@@ -658,9 +734,12 @@ class TestPurgeRecoveryPhases:
 
 
 class TestPurgeCommit:
+    """Commit purge state only while its owned artifacts remain identifiable."""
+
     def test_a_move_that_loses_its_race_rejects_the_purge_and_keeps_the_job(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Retain the job and its evidence when another directory occupies staging."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         _occupy_destination_during_move(monkeypatch)
@@ -673,6 +752,7 @@ class TestPurgeCommit:
     def test_a_directory_exchanged_during_the_move_rejects_the_purge(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Reject an exchanged staging inode while preserving both sets of contents."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         _exchange_after_move(monkeypatch)
@@ -685,6 +765,7 @@ class TestPurgeCommit:
     def test_a_job_deleted_between_preparation_and_commit_is_forgotten(
         self, tmp_path: Path
     ) -> None:
+        """Report concurrent record deletion and remove its obsolete completion waiter."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         statements: list[str] = []
@@ -714,6 +795,7 @@ class TestPurgeCommit:
     def test_a_cleanup_left_pending_is_reported(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Report pending recovery without removing the replacement directory."""
         manager = _manager(tmp_path)
         job_id = _completed_job(manager)
         staged = tmp_path / f".purge-{job_id}"
@@ -743,9 +825,12 @@ def test_a_transaction_that_cannot_begin_rolls_nothing_back(tmp_path: Path) -> N
 
 
 class TestProcessStart:
+    """Persist child-creation and registration failures with their cleanup outcomes."""
+
     def test_a_worker_the_host_cannot_fork_fails_the_job(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Persist the process-creation refusal before a worker can be admitted."""
         manager = _manager(tmp_path / "jobs")
 
         def refused(*_args: object, **_kwargs: object) -> None:
@@ -762,6 +847,7 @@ class TestProcessStart:
     def test_a_refused_registration_whose_worker_is_reaped_says_only_why(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Retain registration failure without falsely reporting a collected survivor."""
         manager = _manager(tmp_path / "jobs")
 
         def refuse(*_args: object) -> None:
@@ -774,18 +860,53 @@ class TestProcessStart:
         assert record.error == "Studio worker could not start: registration thread refused"
 
 
-def test_a_thread_whose_status_cannot_be_read_counts_as_exited(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def unreadable(*_args: object, **_kwargs: object) -> None:
-        raise PermissionError("task stat of another identity")
+@pytest.mark.parametrize("read_error", [errno.EACCES, errno.EMFILE])
+def test_an_unreadable_thread_is_not_confirmed_exited(read_error: int) -> None:
+    """Retain uncertain liveness when the kernel refuses an actual task-stat read.
 
-    monkeypatch.setattr(jobs_process_state, "open", unreadable, raising=False)
-    assert jobs_process_state.process_exited(os.getpid()) is True
+    Parameters
+    ----------
+    read_error : int
+        Kernel refusal for regular read-only opens; directory opens still work.
+    """
+    result = run_refused(
+        "import os\n"
+        "from sc_neurocore.studio.platform.jobs_process_state import (\n"
+        "    group_is_gone, group_survivors, process_exited)\n"
+        "os.setsid()\n"
+        "pid = os.getpid()\n"
+        "before = process_exited(pid)\n"
+        "install_refusals(REFUSALS)\n"
+        "after = process_exited(pid)\n"
+        "group_gone = group_is_gone(os.getpgrp())\n"
+        "survivor = pid in group_survivors(os.getpgrp())\n"
+        "try:\n"
+        "    with open(f'/proc/{pid}/task/{pid}/stat') as stream:\n"
+        "        stream.read()\n"
+        "except OSError as error:\n"
+        "    refused = error.errno\n"
+        "else:\n"
+        "    raise AssertionError('The actual task-stat read was not refused')\n"
+        "print(json.dumps({'before': before, 'after': after, 'read_error': refused,\n"
+        "    'group_gone': group_gone, 'survivor': survivor,\n"
+        "    'tasks_visible': str(pid) in os.listdir(f'/proc/{pid}/task')}))\n",
+        [Refusal("openat", read_error, os.O_RDONLY | os.O_CLOEXEC, 2)],
+    )
+    assert result == {
+        "before": False,
+        "after": False,
+        "read_error": read_error,
+        "group_gone": False,
+        "survivor": True,
+        "tasks_visible": True,
+    }
 
 
 class TestNonReplacingMove:
+    """Preserve existing paths when an atomic non-overwriting move cannot proceed."""
+
     def test_an_occupied_destination_is_refused_not_overwritten(self, tmp_path: Path) -> None:
+        """Retain the source and destination contents after an occupied move."""
         source, destination = tmp_path / "source", tmp_path / "destination"
         source.mkdir()
         destination.mkdir()
@@ -794,6 +915,7 @@ class TestNonReplacingMove:
         assert source.is_dir() and (destination / "kept.txt").read_text() == "existing"
 
     def test_a_missing_source_raises_with_both_paths(self, tmp_path: Path) -> None:
+        """Identify both paths when the source of an atomic move is absent."""
         with pytest.raises(FileNotFoundError) as raised:
             jobs_purge_paths.move_without_replace(tmp_path / "missing", tmp_path / "target")
         assert raised.value.filename == str(tmp_path / "missing")
@@ -802,6 +924,7 @@ class TestNonReplacingMove:
     def test_a_libc_without_renameat2_refuses_rather_than_falling_back(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Refuse an unavailable atomic primitive instead of attempting an overwriting move."""
         monkeypatch.setattr(ctypes, "CDLL", lambda *_args, **_kwargs: types.SimpleNamespace())
         with pytest.raises(OSError, match="Atomic non-overwriting rename is unavailable"):
             jobs_purge_paths.move_without_replace(tmp_path / "a", tmp_path / "b")
@@ -810,6 +933,7 @@ class TestNonReplacingMove:
 def test_a_restored_directory_with_another_identity_leaves_the_intent_pending(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Preserve displaced evidence and its intention after a replacement wins restore."""
     phases = TestPurgeRecoveryPhases()
     manager = _manager(tmp_path)
     job_id = _completed_job(manager)

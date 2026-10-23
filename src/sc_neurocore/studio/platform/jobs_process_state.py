@@ -23,18 +23,32 @@ def process_exited(pid: int) -> bool:
     succeeding for it; treating it as running would report every ordinary reap
     as a failure. A thread-group leader that exits while its other threads run
     is also shown as a zombie, yet its process still executes, so each thread
-    is checked. A process or thread that vanished during the check has exited.
+    is checked. An unreadable process or thread is not confirmed as exited.
+
+    Parameters
+    ----------
+    pid : int
+        Kernel process identifier whose current thread states are observed.
+
+    Returns
+    -------
+    bool
+        True when the process directory is absent or every observed thread is
+        a zombie or dead. False when any thread runs or its state cannot be
+        read, including descriptor exhaustion and permission refusals.
     """
     try:
         tasks = os.listdir(f"/proc/{pid}/task")
-    except OSError:
+    except FileNotFoundError:
         return True
+    except OSError:
+        return False
     for task in tasks:
         try:
             with open(f"/proc/{pid}/task/{task}/stat", encoding="utf-8", errors="replace") as file:
                 state = file.read().rsplit(")", 1)[-1].split()[0]
         except OSError:
-            continue
+            return False
         if state not in {"Z", "X"}:
             return False
     return True

@@ -37,6 +37,7 @@ _SYSCALLS: dict[str, int] = {
     "execve": 59,
     "kill": 62,
     "prctl": 157,
+    "openat": 257,
     "fchmodat": 268,
     "pidfd_send_signal": 424,
     "pidfd_open": 434,

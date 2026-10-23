@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1316
+expected_file_count = 1319
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5363,3 +5363,18 @@ allow_missing = []
 [[file]]
 path = "tests/test_ir_state_runtime.py"
 rationale = "Public Python register transactions exercise native atomic state, reset and enable through persisted IR and actual RTL, with invalid transaction refusals."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_process_state.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_jobs_process_state.py"
+require_module_docstring = true
+allow_missing = []
+
+[[file]]
+path = "tests/test_studio_jobs_fault_paths.py"
+require_module_docstring = true
+allow_missing = []

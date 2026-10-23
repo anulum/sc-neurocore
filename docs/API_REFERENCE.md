@@ -46726,7 +46726,19 @@ A zombie still belongs to its process group, so ``killpg(group, 0)`` keeps
 succeeding for it; treating it as running would report every ordinary reap
 as a failure. A thread-group leader that exits while its other threads run
 is also shown as a zombie, yet its process still executes, so each thread
-is checked. A process or thread that vanished during the check has exited.
+is checked. An unreadable process or thread is not confirmed as exited.
+
+Parameters
+----------
+pid : int
+    Kernel process identifier whose current thread states are observed.
+
+Returns
+-------
+bool
+    True when the process directory is absent or every observed thread is
+    a zombie or dead. False when any thread runs or its state cannot be
+    read, including descriptor exhaustion and permission refusals.
 
 ### Function `group_survivors(group_id)`
 Return the process ids still running in one group, zombies excluded.
