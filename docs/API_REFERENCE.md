@@ -42797,6 +42797,90 @@ OSError
 
 ---
 
+## Module `studio.desktop.bundle`
+
+### Class `BundleEntry`
+One directory, regular file or internally confined symbolic link.
+
+Attributes
+----------
+path : str
+    Canonical relative POSIX path inside the bundle.
+kind : str
+    ``directory``, ``file`` or ``symlink``.
+mode : int
+    POSIX permission bits, including executable permissions.
+value : str
+    File SHA-256, relative symlink target, or empty directory value.
+
+
+### Class `BundleManifest`
+A versioned payload with an explicit, qualified data-compatibility identity.
+
+Attributes
+----------
+version : str
+    Distribution version; independent of the embedded library version.
+compatibility_key : str
+    SHA-256 identity of the qualified data contract. Equal keys permit
+    activation and rollback; creating a manifest does not qualify a key.
+entries : tuple of BundleEntry
+    Complete ordered payload inventory, excluding the manifest itself.
+
+- **build_id**()
+  - Return the SHA-256 identity of all manifest metadata and payload entries.
+
+### Function `create_bundle_manifest(root, *, version, compatibility_key)`
+Inventory and atomically seal a real self-contained Linux desktop payload.
+
+Parameters
+----------
+root : pathlib.Path
+    Existing directory containing the full runtime, UI, bootstrap and icon.
+version : str
+    Distribution version, optionally with a prerelease or build suffix.
+compatibility_key : str
+    Qualified data-contract digest supplied by the bundle producer.
+
+Returns
+-------
+BundleManifest
+    Exact content inventory also written to ``bundle.json``.
+
+Raises
+------
+DesktopStartRefused
+    Metadata, platform, required resources or filesystem entries are invalid.
+OSError
+    Reading the payload or writing the manifest fails.
+
+Notes
+-----
+This checksum contract provides integrity, not publisher authentication,
+scientific acceptance or a claim that a compatibility key was qualified.
+
+### Function `verify_bundle(root)`
+Verify every payload entry before installation, activation or removal.
+
+Parameters
+----------
+root : pathlib.Path
+    Existing bundle directory, including its bounded ``bundle.json``.
+
+Returns
+-------
+BundleManifest
+    Parsed metadata whose exact inventory matches the actual filesystem.
+
+Raises
+------
+DesktopStartRefused
+    The manifest or actual payload is missing, modified or unsupported.
+OSError
+    A filesystem entry cannot be inspected.
+
+---
+
 ## Module `studio.desktop.configuration`
 
 ### Class `DesktopConfiguration`
@@ -42845,6 +42929,68 @@ Raises
 OSError
     The write or atomic replacement failed. The previous file is preserved
     unless replacement completed.
+
+---
+
+## Module `studio.desktop.install`
+
+### Function `main()`
+Run the per-user installation lifecycle through the bundled interpreter.
+
+Returns
+-------
+int
+    Zero after a verified operation, one after a filesystem or authored refusal.
+    Argument errors use argparse's normal exit status. No download, package
+    manager, system service or administrative installation is invoked.
+
+---
+
+## Module `studio.desktop.installation`
+
+### Class `DesktopInstallation`
+Manage the code installation without migrating or removing user data.
+
+Attributes
+----------
+profile : DesktopPaths
+    Existing per-user configuration, projects, state and cache locations.
+root : pathlib.Path
+    Application-only directory containing complete versioned bundles.
+registration : DesktopRegistration
+    Owned command launchers and freedesktop menu entry.
+
+- **__init__**(environ)
+  - Resolve a profile and its managed code location without writing files.
+- **install**(source)
+  - Copy, verify and activate a self-contained bundle at its content identity.
+- **rollback**(build_id)
+  - Select a complete retained version only under the same data contract.
+- **uninstall**()
+  - Remove verified application code and launch files, preserving the profile.
+
+---
+
+## Module `studio.desktop.installation_registration`
+
+### Class `DesktopRegistration`
+The launch files belonging to one managed installation and user profile.
+
+Attributes
+----------
+root : pathlib.Path
+    Managed versioned application directory, separate from project storage.
+profile : DesktopPaths
+    Validated home/XDG profile selecting user launch and menu locations.
+
+- **paths**()
+  - Return the application launcher, management launcher and desktop entry.
+- **verify**(\*, managed)
+  - Refuse an existing foreign or modified launch file before changing any.
+- **register**(\*, managed)
+  - Atomically register owned launch files without changing the user's PATH.
+- **remove**()
+  - Remove verified owned launch files while preserving every parent directory.
 
 ---
 

@@ -210,6 +210,7 @@ sc_neurocore = [
   "neurons/reference_receipts/*.json",
   "neurons/model_descriptors/*.toml",
   "studio/verified_readiness.json",
+  "studio/desktop/icon.svg",
 ]
 
 [tool.pytest.ini_options]

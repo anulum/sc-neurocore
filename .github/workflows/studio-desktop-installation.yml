@@ -1,0 +1,198 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Complete real-runtime installation acceptance
+
+name: Studio Linux installation acceptance
+
+# Consume two complete prepared bundles. This lane never substitutes a fake
+# runtime, silently skips missing inputs, publishes bundles or builds the engine.
+# Producer provenance and scientific/data-family qualification remain separate.
+on:
+  workflow_dispatch:
+    inputs:
+      first_url:
+        description: HTTPS URL of the first complete gzip bundle archive
+        required: true
+        type: string
+      first_sha256:
+        description: SHA256 of the first complete archive
+        required: true
+        type: string
+      second_url:
+        description: HTTPS URL of a different compatible complete gzip bundle archive
+        required: true
+        type: string
+      second_sha256:
+        description: SHA256 of the second complete archive
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      first_url:
+        required: true
+        type: string
+      first_sha256:
+        required: true
+        type: string
+      second_url:
+        required: true
+        type: string
+      second_sha256:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  installation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      QT_QPA_PLATFORM: xcb
+      QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
+      MYPYPATH: src:bridge:.
+      COVERAGE_RCFILE: ${{ github.workspace }}/studio/desktop/installation-coverage.ini
+      SC_NEUROCORE_DESKTOP_TEST_WM_ROOT: /
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+          cache: pip
+      - name: Install locked qualification tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xauth openbox wmctrl xdotool curl xdg-utils desktop-file-utils \
+            libegl1 libgl1 libnss3 libasound2t64 libxcb-cursor0 libxkbcommon-x11-0 \
+            libxcomposite1 libxdamage1 libxrandr2 libxtst6 libdbus-1-3 fonts-dejavu-core
+          python -m pip install --require-hashes --only-binary :all: \
+            -r requirements/build.txt -r requirements/lint.txt -r requirements/ci-dev.txt \
+            -r requirements/runtime.txt -r requirements/hub.txt -r requirements/hdl.txt \
+            -r requirements/studio-desktop-linux-x86_64.txt
+          python -m pip install --no-build-isolation --no-deps -e .
+      - name: Admit complete matching installer payloads
+        env:
+          FIRST_URL: ${{ inputs.first_url }}
+          FIRST_SHA256: ${{ inputs.first_sha256 }}
+          SECOND_URL: ${{ inputs.second_url }}
+          SECOND_SHA256: ${{ inputs.second_sha256 }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, re, subprocess, tarfile
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          from sc_neurocore.studio.desktop.bundle import verify_bundle
+
+          def sealed_payload_filter(member, destination):
+              """Preserve sealed ordinary modes after standard path, link and type admission."""
+              admitted = tarfile.data_filter(member, destination)
+              if member.mode & 0o7000:
+                  raise tarfile.FilterError("Bundle archives cannot carry special permission bits.")
+              if admitted is not None and (admitted.isfile() or admitted.isdir()):
+                  admitted = admitted.replace(mode=member.mode)
+              return admitted
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "studio-installation"
+          root.mkdir()
+          manifests, records, bundles = [], [], []
+          for label in ("FIRST", "SECOND"):
+              url, expected = os.environ[label + "_URL"], os.environ[label + "_SHA256"]
+              if urlsplit(url).scheme != "https" or not re.fullmatch(r"[0-9a-f]{64}", expected):
+                  raise ValueError("Each complete bundle needs an HTTPS URL and lowercase SHA256.")
+              archive = root / (label.lower() + ".tar.gz")
+              subprocess.run([
+                  "curl", "--fail", "--silent", "--show-error", "--location",
+                  "--proto", "=https", "--proto-redir", "=https", "--max-time", "900",
+                  "--max-filesize", "4294967296", "--output", str(archive), "--", url,
+              ], check=True, timeout=920)
+              with archive.open("rb") as stream:
+                  actual = hashlib.file_digest(stream, "sha256").hexdigest()
+              if actual != expected:
+                  raise ValueError("The complete bundle archive checksum does not match.")
+              bundle = root / label.lower()
+              bundle.mkdir()
+              with tarfile.open(archive, "r:gz") as packed:
+                  packed.extractall(bundle, filter=sealed_payload_filter)
+              manifest = verify_bundle(bundle)
+              site = bundle / "runtime/lib/python3.12/site-packages/sc_neurocore/studio/desktop"
+              for name in ("bundle.py", "installation.py", "installation_registration.py", "install.py"):
+                  current = Path("src/sc_neurocore/studio/desktop") / name
+                  if (site / name).read_bytes() != current.read_bytes():
+                      raise ValueError("The bundled installer does not match the checked-out source.")
+              manifests.append(manifest)
+              bundles.append(str(bundle))
+              records.append({"archive_sha256": actual, "build_id": manifest.build_id,
+                              "version": manifest.version, "compatibility_key": manifest.compatibility_key})
+              archive.unlink()
+          if manifests[0].build_id == manifests[1].build_id:
+              raise ValueError("Installation acceptance requires two distinct real versions.")
+          if manifests[0].compatibility_key != manifests[1].compatibility_key:
+              raise ValueError("Installation acceptance requires one declared data family.")
+          (root / "inputs.json").write_text(json.dumps(records, indent=2) + "\n")
+          with Path(os.environ["GITHUB_ENV"]).open("a") as output:
+              output.write("SC_NEUROCORE_DESKTOP_TEST_BUNDLES=" + json.dumps(bundles) + "\n")
+          PY
+      - name: Check the complete installer scope
+        run: |
+          files=(
+            src/sc_neurocore/studio/desktop/{bundle,installation,installation_registration,install}.py
+            studio/desktop/tests/{installation_fixtures,installation_diagnostics}.py
+            studio/desktop/tests/test_{bundle,bundle_inventory,install,installation}.py
+            studio/desktop/tests/test_installation_{compatibility,recovery,registration,menu,ownership,identity}.py
+          )
+          ruff check "${files[@]}"
+          ruff format --check "${files[@]}"
+          ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' \
+            --select D,E902 --ignore-noqa --no-cache "${files[@]}"
+          mypy --strict --explicit-package-bases "${files[@]}"
+          bandit -q -c pyproject.toml src/sc_neurocore/studio/desktop/{bundle,installation,installation_registration,install}.py
+      - name: Exercise real installation and require complete branch coverage
+        env:
+          COVERAGE_FILE: ${{ runner.temp }}/studio-installation/.coverage
+          SC_NEUROCORE_DESKTOP_STACK_LOG: ${{ runner.temp }}/studio-installation/stacks.txt
+        run: |
+          namespace="$RUNNER_TEMP/studio-installation"
+          mkdir -p "$namespace"/{home,tmp,config,data,state,cache,runtime}
+          chmod 700 "$namespace/runtime"
+          export HOME="$namespace/home" TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          export XDG_RUNTIME_DIR="$namespace/runtime"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$namespace/runtime/private-bus"
+          timeout --kill-after=10 1200 xvfb-run -a --server-args='-screen 0 1600x1100x24' \
+            python -B -m coverage run -m pytest -x -vv -o faulthandler_timeout=0 \
+            -p studio.desktop.tests.installation_diagnostics -p no:cacheprovider \
+            studio/desktop/tests/test_bundle.py studio/desktop/tests/test_bundle_inventory.py \
+            studio/desktop/tests/test_install.py studio/desktop/tests/test_installation.py \
+            studio/desktop/tests/test_installation_compatibility.py studio/desktop/tests/test_installation_recovery.py \
+            studio/desktop/tests/test_installation_registration.py studio/desktop/tests/test_installation_ownership.py \
+            studio/desktop/tests/test_installation_identity.py studio/desktop/tests/test_installation_menu.py \
+            --basetemp="$namespace/pytest"
+          python -B -m coverage combine --keep "$namespace"
+          python -B -m coverage report --show-missing
+          python -B -m coverage json -o "$namespace/coverage.json"
+      - name: Preserve installation diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-installation-diagnostics
+          retention-days: 7
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/studio-installation/.coverage*
+            ${{ runner.temp }}/studio-installation/inputs.json
+            ${{ runner.temp }}/studio-installation/coverage.json
+            ${{ runner.temp }}/studio-installation/stacks.txt
+            ${{ runner.temp }}/studio-installation/pytest/**/*.json
+            ${{ runner.temp }}/studio-installation/pytest/**/*.txt
+            ${{ runner.temp }}/studio-installation/pytest/**/*.png
+            !${{ runner.temp }}/studio-installation/pytest/**/application/**

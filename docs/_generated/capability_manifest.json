@@ -969,7 +969,7 @@
     ]
   },
   "counts": {
-    "github_workflows": 23,
+    "github_workflows": 24,
     "model_documentation_pages": 200,
     "optional_extras": 32,
     "public_api_exports": 45,
@@ -3292,7 +3292,8 @@
       "neurons/reference_trace_data/*.json",
       "neurons/reference_receipts/*.json",
       "neurons/model_descriptors/*.toml",
-      "studio/verified_readiness.json"
+      "studio/verified_readiness.json",
+      "studio/desktop/icon.svg"
     ]
   },
   "project": {
@@ -3325,6 +3326,7 @@
       ".github/workflows/scorecard.yml",
       ".github/workflows/security-scanners.yml",
       ".github/workflows/stale.yml",
+      ".github/workflows/studio-desktop-installation.yml",
       ".github/workflows/v3-engine.yml",
       ".github/workflows/v3-wheels.yml",
       ".github/workflows/yosys-synth.yml"

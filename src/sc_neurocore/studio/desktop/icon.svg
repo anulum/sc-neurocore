@@ -1,0 +1,16 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — SNN Studio application icon -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#0d1117"/>
+  <path d="M26 88 48 36 78 76 104 28M26 88l52-12 26 26M48 36l56-8" fill="none" stroke="#6e9ecf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#55d9bd" stroke="#0d1117" stroke-width="4">
+    <circle cx="26" cy="88" r="10"/><circle cx="48" cy="36" r="12"/>
+    <circle cx="78" cy="76" r="14"/><circle cx="104" cy="28" r="9"/>
+    <circle cx="104" cy="102" r="9"/>
+  </g>
+</svg>

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1347
+expected_file_count = 1363
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5523,3 +5523,67 @@ rationale = "Typed native facade arguments, results and state are documented aga
 [[file]]
 path = "tests/equivalence/test_neuron_equiv.py"
 rationale = "Actual native neuron transitions and named state remain consistent through spiking and both reset aliases."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/bundle.py"
+rationale = "Bind a complete Linux desktop payload to its content and declared data compatibility."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/install.py"
+rationale = "Install, roll back or remove application code while retaining research data."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/installation.py"
+rationale = "Install immutable desktop payloads while retaining the user's research profile."
+
+[[file]]
+path = "src/sc_neurocore/studio/desktop/installation_registration.py"
+rationale = "Register only owned user launchers and a freedesktop application entry."
+
+[[file]]
+path = "studio/desktop/tests/installation_diagnostics.py"
+rationale = "Main-thread stack diagnostics preserve actual installer test outcomes, restore signal custody and retain independently enforced process deadlines."
+
+[[file]]
+path = "studio/desktop/tests/installation_fixtures.py"
+rationale = "Keep bundle and installation environment fixtures independently loadable for their actual installer tests."
+
+[[file]]
+path = "studio/desktop/tests/test_bundle.py"
+rationale = "Verify and refuse complete real-runtime payloads through their public manifest API."
+
+[[file]]
+path = "studio/desktop/tests/test_bundle_inventory.py"
+rationale = "Real desktop payload sealing preserves its prior inventory on unreadable directories and refuses unsupported filesystem permission bits."
+
+[[file]]
+path = "studio/desktop/tests/test_install.py"
+rationale = "Use the real bootstrap and installed command without a developer interpreter."
+
+[[file]]
+path = "studio/desktop/tests/test_installation.py"
+rationale = "Install complete application versions and preserve actual user profile files."
+
+[[file]]
+path = "studio/desktop/tests/test_installation_compatibility.py"
+rationale = "Keep actual research profiles and selected versions when migration is unqualified."
+
+[[file]]
+path = "studio/desktop/tests/test_installation_identity.py"
+rationale = "Real installed payload identity, resealing and retained-data contract refusals preserve the user profile and selected application."
+
+[[file]]
+path = "studio/desktop/tests/test_installation_ownership.py"
+rationale = "Actual install, rollback and removal preserve unowned files and reject unsafe selectors, relocated stores and overlapping payload paths."
+
+[[file]]
+path = "studio/desktop/tests/test_installation_recovery.py"
+rationale = "Recover an actual interrupted bundled installer without losing research data."
+
+[[file]]
+path = "studio/desktop/tests/test_installation_registration.py"
+rationale = "Exercise native menu launch and preserve occupied registration paths."
+
+[[file]]
+path = "studio/desktop/tests/test_installation_menu.py"
+rationale = "Actual freedesktop launch opens the independently installed native window, owns its HTTP backend, refuses live upgrade and quits without retaining its process locks."

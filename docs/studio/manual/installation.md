@@ -16,7 +16,7 @@
 | Source checkout | The built UI, or a frontend development server | Developer toolchain and a UI build; see the [technical guide](../../guides/studio.md#development) |
 | Federated host | The Studio panel supplied by your host | The host's admitted plugin/backend contract and operator configuration |
 | Linux desktop from source | A native window with a local backend | Python, the `studio` and `desktop` extras, system graphics libraries and built UI assets |
-| Bundled Linux desktop preview | A native window with a bundled backend/runtime | Installer qualification is separate; no released desktop installer or clean-machine compatibility is claimed here |
+| Bundled Linux desktop preview | A native window with a bundled backend/runtime | An operator-supplied complete Linux x86_64 bundle; see [bundled installation](#install-a-bundled-linux-desktop-preview). A public desktop release is still pending |
 
 The packaged browser interface does not need Node.js to run. Node.js is needed
 when building the frontend from source. Optional training, compiler and FPGA
@@ -113,11 +113,124 @@ remain visible in the native window. When available, its diagnostic log is
 `$XDG_STATE_HOME/sc-neurocore/studio/desktop.log`, or
 `~/.local/state/sc-neurocore/studio/desktop.log` when that variable is unset.
 
-This source workflow requires an existing Python environment. The separately
-bundled runtime, menu registration, update, uninstall and rollback workflow
-must pass installer acceptance before it is presented as a released application.
+This source workflow requires an existing Python environment. The bundled
+workflow below carries its own interpreter and registers a menu entry.
 Optional scientific compiler and physical-hardware capabilities retain their
 own requirements and readiness indicators.
+
+## Install a bundled Linux desktop preview
+
+These steps apply to a complete preview bundle supplied by your operator.
+A public desktop installer is not available yet. The first qualification target
+is Linux x86_64; testing on Ubuntu 24.04 does not establish compatibility with
+every distribution. The bundle includes Python, the built interface and its
+Python/Qt dependencies. It still needs the target system's graphics libraries
+and a graphical login. You do not need a source checkout, Node.js or a separately
+installed developer Python to use this delivery.
+
+Extract the complete supplied archive into an ordinary directory outside your
+Studio application or project directories. Keep its `runtime`, `share`,
+`bundle.json` and `install.sh` together. From that extracted directory, run:
+
+```bash
+./install.sh
+```
+
+Run this as your normal desktop user. The installer copies the complete bundle
+into your user application directory, verifies it, registers **SNN Studio** in
+the application menu and selects the installed version. It prints a version and
+a full build identity; keep that output with your experiment notes. Installation
+does not open the application automatically.
+
+Open **SNN Studio** from the desktop's application menu, or use:
+
+```bash
+"$HOME/.local/bin/snn-studio"
+```
+
+The menu entry and command open the native window described above. If your shell
+already includes `~/.local/bin` in `PATH`, you can also use `snn-studio` directly.
+The installed application runs from its own copy; the extracted preview directory
+does not need to remain open. Keep the supplied archive separately if you need
+to reproduce or repair that exact build.
+
+### Update and return to a retained version
+
+Save your work and quit Studio before changing the application. Extract the new
+complete bundle into a separate directory. Run its `./install.sh`, or give its
+absolute directory to the installed manager:
+
+```bash
+"$HOME/.local/bin/snn-studio-manage" install "/absolute/path/to/new-bundle"
+```
+
+The manager verifies the new copy before changing the selected version. It
+retains earlier installed versions. Reinstalling the identical bundle is safe
+and does not create another version. Keep the same HOME/XDG configuration for
+installation, launch and management commands so they address the same profile.
+
+To inspect retained identities and the selected version:
+
+```bash
+application="${XDG_DATA_HOME:-$HOME/.local/share}/sc-neurocore/studio/application"
+readlink "$application/current"
+ls "$application/versions"
+```
+
+`current` names `versions/` followed by the selected build's full identity.
+The version directory names are content identities, not dates or version numbers.
+Use the identity printed by the earlier installation you want to select. Replace
+the placeholder below with that complete 64-character identity:
+
+```bash
+"$HOME/.local/bin/snn-studio-manage" rollback FULL_64_CHARACTER_BUILD_ID
+```
+
+Rollback selects a verified retained application with a compatible data contract.
+It does not restore an earlier project, undo an experiment or migrate newer data
+into an older format. Restore research data from your own backup when that is
+your intention. An incompatible data contract requires a separately qualified
+migration; there is no force option to bypass this check.
+
+### Uninstall while retaining research
+
+Save your work and quit Studio, then run:
+
+```bash
+"$HOME/.local/bin/snn-studio-manage" uninstall
+```
+
+This removes the managed application, all its retained code versions, its two
+command launchers and its menu entry. It retains projects, desktop settings,
+browser sessions, evidence, state and cache. A later installation must still be
+compatible with that retained profile. Uninstall is not a research-data reset.
+
+With default XDG locations, the profile uses:
+
+| Location | Contents |
+|---|---|
+| `~/.config/sc-neurocore/studio` | Desktop configuration |
+| `~/.local/share/sc-neurocore/studio` | Application data, browser profile and default projects; the `application` subdirectory contains managed code |
+| `~/.local/state/sc-neurocore/studio` | Runtime state, logs and retained compatibility record |
+| `~/.cache/sc-neurocore/studio` | Application cache |
+
+An existing legacy project directory or an explicitly configured project path
+can be elsewhere. Include it when following [backup and restore](projects-and-evidence.md#back-up-and-restore).
+
+### If the installer refuses a change
+
+| Message or condition | What to do |
+|---|---|
+| Close Studio or finish another installation | Quit through the native window, wait for shutdown and retry when the other operation finishes |
+| Bundle contents changed, missing runtime or invalid identity | Use a fresh complete copy of the exact supplied bundle; do not combine files from different builds |
+| An existing launch file or symlink would be replaced | Preserve the reported file and ask the operator to resolve its ownership before retrying |
+| A version needs a data migration or a newer configuration schema | Keep the profile intact and use its compatible application; arrange a qualified migration before switching families |
+| Unowned files, an invalid selector or changed installed payload | Preserve the directory and research backup for inspection; do not delete ownership records to make the check pass |
+
+The installer does not repair foreign files by overwriting them. Research data
+and application code have different recovery procedures. If you need help,
+retain the exact refusal, requested operation, supplied version/build identity
+and target Linux distribution; keep credentials out of shared reports.
 
 ## First launch
 

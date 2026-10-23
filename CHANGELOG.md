@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add verified per-user Linux desktop installation, versioned updates, compatible
+  rollback and removal that retains research profiles. Refuse changed or unreadable
+  payloads and foreign launch files. Add complete-runtime installation acceptance
+  and user instructions for managing supplied desktop preview bundles.
+
 - Add the optional `snn-studio` native Linux window with persistent browser storage,
   owned backend shutdown, native export dialogs and restricted navigation. Add
   hashlocked Qt dependencies, desktop integration checks and source-launch guidance.
