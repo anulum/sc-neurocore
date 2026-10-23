@@ -55,6 +55,16 @@ class Case:
 
 def _cases() -> tuple[Case, ...]:
     return (
+        Case("bench_round", EquationNeuron({"v": "round(I)"}, method="map", dt=1.0)),
+        Case(
+            "bench_heaviside",
+            EquationNeuron(
+                {"v": "heaviside(I, z)", "z": "-z"},
+                state={"v": 0.0, "z": 0.25},
+                method="map",
+                dt=1.0,
+            ),
+        ),
         Case(
             "bench_euler", EquationNeuron({"v": "(I - v) / tau"}, parameters={"tau": 8.0}, dt=0.5)
         ),
@@ -174,6 +184,8 @@ def run_benchmark(samples: int, warmup: int, command: str) -> dict[str, object]:
     paths = [
         *ROOT.glob("src/sc_neurocore/compiler/**/*.py"),
         *ROOT.glob("src/sc_neurocore/neurons/equation*.py"),
+        ROOT / "src/sc_neurocore/neurons/_units.py",
+        ROOT / "src/sc_neurocore/neurons/expression_derivative.py",
         *ROOT.glob("engine/src/ir/**/*.rs"),
         ROOT / "bridge/sc_neurocore_engine/ir.py",
         ROOT / "bridge/sc_neurocore_engine/_ir_native.py",

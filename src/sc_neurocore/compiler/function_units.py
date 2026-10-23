@@ -43,6 +43,8 @@ import math
 from collections.abc import Callable, Sequence
 from functools import cache
 
+from .discrete_function_units import heaviside_code, round_code
+
 LOWERING = "v2"
 P = 30  # internal fraction bits
 B = 30  # bits of a reduced argument on [0, 1) (exp, log) or of one turn (sin, cos)
@@ -1104,9 +1106,13 @@ UNITS: dict[str, Callable[[int, int, int], int]] = {
     "ceil": ceil,
     "trunc": trunc,
     "sign": sign,
+    "round": round_code,
 }
 
-BINARY_UNITS: dict[str, Callable[[int, int, int, int], int]] = {"atan2": atan2}
+BINARY_UNITS: dict[str, Callable[[int, int, int, int], int]] = {
+    "atan2": atan2,
+    "heaviside": heaviside_code,
+}
 UNARY_FUNCTIONS = tuple(UNITS)
 FUNCTIONS = (*UNARY_FUNCTIONS, *BINARY_UNITS)
 FUNCTION_ARITY = {name: 1 for name in UNITS} | {name: 2 for name in BINARY_UNITS}
@@ -1131,7 +1137,8 @@ def evaluate(
     data_width, fraction : int
         The format.
     additional_inputs : sequence of int, optional
-        Further operands in order; ``atan2`` takes its horizontal coordinate here.
+        Further operands in order: the horizontal coordinate of ``atan2`` or
+        the zero-input value of ``heaviside``.
 
     Returns
     -------
@@ -1142,7 +1149,7 @@ def evaluate(
     ------
     ValueError
         For an unknown function, wrong operand count, a format
-        :func:`check_format` refuses, or binary/``softplus`` input codes outside the declared word domain.
+        :func:`check_format` refuses, or binary/``softplus``/``round`` input codes outside the declared word domain.
 
     """
     if function not in FUNCTION_ARITY:
@@ -1150,7 +1157,7 @@ def evaluate(
     check_format(data_width, fraction)
     if 1 + len(additional_inputs) != FUNCTION_ARITY[function]:
         raise ValueError(f"{function} needs exactly {FUNCTION_ARITY[function]} input code(s)")
-    if function in BINARY_UNITS or function == "softplus":
+    if function in BINARY_UNITS or function in {"softplus", "round"}:
         low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
         if any(not low <= value <= high for value in (code, *additional_inputs)):
             raise ValueError(f"{function} input code outside signed {data_width}-bit domain")

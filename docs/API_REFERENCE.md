@@ -8579,6 +8579,93 @@ ValueError
 
 ---
 
+## Module `compiler.discrete_function_programs`
+
+### Function `build_round(p, code, data_width, fraction)`
+Append integer rounding with ties to even to an existing program.
+
+Parameters
+----------
+p : Program
+    Destination signed-64-bit instruction program.
+code : str
+    Input instruction identifier holding the signed fixed-point code.
+data_width : int
+    Signed result width admitted by the function-unit factory.
+fraction : int
+    Fractional bits in the input and output encodings.
+
+Returns
+-------
+str
+    Result instruction identifier, clamped to the declared signed word.
+
+### Function `build_heaviside(p, code, at_zero, data_width, fraction)`
+Append a Heaviside step with a dynamic value at zero.
+
+Parameters
+----------
+p : Program
+    Destination signed-64-bit instruction program.
+code : str
+    First operand identifier, holding a signed fixed-point word.
+at_zero : str
+    Second operand identifier, returned unchanged when the first is zero.
+data_width : int
+    Signed result width admitted by the function-unit factory.
+fraction : int
+    Fractional bits in both operands and the result.
+
+Returns
+-------
+str
+    Result identifier: zero, the supplied second operand, or saturated one.
+
+---
+
+## Module `compiler.discrete_function_units`
+
+### Function `round_code(code, data_width, fraction)`
+Round a fixed-point value to an integer, resolving ties to even.
+
+Parameters
+----------
+code : int
+    Signed input code within the declared word.
+data_width : int
+    Signed word width, validated by the public function-unit dispatcher.
+fraction : int
+    Fractional bits in both the input and output words.
+
+Returns
+-------
+int
+    The nearest integer in the same fixed-point encoding, saturated when
+    rounding the largest positive values would leave the signed word.
+
+### Function `heaviside_code(code, at_zero, data_width, fraction)`
+Evaluate the Heaviside step with an explicitly encoded value at zero.
+
+Parameters
+----------
+code : int
+    Signed first operand, within the declared word.
+at_zero : int
+    Signed second operand in the same format, returned when ``code == 0``.
+data_width : int
+    Signed word width, validated by the public function-unit dispatcher.
+fraction : int
+    Fractional bits in the operands and result.
+
+Returns
+-------
+int
+    Zero for a negative first operand, ``at_zero`` for zero, or the encoded
+    value one for a positive operand. One saturates if the word cannot
+    represent it, including signed fractional-only formats.
+
+---
+
 ## Module `compiler.equation_ir_compiler`
 
 ### Class `EquationIR`
@@ -10203,7 +10290,8 @@ code : int
 data_width, fraction : int
     The format.
 additional_inputs : sequence of int, optional
-    Further operands in order; ``atan2`` takes its horizontal coordinate here.
+    Further operands in order: the horizontal coordinate of ``atan2`` or
+    the zero-input value of ``heaviside``.
 
 Returns
 -------
@@ -10214,7 +10302,7 @@ Raises
 ------
 ValueError
     For an unknown function, wrong operand count, a format
-    :func:`check_format` refuses, or binary/``softplus`` input codes outside the declared word domain.
+    :func:`check_format` refuses, or binary/``softplus``/``round`` input codes outside the declared word domain.
 
 ---
 

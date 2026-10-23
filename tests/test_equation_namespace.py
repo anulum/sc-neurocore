@@ -61,6 +61,8 @@ def test_namespace_exposes_the_expected_symbols() -> None:
         "ceil",
         "trunc",
         "sign",
+        "round",
+        "heaviside",
         "exprel",
         "sigmoid",
         "expit",

@@ -431,6 +431,8 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
     fu.check_format(data_width, fraction)
     if function == "atan2":
         return _measure_atan2(data_width, fraction)
+    if function == "heaviside":
+        return _measure_heaviside(data_width, fraction)
     codes, exhaustive = _v2_codes(function, data_width, fraction)
     scale = float(1 << fraction)
     x = codes.astype(np.float64) / scale
@@ -444,8 +446,10 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
     error = np.abs(values / scale - reference)
     worst = int(np.argmax(error))
     bound = 0.5 / scale + 16.0 / (1 << fu.P) if function == "softplus" else None
+    if function == "round":
+        bound = 0.0
     if bound is not None and float(error[worst]) > bound:
-        raise ValueError("softplus measurement exceeds its declared arithmetic error bound")
+        raise ValueError(f"{function} measurement exceeds its declared arithmetic error bound")
     return LutAccuracy(
         function=function,
         data_width=data_width,
@@ -518,6 +522,59 @@ def _measure_atan2(data_width: int, fraction: int) -> LutAccuracy:
         operand_ranges=((low / scale, high / scale),) * 2,
         worst_inputs=(float(y[worst] / scale), float(x[worst] / scale)),
         declared_error_bound=bound,
+    )
+
+
+def _measure_heaviside(data_width: int, fraction: int) -> LutAccuracy:
+    """Measure both operands while declaring the exact selection/code-identity bound."""
+    low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
+    exhaustive = data_width <= 8
+    if exhaustive:
+        first_axis = second_axis = np.arange(low, high + 1, dtype=np.int64)
+    else:
+        first_axis = np.unique(np.array([low, -1, 0, 1, high], dtype=np.int64))
+        second_axis = np.unique(
+            np.concatenate([np.linspace(low, high, 257).astype(np.int64), np.array([-1, 0, 1])])
+        )
+    first = np.repeat(first_axis, len(second_axis))
+    second = np.tile(second_axis, len(first_axis))
+    scale = float(1 << fraction)
+    actual = (
+        np.array(
+            [
+                fu.evaluate(
+                    "heaviside", int(x), data_width, fraction, additional_inputs=(int(at_zero),)
+                )
+                for x, at_zero in zip(first, second, strict=True)
+            ],
+            dtype=np.float64,
+        )
+        / scale
+    )
+    reference = np.clip(np.heaviside(first / scale, second / scale), low / scale, high / scale)
+    error = np.abs(actual - reference)
+    worst = int(np.argmax(error))
+    if float(error[worst]) != 0.0:
+        raise ValueError("heaviside measurement exceeds its exact arithmetic error bound")
+    return LutAccuracy(
+        function="heaviside",
+        data_width=data_width,
+        fraction=fraction,
+        lowering="v2",
+        exhaustive=exhaustive,
+        codes_evaluated=len(first),
+        input_min=low / scale,
+        input_max=high / scale,
+        table_min=low / scale,
+        table_max=(high + 1) / scale,
+        max_error=float(error[worst]),
+        max_error_at=float(first[worst] / scale),
+        max_error_in_table=float(error[worst]),
+        max_error_in_table_at=float(first[worst] / scale),
+        resolution=1.0 / scale,
+        operand_ranges=((low / scale, high / scale),) * 2,
+        worst_inputs=(float(first[worst] / scale), float(second[worst] / scale)),
+        declared_error_bound=0.0,
     )
 
 

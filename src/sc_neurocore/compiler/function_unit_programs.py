@@ -24,6 +24,7 @@ from functools import cache
 
 from . import function_units as fu
 from .function_unit_ir import Program
+from .discrete_function_programs import build_heaviside, build_round
 
 Builder = Callable[[Program, str, int, int], str]
 
@@ -458,9 +459,13 @@ _BUILDERS: dict[str, Builder] = {
     "ceil": _unit_ceil,
     "trunc": _unit_trunc,
     "sign": _unit_sign,
+    "round": build_round,
 }
 
-_BINARY_BUILDERS: dict[str, Callable[[Program, str, str, int, int], str]] = {"atan2": _unit_atan2}
+_BINARY_BUILDERS: dict[str, Callable[[Program, str, str, int, int], str]] = {
+    "atan2": _unit_atan2,
+    "heaviside": build_heaviside,
+}
 
 
 @cache

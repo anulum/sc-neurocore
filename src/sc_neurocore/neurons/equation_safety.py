@@ -110,6 +110,8 @@ _INPUT_ARGUMENTS = {
     "ceil": 1,
     "trunc": 1,
     "sign": 1,
+    "round": 1,
+    "heaviside": 2,
     "clip": 3,
 }
 """Number of input arguments of each array function of the equation namespace.

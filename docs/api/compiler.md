@@ -247,7 +247,7 @@ closed rather than attaching an invalid unsigned fixed-point contract to RTL.
 | Category | Functions |
 |----------|-----------|
 | Transcendental | `exp`, `log`, `sqrt`, `tanh`, `cosh`, `exprel`, `sigmoid`/`expit`, `sin`, `cos` |
-| Stable activation and angle (v2 only) | `softplus(x)`, `atan2(y, x)` |
+| Stable activation, angle and discrete functions (v2 only) | `softplus(x)`, `atan2(y, x)`, `round(x)`, `heaviside(x, at_zero)` |
 | Arithmetic | `abs`, `clip(x, lo, hi)`, `max(a, b)`, `min(a, b)` |
 | Polynomial | `x**2` through `x**8` |
 | Operators | `+`, `-`, `*`, `/`, `%` by a finite positive numeric literal, unary `-` |
@@ -1188,3 +1188,24 @@ Portable C++ expressions use the same stable identity with the target math
 library. A captureless C++14 lambda evaluates each argument once, preserving
 its type and keeping nested output growth linear. Those floating results differ from fixed-point approximations;
 portable C++ execution does not establish vendor HLS synthesis or FPGA timing.
+
+
+## Rounding and Heaviside step
+
+`round(x)` rounds to the nearest integer with exact ties to even: `round(-1.5) = -2`, `round(-0.5) = 0`, and `round(2.5) = 2`. It takes one operand; decimal-place and output-array arguments are refused. `heaviside(x, at_zero)` takes two operands: negative inputs return zero, zero returns the complete second operand, and positive inputs return one. Both operands use the model's signed fixed-point format. Results saturate to that word, including formats that cannot represent positive one.
+
+Both require `function_lowering="v2"` in the Verilog, C/Rust kernel and native IR compilers. Python models use NumPy `rint` and `heaviside`. The shared integer programs use comparisons, shifts and selection, with no approximation tables or new native instructions. Numeric contracts report zero arithmetic error against the word-clipped reference. Unary widths up to 16 bits and binary widths up to 8 bits are measured exhaustively; wider measurements are sampled and labelled accordingly.
+
+```python
+from sc_neurocore.compiler import compile_to_ir, recompile_ir
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+model = EquationNeuron(
+    {"v": "heaviside(round(I), zero)", "zero": "-zero"},
+    state={"v": 0.0, "zero": 0.25}, method="map", dt=1.0,
+)
+compiled = compile_to_ir(model, function_lowering="v2")
+assert recompile_ir(compiled.graph.to_text()).graph.to_text() == compiled.graph.to_text()
+```
+
+In strict-unit models, `round` rounds the magnitude in base units and retains the physical dimension; a display value of 1250 mV therefore rounds to 1 V. `heaviside` may compare a physical quantity with zero, but its second operand and result must be dimensionless. A symbolic derivative through either discontinuity is refused when it depends on the differentiation variable; independent step coefficients remain supported.

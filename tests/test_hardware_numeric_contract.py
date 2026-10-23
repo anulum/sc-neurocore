@@ -439,3 +439,18 @@ def test_a_huge_finite_parameter_is_out_of_range_not_an_overflow() -> None:
     blocking = {quantity.name: quantity.status for quantity in contract.blocking}
     assert blocking == {"v_threshold": "out_of_range"}
     assert "module m" in compile_to_verilog(neuron, "m", 16, 8)
+
+
+@pytest.mark.parametrize("expression", ["round(I)", "heaviside(I, v)"])
+def test_discrete_contract_carries_exact_bound_and_binary_domain(expression: str) -> None:
+    """The public hardware contract names the real units and their measured domain."""
+    model = EquationNeuron({"v": expression}, method="map", dt=1.0)
+    contract = hardware_numeric_contract(model, Q88, function_lowering="v2")
+    assert len(contract.function_units) == 1
+    unit = contract.function_units[0]
+    assert unit.function == expression.split("(")[0]
+    assert unit.accuracy.max_error == unit.accuracy.declared_error_bound == 0.0
+    if unit.function == "heaviside":
+        assert len(unit.accuracy.operand_ranges) == 2
+        assert not unit.accuracy.exhaustive
+    assert "module" in compile_to_verilog(model, function_lowering="v2")

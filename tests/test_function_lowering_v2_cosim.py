@@ -50,6 +50,8 @@ _EXPRESSIONS = {
     "tan": "tan(I)",
     "floor": "floor(I)",
     "sign": "sign(I)",
+    "round": "round(I)",
+    "heaviside": "heaviside(I, 0.25)",
 }
 _POSITIVE = {"log", "sqrt", "cbrt", "log1p"}
 
@@ -125,7 +127,10 @@ class TestMapNeurons:
         inputs = [0.3, 1.7, top] if function in _POSITIVE else [-top, -1.25, 0.0, 0.0625, 2.5, top]
         for x in inputs:
             rtl, c = _traces(neuron, x, dw, fr, 2)
-            expected = fu.evaluate(function, _q_input(x, dw, fr), dw, fr)
+            additional = (_q_input(0.25, dw, fr),) if function == "heaviside" else ()
+            expected = fu.evaluate(
+                function, _q_input(x, dw, fr), dw, fr, additional_inputs=additional
+            )
             assert int(rtl[-1][1]) == expected, f"RTL {function}({x}) at Q{dw - fr}.{fr}"
             assert rtl == c, f"kernel differs from RTL for {function}({x})"
 

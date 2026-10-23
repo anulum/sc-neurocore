@@ -24,6 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT = ROOT / "benchmarks/results/bench_verilog_compiler.json"
 EXPECTED_CASES = {
     "euler_registered",
+    "round_map_registered",
+    "heaviside_map_registered",
     "rk4_registered",
     "substep_rk4_registered",
     "escape_rate_registered",
@@ -77,7 +79,7 @@ def test_committed_evidence_binds_every_compiler_source() -> None:
 
 
 def test_committed_cases_have_complete_deterministic_samples() -> None:
-    """All nine public workloads retain timings and stable output identities."""
+    """All eleven public workloads retain timings and stable output identities."""
     payload = _payload()
     cases = _mapping(payload["cases"])
     workload = _mapping(payload["workload"])

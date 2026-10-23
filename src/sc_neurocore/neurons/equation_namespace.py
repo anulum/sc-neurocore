@@ -113,6 +113,8 @@ def build_eval_namespace() -> dict[str, Any]:
         "ceil": np.ceil,
         "trunc": np.trunc,
         "sign": np.sign,
+        "round": np.rint,
+        "heaviside": np.heaviside,
         "exprel": _exprel,
         "sigmoid": _sigmoid,
         "expit": _sigmoid,

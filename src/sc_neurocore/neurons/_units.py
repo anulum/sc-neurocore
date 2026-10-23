@@ -183,6 +183,21 @@ def _clip(value: Any, low: Any, high: Any) -> Any:
     return np.clip(float(quantity), float(low), float(high)) * UNIT_REGISTRY.dimensionless
 
 
+def _round(value: Any) -> Any:
+    """Round the base-unit magnitude, keeping the physical dimension and even ties."""
+    if is_quantity(value):
+        base = quantity_to_base(value)
+        return np.rint(base.magnitude) * base.units
+    return np.rint(float(value)) * UNIT_REGISTRY.dimensionless
+
+
+def _heaviside(value: Any, at_zero: Any) -> Any:
+    """Compare a base-unit magnitude with zero and require a dimensionless zero value."""
+    magnitude = quantity_to_base(value).magnitude if is_quantity(value) else float(value)
+    zero_value = _dimensionless_magnitude(at_zero, "heaviside at_zero")
+    return np.heaviside(magnitude, zero_value) * UNIT_REGISTRY.dimensionless
+
+
 def build_quantity_namespace() -> dict[str, Any]:
     """Return the unit-aware functions an expression may call in strict-units mode.
 
@@ -213,6 +228,8 @@ def build_quantity_namespace() -> dict[str, Any]:
         "clip": _clip,
         "max": max,
         "min": min,
+        "round": _round,
+        "heaviside": _heaviside,
     }
 
 

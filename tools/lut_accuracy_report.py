@@ -98,6 +98,8 @@ miss the worst code). Correct rounding is 0.5 LSB. `log`, `sqrt` and `x ** (1/3)
 are measured on the inputs the Python model evaluates; the units are defined for
 32-bit words or narrower with `data_width + fraction <= 61`.
 
+`round(x)` uses exact integer ties-to-even arithmetic and saturates the final word; its error bound against the clipped reference is zero. `heaviside(x, at_zero)` selects zero, the complete second operand, or saturated one, also with a zero error bound. Binary words up to 8 bits are measured exhaustively. Wider Heaviside measurements sample the sign boundaries and 257 second-operand codes plus -1, 0 and 1; they are marked (s), not exhaustive.
+
 `atan2(y, x)` uses both signed input codes. Its Cartesian domain is exhausted for
 words up to 8 bits. Wider words use the Cartesian product of 257 evenly spaced
 codes, powers of two and adjacent codes, and codes -8 through 8, clipped to the

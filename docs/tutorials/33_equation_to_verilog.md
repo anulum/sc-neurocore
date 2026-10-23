@@ -86,7 +86,7 @@ compilation.
 function of the vocabulary has its derivative in the same grammar (`tan`,
 `arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p` and
 `erf` included, with their constant factors written as numbers). A dependence on
-`abs`, `clip`, `min`, `max`, `floor`, `ceil`, `trunc` or `sign` is refused;
+`abs`, `clip`, `min`, `max`, `floor`, `ceil`, `trunc`, `sign`, `round` or `heaviside` is refused;
 random draws do not depend on the state and stay as coefficients.
 
 ## 3. Candidate, previous-state, and event semantics
@@ -248,6 +248,7 @@ the tables with function units that reduce the argument and interpolate:
 | `arctan` | quadratic table on `[0, 1]`, `arctan x = π/2 - arctan(1/x)` above 1 |
 | `arcsin`, `arccos` | `arctan(x / sqrt(1 - x²))` with an exact square root; `arccos = π/2 - arcsin` |
 | `erf` | table on `[0, 4)`, odd symmetry, 1 beyond |
+| `round`, `heaviside(x, at_zero)` | exact ties-to-even rounding or sign selection with a dynamic zero value (v2 only) |
 | `floor`, `ceil`, `trunc`, `sign` | exact integer arithmetic, no table (also used by `lut-v1`) |
 
 Each unit is written once as a 64-bit integer program
@@ -257,7 +258,7 @@ equal the separately written integer reference `sc_neurocore.compiler.function_u
 (checked by Icarus, gcc with undefined-behaviour checks, and rustc with overflow
 checks). The units accept words of at most 32 bits with
 `data_width + fraction <= 61`; other formats are refused. `sinh`, `tan`,
-`arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p`, `softplus`, `atan2` and `erf`
+`arctan`, `arcsin`, `arccos`, `exp2`, `log2`, `log10`, `expm1`, `log1p`, `softplus`, `atan2`, `erf`, `round` and `heaviside`
 exist only in `v2`; the exact `floor`, `ceil`, `trunc` and `sign` work in both
 lowerings. Most names are bound in the Python model to the NumPy functions of
 the same name (`erf` to `scipy.special.erf`). `softplus` uses

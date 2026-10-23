@@ -266,6 +266,13 @@ class _Converter:
                 return self._opaque(node)
             return builder(self.convert(node.left), self.convert(node.right))
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id in {"round", "heaviside"}:
+                count = 1 if node.func.id == "round" else 2
+                if len(node.args) != count or node.keywords:
+                    raise ExpressionDifferentiationError(
+                        f"{node.func.id} needs exactly {count} positional arguments"
+                    )
+                return self._opaque(node)
             if node.func.id == "atan2":
                 return self._atan2(node)
             func = _SMOOTH_FUNCS.get(node.func.id)

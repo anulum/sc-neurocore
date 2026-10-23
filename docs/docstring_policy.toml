@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1397
+expected_file_count = 1404
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5723,3 +5723,31 @@ rationale = "Replay complete source contracts through the public compiler and na
 [[file]]
 path = "tests/test_native_program.py"
 rationale = "Persist public integer programs through native graph builders and execute real RTL."
+
+[[file]]
+path = "src/sc_neurocore/compiler/discrete_function_units.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "src/sc_neurocore/compiler/discrete_function_programs.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "tests/test_discrete_function_units.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "tests/test_discrete_function_programs.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "tests/test_discrete_function_accuracy.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "tests/test_native_equation_discrete_functions.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "tests/test_equation_units_discrete.py"
+rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."

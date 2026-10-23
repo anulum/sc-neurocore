@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from tests.c_expr_emitter_support import *  # noqa: F403
 
 
@@ -108,3 +110,40 @@ class TestFunctionCalls:
         """An attribute call such as obj.method(v) is refused."""
         with pytest.raises(ValueError, match="Only named function calls"):
             _emit("obj.method(v)", {"v"})
+
+
+@pytest.mark.parametrize("function", ["round", "heaviside"])
+def test_discrete_cpp_executes_python_semantics(function: str, tmp_path: Path) -> None:
+    """A real C++ compiler evaluates signed ties, zero selection and nested inputs."""
+    import subprocess
+    from sc_neurocore.compiler.c_expr_emitter import emit_c_expr
+
+    expression = "round(round(x))" if function == "round" else "heaviside(round(x), z)"
+    generated, free = emit_c_expr(expression, {"x", "z"}, math_ns="std", fp_type="double")
+    assert not free
+    values = [-3.5, -2.5, -1.5, -0.5, -0.0, 0.0, 0.5, 1.5, 2.5, 3.5, 3.6]
+    expected = [
+        float(round(x))
+        if function == "round"
+        else 0.0
+        if round(x) < 0
+        else -0.75
+        if round(x) == 0
+        else 1.0
+        for x in values
+    ]
+    calls = "\n".join(f'std::printf("%.17g\\n", f({x!r}, -0.75));' for x in values)
+    source, binary = tmp_path / "unit.cpp", tmp_path / "unit"
+    source.write_text(
+        "#include <cmath>\n#include <cstdio>\n"
+        + f"double f(double x, double z){{(void)z;return {generated};}}\nint main(){{{calls}}}\n"
+    )
+    subprocess.run(
+        ["g++", "-std=c++14", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+    result = subprocess.run([str(binary)], check=True, capture_output=True, text=True, timeout=90)
+    assert [float(x) for x in result.stdout.split()] == expected

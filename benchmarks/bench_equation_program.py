@@ -75,6 +75,11 @@ BINDINGS: dict[str, float] = {
 ADEX = "(-g_L*(v-E_L) + g_L*delta_T*exp((v-V_T)/delta_T) - w + I)/C"
 Reference = Callable[[dict[str, Any]], Any]
 EXPRESSIONS: dict[str, tuple[str, Reference]] = {
+    "round": ("round(I)", lambda e: e["round"](e["I"])),
+    "heaviside": (
+        "heaviside(v, I)",
+        lambda e: e["heaviside"](e["v"], e["I"]),
+    ),
     "leaky_integrator": (
         "(-(v - E_L) + R * I) / tau",
         lambda e: (-(e["v"] - e["E_L"]) + e["R"] * e["I"]) / e["tau"],

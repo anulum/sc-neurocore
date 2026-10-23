@@ -195,6 +195,24 @@ class CExprEmitter(ast.NodeVisitor):
             )
         arg: str = self.visit(node.args[0])
 
+        if fname == "round":
+            value, base = "sc_round_x", "sc_round_floor"
+            remainder = "sc_round_remainder"
+            half, one, two = (f"{self.fp_type}({number})" for number in ("0.5", "1.0", "2.0"))
+            even = f"({self.math_ns}::fmod({base}, {two}) == {self.fp_type}(0.0))"
+            down = f"({remainder} < {half} || ({remainder} == {half} && {even}))"
+            return (
+                f"([](auto {value}) {{ auto {base} = {self.math_ns}::floor({value}); "
+                f"auto {remainder} = {value} - {base}; "
+                f"return {down} ? {base} : {base} + {one}; }})({arg})"
+            )
+        if fname == "heaviside":
+            second = self.visit(node.args[1])
+            zero, one = f"{self.fp_type}(0.0)", f"{self.fp_type}(1.0)"
+            return (
+                f"([](auto sc_step_x, auto sc_step_zero) {{ return sc_step_x < {zero} ? {zero} "
+                f": (sc_step_x > {zero} ? {one} : sc_step_zero); }})({arg}, {second})"
+            )
         if fname == "atan2":
             second = self.visit(node.args[1])
             zero = f"{self.fp_type}(0.0)"

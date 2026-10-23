@@ -65,6 +65,8 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "ceil",
         "trunc",
         "sign",
+        "round",
+        "heaviside",
         "sigmoid",
         "expit",
         "sin",
@@ -92,6 +94,8 @@ V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
         "arcsin",
         "arccos",
         "erf",
+        "round",
+        "heaviside",
     }
 )
 
@@ -197,6 +201,8 @@ V2_UNIT_FOR: dict[str, str] = {
     "ceil": "ceil",
     "trunc": "trunc",
     "sign": "sign",
+    "round": "round",
+    "heaviside": "heaviside",
 }
 
 # Positional-argument counts each function takes, as the Python model accepts it

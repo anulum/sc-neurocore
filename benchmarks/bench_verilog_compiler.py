@@ -8,7 +8,7 @@
 
 """Measure representative registered and folded Verilog compilation paths.
 
-The benchmark rotates nine deterministic workloads and binds results to every
+The benchmark rotates eleven deterministic workloads and binds results to every
 compiler source file. It records ordinary loaded-host timings only; it does not
 claim isolated-core throughput or cross-language performance.
 """
@@ -51,6 +51,8 @@ SOURCE_PATHS = (
     "src/sc_neurocore/compiler/expr_lut_tables.py",
     "src/sc_neurocore/compiler/equation_lowering.py",
     "src/sc_neurocore/compiler/function_units.py",
+    "src/sc_neurocore/compiler/discrete_function_units.py",
+    "src/sc_neurocore/compiler/discrete_function_programs.py",
     "src/sc_neurocore/compiler/function_unit_ir.py",
     "src/sc_neurocore/compiler/function_unit_programs.py",
     "src/sc_neurocore/compiler/equation_compiler.py",
@@ -201,7 +203,19 @@ def _cases() -> tuple[CompilerCase, ...]:
         dt=0.125,
         method="exp_euler",
     )
+    discrete_round = EquationNeuron({"v": "round(I)"}, method="map", dt=1.0)
+    discrete_step = EquationNeuron(
+        {"v": "heaviside(I, z)", "z": "-z"}, state={"v": 0.0, "z": 0.25}, method="map", dt=1.0
+    )
     return (
+        CompilerCase(
+            "round_map_registered",
+            lambda: compile_to_verilog(discrete_round, "bench_round", function_lowering="v2"),
+        ),
+        CompilerCase(
+            "heaviside_map_registered",
+            lambda: compile_to_verilog(discrete_step, "bench_heaviside", function_lowering="v2"),
+        ),
         CompilerCase("euler_registered", lambda: compile_to_verilog(lif, module_name="bench_lif")),
         CompilerCase("rk4_registered", lambda: compile_to_verilog(rk4, module_name="bench_rk4")),
         CompilerCase(

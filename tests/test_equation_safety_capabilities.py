@@ -115,3 +115,13 @@ def test_no_equation_module_executes_dynamic_code(module: str) -> None:
     }
     assert not called & {"eval", "exec", "compile", "__import__"}
     assert "nosec" not in (SOURCE / module).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "expression",
+    ["round(v, out)", "round(v, out=out)", "heaviside(v, 0.5, out)", "heaviside(v, 0.5, out=out)"],
+)
+def test_discrete_functions_cannot_write_an_output_array(expression: str) -> None:
+    """NumPy's optional output capability is unavailable to authored expressions."""
+    with pytest.raises(ValueError, match="output argument|keyword"):
+        ExpressionSafetyValidator().validate(expression)

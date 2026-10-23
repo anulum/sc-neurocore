@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5420
+    "test_files": 5425
   },
   "documentation": {
     "public_pages": [
@@ -4865,6 +4865,9 @@
       "tests/test_digital_twin_network_application.py",
       "tests/test_digital_twin_perturbations.py",
       "tests/test_digital_twin_quantization.py",
+      "tests/test_discrete_function_accuracy.py",
+      "tests/test_discrete_function_programs.py",
+      "tests/test_discrete_function_units.py",
       "tests/test_dispatcher_error_paths_cdll_open_failure_sets_sentinel_false.py",
       "tests/test_dispatcher_error_paths_input_validation_branches.py",
       "tests/test_dispatcher_error_paths_julia_missing_kernel_file.py",
@@ -5032,6 +5035,7 @@
       "tests/test_equation_safety_numeric_limits.py",
       "tests/test_equation_safety_structure.py",
       "tests/test_equation_units.py",
+      "tests/test_equation_units_discrete.py",
       "tests/test_equation_units_runtime.py",
       "tests/test_equilibrium_propagation_activation.py",
       "tests/test_equilibrium_propagation_ep_network_init.py",
@@ -6739,6 +6743,7 @@
       "tests/test_native_equation_arithmetic.py",
       "tests/test_native_equation_clock.py",
       "tests/test_native_equation_commits.py",
+      "tests/test_native_equation_discrete_functions.py",
       "tests/test_native_equation_events.py",
       "tests/test_native_equation_expressions.py",
       "tests/test_native_equation_integrators.py",

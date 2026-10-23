@@ -126,7 +126,7 @@ class TestV2Measurement:
     """``lowering="v2"`` measures the function units the same way."""
 
     def test_v2_functions_include_sinh(self) -> None:
-        """The v2 vocabulary is the eleven units; lut-v1 has no sinh."""
+        """The v2 vocabulary includes sinh; lut-v1 has no sinh."""
         assert "sinh" in table_functions("v2") and "sinh" not in table_functions()
         with pytest.raises(ValueError, match="unknown lowering"):
             table_functions("v3")
@@ -137,7 +137,7 @@ class TestV2Measurement:
         for function in table_functions("v2"):
             result = measure(function, 16, 8, "v2")
             assert result.lowering == "v2"
-            assert result.exhaustive == (function != "atan2")
+            assert result.exhaustive == (function not in {"atan2", "heaviside"})
             assert result.max_error / result.resolution <= (bounds.get(function, 0.501))
 
     def test_v2_improves_every_shared_function_at_q16_16(self) -> None:

@@ -52,6 +52,7 @@ _REFERENCE = {
     "ceil": np.ceil,
     "trunc": np.trunc,
     "sign": np.sign,
+    "round": np.rint,
 }
 # Inputs the Python model evaluates to a real number (outside, the units state a value).
 _DOMAIN = {

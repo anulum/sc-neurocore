@@ -252,3 +252,30 @@ def test_smooth_unary_calls_cannot_drop_or_invent_arguments(function: str, argum
     """The derivative API refuses a call the authored unary model cannot evaluate as compiled."""
     with pytest.raises(ExpressionDifferentiationError, match="exactly one positional argument"):
         differentiate(f"{function}({arguments})", "v")
+
+
+@pytest.mark.parametrize("expression", ["round(x)", "heaviside(x, 0.25)", "heaviside(1, x)"])
+def test_discrete_dependent_derivative_is_refused(expression: str) -> None:
+    """No classical derivative is invented through either dependent step operand."""
+    with pytest.raises(ExpressionDifferentiationError):
+        differentiate(expression, "x")
+
+
+@pytest.mark.parametrize(
+    "expression",
+    ["round(x, 2)", "round()", "heaviside(x)", "heaviside(x, 0, 1)", "heaviside(x, at_zero=0)"],
+)
+def test_discrete_derivative_refuses_wrong_arity(expression: str) -> None:
+    """The derivative interface never drops extra authored operands or keywords."""
+    with pytest.raises(ExpressionDifferentiationError, match="exactly"):
+        differentiate(expression, "x")
+
+
+@pytest.mark.parametrize("factor", ["round(a)", "heaviside(a, b)"])
+def test_discrete_independent_coefficient_survives(factor: str) -> None:
+    """A constant step factor remains executable in the real equation namespace."""
+    derivative = differentiate(f"{factor}*x", "x")
+    namespace = {**build_eval_namespace(), "a": -1.5, "b": 0.25}
+    actual = evaluate_scalar(compile_expression(derivative), namespace)
+    expected = evaluate_scalar(compile_expression(factor), namespace)
+    assert actual == expected
