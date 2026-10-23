@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Describe the Studio simulation input receipt using its public contract name.
+
 - Reject missing, unknown or dimensionally incompatible display units when replaying
   persisted equation graphs, including source metadata with valid native checksums.
 

@@ -346,7 +346,7 @@ projection:
   point to its raw step. Peaks, resets and the final sample survive
   reduction; `spikes` are raw step indices and are never decimated. Analyses,
   exports and the spike-triggered average read `raw`, not the projection.
-- `effective_inputs` — the ST-01 receipt; `state_recording` lists the
+- `effective_inputs` — the effective run inputs receipt; `state_recording` lists the
   recorded and excluded declared variables and `display_points` the size of
   the projection.
 
