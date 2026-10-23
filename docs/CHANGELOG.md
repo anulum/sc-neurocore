@@ -43,6 +43,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Native IR identifier allocation now refuses exhaustion before changing the graph.
+  `ScGraph::try_fresh_id()` exposes a recoverable error; the existing allocator
+  keeps its signature and fails deterministically instead of wrapping in release
+  builds when extending a sparse graph loaded from text.
+
 - Refuse non-regular desktop configuration before reading it, including named pipes without a writer. Keep existing regular-file symlinks readable and preserve refused paths.
 
 - Preserve constant word widths, binary points and vector shapes in native IR emission; reject non-finite, overflowing and malformed constants instead of silently coercing them.

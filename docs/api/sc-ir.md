@@ -236,3 +236,20 @@ fractions must be smaller than their width, and the total physical width must
 fit positive Verilog indexing. Vector nesting is limited to 64 wrappers and
 checked before either text constructor recurses. Exhausted parsed value IDs
 produce a parse diagnostic instead of wrapping the parser allocator.
+
+## Native identifier allocation
+
+Rust `ScGraph::try_fresh_id()` returns `Result<ValueId, ValueIdExhausted>`.
+It reserves an identifier without appending an operation. Identifiers run from
+zero through `u32::MAX - 1`; the counter value `u32::MAX` represents exhaustion
+and is never allocated. A sparse graph loaded from text can reach this boundary
+without containing billions of operations. Refusal leaves the counter and every
+operation unchanged, so the graph remains printable, verifiable and emit-ready.
+
+The existing `ScGraph::fresh_id()` and builder method signatures are retained.
+`fresh_id()` panics with `SC IR value ID space exhausted` before mutation if
+no identifier remains, consistently in debug and release builds. Callers that
+extend externally supplied graphs should use `try_fresh_id()` and handle its
+error. A panic-aborting application cannot recover from the legacy call.
+The Python graph API does not expose either allocator or a builder resumed from
+a parsed graph; this addition is a native Rust API, not a new Python method.

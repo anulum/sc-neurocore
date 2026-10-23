@@ -71,6 +71,18 @@ impl fmt::Display for ValueId {
     }
 }
 
+/// No further SSA identifier can be allocated without wrapping the graph counter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ValueIdExhausted;
+
+impl fmt::Display for ValueIdExhausted {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("SC IR value ID space exhausted")
+    }
+}
+
+impl std::error::Error for ValueIdExhausted {}
+
 // Constants
 
 /// Compile-time constant values embedded in the IR.
@@ -524,11 +536,30 @@ impl ScGraph {
         }
     }
 
-    /// Allocate a fresh ValueId.
+    /// Allocate a fresh identifier, retaining the legacy infallible signature.
+    ///
+    /// # Panics
+    ///
+    /// Panics before mutation when all allocatable identifiers have been used.
+    /// Use [`Self::try_fresh_id`] to handle exhaustion as a normal error.
     pub fn fresh_id(&mut self) -> ValueId {
+        self.try_fresh_id().expect("SC IR value ID space exhausted")
+    }
+
+    /// Allocate the next SSA identifier without wrapping or changing operations.
+    ///
+    /// The largest allocatable identifier is `u32::MAX - 1`; `u32::MAX` is the
+    /// exhausted-counter sentinel, matching the text parser's accepted range.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ValueIdExhausted`] without changing the graph when the next
+    /// identifier would consume the sentinel. Repeated refusals are non-mutating.
+    pub fn try_fresh_id(&mut self) -> Result<ValueId, ValueIdExhausted> {
+        let next = self.next_id.checked_add(1).ok_or(ValueIdExhausted)?;
         let id = ValueId(self.next_id);
-        self.next_id += 1;
-        id
+        self.next_id = next;
+        Ok(id)
     }
 
     /// Append an operation and return its result ValueId.
