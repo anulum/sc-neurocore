@@ -18,7 +18,14 @@ from .adaptive_precision import (
     precision_plan_manifest,
     write_precision_formal_evidence_bundle,
 )
-from .equation_compiler import Q88, compile_to_verilog, equation_to_fpga
+from .equation_compiler import (
+    EquationIR,
+    Q88,
+    compile_to_ir,
+    compile_to_verilog,
+    equation_to_fpga,
+    recompile_ir,
+)
 from .ir_type_checker import (
     IREdge,
     IRNode,
@@ -64,6 +71,9 @@ from .quantizer import (
 )
 
 __all__ = [
+    "EquationIR",
+    "compile_to_ir",
+    "recompile_ir",
     "compile_to_verilog",
     "equation_to_fpga",
     "Q88",

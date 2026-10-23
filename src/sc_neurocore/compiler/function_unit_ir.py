@@ -383,7 +383,7 @@ def emit_verilog(
         if step.op == "table":
             rows = program.tables[step.table]
             lines.append(f"reg signed [63:0] {target};")
-            lines.append(f"always @(*) case ({a[0]})")
+            lines.append(f"always @(*) case (({a[0]} < 64'sd0) ? 64'sd0 : {a[0]})")
             for index, row in enumerate(rows):
                 lines.append(f"    {index}: {target} = {_v_const(row[step.value])};")
             lines.append(f"    default: {target} = {_v_const(rows[-1][step.value])};")

@@ -44,8 +44,21 @@ fn fmt_f64(v: f64) -> String {
 
 /// Print a graph to its text representation.
 pub fn print(graph: &ScGraph) -> String {
+    print_inner(graph, true)
+}
+
+pub(crate) fn print_without_source(graph: &ScGraph) -> String {
+    print_inner(graph, false)
+}
+
+fn print_inner(graph: &ScGraph, include_source: bool) -> String {
     let mut out = String::new();
     out.push_str(&format!("sc.graph @{} {{\n", graph.name));
+    if include_source {
+        if let Some(source) = &graph.source {
+            out.push_str(&format!("  {}\n", source.to_line()));
+        }
+    }
 
     for op in &graph.ops {
         out.push_str("  ");
@@ -62,6 +75,17 @@ pub fn print(graph: &ScGraph) -> String {
                 let enable = enable.map_or_else(|| "none".into(), |id| id.to_string());
                 out.push_str(&format!(
                     "{id} = sc.store {state}, {next}, enable={enable}\n"
+                ));
+            }
+            ScOp::Check {
+                id,
+                condition,
+                enable,
+                kind,
+            } => {
+                let enable = enable.map_or_else(|| "none".into(), |id| id.to_string());
+                out.push_str(&format!(
+                    "{id} = sc.check {kind}, {condition}, enable={enable}\n"
                 ));
             }
             ScOp::Word { id, op } => {

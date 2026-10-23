@@ -14,6 +14,7 @@ use crate::ir::graph::*;
 
 mod divide;
 mod primitives;
+mod runtime_check;
 mod state;
 mod word;
 
@@ -54,6 +55,12 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
         }
     }
 
+    if graph.ops.iter().any(|op| matches!(op, ScOp::Check { .. })) {
+        mlir.push_str(&format!(
+            "sv.macro.decl @{}__sc_synthesis [\"SYNTHESIS\"]\n",
+            graph.name
+        ));
+    }
     mlir.push_str(&format!(
         "hw.module @{}({}) {{\n",
         graph.name,
@@ -69,6 +76,12 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
         match op {
             ScOp::State { id, initial, ty } => state::emit(&mut mlir, graph, *id, *initial, ty)?,
             ScOp::Store { .. } => {}
+            ScOp::Check {
+                id,
+                condition,
+                enable,
+                kind,
+            } => runtime_check::emit(&mut mlir, graph, *id, *condition, *enable, *kind),
             ScOp::Word { id, op } => word::emit(&mut mlir, graph, *id, op)?,
             ScOp::Input { .. } | ScOp::Output { .. } => {}
             ScOp::Encode { .. }

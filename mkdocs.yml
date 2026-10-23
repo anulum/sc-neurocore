@@ -414,6 +414,7 @@ nav:
       - Hardware Compilation:
           - Chip Compiler: api/chip_compiler.md
           - SC Intermediate Representation: api/sc-ir.md
+          - Equation Native IR: api/equation-native-ir.md
       - Transformers & SSM:
           - Spiking Transformers: api/spikformer.md
       - Architecture Search:

@@ -27,6 +27,16 @@ pub(super) fn emit(
         }
     };
     let expression = match op {
+        WordOp::Delay { input, .. } => {
+            s.push_str(&format!(
+                "    always @(posedge clk or negedge rst_n) begin\n\
+                 \x20       if (!rst_n) {out} <= {w}'d0;\n\
+                 \x20       else {out} <= {};\n\
+                 \x20   end\n",
+                wire(*input)
+            ));
+            return Ok(());
+        }
         WordOp::Binary {
             kind: WordBinaryOp::Div | WordBinaryOp::Rem,
             lhs,

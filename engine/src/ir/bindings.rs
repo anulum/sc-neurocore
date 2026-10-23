@@ -9,7 +9,7 @@
 //! Python bindings for constructing, verifying, serialising, and emitting SC IR graphs.
 
 use crate::ir;
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyOverflowError, PyValueError};
 use pyo3::prelude::*;
 
 /// Register the compute-graph IR classes and functions on the Python extension module.
@@ -53,6 +53,33 @@ impl PyScGraph {
         &self.inner.name
     }
 
+    /// Exact UTF-8 provenance, or None for graphs without a source binding.
+    #[getter]
+    fn source_payload(&self) -> Option<&str> {
+        self.inner
+            .source
+            .as_ref()
+            .map(|source| source.payload.as_str())
+    }
+
+    /// SHA-256 of the exact provenance bytes, without an authentication claim.
+    #[getter]
+    fn source_sha256(&self) -> Option<&str> {
+        self.inner
+            .source
+            .as_ref()
+            .map(|source| source.source_sha256.as_str())
+    }
+
+    /// SHA-256 of canonical graph text excluding provenance.
+    #[getter]
+    fn source_graph_sha256(&self) -> Option<&str> {
+        self.inner
+            .source
+            .as_ref()
+            .map(|source| source.graph_sha256.as_str())
+    }
+
     /// Number of input ports.
     fn num_inputs(&self) -> usize {
         self.inner.inputs().len()
@@ -93,6 +120,13 @@ impl PyScGraphBuilder {
         }
     }
 
+    /// Bind exact source provenance after appending all graph operations.
+    fn bind_source(&mut self, payload: String) -> PyResult<()> {
+        self.builder_mut()?
+            .bind_source(payload)
+            .map_err(PyValueError::new_err)
+    }
+
     /// Declare current register storage reset to an earlier exact-type constant.
     fn state(&mut self, initial: u32, ty: &str) -> PyResult<u32> {
         let ty = parse_sc_type(ty)?;
@@ -109,6 +143,29 @@ impl PyScGraphBuilder {
                 ir::graph::ValueId(next),
                 enable.map(ir::graph::ValueId),
             )
+            .0)
+    }
+
+    /// Append an effectful Boolean simulation check, excluded from synthesis.
+    #[pyo3(signature = (condition, kind="overflow", enable=None))]
+    fn runtime_check(&mut self, condition: u32, kind: &str, enable: Option<u32>) -> PyResult<u32> {
+        let kind = kind.parse().map_err(PyValueError::new_err)?;
+        self.builder_mut()?
+            .runtime_check(
+                ir::graph::ValueId(condition),
+                kind,
+                enable.map(ir::graph::ValueId),
+            )
+            .map(|id| id.0)
+            .map_err(|error| PyOverflowError::new_err(error.to_string()))
+    }
+
+    /// Capture a full integer word for one clock with asynchronous active-low zero reset.
+    fn word_delay(&mut self, input: u32, ty: &str) -> PyResult<u32> {
+        let ty = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .word_delay(ir::graph::ValueId(input), ty)
             .0)
     }
 

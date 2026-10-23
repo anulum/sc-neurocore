@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Explicit scalar word operations
 
-//! Raw integer operations; scaling, rounding and saturation are explicit boundaries.
+//! Raw integer operations; scaling, rounding, saturation and clocked delays are explicit.
 
 use super::graph::{ScType, ValueId};
 use std::{fmt, str::FromStr};
@@ -43,6 +43,17 @@ operation_names!(WordRounding {
 /// Scalar SSA instructions with explicit result geometry.
 #[derive(Debug, Clone, PartialEq)]
 pub enum WordOp {
+    /// Capture an integer word on each rising clock, asynchronously resetting to zero.
+    ///
+    /// Input and result have the same explicit integer type, including widths
+    /// above 64 bits. One operation introduces exactly one clock of latency;
+    /// it never saturates, rescales or narrows the physical word.
+    Delay {
+        /// Earlier SSA word sampled on each rising edge of clk.
+        input: ValueId,
+        /// Identical input, register and result geometry.
+        ty: ScType,
+    },
     /// Modulo-2^width arithmetic with identically typed integer operands.
     ///
     /// Division truncates toward zero. Remainder has the dividend's sign.
@@ -137,7 +148,8 @@ impl WordOp {
     pub fn result_type(&self) -> &ScType {
         match self {
             Self::Compare { .. } => &ScType::Bool,
-            Self::Binary { ty, .. }
+            Self::Delay { ty, .. }
+            | Self::Binary { ty, .. }
             | Self::Unary { ty, .. }
             | Self::Resize { ty, .. }
             | Self::Bitcast { ty, .. }
@@ -150,7 +162,8 @@ impl WordOp {
     pub fn operands(&self) -> Vec<ValueId> {
         match self {
             Self::Binary { lhs, rhs, .. } | Self::Compare { lhs, rhs, .. } => vec![*lhs, *rhs],
-            Self::Unary { input, .. }
+            Self::Delay { input, .. }
+            | Self::Unary { input, .. }
             | Self::Resize { input, .. }
             | Self::Bitcast { input, .. }
             | Self::Round { input, .. }
@@ -168,6 +181,7 @@ impl WordOp {
 impl fmt::Display for WordOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Delay { input, .. } => write!(f, "delay {input}"),
             Self::Binary { kind, lhs, rhs, .. } => write!(f, "{kind} {lhs}, {rhs}"),
             Self::Unary { kind, input, .. } => write!(f, "{kind} {input}"),
             Self::Compare {

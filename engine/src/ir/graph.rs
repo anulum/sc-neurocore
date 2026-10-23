@@ -217,10 +217,21 @@ impl fmt::Display for ReduceMode {
 
 /// A single operation in the SC compute graph.
 ///
-/// Each variant owns a unique `id`; Output and Store are non-value terminators.
+/// Each variant owns a unique `id`; Output, Store and Check are non-value terminators.
 /// Input operands reference values produced by earlier operations.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScOp {
+    /// Effectful combinational simulation check, excluded when SYNTHESIS is defined.
+    Check {
+        /// Unique terminator identifier; no data word is produced.
+        id: ValueId,
+        /// Boolean invariant; a false value fails when enabled.
+        condition: ValueId,
+        /// Optional Boolean enable; None checks unconditionally, including during reset.
+        enable: Option<ValueId>,
+        /// Closed failure category retained in text and simulation diagnostics.
+        kind: super::runtime_check::RuntimeCheckKind,
+    },
     /// Current scalar register value, asynchronously reset to an earlier exact-type constant.
     State {
         /// Identifier of the current register word.
@@ -425,10 +436,11 @@ pub enum ScOp {
 }
 
 impl ScOp {
-    /// Return the ValueId produced by this operation.
+    /// Return the unique operation identifier, including non-value terminators.
     pub fn result_id(&self) -> ValueId {
         match self {
-            Self::State { id, .. }
+            Self::Check { id, .. }
+            | Self::State { id, .. }
             | Self::Store { id, .. }
             | Self::Word { id, .. }
             | Self::Input { id, .. }
@@ -463,6 +475,13 @@ impl ScOp {
                 ..
             } => {
                 let mut operands = vec![*state, *next];
+                operands.extend(*enable);
+                operands
+            }
+            Self::Check {
+                condition, enable, ..
+            } => {
+                let mut operands = vec![*condition];
                 operands.extend(*enable);
                 operands
             }
@@ -522,6 +541,7 @@ impl ScOp {
         match self {
             Self::State { .. } => "sc.state",
             Self::Store { .. } => "sc.store",
+            Self::Check { .. } => "sc.check",
             Self::Word { .. } => "sc.word",
             Self::Input { .. } => "sc.input",
             Self::Output { .. } => "sc.output",
@@ -553,6 +573,8 @@ impl ScOp {
 /// referenced by an operation must be defined by an earlier operation.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ScGraph {
+    /// Optional source provenance, bound to this exact graph's canonical text.
+    pub source: Option<super::source::SourceIdentity>,
     /// Module name (used as the SV module name during emission).
     pub name: String,
     /// Operations in topological (definition) order.
@@ -565,6 +587,7 @@ impl ScGraph {
     /// Create a new empty graph.
     pub fn new(name: impl Into<String>) -> Self {
         Self {
+            source: None,
             name: name.into(),
             ops: Vec::new(),
             next_id: 0,

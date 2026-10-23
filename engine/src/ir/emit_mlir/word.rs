@@ -20,6 +20,13 @@ pub(super) fn emit(
     let w = ty.bit_width();
     let wire = |v| value_wire(graph, v);
     match op {
+        WordOp::Delay { input, .. } => {
+            m.push_str(&format!(
+                "  %{p}_reset = hw.constant 0 : i{w}\n\
+                 \x20 %{p} = seq.firreg {} clock %sc_clock reset async %sc_reset, %{p}_reset : i{w}\n",
+                wire(*input)
+            ));
+        }
         WordOp::Binary {
             kind: WordBinaryOp::Div | WordBinaryOp::Rem,
             lhs,

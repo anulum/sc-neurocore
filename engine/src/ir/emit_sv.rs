@@ -21,6 +21,7 @@ mod count;
 mod dense;
 mod divide;
 mod probability;
+mod runtime_check;
 mod state;
 mod word;
 
@@ -97,10 +98,15 @@ pub fn emit_systemverilog_with_target(
             ScOp::State { id, ty, .. } => {
                 sv.push_str(&format!("    reg [{}:0] v{};\n", ty.bit_width() - 1, id.0))
             }
-            ScOp::Store { .. } => {}
+            ScOp::Store { .. } | ScOp::Check { .. } => {}
             ScOp::Word { id, op } => {
+                let declaration = if matches!(op, crate::ir::word::WordOp::Delay { .. }) {
+                    "reg"
+                } else {
+                    "wire"
+                };
                 sv.push_str(&format!(
-                    "    wire [{}:0] v{};\n",
+                    "    {declaration} [{}:0] v{};\n",
                     op.result_type().bit_width() - 1,
                     id.0
                 ));
@@ -202,6 +208,12 @@ pub fn emit_systemverilog_with_target(
                 enable,
                 ..
             } => state::emit(&mut sv, graph, *state, *next, *enable)?,
+            ScOp::Check {
+                condition,
+                enable,
+                kind,
+                ..
+            } => runtime_check::emit(&mut sv, graph, *condition, *enable, *kind),
             ScOp::Word { id, op } => word::emit(&mut sv, graph, *id, op)?,
             ScOp::Encode { id, prob, seed, .. } => {
                 let prob_wire = format!("encode_{inst_idx}_probability");
@@ -506,7 +518,7 @@ pub(crate) fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 }
                 ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::DivConst { .. } => 64,
                 ScOp::State { ty, .. } => ty.bit_width(),
-                ScOp::Store { .. } => 0,
+                ScOp::Store { .. } | ScOp::Check { .. } => 0,
                 ScOp::Output { source, .. } => find_value_width(graph, *source),
             };
         }

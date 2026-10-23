@@ -13335,7 +13335,7 @@
               "__qualname__": "FixedPointLIFNeuron.get_state",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self) -> 'tuple[int, int]'",
+              "signature": "(self) -> 'dict[str, int]'",
               "signature_error": null
             },
             "reset": {
@@ -16085,7 +16085,7 @@
               "__qualname__": "HDCVector.__init__",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, dimension: 'int' = 10000, *, seed: 'int | None' = None)",
+              "signature": "(self, dimension: 'int' = 10000, *, seed: 'int | None' = None) -> 'None'",
               "signature_error": null
             },
             "__init_subclass__": {
@@ -16289,7 +16289,7 @@
               "signature_error": null
             }
           },
-          "signature": "(dimension: 'int' = 10000, *, seed: 'int | None' = None)",
+          "signature": "(dimension: 'int' = 10000, *, seed: 'int | None' = None) -> 'None'",
           "signature_error": null
         },
         "HayL5PyramidalNeuron": {
@@ -27352,7 +27352,7 @@
               "__qualname__": "PetriNetEngine.__init__",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, artifacts: 'dict', length: 'int' = 1024, seed: 'int' = 24301)",
+              "signature": "(self, artifacts: 'Mapping[str, npt.ArrayLike]', length: 'int' = 1024, seed: 'int' = 24301) -> 'None'",
               "signature_error": null
             },
             "__init_subclass__": {
@@ -27484,7 +27484,7 @@
               "__qualname__": "PetriNetEngine.reset",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, marking: 'np.ndarray | None' = None) -> 'None'",
+              "signature": "(self, marking: 'npt.ArrayLike | None' = None) -> 'None'",
               "signature_error": null
             },
             "run": {
@@ -27493,7 +27493,7 @@
               "__qualname__": "PetriNetEngine.run",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, n_steps: 'int', seed: 'int | None' = None) -> 'list[np.ndarray]'",
+              "signature": "(self, n_steps: 'int', seed: 'int | None' = None) -> 'list[npt.NDArray[np.float64]]'",
               "signature_error": null
             },
             "step": {
@@ -27502,7 +27502,7 @@
               "__qualname__": "PetriNetEngine.step",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, seed: 'int | None' = None) -> 'np.ndarray'",
+              "signature": "(self, seed: 'int | None' = None) -> 'npt.NDArray[np.float64]'",
               "signature_error": null
             },
             "step_count": {
@@ -27513,7 +27513,7 @@
               "kind": "property"
             }
           },
-          "signature": "(artifacts: 'dict', length: 'int' = 1024, seed: 'int' = 24301)",
+          "signature": "(artifacts: 'Mapping[str, npt.ArrayLike]', length: 'int' = 1024, seed: 'int' = 24301) -> 'None'",
           "signature_error": null
         },
         "PinskyRinzelNeuron": {
@@ -35043,6 +35043,27 @@
               "__text_signature__": null,
               "kind": "property"
             },
+            "source_graph_sha256": {
+              "__module__": null,
+              "__name__": null,
+              "__qualname__": null,
+              "__text_signature__": null,
+              "kind": "property"
+            },
+            "source_payload": {
+              "__module__": null,
+              "__name__": null,
+              "__qualname__": null,
+              "__text_signature__": null,
+              "kind": "property"
+            },
+            "source_sha256": {
+              "__module__": null,
+              "__name__": null,
+              "__qualname__": null,
+              "__text_signature__": null,
+              "kind": "property"
+            },
             "to_text": {
               "__module__": "sc_neurocore_engine.ir",
               "__name__": "to_text",
@@ -35292,6 +35313,15 @@
               "signature": null,
               "signature_error": "ValueError: no signature found for builtin <method '__subclasshook__' of 'object' objects>"
             },
+            "bind_source": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "bind_source",
+              "__qualname__": "ScGraphBuilder.bind_source",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self, payload: 'str') -> 'None'",
+              "signature_error": null
+            },
             "bitwise_and": {
               "__module__": "sc_neurocore_engine.ir",
               "__name__": "bitwise_and",
@@ -35436,6 +35466,15 @@
               "signature": "(self, input_id: 'int') -> 'int'",
               "signature_error": null
             },
+            "runtime_check": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "runtime_check",
+              "__qualname__": "ScGraphBuilder.runtime_check",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self, condition: 'int', kind: 'str' = 'overflow', enable: 'int | None' = None) -> 'int'",
+              "signature_error": null
+            },
             "scale": {
               "__module__": "sc_neurocore_engine.ir",
               "__name__": "scale",
@@ -35506,6 +35545,15 @@
               "__text_signature__": null,
               "kind": "function",
               "signature": "(self, predicate: 'str', lhs: 'int', rhs: 'int') -> 'int'",
+              "signature_error": null
+            },
+            "word_delay": {
+              "__module__": "sc_neurocore_engine.ir",
+              "__name__": "word_delay",
+              "__qualname__": "ScGraphBuilder.word_delay",
+              "__text_signature__": null,
+              "kind": "function",
+              "signature": "(self, input: 'int', ty: 'str') -> 'int'",
               "signature_error": null
             },
             "word_resize": {
@@ -41533,7 +41581,7 @@
               "__qualname__": "VectorizedSCLayer.forward",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, input_values: 'Sequence[float]') -> 'np.ndarray'",
+              "signature": "(self, input_values: 'Sequence[float]') -> 'npt.NDArray[np.float64]'",
               "signature_error": null
             },
             "forward_batch_numpy": {
@@ -41551,7 +41599,7 @@
               "__qualname__": "VectorizedSCLayer.forward_fast",
               "__text_signature__": null,
               "kind": "function",
-              "signature": "(self, input_values: 'Sequence[float]', seed: 'int' = 44257) -> 'np.ndarray'",
+              "signature": "(self, input_values: 'Sequence[float]', seed: 'int' = 44257) -> 'npt.NDArray[np.float64]'",
               "signature_error": null
             },
             "forward_numpy": {
@@ -93725,6 +93773,27 @@
               "kind": "method_descriptor",
               "signature": "(self, /)",
               "signature_error": null
+            },
+            "source_graph_sha256": {
+              "__module__": null,
+              "__name__": "source_graph_sha256",
+              "__qualname__": "ScGraph.source_graph_sha256",
+              "__text_signature__": null,
+              "kind": "getset_descriptor"
+            },
+            "source_payload": {
+              "__module__": null,
+              "__name__": "source_payload",
+              "__qualname__": "ScGraph.source_payload",
+              "__text_signature__": null,
+              "kind": "getset_descriptor"
+            },
+            "source_sha256": {
+              "__module__": null,
+              "__name__": "source_sha256",
+              "__qualname__": "ScGraph.source_sha256",
+              "__text_signature__": null,
+              "kind": "getset_descriptor"
             }
           },
           "signature": "()",
@@ -93957,6 +94026,15 @@
               "signature": null,
               "signature_error": "ValueError: no signature found for builtin <method '__subclasshook__' of 'object' objects>"
             },
+            "bind_source": {
+              "__module__": null,
+              "__name__": "bind_source",
+              "__qualname__": "ScGraphBuilder.bind_source",
+              "__text_signature__": "($self, payload)",
+              "kind": "method_descriptor",
+              "signature": "(self, /, payload)",
+              "signature_error": null
+            },
             "bitwise_and": {
               "__module__": null,
               "__name__": "bitwise_and",
@@ -94101,6 +94179,15 @@
               "signature": "(self, /, input_id)",
               "signature_error": null
             },
+            "runtime_check": {
+              "__module__": null,
+              "__name__": "runtime_check",
+              "__qualname__": "ScGraphBuilder.runtime_check",
+              "__text_signature__": "($self, condition, kind=\"overflow\", enable=None)",
+              "kind": "method_descriptor",
+              "signature": "(self, /, condition, kind='overflow', enable=None)",
+              "signature_error": null
+            },
             "scale": {
               "__module__": null,
               "__name__": "scale",
@@ -94171,6 +94258,15 @@
               "__text_signature__": "($self, predicate, lhs, rhs)",
               "kind": "method_descriptor",
               "signature": "(self, /, predicate, lhs, rhs)",
+              "signature_error": null
+            },
+            "word_delay": {
+              "__module__": null,
+              "__name__": "word_delay",
+              "__qualname__": "ScGraphBuilder.word_delay",
+              "__text_signature__": "($self, input, ty)",
+              "kind": "method_descriptor",
+              "signature": "(self, /, input, ty)",
               "signature_error": null
             },
             "word_resize": {
@@ -108836,7 +108932,7 @@
     }
   },
   "provenance": {
-    "base_wheel_sha256": "f1ce77f14d2ac992f97ce96241988c62d16bc2f2dda693d14839bb9c536d85cc",
+    "base_wheel_sha256": "8f1eef6b2b9b0c5ce80a358ffbf20a6cf9d76d19faeca4195dba7f995a1db76b",
     "capture_tool_sha256": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de",
     "modules": {
       "sc_neurocore_engine": {
@@ -108847,12 +108943,12 @@
       "sc_neurocore_engine.sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-        "sha256": "4d29d504d16cb3f2356e240ea68a8da5cd11db11004075ae68a06b12c8ba565a"
+        "sha256": "99906269fd051b3e5eefbe8529940d8dd9400e93c386f11d674dc5af8f0a32f4"
       }
     },
-    "native_wheel_source_base_sha": "bab93de1a6443278eabcf19b0b78f581b7766542",
+    "native_wheel_source_base_sha": "1138bd172cd5b8d8fe5bc343999f7dfb7fe5541b",
     "python": "3.12.14",
-    "qualification_scope": "Complete measured interface metadata for this normally installed default release reference profile. Typed scalar word builder methods are added; existing temporal decode/MLIR, signed Q8 Dense, lossless and spike-event codec interfaces are retained. Runtime numerical/state/hardware behavior, other profiles and whole compiler acceptance require their separate contracts.",
+    "qualification_scope": "Complete actual normally installed default release interface capture. State/source binding, runtime-check and wide-delay members are additive; earlier committed facade annotations now describe actual native results. Interface equality is separately checked against the unchanged raw capture. Runtime numerical/RTL/current-source and CPU codec contracts have independent installed-family evidence; no other ABI/profile, physical hardware or whole-compiler certification.",
     "reference_profile": {
       "architecture": "x86_64",
       "build_profile": "release",
@@ -108864,23 +108960,27 @@
       "operating_system": "Linux",
       "python_minor": "3.12"
     },
-    "source_base_sha": "bab93de1a6443278eabcf19b0b78f581b7766542",
+    "source_base_sha": "1138bd172cd5b8d8fe5bc343999f7dfb7fe5541b",
     "source_files_sha256": {
+      "Cargo.lock": "25a5d602f99d9028a96c521b0603b1a1f9eb1277f0943c8aa0b6f04d2d8d1fbc",
+      "Cargo.toml": "545ce6704d50f8e8d887417f89291f1b3b32fde52c99bce750fec7c0487bda81",
       "bridge/.cargo/config.toml": "41a0cf98caba4b36d392af91ff1968990d09e8c5c361149e1110e60d3cd45585",
       "bridge/pyproject.toml": "064fee0d8c1c92b5b43b18067adb88023185316fdaafd1d9cf4a0a3a15716b4e",
+      "bridge/rayon_source_patch.toml": "bd56a5ab23d168303e594e1dabd00ca811857d71050b74854134ff515452583a",
       "bridge/sc_neurocore_engine/__init__.py": "0883369361a12844a632927f11ae8f3f80c9a97ba4fb7f6b80005841247a54d7",
-      "bridge/sc_neurocore_engine/_ir_native.py": "646635438147346d107dc35f643bf27079cb423a211851b29129cb6c420ba17d",
+      "bridge/sc_neurocore_engine/_binding_types.pyi": "5e322f459ce70ee0fa3a0ebc22b7ce027bb0834ee6686ddfaed271de7116c757",
+      "bridge/sc_neurocore_engine/_ir_native.py": "7e4d716b3532f7d8aef70fb0f4bec0de6348ab73b7577a506cbc5cef430bfe17",
       "bridge/sc_neurocore_engine/attention.py": "650f62b8063d90623a847d13a9e68bfaf3d0a8a59c43f71ed058cc201397d694",
       "bridge/sc_neurocore_engine/compat.py": "87729b6d0f3a7ad72ec1f6895b213c3c24fa82f801e0d04f68b35d0a75318e7f",
       "bridge/sc_neurocore_engine/dna.py": "714fc5497401b335a735303b9f46668222a554df78b643aa208c786504dd1474",
-      "bridge/sc_neurocore_engine/grad.py": "2a617661fa64eaab31b5c8e733aaffe04fc3fadf354933a21fe907c1e9127069",
-      "bridge/sc_neurocore_engine/graphs.py": "688e90ce91d85d0e17ee49e2486fa71bec775fb15e2a85dbd82724dd413892dd",
-      "bridge/sc_neurocore_engine/hdc.py": "32b0dfacad9ef367e9667e549bb2d0b08ce8fcf0d9dfdd87749fcd76ff4a7f34",
-      "bridge/sc_neurocore_engine/ir.py": "2599b9fb6bac9dfce9a6fe9e0ba3bed05cdf11153781a85843c41a139a532f4a",
-      "bridge/sc_neurocore_engine/layers.py": "6344286121a917306c577f0b0a5aec40fe1451d72f95cf7ddda44da7831add00",
+      "bridge/sc_neurocore_engine/grad.py": "7e1088f7a4b270b86e6bac55fc3fcb176e449282dda4f1969fc6c62cb7aabf81",
+      "bridge/sc_neurocore_engine/graphs.py": "a3ee54ba09113ea4bf59ec0ba17dd478e22e19cb380e26fa94d5d9af23e930c3",
+      "bridge/sc_neurocore_engine/hdc.py": "30fcb220176d14f87413b9b98989ed58fc496bc90d7de1009362fc9baacd7fc2",
+      "bridge/sc_neurocore_engine/ir.py": "f5e9ac833bd01a3dae2f1fadb4fe56084e522804049925727ffc0ce11b3670f1",
+      "bridge/sc_neurocore_engine/layers.py": "2f9572fbf57825b91b6427332ecd2752887cb9c97ae2eb883de0475699b6c38e",
       "bridge/sc_neurocore_engine/network.py": "e559ab8d8c6c8513abe50404f545236d85f91094d252c3ad2cbf3c897385f631",
-      "bridge/sc_neurocore_engine/neurons.py": "c243d7d25d9a5c3bdb4783ffc8c65ff197993c18a376651bd6b87946a03362d5",
-      "bridge/sc_neurocore_engine/petri_net.py": "12eebaa1d6daed924237978ec764544664f0947699fc8edf47d34b215f27dd9e",
+      "bridge/sc_neurocore_engine/neurons.py": "aa0fd47966a2bb43889d7b157fca86f951ef2a1d32b37482528e3dfab20cca9c",
+      "bridge/sc_neurocore_engine/petri_net.py": "91011e3f4a791d14c20d170d4503029439cfdccb3caf07b0e9097d6372c3ea45",
       "bridge/sc_neurocore_engine/photonics.py": "9aa49dcfbce88ebd8aec8df38912879eeccb0e04ae1f94b4ca564d3ca7b15600",
       "bridge/sc_neurocore_engine/quantum.py": "5aec2c55c34cd0b9bdf6b7dc35130d0e213ddd2a256c0bd7a68352528b2ac372",
       "bridge/sc_neurocore_engine/scpn.py": "027b9bf124562cd748a2dd245933e92206d1b79d0bb84177b611c60607083588",
@@ -109206,42 +109306,57 @@
       "engine/src/gpu/kuramoto.rs": "e4ce3cf6b302b386f1a6681eee43a8d63aeff29f9dfba3607e716385a99e5d2d",
       "engine/src/gpu/lif.rs": "31f32e5314dba532e7ec72962d02559e8e4418df0f4ff991b83032468ae014ad",
       "engine/src/gpu/mod.rs": "947614807781a072453f57710e53478c9ca5d4f3a3b2c2a008fbaa91de0d3dd3",
+      "engine/src/gpu/shaders/accumulate.wgsl": "c8415c0d92bb468486b52725235b77cd741022d8a639a21d11f588f143e178d0",
+      "engine/src/gpu/shaders/encode.wgsl": "3ac632a105dd12c278867a0030d708563cefe052e0cf8c68ebeef152aa6c0812",
+      "engine/src/gpu/shaders/izhikevich_step.wgsl": "494145e1b6731f1c33bd386f646d9ad7874a229fee630696bca677143899b388",
+      "engine/src/gpu/shaders/kuramoto_step.wgsl": "34595df267d5d5acf0838ecc82b4b01fc69e35b0d5daddbff896ce22a6c7d7ed",
+      "engine/src/gpu/shaders/lif_step.wgsl": "70caf58a525ec02c1d8401bcf434dbd8cd3464fe7d2fa954451c8c97dc58bfe0",
+      "engine/src/gpu/shaders/philox.wgsl": "b12e32ff26df9fc4e3ba721ae6b057a9940adccf5ebded8893335ab865bab8c0",
       "engine/src/grad/mod.rs": "414e124cba8ff5b372726ddc37104dc2d3e3414ba3aeb9f74dcd955bb3589e69",
       "engine/src/grad/surrogate.rs": "958fad43a3887d74eb19e409faaa36f5cf28f3cc75776731c7a7b3f0a62e755a",
       "engine/src/graph.rs": "7780d8f17a78ae2d4f39c1ff42d0c8dae021fd77ed15ac04bb875823b7c68312",
-      "engine/src/ir/bindings.rs": "7965caeef2b9de5d49d59daf3e870c8246fc06a861a6289de71831cf55049cbc",
-      "engine/src/ir/builder.rs": "7c6a87e5247c097c243cfe6010467362816ca25a01d238d3aa096ddb89aa41be",
+      "engine/src/ir/bindings.rs": "1c7358acb709fa0904bbc53528ff0b2cf550a782ef337e6f8a90656aec6890de",
+      "engine/src/ir/builder.rs": "7aa64bba746103a5acd60895fb66381d662fc536ceddaac7b1c0fb7094dc3c6b",
       "engine/src/ir/constant_words.rs": "82d15fc1fb109d5afc9c4a2a45663e51c0395b0a4ff95ac5250872c2735a0083",
-      "engine/src/ir/dense_contract.rs": "d2057ba6c25963e4261529fb2753aea1779c7e214500e9e1b31363bc8588882b",
-      "engine/src/ir/emit_mlir.rs": "cae266b717504a1e73f8939684547f3e602d27b1d1a3592f4a85ed6ec0cb9c01",
-      "engine/src/ir/emit_mlir/divide.rs": "6348ef0091f83e75f5ab136cf366422bbbda1d0afb0d1acdb0fb5c8701367d38",
+      "engine/src/ir/dense_contract.rs": "b3f77260387fa448613949fc0f19ccc471a1e0cbba5d8622858a74ff33635e2e",
+      "engine/src/ir/emit_mlir.rs": "abc34c388eaac79a7c7cda5292206acea354d21dd4c56a0361c1f8d3421498eb",
+      "engine/src/ir/emit_mlir/divide.rs": "bb27bfa3a199de892dcb1107e9ac20723e9636636a0e0d6f9a8e958d2c4f31a7",
       "engine/src/ir/emit_mlir/primitives.rs": "13fdffb79a7901a1aeabae7a4be1f569921bdc89b1c4a2d52539b94a07bdb63e",
-      "engine/src/ir/emit_mlir/word.rs": "3eea86e746ee54123098bbcfaa14fbade410611d7dc96db940b414ce34e5d4a0",
-      "engine/src/ir/emit_sv.rs": "f13b1b97df254b0c7ca8bb51e830b8bc929e33a0e07c7d90e0147101b5110bf3",
+      "engine/src/ir/emit_mlir/runtime_check.rs": "cdf8e4d23965f0f0ae0beeb9a56e4bcbc61a8e64a9105c885b4fe3d6086be485",
+      "engine/src/ir/emit_mlir/state.rs": "5146aeaef6436d4a1f317c32cd093ae7c5b441dd47ca09f9af226f913af0043c",
+      "engine/src/ir/emit_mlir/word.rs": "78fdc0b6921c9682a7647615e1cbbb72215b196570ea27a786060754323387a5",
+      "engine/src/ir/emit_sv.rs": "c9c99d972ee77e7264c55dcc10fd5892b8777422a14506b218fb2514c6dbaed7",
       "engine/src/ir/emit_sv/constants.rs": "2d241b1dab15f2c040e1ad54624aa1b52546225db84cb77623d648e65347bf00",
       "engine/src/ir/emit_sv/count.rs": "1d98fa36aa230373a48582734d9f219cb665ccd8c6544db06e9787dff833695d",
       "engine/src/ir/emit_sv/dense.rs": "3a3a4b32ee6b74270116c3a340233c99a301472eda9f3da2c6d5fcf082d89b5a",
-      "engine/src/ir/emit_sv/divide.rs": "b576291fc4de5e9b0e5aac16e2768162320290549566ef63c0ea934da02f69fc",
+      "engine/src/ir/emit_sv/divide.rs": "410992c56ea77530dc5e4fdc96037c642c873e19032386a74384a3c2f4b7b5f6",
       "engine/src/ir/emit_sv/probability.rs": "0d38e7add9b9b4b6dd684915516d7529174469c01c13ee0e6eaafc98ddb3253b",
-      "engine/src/ir/emit_sv/word.rs": "ea72f8eb2b7c4061e50301404b09fd6b8598289a54cf6a89e9a634832caaf762",
-      "engine/src/ir/graph.rs": "a8d3c66567147edc9c91e500dc9d7e7b99848c8f7cb96d60bd54251412e467e2",
-      "engine/src/ir/identifiers.rs": "7d1154e3715de3ceb1bdb7ec69225d71ad679f42af9b45b16ef71e6649f22b3e",
-      "engine/src/ir/mod.rs": "4b32add1dc991be0c18576d4fc6345ea88f6da961f228877583cca4e4678aaee",
-      "engine/src/ir/parser.rs": "bbbf45591e2632a91f19803ed0a710bc757af049af24981ce6693f44bf9c34c0",
+      "engine/src/ir/emit_sv/runtime_check.rs": "33d55e50dfd000eff9ebd141bb8b846ad8292bf3a3336231d820ced148c44d5a",
+      "engine/src/ir/emit_sv/state.rs": "60de4570352a77f6f27113aee41afc36eda624eeaed1dfe693f48fd459281f29",
+      "engine/src/ir/emit_sv/word.rs": "7dc94886961b9d2363f835897570f246f8a84af4746d3a018b7ccdd27cadd72a",
+      "engine/src/ir/graph.rs": "7f9e04bb7fa205db73b640c1a671bc7eb17e8e4c2ca2e96b1d026570f9570e04",
+      "engine/src/ir/identifiers.rs": "e548abf49f918e6c0e98ae59a95f82007fe10cff146b2c025c20c54d1eea7d39",
+      "engine/src/ir/mod.rs": "4ea7ecd1394d4adad3fe3acabe3e51bf3eae56095c2c2f30057bcae267dbcc53",
+      "engine/src/ir/parser.rs": "8cc8ad8ea38532bba6f3bf2330fc9d78c565843f621aac957f319a56732cd1c7",
       "engine/src/ir/parser/neuron.rs": "cb8270da55e138d7e1b7aaf4968b2cb600d9720735dbe8e80c7c3fcf84401751",
-      "engine/src/ir/parser/word.rs": "aad30333194bc33f27c5e70566257bdd1d0e294fd78bcdfff5021af9c979e082",
-      "engine/src/ir/printer.rs": "f6db85c37a323f9362674f2bb729a409d03937568395e9f9e596b3f6c8f1471c",
+      "engine/src/ir/parser/runtime_check.rs": "ac275312b486c3d94329cfbc483a46debd76b493ce0ad76fb494872d20d9717a",
+      "engine/src/ir/parser/state.rs": "8554afdff0a26a9066640ba1b553039b2d4f9ed2ada1348a1d43e4f362c28ca6",
+      "engine/src/ir/parser/word.rs": "64bcd188833d626577f4d2197d01436bfe2d84acf2827ad68796da80d977bf9e",
+      "engine/src/ir/printer.rs": "7cf520d01b365accc07152fe5c243840a49d660c991049a33b635a8e25c489e8",
       "engine/src/ir/qformat.rs": "0ebd6a434df17c2438fb4ff75366260273f7745a5b0fd5675783fd12e13562da",
       "engine/src/ir/qformat/block_floating.rs": "77fba17591c7af9573510953536b08adebbcc89c03c85d59e54464ba277713d2",
       "engine/src/ir/qformat/dense_result.rs": "605cc0c9a6cf431778c9e1420a596790ac56c001a8d54ea3525689a6d5b1bce3",
       "engine/src/ir/qformat/fixed_format.rs": "54d58daf03cd70fac8041fa95f4356d038f35949b58cdf6aa8cbe53abbc4a1ad",
       "engine/src/ir/qformat/mixed_dense.rs": "013e1ce8616115f214118dccde1401f94f8a51c609468dc46c71d0c758338cc1",
-      "engine/src/ir/stream_contract.rs": "c4214d85106edfccf1070d7ec2dc67bc2c9f5b48317d845a5664d81d75b2f9b5",
-      "engine/src/ir/sv_target.rs": "3407ad6dd592c875add4ee1ef155b36e899c58d5537c513b0161f799b4989e7a",
-      "engine/src/ir/type_contract.rs": "fd1741a0cb2245ff6f0d64458c68f43b0ebfa86162055980a163087428d41652",
-      "engine/src/ir/verify.rs": "3ae32337a8c5524cc934a9f91a897c8e4854dbbf894cdab458f07643c94ee94a",
-      "engine/src/ir/word.rs": "5ad26548f1d0dc6d0141377495e18240b877b87564df6d903909bc8d1a62a478",
-      "engine/src/ir/word_contract.rs": "2526b68269ca626b2a1e1c320eb9c2b7ff28bed20d32ad0dc1177ede20e6353f",
+      "engine/src/ir/runtime_check.rs": "4d7c224120fc23d29aaecdabdea36bc7edc7a12436a5222ddacd29c03a203a99",
+      "engine/src/ir/source.rs": "333b16c0d6193c651b213b428cbfe8705ed671692f882166d1d9926c9b76d8d4",
+      "engine/src/ir/state_contract.rs": "b4ee74fcfac0d1b9c935b0a734a69317d2891ff4ab688edbec1e247e5cf74651",
+      "engine/src/ir/stream_contract.rs": "84f63f4909c9c642a6a2a481ac2f2ab734708cb5d9ead83442494446912f9d65",
+      "engine/src/ir/sv_target.rs": "6dbc1ba2423676425cab138c1a55e586d4f0e10b6723d12a01b0d8591cf5e0af",
+      "engine/src/ir/type_contract.rs": "b2cdf72052e8887a47e0fd208f2664a670c085232474f1a6178a266496d835e9",
+      "engine/src/ir/verify.rs": "e8b203a5054f2e630faeed24b390cd84ab308632f880c900e4b580fc19fb6620",
+      "engine/src/ir/word.rs": "857881a216027aff2f3b45c886b70a5dcffc029686a7d5fa11bb67ba5fae23e6",
+      "engine/src/ir/word_contract.rs": "c83a96d5a006d3c09bbbe9bd20309701e78b6f23549db4972476ca86baf8e206",
       "engine/src/layer.rs": "4735a006238c2ee49d2850200c2c97a07fc5ccc3785dc6a2ad5db33d20decb05",
       "engine/src/learning_bindings.rs": "215cbeb17fac59eaa5924bead913c1ad2e2e1490cdc7178ffd855c9ea3b4cc05",
       "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
@@ -109514,20 +109629,16 @@
       "engine/src/waveform_codec.rs": "e78074f8675bc80810be07cce79dab1f3f63eaf587cbbb00d4d49c12475a2a60",
       "engine/src/waveform_stream.rs": "bb55be0f12b833531c473988c48bf873b901a2428084935aca4b4349fdce98a9",
       "engine/src/waveform_stream_gpu.rs": "ad2ab8562c8339ab1cdb4b694e7029f5cd1589fb34dd6e8cdc32a11d967a107c",
+      "engine/src/waveform_stream_gpu.wgsl": "e122123043758b59ede25d6aecfa572469d94a543358e6079c4d8d02029ab7b4",
       "engine/src/wilson_cowan.rs": "86c4742f5095e497daff90c3b20870e1467cc47bd5be0c1c6fd9b8ab619c34ec",
       "engine/src/wong_wang.rs": "f05c3f21bb6a96d26e71d9291035d1e67b81e0a61d5edb5bf6c5839b22c7c2e1",
       "requirements/wheels-test.txt": "64a57340f0f8037303a09e8cb7844fffebff87e5082776b6d8050af27883ab2a",
       "tools/engine_abi_contracts.py": "65b03223948b078b3ceb651b7f22297b67a00ce172d911adff9ffc1bbd34c307",
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
-    "source_manifest_sha256": "5b503064269c5eb7e03c4c33bff8e63f188044fa88a2abce888b552264955c1a",
-    "state_store_additive_capture": {
-      "artifact_sha256": "ac57453b585c00dfbda97014a24a83eb8dd9e1a32e9eb55851f40ea4fbdb2c6e",
-      "boundary": "real source facade + Cargo PyO3 artifact, NOT installed wheel",
-      "existing_rows": "preserved exactly; only four measured State/Store members added",
-      "normal_installed_qualification": "hosted CI required"
-    },
-    "wheel_sha256": "f2762d5ecb230ca767a1d915f56d781754bc9aea8e6ca77627ad4159e7f3cb8a"
+    "source_manifest_sha256": "0c07dbaafd11d1c3a2ce447a2ae9ee403d2db79e199a38953fce24e4172cd468",
+    "source_state": "base plus measured owned scalar/state/source/runtime-check working overlay",
+    "wheel_sha256": "b972ad204694a8fa2dc9570e7cec6038300672f55ab22130c0ab21824e5356f3"
   },
   "schema": 1
 }

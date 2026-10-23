@@ -17,6 +17,7 @@ from typing import cast
 import pytest
 
 from sc_neurocore.compiler.function_unit_ir import Program, emit_c, emit_verilog
+from sc_neurocore.compiler.function_unit_programs import program
 
 
 def _program() -> Program:
@@ -147,6 +148,105 @@ def _run(command: list[str]) -> str:
 
 def _v_literal(value: int) -> str:
     return f"-64'sd{-value}" if value < 0 else f"64'sd{value}"
+
+
+@pytest.mark.parametrize("lang", ["c", "rust", "verilog"])
+@pytest.mark.parametrize("coefficient", [0, 1, 2])
+def test_coefficient_table_endpoints_match_every_target(
+    lang: str, coefficient: int, tmp_path: Path
+) -> None:
+    """Clamp actual log2 coefficient indices at both ends on every compiled target."""
+    rows = program("log", 16, 8).tables["log2"]
+    p = Program(tables={"log2": rows})
+    p.output = p.lookup("log2", p.input(), coefficient)
+    cases = [-9, -1, 0, 1, len(rows) - 1, len(rows), len(rows) + 9]
+    expected = [rows[max(0, min(len(rows) - 1, index))][coefficient] for index in cases]
+    assert [p.evaluate(index) for index in cases] == expected
+    executable = tmp_path / "unit"
+    if lang == "verilog":
+        lines, output = emit_verilog(p, "u", "x")
+        stimulus = "\n".join(
+            f'x={_v_literal(index)}; #1; $display("OBS %0d",{output});' for index in cases
+        )
+        source = tmp_path / "unit.sv"
+        source.write_text(
+            "module tb; reg signed [63:0] x;\n"
+            + "\n".join(lines)
+            + "\ninitial begin\n"
+            + stimulus
+            + "\n$finish; end endmodule\n",
+            encoding="utf-8",
+        )
+        _run(["iverilog", "-g2012", "-s", "tb", "-o", str(executable), str(source)])
+        actual = [
+            int(line.split()[1])
+            for line in _run(["vvp", str(executable)]).splitlines()
+            if line.startswith("OBS ")
+        ]
+    else:
+        lines, arrays, output = emit_c(p, "u", "x", lang)
+        if lang == "c":
+            tables = "\n".join(
+                f"static const int64_t {name}[{len(values)}]={{"
+                + ",".join(f"{value}LL" for value in values)
+                + "};"
+                for name, values in arrays.items()
+            )
+            calls = "\n".join(f'printf("%lld\\n",(long long)unit({index}LL));' for index in cases)
+            source = tmp_path / "unit.c"
+            source.write_text(
+                "#include <stdint.h>\n#include <stdio.h>\n"
+                + tables
+                + "\nint64_t unit(int64_t x){\n"
+                + "\n".join(lines)
+                + f"\nreturn {output};}}\nint main(void){{{calls}return 0;}}\n",
+                encoding="utf-8",
+            )
+            _run(
+                [
+                    "gcc",
+                    "-O2",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-fsanitize=undefined",
+                    "-fno-sanitize-recover=all",
+                    str(source),
+                    "-o",
+                    str(executable),
+                ]
+            )
+        else:
+            tables = "\n".join(
+                f"let {name}:[i64;{len(values)}]=["
+                + ",".join(f"{value}i64" for value in values)
+                + "];"
+                for name, values in arrays.items()
+            )
+            calls = "\n".join(f'println!("{{}}",unit({index}i64));' for index in cases)
+            source = tmp_path / "unit.rs"
+            source.write_text(
+                "fn unit(x:i64)->i64{\n"
+                + tables
+                + "\n"
+                + "\n".join(lines)
+                + f"\n{output}}}\nfn main(){{{calls}}}\n",
+                encoding="utf-8",
+            )
+            _run(
+                [
+                    "rustc",
+                    "-D",
+                    "warnings",
+                    "-C",
+                    "overflow-checks=on",
+                    str(source),
+                    "-o",
+                    str(executable),
+                ]
+            )
+        actual = [int(value) for value in _run([str(executable)]).split()]
+    assert actual == expected
 
 
 @pytest.mark.parametrize("lang", ["c", "rust", "verilog"])

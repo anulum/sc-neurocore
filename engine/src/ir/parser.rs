@@ -16,6 +16,8 @@ use crate::ir::graph::*;
 
 #[path = "parser/neuron.rs"]
 mod neuron;
+#[path = "parser/runtime_check.rs"]
+mod runtime_check;
 #[path = "parser/state.rs"]
 mod state;
 #[path = "parser/word.rs"]
@@ -61,6 +63,7 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
         .to_string();
 
     let mut graph = ScGraph::new(name);
+    let mut source_line = 0;
 
     for (line_idx, line) in lines.iter().enumerate().skip(1) {
         let trimmed = line.trim();
@@ -68,8 +71,25 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
             continue;
         }
 
-        if trimmed.contains("= sc.state ") || trimmed.contains("= sc.store ") {
+        if trimmed.starts_with("sc.source ") {
+            if graph.source.is_some() || !graph.ops.is_empty() {
+                return Err(ParseError {
+                    line: line_idx + 1,
+                    message: "source identity must occur once, before graph operations".into(),
+                });
+            }
+            source_line = line_idx + 1;
+            graph.source =
+                Some(
+                    super::source::parse_line(trimmed).map_err(|message| ParseError {
+                        line: line_idx + 1,
+                        message,
+                    })?,
+                );
+        } else if trimmed.contains("= sc.state ") || trimmed.contains("= sc.store ") {
             state::parse(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.check ") {
+            runtime_check::parse(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.word ") {
             word::parse(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.input") {
@@ -116,6 +136,12 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
         }
     }
 
+    if let Some(source) = &graph.source {
+        source.verify(&graph).map_err(|message| ParseError {
+            line: source_line,
+            message,
+        })?;
+    }
     Ok(graph)
 }
 

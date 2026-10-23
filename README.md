@@ -177,8 +177,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 32 |
-| Python test files | 5405 |
-| Public documentation pages | 655 |
+| Python test files | 5420 |
+| Public documentation pages | 656 |
 | GitHub Actions workflows | 24 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -622,10 +622,11 @@ and the seed constants in `hdl/sc_bitstream_encoder.v`.
 ## Native compute graph IR
 
 The Rust and Python graph builders provide typed integer circuits with explicit
-casts, rounding and saturation, text round trips, and SystemVerilog/CIRCT
-emission. See the [scalar word and naming contract](docs/api/sc-ir.md).
-Equation export uses the separate equation compiler; arbitrary equation-to-native-IR
-lowering is not provided by these graph operations.
+casts, rounding and saturation, source-bound text persistence, state registers
+and SystemVerilog/CIRCT emission. The public `compile_to_ir` frontend lowers
+supported equation models into these operations; `recompile_ir` checks source
+replay against the saved graph. See the [equation API and supported modes](docs/api/equation-native-ir.md)
+and [scalar word and naming contract](docs/api/sc-ir.md).
 
 ## Examples
 

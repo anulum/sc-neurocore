@@ -46,6 +46,13 @@ fn instruction(text: &str) -> Result<(ValueId, WordOp), String> {
         }
     };
     let op = match kind {
+        "delay" => {
+            count(1)?;
+            WordOp::Delay {
+                input: parse_value_id(args[0])?,
+                ty,
+            }
+        }
         "resize" | "bitcast" => {
             count(1)?;
             let input = parse_value_id(args[0])?;

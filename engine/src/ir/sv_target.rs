@@ -236,6 +236,10 @@ impl SvTarget {
                 }
                 ScOp::Word { op, .. } => {
                     use super::word::{WordBinaryOp, WordOp};
+                    if let WordOp::Delay { ty, .. } = op {
+                        ff_estimated = ff_estimated.saturating_add(saturating_u32(ty.bit_width()));
+                        continue;
+                    }
                     let width = op
                         .operands()
                         .iter()
@@ -310,6 +314,7 @@ impl SvTarget {
                         }
                     }
                 }
+                ScOp::Check { .. } => {}
                 ScOp::Input { .. }
                 | ScOp::Output { .. }
                 | ScOp::Encode { .. }

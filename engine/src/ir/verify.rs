@@ -29,6 +29,14 @@ impl std::fmt::Display for VerifyError {
 /// or a list of all errors found.
 pub fn verify(graph: &ScGraph) -> Result<(), Vec<VerifyError>> {
     let mut errors = Vec::new();
+    if let Some(source) = &graph.source {
+        if let Err(message) = source.verify(graph) {
+            errors.push(VerifyError {
+                op_index: 0,
+                message,
+            });
+        }
+    }
     super::identifiers::verify(graph, &mut errors);
     verify_ssa(graph, &mut errors);
     verify_operand_defs(graph, &mut errors);
@@ -38,6 +46,7 @@ pub fn verify(graph: &ScGraph) -> Result<(), Vec<VerifyError>> {
     verify_hardware_words(graph, &mut errors);
     super::word_contract::verify(graph, &mut errors);
     super::state_contract::verify(graph, &mut errors);
+    super::runtime_check::verify(graph, &mut errors);
     if errors.is_empty() {
         Ok(())
     } else {
@@ -75,7 +84,10 @@ fn verify_operand_defs(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
                 });
             }
         }
-        if !matches!(op, ScOp::Output { .. } | ScOp::Store { .. }) {
+        if !matches!(
+            op,
+            ScOp::Output { .. } | ScOp::Store { .. } | ScOp::Check { .. }
+        ) {
             defined.insert(op.result_id());
         }
     }

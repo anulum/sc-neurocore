@@ -16,10 +16,10 @@
 //!
 //! # Design Principles
 //!
-//! - **SSA**: Every operation produces exactly one named value.
-//! - **Typed**: All values carry an `ScType` for static verification.
+//! - **SSA**: Every operation has a unique ID; terminators do not produce data values.
+//! - **Typed**: All data values carry an `ScType` for static verification.
 //! - **Acyclic**: The operation list forms a DAG (verified by `verify()`).
-//! - **Portable**: No external dependencies; pure Rust enums and structs.
+//! - **Portable**: Typed Rust enums and structs; source checksums use the crate's SHA-256 dependency.
 
 pub(crate) mod bindings;
 pub mod builder;
@@ -32,6 +32,8 @@ pub(crate) mod identifiers;
 pub mod parser;
 pub mod printer;
 pub mod qformat;
+pub mod runtime_check;
+pub mod source;
 pub(crate) mod state_contract;
 pub(crate) mod stream_contract;
 pub mod sv_target;

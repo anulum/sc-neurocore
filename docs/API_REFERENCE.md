@@ -8579,6 +8579,97 @@ ValueError
 
 ---
 
+## Module `compiler.equation_ir_compiler`
+
+### Class `EquationIR`
+A verified native graph and the cadence of its registered model outputs.
+
+Attributes
+----------
+graph : ScGraph
+    Actual native graph. Its source payload binds the complete model and
+    numerical choices; both graph text and source have native SHA256 checks.
+clocks_per_timestep : int
+    Physical clocks between complete macro timesteps, including selected
+    product-register fill or model substeps.
+pipeline_registers : int
+    Actual selected wide product registers, rather than a requested count.
+output_widths : tuple of tuple of str and int
+    Public output port names and physical widths in declaration order.
+
+
+### Function `compile_to_ir(neuron, module_name, data_width, fraction, *, signed, overflow, rounding, pipeline_stages, pipeline_points, function_lowering, random_precision)`
+Lower an equation model to typed native IR without embedding generated RTL.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Authored equations, initial state, parameters, constants and events.
+    Compilation preserves the caller's live state and RNG counters.
+module_name : str, optional
+    Hardware module identifier, validated by the native graph verifier.
+data_width : int, optional
+    Signed fixed-point state and input width, from 1 through 64. Internal
+    expression words may be wider than the native scalar port limit.
+fraction : int, optional
+    Number of fractional bits.
+signed : bool, optional
+    Must be True, matching the maintained equation datapath.
+overflow : str, optional
+    Saturate, wrap or simulation-only integrated-state trap. Reset and
+    graded values retain wrapping under trap mode.
+rounding : str, optional
+    Truncate, nearest or bankers product rounding.
+pipeline_stages : int, optional
+    A positive count selects all maintained product registers.
+pipeline_points : list of str or None, optional
+    Explicit product names, mutually exclusive with global pipelining.
+function_lowering : str, optional
+    Existing lut-v1 default or opt-in structured v2 function programs.
+random_precision : str, optional
+    Standard or exact normal-draw lowering.
+
+Returns
+-------
+EquationIR
+    Verified registered graph, physical output widths and timestep cadence.
+    Graph methods emit direct SystemVerilog and structured CIRCT HW/Comb/Seq.
+
+Raises
+------
+ValueError
+    The numerical, source, division, cadence or native graph contract fails.
+TypeError
+    Geometry or pipeline arguments have incorrect runtime types.
+NotImplementedError
+    The request uses an unsupported maintained datapath mode.
+ImportError
+    The native engine providing scalar/state IR is unavailable.
+
+### Function `recompile_ir(text)`
+Replay a bound model and require its canonical native graph to match.
+
+Parameters
+----------
+text : str
+    Native graph text produced by :func:`compile_to_ir`. Native source and
+    graph checksums are validated before reconstructing the model.
+
+Returns
+-------
+EquationIR
+    Freshly compiled identical graph and its actual cadence/output contract.
+    Equality establishes source consistency, without authenticating authorship.
+
+Raises
+------
+ValueError
+    Native text, source schema or replayed model does not match the graph.
+ImportError
+    The native engine or a model's optional units dependency is unavailable.
+
+---
+
 ## Module `compiler.equation_lowering`
 
 ### Function `equation_expressions(neuron)`
@@ -13335,6 +13426,511 @@ Returns
 -------
 str
     Markdown table string.
+
+---
+
+## Module `compiler.native_equation.arithmetic`
+
+### Class `EquationArithmetic`
+Append raw signed words under the existing equation compiler's Q contract.
+
+Parameters
+----------
+builder : ScGraphBuilder
+    Destination native graph; all methods append real typed instructions.
+q : Q88
+    Word geometry and product-rounding policy. Products wrap before
+    rounding, exactly as the maintained Verilog intermediate wires do.
+
+- **__init__**(builder, q)
+- **constant**(value, width)
+  - Append a width-wrapped constant, including words wider than 64 bits.
+- **literal**(value, width)
+  - Encode a source Q-format literal and extend it to its expression context.
+- **round_product**(value, width)
+  - Narrow one wide fixed-point product using the maintained bias arithmetic.
+
+---
+
+## Module `compiler.native_equation.clock`
+
+### Class `EquationClock`
+Native conditions controlling one equation's state and random sequence.
+
+Attributes
+----------
+advance : int
+    Boolean SSA value enabling state commits on the coming clock edge.
+macro_boundary : int
+    Boolean SSA value enabling macro history, threshold and RNG commits.
+clocks_per_timestep : int
+    Number of physical clocks per complete model timestep. Pipeline storage
+    keeps capturing on every clock; it must not use either enable.
+
+
+### Function `build_clock(builder, *, pipeline_registers, substeps)`
+Append the exact pipeline fill or macro-step counter to a native graph.
+
+Parameters
+----------
+builder : ScGraphBuilder
+    Destination graph. Counter storage has asynchronous active-low zero reset.
+pipeline_registers : int, optional
+    Actual selected product-register count, rather than requested stage count
+    or longest path. State commits once every count plus one clocks, matching
+    the maintained registered Verilog compiler's conservative fill counter.
+substeps : int, optional
+    Existing EquationNeuron substep count. Without pipelining, state advances
+    every clock and macro history/RNG advances on the last substep.
+
+Returns
+-------
+EquationClock
+    Explicit native Bool conditions and the complete timestep period.
+
+Raises
+------
+ValueError
+    Counts are not integers in range, need more than 64 counter bits, or
+    request pipelining together with macro substeps. Admission occurs before
+    any graph mutation, as for the maintained compiler's rejected combination.
+
+Notes
+-----
+`_verilog_registered_module.py` resets the fill count after every valid
+recurrence, not just after reset. Its count is the number of physical product
+registers, which can exceed the actual dependency depth.
+
+---
+
+## Module `compiler.native_equation.commits`
+
+### Class `EquationCommits`
+Apply signed Q-word overflow at the maintained model's commit boundaries.
+
+Parameters
+----------
+arithmetic : EquationArithmetic
+    Destination graph and numerical configuration. Word width and overflow
+    mode are captured when constructing this policy.
+
+Raises
+------
+NotImplementedError
+    Unsigned equation state is requested.
+ValueError
+    The overflow mode is outside saturate, wrap and trap.
+
+Notes
+-----
+A final integrated state traps in simulation when requested. Reset and
+graded expressions wrap in trap mode, as in the existing registered core.
+Wide bounds use actual word constants, without an i64-literal restriction.
+
+- **__init__**(arithmetic)
+- **state**(raw, width)
+  - Commit a final integrated word, including its requested simulation trap.
+- **event**(raw, width)
+  - Commit a reset or graded value; trap mode retains its existing wrapping.
+
+---
+
+## Module `compiler.native_equation.division`
+
+### Function `validate_division(neuron, q)`
+Require an encoded nonzero denominator or a preserved nonzero source branch.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Original expressions before introducing totalized compiler intrinsics.
+q : Q88
+    Word geometry used to encode constants and comparison boundaries.
+
+Raises
+------
+ValueError
+    A source divisor may encode zero. Parameter division is retained as a
+    quotient; its AST is never rewritten to literal reciprocal arithmetic.
+
+---
+
+## Module `compiler.native_equation.events`
+
+### Class `EquationEvent`
+Hold explicit next-state and event SSA values for one timestep transaction.
+
+Attributes
+----------
+states : dict of str to int
+    Signed Q-word candidates after simultaneous conditional reset selection.
+spike : int
+    Bool SSA identifier, false outside the logical timestep boundary.
+value : int or None
+    Signed Q-word graded value, zero unless a spike fires; None for binary spikes.
+
+
+### Function `lower_events(neuron, arithmetic, candidates, previous, bindings, commit, enabled, externs)`
+Append one model's threshold/history/reset logic without writing its state words.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Prepared source model, including intrinsic-lowered Philox thresholds.
+arithmetic : EquationArithmetic
+    Destination graph and fixed-point policy.
+candidates : mapping of str to int
+    Integrated signed Q words, before any reset executes.
+previous : mapping of str to int
+    State at the preceding macro boundary, for the model's previous aliases.
+bindings : mapping of str to int
+    Signed Q-word constants, parameters and input.
+commit : callable
+    State overflow policy: raw SSA identifier and physical width to Q word.
+enabled : int
+    Bool SSA identifier for logical timestep completion. Event-history and
+    threshold RNG registers advance only on this boundary.
+externs : mapping of str to int, optional
+    Counter-based RNG bindings, shared with all derivatives in this timestep.
+
+Returns
+-------
+EquationEvent
+    Explicit selected state, Bool spike and optional graded value identifiers.
+
+Raises
+------
+ValueError
+    If stochastic model metadata is inconsistent with its detection mechanism.
+
+Notes
+-----
+Every reset and the graded expression reads the same integrated candidate
+and macro-previous environment. Reset dictionary order never creates a
+sequential update. Crossing history stores the pre-reset active condition.
+
+---
+
+## Module `compiler.native_equation.expressions`
+
+### Class `EquationExpressions`
+Translate equation expressions into typed native word instructions.
+
+Parameters
+----------
+arithmetic : EquationArithmetic
+    Destination graph and the existing fixed-point configuration.
+bindings : mapping of str to int
+    State, parameter, constant and input SSA identifiers, all signed Q words.
+    Runtime state and previous-state aliases are supplied by the integrator.
+externs : mapping of str to int, optional
+    Signed i64 RNG step, seed and stream bindings.
+schedule : EquationSchedule or None, optional
+    Shared source-compatible unit numbering and selected product registers.
+    None leaves every expression product combinational.
+
+Notes
+-----
+Additive expressions inherit their enclosing width. Products, quotients,
+powers and table/program results collapse at the same points as the existing
+Verilog compiler. Inline clamps compare wide values and retain the caller's
+branch width. The surrounding frontend owns state commits and events.
+
+- **__init__**(arithmetic, bindings, externs, schedule)
+- **lower**(expression, width)
+  - Compile a numeric expression at a declared signed context width.
+- **condition**(node)
+  - Lower an equation predicate to Bool, preserving wide chained comparisons.
+- **value**(node, width)
+  - Compile a numeric AST node under its exact enclosing word width.
+
+---
+
+## Module `compiler.native_equation.functions`
+
+### Function `lower_lookup(name, argument, a)`
+Lower a maintained lut-v1 function to an explicit native selection graph.
+
+Parameters
+----------
+name : str
+    Canonical legacy function name, including cbrt for fractional powers.
+argument : int
+    Signed Q-word SSA identifier, already narrowed to the Q data width.
+a : EquationArithmetic
+    Destination graph and numeric configuration.
+
+Returns
+-------
+int
+    Signed Q-word SSA result, using the original table and endpoint clamps.
+
+### Function `lower_call(node, a, value, externs)`
+Lower an already parsed equation call to real native scalar instructions.
+
+Parameters
+----------
+node : ast.Call
+    Named call in the existing equation vocabulary, with numbered RNG sites.
+a : EquationArithmetic
+    Destination graph, word geometry and lowering configuration.
+value : callable
+    Compile an argument under an explicit signed-word context width.
+externs : mapping of str to int
+    Signed i64 step, seed and stream identifiers for random calls.
+
+Returns
+-------
+int
+    Signed Q-word SSA result.
+
+Raises
+------
+ValueError
+    If the name, argument structure, function lowering or RNG bindings are invalid.
+
+---
+
+## Module `compiler.native_equation.integrators`
+
+### Function `integrate(neuron, arithmetic, states, bindings, commit, externs, schedule)`
+Append one complete integration substep without writing registers.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Existing prepared model. The method, declaration order, equations,
+    symbolic diagonal Jacobian and dt all come from this subject.
+arithmetic : EquationArithmetic
+    Destination graph and quantised word/rounding policy.
+states : mapping of str to int
+    Current signed Q-word identifiers in equation declaration order.
+bindings : mapping of str to int
+    Signed Q-word parameters, constants and external inputs.
+commit : callable
+    Apply the configured state overflow policy to a value of a supplied
+    physical width; return a Q-word identifier. Gauss-Seidel reads these
+    already committed earlier candidates within the same substep.
+externs : mapping of str to int, optional
+    Signed i64 RNG step, seed and stream bindings, unchanged within a step.
+schedule : EquationSchedule or None, optional
+    Shared expression scheduling; Euler/Gauss-Seidel dt products also honour
+    their maintained named pipeline points. RK4 scaling stays combinational.
+
+Returns
+-------
+dict of str to int
+    All post-integration candidate words. Thresholds, resets, history and
+    register stores belong to the surrounding timestep transaction.
+
+Raises
+------
+ValueError
+    If the method is outside the existing five-method vocabulary.
+
+Notes
+-----
+RK4 stage advances wrap at the Q word width before the next derivative;
+only the final accumulation calls commit. The dt/2 and dt/6 constants
+quantise independently as in the maintained Verilog integrator. Exponential
+Euler uses the model's actual symbolic Jacobian and shared exprel lowering.
+
+---
+
+## Module `compiler.native_equation.replay`
+
+### Function `restore_source(payload)`
+Reconstruct the exact canonical initial model and numerical compiler request.
+
+Parameters
+----------
+payload : str
+    Canonical ``sc-equation-source.v1`` payload produced by the public
+    compiler. Ordered model maps, all modes and unit metadata are retained.
+
+Returns
+-------
+tuple
+    Initial model, fixed-point configuration, module name, global pipeline
+    request and explicit product selections. Source replay neither imports
+    code from the payload nor restores a caller's running trajectory.
+
+Raises
+------
+ValueError
+    The source schema, types, units, model or canonical encoding is invalid.
+ImportError
+    A strict-units model requires the optional dimensional-analysis package.
+
+---
+
+## Module `compiler.native_equation.scheduling`
+
+### Class `EquationSchedule`
+Plan expression-unit numbering and selected one-clock product registers.
+
+Parameters
+----------
+q : Q88
+    Existing numeric/function configuration.
+register : callable
+    Append a real native zero-reset, one-clock integer word register.
+    Arguments are its input SSA identifier and explicit signed type.
+pipeline : bool, optional
+    Register every product which the maintained emitter pipelines.
+points : sequence of str, optional
+    Explicit multiply names, such as _mul2, mul2 or _dt_mul_v.
+
+Notes
+-----
+Naming follows the maintained Verilog expression emitter's traversal,
+including non-pipelined reciprocal, division, power, table and RNG units.
+Number allocation is separate from typed word construction: a subexpression
+may be resized into several contexts without acquiring several registers.
+The caller supplies native storage, never an executable RTL payload.
+
+- **__init__**(q, register, \*, pipeline, points)
+- **plan**(node)
+  - Allocate unit names in the original compiler's evaluation order.
+- **product**(node, value, width)
+  - Register a selected explicit multiplication, sharing repeated context reads.
+- **named_product**(value, width, name, \*, aliases)
+  - Append selected storage for an integrator or expression product.
+
+---
+
+## Module `compiler.native_equation.source`
+
+### Function `model_source(neuron, q, module_name, pipeline_stages, pipeline_points)`
+Serialize initial model semantics, retaining declaration and reset order.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Authored model before intrinsic preparation. Live state and random
+    counters are deliberately absent: compilation starts at initial state.
+q : Q88
+    Complete fixed-point, function and random-precision configuration.
+module_name : str
+    Actual native hardware module name.
+pipeline_stages : int
+    Requested global product-register selection.
+pipeline_points : tuple of str
+    Explicit ordered product-register selection.
+
+Returns
+-------
+str
+    Canonical UTF-8 JSON with ordered pairs for semantically ordered maps.
+    Strict models retain both runtime base units and state display units.
+
+Raises
+------
+ValueError
+    A numerical model value is nonfinite and cannot be a source contract.
+
+---
+
+## Module `compiler.native_equation.transactions`
+
+### Class `EquationTransaction`
+Describe the committed model words and cadence appended to a native graph.
+
+Attributes
+----------
+states : dict of str to int
+    Source state names bound to their current signed native registers.
+outputs : dict of str to int
+    Public output names bound to actual state, spike and graded registers.
+clock : EquationClock
+    Logical timestep and macro-boundary conditions for this model.
+pipeline_registers : int
+    Number of actual selected wide product registers.
+
+
+### Function `lower_neuron(neuron, arithmetic, commit, *, event_commit, pipeline_stages, pipeline_points)`
+Append a complete maintained neuron's registered timestep transaction.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Authored model. Intrinsics are prepared without altering its live state.
+arithmetic : EquationArithmetic
+    Destination builder and fixed-point numeric contract.
+commit : callable
+    Apply the caller's declared overflow policy to a raw SSA word and its
+    physical width. The result must have the configured signed Q word type.
+    Runtime trap ownership for final integration belongs to this policy.
+event_commit : callable or None, optional
+    Reset and graded-expression commit policy. None preserves the supplied
+    commit callback for existing callers; the public model compiler supplies
+    a separate policy to retain wrapping for events under overflow=trap.
+pipeline_stages : int, optional
+    Zero leaves products combinational; a positive count enables the existing
+    compiler's conservative one-register-per-selected-product policy.
+pipeline_points : sequence of str, optional
+    Explicit maintained product names, mutually exclusive with global mode.
+
+Returns
+-------
+EquationTransaction
+    Registers, output bindings and logical clocks. This component does not
+    construct provenance or substitute for the public source compiler result.
+
+Raises
+------
+TypeError
+    Pipeline stages are not an integer or selection names are not strings.
+ValueError
+    Pipeline selection, output names or the model's macro cadence is invalid.
+NotImplementedError
+    Unsigned state, stochastic rounding, pipelined stochastic thresholds or
+    macro modes unsupported by the maintained registered compiler are requested.
+
+---
+
+## Module `compiler.native_program`
+
+### Function `lower_program(program, builder, inputs, externs)`
+Append a complete function/RNG integer program to a native graph.
+
+Parameters
+----------
+program : Program
+    Shared straight-line integer program from the existing function or
+    random unit builders. Every intermediate must fit its signed 64-bit
+    contract, as required by the existing compiled C/Rust/RTL targets.
+builder : ScGraphBuilder
+    Caller-owned native graph builder, which remains usable afterward.
+inputs : sequence of int
+    Native SSA identifiers of signed i64 operands, in program input order.
+    Constant programs retain the original single-argument contract.
+externs : mapping of str to int, optional
+    Native i64 SSA identifiers of named inputs such as step, seed and stream.
+    Unsigned or fixed-point storage needs an explicit caller-side bitcast
+    or resize before binding.
+
+Returns
+-------
+int
+    Native SSA identifier of the program's signed i64 output.
+
+Raises
+------
+ValueError
+    If instructions, operand count, table metadata or bindings are invalid.
+    These checks precede graph mutation. Native verification additionally
+    checks that supplied SSA identifiers exist and have the required types.
+
+Notes
+-----
+All nineteen existing operations are lowered without a source/RTL escape
+hatch. Division by zero returns zero for evaluated but unselected branches;
+variable shifts clamp to 0..63; comparisons materialise integer 0 or 1.
+Negative table indices select the first row and large indices the last.
+The resulting graph can be printed, parsed and emitted by both native
+SystemVerilog and CIRCT backends. This does not select a neuron integrator
+or implement the surrounding state/event transaction.
 
 ---
 

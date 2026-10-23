@@ -32,6 +32,12 @@ fn generated(name: &str) -> bool {
             && name.as_bytes().get(1).is_some_and(u8::is_ascii_digit))
 }
 pub(crate) fn verify(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
+    if graph.name == "SYNTHESIS" {
+        errors.push(VerifyError {
+            op_index: 0,
+            message: "HDL module identifier is reserved by CIRCT: SYNTHESIS".into(),
+        });
+    }
     if !valid(&graph.name) {
         errors.push(VerifyError {
             op_index: 0,
@@ -41,7 +47,9 @@ pub(crate) fn verify(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
     let mut ports = HashSet::new();
     for (op_index, op) in graph.ops.iter().enumerate() {
         if let ScOp::Input { name, .. } | ScOp::Output { name, .. } = op {
-            let reason = if !valid(name) {
+            let reason = if name == "SYNTHESIS" {
+                Some("HDL port identifier is reserved by CIRCT")
+            } else if !valid(name) {
                 Some("invalid HDL port identifier")
             } else if generated(name) {
                 Some("HDL port identifier uses a reserved generated namespace")

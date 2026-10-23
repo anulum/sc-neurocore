@@ -27,6 +27,21 @@ class NativeGraph(Protocol):
         """Return the graph's module name."""
         ...
 
+    @property
+    def source_payload(self) -> str | None:
+        """Return exact UTF-8 provenance when bound."""
+        ...
+
+    @property
+    def source_sha256(self) -> str | None:
+        """Return the provenance checksum, without an authentication claim."""
+        ...
+
+    @property
+    def source_graph_sha256(self) -> str | None:
+        """Return the bound canonical graph checksum."""
+        ...
+
     def len(self) -> int:
         """Count operations including ports and constants."""
         ...
@@ -43,12 +58,39 @@ class NativeGraph(Protocol):
 class NativeBuilder(Protocol):
     """Actual positional PyO3 graph-builder signatures."""
 
+    def bind_source(self, payload: str) -> None:
+        """Bind nonempty source bytes to the current complete graph, once."""
+        ...
+
+    def runtime_check(
+        self, condition: int, kind: str = "overflow", enable: int | None = None
+    ) -> int:
+        """Append a non-value Boolean simulation check, excluded from synthesis."""
+        ...
+
     def state(self, initial: int, ty: str) -> int:
         """Declare a scalar register with an earlier constant reset value."""
         ...
 
     def store(self, state: int, next: int, enable: int | None = None) -> int:
         """Bind one atomic update, optionally enabled by a Boolean value."""
+        ...
+
+    def word_delay(self, input: int, ty: str) -> int:
+        """Capture a full integer word with one clock latency and asynchronous zero reset.
+
+        Parameters
+        ----------
+        input : int
+            Native SSA identifier of the word sampled at each rising clock.
+        ty : str
+            Identical input/output iN or uN geometry, including widths above 64 bits.
+
+        Returns
+        -------
+        int
+            Native SSA identifier of the registered physical word.
+        """
         ...
 
     def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:

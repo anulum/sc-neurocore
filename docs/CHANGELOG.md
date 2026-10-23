@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add public equation-to-native-IR compilation and source replay with typed scalar
+  state, runtime range checks and product registers. Preserve authored integration,
+  event, random-stream and timestep behavior through direct SystemVerilog and CIRCT.
+  Reject unsupported scalar ports and unproved variable-division domains explicitly.
+  Bind complete equation source to persisted graphs and refresh the measured engine
+  interface inventory and compiler benchmark evidence.
+
 - Make generated Studio federation type archives independent of build time and
   host timezone while preserving declarations and archive metadata. Add real
   command acceptance with complete coverage and retain strict TypeScript checks.

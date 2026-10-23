@@ -23,6 +23,46 @@ impl ScGraphBuilder {
         }
     }
 
+    /// Bind provenance after all graph operations have been appended.
+    ///
+    /// Later operation/name changes invalidate the identity; it is never silently rebound.
+    ///
+    /// # Errors
+    ///
+    /// Refuses empty provenance or a second binding without changing existing metadata.
+    pub fn bind_source(&mut self, payload: String) -> Result<(), String> {
+        if self.graph.source.is_some() {
+            return Err("graph source identity is already bound".into());
+        }
+        self.graph.source = Some(super::source::SourceIdentity::new(payload, &self.graph)?);
+        Ok(())
+    }
+
+    /// Check a Boolean invariant combinationally in simulation, optionally enabled.
+    ///
+    /// A false enabled condition terminates simulation. SYNTHESIS excludes the
+    /// check; data words and registers are unaffected. The returned terminator
+    /// identifier cannot be consumed as a numeric value. Operand types are
+    /// validated by graph verification, like other builder instructions.
+    ///
+    /// # Errors
+    ///
+    /// Refuses exhausted SSA identifiers without modifying the graph.
+    pub fn runtime_check(
+        &mut self,
+        condition: ValueId,
+        kind: super::runtime_check::RuntimeCheckKind,
+        enable: Option<ValueId>,
+    ) -> Result<ValueId, ValueIdExhausted> {
+        let id = self.graph.try_fresh_id()?;
+        Ok(self.graph.push(ScOp::Check {
+            id,
+            condition,
+            enable,
+            kind,
+        }))
+    }
+
     /// Declare current register storage, with an earlier exact-type constant reset word.
     /// Verification requires exactly one subsequent Store for this State.
     pub fn state(&mut self, initial: ValueId, ty: ScType) -> ValueId {
@@ -42,10 +82,19 @@ impl ScGraphBuilder {
         })
     }
 
-    /// Append explicit scalar arithmetic, conversion, rounding or saturation.
+    /// Append explicit scalar arithmetic, conversion, rounding, saturation or word delay.
     pub fn word(&mut self, op: super::word::WordOp) -> ValueId {
         let id = self.graph.fresh_id();
         self.graph.push(ScOp::Word { id, op })
+    }
+
+    /// Capture an identically typed integer word on each rising clock edge.
+    ///
+    /// Active-low rst_n resets the entire word asynchronously to zero. The
+    /// register introduces one cycle of latency and supports the same explicit
+    /// integer widths as word arithmetic, including products wider than 64 bits.
+    pub fn word_delay(&mut self, input: ValueId, ty: ScType) -> ValueId {
+        self.word(super::word::WordOp::Delay { input, ty })
     }
 
     /// Add a module input port.

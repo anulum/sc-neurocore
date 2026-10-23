@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from .equation_ir_compiler import EquationIR, compile_to_ir, recompile_ir
 from .fpga_wrapper import (
     equation_to_fpga,
 )
@@ -28,6 +29,9 @@ from .verilog_expr_emitter import (
 )
 
 __all__ = [
+    "EquationIR",
+    "compile_to_ir",
+    "recompile_ir",
     "Q88",
     "_VerilogExprEmitter",
     "compile_to_datapath",

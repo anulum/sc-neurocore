@@ -14,8 +14,16 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "src/sc_neurocore/compiler/mlir_emitter.py"
-      - "src/sc_neurocore/compiler/pipeline.py"
+      - "src/sc_neurocore/compiler/**"
+      - "src/sc_neurocore/neurons/equation*.py"
+      - "bridge/sc_neurocore_engine/ir.py"
+      - "bridge/sc_neurocore_engine/_ir_native.py"
+      - "tests/test_equation_ir_compiler.py"
+      - "tests/test_native_equation*.py"
+      - "tests/test_ir_source.py"
+      - "tests/test_ir_word_delay.py"
+      - "engine/tests/test_ir_source.rs"
+      - "engine/tests/test_ir_word_delay*.rs"
       - "tests/test_mlir_circt_roundtrip.py"
       - "tests/test_mlir_emitter.py"
       - "tests/test_compiler_pipeline_contracts.py"
@@ -24,6 +32,10 @@ on:
       - "engine/tests/test_ir_scalar*.rs"
       - "engine/tests/test_ir_state*.rs"
       - "engine/tests/test_ir_type_geometry.rs"
+      - "engine/tests/test_ir_runtime_check.rs"
+      - "engine/tests/test_ir_identifiers.rs"
+      - "tests/test_ir_runtime_check.py"
+      - "tests/test_ir_identifiers.py"
       - "engine/tests/common/ir_stream.rs"
       - "engine/tests/common/ir_rtl.rs"
       - "engine/Cargo.toml"
@@ -33,8 +45,16 @@ on:
       - ".github/workflows/mlir-circt.yml"
   pull_request:
     paths:
-      - "src/sc_neurocore/compiler/mlir_emitter.py"
-      - "src/sc_neurocore/compiler/pipeline.py"
+      - "src/sc_neurocore/compiler/**"
+      - "src/sc_neurocore/neurons/equation*.py"
+      - "bridge/sc_neurocore_engine/ir.py"
+      - "bridge/sc_neurocore_engine/_ir_native.py"
+      - "tests/test_equation_ir_compiler.py"
+      - "tests/test_native_equation*.py"
+      - "tests/test_ir_source.py"
+      - "tests/test_ir_word_delay.py"
+      - "engine/tests/test_ir_source.rs"
+      - "engine/tests/test_ir_word_delay*.rs"
       - "tests/test_mlir_circt_roundtrip.py"
       - "tests/test_mlir_emitter.py"
       - "tests/test_compiler_pipeline_contracts.py"
@@ -43,6 +63,10 @@ on:
       - "engine/tests/test_ir_scalar*.rs"
       - "engine/tests/test_ir_state*.rs"
       - "engine/tests/test_ir_type_geometry.rs"
+      - "engine/tests/test_ir_runtime_check.rs"
+      - "engine/tests/test_ir_identifiers.rs"
+      - "tests/test_ir_runtime_check.py"
+      - "tests/test_ir_identifiers.py"
       - "engine/tests/common/ir_stream.rs"
       - "engine/tests/common/ir_rtl.rs"
       - "engine/Cargo.toml"
@@ -116,11 +140,35 @@ jobs:
           --test test_ir_streaming_admission
           --test test_ir_scalar_words --test test_ir_scalar_admission
           --test test_ir_scalar_text --test test_ir_type_geometry
+          --test test_ir_runtime_check --test test_ir_identifiers
+          --test test_ir_source --test test_ir_word_delay --test test_ir_word_delay_admission
           --test test_ir_state --test test_ir_state_text --test test_ir_state_runtime
           -- --test-threads=1
 
       - name: Lower and simulate every native CIRCT reference circuit
         run: python tools/check_ir_circt.py "${{ runner.temp }}/native-ir-circt"
+
+      - name: Run native runtime check API and RTL tests
+        env:
+          SC_NEUROCORE_REQUIRE_ENGINE: "1"
+          SCN_IR_CIRCT_RECEIPT_DIR: ${{ runner.temp }}/native-runtime-check-circt
+        run: >
+          python -m pytest tests/test_ir_runtime_check.py tests/test_ir_identifiers.py -q
+
+      - name: Lower and simulate native runtime check circuits
+        run: python tools/check_ir_circt.py "${{ runner.temp }}/native-runtime-check-circt"
+
+      - name: Run public equation IR compilation and source replay
+        env:
+          SC_NEUROCORE_REQUIRE_ENGINE: "1"
+          SCN_IR_CIRCT_RECEIPT_DIR: ${{ runner.temp }}/public-equation-ir-circt
+        run: >
+          python -m pytest tests/test_native_equation.py
+          tests/test_native_equation_commits.py tests/test_equation_ir_compiler.py
+          tests/test_native_equation_source.py -q
+
+      - name: Lower and simulate public equation IR circuits
+        run: python tools/check_ir_circt.py "${{ runner.temp }}/public-equation-ir-circt"
 
       - name: Check numerical gate refusal regressions
         run: python -m pytest tests/test_tools/test_check_ir_circt.py -q

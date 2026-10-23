@@ -72,6 +72,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_energy_lif_engine_binding_inputs.py",
     "tests/test_engine_global_pickle.py",
     "tests/test_engine_v3_thread_pool_configuration.py",
+    "tests/test_equation_ir_compiler.py",
     "tests/test_ermentrout_kopell_map_engine_binding.py",
     "tests/test_escape_rate_engine_binding.py",
     "tests/test_evo_substrate/test_engine_bindings.py",
@@ -91,10 +92,14 @@ _GUARDED_BINDING_FILES = (
     "tests/test_iqif_engine_binding.py",
     "tests/test_ir_constants_rtl.py",
     "tests/test_ir_dense_rtl.py",
+    "tests/test_ir_identifiers.py",
     "tests/test_ir_neuron_text.py",
+    "tests/test_ir_runtime_check.py",
     "tests/test_ir_scalar_runtime.py",
+    "tests/test_ir_source.py",
     "tests/test_ir_state_runtime.py",
     "tests/test_ir_streaming_runtime.py",
+    "tests/test_ir_word_delay.py",
     "tests/test_izhikevich2007_engine_binding.py",
     "tests/test_izhikevich_engine_binding.py",
     "tests/test_kuramoto_engine_binding_runtime.py",
@@ -109,6 +114,16 @@ _GUARDED_BINDING_FILES = (
     "tests/test_medvedev_map_engine_binding.py",
     "tests/test_mihalas_niebur_engine_binding.py",
     "tests/test_mixed_dense_engine_binding.py",
+    "tests/test_native_equation.py",
+    "tests/test_native_equation_arithmetic.py",
+    "tests/test_native_equation_clock.py",
+    "tests/test_native_equation_commits.py",
+    "tests/test_native_equation_events.py",
+    "tests/test_native_equation_expressions.py",
+    "tests/test_native_equation_integrators.py",
+    "tests/test_native_equation_scheduling.py",
+    "tests/test_native_equation_source.py",
+    "tests/test_native_program.py",
     "tests/test_network_runner_engine_binding.py",
     "tests/test_network_runner_engine_binding_runtime.py",
     "tests/test_neural_decoders_engine_binding_runtime.py",
@@ -482,7 +497,7 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
     """Dominance: an unconditional module-body gate precedes every import."""
-    assert len(_GUARDED_BINDING_FILES) == 126
+    assert len(_GUARDED_BINDING_FILES) == 141
     for relative in _GUARDED_BINDING_FILES:
         analysis = _analyse(_ROOT / relative)
         assert analysis.require_engine_gate_line is not None, (

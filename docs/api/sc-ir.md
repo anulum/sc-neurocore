@@ -46,6 +46,11 @@ contract does not establish arbitrary equation lowering or physical hardware
 validation. Graph verification, numerical equivalence and board measurements
 are separate checks.
 
+For source-backed scalar/state graphs, use the
+[equation native IR compiler](equation-native-ir.md). Its bound model contract
+and recompilation check are separate from the compound primitive attributes
+described here.
+
 ## Dense hardware words
 
 `sc.dense_forward` lowers to `sc_dense_matrix_layer`, with one shared input

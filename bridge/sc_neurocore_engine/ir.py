@@ -32,6 +32,63 @@ class ScGraphBuilder:
     def __init__(self, name: str) -> None:
         self._builder = _native.ScGraphBuilder(name)
 
+    def bind_source(self, payload: str) -> None:
+        """Bind exact UTF-8 provenance after all graph operations are appended.
+
+        Parameters
+        ----------
+        payload : str
+            Nonempty source description. The equation compiler supplies its
+            canonical model/numeric JSON contract, rather than executable RTL.
+
+        Raises
+        ------
+        ValueError
+            If the source is empty, already bound or the builder was consumed.
+
+        Notes
+        -----
+        Later operations invalidate verification and emission; identity is never
+        silently rebound. Checksums detect damage or stale bindings and do not
+        authenticate the author or prove the description's semantic accuracy.
+        """
+        self._builder.bind_source(payload)
+
+    def runtime_check(
+        self, condition: int, kind: str = "overflow", enable: int | None = None
+    ) -> int:
+        """Append an effectful simulation invariant without producing a data word.
+
+        Parameters
+        ----------
+        condition : int
+            Earlier Bool SSA identifier; false fails when enabled.
+        kind : str, optional
+            Closed diagnostic code, "overflow" or "domain".
+        enable : int or None, optional
+            Earlier Bool control. None checks unconditionally, including reset.
+
+        Returns
+        -------
+        int
+            Terminator identifier for provenance; cannot be consumed as a value.
+
+        Raises
+        ------
+        ValueError
+            The kind is unknown or the builder has already been consumed.
+        OverflowError
+            An identifier is outside u32 or the SSA allocator is exhausted.
+
+        Notes
+        -----
+        The native verifier checks operand definitions and Boolean types.
+        Simulation checks combinationally, including time zero; a false enable
+        suppresses the effect. Defining SYNTHESIS excludes checks without
+        changing data words or registers. There is no implicit reset gate.
+        """
+        return self._builder.runtime_check(condition, kind, enable)
+
     def state(self, initial: int, ty: str) -> int:
         """Declare current register storage with an asynchronous constant reset.
 
@@ -78,6 +135,31 @@ class ScGraphBuilder:
         terminator operands are rejected by graph verification and emission.
         """
         return self._builder.store(state, next, enable)
+
+    def word_delay(self, input: int, ty: str) -> int:
+        """Capture an integer word for one clock with asynchronous zero reset.
+
+        Parameters
+        ----------
+        input : int
+            Earlier native SSA identifier sampled on every rising edge of clk.
+        ty : str
+            Explicit iN or uN type, identical to the input. Register widths
+            above 64 bits preserve full intermediate products.
+
+        Returns
+        -------
+        int
+            Identifier of the registered word, delayed by exactly one clock.
+
+        Notes
+        -----
+        Active-low rst_n clears every bit asynchronously, regardless of clk.
+        Consecutive calls form separate one-clock stages. There is no enable,
+        rescaling, saturation or implicit truncation. Graph verification and
+        both emitters reject missing producers and incompatible word types.
+        """
+        return self._builder.word_delay(input, ty)
 
     def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:
         """Append modulo-width integer arithmetic.
@@ -462,6 +544,21 @@ class ScGraph:
     def name(self) -> str:
         """Return the graph name used for the emitted hardware module."""
         return self._inner.name
+
+    @property
+    def source_payload(self) -> str | None:
+        """Return exact bound UTF-8 provenance, or None for legacy graphs."""
+        return self._inner.source_payload
+
+    @property
+    def source_sha256(self) -> str | None:
+        """Return the exact source checksum, without an authentication claim."""
+        return self._inner.source_sha256
+
+    @property
+    def source_graph_sha256(self) -> str | None:
+        """Return the checksum of canonical graph text without source metadata."""
+        return self._inner.source_graph_sha256
 
     def __len__(self) -> int:
         """Count all graph operations, including constants and ports."""

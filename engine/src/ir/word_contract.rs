@@ -79,7 +79,9 @@ fn validate(op: &WordOp, types: &HashMap<ValueId, ScType>) -> Result<(), String>
                 return Err("ashr requires a signed integer".into());
             }
         }
-        WordOp::Unary { input, ty, .. } | WordOp::Round { input, ty, .. } => {
+        WordOp::Delay { input, ty }
+        | WordOp::Unary { input, ty, .. }
+        | WordOp::Round { input, ty, .. } => {
             integer(ty)?;
             same(input, ty)?;
             if let WordOp::Round { shift, .. } = op {

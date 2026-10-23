@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1365
+expected_file_count = 1397
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5595,3 +5595,131 @@ rationale = "Complete sealed bundle export retains actual payload bytes and refu
 [[file]]
 path = "studio/desktop/tests/test_archive.py"
 rationale = "Actual complete runtime archives reproduce byte-for-byte, round-trip through extraction and install with the independent bundled interpreter."
+
+[[file]]
+path = "benchmarks/bench_equation_ir.py"
+rationale = "Measure complete public equation compilation, replay and both hardware emitters."
+
+[[file]]
+path = "src/sc_neurocore/compiler/equation_compiler.py"
+rationale = "Compile arbitrary ODE neuron equations to synthesizable Verilog."
+
+[[file]]
+path = "src/sc_neurocore/compiler/equation_ir_compiler.py"
+rationale = "Compile maintained equation models into verified native scalar and state graphs."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/__init__.py"
+rationale = "Typed numeric and expression components for equation-to-native graph lowering."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/arithmetic.py"
+rationale = "Represent equation widths, literal encoding and product rounding in native IR."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/clock.py"
+rationale = "Represent the registered equation compiler's pipeline and macro-step cadence."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/commits.py"
+rationale = "Preserve the registered compiler's distinct integrated-state and event commits."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/division.py"
+rationale = "Keep user divisions distinct from totalized structured function-program divisions."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/events.py"
+rationale = "Lower pre-reset event detection, simultaneous resets and graded spike values."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/expressions.py"
+rationale = "Lower the maintained equation AST with explicit context sizing and collapse points."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/functions.py"
+rationale = "Reuse canonical function programs, RNG programs and legacy quantised lookup grids."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/integrators.py"
+rationale = "Represent every maintained EquationNeuron integrator as explicit scalar dependencies."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/replay.py"
+rationale = "Reconstruct validated equation inputs from the native graph's bound source."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/scheduling.py"
+rationale = "Allocate maintained multiply names before context-sized native expression lowering."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/source.py"
+rationale = "Bind ordered model semantics and numerical choices to generated native graphs."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_equation/transactions.py"
+rationale = "Wire model state, integration, events and logical clocks into one native graph."
+
+[[file]]
+path = "src/sc_neurocore/compiler/native_program.py"
+rationale = "Lower function and counter-based RNG programs to native scalar instructions."
+
+[[file]]
+path = "tests/test_equation_ir_compiler.py"
+rationale = "Exercise native public equation compilation, source custody and domain refusals."
+
+[[file]]
+path = "tests/test_ir_identifiers.py"
+rationale = "Prevent silent module and port renaming through both native hardware backends."
+
+[[file]]
+path = "tests/test_ir_runtime_check.py"
+rationale = "Exercise range failures, controls, persistence and synthesis through actual native graphs."
+
+[[file]]
+path = "tests/test_ir_source.py"
+rationale = "Verify actual native provenance persistence, independent checksums and stale-source refusal."
+
+[[file]]
+path = "tests/test_ir_word_delay.py"
+rationale = "Observe the public Python/native word-delay boundary through real RTL and reset."
+
+[[file]]
+path = "tests/test_native_equation.py"
+rationale = "Exercise native state/event/clock wiring against the public registered compiler."
+
+[[file]]
+path = "tests/test_native_equation_arithmetic.py"
+rationale = "Execute 128-bit products and independently calculated legacy rounding boundaries."
+
+[[file]]
+path = "tests/test_native_equation_clock.py"
+rationale = "Observe real native state/RNG commit clocks, repeated fill and asynchronous reset."
+
+[[file]]
+path = "tests/test_native_equation_commits.py"
+rationale = "Observe integrated, reset and graded overflow through actual public compiler RTL."
+
+[[file]]
+path = "tests/test_native_equation_events.py"
+rationale = "Observe reset environments, crossing history and stochastic/graded spikes in real RTL."
+
+[[file]]
+path = "tests/test_native_equation_expressions.py"
+rationale = "Execute native expression/state graphs beside the public equation compiler's RTL."
+
+[[file]]
+path = "tests/test_native_equation_integrators.py"
+rationale = "Compare every native integration method with real registered equation RTL."
+
+[[file]]
+path = "tests/test_native_equation_scheduling.py"
+rationale = "Compare selected native product storage with the public registered RTL compiler."
+
+[[file]]
+path = "tests/test_native_equation_source.py"
+rationale = "Replay complete source contracts through the public compiler and native parser."
+
+[[file]]
+path = "tests/test_native_program.py"
+rationale = "Persist public integer programs through native graph builders and execute real RTL."
