@@ -132,7 +132,7 @@ def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
         if isinstance(step, dict) and str(step.get("uses", "")).startswith("actions/setup-go@")
     ]
 
-    assert "1.27.2" in setup_go_versions
+    assert "1.27.3" in setup_go_versions
     assert "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8" in run_text
     assert "tools/security_scan/run_osv_scanners.py" in run_text
     assert "security/ci-security-packet/security/osv_scanner.json" in run_text

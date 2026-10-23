@@ -18,3 +18,11 @@ mcp==1.30.0
 # security pin overrides it the way click is, and the scanner run in CI is
 # the compatibility gate.
 pyjwt==2.15.1
+# Semgrep's direct telemetry pins retain CVE-2026-114603 in API 1.37.
+# Keep its tracing/export/instrumentation dependencies on one patched family.
+# The real repository scan is the compatibility gate for these overrides.
+opentelemetry-api==1.45.1
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-http==1.45.1
+opentelemetry-instrumentation-requests==0.66b1
+opentelemetry-instrumentation-threading==0.66b1

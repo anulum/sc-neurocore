@@ -1,3 +1,3 @@
 module sc_neurocore_services_ext
 
-go 1.27.2
+go 1.27.3

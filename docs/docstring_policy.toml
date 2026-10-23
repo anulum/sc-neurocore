@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1310
+expected_file_count = 1311
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5334,3 +5334,7 @@ rationale = "The executable public example builds typed synapse and matrix graph
 [[file]]
 path = "tests/test_ir_scalar_runtime.py"
 rationale = "Normally installed public scalar builders preserve typed text and real RTL results; invalid names, implicit coercions and unrepresentable literal bounds refuse through the native boundary."
+
+[[file]]
+path = "tests/test_tools/test_ci_julia_runtime_contract.py"
+rationale = "The pinned Julia CI action must keep both supported native runtimes, their explicit executable handoff and the JuliaCall host runtime contract."

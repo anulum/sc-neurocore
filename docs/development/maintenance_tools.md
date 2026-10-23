@@ -227,7 +227,7 @@ the current compiler therefore retains reproducible original debt evidence. A pr
 `--update` migrates the allowance to ceiling protocol v2 and may lower it.
 Ignored, generated and external-source ownership still require explicit mapping.
 
-The lint and pre-commit CI jobs pin Go 1.27.2. Lint runs the native ratchet,
+The lint and pre-commit CI jobs pin Go 1.27.3. Lint runs the native ratchet,
 `go vet`, formatting and strict Python adapter/documentation checks; the native
 documentation job, which installs the test dependencies, type-checks the
 contract tests, and the normal test matrix exercises the module-specific native

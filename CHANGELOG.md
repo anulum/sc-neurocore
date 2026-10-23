@@ -10,6 +10,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refresh hash-locked certifi, Pillow and virtualenv dependencies for current
+  advisories, and update Semgrep's OpenTelemetry API, SDK, exporter and
+  instrumentation together through the existing overrides. Pillow 13 remains
+  in the Python 3.12 optics and workstation profiles.
+
+- Align Go module minima and pinned CI toolchains on 1.27.3 for
+  [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
+
+- Group PyO3 and NumPy Cargo updates at the workspace root so their ABI
+  companions and Cargo.lock advance together. Update the pinned setup-julia
+  action to 3.0.3 while retaining the supported Julia runtime contracts.
+
 - Add typed native-IR scalar arithmetic with explicit resize/bitcast, Boolean comparison/selection, five rounding modes and inclusive clamps. Preserve full signed/unsigned word division in direct SystemVerilog and CIRCT, and expose the same operations through the Python graph builder. Refuse duplicate, invalid and compiler-owned port names, including clock and Dense conversion-bus collisions; verify deep graphs without recursive cycle traversal. Validate unused declarations and refuse invalid widths, excessive vector nesting and overflowing parser IDs before emission.
 
 - Parse generated API documentation structurally and bind inline scripts to

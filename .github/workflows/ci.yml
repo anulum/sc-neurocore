@@ -63,7 +63,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27.2"
+          go-version: "1.27.3"
           cache: false
 
       - name: Install tools
@@ -324,7 +324,7 @@ jobs:
       # here. The release is installed first so that 1.11.9 below stays first on
       # PATH for juliacall; the tests reach 1.13 through the variable only.
       - id: julia-release
-        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
           version: "1.13"
           show-versioninfo: "never"
@@ -334,7 +334,7 @@ jobs:
       # attempting an uncontrolled fallback download. Install the exact
       # compatible runtime once and put it first on PATH for every matrix leg.
       - id: julia-1-11
-        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
           version: "1.11.9"
           show-versioninfo: "never"
@@ -355,12 +355,12 @@ jobs:
           } >> "$GITHUB_ENV"
 
       # Go toolchain for the c-shared accel backends. Must match accel/go/go.mod's
-      # `go 1.27.2` (and release.yml / security-scanners.yml). A mismatched
+      # `go 1.27.3` (and release.yml / security-scanners.yml). A mismatched
       # version makes `go build` reject the module under GOTOOLCHAIN=local.
       # The builder also sets GOTOOLCHAIN=auto. TIER 0: real builds.
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27.2"
+          go-version: "1.27.3"
           cache-dependency-path: |
             src/sc_neurocore/accel/go/go.mod
             src/sc_neurocore/accel/go/services/hil_debugger/go.sum
@@ -1027,7 +1027,7 @@ jobs:
           python-version: "3.12.14"
           cache: pip
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
           version: "1.11.9"
           show-versioninfo: "never"

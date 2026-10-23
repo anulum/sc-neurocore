@@ -19,13 +19,12 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 JULIAPKG_PATH = ROOT / "src" / "sc_neurocore" / "juliapkg.json"
-SETUP_JULIA = "julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32"
+SETUP_JULIA = "julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687"
 JULIA_VERSION = "1.11.9"
 
 
 def _test_steps() -> list[dict[str, Any]]:
     """Return the parsed production test-matrix steps."""
-
     workflow_path = ROOT / ".github" / "workflows" / "ci.yml"
     workflow = cast(
         dict[str, Any],
@@ -36,7 +35,6 @@ def _test_steps() -> list[dict[str, Any]]:
 
 def _step_index(steps: list[dict[str, Any]], *, name: str) -> int:
     """Return the unique step index for ``name``."""
-
     matches = [index for index, step in enumerate(steps) if step.get("name") == name]
     assert len(matches) == 1
     return matches[0]
@@ -44,7 +42,6 @@ def _step_index(steps: list[dict[str, Any]], *, name: str) -> int:
 
 def test_ci_pins_compatible_julia_before_package_installation() -> None:
     """Provision the exact juliacall-compatible runtime before Python install."""
-
     steps = _test_steps()
     setup_matches = [
         (index, step) for index, step in enumerate(steps) if step.get("uses") == SETUP_JULIA
@@ -60,7 +57,6 @@ def test_ci_pins_compatible_julia_before_package_installation() -> None:
 
 def test_ci_fails_closed_on_wrong_julia_before_juliacall_import() -> None:
     """Assert the selected executable version before warming the real bridge."""
-
     steps = _test_steps()
     warm_index = _step_index(steps, name="Verify and warm up juliacall (Julia depot)")
     warm_step = steps[warm_index]
@@ -77,7 +73,6 @@ def test_ci_fails_closed_on_wrong_julia_before_juliacall_import() -> None:
 
 def test_python_package_pins_the_same_julia_runtime() -> None:
     """Ship the CI Julia patch pin with source and wheel installations."""
-
     contract = json.loads(JULIAPKG_PATH.read_text(encoding="utf-8"))
     assert contract == {"julia": f"={JULIA_VERSION}"}
 

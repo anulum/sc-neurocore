@@ -18,3 +18,5 @@ anyio>=4.14.2
 pyjwt>=2.14.0
 # urllib3 2.8 fixes HTTPS-proxy TLS and response-streaming advisories.
 urllib3>=2.8.0,<3
+# Bound W3C tracestate parsing before accepting untrusted propagation headers.
+opentelemetry-api>=1.45.1
