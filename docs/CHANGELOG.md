@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Parse generated API documentation structurally and bind inline scripts to
+  exact CSP hashes and route-specific image resources. Update Studio's locked
+  Vite, Vitest and DOMPurify versions.
+
 - Add a task-oriented SNN Studio user manual: installation, first experiment,
   analysis, networks/training, workspace recovery, reproducibility, FPGA target
   profiles, troubleshooting and terminology. Correct equation-editor directives,

@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 from collections.abc import Iterable, Iterator
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute, APIWebSocketRoute
@@ -48,6 +52,65 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.training_weights",
     }
 )
+
+
+class _DocumentationMarkup(HTMLParser):
+    """Read resource URLs and literal script slices from an actual HTTP document."""
+
+    def __init__(self, document: str) -> None:
+        super().__init__()
+        self.resources: list[str] = []
+        self.images: list[str] = []
+        self.inline_scripts: list[str] = []
+        self._document = document
+        self._lines = document.splitlines(keepends=True)
+        self._start: int | None = None
+        self.feed(document)
+        self.close()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        """Locate generated script bodies and external documentation resources.
+
+        Parameters
+        ----------
+        tag : str
+            Parsed element name from the response.
+        attrs : list of tuple of str and str or None
+            Parsed attributes from that element.
+        """
+        attributes = dict(attrs)
+        if tag == "script":
+            if "src" in attributes:
+                source = attributes["src"]
+                assert source is not None
+                self.resources.append(source)
+            else:
+                line, column = self.getpos()
+                start_tag = self.get_starttag_text()
+                assert start_tag is not None
+                self._start = sum(map(len, self._lines[: line - 1])) + column + len(start_tag)
+        elif tag == "link" and attributes.get("rel") == "stylesheet":
+            source = attributes.get("href")
+            assert source is not None
+            self.resources.append(source)
+        elif tag == "link" and attributes.get("rel") == "shortcut icon":
+            source = attributes.get("href")
+            assert source is not None
+            self.images.append(source)
+
+    def handle_endtag(self, tag: str) -> None:
+        """Record the exact response slice between an inline script's tags.
+
+        Parameters
+        ----------
+        tag : str
+            Parsed closing element name.
+        """
+        if tag == "script" and self._start is not None:
+            line, column = self.getpos()
+            end = sum(map(len, self._lines[: line - 1])) + column
+            self.inline_scripts.append(self._document[self._start : end])
+            self._start = None
 
 
 def _leaf_routes(routes: Iterable[Any]) -> Iterator[Any]:
@@ -183,12 +246,48 @@ def test_a_launched_studio_opens_its_ui_or_says_there_is_none(tmp_path: Path) ->
 
 
 def test_development_retains_interactive_docs_with_hashed_bootstrap_scripts() -> None:
-    """Serve development docs under their exact-script CSP while lab disables them."""
+    """Bind actual development docs scripts and CDN resources to their response policy."""
     application = create_app()
     with TestClient(application, base_url="http://127.0.0.1") as client:
         for route in ("/docs", "/redoc"):
             response = client.get(route)
             assert response.status_code == 200
-            assert "'sha256-" in response.headers["content-security-policy"]
-            assert "https://cdn.jsdelivr.net" in response.text
-        assert client.get("/openapi.json").json() == application.openapi()
+            markup = _DocumentationMarkup(response.text)
+            assert markup.resources
+            for source in markup.resources:
+                resource = urlsplit(source)
+                assert resource.scheme == "https"
+                assert resource.netloc == "cdn.jsdelivr.net"
+                assert resource.path.startswith("/npm/")
+            hashes = {
+                "'sha256-"
+                + base64.b64encode(hashlib.sha256(script.encode()).digest()).decode("ascii")
+                + "'"
+                for script in markup.inline_scripts
+            }
+            directives = {
+                values[0]: set(values[1:])
+                for part in response.headers["content-security-policy"].split(";")
+                if (values := part.split())
+            }
+            assert directives["script-src"] == {"'self'", "https://cdn.jsdelivr.net", *hashes}
+            assert "https://cdn.jsdelivr.net" in directives["style-src"]
+            favicon = "https://fastapi.tiangolo.com/img/favicon.png"
+            assert markup.images == [favicon]
+            image_sources = {favicon}
+            if route == "/redoc":
+                image_sources.add("https://cdn.redoc.ly/redoc/logo-mini.svg")
+            assert directives["img-src"] == {"'self'", "data:", "blob:", *image_sources}
+            if route == "/docs":
+                assert len(markup.inline_scripts) == 1
+                assert "SwaggerUIBundle" in markup.inline_scripts[0]
+                assert "/openapi.json" in markup.inline_scripts[0]
+        schema_response = client.get("/openapi.json")
+        assert schema_response.json() == application.openapi()
+        api_directives = {
+            values[0]: set(values[1:])
+            for part in schema_response.headers["content-security-policy"].split(";")
+            if (values := part.split())
+        }
+        assert api_directives["script-src"] == {"'self'"}
+        assert api_directives["img-src"] == {"'self'", "data:", "blob:"}

@@ -20,8 +20,8 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import re
 from collections.abc import Mapping, Sequence
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -36,23 +36,72 @@ from sc_neurocore.studio.platform.settings import DEFAULT_STUDIO_HTTP_SECURITY_H
 STUDIO_UI_PATH = "/studios/sc-neurocore"
 
 _PACKAGED_UI = Path(__file__).resolve().parents[1] / "frontend_dist"
+_DOCS_FAVICON = "https://fastapi.tiangolo.com/img/favicon.png"
+_REDOC_LOGO = "https://cdn.redoc.ly/redoc/logo-mini.svg"
 
 
-def _docs_response(response: HTMLResponse, headers: Mapping[str, str]) -> HTMLResponse:
-    """Allow only the generated documentation bootstrap script and its documentation CDN."""
-    hashes = []
-    for match in re.finditer(
-        r"<script(?:\s[^>]*)?>(.*?)</script>", bytes(response.body).decode(), re.DOTALL
-    ):
-        digest = base64.b64encode(hashlib.sha256(match.group(1).encode()).digest()).decode("ascii")
-        hashes.append(f"'sha256-{digest}'")
+class _DocumentationScripts(HTMLParser):
+    """Collect exact inline script hashes from generated API documentation HTML."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.hashes: list[str] = []
+        self._script: list[str] | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        """Start collecting an inline script element.
+
+        Parameters
+        ----------
+        tag : str
+            Parsed lowercase element name.
+        attrs : list of tuple of str and str or None
+            Element attributes; a source attribute selects an external script.
+        """
+        if tag == "script":
+            self._script = None if any(name == "src" for name, _ in attrs) else []
+
+    def handle_data(self, data: str) -> None:
+        """Retain literal script text, including whitespace and character references.
+
+        Parameters
+        ----------
+        data : str
+            Parsed character data. HTMLParser preserves script raw text.
+        """
+        if self._script is not None:
+            self._script.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        """Hash a complete inline script and stop collecting its text.
+
+        Parameters
+        ----------
+        tag : str
+            Parsed lowercase closing element name.
+        """
+        if tag == "script" and self._script is not None:
+            digest = hashlib.sha256("".join(self._script).encode()).digest()
+            self.hashes.append("'sha256-" + base64.b64encode(digest).decode("ascii") + "'")
+            self._script = None
+
+
+def _docs_response(
+    response: HTMLResponse, headers: Mapping[str, str], *, image_sources: Sequence[str]
+) -> HTMLResponse:
+    """Admit generated bootstrap scripts and the documentation's declared resources."""
+    scripts = _DocumentationScripts()
+    scripts.feed(bytes(response.body).decode())
+    scripts.close()
     policy = headers.get(
         "content-security-policy", DEFAULT_STUDIO_HTTP_SECURITY_HEADERS["content-security-policy"]
     )
     policy = policy.replace(
-        "script-src 'self'", "script-src 'self' https://cdn.jsdelivr.net " + " ".join(hashes)
+        "script-src 'self'",
+        "script-src 'self' https://cdn.jsdelivr.net " + " ".join(scripts.hashes),
     )
     policy = policy.replace("style-src 'self'", "style-src 'self' https://cdn.jsdelivr.net")
+    policy = policy.replace("img-src 'self'", "img-src 'self' " + " ".join(image_sources))
     response.headers["content-security-policy"] = policy
     return response
 
@@ -64,8 +113,13 @@ def mount_studio_api_docs(app: FastAPI, *, security_headers: Mapping[str, str]) 
     def api_docs() -> HTMLResponse:
         """Serve Swagger without allowing arbitrary inline JavaScript."""
         return _docs_response(
-            get_swagger_ui_html(openapi_url="/openapi.json", title=f"{app.title} API"),
+            get_swagger_ui_html(
+                openapi_url="/openapi.json",
+                title=f"{app.title} API",
+                swagger_favicon_url=_DOCS_FAVICON,
+            ),
             security_headers,
+            image_sources=(_DOCS_FAVICON,),
         )
 
     @app.get("/redoc", include_in_schema=False)
@@ -73,9 +127,13 @@ def mount_studio_api_docs(app: FastAPI, *, security_headers: Mapping[str, str]) 
         """Serve ReDoc using the same bounded documentation script policy."""
         return _docs_response(
             get_redoc_html(
-                openapi_url="/openapi.json", title=f"{app.title} API", with_google_fonts=False
+                openapi_url="/openapi.json",
+                title=f"{app.title} API",
+                redoc_favicon_url=_DOCS_FAVICON,
+                with_google_fonts=False,
             ),
             security_headers,
+            image_sources=(_DOCS_FAVICON, _REDOC_LOGO),
         )
 
 

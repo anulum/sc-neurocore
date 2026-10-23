@@ -25,7 +25,7 @@
   },
   "overrides": {
     "adm-zip": "0.6.1",
-    "dompurify": "3.4.16",
+    "dompurify": "3.4.17",
     "nanoid": "3.3.19",
     "undici": "7.29.1"
   },
@@ -43,7 +43,7 @@
     "happy-dom": "20.14.5",
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.0",
-    "vite": "8.3.0",
-    "vitest": "5.0.1"
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
   }
 }
