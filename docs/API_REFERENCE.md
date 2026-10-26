@@ -13524,7 +13524,7 @@ Append raw signed words under the existing equation compiler's Q contract.
 
 Parameters
 ----------
-builder : ScGraphBuilder
+builder : NativeWordBuilder
     Destination native graph; all methods append real typed instructions.
 q : Q88
     Word geometry and product-rounding policy. Products wrap before
@@ -13561,7 +13561,7 @@ Append the exact pipeline fill or macro-step counter to a native graph.
 
 Parameters
 ----------
-builder : ScGraphBuilder
+builder : NativeWordBuilder
     Destination graph. Counter storage has asynchronous active-low zero reset.
 pipeline_registers : int, optional
     Actual selected product-register count, rather than requested stage count
@@ -13979,6 +13979,42 @@ NotImplementedError
 
 ## Module `compiler.native_program`
 
+### Class `NativeWordBuilder`
+Graph-builder surface the native compiler lowers into.
+
+``sc_neurocore_engine.ir.ScGraphBuilder`` satisfies it. The compiler names
+this structural type instead of the engine class so that its value IDs stay
+typed as ``int`` whether or not the optional engine is installed.
+
+- **constant_i64**(value, ty)
+  - Add an integer constant and return its value ID.
+- **input**(name, ty)
+  - Add a typed input port and return its value ID.
+- **output**(name, source_id)
+  - Expose an existing value as a named output port.
+- **runtime_check**(condition, kind, enable)
+  - Append an effectful simulation invariant.
+- **state**(initial, ty)
+  - Declare register storage with a constant reset.
+- **store**(state, next, enable)
+  - Bind one atomic update to a declared state register.
+- **word_delay**(input, ty)
+  - Capture an integer word for one clock with asynchronous zero reset.
+- **word_binary**(kind, lhs, rhs, ty)
+  - Append modulo-width integer arithmetic.
+- **word_unary**(kind, input, ty)
+  - Append integer negation or complement.
+- **word_compare**(predicate, lhs, rhs)
+  - Append an integer comparison returning Bool.
+- **word_resize**(input, ty)
+  - Resize an integer word explicitly.
+- **word_bitcast**(input, ty)
+  - Reinterpret a scalar word without changing its bits.
+- **word_select**(condition, when_true, when_false, ty)
+  - Select a scalar word using a Boolean condition.
+- **word_clamp**(input, min, max, ty)
+  - Saturate an integer word at explicit inclusive bounds.
+
 ### Function `lower_program(program, builder, inputs, externs)`
 Append a complete function/RNG integer program to a native graph.
 
@@ -13988,7 +14024,7 @@ program : Program
     Shared straight-line integer program from the existing function or
     random unit builders. Every intermediate must fit its signed 64-bit
     contract, as required by the existing compiled C/Rust/RTL targets.
-builder : ScGraphBuilder
+builder : NativeWordBuilder
     Caller-owned native graph builder, which remains usable afterward.
 inputs : sequence of int
     Native SSA identifiers of signed i64 operands, in program input order.

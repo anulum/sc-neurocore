@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import subprocess
 from collections.abc import Sequence
@@ -21,7 +22,7 @@ from sc_neurocore.compiler import function_units as fu
 from sc_neurocore.compiler import random_units as ru
 from sc_neurocore.compiler.function_unit_ir import Program, Step
 from sc_neurocore.compiler.function_unit_programs import program
-from sc_neurocore.compiler.native_program import lower_program
+from sc_neurocore.compiler.native_program import NativeWordBuilder, lower_program
 from sc_neurocore.compiler.random_unit_programs import program as random_program
 from tests.engine_requirement import require_engine
 
@@ -191,3 +192,19 @@ def test_invalid_program_is_refused_before_native_graph_mutation(
         lower_program(Program(steps=steps, output=output), b, [x])
     b.output("result", x)
     assert len(b.build()) == 2
+
+
+def test_engine_builder_matches_the_compiler_builder_protocol() -> None:
+    """Every method the compiler types against exists on the engine builder with the same signature."""
+    members = [
+        name
+        for name, value in vars(NativeWordBuilder).items()
+        if not name.startswith("_") and inspect.isfunction(value)
+    ]
+    assert "word_select" in members and "word_delay" in members
+    for name in members:
+        expected = inspect.signature(getattr(NativeWordBuilder, name))
+        actual = inspect.signature(getattr(ScGraphBuilder, name))
+        assert list(actual.parameters) == list(expected.parameters), name
+        for parameter in expected.parameters.values():
+            assert actual.parameters[parameter.name].default == parameter.default, (name, parameter)

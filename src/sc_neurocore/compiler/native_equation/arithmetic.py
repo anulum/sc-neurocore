@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from ..verilog_compiler_config import Q88
 
 if TYPE_CHECKING:
-    from sc_neurocore_engine.ir import ScGraphBuilder
+    from ..native_program import NativeWordBuilder
 
 
 class EquationArithmetic:
@@ -23,14 +23,14 @@ class EquationArithmetic:
 
     Parameters
     ----------
-    builder : ScGraphBuilder
+    builder : NativeWordBuilder
         Destination native graph; all methods append real typed instructions.
     q : Q88
         Word geometry and product-rounding policy. Products wrap before
         rounding, exactly as the maintained Verilog intermediate wires do.
     """
 
-    def __init__(self, builder: ScGraphBuilder, q: Q88) -> None:
+    def __init__(self, builder: NativeWordBuilder, q: Q88) -> None:
         self.builder = builder
         self.q = q
         self.constants: dict[tuple[int, int], int] = {}

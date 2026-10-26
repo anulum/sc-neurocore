@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from sc_neurocore_engine.ir import ScGraphBuilder
+    from ..native_program import NativeWordBuilder
 
 
 @dataclass(frozen=True)
@@ -38,13 +38,13 @@ class EquationClock:
 
 
 def build_clock(
-    builder: ScGraphBuilder, *, pipeline_registers: int = 0, substeps: int = 1
+    builder: NativeWordBuilder, *, pipeline_registers: int = 0, substeps: int = 1
 ) -> EquationClock:
     """Append the exact pipeline fill or macro-step counter to a native graph.
 
     Parameters
     ----------
-    builder : ScGraphBuilder
+    builder : NativeWordBuilder
         Destination graph. Counter storage has asynchronous active-low zero reset.
     pipeline_registers : int, optional
         Actual selected product-register count, rather than requested stage count

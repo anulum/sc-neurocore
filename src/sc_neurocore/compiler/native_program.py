@@ -18,12 +18,76 @@ therefore consume the same persisted graph.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from .function_unit_ir import Program, Step
 
-if TYPE_CHECKING:
-    from sc_neurocore_engine.ir import ScGraphBuilder
+
+class NativeWordBuilder(Protocol):
+    """Graph-builder surface the native compiler lowers into.
+
+    ``sc_neurocore_engine.ir.ScGraphBuilder`` satisfies it. The compiler names
+    this structural type instead of the engine class so that its value IDs stay
+    typed as ``int`` whether or not the optional engine is installed.
+    """
+
+    def constant_i64(self, value: int, ty: str = "i32") -> int:
+        """Add an integer constant and return its value ID."""
+        ...
+
+    def input(self, name: str, ty: str = "rate") -> int:
+        """Add a typed input port and return its value ID."""
+        ...
+
+    def output(self, name: str, source_id: int) -> int:
+        """Expose an existing value as a named output port."""
+        ...
+
+    def runtime_check(
+        self, condition: int, kind: str = "overflow", enable: int | None = None
+    ) -> int:
+        """Append an effectful simulation invariant."""
+        ...
+
+    def state(self, initial: int, ty: str) -> int:
+        """Declare register storage with a constant reset."""
+        ...
+
+    def store(self, state: int, next: int, enable: int | None = None) -> int:
+        """Bind one atomic update to a declared state register."""
+        ...
+
+    def word_delay(self, input: int, ty: str) -> int:
+        """Capture an integer word for one clock with asynchronous zero reset."""
+        ...
+
+    def word_binary(self, kind: str, lhs: int, rhs: int, ty: str) -> int:
+        """Append modulo-width integer arithmetic."""
+        ...
+
+    def word_unary(self, kind: str, input: int, ty: str) -> int:
+        """Append integer negation or complement."""
+        ...
+
+    def word_compare(self, predicate: str, lhs: int, rhs: int) -> int:
+        """Append an integer comparison returning Bool."""
+        ...
+
+    def word_resize(self, input: int, ty: str) -> int:
+        """Resize an integer word explicitly."""
+        ...
+
+    def word_bitcast(self, input: int, ty: str) -> int:
+        """Reinterpret a scalar word without changing its bits."""
+        ...
+
+    def word_select(self, condition: int, when_true: int, when_false: int, ty: str) -> int:
+        """Select a scalar word using a Boolean condition."""
+        ...
+
+    def word_clamp(self, input: int, min: int, max: int, ty: str) -> int:
+        """Saturate an integer word at explicit inclusive bounds."""
+        ...
 
 
 _ARITY = {
@@ -82,7 +146,7 @@ def _validate(program: Program, inputs: Sequence[int], externs: Mapping[str, int
 class _ProgramLowering:
     """Append signed integer instructions and share repeated literal/table nodes."""
 
-    def __init__(self, builder: ScGraphBuilder) -> None:
+    def __init__(self, builder: NativeWordBuilder) -> None:
         """Bind the destination builder and caches for this program invocation."""
         self.builder = builder
         self.constants: dict[int, int] = {}
@@ -171,7 +235,7 @@ class _ProgramLowering:
 
 def lower_program(
     program: Program,
-    builder: ScGraphBuilder,
+    builder: NativeWordBuilder,
     inputs: Sequence[int],
     externs: Mapping[str, int] | None = None,
 ) -> int:
@@ -183,7 +247,7 @@ def lower_program(
         Shared straight-line integer program from the existing function or
         random unit builders. Every intermediate must fit its signed 64-bit
         contract, as required by the existing compiled C/Rust/RTL targets.
-    builder : ScGraphBuilder
+    builder : NativeWordBuilder
         Caller-owned native graph builder, which remains usable afterward.
     inputs : sequence of int
         Native SSA identifiers of signed i64 operands, in program input order.
