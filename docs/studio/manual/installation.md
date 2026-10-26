@@ -74,7 +74,7 @@ A graphical login and the system libraries required by
 A missing system library is separate from a missing Python package.
 
 From the repository root, use a dedicated Python environment. Build the UI using
-the repository's locked frontend dependencies and qualified Node.js 26.9.0
+the repository's locked frontend dependencies and qualified Node.js 26.12.1
 profile, then install the desktop extras:
 
 ```bash

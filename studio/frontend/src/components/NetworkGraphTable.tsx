@@ -51,7 +51,6 @@ const control: CSSProperties = {
 
 /** Text placed for a screen reader without taking visual space. */
 const offscreen: CSSProperties = {
-  clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
   height: 1,
   overflow: "hidden",
