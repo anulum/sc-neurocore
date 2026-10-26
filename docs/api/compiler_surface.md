@@ -38,8 +38,11 @@ can change without a deprecation window.
 | `compiler_impl` | internal build tool | Legacy implementation module behind documented compiler entry points. |
 | `constraint_gen` | direct public module | Timing constraint generator has direct tests and documentation. |
 | `deployment` | direct public module | Deployment facade aggregates constraints, drivers, evidence, and multi-target helpers. |
+| `discrete_function_programs` | internal build tool | Builds the exact `round()` (ties to even) and `heaviside()` integer programs that the function-unit programs emit. |
+| `discrete_function_units` | internal build tool | Integer reference of `round()` and `heaviside()` on signed fixed-point words, mirrored by the programs and the RTL. |
 | `equation_lowering` | internal build tool | Validates authored callable bindings and prepares diffusion and threshold intrinsics for every neuron compiler entry point. |
 | `equation_compiler` | public facade | Package-level exports provide equation-to-FPGA helpers. |
+| `equation_ir_compiler` | internal build tool | Compiles maintained equation models into verified native scalar and state graphs; `EquationIR`, `compile_to_ir` and `recompile_ir` are exported through the `equation_compiler` facade. |
 | `equivalence_check` | internal build tool | SymbiYosys equivalence runner behind the hardware evidence pipeline. |
 | `equivalence_miter` | internal build tool | Sequential-equivalence miter builder feeding the equivalence runner. |
 | `diffusion_noise` | internal build tool | Lowers the diffusion-noise symbol `xi` to `randn(XI_SITE) * (1/sqrt(dt))` before RTL and kernel emission; refuses `noise_rng` and sub-stepped `xi`. |
@@ -71,6 +74,7 @@ can change without a deprecation window.
 | `mixed_precision_spec` | internal build tool | Data model behind the mixed-precision facade. |
 | `mlir_emitter` | public facade | Package-level exports provide MLIR bundle emission. |
 | `multi_target` | internal build tool | Multi-target comparison helper reached through `deployment`. |
+| `native_program` | internal build tool | Lowers function-unit and random-unit integer programs into native graph instructions for the equation IR compiler; defines the `NativeWordBuilder` protocol it lowers into. |
 | `operator_abstraction` | internal build tool | Lifts an internal result to a free input to abstract a multiplier for tractable unbounded proofs. |
 | `overflow_proof` | internal build tool | Static-analysis proof primitive reached through `static_analysis`. |
 | `pipeline` | public facade | Package-level exports provide the compiler pipeline. |
