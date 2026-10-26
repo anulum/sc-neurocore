@@ -19,7 +19,8 @@ If API documentation appears instead, check the
 
 ## 2. Run a small experiment
 
-1. Choose **Models**, then **SCLapicqueLIFNeuron**.
+1. Choose **Models**; the catalogue lists <!-- count:studio_catalogue_models -->185<!-- /count -->
+   neuron models by category. Select **SCLapicqueLIFNeuron**.
 2. Keep model parameters at their defaults. Use constant current **1.2**,
    duration **50 ms** and timestep **0.1 ms** in the available controls.
 3. Leave the seed empty for this deterministic run.
