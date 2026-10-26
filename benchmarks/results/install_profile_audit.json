@@ -4,11 +4,10 @@
     "numpy>=1.24",
     "scipy>=1.10",
     "defusedxml>=0.7.1",
-    "tomli>=2.0; python_version < '3.11'",
     "tomli-w>=1.0",
     "typing-extensions>=4.0,<5"
   ],
-  "base_dependency_count": 6,
+  "base_dependency_count": 5,
   "empty_polyglot_runtime_patterns": [],
   "heavy_dependencies_in_base": [],
   "install_measurement": {
@@ -18,21 +17,19 @@
   "offline_hardware_profile": {
     "conda_recipe_aligned": true,
     "conda_run_dependencies_expected": [
-      "python >=3.10",
+      "python >=3.11",
       "numpy >=1.24",
       "scipy >=1.10",
       "defusedxml >=0.7.1",
-      "tomli >=2.0  # [py<311]",
       "tomli-w >=1.0",
       "typing-extensions >=4.0,<5"
     ],
     "conda_run_dependencies_missing": [],
     "conda_run_dependencies_recorded": [
-      "python >=3.10",
+      "python >=3.11",
       "numpy >=1.24",
       "scipy >=1.10",
       "defusedxml >=0.7.1",
-      "tomli >=2.0  # [py<311]",
       "tomli-w >=1.0",
       "typing-extensions >=4.0,<5"
     ],
@@ -66,7 +63,7 @@
     "static_primitive_pattern": "hdl/primitives/*.v",
     "vivado_required_for_baseline": false
   },
-  "optional_extra_count": 31,
+  "optional_extra_count": 32,
   "optional_extras": [
     "accel",
     "annealing",
@@ -74,6 +71,7 @@
     "chemistry",
     "compression",
     "core",
+    "desktop",
     "dev",
     "dev-full",
     "docs",
@@ -136,7 +134,8 @@
     "neurons/reference_trace_data/*.json",
     "neurons/reference_receipts/*.json",
     "neurons/model_descriptors/*.toml",
-    "studio/verified_readiness.json"
+    "studio/verified_readiness.json",
+    "studio/desktop/icon.svg"
   ],
   "passed": true,
   "polyglot_research_sources_in_wheel": [],

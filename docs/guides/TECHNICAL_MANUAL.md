@@ -109,7 +109,7 @@ Stochastic computing accuracy grows with the square root of bitstream length. Th
 ## 2. Installation and setup
 
 ### 2.1 Requirements
-The minimum environment is Python 3.10+, numpy, and standard library modules. Additional dependencies are optional and used for specific modules. For example, matplotlib or plotly are required for visualization, and scipy or pandas may be required for some simulation layers. If you intend to run FPGA or PYNQ flows, you will need vendor-specific toolchains and drivers.
+The minimum environment is Python 3.11+, numpy, and standard library modules. Additional dependencies are optional and used for specific modules. For example, matplotlib or plotly are required for visualization, and scipy or pandas may be required for some simulation layers. If you intend to run FPGA or PYNQ flows, you will need vendor-specific toolchains and drivers.
 
 ### 2.2 Local virtual environment
 Use a local virtual environment. Do not install dependencies globally.

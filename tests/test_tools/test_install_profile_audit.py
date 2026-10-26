@@ -60,7 +60,6 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
         "numpy>=1.24",
         "scipy>=1.10",
         "defusedxml>=0.7.1",
-        "tomli>=2.0; python_version < '3.11'",
         "tomli-w>=1.0",
         "typing-extensions>=4.0,<5",
     ]
@@ -97,20 +96,18 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
         ],
         "missing_static_primitives": [],
         "conda_run_dependencies_expected": [
-            "python >=3.10",
+            "python >=3.11",
             "numpy >=1.24",
             "scipy >=1.10",
             "defusedxml >=0.7.1",
-            "tomli >=2.0  # [py<311]",
             "tomli-w >=1.0",
             "typing-extensions >=4.0,<5",
         ],
         "conda_run_dependencies_recorded": [
-            "python >=3.10",
+            "python >=3.11",
             "numpy >=1.24",
             "scipy >=1.10",
             "defusedxml >=0.7.1",
-            "tomli >=2.0  # [py<311]",
             "tomli-w >=1.0",
             "typing-extensions >=4.0,<5",
         ],
@@ -136,11 +133,10 @@ def test_conda_recipe_tracks_base_install_contract() -> None:
 
     assert recipe["version"] == _project_version(tool)
     assert recipe["run_dependencies"] == [
-        "python >=3.10",
+        "python >=3.11",
         "numpy >=1.24",
         "scipy >=1.10",
         "defusedxml >=0.7.1",
-        "tomli >=2.0  # [py<311]",
         "tomli-w >=1.0",
         "typing-extensions >=4.0,<5",
     ]

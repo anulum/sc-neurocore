@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1404
+expected_file_count = 1405
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5751,3 +5751,7 @@ rationale = "Exact rounding and Heaviside semantics across public model, fixed-p
 [[file]]
 path = "tests/test_equation_units_discrete.py"
 rationale = "Exact rounding and Heaviside semantics across public model, fixed-point program and generated hardware boundaries."
+
+[[file]]
+path = "tests/test_publish_workflow.py"
+rationale = "The release workflow keeps trusted publishing, idempotent uploads and the same engine wheel matrix as wheel CI."

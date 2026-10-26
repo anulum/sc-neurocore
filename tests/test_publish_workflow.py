@@ -5,6 +5,8 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
+"""Release-workflow contracts: trusted publishing, idempotent uploads and the wheel matrix."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -34,6 +36,7 @@ def _run_text(job: dict[str, Any]) -> str:
 
 
 def _uses_step(job: dict[str, Any], action_prefix: str) -> dict[str, Any]:
+    """Return the single step of ``job`` whose ``uses`` starts with ``action_prefix``."""
     steps = job["steps"]
     assert isinstance(steps, list)
     matches = [
@@ -46,6 +49,7 @@ def _uses_step(job: dict[str, Any], action_prefix: str) -> dict[str, Any]:
 
 
 def test_python_and_engine_pypi_publish_use_oidc_trusted_publishing() -> None:
+    """Both PyPI publish jobs run in the pypi environment with an OIDC token permission."""
     jobs = _workflow()["jobs"]
 
     python_publish = jobs["publish-python-pypi"]
@@ -63,6 +67,7 @@ def test_python_and_engine_pypi_publish_use_oidc_trusted_publishing() -> None:
 
 
 def test_pypi_publish_steps_are_idempotent_for_tag_retries() -> None:
+    """A retried tag run skips files PyPI already holds instead of failing the upload."""
     jobs = _workflow()["jobs"]
 
     for job_name in ("publish-python-pypi", "publish-engine-pypi"):
@@ -71,6 +76,7 @@ def test_pypi_publish_steps_are_idempotent_for_tag_retries() -> None:
 
 
 def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
+    """The crate job checks crates.io for the engine version before it publishes."""
     jobs = _workflow()["jobs"]
     publish_text = _run_text(jobs["publish-crate"])
 
@@ -84,6 +90,7 @@ def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
 
 
 def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -> None:
+    """Engine wheels are built and installed in a smoke test before the PyPI upload."""
     jobs = _workflow()["jobs"]
 
     build_text = _run_text(jobs["build-engine-wheels"])
@@ -109,7 +116,7 @@ def test_publish_workflow_engine_wheel_release_matrix_matches_ci() -> None:
     arm_matrix = jobs["build-engine-linux-arm"]["strategy"]["matrix"]
 
     assert build_matrix["os"] == ["ubuntu-latest", "windows-latest", "macos-latest"]
-    assert build_matrix["python-version"] == ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    assert build_matrix["python-version"] == ["3.11", "3.12", "3.13", "3.14"]
     assert arm_matrix["python-version"] == build_matrix["python-version"]
 
     build_text = _run_text(jobs["build-engine-wheels"])
@@ -134,7 +141,7 @@ def test_rust_engine_release_fallback_docs_name_wheel_and_source_paths() -> None
 
     assert "python -m pip install sc_neurocore_engine" in docs
     assert "python -m maturin develop --release" in docs
-    assert "Python 3.10-3.14" in docs
+    assert "Python 3.11-3.14" in docs
     assert "Linux x86_64/aarch64, macOS, and Windows" in docs
     assert "local Rust toolchain" in docs
 

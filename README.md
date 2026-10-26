@@ -24,7 +24,7 @@
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/anulum)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
 [![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12175/badge)](https://www.bestpractices.dev/projects/12175)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
@@ -233,7 +233,7 @@ dependency matrix and research-only boundaries.
 The optional Rust engine provides SIMD-accelerated simulation, 212 Rust PyO3
 model wrappers, a 180-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
-with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
+with `maturin` for Python 3.11-3.14 on Linux x86_64/aarch64, macOS, and Windows.
 Use a matching release wheel first:
 
 ```bash
@@ -673,10 +673,10 @@ bridge install. For source-tree runs against local bridge code, use
 | Workflow | Purpose |
 |----------|---------|
 | **audit-cadence.yml** | Scheduled repository, release-evidence, and policy audits |
-| **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.10-3.14, coverage gate enforced in CI) + Build |
+| **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.11-3.14, coverage gate enforced in CI) + Build |
 | **compiler-e2e.yml** | Compiler end-to-end lowering, simulation, and evidence gates |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
-| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
+| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.11–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
 | **publish.yml** | Publish `sc-neurocore`, engine wheels, and `engine/` crate releases; retries skip already-published PyPI/crates.io versions |

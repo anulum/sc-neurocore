@@ -65,11 +65,10 @@ qualify the other ecosystem jobs or the whole security packet.
 
 The installed native-wheel profile is generated from `requirements/wheels-test.in`
 with the development lock as its constraint. Its universal resolution retains
-the Python 3.10 and 3.11 NumPy branches and the platform-specific pytest
-dependencies. Regenerate it with:
+the Python 3.11 NumPy branch and the platform-specific pytest dependencies. Regenerate it with:
 
 ```bash
-uv pip compile --universal --python-version 3.10 --generate-hashes \
+uv pip compile --universal --python-version 3.11 --generate-hashes \
   --constraint requirements/ci-dev.txt \
   --output-file requirements/wheels-test.txt requirements/wheels-test.in
 ```

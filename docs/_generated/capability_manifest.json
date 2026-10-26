@@ -3301,7 +3301,7 @@
     "license": "AGPL-3.0-or-later",
     "name": "sc-neurocore",
     "readme": "README.md",
-    "requires_python": ">=3.10",
+    "requires_python": ">=3.11",
     "version": "3.16.0"
   },
   "project_label": "SC-NeuroCore",

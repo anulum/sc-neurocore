@@ -24,7 +24,7 @@ on:
     branches-ignore:
       - "dependabot/**"
   # Pull requests run CI unconditionally so the branch-protection required
-  # status checks (`lint`, `test (3.10-3.14)`, `spdx-guard`, `pre-commit`)
+  # status checks (`lint`, `test (3.11-3.14)`, `spdx-guard`, `pre-commit`)
   # always report a concrete SUCCESS / FAILURE and never sit "pending".
   pull_request:
 
@@ -282,12 +282,10 @@ jobs:
         # surface (actions/python-versions is fetched at runtime with no
         # per-artifact digest — accepted + tracked residual, see
         # docs/internal/ci_supply_chain_residuals.md). `python-minor` keeps the
-        # branch-protection-required job names `test (3.10)`..`test (3.14)`
+        # branch-protection-required job names `test (3.11)`..`test (3.14)`
         # stable across patch bumps (via the job `name:` above); `primary` flags
         # the single leg that runs coverage + the exact-coverage gates.
         include:
-          - python-minor: "3.10"
-            python-version: "3.10.21"
           - python-minor: "3.11"
             python-version: "3.11.16"
           - python-minor: "3.12"
