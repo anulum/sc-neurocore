@@ -204,6 +204,36 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
         "substeps > 1 is compiled only by compile_to_verilog",
     ),
     _RaiseSite(
+        "src/sc_neurocore/compiler/equation_ir_compiler.py",
+        "compile_to_ir",
+        "native equation ports require data_width <= 64",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/native_equation/commits.py",
+        "EquationCommits.__init__",
+        "unsigned equation state is not supported",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "lower_neuron",
+        "unsigned equation state is not supported",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "lower_neuron",
+        "equation products require truncate, nearest or bankers rounding",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "lower_neuron",
+        "macro substeps require crossing detection without resets",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "lower_neuron",
+        "stochastic thresholds do not support multiply pipelining",
+    ),
+    _RaiseSite(
         "src/sc_neurocore/studio/platform/policy_audit_integrity.py",
         "_JsonlAuditIntegrityMixin._export_paths",
         "<abstract>",
