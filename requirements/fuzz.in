@@ -6,6 +6,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore bounded fuzz release requirements
 
-numpy==2.2.6
-hypothesis==6.168.0
+numpy==2.5.4
+hypothesis==6.170.11
 pytest==9.1.1

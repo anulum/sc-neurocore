@@ -668,7 +668,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-23 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
+24 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -693,6 +693,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **scorecard.yml** | OpenSSF Scorecard |
 | **security-scanners.yml** | pip-audit, cargo-audit, Semgrep, and release security scans |
 | **pre-commit.yml** | Pre-commit hook validation |
+| **studio-desktop-installation.yml** | Studio Linux installation acceptance on two complete prepared bundles with the real runtime |
 | **yosys-synth.yml** | Yosys HDL synthesis verification |
 | **stale.yml** | Auto-label and close stale issues |
 

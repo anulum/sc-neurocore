@@ -21,7 +21,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 TYPING_SCANNER_SCHEMA_VERSION = "sc-neurocore.typing-scanners.v2"
-TYPING_TOOL_VERSIONS = {"pyright": "1.1.414", "mypy": "2.3.1"}
+TYPING_TOOL_VERSIONS = {"pyright": "1.1.414", "mypy": "2.4.0"}
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -43,11 +43,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _write_json(path: Path, payload: object) -> None:
+    """Write payload as sorted, indented JSON, creating parent directories."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _resolve_tool(name: str) -> str:
+    """Return the tool on PATH, else beside the running interpreter, else its bare name."""
     resolved = shutil.which(name)
     if resolved is not None:
         return resolved
@@ -58,6 +60,7 @@ def _resolve_tool(name: str) -> str:
 def _execute(
     command: list[str], repo_root: Path, run_command: RunCommand, timeout: float
 ) -> dict[str, object]:
+    """Run one scanner command and return its command, exit status, output or launch failure."""
     try:
         completed = run_command(
             command, cwd=repo_root, capture_output=True, text=True, timeout=timeout, check=False
@@ -80,6 +83,7 @@ def _execute(
 
 
 def _pyright_report(stdout: str, returncode: object) -> tuple[object, bool]:
+    """Parse Pyright JSON output and tell whether it reports zero errors with a clean exit."""
     try:
         payload: object = json.loads(stdout)
     except json.JSONDecodeError:
@@ -111,6 +115,7 @@ def _pyright_report(stdout: str, returncode: object) -> tuple[object, bool]:
 
 
 def _mypy_report(stdout: str, returncode: object) -> tuple[list[object], bool]:
+    """Parse Mypy JSON-lines output and tell whether it reports zero errors with a clean exit."""
     diagnostics: list[object] = []
     try:
         for line in stdout.splitlines():

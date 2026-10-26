@@ -104,7 +104,7 @@ Julia bridge, Rust build frontend, plotting stack, and Jupyter surface in one
 environment:
 
 ```bash
-uv venv --python 3.12.14 .venv
+uv venv --python 3.12.15 .venv
 uv pip install --python .venv/bin/python --require-hashes \
   -r requirements/workstation.txt
 uv pip install --python .venv/bin/python --no-deps --no-build-isolation \

@@ -93,7 +93,7 @@ sequence.
 - Optional typing artefact slots include `security/pyright.json`,
   `security/mypy`, and `security/typing_scanner_summary.json`; the executable
   runner is available for baseline refreshes without enabling the lane in the
-  default workflow yet. Install Mypy `2.3.1` from the existing hashlocked lint
+  default workflow yet. Install Mypy `2.4.0` from the existing hashlocked lint
   profile and Pyright `1.1.414` in a dedicated tool directory with
   `npm install --prefix <tool-directory> --ignore-scripts pyright@1.1.414`.
   Put that directory's `node_modules/.bin` and the active Python environment's

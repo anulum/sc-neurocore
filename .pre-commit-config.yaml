@@ -8,7 +8,7 @@
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: '\.rpt$'
@@ -24,7 +24,7 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: a56c0b927e6465d37cae3e97d35d4d18ab2b96cd  # v0.16.9
+    rev: f368fb366ff7f2f808dd324b83a6d32267799e19  # v0.17.2
     hooks:
       - id: ruff
         exclude: '^data/'
@@ -34,7 +34,7 @@ repos:
         exclude: '^data/'
 
   - repo: https://github.com/crate-ci/typos
-    rev: d11834eeac776f87614aef80119b38800a9a2bac  # v1.29.5
+    rev: 7f9d0819ca1c008ade73f4b41fa9d258d48f605b  # v1.51.1
     hooks:
       - id: typos
         args: ['--config', '.typos.toml']

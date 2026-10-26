@@ -283,7 +283,7 @@ class TestSSEStream:
 
         assert list(stream_metrics(proxy.id)) == []
 
-    def test_a_record_that_never_seals_ends_with_the_proxys_own_verdict(
+    def test_a_record_that_never_seals_ends_with_the_verdict_of_the_proxy(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """The grace window is bounded: the stream then says how the proxy ended."""
@@ -331,7 +331,7 @@ class TestSSEStream:
             ("interrupted", None, {"event": "error", "data": {"message": "Training failed."}}),
         ],
     )
-    def test_the_proxys_verdict_names_how_an_unfinished_run_ended(
+    def test_the_verdict_of_the_proxy_names_how_an_unfinished_run_ended(
         self, status: str, error: str | None, expected: dict[str, object]
     ) -> None:
         """An unqualified proxy diagnostic uses the fixed public failure."""

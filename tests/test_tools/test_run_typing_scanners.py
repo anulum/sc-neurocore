@@ -40,7 +40,7 @@ def test_manifest_typing_commands_are_executable_and_pinned() -> None:
     scanners = {scanner["name"]: scanner for scanner in manifest["scanners"]}
     assert scanners["pyright"]["pinned_version"] == "pyright==1.1.414"
     assert scanners["pyright"]["command"] == "pyright --project pyrightconfig.json --outputjson"
-    assert scanners["mypy"]["pinned_version"] == "mypy==2.3.1"
+    assert scanners["mypy"]["pinned_version"] == "mypy==2.4.0"
     assert scanners["mypy"]["command"] == (
         "python tools/security_scan/run_typing_scanners.py --output-dir ."
     )

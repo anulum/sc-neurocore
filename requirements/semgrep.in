@@ -8,8 +8,8 @@
 
 # Compile with requirements/semgrep-overrides.txt for the reviewed click pin
 # and the MCP v1 dependency required by Semgrep's server imports.
-cryptography==50.0.1
-semgrep==1.177.0
+cryptography==50.0.2
+semgrep==1.182.1
 
 # Minimum compatible patch for the shared async runtime.
 anyio>=4.14.2

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1405
+expected_file_count = 1409
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5755,3 +5755,19 @@ rationale = "Exact rounding and Heaviside semantics across public model, fixed-p
 [[file]]
 path = "tests/test_publish_workflow.py"
 rationale = "The release workflow keeps trusted publishing, idempotent uploads and the same engine wheel matrix as wheel CI."
+
+[[file]]
+path = "tools/security_scanner_manifest.py"
+rationale = "The deterministic manifest of every security scanner, its pinned version, inputs, owner and blocking policy."
+
+[[file]]
+path = "tools/security_scan/run_typing_scanners.py"
+rationale = "Run the pinned Pyright and Mypy scanners and record their JSON reports and pass state."
+
+[[file]]
+path = "tests/test_tools/test_security_scanner_manifest.py"
+rationale = "The scanner manifest names every required scanner with complete fields, validates and writes through its CLI."
+
+[[file]]
+path = "tests/test_tools/test_run_typing_scanners.py"
+rationale = "The typing scanner runner pins its tool versions and reports parsed results without hiding launch failures."

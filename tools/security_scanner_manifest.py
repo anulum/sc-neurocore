@@ -33,6 +33,8 @@ SCAN_MANIFEST_SCHEMA_VERSION = "sc-neurocore.security-scanner-manifest.v1"
 
 @dataclass(frozen=True)
 class ScannerInput:
+    """One file a scanner reads, why it reads it, and whether it must exist."""
+
     path: str
     purpose: str
     required: bool
@@ -40,6 +42,8 @@ class ScannerInput:
 
 @dataclass(frozen=True)
 class ScannerManifestEntry:
+    """One scanner: ecosystem, cadence, blocking policy, command, inputs, owner, noise and pin."""
+
     name: str
     ecosystem: str
     cadence: str
@@ -53,6 +57,7 @@ class ScannerManifestEntry:
 
 
 def _input(path: str, purpose: str, *, required: bool = True) -> ScannerInput:
+    """Build a ScannerInput, required unless stated otherwise."""
     return ScannerInput(path=path, purpose=purpose, required=required)
 
 
@@ -188,7 +193,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.177.0",
+        pinned_version="semgrep==1.182.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -297,7 +302,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore typing owner",
         noise="low",
-        pinned_version="mypy==2.3.1",
+        pinned_version="mypy==2.4.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -331,7 +336,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore code quality owner",
         noise="low",
-        pinned_version="ruff==0.16.9",
+        pinned_version="ruff==0.17.2",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -397,6 +402,7 @@ def build_scanner_manifest() -> dict[str, Any]:
 
 
 def _manifest_entry_to_dict(entry: ScannerManifestEntry) -> dict[str, Any]:
+    """Convert a manifest entry, including its inputs, to plain JSON data."""
     return {
         **asdict(entry),
         "inputs": [asdict(scanner_input) for scanner_input in entry.inputs],
@@ -505,6 +511,7 @@ def validate_scanner_manifest(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _required_scanner_names() -> set[str]:
+    """Return the scanner names the security programme requires in the manifest."""
     return {
         "pip-audit",
         "osv-scanner",
@@ -526,6 +533,7 @@ def _required_scanner_names() -> set[str]:
 
 
 def _final_report(findings: list[dict[str, str]]) -> dict[str, Any]:
+    """Summarise validation findings into pass/fail with error and warning counts."""
     errors = [finding for finding in findings if finding["level"] == "error"]
     return {
         "passed": len(errors) == 0,
@@ -536,6 +544,7 @@ def _final_report(findings: list[dict[str, str]]) -> dict[str, Any]:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser for writing or validating the manifest."""
     parser = argparse.ArgumentParser(
         description="Build and validate a deterministic security scanner manifest."
     )
@@ -549,6 +558,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Print or write the manifest, or validate a manifest file; return the exit status."""
     args = build_parser().parse_args(argv)
 
     if args.validate is not None:

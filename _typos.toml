@@ -8,6 +8,8 @@
 
 [default.extend-words]
 # Domain-specific terms that are not typos
+# NumPy API spelling: ndarray.flags.writeable
+writeable = "writeable"
 nanos = "nanos"
 ket = "ket"
 bra = "bra"
@@ -93,6 +95,8 @@ Hoeks = "Hoeks"
 SOM = "SOM"
 
 [default.extend-identifiers]
+# PACT acronym spelled out with capitals: PArameterized Clipping acTivation
+PArameterized = "PArameterized"
 lins = "lins"
 PnR = "PnR"
 PnRResult = "PnRResult"

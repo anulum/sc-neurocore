@@ -1,7 +1,7 @@
-ruff==0.16.9
+ruff==0.17.2
 bandit==1.9.4
-mypy==2.3.1
+mypy==2.4.0
 numpy
-tomli==2.4.1
+tomli==2.5.0
 types-defusedxml==0.7.0.20260504
-types-setuptools==84.0.0.20260812
+types-setuptools==84.0.0.20261006

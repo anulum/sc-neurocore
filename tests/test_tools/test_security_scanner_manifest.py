@@ -5,6 +5,8 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
+"""Contract tests of the security scanner manifest: scanner set, fields, validation and the CLI."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -21,6 +23,7 @@ import pytest
 
 
 def _load_tool() -> Any:
+    """Import tools/security_scanner_manifest.py from its path as a module."""
     repo_root = Path(__file__).resolve().parents[2]
     tool_path = repo_root / "tools" / "security_scanner_manifest.py"
     spec = importlib.util.spec_from_file_location("security_scanner_manifest", tool_path)
@@ -33,6 +36,7 @@ def _load_tool() -> Any:
 
 
 def test_manifest_contains_required_security_scanners() -> None:
+    """The manifest lists every scanner the security programme requires."""
     tool = _load_tool()
 
     manifest = tool.build_scanner_manifest()
@@ -65,15 +69,16 @@ def test_manifest_scanner_versions_match_governed_locks() -> None:
     scanners = {scanner["name"]: scanner for scanner in tool.build_scanner_manifest()["scanners"]}
 
     assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
-    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.177.0"
-    assert scanners["ruff"]["pinned_version"] == "ruff==0.16.9"
-    assert scanners["mypy"]["pinned_version"] == "mypy==2.3.1"
+    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.182.1"
+    assert scanners["ruff"]["pinned_version"] == "ruff==0.17.2"
+    assert scanners["mypy"]["pinned_version"] == "mypy==2.4.0"
     repo = Path(__file__).resolve().parents[2]
     for name, source in (("semgrep", "semgrep.in"), ("ruff", "lint.in"), ("mypy", "lint.in")):
         assert scanners[name]["pinned_version"] in (repo / "requirements" / source).read_text()
 
 
 def test_scanner_records_ownership_and_noise_fields() -> None:
+    """Every scanner records ecosystem, cadence, blocking policy, command, owner and noise."""
     tool = _load_tool()
     manifest = tool.build_scanner_manifest()
 
@@ -89,6 +94,7 @@ def test_scanner_records_ownership_and_noise_fields() -> None:
 
 
 def test_non_blocking_scanners_require_rationale() -> None:
+    """A scanner allowed to fail must state why in its rationale field."""
     tool = _load_tool()
     manifest = tool.build_scanner_manifest()
 
@@ -98,6 +104,7 @@ def test_non_blocking_scanners_require_rationale() -> None:
 
 
 def test_manifest_validation_and_deterministic_json() -> None:
+    """The manifest serialises identically on every build and validates clean."""
     tool = _load_tool()
 
     first = json.dumps(tool.build_scanner_manifest(), sort_keys=True)
@@ -111,6 +118,7 @@ def test_manifest_validation_and_deterministic_json() -> None:
 
 
 def test_manifest_validation_reports_schema_and_scanner_list_errors() -> None:
+    """A wrong schema version and a non-list scanner field are both reported."""
     tool = _load_tool()
 
     report = tool.validate_scanner_manifest(
@@ -124,6 +132,7 @@ def test_manifest_validation_reports_schema_and_scanner_list_errors() -> None:
 
 
 def test_manifest_validation_reports_malformed_scanner_entries() -> None:
+    """Malformed scanner entries are reported one by one, not accepted."""
     tool = _load_tool()
     payload = tool.build_scanner_manifest()
     payload["scanners"] = [
@@ -168,6 +177,7 @@ def test_manifest_validation_reports_malformed_scanner_entries() -> None:
 
 
 def test_required_scanner_contract_includes_every_manifest_scanner() -> None:
+    """The required-scanner contract and the manifest name the same scanners."""
     tool = _load_tool()
 
     manifest = tool.build_scanner_manifest()
@@ -177,6 +187,7 @@ def test_required_scanner_contract_includes_every_manifest_scanner() -> None:
 
 
 def test_json_output_scanners_are_release_artifacts() -> None:
+    """Every scanner that writes JSON has that file listed as a release artifact."""
     repo_root = Path(__file__).resolve().parents[2]
     tool = _load_tool()
 
@@ -213,6 +224,7 @@ def test_json_output_scanners_are_release_artifacts() -> None:
 
 
 def test_bandit_scanner_excludes_vendored_tool_environments() -> None:
+    """Bandit skips the vendored pixi environment and writes its medium-severity JSON report."""
     tool = _load_tool()
     manifest = tool.build_scanner_manifest()
 
@@ -224,6 +236,7 @@ def test_bandit_scanner_excludes_vendored_tool_environments() -> None:
 
 
 def test_cli_writes_manifest_and_can_validate() -> None:
+    """The CLI writes the manifest to a file and validates that file."""
     repo_root = Path(__file__).resolve().parents[2]
     tool_path = repo_root / "tools" / "security_scanner_manifest.py"
     tool = _load_tool()
@@ -266,6 +279,7 @@ def test_cli_writes_manifest_and_can_validate() -> None:
 def test_main_prints_writes_and_validates_manifest(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """main() prints, writes and validates the manifest and rejects an invalid one."""
     tool = _load_tool()
     manifest_path = tmp_path / "manifest.json"
     invalid_path = tmp_path / "invalid.json"
@@ -289,6 +303,7 @@ def test_main_prints_writes_and_validates_manifest(
 def test_script_entrypoint_runs_main(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """Running the module as a script calls main() and exits with its status."""
     repo_root = Path(__file__).resolve().parents[2]
     tool_path = repo_root / "tools" / "security_scanner_manifest.py"
     monkeypatch.setattr(sys, "argv", [str(tool_path)])
@@ -302,5 +317,6 @@ def test_script_entrypoint_runs_main(
 
 @contextmanager
 def _tempdir() -> Iterator[Path]:
+    """Yield a temporary directory as a Path and remove it afterwards."""
     with tempfile.TemporaryDirectory() as directory:
         yield Path(directory)
