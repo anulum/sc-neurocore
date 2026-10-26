@@ -304,7 +304,7 @@ mod tests {
     #[test]
     fn test_digamma_known_values() {
         // ψ(1) = -γ ≈ -0.5772156649
-        assert!((digamma(1.0) - (-0.5772156649)).abs() < 1e-8);
+        assert!((digamma(1.0) + std::f64::consts::EULER_GAMMA).abs() < 1e-8);
         // ψ(2) = 1 - γ ≈ 0.4227843351
         assert!((digamma(2.0) - 0.4227843351).abs() < 1e-8);
         // ψ(0.5) = -γ - 2 ln 2 ≈ -1.9635100260

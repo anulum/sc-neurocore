@@ -56,9 +56,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
           cache: pip
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -147,9 +147,9 @@ jobs:
         with:
           toolchain: "1.98.1"
           components: rustfmt, clippy
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
       - name: Install locked native-adapter test and lint dependencies
         run: |
           python -m pip install --require-hashes -r requirements/ci-dev.txt -r requirements/lint.txt
@@ -219,9 +219,9 @@ jobs:
         working-directory: studio/frontend
         run: npm run test:e2e
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
           cache: pip
 
       - name: Install live Studio backend dependencies
@@ -247,7 +247,7 @@ jobs:
       PYTHONPATH: src;bridge
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12.10"  # newest 3.12 release with a Windows build (3.12 is security-only)
       - name: Install hashlocked test dependencies
@@ -287,14 +287,14 @@ jobs:
         # the single leg that runs coverage + the exact-coverage gates.
         include:
           - python-minor: "3.11"
-            python-version: "3.11.17"
+            python-version: "3.11.18"
           - python-minor: "3.12"
-            python-version: "3.12.15"
+            python-version: "3.12.16"
             primary: true
           - python-minor: "3.13"
-            python-version: "3.13.17"
+            python-version: "3.13.18"
           - python-minor: "3.14"
-            python-version: "3.14.9"
+            python-version: "3.14.10"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -312,7 +312,7 @@ jobs:
           # scopes by lockfile; github.repository makes the binding explicit).
           key: ${{ github.repository }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -1059,9 +1059,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
           cache: pip
 
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
@@ -1093,9 +1093,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
           cache: pip
 
       - uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
@@ -1153,9 +1153,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
           cache: pip
 
       - name: Install system packages
@@ -1202,9 +1202,9 @@ jobs:
           # scopes by lockfile; github.repository makes the binding explicit).
           key: ${{ github.repository }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.15"
+          python-version: "3.12.16"
 
       - run: pip install --require-hashes -r requirements/build.txt -r requirements/maturin.txt
 

@@ -7,7 +7,7 @@
 # SC-NeuroCore — Complete Linux desktop dependency profile
 
 # Compile alongside pyproject.toml with --extra studio --extra desktop.
-# Target: CPython 3.12.15, Linux x86_64, manylinux_2_39.
+# Target: CPython 3.12.16, Linux x86_64, manylinux_2_39.
 # The root package, scientific engine and interpreter are separate artifacts.
 -c runtime.txt
 -c hub.txt

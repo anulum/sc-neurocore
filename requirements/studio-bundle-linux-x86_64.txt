@@ -8,7 +8,7 @@
 
 # Install with --require-hashes --only-binary :all:.
 # Complete third-party closure for [studio,desktop]; no first-party wheel or interpreter.
-# CPython 3.12.15 / Linux x86_64 / manylinux_2_39 resolution target.
+# CPython 3.12.16 / Linux x86_64 / manylinux_2_39 resolution target.
 annotated-doc==0.0.5 \
     --hash=sha256:117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101 \
     --hash=sha256:c7e58ce09192557605d8bbd92836d7e1d520ac9580096042c0bfd197efacf1bb
