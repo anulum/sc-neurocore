@@ -658,6 +658,12 @@ jobs:
           export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
           export XDG_RUNTIME_DIR="$namespace/runtime"
           export DBUS_SESSION_BUS_ADDRESS="unix:path=$namespace/runtime/private-bus"
+          # Start Qt once outside pytest, whose capture loses the message of a Qt abort,
+          # so a missing platform library or plugin is named in the log before the suite runs.
+          xcb_plugin="$(python -c 'import pathlib, PySide6; print(pathlib.Path(PySide6.__file__).parent / "Qt/plugins/platforms/libqxcb.so")')"
+          ldd "$xcb_plugin" | grep 'not found' || true
+          QT_DEBUG_PLUGINS=1 xvfb-run -a --server-args='-screen 0 1600x1100x24' python -c \
+            'import sc_neurocore.studio.desktop.runtime; from PySide6.QtWidgets import QApplication; print("Qt platform:", QApplication([]).platformName())'
           xvfb-run -a --server-args='-screen 0 1600x1100x24' \
             python -m coverage run -m pytest -q \
             studio/desktop/tests/test_window.py studio/desktop/tests/test_webview.py \
