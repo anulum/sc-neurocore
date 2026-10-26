@@ -160,3 +160,115 @@ print(json.dumps({'n_inputs': n_inputs, 'n_neurons': n_neurons,
         "pressure_exercised": sys.platform == "linux",
         "constructor_recovery": True,
     }
+
+
+@pytest.mark.parametrize(("n_inputs", "n_neurons"), [(4, 2), (128, 8)])
+def test_dense_prepacked_views_tail_bits_and_refusal_recovery(
+    n_inputs: int, n_neurons: int
+) -> None:
+    """Retain packed-row layouts, authored refusal order and unclipped channel sums.
+
+    Parameters
+    ----------
+    n_inputs
+        Number of packed features below or at the parallel encoding threshold.
+    n_neurons
+        Output count below or at the parallel accumulation threshold.
+    """
+    program = """
+import hashlib
+import json
+from pathlib import Path
+import sys
+import numpy as np
+import sc_neurocore_engine as engine
+import sc_neurocore_engine.sc_neurocore_engine as native
+
+origins = json.loads(sys.argv[1])
+n_inputs, n_neurons = map(int, sys.argv[2:])
+for module in (engine, native):
+    path = Path(module.__file__).resolve()
+    assert path.is_relative_to(Path(sys.prefix).resolve())
+    assert str(path) == origins[module.__name__]['path']
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == origins[module.__name__]['sha256']
+assert engine.DenseLayer is native.DenseLayer
+engine.set_num_threads(1)
+length = 65
+layer = native.DenseLayer(n_inputs, n_neurons, length=length, seed=24301)
+weights = ((np.arange(n_neurons)[:, None] + np.arange(n_inputs)[None, :]) % 3 != 0)
+layer.set_weights(weights.astype(np.float64).tolist())
+storage = np.zeros((n_inputs, 4), dtype=np.uint64)
+for row in range(n_inputs):
+    storage[row, 0] = np.uint64((1 << (row % 64 + 1)) - 1)
+    storage[row, 2] = np.uint64(2**64 - 1 if row % 2 else 2**64 - 2)
+packed = storage[:, ::2]
+assert not packed.flags.c_contiguous
+storage.setflags(write=False)
+packed.setflags(write=False)
+before = storage.tobytes()
+counts = np.array([int(row[0]).bit_count() + (int(row[1]) & 1) for row in packed], dtype=np.int64)
+expected = (weights.astype(np.int64) @ counts).astype(np.float64) * (1.0 / length)
+for payload in (packed, packed.tolist()):
+    result = layer.forward_prepacked(payload)
+    assert isinstance(result, list)
+    np.testing.assert_array_equal(result, expected)
+contiguous = np.ascontiguousarray(packed)
+contiguous.setflags(write=False)
+contiguous_before = contiguous.tobytes()
+result = layer.forward_prepacked_numpy(contiguous)
+assert result.dtype == np.float64 and result.flags.c_contiguous and result.flags.writeable
+np.testing.assert_array_equal(result, expected)
+invalid_strided = np.ones((n_inputs + 1, 4), dtype=np.uint64)[:, ::2]
+for payload in (packed, invalid_strided):
+    try:
+        layer.forward_prepacked_numpy(payload)
+    except ValueError as error:
+        assert str(error).startswith('Array not contiguous:')
+    else:
+        raise AssertionError('borrowed strided packed storage was accepted')
+wrong_words = np.ones((n_inputs, 3), dtype=np.uint64)
+for method, message in (
+    (layer.forward_prepacked, 'Packed input 0 has 3 words, expected 2.'),
+    (layer.forward_prepacked_numpy, 'Expected 2 words per input, got 3.'),
+):
+    try:
+        method(wrong_words)
+    except ValueError as error:
+        assert str(error) == message
+    else:
+        raise AssertionError('incorrect packed word count was accepted')
+np.testing.assert_array_equal(layer.forward_prepacked_numpy(contiguous), expected)
+assert storage.tobytes() == before and not storage.flags.writeable
+assert contiguous.tobytes() == contiguous_before and not contiguous.flags.writeable
+np.testing.assert_array_equal(layer.get_weights(), weights)
+for module in (engine, native):
+    assert hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() == origins[module.__name__]['sha256']
+print(json.dumps({'n_inputs': n_inputs, 'n_neurons': n_neurons,
+                  'prepacked_recovery': True}))
+"""
+    environment = os.environ.copy()
+    environment.update({"OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"})
+    environment.pop("RAYON_NUM_THREADS", None)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            program,
+            json.dumps(installed_engine_origins()),
+            str(n_inputs),
+            str(n_neurons),
+        ],
+        capture_output=True,
+        text=True,
+        env=environment,
+        timeout=40,
+        check=False,
+    )
+    assert result.returncode == 0, (result.returncode, result.stdout, result.stderr)
+    assert json.loads(result.stdout.splitlines()[-1]) == {
+        "n_inputs": n_inputs,
+        "n_neurons": n_neurons,
+        "prepacked_recovery": True,
+    }

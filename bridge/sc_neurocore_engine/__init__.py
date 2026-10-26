@@ -1141,3 +1141,16 @@ try:
     _predictive_codec_rust_available = True
 except ImportError:
     _predictive_codec_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        GpuDenseLayer as GpuDenseLayer,
+        GpuLifBatch as GpuLifBatch,
+        GpuKuramoto as GpuKuramoto,
+        GpuIzhikevichBatch as GpuIzhikevichBatch,
+    )
+
+    __all__ += ["GpuDenseLayer", "GpuLifBatch", "GpuKuramoto", "GpuIzhikevichBatch"]
+    _gpu_rust_available = True
+except ImportError:
+    _gpu_rust_available = False

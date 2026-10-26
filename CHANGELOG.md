@@ -571,6 +571,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   vulnerability data without that login. Document its Conda CPE/NVD matching
   limits and retain exact, evidence-checked exceptions for fixed vendor code.
 
+- Return catchable dense-layer storage refusals for constructors, weight copies,
+  packed weight rebuilds and every forward representation. Preserve weight
+  replacements and caller-owned batch output on failed allocation.
+
+- Check GPU dense construction against shader index widths and device buffer
+  and dispatch limits, and return typed refusals from single and batch GPU
+  forwards before submission. Rejected shapes keep packed weights intact.
+  GPU-feature wheels re-export `GpuDenseLayer`, `GpuLifBatch`, `GpuKuramoto`
+  and `GpuIzhikevichBatch` from `sc_neurocore_engine`.
+
 - Align candidate API and symbolic comparison tests with equation admission:
   reject unavailable attributes and module-qualified calls before simulation,
   while retaining authored diagnostics for failures of admitted expressions.

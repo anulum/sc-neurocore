@@ -24,6 +24,48 @@ with SIMD-accelerated bitstream operations, IR compilation, and HDC support.
 
 **[Criterion Benchmarks →](rust-benchmarks.md)** — all measured latencies for engine, neurons, and analysis.
 
+## Fallible dense storage
+
+`layer::DenseLayer::try_new` and the `try_get_weights`, `try_set_weights`,
+`try_refresh_packed_weights`, `try_forward`, `try_forward_fast`,
+`try_forward_fused`, `try_forward_batch`, `try_forward_batch_into`,
+`try_forward_prepacked` and `try_forward_prepacked_2d` methods return
+`layer::DenseLayerError`. Its `Invalid` variant retains authored shape refusals;
+`Allocation` identifies storage that cannot be represented or reserved.
+Weight replacements and caller-owned batch output commit only after complete
+success. The existing Rust convenience signatures remain available; constructor,
+weight-copy and refresh convenience methods retain their documented panic
+behavior. Python bindings use the fallible paths and Python-owned outputs.
+
+## Fallible GPU dense storage
+
+GPU-feature wheels re-export `GpuDenseLayer`, `GpuLifBatch`, `GpuKuramoto` and
+`GpuIzhikevichBatch` from `sc_neurocore_engine`; these are the native class
+objects registered in `sc_neurocore_engine.sc_neurocore_engine`. Default wheels
+omit the GPU exports.
+
+With the `gpu` feature, `gpu::GpuDenseLayer::try_new_checked` returns a typed
+`gpu::dense::GpuDenseError` or `Ok(None)` for unavailable GPU hardware.
+`try_forward_gpu` and `try_forward_batch_gpu` validate inputs and reserve host
+storage before submitting the original Philox shader kernels. Construction
+checks shader index widths, device buffer limits and dispatch limits. A zero
+sample batch returns an empty result. Calls sharing persistent GPU buffers
+serialize submission and readback; rejected shapes leave packed weights intact.
+The original Rust convenience signatures remain available with documented panic
+behavior. Python uses the checked methods and separately owned list outputs.
+
+GPU feature qualification requires the dedicated Rust integration surface and
+an installed GPU-feature wheel for the Python surface:
+
+```bash
+cargo test --locked --features gpu --test test_gpu_dense -- --test-threads=1
+python -m pytest engine/tests/python/test_gpu_dense_layer_engine_binding.py
+```
+
+These GPU tests require real hardware; a default wheel does not provide this
+optional binding. The shader's Philox inputs remain distinct from the CPU
+encoder's random streams, so exact same-seed CPU outputs are not its oracle.
+
 ## Building from Source
 
 ```bash

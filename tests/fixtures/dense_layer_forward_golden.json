@@ -1,0 +1,392 @@
+{
+  "schema": 1,
+  "reference": {
+    "engine_version": "3.16.0",
+    "native_sha256": "8ed41318d0cf8be0af014c4b77a08a89b143ee7f2231583036447246a0accf9e",
+    "wrapper_sha256": "0883369361a12844a632927f11ae8f3f80c9a97ba4fb7f6b80005841247a54d7",
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "simd": "avx512-vpopcntdq",
+    "kind": "unchanged normal installed reference; no historical parent/final source credit"
+  },
+  "cases": [
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 1,
+      "weight_seed": 42,
+      "seed": 42,
+      "initial_weights_sha256": "b43e422f03e93aee40e2cd7107fb7c9e87749d6eb9e78501b5f607714976e6f8",
+      "scalar_counts": [
+        1,
+        1
+      ],
+      "fast_counts": [
+        1,
+        2
+      ],
+      "prepacked_counts": [
+        1,
+        1
+      ],
+      "batch_counts": [
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 63,
+      "weight_seed": 24301,
+      "seed": 44257,
+      "initial_weights_sha256": "092f72a93ffaddb5faccc0b1daa5b635d4ee84e4a1b4ec21545e5c0b7f7babc9",
+      "scalar_counts": [
+        46,
+        94
+      ],
+      "fast_counts": [
+        43,
+        85
+      ],
+      "prepacked_counts": [
+        33,
+        87
+      ],
+      "batch_counts": [
+        [
+          43,
+          85
+        ],
+        [
+          30,
+          90
+        ],
+        [
+          13,
+          59
+        ]
+      ]
+    },
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 64,
+      "weight_seed": 24301,
+      "seed": 44257,
+      "initial_weights_sha256": "092f72a93ffaddb5faccc0b1daa5b635d4ee84e4a1b4ec21545e5c0b7f7babc9",
+      "scalar_counts": [
+        52,
+        95
+      ],
+      "fast_counts": [
+        44,
+        86
+      ],
+      "prepacked_counts": [
+        34,
+        90
+      ],
+      "batch_counts": [
+        [
+          44,
+          86
+        ],
+        [
+          31,
+          92
+        ],
+        [
+          13,
+          59
+        ]
+      ]
+    },
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 65,
+      "weight_seed": 24301,
+      "seed": 44257,
+      "initial_weights_sha256": "092f72a93ffaddb5faccc0b1daa5b635d4ee84e4a1b4ec21545e5c0b7f7babc9",
+      "scalar_counts": [
+        57,
+        94
+      ],
+      "fast_counts": [
+        46,
+        84
+      ],
+      "prepacked_counts": [
+        44,
+        91
+      ],
+      "batch_counts": [
+        [
+          46,
+          84
+        ],
+        [
+          28,
+          94
+        ],
+        [
+          18,
+          56
+        ]
+      ]
+    },
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 130,
+      "weight_seed": 18446744073709551615,
+      "seed": 18446744073709551614,
+      "initial_weights_sha256": "5a688f982cce88b733d4a33e9515fb0d44ed9c8a0fa44aa4df14282bd8351c62",
+      "scalar_counts": [
+        81,
+        187
+      ],
+      "fast_counts": [
+        74,
+        191
+      ],
+      "prepacked_counts": [
+        74,
+        192
+      ],
+      "batch_counts": [
+        [
+          74,
+          191
+        ],
+        [
+          45,
+          189
+        ],
+        [
+          36,
+          135
+        ]
+      ]
+    },
+    {
+      "n_inputs": 16,
+      "n_neurons": 8,
+      "length": 65,
+      "weight_seed": 24301,
+      "seed": 18446744073709551611,
+      "initial_weights_sha256": "864f02604d340ebb9b3484974ad238cd451e0ce2f097d0394a839f38354a3bb9",
+      "scalar_counts": [
+        253,
+        250,
+        204,
+        206,
+        209,
+        194,
+        228,
+        215
+      ],
+      "fast_counts": [
+        243,
+        277,
+        202,
+        222,
+        229,
+        194,
+        269,
+        214
+      ],
+      "prepacked_counts": [
+        272,
+        265,
+        247,
+        266,
+        251,
+        245,
+        279,
+        254
+      ],
+      "batch_counts": [
+        [
+          243,
+          277,
+          202,
+          222,
+          229,
+          194,
+          269,
+          214
+        ],
+        [
+          273,
+          284,
+          283,
+          327,
+          279,
+          295,
+          319,
+          285
+        ],
+        [
+          228,
+          244,
+          204,
+          242,
+          212,
+          243,
+          249,
+          174
+        ]
+      ]
+    },
+    {
+      "n_inputs": 128,
+      "n_neurons": 8,
+      "length": 65,
+      "weight_seed": 18446744073709551613,
+      "seed": 18446744073709551552,
+      "initial_weights_sha256": "aa08cfaa29d3d5532dcb143c98c7a22139d70a6c8dfb930abb877da4b008d7fe",
+      "scalar_counts": [
+        1942,
+        1849,
+        1811,
+        1886,
+        1961,
+        1851,
+        1904,
+        1906
+      ],
+      "fast_counts": [
+        1940,
+        1833,
+        1809,
+        1853,
+        1915,
+        1845,
+        1870,
+        1871
+      ],
+      "prepacked_counts": [
+        2165,
+        2140,
+        2114,
+        2171,
+        2133,
+        2114,
+        2184,
+        2114
+      ],
+      "batch_counts": [
+        [
+          1940,
+          1833,
+          1809,
+          1853,
+          1915,
+          1845,
+          1870,
+          1871
+        ],
+        [
+          2271,
+          2298,
+          2334,
+          2333,
+          2238,
+          2301,
+          2335,
+          2281
+        ],
+        [
+          1969,
+          1982,
+          1883,
+          1880,
+          1894,
+          1925,
+          1971,
+          1849
+        ]
+      ]
+    },
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 1024,
+      "weight_seed": 12345,
+      "seed": 99999,
+      "initial_weights_sha256": "496ede27606c77f66bb97c66333fea1cd638044793577c0c0a7e11810a5729b7",
+      "scalar_counts": [
+        739,
+        1491
+      ],
+      "fast_counts": [
+        715,
+        1455
+      ],
+      "prepacked_counts": [
+        577,
+        1467
+      ],
+      "batch_counts": [
+        [
+          715,
+          1455
+        ],
+        [
+          413,
+          1421
+        ],
+        [
+          267,
+          1032
+        ]
+      ]
+    },
+    {
+      "n_inputs": 4,
+      "n_neurons": 2,
+      "length": 1025,
+      "weight_seed": 42,
+      "seed": 18446744073709551613,
+      "initial_weights_sha256": "b43e422f03e93aee40e2cd7107fb7c9e87749d6eb9e78501b5f607714976e6f8",
+      "scalar_counts": [
+        718,
+        1489
+      ],
+      "fast_counts": [
+        724,
+        1521
+      ],
+      "prepacked_counts": [
+        586,
+        1469
+      ],
+      "batch_counts": [
+        [
+          724,
+          1521
+        ],
+        [
+          423,
+          1456
+        ],
+        [
+          233,
+          984
+        ]
+      ]
+    }
+  ]
+}

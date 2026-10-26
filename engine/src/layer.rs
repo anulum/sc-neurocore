@@ -13,10 +13,17 @@
 
 use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use rand_xoshiro::Xoshiro256PlusPlus;
 use rayon::prelude::*;
 
-use crate::{bitstream, simd};
+use crate::bitstream;
+
+mod allocation;
+mod batch;
+mod forward;
+mod prepacked;
+
+pub use allocation::DenseLayerError;
+use allocation::{copy_weights, product, zeroed};
 
 /// Minimum number of inputs before rayon parallelism is used for encoding.
 const RAYON_ENCODE_THRESHOLD: usize = 128;
@@ -32,470 +39,203 @@ pub struct DenseLayer {
     pub n_neurons: usize,
     /// Bitstream length per encoded scalar.
     pub length: usize,
+    /// Scale from bit counts to probability-domain activations.
     pub inv_length: f64,
     /// Words per packed input stream (`ceil(length / 64)`).
     pub words_per_input: usize,
     /// Probability-domain weights in `[0, 1]`.
     pub weights: Vec<Vec<f64>>,
-    /// Packed bitstream weights in row-major contiguous layout:
-    /// `[neuron][input][word]`.
+    /// Packed weights in row-major `[neuron][input][word]` order.
     packed_weights_flat: Vec<u64>,
     weight_seed: u64,
 }
 
 impl DenseLayer {
     /// Create a layer with random weights sampled from `U(0,1)`.
+    ///
+    /// # Panics
+    ///
+    /// Panics for zero dimensions or unavailable storage. Foreign-language
+    /// callers use [`Self::try_new`] to receive a typed refusal instead.
     pub fn new(n_inputs: usize, n_neurons: usize, length: usize, seed: u64) -> Self {
         assert!(length > 0, "bitstream length must be > 0");
         assert!(n_inputs > 0, "n_inputs must be > 0");
         assert!(n_neurons > 0, "n_neurons must be > 0");
-        let mut rng = ChaCha8Rng::seed_from_u64(seed);
-        let mut weights = vec![vec![0.0; n_inputs]; n_neurons];
+        Self::try_new(n_inputs, n_neurons, length, seed).expect("dense storage cannot be allocated")
+    }
 
-        for row in &mut weights {
-            for p in row {
-                *p = rng.random::<f64>();
+    /// Create independently owned weights with checked, fallible storage.
+    ///
+    /// Sampling order and per-neuron packed seeds match [`Self::new`].
+    ///
+    /// # Errors
+    ///
+    /// Returns `Invalid` for zero dimensions, in length/input/neuron order,
+    /// or `Allocation` for overflowing products or unavailable storage.
+    pub fn try_new(
+        n_inputs: usize,
+        n_neurons: usize,
+        length: usize,
+        seed: u64,
+    ) -> Result<Self, DenseLayerError> {
+        for (value, message) in [
+            (length, "bitstream length must be > 0"),
+            (n_inputs, "n_inputs must be > 0"),
+            (n_neurons, "n_neurons must be > 0"),
+        ] {
+            if value == 0 {
+                return Err(DenseLayerError::Invalid(message.into()));
             }
         }
-
+        let words_per_input = length.div_ceil(64);
+        product(product(n_neurons, n_inputs)?, words_per_input)?;
+        let mut weights = Vec::new();
+        weights.try_reserve_exact(n_neurons)?;
+        let mut rng = ChaCha8Rng::seed_from_u64(seed);
+        for _ in 0..n_neurons {
+            let mut row = zeroed(n_inputs)?;
+            for probability in &mut row {
+                *probability = rng.random::<f64>();
+            }
+            weights.push(row);
+        }
         let mut layer = Self {
             n_inputs,
             n_neurons,
             length,
             inv_length: 1.0 / length as f64,
-            words_per_input: length.div_ceil(64),
+            words_per_input,
             weights,
-            packed_weights_flat: vec![],
+            packed_weights_flat: Vec::new(),
             weight_seed: seed.wrapping_add(1),
         };
-        layer.refresh_packed_weights();
-        layer
+        layer.try_refresh_packed_weights()?;
+        Ok(layer)
     }
 
-    /// Read-only access to the flat packed weight buffer.
-    ///
-    /// Layout: `[neuron][input][word]`, row-major contiguous `u64`.
+    /// Read the row-major `[neuron][input][word]` packed weight buffer.
     #[inline]
     pub fn packed_weights_flat(&self) -> &[u64] {
         &self.packed_weights_flat
     }
 
-    /// Return a single `[word]` slice for one neuron/input pair.
+    /// Borrow the words for one neuron/input pair.
     #[inline]
     fn weight_slice(&self, neuron: usize, input: usize) -> &[u64] {
         let start = (neuron * self.n_inputs + input) * self.words_per_input;
         &self.packed_weights_flat[start..start + self.words_per_input]
     }
 
-    /// Return a copy of weight matrix.
+    /// Return an independently owned copy of the weight matrix.
+    ///
+    /// # Panics
+    ///
+    /// Panics when storage is unavailable; [`Self::try_get_weights`] is fallible.
     pub fn get_weights(&self) -> Vec<Vec<f64>> {
-        self.weights.clone()
+        self.try_get_weights()
+            .expect("dense storage cannot be allocated")
     }
 
-    /// Set probability weights and refresh packed representation.
+    /// Copy the weight matrix without infallible vector growth.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Allocation` if any matrix row or its outer storage cannot fit.
+    pub fn try_get_weights(&self) -> Result<Vec<Vec<f64>>, DenseLayerError> {
+        copy_weights(&self.weights)
+    }
+
+    /// Set probability weights, retaining both old representations on failure.
     pub fn set_weights(&mut self, weights: Vec<Vec<f64>>) -> Result<(), String> {
+        self.try_set_weights(weights)
+            .map_err(|error| error.to_string())
+    }
+
+    /// Build new packed weights before publishing either representation.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Invalid` for an incorrect matrix shape, or `Allocation` for
+    /// unavailable packed storage. Every refusal preserves the old layer.
+    pub fn try_set_weights(&mut self, weights: Vec<Vec<f64>>) -> Result<(), DenseLayerError> {
+        self.validate_weights(&weights)?;
+        let packed = self.pack_weights(&weights)?;
+        self.weights = weights;
+        self.packed_weights_flat = packed;
+        Ok(())
+    }
+
+    /// Rebuild packed bitstreams using the original weight seeds.
+    ///
+    /// # Panics
+    ///
+    /// Panics on invalid shape or unavailable storage. Foreign callers use
+    /// [`Self::try_refresh_packed_weights`] for failure-atomic refusal.
+    pub fn refresh_packed_weights(&mut self) {
+        self.try_refresh_packed_weights()
+            .expect("dense packed weights cannot be rebuilt");
+    }
+
+    /// Replace packed weights only after the complete rebuild succeeds.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Invalid` for an incorrect matrix shape or `Allocation` for
+    /// overflowing dimensions or unavailable packed storage.
+    pub fn try_refresh_packed_weights(&mut self) -> Result<(), DenseLayerError> {
+        self.validate_weights(&self.weights)?;
+        let packed = self.pack_weights(&self.weights)?;
+        self.packed_weights_flat = packed;
+        Ok(())
+    }
+
+    /// Preserve row-count and first malformed-row refusal priority.
+    fn validate_weights(&self, weights: &[Vec<f64>]) -> Result<(), DenseLayerError> {
         if weights.len() != self.n_neurons {
-            return Err(format!(
+            return Err(DenseLayerError::Invalid(format!(
                 "Expected {} rows, got {}.",
                 self.n_neurons,
                 weights.len()
-            ));
+            )));
         }
-        for (row_idx, row) in weights.iter().enumerate() {
+        for (index, row) in weights.iter().enumerate() {
             if row.len() != self.n_inputs {
-                return Err(format!(
+                return Err(DenseLayerError::Invalid(format!(
                     "Row {} has length {}, expected {}.",
-                    row_idx,
+                    index,
                     row.len(),
                     self.n_inputs
-                ));
+                )));
             }
         }
-        self.weights = weights;
-        self.refresh_packed_weights();
         Ok(())
     }
 
-    /// Rebuild packed weight bitstreams from current weight matrix.
-    pub fn refresh_packed_weights(&mut self) {
-        let n_inputs = self.n_inputs;
-        let words = self.words_per_input;
-        let length = self.length;
-        let weight_seed = self.weight_seed;
-        let weights = &self.weights;
-
-        let mut packed_weights_flat = vec![0_u64; self.n_neurons * n_inputs * words];
-
-        packed_weights_flat
-            .par_chunks_mut(n_inputs * words)
+    /// Encode directly into reserved rows, preserving ChaCha8 draw protocols.
+    fn pack_weights(&self, weights: &[Vec<f64>]) -> Result<Vec<u64>, DenseLayerError> {
+        let row_words = product(self.n_inputs, self.words_per_input)?;
+        let mut packed = zeroed(product(self.n_neurons, row_words)?)?;
+        packed
+            .par_chunks_mut(row_words)
             .enumerate()
-            .for_each(|(neuron_idx, neuron_chunk)| {
+            .try_for_each(|(neuron, row)| {
                 let mut rng =
-                    ChaCha8Rng::seed_from_u64(weight_seed.wrapping_add(neuron_idx as u64));
-                for (input_idx, input_chunk) in neuron_chunk.chunks_mut(words).enumerate() {
-                    let weight_prob = weights[neuron_idx][input_idx];
-                    if weight_prob <= 0.0 {
-                        input_chunk.fill(0);
-                    } else if weight_prob >= 1.0 {
-                        input_chunk.fill(u64::MAX);
-                        if !length.is_multiple_of(64) {
-                            input_chunk[words - 1] = (1_u64 << (length % 64)) - 1;
-                        }
-                    } else {
-                        let packed =
-                            bitstream::bernoulli_packed_simd(weight_prob, length, &mut rng);
-                        input_chunk.copy_from_slice(&packed);
-                    }
-                }
-            });
-
-        self.packed_weights_flat = packed_weights_flat;
-    }
-
-    /// Forward pass using stochastic bitstreams.
-    ///
-    /// Returns one activation value per neuron.
-    pub fn forward(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        if input_values.len() != self.n_inputs {
-            return Err(format!(
-                "Expected input of length {}, got {}.",
-                self.n_inputs,
-                input_values.len()
-            ));
-        }
-
-        let words = self.words_per_input;
-        let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
-        let mut packed_inputs_flat = vec![0_u64; self.n_inputs * words];
-
-        for (idx, p) in input_values.iter().copied().enumerate() {
-            let packed = bitstream::bernoulli_packed(p, self.length, &mut rng);
-            packed_inputs_flat[idx * words..(idx + 1) * words].copy_from_slice(&packed);
-        }
-
-        let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            let n_inputs = self.n_inputs;
-            self.packed_weights_flat
-                .par_chunks_exact(n_inputs * words)
-                .map(|neuron_weights| {
-                    let total =
-                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
-                    total as f64 * self.inv_length
-                })
-                .collect()
-        } else {
-            let n_inputs = self.n_inputs;
-            self.packed_weights_flat
-                .chunks_exact(n_inputs * words)
-                .map(|neuron_weights| {
-                    let total =
-                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
-                    total as f64 * self.inv_length
-                })
-                .collect()
-        };
-
-        Ok(out)
-    }
-
-    /// Forward pass with parallel input encoding.
-    ///
-    /// Each input is encoded with an independently-seeded RNG:
-    /// `seed + input_index` (wrapping).
-    pub fn forward_fast(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        if input_values.len() != self.n_inputs {
-            return Err(format!(
-                "Expected input of length {}, got {}.",
-                self.n_inputs,
-                input_values.len()
-            ));
-        }
-
-        let words = self.words_per_input;
-        let mut packed_inputs_flat = vec![0_u64; self.n_inputs * words];
-
-        if self.n_inputs >= RAYON_ENCODE_THRESHOLD {
-            packed_inputs_flat
-                .par_chunks_mut(words)
-                .enumerate()
-                .for_each(|(idx, chunk)| {
-                    let p = input_values[idx];
-                    let input_seed = seed.wrapping_add(idx as u64);
-                    let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                    let packed = bitstream::bernoulli_packed_simd(p, self.length, &mut rng);
-                    chunk.copy_from_slice(&packed);
-                });
-        } else {
-            packed_inputs_flat
-                .chunks_mut(words)
-                .enumerate()
-                .for_each(|(idx, chunk)| {
-                    let p = input_values[idx];
-                    let input_seed = seed.wrapping_add(idx as u64);
-                    let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                    let packed = bitstream::bernoulli_packed_simd(p, self.length, &mut rng);
-                    chunk.copy_from_slice(&packed);
-                });
-        }
-
-        let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            let n_inputs = self.n_inputs;
-            self.packed_weights_flat
-                .par_chunks_exact(n_inputs * words)
-                .map(|neuron_weights| {
-                    let total =
-                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
-                    total as f64 * self.inv_length
-                })
-                .collect()
-        } else {
-            let n_inputs = self.n_inputs;
-            self.packed_weights_flat
-                .chunks_exact(n_inputs * words)
-                .map(|neuron_weights| {
-                    let total =
-                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
-                    total as f64 * self.inv_length
-                })
-                .collect()
-        };
-
-        Ok(out)
-    }
-
-    /// Forward pass with fused encode+AND+popcount.
-    ///
-    /// This path avoids materializing encoded inputs and consumes each encoded
-    /// word immediately against its corresponding weight words.
-    pub fn forward_fused(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        if input_values.len() != self.n_inputs {
-            return Err(format!(
-                "Expected input of length {}, got {}.",
-                self.n_inputs,
-                input_values.len()
-            ));
-        }
-
-        let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            (0..self.n_neurons)
-                .into_par_iter()
-                .map(|neuron_idx| {
-                    let total: u64 = input_values
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, &p)| {
-                            let input_seed = seed.wrapping_add(input_idx as u64);
-                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                            bitstream::encode_and_popcount(
-                                self.weight_slice(neuron_idx, input_idx),
-                                p,
-                                self.length,
-                                &mut rng,
-                            )
-                        })
-                        .sum();
-                    total as f64 * self.inv_length
-                })
-                .collect()
-        } else {
-            (0..self.n_neurons)
-                .map(|neuron_idx| {
-                    let total: u64 = input_values
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, &p)| {
-                            let input_seed = seed.wrapping_add(input_idx as u64);
-                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                            bitstream::encode_and_popcount(
-                                self.weight_slice(neuron_idx, input_idx),
-                                p,
-                                self.length,
-                                &mut rng,
-                            )
-                        })
-                        .sum();
-                    total as f64 * self.inv_length
-                })
-                .collect()
-        };
-
-        Ok(out)
-    }
-
-    /// Batched forward pass writing into an existing row-major output buffer.
-    ///
-    /// - `inputs_flat`: shape `[n_samples, n_inputs]`
-    /// - `output`: shape `[n_samples, n_neurons]`
-    pub fn forward_batch_into(
-        &self,
-        inputs_flat: &[f64],
-        n_samples: usize,
-        seed: u64,
-        output: &mut [f64],
-    ) -> Result<(), String> {
-        let expected_inputs = n_samples.checked_mul(self.n_inputs).ok_or_else(|| {
-            "Input size overflow when validating n_samples * n_inputs.".to_string()
-        })?;
-        if inputs_flat.len() != expected_inputs {
-            return Err(format!(
-                "Expected {} values ({}×{}), got {}.",
-                expected_inputs,
-                n_samples,
-                self.n_inputs,
-                inputs_flat.len()
-            ));
-        }
-
-        let expected_outputs = n_samples.checked_mul(self.n_neurons).ok_or_else(|| {
-            "Output size overflow when validating n_samples * n_neurons.".to_string()
-        })?;
-        if output.len() != expected_outputs {
-            return Err(format!(
-                "Expected output length {} ({}×{}), got {}.",
-                expected_outputs,
-                n_samples,
-                self.n_neurons,
-                output.len()
-            ));
-        }
-
-        output
-            .par_chunks_mut(self.n_neurons)
-            .enumerate()
-            .for_each(|(sample_idx, out_row)| {
-                let start = sample_idx * self.n_inputs;
-                let end = start + self.n_inputs;
-                let input_row = &inputs_flat[start..end];
-                let sample_seed = seed.wrapping_add((sample_idx as u64).wrapping_mul(1_000_000));
-
-                if let Ok(res) = self.forward_fast(input_row, sample_seed) {
-                    out_row.copy_from_slice(&res);
-                }
-            });
-
-        Ok(())
-    }
-
-    /// Batched forward pass: process N input vectors in one call.
-    ///
-    /// `inputs_flat` is row-major: `[n_samples, n_inputs]`.
-    /// Returns flat output: `[n_samples, n_neurons]`.
-    pub fn forward_batch(
-        &self,
-        inputs_flat: &[f64],
-        n_samples: usize,
-        seed: u64,
-    ) -> Result<Vec<f64>, String> {
-        let output_len = n_samples.checked_mul(self.n_neurons).ok_or_else(|| {
-            "Output size overflow when allocating n_samples * n_neurons.".to_string()
-        })?;
-        let mut output = vec![0.0_f64; output_len];
-        self.forward_batch_into(inputs_flat, n_samples, seed, &mut output)?;
-        Ok(output)
-    }
-
-    /// Forward pass with pre-packed input bitstreams.
-    ///
-    /// `packed_inputs` must have shape:
-    /// - outer length = `n_inputs`
-    /// - inner length = `ceil(length / 64)`
-    pub fn forward_prepacked(&self, packed_inputs: &[Vec<u64>]) -> Result<Vec<f64>, String> {
-        if packed_inputs.len() != self.n_inputs {
-            return Err(format!(
-                "Expected {} packed inputs, got {}.",
-                self.n_inputs,
-                packed_inputs.len()
-            ));
-        }
-        let expected_words = self.length.div_ceil(64);
-        for (idx, pi) in packed_inputs.iter().enumerate() {
-            if pi.len() != expected_words {
-                return Err(format!(
-                    "Packed input {} has {} words, expected {}.",
-                    idx,
-                    pi.len(),
-                    expected_words
-                ));
-            }
-        }
-
-        let out = (0..self.n_neurons)
-            .into_par_iter()
-            .map(|neuron_idx| {
-                let total: u64 = packed_inputs
+                    ChaCha8Rng::seed_from_u64(self.weight_seed.wrapping_add(neuron as u64));
+                for (probability, words) in weights[neuron]
                     .iter()
-                    .enumerate()
-                    .map(|(input_idx, input_words)| {
-                        simd::fused_and_popcount_dispatch(
-                            self.weight_slice(neuron_idx, input_idx),
-                            input_words,
-                        )
-                    })
-                    .sum();
-                total as f64 * self.inv_length
-            })
-            .collect();
-
-        Ok(out)
-    }
-
-    /// Forward pass with pre-packed inputs from a 2-D contiguous array.
-    ///
-    /// `packed_flat` is a flat row-major buffer of shape `[n_inputs, words]`.
-    /// Each row is one input's packed bitstream words.
-    pub fn forward_prepacked_2d(
-        &self,
-        packed_flat: &[u64],
-        n_inputs: usize,
-        words: usize,
-    ) -> Result<Vec<f64>, String> {
-        if n_inputs != self.n_inputs {
-            return Err(format!(
-                "Expected {} packed inputs, got {}.",
-                self.n_inputs, n_inputs
-            ));
-        }
-        let expected_words = self.length.div_ceil(64);
-        if words != expected_words {
-            return Err(format!(
-                "Expected {} words per input, got {}.",
-                expected_words, words
-            ));
-        }
-        if packed_flat.len() != n_inputs * words {
-            return Err(format!(
-                "Flat buffer length {} != n_inputs({}) * words({}).",
-                packed_flat.len(),
-                n_inputs,
-                words
-            ));
-        }
-
-        let out = (0..self.n_neurons)
-            .into_par_iter()
-            .map(|neuron_idx| {
-                let total: u64 = (0..self.n_inputs)
-                    .map(|input_idx| {
-                        let row_start = input_idx * words;
-                        let input_words = &packed_flat[row_start..row_start + words];
-                        simd::fused_and_popcount_dispatch(
-                            self.weight_slice(neuron_idx, input_idx),
-                            input_words,
-                        )
-                    })
-                    .sum();
-                total as f64 * self.inv_length
-            })
-            .collect();
-
-        Ok(out)
-    }
-
-    /// Single-call dense forward with parallel Bernoulli encoding.
-    ///
-    /// This mirrors `forward_fast` and exists for numpy-native Python bindings.
-    pub fn forward_numpy_inner(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        self.forward_fast(input_values, seed)
+                    .zip(row.chunks_mut(self.words_per_input))
+                {
+                    bitstream::bernoulli_packed_simd_into(
+                        *probability,
+                        self.length,
+                        &mut rng,
+                        words,
+                    )
+                    .map_err(|message| DenseLayerError::Invalid(message.into()))?;
+                }
+                Ok::<(), DenseLayerError>(())
+            })?;
+        Ok(packed)
     }
 }
 
@@ -504,8 +244,70 @@ mod tests {
     use rand::SeedableRng;
     use rand_chacha::ChaCha8Rng;
 
-    use super::DenseLayer;
+    use super::{DenseLayer, DenseLayerError};
     use crate::bitstream;
+
+    /// Keep caller storage intact on malformed internal output and permit retry.
+    #[test]
+    fn owned_fast_output_refusal_preserves_surrounding_storage_and_retry() {
+        let mut layer = DenseLayer::new(2, 2, 65, 24301);
+        let weights = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
+        layer.set_weights(weights.clone()).unwrap();
+        let packed = layer.packed_weights_flat().to_vec();
+        for length in [0, 1, 3, 4] {
+            let mut storage = [17.0; 6];
+            assert_eq!(
+                layer
+                    .validate_inputs(&[1.0, 0.0])
+                    .unwrap()
+                    .try_forward_fast_into(42, &mut storage[1..1 + length]),
+                Err(DenseLayerError::Invalid(format!(
+                    "Expected output length 2, got {length}."
+                )))
+            );
+            assert_eq!(storage, [17.0; 6]);
+            layer
+                .validate_inputs(&[1.0, 0.0])
+                .unwrap()
+                .try_forward_fast_into(42, &mut storage[1..3])
+                .unwrap();
+            assert_eq!(storage, [17.0, 1.0, 0.0, 17.0, 17.0, 17.0]);
+            assert_eq!(layer.get_weights(), weights);
+            assert_eq!(layer.packed_weights_flat(), packed);
+        }
+    }
+
+    /// Refuse malformed packed output before writes and retain borrowed packed input.
+    #[test]
+    fn owned_prepacked_output_refusal_preserves_input_storage_and_retry() {
+        let mut layer = DenseLayer::new(2, 2, 65, 24301);
+        let weights = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
+        layer.set_weights(weights.clone()).unwrap();
+        let inputs = [u64::MAX, 1, 0, 0];
+        let packed = layer.packed_weights_flat().to_vec();
+        for length in [0, 1, 3, 4] {
+            let mut storage = [23.0; 6];
+            assert_eq!(
+                layer
+                    .validate_prepacked_2d(&inputs, 2, 2)
+                    .unwrap()
+                    .try_forward_into(&mut storage[1..1 + length]),
+                Err(DenseLayerError::Invalid(format!(
+                    "Expected output length 2, got {length}."
+                )))
+            );
+            assert_eq!(storage, [23.0; 6]);
+            layer
+                .validate_prepacked_2d(&inputs, 2, 2)
+                .unwrap()
+                .try_forward_into(&mut storage[1..3])
+                .unwrap();
+            assert_eq!(storage, [23.0, 1.0, 0.0, 23.0, 23.0, 23.0]);
+            assert_eq!(inputs, [u64::MAX, 1, 0, 0]);
+            assert_eq!(layer.get_weights(), weights);
+            assert_eq!(layer.packed_weights_flat(), packed);
+        }
+    }
 
     #[test]
     fn flat_weight_roundtrip() {

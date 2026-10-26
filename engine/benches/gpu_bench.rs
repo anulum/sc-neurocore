@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — GPU and CPU measured comparisons
 
 //! GPU vs CPU benchmark comparison for DenseLayer forward pass and LIF batches.
 
@@ -36,15 +38,20 @@ fn bench_gpu_vs_cpu(c: &mut Criterion) {
         );
 
         // GPU benchmark.
-        if let Some(gpu_layer) = GpuDenseLayer::try_new(n_inputs, n_neurons, length, seed, 1) {
-            group.bench_with_input(
-                BenchmarkId::new("gpu", format!("{n_inputs}x{n_neurons}")),
-                &inputs,
-                |b, inp| {
-                    b.iter(|| gpu_layer.forward_gpu(inp, seed));
-                },
-            );
-        }
+        let gpu_layer = GpuDenseLayer::try_new_checked(n_inputs, n_neurons, length, seed, 1)
+            .expect("GPU dense benchmark construction failed")
+            .expect("GPU dense benchmarks require a physical GPU");
+        group.bench_with_input(
+            BenchmarkId::new("gpu", format!("{n_inputs}x{n_neurons}")),
+            &inputs,
+            |b, inp| {
+                b.iter(|| {
+                    gpu_layer
+                        .try_forward_gpu(inp, seed)
+                        .expect("GPU dense inference failed")
+                });
+            },
+        );
     }
 
     group.finish();
@@ -72,11 +79,16 @@ fn bench_gpu_batch(c: &mut Criterion) {
         });
 
         // GPU batch.
-        if let Some(gpu_layer) = GpuDenseLayer::try_new(n_inputs, n_neurons, length, seed, batch) {
-            group.bench_with_input(BenchmarkId::new("gpu", batch), &inputs, |b, inp| {
-                b.iter(|| gpu_layer.forward_batch_gpu(inp, batch, seed));
+        let gpu_layer = GpuDenseLayer::try_new_checked(n_inputs, n_neurons, length, seed, batch)
+            .expect("GPU dense benchmark construction failed")
+            .expect("GPU dense benchmarks require a physical GPU");
+        group.bench_with_input(BenchmarkId::new("gpu", batch), &inputs, |b, inp| {
+            b.iter(|| {
+                gpu_layer
+                    .try_forward_batch_gpu(inp, batch, seed)
+                    .expect("GPU dense inference failed")
             });
-        }
+        });
     }
 
     group.finish();
