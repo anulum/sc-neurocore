@@ -547,6 +547,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   unavailable. Show constructor fields as read-only and continue rejecting
   simulation requests whose clock cannot be verified.
 
+- Preserve integer seed text across Studio saves, reopened workspaces and
+  exports. Bind simulations to admitted constructor parameters and model
+  timebases.
+
+- Gate Python package publication and releases on browser replay against an
+  isolated installed Studio wheel. Use the same installed interpreter for
+  downloaded replay packs and retain browser evidence.
+
+- Preserve exact integer constructor parameters through Studio model requests
+  and report oversized floating-point inputs as field errors. Reload model
+  metadata before running saved inputs and keep floating parameter controls
+  continuous.
+
+- Clarify v2 replay-pack state samples and the retained v1 digest-only
+  comparison contract.
+
+- Report browser session save and delete failures beside the session list.
+  Keep page changes usable after storage refuses a write, explain reload
+  behaviour and distinguish browser sessions from saved server projects.
+
 - Reject oversized GPU LIF and Izhikevich batch outputs before buffer creation
   or dispatch. Return recoverable exceptions for storage, shader-index and
   workgroup limits while preserving accepted trajectories and empty shapes.
@@ -580,6 +600,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   forwards before submission. Rejected shapes keep packed weights intact.
   GPU-feature wheels re-export `GpuDenseLayer`, `GpuLifBatch`, `GpuKuramoto`
   and `GpuIzhikevichBatch` from `sc_neurocore_engine`.
+
+- Restore the optimizer bridge's per-layer parameter and result descriptions
+  lost during wrapper extraction.
 
 - Align candidate API and symbolic comparison tests with equation admission:
   reject unavailable attributes and module-qualified calls before simulation,
