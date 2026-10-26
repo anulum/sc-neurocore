@@ -700,9 +700,9 @@ fastjsonschema==2.22.2 \
     --hash=sha256:0fb3915616adac85ccfdd737d26be1089845d2019819505b42d39888458f74d4 \
     --hash=sha256:72064e12356a7d6ef02165be2946b9abadbdf238536e07eb587e3dbaa33099cf
     # via nbformat
-filelock==3.32.7 \
-    --hash=sha256:37b8a3d9811b0f9aef7e5ec5c71bb320de52df51e6ca9bcd6f5ad81187660da7 \
-    --hash=sha256:65ff0d0190ea42038b32bda4b77834fb05be2cad4c5b9b01aa4dfb3614536e52
+filelock==4.2.4 \
+    --hash=sha256:301241438c57936ef93f4243a94f2559022268bfcf9b375a9a72eb0f8db8358e \
+    --hash=sha256:c6d8663535e1650ee430507b4ffbac7b464dd64b7647ea0112a9f406499d163d
     # via
     #   juliapkg
     #   sc-neurocore (pyproject.toml)
@@ -958,9 +958,9 @@ juliacall==0.9.36 \
     --hash=sha256:75abfe60fffc48161f5b4b3619ee0e2299df75c738aa88da4302ec718c6c9c7d \
     --hash=sha256:9dc27dbe9da5a78e8d402ffebe0470708ebca4b5fcf7890017819e7dc1a2b85b
     # via sc-neurocore (pyproject.toml)
-juliapkg==0.1.27 \
-    --hash=sha256:89cbdc56030f3de82c26bc84e2c0e99740675b6c14a746585522b84f52c47e08 \
-    --hash=sha256:c2f6c53a65a4f4a1c124db8400ad48c9f142b2def67b2db86703f0cedc42c150
+juliapkg==0.1.28 \
+    --hash=sha256:24f3ca545263e090f57521f47900bbb94ee7ebc9d91c55c82e4148aaf1b58e36 \
+    --hash=sha256:e09640eb5d3465eda0ea40fda912048cc06f34e1a3880eb9e46f4e2c836d8d48
     # via juliacall
 jupyter==1.1.1 \
     --hash=sha256:7a59533c22af65439b24bbe60373a4e95af8f16ac65a6c00820ad378e3f7cc83 \
@@ -2613,9 +2613,9 @@ pip==26.2.1 \
     # via
     #   -r requirements/workstation.in
     #   pip-tools
-setuptools==84.0.0 \
-    --hash=sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670 \
-    --hash=sha256:f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73
+setuptools==84.2.1 \
+    --hash=sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc \
+    --hash=sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2
     # via
     #   -r requirements/build.in
     #   pip-tools
