@@ -1417,10 +1417,12 @@ input[type="range"]::-moz-range-thumb {
 
 /* The React Flow attribution stays visible (hiding it is reserved for its Pro
    subscribers), in the Studio's own colours: its default grey on a light grey
-   plate measured 1.25:1 against the 4.5:1 text threshold. */
-.react-flow__attribution {
+   plate measured 1.25:1 against the 4.5:1 text threshold. The canvas loads
+   React Flow's stylesheet in a lazy chunk, after this file, so these rules
+   must outrank its equal selectors by specificity, not by source order. */
+.react-flow .react-flow__attribution {
   background: var(--bg-secondary);
 }
-.react-flow__attribution a {
+.react-flow .react-flow__attribution a {
   color: var(--text-secondary);
 }
