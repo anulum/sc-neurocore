@@ -210,7 +210,9 @@ bcm_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="tor
 # ... standard cross-entropy loss.backward() loop
 
 # 2. Deploy natively to SC-NeuroCore hardware limits
-exascale_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="rust", weight=bcm_layer.weights.detach().numpy())
+exascale_layer = create_plasticity_layer(
+    count=128, rule_type=RULE_STDP, backend="rust", weight=bcm_layer.weights.detach().numpy()
+)
 exascale_layer.save("hw_layer.scal")
 ```
 See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`](examples/zenith_hybrid_resnet.py).
@@ -500,22 +502,37 @@ graph TD
 ```python
 from sc_neurocore import (
     # Neurons
-    StochasticLIFNeuron, FixedPointLIFNeuron, FixedPointLFSR,
-    FixedPointBitstreamEncoder, HomeostaticLIFNeuron,
-    StochasticDendriticNeuron, SCIzhikevichNeuron,
+    StochasticLIFNeuron,
+    FixedPointLIFNeuron,
+    FixedPointLFSR,
+    FixedPointBitstreamEncoder,
+    HomeostaticLIFNeuron,
+    StochasticDendriticNeuron,
+    SCIzhikevichNeuron,
     # Synapses
-    BitstreamSynapse, BitstreamDotProduct,
-    StochasticSTDPSynapse, RewardModulatedSTDPSynapse,
+    BitstreamSynapse,
+    BitstreamDotProduct,
+    StochasticSTDPSynapse,
+    RewardModulatedSTDPSynapse,
     # Layers
-    SCDenseLayer, SCConv2DLayer, SCLearningLayer,
-    VectorizedSCLayer, SCRecurrentLayer, MemristiveDenseLayer,
-    SCFusionLayer, StochasticAttention,
+    SCDenseLayer,
+    SCConv2DLayer,
+    SCLearningLayer,
+    VectorizedSCLayer,
+    SCRecurrentLayer,
+    MemristiveDenseLayer,
+    SCFusionLayer,
+    StochasticAttention,
     # Utilities
-    BitstreamEncoder, BitstreamAverager, RNG,
-    generate_bernoulli_bitstream, generate_sobol_bitstream,
+    BitstreamEncoder,
+    BitstreamAverager,
+    RNG,
+    generate_bernoulli_bitstream,
+    generate_sobol_bitstream,
     bitstream_to_probability,
     # Sources & Recorders
-    BitstreamCurrentSource, BitstreamSpikeRecorder,
+    BitstreamCurrentSource,
+    BitstreamSpikeRecorder,
 )
 ```
 
