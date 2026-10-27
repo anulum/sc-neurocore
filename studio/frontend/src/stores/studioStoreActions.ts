@@ -414,6 +414,8 @@ export function createStudioStoreActions(
   let trainingSelectionVersion = 0;
   let trainingListVersion = 0;
   let modelSelectionVersion = 0;
+  let modelsLoadVersion = 0;
+  let presetsLoadVersion = 0;
 
   /** Fetch restored model metadata without replacing saved inputs with catalogue defaults. */
   const runRestoredExperiment = (): void => {
@@ -829,12 +831,38 @@ export function createStudioStoreActions(
     }
   },
   loadModels: async () => {
-    const models = await fetchModels();
-    set(modelsLoadedState(models));
-    const firstModel = models[0];
-    if (firstModel !== undefined && !get().selectedModelName) await get().selectModel(firstModel.name);
+    const version = ++modelsLoadVersion;
+    let selectionVersion: number | null = null;
+    try {
+      const models = await fetchModels();
+      if (version !== modelsLoadVersion) return;
+      const state = get();
+      set({ ...modelsLoadedState(models), modelsError: null });
+      const firstModel = models[0];
+      if (firstModel !== undefined && state.sourceMode === "model"
+        && (!state.selectedModelName || (state.modelsError !== null && state.modelDetail === null))) {
+        const selection = get().selectModel(state.selectedModelName || firstModel.name);
+        selectionVersion = modelSelectionVersion;
+        await selection;
+      }
+    } catch (error: unknown) {
+      if (selectionVersion === null
+        ? version === modelsLoadVersion : selectionVersion === modelSelectionVersion) {
+        set({ modelsError: error instanceof Error ? error.message : "Model library initialization failed" });
+      }
+    }
   },
-  loadPresets: async () => { set(presetsLoadedState(await fetchPresets())); },
+  loadPresets: async () => {
+    const version = ++presetsLoadVersion;
+    try {
+      const presets = await fetchPresets();
+      if (version === presetsLoadVersion) set({ ...presetsLoadedState(presets), presetsError: null });
+    } catch (error: unknown) {
+      if (version === presetsLoadVersion) {
+        set({ presetsError: error instanceof Error ? error.message : "Experiment library load failed" });
+      }
+    }
+  },
 
   selectTemplate: (name) => {
     const template = get().templates.find((candidate) => candidate.name === name);

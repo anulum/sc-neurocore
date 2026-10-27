@@ -6,22 +6,26 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — federated Studio panel entry
 
-import { loader } from "@monaco-editor/react";
-import App from "./App";
+import { lazy, Suspense } from "react";
+import HostedStudioPanel from "./HostedStudioPanel";
 import "./index.css";
 
-const editorPath = `${import.meta.env.BASE_URL}vs`;
-loader.config({ paths: { vs: new URL(editorPath, import.meta.url).href } });
+const StandaloneStudioPanel = lazy(() => import("./StandaloneStudioPanel"));
 
 /**
- * The Studio's entry component, for standalone and federated hosts alike.
+ * Mount a read-only hosted view in an iframe, or the standalone workspace.
  *
- * It exists so the federation boundary has one stable export to name, and it
- * carries the stylesheet import so a federated host gets the Studio's styles
- * by mounting it rather than by knowing to load them.
+ * Embedded panels never import the backend workspace, editor or store. Host
+ * metadata cannot enable computation; installed-backend integration requires
+ * its separate host capability contract.
  *
- * @returns The Studio shell.
+ * @returns The hosted view or the standalone Studio workspace.
  */
 export default function SnnStudioPanel() {
-  return <App />;
+  if (window.parent !== window) return <HostedStudioPanel />;
+  return (
+    <Suspense fallback={<p role="status">Loading SC-NeuroCore Studio…</p>}>
+      <StandaloneStudioPanel />
+    </Suspense>
+  );
 }

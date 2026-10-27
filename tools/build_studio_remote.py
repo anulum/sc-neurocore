@@ -26,6 +26,8 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+from dataclasses import replace
+from inspect import signature
 from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[1]
@@ -94,7 +96,7 @@ def _write_archive(path: Path, files: dict[str, bytes]) -> None:
             archive.addfile(member, io.BytesIO(data))
 
 
-def build_bundle(frontend_dist: Path, output_dir: Path) -> Path:
+def build_bundle(frontend_dist: Path, output_dir: Path, *, local_host: bool = False) -> Path:
     """Write verified UI bytes and their producer manifest into a new release directory.
 
     Parameters
@@ -105,6 +107,10 @@ def build_bundle(frontend_dist: Path, output_dir: Path) -> Path:
     output_dir
         New destination for the archive and deploy descriptor. Existing output
         is never replaced. Temporary snapshots stay beside this destination.
+    local_host
+        Emit the own relative ``/studios/sc-neurocore/remoteEntry.js`` path
+        with an integrity pin over these frozen entry bytes. False retains
+        the published absolute URL. This selects metadata, not host admission.
 
     Returns
     -------
@@ -116,12 +122,12 @@ def build_bundle(frontend_dist: Path, output_dir: Path) -> Path:
     ------
     StudioBundleRefusal
         If the frontend is invalid, federation verification fails or the
-        destination already exists.
+        destination already exists, or the SDK lacks local entry-digest support.
     OSError
         If the filesystem cannot read inputs or finish the output.
     """
     try:
-        from sc_neurocore.federation.manifest import build_manifest
+        from sc_neurocore.federation.manifest import STUDIO_UI, build_manifest
         from tools.emit_studio_manifest import render
     except ImportError as exc:
         raise StudioBundleRefusal(
@@ -133,8 +139,21 @@ def build_bundle(frontend_dist: Path, output_dir: Path) -> Path:
             "Output directory already exists; choose a new release directory."
         )
     files = _frontend_files(frontend_dist)
-    manifest = build_manifest()
-    manifest_bytes = render().encode("utf-8")
+    if local_host and "remote_entry_digest" not in signature(type(STUDIO_UI)).parameters:
+        raise StudioBundleRefusal(
+            "Local-host bundles require a federation SDK with UI entry digest support."
+        )
+    ui_module = (
+        replace(
+            STUDIO_UI,
+            remote_entry="/studios/sc-neurocore/remoteEntry.js",
+            remote_entry_digest="sha256:" + hashlib.sha256(files["remoteEntry.js"]).hexdigest(),
+        )
+        if local_host
+        else STUDIO_UI
+    )
+    manifest = build_manifest(ui_module=ui_module)
+    manifest_bytes = render(manifest=manifest).encode("utf-8")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".studio-remote-", dir=output_dir.parent) as temporary:
         stage = Path(temporary)
@@ -195,9 +214,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else "")
     parser.add_argument("--frontend-dist", type=Path, default=_FRONTEND / "dist")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--local-host",
+        action="store_true",
+        help="Use the own relative remote entry with a digest pin for a local host.",
+    )
     args = parser.parse_args(argv)
     try:
-        descriptor = build_bundle(args.frontend_dist, args.output_dir)
+        descriptor = build_bundle(args.frontend_dist, args.output_dir, local_host=args.local_host)
     except StudioBundleRefusal as exc:
         print(str(exc))
         return 2

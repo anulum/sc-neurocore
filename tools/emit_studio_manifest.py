@@ -27,6 +27,8 @@ import sys
 from pathlib import Path
 from typing import Any, Protocol, cast
 
+from scpn_studio_platform.manifest import CapabilityManifest
+
 from sc_neurocore.federation.manifest import build_manifest
 
 _ARTIFACT = Path(__file__).resolve().parents[1] / "docs" / "_generated" / "studio_manifest.json"
@@ -65,8 +67,14 @@ def _normalise_env_dependent_fields(payload: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
-def render() -> str:
+def render(*, manifest: CapabilityManifest | None = None) -> str:
     """Return the deterministic Studio federation envelope JSON.
+
+    Parameters
+    ----------
+    manifest
+        Exact producer manifest to serialise, including a selected local UI
+        contract. Omission uses the published default. No host overlay is applied.
 
     Returns
     -------
@@ -76,7 +84,7 @@ def render() -> str:
         newline.
     """
     payload = {
-        "schema_a": build_manifest().to_dict(),
+        "schema_a": (build_manifest() if manifest is None else manifest).to_dict(),
         "architecture_map": build_architecture_map_extension(),
     }
     return json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n"

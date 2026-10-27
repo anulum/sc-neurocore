@@ -10,7 +10,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "module-federation-host.spec.ts",
+  testMatch: ["module-federation-host.spec.ts", "module-federation-opaque.spec.ts"],
   timeout: 60_000,
   expect: {
     timeout: 15_000,

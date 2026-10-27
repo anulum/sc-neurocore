@@ -22130,12 +22130,18 @@ ValueError
 
 ## Module `federation.manifest`
 
-### Function `declared_surface()`
+### Function `declared_surface(*, ui_module)`
 Return the content-addressable declared surface of the SC-NeuroCore studio.
 
 The surface is the canonical JSON of each advertised verb, the evidence
 schema list and the UI module, keyed by a stable logical path. Hashing surface
 *content* (not git state) makes the digest reproducible across checkouts.
+
+Parameters
+----------
+ui_module
+    Producer-selected UI descriptor. Local entry paths and integrity pins
+    are included in the declared digest, just like the published URL.
 
 Returns
 -------
@@ -22143,7 +22149,7 @@ dict&#91;str, bytes&#93;
     Mapping of logical path to canonical-JSON bytes, suitable for
     :func:`scpn_studio_platform.manifest.content_digest`.
 
-### Function `build_manifest(*, studio_version)`
+### Function `build_manifest(*, studio_version, ui_module)`
 Build the SC-NeuroCore studio's capability manifest.
 
 Parameters
@@ -22151,6 +22157,9 @@ Parameters
 studio_version
     The studio version to stamp; defaults to :data:`STUDIO_VERSION` (the
     source ``sc-neurocore`` version).
+ui_module
+    Producer-selected UI descriptor. Defaults to the published remote;
+    its full wire representation contributes to the content digest.
 
 Returns
 -------

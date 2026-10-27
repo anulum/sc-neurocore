@@ -31,6 +31,7 @@ export const studioInitialData = {
   // previous C = 1 put v_inf at +35 mV and fired about 590 Hz at 10.
   odeParams: { E_L: -65, tau_m: 20, C: 10 },
   odeInit: { v: -65 },
+  modelsError: null, presetsError: null,
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   modelIntegrator: "", modelQFormat: "Q8.8",
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,

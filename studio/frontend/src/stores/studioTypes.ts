@@ -67,6 +67,8 @@ export interface StudioState {
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
   models: ModelSummary[];
+  /** Last catalogue or initial model-detail failure; cleared after a successful retry. */
+  modelsError: string | null;
   selectedModelName: string;
   modelDetail: ModelDetail | null;
   modelParams: ModelParameters;
@@ -107,6 +109,8 @@ export interface StudioState {
   auditError: string | null;
   templates: NeuronTemplate[];
   presets: PresetSummary[];
+  /** Preset-list failure, independent of model loading and simulation. */
+  presetsError: string | null;
   dt: number;
   duration: number;
   current: number;

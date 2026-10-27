@@ -551,11 +551,23 @@ export default function App() {
           ({s.capabilitiesError}). Controls that need the server stay disabled
           until it answers.{" "}
           <button type="button" className="btn-simulate btn btn--ghost"
-            onClick={() => { void loadCapabilities(); void loadOperatorStatus(); void s.loadModels(); }}>
+            onClick={() => { void loadCapabilities(); void loadOperatorStatus(); void s.loadModels(); void loadPresets(); }}>
             Retry
           </button>
         </div>
       )}
+      {[
+        { label: "Model library", error: s.modelsError, retry: s.loadModels },
+        { label: "Experiment library", error: s.presetsError, retry: loadPresets },
+      ].map(({ label, error, retry }) => error !== null && (
+        <div className="error-banner" role="alert" key={label}>
+          {label} could not be initialized ({error}). Previously loaded entries may be out of date.{" "}
+          <button type="button" className="btn-simulate btn btn--ghost"
+            aria-label={`Retry ${label.toLowerCase()}`} onClick={() => { void retry(); }}>
+            Retry
+          </button>
+        </div>
+      ))}
       {s.linkNotice !== null && (
         <div className="error-banner" role="alert" data-testid="link-notice">
           {s.linkNotice}{" "}

@@ -1,6 +1,7 @@
 {
   "// note": "Type-aware linting needs a project that contains every file the lint scope reaches. `src` is covered by tsconfig.json; everything outside it is listed here. The lint scope is now every .ts/.tsx in the package, so a new file outside `src` belongs in this list.",
   "extends": "./tsconfig.json",
+  "compilerOptions": { "resolveJsonModule": true },
   "include": [
     "e2e/admin-operator-audit-archive.spec.ts",
     "e2e/admin-operator-capabilities.spec.ts",
@@ -14,6 +15,8 @@
     "e2e/catalogue-to-silicon-live.spec.ts",
     "e2e/experiment-export-live.spec.ts",
     "e2e/federation-host/main.tsx",
+    "e2e/federation-host/opaque.ts",
+    "e2e/module-federation-opaque.spec.ts",
     "e2e/fit-live.spec.ts",
     "e2e/federation-host/vite.config.ts",
     "e2e/guided-flow-truth-live.spec.ts",

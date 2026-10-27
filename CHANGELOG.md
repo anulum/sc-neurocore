@@ -12,6 +12,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Show a read-only hosted view when the federated Studio panel is mounted in an
+  iframe. It asks only its immediate parent for the Hub's `federation:config`
+  metadata, offers a retry after refusal, invalid data or a five-second timeout,
+  and makes no backend, WebSocket or browser-storage requests. A top-level host
+  still mounts the standalone workspace, now loaded as a separate chunk.
+
+- Report model-library and experiment-library load failures in separate alerts
+  with their own Retry buttons. Previously loaded entries stay visible, and an
+  older response can no longer overwrite a newer successful load.
+
+- Add `--local-host` to `tools.build_studio_remote`. It selects the producer's
+  relative remote entry and pins its bytes with `remote_entry_digest`, and the
+  selected UI descriptor contributes to the manifest content digest. The default
+  bundle keeps the published URL. Neither mode establishes host admission.
+
 - Keep the desktop window's closing state when Chromium reports a renderer loss
   after the close began. The window stops listening for renderer loss as soon as
   it replaces the interface, instead of depending on whether the page is deleted

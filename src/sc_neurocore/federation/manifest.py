@@ -74,12 +74,18 @@ STUDIO_VERSION = _resolve_studio_version()
 """The SC-NeuroCore studio version this manifest stamps (source package version)."""
 
 
-def declared_surface() -> dict[str, bytes]:
+def declared_surface(*, ui_module: UiModule = STUDIO_UI) -> dict[str, bytes]:
     """Return the content-addressable declared surface of the SC-NeuroCore studio.
 
     The surface is the canonical JSON of each advertised verb, the evidence
     schema list and the UI module, keyed by a stable logical path. Hashing surface
     *content* (not git state) makes the digest reproducible across checkouts.
+
+    Parameters
+    ----------
+    ui_module
+        Producer-selected UI descriptor. Local entry paths and integrity pins
+        are included in the declared digest, just like the published URL.
 
     Returns
     -------
@@ -97,12 +103,14 @@ def declared_surface() -> dict[str, bytes]:
         list(evidence_schemas()), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     surface["ui/module"] = json.dumps(
-        STUDIO_UI.to_dict(), sort_keys=True, separators=(",", ":")
+        ui_module.to_dict(), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return surface
 
 
-def build_manifest(*, studio_version: str = STUDIO_VERSION) -> CapabilityManifest:
+def build_manifest(
+    *, studio_version: str = STUDIO_VERSION, ui_module: UiModule = STUDIO_UI
+) -> CapabilityManifest:
     """Build the SC-NeuroCore studio's capability manifest.
 
     Parameters
@@ -110,6 +118,9 @@ def build_manifest(*, studio_version: str = STUDIO_VERSION) -> CapabilityManifes
     studio_version
         The studio version to stamp; defaults to :data:`STUDIO_VERSION` (the
         source ``sc-neurocore`` version).
+    ui_module
+        Producer-selected UI descriptor. Defaults to the published remote;
+        its full wire representation contributes to the content digest.
 
     Returns
     -------
@@ -121,10 +132,10 @@ def build_manifest(*, studio_version: str = STUDIO_VERSION) -> CapabilityManifes
         studio=STUDIO_ID,
         studio_version=studio_version,
         platform_sdk=PLATFORM_SDK_RANGE,
-        content_digest=content_digest(declared_surface()),
+        content_digest=content_digest(declared_surface(ui_module=ui_module)),
         protocol_version=PROTOCOL_VERSION,
         transport_profile=TransportProfile.LOCAL_FIRST,
         verbs=NEUROCORE_VERBS,
         evidence_types=evidence_schemas(),
-        ui_module=STUDIO_UI,
+        ui_module=ui_module,
     )

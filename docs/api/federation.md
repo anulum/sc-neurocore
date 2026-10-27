@@ -51,9 +51,14 @@ python tools/emit_studio_manifest.py
 python tools/emit_studio_manifest.py --check
 ```
 
-The digest covers the declared verbs and evidence schemas, not the current git
-state, so the manifest is stable across checkouts with the same federation
-surface.
+The digest covers the declared verbs, evidence schemas and UI module, including
+its selected remote entry and any entry-digest pin. It does not depend on Git
+state. `build_manifest(ui_module=...)` accepts a producer-selected platform
+`UiModule`; `declared_surface(ui_module=...)` hashes that same wire contract.
+The defaults retain the published absolute URL. The local bundle mode described
+in [the Studio guide](../guides/studio.md) selects the own relative entry and
+pins the frozen entry bytes. The host consumes these producer bytes without
+rewriting them; neither form establishes host or installed-backend acceptance.
 
 ## Evidence Bundles
 

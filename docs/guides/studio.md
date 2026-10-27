@@ -1,7 +1,7 @@
 # Visual SNN Design Studio
 
 The Studio is a web-based research workbench for designing, simulating, and
-analysing spiking neurons interactively. It combines 118 built-in neuron models,
+analysing spiking neurons interactively. It combines <!-- count:studio_catalogue_models -->185<!-- /count --> catalogue models,
 custom ODE editing, 15 analysis views, and Verilog RTL generation in a single
 interface.
 
@@ -55,6 +55,13 @@ left-panel section is a readiness panel derived from
 `/api/studio/operator/status`; it turns route-policy, identity, audit, job
 root, runtime-limit, and capability gaps into `ready`, `warning`, and
 `blocked` rows before the operator opens Admin or runs release preflight.
+
+If the model or experiment library cannot load, Studio shows a separate alert
+with a **Retry** button for that library. Previously loaded entries remain
+visible and may be out of date. A successful retry replaces the list and clears
+its alert; retrying the model library also retries an initial model-detail
+request that failed. A library refresh does not switch an equation experiment
+to a catalogue model.
 
 To use a different port:
 
@@ -694,6 +701,21 @@ Build a local pull-deploy candidate after building the frontend:
 python -m tools.build_studio_remote --output-dir dist/studio-remote-candidate
 ```
 
+For an operator-configured local host, select the producer's relative entry:
+
+```bash
+python -m tools.build_studio_remote --local-host --output-dir dist/studio-local-candidate
+```
+
+This mode emits `/studios/sc-neurocore/remoteEntry.js` and a
+`remote_entry_digest` over the frozen entry bytes. The selected descriptor
+contributes to the declared capability digest and is serialised directly into
+the archive; the host does not rewrite it. The default command retains the
+published absolute URL. A federation SDK without UI entry-digest support is
+refused with a fixed diagnostic. This flag does not grant era admission,
+bridge capabilities, backend access or host adoption.
+
+
 The destination must be new. The command snapshots the frontend, runs the same
 Node federation verifier on those bytes, and emits
 `sc-neurocore-studio-remote.tar.gz` plus `studio-deploy.json`. The archive puts
@@ -712,6 +734,26 @@ The v2 manifest requires explicit v2 host admission. The current SCPN Studio
 opaque sandbox has no general compute/storage bridge; full remote-workbench
 execution needs that separately agreed integration. A bundle or local harness
 render does not establish installed-backend host acceptance or rollback.
+
+When `SnnStudioPanel` is mounted inside an iframe, it selects a read-only
+hosted view. It does not import the standalone workspace, Monaco editor or
+application store. It sends only a `federation:config` parent-window bridge
+request and displays the Hub's declared SC-NeuroCore identity, version, era
+and evidence types. Metadata is not a runtime or hardware qualification.
+Only the immediate parent's answer with the matching request id is accepted;
+refusal, malformed data, missing or duplicate studio identities, and a
+five-second timeout produce an unavailable state with a retry. Unmount
+cancels the request and removes its listeners and timer.
+
+Simulation, analysis, training, compilation, co-simulation, synthesis, jobs,
+artefact downloads, the model catalogue, projects, sessions, evidence export,
+authentication and operator controls are explicitly unavailable in that view.
+It performs no backend HTTP, WebSocket or browser-storage operations. A
+successful metadata answer never enables them. The top-level standalone
+application continues to use its configured backend and packaged editor.
+Actual SCPN Studio sandbox admission, the producer's declared bridge capability,
+and host rollback require separate integration evidence. Neither a DOM test
+nor a simple Module Federation harness establishes that acceptance.
 
 Frontend contract tests:
 
@@ -732,6 +774,15 @@ Federation host with the production singleton-share contract. This second
 browser test fails on missing chunks, incorrect public paths, federation-name
 drift, expose drift, duplicate-React hook failures, or a panel that cannot
 render through the host boundary.
+
+The same federation suite also builds its transport fixture and loads the
+production panel inside an `allow-scripts` iframe without `allow-same-origin`.
+It checks the browser's opaque origin, metadata messages and refusal/retry,
+explicitly unavailable workspace controls, no backend HTTP or WebSocket
+requests, and no standalone/editor chunk loading. The fixture uses the
+producer's generated manifest for metadata. These producer transport checks
+remain separate from SCPN Studio host admission, capability declarations,
+rollback and installed-backend acceptance.
 
 The Admin panel loads path-free audit health at startup and can request the
 admin-gated audit export endpoint. Development-preview policy mode can still

@@ -19,9 +19,10 @@ test("the built remote loads its production panel through a real federation host
       remoteResponses.push({ path: url.pathname, status: response.status() });
     }
   });
+  let librariesRestored = false;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/api/models" || path === "/api/presets") {
+    if (librariesRestored && (path === "/api/models" || path === "/api/presets")) {
       await route.fulfill({ contentType: "application/json", json: [], status: 200 });
       return;
     }
@@ -36,6 +37,19 @@ test("the built remote loads its production panel through a real federation host
 
   await expect(page.locator("#root")).toHaveAttribute("data-federation-status", "loaded");
   await expect(page.getByRole("heading", { exact: true, name: "SC-NeuroCore Studio" })).toBeVisible();
+  await expect(page.getByLabel("Save project", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Save session", { exact: true })).toBeVisible();
+  await expect(page.getByText("Hosted view · no backend connected")).toHaveCount(0);
+  await page.getByRole("button", { name: "Skip tour", exact: true }).click();
+  const modelRetry = page.getByRole("button", { name: "Retry model library", exact: true });
+  const presetRetry = page.getByRole("button", { name: "Retry experiment library", exact: true });
+  await expect(modelRetry).toBeVisible();
+  await expect(presetRetry).toBeVisible();
+  librariesRestored = true;
+  await modelRetry.click();
+  await presetRetry.click();
+  await expect(modelRetry).toHaveCount(0);
+  await expect(presetRetry).toHaveCount(0);
   expect(pageErrors).toEqual([]);
   expect(remoteResponses).toContainEqual({
     path: "/studios/sc-neurocore/remoteEntry.js",

@@ -53,8 +53,9 @@ def frontend(tmp_path: Path) -> Path:
     return root
 
 
+@pytest.mark.parametrize("local_host", [False, True])
 def test_cli_bundle_has_exact_root_manifest_and_all_asset_digests(
-    frontend: Path, tmp_path: Path
+    frontend: Path, tmp_path: Path, local_host: bool
 ) -> None:
     """The process CLI emits a platform-admissible manifest and byte-bound archive."""
     from scpn_studio_platform.manifest import validate_studio_manifest
@@ -69,6 +70,7 @@ def test_cli_bundle_has_exact_root_manifest_and_all_asset_digests(
             str(frontend),
             "--output-dir",
             str(output),
+            *(["--local-host"] if local_host else []),
         ],
         capture_output=True,
         text=True,
@@ -99,21 +101,36 @@ def test_cli_bundle_has_exact_root_manifest_and_all_asset_digests(
                 assert validate_studio_manifest(schema_a, supported_eras={"v2"}).admitted
                 assert not validate_studio_manifest(schema_a, supported_eras={"v1"}).admitted
                 assert schema_a["ui_module"]["exposes"] == ["./SnnStudioPanel"]
+                if local_host:
+                    assert (
+                        schema_a["ui_module"]["remote_entry"]
+                        == "/studios/sc-neurocore/remoteEntry.js"
+                    )
+                    assert schema_a["ui_module"]["remote_entry_digest"] == (
+                        "sha256:"
+                        + hashlib.sha256((frontend / "remoteEntry.js").read_bytes()).hexdigest()
+                    )
+                else:
+                    assert schema_a["ui_module"]["remote_entry"] == (
+                        "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js"
+                    )
+                    assert "remote_entry_digest" not in schema_a["ui_module"]
                 assert descriptor["backend_compatibility"]["version"] == schema_a["studio_version"]
             else:
                 assert payload == (frontend / member.name).read_bytes()
 
 
+@pytest.mark.parametrize("local_host", [False, True])
 def test_bundle_is_reproducible_across_locations_and_source_metadata(
-    frontend: Path, tmp_path: Path
+    frontend: Path, tmp_path: Path, local_host: bool
 ) -> None:
     """Source mode, mtime and destination names cannot change the release bytes."""
-    first = build_bundle(frontend, tmp_path / "first")
+    first = build_bundle(frontend, tmp_path / "first", local_host=local_host)
     for path in frontend.rglob("*"):
         os.utime(path, (1700000000, 1700000000))
         if path.is_file():
             path.chmod(0o600)
-    second = build_bundle(frontend, tmp_path / "second")
+    second = build_bundle(frontend, tmp_path / "second", local_host=local_host)
     assert first.read_bytes() == second.read_bytes()
     name = json.loads(first.read_bytes())["bundle_asset"]
     assert (first.parent / name).read_bytes() == (second.parent / name).read_bytes()
@@ -278,3 +295,37 @@ def test_cli_filesystem_failure_has_fixed_diagnostic(
     assert main(["--frontend-dist", str(frontend), "--output-dir", str(parent / "release")]) == 1
     assert capsys.readouterr().out.strip() == "Studio remote bundle could not be written."
     assert parent.read_bytes() == b"retained file"
+
+
+def test_local_entry_pin_changes_with_actual_entry_and_binds_the_capability_surface(
+    frontend: Path, tmp_path: Path
+) -> None:
+    """Local entry pins and declared digests track the entry, not a host-authored overlay."""
+    from sc_neurocore.federation.manifest import build_manifest
+    from tools.emit_studio_manifest import render
+
+    original = json.loads(render())["schema_a"]
+    assert original == build_manifest().to_dict()
+    first = json.loads(
+        build_bundle(frontend, tmp_path / "local-first", local_host=True).read_bytes()
+    )
+    with tarfile.open(tmp_path / "local-first" / first["bundle_asset"]) as archive:
+        stream = archive.extractfile("manifest.json")
+        assert stream is not None
+        initial = json.load(stream)["schema_a"]
+    assert initial["content_digest"] != original["content_digest"]
+    assert initial["content_digest"] == first["backend_compatibility"]["content_digest"]
+    (frontend / "remoteEntry.js").write_text((frontend / "remoteEntry.js").read_text() + "\n")
+    second = json.loads(
+        build_bundle(frontend, tmp_path / "local-second", local_host=True).read_bytes()
+    )
+    with tarfile.open(tmp_path / "local-second" / second["bundle_asset"]) as archive:
+        stream = archive.extractfile("manifest.json")
+        assert stream is not None
+        changed = json.load(stream)["schema_a"]
+    assert (
+        initial["ui_module"]["remote_entry_digest"] != changed["ui_module"]["remote_entry_digest"]
+    )
+    assert initial["content_digest"] != changed["content_digest"]
+    assert initial["studio_version"] == changed["studio_version"]
+    assert json.loads(render())["schema_a"] == original
