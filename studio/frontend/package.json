@@ -33,7 +33,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@module-federation/runtime": "2.9.2",
-    "@module-federation/vite": "1.23.5",
+    "@module-federation/vite": "1.23.6",
     "@playwright/test": "1.64.1",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
