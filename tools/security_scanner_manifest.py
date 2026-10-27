@@ -336,7 +336,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore code quality owner",
         noise="low",
-        pinned_version="ruff==0.17.2",
+        pinned_version="ruff==0.17.3",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
