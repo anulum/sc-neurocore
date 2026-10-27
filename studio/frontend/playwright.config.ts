@@ -20,6 +20,7 @@ export default defineConfig({
     "fit-live.spec.ts",
     "guided-flow-truth-live.spec.ts",
     "module-federation-host.spec.ts",
+    "module-federation-opaque.spec.ts",
     "network-canvas-live.spec.ts",
     "network-notebook-live.spec.ts",
     "notebook-export-live.spec.ts",
