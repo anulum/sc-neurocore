@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Move the evolutionary substrate crate to `sha2` 0.11, which replaces the
+  vulnerable `block-buffer` 0.10.4 with 0.12.1 (GHSA-qwgh-2vcv-g2f7). Genome
+  identifiers are unchanged because the SHA-256 output is the same.
+
 - Show a read-only hosted view when the federated Studio panel is mounted in an
   iframe. It asks only its immediate parent for the Hub's `federation:config`
   metadata, offers a retry after refusal, invalid data or a five-second timeout,
