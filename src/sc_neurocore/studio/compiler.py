@@ -33,8 +33,8 @@ def build_ir_from_equation(
     params = params or {}
     builder = ScGraphBuilder("ode_neuron")
 
-    # Input ports
-    clk = builder.input("clk", "bool")
+    # Input port. The SystemVerilog emitter generates clk and rst_n itself;
+    # the native IR refuses a declared port in that reserved namespace.
     i_ext = builder.input("i_ext", "fixed<16,8>")
 
     # Encode parameters as fixed-point constants

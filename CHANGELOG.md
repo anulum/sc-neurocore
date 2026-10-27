@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Stop declaring a `clk` input in the Studio IR builder. The native IR reserves
+  that name for the ports the SystemVerilog emitter generates, so IR verification
+  and SystemVerilog emission from `/api/ir/build` output were refused.
+
 - Move the evolutionary substrate crate to `sha2` 0.11, which replaces the
   vulnerable `block-buffer` 0.10.4 with 0.12.1 (GHSA-qwgh-2vcv-g2f7). Genome
   identifiers are unchanged because the SHA-256 output is the same.

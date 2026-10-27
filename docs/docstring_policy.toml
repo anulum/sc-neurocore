@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1414
+expected_file_count = 1415
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5791,3 +5791,7 @@ rationale = "Preserve measured shape, dtype, layout and caller-conversion refusa
 [[file]]
 path = "engine/tests/python/test_gpu_dense_layer_engine_binding.py"
 rationale = "The installed GPU-feature wheel must preserve native GPU identities through facade imports and global pickling, propagate dimension and capacity refusals, preserve inputs and permit healthy retries through its public dense methods."
+
+[[file]]
+path = "src/sc_neurocore/studio/compiler.py"
+rationale = "Studio compiler adapters build, verify and emit native IR through the installed engine without declaring ports the emitter reserves."
