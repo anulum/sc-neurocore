@@ -548,7 +548,7 @@ guards — 40+ classes) stays authoritative in Python; only
 `genomic_distance`, `crossover_uniform`, `point_mutation`, and
 `population_diversity` are mirrored elsewhere.
 
-The source-bound schema-v2 comparison was captured on 2026-07-12 via
+The source-bound schema-v2 comparison was captured on 2026-10-27 via
 `benchmarks/bench_evo_substrate_multilang.py`. It interleaves 30 samples per
 backend after two warmups; each sample executes 100 000 calls over 19-D
 Float64 vectors. All five required backends completed. The same non-exclusive,
@@ -556,9 +556,9 @@ loaded-host caveat applies, so the medians below are diagnostic only.
 
 | Kernel (ns/call, dim=19) |    Rust |  Julia |    Go |   Mojo |   Python |
 | ------------------------ | ------: | -----: | ----: | -----: | -------: |
-| `genomic_distance`       |   692.8 |   36.0 |  80.0 |   34.8 | 21 347.4 |
-| `crossover_uniform`      | 1 508.1 |  131.3 | 161.7 |  323.8 |  3 705.1 |
-| `point_mutation`         | 1 205.3 |  707.2 | 176.8 |  328.3 | 12 373.0 |
+| `genomic_distance`       |   292.4 |   21.1 |  28.6 |   47.6 |  6 005.0 |
+| `crossover_uniform`      |   566.6 |  116.3 |  47.8 |  187.6 |  1 146.5 |
+| `point_mutation`         |   520.5 |   26.9 |  51.2 |  200.6 |  4 333.2 |
 
 **How to read this.** Rust includes the PyO3 boundary. Julia, Go, and Mojo are
 standalone kernel processes and are parity references rather than Python-callable
@@ -569,7 +569,7 @@ empty `unavailable` set are committed in
 **From the Python orchestration's perspective**, Rust is the only directly
 accessible compiled kernel because Julia, Go, and Mojo require subprocess
 dispatch. In this loaded diagnostic run, the Rust distance median was about
-30.8 times lower than the Python reference median; this ratio is not a
+20.5 times lower than the Python reference median; this ratio is not a
 production claim.
 
 **Fallback order.** Python callers currently dispatch

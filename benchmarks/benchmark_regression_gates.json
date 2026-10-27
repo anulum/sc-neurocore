@@ -2501,7 +2501,7 @@
       "artefact": "benchmarks/results/bench_evo_substrate_multilang.json",
       "description": "Source-bound Rust, Julia, Go, Mojo, and Python evolutionary-kernel diagnostics.",
       "expected_values": {
-        "measurement_context.concurrent_load_status": "non-exclusive workstation run during the FEC build; one CPU and 2 GiB cgroup limit, lowest scheduling priority",
+        "measurement_context.concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "measurement_context.timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "protocol.dimension": 19,
         "protocol.inner_iterations": 100000,
@@ -2509,7 +2509,7 @@
         "protocol.warmups": 2,
         "schema_version": "sc-neurocore.evo-substrate-multilang-benchmark.v2",
         "source.source_file_count": 33,
-        "source.source_sha256": "d10ced63e4e70b0aa17124b4279b6385b5f8ab78912254619f9ba4f4472855f0",
+        "source.source_sha256": "0938c0685793c4a851155ebf1404712eb49a8c7c22b9ad9117895f2e62056310",
         "unavailable": []
       },
       "id": "evo-substrate-five-language-local-diagnostics",
