@@ -124,6 +124,8 @@ class StudioWindow(QMainWindow):
     def _message(self, text: str) -> None:
         """Display a real startup or process failure state with a close action."""
         if self.view is not None and self._profile is not None:
+            # A renderer loss Chromium has not delivered yet must not replace this state.
+            self.view.page().renderProcessTerminated.disconnect(self._renderer_stopped)
             self.view.destroyed.connect(self._profile.deleteLater)
             self._profile.destroyed.connect(self._browser_disposed)
             self.view = None
@@ -208,9 +210,12 @@ class StudioWindow(QMainWindow):
     def _renderer_stopped(
         self, _status: QWebEnginePage.RenderProcessTerminationStatus, _exit_code: int
     ) -> None:
-        """Retain a visible renderer failure until the owner closes and reaps the backend."""
-        if not self._closing:
-            self._message("The Studio interface stopped. Close and relaunch Studio to recover.")
+        """Retain a visible renderer failure until the owner closes and reaps the backend.
+
+        Only the mounted interface reports here: ``_message`` disconnects this slot when it
+        replaces the view, including at the start of a close.
+        """
+        self._message("The Studio interface stopped. Close and relaunch Studio to recover.")
 
     def _download(self, request: QWebEngineDownloadRequest) -> None:
         """Save actual browser exports only after the user selects their destination."""

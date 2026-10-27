@@ -140,9 +140,7 @@ def test_queued_renderer_loss_does_not_replace_the_native_close_state(
         renderer = page.renderProcessPid()
         assert renderer > 0 and renderer not in (os.getpid(), instance.pid)
         assert b"QtWebEngineProcess" in Path(f"/proc/{renderer}/cmdline").read_bytes()
-        losses: list[int] = []
         disposed: list[bool] = []
-        page.renderProcessTerminated.connect(lambda _status, code: losses.append(code))
         page.destroyed.connect(lambda: disposed.append(True))
 
         def close_before_renderer_notification() -> bool:
@@ -155,12 +153,15 @@ def test_queued_renderer_loss_does_not_replace_the_native_close_state(
             finally:
                 os.close(pidfd)
             window.close()
-            _wait(lambda: bool(losses))
-            assert not _message(window, "The Studio interface stopped.")
             return True
 
+        def closed_without_renderer_failure() -> bool:
+            """Observe every delivery order of the loss and the page's deferred deletion."""
+            assert not _message(window, "The Studio interface stopped.")
+            return not window.isVisible()
+
         _wait(close_before_renderer_notification)
-        _wait(lambda: not window.isVisible())
+        _wait(closed_without_renderer_failure)
         assert disposed and desktop_backend.returncode == 0
         assert config.read_bytes() == original
 

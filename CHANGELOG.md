@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Keep the desktop window's closing state when Chromium reports a renderer loss
+  after the close began. The window stops listening for renderer loss as soon as
+  it replaces the interface, instead of depending on whether the page is deleted
+  before the loss notification arrives.
+
 - Add opt-in compiler v2 `round(x)` with ties to even and `heaviside(x, at_zero)` with a dynamic zero value across Python, generated C/Rust/C++, RTL and native IR/source replay. Fixed-point results saturate to the signed word; strict-unit rounding uses base units. The default `lut-v1` lowering is unchanged.
 
 - Describe the Studio simulation input receipt using its public contract name.
