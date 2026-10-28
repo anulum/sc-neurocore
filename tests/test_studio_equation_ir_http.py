@@ -16,6 +16,11 @@ import unittest
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+
+from tests.engine_requirement import require_engine
+
+require_engine()
+
 from sc_neurocore_engine.ir import ScGraphBuilder
 
 from sc_neurocore.studio.app import create_app

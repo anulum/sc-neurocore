@@ -14,6 +14,10 @@ import json
 import unittest
 from collections.abc import Callable
 
+from tests.engine_requirement import require_engine
+
+require_engine()
+
 from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
 
 from sc_neurocore.studio.equation_ir import (

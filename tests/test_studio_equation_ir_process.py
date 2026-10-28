@@ -18,6 +18,11 @@ import unittest
 from pathlib import Path
 
 from pydantic import ValidationError
+
+from tests.engine_requirement import require_engine
+
+require_engine()
+
 from sc_neurocore_engine.ir import parse_ir
 
 from sc_neurocore.studio.equation_ir import build_equation_ir
