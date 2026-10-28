@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1416
+expected_file_count = 1422
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5799,3 +5799,27 @@ rationale = "The installed GPU-feature wheel must preserve native GPU identities
 [[file]]
 path = "src/sc_neurocore/studio/compiler.py"
 rationale = "Studio compiler adapters build, verify and emit native IR through the installed engine without declaring ports the emitter reserves."
+
+[[file]]
+path = "src/sc_neurocore/compiler/magnitude_function_units.py"
+rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."
+
+[[file]]
+path = "src/sc_neurocore/compiler/magnitude_function_programs.py"
+rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."
+
+[[file]]
+path = "tests/test_magnitude_function_units.py"
+rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."
+
+[[file]]
+path = "tests/test_magnitude_function_programs.py"
+rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."
+
+[[file]]
+path = "tests/test_native_equation_hypot.py"
+rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."
+
+[[file]]
+path = "tests/test_equation_units_hypot.py"
+rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."

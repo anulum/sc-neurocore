@@ -10291,7 +10291,7 @@ data_width, fraction : int
     The format.
 additional_inputs : sequence of int, optional
     Further operands in order: the horizontal coordinate of ``atan2`` or
-    the zero-input value of ``heaviside``.
+    the zero-input value of ``heaviside``, or the second coordinate of ``hypot``.
 
 Returns
 -------
@@ -13274,6 +13274,54 @@ Raises
 ------
 ValueError
     For an unknown function, lowering or an invalid format.
+
+---
+
+## Module `compiler.magnitude_function_programs`
+
+### Function `build_hypot(p, first, second, data_width, fraction)`
+Append an exactly rounded two-coordinate magnitude to an integer program.
+
+Parameters
+----------
+p : Program
+    Destination signed-64-bit program, evaluated by every maintained target.
+first, second : str
+    Input identifiers carrying signed codes of the admitted word format.
+data_width : int
+    Input and output width, at most 32 bits.
+fraction : int
+    Common fractional width; no rescaling is needed before taking the norm.
+
+Returns
+-------
+str
+    Result identifier, rounded to nearest and saturated at the positive
+    signed-word maximum. Clipping each absolute input at that maximum
+    preserves saturation and keeps the sum of squares within signed 64 bits.
+
+---
+
+## Module `compiler.magnitude_function_units`
+
+### Function `hypot_code(first, second, data_width, fraction)`
+Return the saturated, nearest code of a two-coordinate Euclidean norm.
+
+Parameters
+----------
+first, second : int
+    Signed codes admitted by the public function-unit dispatcher.
+data_width : int
+    Width of the signed input and result words.
+fraction : int
+    Shared fractional width; the common scale cancels in code space.
+
+Returns
+-------
+int
+    Nearest integer to ``sqrt(first**2 + second**2)``, capped at the
+    positive signed-word maximum. An exact half-integer square root of
+    an integer is impossible, so the rounding rule has no tie case.
 
 ---
 

@@ -248,10 +248,28 @@ closed rather than attaching an invalid unsigned fixed-point contract to RTL.
 |----------|-----------|
 | Transcendental | `exp`, `log`, `sqrt`, `tanh`, `cosh`, `exprel`, `sigmoid`/`expit`, `sin`, `cos` |
 | Stable activation, angle and discrete functions (v2 only) | `softplus(x)`, `atan2(y, x)`, `round(x)`, `heaviside(x, at_zero)` |
+| Euclidean magnitude (v2 only) | `hypot(x, y)` |
 | Arithmetic | `abs`, `clip(x, lo, hi)`, `max(a, b)`, `min(a, b)` |
 | Polynomial | `x**2` through `x**8` |
 | Operators | `+`, `-`, `*`, `/`, `%` by a finite positive numeric literal, unary `-` |
 | Comparison | `>`, `>=`, `<`, `<=` |
+
+`hypot` takes two finite real coordinates with compatible physical dimensions.
+Strict-units models convert their display units to a common base unit; the
+result preserves that dimension. The fixed-point unit returns the nearest code
+of the Euclidean norm, saturated at the positive signed-word maximum, with a
+declared error of at most half an output LSB against the clipped real norm.
+It uses an integer restoring square root and does not overflow on two
+most-negative input words. Source-bound native IR retains both operands and
+the original unit metadata. Exponential Euler requires a provably nonzero
+coordinate before differentiating a state-dependent norm; it refuses an
+unproven origin rather than inventing a derivative there.
+
+The portable C++ expression uses `std::hypot` when `math_ns="std"`;
+the default HLS namespace maps to the documented
+[`hls::hypot` math function](https://docs.amd.com/r/en-US/ug1399-vitis-hls/HLS-Math-Library).
+C++ library lowering is separate from the exact fixed-point C/Rust/RTL unit.
+Library availability does not attest a target-specific HLS synthesis result.
 
 #### Candidate and previous-state expressions
 
@@ -319,10 +337,10 @@ from a checked tree to a program (`equation_program.py`), the numpy evaluation
 namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 (`equation_namespace.py`), and the strict pint-backed unit runtime
 (`equation_units_runtime.py`). A program costs more per evaluation than
-bytecode. `benchmarks/bench_equation_program.py` times eight expressions as
+bytecode. `benchmarks/bench_equation_program.py` times eleven expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 0.4 and 3.0 times the function,
+development host, puts a program at between 1.0 and 2.8 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
@@ -836,19 +854,24 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.442847 ms | 50 |
-| Euler folded with parameter port | 0.243867 ms | 38 |
-| RK4 registered | 0.586510 ms | 92 |
-| Four-substep RK4 registered | 1.144604 ms | 136 |
-| Escape-rate registered | 2.194242 ms | 902 |
-| Square-root map registered | 0.208785 ms | 65 |
-| Negative half-LSB nearest map registered | 0.153899 ms | 45 |
-| Quadrant-aware angle map registered | 2.199175 ms | 3225 |
-| Softplus exponential Euler registered | 6.857834 ms | 11374 |
+| Euler registered | 0.150644 ms | 50 |
+| Euler folded with parameter port | 0.159651 ms | 38 |
+| RK4 registered | 0.398371 ms | 92 |
+| Four-substep RK4 registered | 0.776138 ms | 136 |
+| Escape-rate registered | 1.313703 ms | 902 |
+| Square-root map registered | 0.138529 ms | 65 |
+| Negative half-LSB nearest map registered | 0.093834 ms | 45 |
+| Quadrant-aware angle map registered | 1.231945 ms | 3225 |
+| Softplus exponential Euler registered | 4.459806 ms | 11374 |
+| Ties-to-even round map registered | 0.153960 ms | 64 |
+| Heaviside map registered | 0.157998 ms | 62 |
+| Euclidean norm map registered | 0.456359 ms | 210 |
 
-The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.14. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
+
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-28_equation_ir.json` records 11 samples after two warmups for seven models, including the norm, rounding and Heaviside. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The norm transaction median is 4.847572 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather

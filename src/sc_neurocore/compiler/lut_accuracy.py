@@ -433,6 +433,8 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
         return _measure_atan2(data_width, fraction)
     if function == "heaviside":
         return _measure_heaviside(data_width, fraction)
+    if function == "hypot":
+        return _measure_hypot(data_width, fraction)
     codes, exhaustive = _v2_codes(function, data_width, fraction)
     scale = float(1 << fraction)
     x = codes.astype(np.float64) / scale
@@ -575,6 +577,60 @@ def _measure_heaviside(data_width: int, fraction: int) -> LutAccuracy:
         operand_ranges=((low / scale, high / scale),) * 2,
         worst_inputs=(float(first[worst] / scale), float(second[worst] / scale)),
         declared_error_bound=0.0,
+    )
+
+
+def _measure_hypot(data_width: int, fraction: int) -> LutAccuracy:
+    """Measure the rounded norm against NumPy without squaring floating operands."""
+    low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
+    exhaustive = data_width <= 8
+    if exhaustive:
+        axis = np.arange(low, high + 1, dtype=np.int64)
+    else:
+        edges = {low, high, *range(-8, 9)}
+        for bit in range(data_width):
+            edges.update(sign * (1 << bit) + d for sign in (-1, 1) for d in (-1, 0, 1))
+        axis = np.unique(
+            np.concatenate([np.linspace(low, high, 257).astype(np.int64), np.array(sorted(edges))])
+        )
+        axis = axis[(axis >= low) & (axis <= high)]
+    first, second = np.repeat(axis, len(axis)), np.tile(axis, len(axis))
+    scale = float(1 << fraction)
+    actual = (
+        np.array(
+            [
+                fu.evaluate("hypot", int(a), data_width, fraction, additional_inputs=(int(b),))
+                for a, b in zip(first, second, strict=True)
+            ],
+            dtype=np.float64,
+        )
+        / scale
+    )
+    reference = np.minimum(np.hypot(first / scale, second / scale), high / scale)
+    error = np.abs(actual - reference)
+    worst = int(np.argmax(error))
+    bound = 0.5 / scale
+    if float(error[worst]) > bound:
+        raise ValueError("hypot measurement exceeds its declared arithmetic error bound")
+    return LutAccuracy(
+        function="hypot",
+        data_width=data_width,
+        fraction=fraction,
+        lowering="v2",
+        exhaustive=exhaustive,
+        codes_evaluated=len(first),
+        input_min=low / scale,
+        input_max=high / scale,
+        table_min=low / scale,
+        table_max=(high + 1) / scale,
+        max_error=float(error[worst]),
+        max_error_at=float(first[worst] / scale),
+        max_error_in_table=float(error[worst]),
+        max_error_in_table_at=float(first[worst] / scale),
+        resolution=1.0 / scale,
+        operand_ranges=((low / scale, high / scale),) * 2,
+        worst_inputs=(float(first[worst] / scale), float(second[worst] / scale)),
+        declared_error_bound=bound,
     )
 
 

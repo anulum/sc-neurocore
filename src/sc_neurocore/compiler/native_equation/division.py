@@ -141,7 +141,22 @@ def validate_division(neuron: EquationNeuron, q: Q88) -> None:
                 None,
                 0,
             )
-            if not literal and not bound and not unary:
+            # A rounded integer norm is at least one code when either encoded
+            # coordinate is nonzero. A real constant rounded to zero proves nothing.
+            norm = (
+                isinstance(denominator, ast.Call)
+                and isinstance(denominator.func, ast.Name)
+                and denominator.func.id == "hypot"
+                and len(denominator.args) == 2
+                and not denominator.keywords
+                and any(
+                    literal_code(coordinate) not in (None, 0)
+                    or isinstance(coordinate, ast.Name)
+                    and coordinate.id in known
+                    for coordinate in denominator.args
+                )
+            )
+            if not literal and not bound and not unary and not norm:
                 raise ValueError(
                     f"{where}: divisor {ast.unparse(denominator)!r} may encode zero; "
                     "provide an encoded nonzero constant or preserve an explicit nonzero branch"

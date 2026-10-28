@@ -215,6 +215,17 @@ def _sigmoid_expr(*args: sympy.Expr) -> sympy.Expr:
     return cast(sympy.Expr, sigmoid(*args))
 
 
+def _hypot_partial(self: sympy.Function, argindex: int = 1) -> sympy.Expr:
+    """Return the selected coordinate divided by the proven nonzero norm."""
+    return _as_expr(_as_expr(self.args[argindex - 1]) / self)
+
+
+_hypot_expr = cast(
+    Callable[..., sympy.Expr],
+    type("hypot", (sympy.Function,), {"fdiff": _hypot_partial}),
+)
+
+
 # DSL call names whose derivative is expressible in the same grammar.
 _SMOOTH_FUNCS: dict[str, Callable[..., sympy.Expr]] = {
     "exp": sympy.exp,
@@ -275,6 +286,8 @@ class _Converter:
                 return self._opaque(node)
             if node.func.id == "atan2":
                 return self._atan2(node)
+            if node.func.id == "hypot":
+                return self._hypot(node)
             func = _SMOOTH_FUNCS.get(node.func.id)
             if func is not None:
                 if len(node.args) != 1 or node.keywords:
@@ -297,6 +310,20 @@ class _Converter:
             )
         call = cast(Callable[..., object], sympy.atan2)
         return cast(sympy.Expr, call(y, x, evaluate=False))
+
+    def _hypot(self, node: ast.Call) -> sympy.Expr:
+        """Preserve the DSL norm and require a smooth domain for state dependence."""
+        if len(node.args) != 2 or node.keywords:
+            raise ExpressionDifferentiationError("hypot needs exactly two positional arguments")
+        if not any(isinstance(sub, ast.Name) and sub.id == self._wrt for sub in ast.walk(node)):
+            return self._opaque(node)
+        first, second = (self.convert(value) for value in node.args)
+        if first.is_nonzero is not True and second.is_nonzero is not True:
+            raise ExpressionDifferentiationError(
+                "hypot derivative needs a provably nonzero coordinate; "
+                "the origin is not differentiable"
+            )
+        return _hypot_expr(first, second)
 
     def _opaque(self, node: ast.expr) -> sympy.Expr:
         """Stand an opaque sub-expression in as a constant, if it is one."""

@@ -44,6 +44,7 @@ from collections.abc import Callable, Sequence
 from functools import cache
 
 from .discrete_function_units import heaviside_code, round_code
+from .magnitude_function_units import hypot_code
 
 LOWERING = "v2"
 P = 30  # internal fraction bits
@@ -1112,6 +1113,7 @@ UNITS: dict[str, Callable[[int, int, int], int]] = {
 BINARY_UNITS: dict[str, Callable[[int, int, int, int], int]] = {
     "atan2": atan2,
     "heaviside": heaviside_code,
+    "hypot": hypot_code,
 }
 UNARY_FUNCTIONS = tuple(UNITS)
 FUNCTIONS = (*UNARY_FUNCTIONS, *BINARY_UNITS)
@@ -1138,7 +1140,7 @@ def evaluate(
         The format.
     additional_inputs : sequence of int, optional
         Further operands in order: the horizontal coordinate of ``atan2`` or
-        the zero-input value of ``heaviside``.
+        the zero-input value of ``heaviside``, or the second coordinate of ``hypot``.
 
     Returns
     -------

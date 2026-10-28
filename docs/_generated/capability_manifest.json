@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5430
+    "test_files": 5434
   },
   "documentation": {
     "public_pages": [
@@ -5040,6 +5040,7 @@
       "tests/test_equation_safety_structure.py",
       "tests/test_equation_units.py",
       "tests/test_equation_units_discrete.py",
+      "tests/test_equation_units_hypot.py",
       "tests/test_equation_units_runtime.py",
       "tests/test_equilibrium_propagation_activation.py",
       "tests/test_equilibrium_propagation_ep_network_init.py",
@@ -5810,6 +5811,8 @@
       "tests/test_lut_accuracy.py",
       "tests/test_lut_accuracy_report.py",
       "tests/test_lut_index_offset_width.py",
+      "tests/test_magnitude_function_programs.py",
+      "tests/test_magnitude_function_units.py",
       "tests/test_mainen_sejnowski_backends.py",
       "tests/test_mat_backend_configuration.py",
       "tests/test_mat_backend_dispatch.py",
@@ -6750,6 +6753,7 @@
       "tests/test_native_equation_discrete_functions.py",
       "tests/test_native_equation_events.py",
       "tests/test_native_equation_expressions.py",
+      "tests/test_native_equation_hypot.py",
       "tests/test_native_equation_integrators.py",
       "tests/test_native_equation_scheduling.py",
       "tests/test_native_equation_source.py",

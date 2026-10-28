@@ -102,6 +102,7 @@ _INPUT_ARGUMENTS = {
     "tan": 1,
     "arctan": 1,
     "atan2": 2,
+    "hypot": 2,
     "softplus": 1,
     "arcsin": 1,
     "arccos": 1,
@@ -304,6 +305,8 @@ class ExpressionSafetyValidator:
                     f"Only a function under a plain name can be called in an equation: {expr!r}"
                 )
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                if node.func.id == "hypot" and (len(node.args) != 2 or node.keywords):
+                    raise EquationRefusal("hypot needs exactly two positional arguments")
                 inputs = _INPUT_ARGUMENTS.get(node.func.id)
                 if inputs is not None and any(
                     not (isinstance(extra, ast.Constant) and extra.value is None)

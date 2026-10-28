@@ -23,6 +23,7 @@ from tools.benchmark_evidence_gate import committed_source_hash_failures
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT = ROOT / "benchmarks/results/bench_verilog_compiler.json"
 EXPECTED_CASES = {
+    "hypot_map_registered",
     "euler_registered",
     "round_map_registered",
     "heaviside_map_registered",
@@ -79,7 +80,7 @@ def test_committed_evidence_binds_every_compiler_source() -> None:
 
 
 def test_committed_cases_have_complete_deterministic_samples() -> None:
-    """All eleven public workloads retain timings and stable output identities."""
+    """Every public workload retains timings and stable output identities."""
     payload = _payload()
     cases = _mapping(payload["cases"])
     workload = _mapping(payload["workload"])

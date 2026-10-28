@@ -68,6 +68,19 @@ def _softplus(x: Any) -> Any:
         return np.logaddexp(0.0, values)
 
 
+def _hypot(first: Any, second: Any) -> Any:
+    """Evaluate a two-coordinate norm without squaring finite floating inputs."""
+    a, b = np.asarray(first), np.asarray(second)
+    if (
+        np.iscomplexobj(a)
+        or np.iscomplexobj(b)
+        or not np.all(np.isfinite(a))
+        or not np.all(np.isfinite(b))
+    ):
+        raise EquationRefusal("hypot needs finite real coordinates")
+    return np.hypot(a, b)
+
+
 def _exprel(x: Any) -> Any:
     """(exp(x) - 1) / x with the removable-singularity limit exprel(0) = 1.
 
@@ -100,6 +113,7 @@ def build_eval_namespace() -> dict[str, Any]:
         "tan": np.tan,
         "arctan": np.arctan,
         "atan2": _atan2,
+        "hypot": _hypot,
         "arcsin": np.arcsin,
         "arccos": np.arccos,
         "exp2": np.exp2,

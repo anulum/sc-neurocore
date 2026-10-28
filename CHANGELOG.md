@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add opt-in v2 `hypot(x, y)` across equations, source-bound native IR, C/Rust fixed kernels, C++ expressions and RTL. Preserve compatible physical units and round the norm once with a half-LSB bound; refuse an unproven singular derivative domain.
+
 - Split the instrumented full-suite CI run into two coverage shards. On
   2026-10-27 the single coverage leg ran 5 h 27 min of batches and reached
   GitHub's six-hour job limit before its 100 % gate. Each shard now runs every

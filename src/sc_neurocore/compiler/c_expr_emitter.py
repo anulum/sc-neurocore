@@ -213,6 +213,8 @@ class CExprEmitter(ast.NodeVisitor):
                 f"([](auto sc_step_x, auto sc_step_zero) {{ return sc_step_x < {zero} ? {zero} "
                 f": (sc_step_x > {zero} ? {one} : sc_step_zero); }})({arg}, {second})"
             )
+        if fname == "hypot":
+            return f"{self.math_ns}::hypot({arg}, {self.visit(node.args[1])})"
         if fname == "atan2":
             second = self.visit(node.args[1])
             zero = f"{self.fp_type}(0.0)"

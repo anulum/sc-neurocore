@@ -106,6 +106,15 @@ codes, powers of two and adjacent codes, and codes -8 through 8, clipped to the
 word; these cells are sampled and marked (s). They do not prove the global maximum.
 Numeric contracts record both input ranges and the measured worst pair.
 
+`hypot(x, y)` computes the nearest integer square root of the exact sum of
+squared input codes, followed by signed-word saturation. Its error is at most
+half an output LSB against the clipped real norm. The shared fractional scale
+cancels; no lookup table, intermediate fixed-point multiplication or floating
+square is used. A most-negative coordinate already implies output saturation;
+clipping each magnitude at the output maximum keeps every signed 64-bit
+intermediate representable. It uses the same exhaustive/sampled Cartesian
+measurement domains as `atan2`, recording both coordinates in the contract.
+
 The separate conservative arithmetic bound for `atan2` is
 `0.5 * 2**-fraction + 8 * 2**-30` radians against the word-clipped real angle.
 Range reduction has less than one internal LSB of ratio error. The 512-segment

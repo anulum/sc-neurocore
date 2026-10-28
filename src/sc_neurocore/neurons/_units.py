@@ -22,6 +22,7 @@ import numpy as np
 
 from sc_neurocore.exceptions import SCDependencyError
 from sc_neurocore.neurons.equation_program import compile_expression
+from sc_neurocore.neurons.equation_namespace import _hypot as _real_hypot
 
 try:
     import pint
@@ -198,6 +199,15 @@ def _heaviside(value: Any, at_zero: Any) -> Any:
     return np.heaviside(magnitude, zero_value) * UNIT_REGISTRY.dimensionless
 
 
+def _hypot(first: Any, second: Any) -> Any:
+    """Require compatible coordinates and preserve their common physical dimension."""
+    a = first if is_quantity(first) else first * UNIT_REGISTRY.dimensionless
+    b = second if is_quantity(second) else second * UNIT_REGISTRY.dimensionless
+    a = quantity_to_base(a)
+    b = b.to(a.units)
+    return _real_hypot(a.magnitude, b.magnitude) * a.units
+
+
 def build_quantity_namespace() -> dict[str, Any]:
     """Return the unit-aware functions an expression may call in strict-units mode.
 
@@ -230,6 +240,7 @@ def build_quantity_namespace() -> dict[str, Any]:
         "min": min,
         "round": _round,
         "heaviside": _heaviside,
+        "hypot": _hypot,
     }
 
 
