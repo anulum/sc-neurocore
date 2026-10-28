@@ -208,7 +208,7 @@ jobs:
 
       - name: Vitest
         working-directory: studio/frontend
-        run: npm test -- --run
+        run: npm test
 
       - name: TypeScript and Vite build
         working-directory: studio/frontend
