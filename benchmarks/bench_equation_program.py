@@ -75,6 +75,8 @@ BINDINGS: dict[str, float] = {
 ADEX = "(-g_L*(v-E_L) + g_L*delta_T*exp((v-V_T)/delta_T) - w + I)/C"
 Reference = Callable[[dict[str, Any]], Any]
 EXPRESSIONS: dict[str, tuple[str, Reference]] = {
+    "power_literal": ("I**1.5", lambda e: e["I"] ** 1.5),
+    "power_dynamic": ("I**w", lambda e: e["I"] ** e["w"]),
     "rsqrt": ("rsqrt(I)", lambda e: e["rsqrt"](e["I"])),
     "hypot": ("hypot(v, I)", lambda e: e["hypot"](e["v"], e["I"])),
     "round": ("round(I)", lambda e: e["round"](e["I"])),

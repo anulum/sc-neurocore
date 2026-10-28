@@ -25,6 +25,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from sc_neurocore.compiler.power_accuracy import measure_power
+
 from sc_neurocore.compiler.lut_accuracy import (
     EXHAUSTIVE_MAX_WIDTH,
     V2_EXHAUSTIVE_MAX_WIDTH,
@@ -188,6 +190,41 @@ def render_v2() -> str:
         lines.append(f"| `{name}` | " + " | ".join(cells) + " |")
     lines.append("")
     lines.append("Cells: error in least significant bits; (s) marks a sampled format.")
+    lines.extend(
+        [
+            "",
+            "## General powers",
+            "",
+            "Constants have independent precision; dynamic exponents use the base Q word.",
+            "Domains: positive bases for dynamic powers, nonzero bases for negative integral",
+            "constants, and nonnegative bases for positive fractional constants. The explicit",
+            "zero sentinel outside each domain is excluded. Literal domains through eight",
+            "bits and dynamic domains through four bits are exhausted; larger domains use",
+            "65 evenly spaced codes plus leading-bit and zero/one neighbors on each axis.",
+            "Each cell is measured error / conservative global arithmetic bound in output",
+            "LSBs. (s) denotes sampling; these are not universal correct-rounding claims.",
+            "The bound is 0.5/scale + M*(ln(2)*epsilon + 32/2**56), with",
+            "epsilon=(16*Y+1)/2**56 + L*literal_encoding_error, M=2**(width-1)/scale,",
+            "Y the maximum exponent magnitude, and L=max(fraction,width-1-fraction).",
+            "The normalized atanh logarithm has less than 16 internal units of error;",
+            "the exponential polynomial has less than 32. Saturation is nonexpansive.",
+            "",
+            "| Power | " + " | ".join(labels) + " |",
+            "| --- | " + " | ".join("---:" for _ in labels) + " |",
+        ]
+    )
+    for exponent in (-3, 1.5, 9, None):
+        cells = []
+        for dw, fr in formats:
+            result = measure_power(dw, fr, exponent)
+            assert result.declared_error_bound is not None
+            mark = "" if result.exhaustive else " (s)"
+            cells.append(
+                f"{result.max_error / result.resolution:.3g} / "
+                f"{result.declared_error_bound / result.resolution:.3g}{mark}"
+            )
+        label = "base ** exponent" if exponent is None else f"base ** {exponent}"
+        lines.append(f"| `{label}` | " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
 
 

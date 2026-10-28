@@ -47,5 +47,15 @@ def test_v2_report_covers_every_unit() -> None:
     """One row per v2 unit; every listed format the units support is a column."""
     tool = _tool()
     rows = [line for line in tool.render_v2().splitlines() if line.startswith("| `")]
-    assert len(rows) == len(table_functions("v2"))
+    assert len(rows) == len(table_functions("v2")) + 4
     assert any("`sinh`" in line for line in rows)
+
+
+def test_power_report_distinguishes_samples_from_global_bounds() -> None:
+    """All constant and dynamic rows retain both numerical meanings at every format."""
+    text = _tool().render_v2()
+    rows = [line for line in text.splitlines() if line.startswith("| `base **")]
+    assert len(rows) == 4
+    assert all(" / " in line and "(s)" in line for line in rows)
+    assert "Literal domains through eight" in text
+    assert "global arithmetic bound" in text

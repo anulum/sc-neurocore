@@ -49,6 +49,8 @@ from .intelligence.bit_true_kernel import (
     kernel_arithmetic_contract,
 )
 from .q_format import QFormat
+from .power_accuracy import measure_power
+from .power_units import power_code
 
 HARDWARE_NUMERIC_CONTRACT_SCHEMA_VERSION = "sc-neurocore.hardware-numeric-contract.v1"
 
@@ -186,7 +188,7 @@ class FunctionUnit:
     Parameters
     ----------
     function : str
-        A registered unary or binary function unit, including ``atan2``.
+        A unary/binary function unit or one ``power`` operator specialization.
     accuracy : LutAccuracy
         Its error at the contract's format against the Python model's function.
         Binary measurements retain both operand ranges, the worst tuple, and
@@ -367,7 +369,13 @@ def hardware_numeric_contract(
     authored_neuron = neuron
     neuron = prepare_neuron(neuron)
     quantities = _deduplicated(
-        _quantities(neuron, data_width=data_width, fraction=fraction, rounding=rounding)
+        _quantities(
+            neuron,
+            data_width=data_width,
+            fraction=fraction,
+            rounding=rounding,
+            function_lowering=function_lowering,
+        )
     )
     try:
         generate_bittrue_kernel_from_neuron(
@@ -427,7 +435,9 @@ def _literals(
     """Yield each numeric literal the Verilog emitter encodes, as it encodes it.
 
     A literal divisor becomes its encoded reciprocal, a modulo period is
-    encoded as it stands, and exponents and floor divisors are not encoded. A
+    encoded as it stands, and floor divisors are not encoded.
+    A dynamic power's exponent subtree is encoded normally; a constant exponent
+    retains the independently declared format in its power-unit contract. A
     named constant such as ``pi`` is encoded as a literal unless a state
     variable, parameter or constant in ``bound`` takes its name.
     """
@@ -451,7 +461,12 @@ def _literals(
         return
     if isinstance(node, ast.BinOp):
         yield from _literals(node.left, bound)
-        if isinstance(node.op, (ast.Pow, ast.FloorDiv)):
+        if isinstance(node.op, ast.Pow):
+            _, exponent = expr_lut_tables.classify_power(node.right, "v2", bound)
+            if exponent is None:
+                yield from _literals(node.right, bound)
+            return
+        if isinstance(node.op, ast.FloorDiv):
             return
         right = _numeric_literal(node.right)
         if isinstance(node.op, ast.Div) and right is not None:
@@ -478,7 +493,12 @@ def _numeric_literal(node: ast.AST) -> float | None:
 
 
 def _quantities(
-    neuron: EquationNeuron, *, data_width: int, fraction: int, rounding: str
+    neuron: EquationNeuron,
+    *,
+    data_width: int,
+    fraction: int,
+    rounding: str,
+    function_lowering: str,
 ) -> Iterator[EncodedQuantity]:
     """Yield every encoded value of ``neuron`` in declaration order."""
     for name, value in neuron.parameters.items():
@@ -507,7 +527,13 @@ def _quantities(
         for kind, value in _literals(ast.parse(expression, mode="eval"), bound):
             yield _encoded(kind, where, value, data_width=data_width, fraction=fraction)
     values = {**neuron.parameters, **neuron.constants}
-    fixed = _FixedValue(values, data_width=data_width, fraction=fraction, rounding=rounding)
+    fixed = _FixedValue(
+        values,
+        data_width=data_width,
+        fraction=fraction,
+        rounding=rounding,
+        function_lowering=function_lowering,
+    )
     for where, expression in _expressions(neuron):
         for node in ast.walk(ast.parse(expression, mode="eval")):
             if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Div):
@@ -541,19 +567,26 @@ class _FixedValue:
     Sums are exact; products and quotients are narrowed to the word as the
     bit-true kernel narrows them, under the selected rounding (truncate,
     nearest, or bankers' half-to-even exactly as the RTL's guard bit does it).
-    The real value beside each word is a :class:`~fractions.Fraction`, so a
-    huge finite parameter folds without a host-float overflow. An expression
-    that reads the state, the input, or anything outside ``+ - * /`` and
-    integer powers 2 to 8 is not evaluated.
+    A rational real value accompanies each word; nonintegral general powers
+    use the model's finite floating real result. An expression reading state,
+    inputs or unsupported calls is not folded. In v2, parameter exponents
+    use their encoded words while literal powers retain independent precision.
     """
 
     def __init__(
-        self, values: dict[str, float], *, data_width: int, fraction: int, rounding: str
+        self,
+        values: dict[str, float],
+        *,
+        data_width: int,
+        fraction: int,
+        rounding: str,
+        function_lowering: str = "lut-v1",
     ) -> None:
         self._values = values
         self._dw = data_width
         self._frac = fraction
         self._rounding = rounding if fraction > 0 else "truncate"
+        self._function_lowering = function_lowering
 
     def _wrap(self, value: int, bits: int) -> int:
         value &= (1 << bits) - 1
@@ -564,6 +597,8 @@ class _FixedValue:
 
     def _mul(self, left: int, right: int) -> int:
         product = self._wrap(left * right, 2 * self._dw)
+        if self._frac == 0:
+            return self._wrap(product, self._dw)
         half = 1 << (self._frac - 1)
         if self._rounding == "nearest":
             product = self._wrap(product + (half - 1 if product < 0 else half), 2 * self._dw)
@@ -575,7 +610,7 @@ class _FixedValue:
         return self._wrap(product >> self._frac, self._dw)
 
     def evaluate(self, node: ast.AST) -> tuple[int, Fraction] | None:
-        """Return the RTL word and the exact real value of ``node``, or ``None``."""
+        """Return RTL word and rational/model-float value, or None outside the foldable subset."""
         literal = _numeric_literal(node)
         if literal is not None:
             return self._encode(literal), Fraction(literal)
@@ -593,6 +628,18 @@ class _FixedValue:
         if left is None:
             return None
         if isinstance(node.op, ast.Pow):
+            if self._function_lowering == "v2":
+                kind, folded_exponent = expr_lut_tables.classify_power(
+                    node.right, "v2", self._values
+                )
+                if kind == "power":
+                    return self._power(left, node.right, folded_exponent)
+                if kind == "multiply":
+                    assert folded_exponent is not None
+                    word = left[0]
+                    for _ in range(int(folded_exponent) - 1):
+                        word = self._mul(word, left[0])
+                    return word, left[1] ** int(folded_exponent)
             exponent = node.right
             if not (
                 isinstance(exponent, ast.Constant)
@@ -625,6 +672,34 @@ class _FixedValue:
             quotient = abs(shifted) // abs(right[0])
             word = self._wrap(quotient if (shifted < 0) == (right[0] < 0) else -quotient, self._dw)
         return word, left[1] / right[1]
+
+    def _power(
+        self, base: tuple[int, Fraction], node: ast.AST, literal: float | None
+    ) -> tuple[int, Fraction] | None:
+        """Detect a constant power divisor lost to final word rounding."""
+        if literal is None:
+            exponent = self.evaluate(node)
+            if exponent is None:
+                return None
+            real_exponent = exponent[1]
+            exponent_code = self._wrap(exponent[0], self._dw)
+        else:
+            real_exponent, exponent_code = Fraction(literal), None
+        code = power_code(
+            self._wrap(base[0], self._dw),
+            self._dw,
+            self._frac,
+            exponent=literal,
+            exponent_code=exponent_code,
+        )
+        try:
+            if real_exponent.denominator == 1 and abs(real_exponent) <= 64:
+                real = base[1] ** int(real_exponent)
+            else:
+                real = Fraction(math.pow(float(base[1]), float(real_exponent)))
+        except (ValueError, OverflowError, ZeroDivisionError):
+            return None
+        return code, real
 
 
 def _encoded(
@@ -703,6 +778,10 @@ def _function_units(
 ) -> tuple[FunctionUnit, ...]:
     """Return the ``v2`` units the Verilog emitter instantiates for ``neuron``, measured at the format."""
     functions: set[str] = {"exprel"} if neuron.method == "exp_euler" else set()
+    powers: set[float | None] = set()
+    bound = frozenset(
+        {*neuron.parameters, *neuron.constants, *neuron.initial_state, *neuron.equations}
+    )
     for _where, expression in _expressions(neuron):
         for node in ast.walk(ast.parse(expression, mode="eval")):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
@@ -710,15 +789,20 @@ def _function_units(
                 if unit is not None:
                     functions.add(unit)
             elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow):
-                exponent = expr_lut_tables.const_float(node.right)
-                if exponent is not None and abs(exponent - 1.0 / 3.0) < 1e-6:
-                    functions.add("cbrt")
-                elif exponent is not None and abs(exponent - 0.5) < 1e-6:
-                    functions.add("sqrt")
-    return tuple(
+                kind, exponent = expr_lut_tables.classify_power(node.right, "v2", bound)
+                if kind in {"sqrt", "cbrt"}:
+                    functions.add(kind)
+                elif kind == "power":
+                    powers.add(exponent)
+    units = tuple(
         FunctionUnit(function, measure(function, data_width, fraction, "v2"))
         for function in sorted(functions)
     )
+    specialized = tuple(
+        FunctionUnit("power", measure_power(data_width, fraction, exponent))
+        for exponent in sorted(powers, key=repr)
+    )
+    return tuple(sorted((*units, *specialized), key=lambda unit: unit.function))
 
 
 def _table(function: str, *, data_width: int, fraction: int) -> LookupTable:

@@ -42,10 +42,11 @@ from collections.abc import Callable, Sequence
 from fractions import Fraction
 
 from . import expr_lut_tables
-from .function_unit_ir import emit_c
+from .function_unit_ir import Program, emit_c
+from .power_unit_programs import power_program
 from .function_unit_programs import program
 from .random_unit_programs import program as random_program
-from .expr_lut_tables import SUPPORTED_FUNCTIONS, const_float
+from .expr_lut_tables import SUPPORTED_FUNCTIONS
 from .verilog_compiler_config import Q88
 
 # Per-function LUT geometry, matching the calls in
@@ -314,28 +315,27 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         return self._wide(f"fxmod({left}, {period_q})")
 
     def _emit_pow(self, node: ast.BinOp, left: str) -> str:
-        """Emit a power: integer 2-8 as repeated wrap-multiply, 1/2 and 1/3 as LUT roots."""
-        right = node.right
-        if (
-            isinstance(right, ast.Constant)
-            and isinstance(right.value, int)
-            and 2 <= right.value <= 8
-        ):
-            acc = left
-            for _ in range(right.value - 1):
-                acc = self._fxmul(acc, left)
-            return acc
-        frac_exp = const_float(right)
-        if self.q.function_lowering == "v2" and frac_exp is not None:
-            if abs(frac_exp - 1.0 / 3.0) < 1e-6:
-                return self._emit_unit("cbrt", left)
-            if abs(frac_exp - 0.5) < 1e-6:
-                return self._emit_unit("sqrt", left)
-        if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
-            return self._emit_lut("sqrt", left)
-        if frac_exp is not None and abs(frac_exp - 1.0 / 3.0) < 1e-6:
-            return self._emit_lut("cbrt", left)
-        raise ValueError(f"Only integer powers 2-8 and 1/2, 1/3 supported, got {ast.dump(right)}")
+        """Emit preserved multiply/roots or a general independently coded v2 power."""
+        kind, exponent = expr_lut_tables.classify_power(
+            node.right, self.q.function_lowering, set(self.state_map) | set(self.param_map)
+        )
+        if kind == "multiply":
+            assert exponent is not None
+            result = left
+            for _ in range(int(exponent) - 1):
+                result = self._fxmul(result, left)
+            return result
+        if kind in {"sqrt", "cbrt"}:
+            return (
+                self._emit_unit(kind, left)
+                if self.q.function_lowering == "v2"
+                else self._emit_lut(kind, left)
+            )
+        return self._emit_unit(
+            power_program(self.q.data_width, self.q.fraction, exponent),
+            left,
+            additional=(self._value(node.right),) if exponent is None else (),
+        )
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
         """Emit a unary op (negate, positive)."""
@@ -473,7 +473,9 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         self.tables.update(arrays)
         return self._wide(out)
 
-    def _emit_unit(self, function: str, arg: str, *, additional: Sequence[str] = ()) -> str:
+    def _emit_unit(
+        self, function: str | Program, arg: str, *, additional: Sequence[str] = ()
+    ) -> str:
         """Emit one ``v2`` function unit as statements mirroring the RTL unit; return its result.
 
         The argument is first truncated to the word, as the RTL hoists it to a
@@ -490,7 +492,9 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             self.statements.append(self._local(name, f"sc_wrap({value}, {self.q.data_width})"))
             extra_args.append(name)
         statements, arrays, out = emit_c(
-            program(function, self.q.data_width, self.q.fraction),
+            program(function, self.q.data_width, self.q.fraction)
+            if isinstance(function, str)
+            else function,
             prefix,
             argument,
             self.lang,

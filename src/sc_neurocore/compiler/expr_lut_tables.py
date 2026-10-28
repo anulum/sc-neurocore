@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import ast
 import math
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 
 from .function_units import FUNCTION_ARITY as UNIT_ARITY
 
@@ -374,7 +374,7 @@ SQRT_LUT_STEP = 0.5
 SQRT_LUT_SIZE = 16
 
 
-def const_float(node: ast.AST) -> float | None:
+def const_float(node: ast.AST, *, constants: Mapping[str, float] | None = None) -> float | None:
     """Constant-fold a literal or simple literal-arithmetic node to a float.
 
     Recognises fractional exponents such as ``1.0 / 3.0`` in ``x ** p`` by
@@ -385,6 +385,8 @@ def const_float(node: ast.AST) -> float | None:
     ----------
     node : ast.AST
         Expression node to fold.
+    constants : mapping of str to float or None, optional
+        Explicit unshadowed named constants. None folds numeric literals only.
 
     Returns
     -------
@@ -395,12 +397,14 @@ def const_float(node: ast.AST) -> float | None:
     """
     if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
         return float(node.value)
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
-        inner = const_float(node.operand)
-        return None if inner is None else -inner
+    if isinstance(node, ast.Name) and constants is not None:
+        return constants.get(node.id)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        inner = const_float(node.operand, constants=constants)
+        return None if inner is None else -inner if isinstance(node.op, ast.USub) else inner
     if isinstance(node, ast.BinOp):
-        a = const_float(node.left)
-        b = const_float(node.right)
+        a = const_float(node.left, constants=constants)
+        b = const_float(node.right, constants=constants)
         if a is None or b is None:
             return None
         if isinstance(node.op, ast.Div):
@@ -412,6 +416,63 @@ def const_float(node: ast.AST) -> float | None:
         if isinstance(node.op, ast.Sub):
             return a - b
     return None
+
+
+def classify_power(
+    exponent: ast.AST, lowering: str, bound: Collection[str] = ()
+) -> tuple[str, float | None]:
+    """Select the shared power lowering and preserve independently coded literals.
+
+    Parameters
+    ----------
+    exponent : ast.AST
+        Original exponent subtree, before Q-word encoding.
+    lowering : str
+        ``lut-v1`` preserves legacy root recognition; ``v2`` admits general
+        finite constants and dynamic positive-domain powers.
+    bound : collection of str, optional
+        State, parameter and input names which shadow named mathematical constants.
+
+    Returns
+    -------
+    tuple of str and float or None
+        ``multiply`` and its small integer exponent, ``sqrt`` or ``cbrt``, or
+        ``power`` with a folded constant (None means a dynamic exponent).
+
+    Raises
+    ------
+    ValueError
+        For an invalid lowering, Boolean/nonfinite literal, or an unsupported
+        legacy power. Near-root constants use the general v2 power path.
+    """
+    if lowering not in ("lut-v1", "v2"):
+        raise ValueError("power lowering must be lut-v1 or v2")
+    if isinstance(exponent, ast.Constant):
+        value = exponent.value
+        if isinstance(value, bool):
+            raise ValueError("power exponent must be a real numeric literal")
+        if isinstance(value, (int, float)) and (
+            value in (2, 3) or type(value) is int and 4 <= value <= 8
+        ):
+            return "multiply", float(value)
+    original, sign = exponent, 1
+    while isinstance(original, ast.UnaryOp) and isinstance(original.op, (ast.USub, ast.UAdd)):
+        if isinstance(original.op, ast.USub):
+            sign = -sign
+        original = original.operand
+    if lowering == "v2" and isinstance(original, ast.Constant) and type(original.value) is int:
+        return "power", sign * original.value
+    constants = {name: value for name, value in NAMED_CONSTANTS.items() if name not in bound}
+    value = const_float(exponent, constants=constants if lowering == "v2" else None)
+    if value is not None:
+        if not math.isfinite(value):
+            raise ValueError("power exponent must be finite")
+        for root, reference in (("sqrt", 0.5), ("cbrt", 1.0 / 3.0)):
+            if value == reference or lowering == "lut-v1" and abs(value - reference) < 1e-6:
+                return root, value
+    if lowering == "lut-v1":
+        raise ValueError("Only integer powers 2-8 and 1/2, 1/3 supported; other powers require v2")
+    return "power", value
 
 
 def symmetric_sample_points() -> list[float]:

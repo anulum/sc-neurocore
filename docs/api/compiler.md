@@ -252,6 +252,7 @@ closed rather than attaching an invalid unsigned fixed-point contract to RTL.
 | Reciprocal square root (v2 only) | `rsqrt(x)` |
 | Arithmetic | `abs`, `clip(x, lo, hi)`, `max(a, b)`, `min(a, b)` |
 | Polynomial | `x**2` through `x**8` |
+| General power (v2 only in fixed targets) | `x**-3`, `x**1.5`, `x**y` |
 | Operators | `+`, `-`, `*`, `/`, `%` by a finite positive numeric literal, unary `-` |
 | Comparison | `>`, `>=`, `<`, `<=` |
 
@@ -338,10 +339,10 @@ from a checked tree to a program (`equation_program.py`), the numpy evaluation
 namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 (`equation_namespace.py`), and the strict pint-backed unit runtime
 (`equation_units_runtime.py`). A program costs more per evaluation than
-bytecode. `benchmarks/bench_equation_program.py` times twelve expressions as
+bytecode. `benchmarks/bench_equation_program.py` times fourteen expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 0.9 and 2.8 times the function,
+development host, puts a program at between 0.9 and 2.5 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
@@ -855,25 +856,27 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.204113 ms | 50 |
-| Euler folded with parameter port | 0.237455 ms | 38 |
-| RK4 registered | 0.566084 ms | 92 |
-| Four-substep RK4 registered | 1.153680 ms | 136 |
-| Escape-rate registered | 2.299589 ms | 902 |
-| Square-root map registered | 0.204394 ms | 65 |
-| Negative half-LSB nearest map registered | 0.143054 ms | 45 |
-| Quadrant-aware angle map registered | 2.282547 ms | 3225 |
-| Softplus exponential Euler registered | 7.565188 ms | 11374 |
-| Ties-to-even round map registered | 0.175959 ms | 64 |
-| Heaviside map registered | 0.228157 ms | 62 |
-| Euclidean norm map registered | 0.398104 ms | 210 |
-| Reciprocal square-root map registered | 0.637245 ms | 305 |
+| Euler registered | 0.120903 ms | 50 |
+| Euler folded with parameter port | 0.131863 ms | 38 |
+| RK4 registered | 0.365532 ms | 92 |
+| Four-substep RK4 registered | 0.697062 ms | 136 |
+| Escape-rate registered | 1.266044 ms | 902 |
+| Square-root map registered | 0.116763 ms | 65 |
+| Negative half-LSB nearest map registered | 0.083026 ms | 45 |
+| Quadrant-aware angle map registered | 1.134433 ms | 3225 |
+| Softplus exponential Euler registered | 4.108130 ms | 11374 |
+| Ties-to-even round map registered | 0.113992 ms | 64 |
+| Heaviside map registered | 0.148671 ms | 62 |
+| Euclidean norm map registered | 0.225972 ms | 210 |
+| Reciprocal square-root map registered | 0.311925 ms | 305 |
+| Constant power map registered | 1.338232 ms | 1692 |
+| Dynamic power map registered | 1.240663 ms | 1698 |
 
 The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-28_equation_ir.json` records 11 samples after two warmups for eight models, including reciprocal square root, norm, rounding and Heaviside. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The norm transaction median is 4.187950 ms; reciprocal square root is 5.962686 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-28_equation_ir.json` records 11 samples after two warmups for ten models, including constant and dynamic powers, reciprocal square root, norm, rounding and Heaviside. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The constant-power transaction median is 63.242322 ms; the dynamic-power median is 61.992394 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather
@@ -1268,3 +1271,49 @@ requires a provably positive argument, such as `v*v+1`; `rsqrt(v)` and
 `rsqrt(v*v)` refuse an unproven domain. State-independent calls remain opaque
 coefficients. Native source replay retains the authored function and units;
 the same integer program drives direct RTL and native SCIR/CIRCT lowering.
+
+
+## General real powers
+
+With `function_lowering="v2"`, fixed C/Rust, Verilog and source-bound native
+IR admit `base**exponent`. Python and portable C++ use their real arithmetic;
+C++ emits the target math library's `pow`. The equation grammar's existing
+literal-magnitude, exponent and resource limits still apply.
+
+The base and result use the configured signed Q word. A dynamic exponent uses
+that same word and requires a strictly positive base. Every compound operand
+is narrowed before domain selection. A numeric literal or folded literal-arithmetic exponent instead has its own
+precision, up to 56 fractional bits; it never wraps into the base's format.
+Unshadowed `pi` retains this independent precision. Declared states or
+parameters with those names remain dynamic word operands.
+
+Integral constants admit negative bases and preserve odd/even signs. Positive
+constants admit a zero base; negative constants exclude it. A literal zero
+produces saturated one, including `0**0`. Inputs outside these domains return
+a zero sentinel in fixed targets, outside the approximation claim. Preserve
+the mathematical domain after quantization and wrapping. Floating targets
+retain their language and math-library behavior outside it.
+
+The datapath evaluates `exp2(exponent*log2(abs(base)))` internally at Q56. It
+uses a normalized atanh logarithm and a degree-20 exponential polynomial,
+split products and restoring fractional division. All eagerly evaluated
+intermediates fit signed 64 bits at admitted formats (2–32 word bits,
+`fraction <= 30`, `data_width + fraction <= 61`). The final magnitude is
+rounded to nearest, ties up, then signed and saturated. This approximates the
+real power; it does not claim universally correct rounding.
+
+`hardware_numeric_contract` retains each distinct constant specialization and
+the dynamic specialization separately. Each records its actual mathematical
+domain, independent literal encoding, measured worst input, sampled versus
+exhaustive status, and a separate conservative global arithmetic bound.
+Literal domains through eight word bits and dynamic domains through four
+bits are exhaustive; wider deterministic measurements are samples. See the
+[generated accuracy report](../validation/function_units_v2_accuracy.md).
+
+The legacy default remains `lut-v1`. Existing integer powers 2–8 keep their
+repeated-multiply behavior, including intermediate word rounding and wrap;
+canonical square/cube roots keep their existing units. These legacy paths do
+not inherit the general power approximation bound. In v2, constants merely
+near one half or one third use their actual exponent in the general unit.
+Strict units and symbolic differentiation keep the original equation's
+power semantics; runtime inputs must satisfy the real domain.

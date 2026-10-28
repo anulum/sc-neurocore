@@ -16,7 +16,8 @@ from collections.abc import Sequence
 
 from ..hdl_gen._ident import sanitize_ident
 from . import expr_lut_tables
-from .function_unit_ir import emit_verilog
+from .function_unit_ir import Program, emit_verilog
+from .power_unit_programs import power_program
 from .function_unit_programs import program
 from .random_unit_programs import program as random_program
 from .verilog_compiler_config import Q88
@@ -305,50 +306,25 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             )
             return result
         elif isinstance(node.op, ast.Pow):
-            if isinstance(node.right, ast.Constant) and node.right.value == 2:
-                tmp = f"_mul{self._mul_count}"
-                self._mul_count += 1
-                self.intermediates.append(
-                    f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {left};"
-                )
-                return self._trunc(tmp)
-            elif isinstance(node.right, ast.Constant) and node.right.value == 3:
-                sq = f"_mul{self._mul_count}"
-                self._mul_count += 1
-                self.intermediates.append(
-                    f"wire signed [{2 * self.q.data_width - 1}:0] {sq} = {left} * {left};"
-                )
-                sq_trunc = self._trunc(sq)
-                cu = f"_mul{self._mul_count}"
-                self._mul_count += 1
-                self.intermediates.append(
-                    f"wire signed [{2 * self.q.data_width - 1}:0] {cu} = {sq_trunc} * {left};"
-                )
-                return self._trunc(cu)
-            elif (
-                isinstance(node.right, ast.Constant)
-                and isinstance(node.right.value, int)
-                and 4 <= node.right.value <= 8
-            ):
-                exp: int = node.right.value
-                prev: str = left
-                for step in range(exp - 1):
-                    tmp = f"_mul{self._mul_count}"
+            kind, exponent = expr_lut_tables.classify_power(
+                node.right, self.q.function_lowering, set(self.state_vars) | set(self.param_map)
+            )
+            if kind == "multiply":
+                assert exponent is not None
+                previous = left
+                for _ in range(int(exponent) - 1):
+                    temporary = f"_mul{self._mul_count}"
                     self._mul_count += 1
                     self.intermediates.append(
-                        f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {prev} * {left};"
+                        f"wire signed [{2 * self.q.data_width - 1}:0] {temporary} = {previous} * {left};"
                     )
-                    prev = self._trunc(tmp)
-                return prev
-            frac_exp = self._const_float(node.right)
-            if self.q.function_lowering == "v2" and frac_exp is not None:
-                if abs(frac_exp - 1.0 / 3.0) < 1e-6:
-                    return self._emit_unit("cbrt", left)
-                if abs(frac_exp - 0.5) < 1e-6:
-                    return self._emit_unit("sqrt", left)
-            if frac_exp is not None and abs(frac_exp - 1.0 / 3.0) < 1e-6:
-                return self._emit_lut_call("_cbrt_lut", left, self._cbrt_lut_entries())
-            if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
+                    previous = self._trunc(temporary)
+                return previous
+            if kind in {"sqrt", "cbrt"}:
+                if self.q.function_lowering == "v2":
+                    return self._emit_unit(kind, left)
+                if kind == "cbrt":
+                    return self._emit_lut_call("_cbrt_lut", left, self._cbrt_lut_entries())
                 return self._emit_lut_call(
                     "_sqrt_lut",
                     left,
@@ -356,9 +332,10 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                     lut_min=expr_lut_tables.SQRT_LUT_MIN,
                     lut_step=expr_lut_tables.SQRT_LUT_STEP,
                 )
-            raise ValueError(
-                f"Only integer powers 2-8 and 1/2, 1/3 supported in Verilog, "
-                f"got {ast.dump(node.right)}"
+            return self._emit_unit(
+                power_program(self.q.data_width, self.q.fraction, exponent),
+                left,
+                additional=(right,) if exponent is None else (),
             )
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
 
@@ -507,7 +484,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             result = f"(({self._wide(result)} {cmp} {self._wide(b)}) ? {result} : {b})"
         return result
 
-    def _emit_unit(self, function: str, arg: str, *, additional: Sequence[str] = ()) -> str:
+    def _emit_unit(
+        self, function: str | Program, arg: str, *, additional: Sequence[str] = ()
+    ) -> str:
         """Emit one ``v2`` function unit inline; return the ``data_width``-bit result wire.
 
         The unit's 64-bit integer program
@@ -519,7 +498,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self._mul_count += 1
         dw = self.q.data_width
         arg_w = f"{prefix}_arg"
-        self.intermediates.append(f"// v2 function unit: {function}")
+        label = function if isinstance(function, str) else "power"
+        self.intermediates.append(f"// v2 function unit: {label}")
         self.intermediates.append(f"wire signed [{dw - 1}:0] {arg_w} = {arg};")
         extra_args = []
         for index, value in enumerate(additional, 1):
@@ -527,7 +507,10 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             self.intermediates.append(f"wire signed [{dw - 1}:0] {name} = {value};")
             extra_args.append(name)
         lines, out = emit_verilog(
-            program(function, dw, self.q.fraction), prefix, arg_w, additional_arguments=extra_args
+            program(function, dw, self.q.fraction) if isinstance(function, str) else function,
+            prefix,
+            arg_w,
+            additional_arguments=extra_args,
         )
         self.intermediates.extend(lines)
         result = f"{prefix}_out"

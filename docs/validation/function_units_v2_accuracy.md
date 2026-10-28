@@ -124,3 +124,26 @@ and measured worst input; wider sampled cells still do not prove a global maximu
 | `trunc` | 0 | 0 | 0 | 0 | 0 | 0 (s) | 0 (s) | 0 (s) | 0 (s) |
 
 Cells: error in least significant bits; (s) marks a sampled format.
+
+## General powers
+
+Constants have independent precision; dynamic exponents use the base Q word.
+Domains: positive bases for dynamic powers, nonzero bases for negative integral
+constants, and nonnegative bases for positive fractional constants. The explicit
+zero sentinel outside each domain is excluded. Literal domains through eight
+bits and dynamic domains through four bits are exhausted; larger domains use
+65 evenly spaced codes plus leading-bit and zero/one neighbors on each axis.
+Each cell is measured error / conservative global arithmetic bound in output
+LSBs. (s) denotes sampling; these are not universal correct-rounding claims.
+The bound is 0.5/scale + M*(ln(2)*epsilon + 32/2**56), with
+epsilon=(16*Y+1)/2**56 + L*literal_encoding_error, M=2**(width-1)/scale,
+Y the maximum exponent magnitude, and L=max(fraction,width-1-fraction).
+The normalized atanh logarithm has less than 16 internal units of error;
+the exponential polynomial has less than 32. Saturation is nonexpansive.
+
+| Power | Q4.4 | Q1.7 | Q8.8 | Q4.12 | Q1.15 | Q9.9 | Q12.12 | Q16.16 | Q8.24 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `base ** -3` | 0.494 / 0.5 | 0 / 0.5 | 0.5 / 0.5 (s) | 0.486 / 0.5 (s) | 0 / 0.5 (s) | 0.439 / 0.5 (s) | 0.498 / 0.5 (s) | 0.498 / 0.5 (s) | 0.466 / 0.5 (s) |
+| `base ** 1.5` | 0.492 / 0.5 | 0.497 / 0.5 | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.499 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) |
+| `base ** 9` | 0.469 / 0.5 | 0.5 / 0.5 | 0.5 / 0.5 (s) | 0.449 / 0.5 (s) | 0.499 / 0.5 (s) | 0.463 / 0.5 (s) | 0.44 / 0.5 (s) | 0.25 / 0.5 (s) | 0.125 / 0.5 (s) |
+| `base ** exponent` | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.5 (s) | 0.5 / 0.511 (s) | 0.5 / 0.5 (s) |

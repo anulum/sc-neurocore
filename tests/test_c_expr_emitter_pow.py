@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestPow from former test_c_expr_emitter.py
+# SC-NeuroCore — C++ power lowering
 
 """Focused suite: TestPow from former test_c_expr_emitter.py."""
 
@@ -36,7 +36,6 @@ class TestPow:
         """Check that a one-third power lowers to ``hls::cbrt``."""
         assert _emit("v ** (1.0 / 3.0)", {"v"}) == "hls::cbrt(v)"
 
-    def test_unsupported_power_raises(self) -> None:
-        """Check that a power above the supported range is refused."""
-        with pytest.raises(ValueError, match="Only integer powers"):
-            _emit("v ** 9", {"v"})
+    def test_general_constant_uses_math_power(self) -> None:
+        """Check that a general constant reaches the real library power."""
+        assert _emit("v ** 9", {"v"}) == "hls::pow(v, fp_t(9.0))"

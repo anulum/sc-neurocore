@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1450
+expected_file_count = 1461
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5934,3 +5934,47 @@ rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded 
 [[file]]
 path = "tests/test_equation_units_rsqrt.py"
 rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "src/sc_neurocore/compiler/power_units.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "src/sc_neurocore/compiler/power_unit_programs.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "src/sc_neurocore/compiler/power_accuracy.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "tests/test_power_units.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "tests/test_power_unit_programs.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "tests/test_power_accuracy.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "tests/test_power_lowering.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "tests/test_native_equation_powers.py"
+rationale = "Real power domains, independent literal precision, bounded arithmetic and public compiler execution."
+
+[[file]]
+path = "tests/test_expression_derivative_powers.py"
+rationale = "General power derivatives and strict-unit runtime behavior retain the authored real semantics."
+
+[[file]]
+path = "tests/test_equation_units_powers.py"
+rationale = "General power derivatives and strict-unit runtime behavior retain the authored real semantics."
+
+[[file]]
+path = "tests/test_expr_lut_tables_power_classification.py"
+rationale = "Shared original-exponent semantics and real compiler refusal paths preserve every target contract."

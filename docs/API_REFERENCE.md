@@ -9149,7 +9149,7 @@ Returns
 list&#91;int&#93;
     The entries limited to ``&#91;-2**(data_width-1), 2**(data_width-1) - 1&#93;``.
 
-### Function `const_float(node)`
+### Function `const_float(node, *, constants)`
 Constant-fold a literal or simple literal-arithmetic node to a float.
 
 Recognises fractional exponents such as ``1.0 / 3.0`` in ``x ** p`` by
@@ -9160,12 +9160,39 @@ Parameters
 ----------
 node : ast.AST
     Expression node to fold.
+constants : mapping of str to float or None, optional
+    Explicit unshadowed named constants. None folds numeric literals only.
 
 Returns
 -------
 float or None
     The folded value, or ``None`` if the node is not a compile-time
     constant.
+
+### Function `classify_power(exponent, lowering, bound)`
+Select the shared power lowering and preserve independently coded literals.
+
+Parameters
+----------
+exponent : ast.AST
+    Original exponent subtree, before Q-word encoding.
+lowering : str
+    ``lut-v1`` preserves legacy root recognition; ``v2`` admits general
+    finite constants and dynamic positive-domain powers.
+bound : collection of str, optional
+    State, parameter and input names which shadow named mathematical constants.
+
+Returns
+-------
+tuple of str and float or None
+    ``multiply`` and its small integer exponent, ``sqrt`` or ``cbrt``, or
+    ``power`` with a folded constant (None means a dynamic exponent).
+
+Raises
+------
+ValueError
+    For an invalid lowering, Boolean/nonfinite literal, or an unsupported
+    legacy power. Near-root constants use the general v2 power path.
 
 ### Function `symmetric_sample_points()`
 Return the 256 sample points over ``&#91;-16, 16)`` at 0.125 spacing.
@@ -10394,7 +10421,7 @@ One ``v2`` function unit the datapath instantiates, with its measured error.
 Parameters
 ----------
 function : str
-    A registered unary or binary function unit, including ``atan2``.
+    A unary/binary function unit or one ``power`` operator specialization.
 accuracy : LutAccuracy
     Its error at the contract's format against the Python model's function.
     Binary measurements retain both operand ranges, the worst tuple, and
@@ -14568,6 +14595,45 @@ list&#91;str&#93;
 
 ---
 
+## Module `compiler.power_accuracy`
+
+### Class `PowerAccuracy`
+A power measurement retaining its literal specialization and true domain.
+
+Parameters
+----------
+exponent : PowerExponent or None, optional
+    Literal's independent format. None denotes the second dynamic operand.
+    Other fields retain the base ``LutAccuracy`` meanings.
+
+- **to_public_dict**()
+  - Return domain, specialization, measured error and a separate global bound.
+
+### Function `measure_power(data_width, fraction, exponent)`
+Measure one complete small power domain or deterministic wider-format sample.
+
+Parameters
+----------
+data_width, fraction : int
+    The admitted v2 Q format.
+exponent : int or float or None, optional
+    Original finite literal, or None for a dynamic second operand.
+
+Returns
+-------
+PowerAccuracy
+    Independent Decimal measurement, original exponent, operand ranges,
+    domain cardinality and a separate conservative global arithmetic bound.
+    Literal domains through eight bits and dynamic domains through four
+    bits are exhaustive. Larger domains are explicitly sampled.
+
+Raises
+------
+ValueError
+    For invalid arguments or a measured error beyond the declared bound.
+
+---
+
 ## Module `compiler.power_estimator`
 
 ### Class `PowerEstimate`
@@ -14619,6 +14685,112 @@ Returns
 -------
 PowerEstimate
     Estimated power breakdown.
+
+---
+
+## Module `compiler.power_unit_programs`
+
+### Function `power_program(data_width, fraction, exponent)`
+Return one v2 power unit using only existing signed64 program operations.
+
+Parameters
+----------
+data_width, fraction : int
+    Signed base, dynamic-exponent and output Q format. Inputs to the program
+    must already be narrowed to this word, as the maintained emitters do.
+exponent : int or float or None, optional
+    Finite constant specialization with independently encoded precision.
+    None creates a two-input unit for a dynamic signed Q-word exponent.
+
+Returns
+-------
+Program
+    Saturated power datapath, bit-identical to ``power_code``. Its positive
+    domain and literal negative-base/zero policies are defined there. No
+    table, new native opcode or wide-integer ABI is required.
+
+Raises
+------
+ValueError
+    If the format or exponent is invalid. Validation precedes memoization,
+    including boolean/literal aliases of a previously cached specialization.
+
+---
+
+## Module `compiler.power_units`
+
+### Class `PowerExponent`
+A literal exponent with independent precision and original domain flags.
+
+Parameters
+----------
+value : int or float
+    Exact original finite value, canonicalized to int when integral.
+    Zero/sign/integrality are tested before coding.
+code, fraction : int
+    Signed exponent code and fractional width, with magnitude below 2**61.
+    Magnitudes above 2**36 are capped: every nonunit admitted base then
+    already forces the output to zero or saturation.
+integral, odd : bool
+    Exact original integrality and odd parity, used for negative bases.
+
+
+### Function `exponent_format(value)`
+Encode a finite literal without losing its original domain classification.
+
+Parameters
+----------
+value : int or float
+    Literal exponent; booleans are excluded.
+
+Returns
+-------
+PowerExponent
+    Independent fixed-point code rounded to nearest, ties away from zero.
+
+Raises
+------
+ValueError
+    If the value is not a finite real Python numeric literal.
+
+### Function `coefficients()`
+Return Q56 logarithm and exponential coefficients generated at precision 96.
+
+Returns
+-------
+tuple of tuple of int
+    Twenty coefficients of ``(2/ln(2))*sum(t**(2*k)/(2*k+1))`` and
+    twenty-one coefficients of ``exp(ln(2)*r)`` in increasing degree.
+    Both reduced arguments are nonnegative: ``t < 1/3`` and ``r < 1``.
+
+### Function `power_code(base, data_width, fraction, *, exponent, exponent_code)`
+Evaluate a power reference using arbitrary-precision integer arithmetic.
+
+Parameters
+----------
+base : int
+    Signed base code of the configured format.
+data_width, fraction : int
+    Common base, dynamic-exponent and output format.
+exponent : int or float or None, optional
+    Finite literal exponent, encoded independently. None selects a dynamic
+    exponent, supplied through ``exponent_code``.
+exponent_code : int or None, optional
+    Dynamic signed Q-word exponent; required only in dynamic mode.
+
+Returns
+-------
+int
+    Rounded Q56 approximation, with magnitude ties rounded up and signed
+    word saturation. Dynamic powers require positive bases. Integral
+    literals also admit negative bases; positive literals admit zero.
+    Literal zero produces saturated one, including for a zero base.
+    Inputs outside these mathematical domains return the zero sentinel.
+
+Raises
+------
+ValueError
+    For an invalid format, operand word, literal or exponent argument pair.
 
 ---
 

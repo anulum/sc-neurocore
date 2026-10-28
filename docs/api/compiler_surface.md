@@ -81,6 +81,9 @@ can change without a deprecation window.
 | `overflow_proof` | internal build tool | Static-analysis proof primitive reached through `static_analysis`. |
 | `pipeline` | public facade | Package-level exports provide the compiler pipeline. |
 | `pipeline_analysis` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
+| `power_accuracy` | direct public module | Measures literal or dynamic powers against independent Decimal values, recording the exact domain, sampling and a separate global arithmetic bound. |
+| `power_unit_programs` | internal build tool | Builds bounded Q56 logarithm/exponential power programs for Verilog, C, Rust and native IR. |
+| `power_units` | direct public module | Independent arbitrary-precision power reference and literal-exponent format with original sign and parity. |
 | `power_estimator` | direct public module | Power estimator has direct tests and documentation. |
 | `precision_config` | direct public module | Precision configuration types are direct mixed-precision surfaces. |
 | `precision_pairs` | internal build tool | Preset/configuration helper behind precision planning. |

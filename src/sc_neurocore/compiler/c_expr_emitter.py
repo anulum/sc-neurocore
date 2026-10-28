@@ -33,7 +33,7 @@ from .expr_lut_tables import (
     RANDOM_FUNCTIONS,
     SUPPORTED_FUNCTIONS,
     check_call_arguments,
-    const_float,
+    classify_power,
 )
 
 # Transcendentals that map directly to a single hls_math / <cmath> function.
@@ -117,19 +117,14 @@ class CExprEmitter(ast.NodeVisitor):
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
 
     def _emit_pow(self, node: ast.BinOp, left: str) -> str:
-        """Emit C++ for a power: integer 2-8 as repeated multiply, 1/2, 1/3 as roots."""
-        if isinstance(node.right, ast.Constant) and isinstance(node.right.value, int):
-            exp = node.right.value
-            if 2 <= exp <= 8:
-                return "(" + " * ".join([left] * exp) + ")"
-        frac_exp = const_float(node.right)
-        if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
-            return f"{self.math_ns}::sqrt({left})"
-        if frac_exp is not None and abs(frac_exp - 1.0 / 3.0) < 1e-6:
-            return f"{self.math_ns}::cbrt({left})"
-        raise ValueError(
-            f"Only integer powers 2-8 and 1/2, 1/3 supported, got {ast.dump(node.right)}"
-        )
+        """Emit products, exact root aliases or a real-domain library power."""
+        kind, exponent = classify_power(node.right, "v2", self.state_vars | set(self.param_map))
+        if kind == "multiply":
+            assert exponent is not None
+            return "(" + " * ".join([left] * int(exponent)) + ")"
+        if kind in {"sqrt", "cbrt"}:
+            return f"{self.math_ns}::{kind}({left})"
+        return f"{self.math_ns}::pow({left}, {self.visit(node.right)})"
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
         """Emit C++ for a unary operation (negate, positive)."""

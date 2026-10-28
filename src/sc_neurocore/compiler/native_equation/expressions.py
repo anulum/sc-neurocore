@@ -16,6 +16,7 @@ from collections.abc import Mapping
 
 from .. import expr_lut_tables as tables
 from ..verilog_expr_emitter import _require_wide_headroom
+from ..power_unit_programs import power_program
 from .arithmetic import EquationArithmetic
 from .functions import lower_call, lower_lookup
 from .scheduling import EquationSchedule
@@ -296,28 +297,19 @@ class EquationExpressions:
         return self.value(first, width)
 
     def _power(self, node: ast.BinOp) -> int:
-        """Collapse every power multiplication and reuse the existing fractional-power units."""
+        """Preserve legacy products/roots or lower the shared bounded general-power program."""
         a, b, q = self.a, self.a.builder, self.a.q
-        exponent = tables.const_float(node.right)
-        if (
-            isinstance(node.right, ast.Constant)
-            and isinstance(node.right.value, (int, float))
-            and (
-                node.right.value in (2, 3)
-                or type(node.right.value) is int
-                and 4 <= node.right.value <= 8
-            )
-        ):
+        kind, exponent = tables.classify_power(node.right, q.function_lowering, self.bindings)
+        if kind == "multiply":
+            assert exponent is not None
             wide, result = 2 * q.data_width, self.value(node.left, 2 * q.data_width)
             base = result
-            for _ in range(int(node.right.value) - 1):
+            for _ in range(int(exponent) - 1):
                 product = b.word_binary("mul", result, base, f"i{wide}")
                 result = b.word_resize(a.round_product(product, wide), f"i{wide}")
             return b.word_resize(result, f"i{q.data_width}")
-        if exponent is not None and (
-            abs(exponent - 0.5) < 1e-6 or abs(exponent - 1.0 / 3.0) < 1e-6
-        ):
-            name = "sqrt" if abs(exponent - 0.5) < 1e-6 else "cbrt"
+        if kind in {"sqrt", "cbrt"}:
+            name = kind
             argument = self.value(node.left, q.data_width)
             if q.function_lowering == "lut-v1":
                 return lower_lookup(name, argument, a)
@@ -333,4 +325,16 @@ class EquationExpressions:
                 ),
                 f"i{q.data_width}",
             )
-        raise ValueError("native equation powers require integer 2-8 or fractional 1/2, 1/3")
+        from ..native_program import lower_program
+
+        arguments = [self.value(node.left, q.data_width)]
+        if exponent is None:
+            arguments.append(self.value(node.right, q.data_width))
+        return b.word_resize(
+            lower_program(
+                power_program(q.data_width, q.fraction, exponent),
+                b,
+                [b.word_resize(value, "i64") for value in arguments],
+            ),
+            f"i{q.data_width}",
+        )

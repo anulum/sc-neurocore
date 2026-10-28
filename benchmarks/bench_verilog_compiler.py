@@ -55,6 +55,8 @@ SOURCE_PATHS = (
     "src/sc_neurocore/compiler/discrete_function_programs.py",
     "src/sc_neurocore/compiler/magnitude_function_units.py",
     "src/sc_neurocore/compiler/magnitude_function_programs.py",
+    "src/sc_neurocore/compiler/power_units.py",
+    "src/sc_neurocore/compiler/power_unit_programs.py",
     "src/sc_neurocore/compiler/reciprocal_root_units.py",
     "src/sc_neurocore/compiler/reciprocal_root_programs.py",
     "src/sc_neurocore/compiler/function_unit_ir.py",
@@ -213,7 +215,21 @@ def _cases() -> tuple[CompilerCase, ...]:
     )
     magnitude_map = EquationNeuron({"v": "hypot(I,1)"}, method="map", dt=1.0)
     reciprocal_map = EquationNeuron({"v": "rsqrt(I)"}, method="map", dt=1.0)
+    power_literal = EquationNeuron({"v": "I**1.5"}, method="map", dt=1.0)
+    power_dynamic = EquationNeuron({"v": "(I*I+1)**I"}, method="map", dt=1.0)
     return (
+        CompilerCase(
+            "power_literal_map_registered",
+            lambda: compile_to_verilog(
+                power_literal, "bench_power_literal", function_lowering="v2"
+            ),
+        ),
+        CompilerCase(
+            "power_dynamic_map_registered",
+            lambda: compile_to_verilog(
+                power_dynamic, "bench_power_dynamic", function_lowering="v2"
+            ),
+        ),
         CompilerCase(
             "rsqrt_map_registered",
             lambda: compile_to_verilog(reciprocal_map, "bench_rsqrt", function_lowering="v2"),
