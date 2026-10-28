@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio saved-session persistence tests
 
+import { defaultEquationIrConfiguration } from "./equationIrConfig";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -56,6 +57,7 @@ describe("Studio saved-session persistence", () => {
     equations: ["dv/dt = -v / tau"],
     modelParams: { tau: 10 },
     odeInit: { v: -65 },
+    equationIrConfig: defaultEquationIrConfiguration(),
     odeParams: { tau: 20 },
     protocol: "constant",
     reset: "v = -65",
@@ -79,9 +81,21 @@ describe("Studio saved-session persistence", () => {
       { name: "missing-state" },
       { name: 12, state: {} },
       { name: "array-state", state: [] },
+      null, 7, "unreadable session",
     ]);
 
     expect(readStoredStudioSessions(createStorage(stored))).toEqual([demoSession]);
+    expect(readStudioSessionsResult(createStorage(stored))).toEqual({
+      sessions: [demoSession], status: "partial", discarded: 6,
+    });
+  });
+
+  it("reports unavailable storage without rewriting an unreadable session list", () => {
+    const storage: StudioSavedSessionStorage = {
+      getItem: () => { throw new DOMException("Browser storage access denied", "SecurityError"); },
+      setItem: () => { throw new Error("An unavailable store must not be rewritten"); },
+    };
+    expect(readStudioSessionsResult(storage)).toEqual({ sessions: [], status: "unavailable", discarded: 0 });
   });
 
   it("writes saved sessions with the canonical storage key", () => {
@@ -127,6 +141,7 @@ describe("Studio saved-session persistence", () => {
 
   it("builds the persisted state snapshot from the active Studio state", () => {
     expect(studioSavedSessionState(demoInput)).toEqual({
+      equationIrConfig: defaultEquationIrConfiguration(),
       current: 10,
       dt: 0.1,
       duration: 100,
@@ -181,6 +196,7 @@ describe("Studio saved-session persistence", () => {
       seed: undefined,
       trial: "random",
     })).toEqual({
+      equationIrConfig: defaultEquationIrConfiguration(),
       current: 10,
       dt: 0.1,
       duration: 100,
@@ -267,9 +283,9 @@ describe("browser cache status", () => {
     expect(readStudioSessionsResult(storage({ [key]: JSON.stringify([good]) })).status).toBe("ok");
   });
 
-  it("turns a denied quota into a message instead of an exception", () => {
+  it.each(["QuotaExceededError", "NS_ERROR_DOM_QUOTA_REACHED"])("reports the browser quota refusal %s without throwing", (name) => {
     const denying = storage({}, () => {
-      throw new DOMException("out of space", "QuotaExceededError");
+      throw new DOMException("out of space", name);
     });
 
     const result = writeStoredStudioSessions([], denying);
@@ -280,7 +296,7 @@ describe("browser cache status", () => {
     expect(result.message).toContain("server");
   });
 
-  it.each<unknown>([new Error("disk on fire"), { reason: "write denied" }])(
+  it.each<unknown>([new Error("disk on fire"), new DOMException("Write access denied", "SecurityError"), { reason: "write denied" }])(
     "reports other write failures without throwing: %s", (failure) => {
     const failing = storage({}, () => {
       throw failure;

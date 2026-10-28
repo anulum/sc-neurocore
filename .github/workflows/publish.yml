@@ -27,6 +27,7 @@ concurrency:
 
 jobs:
   build-python-dist:
+    needs: [build-engine-wheels]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -38,6 +39,9 @@ jobs:
           node-version: "26.12.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
+
+      - name: Install pinned npm
+        run: npm install --global npm@12.2.1
       - name: Build the Studio UI the wheel carries
         working-directory: studio/frontend
         run: |
@@ -47,12 +51,20 @@ jobs:
       - run: python -m build
         env:
           SC_NEUROCORE_STUDIO_UI: required
+      - name: Download the matching native wheel for Studio acceptance
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: engine-wheel-ubuntu-latest-py3.12
+          path: dist-engine/
       - name: Accept the installed Studio the wheel provides
         run: |
           python -m venv "$RUNNER_TEMP/installed"
           "$RUNNER_TEMP/installed/bin/pip" install --require-hashes \
             -r requirements/runtime.txt -r requirements/hub.txt
           "$RUNNER_TEMP/installed/bin/pip" install --no-deps dist/sc_neurocore-*.whl
+          "$RUNNER_TEMP/installed/bin/pip" install --no-deps dist-engine/*.whl
+          "$RUNNER_TEMP/installed/bin/python" -I -c \
+            'from sc_neurocore_engine.ir import ScGraphBuilder; graph = ScGraphBuilder("installed"); graph.output("value", graph.input("drive", "i16")); assert not graph.build().verify()'
           python tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"
       - name: Replay through the installed Studio in a real browser
         id: installed_browser
@@ -105,7 +117,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
@@ -139,7 +151,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           targets: aarch64-unknown-linux-gnu
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -211,7 +223,7 @@ jobs:
     environment: crates-io
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - name: Publish to crates.io
         run: |
           CRATE_NAME="$(sed -n 's/^name = "\(.*\)"/\1/p' engine/Cargo.toml | head -n 1)"

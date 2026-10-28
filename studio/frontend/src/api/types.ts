@@ -1773,36 +1773,10 @@ export interface ModelCosimReport {
   };
 }
 
-/**
- * A built IR document, its shape, and whatever refused to build.
- *
- * `errors` is non-empty alongside an IR when the build partially succeeded, so
- * a caller reads the errors rather than assuming the text is complete.
- */
-export interface IRBuildResponse {
-  ir_text: string;
-  errors: string[];
-  n_ops: number;
-  n_inputs: number;
-  n_outputs: number;
-  graph_name: string;
-  params_q88: Record<string, number>;
-}
-
-/** Whether an IR document holds the invariants the emitters rely on. */
-export interface IRVerifyResponse {
-  valid: boolean;
-  errors: string[];
-  n_ops: number;
-  graph_name: string;
-}
-
-/** SystemVerilog emitted from an IR document. */
-export interface SVEmitResponse {
-  systemverilog: string;
-  graph_name: string;
-  chars: number;
-}
+export type {
+  AuthoredEquationModel, EquationIRProfile, EquationIRRequest, EquationIRResult,
+  IRBuildResponse, IRVerifyResponse, IRReplayResponse, SVEmitResponse,
+} from "./equationIrTypes";
 
 /**
  * Verilog emitted straight from a system, with the IR it went through.

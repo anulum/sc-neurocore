@@ -21,6 +21,7 @@ export interface StudioBundleContext { key: string; bundleId: string; jobId: str
 export type StudioBundleContextSource = StudioSimulationConfigSource & StudioProjectSnapshotInput & Pick<StudioState,
   "projectRevision" | "resultExperimentKey" | "analysisExperimentKey" | "trainingExperimentKey"
   | "verilogSrc" | "svSource" | "compileTraceability" | "cosimResult" | "latestSynthesisJobId"
+  | "irText" | "irRequestKey" | "irResult"
   | "latestMultiTargetSynthesisJobId" | "bundleContexts" | "projectEvidenceBundle"
   | "compileEvidenceBundle" | "synthesisEvidenceBundle">;
 
@@ -41,6 +42,7 @@ export function studioBundleContextKey(surface: EvidenceBundleSurface, state: St
   });
   return canonicalSealText({ source: state.sourceMode, rtl: state.verilogSrc, sv: state.svSource,
     trace: state.compileTraceability,
+    ir: state.irText, irRequest: state.irRequestKey, irResult: state.irResult,
     ...(surface === "synthesis" ? { target: state.synthTarget, parity: state.cosimResult,
       single: state.latestSynthesisJobId, multi: state.latestMultiTargetSynthesisJobId } : {}),
   });

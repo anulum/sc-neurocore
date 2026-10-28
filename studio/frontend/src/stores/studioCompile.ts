@@ -6,17 +6,23 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Compile and co-simulation request ownership
 
-import { buildIR, emitSV, emitSVDirect, compileModelVerilog, compileVerilog, cosimModelVerilog } from "../api/client";
+import { buildIR, emitSV, verifyIR, replayIR, compileModelVerilog, compileVerilog, cosimModelVerilog } from "../api/client";
 import { canonicalSealText } from "../evidenceSeal";
+import { equationIrRequest } from "../equationIrConfig";
 import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
 import { compilerConfigurationInvalidatedState, compilerCosimInvalidatedState,
   compilerCosimLoadedState, compilerFailureState, compilerRunStartState,
-  compilerVerilogLoadedState, compilerIRLoadedState, compilerSVLoadedState,
-  compilerSVDirectLoadedState } from "../compilerStoreState";
+  compilerVerilogLoadedState, compilerIRLoadedState, compilerSVLoadedState } from "../compilerStoreState";
 import type { StudioState } from "./studioTypes";
 
 /** Compiler entry points sharing exclusive request ownership. */
-type Operation = "compile" | "cosim" | "ir" | "sv";
+type Operation = "compile" | "cosim" | "ir" | "sv" | "verify-ir" | "replay-ir";
+
+/** Captured request identity and execution with an ownership check between native jobs. */
+interface CompilePlan {
+  key: string;
+  execute: (isCurrent: () => boolean) => Promise<Partial<StudioState>>;
+}
 
 /**
  * Resolve a request without sending it.
@@ -25,22 +31,30 @@ type Operation = "compile" | "cosim" | "ir" | "sv";
  * @param operation - Compile or parity operation.
  * @returns Request identity and deferred execution.
  */
-function plan(state: StudioState, operation: Operation) {
-  if (operation === "ir" || operation === "sv") {
+function plan(state: StudioState, operation: Operation): CompilePlan {
+  if (operation === "ir" || operation === "sv" || operation === "verify-ir" || operation === "replay-ir") {
     if (state.sourceMode !== "ode") throw new Error("IR/SV generation requires ODE mode");
-    const system = { equations: state.equations, threshold: state.threshold || null,
-      reset: state.reset || null, params: state.odeParams };
-    if (operation === "sv") {
-      const request = { ...system, init: state.odeInit };
-      return { key: canonicalSealText({ operation, request }),
-        execute: async () => compilerSVDirectLoadedState(await emitSVDirect(request)) };
+    const request = equationIrRequest(state);
+    const sourceKey = canonicalSealText(request);
+    if (operation === "verify-ir" || operation === "replay-ir") {
+      if (!state.irText || state.irRequestKey !== sourceKey) {
+        throw new Error("Build IR for the current equation inputs before inspecting it.");
+      }
+      return { key: canonicalSealText({ operation, request, ir_text: state.irText }),
+        execute: async () => compilerIRLoadedState(
+          await (operation === "verify-ir" ? verifyIR(state.irText) : replayIR(state.irText)), sourceKey,
+        ) };
     }
-    const request = { ...system, dt: state.dt };
-    return { key: canonicalSealText({ operation, request }), execute: async () => {
+    return { key: canonicalSealText({ operation, request }), execute: async (isCurrent) => {
+      if (operation === "sv" && state.irText && state.irRequestKey === sourceKey) {
+        const emitted = await emitSV(state.irText);
+        return { ...compilerIRLoadedState(emitted, sourceKey), ...compilerSVLoadedState(emitted) };
+      }
       const ir = await buildIR(request);
-      const patch = compilerIRLoadedState(ir);
-      if (ir.errors.length > 0) return patch;
-      return { ...patch, ...compilerSVLoadedState(await emitSV(ir.ir_text)) };
+      if (operation === "ir") return compilerIRLoadedState(ir, sourceKey);
+      if (!isCurrent()) return { isSimulating: false };
+      const emitted = await emitSV(ir.ir_text);
+      return { ...compilerIRLoadedState(emitted, sourceKey), ...compilerSVLoadedState(emitted) };
     } };
   }
   const input = { dt: state.dt, integrator: state.modelIntegrator,
@@ -80,13 +94,17 @@ export async function runStoreCompile(
 ): Promise<void> {
   const state = get();
   if (state.isSimulating) return;
+  const inspecting = operation === "verify-ir" || operation === "replay-ir";
   set({ ...(operation === "cosim" ? compilerCosimInvalidatedState(state.sourceMode === "model") : compilerConfigurationInvalidatedState()),
-    ...compilerRunStartState(operation === "ir" || operation === "sv" ? "ir" : "verilog") });
+    ...(inspecting ? { irText: state.irText, irRequestKey: state.irRequestKey } : {}),
+    ...compilerRunStartState(operation === "compile" || operation === "cosim" ? "verilog" : "ir") });
   let requestedKey: string | null = null;
   try {
     const request = plan(state, operation);
     requestedKey = request.key;
-    const patch = await request.execute();
+    const patch = await request.execute(
+      () => get().sourceMode === state.sourceMode && plan(get(), operation).key === request.key,
+    );
     if (get().sourceMode !== state.sourceMode || plan(get(), operation).key !== requestedKey) {
       set({ isSimulating: false }); return;
     }

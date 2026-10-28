@@ -18,7 +18,7 @@
 import type {
   CompileResponse,
   CompileTraceability,
-  IRBuildResponse,
+  EquationIRResult,
   SVDirectResponse,
   SVEmitResponse,
   ModelCosimReport,
@@ -58,6 +58,8 @@ export interface CompilerCosimLoadedStatePatch {
 
 /** The configuration changed, so the RTL it produced no longer applies. */
 export interface CompilerConfigurationInvalidatedStatePatch {
+  irResult: null;
+  irRequestKey: null;
   svSource: "";
   irText: "";
   irErrors: string[];
@@ -86,6 +88,8 @@ export interface CompilerCosimInvalidatedStatePatch {
 
 /** A built intermediate representation arrived. */
 export interface CompilerIRLoadedStatePatch {
+  irResult: EquationIRResult;
+  irRequestKey: string;
   irErrors: string[];
   irText: string;
   isSimulating: false;
@@ -98,6 +102,8 @@ export interface CompilerSVLoadedStatePatch {
 
 /** SystemVerilog emitted straight from the system arrived, with its IR. */
 export interface CompilerSVDirectLoadedStatePatch {
+  irResult: null;
+  irRequestKey: null;
   compileTraceability: CompileTraceability;
   irText: string;
   isSimulating: false;
@@ -174,6 +180,8 @@ export function compilerCosimLoadedState(
  */
 export function compilerConfigurationInvalidatedState(): CompilerConfigurationInvalidatedStatePatch {
   return {
+    irResult: null,
+    irRequestKey: null,
     svSource: "",
     irText: "",
     irErrors: [],
@@ -213,12 +221,16 @@ export function compilerCosimInvalidatedState(modelMode: boolean): CompilerCosim
  * Take a built IR into the store.
  *
  * @param response - The build response.
+ * @param requestKey - Exact captured native request identity.
  * @returns The patch.
  */
 export function compilerIRLoadedState(
-  response: IRBuildResponse,
+  response: EquationIRResult,
+  requestKey: string,
 ): CompilerIRLoadedStatePatch {
   return {
+    irResult: response,
+    irRequestKey: requestKey,
     irErrors: response.errors,
     irText: response.ir_text,
     isSimulating: false,
@@ -245,6 +257,8 @@ export function compilerSVDirectLoadedState(
   response: SVDirectResponse,
 ): CompilerSVDirectLoadedStatePatch {
   return {
+    irResult: null,
+    irRequestKey: null,
     compileTraceability: response.compile_traceability,
     irText: response.ir_repr,
     isSimulating: false,

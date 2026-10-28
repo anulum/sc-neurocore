@@ -172,6 +172,7 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     ("POST", "/api/ir/build", RouteVisibility.AUTHENTICATED, "studio.ir.build"),
     ("POST", "/api/ir/verify", RouteVisibility.AUTHENTICATED, "studio.ir.verify"),
+    ("POST", "/api/ir/replay", RouteVisibility.AUTHENTICATED, "studio.ir.replay"),
     ("POST", "/api/ir/emit-sv", RouteVisibility.AUTHENTICATED, "studio.ir.emit_sv"),
     (
         "POST",

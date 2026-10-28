@@ -18,6 +18,7 @@ import {
   studioStageSet,
 } from "./studioStageFailure";
 import { createStudioStoreActions } from "./studioStoreActions";
+import { createStudioEquationIrActions } from "./studioEquationIrActions";
 import type { StudioState } from "./studioTypes";
 
 /**
@@ -28,7 +29,7 @@ import type { StudioState } from "./studioTypes";
 function studioStore() {
   return createStore<StudioState>((set, get) => ({
     ...studioInitialData,
-    ...createStudioStoreActions(set, get),
+    ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
   }));
 }
 

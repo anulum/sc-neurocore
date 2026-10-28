@@ -42159,6 +42159,30 @@ Build the compiler router over shared Studio runtime state.
 
 ---
 
+## Module `studio.api.compiler_result`
+
+### Function `decode_equation_ir_response(response)`
+Decode a completed process result and project its public response.
+
+Parameters
+----------
+response : Mapping of str to object
+    JSON-decoded process envelope with the runtime's optional job receipt.
+    Completion of a process does not establish validity of its domain result.
+
+Returns
+-------
+dict of str to object
+    Validated compiler result and the original runtime receipt.
+
+Raises
+------
+HTTPException
+    Sanitized status 500 for a malformed worker envelope, or the validated
+    controlled refusal status with its reason and original job receipt.
+
+---
+
 ## Module `studio.api.cosim`
 
 ### Function `build_cosim_router(context)`
@@ -43476,19 +43500,6 @@ Build path-free traceability for catalogue-model RTL compilation.
 
 ## Module `studio.compiler`
 
-### Function `build_ir_from_equation(equations, params, threshold, reset, dt)`
-Build an SC IR graph from ODE equations.
-
-Uses the Rust ScGraphBuilder to construct a stochastic computing IR
-that represents the neuron's ODE as a hardware pipeline:
-input current → encode → multiply (leak, gain) → LIF step → output spike.
-
-### Function `verify_ir(ir_text)`
-Parse and verify an IR text representation.
-
-### Function `emit_systemverilog(ir_text)`
-Parse IR text and emit synthesisable SystemVerilog.
-
 ### Function `emit_sv_from_equation(equations, params, threshold, reset, init, module_name)`
 Direct equation → SystemVerilog via the Python equation compiler.
 
@@ -43911,6 +43922,275 @@ Own one persistent browser profile and the backend serving its interface.
   - Show startup immediately and begin actual backend admission asynchronously.
 - **closeEvent**(event)
   - Keep Qt alive until startup and owned backend cleanup have finished.
+
+---
+
+## Module `studio.equation_ir`
+
+### Class `EquationIRRefusal`
+A controlled compiler refusal without generated exception diagnostics.
+
+Attributes
+----------
+stage : str
+    Compiler boundary at which the request refused.
+code : str
+    Stable descriptive reason suitable for API and UI handling.
+message : str
+    Fixed caller-facing explanation.
+status_code : int
+    HTTP input refusal or unavailable dependency status.
+
+- **__init__**(stage, code, message)
+
+### Class `EquationIRPort`
+A native output's name and physical scalar width.
+
+Attributes
+----------
+name : str
+    Actual emitted output port.
+width : int
+    Physical bit width, including Boolean event outputs.
+
+
+### Class `EquationIRResult`
+Native graph result with narrowly scoped validation claims.
+
+Attributes
+----------
+operation : str
+    Completed compiler action.
+ir_text, graph_name : str
+    Canonical native graph and its actual module name.
+n_ops, n_inputs, n_outputs : int
+    Actual graph operation and data-port counts; implicit clocks are not inputs.
+valid, errors : bool and list of str
+    Structural verification only, never a hardware qualification.
+source_present : bool
+    Whether the native graph contains a source payload.
+source_replay : str
+    Semantic replay was passed, unavailable, or not requested.
+source_sha256, source_graph_sha256 : str or None
+    Native source-binding hashes, without an authentication claim.
+clocks_per_timestep, pipeline_registers : int or None
+    Actual compiler output contract, absent on structure-only inspection.
+output_widths : list of EquationIRPort or None
+    Ordered physical output widths when a model has been compiled or replayed.
+systemverilog : str or None
+    Actual native emitted RTL for the emission operation.
+
+
+### Function `build_equation_ir(request)`
+Compile the exact ordered source and numeric profile to native IR.
+
+Parameters
+----------
+request : EquationIRRequest
+    Full serializable constructor inputs and hardware profile.
+
+Returns
+-------
+EquationIRResult
+    Actual graph, source digests, cadence and output contract.
+
+Raises
+------
+EquationIRRefusal
+    Source, profile or native dependency cannot be admitted.
+
+### Function `equation_model(model)`
+Construct the public model without stepping or replacing its random keys.
+
+Parameters
+----------
+model : AuthoredEquationModel
+    Ordered declarations, physical quantities and exact random seed.
+
+Returns
+-------
+EquationNeuron
+    Unstepped model with every serializable constructor setting preserved.
+
+Notes
+-----
+Quantity conversion is confined to Pint's optional untyped boundary. Native
+arithmetic and dimensional validation remain owned by the public constructor.
+
+### Function `verify_equation_ir(request)`
+Inspect graph structure without claiming semantic source consistency.
+
+Parameters
+----------
+request : EquationIRTextRequest
+    Native graph text.
+
+Returns
+-------
+EquationIRResult
+    Structural diagnostics and source availability, without replayed metadata.
+
+Raises
+------
+EquationIRRefusal
+    Native parsing or dependency admission fails.
+
+### Function `replay_equation_ir(request)`
+Recompile bound source and require equality with the submitted graph.
+
+Parameters
+----------
+request : EquationIRTextRequest
+    Source-bound native graph text.
+
+Returns
+-------
+EquationIRResult
+    Semantic source consistency and actual reconstructed output contract.
+
+Raises
+------
+EquationIRRefusal
+    Source is missing, malformed, inconsistent or unsupported.
+
+### Function `emit_equation_systemverilog(request)`
+Emit native RTL, enforcing replay whenever source metadata is present.
+
+Parameters
+----------
+request : EquationIREmitRequest
+    Graph text and explicit source requirement.
+
+Returns
+-------
+EquationIRResult
+    Native SystemVerilog and scoped graph/source validation results.
+
+Raises
+------
+EquationIRRefusal
+    Structural validity, required source replay or native emission refuses.
+
+---
+
+## Module `studio.equation_ir_schema`
+
+### Class `EquationValue`
+A finite magnitude and optional authored physical unit.
+
+Attributes
+----------
+value : int or float
+    Magnitude in the declared unit, or the unannotated numerical convention.
+unit : str or None
+    Pint expression whose dimensions are checked by the model constructor.
+
+
+### Class `NamedEquationValue`
+An ordered initial state, parameter or immutable constant.
+
+Attributes
+----------
+name : str
+    Authored symbol passed unchanged to the equation model.
+
+
+### Class `EquationExpression`
+An ordered state right-hand side or reset expression.
+
+Attributes
+----------
+name : str
+    State variable updated by the declaration.
+expression : str
+    Authored right-hand side under the numerical and event semantics.
+
+
+### Class `AuthoredEquationModel`
+Serializable constructor inputs of a native-compilable equation model.
+
+Attributes
+----------
+equations, initial_state, parameters, constants, reset : list
+    Ordered declarations. Repeated names refuse before dictionary conversion.
+    An empty initial state selects the public constructor's default.
+dt : EquationValue
+    Positive inner timestep, with an explicit time unit in strict mode.
+method : str
+    Maintained integrator; order is retained for Gauss–Seidel updates.
+threshold, rate_expression, probability_expression, spike_value : str or None
+    Authored event condition, stochastic threshold and graded-spike rules.
+detection, threshold_rng : str
+    Maintained event detection and threshold random generator.
+substeps : int
+    Positive inner steps per macro timestep.
+rng_seed : str
+    Canonical decimal unsigned 64-bit key; strings avoid JavaScript loss.
+random_stream : int
+    Unsigned 32-bit counter-based random stream.
+units : str
+    Explicit dimensional-validation mode.
+input_unit : EquationValue or None
+    Authored quantity declaring the drive's physical dimension.
+
+Notes
+-----
+A live Python noise_rng object is not a serializable native compiler input.
+No such object is reconstructed or substituted from this request.
+
+
+### Class `EquationIRProfile`
+Native scalar geometry, product-register and function-lowering choices.
+
+Attributes
+----------
+module_name : str
+    Authored HDL identifier, validated by the compiler.
+data_width, fraction : int
+    Total scalar and fractional bits; the compiler admits geometry.
+signed : bool
+    Requested signedness; unsupported datapaths refuse explicitly.
+overflow, rounding : str
+    Integrated-state overflow and product rounding semantics.
+pipeline_stages, pipeline_points : int and list of str
+    Global product-register selection or explicit product names.
+function_lowering, random_precision : str
+    Existing function and normal-draw lowering profiles.
+
+
+### Class `EquationIRRequest`
+Versioned authored model and profile for a bounded compiler job.
+
+Attributes
+----------
+schema_version : str
+    Required descriptive identity; old lossy bodies are not made equivalent
+    by silently filling missing source declarations.
+model : AuthoredEquationModel
+    Complete serializable model declaration.
+profile : EquationIRProfile
+    Numerical and hardware-output choices.
+
+
+### Class `EquationIRTextRequest`
+Native graph text for bounded structural or semantic inspection.
+
+Attributes
+----------
+ir_text : str
+    Actual native text, including its source binding when present.
+
+
+### Class `EquationIREmitRequest`
+SystemVerilog emission with an explicit source-consistency requirement.
+
+Attributes
+----------
+source_policy : str
+    Require a replayable source by default. Structural-only emission permits
+    unsourced native graphs, without making an authored-model claim.
+    A source binding, when present, must always replay successfully.
+
 
 ---
 
@@ -46613,6 +46893,79 @@ ValueError
 
 ### Function `list_studio_deployment_profile_packages()`
 Return all supported Studio deployment-profile packages.
+
+---
+
+## Module `studio.platform.equation_ir_process`
+
+### Class `EquationIRFailure`
+Controlled refusal transported independently of the worker job status.
+
+Attributes
+----------
+stage, code, message : str
+    Authored compiler boundary, stable reason and caller-facing explanation.
+status_code : int
+    Input refusal or unavailable dependency; never a success status.
+
+
+### Class `EquationIRWorkerSuccess`
+Accepted worker envelope with a required graph and no refusal.
+
+Attributes
+----------
+accepted : bool
+    Always true for this envelope.
+result : EquationIRResult
+    Validated graph and compiler evidence.
+refusal : None
+    A successful operation has no controlled refusal.
+
+
+### Class `EquationIRWorkerRefusal`
+Refused worker envelope with a required reason and no graph.
+
+Attributes
+----------
+accepted : bool
+    Always false for this envelope.
+result : None
+    A refused operation has no compiler graph result.
+refusal : EquationIRFailure
+    Validated reason and corresponding response status.
+
+
+### Class `EquationIRWorkerResult`
+Validate the serialized success/refusal union without boolean coercion.
+
+Attributes
+----------
+root : EquationIRWorkerSuccess or EquationIRWorkerRefusal
+    One complete outcome; inconsistent optional field combinations cannot
+    represent a validated worker result.
+
+
+### Function `run_equation_ir_process_task(context, payload)`
+Run one bounded native action and record its actual compiler outcome.
+
+Parameters
+----------
+context : StudioJobContext
+    Admitted worker sandbox and artifact writer.
+payload : Mapping of str to object
+    Discriminated operation and versioned request from the public caller.
+
+Returns
+-------
+dict of str to object
+    Successful graph result or controlled refusal. A completed worker is not
+    necessarily a successful compilation; accepted and evidence status carry
+    the compiler outcome separately from the job transport status.
+
+Notes
+-----
+Unexpected exceptions propagate to the supervised worker's generic failure
+boundary. They never become successful graph results or public diagnostics.
 
 ---
 

@@ -929,9 +929,14 @@ status and checkpoint payloads.
 
 ### Compiler Inspector
 
-The current Rust **Build IR** adapter constructs a fixed LIF template, not
-an equivalent graph for arbitrary entered equations. Its verification badge
-reports structural checks; emitted text still requires real tool qualification.
+**Build IR** lowers the authored equations, initial state, constructor settings
+and numeric profile through the native compiler. **Check graph structure**
+inspects the graph; **Replay source** reconstructs its bound source and requires
+the same graph. **Emit SV** enforces replay for bound source before native RTL
+emission. Unsupported combinations produce explicit refusals. Compiler settings
+survive projects and local sessions; input changes withdraw previous results.
+See [Compiler Inspector](compiler-inspector.md) for settings, cadence, port
+widths and request/evidence exports. Emitted RTL still needs tool qualification.
 The separate direct Python equation-to-Verilog output includes a source-to-RTL traceability strip with
 source, RTL, and manifest digests plus controlled terminal status for evidence
 review. The strip can export a compile evidence bundle with replay metadata for

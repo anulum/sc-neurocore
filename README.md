@@ -177,7 +177,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 32 |
-| Python test files | 5440 |
+| Python test files | 5445 |
 | Public documentation pages | 656 |
 | GitHub Actions workflows | 24 |
 
@@ -382,7 +382,7 @@ sc-neurocore studio              # opens browser at http://127.0.0.1:8001
 |---------|-------------|
 | **160-entry Model Browser** | Browse every registered catalogue entry by category, simulate with parameter sliders |
 | **18+ Analysis Views** | Trace, phase portrait, ISI, f-I curve, bifurcation, heatmap, STA, frequency response, characterisation dashboard |
-| **Compiler Inspector** | Verify SC IR and emit SystemVerilog |
+| **Compiler Inspector** | Lower authored equations and numeric profiles to native IR, inspect graph structure, replay bound source and emit SystemVerilog |
 | **Synthesis Dashboard** | One-click Yosys synthesis to ice40/ECP5/Gowin/Xilinx, multi-target comparison, resource bars |
 | **Training Monitor** | Live loss/accuracy curves via SSE, 6 surrogate gradients, per-layer spike rates |
 | **Network Canvas** | Drag-and-drop populations and projections (React Flow), NIR export/import |

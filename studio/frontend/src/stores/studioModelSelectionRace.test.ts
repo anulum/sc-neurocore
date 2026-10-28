@@ -13,6 +13,7 @@ import type { ModelDetail } from "../api/client";
 import { fetchModelDetail, fetchReplayPack, loadProject } from "../api/client";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
+import { createStudioEquationIrActions } from "./studioEquationIrActions";
 import type { StudioState } from "./studioTypes";
 
 vi.mock("../api/client", async () => {
@@ -36,7 +37,7 @@ function detail(name: string, parameter: string): ModelDetail {
 describe("Studio model selection", () => {
   it.each(["session", "project"] as const)("loads restored %s metadata while keeping the saved constructor, clock and exact seed", async (source) => {
     const store = createStore<StudioState>((set, get) => ({
-      ...studioInitialData, ...createStudioStoreActions(set, get),
+      ...studioInitialData, ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
     }));
     const runSimulation = vi.fn(() => Promise.resolve());
     vi.mocked(fetchModelDetail).mockResolvedValue(detail("SCStochasticRateAdaptationNeuron", "tau_a"));
@@ -63,7 +64,7 @@ describe("Studio model selection", () => {
     vi.mocked(fetchModelDetail).mockImplementation((name) => name === "SCStochasticRateAdaptationNeuron"
       ? old : Promise.resolve(detail(name, "tau_w")));
     const store = createStore<StudioState>((set, get) => ({
-      ...studioInitialData, ...createStudioStoreActions(set, get),
+      ...studioInitialData, ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
     }));
     const runSimulation = vi.fn(() => Promise.resolve());
     store.setState({ runSimulation, savedSessions: [{ name: "saved", state: {
@@ -88,7 +89,7 @@ describe("Studio model selection", () => {
   it("reports a failed restored metadata read before running an unbound model", async () => {
     vi.mocked(fetchModelDetail).mockRejectedValue(new Error("Model contract unavailable"));
     const store = createStore<StudioState>((set, get) => ({
-      ...studioInitialData, ...createStudioStoreActions(set, get),
+      ...studioInitialData, ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
     }));
     const runSimulation = vi.fn(() => Promise.resolve());
     store.setState({ runSimulation, savedSessions: [{ name: "saved", state: {
@@ -108,7 +109,7 @@ describe("Studio model selection", () => {
     );
     const store = createStore<StudioState>((set, get) => ({
       ...studioInitialData,
-      ...createStudioStoreActions(set, get),
+      ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
     }));
     store.setState({ runSimulation: vi.fn(() => Promise.resolve()) });
 
@@ -135,7 +136,7 @@ describe("Studio model selection", () => {
     );
     const store = createStore<StudioState>((set, get) => ({
       ...studioInitialData,
-      ...createStudioStoreActions(set, get),
+      ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
     }));
     store.setState({ runSimulation: vi.fn(() => Promise.resolve()) });
 
@@ -157,7 +158,7 @@ describe("Studio model selection", () => {
     );
     const store = createStore<StudioState>((set, get) => ({
       ...studioInitialData,
-      ...createStudioStoreActions(set, get),
+      ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
     }));
     store.setState({
       runSimulation: vi.fn(() => Promise.resolve()),

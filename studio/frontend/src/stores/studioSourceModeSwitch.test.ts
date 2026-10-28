@@ -12,6 +12,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ModelDetail } from "../api/client";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
+import { createStudioEquationIrActions } from "./studioEquationIrActions";
 import type { StudioState } from "./studioTypes";
 
 /**
@@ -25,7 +26,7 @@ import type { StudioState } from "./studioTypes";
 function storeWithObservedRuns() {
   const store = createStore<StudioState>((set, get) => ({
     ...studioInitialData,
-    ...createStudioStoreActions(set, get),
+    ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
   }));
   const autoSimulate = vi.fn();
   store.setState({ autoSimulate, modelDetail: { name: "AdExNeuron" } as ModelDetail });

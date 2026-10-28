@@ -212,6 +212,176 @@
         "title": "AnalysisJobRequest",
         "type": "object"
       },
+      "AuthoredEquationModel": {
+        "additionalProperties": false,
+        "description": "Serializable constructor inputs of a native-compilable equation model.\n\nAttributes\n----------\nequations, initial_state, parameters, constants, reset : list\n    Ordered declarations. Repeated names refuse before dictionary conversion.\n    An empty initial state selects the public constructor's default.\ndt : EquationValue\n    Positive inner timestep, with an explicit time unit in strict mode.\nmethod : str\n    Maintained integrator; order is retained for Gauss\u2013Seidel updates.\nthreshold, rate_expression, probability_expression, spike_value : str or None\n    Authored event condition, stochastic threshold and graded-spike rules.\ndetection, threshold_rng : str\n    Maintained event detection and threshold random generator.\nsubsteps : int\n    Positive inner steps per macro timestep.\nrng_seed : str\n    Canonical decimal unsigned 64-bit key; strings avoid JavaScript loss.\nrandom_stream : int\n    Unsigned 32-bit counter-based random stream.\nunits : str\n    Explicit dimensional-validation mode.\ninput_unit : EquationValue or None\n    Authored quantity declaring the drive's physical dimension.\n\nNotes\n-----\nA live Python noise_rng object is not a serializable native compiler input.\nNo such object is reconstructed or substituted from this request.",
+        "properties": {
+          "constants": {
+            "items": {
+              "$ref": "#/components/schemas/NamedEquationValue"
+            },
+            "title": "Constants",
+            "type": "array"
+          },
+          "detection": {
+            "default": "level",
+            "enum": [
+              "level",
+              "crossing",
+              "poisson",
+              "escape_rate"
+            ],
+            "title": "Detection",
+            "type": "string"
+          },
+          "dt": {
+            "$ref": "#/components/schemas/EquationValue"
+          },
+          "equations": {
+            "items": {
+              "$ref": "#/components/schemas/EquationExpression"
+            },
+            "minItems": 1,
+            "title": "Equations",
+            "type": "array"
+          },
+          "initial_state": {
+            "items": {
+              "$ref": "#/components/schemas/NamedEquationValue"
+            },
+            "title": "Initial State",
+            "type": "array"
+          },
+          "input_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EquationValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "method": {
+            "default": "euler",
+            "enum": [
+              "euler",
+              "rk4",
+              "exp_euler",
+              "map",
+              "gauss_seidel"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/components/schemas/NamedEquationValue"
+            },
+            "title": "Parameters",
+            "type": "array"
+          },
+          "probability_expression": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probability Expression"
+          },
+          "random_stream": {
+            "default": 0,
+            "exclusiveMaximum": 4294967296.0,
+            "minimum": 0.0,
+            "title": "Random Stream",
+            "type": "integer"
+          },
+          "rate_expression": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Expression"
+          },
+          "reset": {
+            "items": {
+              "$ref": "#/components/schemas/EquationExpression"
+            },
+            "title": "Reset",
+            "type": "array"
+          },
+          "rng_seed": {
+            "default": "44257",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "title": "Rng Seed",
+            "type": "string"
+          },
+          "spike_value": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spike Value"
+          },
+          "substeps": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Substeps",
+            "type": "integer"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "threshold_rng": {
+            "default": "lfsr16",
+            "enum": [
+              "lfsr16",
+              "philox"
+            ],
+            "title": "Threshold Rng",
+            "type": "string"
+          },
+          "units": {
+            "default": "none",
+            "enum": [
+              "none",
+              "strict"
+            ],
+            "title": "Units",
+            "type": "string"
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "title": "AuthoredEquationModel",
+        "type": "object"
+      },
       "BenchmarkContributeRequest": {
         "description": "Request body for benchmark-databank contribution uploads.",
         "properties": {
@@ -761,6 +931,209 @@
           "high"
         ],
         "title": "DomainBody",
+        "type": "object"
+      },
+      "EquationExpression": {
+        "additionalProperties": false,
+        "description": "An ordered state right-hand side or reset expression.\n\nAttributes\n----------\nname : str\n    State variable updated by the declaration.\nexpression : str\n    Authored right-hand side under the numerical and event semantics.",
+        "properties": {
+          "expression": {
+            "minLength": 1,
+            "title": "Expression",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "expression"
+        ],
+        "title": "EquationExpression",
+        "type": "object"
+      },
+      "EquationIREmitRequest": {
+        "additionalProperties": false,
+        "description": "SystemVerilog emission with an explicit source-consistency requirement.\n\nAttributes\n----------\nsource_policy : str\n    Require a replayable source by default. Structural-only emission permits\n    unsourced native graphs, without making an authored-model claim.\n    A source binding, when present, must always replay successfully.",
+        "properties": {
+          "ir_text": {
+            "minLength": 1,
+            "title": "Ir Text",
+            "type": "string"
+          },
+          "source_policy": {
+            "default": "require-bound",
+            "enum": [
+              "require-bound",
+              "structural-only"
+            ],
+            "title": "Source Policy",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ir_text"
+        ],
+        "title": "EquationIREmitRequest",
+        "type": "object"
+      },
+      "EquationIRProfile": {
+        "additionalProperties": false,
+        "description": "Native scalar geometry, product-register and function-lowering choices.\n\nAttributes\n----------\nmodule_name : str\n    Authored HDL identifier, validated by the compiler.\ndata_width, fraction : int\n    Total scalar and fractional bits; the compiler admits geometry.\nsigned : bool\n    Requested signedness; unsupported datapaths refuse explicitly.\noverflow, rounding : str\n    Integrated-state overflow and product rounding semantics.\npipeline_stages, pipeline_points : int and list of str\n    Global product-register selection or explicit product names.\nfunction_lowering, random_precision : str\n    Existing function and normal-draw lowering profiles.",
+        "properties": {
+          "data_width": {
+            "default": 16,
+            "minimum": 1.0,
+            "title": "Data Width",
+            "type": "integer"
+          },
+          "fraction": {
+            "default": 8,
+            "minimum": 0.0,
+            "title": "Fraction",
+            "type": "integer"
+          },
+          "function_lowering": {
+            "default": "lut-v1",
+            "enum": [
+              "lut-v1",
+              "v2"
+            ],
+            "title": "Function Lowering",
+            "type": "string"
+          },
+          "module_name": {
+            "default": "sc_equation_neuron",
+            "minLength": 1,
+            "title": "Module Name",
+            "type": "string"
+          },
+          "overflow": {
+            "default": "saturate",
+            "enum": [
+              "saturate",
+              "wrap",
+              "trap"
+            ],
+            "title": "Overflow",
+            "type": "string"
+          },
+          "pipeline_points": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Pipeline Points",
+            "type": "array"
+          },
+          "pipeline_stages": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Pipeline Stages",
+            "type": "integer"
+          },
+          "random_precision": {
+            "default": "standard",
+            "enum": [
+              "standard",
+              "exact"
+            ],
+            "title": "Random Precision",
+            "type": "string"
+          },
+          "rounding": {
+            "default": "truncate",
+            "enum": [
+              "truncate",
+              "nearest",
+              "bankers"
+            ],
+            "title": "Rounding",
+            "type": "string"
+          },
+          "signed": {
+            "default": true,
+            "title": "Signed",
+            "type": "boolean"
+          }
+        },
+        "title": "EquationIRProfile",
+        "type": "object"
+      },
+      "EquationIRRequest": {
+        "additionalProperties": false,
+        "description": "Versioned authored model and profile for a bounded compiler job.\n\nAttributes\n----------\nschema_version : str\n    Required descriptive identity; old lossy bodies are not made equivalent\n    by silently filling missing source declarations.\nmodel : AuthoredEquationModel\n    Complete serializable model declaration.\nprofile : EquationIRProfile\n    Numerical and hardware-output choices.",
+        "properties": {
+          "model": {
+            "$ref": "#/components/schemas/AuthoredEquationModel"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/EquationIRProfile"
+          },
+          "schema_version": {
+            "const": "studio.equation-ir-request.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "model"
+        ],
+        "title": "EquationIRRequest",
+        "type": "object"
+      },
+      "EquationIRTextRequest": {
+        "additionalProperties": false,
+        "description": "Native graph text for bounded structural or semantic inspection.\n\nAttributes\n----------\nir_text : str\n    Actual native text, including its source binding when present.",
+        "properties": {
+          "ir_text": {
+            "minLength": 1,
+            "title": "Ir Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ir_text"
+        ],
+        "title": "EquationIRTextRequest",
+        "type": "object"
+      },
+      "EquationValue": {
+        "additionalProperties": false,
+        "description": "A finite magnitude and optional authored physical unit.\n\nAttributes\n----------\nvalue : int or float\n    Magnitude in the declared unit, or the unannotated numerical convention.\nunit : str or None\n    Pint expression whose dimensions are checked by the model constructor.",
+        "properties": {
+          "unit": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "EquationValue",
         "type": "object"
       },
       "ExperimentRejectedDetail": {
@@ -1803,6 +2176,46 @@
           "diagnostic"
         ],
         "title": "ModelSimulationFailureDetail",
+        "type": "object"
+      },
+      "NamedEquationValue": {
+        "additionalProperties": false,
+        "description": "An ordered initial state, parameter or immutable constant.\n\nAttributes\n----------\nname : str\n    Authored symbol passed unchanged to the equation model.",
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "name"
+        ],
+        "title": "NamedEquationValue",
         "type": "object"
       },
       "NativeToolUnavailableDetail": {
@@ -5124,7 +5537,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SimulateRequest"
+                "$ref": "#/components/schemas/EquationIRRequest"
               }
             }
           },
@@ -5200,9 +5613,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Data",
-                "type": "object"
+                "$ref": "#/components/schemas/EquationIREmitRequest"
               }
             }
           },
@@ -5271,6 +5682,44 @@
         "summary": "Api Ir Emit Sv Direct"
       }
     },
+    "/api/ir/replay": {
+      "post": {
+        "operationId": "api_ir_replay_api_ir_replay_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquationIRTextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ir Replay Api Ir Replay Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ir Replay"
+      }
+    },
     "/api/ir/verify": {
       "post": {
         "operationId": "api_ir_verify_api_ir_verify_post",
@@ -5278,9 +5727,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Data",
-                "type": "object"
+                "$ref": "#/components/schemas/EquationIRTextRequest"
               }
             }
           },

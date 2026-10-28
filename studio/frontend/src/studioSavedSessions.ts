@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio saved-session persistence helpers
 import { readModelParameters, type ModelParameters } from "./modelInputs";
 import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
+import { readEquationIrConfiguration, type EquationIrConfiguration } from "./equationIrConfig";
 import { parseStudioJson, stringifyStudioJson } from "./studioJson";
 
 /**
@@ -46,6 +47,7 @@ export interface StudioSavedSessionInput {
   reset: string;
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
+  equationIrConfig: EquationIrConfiguration;
   selectedModelName: string;
   modelParams: ModelParameters;
   dt: number;
@@ -235,6 +237,7 @@ export function studioSavedSessionState(input: StudioSavedSessionInput): Record<
     reset: input.reset,
     odeParams: input.odeParams,
     odeInit: input.odeInit,
+    equationIrConfig: readEquationIrConfiguration(input.equationIrConfig),
     selectedModelName: input.selectedModelName,
     modelParams: input.modelParams,
     dt: input.dt,
@@ -267,6 +270,7 @@ export function studioSavedSessionRestoreState(
     reset: stringValue(state.reset, ""),
     odeParams: numberRecordValue(state.odeParams),
     odeInit: numberRecordValue(state.odeInit),
+    equationIrConfig: readEquationIrConfiguration(state.equationIrConfig),
     selectedModelName: stringValue(state.selectedModelName, ""),
     modelParams: readModelParameters(state.modelParams),
     dt: nonZeroFiniteNumberValue(state.dt, 0.1),

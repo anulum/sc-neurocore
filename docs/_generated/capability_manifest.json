@@ -965,6 +965,10 @@
       {
         "name": "hil-telemetry",
         "schema_ref": "proto/core.proto + proto/telemetry.proto (Tensor / BitstreamMetadata / HILFrame)"
+      },
+      {
+        "name": "studio.equation-ir-request.v1",
+        "schema_ref": "sc_neurocore.studio.equation_ir_schema.EquationIRRequest (ordered model declarations, physical quantities, exact random key and numeric profile; HTTP and bounded compiler workers)"
       }
     ]
   },
@@ -978,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5440
+    "test_files": 5445
   },
   "documentation": {
     "public_pages": [
@@ -7912,6 +7916,7 @@
       "tests/test_studio_compiler_cosim.py",
       "tests/test_studio_compiler_ir_build.py",
       "tests/test_studio_compiler_ir_verify.py",
+      "tests/test_studio_compiler_result.py",
       "tests/test_studio_compiler_sv_emit.py",
       "tests/test_studio_conflicting_edit_branch.py",
       "tests/test_studio_dcls.py",
@@ -7944,6 +7949,10 @@
       "tests/test_studio_endpoints_network.py",
       "tests/test_studio_endpoints_presets.py",
       "tests/test_studio_endpoints_sensitivity.py",
+      "tests/test_studio_equation_ir.py",
+      "tests/test_studio_equation_ir_http.py",
+      "tests/test_studio_equation_ir_process.py",
+      "tests/test_studio_equation_ir_schema.py",
       "tests/test_studio_event_manifest_corruption.py",
       "tests/test_studio_event_runtime_environment.py",
       "tests/test_studio_event_training_budget.py",

@@ -59,9 +59,9 @@ jobs:
         with:
           go-version: "1.27.3"
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # nightly
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # nightly
         with:
           toolchain: nightly
 
@@ -97,6 +97,9 @@ jobs:
           node-version: "26.12.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
+
+      - name: Install pinned npm
+        run: npm install --global npm@12.2.1
       - name: Build the Studio UI the wheel carries
         working-directory: studio/frontend
         run: |
@@ -111,11 +114,18 @@ jobs:
           python -m build
 
       - name: Accept the installed Studio the wheel provides
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: |
+          python -m pip install --require-hashes -r requirements/maturin.txt
+          (cd bridge && maturin build --release --locked --out "$RUNNER_TEMP/studio-native-wheel")
           python -m venv "$RUNNER_TEMP/installed"
           "$RUNNER_TEMP/installed/bin/pip" install --require-hashes \
             -r requirements/runtime.txt -r requirements/hub.txt
           "$RUNNER_TEMP/installed/bin/pip" install --no-deps dist/sc_neurocore-*.whl
+          "$RUNNER_TEMP/installed/bin/pip" install --no-deps "$RUNNER_TEMP/studio-native-wheel/"*.whl
+          "$RUNNER_TEMP/installed/bin/python" -I -c \
+            'from sc_neurocore_engine.ir import ScGraphBuilder; graph = ScGraphBuilder("installed"); graph.output("value", graph.input("drive", "i16")); assert not graph.build().verify()'
           python tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"
 
       - name: Replay through the installed Studio in a real browser

@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — What the guided workflow may and may not call done
 
+import { defaultEquationIrConfiguration } from "./equationIrConfig";
 import { describe, expect, it } from "vitest";
 import { studioBundleContextKey } from "./studioBundleContext";
 
@@ -40,8 +41,9 @@ function source(overrides: Partial<StudioGuidedFlowSource> = {}): StudioGuidedFl
   return {
     bundleContexts: {}, candidates: [], graphPopulations: [], graphProjections: [],
     synthTarget: "ice40", projectRevision: null,
+    equationIrConfig: defaultEquationIrConfiguration(),
     latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null,
-    verilogSrc: "", svSource: "",
+    verilogSrc: "", svSource: "", irText: "", irRequestKey: null, irResult: null,
     analysisExperimentKey: null,
     modelQFormat: "Q8.8",
     bifResult: null,

@@ -18,8 +18,10 @@ physical board deployment needs separate validation.
    its actual outcome, fit and artifact report.
 6. Use **Estimate** only as a labelled heuristic for the applicable IR source.
 
-The Rust **Build IR** adapter currently creates a fixed LIF template; it does
-not establish translation of arbitrary ODEs. See the
+**Build IR** lowers authored equations and their selected constructor/numeric
+profile through the native compiler. **Replay source** checks that its bound
+source reconstructs the graph; native **Emit SV** requires that replay.
+These results do not replace synthesis or physical-device checks. See the
 [hardware user guide](manual/hardware.md) before interpreting IR, precision,
 synthesis or physical-device claims.
 

@@ -62,10 +62,12 @@ See [Projects and evidence](../studio/manual/projects-and-evidence.md).
 | RTL, parity, FPGA target profiles and synthesis | [Hardware workflow](../studio/manual/hardware.md) |
 | Login, jobs, recovery or a failed operation | [Troubleshooting](../studio/manual/troubleshooting.md) |
 
-The current Rust **Build IR** adapter constructs a fixed LIF graph and is not a
-translation of arbitrary entered equations. Structural IR verification does
-not establish source fidelity. Use the hardware guide's separate catalogue
-and direct-Python compiler procedures and retain their qualification limits.
+For authored equations, open **IR → Equation compiler settings**, select the
+numeric profile, then **Build IR → Check graph structure → Replay source → Emit
+SV**. The compiler preserves the entered equations and initial state and
+reports unsupported combinations explicitly. Structural checks and semantic
+replay have separate results; neither establishes hardware operation. The
+hardware guide also documents the catalogue and direct Python compiler paths.
 
 [Complete user manual](../studio/manual/index.md) ·
 [Technical Studio guide](../guides/studio.md)

@@ -143,7 +143,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
         with:
           toolchain: "1.98.1"
           components: rustfmt, clippy
@@ -198,6 +198,9 @@ jobs:
           node-version: "26.12.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
+
+      - name: Install pinned npm
+        run: npm install --global npm@12.2.1
 
       - name: Install frontend dependencies
         working-directory: studio/frontend
@@ -311,7 +314,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
         with:
           toolchain: "1.98.1"
 
@@ -388,7 +391,7 @@ jobs:
           # downloads/executes a moving target). Residual: the pinned release is
           # still fetched from the official prefix-dev endpoint without a
           # per-artifact digest — accepted + tracked (ci_supply_chain_residuals).
-          pixi-version: v0.81.0
+          pixi-version: v0.83.0
           manifest-path: src/sc_neurocore/accel/mojo/pixi.toml
 
       - name: Expose mojo without shadowing the CI Python
@@ -448,6 +451,9 @@ jobs:
           node-version: "26.12.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
+
+      - name: Install pinned npm
+        run: npm install --global npm@12.2.1
 
       - name: Install the frontend's locked lint tools
         working-directory: studio/frontend
@@ -695,6 +701,55 @@ jobs:
             ${{ runner.temp }}/studio-native/.coverage*
             ${{ runner.temp }}/studio-native/pytest/**/*.log
             ${{ runner.temp }}/studio-native/pytest/**/*.json
+          include-hidden-files: true
+          retention-days: 7
+
+      - name: Native equation compiler frontend coverage
+        if: matrix.primary
+        working-directory: studio/frontend
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          namespace="$RUNNER_TEMP/studio-equation-coverage"
+          mkdir -p "$namespace"/{tmp,config,data,state,cache}
+          export TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          export SC_NEUROCORE_STUDIO_COMPILER_COVERAGE_DIR="$namespace/reports"
+          npm run test:compiler-coverage
+
+      - name: Native equation compiler browser workflow
+        if: matrix.primary
+        working-directory: studio/frontend
+        shell: bash
+        env:
+          SC_NEUROCORE_STUDIO_LIVE_API_PORT: "24020"
+          SC_NEUROCORE_STUDIO_LIVE_UI_PORT: "24021"
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          namespace="$RUNNER_TEMP/studio-equation-browser"
+          mkdir -p "$namespace"/{tmp,config,data,state,cache}
+          export TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          export SC_NEUROCORE_STUDIO_LIVE_JOB_ROOT="$namespace/jobs"
+          export SC_NEUROCORE_STUDIO_LIVE_AUDIT_LOG_PATH="$namespace/audit.jsonl"
+          export SC_NEUROCORE_STUDIO_PROJECT_ROOT="$namespace/projects"
+          npx playwright install --with-deps chromium
+          npx playwright test --config playwright.live.config.ts equation-ir-live.spec.ts \
+            --output="$namespace/playwright"
+
+      - name: Preserve equation compiler browser diagnostics
+        if: always() && matrix.primary
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-equation-browser-diagnostics
+          path: |
+            ${{ runner.temp }}/studio-equation-browser
+            ${{ runner.temp }}/studio-equation-coverage
           include-hidden-files: true
           retention-days: 7
 
@@ -1147,7 +1202,7 @@ jobs:
           python-version: "3.12.16"
           cache: pip
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
         with:
           toolchain: "1.98.1"
 
@@ -1273,7 +1328,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
         with:
           toolchain: "1.98.1"
 

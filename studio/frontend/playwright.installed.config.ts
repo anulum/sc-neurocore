@@ -39,8 +39,8 @@ const path = `${dirname(python)}${delimiter}${process.env.PATH ?? ""}`;
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: ["catalogue-to-silicon-live.spec.ts", "experiment-export-live.spec.ts"],
-  grep: /Poisson constructor controls run, replay, export and preserve observed state|a full-domain seed survives serialized project custody, editing, local sessions and independent replay|browser session writes report real quota failures and recover without losing the stored list/,
+  testMatch: ["catalogue-to-silicon-live.spec.ts", "experiment-export-live.spec.ts", "equation-ir-live.spec.ts"],
+  grep: /Poisson constructor controls run, replay, export and preserve observed state|a full-domain seed survives serialized project custody, editing, local sessions and independent replay|browser session writes report real quota failures and recover without losing the stored list|authored native compiler inputs survive graph replay|native compiler rejects stale responses/,
   timeout: 900_000,
   expect: { timeout: 60_000 },
   fullyParallel: false,
@@ -65,6 +65,7 @@ export default defineConfig({
       BROWSER: "true",
       SC_NEUROCORE_STUDIO_JOB_ROOT: join(root, "jobs"),
       SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH: join(root, "audit.jsonl"),
+      SC_NEUROCORE_STUDIO_PROJECT_ROOT: join(root, "projects"),
       SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS: origin,
     },
     reuseExistingServer: false,

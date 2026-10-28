@@ -44,19 +44,20 @@ See [Model readiness](../model-readiness.md) and
 
 ## Custom equations and the compiler inspector
 
-ODE mode exposes a direct Python equation compiler and a separate Rust IR
-inspector. They are distinct paths with distinct supported operations.
+ODE mode exposes a direct Python equation compiler and a separate native IR
+compiler. They are distinct paths with distinct supported operations.
 
-**Current limitation:** the Studio Rust **Build IR** adapter constructs a fixed
-LIF graph; it does not translate arbitrary submitted equations, threshold and
-reset into equivalent IR. A structurally valid graph or green verifier badge
-therefore does not establish fidelity to the equations you typed. Do not use
-this path as evidence of general equation-to-hardware correctness.
+**Build IR** lowers the authored equations, initial state, parameters, event
+rules and compiler settings through the native equation compiler. Inspect its
+actual port widths and clock cadence. **Check graph structure** validates the
+graph; **Replay source** reconstructs its bound model and requires the same
+graph. **Emit SV** uses the native emitter and enforces source replay. Changing
+an input withdraws previous compilation results and evidence.
 
 The direct **Generate RTL** / Python compiler path carries source-to-RTL
 traceability and its own supported expression/numeric contract. Inspect that
-output and qualify its behaviour independently. Direct output is not repaired
-or certified by a successful fixed-template IR inspection. Keep failed emission
+output and qualify its behaviour independently. Native source replay establishes
+source consistency, rather than scientific or physical qualification. Keep failed emission
 or tool diagnostics with the result; generated text is not synthesis evidence.
 [Compiler Inspector](../compiler-inspector.md) describes both routes.
 

@@ -44,6 +44,7 @@ export default defineConfig({
   testDir: "./e2e",
   testMatch: [
     "catalogue-to-silicon-live.spec.ts",
+    "equation-ir-live.spec.ts",
     "training-preregistration-live.spec.ts",
     "training-conversion-live.spec.ts",
   ],

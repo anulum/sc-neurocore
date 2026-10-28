@@ -12,25 +12,32 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Query, Request
+from pydantic import BaseModel
 
 from sc_neurocore.studio.api.common import _safe
+from sc_neurocore.studio.api.compiler_result import decode_equation_ir_response
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
     CompileRequest,
     DirectCompileRequest,
     ModelCompileRequest,
     ModelCosimRequest,
-    SimulateRequest,
 )
 from sc_neurocore.studio.compiler import (
-    build_ir_from_equation,
     emit_sv_from_equation,
-    emit_systemverilog,
-    verify_ir,
+)
+from sc_neurocore.studio.equation_ir import IROperation
+from sc_neurocore.studio.equation_ir_schema import (
+    EquationIREmitRequest,
+    EquationIRRequest,
+    EquationIRTextRequest,
 )
 from sc_neurocore.studio.nir_compile import compile_nir_file_bytes
 from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
+from sc_neurocore.studio.platform.equation_ir_process import (
+    EQUATION_IR_PROCESS_TASK,
+)
 from sc_neurocore.studio.platform.model_compile_process import MODEL_COMPILE_PROCESS_TASK
 from sc_neurocore.studio.platform.model_cosim_process import MODEL_COSIM_PROCESS_TASK
 
@@ -39,6 +46,17 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
     """Build the compiler router over shared Studio runtime state."""
     router = APIRouter()
     run_studio_process_job_sync = context.run_studio_process_job_sync
+
+    def run_equation_ir(operation: IROperation, request: BaseModel) -> dict[str, Any]:
+        """Validate the bounded worker outcome and retain its exact job receipt."""
+        response = run_studio_process_job_sync(
+            kind="compiler",
+            owner="studio-equation-ir",
+            task_path=EQUATION_IR_PROCESS_TASK,
+            payload={"operation": operation, "request": request.model_dump(mode="json")},
+            include_job_receipt=True,
+        )
+        return decode_equation_ir_response(response)
 
     @router.post("/api/compile")
     def api_compile(req: CompileRequest) -> Any:
@@ -86,30 +104,20 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
         )
 
     @router.post("/api/ir/build")
-    def api_ir_build(req: SimulateRequest) -> Any:
-        return _safe(
-            lambda: build_ir_from_equation(
-                equations=req.equations,
-                params=req.params,
-                threshold=req.threshold,
-                reset=req.reset,
-                dt=req.dt,
-            )
-        )
+    def api_ir_build(req: EquationIRRequest) -> Any:
+        return _safe(lambda: run_equation_ir("build", req))
 
     @router.post("/api/ir/verify")
-    def api_ir_verify(data: dict[str, Any]) -> Any:
-        ir_text = data.get("ir_text", "")
-        if not ir_text:
-            raise HTTPException(422, "ir_text required")
-        return _safe(lambda: verify_ir(ir_text))
+    def api_ir_verify(req: EquationIRTextRequest) -> Any:
+        return _safe(lambda: run_equation_ir("verify", req))
+
+    @router.post("/api/ir/replay")
+    def api_ir_replay(req: EquationIRTextRequest) -> Any:
+        return _safe(lambda: run_equation_ir("replay", req))
 
     @router.post("/api/ir/emit-sv")
-    def api_ir_emit_sv(data: dict[str, Any]) -> Any:
-        ir_text = data.get("ir_text", "")
-        if not ir_text:
-            raise HTTPException(422, "ir_text required")
-        return _safe(lambda: emit_systemverilog(ir_text))
+    def api_ir_emit_sv(req: EquationIREmitRequest) -> Any:
+        return _safe(lambda: run_equation_ir("emit-sv", req))
 
     @router.post("/api/ir/emit-sv-direct")
     def api_ir_emit_sv_direct(req: DirectCompileRequest) -> Any:

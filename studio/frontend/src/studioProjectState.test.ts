@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio project state snapshot helper tests
 
+import { defaultEquationIrConfiguration } from "./equationIrConfig";
 import { describe, expect, it } from "vitest";
 
 import { studioExperimentKey, studioTrainingKey } from "./studioExperimentKey";
@@ -53,6 +54,7 @@ function snapshot(): StudioProjectStateSnapshot {
     reset: "v = 0",
     odeParams: { tau: 10 },
     odeInit: { v: 0 },
+    equationIrConfig: defaultEquationIrConfiguration(),
     selectedModelName: "lif",
     modelParams: { tau: 20 },
     dt: 0.05,
@@ -242,6 +244,14 @@ describe("Studio project state helpers", () => {
       trainingConfig: fallbackTrainingConfig,
       candidates: [],
     });
+  });
+
+  it("restores the fallback architecture when a saved hidden-layer field is not a list", () => {
+    const restored = studioProjectStateFromLoadResponse({ state: {
+      trainingConfig: { ...fallbackTrainingConfig, hidden: "64,32" },
+    } }, fallbackTrainingConfig);
+    expect(restored.trainingConfig.hidden).toEqual(fallbackTrainingConfig.hidden);
+    expect(restored.equationIrConfig).toEqual(defaultEquationIrConfiguration());
   });
 
   it("keeps each stored candidate draft that carries text, exactly as typed", () => {

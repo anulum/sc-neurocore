@@ -7,6 +7,8 @@
 // SC-NeuroCore — Studio Zustand store
 import type { ModelParameters } from "../modelInputs";
 import type { SimulationSeedInput } from "../simulationSeed";
+import type { EquationIrConfiguration } from "../equationIrConfig";
+import type { EquationIRResult } from "../api/equationIrTypes";
 // Studio store state shape and view-mode types.
 
 import type { StudioGraphHistory } from "../studioGraphHistory";
@@ -66,6 +68,7 @@ export interface StudioState {
   reset: string;
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
+  equationIrConfig: EquationIrConfiguration;
   models: ModelSummary[];
   /** Last catalogue or initial model-detail failure; cleared after a successful retry. */
   modelsError: string | null;
@@ -152,6 +155,9 @@ export interface StudioState {
   networkParams: StudioNetworkParams;
   verilogSrc: string;
   irText: string;
+  irResult: EquationIRResult | null;
+  /** Actual request identity of the current native graph; withdrawn with its outputs. */
+  irRequestKey: string | null;
   svSource: string;
   irErrors: string[];
   compileTraceability: CompileTraceability | null;
@@ -288,6 +294,9 @@ export interface StudioState {
   setReset: (r: string) => void;
   setOdeParam: (key: string, value: number) => void;
   setOdeInit: (key: string, value: number) => void;
+  setEquationIrConfig: (config: EquationIrConfiguration) => void;
+  runVerifyIR: () => Promise<void>;
+  runReplayIR: () => Promise<void>;
   setModelParam: (key: string, value: number) => void;
   setModelIntegrator: (integrator: string) => void;
   setModelQFormat: (qFormat: string) => void;

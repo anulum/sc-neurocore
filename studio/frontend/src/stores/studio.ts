@@ -13,6 +13,7 @@ import { syncStoredStudioAuthToken } from "../studioAuthSession";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
+import { createStudioEquationIrActions } from "./studioEquationIrActions";
 import type { StudioState } from "./studioTypes";
 
 export type { SourceMode, ViewTab, StudioState } from "./studioTypes";
@@ -25,6 +26,7 @@ export const useStudioStore = create<StudioState>((set, get) => {
   const state: StudioState = {
     ...studioInitialData,
     ...actions,
+    ...createStudioEquationIrActions(set, get),
   };
   return state;
 });

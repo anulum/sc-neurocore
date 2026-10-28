@@ -160,6 +160,10 @@ schema_ref = "sc_neurocore.nir_bridge.from_nir/to_nir (NIR graph, 18/18 primitiv
 name = "hil-telemetry"
 schema_ref = "proto/core.proto + proto/telemetry.proto (Tensor / BitstreamMetadata / HILFrame)"
 
+[[wire_formats]]
+name = "studio.equation-ir-request.v1"
+schema_ref = "sc_neurocore.studio.equation_ir_schema.EquationIRRequest (ordered model declarations, physical quantities, exact random key and numeric profile; HTTP and bounded compiler workers)"
+
 [[cross_repo]]
 sibling = "SCPN-CONTROL"
 adapter = "accel.get_backend().sc_forward"

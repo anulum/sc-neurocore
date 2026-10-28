@@ -97,6 +97,29 @@ consumer directory. It round-trips every public native class/function global
 through every supported pickle protocol and verifies object identity. Binding
 tests separately exercise instance persistence or refusal, inputs and mutation.
 
+### Frontend toolchain
+
+Use the Node version pinned in the workflows and npm 12.2.1, as declared by
+`studio/frontend/package.json`. When the installed npm version differs, run
+`npx --yes npm@12.2.1 ci` from `studio/frontend`; the same prefix can run the
+package scripts without changing the shared machine's global npm installation.
+The producer and federation test host use matching React singleton versions.
+
+### Equation compiler frontend coverage
+
+From `studio/frontend`, `npm run test:compiler-coverage` checks the compiler
+controls, store ownership and project/session custody with per-file statement,
+branch, function and line thresholds of 100%. Its Inspector integration starts
+the real FastAPI server and native compiler workers; the Python environment
+must provide the Studio runtime and the matching native engine. Set
+`SC_NEUROCORE_STUDIO_COMPILER_PYTHON` to select that interpreter and
+`SC_NEUROCORE_STUDIO_COMPILER_API_ORIGIN` to select a test-owned IPv4 loopback
+port (default `http://127.0.0.1:24022`). CI runs it in the primary native lane.
+The run keeps API logs and jobs below `TMPDIR`; set
+`SC_NEUROCORE_STUDIO_COMPILER_COVERAGE_DIR` for its coverage reports.
+The DOM test observes download payloads; the real browser cases separately
+verify file delivery and evidence manifest digests.
+
 ### Installed Studio browser acceptance
 
 The publish and release workflows install the built wheel into a fresh
@@ -106,13 +129,17 @@ The browser checks Poisson constructor inputs and replay, and an exact 63-bit
 seed through both a catalogue model and the equation playground, including
 project saves, local sessions, downloads and a separate replay
 interpreter. An editable source import is refused before the browser starts.
+The same acceptance also compiles authored equations through the installed
+native engine, checks source replay and RTL, and downloads compiler evidence.
+Both wheels come from the same checkout: publishing consumes the matching
+Linux engine artifact; release validation builds it with the locked Cargo graph.
 
 This configuration requires `SC_NEUROCORE_STUDIO_INSTALLED_PYTHON` and
 `SC_NEUROCORE_STUDIO_INSTALLED_TEST_ROOT` as absolute paths. The selected
 interpreter also runs the downloaded pack's independent replay.
-The test root holds jobs, audit output and browser evidence; the project store
-still belongs to the server's normal user. CI runs with a disposable user
-filesystem. Shared-machine checks need a disposable project-store namespace.
+The test root holds jobs, audit output, browser evidence and an isolated project
+store. CI runs with a disposable user filesystem; shared-machine checks retain
+the same explicit project-store namespace.
 An existing browser may be selected explicitly with
 `SC_NEUROCORE_STUDIO_BROWSER_EXECUTABLE`; CI uses Playwright's locked Chromium.
 These checks do not attest federation-host adoption or hardware execution.

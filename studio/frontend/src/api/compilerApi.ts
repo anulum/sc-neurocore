@@ -15,6 +15,8 @@ import type {
   ModelCosimRequest,
   IRBuildResponse,
   IRVerifyResponse,
+  IRReplayResponse,
+  EquationIRRequest,
   SVEmitResponse,
   SVDirectResponse,
 } from "./types";
@@ -56,7 +58,7 @@ export const cosimModelVerilog = (req: ModelCosimRequest) => (
  * @param req - The system to lower.
  * @returns The IR text and the report of how it was built.
  */
-export const buildIR = (req: Record<string, unknown>) => post<IRBuildResponse>("/ir/build", req);
+export const buildIR = (req: EquationIRRequest) => post<IRBuildResponse>("/ir/build", req);
 
 /**
  * Check an IR document against the invariants the emitters rely on.
@@ -65,6 +67,14 @@ export const buildIR = (req: Record<string, unknown>) => post<IRBuildResponse>("
  * @returns What it violates, or that it violates nothing.
  */
 export const verifyIR = (irText: string) => post<IRVerifyResponse>("/ir/verify", { ir_text: irText });
+
+/**
+ * Recompile bound source and require its graph to match the submitted IR.
+ *
+ * @param irText - Native graph with its source binding.
+ * @returns Actual semantic replay and reconstructed output contract.
+ */
+export const replayIR = (irText: string) => post<IRReplayResponse>("/ir/replay", { ir_text: irText });
 
 /**
  * Emit SystemVerilog from an IR document.

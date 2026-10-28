@@ -7,6 +7,7 @@
     "dev": "vite",
     "lint": "eslint .",
     "test": "vitest run && npm run test:build",
+    "test:compiler-coverage": "vitest run --config vitest.compiler.config.ts",
     "test:e2e": "playwright test && npm run test:federation",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "test:e2e:export": "npm run build && playwright test --config playwright.export.config.ts",
@@ -20,8 +21,8 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@xyflow/react": "12.12.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "zustand": "5.0.16"
   },
   "overrides": {
@@ -39,6 +40,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
+    "@vitest/coverage-v8": "5.0.5",
     "adm-zip": "0.6.1",
     "eslint": "10.13.0",
     "eslint-plugin-jsdoc": "65.4.2",
@@ -47,5 +49,6 @@
     "typescript-eslint": "8.72.1",
     "vite": "8.3.5",
     "vitest": "5.0.5"
-  }
+  },
+  "packageManager": "npm@12.2.1"
 }

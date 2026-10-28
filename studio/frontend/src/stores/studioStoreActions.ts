@@ -324,6 +324,7 @@ import {
 } from "../studioAutoSimulation";
 import { studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 import { runStoreCompile } from "./studioCompile";
+import type { StudioEquationIrActions } from "./studioEquationIrActions";
 import { runStoreSynthesis } from "./studioSynthesis";
 import { runStoreBundle } from "./studioBundle";
 import { studioStageOutcomeState, studioStageSet } from "./studioStageFailure";
@@ -402,14 +403,13 @@ let debounceTimer: StudioAutoSimulationTimer | null = null;
  *
  * @param set - Writes a patch into the store.
  * @param get - Reads the store as it stands.
- * @returns Every action, complete. The return type is the derived action half
- *   of the state rather than a `Partial`, so a forgotten action is a type
- *   error here instead of a runtime `undefined` at the first click.
+ * @returns Complete actions except native equation actions, which are composed
+ *   separately. Every other callable state field remains required here.
  */
 export function createStudioStoreActions(
   set: (partial: Partial<StudioState> | ((state: StudioState) => Partial<StudioState>)) => void,
   get: () => StudioState,
-): StudioStoreActions {
+): Omit<StudioStoreActions, keyof StudioEquationIrActions> {
   let trainingStream: StudioTrainingStreamEventSource | null = null;
   let trainingSelectionVersion = 0;
   let trainingListVersion = 0;
@@ -1079,9 +1079,6 @@ export function createStudioStoreActions(
     if (state !== null) set(state);
   },
 
-  runBuildIR: () => runStoreCompile("ir", get, set),
-
-  runEmitSV: () => runStoreCompile("sv", get, set),
 
   setSynthTarget: (t) => { set(synthesisTargetState(t)); },
 

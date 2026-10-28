@@ -346,7 +346,8 @@ def test_emit_systemverilog_route_requires_ir_text(tmp_path: Path) -> None:
     response = client.post("/api/ir/emit-sv", json={})
 
     assert response.status_code == 422
-    assert response.json()["detail"] == "ir_text required"
+    assert response.json()["detail"][0]["loc"] == ["body", "ir_text"]
+    assert response.json()["detail"][0]["type"] == "missing"
 
 
 def test_pipeline_route_records_bounded_worker_job(tmp_path: Path) -> None:

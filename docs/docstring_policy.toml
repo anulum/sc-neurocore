@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1428
+expected_file_count = 1442
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5818,7 +5818,7 @@ rationale = "The installed GPU-feature wheel must preserve native GPU identities
 
 [[file]]
 path = "src/sc_neurocore/studio/compiler.py"
-rationale = "Studio compiler adapters build, verify and emit native IR through the installed engine without declaring ports the emitter reserves."
+rationale = "Direct Python equation RTL and precision co-simulation adapters preserve their distinct execution contracts."
 
 [[file]]
 path = "src/sc_neurocore/compiler/magnitude_function_units.py"
@@ -5847,3 +5847,58 @@ rationale = "Euclidean magnitude preserves both coordinates, physical dimensions
 [[file]]
 path = "tests/test_native_equation_functions.py"
 rationale = "Native equation function lowering preserves actual numerical results and source-bound emitted targets."
+[[file]]
+path = "src/sc_neurocore/studio/equation_ir_schema.py"
+rationale = "Ordered equation requests preserve declarations, physical quantities and exact random keys across HTTP and worker serialization."
+
+[[file]]
+path = "src/sc_neurocore/studio/equation_ir.py"
+rationale = "Authored equation lowering, graph verification, semantic replay and native RTL emission expose separate compiler outcomes."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/equation_ir_process.py"
+rationale = "Bounded native compiler jobs retain real result artifacts and distinguish authored refusals from completed compilation."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/compiler.py"
+rationale = "Compiler HTTP routes validate authored requests and return safe refusal details with exact process receipts."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/policy_routes_compute.py"
+rationale = "Compute route policy includes semantic source replay under the authenticated compiler operation boundary."
+
+[[file]]
+path = "tests/test_studio_compiler_ir_build.py"
+rationale = "HTTP build contracts distinguish authored source, native port widths and cadence from the former fixed-template output."
+
+[[file]]
+path = "tests/test_studio_compiler_ir_verify.py"
+rationale = "HTTP graph inspection reports structural validity without claiming source replay."
+
+[[file]]
+path = "tests/test_studio_compiler_sv_emit.py"
+rationale = "HTTP emission tests preserve the distinct native source-replayed and direct Python RTL paths."
+
+[[file]]
+path = "tests/test_studio_equation_ir_schema.py"
+rationale = "Public request admission refuses lossy scalars, duplicate declarations and ambiguous numeric options."
+
+[[file]]
+path = "tests/test_studio_equation_ir.py"
+rationale = "Real native compiler contracts cover authored dynamics, ordered integration, units, source replay and controlled refusals."
+
+[[file]]
+path = "tests/test_studio_equation_ir_process.py"
+rationale = "Actual compiler child processes preserve source and publish truthful success or refusal artifacts."
+
+[[file]]
+path = "tests/test_studio_equation_ir_http.py"
+rationale = "Production HTTP routers execute native jobs and preserve source-bound replay, RTL and refusal receipts."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/compiler_result.py"
+rationale = "Production process-result decoding and sanitized compiler HTTP projection."
+
+[[file]]
+path = "tests/test_studio_compiler_result.py"
+rationale = "Actual native HTTP jobs and persisted result bytes qualify response decoding and corrupt envelopes."

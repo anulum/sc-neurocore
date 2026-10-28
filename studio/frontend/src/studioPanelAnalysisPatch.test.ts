@@ -14,6 +14,7 @@ import { applyStudioPanelAnalysisPatch } from "./studioPanelAnalysisPatch";
 import { studioSimulationConfigInput } from "./studioSimulationConfigInput";
 import { studioInitialData } from "./stores/studioInitialState";
 import { createStudioStoreActions } from "./stores/studioStoreActions";
+import { createStudioEquationIrActions } from "./stores/studioEquationIrActions";
 import type { StudioState } from "./stores/studioTypes";
 
 /**
@@ -24,7 +25,7 @@ import type { StudioState } from "./stores/studioTypes";
 function busyStore() {
   const store = createStore<StudioState>((set, get) => ({
     ...studioInitialData,
-    ...createStudioStoreActions(set, get),
+    ...createStudioStoreActions(set, get), ...createStudioEquationIrActions(set, get),
   }));
   store.setState({ error: "store-owned message", isSimulating: true });
   return store;

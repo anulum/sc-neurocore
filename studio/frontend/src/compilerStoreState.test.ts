@@ -6,14 +6,13 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio compiler store state helper tests
 import { describe, expect, it } from "vitest";
+import { nativeIRInvalidResult, nativeSVEmitResult } from "./equationIrTestSupport";
 
 import type {
   CompileResponse,
   CompileTraceability,
   ModelCosimReport,
-  IRBuildResponse,
   SVDirectResponse,
-  SVEmitResponse,
 } from "./api/client";
 import {
   compilerErrorState,
@@ -113,38 +112,6 @@ function cosimReport(): ModelCosimReport {
 }
 
 /**
- * A built intermediate representation.
- *
- * @param overrides - Fields to set on top of the default.
- * @returns The fixture.
- */
-function irBuildResponse(overrides: Partial<IRBuildResponse> = {}): IRBuildResponse {
-  return {
-    errors: overrides.errors ?? [],
-    graph_name: overrides.graph_name ?? "lif_graph",
-    ir_text: overrides.ir_text ?? "%0 = input current",
-    n_inputs: overrides.n_inputs ?? 1,
-    n_ops: overrides.n_ops ?? 3,
-    n_outputs: overrides.n_outputs ?? 1,
-    params_q88: overrides.params_q88 ?? { tau_m: 2560 },
-  };
-}
-
-/**
- * SystemVerilog emitted from an IR.
- *
- * @param overrides - Fields to set on top of the default.
- * @returns The fixture.
- */
-function svEmitResponse(overrides: Partial<SVEmitResponse> = {}): SVEmitResponse {
-  return {
-    chars: overrides.chars ?? 96,
-    graph_name: overrides.graph_name ?? "lif_graph",
-    systemverilog: overrides.systemverilog ?? "module lif_graph; endmodule",
-  };
-}
-
-/**
  * SystemVerilog emitted straight from a system.
  *
  * @param overrides - Fields to set on top of the default.
@@ -181,6 +148,10 @@ describe("compiler store state helpers", () => {
       error: "compiler unavailable",
       isSimulating: false,
     });
+    expect(compilerFailureState(new Error())).toEqual({ error: "Error", isSimulating: false });
+    expect(compilerFailureState("compiler disconnected")).toEqual({
+      error: "compiler disconnected", isSimulating: false,
+    });
   });
 
   it("builds Verilog compile result patches", () => {
@@ -205,6 +176,7 @@ describe("compiler store state helpers", () => {
       synthResult: null, multiTargetResult: null,
       latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null });
     expect(compilerConfigurationInvalidatedState()).toEqual({
+      irResult: null, irRequestKey: null,
       svSource: "",
       irText: "",
       irErrors: [],
@@ -224,16 +196,18 @@ describe("compiler store state helpers", () => {
   });
 
   it("builds IR and emitted SystemVerilog result patches", () => {
-    const irResponse = irBuildResponse({ errors: ["unreachable output"] });
-    const svResponse = svEmitResponse();
+    const irResponse = nativeIRInvalidResult();
+    const svResponse = nativeSVEmitResult();
 
-    expect(compilerIRLoadedState(irResponse)).toEqual({
-      irErrors: ["unreachable output"],
-      irText: "%0 = input current",
+    expect(compilerIRLoadedState(irResponse, "captured native request")).toEqual({
+      irResult: irResponse,
+      irRequestKey: "captured native request",
+      irErrors: irResponse.errors,
+      irText: irResponse.ir_text,
       isSimulating: false,
     });
     expect(compilerSVLoadedState(svResponse)).toEqual({
-      svSource: "module lif_graph; endmodule",
+      svSource: svResponse.systemverilog,
     });
   });
 
@@ -241,6 +215,7 @@ describe("compiler store state helpers", () => {
     const response = svDirectResponse();
 
     expect(compilerSVDirectLoadedState(response)).toEqual({
+      irResult: null, irRequestKey: null,
       compileTraceability: response.compile_traceability,
       irText: "%0 = input current\n%1 = lif %0",
       isSimulating: false,

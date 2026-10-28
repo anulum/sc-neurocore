@@ -95,6 +95,7 @@ export {
   cosimModelVerilog,
   buildIR,
   verifyIR,
+  replayIR,
   emitSV,
   emitSVDirect,
   fetchCosimDetail,
@@ -153,4 +154,4 @@ export {
 } from "./progressApi";
 
 // Legacy sync analysis helpers fetchFICurve/fetchBifurcation/fetchSensitivity/fetchHeatmap
-// removed: zero callers; async path is submitAnalysisJob + job polling (W12-D/G).
+// removed: zero callers; async path is submitAnalysisJob + job polling.

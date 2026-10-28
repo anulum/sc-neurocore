@@ -10,6 +10,7 @@
 import { emptyGraphHistory } from "../studioGraphHistory";
 import type { StudioStateData } from "./studioTypes";
 import { readStoredStudioSessions } from "../studioSavedSessions";
+import { defaultEquationIrConfiguration } from "../equationIrConfig";
 
 /**
  * What every Studio field holds before anything has happened.
@@ -31,6 +32,7 @@ export const studioInitialData = {
   // previous C = 1 put v_inf at +35 mV and fired about 590 Hz at 10.
   odeParams: { E_L: -65, tau_m: 20, C: 10 },
   odeInit: { v: -65 },
+  equationIrConfig: defaultEquationIrConfiguration(),
   modelsError: null, presetsError: null,
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   modelIntegrator: "", modelQFormat: "Q8.8",
@@ -56,7 +58,8 @@ export const studioInitialData = {
   freqResult: null, staResult: null,
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 12.0 },
-  verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[], compileTraceability: null,
+  verilogSrc: "", irText: "", irResult: null, irRequestKey: null,
+  svSource: "", irErrors: [] as string[], compileTraceability: null,
   cosimResult: null,
   progressPct: 0, progressMsg: "",
   candidates: [],

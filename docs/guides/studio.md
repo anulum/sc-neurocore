@@ -572,6 +572,10 @@ with that reason.
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
 | POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
 | POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity |
+| POST | `/api/ir/build` | Lower a versioned authored equation model and numeric profile through the native compiler |
+| POST | `/api/ir/verify` | Inspect native graph structure without claiming semantic replay |
+| POST | `/api/ir/replay` | Reconstruct bound equation source and require the same native graph |
+| POST | `/api/ir/emit-sv` | Emit native SystemVerilog with replay of bound source |
 | POST | `/api/candidates/validate` | Locate every problem with a candidate model package ([Candidate Models](../studio/candidate-models.md)) |
 | POST | `/api/candidates/diff` | Diff a candidate against its parent, mathematically and semantically |
 | POST | `/api/candidates/simulate` | Run a candidate under its own profile, bounded |
@@ -1005,6 +1009,16 @@ routes use the equation compiler's fixed default timestep of 0.1. They reject
 simulation-only fields such as `dt`, `duration`, and `current` with HTTP 422;
 they do not silently apply a different simulation configuration. Selected-model
 compilation has its own explicit timestep contract.
+
+The native equation workflow has its own versioned
+`studio.equation-ir-request.v1` model/profile contract, including timestep,
+ordered declarations, units, exact random key and arithmetic options. It runs
+Build, Verify, Replay and Emit in bounded workers and retains
+`equation-ir/result.json` and `equation-ir/evidence.json`. **Equation compiler
+settings** persist in projects and local sessions. The Inspector distinguishes
+graph structure from source replay, reports actual port widths and cadence,
+and exports its compiler request and job evidence. See
+[Compiler Inspector](../studio/compiler-inspector.md) for the complete workflow.
 
 The manifest records the source equation payload, emitted RTL module metadata,
 source and RTL SHA-256 digests, and `evidence_classification: "compile"`

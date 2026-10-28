@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio project state snapshot helpers
 import { readModelParameters, type ModelParameters } from "./modelInputs";
 import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
+import { readEquationIrConfiguration, type EquationIrConfiguration } from "./equationIrConfig";
 
 /**
  * Turning the store into a saved workspace, and a saved workspace back.
@@ -68,6 +69,7 @@ export interface StudioProjectSnapshotInput {
   reset: string;
   odeParams: Record<string, number>;
   odeInit: Record<string, number>;
+  equationIrConfig: EquationIrConfiguration;
   selectedModelName: string;
   modelParams: ModelParameters;
   dt: number;
@@ -145,6 +147,7 @@ export function studioProjectSaveState(input: StudioProjectSnapshotInput): Studi
     reset: input.reset,
     odeParams: input.odeParams,
     odeInit: input.odeInit,
+    equationIrConfig: readEquationIrConfiguration(input.equationIrConfig),
     selectedModelName: input.selectedModelName,
     modelParams: input.modelParams,
     dt: input.dt,
@@ -335,6 +338,7 @@ export function studioProjectStateFromLoadResponse(
     reset: stringValue(state.reset, ""),
     odeParams: numberRecordValue(state.odeParams),
     odeInit: numberRecordValue(state.odeInit),
+    equationIrConfig: readEquationIrConfiguration(state.equationIrConfig),
     selectedModelName: stringValue(state.selectedModelName, ""),
     modelParams: readModelParameters(state.modelParams),
     dt: positiveNumberValue(state.dt, 0.1),

@@ -1,155 +1,140 @@
 # Compiler Inspector
 
-The Compiler Inspector lets you see how your neuron ODE equations compile
-to stochastic computing hardware. It shows the intermediate representation
-(IR) and generated SystemVerilog side by side, with verification status
-and Q8.8 fixed-point parameter encoding.
+The Compiler Inspector lowers the equations in the ODE playground through the
+native equation compiler. It shows the resulting SC intermediate representation
+and SystemVerilog, the actual output widths and clock cadence, and separate
+results for graph structure and source replay.
 
-The inspector keeps the generated RTL and its source traceability visible
-for review before downstream synthesis or hardware validation.
+## Compile the current equations
 
-## Current equation-translation boundary
+1. Select **ODE mode** and enter the equations, initial values, parameters,
+   threshold and reset rules in the playground.
+2. Open **Equation compiler settings** in the Inspector. Choose the integration
+   method, event rules, arithmetic format and optional physical units. The
+   playground supplies the timestep.
+3. Select **Build IR**. Inspect the actual operation and port counts, output
+   widths, product registers and clocks per timestep.
+4. Select **Check graph structure** to inspect the native graph, or **Replay
+   source** to reconstruct its bound equations and require the same graph.
+5. Select **Emit SV** to generate native SystemVerilog. This builds the current
+   equations first when no matching graph exists. Emission replays bound source
+   before generating RTL.
+6. Download the IR, SystemVerilog and compiler request. Export the compile
+   evidence bundle to retain the worker artifacts and source replay command.
 
-The Studio Rust `build_ir_from_equation` adapter currently constructs a fixed
-LIF graph. Submitted equations, threshold and reset are not lowered into their
-corresponding operations. A structurally valid IR graph therefore does not
-establish that the entered equations were compiled. Treat **Build IR** as
-inspection of that template, not general equation-to-hardware evidence.
+Changing any compiler input withdraws the previous IR, RTL and validation
+results. A response from an older request cannot restore them. Starting another
+compiler action while work is running does not submit a duplicate job.
 
-The direct Python equation compiler is a separate route with its own
-supported-operation contract and source-to-RTL traceability. Generated source
-still needs numerical, RTL and tool qualification. For a task-oriented path,
-read the [hardware user guide](manual/hardware.md).
+## Equations, events and arithmetic
 
-## Inspection workflow
+The native request retains the authored equation order and nonzero initial
+state. The integration choices are Euler, RK4, exponential Euler, discrete map
+and Gauss–Seidel. For Gauss–Seidel, changing the equation order can change the
+model; the order survives worker transport and source replay.
 
-1. Switch to **ODE mode** and retain the equations and numerical inputs.
-2. Use **Build IR** only with the fixed-template limitation above in mind.
-3. Inspect its IR text, emitted source and structural-verification diagnostics.
-4. Use **Generate RTL** / the direct Python path when evaluating supported
-   equation compilation; **Emit SystemVerilog** also invokes the direct path.
-5. Inspect source/RTL digests, module name and compile evidence class.
-6. Qualify emitted source through the appropriate simulation and tool workflow;
-   neither a green structural badge nor source emission proves synthesisability.
+The settings include:
 
-## What the IR Represents
+- Level, crossing, Poisson and escape-rate detection; reset expressions and
+  optional graded spike values.
+- An exact unsigned 64-bit compiler random key and unsigned 32-bit stream. The
+  key is decimal text throughout the browser and request. It is separate from
+  the simulation seed.
+- Explicit immutable constants selected from the playground parameters.
+- Total scalar bits, fractional bits, signedness, overflow and rounding.
+- Global product pipeline stages or named product pipeline points.
+- The default `lut-v1` function profile and opt-in `v2` profile; normal-draw
+  precision is selected explicitly.
+- Strict physical units for initial states, parameters, constants, timestep
+  and the input drive. Unit declarations preserve the entered display units.
 
-The SC IR (Stochastic Computing Intermediate Representation) is a dataflow
-graph where each node is a hardware operation:
+The compiler determines which combinations it supports. An unsupported
+combination is refused; the caller does not replace it with Q8.8, another
+integrator or another event rule. For example, multiple substeps currently
+require crossing detection without reset rules. Unsigned equation arithmetic
+is not an advertised supported datapath.
 
-| Operation | Hardware Meaning |
-|-----------|-----------------|
-| `input` | Port (clock, current) |
-| `constant` | Fixed-point literal |
-| `encode` | Bernoulli bitstream encoder (LFSR + comparator) |
-| `bitwise_and` | Stochastic multiplication (P(A)·P(B)) |
-| `popcount` | Bitstream → integer (population count) |
-| `lif_step` | LIF neuron pipeline (leak, gain, threshold, reset) |
-| `scale` | Multiply by constant factor |
-| `offset` | Add constant |
-| `output` | Output port (spike signal) |
+Compiler settings travel with saved projects and local sessions. Incomplete
+text drafts remain editable after reload, but cannot compile until valid.
+Projects without the compiler settings block receive explicit legacy defaults;
+an explicitly malformed or unknown settings block is refused.
 
-The IR uses SSA (static single assignment) form. Each value has exactly
-one definition and can be used by multiple consumers.
+## What the checks establish
 
-## Verification
+| Result | Meaning |
+|---|---|
+| Graph structure valid | The native parser and verifier accept the graph's operations, references, types and ports. |
+| Source replay not run | Bound equation source is present, but this action did not reconstruct it. |
+| Source replay passed | Recompiling the bound model and profile produced the submitted graph. |
+| Source replay unavailable | The graph has no bound equation source. |
+| SystemVerilog emitted | The native emitter returned RTL after the required structural and source checks. |
 
-The IR verifier checks:
+Structural validity does not establish source consistency. Source replay does
+not establish scientific accuracy, successful RTL tool compilation, synthesis
+or physical hardware behaviour. Use the [hardware user guide](manual/hardware.md)
+for the subsequent qualification steps.
 
-- **DAG structure**: no cycles in the dataflow graph
-- **SSA validity**: every operand references a defined value
-- **Type consistency**: operations receive compatible types
-- **Port completeness**: all inputs connected, all outputs driven
+The native equation datapath uses explicit scalar state, integer word
+operations, stores and output ports. Its IR is not a fixed LIF template.
+The emitter supplies its own clock and reset ports; they are not authored
+input declarations.
 
-Verification runs automatically when you build the IR. Errors appear
-in the red banner above the split pane.
+## HTTP API
 
-## Q8.8 Fixed-Point Encoding
+All native build, inspection, replay and emission actions use the bounded
+Studio process service. Responses include a path-free `studio_job_receipt`
+with the actual job identifier and artifact digests. A completed worker can
+carry a refused compilation; worker completion and successful compilation
+are separate outcomes.
 
-The current Rust template uses Q8.8 constants. In this format:
+| Endpoint | Request and result |
+|---|---|
+| `POST /api/ir/build` | Versioned authored model and profile; native graph and output contract. |
+| `POST /api/ir/verify` | `ir_text`; structural inspection without a source replay claim. |
+| `POST /api/ir/replay` | `ir_text`; require bound source and reconstruct the same graph. |
+| `POST /api/ir/emit-sv` | `ir_text`; native SystemVerilog, requiring source replay by default. |
+| `POST /api/ir/emit-sv-direct` | Separate direct Python equation compiler and its traceability manifest. |
 
-- 8 integer bits + 8 fractional bits = 16-bit signed
-- Range: -128.0 to +127.996
-- Resolution: 1/256 ≈ 0.0039
+A minimal native build request is:
 
-The parameter table shows each parameter's float value alongside its
-Q8.8 encoded integer. This is the exact value used in the generated
-SystemVerilog module.
+```json
+{
+  "schema_version": "studio.equation-ir-request.v1",
+  "model": {
+    "equations": [{"name": "v", "expression": "I"}],
+    "initial_state": [{"name": "v", "value": 7}],
+    "dt": {"value": 0.5},
+    "rng_seed": "18446744073709551615"
+  },
+  "profile": {
+    "module_name": "authored_neuron",
+    "data_width": 16,
+    "fraction": 8
+  }
+}
+```
 
-## API Endpoints
+Ordered declarations are arrays in the API. The request schema rejects repeated
+names, unknown fields, lossy random keys and the former unversioned simulation
+bodies. Invalid or unsupported compiler inputs return a controlled refusal;
+unavailable compiler dependencies are distinguished from invalid source.
+Malformed worker results return status 500 with `studio_compiler_result_invalid`;
+process completion alone never makes a malformed compiler result acceptable.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/ir/build` | Equation → ScGraph → IR text |
-| POST | `/api/ir/verify` | Parse and verify IR text |
-| POST | `/api/ir/emit-sv` | IR text → SystemVerilog |
-| POST | `/api/ir/emit-sv-direct` | Equation → Verilog plus compile traceability |
-| POST | `/api/ir/cosim` | Float vs Q8.8 co-simulation |
+Raw native graphs without bound equation source cannot pass source replay.
+An API caller can explicitly request `source_policy: "structural-only"` for
+emission of an unsourced graph. Its response still reports source replay as
+unavailable. A graph with source metadata must replay successfully even when
+structural-only emission is requested.
 
-## Two Compilation Paths
+## The direct Python compiler
 
-1. **Rust IR inspector** (**Build IR**): fixed LIF template → ScGraphBuilder
-   → IR → SystemVerilog. Uses structural verification; it does not currently
-   translate arbitrary submitted equations into equivalent hardware operations.
+**Generate RTL** uses the separate direct Python equation compiler. Its
+`studio.compile-traceability.v1` manifest binds the submitted equations,
+initial state, parameters, threshold and reset to the generated RTL. The
+Inspector retains its source, RTL and traceability digests and evidence export.
+The native **Emit SV** action does not silently switch to this route.
 
-2. **Python compiler path** (`SV` button): Equation → AST → Q8.8 Verilog.
-   Uses `equation_compiler.py` to generate Verilog directly from the equation
-   AST. Produces register-transfer-level Verilog with explicit fixed-point
-   arithmetic.
-
-Source emission is a separate result from successful tool compilation,
-co-simulation and synthesis. Do not infer equation fidelity from template
-verification or physical device support from either path.
-
-## Source-to-RTL Traceability
-
-The direct equation-to-Verilog path returns a path-free
-`studio.compile-traceability.v1` manifest in `compile_traceability`.
-The manifest records:
-
-- the submitted equations, threshold, reset, initial state, and numeric
-  parameter map;
-- `input_sha256`, a stable SHA-256 digest over the canonical source payload;
-- the emitted RTL language, module name, source length, and `rtl_sha256`;
-- `traceability_sha256`, a stable digest over the complete public manifest;
-- `evidence_classification: "compile"` and `status: "completed"` for
-  evidence-bundle consumers.
-
-The traceability serializer validates its evidence class and terminal status
-through the shared Studio evidence-classification contract before returning
-public metadata.
-
-The manifest is included in both `/api/compile` and
-`/api/ir/emit-sv-direct` responses. The Compiler Inspector displays the
-schema version, evidence class, terminal status, module name, and shortened
-source/RTL/manifest digests beside the generated RTL. Operators can export a compile evidence
-bundle directly from that traceability strip; the bundle records replay
-metadata for `/api/ir/emit-sv-direct`, the compile input digest, and the
-traceability digest note through the same admin evidence-bundle route used by
-the Admin panel. It deliberately contains no host-local paths.
-
-Adaptive-precision formal bundles created through
-`/api/adaptive-precision/formal-bundle` use the same evidence-classification
-contract for their generated SymbiYosys-ready manifests:
-`evidence_classification: "compile"` and `status: "completed"` mean the bundle
-generation completed, while the embedded formal-claim flags remain fail-closed
-until external SymbiYosys execution evidence is attached.
-
-The adaptive-precision planner accepts finite vector or matrix layer weights
-and rejects empty, non-finite, or higher-rank inputs before stochastic
-sensitivity sampling. This keeps Studio auto-tune and formal-bundle generation
-deterministic across NumPy runtime and coverage-instrumented environments.
-
-## Co-Simulation
-
-The **Q8.8 precision** view and `/api/ir/cosim` compare a float64 run with
-execution of the generated bit-true fixed-point kernel under the selected
-numeric contract. This is separate from RTL-versus-C catalogue co-simulation.
-It reports:
-
-- **max_error**: worst-case absolute difference
-- **mean_error**: average difference
-- **rms_error**: root mean square difference
-- **Error trace**: per-timestep absolute error
-
-This quantifies the precision loss from float-to-hardware conversion.
+Neither compilation path alone qualifies a model for a hardware target.
+Retain the compiler/profile identity and run the applicable numerical,
+co-simulation and tool checks for the emitted design.
