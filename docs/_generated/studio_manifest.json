@@ -964,6 +964,10 @@
       {
         "name": "hil-telemetry",
         "schema_ref": "proto/core.proto + proto/telemetry.proto (Tensor / BitstreamMetadata / HILFrame)"
+      },
+      {
+        "name": "studio.equation-ir-request.v1",
+        "schema_ref": "sc_neurocore.studio.equation_ir_schema.EquationIRRequest (ordered model declarations, physical quantities, exact random key and numeric profile; HTTP and bounded compiler workers)"
       }
     ]
   },

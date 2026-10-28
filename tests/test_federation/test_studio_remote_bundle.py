@@ -102,6 +102,7 @@ def test_cli_bundle_has_exact_root_manifest_and_all_asset_digests(
                 assert not validate_studio_manifest(schema_a, supported_eras={"v1"}).admitted
                 assert schema_a["ui_module"]["exposes"] == ["./SnnStudioPanel"]
                 if local_host:
+                    assert schema_a["ui_module"]["capabilities"] == ["federation:config"]
                     assert (
                         schema_a["ui_module"]["remote_entry"]
                         == "/studios/sc-neurocore/remoteEntry.js"
@@ -115,6 +116,7 @@ def test_cli_bundle_has_exact_root_manifest_and_all_asset_digests(
                         "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js"
                     )
                     assert "remote_entry_digest" not in schema_a["ui_module"]
+                    assert "capabilities" not in schema_a["ui_module"]
                 assert descriptor["backend_compatibility"]["version"] == schema_a["studio_version"]
             else:
                 assert payload == (frontend / member.name).read_bytes()

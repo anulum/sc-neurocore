@@ -109,8 +109,9 @@ def build_bundle(frontend_dist: Path, output_dir: Path, *, local_host: bool = Fa
         is never replaced. Temporary snapshots stay beside this destination.
     local_host
         Emit the own relative ``/studios/sc-neurocore/remoteEntry.js`` path
-        with an integrity pin over these frozen entry bytes. False retains
-        the published absolute URL. This selects metadata, not host admission.
+        with an integrity pin over these frozen entry bytes and a typed
+        ``federation:config`` declaration. False retains the published absolute
+        URL. This selects metadata, not host admission or backend access.
 
     Returns
     -------
@@ -122,7 +123,8 @@ def build_bundle(frontend_dist: Path, output_dir: Path, *, local_host: bool = Fa
     ------
     StudioBundleRefusal
         If the frontend is invalid, federation verification fails or the
-        destination already exists, or the SDK lacks local entry-digest support.
+        destination already exists, or the SDK lacks local entry-digest or
+        bridge capability support.
     OSError
         If the filesystem cannot read inputs or finish the output.
     """
@@ -139,15 +141,18 @@ def build_bundle(frontend_dist: Path, output_dir: Path, *, local_host: bool = Fa
             "Output directory already exists; choose a new release directory."
         )
     files = _frontend_files(frontend_dist)
-    if local_host and "remote_entry_digest" not in signature(type(STUDIO_UI)).parameters:
+    if local_host and not {"remote_entry_digest", "capabilities"}.issubset(
+        signature(type(STUDIO_UI)).parameters
+    ):
         raise StudioBundleRefusal(
-            "Local-host bundles require a federation SDK with UI entry digest support."
+            "Local-host bundles require a federation SDK with UI entry digest and bridge capability support."
         )
     ui_module = (
         replace(
             STUDIO_UI,
             remote_entry="/studios/sc-neurocore/remoteEntry.js",
             remote_entry_digest="sha256:" + hashlib.sha256(files["remoteEntry.js"]).hexdigest(),
+            capabilities=("federation:config",),
         )
         if local_host
         else STUDIO_UI

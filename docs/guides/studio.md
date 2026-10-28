@@ -681,7 +681,8 @@ The production build serves two entry surfaces from the same source tree:
   `sc_neurocore` and expose `./SnnStudioPanel`.
 
 The remote and the SCPN Studio host share `react` and `react-dom` as singleton
-dependencies pinned to `19.3.0`. Keep the object-form share declaration in
+dependencies. The producer pins `19.3.1`; check the consuming host's declared
+version when qualifying a deployment. Keep the object-form share declaration in
 `vite.config.ts`; array shorthand permits an independent React fallback and can
 produce invalid hook calls when the host renders the panel. The corresponding
 schema-A `ui_module` contract is:
@@ -712,12 +713,15 @@ python -m tools.build_studio_remote --local-host --output-dir dist/studio-local-
 ```
 
 This mode emits `/studios/sc-neurocore/remoteEntry.js` and a
-`remote_entry_digest` over the frozen entry bytes. The selected descriptor
+`remote_entry_digest` over the frozen entry bytes, together with the typed
+`capabilities: ["federation:config"]` declaration used by the hosted metadata
+view. The selected descriptor
 contributes to the declared capability digest and is serialised directly into
 the archive; the host does not rewrite it. The default command retains the
-published absolute URL. A federation SDK without UI entry-digest support is
+published absolute URL and omits capabilities. A federation SDK without UI
+entry-digest and bridge capability support is
 refused with a fixed diagnostic. This flag does not grant era admission,
-bridge capabilities, backend access or host adoption.
+bridge services, backend access or host adoption.
 
 
 The destination must be new. The command snapshots the frontend, runs the same

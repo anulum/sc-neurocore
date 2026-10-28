@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Declare `federation:config` through the typed SDK in local-host Studio bundles, preserving the published default and requiring SDK support before packaging.
+
 - Refuse incomplete authored equation initial states before native compilation, and keep native compiler tests in their real-backend browser and integration lanes.
 
 - Compile authored Studio equations through bounded native IR workers, preserving initial state, units, integrators, arithmetic profiles and exact random keys. Separate graph checks from source replay and native RTL emission; retain compiler settings in projects and sessions and export source-bound job evidence.
