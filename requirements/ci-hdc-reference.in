@@ -7,6 +7,6 @@
 # SC-NeuroCore — HDC reference test and build dependencies
 
 -r build.txt
-pytest==9.1.1
+pytest==9.2.0
 filelock
 coverage
