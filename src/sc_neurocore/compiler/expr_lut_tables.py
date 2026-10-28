@@ -41,6 +41,7 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "exp",
         "log",
         "sqrt",
+        "rsqrt",
         "tanh",
         "cosh",
         "sinh",
@@ -83,6 +84,7 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
 V2_ONLY_FUNCTIONS: frozenset[str] = frozenset(
     {
         "sinh",
+        "rsqrt",
         "exp2",
         "log2",
         "log10",
@@ -179,6 +181,7 @@ V2_UNIT_FOR: dict[str, str] = {
     "exp": "exp",
     "log": "log",
     "sqrt": "sqrt",
+    "rsqrt": "rsqrt",
     "tanh": "tanh",
     "cosh": "cosh",
     "sinh": "sinh",

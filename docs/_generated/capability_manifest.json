@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5445
+    "test_files": 5451
   },
   "documentation": {
     "public_pages": [
@@ -5046,6 +5046,7 @@
       "tests/test_equation_units.py",
       "tests/test_equation_units_discrete.py",
       "tests/test_equation_units_hypot.py",
+      "tests/test_equation_units_rsqrt.py",
       "tests/test_equation_units_runtime.py",
       "tests/test_equilibrium_propagation_activation.py",
       "tests/test_equilibrium_propagation_ep_network_init.py",
@@ -5203,6 +5204,7 @@
       "tests/test_expr_lut_tables_supported_functions.py",
       "tests/test_expression_derivative.py",
       "tests/test_expression_derivative_atan2.py",
+      "tests/test_expression_derivative_rsqrt.py",
       "tests/test_expression_derivative_softplus.py",
       "tests/test_extended_neurons_brain_scale_s_ad_ex.py",
       "tests/test_extended_neurons_butera.py",
@@ -5365,6 +5367,7 @@
       "tests/test_frontiers.py",
       "tests/test_function_lowering_atan2_cosim.py",
       "tests/test_function_lowering_call_bindings.py",
+      "tests/test_function_lowering_rsqrt_cosim.py",
       "tests/test_function_lowering_softplus_cosim.py",
       "tests/test_function_lowering_v2_cosim.py",
       "tests/test_function_unit_ir.py",
@@ -6761,6 +6764,7 @@
       "tests/test_native_equation_functions.py",
       "tests/test_native_equation_hypot.py",
       "tests/test_native_equation_integrators.py",
+      "tests/test_native_equation_rsqrt.py",
       "tests/test_native_equation_scheduling.py",
       "tests/test_native_equation_source.py",
       "tests/test_native_lane_requirement_gate.py",
@@ -7238,6 +7242,8 @@
       "tests/test_readiness_evidence_ledger.py",
       "tests/test_readiness_verification.py",
       "tests/test_receipt_execution.py",
+      "tests/test_reciprocal_root_programs.py",
+      "tests/test_reciprocal_root_units.py",
       "tests/test_record_readiness_receipt.py",
       "tests/test_recorders/test_spike_recorder.py",
       "tests/test_reference_adaptive_threshold_if.py",

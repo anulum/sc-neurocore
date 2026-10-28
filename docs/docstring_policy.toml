@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1442
+expected_file_count = 1450
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5902,3 +5902,35 @@ rationale = "Production process-result decoding and sanitized compiler HTTP proj
 [[file]]
 path = "tests/test_studio_compiler_result.py"
 rationale = "Actual native HTTP jobs and persisted result bytes qualify response decoding and corrupt envelopes."
+
+[[file]]
+path = "src/sc_neurocore/compiler/reciprocal_root_units.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "src/sc_neurocore/compiler/reciprocal_root_programs.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "tests/test_reciprocal_root_units.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "tests/test_reciprocal_root_programs.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "tests/test_function_lowering_rsqrt_cosim.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "tests/test_native_equation_rsqrt.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "tests/test_expression_derivative_rsqrt.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."
+
+[[file]]
+path = "tests/test_equation_units_rsqrt.py"
+rationale = "Reciprocal roots preserve positive-domain semantics, exact rounded integer targets, dimensional units and actual source-bound execution."

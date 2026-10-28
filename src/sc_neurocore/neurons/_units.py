@@ -23,6 +23,7 @@ import numpy as np
 from sc_neurocore.exceptions import SCDependencyError
 from sc_neurocore.neurons.equation_program import compile_expression
 from sc_neurocore.neurons.equation_namespace import _hypot as _real_hypot
+from sc_neurocore.neurons.equation_namespace import _rsqrt as _real_rsqrt
 
 try:
     import pint
@@ -172,6 +173,12 @@ def _sqrt(value: Any) -> Any:
     return np.sqrt(float(quantity)) * UNIT_REGISTRY.dimensionless
 
 
+def _rsqrt(value: Any) -> Any:
+    """Invert the square root of base units after checking the positive magnitude."""
+    base = quantity_to_base(value) if is_quantity(value) else value * UNIT_REGISTRY.dimensionless
+    return _real_rsqrt(base.magnitude) * base.units**-0.5
+
+
 def _clip(value: Any, low: Any, high: Any) -> Any:
     quantity = require_quantity(value, "clip") if is_quantity(value) else value
     if is_quantity(quantity):
@@ -227,6 +234,7 @@ def build_quantity_namespace() -> dict[str, Any]:
         "exp": _exp,
         "log": _log,
         "sqrt": _sqrt,
+        "rsqrt": _rsqrt,
         "abs": abs,
         "sin": _sin,
         "cos": _cos,

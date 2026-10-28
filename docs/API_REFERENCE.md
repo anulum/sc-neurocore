@@ -10302,7 +10302,7 @@ Raises
 ------
 ValueError
     For an unknown function, wrong operand count, a format
-    :func:`check_format` refuses, or binary/``softplus``/``round`` input codes outside the declared word domain.
+    :func:`check_format` refuses, or binary/``softplus``/``round``/``rsqrt`` input codes outside the declared word domain.
 
 ---
 
@@ -15244,6 +15244,53 @@ Returns
 -------
 int
     The count: the exact inversion for the mean ``row / 16``.
+
+---
+
+## Module `compiler.reciprocal_root_programs`
+
+### Function `build_rsqrt(p, code, data_width, fraction)`
+Append the saturated, half-up reciprocal root to a signed64 program.
+
+Parameters
+----------
+p : Program
+    Destination evaluated and emitted by the maintained compiler targets.
+code : str
+    Signed input identifier, narrowed to the admitted word before this call.
+data_width, fraction : int
+    Common input and output format, validated by the public program factory.
+
+Returns
+-------
+str
+    Result identifier. A bitwise search finds the greatest unsaturated root
+    with ``code * root**2 <= 2**(3*fraction)``. An exact midpoint comparison
+    rounds it. All eagerly evaluated intermediates fit signed64 even for
+    32-bit inputs and 30 fractional bits. Nonpositive inputs return zero,
+    the documented out-of-domain sentinel, and cannot overflow a branch.
+
+---
+
+## Module `compiler.reciprocal_root_units`
+
+### Function `rsqrt_code(code, data_width, fraction)`
+Return the saturated nearest code of a positive reciprocal square root.
+
+Parameters
+----------
+code : int
+    Signed input code. Nonpositive codes produce the explicit zero sentinel,
+    outside the mathematical domain; they never approximate a real result.
+data_width, fraction : int
+    Common input and output format, validated by the public unit dispatcher.
+
+Returns
+-------
+int
+    Nearest code of ``sqrt(2**(3*fraction) / code)``, with ties rounded up
+    and saturation at the signed-word maximum. Arbitrary-precision arithmetic
+    makes this reference independent of the emitted two-limb comparisons.
 
 ---
 

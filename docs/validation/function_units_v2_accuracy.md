@@ -42,6 +42,14 @@ clipping each magnitude at the output maximum keeps every signed 64-bit
 intermediate representable. It uses the same exhaustive/sampled Cartesian
 measurement domains as `atan2`, recording both coordinates in the contract.
 
+`rsqrt(x)` is measured only for positive input codes. Its exact integer result
+is the nearest code of `sqrt(2**(3*fraction)/code)`, with ties rounded up and
+saturation at the signed-word maximum. Its arithmetic error is at most half an
+output LSB against the clipped real reciprocal root. Nonpositive codes produce
+an explicit zero sentinel outside the mathematical domain and are excluded
+from these error measurements. Split-product comparisons keep all eagerly
+evaluated intermediates within signed 64 bits without a wide division.
+
 The separate conservative arithmetic bound for `atan2` is
 `0.5 * 2**-fraction + 8 * 2**-30` radians against the word-clipped real angle.
 Range reduction has less than one internal LSB of ratio error. The 512-segment
@@ -104,6 +112,7 @@ and measured worst input; wider sampled cells still do not prove a global maximu
 | `log1p` | 0.499 | 0.499 | 0.5 | 0.5 | 0.5 | 0.5 (s) | 0.5 (s) | 0.5 (s) | 0.519 (s) |
 | `log2` | 0.498 | 0.499 | 0.5 | 0.5 | 0.5 | 0.5 (s) | 0.5 (s) | 0.5 (s) | 0.518 (s) |
 | `round` | 0 | 0 | 0 | 0 | 0 | 0 (s) | 0 (s) | 0 (s) | 0 (s) |
+| `rsqrt` | 0.498 | 0 | 0.5 | 0.5 | 0 | 0.5 (s) | 0.5 (s) | 0.5 (s) | 0.5 (s) |
 | `sigmoid` | 0.499 | 0.5 | 0.5 | 0.5 | 0.5 | 0.5 (s) | 0.5 (s) | 0.5 (s) | 0.566 (s) |
 | `sign` | 0 | 0 | 0 | 0 | 0 | 0 (s) | 0 (s) | 0 (s) | 0 (s) |
 | `sin` | 0.498 | 0.498 | 0.5 | 0.5 | 0.5 | 0.5 (s) | 0.5 (s) | 0.5 (s) | 0.634 (s) |

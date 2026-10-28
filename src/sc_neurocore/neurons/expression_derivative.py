@@ -81,7 +81,9 @@ _TWO_OVER_SQRT_PI = 2.0 / math.sqrt(math.pi)
 _Derivative = Callable[[Callable[..., sympy.Expr], sympy.Expr], sympy.Expr]
 
 
-def _dsl_function(name: str, derivative: _Derivative) -> Callable[..., sympy.Expr]:
+def _dsl_function(
+    name: str, derivative: _Derivative, *, positive: bool = False
+) -> Callable[..., sympy.Expr]:
     """Return a SymPy function class printed as ``name`` whose derivative is ``derivative``.
 
     Parameters
@@ -90,6 +92,8 @@ def _dsl_function(name: str, derivative: _Derivative) -> Callable[..., sympy.Exp
         The DSL function name, also the printed token.
     derivative : callable
         ``derivative(function, x)`` returns ``d function(x) / dx``.
+    positive : bool, optional
+        Whether every admitted real result is strictly positive.
 
     Returns
     -------
@@ -101,10 +105,10 @@ def _dsl_function(name: str, derivative: _Derivative) -> Callable[..., sympy.Exp
     def fdiff(self: sympy.Function, argindex: int = 1) -> sympy.Expr:
         return derivative(function, _as_expr(self.args[0]))
 
-    function = cast(
-        Callable[..., sympy.Expr],
-        type(name, (sympy.Function,), {"fdiff": fdiff, "__doc__": f"SymPy image of DSL {name}()."}),
-    )
+    attributes: dict[str, object] = {"fdiff": fdiff, "__doc__": f"SymPy image of DSL {name}()."}
+    if positive:
+        attributes["is_positive"] = True
+    function = cast(Callable[..., sympy.Expr], type(name, (sympy.Function,), attributes))
     return function
 
 
@@ -115,6 +119,7 @@ _DSL_FUNCTIONS: dict[str, Callable[..., sympy.Expr]] = {
     "expm1": _dsl_function("expm1", lambda f, x: _as_expr(sympy.exp(x))),
     "log1p": _dsl_function("log1p", lambda f, x: _as_expr(1 / (1 + x))),
     "softplus": _dsl_function("softplus", lambda f, x: _sigmoid_expr(x)),
+    "rsqrt": _dsl_function("rsqrt", lambda f, x: _as_expr(-(f(x) ** 3) / 2), positive=True),
     "arctan": _dsl_function("arctan", lambda f, x: _as_expr(1 / (1 + x**2))),
     "arcsin": _dsl_function("arcsin", lambda f, x: _as_expr(1 / sympy.sqrt(1 - x**2))),
     "arccos": _dsl_function("arccos", lambda f, x: _as_expr(-1 / sympy.sqrt(1 - x**2))),
@@ -288,6 +293,8 @@ class _Converter:
                 return self._atan2(node)
             if node.func.id == "hypot":
                 return self._hypot(node)
+            if node.func.id == "rsqrt":
+                return self._rsqrt(node)
             func = _SMOOTH_FUNCS.get(node.func.id)
             if func is not None:
                 if len(node.args) != 1 or node.keywords:
@@ -324,6 +331,21 @@ class _Converter:
                 "the origin is not differentiable"
             )
         return _hypot_expr(first, second)
+
+    def _rsqrt(self, node: ast.Call) -> sympy.Expr:
+        """Require a positive argument before differentiating a state-dependent root."""
+        if len(node.args) != 1 or node.keywords:
+            raise ExpressionDifferentiationError("rsqrt needs exactly one positional argument")
+        if not any(isinstance(sub, ast.Name) and sub.id == self._wrt for sub in ast.walk(node)):
+            return self._opaque(node)
+        argument = self.convert(node.args[0])
+        assumptions = sympy.And(*(sympy.Q.real(symbol) for symbol in argument.free_symbols))
+        ask = cast(Callable[[object, object], object], sympy.ask)
+        if ask(sympy.Q.positive(argument), assumptions) is not True:
+            raise ExpressionDifferentiationError(
+                "rsqrt derivative needs a provably positive argument"
+            )
+        return _DSL_FUNCTIONS["rsqrt"](argument)
 
     def _opaque(self, node: ast.expr) -> sympy.Expr:
         """Stand an opaque sub-expression in as a constant, if it is one."""

@@ -93,6 +93,8 @@ can change without a deprecation window.
 | `quantizer` | public facade | Package-level exports provide canonical quantization helpers. |
 | `random_unit_programs` | internal build tool | Builds the `rand()`, `randn()` and `poisson()` units as integer programs for the expression emitters. |
 | `random_units` | internal build tool | Philox4x32-10 reference and the draw conversions shared by the equation neuron and the compiler. |
+| `reciprocal_root_programs` | internal build tool | Builds the saturated, nearest-code `rsqrt()` program with bounded two-limb product comparisons for Verilog, C, Rust and native IR. |
+| `reciprocal_root_units` | internal build tool | Independent integer reciprocal-root reference with explicit positive domain, half-up rounding and saturation. |
 | `resource_estimator` | internal build tool | Deployment estimator reached through `deployment`. |
 | `riscv_driver` | direct public module | RISC-V driver generator has direct tests and documentation. |
 | `sby_formal` | internal build tool | SymbiYosys script generator reached through `deployment`. |

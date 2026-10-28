@@ -8,7 +8,7 @@
 
 """Measure representative registered and folded Verilog compilation paths.
 
-The benchmark rotates twelve deterministic workloads and binds results to every
+The benchmark rotates thirteen deterministic workloads and binds results to every
 compiler source file. It records ordinary loaded-host timings only; it does not
 claim isolated-core throughput or cross-language performance.
 """
@@ -55,6 +55,8 @@ SOURCE_PATHS = (
     "src/sc_neurocore/compiler/discrete_function_programs.py",
     "src/sc_neurocore/compiler/magnitude_function_units.py",
     "src/sc_neurocore/compiler/magnitude_function_programs.py",
+    "src/sc_neurocore/compiler/reciprocal_root_units.py",
+    "src/sc_neurocore/compiler/reciprocal_root_programs.py",
     "src/sc_neurocore/compiler/function_unit_ir.py",
     "src/sc_neurocore/compiler/function_unit_programs.py",
     "src/sc_neurocore/compiler/equation_compiler.py",
@@ -210,7 +212,12 @@ def _cases() -> tuple[CompilerCase, ...]:
         {"v": "heaviside(I, z)", "z": "-z"}, state={"v": 0.0, "z": 0.25}, method="map", dt=1.0
     )
     magnitude_map = EquationNeuron({"v": "hypot(I,1)"}, method="map", dt=1.0)
+    reciprocal_map = EquationNeuron({"v": "rsqrt(I)"}, method="map", dt=1.0)
     return (
+        CompilerCase(
+            "rsqrt_map_registered",
+            lambda: compile_to_verilog(reciprocal_map, "bench_rsqrt", function_lowering="v2"),
+        ),
         CompilerCase(
             "hypot_map_registered",
             lambda: compile_to_verilog(

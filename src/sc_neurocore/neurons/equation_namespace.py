@@ -40,6 +40,18 @@ def _sqrt(x: Any) -> Any:
     return np.sqrt(x)
 
 
+def _rsqrt(x: Any) -> Any:
+    """Evaluate reciprocal roots of finite positive real scalars or arrays.
+
+    Taking the square root first preserves subnormal inputs whose reciprocal
+    would overflow. Invalid inputs refuse before NumPy emits a warning.
+    """
+    values = np.asarray(x)
+    if np.iscomplexobj(values) or not np.all(np.isfinite(values)) or np.any(values <= 0):
+        raise EquationRefusal("rsqrt needs finite positive real inputs")
+    return 1.0 / np.sqrt(values)
+
+
 def _atan2(y: Any, x: Any) -> Any:
     """Return real finite-coordinate angles with the fixed-point zero convention.
 
@@ -104,6 +116,7 @@ def build_eval_namespace() -> dict[str, Any]:
         "exp": np.exp,
         "log": np.log,
         "sqrt": _sqrt,
+        "rsqrt": _rsqrt,
         "abs": abs,
         "sin": np.sin,
         "cos": np.cos,

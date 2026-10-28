@@ -23,6 +23,7 @@ from tools.benchmark_evidence_gate import committed_source_hash_failures
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT = ROOT / "benchmarks/results/bench_verilog_compiler.json"
 EXPECTED_CASES = {
+    "rsqrt_map_registered",
     "hypot_map_registered",
     "euler_registered",
     "round_map_registered",

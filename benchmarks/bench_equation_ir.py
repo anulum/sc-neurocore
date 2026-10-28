@@ -55,6 +55,7 @@ class Case:
 
 def _cases() -> tuple[Case, ...]:
     return (
+        Case("bench_rsqrt", EquationNeuron({"v": "rsqrt(I)"}, method="map", dt=1.0)),
         Case("bench_hypot", EquationNeuron({"v": "hypot(I,1)"}, method="map", dt=1.0)),
         Case("bench_round", EquationNeuron({"v": "round(I)"}, method="map", dt=1.0)),
         Case(

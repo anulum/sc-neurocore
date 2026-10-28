@@ -123,11 +123,12 @@ _MODEL_DOMAIN: dict[str, tuple[float, float]] = {
     "log10": (0.0, math.inf),
     "log1p": (-1.0, math.inf),
     "sqrt": (0.0, math.inf),
+    "rsqrt": (0.0, math.inf),
     "cbrt": (0.0, math.inf),
     "arcsin": (-1.0, 1.0),
     "arccos": (-1.0, 1.0),
 }
-_OPEN_LOWER = frozenset({"log", "log2", "log10", "log1p"})
+_OPEN_LOWER = frozenset({"log", "log2", "log10", "log1p", "rsqrt"})
 
 
 def _reference(function: str) -> Callable[[FloatArray], FloatArray]:
@@ -450,6 +451,8 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
     bound = 0.5 / scale + 16.0 / (1 << fu.P) if function == "softplus" else None
     if function == "round":
         bound = 0.0
+    if function == "rsqrt":
+        bound = 0.5 / scale
     if bound is not None and float(error[worst]) > bound:
         raise ValueError(f"{function} measurement exceeds its declared arithmetic error bound")
     return LutAccuracy(
@@ -468,7 +471,7 @@ def _measure_v2(function: str, data_width: int, fraction: int) -> LutAccuracy:
         max_error_in_table=float(error[worst]),
         max_error_in_table_at=float(x[worst]),
         resolution=1.0 / scale,
-        operand_ranges=((word_min, word_max),) if bound is not None else (),
+        operand_ranges=((float(x[0]), float(x[-1])),) if bound is not None else (),
         worst_inputs=(float(x[worst]),) if bound is not None else (),
         declared_error_bound=bound,
     )

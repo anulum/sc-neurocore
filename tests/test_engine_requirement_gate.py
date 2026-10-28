@@ -127,6 +127,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_native_equation_expressions.py",
     "tests/test_native_equation_functions.py",
     "tests/test_native_equation_hypot.py",
+    "tests/test_native_equation_rsqrt.py",
     "tests/test_native_equation_integrators.py",
     "tests/test_native_equation_scheduling.py",
     "tests/test_native_equation_source.py",
@@ -507,7 +508,7 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
     """Dominance: an unconditional module-body gate precedes every import."""
-    assert len(_GUARDED_BINDING_FILES) == 151
+    assert len(_GUARDED_BINDING_FILES) == 152
     for relative in _GUARDED_BINDING_FILES:
         analysis = _analyse(_ROOT / relative)
         assert analysis.require_engine_gate_line is not None, (

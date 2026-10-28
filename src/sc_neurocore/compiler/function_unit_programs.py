@@ -26,6 +26,7 @@ from . import function_units as fu
 from .function_unit_ir import Program
 from .discrete_function_programs import build_heaviside, build_round
 from .magnitude_function_programs import build_hypot
+from .reciprocal_root_programs import build_rsqrt
 
 Builder = Callable[[Program, str, int, int], str]
 
@@ -437,6 +438,7 @@ _BUILDERS: dict[str, Builder] = {
     "exp": _unit_exp,
     "log": _unit_log,
     "sqrt": _unit_sqrt,
+    "rsqrt": build_rsqrt,
     "sin": _unit_sin,
     "cos": _unit_cos,
     "sigmoid": _unit_sigmoid,

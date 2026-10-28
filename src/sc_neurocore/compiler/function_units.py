@@ -24,7 +24,7 @@ fraction of :data:`P` bits, and rounds once to the output format:
 * ``cosh``/``sinh`` — from two exponentials; ``exprel`` — a quartic series near zero,
   ``(e^x - 1)/x`` elsewhere; ``x**(1/3)`` — ``2^(log2|x| / 3)`` with the sign of ``x``.
 
-Every intermediate stays within a signed 64-bit integer for words up to 32 bits,
+Every emitted-program intermediate fits a signed 64-bit integer through 32 bits,
 so the C/Rust kernel can mirror this module with ``int64_t`` and the RTL with
 64-bit signed registers; :func:`check_format` refuses wider words. Divisions
 truncate towards zero and right shifts floor, as in those targets. Results are
@@ -45,6 +45,7 @@ from functools import cache
 
 from .discrete_function_units import heaviside_code, round_code
 from .magnitude_function_units import hypot_code
+from .reciprocal_root_units import rsqrt_code
 
 LOWERING = "v2"
 P = 30  # internal fraction bits
@@ -1084,6 +1085,7 @@ UNITS: dict[str, Callable[[int, int, int], int]] = {
     "exp": exp,
     "log": log,
     "sqrt": sqrt,
+    "rsqrt": rsqrt_code,
     "sin": sin,
     "cos": cos,
     "sigmoid": sigmoid,
@@ -1151,7 +1153,7 @@ def evaluate(
     ------
     ValueError
         For an unknown function, wrong operand count, a format
-        :func:`check_format` refuses, or binary/``softplus``/``round`` input codes outside the declared word domain.
+        :func:`check_format` refuses, or binary/``softplus``/``round``/``rsqrt`` input codes outside the declared word domain.
 
     """
     if function not in FUNCTION_ARITY:
@@ -1159,7 +1161,7 @@ def evaluate(
     check_format(data_width, fraction)
     if 1 + len(additional_inputs) != FUNCTION_ARITY[function]:
         raise ValueError(f"{function} needs exactly {FUNCTION_ARITY[function]} input code(s)")
-    if function in BINARY_UNITS or function in {"softplus", "round"}:
+    if function in BINARY_UNITS or function in {"softplus", "round", "rsqrt"}:
         low, high = -(1 << (data_width - 1)), (1 << (data_width - 1)) - 1
         if any(not low <= value <= high for value in (code, *additional_inputs)):
             raise ValueError(f"{function} input code outside signed {data_width}-bit domain")
