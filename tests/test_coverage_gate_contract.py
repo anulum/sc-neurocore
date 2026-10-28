@@ -73,16 +73,17 @@ def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
     )
     assert upload["with"]["if-no-files-found"] == "error"
     assert upload["with"]["include-hidden-files"] is True
-    test = workflow["jobs"]["test"]
-    assert "shd-non-linux-refusal" in test["needs"]
+    assert "shd-non-linux-refusal" in workflow["jobs"]["test"]["needs"]
+    union = workflow["jobs"]["coverage-union"]
+    assert "shd-non-linux-refusal" in union["needs"]
     download = next(
         step
-        for step in test["steps"]
+        for step in union["steps"]
         if step.get("name") == "Retrieve actual Windows refusal coverage"
     )
-    assert download["if"] == "matrix.primary"
+    assert "if" not in download
     assert download["with"]["name"] == upload["with"]["name"]
-    aggregate = next(step for step in test["steps"] if step.get("name") == "Test + coverage")
+    aggregate = next(step for step in union["steps"] if step.get("name") == "Coverage union gate")
     assert aggregate["env"]["SCN_EXTRA_COVERAGE_DIR"] == download["with"]["path"]
     runner = (_ROOT / "tools/run_full_cov.sh").read_text()
     assert 'coverage combine --append --keep "$SCN_EXTRA_COVERAGE_DIR"' in runner
@@ -104,8 +105,9 @@ def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     step = workflow_text[start:end]
 
     assert step.count("bash tools/run_full_cov.sh --batch-size=384") == 2
-    assert "--batch-size=384 --html --cov-fail-under=100" in step
+    assert '--batch-size=384 --shard="${{ matrix.shard }}"' in step
     assert "--batch-size=384 --no-cov" in step
+    assert "--cov-fail-under" not in step
     assert "pytest -n auto" not in step
 
     try:
@@ -115,8 +117,55 @@ def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
 
         pytest.skip("PyYAML is not installed")
     workflow = yaml.safe_load(workflow_text)
-    # Compatibility legs keep four hours; the coverage-bearing primary leg has six.
-    assert workflow["jobs"]["test"]["timeout-minutes"] == "${{ matrix.primary && 360 || 240 }}"
+    # Every leg stays below the hosted runner's six-hour limit; coverage shards have five.
+    assert workflow["jobs"]["test"]["timeout-minutes"] == "${{ matrix.coverage && 300 || 240 }}"
+
+
+def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
+    """Coverage shards cover the suite once; the required check gates their union.
+
+    A skipped union job would report success to branch protection, so it must run
+    after any outcome and refuse unless every shard published its data.
+    """
+    try:
+        import yaml
+    except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.
+        import pytest
+
+        pytest.skip("PyYAML is not installed")
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    test = workflow["jobs"]["test"]
+    include = test["strategy"]["matrix"]["include"]
+    shards = [leg for leg in include if leg.get("coverage") is True]
+    count = len(shards)
+    assert count >= 2
+    assert sorted(leg["shard-index"] for leg in shards) == list(range(1, count + 1))
+    assert all(leg["shard"] == f"{leg['shard-index']}/{count}" for leg in shards)
+    assert {leg["python-version"] for leg in shards} == {"3.12.16"}
+    assert all(leg.get("coverage") is not True for leg in include if "shard" not in leg)
+    assert "coverage shard" in test["name"]
+
+    stage, preserve = test["steps"][-2:]
+    assert stage["if"] == preserve["if"] == "matrix.coverage"
+    assert ".coverage.shard-${{ matrix.shard-index }}" in stage["run"]
+    assert preserve["with"]["name"] == "coverage-data-shard-${{ matrix.shard-index }}"
+    assert preserve["with"]["include-hidden-files"] is True
+    assert preserve["with"]["if-no-files-found"] == "error"
+
+    union = workflow["jobs"]["coverage-union"]
+    assert union["name"] == "test (3.12)"
+    assert union["if"] == "${{ !cancelled() }}"
+    assert "test" in union["needs"]
+    retrieve = next(
+        step for step in union["steps"] if step.get("name") == "Retrieve every coverage shard"
+    )
+    assert retrieve["with"]["pattern"] == "coverage-data-shard-*"
+    assert retrieve["with"]["merge-multiple"] is True
+    gate = next(step for step in union["steps"] if step.get("name") == "Coverage union gate")
+    assert '--combine-from="$RUNNER_TEMP/coverage-shards"' in gate["run"]
+    assert f"--expect-shards={count}" in gate["run"]
+    assert "--cov-fail-under=100" in gate["run"]
+    assert "coverage-union" in workflow["jobs"]["build"]["needs"]
 
 
 def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> None:
@@ -132,6 +181,8 @@ def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> No
     assert "python -m coverage xml -o coverage.xml" in runner
     assert "test-results-batch-%03d.xml" in runner
     assert '! $coverage && [[ "$path" == "tests/test_catalogue_formal_smoke.py" ]]' in runner
+    assert "(((batch_number - 1) % shard_count != shard_index - 1))" in runner
+    assert "((${#shard_files[@]} != expect_shards))" in runner
 
 
 def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
@@ -314,7 +365,7 @@ def test_exactly_one_primary_matrix_leg_carries_the_exact_coverage_lanes() -> No
 
     Every exact-coverage lane rides `if: matrix.primary`; losing the single
     `primary: true` matrix entry would silently disable all of them on every
-    leg.
+    leg. The primary entry is one of the coverage shards.
     """
     try:
         import yaml
@@ -329,3 +380,4 @@ def test_exactly_one_primary_matrix_leg_carries_the_exact_coverage_lanes() -> No
         "the test matrix must declare exactly one primary leg; "
         f"found {len(primary_legs)} of {len(include)}"
     )
+    assert primary_legs[0].get("coverage") is True

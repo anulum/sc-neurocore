@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Split the instrumented full-suite CI run into two coverage shards. On
+  2026-10-27 the single coverage leg ran 5 h 27 min of batches and reached
+  GitHub's six-hour job limit before its 100 % gate. Each shard now runs every
+  second batch of the same global batch list. A union job keeps the required
+  `test (3.12)` check name and combines both shards with the native Windows
+  refusal data. It applies the unchanged 100 % gate and fails unless every shard
+  published its data. `tools/run_full_cov.sh` gains `--shard=K/N` and
+  `--combine-from=DIR --expect-shards=N`.
+
 - Stop declaring a `clk` input in the Studio IR builder. The native IR reserves
   that name for the ports the SystemVerilog emitter generates, so IR verification
   and SystemVerilog emission from `/api/ir/build` output were refused.

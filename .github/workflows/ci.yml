@@ -268,13 +268,15 @@ jobs:
           if-no-files-found: error
 
   test:
-    name: test (${{ matrix.python-minor }})
+    # Coverage shards are not required checks themselves; the union job
+    # `coverage-union` carries the required `test (3.12)` name and the gate.
+    name: test (${{ matrix.python-minor }}${{ matrix.shard && format(' coverage shard {0}', matrix.shard) || '' }})
     runs-on: ubuntu-latest
     needs: [shd-non-linux-refusal]
-    # The primary coverage leg exceeded four hours while still progressing
-    # through the full-suite batches. Allow the hosted runner's six-hour limit
-    # for coverage and its exact gates; compatibility legs retain four hours.
-    timeout-minutes: ${{ matrix.primary && 360 || 240 }}
+    # One instrumented leg ran 5 h 27 min of batches on 2026-10-27 and hit the
+    # hosted runner's six-hour limit before its gate, so coverage runs as two
+    # shards of about 2 h 45 min each. Every leg keeps a bounded timeout.
+    timeout-minutes: ${{ matrix.coverage && 300 || 240 }}
     strategy:
       fail-fast: false
       matrix:
@@ -283,14 +285,23 @@ jobs:
         # per-artifact digest — accepted + tracked residual, see
         # docs/internal/ci_supply_chain_residuals.md). `python-minor` keeps the
         # branch-protection-required job names `test (3.11)`..`test (3.14)`
-        # stable across patch bumps (via the job `name:` above); `primary` flags
-        # the single leg that runs coverage + the exact-coverage gates.
+        # stable across patch bumps (via the job `name:` above); `coverage`
+        # flags the instrumented shards of the full suite, and `primary` the
+        # single shard that also runs the exact-coverage gates.
         include:
           - python-minor: "3.11"
             python-version: "3.11.18"
           - python-minor: "3.12"
             python-version: "3.12.16"
+            coverage: true
+            shard: "1/2"
+            shard-index: 1
             primary: true
+          - python-minor: "3.12"
+            python-version: "3.12.16"
+            coverage: true
+            shard: "2/2"
+            shard-index: 2
           - python-minor: "3.13"
             python-version: "3.13.18"
           - python-minor: "3.14"
@@ -452,8 +463,10 @@ jobs:
           python tools/ci_install_dev.py
           python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
 
+      # Both coverage shards install it, so each batch runs in the same
+      # environment as it did in the former single instrumented leg.
       - name: Install native Studio desktop dependencies
-        if: matrix.primary
+        if: matrix.coverage
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb xauth openbox wmctrl xdotool curl xdg-utils \
@@ -685,13 +698,6 @@ jobs:
           include-hidden-files: true
           retention-days: 7
 
-      - name: Retrieve actual Windows refusal coverage
-        if: matrix.primary
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: shd-non-linux-coverage
-          path: ${{ runner.temp }}/shd-platform-coverage
-
       - name: Install pinned Conda audit scanners
         env:
           TMPDIR: ${{ runner.temp }}
@@ -702,11 +708,11 @@ jobs:
       - name: Test + coverage
         env:
           GRYPE_DB_CACHE_DIR: ${{ runner.temp }}/grype-audit-db
-          SCN_EXTRA_COVERAGE_DIR: ${{ runner.temp }}/shd-platform-coverage
         shell: bash
         run: |
-          if [[ "${{ matrix.primary }}" == "true" ]]; then
-            bash tools/run_full_cov.sh --batch-size=384 --html --cov-fail-under=100
+          if [[ "${{ matrix.coverage }}" == "true" ]]; then
+            # One shard of the instrumented suite; `coverage-union` gates the union.
+            bash tools/run_full_cov.sh --batch-size=384 --shard="${{ matrix.shard }}"
           else
             # Full behavioral compatibility matrix, without repeating
             # coverage instrumentation on every Python interpreter.
@@ -1028,11 +1034,89 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: test-results-py${{ matrix.python-minor }}
+          name: test-results-py${{ matrix.python-minor }}${{ matrix.shard-index && format('-shard{0}', matrix.shard-index) || '' }}
           path: test-results/test-results-batch-*.xml
 
+      # Last step on purpose: a shard publishes its data only when every
+      # earlier step passed, so the union cannot be built from a failed shard.
+      - name: Stage this shard's coverage data
+        if: matrix.coverage
+        shell: bash
+        run: |
+          mkdir -p coverage-shard
+          cp .coverage "coverage-shard/.coverage.shard-${{ matrix.shard-index }}"
+
+      - name: Preserve this shard's coverage data
+        if: matrix.coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: coverage-data-shard-${{ matrix.shard-index }}
+          path: coverage-shard/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  coverage-union:
+    # Carries the required check name: the instrumented suite is sharded, but
+    # the 100 % gate applies once, to the union of every shard and the native
+    # Windows refusal leg.
+    name: test (3.12)
+    runs-on: ubuntu-latest
+    needs: [test, shd-non-linux-refusal]
+    # A skipped job would report success to branch protection, so this job
+    # runs whatever the other legs did and fails unless both shards published.
+    if: ${{ !cancelled() }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+
+      - name: Install the locked coverage tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Reuse the exact hash-locked pin of the instrumented legs.
+          python - "$RUNNER_TEMP/coverage-requirements.txt" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path("requirements/ci-dev.txt").read_text(encoding="utf-8").splitlines()
+          start = next(i for i, line in enumerate(lines) if re.match(r"coverage==\S+ \\$", line))
+          block = [lines[start]]
+          for line in lines[start + 1 :]:
+              if not line.strip().startswith("--hash="):
+                  break
+              block.append(line)
+          Path(sys.argv[1]).write_text("\n".join(block).rstrip(" \\") + "\n", encoding="utf-8")
+          PY
+          python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/coverage-requirements.txt"
+
+      - name: Retrieve every coverage shard
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: coverage-data-shard-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/coverage-shards
+
+      - name: Retrieve actual Windows refusal coverage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: shd-non-linux-coverage
+          path: ${{ runner.temp }}/shd-platform-coverage
+
+      - name: Coverage union gate
+        env:
+          SCN_EXTRA_COVERAGE_DIR: ${{ runner.temp }}/shd-platform-coverage
+        shell: bash
+        run: |
+          bash tools/run_full_cov.sh --combine-from="$RUNNER_TEMP/coverage-shards" \
+            --expect-shards=2 --html --cov-fail-under=100
+
       - name: Upload coverage report
-        if: matrix.primary
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: coverage-report
@@ -1041,14 +1125,13 @@ jobs:
             coverage.xml
 
       - name: Upload coverage to Codecov
-        if: matrix.primary
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage.xml
           flags: python
-          name: sc-neurocore-python-${{ matrix.python-minor }}
+          name: sc-neurocore-python-3.12
           disable_search: true
-          # Do not fail the primary leg if the Codecov token/app is missing;
+          # Do not fail the union if the Codecov token/app is missing;
           # local and CI coverage gates above remain authoritative.
           fail_ci_if_error: false
         env:
@@ -1186,7 +1269,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test, test-hdc-reference, spdx-guard, rust-documentation]
+    needs: [lint, test, coverage-union, test-hdc-reference, spdx-guard, rust-documentation]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

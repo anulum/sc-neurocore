@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1415
+expected_file_count = 1416
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -3463,6 +3463,10 @@ rationale = "Engine import gate behaviour, gate dominance sweep and the pinned i
 [[file]]
 path = "tests/test_coverage_gate_contract.py"
 rationale = "Hosted coverage lanes, batched full-suite runner and the test job's time budget."
+
+[[file]]
+path = "tests/test_tools/test_run_full_cov_shards.py"
+rationale = "Real runs of the sharded full-suite runner: batch partition, shard union and the exact gate."
 
 [[file]]
 path = "tests/test_tools_documentation_debt.py"
