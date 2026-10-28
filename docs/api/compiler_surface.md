@@ -67,6 +67,8 @@ can change without a deprecation window.
 | `live_control_specs` | internal build tool | Implementation module for live-control spec records. |
 | `live_control_types` | internal build tool | Implementation module for live-control type aliases. |
 | `lut_accuracy` | internal build tool | Measures the transcendental tables against the Python model for the validation report. |
+| `magnitude_function_programs` | internal build tool | Builds the exactly rounded `hypot()` integer program emitted by the `v2` function units to Verilog, C and Rust. |
+| `magnitude_function_units` | internal build tool | Integer reference of the saturated, nearest-code `hypot()` result mirrored by the `v2` function-unit programs. |
 | `manifest_gen` | internal build tool | Manifest helper used by validation and compiler evidence paths. |
 | `mixed_dense_kernel` | internal build tool | Numeric kernel behind mixed dense compilation. |
 | `mixed_dense_quantization` | direct public module | Mixed dense compiler helpers are direct quantization surfaces. |
