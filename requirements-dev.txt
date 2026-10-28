@@ -8,4 +8,4 @@ mypy>=2.4.0
 ruff==0.17.3
 bandit>=1.7
 pyyaml>=6.0
-mojo>=1.0.0
+mojo==1.0.0; platform_system != "Windows"

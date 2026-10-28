@@ -93,7 +93,7 @@ jobs:
         with:
           python-version: "3.12.16"
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.98.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
         with:
           toolchain: "1.98.1"
 
@@ -109,13 +109,13 @@ jobs:
 
       - name: Install CIRCT (circt-opt)
         run: |
-          url="https://github.com/llvm/circt/releases/download/firtool-1.152.0/circt-full-shared-linux-x64.tar.gz"
+          url="https://github.com/llvm/circt/releases/download/firtool-1.162.0/circt-full-shared-linux-x64.tar.gz"
           curl -fsSL -o /tmp/circt.tar.gz "$url"
-          echo "767cd4347462e7c2f1df2f6937443f74470437e58c18fd4363956e9b639d41fa  /tmp/circt.tar.gz" \
+          echo "6be43434f1fe1ed2f4438e820e3cd636fac551df7090d90db258f0ba223d1de9  /tmp/circt.tar.gz" \
             | sha256sum -c -
           mkdir -p "$HOME/circt"
           tar -xzf /tmp/circt.tar.gz -C "$HOME/circt"
-          echo "$HOME/circt/firtool-1.152.0/bin" >> "$GITHUB_PATH"
+          echo "$HOME/circt/firtool-1.162.0/bin" >> "$GITHUB_PATH"
 
       - name: Verify circt-opt
         run: circt-opt --version

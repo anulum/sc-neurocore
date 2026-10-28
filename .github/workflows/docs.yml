@@ -60,7 +60,7 @@ jobs:
         run: sphinx-build -W --keep-going -b html docs/sphinx/source _site/sphinx
 
       # --- Rustdoc (Rust engine API) ---
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # nightly
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # nightly
 
       - name: Build and merge Rustdoc
         run: |
