@@ -90,6 +90,27 @@ test("authored native compiler inputs survive graph replay, RTL export and proje
   }
   await expect(page.getByLabel("Generated SystemVerilog", { exact: true }))
     .toContainText("module sc_equation_neuron");
+  // The toolbar is a second public entry point for the authored native path.
+  // Its real worker receipt must bind the same source and graph as the Inspector.
+  const toolbarResponse = page.waitForResponse(operation("emit-sv"));
+  await page.getByRole("button", { name: "Emit SystemVerilog", exact: true }).click();
+  const emittedResponse = await toolbarResponse;
+  expect(emittedResponse.ok(), await emittedResponse.text()).toBe(true);
+  expect(emittedResponse.request().postDataJSON()).toEqual({ ir_text: first.ir_text });
+  const emitted = await emittedResponse.json() as EquationIRResult;
+  expect(emitted).toMatchObject({ operation: "emit-sv", valid: true, errors: [],
+    source_present: true, source_replay: "passed", ir_text: first.ir_text,
+    source_sha256: first.source_sha256, source_graph_sha256: first.source_graph_sha256 });
+  expect(emitted.studio_job_receipt.job_id).toMatch(/^sj_/);
+  expect(emitted.studio_job_receipt.job_id).not.toBe(first.studio_job_receipt.job_id);
+  expect(emitted.systemverilog).toContain("module sc_equation_neuron");
+  await expect(page.getByText(`job ${emitted.studio_job_receipt.job_id}`, { exact: true })).toBeVisible();
+  const rtlDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download SystemVerilog", exact: true }).click();
+  const rtlPath = info.outputPath("authored-native-systemverilog.sv");
+  await (await rtlDownload).saveAs(rtlPath);
+  expect(readFileSync(rtlPath, "utf-8")).toBe(emitted.systemverilog);
+
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download compiler request", exact: true }).click();
   const requestPath = info.outputPath("authored-compiler-request.json");
@@ -108,6 +129,7 @@ test("authored native compiler inputs survive graph replay, RTL export and proje
   const bundle = await exportResponse.json() as StudioEvidenceBundleResponse;
   expect(exportResponse.request().postDataJSON()).toMatchObject({
     command_replay: { method: "POST", route: "/api/ir/replay", body: { ir_text: first.ir_text } },
+    job_ids: [emitted.studio_job_receipt.job_id],
   });
   expect(bundle.summary.source_job_count).toBe(1);
   await expect(page.getByText(`bundle ${bundle.bundle_id}`, { exact: true })).toBeVisible();

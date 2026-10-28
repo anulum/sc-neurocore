@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
   await installApiDispatcher(page, defaultApiMocks());
 });
 
-test("synthesis dashboard renders target provenance matrix from all-target run", async ({ page }) => {
+test("direct compiler evidence and synthesis dashboard retain operator provenance", async ({ page }) => {
   const verilog = "module test(input clk, output y); assign y = clk; endmodule";
   const synthesisJobList = {
     jobs: [
@@ -76,7 +76,7 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
         nextpnr_ice40: { available: false, version: null },
         yosys: { available: true, version: "Yosys 0.test" },
       }],
-      ["/api/ir/emit-sv-direct", {
+      ["/api/compile", {
         chars: verilog.length,
         compile_traceability: {
           evidence_classification: "compile",
@@ -89,16 +89,16 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
           },
           schema_version: "studio.compile-traceability.v1",
           source: "ode",
+          status: "completed",
           source_payload: {
             equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
             init: { v: -65 },
-            params: { C: 1, E_L: -65, tau_m: 10 },
+            params: { C: 10, E_L: -65, tau_m: 20 },
             reset: "v = -65",
             threshold: "v > -50",
           },
           traceability_sha256: "3".repeat(64),
         },
-        ir_repr: "%0 = input clk",
         module_name: "test",
         verilog,
       }],
@@ -319,7 +319,17 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
 
   await page.goto("/");
   await page.getByRole("button", { name: "ODE", exact: true }).click();
-  await page.getByRole("button", { name: "Emit SystemVerilog" }).click();
+  await page.getByRole("button", { name: "Generate RTL", exact: true }).click();
+  expect(api.requests("/api/compile")).toBe(1);
+  expect(api.requests("/api/ir/emit-sv-direct")).toBe(0);
+  expect(api.bodies("/api/compile")[0]).toEqual({
+    equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
+    init: { v: -65 },
+    params: { C: 10, E_L: -65, tau_m: 20 },
+    reset: "v = -65",
+    threshold: "v > -50",
+  });
+  await page.getByRole("tab", { name: "IR", exact: true }).click();
   await expect(page.getByText("SystemVerilog", { exact: true })).toBeVisible();
   await expect(page.getByText("trace 333333333333")).toBeVisible();
   await page.getByRole("button", { name: "Export compile evidence bundle" }).click();
@@ -332,8 +342,16 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
   expect(evidenceBodies[0]).toMatchObject({
     command_replay: {
       method: "POST",
-      request_sha256: "1".repeat(64),
-      route: "/api/ir/emit-sv-direct",
+      source_payload_sha256: "1".repeat(64),
+      route: "/api/compile",
+      body: {
+        equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
+        init: { v: -65 },
+        params: { C: 10, E_L: -65, tau_m: 20 },
+        reset: "v = -65",
+        threshold: "v > -50",
+        module_name: "test",
+      },
     },
     include_audit: true,
     project_name: null,
