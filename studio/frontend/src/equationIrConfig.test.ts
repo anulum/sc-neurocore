@@ -158,6 +158,15 @@ describe("ordered native equation requests", () => {
     expect(() => equationIrRequest(reset)).toThrow("repeat");
   });
 
+  it("refuses a partial initial state while retaining an explicit constructor default", () => {
+    const input = source();
+    input.equations = ["dv/dt = -v + w + I", "dw/dt = -w"];
+    input.odeInit = { v: 2 };
+    expect(() => equationIrRequest(input)).toThrow("Initial state must initialise every equation state.");
+    input.odeInit = {};
+    expect(equationIrRequest(input).model.initial_state).toEqual([]);
+  });
+
   it("refuses invalid source syntax and nonfinite playground values", () => {
     const empty = source(); empty.equations = [];
     expect(() => equationIrRequest(empty)).toThrow("Add an equation");

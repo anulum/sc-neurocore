@@ -18,10 +18,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it.each([
-  ["runCompile", "/api/compile"],
-  ["runEmitSV", "/api/ir/emit-sv-direct"],
-] as const)("%s sends every ODE initial state to %s", async (action, route) => {
+it("runCompile sends every ODE initial state to the direct Python compiler", async () => {
   const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
     new Response(JSON.stringify({ verilog: "module sc_neuron; endmodule", chars: 30 }), {
       headers: { "Content-Type": "application/json" },
@@ -33,10 +30,10 @@ it.each([
     equations: ["dv/dt = -v + w + I", "dw/dt = -w"],
     odeInit: { v: 2, w: 3 },
   });
-  await useStudioStore.getState()[action]();
+  await useStudioStore.getState().runCompile();
   expect(fetch).toHaveBeenCalledOnce();
   const [url, options] = at(fetch.mock.calls, 0);
-  expect(url).toBe(route);
+  expect(url).toBe("/api/compile");
   const body = options?.body;
   expect(JSON.parse(typeof body === "string" ? body : JSON.stringify(body))).toMatchObject({
     equations: ["dv/dt = -v + w + I", "dw/dt = -w"],

@@ -29,9 +29,12 @@ compiler action while work is running does not submit a duplicate job.
 ## Equations, events and arithmetic
 
 The native request retains the authored equation order and nonzero initial
-state. The integration choices are Euler, RK4, exponential Euler, discrete map
-and Gauss–Seidel. For Gauss–Seidel, changing the equation order can change the
-model; the order survives worker transport and source replay.
+state. An explicit nonempty list of initial values must include every equation
+state; partial lists are refused before a worker starts. An empty list selects
+the equation constructor's default. The integration choices are Euler, RK4,
+exponential Euler, discrete map and Gauss–Seidel. For Gauss–Seidel, changing the
+equation order can change the model; the order survives worker transport and
+source replay.
 
 The settings include:
 

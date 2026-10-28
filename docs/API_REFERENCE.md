@@ -44114,6 +44114,7 @@ Attributes
 equations, initial_state, parameters, constants, reset : list
     Ordered declarations. Repeated names refuse before dictionary conversion.
     An empty initial state selects the public constructor's default.
+    An explicit nonempty initial state must initialise every equation state.
 dt : EquationValue
     Positive inner timestep, with an explicit time unit in strict mode.
 method : str

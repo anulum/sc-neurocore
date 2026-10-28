@@ -101,6 +101,29 @@ async function click(label: string, busy: "isSimulating" | "compileEvidenceBundl
   expect(useStudioStore.getState().error).toBeNull();
 }
 
+it("emits native RTL with every authored equation and initial state through the real store", async () => {
+  act(() => { useStudioStore.setState({
+    equations: ["dv/dt = -v + w + I", "dw/dt = -w"], odeInit: { v: 2, w: 3 },
+  }); });
+  await act(async () => { await useStudioStore.getState().runEmitSV(); });
+  const state = useStudioStore.getState();
+  expect(state.error).toBeNull();
+  expect(state.isSimulating).toBe(false);
+  expect(state.irResult?.operation).toBe("emit-sv");
+  expect(state.irResult?.source_replay).toBe("passed");
+  expect(state.irResult?.output_widths).toEqual([
+    { name: "v_out", width: 16 }, { name: "w_out", width: 16 },
+    { name: "spike_out", width: 1 },
+  ]);
+  const payload = /payload=([0-9a-f]+)/.exec(state.irText)?.[1];
+  if (payload === undefined) throw new Error("The native graph has no bound equation source");
+  const source: unknown = JSON.parse(Buffer.from(payload, "hex").toString("utf-8"));
+  expect(source).toMatchObject({ model: {
+    equations: [["v", "-v + w + I"], ["w", "-w"]], initial_state: [["v", 2], ["w", 3]],
+  } });
+  expect(state.svSource).toContain("module sc_equation_neuron");
+}, 60_000);
+
 it("compiles, checks, replays and exports the authored source through Inspector controls", async () => {
   await click("Build IR");
   const built = useStudioStore.getState().irResult;

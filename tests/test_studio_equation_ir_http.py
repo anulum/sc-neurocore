@@ -105,6 +105,19 @@ class EquationIRHttpTests(unittest.TestCase):
                     for route, body in (
                         ("/api/ir/build", {"equations": ["dv/dt = I"], "init": {"v": 7}}),
                         ("/api/ir/build", {**_source("I", 0), "ignored": True}),
+                        (
+                            "/api/ir/build",
+                            {
+                                "schema_version": "studio.equation-ir-request.v1",
+                                "model": {
+                                    "equations": [
+                                        {"name": "v", "expression": "-v + w + I"},
+                                        {"name": "w", "expression": "-w"},
+                                    ],
+                                    "initial_state": [{"name": "v", "value": 2}],
+                                },
+                            },
+                        ),
                         ("/api/ir/verify", {"ir_text": ""}),
                         ("/api/ir/replay", {"ir_text": first["ir_text"], "skip_source": True}),
                     ):

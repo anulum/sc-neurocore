@@ -95,6 +95,22 @@ class EquationIRRequestTests(unittest.TestCase):
                     }
                 )
 
+    def test_partial_initial_state_refuses_instead_of_losing_an_authored_state(self) -> None:
+        """Reject an explicit state map that would leave native lowering without a value."""
+        with self.assertRaisesRegex(ValidationError, "initialise every declared state"):
+            EquationIRRequest.model_validate(
+                {
+                    "schema_version": "studio.equation-ir-request.v1",
+                    "model": {
+                        "equations": [
+                            {"name": "v", "expression": "-v + w + I"},
+                            {"name": "w", "expression": "-w"},
+                        ],
+                        "initial_state": [{"name": "v", "value": 2}],
+                    },
+                }
+            )
+
     def test_scalar_types_and_timestep_are_explicit(self) -> None:
         """Booleans, nonfinite values and nonpositive timesteps cannot be coerced."""
         for value in (True, "0.1", float("nan"), float("inf"), 0, -1):

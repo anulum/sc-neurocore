@@ -10,11 +10,13 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: "**/*.spec.ts",
   // Live-backend specs run under their own configs (graph, live, event, export),
   // which start the real API they need; the mocked default run cannot serve them.
   testIgnore: [
     "candidate-authoring-live.spec.ts",
     "catalogue-to-silicon-live.spec.ts",
+    "equation-ir-live.spec.ts",
     "event-training-live.spec.ts",
     "experiment-export-live.spec.ts",
     "fit-live.spec.ts",

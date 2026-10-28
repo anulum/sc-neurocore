@@ -198,6 +198,9 @@ export function equationIrRequest(input: EquationIrSourceInput): EquationIRReque
   const points = names(p.pipeline_points, "Product pipeline points");
   declared(constants, Object.keys(input.odeParams), "Immutable constants");
   declared(Object.keys(input.odeInit), states, "Initial state");
+  if (Object.keys(input.odeInit).length > 0 && Object.keys(input.odeInit).length !== states.length) {
+    throw new Error("Initial state must initialise every equation state.");
+  }
   const stateUnits = unitMap(m.state_units, states, "State units");
   declared([...stateUnits.keys()], Object.keys(input.odeInit), "Initial state units");
   const parameterUnits = unitMap(m.parameter_units, Object.keys(input.odeParams), "Parameter units");
