@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Integrity-verified npm CLI for CI and release jobs
+
+name: Install verified npm
+description: Verify the npm 12.2.1 registry archive before extracting and using it.
+runs:
+  using: composite
+  steps:
+    - name: Verify and install npm 12.2.1
+      shell: bash
+      run: |
+        set -euo pipefail
+        npm_install_dir="$(mktemp -d "$RUNNER_TEMP/sc-neurocore-npm.XXXXXX")"
+        npm_archive="$npm_install_dir/npm.tgz"
+        curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location \
+          --output "$npm_archive" https://registry.npmjs.org/npm/-/npm-12.2.1.tgz
+        printf '%s  %s\n' \
+          '228bd64aaef23270dbdbd2cf3d5ef5c467602ef38c4066246cef1984adab9a67' \
+          "$npm_archive" | sha256sum --check --strict
+        tar --extract --gzip --file "$npm_archive" \
+          --directory "$npm_install_dir"
+        rm -- "$npm_archive"
+        mkdir "$npm_install_dir/bin"
+        ln -s ../package/bin/npm-cli.js "$npm_install_dir/bin/npm"
+        ln -s ../package/bin/npx-cli.js "$npm_install_dir/bin/npx"
+        test "$("$npm_install_dir/bin/npm" --version)" = '12.2.1'
+        echo "$npm_install_dir/bin" >> "$GITHUB_PATH"

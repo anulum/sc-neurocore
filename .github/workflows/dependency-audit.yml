@@ -46,9 +46,9 @@ jobs:
         if: matrix.ecosystem == 'npm'
         with:
           node-version: "26.12.1"
-      - name: Install pinned npm
+      - name: Install verified npm
         if: matrix.ecosystem == 'npm'
-        run: npm install --global npm@12.2.1
+        uses: ./.github/actions/setup-npm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         if: matrix.ecosystem == 'go'
         with:

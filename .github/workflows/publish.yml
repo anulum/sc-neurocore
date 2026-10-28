@@ -40,8 +40,8 @@ jobs:
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 
-      - name: Install pinned npm
-        run: npm install --global npm@12.2.1
+      - name: Install verified npm
+        uses: ./.github/actions/setup-npm
       - name: Build the Studio UI the wheel carries
         working-directory: studio/frontend
         run: |

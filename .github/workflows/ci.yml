@@ -199,8 +199,8 @@ jobs:
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 
-      - name: Install pinned npm
-        run: npm install --global npm@12.2.1
+      - name: Install verified npm
+        uses: ./.github/actions/setup-npm
 
       - name: Install frontend dependencies
         working-directory: studio/frontend
@@ -452,8 +452,8 @@ jobs:
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 
-      - name: Install pinned npm
-        run: npm install --global npm@12.2.1
+      - name: Install verified npm
+        uses: ./.github/actions/setup-npm
 
       - name: Install the frontend's locked lint tools
         working-directory: studio/frontend
