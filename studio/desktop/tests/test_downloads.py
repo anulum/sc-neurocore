@@ -133,7 +133,7 @@ def _dialog_action(action: str, destination: Path) -> Iterator[subprocess.Popen[
 def test_real_simulation_export_obeys_the_native_save_decision(
     desktop_backend: DesktopBackend, tmp_path: Path, action: str
 ) -> None:
-    """Export an actual seeded UI run or cancel without changing retained user data.
+    """Save or cancel two consecutive actual exports without changing retained data.
 
     Parameters
     ----------
@@ -222,41 +222,61 @@ def test_real_simulation_export_obeys_the_native_save_decision(
             download.stateChanged.connect(lambda state: record.update(state=state.name))
 
         window.view.page().profile().downloadRequested.connect(requested)
-        destination = tmp_path / "retained experiment % 63.json"
-        original = b'{"retained":"user research data"}'
-        if action == "cancel":
-            destination.write_bytes(original)
-        default = Path(
-            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
-        )
-        before = {str(path) for path in default.glob("*") if path.is_file()}
-        with _dialog_action(action, destination) as controller:
-            assert (
-                _script(
-                    window,
-                    "(() => { Array.from(document.querySelectorAll('button')).find(button => button.title === 'Download the current run as JSON').click(); return true; })()",
-                )
-                is True
+        exports: list[dict[str, object]] = []
+        for export_index in range(2):
+            directory = tmp_path / f"export-{export_index}"
+            directory.mkdir()
+            destination = directory / "retained experiment % 63.json"
+            original = b'{"retained":"user research data"}'
+            if action == "cancel":
+                destination.write_bytes(original)
+            default = Path(
+                QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
             )
-            _wait(
-                lambda: (
-                    bool(downloads)
-                    and downloads[0]["state"] in {"DownloadCompleted", "DownloadCancelled"}
+            before = {str(path) for path in default.glob("*") if path.is_file()}
+            with _dialog_action(action, destination) as controller:
+                assert (
+                    _script(
+                        window,
+                        "(() => { Array.from(document.querySelectorAll('button')).find(button => button.title === 'Download the current run as JSON').click(); return true; })()",
+                    )
+                    is True
                 )
+
+                def _download_finished(index: int = export_index) -> bool:
+                    """Observe this export's actual terminal download state."""
+                    return len(downloads) > index and downloads[index]["state"] in {
+                        "DownloadCompleted",
+                        "DownloadCancelled",
+                    }
+
+                def _controller_finished(child: subprocess.Popen[str] = controller) -> bool:
+                    """Observe the real controller's bounded termination."""
+                    return child.poll() is not None
+
+                _wait(_download_finished)
+                _wait(_controller_finished)
+            assert controller.returncode == 0, (directory / "native-dialog.log").read_text()
+            controlled = json.loads((directory / "native-dialog.json").read_text())
+            assert controlled["owner_pid"] == os.getpid() and controlled["action"] == action
+            assert controlled["window"] and len(downloads) == export_index + 1
+            assert downloads[export_index]["url"].startswith("blob:" + instance.origin + "/")
+            if action == "save":
+                assert downloads[export_index]["state"] == "DownloadCompleted"
+                assert json.loads(destination.read_text()) == expected
+            else:
+                assert downloads[export_index]["state"] == "DownloadCancelled"
+                assert destination.read_bytes() == original
+            assert {str(path) for path in default.glob("*") if path.is_file()} == before
+            exports.append(
+                {
+                    "download": downloads[export_index].copy(),
+                    "dialog": controlled,
+                    "export_or_retained_file_sha256": hashlib.sha256(
+                        destination.read_bytes()
+                    ).hexdigest(),
+                }
             )
-            _wait(lambda: controller.poll() is not None)
-        assert controller.returncode == 0, (tmp_path / "native-dialog.log").read_text()
-        controlled = json.loads((tmp_path / "native-dialog.json").read_text())
-        assert controlled["owner_pid"] == os.getpid() and controlled["action"] == action
-        assert controlled["window"] and len(downloads) == 1
-        assert downloads[0]["url"].startswith("blob:" + instance.origin + "/")
-        if action == "save":
-            assert downloads[0]["state"] == "DownloadCompleted"
-            assert json.loads(destination.read_text()) == expected
-        else:
-            assert downloads[0]["state"] == "DownloadCancelled"
-            assert destination.read_bytes() == original
-        assert {str(path) for path in default.glob("*") if path.is_file()} == before
         assert desktop_backend.returncode is None
         (tmp_path / "native-requests-at-close.json").write_text(
             str(_script(window, "JSON.stringify(window.__nativeRequests)")) + "\n"
@@ -280,11 +300,7 @@ def test_real_simulation_export_obeys_the_native_save_decision(
                 "actual_response_sha256": hashlib.sha256(
                     observation["response"].encode()
                 ).hexdigest(),
-                "export_or_retained_file_sha256": hashlib.sha256(
-                    destination.read_bytes()
-                ).hexdigest(),
-                "download": downloads[0],
-                "dialog": controlled,
+                "exports": exports,
                 "backend_exit": desktop_backend.returncode,
                 "scope": "Current-source native UI export/save/cancel; no installed-release or scientific/full-state acceptance.",
             },
