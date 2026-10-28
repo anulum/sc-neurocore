@@ -24,16 +24,19 @@
 #   bash tools/run_full_cov.sh --batch-size=384
 #   bash tools/run_full_cov.sh --cov-fail-under=100
 #   bash tools/run_full_cov.sh --skip-slow  # exclude known-heavy dirs
-#   bash tools/run_full_cov.sh --shard=1/2  # run batches 1, 3, 5, ... only
+#   bash tools/run_full_cov.sh --shard=1/4  # every fourth sorted module, then batch
+#   bash tools/run_full_cov.sh --shard=1/4 --list-files  # NUL-delimited paths; no tests
 #   bash tools/run_full_cov.sh --combine-from=DIR --expect-shards=2 --cov-fail-under=100
 #
-# Sharding: a shard runs every Nth batch of the same global batch list and
-# leaves its `.coverage` data for the union; with coverage on it writes no
+# Sharding: a shard takes every Nth module of the same sorted file list, then
+# batches its own files. Adjacent expensive modules can run on different hosts.
+# Each shard leaves its `.coverage` data for the union and writes no
 # report, because a partial union cannot pass the exact gate. The union run
 # (--combine-from) runs no tests: it requires exactly the expected number of
-# `.coverage.*` shard files in DIR, combines them, and applies the gate.
+# `.coverage.shard-K` files in DIR, combines them, and applies the gate.
 
 set -euo pipefail
+export LC_ALL=C
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -68,6 +71,7 @@ cov_fail_under="$DEFAULT_COV_FAIL_UNDER"
 shard=""
 combine_from=""
 expect_shards=""
+list_files=false
 for arg in "$@"; do
     case "$arg" in
         --skip-slow) skip_slow=true ;;
@@ -78,6 +82,7 @@ for arg in "$@"; do
         --shard=*)   shard="${arg#*=}" ;;
         --combine-from=*) combine_from="${arg#*=}" ;;
         --expect-shards=*) expect_shards="${arg#*=}" ;;
+        --list-files) list_files=true ;;
         *)           echo "unknown arg: $arg" >&2; exit 2 ;;
     esac
 done
@@ -104,8 +109,8 @@ fi
 
 # Union of shard coverage: no tests run here, so a missing shard cannot pass.
 if [[ -n "$combine_from" ]]; then
-    if [[ -n "$shard" ]] || ! $coverage; then
-        echo "--combine-from excludes --shard and --no-cov" >&2
+    if [[ -n "$shard" ]] || ! $coverage || $list_files; then
+        echo "--combine-from excludes --shard, --no-cov and --list-files" >&2
         exit 2
     fi
     if ! [[ "$expect_shards" =~ ^[1-9][0-9]*$ ]]; then
@@ -119,6 +124,12 @@ if [[ -n "$combine_from" ]]; then
         echo "expected $expect_shards shard coverage files in $combine_from, found ${#shard_files[@]}" >&2
         exit 1
     fi
+    for ((index = 1; index <= expect_shards; index++)); do
+        if [[ ! -f "$combine_from/.coverage.shard-$index" ]]; then
+            echo "missing coverage shard $index/$expect_shards in $combine_from" >&2
+            exit 1
+        fi
+    done
     rm -f "$COV_DATA" "$COV_DATA".*
     python -m coverage combine --keep "${shard_files[@]}"
     report_union
@@ -127,11 +138,6 @@ elif [[ -n "$expect_shards" ]]; then
     echo "--expect-shards needs --combine-from" >&2
     exit 2
 fi
-
-if $coverage && [[ -z "$combine_from" ]]; then
-    rm -f "$COV_DATA" "$COV_DATA".*
-fi
-mkdir -p "$JUNIT_DIR"
 
 # Match pytest's default Python module patterns across the complete tests tree.
 # NUL delimiters preserve any future whitespace-bearing path without shell splitting.
@@ -142,10 +148,10 @@ mapfile -d '' -t discovered < <(
 test_files=()
 for path in "${discovered[@]}"; do
     # External formal proofs are independent of the Python interpreter. Run
-    # them once in the coverage-bearing primary leg, not in every compatibility
-    # leg where five concurrent solver copies only duplicate the same evidence.
+    # them once among the coverage shards, not in every compatibility leg,
+    # where concurrent solver copies only duplicate the same evidence.
     if ! $coverage && [[ "$path" == "tests/test_catalogue_formal_smoke.py" ]]; then
-        echo "[primary-only] $path"
+        echo "[primary-only] $path" >&2
         continue
     fi
     if $skip_slow; then
@@ -153,7 +159,7 @@ for path in "${discovered[@]}"; do
         for prefix in "${SKIP_SLOW[@]}"; do
             [[ "$path" == "$prefix/"* ]] && skip=true && break
         done
-        $skip && { echo "[skip-slow] $path"; continue; }
+        $skip && { echo "[skip-slow] $path" >&2; continue; }
     fi
     test_files+=("$path")
 done
@@ -163,16 +169,30 @@ if ((${#test_files[@]} == 0)); then
     exit 2
 fi
 
+if ((shard_count > ${#test_files[@]})); then
+    echo "shard count $shard_count exceeds module count ${#test_files[@]}" >&2
+    exit 2
+fi
+selected=()
+for ((index = shard_index - 1; index < ${#test_files[@]}; index += shard_count)); do
+    selected+=("${test_files[index]}")
+done
+test_files=("${selected[@]}")
+if $list_files; then
+    printf '%s\0' "${test_files[@]}"
+    exit 0
+fi
+if $coverage; then
+    rm -f "$COV_DATA" "$COV_DATA".*
+fi
+mkdir -p "$JUNIT_DIR"
+
 ran=0
 total=${#test_files[@]}
 batch_count=$(((total + batch_size - 1) / batch_size))
 for ((offset = 0; offset < total; offset += batch_size)); do
     batch=("${test_files[@]:offset:batch_size}")
     batch_number=$((offset / batch_size + 1))
-    # Shards take every Nth batch of the one global list, so the union is exact.
-    if (((batch_number - 1) % shard_count != shard_index - 1)); then
-        continue
-    fi
     junit_path=$(printf '%s/test-results-batch-%03d.xml' "$JUNIT_DIR" "$batch_number")
     echo
     echo "=========================================================="
@@ -203,7 +223,7 @@ echo "  FULL-SUITE SUMMARY"
 echo "=========================================================="
 echo "  Modules run: $ran"
 if ((shard_count > 1)); then
-    echo "  Batches run: shard $shard_index/$shard_count of $batch_count"
+    echo "  Batches run: $batch_count (shard $shard_index/$shard_count)"
 else
     echo "  Batches run: $batch_count"
 fi

@@ -273,42 +273,38 @@ jobs:
   test:
     # Coverage shards are not required checks themselves; the union job
     # `coverage-union` carries the required `test (3.12)` name and the gate.
-    name: test (${{ matrix.python-minor }}${{ matrix.shard && format(' coverage shard {0}', matrix.shard) || '' }})
+    name: test (${{ matrix.python-minor }}${{ matrix.coverage && ' coverage' || '' }} shard ${{ matrix.shard-index }}/4)
     runs-on: ubuntu-latest
     needs: [shd-non-linux-refusal]
-    # One instrumented leg ran 5 h 27 min of batches on 2026-10-27 and hit the
-    # hosted runner's six-hour limit before its gate, so coverage runs as two
-    # shards of about 2 h 45 min each. Every leg keeps a bounded timeout.
+    # Partition files before batching: neighboring compiler/backend modules no
+    # longer occupy one indivisible 384-file batch on a single hosted runner.
     timeout-minutes: ${{ matrix.coverage && 300 || 240 }}
     strategy:
       fail-fast: false
       matrix:
+        python-minor: ["3.11", "3.12", "3.13", "3.14"]
+        shard-index: [1, 2, 3, 4]
         # Exact interpreter patch pins shrink the setup-python mutable-manifest
         # surface (actions/python-versions is fetched at runtime with no
         # per-artifact digest — accepted + tracked residual, see
         # docs/internal/ci_supply_chain_residuals.md). `python-minor` keeps the
         # branch-protection-required job names `test (3.11)`..`test (3.14)`
-        # stable across patch bumps (via the job `name:` above); `coverage`
-        # flags the instrumented shards of the full suite, and `primary` the
-        # single shard that also runs the exact-coverage gates.
+        # stable across patch bumps through the aggregate jobs below. Every
+        # interpreter runs the complete suite across four shards. `primary`
+        # selects native desktop/browser admission, not the other exact gates.
         include:
           - python-minor: "3.11"
             python-version: "3.11.18"
           - python-minor: "3.12"
             python-version: "3.12.16"
             coverage: true
-            shard: "1/2"
-            shard-index: 1
-            primary: true
-          - python-minor: "3.12"
-            python-version: "3.12.16"
-            coverage: true
-            shard: "2/2"
-            shard-index: 2
           - python-minor: "3.13"
             python-version: "3.13.18"
           - python-minor: "3.14"
             python-version: "3.14.10"
+          - python-minor: "3.12"
+            shard-index: 1
+            primary: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -469,7 +465,7 @@ jobs:
           python tools/ci_install_dev.py
           python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
 
-      # Both coverage shards install it, so each batch runs in the same
+      # All coverage shards install it, so each batch runs in the same
       # environment as it did in the former single instrumented leg.
       - name: Install native Studio desktop dependencies
         if: matrix.coverage
@@ -767,11 +763,11 @@ jobs:
         run: |
           if [[ "${{ matrix.coverage }}" == "true" ]]; then
             # One shard of the instrumented suite; `coverage-union` gates the union.
-            bash tools/run_full_cov.sh --batch-size=384 --shard="${{ matrix.shard }}"
+            bash tools/run_full_cov.sh --batch-size=384 --shard="${{ matrix.shard-index }}/4"
           else
             # Full behavioral compatibility matrix, without repeating
             # coverage instrumentation on every Python interpreter.
-            bash tools/run_full_cov.sh --batch-size=384 --no-cov
+            bash tools/run_full_cov.sh --batch-size=384 --no-cov --shard="${{ matrix.shard-index }}/4"
           fi
 
       - name: NIR graph exact coverage
@@ -801,7 +797,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Autonomous-learning bridge exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-learning python -m coverage run \
@@ -814,7 +810,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Hierarchical partitioner exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-hierarchical-partitioner python -m coverage run \
@@ -828,7 +824,7 @@ jobs:
 
       - name: Studio distribution build coverage
         # Build copies in source and unpacked sdist map to the same owned hook.
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 2
         shell: bash
         run: |
           STUDIO_BUILD_COVERAGE_FILE="$PWD/.coverage-studio-build" python -m pytest tests/test_studio_distribution.py -q
@@ -837,7 +833,7 @@ jobs:
 
       - name: Studio replay exact statement coverage
         # Studio is excluded from aggregate coverage; replay has its own statement gate.
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 2
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-replay python -m coverage run \
@@ -850,7 +846,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Studio policy exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 2
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-policy python -m coverage run \
@@ -863,7 +859,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Studio jobs exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 2
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-jobs python -m pytest \
@@ -876,7 +872,7 @@ jobs:
             --cov-branch --cov-report=term-missing
 
       - name: Studio evidence input limits exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 2
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-evidence-limits python -m coverage run \
@@ -889,7 +885,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Studio evidence process exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 2
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-evidence-process python -m pytest \
@@ -900,7 +896,7 @@ jobs:
             --cov-branch --cov-report=term-missing
 
       - name: Nagumo-Sato and SC adaptive-map exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 4
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-nagumo-sc-map python -m coverage run \
@@ -919,7 +915,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Ih exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-ih python -m coverage run \
@@ -933,7 +929,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: PersistentNa exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-persistent-na python -m coverage run \
@@ -947,7 +943,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: NMDA exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-nmda python -m coverage run \
@@ -961,7 +957,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: SK exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-sk python -m coverage run \
@@ -975,7 +971,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: TTypeCa exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 3
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-ttype-ca python -m coverage run \
@@ -989,7 +985,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: GLM exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 4
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-glm python -m coverage run \
@@ -1009,7 +1005,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: MainenSejnowski exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 4
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-mainen python -m coverage run \
@@ -1028,7 +1024,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: TwoCompartmentLIF exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 4
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-tc-lif python -m coverage run \
@@ -1051,7 +1047,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: ParallelSpiking exact coverage and backend parity
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 4
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-psn python -m coverage run \
@@ -1073,7 +1069,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: HDC exact coverage
-        if: matrix.primary
+        if: matrix.coverage && matrix.shard-index == 4
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-hdc python -m coverage run \
@@ -1119,10 +1115,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, shd-non-linux-refusal]
     # A skipped job would report success to branch protection, so this job
-    # runs whatever the other legs did and fails unless both shards published.
+    # runs after failed legs too and requires every test shard to pass.
     if: ${{ !cancelled() }}
     timeout-minutes: 30
     steps:
+      - name: Require successful test shards and native Windows refusal
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          WINDOWS_RESULT: ${{ needs.shd-non-linux-refusal.result }}
+        shell: bash
+        run: test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -1169,7 +1172,7 @@ jobs:
         shell: bash
         run: |
           bash tools/run_full_cov.sh --combine-from="$RUNNER_TEMP/coverage-shards" \
-            --expect-shards=2 --html --cov-fail-under=100
+            --expect-shards=4 --html --cov-fail-under=100
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -1191,6 +1194,24 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  compatibility-union:
+    # Preserve branch-protection names after sharding each interpreter.
+    name: test (${{ matrix.python-minor }})
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: ${{ !cancelled() }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        python-minor: ["3.11", "3.13", "3.14"]
+    steps:
+      - name: Require every test shard to pass
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+        shell: bash
+        run: test "$TEST_RESULT" = success
 
   test-training:
     runs-on: ubuntu-latest

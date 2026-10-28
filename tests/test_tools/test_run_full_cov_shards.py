@@ -13,7 +13,7 @@ outgrew the runner's time limit. These tests run ``tools/run_full_cov.sh``
 itself, with real pytest and coverage subprocesses, on a three-module project.
 They check three things:
 
-- the shards partition the batches;
+- the shards partition modules before memory-reclaiming batches;
 - the union reaches the exact gate only when every shard's data is present;
 - a missing shard or an uncovered branch fails.
 """
@@ -25,6 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -106,31 +107,40 @@ def _run(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def _batches(output: str) -> list[int]:
-    """Return the batch numbers a run announced, in order."""
-    return [int(number) for number in re.findall(r"batch (\d+)/3 \(", output)]
+def _executed_modules(project: Path) -> list[str]:
+    """Read module identities from the real pytest JUnit results."""
+    return sorted(
+        case.attrib["classname"]
+        for report in (project / "test-results").glob("test-results-batch-*.xml")
+        for case in ET.parse(report).iter("testcase")
+    )
 
 
-def _run_shards(project: Path, union: Path, count: int) -> list[list[int]]:
+def _run_shards(project: Path, union: Path, count: int, *, batch_size: int = 1) -> list[list[str]]:
     """Run every shard and keep each shard's data as the hosted job publishes it."""
     union.mkdir(exist_ok=True)
     ran = []
     for index in range(1, count + 1):
-        result = _run(project, f"--shard={index}/{count}")
+        shutil.rmtree(project / "test-results", ignore_errors=True)
+        result = _run(project, f"--shard={index}/{count}", f"--batch-size={batch_size}")
         assert result.returncode == 0, result.stdout + result.stderr
         assert "coverage data left in" in result.stdout
         assert "TOTAL" not in result.stdout
-        ran.append(_batches(result.stdout))
+        ran.append(_executed_modules(project))
         shutil.copy2(project / ".coverage", union / f".coverage.shard-{index}")
     return ran
 
 
-def test_shards_partition_the_batches_and_the_union_passes_the_exact_gate(
-    project: Path,
+@pytest.mark.parametrize("batch_size", [1, 2])
+def test_shards_partition_modules_and_the_union_passes_the_exact_gate(
+    project: Path, batch_size: int
 ) -> None:
-    """Two shards run batches 1 and 3, then 2; their union reaches exactly 100 %."""
+    """Changing batch size preserves module ownership and exact union coverage."""
     union = project / "union"
-    assert _run_shards(project, union, 2) == [[1, 3], [2]]
+    assert _run_shards(project, union, 2, batch_size=batch_size) == [
+        ["tests.test_alpha", "tests.test_gamma"],
+        ["tests.test_beta"],
+    ]
 
     result = _run(project, f"--combine-from={union}", "--expect-shards=2", "--cov-fail-under=100")
 
@@ -160,19 +170,102 @@ def test_a_missing_shard_or_an_uncovered_line_fails_the_union(project: Path) -> 
     assert "less than fail-under=100" in partial.stdout + partial.stderr
 
 
+def test_wrong_shard_identity_cannot_replace_a_missing_shard(project: Path) -> None:
+    """A renamed duplicate cannot satisfy the expected shard identities by count."""
+    union = project / "union"
+    _run_shards(project, union, 2)
+    (union / ".coverage.shard-2").rename(union / ".coverage.shard-99")
+
+    result = _run(project, f"--combine-from={union}", "--expect-shards=2")
+
+    assert result.returncode == 1
+    assert "missing coverage shard 2/2" in result.stderr
+
+
+def test_listing_is_read_only_and_retains_whitespace_and_both_pytest_patterns(
+    project: Path,
+) -> None:
+    """List exact NUL-separated selections without invoking pytest or erasing data."""
+    nested = project / "tests" / "group with spaces"
+    nested.mkdir()
+    (nested / "delta_test.py").write_text("raise RuntimeError('listing must not import')\n")
+    coverage = project / ".coverage"
+    coverage.write_bytes(b"preserve previous coverage")
+
+    first = _run(project, "--list-files", "--shard=1/2")
+    second = _run(project, "--list-files", "--shard=2/2", "--batch-size=2")
+
+    assert first.returncode == second.returncode == 0
+    assert first.stdout.split("\0") == [
+        "tests/group with spaces/delta_test.py",
+        "tests/test_beta.py",
+        "",
+    ]
+    assert second.stdout.split("\0") == ["tests/test_alpha.py", "tests/test_gamma.py", ""]
+    assert coverage.read_bytes() == b"preserve previous coverage"
+    assert not (project / "test-results").exists()
+
+
+def test_compatibility_shards_execute_every_behavioral_module_once(project: Path) -> None:
+    """Every compatibility shard runs real pytest without creating coverage data."""
+    executed = []
+    for index in range(1, 4):
+        result = _run(project, "--no-cov", f"--shard={index}/3", "--batch-size=2")
+        assert result.returncode == 0, result.stdout + result.stderr
+        executed.extend(_executed_modules(project))
+    assert sorted(executed) == ["tests.test_alpha", "tests.test_beta", "tests.test_gamma"]
+    assert not (project / ".coverage").exists()
+
+
+def test_formal_proofs_keep_single_coverage_custody(project: Path) -> None:
+    """Compatibility discovery excludes only the existing interpreter-independent proofs."""
+    path = "tests/test_catalogue_formal_smoke.py"
+    (project / path).write_text("raise RuntimeError('listing must not import')\n")
+    coverage = _run(project, "--list-files")
+    behavioral = _run(project, "--list-files", "--no-cov")
+
+    assert coverage.returncode == behavioral.returncode == 0
+    assert path in coverage.stdout.split("\0")
+    assert set(coverage.stdout.split("\0")) - set(behavioral.stdout.split("\0")) == {path}
+
+
+def test_unsharded_runner_still_gates_the_complete_suite(project: Path) -> None:
+    """The default CLI runs every module and reports exact union coverage."""
+    result = _run(project, "--batch-size=2")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _executed_modules(project) == ["tests.test_alpha", "tests.test_beta", "tests.test_gamma"]
+    assert re.search(r"^TOTAL\s.*\s100\.00%$", result.stdout, re.MULTILINE)
+    assert (project / "coverage.xml").is_file()
+
+
+def test_a_failed_batch_cannot_report_a_successful_union(project: Path) -> None:
+    """An actual failing pytest case aborts its shard before a coverage report."""
+    (project / "tests/test_alpha.py").write_text("def test_failure():\n    assert False\n")
+
+    result = _run(project, "--shard=1/2")
+
+    assert result.returncode == 1
+    assert "batch 1 failed" in result.stderr
+    assert "FULL-SUITE SUMMARY" not in result.stdout
+    assert not (project / "coverage.xml").exists()
+
+
 @pytest.mark.parametrize(
     ("arguments", "message"),
     [
         (("--shard=3/2",), "shard must be K/N"),
         (("--shard=0/2",), "shard must be K/N"),
         (("--shard=1-2",), "shard must be K/N"),
+        (("--shard=1/4",), "shard count 4 exceeds module count 3"),
         (("--combine-from=union",), "needs --expect-shards"),
         (("--expect-shards=2",), "needs --combine-from"),
         (("--combine-from=union", "--expect-shards=2", "--shard=1/2"), "excludes --shard"),
         (
             ("--combine-from=union", "--expect-shards=2", "--no-cov"),
-            "excludes --shard and --no-cov",
+            "excludes --shard, --no-cov and --list-files",
         ),
+        (("--combine-from=union", "--list-files"), "excludes --shard"),
     ],
 )
 def test_inconsistent_shard_arguments_are_refused_before_any_test_runs(

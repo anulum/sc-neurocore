@@ -105,7 +105,7 @@ def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     step = workflow_text[start:end]
 
     assert step.count("bash tools/run_full_cov.sh --batch-size=384") == 2
-    assert '--batch-size=384 --shard="${{ matrix.shard }}"' in step
+    assert step.count('--shard="${{ matrix.shard-index }}/4"') == 2
     assert "--batch-size=384 --no-cov" in step
     assert "--cov-fail-under" not in step
     assert "pytest -n auto" not in step
@@ -135,15 +135,15 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
         pytest.skip("PyYAML is not installed")
     workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
     test = workflow["jobs"]["test"]
-    include = test["strategy"]["matrix"]["include"]
-    shards = [leg for leg in include if leg.get("coverage") is True]
-    count = len(shards)
-    assert count >= 2
-    assert sorted(leg["shard-index"] for leg in shards) == list(range(1, count + 1))
-    assert all(leg["shard"] == f"{leg['shard-index']}/{count}" for leg in shards)
-    assert {leg["python-version"] for leg in shards} == {"3.12.16"}
-    assert all(leg.get("coverage") is not True for leg in include if "shard" not in leg)
-    assert "coverage shard" in test["name"]
+    matrix = test["strategy"]["matrix"]
+    include = matrix["include"]
+    assert matrix["python-minor"] == ["3.11", "3.12", "3.13", "3.14"]
+    assert matrix["shard-index"] == [1, 2, 3, 4]
+    count = len(matrix["shard-index"])
+    coverage = [leg for leg in include if leg.get("coverage") is True]
+    assert coverage == [{"python-minor": "3.12", "python-version": "3.12.16", "coverage": True}]
+    assert "matrix.shard-index" in test["name"]
+    assert "matrix.coverage" in test["name"]
 
     stage, preserve = test["steps"][-2:]
     assert stage["if"] == preserve["if"] == "matrix.coverage"
@@ -166,6 +166,19 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert f"--expect-shards={count}" in gate["run"]
     assert "--cov-fail-under=100" in gate["run"]
     assert "coverage-union" in workflow["jobs"]["build"]["needs"]
+    readiness = union["steps"][0]
+    assert readiness["env"] == {
+        "TEST_RESULT": "${{ needs.test.result }}",
+        "WINDOWS_RESULT": "${{ needs.shd-non-linux-refusal.result }}",
+    }
+    assert readiness["run"] == 'test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success'
+    compatibility = workflow["jobs"]["compatibility-union"]
+    assert compatibility["name"] == "test (${{ matrix.python-minor }})"
+    assert compatibility["needs"] == ["test"]
+    assert compatibility["if"] == "${{ !cancelled() }}"
+    assert compatibility["strategy"]["matrix"]["python-minor"] == ["3.11", "3.13", "3.14"]
+    assert compatibility["steps"][0]["env"] == {"TEST_RESULT": "${{ needs.test.result }}"}
+    assert compatibility["steps"][0]["run"] == 'test "$TEST_RESULT" = success'
 
 
 def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> None:
@@ -181,7 +194,7 @@ def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> No
     assert "python -m coverage xml -o coverage.xml" in runner
     assert "test-results-batch-%03d.xml" in runner
     assert '! $coverage && [[ "$path" == "tests/test_catalogue_formal_smoke.py" ]]' in runner
-    assert "(((batch_number - 1) % shard_count != shard_index - 1))" in runner
+    assert "index = shard_index - 1; index < ${#test_files[@]}; index += shard_count" in runner
     assert "((${#shard_files[@]} != expect_shards))" in runner
 
 
@@ -194,7 +207,7 @@ def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 4" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "src/sc_neurocore/neurons/models/nagumo_sato_map_neuron.py" in step
     assert "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py" in step
@@ -214,7 +227,7 @@ def test_ih_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 3" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/ih_neuron.py'" in step
     assert "tests/test_model_ih_neuron.py" in step
@@ -229,7 +242,7 @@ def test_persistent_na_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 3" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/persistent_na_neuron.py'" in step
     assert "tests/test_model_persistent_na_neuron.py" in step
@@ -244,7 +257,7 @@ def test_nmda_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 3" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/nmda_neuron.py'" in step
     assert "tests/test_model_nmda_neuron.py" in step
@@ -259,7 +272,7 @@ def test_sk_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 3" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/sk_neuron.py'" in step
     assert "tests/test_model_sk_neuron.py" in step
@@ -274,7 +287,7 @@ def test_ttype_ca_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 3" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/ttype_ca_neuron.py'" in step
     assert "tests/test_model_ttype_ca_neuron.py" in step
@@ -289,7 +302,7 @@ def test_glm_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 4" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/glm_neuron.py'" in step
     assert "tests/test_model_glm_neuron_glm_atomicity.py" in step
@@ -304,7 +317,7 @@ def test_mainen_sejnowski_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 4" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/neurons/models/mainen_sejnowski.py'" in step
     assert "tests/test_model_mainen_sejnowski_ms_atomicity.py" in step
@@ -319,7 +332,7 @@ def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 4" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "src/sc_neurocore/neurons/models/tc_lif.py" in step
     assert "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py" in step
@@ -336,7 +349,7 @@ def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 4" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "src/sc_neurocore/neurons/models/psn.py" in step
     assert "src/sc_neurocore/neurons/models/sc_resetting_psn.py" in step
@@ -352,7 +365,7 @@ def test_hdc_exact_coverage_is_hosted() -> None:
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
 
-    assert "if: matrix.primary" in step
+    assert "if: matrix.coverage && matrix.shard-index == 4" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "src/sc_neurocore/hdc/base.py" in step
     assert "src/sc_neurocore/hdc/classifier.py" in step
@@ -360,12 +373,11 @@ def test_hdc_exact_coverage_is_hosted() -> None:
     assert "--fail-under=100 --show-missing" in step
 
 
-def test_exactly_one_primary_matrix_leg_carries_the_exact_coverage_lanes() -> None:
+def test_exactly_one_primary_matrix_leg_carries_native_desktop_admission() -> None:
     """Require exactly one primary interpreter in the test matrix.
 
-    Every exact-coverage lane rides `if: matrix.primary`; losing the single
-    `primary: true` matrix entry would silently disable all of them on every
-    leg. The primary entry is one of the coverage shards.
+    Native desktop and browser admission run once. Other focused gates are
+    distributed among the four coverage shards, without changing their commands.
     """
     try:
         import yaml
@@ -380,4 +392,4 @@ def test_exactly_one_primary_matrix_leg_carries_the_exact_coverage_lanes() -> No
         "the test matrix must declare exactly one primary leg; "
         f"found {len(primary_legs)} of {len(include)}"
     )
-    assert primary_legs[0].get("coverage") is True
+    assert primary_legs[0] == {"python-minor": "3.12", "shard-index": 1, "primary": True}
