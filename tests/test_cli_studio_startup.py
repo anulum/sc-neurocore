@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import signal
 import socket
 import subprocess
 import sys
@@ -90,7 +91,10 @@ def _launch_studio(
             yield process, marker
         finally:
             if process.poll() is None:
-                process.terminate()
+                # Exercise console shutdown; Uvicorn re-raises the received
+                # signal after draining. SIGINT unwinds Python and preserves
+                # subprocess coverage, whereas re-raised SIGTERM skips atexit.
+                process.send_signal(signal.SIGINT)
             try:
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
