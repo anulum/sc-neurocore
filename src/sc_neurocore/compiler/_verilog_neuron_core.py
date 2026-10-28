@@ -145,9 +145,6 @@ def _build_neuron_core(
             "compiler because the emitted datapath has no rounding LFSR; use truncate, "
             "nearest, or bankers"
         )
-    if getattr(neuron, "uses_diffusion_noise", False):
-        # The callers lower xi first (compiler.diffusion_noise); a bare xi has no signal.
-        raise ValueError("xi must be lowered with compiler.diffusion_noise before emission")
     if type(pipeline_stages) is not int:
         raise TypeError(f"pipeline_stages must be an integer, got {pipeline_stages!r}")
     if pipeline_stages < 0:

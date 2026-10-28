@@ -25,6 +25,14 @@ from sc_neurocore.compiler import function_units as fu
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
 
 _NS = build_eval_namespace()
+
+
+@pytest.mark.parametrize("code,expected", [(-421657428, -(1 << 31)), (421657429, (1 << 31) - 1)])
+def test_tangent_at_a_representable_reduced_pole_saturates(code: int, expected: int) -> None:
+    """Real Q4.28 inputs can land exactly on either zero-cosine turn after reduction."""
+    assert fu.evaluate("tan", code, 32, 28) == expected
+
+
 _REFERENCE = {
     "exp": np.exp,
     "log": np.log,

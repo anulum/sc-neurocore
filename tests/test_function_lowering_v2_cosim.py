@@ -26,6 +26,10 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.compiler import function_units as fu
+from sc_neurocore.compiler.c_fixed_emitter import emit_c_fixed_expr
+from sc_neurocore.compiler.hardware_numeric_contract import hardware_numeric_contract
+from sc_neurocore.compiler.q_format import QFormat
+from sc_neurocore.compiler.verilog_compiler_config import Q88
 from sc_neurocore.compiler.intelligence.bit_true_kernel import generate_bittrue_kernel_from_neuron
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
@@ -54,6 +58,47 @@ _EXPRESSIONS = {
     "heaviside": "heaviside(I, 0.25)",
 }
 _POSITIVE = {"log", "sqrt", "cbrt", "log1p"}
+
+
+@pytest.mark.parametrize("dw,fr", [(16, 8), (32, 16)])
+@pytest.mark.parametrize("current", [0.25, 2.0, 9.0])
+def test_half_power_rtl_and_kernel_match_the_sqrt_unit(
+    dw: int, fr: int, current: float, tmp_path: Path
+) -> None:
+    """The half power reaches real RTL, C and Rust with an independent square-root oracle."""
+    from tests.test_function_lowering_atan2_cosim import _rust_trace
+
+    model = EquationNeuron({"v": "I ** 0.5"}, method="map", dt=1.0)
+    rtl, c = _traces(model, current, dw, fr, 3)
+    expected = fu.evaluate("sqrt", _q_input(current, dw, fr), dw, fr)
+    rust = _rust_trace(model, current, dw, fr, 3, tmp_path)
+    assert len(rtl) == 3 and rtl == c == rust
+    assert [int(row[1]) for row in rtl] == [expected] * 3
+
+
+def test_half_power_emitters_and_contract_select_the_square_root() -> None:
+    """C, Rust, Verilog and the hardware receipt distinguish half and third powers."""
+    q = Q88(function_lowering="v2")
+    for language in ("c", "rust"):
+        half = emit_c_fixed_expr("x ** 0.5", {}, {}, q, lang=language)
+        assert half == emit_c_fixed_expr("sqrt(x)", {}, {}, q, lang=language)
+        assert half != emit_c_fixed_expr("x ** (1.0 / 3.0)", {}, {}, q, lang=language)
+
+    def verilog(expression: str) -> str:
+        """Compile a real map model through the public Verilog entry point."""
+        neuron = EquationNeuron({"v": expression}, method="map", dt=1.0)
+        source = compile_to_verilog(neuron, "m", function_lowering="v2")
+        return source[source.index("\nmodule ") :]
+
+    assert verilog("I ** 0.5") == verilog("sqrt(I)")
+    assert verilog("I ** 0.5") != verilog("I ** (1.0 / 3.0)")
+    contract = hardware_numeric_contract(
+        EquationNeuron({"v": "I ** 0.5"}, method="map"),
+        QFormat.from_string("Q8.8"),
+        function_lowering="v2",
+    )
+    assert [unit.function for unit in contract.function_units] == ["sqrt"]
+    assert contract.lookup_tables == ()
 
 
 def _traces(

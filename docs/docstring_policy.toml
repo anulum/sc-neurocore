@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1427
+expected_file_count = 1428
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5843,3 +5843,7 @@ rationale = "Euclidean magnitude preserves both coordinates, physical dimensions
 [[file]]
 path = "tests/test_equation_units_hypot.py"
 rationale = "Euclidean magnitude preserves both coordinates, physical dimensions, rounded fixed-point accuracy and real source-bound target execution."
+
+[[file]]
+path = "tests/test_native_equation_functions.py"
+rationale = "Native equation function lowering preserves actual numerical results and source-bound emitted targets."

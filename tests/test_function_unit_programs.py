@@ -31,6 +31,15 @@ from sc_neurocore.compiler.function_unit_ir import Program, emit_c, emit_verilog
 from sc_neurocore.compiler.function_unit_programs import program
 
 
+@pytest.mark.parametrize("fraction", [0, 1, 2])
+def test_exprel_coarse_formats_keep_the_zero_series_limit(fraction: int) -> None:
+    """Every eight-bit code agrees with the independent reference when the near window shrinks."""
+    unit = program("exprel", 8, fraction)
+    assert unit.evaluate(0) == 1 << fraction
+    for code in range(-128, 128):
+        assert unit.evaluate(code) == fu.evaluate("exprel", code, 8, fraction)
+
+
 class TestProgramsEqualReference:
     """Program evaluation equals the reference and never leaves 64 bits."""
 

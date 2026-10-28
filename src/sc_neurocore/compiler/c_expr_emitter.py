@@ -246,15 +246,13 @@ class CExprEmitter(ast.NodeVisitor):
             # numpy.clip is minimum(maximum(x, lo), hi): with lo > hi the result is hi.
             raised = f"(({arg} < {lo}) ? {lo} : {arg})"
             return f"(({raised} > {hi}) ? {hi} : {raised})"
-        if fname in ("max", "min"):
-            # Every argument, folded left as Python's builtin compares them.
-            cmp = ">" if fname == "max" else "<"
-            result = arg
-            for extra in node.args[1:]:
-                other: str = self.visit(extra)
-                result = f"(({result} {cmp} {other}) ? {result} : {other})"
-            return result
-        raise ValueError(f"Function '{fname}' has no C/C++ lowering.")
+        # The validated vocabulary leaves only max/min: fold every argument.
+        cmp = {"max": ">", "min": "<"}[fname]
+        result = arg
+        for extra in node.args[1:]:
+            other: str = self.visit(extra)
+            result = f"(({result} {cmp} {other}) ? {result} : {other})"
+        return result
 
     def generic_visit(self, node: ast.AST) -> str:
         """Raise for any unsupported AST node type."""

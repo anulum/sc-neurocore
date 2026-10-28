@@ -41,11 +41,9 @@ class EquationEvent:
 def _lfsr_trial(
     neuron: EquationNeuron, expression: str, e: EquationExpressions, enabled: int
 ) -> int:
-    """Advance the maintained 16-bit LFSR eight times per enabled logical trial."""
+    """Advance eight times; stochastic EquationNeuron construction supplies the seed."""
     a, b, q = e.a, e.a.builder, e.a.q
     initial = neuron.stochastic_rng_initial_seed
-    if initial is None:
-        raise ValueError("stochastic equation threshold has no initial RNG seed")
     current = b.state(a.constant(initial or 0xACE1, 16), "i16")
     sample = current
     for _ in range(8):

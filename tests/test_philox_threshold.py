@@ -29,6 +29,7 @@ from typing import Callable
 import pytest
 
 from sc_neurocore.compiler import random_units as ru
+from sc_neurocore.compiler.philox_threshold import lower_philox_threshold
 from sc_neurocore.compiler.intelligence.bit_true_kernel import generate_bittrue_kernel_from_neuron
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
@@ -44,6 +45,14 @@ from tests.bit_true_cosim_support import (
 )
 
 _SEED = 2026
+
+
+def test_lowering_refuses_a_removed_public_probability_expression() -> None:
+    """A mutable Philox model cannot compile after its probability expression disappears."""
+    neuron = _poisson(0.5)
+    neuron.probability_expression = None
+    with pytest.raises(ValueError, match="needs its probability or rate expression"):
+        lower_philox_threshold(neuron)
 
 
 def _poisson(probability: float, rng: str = "philox", stream: int = 0) -> EquationNeuron:

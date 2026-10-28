@@ -23,11 +23,13 @@ import numpy as np
 import pytest
 
 from sc_neurocore.compiler import expr_lut_tables as tables
+from sc_neurocore.compiler import function_units
 from sc_neurocore.compiler.hardware_numeric_contract import hardware_numeric_contract
 from sc_neurocore.compiler.lut_accuracy import (
     EXHAUSTIVE_MAX_WIDTH,
     GEOMETRY,
     lut_read,
+    lut_read_int,
     measure,
     table_functions,
 )
@@ -37,6 +39,53 @@ from tests.bit_true_cosim_support import HAS_COSIM, _q_input, _verilog_trace
 
 _EXPRESSION = {"cbrt": "I ** (1.0 / 3.0)", "sigmoid": "sigmoid(I)"}
 _POSITIVE = {"log", "sqrt", "cbrt"}
+
+
+@pytest.mark.parametrize("function", ["round", "softplus", "atan2", "heaviside"])
+def test_accuracy_receipt_refuses_a_kernel_outside_its_bound(
+    function: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A broken public kernel cannot publish a receipt claiming the declared error bound."""
+    original = function_units.evaluate
+    measure.cache_clear()
+
+    def corrupted(*args: object, **kwargs: object) -> int:
+        """Supply a deliberately invalid public kernel for the fail-closed negative control."""
+        return 0
+
+    try:
+        monkeypatch.setattr(function_units, "evaluate", corrupted)
+        with pytest.raises(ValueError, match="measurement exceeds"):
+            measure(function, 3, 1, "v2")
+    finally:
+        monkeypatch.setattr(function_units, "evaluate", original)
+        measure.cache_clear()
+    assert measure(function, 3, 1, "v2").declared_error_bound is not None
+
+
+def test_wide_lookup_requires_the_exact_integer_reader() -> None:
+    """A table offset exceeding int64 refuses vectorized arithmetic and retains the exact path."""
+    with pytest.raises(ValueError, match="use lut_read_int"):
+        lut_read("sin", np.array([0], dtype=np.int64), 64, 63)
+    assert lut_read_int("sin", 0, 64, 63) == 0
+
+
+def test_binary_accuracy_projection_reports_the_cartesian_domain() -> None:
+    """A public binary receipt states both operand ranges and omits unary table metadata."""
+    report = measure("atan2", 3, 1, "v2").to_public_dict()
+    assert report["input_arity"] == 2
+    assert report["domain_cardinality"] == 64
+    assert report["operand_ranges"] == [[-2.0, 1.5], [-2.0, 1.5]]
+    assert "max_error_at_inputs" in report and "table_domain" not in report
+
+
+def test_coarse_log_sampling_keeps_its_single_lower_boundary() -> None:
+    """A sampled log grid with no codes below its first cell agrees inside with an exhaustive one."""
+    sampled = measure("log", 32, 0)
+    exhaustive = measure("log", 16, 0)
+    assert not sampled.exhaustive and exhaustive.exhaustive
+    assert sampled.input_min == 1.0
+    assert sampled.max_error_in_table == exhaustive.max_error_in_table
 
 
 class TestVocabulary:
@@ -54,6 +103,8 @@ class TestVocabulary:
             measure("erf", 16, 8)
         with pytest.raises(ValueError, match="invalid format"):
             measure("exp", 16, 16)
+        with pytest.raises(ValueError, match="unknown lowering"):
+            measure("exp", 16, 8, "unknown")
 
 
 @pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
@@ -137,7 +188,7 @@ class TestV2Measurement:
         for function in table_functions("v2"):
             result = measure(function, 16, 8, "v2")
             assert result.lowering == "v2"
-            assert result.exhaustive == (function not in {"atan2", "heaviside"})
+            assert result.exhaustive == (function_units.FUNCTION_ARITY[function] == 1)
             assert result.max_error / result.resolution <= (bounds.get(function, 0.501))
 
     def test_v2_improves_every_shared_function_at_q16_16(self) -> None:

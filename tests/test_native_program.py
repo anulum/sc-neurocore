@@ -208,3 +208,16 @@ def test_engine_builder_matches_the_compiler_builder_protocol() -> None:
         assert list(actual.parameters) == list(expected.parameters), name
         for parameter in expected.parameters.values():
             assert actual.parameters[parameter.name].default == parameter.default, (name, parameter)
+
+
+@pytest.mark.parametrize("row", [(0, 1 << 63, 0), (0, -(1 << 63), 0)])
+def test_native_program_refuses_invalid_table_coefficients(row: tuple[int, int, int]) -> None:
+    """Signed coefficient overflow refuses before native instructions append."""
+    builder = ScGraphBuilder("invalid_table")
+    source = builder.input("arg", "i64")
+    unit = Program(tables={"coefficients": (row,)})
+    unit.output = unit.lookup("coefficients", unit.input(), 1)
+    with pytest.raises(ValueError, match="coefficient does not fit signed 64 bits"):
+        lower_program(unit, builder, [source])
+    builder.output("result", source)
+    assert len(builder.build()) == 2

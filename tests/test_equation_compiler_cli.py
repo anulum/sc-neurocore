@@ -18,6 +18,29 @@ import pytest
 from sc_neurocore.cli import main
 
 
+@pytest.mark.parametrize("pipeline", [["--pipeline", "1"], ["--pipeline-points", "mul1"]])
+def test_adaptive_precision_refuses_incompatible_pipeline_options(
+    pipeline: list[str], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The real CLI refuses a pipelined adaptive wrapper and writes no partial output."""
+    output = tmp_path / "adaptive"
+    with patch(
+        "sys.argv",
+        [
+            "sc-neurocore",
+            "compile",
+            "dv/dt = -v + I",
+            "--adaptive-precision",
+            *pipeline,
+            "-o",
+            str(output),
+        ],
+    ):
+        assert main() == 1
+    assert "does not support --pipeline/--pipeline-points" in capsys.readouterr().out
+    assert not list(output.rglob("*.v"))
+
+
 class TestCompileCLI:
     """Pin file generation, naming, and missing-equation behaviour."""
 

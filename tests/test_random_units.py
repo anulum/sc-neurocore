@@ -22,8 +22,6 @@ import pytest
 
 from sc_neurocore.compiler.random_units import counter_words, philox4x32
 
-randomgen = pytest.importorskip("randomgen")
-
 _CASES = [
     (0, 0),
     (0, 1),
@@ -36,6 +34,7 @@ _CASES = [
 @pytest.mark.parametrize(("key", "counter"), _CASES)
 def test_blocks_equal_randomgen(key: int, counter: int) -> None:
     """Four consecutive blocks equal randomgen's output for the same key and counters."""
+    randomgen = pytest.importorskip("randomgen")
     generator = randomgen.Philox(number=4, width=32, key=key, counter=(counter - 1) % (1 << 128))
     expected = [int(word) for word in generator.random_raw(16)]
     key_words = (key & 0xFFFFFFFF, key >> 32)
@@ -53,3 +52,11 @@ def test_word_and_round_ranges_are_checked() -> None:
         philox4x32((0, 0, 0, 0), (0, 0), rounds=0)
     with pytest.raises(ValueError, match="128 bits"):
         counter_words(1 << 128)
+
+
+def test_counter_words_split_little_endian_without_an_optional_reference() -> None:
+    """The public split and refusal contract runs even when randomgen is absent."""
+    assert counter_words((4 << 96) | (3 << 64) | (2 << 32) | 1) == (1, 2, 3, 4)
+    assert counter_words((1 << 128) - 1) == ((1 << 32) - 1,) * 4
+    with pytest.raises(ValueError, match="128 bits"):
+        counter_words(-1)

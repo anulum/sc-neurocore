@@ -15,6 +15,20 @@ from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
 from tests.bit_true_kernel_support import *  # noqa: F403
 
 
+def test_arithmetic_contract_refuses_an_unknown_function_lowering() -> None:
+    """The public receipt validates its function lowering independently of model construction."""
+    with pytest.raises(ValueError, match="unknown function_lowering"):
+        kernel_arithmetic_contract(function_lowering="unknown")
+
+
+def test_kernel_refuses_a_changed_unsupported_model_method() -> None:
+    """A mutable public model cannot silently compile under an unsupported integration rule."""
+    neuron = _lif()
+    neuron.method = "unsupported"
+    with pytest.raises(ValueError, match="currently supports method"):
+        generate_bittrue_kernel_from_neuron(neuron, "m")
+
+
 class TestModesAndValidation:
     """Rounding, overflow and configuration modes the bit-true kernel emits or refuses."""
 

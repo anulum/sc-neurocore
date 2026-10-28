@@ -28,6 +28,24 @@ require_engine()
 from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
 
 
+def test_native_integrator_refuses_a_changed_unsupported_method() -> None:
+    """A mutable public model cannot silently switch an unknown method to RK4."""
+    neuron = EquationNeuron({"v": "I"}, method="map")
+    neuron.method = "unsupported"
+    builder = ScGraphBuilder("invalid_integrator")
+    arithmetic = EquationArithmetic(builder, Q88(16, 8))
+    source = builder.input("I", "i16")
+
+    def commit(raw: int, width: int) -> int:
+        """Narrow an integration candidate using the actual typed builder."""
+        return arithmetic.builder.word_resize(raw, "i16")
+
+    with pytest.raises(ValueError, match="unsupported native equation integrator"):
+        integrate(neuron, arithmetic, {"v": source}, {"I": source}, commit)
+    builder.output("result", source)
+    assert len(builder.build()) == 2
+
+
 @pytest.mark.parametrize("method", SUPPORTED_METHODS)
 @pytest.mark.parametrize("overflow", ["wrap", "saturate"])
 @pytest.mark.parametrize("rounding", ["truncate", "nearest", "bankers"])
@@ -52,9 +70,10 @@ def test_native_integrator_preserves_coupled_atomic_recurrence(
     current = b.input("I_t", f"i{width}")
 
     def commit(raw: int, raw_width: int) -> int:
+        """Commit an actual candidate using the selected signed overflow policy."""
         if overflow == "saturate":
             raw = b.word_clamp(raw, -(1 << (width - 1)), (1 << (width - 1)) - 1, f"i{raw_width}")
-        return b.word_resize(raw, f"i{width}")
+        return a.builder.word_resize(raw, f"i{width}")
 
     candidates = integrate(neuron, a, states, {"I": current}, commit)
     for name in states:

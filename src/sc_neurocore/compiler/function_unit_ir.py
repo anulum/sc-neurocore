@@ -31,13 +31,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-_OPS = frozenset(
-    {
-        "const", "add", "sub", "mul", "div", "neg", "shl", "shr", "shl_var", "shr_var",
-        "mask", "lt", "le", "eq", "select", "table", "input", "xor", "extern",
-    }
-)  # fmt: skip
-
 
 @dataclass(frozen=True, slots=True)
 class Step:
@@ -84,8 +77,7 @@ class Program:
     _count: int = 0
 
     def _add(self, op: str, args: Sequence[str] = (), value: int = 0, table: str = "") -> str:
-        if op not in _OPS:
-            raise ValueError(f"unknown operation {op!r}")
+        """Append an instruction from the fixed opcode vocabulary of the public builders."""
         name = f"t{self._count}"
         self._count += 1
         self.steps.append(Step(name, op, tuple(args), value, table))

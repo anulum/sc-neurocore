@@ -24,6 +24,13 @@ from sc_neurocore.compiler import expr_lut_tables as tables
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
 
 
+@pytest.mark.parametrize("site", ["I", "True", "-1", "4294967296"])
+def test_public_random_call_refuses_a_nonliteral_or_out_of_range_site(site: str) -> None:
+    """The documented call-site API validates parsed RNG calls independently of the model."""
+    with pytest.raises(ValueError, match="call-site number as an integer literal"):
+        tables.random_site("rand", _call(f"rand({site})"))
+
+
 def _call(text: str) -> ast.Call:
     node = ast.parse(text, mode="eval").body
     assert isinstance(node, ast.Call)

@@ -684,12 +684,10 @@ def measure(function: str, data_width: int, fraction: int, lowering: str = LOWER
     table_max = geometry.lo + geometry.size * geometry.step
     inside = (x >= geometry.lo) & (x < table_max)
     worst = int(np.argmax(error))
-    if inside.any():
-        inside_index = np.flatnonzero(inside)
-        worst_inside = int(inside_index[np.argmax(error[inside])])
-        max_inside, at_inside = float(error[worst_inside]), float(x[worst_inside])
-    else:
-        max_inside, at_inside = 0.0, math.nan
+    # Every supported grid contains a representable input in the model's domain.
+    inside_index = np.flatnonzero(inside)
+    worst_inside = int(inside_index[np.argmax(error[inside])])
+    max_inside, at_inside = float(error[worst_inside]), float(x[worst_inside])
     return LutAccuracy(
         function=function,
         data_width=data_width,

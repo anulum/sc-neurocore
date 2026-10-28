@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.compiler.equation_lowering import prepare_neuron
+from sc_neurocore.compiler import compile_to_ir
 from sc_neurocore.compiler.native_equation import EquationArithmetic
 from sc_neurocore.compiler.native_equation.events import lower_events
 from sc_neurocore.compiler.native_equation.integrators import integrate
@@ -28,6 +29,15 @@ from tests.engine_requirement import require_engine
 require_engine()
 
 from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
+
+
+def test_empty_stochastic_expression_is_refused_by_native_compilation() -> None:
+    """A public model with an empty probability cannot silently acquire a spike rule."""
+    neuron = EquationNeuron(
+        {"v": "I"}, detection="poisson", probability_expression="", method="map"
+    )
+    with pytest.raises(ValueError, match="requires a probability or escape-rate expression"):
+        compile_to_ir(neuron)
 
 
 def _model(name: str) -> EquationNeuron:
@@ -103,7 +113,8 @@ def test_native_event_transaction_matches_public_compiler(
         }
 
     def commit(raw: int, width: int) -> int:
-        return b.word_resize(b.word_clamp(raw, -32768, 32767, f"i{width}"), "i16")
+        """Commit a saturating signed state through the real native builder."""
+        return a.builder.word_resize(a.builder.word_clamp(raw, -32768, 32767, f"i{width}"), "i16")
 
     candidates = integrate(neuron, a, states, {"I": current}, commit, externs)
     event = lower_events(neuron, a, candidates, states, {"I": current}, commit, true, externs)
