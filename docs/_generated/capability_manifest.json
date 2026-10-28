@@ -978,7 +978,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5434
+    "test_files": 5439
   },
   "documentation": {
     "public_pages": [
@@ -5034,6 +5034,7 @@
       "tests/test_equation_namespace.py",
       "tests/test_equation_program.py",
       "tests/test_equation_random.py",
+      "tests/test_equation_random_and_seed_alias_edges.py",
       "tests/test_equation_safety_acceptance.py",
       "tests/test_equation_safety_capabilities.py",
       "tests/test_equation_safety_numeric_limits.py",
@@ -6778,6 +6779,7 @@
       "tests/test_network_execution_paths_engine_detection.py",
       "tests/test_network_execution_paths_monitor_and_dispatch.py",
       "tests/test_network_execution_paths_rust_mpi_workspace.py",
+      "tests/test_network_export_and_bridge_refusals.py",
       "tests/test_network_monitor_edges.py",
       "tests/test_network_monitor_fidelity.py",
       "tests/test_network_monitors_stimulus_poisson_input.py",
@@ -6793,7 +6795,9 @@
       "tests/test_network_runner_engine_binding.py",
       "tests/test_network_runner_engine_binding_runtime.py",
       "tests/test_network_rust_dispatch_fidelity.py",
+      "tests/test_network_rust_dispatch_probe_edges.py",
       "tests/test_network_spike_gating_equivalence.py",
+      "tests/test_network_topology_domain_edges.py",
       "tests/test_network_verilog_export_fidelity.py",
       "tests/test_neural_decoders_cebra_encoder.py",
       "tests/test_neural_decoders_engine_binding_runtime.py",
@@ -7219,6 +7223,7 @@
       "tests/test_quasirandom_emitter_halton16_emitter.py",
       "tests/test_quasirandom_emitter_quasi_random_emitter.py",
       "tests/test_quasirandom_emitter_sobol16_emitter.py",
+      "tests/test_quiescence_declared_model_edges.py",
       "tests/test_quiescence_purity_contract.py",
       "tests/test_rall_dendrite.py",
       "tests/test_random_draws_cosim.py",

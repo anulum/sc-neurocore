@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1422
+expected_file_count = 1427
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -4363,6 +4363,10 @@ path = "tests/test_equation_random.py"
 rationale = "Site numbering, seed and stream ranges, and reproducible neuron traces across reset."
 
 [[file]]
+path = "tests/test_equation_random_and_seed_alias_edges.py"
+rationale = "Philox stochastic-threshold runtime: reported key, counter restored on a refused step; seed-alias declarations."
+
+[[file]]
 path = "tests/test_random_draws_cosim.py"
 rationale = "Compiled rand() and randn(): RTL equals the bit-true kernel and follows the Python model; unsupported lowerings refuse."
 
@@ -4511,6 +4515,10 @@ path = "tests/test_network_spike_gating_equivalence.py"
 rationale = "Spike gating is exact: probe acceptance and refusals, gated equals ungated runs, catalogue probes."
 
 [[file]]
+path = "tests/test_network_topology_domain_edges.py"
+rationale = "Small-world and ring topology domain refusals and the complete ring with nothing to rewire."
+
+[[file]]
 path = "tests/test_network_basic_population.py"
 rationale = "Population construction, stepping, reset, state access and spike gating."
 
@@ -4579,6 +4587,10 @@ path = "tests/test_network_rust_dispatch_fidelity.py"
 rationale = "Native network dispatch: only networks the runner reproduces (defaults, state v only, same model, no dropped stimuli or projection features)."
 
 [[file]]
+path = "tests/test_network_rust_dispatch_probe_edges.py"
+rationale = "Native-dispatch probe refusals for registered models without a descriptor, a callable step or a float drive, and for global noise."
+
+[[file]]
 path = "tests/test_mpi_runner.py"
 rationale = "MPIRunner partitioning, rank-local Rust dispatch and spike exchange through mocked mpi4py."
 
@@ -4597,6 +4609,10 @@ rationale = "Network monitors record the run that happened: rate exposure, mappi
 [[file]]
 path = "tests/test_network_execution_paths_rust_mpi_workspace.py"
 rationale = "Network execution paths: release profile, Rust result decode and MPI runner invocation."
+
+[[file]]
+path = "tests/test_network_export_and_bridge_refusals.py"
+rationale = "Verilog export and Torch bridge refusals: per-neuron thresholds, external entropy, flow voltage at threshold."
 
 [[file]]
 path = "tests/test_topology_ba_and_ring_domain.py"
@@ -5273,6 +5289,10 @@ rationale = "Public spike-codec package exports."
 [[file]]
 path = "tests/test_quantum_codec_coverage_closure.py"
 rationale = "Coverage closure of quantum and waveform codec optional paths."
+
+[[file]]
+path = "tests/test_quiescence_declared_model_edges.py"
+rationale = "Quiescence probe on declared-pure models: reserved slots, unset slots, object arrays and state too deep to read."
 
 [[file]]
 path = "tests/test_waveform_codec_backends.py"

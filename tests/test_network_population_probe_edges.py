@@ -20,12 +20,16 @@ import numpy as np
 import pytest
 
 from sc_neurocore.network.population import Population
-from sc_neurocore.network.quiescence import _global_generator_signature_of
+from sc_neurocore.network.quiescence import _global_generator_signature_of, declares_purity
 from sc_neurocore.network.rust_dispatch import _attribute_map
 
 
 class UncopyableNeuron:
     """A user model holding a resource that cannot be deep-copied."""
+
+    # Declared pure, so the probe goes as far as the copy instead of stopping
+    # at the purity gate before it.
+    quiescence_pure = True
 
     def __init__(self) -> None:
         self.v = 0.0
@@ -42,6 +46,9 @@ class UncopyableNeuron:
 
 class UnresettableNeuron:
     """A user model whose reset refuses."""
+
+    # Declared pure, so the probe reaches the reset.
+    quiescence_pure = True
 
     def __init__(self) -> None:
         self.v = 0.0
@@ -69,6 +76,9 @@ class SlottedNeuron:
 def test_a_model_the_probe_cannot_prepare_has_no_quiescent_state(model: type) -> None:
     """A model that cannot be copied or reset has no quiescent signature, also on a repeated call."""
     population = Population(model, 3)
+    # An undeclared model would be refused at the purity gate, before the copy
+    # or reset this test is about.
+    assert declares_purity(population.neurons[0])
     assert population.quiescent_signature() is None
     # Measured once: the second call answers from the record, not a new probe.
     assert population.quiescent_signature() is None
