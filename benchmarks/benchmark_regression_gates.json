@@ -6304,7 +6304,6 @@
         "engine/src/ir/verify.rs": "source_sha256.engine/src/ir/verify.rs",
         "engine/src/ir/word.rs": "source_sha256.engine/src/ir/word.rs",
         "engine/src/ir/word_contract.rs": "source_sha256.engine/src/ir/word_contract.rs",
-        "engine/src/lib.rs": "source_sha256.engine/src/lib.rs",
         "engine/tests/common/compound_arithmetic.rs": "source_sha256.engine/tests/common/compound_arithmetic.rs",
         "engine/tests/common/compound_kernels.rs": "source_sha256.engine/tests/common/compound_kernels.rs",
         "engine/tests/common/compound_neurons.rs": "source_sha256.engine/tests/common/compound_neurons.rs",
