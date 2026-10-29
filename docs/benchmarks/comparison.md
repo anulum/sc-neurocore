@@ -2,25 +2,31 @@
 
 # Benchmark Comparison
 
-Measured performance of SC-NeuroCore against competing frameworks.
-All benchmarks are reproducible — see `benchmarks/` in the repository.
+Measured performance of SC-NeuroCore, each figure with the committed record it
+comes from, the host and the date. A figure without a record is not stated.
+Same-host timings are observations from that machine, not portable speed
+claims.
 
-![Benchmark charts](../assets/benchmarks.png)
+## Brunel balanced network (vs Brian2)
 
-## Brunel Balanced Network (vs Brian2)
+`benchmarks/results/upcloud_p4_rerun_20260310/brian2_headtohead.json`
+(2026-03-10, one UpCloud host, Brian2 2.10.1, Numba 0.64.0) runs the Brunel
+(2000) asynchronous-irregular regime (g = 5, η = 2, connection probability
+0.1, 1 s simulated, dt = 0.1 ms) three times per size:
 
-Standard 800E/200I Izhikevich network with random connectivity and
-Poisson drive (Brunel 2000).
+| Network size | SC-NeuroCore (Numba JIT) | Brian2 | Ratio | Mean rate SC / Brian2 |
+|---|---:|---:|---:|---:|
+| 1,000 neurons | 0.345 s | 1.382 s | 4.0× faster | 100.0 / 100.4 Hz |
+| 10,000 neurons | 4.364 s | 5.914 s | 1.35× faster | 40.6 / 43.6 Hz |
 
-| Network size | SC-NeuroCore (Numba JIT) | Brian2 (C++ codegen) | Speedup |
-|-------------|--------------------------|----------------------|---------|
-| 1 000 neurons | 0.35 s | 1.38 s | **4.0x faster** |
-| 10 000 neurons | 5.9 s | 4.4 s | 1.35x slower |
+At 10,000 neurons the mean rate is 7 % below Brian2's, outside the 5 % rate
+tolerance of the dynamics-parity lane. For the Rust engine, the README gives
+the corrected comparison: older 39–202× rows measured an unconnected layer,
+and the parity lane records 2.4×, 1.3× and 0.75× (slower) at 1,000, 5,000 and
+10,000 neurons from one recording. The `brunel-parity.yml` workflow reruns
+that lane weekly.
 
-Firing rates match within 1% (100 Hz). SC-NeuroCore targets FPGA-scale
-networks (≤5K neurons) where bit-exact RTL co-simulation matters.
-
-## SNN Training (MNIST)
+## SNN training (MNIST)
 
 | Architecture | Method | Accuracy |
 |-------------|--------|----------|
@@ -28,54 +34,55 @@ networks (≤5K neurons) where bit-exact RTL co-simulation matters.
 | FC 784→128→128→10 | + learnable τ (Fang 2021) | 97.7% |
 | Conv→LIF→Pool→Conv→LIF→Pool→FC | Learnable β + threshold | **99.49%** (`benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
 
-snnTorch achieves 95.8% on the same FC architecture (same setup,
-10 epochs). The value of SC-NeuroCore is not training performance — it's
-the `to_sc_weights()` export path to synthesisable FPGA hardware.
+The value of SC-NeuroCore is not training accuracy; it is the
+`to_sc_weights()` export path to synthesisable FPGA hardware.
 
-## Rust SIMD Engine
+## Rust SIMD engine
 
-Criterion benchmarks on Intel i7-10700K:
+Criterion medians from `cargo bench --manifest-path engine/Cargo.toml` on an
+UpCloud AMD EPYC 9575F (AVX-512), 2026-04-05, as listed in
+[the benchmark report](BENCHMARKS.md), section 7:
 
-| Operation | AVX-512 | AVX2 | Scalar |
-|-----------|---------|------|--------|
-| Bitstream packing | 113 Gbit/s | ~20 Gbit/s | ~3 Gbit/s |
-| LIF neuron stepping | 456 Mstep/s | ~120 Mstep/s | ~40 Mstep/s |
-| HDC query (100 patterns) | 1.1 ms | ~2 ms | ~8 ms |
+| Operation | Variant | Median | Throughput |
+|---|---|---:|---:|
+| Bitstream packing, 1M bits | `pack` (scalar) | 897 µs | 1.17 Gbit/s |
+| Bitstream packing, 1M bits | `pack_fast` (u64 chunks) | 286 µs | 3.67 Gbit/s |
+| Bitstream packing, 1M bits | `pack_dispatch` (AVX-512) | 8.85 µs | 113 Gbit/s |
+| LIF neuron, 10K steps | — | 47.9 µs | 209 Mstep/s |
+| LIF neuron, 100K steps | — | 219 µs | 456 Mstep/s |
 
-Runtime SIMD detection selects the fastest available path. ARM NEON
-supported for Apple Silicon and Raspberry Pi.
+Runtime SIMD detection selects the available path; an ARM NEON path is built
+on aarch64 targets (`engine/src/simd/neon.rs`).
 
-## FPGA Synthesis (Yosys)
+## FPGA synthesis (Yosys)
 
-| Configuration | LUTs (Xilinx 7-series) | Fmax (est.) |
-|---------------|------------------------|-------------|
-| sc_neurocore_top (default) | 3 673 | ~100 MHz |
-| MNIST 16→10 (estimated) | ~56 000 | ~80 MHz |
-| Target: Artix-7 100T | 63 400 available | — |
+`benchmarks/results/yosys_synth.json` (Yosys 0.63, `synth_xilinx -flatten`,
+Xilinx 7-series) records, among its ten modules:
 
-## Fault Tolerance
+| Module | LUTs | FFs | DSP |
+|---|---:|---:|---:|
+| `sc_dense_layer_top` | 487 | 259 | 10 |
+| `sc_neurocore_top` | 3,673 | 1,221 | 30 |
 
-SC bitstreams degrade gracefully under random bit errors:
+These are synthesis estimates without place and route; no timing (Fmax) is
+recorded. An Artix-7 100T has 63,400 LUTs.
 
-| Error rate | Accuracy loss (balanced p=0.5) |
-|------------|-------------------------------|
-| 1% | < 1% |
-| 5% | < 1% |
-| 10% | ~1% |
-| 20% | ~2% |
+## Fault tolerance
 
-This is a property of stochastic encoding (Alaghi & Hayes 2013), not
-SC-NeuroCore-specific.
+Stochastic bitstreams degrade gradually under random bit errors, because each
+bit carries a small share of the value. This is a property of stochastic
+encoding (Alaghi & Hayes 2013), not specific to SC-NeuroCore; this page states
+no measured accuracy figures for it.
 
-## Neuron Model Coverage
+## SC-NeuroCore inventory
 
-| Category | SC-NeuroCore | snnTorch | Norse | Brian2 | Lava |
-|----------|:---:|:---:|:---:|:---:|:---:|
-| Python models | **183 lazy-loaded classes / 176 source modules** | 11 | 6 | Custom eq. | 3 |
-| Rust/compiled models | **212 Rust PyO3 wrappers / 180-model NetworkRunner** | — | — | C++ codegen | — |
-| Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **90 SymbiYosys proof jobs and 449 formal statements (299 assert, 114 assume, 36 cover)** | — | — | — | — |
-| Train-to-FPGA export | **Yes** | No | No | No | No |
+| Category | SC-NeuroCore |
+|----------|---|
+| Python models | **183 lazy-loaded classes / 176 source modules** |
+| Rust/compiled models | **212 Rust PyO3 wrappers / 180-model NetworkRunner** |
+| Neuromorphic-hardware neuron models | Loihi (CUBA, Loihi 2), TrueNorth, SpiNNaker (LIF, SpiNNaker 2), Akida, BrainScaleS AdEx, DYNAP-SE DPI |
+| Formal verification | **90 SymbiYosys proof jobs and 449 formal statements (299 assert, 114 assume, 36 cover)** |
+| Train-to-FPGA export | **Yes** |
 
 ## IQIF signed-integer polyglot batch loop
 
