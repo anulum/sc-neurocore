@@ -227,6 +227,18 @@ def test_hosted_shards_share_current_abi_wheels_and_one_timing_snapshot() -> Non
     )
     assert jobs["test-timings"]["if"] == "${{ !cancelled() }}"
     assert jobs["test-timings"]["needs"] == ["test"]
+    timing_steps = jobs["test-timings"]["steps"]
+    install = next(
+        index
+        for index, step in enumerate(timing_steps)
+        if step.get("run") == "python -m pip install --require-hashes -r requirements/runtime.txt"
+    )
+    record = next(
+        index
+        for index, step in enumerate(timing_steps)
+        if "tools/pytest_shards.py record" in step.get("run", "")
+    )
+    assert install < record, "the report parser needs the hash-locked defusedxml first"
 
 
 def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> None:

@@ -165,6 +165,9 @@ def test_record_cli_retains_unobserved_live_history_and_aggregates_cases(
         "<testsuite/>",
         '<testsuite><testcase classname="tests.test_first" time="-1"/></testsuite>',
         '<testsuite><testcase classname="tests.test_first" time="NaN"/></testsuite>',
+        # A downloaded report may not declare entities; the standard parser would expand this one.
+        '<!DOCTYPE t [<!ENTITY m "tests.test_first">]>'
+        '<testsuite><testcase classname="&m;" time="1"/></testsuite>',
     ],
 )
 def test_record_cli_refuses_invalid_reports_without_replacing_history(

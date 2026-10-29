@@ -19,7 +19,9 @@ from pathlib import Path
 import statistics
 import sys
 from typing import cast
-import xml.etree.ElementTree as ET
+
+# JUnit reports arrive as downloaded CI artifacts; entity declarations are refused, not expanded.
+from defusedxml import ElementTree as ET
 
 
 def read_timings(path: Path | None) -> dict[str, float]:
