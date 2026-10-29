@@ -199,20 +199,20 @@ def test_unicode_attribution_survives_valid_simulation_and_review(
 
 @pytest.mark.parametrize("route", ["simulate", "review-packet"])
 @pytest.mark.parametrize(
-    ("expression", "reason"),
+    ("expression", "reason", "admitted"),
     [
-        ("1 / 0", "the equation divides by zero"),
-        ("min(v)", "the equation value has an invalid type"),
-        ("v[0]", "the equation value has an invalid type"),
-        ("[v].real", "the equation reads an unavailable attribute"),
-        ("[v]", "the equation value has an invalid type"),
-        ("v + exp", "the equation value has an invalid type"),
+        ("v / tau / 0", "the equation divides by zero", True),
+        ("min(v)", "a single-argument extremum requires a sequence of quantities", False),
+        ("v[0]", "only a sequence can supply an indexed quantity", False),
+        ("[v].real", "a plain sequence has no scalar real or imaginary quantity", False),
+        ("[v]", "a scalar quantity is required to establish this expression's units", False),
+        ("v + exp", "an equation function cannot be used as a quantity", False),
     ],
 )
 def test_real_expression_failure_reports_a_failed_run_without_interpreter_text(
-    candidate_client: TestClient, route: str, expression: str, reason: str
+    candidate_client: TestClient, route: str, expression: str, reason: str, admitted: bool
 ) -> None:
-    """Report a failed admitted calculation while preserving review packet binding.
+    """Locate static quantity failures and retain genuine numeric-run failures.
 
     Parameters
     ----------
@@ -224,13 +224,20 @@ def test_real_expression_failure_reports_a_failed_run_without_interpreter_text(
         Admitted expression that fails when evaluated against the model state.
     reason : str
         Authored runtime failure without Python's exception wording.
+    admitted : bool
+        Whether dimensions can be established before the numerical failure.
     """
     document = adex_candidate()
     document["model"]["dynamics"]["v"] = expression
     response = candidate_client.post(f"/api/candidates/{route}", json={"candidate": document})
-    assert response.status_code == 200
+    assert response.status_code == (200 if admitted else 422)
     body = response.json()
-    if route == "simulate":
+    if not admitted:
+        assert body["detail"]["reason"] == "invalid_candidate"
+        assert {"location": "/model/dynamics/v", "message": reason} in body["detail"]["validation"][
+            "diagnostics"
+        ]
+    elif route == "simulate":
         assert body["diverged_at_step"] == 0
         assert body["final_state"] is None
         assert body["divergence"] == reason
@@ -242,3 +249,32 @@ def test_real_expression_failure_reports_a_failed_run_without_interpreter_text(
     assert "object has no attribute" not in response.text
     assert "float() argument" not in response.text
     assert "unsupported operand" not in response.text
+
+
+@pytest.mark.parametrize("route", ["validate", "diff", "simulate", "review-packet"])
+def test_voltage_as_time_is_a_located_refusal_on_every_real_route(
+    candidate_client: TestClient, route: str
+) -> None:
+    """Reject a parseable wrong unit consistently before every candidate action.
+
+    Parameters
+    ----------
+    candidate_client : starlette.testclient.TestClient
+        Actual Studio application with isolated state.
+    route : str
+        Public candidate action, including validation's HTTP 200 envelope.
+    """
+    document = adex_candidate()
+    document["units"]["state"]["v"] = "ms"
+    response = candidate_client.post(f"/api/candidates/{route}", json={"candidate": document})
+    assert response.status_code == (200 if route == "validate" else 422)
+    payload = response.json()
+    validation = payload if route == "validate" else payload["detail"]["validation"]
+    assert validation["valid"] is False
+    assert {
+        "location": "/model/dynamics/v",
+        "message": "incompatible dimensions; use quantities with matching units",
+    } in validation["diagnostics"]
+    if route != "validate":
+        assert payload["detail"]["reason"] == "invalid_candidate"
+        assert "trace" not in payload and "packet_sha256" not in payload

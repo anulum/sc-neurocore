@@ -50,8 +50,6 @@ NOT_ESTABLISHED = (
     "separately authorised and evidence-gated",
     "independent validation: the reference tests are the author's proposals, not an "
     "independent oracle against the cited source",
-    "dimensional consistency: units are declared per quantity; the equations are not checked "
-    "against them",
     "hardware: no fixed-point, RTL or co-simulation evidence is produced for a candidate",
 )
 """What a review packet does not show, stated in every packet."""

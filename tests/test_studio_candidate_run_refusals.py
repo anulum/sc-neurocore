@@ -19,7 +19,7 @@ from tests.studio_candidate_support import adex_candidate
 def test_candidate_divergence_preserves_the_authored_state_guard() -> None:
     """Report the equation's deliberate non-finite-state failure at its step."""
     document = adex_candidate()
-    document["model"]["dynamics"]["v"] = "exp(v + 1000)"
+    document["model"]["dynamics"]["v"] = "delta_T / tau * exp(v / delta_T + 1000)"
     with np.errstate(over="ignore"):
         result = simulate_candidate(document, current=0.0, steps=10)
     assert result["diverged_at_step"] == 0
@@ -30,7 +30,7 @@ def test_candidate_divergence_preserves_the_authored_state_guard() -> None:
 def test_candidate_divergence_does_not_publish_numpy_exception_text() -> None:
     """Map an actual NumPy overflow to the fixed candidate divergence reason."""
     document = adex_candidate()
-    document["model"]["dynamics"]["v"] = "exp(v + 1000)"
+    document["model"]["dynamics"]["v"] = "delta_T / tau * exp(v / delta_T + 1000)"
     with np.errstate(over="raise"):
         result = simulate_candidate(document, current=0.0, steps=10)
     assert result["diverged_at_step"] == 0
@@ -41,7 +41,7 @@ def test_candidate_divergence_does_not_publish_numpy_exception_text() -> None:
 def test_candidate_divergence_retains_the_authored_sqrt_domain_reason() -> None:
     """Report the existing square-root domain refusal at the failed step."""
     document = adex_candidate()
-    document["model"]["dynamics"]["v"] = "sqrt(v)"
+    document["model"]["dynamics"]["v"] = "delta_T / tau * sqrt(v / delta_T)"
     result = simulate_candidate(document, current=0.0, steps=10)
     assert result["diverged_at_step"] == 0
     assert result["final_state"] is None

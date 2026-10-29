@@ -96,6 +96,36 @@ test("a candidate is imported, edited, checked, reviewed, exported and kept with
   await expect(page.getByRole("list", { name: "Candidate problems" })).toContainText(
     "/units/state/v 'banana' is not a unit",
   );
+
+  // A parseable wrong dimension must also refuse, including direct action calls.
+  broken.units.state.v = "ms";
+  await draft.fill(JSON.stringify(broken, null, 2));
+  await page.getByRole("button", { name: "Validate", exact: true }).click();
+  await expect(page.getByRole("list", { name: "Candidate problems" })).toContainText(
+    "/model/dynamics/v incompatible dimensions",
+  );
+  for (const [label, route] of [
+    ["Simulate", "simulate"],
+    ["Run reference tests", "review-packet"],
+  ] as const) {
+    const refused = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === `/api/candidates/${route}`,
+    );
+    await page.getByRole("button", { name: label, exact: true }).click();
+    const response = await refused;
+    expect(response.status()).toBe(422);
+    const body = await response.json() as {
+      detail: { reason: string; validation: { diagnostics: { location: string; message: string }[] } };
+    };
+    expect(body.detail.reason).toBe("invalid_candidate");
+    expect(body.detail.validation.diagnostics).toContainEqual({
+      location: "/model/dynamics/v",
+      message: "incompatible dimensions; use quantities with matching units",
+    });
+    await expect(page.getByRole("list", { name: "Candidate problems" })).toContainText(
+      "/model/dynamics/v incompatible dimensions",
+    );
+  }
   await draft.fill(edited);
 
   // The draft is the workspace's: it is saved with it and comes back with it.

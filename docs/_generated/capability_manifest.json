@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5479
+    "test_files": 5483
   },
   "documentation": {
     "public_pages": [
@@ -7928,6 +7928,10 @@
       "tests/test_studio_candidate_package_refusals.py",
       "tests/test_studio_candidate_run.py",
       "tests/test_studio_candidate_run_refusals.py",
+      "tests/test_studio_candidate_unit_expressions.py",
+      "tests/test_studio_candidate_unit_functions.py",
+      "tests/test_studio_candidate_unit_values.py",
+      "tests/test_studio_candidate_units.py",
       "tests/test_studio_catalogue_identity_classification.py",
       "tests/test_studio_catalogue_metadata_state.py",
       "tests/test_studio_catalogue_query.py",

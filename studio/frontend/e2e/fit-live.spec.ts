@@ -61,7 +61,7 @@ test("a candidate's model is fitted, validated on held-out data and replayed", a
   await parameter(page, 1, ["v_rest", "-80", "-50", false]);
   await page.getByRole("button", { name: "Add parameter", exact: true }).click();
   await parameter(page, 2, ["tau_m", "1", "50", true]);
-  await page.getByLabel("Fixed parameters (name=value, one per line)").fill("R=1\nC=1");
+  await page.getByLabel("Fixed parameters (name=value, one per line)").fill("current_gain=1\nC=1");
   await page.getByLabel("Generations", { exact: true }).fill("15");
   await page.getByLabel("Population", { exact: true }).fill("8");
   await page.getByRole("button", { name: "Run fit", exact: true }).click();
@@ -79,9 +79,9 @@ test("a candidate's model is fitted, validated on held-out data and replayed", a
   await expect(page.locator("#fit-outcome")).toContainText("Replay reproduced the result", { timeout: 120_000 });
 });
 
-test("resistance and capacitance, seen only as a ratio, are reported unconstrained", async ({ page }) => {
+test("input gain and capacitance, seen only as a ratio, are reported unconstrained", async ({ page }) => {
   await prepare(page);
-  await parameter(page, 1, ["R", "0.1", "10", true]);
+  await parameter(page, 1, ["current_gain", "0.1", "10", true]);
   await page.getByRole("button", { name: "Add parameter", exact: true }).click();
   await parameter(page, 2, ["C", "0.1", "10", true]);
   await page.getByLabel("Fixed parameters (name=value, one per line)").fill("v_rest=-65\ntau_m=10");
@@ -121,9 +121,9 @@ test("a full shared-noise cohort runs, exports, replays and recovers after reloa
 
 test("fit constraints and acquisition split refusals reach the real backend", async ({ page }) => {
   await prepare(page);
-  await parameter(page, 1, ["R", "0.1", "2", true]);
+  await parameter(page, 1, ["current_gain", "0.1", "2", true]);
   await page.getByLabel("Fixed parameters (name=value, one per line)").fill("v_rest=-65\ntau_m=10\nC=1");
-  await page.getByLabel("Parameter constraints (JSON: name, coefficients, low, high)").fill('[{"name":"R below C","coefficients":{"R":1,"C":-1},"low":-1,"high":-0.3}]');
+  await page.getByLabel("Parameter constraints (JSON: name, coefficients, low, high)").fill('[{"name":"input gain below C","coefficients":{"current_gain":1,"C":-1},"low":-1,"high":-0.3}]');
   await page.getByLabel("Generations", { exact: true }).fill("10");
   await page.getByLabel("Population", { exact: true }).fill("8");
   await page.getByLabel("Acquisition group of step-plus-5.csv").fill("same-subject");

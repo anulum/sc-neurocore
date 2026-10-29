@@ -28554,7 +28554,44 @@ caller's display units to each state variable.
 
 
 ### Function `prepare_strict_runtime(*, equations, threshold_expr, reset_rules, input_unit_name, raw_parameters, raw_state, raw_constants, dt, input_unit)`
-Convert pint quantities to base-unit floats for runtime.
+Validate physical expressions and prepare the existing base-unit runtime.
+
+Parameters
+----------
+equations : dict of str to str
+    Derivatives of the explicitly declared state quantities.
+threshold_expr : str, optional
+    Event predicate, required to produce a Boolean quantity comparison.
+reset_rules : dict of str to str
+    State assignments whose results retain the target's physical unit.
+input_unit_name : str
+    Name of the injected numeric input in the equation namespace.
+raw_parameters, raw_state, raw_constants : dict
+    Caller-owned Pint quantities, which remain unchanged. All equation
+    state variables require explicit quantities.
+dt : Pint quantity
+    Time step, convertible to seconds. The white-noise symbol ``xi`` has
+    inverse-square-root time units because the runtime draws
+    ``N(0, 1) / sqrt(dt)``. Unit checking uses its unit, without drawing.
+input_unit : Pint quantity, optional
+    Input unit declaration, required when an expression reads ``I``.
+
+Returns
+-------
+StrictRuntime
+    Base-unit magnitudes and display/input unit maps. This opt-in strict
+    runtime retains its existing conversion contract; candidate admission
+    separately checks unchanged numeric magnitudes without conversion.
+
+Raises
+------
+ValueError
+    Required state/input declarations are absent or a threshold is not a
+    Boolean comparison.
+DimensionalError
+    A declared quantity, derivative or reset has incompatible dimensions.
+SCDependencyError
+    The optional Pint dependency is unavailable.
 
 ### Function `convert_runtime_value(*, strict_units, runtime_units, name, value)`
 Convert a runtime value from pint quantity to float.
@@ -43799,7 +43836,8 @@ Returns
 -------
 CandidateValidation
     The problems, each with a JSON pointer, and the document digest when
-    it is an object.
+    it is an object. Unit consistency is checked across all expression
+    branches without stepping, drawing noise or changing magnitudes.
 
 ---
 
@@ -43843,6 +43881,229 @@ Assemble the review packet of a valid candidate.
 The packet carries the candidate unchanged, its validation, its diff
 against the parent, the reference-test results, the environment that
 produced them and what the packet does not establish, all under one digest.
+
+---
+
+## Module `studio.candidate_unit_expressions`
+
+### Class `UnitExpression`
+Infer units using an immutable snapshot of the admitted symbol descriptions.
+
+Parameters
+----------
+symbols : mapping
+    State, parameter and input units, and dimensionless namespace constants.
+    Function names are handled only as callees, never as numeric quantities.
+
+- **__init__**(symbols)
+  - Copy the symbol declarations so later caller mutations cannot alter admission.
+- **infer**(expression)
+  - Require a scalar result after checking every expression path.
+
+---
+
+## Module `studio.candidate_unit_functions`
+
+### Function `elementwise(arguments, rule)`
+Apply a scalar unit rule to every element of broadcastable arrays.
+
+Parameters
+----------
+arguments : tuple
+    Scalar or sequence unit descriptions; None is not an input quantity.
+rule : callable
+    Scalar unit rule, which never evaluates numerical model expressions.
+
+Returns
+-------
+UnitValue
+    A scalar or an array of inferred units.
+
+Raises
+------
+CandidateUnitRefused
+    An input is not a quantity, shapes cannot broadcast, or a scalar rule
+    finds incompatible dimensions or scales.
+
+### Function `function_units(name, arguments)`
+Infer an admitted namespace call without invoking its numerical function.
+
+Parameters
+----------
+name : str
+    Direct callee already admitted by the equation safety and arity gates.
+arguments : tuple
+    All statically inspected argument descriptions, including literal None
+    in permitted optional output and clipping-bound positions.
+
+Returns
+-------
+UnitValue
+    Inferred result, retaining array shape until an index or reduction.
+
+Raises
+------
+CandidateUnitRefused
+    A quantity, function, iterable or scale cannot satisfy the unit rule.
+
+---
+
+## Module `studio.candidate_unit_values`
+
+### Class `CandidateUnitRefused`
+An authored dimensional-admission failure, safe to place beside a field.
+
+
+### Class `Unit`
+Base dimensions, numeric scale and an optional static dimensionless value.
+
+Parameters
+----------
+dimensions : tuple of pairs
+    Sorted base-dimension names and rational powers, omitting zero powers.
+scale : float
+    Positive multiplier from the declared unit to its base units.
+constant : fractions.Fraction, optional
+    Known dimensionless literal or immutable parameter value. State and
+    input samples never receive a constant, even when initially zero.
+literal : bool
+    Whether the constant comes solely from numeric literals. Only a
+    literal zero, rather than a named zero parameter, is an additive
+    identity that may take the other operand's physical unit.
+
+- **zero**()
+  - Tell whether this is a statically known, unscaled dimensionless zero.
+- **power**(exponent)
+  - Raise dimensions and scale to a bounded static exponent.
+
+### Class `UnitSequence`
+An authored sequence or a unit-wise array-function result.
+
+Parameters
+----------
+items : tuple
+    Unit descriptions of all elements, including unselected elements.
+array : bool
+    Whether an array function produced this value. Plain Python sequences
+    retain the runtime's refusal of numeric sequence arithmetic.
+
+
+### Function `parse_unit(text)`
+Read a finite multiplicative unit's dimensions and scale with Pint.
+
+Parameters
+----------
+text : str
+    Unit expression already admitted by candidate field validation.
+
+Returns
+-------
+Unit
+    Base dimensions and scale only. No candidate magnitude is converted.
+
+Raises
+------
+CandidateUnitRefused
+    An affine, logarithmic or non-finite scale cannot describe arithmetic
+    performed by the numeric DSL. Invalid definitions are refused safely.
+
+### Function `scalar(value)`
+Require a scalar unit description without reading any model magnitude.
+
+Parameters
+----------
+value : UnitValue
+    Inferred expression result.
+
+Returns
+-------
+Unit
+    The scalar description.
+
+Raises
+------
+CandidateUnitRefused
+    A sequence or None cannot supply a scalar equation value.
+
+### Function `coherent(first, second)`
+Require equal dimensions and scales, allowing a literal additive zero.
+
+Parameters
+----------
+first, second : Unit
+    Quantities joined by addition, comparison, a branch or an assignment.
+
+Returns
+-------
+Unit
+    Their common unit, with no inferred constant value.
+
+Raises
+------
+CandidateUnitRefused
+    Dimensions differ, or equal dimensions would require conversion.
+
+### Function `dimensionless(value)`
+Require an unscaled dimensionless argument or predicate.
+
+Parameters
+----------
+value : Unit
+    Inferred scalar argument.
+
+Returns
+-------
+None
+    No unit or numeric value is changed.
+
+Raises
+------
+CandidateUnitRefused
+    The argument is physical or uses a scale such as percent or degrees.
+
+### Function `product(first, second, *, divide)`
+Combine physical dimensions and scales for multiplication or division.
+
+Parameters
+----------
+first, second : Unit
+    Inferred scalar operands.
+divide : bool
+    Subtract the second operand's powers and divide its scale when true.
+
+Returns
+-------
+Unit
+    The product or quotient, without computing model values.
+
+Raises
+------
+CandidateUnitRefused
+    Scale arithmetic leaves the finite representable range.
+
+---
+
+## Module `studio.candidate_units`
+
+### Function `candidate_unit_diagnostics(document)`
+Check units in an otherwise admitted candidate and locate every failure.
+
+Parameters
+----------
+document : mapping
+    Candidate JSON already accepted by the structural and DSL gates. State
+    and parameter numbers retain their declared magnitudes; units supply
+    metadata, never a conversion request.
+
+Returns
+-------
+tuple of pairs
+    JSON pointers and deliberately authored refusal messages. Dynamics are
+    derivatives for ODE profiles and next-state values for maps; resets
+    retain state units, rates use inverse declared time, probabilities and
+    predicates are unscaled dimensionless. Graded outputs may be physical
+    scalars, with all internal arithmetic checked. Declared profile units
+    must agree with the package in dimension and scale.
 
 ---
 

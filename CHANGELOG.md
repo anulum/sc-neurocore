@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Validate candidate equations against every declared unit and numeric scale before simulation or review, including conditional branches, resets and stochastic thresholds. Report located refusals without converting model magnitudes; preserve the real AdEx trace. Give diffusion noise its actual inverse-square-root time unit in candidate and strict-unit equation admission, preserving seeded sampling and integration. Candidate runs remain synchronous, catalogue-start assistance is deferred, and scientific acceptance and promotion remain separate.
+
 - Breaking: the `lava` optional extra is removed. Its only requirement, `lava-nc`, has no release for Python 3.11 or later (the latest, 0.10.0, requires `<3.11`), so on the supported Pythons `pip install "sc-neurocore[lava]"` installed nothing. The Lava adapter remains a handoff artefact that names `lava-nc` in its generated manifest; the optional dependency matrix states why it cannot be installed alongside SC-NeuroCore.
 
 - Breaking: Python 3.11 is now the minimum supported version (`requires-python = ">=3.11"`); Python 3.10 is no longer tested, built or published for, and the `tomli` fallback for Python 3.10 is dropped. Install on Python 3.11 to 3.14.

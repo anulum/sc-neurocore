@@ -45,7 +45,67 @@ field that caused it — `/units/state/v`, `/model/dynamics/w`,
 input. Unknown fields are refused rather than ignored, so an export carries
 nothing the Studio did not check. A document with no field-level problem is
 finally handed to the Universal DSL, which admits or refuses the model under
-its own numerical profile; its refusal is reported at `/model`.
+its own numerical profile; its refusal is reported at `/model`. Once that
+profile is admitted, a static unit check inspects every executable expression,
+including both branches of conditional expressions and every Boolean operand.
+It does not run the model, draw noise, or convert the candidate's magnitudes.
+
+### Dimensions and numeric scales
+
+An ODE right-hand side must have the state variable's unit divided by the
+declared time unit. A map right-hand side is the next state and must have the
+state unit itself. Resets preserve state units; threshold predicates and
+Poisson probabilities are unscaled dimensionless quantities; escape rates
+have inverse-time units. Graded spike values may be physical scalars, with
+their internal arithmetic checked. A declaration in `model.profile.units`
+must agree with the package, and an explicit numerical time unit must agree
+with `units.time`. ODE integration requires physical time.
+An iteration-only map uses an unscaled dimensionless time unit. To give a map
+a physical clock, author that clock explicitly in the model's numerical
+profile and give the candidate the same unit; admission never supplies one.
+
+Addition, subtraction, comparisons, clipping, extrema and conditional branches
+require compatible dimensions **and the same numeric scale**. For example,
+`v + I` cannot add millivolts to picoamps; `exp(v)` cannot exponentiate voltage;
+and `v_mV + v_V` requires an explicit conversion written by the author. The
+numeric DSL does not insert one. The usual AdEx identities `nS * mV = pA`
+and `pA / pF = mV / ms` are accepted. A literal zero may take the other
+operand's unit. Initially zero state variables and named zero parameters keep
+their declared units and cannot conceal a mismatch.
+
+The diffusion symbol `xi` is the runtime's `N(0,1)/sqrt(dt)` sample, so it has
+inverse-square-root time units. For example, a voltage derivative
+`sigma * xi` requires `sigma` in `mV / sqrt(ms)` when the clock is in `ms`.
+It is not an unscaled normal draw. Validation inspects this unit without
+consuming the seeded noise stream. The opt-in strict-unit equation runtime
+uses the same noise-unit declaration; its existing conversion to base-unit
+magnitudes remains separate from candidate admission.
+
+| Function group | Unit rule |
+|----------------|-----------|
+| `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `sin`, `cos`, `tan`, `arcsin`, `arccos`, `arctan`, `sinh`, `cosh`, `tanh`, `erf`, `softplus`, `exprel`, `sigmoid`, `expit` | unscaled dimensionless argument and result |
+| `sqrt`, `rsqrt` | square-root or inverse-square-root units |
+| `abs`, `floor`, `ceil`, `trunc`, `round` | preserve the declared unit; rounding acts on its unchanged numeric magnitude |
+| `sign`, `heaviside` | dimensionless result; `heaviside`'s value at zero must be dimensionless |
+| `atan2` | same-scale compatible arguments, dimensionless angle |
+| `hypot`, `clip`, `min`, `max` | same-scale compatible quantities, preserving their common unit |
+
+Lists, tuples, permitted array arguments, literal indexing and slicing, and
+the `real` and `imag` attributes retain quantity information. Optional output
+arguments remain literal `None`; clipping bounds may be `None`. Every sequence
+element is inspected, including elements not selected at the initial state.
+A unitful base raised to a power needs a bounded, statically established
+dimensionless exponent; a state-dependent exponent cannot establish a fixed
+physical dimension. No arbitrary expression is executed to infer its units.
+Affine and logarithmic units, such as Celsius and decibels, are refused;
+write a model in finite multiplicative units. Scaled dimensionless units such
+as percent and degrees must be made explicit before a dimensionless function.
+
+Changing only `units.state.v` from `mV` to `ms` therefore refuses validation
+and all candidate actions, with diagnostics beside the affected equations,
+thresholds, resets and any contradictory declaration. This check establishes
+internal dimensional and scale consistency. It does not establish that the
+declared units or equations reproduce the cited scientific source.
 
 Diagnostics use explanations written for authors. Numbers must be finite,
 text must be valid Unicode, and every value must be representable in JSON.
@@ -77,9 +137,10 @@ A candidate runs under its own declared profile — the method and timestep it
 states — with a constant current, for at most 100 000 steps; longer traces are
 returned at a stride of at most 5 000 samples per variable. A run whose state
 stops being finite reports the step and the reason instead of numbers.
-An expression that divides by zero, reads an unavailable value or cannot produce
-a scalar also reports the failed step with an authored reason and a `null`
-`final_state`. Its reference tests fail, and the review packet retains the
+Static quantity and shape faults are refused during validation. A dimensionally
+admitted expression can still divide by zero, leave a function's numerical
+domain, or produce a non-finite state. It reports the failed step with an
+authored reason and a `null` `final_state`. Its reference tests fail, and the review packet retains the
 candidate and digest so the author can repair that proposal. Corrupt canonical
 resources and internal engine faults remain server errors.
 
@@ -96,11 +157,18 @@ them, and what the packet does not establish:
 
 - catalogue promotion;
 - independent validation against the cited source;
-- dimensional consistency of the equations against the declared units;
 - any fixed-point, RTL or co-simulation evidence.
 
 The packet is bound under one `packet_sha256`, and the candidate under its own
 `candidate_sha256`.
+
+Candidate simulations and author-proposed reference tests run synchronously
+within the existing per-run step and reference-test limits. Durable jobs,
+cancellation and restart recovery are deferred. Packages currently start
+through import and text editing; starting a candidate directly from the
+catalogue is deferred. Independent scientific acceptance and authorised
+catalogue promotion remain separate later work, with no automatic catalogue
+changes.
 
 ## In the workspace
 

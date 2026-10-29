@@ -69,7 +69,45 @@ def prepare_strict_runtime(
     dt: Any,
     input_unit: Any | None,
 ) -> StrictRuntime:
-    """Convert pint quantities to base-unit floats for runtime."""
+    """Validate physical expressions and prepare the existing base-unit runtime.
+
+    Parameters
+    ----------
+    equations : dict of str to str
+        Derivatives of the explicitly declared state quantities.
+    threshold_expr : str, optional
+        Event predicate, required to produce a Boolean quantity comparison.
+    reset_rules : dict of str to str
+        State assignments whose results retain the target's physical unit.
+    input_unit_name : str
+        Name of the injected numeric input in the equation namespace.
+    raw_parameters, raw_state, raw_constants : dict
+        Caller-owned Pint quantities, which remain unchanged. All equation
+        state variables require explicit quantities.
+    dt : Pint quantity
+        Time step, convertible to seconds. The white-noise symbol ``xi`` has
+        inverse-square-root time units because the runtime draws
+        ``N(0, 1) / sqrt(dt)``. Unit checking uses its unit, without drawing.
+    input_unit : Pint quantity, optional
+        Input unit declaration, required when an expression reads ``I``.
+
+    Returns
+    -------
+    StrictRuntime
+        Base-unit magnitudes and display/input unit maps. This opt-in strict
+        runtime retains its existing conversion contract; candidate admission
+        separately checks unchanged numeric magnitudes without conversion.
+
+    Raises
+    ------
+    ValueError
+        Required state/input declarations are absent or a threshold is not a
+        Boolean comparison.
+    DimensionalError
+        A declared quantity, derivative or reset has incompatible dimensions.
+    SCDependencyError
+        The optional Pint dependency is unavailable.
+    """
     require_pint()
 
     runtime_units: dict[str, Any] = {}
@@ -101,7 +139,7 @@ def prepare_strict_runtime(
     quantity_env.update(quantity_parameters)
     quantity_env.update(quantity_constants)
     quantity_env.update(quantity_state)
-    quantity_env["xi"] = 1.0 * UNIT_REGISTRY.dimensionless
+    quantity_env["xi"] = 1.0 / dt_quantity.units**0.5
 
     uses_input = any(re.search(r"\bI\b", expr) for expr in equations.values())
     if threshold_expr:

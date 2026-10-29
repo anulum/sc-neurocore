@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1502
+expected_file_count = 1512
 
 [[file]]
 path = "tests/test_dcls_parameterized_cosim.py"
@@ -6142,3 +6142,43 @@ rationale = "Shared artifact absence, ambiguity and actual pip ABI refusal witho
 [[file]]
 path = "tests/test_rust_integration_ir_compiler.py"
 rationale = "Installed native verification and RTL emission enforce signed neuron currents while retaining Boolean passthrough graphs."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_unit_values.py"
+rationale = "Finite multiplicative unit dimensions and scales are checked without converting candidate model magnitudes."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_unit_functions.py"
+rationale = "Every actual equation namespace function has a static scalar and array dimensional contract."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_unit_expressions.py"
+rationale = "All checked expression branches retain their unit and quantity shape without running the model."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_units.py"
+rationale = "Candidate expressions, numerical profile and declared units are admitted together with located authored refusals."
+
+[[file]]
+path = "tests/test_studio_candidate_unit_values.py"
+rationale = "Electrical unit identities, fractional dimensions and unrepresentable scale refusals use real unit definitions."
+
+[[file]]
+path = "tests/test_studio_candidate_unit_functions.py"
+rationale = "The actual numeric namespace, optional outputs and all sequence elements obey dimensional admission."
+
+[[file]]
+path = "tests/test_studio_candidate_unit_expressions.py"
+rationale = "Physical arithmetic, static rational powers and unselected branches are checked through expression admission."
+
+[[file]]
+path = "tests/test_studio_candidate_units.py"
+rationale = "Actual candidate validation and runs preserve bitwise numeric traces while refusing dimensional and scale faults."
+
+[[file]]
+path = "src/sc_neurocore/neurons/equation_units_runtime.py"
+rationale = "Strict equation admission assigns the actual inverse-root-time diffusion unit before preserving its established base-unit runtime conversion."
+
+[[file]]
+path = "tests/test_equation_units_runtime.py"
+rationale = "Real seeded strict-unit diffusion matches the numeric runtime and independent Euler-Maruyama increments, while wrong coefficient units refuse before draws."

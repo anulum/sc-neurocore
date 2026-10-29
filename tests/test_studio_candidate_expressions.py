@@ -50,16 +50,22 @@ def test_bad_calls_are_refused_at_the_actual_equation_field(expression: str, rea
 @pytest.mark.parametrize(
     "expression",
     [
-        "sqrt(4)",
-        "abs(v)",
-        "exprel(0)",
-        "sigmoid(0)",
-        "clip(v, -70, -50)",
-        "clip(v, None, 0)",
-        "min([v, 0])",
-        "max(v, 0)",
-        *[f"{name}(0)" for name in ("exp", "log", "sin", "cos", "tanh", "cosh", "sinh")],
-        *[f"{name}(1, None)" for name in ("exp", "log", "sin", "cos", "tanh", "cosh", "sinh")],
+        "sqrt(4) * delta_T / tau",
+        "abs(v) / tau",
+        "exprel(0) * delta_T / tau",
+        "sigmoid(0) * delta_T / tau",
+        "clip(v, v_reset, v_threshold) / tau",
+        "clip(v, None, 0) / tau",
+        "min([v, 0]) / tau",
+        "max(v, 0) / tau",
+        *[
+            f"{name}(0) * delta_T / tau"
+            for name in ("exp", "log", "sin", "cos", "tanh", "cosh", "sinh")
+        ],
+        *[
+            f"{name}(1, None) * delta_T / tau"
+            for name in ("exp", "log", "sin", "cos", "tanh", "cosh", "sinh")
+        ],
     ],
 )
 def test_supported_overloads_are_admitted_and_reach_the_real_runner(expression: str) -> None:
@@ -67,10 +73,12 @@ def test_supported_overloads_are_admitted_and_reach_the_real_runner(expression: 
     document = adex_candidate()
     document["model"]["dynamics"]["v"] = expression
     assert validate_candidate(document).valid
-    result = simulate_candidate(document, current=0.0, steps=1)
-    if expression == "log(0)":
+    if expression.startswith("log(0)"):
+        with pytest.warns(RuntimeWarning, match="divide by zero encountered in log"):
+            result = simulate_candidate(document, current=0.0, steps=1)
         assert result["diverged_at_step"] == 0
     else:
+        result = simulate_candidate(document, current=0.0, steps=1)
         assert result["diverged_at_step"] is None
     assert diff_candidate(document)["status"] == "compared"
 
@@ -78,7 +86,7 @@ def test_supported_overloads_are_admitted_and_reach_the_real_runner(expression: 
 def test_nested_and_attribute_calls_keep_existing_scalar_semantics() -> None:
     """Keep nested helper calls and the float attribute API executable."""
     document = adex_candidate()
-    document["model"]["dynamics"]["v"] = "abs(min(v.real, -60))"
+    document["model"]["dynamics"]["v"] = "abs(min(v.real, v_rest)) / tau"
     assert validate_candidate(document).valid
     assert simulate_candidate(document, current=0.0, steps=1)["diverged_at_step"] is None
     assert diff_candidate(document)["dynamics"][0]["status"] == "not_comparable"

@@ -17,8 +17,10 @@ the coherent-model happy path and every rejection branch.
 from __future__ import annotations
 
 import pytest
+import numpy as np
 
 from sc_neurocore.neurons._units import UNIT_REGISTRY, DimensionalError
+from sc_neurocore.neurons.equation_builder import from_equations
 from sc_neurocore.neurons.equation_units_runtime import (
     StrictRuntime,
     convert_runtime_value,
@@ -203,3 +205,48 @@ def test_convert_runtime_value_coerces_quantity_to_base_float() -> None:
         value=2.0 * UNIT_REGISTRY.nanoampere,
     )
     assert converted == pytest.approx(2e-9)  # 2 nA -> 2e-9 A
+
+
+def test_strict_diffusion_units_match_real_numeric_and_independent_noise_steps() -> None:
+    """Preserve Euler-Maruyama increments under the existing base-unit conversion."""
+    units = UNIT_REGISTRY
+    strict = from_equations(
+        "dv/dt = sigma * xi",
+        params={"sigma": 0.5 * units.mV / units.ms**0.5},
+        init={"v": -65.0 * units.mV},
+        dt=0.1 * units.ms,
+        units="strict",
+        noise_rng=np.random.default_rng(17),
+    )
+    numeric = from_equations(
+        "dv/dt = sigma * xi",
+        params={"sigma": 0.5},
+        init={"v": -65.0},
+        dt=0.1,
+        noise_rng=np.random.default_rng(17),
+    )
+    draws = np.random.default_rng(17)
+    expected = -65.0
+    for _ in range(64):
+        expected += 0.5 * float(draws.standard_normal()) * 0.1**0.5
+        strict.step(0.0)
+        numeric.step(0.0)
+        observed = float(strict.get_state()["v"].to(units.mV).magnitude)
+        assert observed == pytest.approx(expected, rel=0.0, abs=5e-12)
+        assert observed == pytest.approx(numeric.state["v"], rel=0.0, abs=5e-12)
+
+
+def test_wrong_diffusion_coefficient_units_refuse_before_drawing_noise() -> None:
+    """Reject voltage-per-time noise amplitude without consuming a random sample."""
+    generator = np.random.default_rng(17)
+    initial = generator.bit_generator.state
+    with pytest.raises(DimensionalError):
+        from_equations(
+            "dv/dt = sigma * xi",
+            params={"sigma": 0.5 * UNIT_REGISTRY.mV / UNIT_REGISTRY.ms},
+            init={"v": -65.0 * UNIT_REGISTRY.mV},
+            dt=0.1 * UNIT_REGISTRY.ms,
+            units="strict",
+            noise_rng=generator,
+        )
+    assert generator.bit_generator.state == initial

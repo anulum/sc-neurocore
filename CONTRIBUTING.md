@@ -169,6 +169,29 @@ programming hardware. These checks attest the software catalogue, not a vendor
 SDK or physical device. Shared-host local checks remain module-specific and
 serial; the commands above describe the hosted gate.
 
+### Candidate dimensional admission coverage
+
+Candidate dimensional admission has a separate branch-coverage gate over its
+four static unit modules. It exercises the actual candidate validation,
+simulation and review API as well as expression and unit algebra:
+
+```bash
+python -m pytest tests/test_studio_candidate_units.py \
+  tests/test_studio_candidate_unit_expressions.py \
+  tests/test_studio_candidate_unit_functions.py \
+  tests/test_studio_candidate_unit_values.py \
+  tests/test_equation_units_runtime.py \
+  tests/test_studio_candidate_api_refusals.py -q \
+  --cov --cov-config=tests/studio_candidate_units.coveragerc \
+  --cov-report=term-missing --cov-fail-under=100
+```
+
+The real browser contract in `e2e/candidate-authoring-live.spec.ts` retains a
+valid AdEx candidate through authoring, simulation, review, export and workspace
+reopen, and checks located refusals for a parseable voltage-as-time declaration.
+These gates check dimensional admission and unchanged numeric execution, not
+independent scientific validation or catalogue promotion.
+
 ### Equation compiler frontend coverage
 
 From `studio/frontend`, `npm run test:compiler-coverage` checks the compiler

@@ -39,7 +39,7 @@ from tests.studio_candidate_support import adex_candidate
 def _diverging() -> dict[str, Any]:
     """Build a valid candidate whose state leaves finite numbers within a few steps."""
     document = adex_candidate()
-    document["model"]["dynamics"]["w"] = "w * w * 1e6 + 1e6"
+    document["model"]["dynamics"]["w"] = "(w * w / b_adapt * 1e6 + b_adapt * 1e6) / tau_w"
     document["reference_tests"] = [
         {
             "name": "stays bounded",
@@ -158,7 +158,8 @@ class TestRoutes:
     """Candidate validation, simulation and review through the actual Studio API."""
 
     @pytest.fixture(scope="class")
-    def client(self) -> TestClient:
+    @classmethod
+    def client(cls) -> TestClient:
         """Provide the actual Studio API for candidate authoring and review requests."""
         return TestClient(
             create_app(), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}

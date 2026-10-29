@@ -17,18 +17,19 @@
     "parameters": {
       "v_rest": -65.0,
       "tau_m": 10.0,
-      "R": 1.0,
-      "C": 1.0
+      "C": 1.0,
+      "current_gain": 1.0,
+      "v_threshold": -50.0
     },
     "integration": {
       "dt": 1.0,
       "method": "euler"
     },
     "dynamics": {
-      "v": "-(v - v_rest) / tau_m + R * I / C"
+      "v": "-(v - v_rest) / tau_m + current_gain * I / C"
     },
     "threshold": {
-      "condition": "v > -50",
+      "condition": "v > v_threshold",
       "detection": "level"
     },
     "reset": {
@@ -45,13 +46,16 @@
       "parameters": {
         "v_rest": "source",
         "tau_m": "source",
-        "R": "source",
-        "C": "source"
+        "C": "source",
+        "current_gain": "source",
+        "v_threshold": "source"
       },
       "units": {
         "v": "mV",
         "v_rest": "mV",
-        "tau_m": "ms"
+        "tau_m": "ms",
+        "current_gain": "dimensionless",
+        "v_threshold": "mV"
       }
     }
   },
@@ -62,8 +66,9 @@
     "parameters": {
       "v_rest": "mV",
       "tau_m": "ms",
-      "R": "megaohm",
-      "C": "nF"
+      "C": "nF",
+      "current_gain": "dimensionless",
+      "v_threshold": "mV"
     },
     "current": "nA",
     "time": "ms"
@@ -72,7 +77,8 @@
     "citation": "Lapicque, L. (1907) J. Physiol. Pathol. Gen. 9:620-635"
   },
   "assumptions": [
-    "point neuron driven below threshold"
+    "point neuron driven below threshold",
+    "current_gain is a dimensionless input multiplier; C is the capacitance in nF; numeric input magnitudes are unchanged"
   ],
   "authors": [
     "A. Researcher"

@@ -77,4 +77,8 @@ def test_fractional_unit_powers_keep_the_existing_unit_parser_semantics() -> Non
     """Retain valid fractional units while refusing complex unit exponents."""
     document = adex_candidate()
     document["units"]["state"]["v"] = "mV**0.5"
+    document["model"].pop("profile")
+    document["model"]["dynamics"] = {"v": "sqrt(delta_T) / tau", "w": "-w / tau_w"}
+    document["model"]["threshold"]["condition"] = "v >= sqrt(delta_T)"
+    document["model"]["reset"]["v"] = "sqrt(delta_T)"
     assert validate_candidate(document).valid

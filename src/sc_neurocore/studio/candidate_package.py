@@ -21,7 +21,8 @@ Validation is fail-closed and located. Every problem is reported with a JSON
 pointer to the field that caused it, so an editor can put the message beside
 the input, and all problems are reported at once rather than the first only.
 A document is valid only when it has no problem and the Universal DSL admits
-its model.
+its model and all executable expressions agree with the declared units and
+numeric scales. Admission never converts the model's magnitudes.
 """
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ from sc_neurocore.studio.candidate_document import (
     encode_candidate_document,
 )
 from sc_neurocore.studio.candidate_expressions import validate_candidate_calls
+from sc_neurocore.studio.candidate_units import candidate_unit_diagnostics
 
 CANDIDATE_SCHEMA_VERSION = "sc-neurocore.studio.candidate.v1"
 """The one candidate schema this build reads and writes."""
@@ -234,7 +236,8 @@ def validate_candidate(
     -------
     CandidateValidation
         The problems, each with a JSON pointer, and the document digest when
-        it is an object.
+        it is an object. Unit consistency is checked across all expression
+        branches without stepping, drawing noise or changing magnitudes.
     """
     check = _Checker()
     if not isinstance(document, Mapping):
@@ -262,6 +265,9 @@ def validate_candidate(
     _check_reference_tests(check, document.get("reference_tests"))
     if not check.diagnostics:
         _check_admission(check, document["model"])
+    if not check.diagnostics:
+        for location, message in candidate_unit_diagnostics(document):
+            check.fail(location, message)
     return _validation(check, document)
 
 
@@ -328,14 +334,22 @@ def _check_model(check: _Checker, model: object) -> tuple[set[str], set[str]]:
 def _check_events(
     check: _Checker, model: Mapping[str, Any], state: set[str], known: frozenset[str]
 ) -> None:
+    """Check every expression the threshold and reset mechanisms can execute."""
     threshold = model.get("threshold")
     if threshold is not None:
         if not isinstance(threshold, Mapping):
             check.fail(_pointer("model", "threshold"), "threshold must be an object")
         else:
-            check.expression(
-                threshold.get("condition"), _pointer("model", "threshold", "condition"), known
-            )
+            for field in ("condition", "rate_expression", "probability_expression", "spike_value"):
+                expression = threshold.get(field)
+                if (
+                    field == "condition"
+                    and expression == "stochastic"
+                    and threshold.get("detection") in ("escape_rate", "poisson")
+                ):
+                    continue
+                if field == "condition" or expression is not None:
+                    check.expression(expression, _pointer("model", "threshold", field), known)
     reset = model.get("reset")
     if reset is not None:
         if not isinstance(reset, Mapping):
