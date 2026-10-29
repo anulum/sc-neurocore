@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import sys
 
 import yaml
@@ -32,18 +33,30 @@ def test_archive_citation_and_packages_state_the_same_version() -> None:
     ``CITATION.cff``. Both must equal the version of the Python package and of
     the engine built from the same tree; a release whose archive record is
     labelled with an older version misleads everyone who cites by version.
+    The conda recipe and the root component of the committed SBOM name the
+    same release.
     """
     package = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     engine = tomllib.loads((ROOT / "bridge/pyproject.toml").read_text(encoding="utf-8"))["project"]
     crate = tomllib.loads((ROOT / "engine/Cargo.toml").read_text(encoding="utf-8"))["package"]
     archive = json.loads((ROOT / ".zenodo.json").read_text(encoding="utf-8"))
     citation = yaml.safe_load((ROOT / "CITATION.cff").read_text(encoding="utf-8"))
+    recipe = re.findall(
+        r'^\{% set version = "([^"]+)" %\}$',
+        (ROOT / "conda/meta.yaml").read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    sbom = json.loads((ROOT / "sbom.cdx.json").read_text(encoding="utf-8"))["metadata"]["component"]
+    assert len(recipe) == 1, "The conda recipe sets its version exactly once."
+    assert sbom["name"] == package["name"], "The SBOM root component is the Python package."
     versions = {
         "pyproject.toml": package["version"],
         "bridge/pyproject.toml": engine["version"],
         "engine/Cargo.toml": crate["version"],
         ".zenodo.json": archive["version"],
         "CITATION.cff": str(citation["version"]),
+        "conda/meta.yaml": recipe[0],
+        "sbom.cdx.json": sbom["version"],
     }
     assert len(set(versions.values())) == 1, versions
     assert not str(archive["version"]).startswith("v"), "The archive label carries no prefix."
