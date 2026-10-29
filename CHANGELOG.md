@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Breaking: Python 3.11 is now the minimum supported version (`requires-python = ">=3.11"`); Python 3.10 is no longer tested, built or published for, and the `tomli` fallback for Python 3.10 is dropped. Install on Python 3.11 to 3.14.
+
 - The generated safety-manual template names the fields an assessor must fill as "to be supplied by the assessor" instead of printing `TODO`. The template remains a non-certifying draft.
 
 - Keep one changelog. `CHANGELOG.md` and `docs/CHANGELOG.md` had been edited separately and diverged by about 1,350 entries and 26 release sections. They are merged into `CHANGELOG.md`: every entry and section of both files is kept once, in its release section, and where the same entry had been corrected only in the documentation copy, the corrected wording is kept. `docs/CHANGELOG.md`, which the documentation site and the release workflow read, is now a byte copy, and a test requires it.
