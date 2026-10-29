@@ -268,8 +268,9 @@ net.add_projection(Projection(inh, exc, probability=0.1, weight=-4.0))
 net.run(duration_ms=1000, dt=0.1)
 ```
 
-Three backends: Python (NumPy), Rust (NetworkRunner with 81 models, Rayon parallel),
-and MPI (billion-neuron distributed via mpi4py).
+Three backends: Python (NumPy), Rust (`NetworkRunner`, Rayon parallel; its models are
+listed by `NetworkRunner.supported_models()`), and MPI (populations distributed across
+ranks via mpi4py).
 
 ## Loading Pre-Trained Models
 

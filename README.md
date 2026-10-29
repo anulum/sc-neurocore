@@ -472,7 +472,7 @@ graph TD
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
         F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>212 Rust PyO3 wrappers · 180-model NetworkRunner]
-        F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
+        F -->|MPI| MPI[mpi4py distributed<br/>across ranks]
     end
 
     subgraph "Hardware Target"
