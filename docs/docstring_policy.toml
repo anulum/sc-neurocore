@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1500
+expected_file_count = 1501
 
 [[file]]
 path = "tests/test_dcls_parameterized_cosim.py"
@@ -95,6 +95,10 @@ rationale = "The archive label, the citation file and both packages must state o
 [[file]]
 path = "tests/test_changelog_single_source.py"
 rationale = "The documentation changelog is a byte copy of the repository changelog, and no changelog entry is written twice."
+
+[[file]]
+path = "tests/test_safety_cert/test_package_materialisation_manual_template.py"
+rationale = "The non-certifying safety-manual template is deterministic, refuses an invalid date and names every field the assessor must supply."
 
 [[file]]
 path = "tools/security_scan/advisory_exceptions.py"

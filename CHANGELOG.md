@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The generated safety-manual template names the fields an assessor must fill as "to be supplied by the assessor" instead of printing `TODO`. The template remains a non-certifying draft.
+
 - Keep one changelog. `CHANGELOG.md` and `docs/CHANGELOG.md` had been edited separately and diverged by about 1,350 entries and 26 release sections. They are merged into `CHANGELOG.md`: every entry and section of both files is kept once, in its release section, and where the same entry had been corrected only in the documentation copy, the corrected wording is kept. `docs/CHANGELOG.md`, which the documentation site and the release workflow read, is now a byte copy, and a test requires it.
 
 - Restored `GLIFNeuron` to the Teeter et al. five-state GLIF5 equations across

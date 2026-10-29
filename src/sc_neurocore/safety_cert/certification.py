@@ -517,7 +517,7 @@ class SafetyManualGenerator:
 
             ### 2. Timing Input
             - Caller-supplied WCET value: {float(wcet_ns):.1f} ns
-            - Measurement method, clock source, operating corners, and margin: TODO
+            - Measurement method, clock source, operating corners, and margin: to be supplied by the assessor
 
             ### 3. Integrity Labels
             - Target label supplied by caller: SIL {sil_level.value}
@@ -525,11 +525,11 @@ class SafetyManualGenerator:
             - The crosswalk is non-normative and does not establish equivalence.
 
             ### 4. Required Evidence
-            - Safety requirements and implementation traceability: TODO
-            - FMEDA source data and provenance: TODO
-            - Verification reports and tool versions: TODO
-            - Operating conditions and limitations: TODO
-            - Change-control and re-verification process: TODO
+            - Safety requirements and implementation traceability: to be supplied by the assessor
+            - FMEDA source data and provenance: to be supplied by the assessor
+            - Verification reports and tool versions: to be supplied by the assessor
+            - Operating conditions and limitations: to be supplied by the assessor
+            - Change-control and re-verification process: to be supplied by the assessor
 
             ### 5. Review
             Applicability, completeness, independence, and conformity decisions
