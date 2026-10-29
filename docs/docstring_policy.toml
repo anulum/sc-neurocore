@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1501
+expected_file_count = 1502
 
 [[file]]
 path = "tests/test_dcls_parameterized_cosim.py"
@@ -6138,3 +6138,7 @@ rationale = "Scheduler CLI inputs, live repository partitioning, growth and JUni
 [[file]]
 path = "tests/test_tools/test_ci_install_common.py"
 rationale = "Shared artifact absence, ambiguity and actual pip ABI refusal without build fallback."
+
+[[file]]
+path = "tests/test_rust_integration_ir_compiler.py"
+rationale = "Installed native verification and RTL emission enforce signed neuron currents while retaining Boolean passthrough graphs."
