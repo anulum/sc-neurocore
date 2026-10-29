@@ -67,7 +67,7 @@ Pool → FC(1024,128) → LIF → FC(128,10) → LIF`
 | Default | 25 | 10 | ~98% | ~160K |
 | learn_beta + learn_threshold | 25 | 30 | 99.49% | 184,594 |
 
-The 99.49% figure uses cosine LR schedule, data augmentation
+The 99.49% figure is the committed run of 2026-03-26. It uses cosine LR schedule, data augmentation
 (random affine translation + rotation), learnable beta/threshold, and the
 committed evidence manifest
 `benchmarks/results/mnist_conv_accuracy_reproducibility.json`. The manifest
@@ -83,7 +83,7 @@ python examples/mnist_conv_train.py --epochs 30 --batch-size 128 \
 
 | Framework | Architecture | MNIST Accuracy | Source |
 |-----------|-------------|:-----------:|--------|
-| SC-NeuroCore ConvSpikingNet | Conv SNN | 99.49% | `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
+| SC-NeuroCore ConvSpikingNet | Conv SNN | 99.49% (2026-03-26 run) | `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
 | snnTorch | Conv SNN | ~97-98% | Eshraghian et al. 2023 |
 | Norse | Conv SNN | ~96% | Pehle & Pedersen 2021 |
 | SpikingJelly | Conv SNN | ~99.3% | Fang et al. 2023 |

@@ -168,7 +168,7 @@ New in this release:
 - **NIR bridge**: 18/18 primitives (was 11), full roundtrip verified
 - **Cross-framework interop**: verified with Norse, snnTorch, SpikingJelly, Sinabs, Rockpool
 - **Equation-to-Verilog compiler**: any `EquationNeuron` ODE string → synthesizable Q8.8 RTL
-- **Surrogate gradient MNIST**: 99.49% (ConvSpikingNet with learnable beta/threshold)
+- **Surrogate gradient MNIST**: 99.49% in the committed 2026-03-26 run (ConvSpikingNet with learnable beta/threshold; `benchmarks/results/mnist_conv_accuracy_reproducibility.json`)
 - **Import time optimization**: 200s → 10s via lazy-load neuron models + deferred scipy
 - **SC arithmetic**: CORDIV division, adaptive bitstream length, Sobol/Halton decorrelation
 - **Learning rules**: BCM, voltage STDP, TBPTT, EWC (real implementation), learnable beta/threshold

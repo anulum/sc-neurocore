@@ -32,7 +32,7 @@ that lane weekly.
 |-------------|--------|----------|
 | FC 784→128→128→10 | Surrogate gradient (10 epochs) | 95.5% |
 | FC 784→128→128→10 | + learnable τ (Fang 2021) | 97.7% |
-| Conv→LIF→Pool→Conv→LIF→Pool→FC | Learnable β + threshold | **99.49%** (`benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
+| Conv→LIF→Pool→Conv→LIF→Pool→FC | Learnable β + threshold | **99.49%**, committed 2026-03-26 run (`benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
 
 The value of SC-NeuroCore is not training accuracy; it is the
 `to_sc_weights()` export path to synthesisable FPGA hardware.

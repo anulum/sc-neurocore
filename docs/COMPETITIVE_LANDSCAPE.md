@@ -208,14 +208,15 @@ hardware capability conclusion across frameworks.
 | Float baseline (sklearn) | 94.2% | SC-NeuroCore | Verified (stored artifact) |
 | Quantized Q8.8 | 94.2% | SC-NeuroCore | Verified (stored artifact) |
 | Stochastic computing (L=1024) | 94.0% | SC-NeuroCore | Verified (stored artifact) |
-| ConvSpikingNet (learnable params) | **99.49%** | **SC-NeuroCore** | Verified by `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
+| ConvSpikingNet (learnable params) | **99.49%** | **SC-NeuroCore** | Committed 2026-03-26 run, `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
 | Surrogate gradient SNN | ~97% | snnTorch | Published |
 | Surrogate gradient SNN | ~96% | Norse | Published |
 
 SC-NeuroCore's ConvSpikingNet achieved 99.49% on MNIST with
 learnable beta/threshold, cosine LR, and data augmentation in the committed
-training run recorded by `benchmarks/results/mnist_conv_accuracy_reproducibility.json`.
-Use that manifest as the evidence boundary for the public claim.
+training run of 2026-03-26 recorded by `benchmarks/results/mnist_conv_accuracy_reproducibility.json`.
+Use that manifest as the evidence boundary for the public claim; it is a recorded result, not a
+measurement repeated for each release.
 
 ---
 
