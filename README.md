@@ -731,15 +731,9 @@ python benchmarks/benchmark_suite.py --full    # thorough (10x)
 python benchmarks/benchmark_suite.py --markdown # output BENCHMARKS.md
 ```
 
-Sample results (CPU, quick mode):
-
-| Operation | Throughput |
-|-----------|-----------|
-| LFSR step | 2.25 Mstep/s |
-| Bitstream encoder | 1.88 Mstep/s |
-| LIF neuron step | 1.15 Mstep/s |
-| vec_and (1024 words) | 45.67 Gbit/s |
-| gpu_vec_mac (64x32x16w) | 6.15 GOP/s |
+Measured figures, each with its host, date and committed record, are in the
+[benchmark report](docs/benchmarks/BENCHMARKS.md); timings depend on the
+machine and its load.
 
 ## Documentation
 
@@ -748,7 +742,7 @@ Sample results (CPU, quick mode):
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
 - [Install Profiles](docs/guides/install_profiles.md) — Base install, optional extras, and research-only polyglot boundary
 - [FPGA Deploy Cookbook](docs/tutorials/fpga_deploy_cookbook.md) — Five-minute scaffold, optional synthesis, report-to-optimiser handoff
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 88 tracked guides and tutorials (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 88 tracked tutorials (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [Studio Federation API](docs/api/federation.md) — Optional Hub-facing federation manifest, verbs, and evidence envelopes
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
