@@ -180,7 +180,12 @@ fn kuramoto_step_rejects_mismatched_coupling() {
     let g = b.build();
 
     let err = emit_sv::emit(&g).expect_err("mismatched coupling must be rejected");
-    assert!(err.contains("coupling length 3 is not 2×2"), "{err}");
+    assert!(
+        err.contains(
+            "KuramotoStep requires matching phase/omega vectors and a square coupling matrix"
+        ),
+        "{err}"
+    );
 }
 
 #[test]
@@ -249,7 +254,10 @@ fn graph_forward_rejects_mismatched_adjacency() {
     let g = b.build();
 
     let err = emit_sv::emit(&g).expect_err("mismatched adjacency must be rejected");
-    assert!(err.contains("adjacency length 3 is not 2×2"), "{err}");
+    assert!(
+        err.contains("GraphForward constant lengths must match its positive node/feature geometry"),
+        "{err}"
+    );
 }
 
 #[test]
@@ -320,7 +328,7 @@ fn softmax_attention_rejects_mismatched_shapes() {
 
     let err = emit_sv::emit(&g).expect_err("mismatched attention shapes must be rejected");
     assert!(
-        err.contains("query length 3 is not a multiple of dim_k 2"),
+        err.contains("SoftmaxAttention requires complete nonempty query/key/value rows and a positive key dimension"),
         "{err}"
     );
 }
