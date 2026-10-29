@@ -562,9 +562,9 @@ This parallelises trivially on GPU (PyTorch) or in SIMD (Rust).
 ### Energy efficiency
 
 The KLIF's minimal computation (1 multiply-add + 1 compare per step) makes it one of
-the most energy-efficient spiking neuron models for neuromorphic deployment. On Loihi-2
-or SpiNNaker-2 class hardware, a KLIF neuron consumes ~1 pJ per step, compared to
-~10–100 pJ for more complex models (HH, WB).
+the cheapest spiking neuron models to deploy: per step it needs fewer operations than
+models with exponentials or gating variables (HH, WB). Energy per step on a given chip
+has not been measured for this model.
 
 For battery-powered edge devices (hearing aids, implantables), the KLIF's simplicity
 directly translates to longer battery life.

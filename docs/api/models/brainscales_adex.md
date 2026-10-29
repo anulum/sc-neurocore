@@ -271,13 +271,13 @@ With I=0: V decays to V_rest, w decays to 0. No spikes. Verified by test.
 
 ## Performance
 
-| Metric | Python | BrainScaleS-2 hardware |
-|--------|--------|----------------------|
-| Isolation | ~500K steps/s | ~10⁹ steps/s (1000× real-time) |
-| Network (10n) | ~40K neuron-steps/s | ~5×10⁸ (512 neurons parallel) |
+| Metric | Python |
+|--------|--------|
+| Isolation | ~500K steps/s |
+| Network (10n) | ~40K neuron-steps/s |
 
-The software emulation is 2000× slower than the actual hardware — this
-is the entire point of analog neuromorphic computing.
+BrainScaleS-2 integrates its analog circuits in continuous, accelerated time, so it
+has no time steps to compare with these software figures.
 
 ---
 

@@ -545,8 +545,6 @@ LIF reservoirs, potentially improving separation of input trajectories.
 The LNM's 3-parameter per-neuron overhead is minimal for hardware:
 - Trained weights + per-neuron (α, β, γ) stored in on-chip SRAM
 - Runtime: 3 multiply-adds + 1 sigmoid LUT per step
-- Power: ~2 pJ per neuron-step (estimated for 28 nm ASIC)
-- Throughput: >1 billion neuron-steps/s on a single neuromorphic core
 
 ### Comparison with adaptive LIF (ALIF)
 

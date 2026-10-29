@@ -418,9 +418,6 @@ For exact hardware fidelity, use tau values that are powers of 2 (2, 4, 8, 16, .
 **Key advantage:** If τ values are restricted to powers of 2, the divisions become
 bit-shifts (0 LUTs, combinational). This reduces the total to ~100 LUTs per neuron.
 
-A Zynq-7020 could implement ~1,000 LoihiCUBA neurons in parallel with power-of-2
-tau, processing at ~20 billion neuron-steps/s.
-
 **Note:** These are analytical estimates, not measured synthesis results.
 
 ---
