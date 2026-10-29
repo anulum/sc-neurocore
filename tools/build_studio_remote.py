@@ -110,8 +110,9 @@ def build_bundle(frontend_dist: Path, output_dir: Path, *, local_host: bool = Fa
     local_host
         Emit the own relative ``/studios/sc-neurocore/remoteEntry.js`` path
         with an integrity pin over these frozen entry bytes and a typed
-        ``federation:config`` declaration. False retains the published absolute
-        URL. This selects metadata, not host admission or backend access.
+        catalogue and closed local runtime capability declarations. False
+        retains the published absolute URL. The host and backend still enforce
+        service availability, admission and operation policies independently.
 
     Returns
     -------
@@ -152,7 +153,7 @@ def build_bundle(frontend_dist: Path, output_dir: Path, *, local_host: bool = Fa
             STUDIO_UI,
             remote_entry="/studios/sc-neurocore/remoteEntry.js",
             remote_entry_digest="sha256:" + hashlib.sha256(files["remoteEntry.js"]).hexdigest(),
-            capabilities=("federation:config",),
+            capabilities=("federation:config", "custom:sc-neurocore:api"),
         )
         if local_host
         else STUDIO_UI

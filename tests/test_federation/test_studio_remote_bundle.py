@@ -102,7 +102,10 @@ def test_cli_bundle_has_exact_root_manifest_and_all_asset_digests(
                 assert not validate_studio_manifest(schema_a, supported_eras={"v1"}).admitted
                 assert schema_a["ui_module"]["exposes"] == ["./SnnStudioPanel"]
                 if local_host:
-                    assert schema_a["ui_module"]["capabilities"] == ["federation:config"]
+                    assert schema_a["ui_module"]["capabilities"] == [
+                        "federation:config",
+                        "custom:sc-neurocore:api",
+                    ]
                     assert (
                         schema_a["ui_module"]["remote_entry"]
                         == "/studios/sc-neurocore/remoteEntry.js"

@@ -233,14 +233,14 @@ class IsolatedJobManager:
         to stop, so a live job answers ``cancelling`` rather than a
         ``cancelled`` its supervisor wrote first. The local generation is told
         even when a legacy service exchange fails. Actor-owned laboratory
-        cancellation signals the local worker only after authority approval,
+        cancellation and the general administrator route signal the local worker only after approval,
         including legacy routes and lost replies. Custody is classified from
         the admitted registered task, independently of the cancellation route.
         """
-        signal_worker = (
-            self._threads.is_service_task(job_id)
-            and _delegation().route != "/api/fits/jobs/{job_id}/cancel"
-        )
+        signal_worker = self._threads.is_service_task(job_id) and _delegation().route not in {
+            "/api/fits/jobs/{job_id}/cancel",
+            "/api/studio/jobs/{job_id}/cancel",
+        }
         try:
             record = exchange_cancel(
                 self._runtime.connect(),
@@ -251,6 +251,8 @@ class IsolatedJobManager:
                     authorized_route=(
                         "/api/fits/jobs/{job_id}/cancel"
                         if _delegation().route == "/api/fits/jobs/{job_id}/cancel"
+                        else "/api/studio/jobs/{job_id}/cancel"
+                        if _delegation().route == "/api/studio/jobs/{job_id}/cancel"
                         else None
                     ),
                 ),

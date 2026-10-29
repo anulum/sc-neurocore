@@ -58,7 +58,7 @@ def apply_cancel(
             status = "not_found"
         else:
             if (
-                request.authorized_route is not None
+                request.authorized_route == "/api/fits/jobs/{job_id}/cancel"
                 or current.admission.get("laboratory_task") in {"fit", "fit_replay", "cohort"}
             ) and (
                 request.requester is None

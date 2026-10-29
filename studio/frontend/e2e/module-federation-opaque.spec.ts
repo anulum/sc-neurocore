@@ -106,11 +106,12 @@ for (const initialReply of ["metadata", "refuse"] as const) {
     await expect(frame.locator("dl")).toContainText(schema.studio_version);
     await expect(frame.locator("dl")).toContainText(schema.contract_era);
     for (const evidence of schema.evidence_types) await expect(frame.locator("dl")).toContainText(evidence);
-    await expect(frame.locator("button, input, select, textarea, canvas")).toHaveCount(0);
+    await expect(frame.getByRole("button", { name: "Connect local runtime", exact: true })).toBeVisible();
+    await expect(frame.locator("input, select, textarea, canvas")).toHaveCount(0);
     await expect(frame.getByLabel("Save project", { exact: true })).toHaveCount(0);
-    await frame.getByText("Workbench views — not available in hosted view", { exact: true }).click();
+    await frame.getByText("Standalone workbench views — not mounted here", { exact: true }).click();
     await expect(frame.locator("li")).toHaveCount(25);
-    for (const item of await frame.locator("li").all()) await expect(item).toContainText("not available in hosted view");
+    for (const item of await frame.locator("li").all()) await expect(item).toContainText("standalone workbench view not mounted here");
     const child = page.frames().find((entry) => entry.parentFrame() !== null);
     if (child === undefined) throw new Error("Opaque producer frame missing");
     const context = await child.evaluate(() => {

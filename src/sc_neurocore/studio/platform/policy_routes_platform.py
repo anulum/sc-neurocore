@@ -13,6 +13,14 @@ from __future__ import annotations
 from sc_neurocore.studio.platform.policy_models import RouteVisibility
 
 PLATFORM_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
+    ("GET", "/api/studio/host-bridge", RouteVisibility.PUBLIC, "studio.host.describe"),
+    ("POST", "/api/studio/host-jobs", RouteVisibility.AUTHENTICATED, "studio.host.submit"),
+    (
+        "POST",
+        "/api/studio/jobs/{job_id}/cancel",
+        RouteVisibility.ADMIN,
+        "studio.jobs.cancel",
+    ),
     ("GET", "/api/health", RouteVisibility.PUBLIC, "studio.health.read"),
     (
         "GET",

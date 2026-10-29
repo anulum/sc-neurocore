@@ -13,13 +13,13 @@ import "./index.css";
 const StandaloneStudioPanel = lazy(() => import("./StandaloneStudioPanel"));
 
 /**
- * Mount a read-only hosted view in an iframe, or the standalone workspace.
+ * Mount the hosted catalogue and optional local runtime in an iframe, or standalone Studio.
  *
- * Embedded panels never import the backend workspace, editor or store. Host
- * metadata cannot enable computation; installed-backend integration requires
- * its separate host capability contract.
+ * Embedded panels keep the standalone workbench, editor and store unmounted.
+ * Metadata loads first; explicit local execution uses the separately declared
+ * closed host capability and its operator-configured backend.
  *
- * @returns The hosted view or the standalone Studio workspace.
+ * @returns The hosted catalogue/runtime view or the standalone Studio workspace.
  */
 export default function SnnStudioPanel() {
   if (window.parent !== window) return <HostedStudioPanel />;

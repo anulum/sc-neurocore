@@ -30,6 +30,7 @@ from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord, StudioJobStatus
+from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmission
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import InMemoryAuditSink
 from sc_neurocore.studio.platform.storage_cancel import serve_cancel
@@ -272,3 +273,75 @@ def test_a_record_of_another_job_is_refused(ledger: StudioJobLedger) -> None:
             deadline=time.monotonic() + 10,
         )
     thread.join(timeout=10)
+
+
+def test_general_route_keeps_legacy_wire_bytes_optional(ledger: StudioJobLedger) -> None:
+    """Existing cancellation messages omit the added route; admin route is explicit."""
+    legacy = cancel_request("default", JOB, requester=USER)
+    assert "authorized_route" not in json.loads(encode_cancel_message(legacy))
+    admin = StorageRequester(principal_id="operator", roles=("studio.admin",))
+    request = cancel_request(
+        "default", JOB, requester=admin, authorized_route="/api/studio/jobs/{job_id}/cancel"
+    )
+    assert decode_cancel_request(encode_cancel_message(request), max_bytes=FRAME) == request
+    authority = Authority(ledger)
+    record = exchange_cancel(
+        authority.connect(),
+        request,
+        expected_service_uid=os.getuid(),
+        max_bytes=FRAME,
+        deadline=time.monotonic() + 10,
+    )
+    authority.join()
+    assert record.status == "cancelling"
+
+
+@pytest.mark.parametrize("actor", ["reader", "other_admin", "own_admin"])
+def test_general_route_authority_preserves_laboratory_owner(
+    ledger: StudioJobLedger, actor: str
+) -> None:
+    """Real wire policy and ledger ownership both precede the cancellation write."""
+    lab_job = "sj_" + "a" * 16
+    SharedJobAdmission(ledger, max_concurrent=2, max_queued=0).admit(
+        job_id=lab_job,
+        kind="analysis",
+        actor="alice",
+        workspace="default",
+        request_id=None,
+        idempotency_key=None,
+        experiment_sha256=None,
+        admission={"laboratory_task": "fit"},
+        execution_model="process",
+        supervisor=supervisor_identity(),
+    )
+    requester = StorageRequester(
+        principal_id="alice" if actor != "other_admin" else "bob",
+        roles=() if actor == "reader" else ("studio.admin",),
+    )
+    authority = Authority(ledger)
+    request = cancel_request(
+        "default", lab_job, requester=requester, authorized_route="/api/studio/jobs/{job_id}/cancel"
+    )
+    try:
+        if actor == "own_admin":
+            record = exchange_cancel(
+                authority.connect(),
+                request,
+                expected_service_uid=os.getuid(),
+                max_bytes=FRAME,
+                deadline=time.monotonic() + 10,
+            )
+            assert record.status == "cancelling"
+        else:
+            expected = PermissionError if actor == "reader" else KeyError
+            with pytest.raises(expected):
+                exchange_cancel(
+                    authority.connect(),
+                    request,
+                    expected_service_uid=os.getuid(),
+                    max_bytes=FRAME,
+                    deadline=time.monotonic() + 10,
+                )
+            assert ledger.record(lab_job).status == "pending"
+    finally:
+        authority.join()

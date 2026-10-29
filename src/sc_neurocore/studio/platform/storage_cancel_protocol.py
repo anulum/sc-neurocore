@@ -11,8 +11,8 @@
 ``studio.storage.cancel.v2`` asks the authority to record that one job of the
 workspace should stop, for the requester the peer-verified API delegated,
 under the policy of ``POST /api/training/stop`` by default. An explicit
-``authorized_route`` can select the actor-owned laboratory cancellation
-route; the authority then checks both actor and laboratory task custody.
+``authorized_route`` can select laboratory or administrator cancellation.
+The authority retains actor custody for laboratory tasks on every route.
 The reply carries the job's record after the request, as the embedded
 manager returns it. Cancelling is idempotent, so a lost reply is resent.
 Large snapshots use the correlated, SHA-bound storage view content envelope;
@@ -32,6 +32,9 @@ from sc_neurocore.studio.platform.storage_record_protocol import StorageRequeste
 
 CANCEL_SCHEMA_VERSION: Final[Literal["studio.storage.cancel.v2"]] = "studio.storage.cancel.v2"
 CANCEL_ROUTE: Final = ("POST", "/api/training/stop")
+CancelAuthorizedRoute = Literal[
+    "/api/fits/jobs/{job_id}/cancel", "/api/studio/jobs/{job_id}/cancel"
+]
 
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
 _JobId = Annotated[str, Field(pattern=r"^sj_[0-9a-f]{16}$")]
@@ -47,7 +50,7 @@ class StorageCancelRequest(BaseModel):
     workspace: Annotated[str, Field(min_length=1, max_length=256)]
     requester: StorageRequester | None
     job_id: _JobId
-    authorized_route: Literal["/api/fits/jobs/{job_id}/cancel"] | None = Field(
+    authorized_route: CancelAuthorizedRoute | None = Field(
         default=None, exclude_if=lambda route: route is None
     )
 
@@ -144,6 +147,7 @@ def decode_cancel_response(
 __all__ = [
     "CANCEL_ROUTE",
     "CANCEL_SCHEMA_VERSION",
+    "CancelAuthorizedRoute",
     "StorageCancelRequest",
     "StorageCancelResponse",
     "decode_cancel_request",

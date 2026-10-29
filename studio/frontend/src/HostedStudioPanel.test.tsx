@@ -82,8 +82,9 @@ it("shows metadata while every workbench view remains unavailable, with no stora
   expect(host.querySelector("dl")?.textContent).toContain("sc-neurocoreVersion3.16.0Contract erav2");
   expect(host.textContent).toContain("studio.model-scan.v1");
   expect(host.querySelectorAll("li")).toHaveLength(25);
-  for (const item of host.querySelectorAll("li")) expect(item.textContent).toContain("not available in hosted view");
-  expect(host.querySelector("button, input, select, textarea, canvas")).toBeNull();
+  for (const item of host.querySelectorAll("li")) expect(item.textContent).toContain("standalone workbench view not mounted here");
+  expect(host.querySelector("button")?.textContent).toContain("Connect local runtime");
+  expect(host.querySelector("input, select, textarea, canvas")).toBeNull();
   expect(storage).not.toHaveBeenCalled(); expect(socket).not.toHaveBeenCalled();
 });
 
@@ -163,4 +164,27 @@ it("hides unexpected browser identity failures without sending requests or leavi
   expect(host.querySelector('[role="alert"]')?.textContent).toBe("Host catalogue is unavailable.");
   expect(host.textContent).not.toContain("private browser diagnostics");
   expect(requests).toEqual([]);
+});
+
+
+it("connects explicitly from catalogue metadata to the actual hosted scientific workspace", async () => {
+  await mount(); await answer([own]);
+  await act(async () => { host.querySelector("button")?.click(); });
+  expect(requests.at(-1)?.capability).toBe("custom:sc-neurocore:api");
+  expect(host.textContent).toContain("local runtime connection requested");
+  await answer({ protocol: "sc-neurocore.host-api.v1", operations: ["simulate"] });
+  expect(host.querySelector('[aria-label="Local scientific workspace"]')).not.toBeNull();
+  expect(host.querySelector("textarea")).not.toBeNull();
+  expect(host.querySelector("canvas")).toBeNull();
+  expect(host.textContent).toContain("1 available actions");
+});
+
+it("does not restore catalogue state if unmounted immediately after its real message response", async () => {
+  await mount(); const request = requests.at(-1); if (request === undefined) throw new Error("Missing catalogue request");
+  await act(async () => {
+    window.dispatchEvent(new MessageEvent("message", { source: parent,
+      data: { type: "scpn:bridge:response", id: request.id, ok: true, result: [own] } }));
+    root?.unmount(); root = undefined;
+  });
+  expect(host.childElementCount).toBe(0);
 });

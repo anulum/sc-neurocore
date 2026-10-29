@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5459
+    "test_files": 5463
   },
   "documentation": {
     "public_pages": [
@@ -7999,6 +7999,9 @@
       "tests/test_studio_generator_state_visibility.py",
       "tests/test_studio_graph_model_contract.py",
       "tests/test_studio_graph_validation_locations.py",
+      "tests/test_studio_host_job_tasks.py",
+      "tests/test_studio_host_jobs.py",
+      "tests/test_studio_host_jobs_schema.py",
       "tests/test_studio_identity_admin_records.py",
       "tests/test_studio_identity_admin_routes.py",
       "tests/test_studio_identity_bootstrap_bootstrap_core.py",
@@ -8197,6 +8200,7 @@
       "tests/test_studio_storage_generation_registration.py",
       "tests/test_studio_storage_generation_startup.py",
       "tests/test_studio_storage_generation_supervisor.py",
+      "tests/test_studio_storage_host_jobs.py",
       "tests/test_studio_storage_isolated_jobs.py",
       "tests/test_studio_storage_isolated_runtime.py",
       "tests/test_studio_storage_julia_dvs_training.py",

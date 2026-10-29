@@ -44,6 +44,7 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.frontend",
         "sc_neurocore.studio.api.identity",
         "sc_neurocore.studio.api.jobs",
+        "sc_neurocore.studio.api.host_jobs",
         "sc_neurocore.studio.api.presets",
         "sc_neurocore.studio.api.simulation",
         "sc_neurocore.studio.api.synthesis",
@@ -149,7 +150,18 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     # admitted, never by relaxing the assertion.
     # Swagger and ReDoc now have explicit frontend-owned handlers so their
     # generated scripts can be bound to the response CSP by content hash.
-    assert len(backend_routes) == 150
+    # The authored compiler added POST /api/ir/replay, bringing the baseline to151.
+    # The three closed hosted description/submission/cancellation routes add three.
+    assert len(backend_routes) == 154
+    assert {
+        (route.path, tuple(sorted(route.methods or ())))
+        for route in backend_routes
+        if route.endpoint.__module__ == "sc_neurocore.studio.api.host_jobs"
+    } == {
+        ("/api/studio/host-bridge", ("GET",)),
+        ("/api/studio/host-jobs", ("POST",)),
+        ("/api/studio/jobs/{job_id}/cancel", ("POST",)),
+    }
     assert {
         route.path
         for route in backend_routes

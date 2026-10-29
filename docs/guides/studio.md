@@ -714,8 +714,8 @@ python -m tools.build_studio_remote --local-host --output-dir dist/studio-local-
 
 This mode emits `/studios/sc-neurocore/remoteEntry.js` and a
 `remote_entry_digest` over the frozen entry bytes, together with the typed
-`capabilities: ["federation:config"]` declaration used by the hosted metadata
-view. The selected descriptor
+`capabilities: ["federation:config", "custom:sc-neurocore:api"]` declaration used
+by the hosted catalogue and optional local runtime connection. The selected descriptor
 contributes to the declared capability digest and is serialised directly into
 the archive; the host does not rewrite it. The default command retains the
 published absolute URL and omits capabilities. A federation SDK without UI
@@ -738,14 +738,14 @@ This command performs no publication or deployment. A release operator may
 later attach both files to an authorised `studio-remote-v<semver>` release.
 A source-version match alone does not qualify the backend: retain exact
 installed-wheel, frontend, compiler and host acceptance receipts for a release.
-The v2 manifest requires explicit v2 host admission. The current SCPN Studio
-opaque sandbox has no general compute/storage bridge; full remote-workbench
-execution needs that separately agreed integration. A bundle or local harness
+The v2 manifest requires explicit v2 host admission. SCPN Studio's opaque
+sandbox exposes a closed local scientific bridge, with no general HTTP,
+browser-storage or socket proxy. A bundle or local harness
 render does not establish installed-backend host acceptance or rollback.
 
-When `SnnStudioPanel` is mounted inside an iframe, it selects a read-only
-hosted view. It does not import the standalone workspace, Monaco editor or
-application store. It sends only a `federation:config` parent-window bridge
+When `SnnStudioPanel` is mounted inside an iframe, it starts with the hosted
+catalogue. It does not import the standalone workspace, Monaco editor or
+application store. Its initial `federation:config` parent-window bridge
 request and displays the Hub's declared SC-NeuroCore identity, version, era
 and evidence types. Metadata is not a runtime or hardware qualification.
 Only the immediate parent's answer with the matching request id is accepted;
@@ -753,12 +753,57 @@ refusal, malformed data, missing or duplicate studio identities, and a
 five-second timeout produce an unavailable state with a retry. Unmount
 cancels the request and removes its listeners and timer.
 
-Simulation, analysis, training, compilation, co-simulation, synthesis, jobs,
-artefact downloads, the model catalogue, projects, sessions, evidence export,
-authentication and operator controls are explicitly unavailable in that view.
-It performs no backend HTTP, WebSocket or browser-storage operations. A
-successful metadata answer never enables them. The top-level standalone
-application continues to use its configured backend and packaged editor.
+**Connect local runtime** checks the installed backend through the host's
+`custom:sc-neurocore:api` service. The operator must serve its own
+`/platform/local-neurocore-backend.json` with
+`schema_version: "scpn.local-neurocore-backend.v1"` and a canonical loopback
+`backend_origin`, for example `http://127.0.0.1:8001`. The Hub must also be on
+loopback. Configure `SC_NEUROCORE_STUDIO_CORS_ORIGINS` on the backend with the
+actual Hub origin; the opaque child's `Origin: null` remains refused. The
+bridge carries no cookie, token or principal. Backend policy enforcement can
+refuse it; connecting does not create an authenticated session. This adapter
+is available only in the existing `development` deployment profile, not a
+production-profile or public-host compute service.
+
+The workspace presents the installed action list, a scientific request JSON
+editor with editable examples, a real job receipt and explicit refresh/cancel
+controls. Supported actions are simulation, firing-rate curves, numerical
+extrema sweeps, response heatmaps, parameter sensitivity, native graph build,
+structural verification, source replay and SystemVerilog emission. Native
+actions are advertised only when the engine module imports successfully; that
+is dependency availability, not acceptance of every model or hardware support.
+The installed model catalogue and equation templates can also be inspected.
+Source order, exact random keys and original numeric tokens are transported as
+text rather than rewritten by JavaScript. No backend HTTP, WebSocket or
+browser-storage call is made by the child.
+
+`POST /api/studio/host-jobs` admits the closed operation/request envelope to
+the normal asynchronous job service. Existing analysis and native compiler
+workers run the actual calculation; the adapter seals `host/result.json` and,
+for accepted native outputs, `host/graph.scir` and `host/output.sv`. Existing
+compiler evidence remains attached. A completed job can contain a compiler
+refusal: inspect the explicit outcome, structural verification and source
+replay fields. The UI keeps these verdicts separate. Jobs can be cancelled
+through `POST /api/studio/jobs/{job_id}/cancel`; administrator policy and
+actor-owned laboratory custody are retained by both embedded and isolated
+storage. Finishing a job before cancellation is an idempotent terminal result.
+
+The host and client verify result/artifact sizes and SHA-256, with an 8 MiB
+artifact ceiling. Downloads use the host's closed `download` action, selecting
+only an admitted job and declared digest. The trusted parent chooses the
+declared artifact's basename and dispatches the file; the child never supplies
+a filename, path or file content to save. The sandbox remains `allow-scripts`.
+Build an authored graph first, then use **Load example / last graph** for
+verification, source replay or emission; each output belongs to its actual job.
+
+Training, co-simulation, FPGA synthesis, projects, sessions, evidence bundles,
+authentication and operator controls remain standalone workflows. A successful
+metadata response alone enables none of the runtime actions. The top-level
+standalone application continues to use its configured backend and editor.
+Before removing a hosted bundle or reverting its installed backend, settle the
+admitted jobs, retain the prior package and preserve projects, sessions,
+configuration and job data. The host's unmount cancellation is best effort;
+browser termination and lost receipts still rely on backend deadlines/recovery.
 Actual SCPN Studio sandbox admission, the producer's declared bridge capability,
 and host rollback require separate integration evidence. Neither a DOM test
 nor a simple Module Federation harness establishes that acceptance.

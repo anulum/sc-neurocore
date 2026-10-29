@@ -143,16 +143,17 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     # single-operator lab profile (7014fa6a3) classified the six served
     # frontend and API-document reads (/, /docs, /redoc, /openapi.json and
     # GET/HEAD /studios/sc-neurocore) as public and made one public read
-    # authenticated.
+    # authenticated. The authenticated compiler replay route adds one; hosted
+    # description, submission and cancellation add public/authenticated/admin.
     assert payload["route_policies"] == {
-        "admin_count": 28,
-        "authenticated_count": 87,
+        "admin_count": 29,
+        "authenticated_count": 89,
         "enforced": True,
-        "protected_audit_action_count": 115,
-        "protected_count": 115,
+        "protected_audit_action_count": 118,
+        "protected_count": 118,
         "protected_routes_audited": True,
-        "public_count": 40,
-        "total_count": 155,
+        "public_count": 41,
+        "total_count": 159,
     }
     assert payload["identity"] == {
         "configured": True,

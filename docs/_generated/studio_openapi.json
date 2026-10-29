@@ -214,7 +214,7 @@
       },
       "AuthoredEquationModel": {
         "additionalProperties": false,
-        "description": "Serializable constructor inputs of a native-compilable equation model.\n\nAttributes\n----------\nequations, initial_state, parameters, constants, reset : list\n    Ordered declarations. Repeated names refuse before dictionary conversion.\n    An empty initial state selects the public constructor's default.\ndt : EquationValue\n    Positive inner timestep, with an explicit time unit in strict mode.\nmethod : str\n    Maintained integrator; order is retained for Gauss\u2013Seidel updates.\nthreshold, rate_expression, probability_expression, spike_value : str or None\n    Authored event condition, stochastic threshold and graded-spike rules.\ndetection, threshold_rng : str\n    Maintained event detection and threshold random generator.\nsubsteps : int\n    Positive inner steps per macro timestep.\nrng_seed : str\n    Canonical decimal unsigned 64-bit key; strings avoid JavaScript loss.\nrandom_stream : int\n    Unsigned 32-bit counter-based random stream.\nunits : str\n    Explicit dimensional-validation mode.\ninput_unit : EquationValue or None\n    Authored quantity declaring the drive's physical dimension.\n\nNotes\n-----\nA live Python noise_rng object is not a serializable native compiler input.\nNo such object is reconstructed or substituted from this request.",
+        "description": "Serializable constructor inputs of a native-compilable equation model.\n\nAttributes\n----------\nequations, initial_state, parameters, constants, reset : list\n    Ordered declarations. Repeated names refuse before dictionary conversion.\n    An empty initial state selects the public constructor's default.\n    An explicit nonempty initial state must initialise every equation state.\ndt : EquationValue\n    Positive inner timestep, with an explicit time unit in strict mode.\nmethod : str\n    Maintained integrator; order is retained for Gauss\u2013Seidel updates.\nthreshold, rate_expression, probability_expression, spike_value : str or None\n    Authored event condition, stochastic threshold and graded-spike rules.\ndetection, threshold_rng : str\n    Maintained event detection and threshold random generator.\nsubsteps : int\n    Positive inner steps per macro timestep.\nrng_seed : str\n    Canonical decimal unsigned 64-bit key; strings avoid JavaScript loss.\nrandom_stream : int\n    Unsigned 32-bit counter-based random stream.\nunits : str\n    Explicit dimensional-validation mode.\ninput_unit : EquationValue or None\n    Authored quantity declaring the drive's physical dimension.\n\nNotes\n-----\nA live Python noise_rng object is not a serializable native compiler input.\nNo such object is reconstructed or substituted from this request.",
         "properties": {
           "constants": {
             "items": {
@@ -1695,6 +1695,150 @@
         "title": "HeatmapRequest",
         "type": "object"
       },
+      "HostAnalysisRequest": {
+        "additionalProperties": false,
+        "description": "One existing simulation or analysis request selected by a closed operation.",
+        "properties": {
+          "operation": {
+            "enum": [
+              "fi_curve",
+              "bifurcation",
+              "heatmap",
+              "sensitivity",
+              "simulate"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "request": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Request",
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "request"
+        ],
+        "title": "HostAnalysisRequest",
+        "type": "object"
+      },
+      "HostBridgeDescription": {
+        "additionalProperties": false,
+        "description": "Installed local operation families under the closed host wire contract.\n\nAttributes\n----------\nprotocol, profile : str\n    Fixed protocol and local-first execution boundary, without identity grants.\noperations : tuple of str\n    Known actions whose required dependency families imported successfully.\n    This is availability, not scientific or hardware qualification.",
+        "properties": {
+          "operations": {
+            "items": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fi_curve",
+                    "bifurcation",
+                    "heatmap",
+                    "sensitivity",
+                    "simulate"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "enum": [
+                    "ir.build",
+                    "ir.verify",
+                    "ir.replay",
+                    "ir.emit-sv"
+                  ],
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "profile": {
+            "const": "local-first",
+            "default": "local-first",
+            "title": "Profile",
+            "type": "string"
+          },
+          "protocol": {
+            "const": "sc-neurocore.host-api.v1",
+            "default": "sc-neurocore.host-api.v1",
+            "title": "Protocol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operations"
+        ],
+        "title": "HostBridgeDescription",
+        "type": "object"
+      },
+      "HostIRBuildRequest": {
+        "additionalProperties": false,
+        "description": "An ordered authored equation model and its explicit compiler profile.",
+        "properties": {
+          "operation": {
+            "const": "ir.build",
+            "title": "Operation",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/EquationIRRequest"
+          }
+        },
+        "required": [
+          "operation",
+          "request"
+        ],
+        "title": "HostIRBuildRequest",
+        "type": "object"
+      },
+      "HostIREmitRequest": {
+        "additionalProperties": false,
+        "description": "A versioned native graph and explicit emission source policy.",
+        "properties": {
+          "operation": {
+            "const": "ir.emit-sv",
+            "title": "Operation",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/EquationIREmitRequest"
+          }
+        },
+        "required": [
+          "operation",
+          "request"
+        ],
+        "title": "HostIREmitRequest",
+        "type": "object"
+      },
+      "HostIRTextRequest": {
+        "additionalProperties": false,
+        "description": "A versioned native graph for structural verification or source replay.",
+        "properties": {
+          "operation": {
+            "enum": [
+              "ir.verify",
+              "ir.replay"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/EquationIRTextRequest"
+          }
+        },
+        "required": [
+          "operation",
+          "request"
+        ],
+        "title": "HostIRTextRequest",
+        "type": "object"
+      },
+      "JsonValue": {},
       "MeasurementRequest": {
         "additionalProperties": false,
         "description": "A complete scientific result and externally acquired receipts.",
@@ -8259,6 +8403,94 @@
         "summary": "Api Studio Evidence Bundle"
       }
     },
+    "/api/studio/host-bridge": {
+      "get": {
+        "description": "Describe installed operation families without attesting scientific validity.",
+        "operationId": "describe_host_bridge_api_studio_host_bridge_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostBridgeDescription"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Describe Host Bridge"
+      }
+    },
+    "/api/studio/host-jobs": {
+      "post": {
+        "description": "Validate before admission and preserve the complete original JSON text.",
+        "operationId": "submit_host_job_api_studio_host_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "bifurcation": "#/components/schemas/HostAnalysisRequest",
+                    "fi_curve": "#/components/schemas/HostAnalysisRequest",
+                    "heatmap": "#/components/schemas/HostAnalysisRequest",
+                    "ir.build": "#/components/schemas/HostIRBuildRequest",
+                    "ir.emit-sv": "#/components/schemas/HostIREmitRequest",
+                    "ir.replay": "#/components/schemas/HostIRTextRequest",
+                    "ir.verify": "#/components/schemas/HostIRTextRequest",
+                    "sensitivity": "#/components/schemas/HostAnalysisRequest",
+                    "simulate": "#/components/schemas/HostAnalysisRequest"
+                  },
+                  "propertyName": "operation"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/HostAnalysisRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HostIRBuildRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HostIRTextRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HostIREmitRequest"
+                  }
+                ],
+                "title": " Validated"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Submit Host Job Api Studio Host Jobs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Host Job"
+      }
+    },
     "/api/studio/identity/browser-users": {
       "get": {
         "description": "Return password-free persistent browser users for administrators.",
@@ -8874,6 +9106,48 @@
           }
         },
         "summary": "Api Studio Job Artifact"
+      }
+    },
+    "/api/studio/jobs/{job_id}/cancel": {
+      "post": {
+        "description": "Request real cancellation and return the actual settled or pending record.",
+        "operationId": "cancel_studio_job_api_studio_jobs__job_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cancel Studio Job Api Studio Jobs  Job Id  Cancel Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Studio Job"
       }
     },
     "/api/studio/operator/status": {

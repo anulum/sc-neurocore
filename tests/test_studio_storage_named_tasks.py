@@ -25,6 +25,8 @@ from tests.studio_seccomp_support import run_child
 
 
 _NAMED_ROUTES = {
+    "host.analysis": "/api/studio/host-jobs",
+    "host.compiler": "/api/studio/host-jobs",
     "laboratory.run": "/api/fits/jobs",
     "analysis.run": "/api/analysis/jobs",
     "model.scan": "/api/models/scan/jobs",
@@ -49,7 +51,7 @@ def test_named_process_tasks_require_actual_nonpublic_post_policies() -> None:
     """All observed process submissions have an exact protected policy route."""
     policies = build_default_studio_route_policy_registry()
     source_root = Path(__file__).resolve().parents[1] / "src"
-    assert len(_NAMED_ROUTES) == 17
+    assert len(_NAMED_ROUTES) == 19
     for name, route in _NAMED_ROUTES.items():
         task = resolve_named_studio_task(name, authorized_route=route)
         assert task.name == name

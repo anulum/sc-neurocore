@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Connect hosted Studio to an explicitly configured local runtime for simulation,
+  analysis and native equation jobs. Preserve original scientific JSON through
+  real process workers; expose actual cancellation, digest-bound results and
+  parent-mediated downloads without changing the opaque iframe sandbox.
+
 - Declare `federation:config` through the typed SDK in local-host Studio bundles, preserving the published default and requiring SDK support before packaging.
 
 - Refuse incomplete authored equation initial states before native compilation, and keep native compiler tests in their real-backend browser and integration lanes.

@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import secrets
 import socket
-from typing import Literal
 
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 from sc_neurocore.studio.platform.storage_cancel_protocol import (
     CANCEL_SCHEMA_VERSION,
+    CancelAuthorizedRoute,
     StorageCancelRequest,
     decode_cancel_response,
     encode_cancel_message,
@@ -33,7 +33,7 @@ def cancel_request(
     job_id: str,
     *,
     requester: StorageRequester | None,
-    authorized_route: Literal["/api/fits/jobs/{job_id}/cancel"] | None = None,
+    authorized_route: CancelAuthorizedRoute | None = None,
 ) -> StorageCancelRequest:
     """Build a cancellation with a fresh random request ID."""
     return StorageCancelRequest(

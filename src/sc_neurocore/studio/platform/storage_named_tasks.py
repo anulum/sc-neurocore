@@ -82,6 +82,20 @@ class NamedStudioTask:
 
 _TASKS = (
     NamedStudioTask(
+        "host.analysis",
+        "analysis",
+        "studio-host-analysis",
+        "sc_neurocore.studio.api.host_job_tasks:run_host_analysis_task",
+        ("/api/studio/host-jobs",),
+    ),
+    NamedStudioTask(
+        "host.compiler",
+        "compiler",
+        "studio-host-compiler",
+        "sc_neurocore.studio.api.host_job_tasks:run_host_compiler_task",
+        ("/api/studio/host-jobs",),
+    ),
+    NamedStudioTask(
         "laboratory.run",
         "analysis",
         "studio-laboratory",

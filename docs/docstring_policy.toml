@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1461
+expected_file_count = 1471
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -5978,3 +5978,43 @@ rationale = "General power derivatives and strict-unit runtime behavior retain t
 [[file]]
 path = "tests/test_expr_lut_tables_power_classification.py"
 rationale = "Shared original-exponent semantics and real compiler refusal paths preserve every target contract."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/host_jobs_schema.py"
+rationale = "Closed original-text hosted request validation preserves scientific order and exact numeric domains."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/host_job_tasks.py"
+rationale = "Real analysis and native compiler process adapters publish digest-custodied hosted results."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/host_jobs.py"
+rationale = "Local-first hosted description, asynchronous admission and administrator cancellation use existing policy and custody."
+
+[[file]]
+path = "tests/test_studio_host_jobs_schema.py"
+rationale = "Scientific request admission rejects ambiguous, nonfinite and oversized envelopes before job allocation."
+
+[[file]]
+path = "tests/test_studio_host_job_tasks.py"
+rationale = "Actual worker contexts and native compiler outcomes retain exact source and artifact custody."
+
+[[file]]
+path = "tests/test_studio_host_jobs.py"
+rationale = "HTTP-to-process scientific jobs, actual native round trip, artifact integrity and real cancellation."
+
+[[file]]
+path = "tests/test_studio_storage_host_jobs.py"
+rationale = "Hosted tasks cross real storage authority and launcher boundaries; cancellation requires authority approval."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/__init__.py"
+rationale = "Ordered responsibility-router registration includes the real local scientific adapters."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/policy_routes_platform.py"
+rationale = "Hosted submission and administrator cancellation keep their explicit route visibility and policy actions."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_cancel.py"
+rationale = "Authoritative cancellation preserves laboratory actor custody on both laboratory and general administrator routes."

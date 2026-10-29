@@ -42639,6 +42639,121 @@ app_module_file:
 
 ---
 
+## Module `studio.api.host_job_tasks`
+
+### Function `run_host_analysis_task(context, payload)`
+Run a validated existing analysis in the admitted process sandbox.
+
+Parameters
+----------
+context : StudioJobContext
+    Actual supervised worker's cancellation and artifact custody.
+payload : Mapping of str to object
+    Original envelope text; scientific dictionary order survives transport.
+
+Returns
+-------
+dict of str to object
+    Existing scientific result, also sealed as ``host/result.json``.
+
+Raises
+------
+ValueError
+    The envelope selects a different task family or invalid input.
+StudioJobCancelled
+    Cancellation was requested before execution or publication.
+
+### Function `run_host_compiler_task(context, payload)`
+Run the native compiler without confusing transport completion with acceptance.
+
+Parameters
+----------
+context : StudioJobContext
+    Actual supervised worker's cancellation and artifact custody.
+payload : Mapping of str to object
+    Original closed compiler envelope text, preserving exact source inputs.
+
+Returns
+-------
+dict of str to object
+    Existing accepted/refused compiler envelope and its actual evidence.
+
+Raises
+------
+ValueError
+    The envelope is invalid or selects an analysis task.
+StudioJobCancelled
+    Cancellation was requested before execution or publication.
+
+---
+
+## Module `studio.api.host_jobs`
+
+### Function `build_host_jobs_router(context)`
+Build local-only hosted adapters under the normal middleware policies.
+
+Parameters
+----------
+context : StudioApiContext
+    Existing settings, policy and job-service owners; no alternate identity.
+
+Returns
+-------
+APIRouter
+    Description, closed asynchronous submission and administrator cancellation.
+
+---
+
+## Module `studio.api.host_jobs_schema`
+
+### Class `HostBridgeDescription`
+Installed local operation families under the closed host wire contract.
+
+Attributes
+----------
+protocol, profile : str
+    Fixed protocol and local-first execution boundary, without identity grants.
+operations : tuple of str
+    Known actions whose required dependency families imported successfully.
+    This is availability, not scientific or hardware qualification.
+
+
+### Class `HostAnalysisRequest`
+One existing simulation or analysis request selected by a closed operation.
+
+
+### Class `HostIRBuildRequest`
+An ordered authored equation model and its explicit compiler profile.
+
+
+### Class `HostIRTextRequest`
+A versioned native graph for structural verification or source replay.
+
+
+### Class `HostIREmitRequest`
+A versioned native graph and explicit emission source policy.
+
+
+### Function `parse_host_job(text)`
+Validate a complete bounded envelope without changing its stored text.
+
+Parameters
+----------
+text : str
+    Original UTF-8 HTTP object, including the nested scientific request.
+
+Returns
+-------
+HostJobRequest
+    Closed typed operation with the existing scientific schema validated.
+
+Raises
+------
+ValueError
+    Encoding, size, JSON, operation or scientific input is invalid.
+
+---
+
 ## Module `studio.api.identity`
 
 ### Function `build_identity_router(context)`
