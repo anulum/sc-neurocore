@@ -34,7 +34,7 @@ from scpn_studio_platform.manifest import (
 
 from .verbs import NEUROCORE_VERBS, STUDIO_ID, evidence_schemas
 
-PLATFORM_SDK_RANGE = ">=0.11,<0.12"
+PLATFORM_SDK_RANGE = ">=0.11.3.dev0,<0.12"
 """The platform SDK SemVer range the studio builds on (matches the ``federation`` extra)."""
 
 PROTOCOL_VERSION = "1"

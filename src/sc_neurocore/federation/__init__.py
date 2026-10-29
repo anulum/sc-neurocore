@@ -11,7 +11,7 @@
 Hub-facing federation surface (schema-A capability manifest + schema-B evidence
 bundles), distinct from the local FastAPI Studio web app under
 ``sc_neurocore.studio``. Importing this package requires the ``federation`` extra
-(``pip install sc-neurocore[federation]`` → ``scpn-studio-platform>=0.11,<0.12``, the
+(``pip install sc-neurocore[federation]`` → ``scpn-studio-platform>=0.11.3.dev0,<0.12``, the
 Python 3.11+ SDK with the verifiable-honesty :mod:`~scpn_studio_platform.seal` module); a
 clean ``ModuleNotFoundError`` is raised when the platform SDK is absent, which is
 why tests guard with ``pytest.importorskip("scpn_studio_platform")``.

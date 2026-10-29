@@ -20,6 +20,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Require the published federation SDK 0.11.3.dev0 for typed local-host capabilities, and pin its verified release artifacts in the federation dependency profile.
+
 - Lower native compound LIF, Dense, DCLS, scalar arithmetic and constant Q8.16 graph, attention and Kuramoto operations to typed HW/Comb/Seq MLIR. Verify operand formats and dimensions before hardware emission, preserve Boolean spike composition and compute parameterized DCLS tents without fixed-width clipping. Add independent integer trajectories through real RTL and CIRCT.
 
 - Accept partial numeric initial values and held state in Studio projects,
