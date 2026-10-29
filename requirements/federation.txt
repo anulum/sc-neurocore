@@ -327,9 +327,9 @@ rpds-py==2026.9.1 \
     # via
     #   jsonschema
     #   referencing
-scpn-studio-platform==0.11.3.dev0 \
-    --hash=sha256:067dc4f7fcff7e15ff63002d806825d6f70f49799c00386bf3214de52b58ccfe \
-    --hash=sha256:d6cbb1c6dd7f5ba60ba0590c933c2e0e1b401800bffe2a4ca8df2c75fd8c6162
+scpn-studio-platform==0.11.3 \
+    --hash=sha256:59bd4f88029c34a717189975617e5e9890e403820ebcd52645bda6487b7e8fc6 \
+    --hash=sha256:b9f0a1fb336b15e57fd7415dda74411935ba714fc86978ac0717834921d52603
     # via -r requirements/federation.in
 typing-extensions==4.16.0 ; python_full_version < '3.13' \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \

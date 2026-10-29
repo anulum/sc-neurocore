@@ -6,4 +6,4 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Federation dependency profile
 
-scpn-studio-platform>=0.11.3.dev0,<0.12
+scpn-studio-platform>=0.11.3,<0.12

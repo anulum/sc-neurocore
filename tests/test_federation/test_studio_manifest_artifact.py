@@ -74,7 +74,7 @@ def test_artifact_is_schema_a_envelope_well_formed() -> None:
     assert payload["studio"] == "sc-neurocore"
     assert payload["studio_version"] == SOURCE_VERSION
     assert payload["contract_era"] == "v2"
-    assert payload["platform_sdk"] == ">=0.11.3.dev0,<0.12"
+    assert payload["platform_sdk"] == ">=0.11.3,<0.12"
     assert payload["ui_module"] == {
         "remote_entry": "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js",
         "exposes": ["./SnnStudioPanel"],

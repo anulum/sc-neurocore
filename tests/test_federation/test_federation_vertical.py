@@ -53,7 +53,7 @@ def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
     assert manifest.contract_era == "v2"
     assert manifest.studio == STUDIO_ID == "sc-neurocore"
     assert manifest.studio_version == SOURCE_VERSION
-    assert manifest.platform_sdk == ">=0.11.3.dev0,<0.12"
+    assert manifest.platform_sdk == ">=0.11.3,<0.12"
     assert manifest.ui_module is not None
     assert manifest.ui_module.to_dict() == {
         "remote_entry": "https://www.anulum.org/studios/sc-neurocore/remoteEntry.js",
