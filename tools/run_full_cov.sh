@@ -26,6 +26,7 @@
 #   bash tools/run_full_cov.sh --skip-slow  # exclude known-heavy dirs
 #   bash tools/run_full_cov.sh --shard=1/4  # every fourth sorted module, then batch
 #   bash tools/run_full_cov.sh --shard=1/4 --list-files  # NUL-delimited paths; no tests
+#   bash tools/run_full_cov.sh --shard=1/8 --timings=pytest-durations.json
 #   bash tools/run_full_cov.sh --combine-from=DIR --expect-shards=2 --cov-fail-under=100
 #
 # Sharding: a shard takes every Nth module of the same sorted file list, then
@@ -72,6 +73,7 @@ shard=""
 combine_from=""
 expect_shards=""
 list_files=false
+timings=""
 for arg in "$@"; do
     case "$arg" in
         --skip-slow) skip_slow=true ;;
@@ -83,6 +85,7 @@ for arg in "$@"; do
         --combine-from=*) combine_from="${arg#*=}" ;;
         --expect-shards=*) expect_shards="${arg#*=}" ;;
         --list-files) list_files=true ;;
+        --timings=*) timings="${arg#*=}" ;;
         *)           echo "unknown arg: $arg" >&2; exit 2 ;;
     esac
 done
@@ -174,9 +177,17 @@ if ((shard_count > ${#test_files[@]})); then
     exit 2
 fi
 selected=()
-for ((index = shard_index - 1; index < ${#test_files[@]}; index += shard_count)); do
-    selected+=("${test_files[index]}")
-done
+if [[ -n "$timings" ]]; then
+    selection=$(mktemp)
+    trap 'rm -f "$selection"' EXIT
+    printf '%s\0' "${test_files[@]}" | python tools/pytest_shards.py select \
+        --shard="$shard_index/$shard_count" --timings="$timings" > "$selection"
+    mapfile -d '' -t selected < "$selection"
+else
+    for ((index = shard_index - 1; index < ${#test_files[@]}; index += shard_count)); do
+        selected+=("${test_files[index]}")
+    done
+fi
 test_files=("${selected[@]}")
 if $list_files; then
     printf '%s\0' "${test_files[@]}"

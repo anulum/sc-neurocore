@@ -72,7 +72,7 @@ expected_count = 2
 name = "supplemental-guides"
 rationale = "Specialized operational and reference guides linked from higher-level manuals or retained as direct references."
 patterns = ["guides/*.md"]
-expected_count = 38
+expected_count = 39
 
 [[classification]]
 name = "supplemental-benchmark-references"

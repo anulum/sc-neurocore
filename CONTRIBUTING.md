@@ -92,23 +92,46 @@ immediate process exit. Each process writes separate data; pytest-cov combines
 it into the current batch, and `--cov-append` retains earlier batches. Keep both
 patches and the parallel setting when changing the coverage runner.
 
-Hosted CI partitions the sorted test-module list into four shards for each
+Hosted CI partitions the complete test-module list into eight shards for each
 Python interpreter, then runs each shard in memory-reclaiming batches. Every
 module runs once per interpreter; interpreter-independent formal proofs retain
 their single coverage run. Focused coverage and backend gates are distributed
 among the Python 3.12 shards. The required `test (3.11)` through `test (3.14)`
 checks require all test shards to succeed. Python 3.12 additionally combines all
-four indexed coverage artifacts and native Windows refusal data before applying
+eight indexed coverage artifacts and native Windows refusal data before applying
 the unchanged 100% gate. A failed, absent or misidentified shard cannot pass.
 
 Inspect a shard without running tests or replacing existing coverage data:
 
 ```bash
-bash tools/run_full_cov.sh --shard=1/4 --list-files | tr '\0' '\n'
+bash tools/run_full_cov.sh --shard=1/8 --list-files | tr '\0' '\n'
 ```
 
 `--list-files` emits NUL-delimited repository-relative paths. Shard assignment
 does not depend on `--batch-size`; choose batch size for process memory limits.
+
+CI builds the release engine wheel once per Python ABI and shares that run's
+artifact with its test shards. Ready-to-install wheels use exact source,
+dependency, toolchain and platform cache keys. Local installer commands still
+build the engine unless `SC_NEUROCORE_CI_ENGINE_WHEEL_DIR` names the downloaded
+directory; a missing, duplicate or ABI-incompatible wheel fails admission.
+
+One shared timing snapshot drives every shard in a run. With previous JUnit
+durations, the runner assigns the longest modules to the least-loaded shard.
+New modules receive the median recorded duration and always join discovery.
+Without history, deterministic round-robin assignment still runs every module.
+The next run retains actual measured durations, including completed tests in
+failed batches. Timing data controls order and placement, never test membership.
+
+```bash
+bash tools/run_full_cov.sh --shard=1/8 --timings=pytest-durations.json --list-files
+python tools/pytest_shards.py record --reports=test-results --output=pytest-durations.json
+```
+
+`SCN_CI_SHARD_COUNT`, the matrix indices and displayed shard count must agree;
+the workflow contract tests enforce this. Increase capacity based on successful
+end-to-end measurements, including queueing and setup. More queued shards can
+cost more time than they save, and one indivisible long test sets a lower bound.
 
 Installed-wheel CI runs `tests/test_engine_global_pickle.py` from an external
 consumer directory. It round-trips every public native class/function global

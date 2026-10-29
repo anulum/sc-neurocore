@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5475
+    "test_files": 5477
   },
   "documentation": {
     "public_pages": [
@@ -8393,6 +8393,7 @@
       "tests/test_tools/test_check_ir_circt.py",
       "tests/test_tools/test_check_mojo_isa_baseline.py",
       "tests/test_tools/test_ci_go_cache_contract.py",
+      "tests/test_tools/test_ci_install_common.py",
       "tests/test_tools/test_ci_julia_runtime_contract.py",
       "tests/test_tools/test_ci_security_packet.py",
       "tests/test_tools/test_compiler_e2e_workflow_contract.py",
@@ -8452,6 +8453,7 @@
       "tests/test_tools/test_preflight_native_requirements.py",
       "tests/test_tools/test_pypi_downloads.py",
       "tests/test_tools/test_pytest_plugin_policy.py",
+      "tests/test_tools/test_pytest_shards.py",
       "tests/test_tools/test_python_code_scanner_plan.py",
       "tests/test_tools/test_python_dependency_audit.py",
       "tests/test_tools/test_python_dependency_profiles.py",

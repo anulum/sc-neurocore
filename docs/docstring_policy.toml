@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1494
+expected_file_count = 1498
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -6110,3 +6110,19 @@ rationale = "The real CLI, generated testbench and adaptive wrapper expose held 
 [[file]]
 path = "src/sc_neurocore/studio/model_capabilities.py"
 rationale = "Catalogue operations report the same canonical synthesis targets as the tools that execute them."
+
+[[file]]
+path = "tools/pytest_shards.py"
+rationale = "Measured JUnit durations and complete deterministic module assignment through the public scheduling CLI."
+
+[[file]]
+path = "tools/ci_install_common.py"
+rationale = "Same-run engine wheel admission and the existing local build and checkout extension alignment."
+
+[[file]]
+path = "tests/test_tools/test_pytest_shards.py"
+rationale = "Scheduler CLI inputs, live repository partitioning, growth and JUnit measurement history."
+
+[[file]]
+path = "tests/test_tools/test_ci_install_common.py"
+rationale = "Shared artifact absence, ambiguity and actual pip ABI refusal without build fallback."

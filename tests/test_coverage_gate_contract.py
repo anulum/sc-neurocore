@@ -93,7 +93,7 @@ def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     """Makefile and primary hosted CI must not weaken the canonical threshold."""
     assert _cov_thresholds(_ROOT / "Makefile") == (100,)
-    assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100,)
+    assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100, 100)
 
 
 def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
@@ -105,7 +105,8 @@ def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     step = workflow_text[start:end]
 
     assert step.count("bash tools/run_full_cov.sh --batch-size=384") == 2
-    assert step.count('--shard="${{ matrix.shard-index }}/4"') == 2
+    assert step.count('--shard="${{ matrix.shard-index }}/$SCN_CI_SHARD_COUNT"') == 2
+    assert step.count('--timings="$RUNNER_TEMP/pytest-timings/pytest-durations.json"') == 2
     assert "--batch-size=384 --no-cov" in step
     assert "--cov-fail-under" not in step
     assert "pytest -n auto" not in step
@@ -138,8 +139,9 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     matrix = test["strategy"]["matrix"]
     include = matrix["include"]
     assert matrix["python-minor"] == ["3.11", "3.12", "3.13", "3.14"]
-    assert matrix["shard-index"] == [1, 2, 3, 4]
+    assert matrix["shard-index"] == list(range(1, 9))
     count = len(matrix["shard-index"])
+    assert int(workflow["env"]["SCN_CI_SHARD_COUNT"]) == count
     coverage = [leg for leg in include if leg.get("coverage") is True]
     assert coverage == [{"python-minor": "3.12", "python-version": "3.12.16", "coverage": True}]
     assert "matrix.shard-index" in test["name"]
@@ -163,7 +165,7 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert retrieve["with"]["merge-multiple"] is True
     gate = next(step for step in union["steps"] if step.get("name") == "Coverage union gate")
     assert '--combine-from="$RUNNER_TEMP/coverage-shards"' in gate["run"]
-    assert f"--expect-shards={count}" in gate["run"]
+    assert '--expect-shards="$SCN_CI_SHARD_COUNT"' in gate["run"]
     assert "--cov-fail-under=100" in gate["run"]
     assert "coverage-union" in workflow["jobs"]["build"]["needs"]
     readiness = union["steps"][0]
@@ -179,6 +181,52 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert compatibility["strategy"]["matrix"]["python-minor"] == ["3.11", "3.13", "3.14"]
     assert compatibility["steps"][0]["env"] == {"TEST_RESULT": "${{ needs.test.result }}"}
     assert compatibility["steps"][0]["run"] == 'test "$TEST_RESULT" = success'
+
+
+def test_hosted_shards_share_current_abi_wheels_and_one_timing_snapshot() -> None:
+    """Every shard consumes its ABI's current artifact and the same run's scheduling hints."""
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    jobs = workflow["jobs"]
+    test = jobs["test"]
+    builders = jobs["test-engine-wheels"]
+    assert builders["strategy"]["matrix"]["python-version"] == [
+        row["python-version"]
+        for row in test["strategy"]["matrix"]["include"]
+        if "python-version" in row
+    ]
+    assert builders["runs-on"] == test["runs-on"] == "ubuntu-24.04"
+    assert {"test-engine-wheels", "test-timing-baseline"} <= set(test["needs"])
+    build = next(
+        step
+        for step in builders["steps"]
+        if step.get("name") == "Build the current engine once per Python ABI"
+    )
+    assert 'maturin build --release --locked --out "$RUNNER_TEMP/engine-wheel"' in build["run"]
+    producer = builders["steps"][-1]
+    consumer = next(
+        step
+        for step in test["steps"]
+        if step.get("name") == "Retrieve this run's ABI-matching engine"
+    )
+    assert consumer["with"]["name"] == producer["with"]["name"]
+    install = next(step for step in test["steps"] if step.get("name") == "Install package")
+    assert install["env"]["SC_NEUROCORE_CI_ENGINE_WHEEL_DIR"] == consumer["with"]["path"]
+    cache = next(step for step in builders["steps"] if step.get("id") == "engine-wheel")
+    assert "restore-keys" not in cache["with"]
+    for source in ("engine/src/**", "bridge/vendor/**", "Cargo.lock", "requirements/maturin.txt"):
+        assert source in cache["with"]["key"]
+    timing_consumer = next(
+        step
+        for step in test["steps"]
+        if step.get("name") == "Retrieve this run's shared timing baseline"
+    )
+    assert (
+        timing_consumer["with"]["name"] == jobs["test-timing-baseline"]["steps"][-1]["with"]["name"]
+    )
+    assert jobs["test-timings"]["if"] == "${{ !cancelled() }}"
+    assert jobs["test-timings"]["needs"] == ["test"]
 
 
 def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> None:

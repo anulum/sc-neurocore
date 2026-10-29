@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -62,21 +63,41 @@ def _sync_engine_extension_into_bridge() -> None:
 
 
 def install_editable(extra: str) -> int:
-    DIST_DIR.mkdir(exist_ok=True)
-    if TRACKED_WINDOWS_EXTENSION.exists():
-        TRACKED_WINDOWS_EXTENSION.unlink()
-    for wheel in DIST_DIR.glob("sc_neurocore_engine-*.whl"):
-        wheel.unlink()
-    _run(
-        sys.executable, "-m", "pip", "install", "--require-hashes", "-r", str(MATURIN_REQUIREMENTS)
-    )
-    _run("maturin", "build", "--release", "--out", str(DIST_DIR), cwd=BRIDGE_DIR)
+    """Install this checkout with its built or same-run shared engine wheel.
 
-    wheels = sorted(DIST_DIR.glob("sc_neurocore_engine-*.whl"))
-    if not wheels:
-        raise FileNotFoundError("No sc_neurocore_engine wheel was produced in dist/")
+    Parameters
+    ----------
+    extra : str
+        Comma-separated project extras to install for the selected CI lane.
 
-    _run(sys.executable, "-m", "pip", "install", "--force-reinstall", str(wheels[-1]))
+    Returns
+    -------
+    int
+        Zero after native import alignment and version checks succeed.
+    """
+    shared = os.environ.get("SC_NEUROCORE_CI_ENGINE_WHEEL_DIR")
+    if shared is None:
+        DIST_DIR.mkdir(exist_ok=True)
+        if TRACKED_WINDOWS_EXTENSION.exists():
+            TRACKED_WINDOWS_EXTENSION.unlink()
+        for wheel in DIST_DIR.glob("sc_neurocore_engine-*.whl"):
+            wheel.unlink()
+        _run(
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--require-hashes",
+            "-r",
+            str(MATURIN_REQUIREMENTS),
+        )
+        _run("maturin", "build", "--release", "--out", str(DIST_DIR), cwd=BRIDGE_DIR)
+    wheel_dir = Path(shared) if shared is not None else DIST_DIR
+    wheels = sorted(wheel_dir.glob("sc_neurocore_engine-*.whl"))
+    if len(wheels) != 1:
+        raise FileNotFoundError(f"Expected one engine wheel in {wheel_dir}, found {len(wheels)}")
+
+    _run(sys.executable, "-m", "pip", "install", "--force-reinstall", str(wheels[0]))
     _sync_engine_extension_into_bridge()
     _run(sys.executable, "-m", "pip", "install", "-e", f".[{extra}]")
     _run(sys.executable, str(ROOT / "tools" / "version_surface_audit.py"))

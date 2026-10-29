@@ -21,6 +21,7 @@ They check three things:
 from __future__ import annotations
 
 import os
+import json
 import re
 import shutil
 import subprocess
@@ -72,6 +73,7 @@ def project(tmp_path: Path) -> Path:
         pytest.skip("bash is not available")
     (tmp_path / "tools").mkdir()
     shutil.copy2(_RUNNER, tmp_path / "tools" / "run_full_cov.sh")
+    shutil.copy2(_ROOT / "tools" / "pytest_shards.py", tmp_path / "tools" / "pytest_shards.py")
     (tmp_path / "pyproject.toml").write_text(_PYPROJECT, encoding="utf-8")
     package = tmp_path / "src" / "sc_neurocore"
     package.mkdir(parents=True)
@@ -227,6 +229,49 @@ def test_formal_proofs_keep_single_coverage_custody(project: Path) -> None:
     assert coverage.returncode == behavioral.returncode == 0
     assert path in coverage.stdout.split("\0")
     assert set(coverage.stdout.split("\0")) - set(behavioral.stdout.split("\0")) == {path}
+
+
+def test_weighted_shards_run_every_module_once_and_gate_the_same_union(project: Path) -> None:
+    """Real pytest batches honor measured weights without changing coverage closure."""
+    durations = project / "durations.json"
+    durations.write_text(
+        json.dumps(
+            {
+                "schema": 1,
+                "durations": {
+                    "tests/test_alpha.py": 10,
+                    "tests/test_beta.py": 6,
+                    "tests/test_gamma.py": 4,
+                },
+            }
+        )
+    )
+    union = project / "union"
+    union.mkdir()
+    ran = []
+    for index in (1, 2):
+        shutil.rmtree(project / "test-results", ignore_errors=True)
+        result = _run(project, f"--shard={index}/2", f"--timings={durations}")
+        assert result.returncode == 0, result.stdout + result.stderr
+        ran.append(_executed_modules(project))
+        shutil.copy2(project / ".coverage", union / f".coverage.shard-{index}")
+    assert ran == [["tests.test_alpha"], ["tests.test_beta", "tests.test_gamma"]]
+    result = _run(project, f"--combine-from={union}", "--expect-shards=2")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert re.search(r"^TOTAL\s.*\s100\.00%$", result.stdout, re.MULTILINE)
+
+
+def test_malformed_timing_cache_cannot_start_tests_or_remove_coverage(project: Path) -> None:
+    """A corrupt scheduling hint fails before any destructive or pytest operation."""
+    durations = project / "durations.json"
+    durations.write_text('{"schema":1,"durations":{"tests/test_alpha.py":-1}}')
+    coverage = project / ".coverage"
+    coverage.write_bytes(b"preserve")
+    result = _run(project, "--shard=1/2", f"--timings={durations}")
+    assert result.returncode == 2
+    assert "positive finite seconds" in result.stderr
+    assert coverage.read_bytes() == b"preserve"
+    assert not (project / "test-results").exists()
 
 
 def test_unsharded_runner_still_gates_the_complete_suite(project: Path) -> None:

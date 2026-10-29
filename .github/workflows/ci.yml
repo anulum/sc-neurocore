@@ -33,6 +33,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  SCN_CI_SHARD_COUNT: "8"
   CARGO_HTTP_MULTIPLEXING: "false"
   CMAKE_POLICY_VERSION_MINIMUM: "3.5"
   # Hosted CI builds the engine, so the engine-binding import gate must never
@@ -153,6 +154,12 @@ jobs:
       - name: Install locked native-adapter test and lint dependencies
         run: |
           python -m pip install --require-hashes -r requirements/ci-dev.txt -r requirements/lint.txt
+      - name: Cache the Rust documentation build target
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: target/rust-documentation
+          key: ${{ runner.os }}-${{ github.repository }}-rustdoc-1.98.1-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('engine/src/**', 'tools/rustdoc_symbols/src/**') }}
+          restore-keys: ${{ runner.os }}-${{ github.repository }}-rustdoc-1.98.1-${{ hashFiles('**/Cargo.lock') }}-
       - name: Rust syntax producer strict gates
         run: |
           cargo fmt --check --manifest-path tools/rustdoc_symbols/Cargo.toml
@@ -285,12 +292,87 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
 
+  test-timing-baseline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ runner.temp }}/pytest-timings/pytest-durations.json
+          key: ${{ github.repository }}-pytest-timings-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ${{ github.repository }}-pytest-timings-v1-
+      - name: Initialize a cold timing baseline
+        shell: bash
+        run: |
+          python3 - "$RUNNER_TEMP/pytest-timings/pytest-durations.json" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          path.parent.mkdir(parents=True, exist_ok=True)
+          if not path.exists():
+              path.write_text('{"schema":1,"durations":{}}\n')
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: pytest-timing-baseline
+          path: ${{ runner.temp }}/pytest-timings/pytest-durations.json
+          if-no-files-found: error
+          retention-days: 7
+
+  test-engine-wheels:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11.18", "3.12.16", "3.13.18", "3.14.10"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Restore an exact-source engine wheel
+        id: engine-wheel
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ runner.temp }}/engine-wheel
+          key: ubuntu24-x64-engine-v1-release-z3default-cmake3.5-py${{ matrix.python-version }}-rust1.98.1-${{ hashFiles('engine/src/**', 'engine/Cargo.*', 'engine/rust-toolchain.toml', 'engine/vendor/**', 'engine/.cargo/**', 'bridge/**/*.py', 'bridge/pyproject.toml', 'bridge/.cargo/**', 'bridge/vendor/**', 'bridge/rayon_source_patch.toml', '.cargo/**', 'rust-toolchain.*', 'Cargo.toml', 'Cargo.lock', 'requirements/maturin.txt') }}
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
+        if: steps.engine-wheel.outputs.cache-hit != 'true'
+        with:
+          toolchain: "1.98.1"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        if: steps.engine-wheel.outputs.cache-hit != 'true'
+        with:
+          workspaces: engine
+          key: ${{ github.repository }}-test-wheel-py${{ matrix.python-version }}
+      - name: Build the current engine once per Python ABI
+        if: steps.engine-wheel.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          python -m pip install --require-hashes -r requirements/maturin.txt
+          cd bridge
+          maturin build --release --locked --out "$RUNNER_TEMP/engine-wheel"
+      - name: Save the exact-source engine wheel
+        if: steps.engine-wheel.outputs.cache-hit != 'true'
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ runner.temp }}/engine-wheel
+          key: ${{ steps.engine-wheel.outputs.cache-primary-key }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: test-engine-wheel-py${{ matrix.python-version }}
+          path: ${{ runner.temp }}/engine-wheel/sc_neurocore_engine-*.whl
+          if-no-files-found: error
+          retention-days: 7
+
   test:
     # Coverage shards are not required checks themselves; the union job
     # `coverage-union` carries the required `test (3.12)` name and the gate.
-    name: test (${{ matrix.python-minor }}${{ matrix.coverage && ' coverage' || '' }} shard ${{ matrix.shard-index }}/4)
-    runs-on: ubuntu-latest
-    needs: [shd-non-linux-refusal]
+    name: test (${{ matrix.python-minor }}${{ matrix.coverage && ' coverage' || '' }} shard ${{ matrix.shard-index }}/8)
+    runs-on: ubuntu-24.04
+    needs: [shd-non-linux-refusal, test-engine-wheels, test-timing-baseline]
     # Partition files before batching: neighboring compiler/backend modules no
     # longer occupy one indivisible 384-file batch on a single hosted runner.
     timeout-minutes: ${{ matrix.coverage && 300 || 240 }}
@@ -298,14 +380,14 @@ jobs:
       fail-fast: false
       matrix:
         python-minor: ["3.11", "3.12", "3.13", "3.14"]
-        shard-index: [1, 2, 3, 4]
+        shard-index: [1, 2, 3, 4, 5, 6, 7, 8]
         # Exact interpreter patch pins shrink the setup-python mutable-manifest
         # surface (actions/python-versions is fetched at runtime with no
         # per-artifact digest — accepted + tracked residual, see
         # docs/internal/ci_supply_chain_residuals.md). `python-minor` keeps the
         # branch-protection-required job names `test (3.11)`..`test (3.14)`
         # stable across patch bumps through the aggregate jobs below. Every
-        # interpreter runs the complete suite across four shards. `primary`
+        # interpreter runs the complete suite across eight shards. `primary`
         # selects native desktop/browser admission, not the other exact gates.
         include:
           - python-minor: "3.11"
@@ -474,7 +556,21 @@ jobs:
         working-directory: studio/frontend
         run: npm run build
 
+      - name: Retrieve this run's ABI-matching engine
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: test-engine-wheel-py${{ matrix.python-version }}
+          path: ${{ runner.temp }}/engine-wheel
+
+      - name: Retrieve this run's shared timing baseline
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: pytest-timing-baseline
+          path: ${{ runner.temp }}/pytest-timings
+
       - name: Install package
+        env:
+          SC_NEUROCORE_CI_ENGINE_WHEEL_DIR: ${{ runner.temp }}/engine-wheel
         run: |
           python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
           python tools/ci_install_dev.py
@@ -779,11 +875,13 @@ jobs:
         run: |
           if [[ "${{ matrix.coverage }}" == "true" ]]; then
             # One shard of the instrumented suite; `coverage-union` gates the union.
-            bash tools/run_full_cov.sh --batch-size=384 --shard="${{ matrix.shard-index }}/4"
+            bash tools/run_full_cov.sh --batch-size=384 --shard="${{ matrix.shard-index }}/$SCN_CI_SHARD_COUNT" \
+              --timings="$RUNNER_TEMP/pytest-timings/pytest-durations.json"
           else
             # Full behavioral compatibility matrix, without repeating
             # coverage instrumentation on every Python interpreter.
-            bash tools/run_full_cov.sh --batch-size=384 --no-cov --shard="${{ matrix.shard-index }}/4"
+            bash tools/run_full_cov.sh --batch-size=384 --no-cov --shard="${{ matrix.shard-index }}/$SCN_CI_SHARD_COUNT" \
+              --timings="$RUNNER_TEMP/pytest-timings/pytest-durations.json"
           fi
 
       - name: NIR graph exact coverage
@@ -1134,6 +1232,32 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  test-timings:
+    runs-on: ubuntu-24.04
+    needs: [test]
+    if: ${{ !cancelled() }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: pytest-timing-baseline
+          path: ${{ runner.temp }}/pytest-timings
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: test-results-py3.12-shard*
+          path: ${{ runner.temp }}/pytest-reports
+      - name: Retain actual module durations, including observed failed batches
+        shell: bash
+        run: |
+          python3 tools/pytest_shards.py record --reports="$RUNNER_TEMP/pytest-reports" \
+            --previous="$RUNNER_TEMP/pytest-timings/pytest-durations.json" \
+            --output="$RUNNER_TEMP/pytest-timings/pytest-durations.json"
+      - uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ runner.temp }}/pytest-timings/pytest-durations.json
+          key: ${{ github.repository }}-pytest-timings-v1-${{ github.run_id }}-${{ github.run_attempt }}
+
   coverage-union:
     # Carries the required check name: the instrumented suite is sharded, but
     # the 100 % gate applies once, to the union of every shard and the native
@@ -1199,7 +1323,7 @@ jobs:
         shell: bash
         run: |
           bash tools/run_full_cov.sh --combine-from="$RUNNER_TEMP/coverage-shards" \
-            --expect-shards=4 --html --cov-fail-under=100
+            --expect-shards="$SCN_CI_SHARD_COUNT" --html --cov-fail-under=100
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
