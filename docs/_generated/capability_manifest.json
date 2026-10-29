@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5478
+    "test_files": 5479
   },
   "documentation": {
     "public_pages": [
@@ -4441,6 +4441,7 @@
       "tests/test_ccw_bridge_glyph_vector_to_vibrana.py",
       "tests/test_ccw_bridge_scpn_metrics_to_ccw.py",
       "tests/test_certification_gen.py",
+      "tests/test_changelog_single_source.py",
       "tests/test_chaos_chaotic_rng.py",
       "tests/test_chaos_tent_map_rng.py",
       "tests/test_chaotic_encoder.py",

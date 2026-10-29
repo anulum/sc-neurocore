@@ -4,13 +4,21 @@
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
-<!-- SC-NeuroCore — Documentation changelog -->
+<!-- SC-NeuroCore — Changelog -->
 
 # Changelog
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
 ## [Unreleased]
+
+- Keep one changelog. `CHANGELOG.md` and `docs/CHANGELOG.md` had been edited separately and diverged by about 1,350 entries and 26 release sections. They are merged into `CHANGELOG.md`: every entry and section of both files is kept once, in its release section, and where the same entry had been corrected only in the documentation copy, the corrected wording is kept. `docs/CHANGELOG.md`, which the documentation site and the release workflow read, is now a byte copy, and a test requires it.
+
+- Restored `GLIFNeuron` to the Teeter et al. five-state GLIF5 equations across
+  Python, production and safety Rust, Julia, Go, Mojo, paired schemas, receipts,
+  benchmarks, Q32.32 RTL, Yosys, and bounded formal evidence. The former
+  four-state RK4 recurrence remains available as the count-neutral
+  `SCFourStateGLIFNeuron` compatibility identity.
 
 - Require the published federation SDK 0.11.3.dev0 for typed local-host capabilities, and pin its verified release artifacts in the federation dependency profile.
 
@@ -26,9 +34,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Preserve partial numeric initial states and held-state variables through Python integration, native IR/source replay, registered and folded RTL, fixed C/Rust kernels, adaptive wrappers and generated testbenches. Keep strict-unit initial quantities explicit and retain the legacy function-lowering default.
 
 - Report source-located encoded argument intervals and separate numerical measurements for each approximation call, including event and exponential-Euler expressions. Preserve mathematical-domain exclusions, empty-domain results and exhaustive versus sampled scope. Add a source-bound first-call/cached analysis benchmark; generated arithmetic and the legacy lowering default remain unchanged.
+- Keep the desktop HTTP cache separate for each interface content version so
+  returning from rollback cannot display an older interface with a newer
+  backend. Preserve browser sessions, the stable local origin and existing caches.
 
 - Add opt-in v2 general constant and dynamic positive-base powers across Verilog, fixed C/Rust and source-bound native IR, with portable C++ math-library execution. Keep literal exponents independent of the base format and publish conditional domains, sampled measurements and conservative arithmetic bounds. Preserve the legacy default and repeated-multiply arithmetic.
 - Add opt-in v2 `rsqrt(x)` across Python equations, Verilog, fixed C/Rust, portable C++ and native IR/source replay. Preserve inverse-square-root physical units; round positive encoded inputs with a half-LSB bound using bounded integer arithmetic and require proven positivity for state-dependent derivatives.
+- Reject unsupported model compiler Q-formats as invalid requests before
+  starting compile or co-simulation jobs. Preserve the offered Q8.8 and
+  Q16.16 formats, their default and accepted zero-padded spelling.
+
+- Browse registered hardware profiles, NIR constraints, FPGA toolchain targets
+  and the board-driver interface in Studio. Keep registration distinct from
+  tool availability and physical evidence, and select synthesis targets from
+  the same backend catalogue without starting a tool or device operation.
+
+- Connect hosted Studio to an explicitly configured local runtime for simulation,
+  analysis and native equation jobs. Preserve original scientific JSON through
+  real process workers; expose actual cancellation, digest-bound results and
+  parent-mediated downloads without changing the opaque iframe sandbox.
+
+- Declare `federation:config` through the typed SDK in local-host Studio bundles, preserving the published default and requiring SDK support before packaging.
 
 - Require explicit equation initial quantities for strict-unit native compilation, and keep native compiler tests in their real-backend browser and integration lanes.
 
@@ -37,6 +63,42 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Add opt-in v2 `hypot(x, y)` across equations, source-bound native IR, C/Rust fixed kernels, C++ expressions and RTL. Preserve compatible physical units and round the norm once with a half-LSB bound; refuse an unproven singular derivative domain.
 
 - Refresh the equation-program benchmark with constant/dynamic powers, reciprocal root, rounding, Heaviside and Euclidean norm cases: checked expressions take between 1.0 and 2.7 times their direct Python references on the recorded shared host. These are local regression timings, not production speed claims; see `benchmarks/results/bench_equation_program.json`.
+- Split the instrumented full-suite CI run into two coverage shards. On
+  2026-10-27 the single coverage leg ran 5 h 27 min of batches and reached
+  GitHub's six-hour job limit before its 100 % gate. Each shard now runs every
+  second batch of the same global batch list. A union job keeps the required
+  `test (3.12)` check name and combines both shards with the native Windows
+  refusal data. It applies the unchanged 100 % gate and fails unless every shard
+  published its data. `tools/run_full_cov.sh` gains `--shard=K/N` and
+  `--combine-from=DIR --expect-shards=N`.
+
+- Stop declaring a `clk` input in the Studio IR builder. The native IR reserves
+  that name for the ports the SystemVerilog emitter generates, so IR verification
+  and SystemVerilog emission from `/api/ir/build` output were refused.
+
+- Move the evolutionary substrate crate to `sha2` 0.11, which replaces the
+  vulnerable `block-buffer` 0.10.4 with 0.12.1 (GHSA-qwgh-2vcv-g2f7). Genome
+  identifiers are unchanged because the SHA-256 output is the same.
+
+- Show a read-only hosted view when the federated Studio panel is mounted in an
+  iframe. It asks only its immediate parent for the Hub's `federation:config`
+  metadata, offers a retry after refusal, invalid data or a five-second timeout,
+  and makes no backend, WebSocket or browser-storage requests. A top-level host
+  still mounts the standalone workspace, now loaded as a separate chunk.
+
+- Report model-library and experiment-library load failures in separate alerts
+  with their own Retry buttons. Previously loaded entries stay visible, and an
+  older response can no longer overwrite a newer successful load.
+
+- Add `--local-host` to `tools.build_studio_remote`. It selects the producer's
+  relative remote entry and pins its bytes with `remote_entry_digest`, and the
+  selected UI descriptor contributes to the manifest content digest. The default
+  bundle keeps the published URL. Neither mode establishes host admission.
+
+- Keep the desktop window's closing state when Chromium reports a renderer loss
+  after the close began. The window stops listening for renderer loss as soon as
+  it replaces the interface, instead of depending on whether the page is deleted
+  before the loss notification arrives.
 
 - Add opt-in compiler v2 `round(x)` with ties to even and `heaviside(x, at_zero)` with a dynamic zero value across Python, generated C/Rust/C++, RTL and native IR/source replay. Fixed-point results saturate to the signed word; strict-unit rounding uses base units. The default `lut-v1` lowering is unchanged.
 
@@ -129,11 +191,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 - Add per-user desktop profile paths and bounded, versioned configuration. Preserve legacy projects, refuse unusable profile roots and retain the selected origin and project directory through atomic private writes.
 
+- Spike-event layer for Bluetooth-class links (`sc_neurocore.spike_codec.spike_events`: `SpikeEventEncoder`, `SpikeEventDecoder`, `SpikeEventWindow`; Rust `SpikeEventEncoder`/`SpikeEventDecoder`). Threshold-crossing events in 1 ms bins and spike-band power from raw int16 samples: Q14 second-order Butterworth high-pass (250 Hz) and low-pass (1000 Hz), streaming median noise estimate, -4.5 sigma downward crossings with refractory period and warm-up, adaptive binary coding with 16-bit event probabilities; Rust and the pure-Python reference write identical packets. On the 743 Neuralink challenge recordings the detector finds injected spikes as often as an offline float reference (73.7 % vs 73.8 % at 5 noise SD, 99.9 % at 8), and 1024 channels need 51 kbit/s for events and 157 kbit/s with band power in 10 ms packets. Fixes from the independent review of the streaming lossless coder: `sc_neurocore.spike_codec` imports in the base distribution (the predictive codec imports the optional world model only for its world-model predictor), decoders refuse sample requests a packet cannot hold before allocating (a native decode of 2**63 samples aborted the process), and `detect_adc_bits` refuses fractional or out-of-range samples instead of casting them.
+
+- Streaming lossless coder for live multi-channel electrode streams (`sc_neurocore.spike_codec.waveform_stream`: `LosslessStreamEncoder`, `LosslessStreamDecoder`, `detect_adc_bits`; Rust `WaveformLosslessEncoder`/`WaveformLosslessDecoder`, and `GpuStreamEncoder` with the engine's `gpu` feature). ADC levels with dense numbering (missing codes leave it), a sign-sign LMS predictor of order 16 and an adaptive binary range coder; state persists across windows (each packet adds about 9 bytes per channel group, so 1 ms packets cost little only when many channels share a group). Rust, the pure-Python reference and the GPU encoder write identical packets. `WaveformCodec(mode="lossless")` now uses it (mode byte 4, ADC width detected or `adc_bits`); the earlier Rice coder stays as `mode="lossless_rice"` (mode byte 3). Lossless modes in a legacy `WFCX` stream are refused. On the public Neuralink compression-challenge data (743 files) `lossless` measures 3.457x with every file byte-identical after decoding (`lossless_rice` 3.33x); FLAC, WavPack, Monkey's Audio, brainwire, hxrdxk and Sac measured on the same files are in the BCI codec guide.
+
+- `WaveformCodec` gains `decompress` for every mode and an exact `lossless` mode (per-channel ADC-level mapping, fixed polynomial prediction, block-adaptive Rice codes). Stream format `WFC2` adds per-snippet template scales, the background's first row, closed-loop background quantisation and a CRC-32 trailer; corrupted streams and headers declaring more than `max_samples` raise `ValueError`. Legacy `WFCX` streams decode their spike raster only. Noise thresholds, detection, template matching, background extraction and quantisation and the lossless coder run in Rust in `sc_neurocore_engine` (`backend="auto"|"rust"|"python"`), writing byte-identical streams to the NumPy reference. On the public Neuralink compression-challenge data (743 files, 62.6 minutes) the lossless mode measures 3.33x with every file byte-identical after decoding, encoding in 10.1 s with the Rust kernels; the BCI guide's stale 24x synthetic figure is replaced by measured values.
+
 - Match optional Studio simulator getter types to the native bridge callable contract, including installations without the optional engine.
+
+- Use the existing typed Torch module base for exact-reset cells so strict checking also works without the optional Torch dependency; runtime inheritance and numerical updates are unchanged.
+
+- Use `SC_NEUROCORE_STUDIO_PROJECT_ROOT` consistently for Studio project storage and backup planning. Preserve the legacy directory by default and refuse unusable configuration before startup writes.
 
 ### Changed
 
 - Native IR `dense_forward` now uses per-neuron, row-major weights and checks declared probability and signed Q8 formats before emitting RTL. Python's default `y_max` is 256, matching the Rust default and the previous emitted hardware; explicit endpoints must fit the signed state word. Regenerate graphs that relied on the previously ignored value 65535.
+
+### Added
+
+- Add stable beta-one `softplus` to Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions, with full-word numerical domains and an explicit arithmetic error bound. Refuse extra smooth-unary derivative arguments instead of discarding them. Refresh complete compiler/expression benchmarks with measured hardware context.
+
+- Add opt-in v2 `atan2(y, x)` to Python equations, Verilog, fixed C/Rust and portable C++ expressions, with two-operand accuracy reports and explicit derivative branch-cut refusals. Preserve numeric name binding through compiler-inserted noise and integrator calls. Refresh compiler/expression benchmarks with measured CPU and RAM context; emit Rust units without redundant parentheses.
+
+- Add indexed operands to function-unit integer programs, with matching Python, Verilog, C and Rust bindings and explicit refusal of missing or extra operands.
 
 ### Fixed
 
@@ -147,10 +227,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Preserve constant word widths, binary points and vector shapes in native IR emission; reject non-finite, overflowing and malformed constants instead of silently coercing them.
 - Restore declared encoder seeds on every Dense reset, including a single reset clock or a pulse between clocks. Reject nonpositive dot-product fan-in with an explicit configuration diagnostic and align the full-pipeline Python reference with signed truncation and registered encoder latency.
 
-- Use the existing typed Torch module base for exact-reset cells so strict checking also works without the optional Torch dependency; runtime inheritance and numerical updates are unchanged.
-
-- Use `SC_NEUROCORE_STUDIO_PROJECT_ROOT` consistently for Studio project storage and backup planning. Preserve the legacy directory by default and refuse unusable configuration before startup writes.
-
 - Fix full-range signed current interpolation in the HDL dot-product mapper, including descending endpoint ranges; retain every product bit until signed division and compare real RTL against an exact integer reference.
 
 - Preserve every LIF, dense and delay-coded layer parameter in native IR text. Parse delay-coded layers, retain ordered tap offsets, and reject malformed explicit attributes instead of silently substituting defaults.
@@ -160,11 +236,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Add stable beta-one `softplus` across Python equations, symbolic derivatives, v2 Verilog, fixed C/Rust and portable C++ expressions. Document the full signed-word domain and separate arithmetic error bound; exercise actual native outputs and refresh both full benchmark protocols with hardware context. Fix smooth unary differentiation silently discarding extra positional arguments.
 
 - Add opt-in v2 `atan2(y, x)` through the equation runtime, Verilog, fixed C/Rust and C++ expression paths. Preserve both operands and the fixed-point zero convention, reject invalid domains and unproven derivative branch cuts, and report two-dimensional accuracy. Refresh source-bound compiler/expression benchmarks with CPU and RAM context. Remove redundant Rust expression parentheses so generated units compile with warnings denied.
-
+- Retain and check every timed model trajectory across all five runtimes; reject non-finite states and inconsistent dimensions before writing benchmark evidence. Record CPU, RAM and runtime context with each report.
 
 - The integer-power bound of equation programs also covers a computed
   exponent. A re-reading showed that `2 ** (60 * 60 * 60)` passed, because
   the bound was applied only where the base was itself a power.
+- Declare the Studio remote panel in its federation manifest and content digest.
+  Add a local remote-bundle command that verifies frozen frontend bytes and
+  writes a reproducible archive with a digest-pinned deploy descriptor.
 
 - Two bounds of the expression gate moved from the shape of the text to the
   values, after an outside review showed that a slice, a choice or a call
@@ -174,6 +253,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   power needs literal exponents is withdrawn; `(a**b)**2` is valid again.
 - The parity rerun workflow installs a hash-pinned profile
   (`requirements/brunel-parity.txt`) and runs the package from the checkout.
+- Preserve diffusion-noise scaling for every positive equation timestep,
+  including values below `1e-12` and subnormal floats. Keep zero-step Euler
+  states frozen and reject timesteps outside the selected hardware format.
 
 - `docs/guides/supported_workflows.md` gives four workflows of the base
   package with the output each prints, and says what each way of installing
@@ -181,6 +263,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   every block from the source tree and from a built wheel installed outside
   the repository. The README's quick start now stands before the roadmap and
   points to that page.
+- `NetworkRunner.add_projection` admits its CSR arrays before allocating:
+  population indices, `n_source + 1` row offsets starting at 0 and never
+  decreasing, equal column and value lengths, a last offset within them, and
+  every used column inside the target population. Malformed connectivity now
+  raises `ValueError` and leaves the runner unchanged; before, it silently
+  dropped driven connections or aborted the process on short storage.
 
 - The Brunel comparison can be rerun and judged. Each repetition of
   `benchmarks/scaling_benchmark.py` now has its own seed, the Brian2
@@ -189,6 +277,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   and the weekly `brunel-parity.yml` workflow reruns both lanes on current
   code with eight seeds and one second simulated. A rerun of 2026-10-12 is
   committed: rate ratios 1.015 and 0.996 at 1,000 and 5,000 neurons.
+- `EquationNeuron(..., threshold_rng="philox")` is an optional generator for
+  Poisson and escape-rate thresholds: a step fires when `rand()` of the reserved
+  call site `2**31` is below the probability, keyed by the neuron's seed and
+  stream (its own stream per neuron, `2**-32` resolution). The compiler lowers
+  it as the level threshold `rand(S) < p`, so the C and Rust kernels compile it
+  as well as the RTL; for a probability with an exact Q-format code the model,
+  RTL, C and Rust fire on the same steps. The 16-bit LFSR stays the default and
+  its RTL is unchanged.
 
 - The expression gate bounds three more things. An array function of the
   equation namespace cannot be handed an output array: a positional argument
@@ -200,6 +296,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `benchmarks/results/bench_equation_program.json` (loaded development host)
   puts a program at between 0.9 and 3.2 times the same arithmetic written as
   a Python function.
+- The diffusion-noise symbol `xi` is the counter-based normal draw of a reserved
+  call site (`XI_SITE = 2**32 - 1`, sub-step `k` reads `XI_SITE - k`) divided by
+  `sqrt(dt)`, keyed by the neuron's seed and stream like `randn()`: replayable,
+  shared by every occurrence in a step, and compiled bit for bit to RTL, C and
+  Rust (`compiler.diffusion_noise`). It was drawn from NumPy's global generator
+  and, despite the documented `1/sqrt(dt)`, equalled `N(0, 1)`, so an Euler
+  increment had variance `dt**2` instead of `dt`; seeded runs with `xi` change.
+  A caller's `noise_rng` still draws `xi` (Python only, refused by the compiler);
+  explicit call sites must lie below `2**31`. Model profiles count `xi` as
+  `philox-draws` (replayable), Studio keys it by the run seed, and the precision
+  comparison runs it and states the draws' key and stream.
 
 - Published claims are bound to their sources after an outside review. The
   simulator-comparison gate enforces the 5 % the README states (it allowed
@@ -215,6 +322,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The audit module and one test import the TOML reader in the form Python 3.10
   has, and the distribution build's refusal of a missing comparison script
   has its test.
+- Docstrings and strict typing: the StochasticIF and Cazelles model modules
+  and 12 native-dispatch, projection and StochasticIF test modules meet the
+  NumPy docstring convention and `mypy --strict`.
 
 - Equation expressions are no longer executed by the interpreter. The safety
   gate returns the checked tree and a new translator turns it into a program
@@ -233,6 +343,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   measurement on a loaded development host, not yet reproduced by a committed
   benchmark, gave 0.9 to 2.0 times per expression and 1 % to 22 % per neuron
   step.
+- Checking whether a network can run natively no longer moves the caller's
+  random generators: the state probe constructs and steps default neurons
+  inside a generator transaction, and a model that draws from NumPy's global
+  generator or `random` (`StochasticIFNeuron`) is not dispatched natively, since
+  a native run would not advance it. Before, `backend="auto"` and a refused
+  `backend="rust"` advanced `np.random` by 44 draws.
 
 - Vendor-record exceptions are bound more tightly after an outside review.
   The vendor identifiers of a channel are a constant of the audit code keyed
@@ -241,6 +357,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   never excepted. Each reviewed record carries the products it named at
   review; a changed product list fails the check. A busy source is asked
   three times and then blocks with `source unavailable`.
+- Docstrings: `training/snn_modules.py`, the Brunel-Wang model module and
+  `schema_contracts` meet the NumPy convention, and 66 compiler, DSL, readiness
+  and training test modules carry real docstrings and strict typing.
 
 - The Julia SC Compte network lane depends on the `FFTW_jll` transform binary
   alone and calls it through the C interface. The 1,000-step state digests of
@@ -249,6 +368,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   carried all 77 Julia advisory findings. The `SHA` standard library the
   module already used is now declared. The three receipts bound to the changed
   sources are regenerated.
+- `compile_network_to_fpga()` takes `random_precision` ("standard" or "exact")
+  and lowers `randn()` in every neuron module and folded processing element
+  with it; with "exact" every state word of the direct and the folded network
+  equals the exact 60-bit reference.
 
 - A package the Pixi scanner cannot audit is accepted only through a
   `vendor_records_reviewed` exception. The audit requires the vendor channel
@@ -256,55 +379,455 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   records bound to the vendor's product identifiers to be exactly the reviewed
   ones, none naming a package of the lock. The four Modular packages of the
   Mojo lock are recorded this way.
+- `Network.to_torch()` steps in float64, the Python models' precision, for any
+  input dtype (a float32 bridge overflowed or rounded where the model did not),
+  keeps the models' runtime refusals of a non-finite voltage and Lapicque
+  candidate, and carries a StochasticLIF neuron's live refractory counter.
 
 - Advisory exceptions are bound to the lock: channel and platform come from
   the locked artefact's address, a newer build of the locked version ends an
   exception, and a table for another ecosystem or an unread lock fails.
+- Compiler fidelity: a comparison used as a comparison operand
+  (`(v > 0.25) > 0.5`) is 1.0 or 0.0 on RTL, C and Rust as in the model (the
+  RTL and C never fired, the Rust kernel did not compile); a stochastic
+  threshold at Q1.f compares with 1.0 one bit wider (Q1.15 fired every step);
+  a dt outside the format is refused by every emitter wherever it multiplies
+  (dt = 1.0 at Q1.15 was integrated as -1.0), a map excepted; the adaptive
+  precision compile forwards `function_lowering` and `random_precision` to both
+  datapaths and its manifest (the CLI wrote the standard randn unit for
+  `--random-precision exact`) and refuses `--pipeline`; the numeric contract's
+  divisor check rounds bankers' half to even as the RTL does and folds huge
+  finite values exactly, and `precision_report` and the `precision` CLI report a
+  huge dt or parameter instead of raising `OverflowError`.
 
 - A test binds the version in `.zenodo.json` and `CITATION.cff` to the package
   and engine versions. Releases 3.13.4 to 3.16.0 were archived under the stale
   label 3.13.3 because nothing checked it.
+- The folded network interconnect reads graded spike values and analogue
+  voltages from its packed buses as signed words: a negative value or voltage
+  entered the product and the source-threshold comparison as a large positive
+  number (-0.5 times +1 gave +32767). Populations of one neuron type must now
+  share one template definition (equations, threshold, reset, method, initial
+  values, detection, spike value, seed); a second definition under the same
+  type name ran the first one's module and is now refused before any RTL.
 
 - The Pixi lock audit accepts a finding only through a recorded exception whose
   reason it re-verifies on every run: no newer version in the channel, or the
   affected program absent from the locked artefact. Unrecorded findings, failed
   checks, stale records and unaudited packages still fail.
+- `randn()` can be lowered at full precision: `random_precision="exact"`
+  (on `compile_to_verilog`, `compile_to_datapath`, the bit-true C and Rust
+  kernels, `hardware_numeric_contract` and `--random-precision exact` in the
+  CLI) computes the Box–Muller transform with 60-bit internals and rounds
+  once, so every code is within 0.5 LSB + `2^(fraction-45)` of the exact
+  value (0.50002 LSB at Q3.29, where the standard unit can be 32.5 LSB away).
+  The standard unit stays the default and its RTL is unchanged.
 
 - Wheel consumer jobs build the checkout into a wheel and install that file,
   so every `pip install` of the job consumes a hash-locked profile or a local
   artefact.
+- The FPGA network compiler learns: `ConnectionSpec(plasticity=STDPRule(...))`
+  applies trace-based pair STDP (the rule of `Projection.update_plasticity`) in
+  the network's fixed-point format, in the direct and the folded
+  interconnect. `nir_bridge.stdp.stdp_tick` is the integer golden; every
+  weight of both interconnects equals it each tick. Delayed, thresholded,
+  external, analogue or graded plastic sources are refused, and a plastic
+  network is never placed on the address-event interconnect.
 
 - Report full-suite coverage for the repository source tree only. Wheel copies
   that distribution tests run from temporary directories no longer abort the
   final report; the 100 % threshold and the measured sources are unchanged.
+- The FPGA network compiler carries graded spikes: a population whose
+  template has `spike_value` adds `(value · weight) >>> fraction` to its
+  targets (a value of 1.0 is the binary case; a source threshold compares the
+  value). The direct interconnect wires each instance's `spike_value_out`, the
+  folded one commits the values to a `val_bus` with `spike_bus`, both with
+  delays; a network with a graded source is not auto-selected for the
+  address-event interconnect, which carries addresses only.
 
 - Update the pinned Pixi advisory scanner to 0.2.0 and validate its renamed
   report fields. Continue refusing every advisory match, ignored rule,
   unaudited package and incomplete or inconsistent response.
+- The table-accuracy measurement of wide formats places each table cell where
+  the RTL indexes it; at fraction 0, where a 1/8 step is finer than one code,
+  it takes every code inside the table. Sampled cos at 32/0 and 62/0 reported
+  0.042 although the table's integer codes reach 0.46 (the exhaustive 16/0
+  value); the sampled result now equals it and is still stated as sampled.
 
 - Refresh the complete compatible Mojo support environment to Python 3.15.0
   and binutils 2.46.1 while retaining Mojo 1.0.0. Include the matching shared
   `libpython` required by Mojo's Python interoperability, and retain SQLite's
   ICU-enabled build for Unicode casing and collation.
+- Network monitors and repeated runs report the run that happened. A
+  `RateMonitor` bin divides by the time its whole steps cover (a 10 ms bin at
+  dt 3 ms is 9 ms: 333 Hz, not 300 Hz); `StateMonitor` and
+  `Population.get_states` read each model's `get_state()`, so an
+  `EquationNeuron` is no longer recorded as zeros; a second `Network.run`
+  continues the step index and delivers the last step's spikes (another dt is
+  refused); `SpikeMonitor.cross_correlation` keeps every requested lag;
+  `StateMonitor(record=[])` records no neuron instead of crashing; and
+  neurons built from one explicit initial state no longer share it.
+- Spike gating admits a model's purity before its probe copies or resets
+  anything, restores both process generators around the whole probe, and
+  treats a self-referential state as not comparable instead of raising
+  `RecursionError`.
+- `scale_free` starts from a star on `m + 1` nodes and attaches by actual
+  degree (seed nodes counted a degree they had no edge for); `ring_topology`
+  refuses `k > (n - 1) // 2`, which doubled the antipode or added self
+  connections.
 
 - Refuse incomplete or malformed fixed-point LIF co-simulation traces instead
   of reporting a false bit-exact match. Require a nonempty reference, exactly
   one two-field decimal RTL row per step, positive step counts and nonnegative
   seeds; report unreadable traces without a traceback. Release testbench reset
   on a falling edge so the first stimulus is consumed exactly once.
+- `Network` dispatches to the native runner only what the runner
+  reproduces. It returns voltages only, so a model with state besides `v`
+  (AdEx's `w` stayed 0 after 1000 native steps; Rulkov's `x`, `y`) is
+  refused; `LapicqueNeuron` names the 1907 source profile in the engine and
+  is refused (`SCLapicqueLIFNeuron` is the same on both sides); embedded
+  stimuli, per-synapse delays, `weight_threshold` pruning and plasticity,
+  which the runner dropped, are refused. `auto` falls back to Python and a
+  forced `rust` raises naming each reason. In Python, `weight_threshold` now
+  also prunes projections with per-synapse delays.
 
 - Update the Mojo environment's locked Expat to 2.8.5, SQLite to 3.54.0,
   libuuid to 2.42.4 and Tornado to 6.5.10. Retain SQLite's ICU support,
   Python 3.14.4 and Mojo 1.0.0.
+- The compiler encodes parameters, literals and initial states exactly
+  (`round(Fraction(value)·2^fraction)`): a finite value as large as 1e308
+  overflowed the float product and raised `OverflowError` in the RTL, the
+  kernel and the hardware numeric contract; it is now out of range like any
+  other value outside the format. `export_verilog` refuses it, and a derived
+  parameter that is not finite, by name with `SCHardwareError`, and checks
+  every neuron's Lapicque profile.
 
 - Update the Mojo environment's locked OpenSSL dependency from 3.6.2 to 3.6.5,
   retaining the Mojo compiler and every other locked package.
+- `Network.to_torch()` steps each model with its own operations in its own
+  order (`(R·I)·dt`, the SC flow through `v_inf`), so a float64 run equals the
+  Python voltages bit for bit and a resistance of 1e308 no longer turns a
+  zero-input state into NaN through a precomputed `R·dt`. Every neuron's
+  Lapicque profile is checked, not only the first one's.
 
 - Report Julia as selected bundled sources requiring JuliaCall, including the
   adaptive-threshold kernel already shipped in the wheel. Verify installed
   kernel trajectories and final states against Python while retaining explicit
   refusal for Julia models whose sources are absent. Go and Mojo still need
   built shared libraries.
+- With `substeps > 1`, `<state>_prev` in a threshold or graded value is the
+  macro step's entry state in the RTL and the C and Rust kernels, as in
+  `EquationNeuron.step`; the RTL compared with the penultimate sub-step
+  (`x < x_prev` with `x -> 1 - x` spiked once where the model never does).
+  The folded PE refuses `substeps > 1`, which it did not lower.
+
+- A population derives its neurons' seeds by distinct generator states: the
+  LFSR16 models (`PoissonNeuron`, `EscapeRateNeuron`) declare that seed 0 runs
+  as `0xACE1` (`SEED_ALIASES`), so the two are never both handed out and the
+  capacity is 65535 neurons. `Population(PoissonNeuron, 65536, seed=11)` gave
+  two neurons one stream; seeds before the first alias are unchanged.
+
+- The Studio equation playground sees `rand()`, `randn()` and `poisson()` in
+  reset assignments (including `;`-separated ones): a seed is accepted and
+  replayed, an unseeded run discloses its counter draws, and a fresh trial is
+  not cached. A reset-only draw was refused a seed and labelled deterministic.
+
+- `export_verilog` checks every lowered parameter and the initial voltage at
+  its format before writing: a value outside the range (threshold 300 was
+  written as 44 in Q8.8, a gain of 256 as 0) or a non-zero value that rounds
+  to zero is refused with `SCHardwareError` naming the quantity. The new
+  keyword arguments `data_width` and `fraction` choose a wider format (for
+  example Q16.16), in which those models step as the Python neurons do.
+
+- `Network.to_torch()` keeps projection weights in float64, the precision of
+  the CSR data, and casts them to the input's dtype in the forward pass: a
+  float64 run uses the network's own weights and a sync without training
+  writes every weight back unchanged (a weight of 0.99999999 had become 1.0).
+  A step whose voltage overflows to infinity now resets to `v_reset` instead
+  of turning the state into NaN and losing every later spike.
+
+- Spike gating probes only models whose purity is declared (the catalogue
+  models, or a user class with `quiescence_pure = True`); any other model is
+  never skipped. The probe also restores the standard `random` generator and
+  refuses a model that moved it, and reads private `__slots__` under their
+  mangled names. A user neuron drawing from `random` was skipped after one
+  sampled zero spike and a private slot crashed gated stepping.
+
+- `network.export_verilog` writes RTL that elaborates: each population is
+  lowered by the equation compiler to a neuron module with the model's own
+  update, `>=` threshold and hard reset (SC LIF Lapicque exact flow,
+  StochasticLIF forward Euler), one instance per neuron with a Q8.8 current
+  word. It instantiated an `sc_lif_array` no file defined and collapsed every
+  LIF-family model and parameter set into one file. Other models, the 1907
+  Lapicque profile, noise, refractoriness, per-neuron parameters, an empty
+  network or population are refused before anything is written.
+
+- `Network.to_torch()` steps as the supported models step: the SC LIF Lapicque
+  profile by its exact flow and StochasticLIF by its forward-Euler update, both
+  with the models' `>=` threshold and hard reset (surrogate gradient in the
+  backward pass), each neuron from its own voltage. The 1907 Lapicque source
+  profile, parallel CSR connections, a nonzero `weight_threshold` and
+  heterogeneous per-neuron parameters are refused instead of being substituted,
+  overwritten or ignored. Surrogate spikes keep the input's floating dtype, so a
+  float64 bridge runs past its first projected step.
+
+- `small_world` is a Watts-Strogatz simple graph: a rewired edge goes to a node
+  that is neither the source nor already its neighbour, the graph keeps `n·k`
+  entries in both directions, and an odd or too large degree, a probability
+  outside `[0, 1]` or `n < 1` is refused (one invalid call used to loop). It
+  could emit a parallel pair, which delivered twice the weight per spike.
+  `grid_topology` is documented as the Chebyshev (square) neighbourhood it is.
+
+- The network compiler accepts equation-defined populations: a `NeuronSpec`
+  with a `template` (equations, threshold, reset, default parameters, and
+  optionally method, detection, `spike_value`, `rng_seed` and a base
+  `random_stream`) compiles in the direct and the folded interconnect. A
+  population that draws gives each neuron the stream `base + global index`:
+  per-instance `P_RNG_STREAM` overrides in the direct top, and in the folded
+  top one network step counter with the active neuron's stream on the shared
+  PE. Stochastic detection and rising-edge templates stay on the direct path.
+
+- A state whose name takes a compiled form's own field is refused by name
+  instead of emitting a duplicate declaration: in the C and Rust kernels a
+  state named `spike` (field `spike_out`) or, for an edge-crossing neuron,
+  `thr_prev`; in the registered RTL a state named `spike` (port `spike_out`).
+
+- Add `poisson_grid(lam)`, a Poisson draw whose mean is a variable expression:
+  the mean is floored to a multiple of 1/16 and clamped to `[0, 16]`, and word
+  0 of the Philox block is inverted against the exact thresholds of that grid
+  mean (257 rows of 47 thresholds, as for a constant `poisson()`). The model,
+  the RTL and the C and Rust kernels give the same counts; `poisson()` keeps
+  its exact constant mean and its refusal now names `poisson_grid()`.
+
+- The bit-true C and Rust kernels mirror every integrator the RTL lowers:
+  `rk4`, `exp_euler` and `gauss_seidel` join `euler` and `map`, and the macro
+  steps of sub-stepped crossing models are mirrored (draws once per macro
+  step, graded value on the boundary). Every executable bundled schema using
+  these methods gives identical RTL and C traces at Q8.8 and Q16.16 (150 steps
+  each). The RTL's integrator scalings (`dt`, the RK4 stage factors and
+  `dt/6`) now round under the format's rounding mode like every other product:
+  with `rounding="nearest"` the Euler kernel rounded the `dt` product while the
+  RTL truncated it, so the two disagreed from the first step. With the default
+  truncation the RTL of all 80 bundled schemas at six formats is byte-identical.
+
+- Counter-based draws and graded spikes beyond the compiler:
+  - `sc-neurocore compile` takes `--data-width`, `--fraction` (both were
+    documented but missing), `--method`, `--function-lowering`, `--rng-seed`,
+    `--random-stream` and `--spike-value`; `from_equations` takes `rng_seed`,
+    `random_stream` and `spike_value`.
+  - Schemas: `threshold.spike_value` makes a schema neuron graded and
+    `UniversalNeuron(random_stream=...)` separates instances; the model profile
+    reports `philox-draws` (with its seed) and admits a seed override for a
+    schema that draws; the schema validator uses the model's real function
+    vocabulary, so `rand`, `sigmoid`, `exprel`, `clip` and conditionals no
+    longer raise unknown-name warnings.
+  - The Studio equation playground accepts a seed for equations that call
+    `rand()`, `randn()` or `poisson()`, keys their draws with it and reports
+    the Philox generator (`counter-draws`, or `counter-draws+diffusion-noise`
+    with `xi`).
+- Close the remaining review P3 items: the v2 accuracy report is linked from
+  `compile_to_verilog`; `BitstreamSpikeRecorder` (Python, Rust, Julia) refuses a
+  NaN or infinite `dt_ms`; eight C-emitter test modules are type-complete under
+  strict mypy and documented.
+
+- Fix the equation compiler findings of the 2026-10-19 reviews:
+  - `randn()` near `u = 1` (word 0 close to `2^32`) was up to 1.84 LSB from the
+    model at Q16.16; the radius there is now summed as a series, and the
+    accuracy is stated as half an LSB plus a measured transform error of
+    `2^-24` (`random_units.NORMAL_TRANSFORM_ERROR`), which dominates at high
+    fractions. The earlier unrestricted 0.5 LSB statement was wrong.
+  - The C and Rust kernels evaluate reset and graded-value expressions only on
+    a spike, so an expression undefined off the spike no longer traps them.
+  - `xi` in any expression, the graded value included, is refused by the
+    registered module, the folded PE and both kernels instead of emitting an
+    unbound name; `uses_diffusion_noise` sees the graded value.
+  - The folded PE of a crossing neuron without reset takes its threshold
+    history on `thr_prev_in` and returns it on `thr_cond_out`.
+  - Compiling a neuron that has already stepped no longer changes the reset
+    state of its edge history: the initial threshold uses the draws of step 0.
+  - Draws are detected from the parsed calls, so a state named `rng_step`
+    without draws compiles in the kernels; with draws the clash is refused. A
+    state named `spike_value` is refused with a graded spike. The
+    `{var: derivative}` kernel refuses draws.
+  - `expit` runs in the Python model; the hardware contract describes the
+    function lowering in use, the actual table index widths and the draws'
+    seed and stream; the table measurement no longer overflows int64; a failed
+    stochastic step restores `last_spike_value`.
+
+- Random draws compile in pipelined and multi-substep registered modules:
+  `rng_step` advances on the pipeline's valid cycle and on the macro
+  boundary, so each logical step draws what the unpipelined module draws
+  and every sub-step of a macro step draws the same numbers, as the Python
+  model does. A graded spike (`spike_value`) is set on the macro boundary of
+  a multi-substep module from the state after its last sub-step.
+
+- Add graded spikes: `EquationNeuron(spike_value=...)` evaluates an expression
+  on a spike (on the state before reset) and keeps it as `last_spike_value`.
+  The registered RTL emits `spike_value_out`, the folded PE drives it, and the
+  bit-true C and Rust kernels store it; all agree with each other and with the
+  model on a dyadic grid.
+
+- The folded datapath PE (`compile_to_datapath`) accepts `rand()`, `randn()`
+  and `poisson()`: it takes the neuron's step counter and stream on the inputs
+  `rng_step` and `P_RNG_STREAM`, and with the same values matches the
+  per-instance module state for state.
+
+- Add `poisson(lam)` to equation-defined neurons and the equation compiler. The
+  count inverts the Poisson distribution on one 32-bit Philox word against the
+  thresholds `ceil(2^32·CDF(k))`, summed at 50 significant digits, so the
+  Python model, the RTL and the bit-true kernel return the same count. A
+  compiled mean must be a constant in `[0, 100]`.
+- `exp_euler` differentiates `tan`, `arctan`, `arcsin`, `arccos`, `exp2`,
+  `log2`, `log10`, `expm1`, `log1p` and `erf`; random draws stay as
+  coefficients.
+
+- Add `rand()` and `randn()` to equation-defined neurons and the equation
+  compiler. Each call draws a Philox4x32-10 block at counter `(site, step,
+  stream)` keyed by `rng_seed`; `EquationNeuron` numbers the call sites when it is
+  built, so the Python model and the compiler read the same text, and takes a new
+  `random_stream` argument. Registered RTL gains `P_RNG_SEED`, `P_RNG_STREAM` and
+  an `rng_step` register; the bit-true C and Rust kernels carry the same counter.
+  `rand()` equals `floor(rand·2^fraction)` of the model exactly and `randn()` (an
+  integer Box–Muller) is within 0.5 LSB; RTL equals the kernel. Pipelined,
+  multi-substep and folded modules and the HLS lowering refuse draws.
+- Fix the bit-true C and Rust kernels: statements needed by a reset expression
+  (table reads, function units) were not emitted, so a reset such as
+  `exp(v) - 1.5` produced a kernel that did not compile.
+
+- Extend the equation vocabulary with the functions Brian2 and LEMS provide.
+  New v2 function units: `tan`, `arctan`, `arcsin`, `arccos`, `exp2`, `log2`,
+  `log10`, `expm1`, `log1p` and `erf`. New exact functions `floor`, `ceil`,
+  `trunc` and `sign` work in both lowerings. All are bound in the Python model
+  to their NumPy functions (`erf` to `scipy.special.erf`) and guarded against
+  output arrays like the existing ufuncs. Every 16-bit-format code is correctly
+  rounded except `tan` (0.52 LSB). Near a pole, the `tan` error follows its
+  conditioning.
+
+- Add function lowering v2 to the equation compiler: `compile_to_verilog(...,
+  function_lowering="v2")` (also `compile_to_datapath`, the bit-true C/Rust
+  kernel and the hardware numeric contract). exp, log, sqrt, sin, cos, sigmoid,
+  tanh, cosh, sinh, exprel and `x ** (1/3)` are computed by range reduction and
+  quadratic tables at a 30-bit internal fraction. Each unit is one 64-bit
+  integer program, emitted to Verilog, C and Rust, and equal to a separately
+  written integer reference. Every 16-bit-format code is correctly rounded
+  (cosh and sinh are within 0.63 LSB); `docs/validation/function_units_v2_accuracy.md`
+  lists every format. `lut-v1` stays the default and its RTL is unchanged except
+  for the fixes below. `sinh` is new and exists only in v2.
+- Fix the lut-v1 lowering. `clip` follows numpy (`min(max(x, lo), hi)`), so
+  reversed bounds give the upper bound. Table entries that do not fit the word
+  saturate instead of wrapping: `cos(0)` at Q1.7 gave -1. A left-shifted
+  table index is widened before it is clamped: `exp(64)` at Q8.0 gave 1. The
+  accuracy measurement mirrors these widths and handles 64-bit words. The HLS
+  C++ lowering no longer turns `sinh(v)` into `v`.
+
+- State the approximation error of the equation compiler's transcendental tables.
+  `sc_neurocore.compiler.lut_accuracy` reads each table exactly as the generated
+  RTL indexes it (checked by Icarus simulation). It compares the result with the
+  Python model's function, at every input code up to 18 bits and sampled above.
+  The hardware numeric contract now reports the error for every table a neuron
+  uses at its format, and `docs/validation/lut_accuracy_v1.md` lists it per
+  function and format. The current lowering is coarse: inside its table, `exp`
+  errs by up to 13 at Q8.8 and 3765 at Q16.16, `sin` by 0.125, and `sqrt` by
+  0.71.
+
+- Stop silent mis-lowering in the equation compiler. `max` and `min` now compare
+  every argument; they used only the first two, and the GLIF5 schema's tolerance
+  term has three. A call the Python model would not evaluate as written is now
+  refused instead of passed through, in the Verilog, HLS C++ and bit-true C/Rust
+  lowerers alike. Such calls include `max(x)`, `clip(x)`, `clip(x, lo)`, keyword
+  arguments, and a second argument to a one-argument function. `pi` is encoded
+  as a literal instead of an undeclared net. The transcendental-table index now
+  holds its offset at formats whose integer range is narrower than 16, such as
+  Q4.12, Q1.15, Q4.4 and Q1.7. At those formats the RTL and the bit-true kernel
+  both read wrong entries; for example, `exp(0)` gave 0 at Q4.12. RTL at Q8.8,
+  Q9.9, Q16.16 and Q8.24 is byte-identical for every bundled schema except GLIF.
+
+- Retain every completed stochastic network benchmark repetition in JSON and
+  Markdown, including its seed and step count. Record timezone-aware UTC and
+  distinguish measured fused totals from estimated native component times.
+
+- Declare `typing-extensions` in the base runtime and Conda profiles so the
+  reference MAT model imports without developer extras. Exercise a real MAT
+  step in the measured installation smoke check.
+
+- Keep stateless-model custody checks independent of numerical timebase admission;
+  verify real driven instances and preserve refusal of untimed simulation runs.
+- Reject optimizer searches with no layers or missing scoring weights before
+  candidate construction, returning `ValueError` instead of aborting Python.
+  Preserve seeded results and trailing-weight normalization; reject malformed
+  native Rust candidate dimensions with `None`.
+
+- Keep Studio model metadata browsable when a simulation timestep profile is
+  unavailable. Show constructor fields as read-only and continue rejecting
+  simulation requests whose clock cannot be verified.
+
+- Preserve integer seed text across Studio saves, reopened workspaces and
+  exports. Bind simulations to admitted constructor parameters and model
+  timebases.
+
+- Gate Python package publication and releases on browser replay against an
+  isolated installed Studio wheel. Use the same installed interpreter for
+  downloaded replay packs and retain browser evidence.
+
+- Preserve exact integer constructor parameters through Studio model requests
+  and report oversized floating-point inputs as field errors. Reload model
+  metadata before running saved inputs and keep floating parameter controls
+  continuous.
+
+- Clarify v2 replay-pack state samples and the retained v1 digest-only
+  comparison contract.
+
+- Report browser session save and delete failures beside the session list.
+  Keep page changes usable after storage refuses a write, explain reload
+  behaviour and distinguish browser sessions from saved server projects.
+
+- Reject oversized GPU LIF and Izhikevich batch outputs before buffer creation
+  or dispatch. Return recoverable exceptions for storage, shader-index and
+  workgroup limits while preserving accepted trajectories and empty shapes.
+  Apply the CPU fixed-point configuration checks to GPU LIF batches, including
+  empty runs.
+
+- Update the Semgrep environment to MCP 1.30.0 to address CVE-2026-59951.
+  Mark embedded receipt-header examples so REUSE checks the source headers
+  without interpreting generated SPDX text as additional file metadata.
+
+- Connect SHD AXI input commits to a shared logical-step enable throughout
+  the network. Snapshot complete input vectors, reset each inference, drain
+  padding automatically and retain completion for software polling. Exercise
+  the AXI interface against Python Q8.8 golden outputs with stalled transfers.
+
+- Recognize guarded optional reference imports in test-inventory audits while
+  rejecting unexplained or overly broad module skips.
+
+- Replace the Basilisk-backed Pixi dependency audit with checksum-pinned Syft
+  and Grype scanning of the locked Mojo environment. Basilisk now requires
+  account access, a granted role and a CI API token; the replacement uses public
+  vulnerability data without that login. Document its Conda CPE/NVD matching
+  limits and retain exact, evidence-checked exceptions for fixed vendor code.
+
+- Return catchable dense-layer storage refusals for constructors, weight copies,
+  packed weight rebuilds and every forward representation. Preserve weight
+  replacements and caller-owned batch output on failed allocation.
+
+- Check GPU dense construction against shader index widths and device buffer
+  and dispatch limits, and return typed refusals from single and batch GPU
+  forwards before submission. Rejected shapes keep packed weights intact.
+  GPU-feature wheels re-export `GpuDenseLayer`, `GpuLifBatch`, `GpuKuramoto`
+  and `GpuIzhikevichBatch` from `sc_neurocore_engine`.
+
+- Restore the optimizer bridge's per-layer parameter and result descriptions
+  lost during wrapper extraction.
+
+- Align candidate API and symbolic comparison tests with equation admission:
+  reject unavailable attributes and module-qualified calls before simulation,
+  while retaining authored diagnostics for failures of admitted expressions.
+
+- Report the SC Compte benchmark's actual PATH-resolved tools and module-selected
+  Go version, with loaded Mojo library identity separate from compiler observations.
+
+- Record facet evidence and refresh the profile ledger, readiness ledger and
+  Studio seal with one command, including failed validator outcomes. Preserve
+  immutable receipts and detect loss of the established co-simulation labels.
 
 - Describe vectorized SC outputs as channel sums with optional bias. Preserve
   unclipped MAC values above one and signed outputs; they are not firing fractions.
@@ -401,6 +924,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   leaking interpreter text; corrupt parent resources remain server errors.
 
 ### Added
+- Pin the workstation notebook dependency JupyterLab to 4.6.4, fixing
+  GHSA-3jqq-pw4j-pqcj, GHSA-6966-vjj6-99xv and GHSA-3325-v43h-43rv.
 
 - A training request can declare a preregistered acceptance criterion
   (`val_accuracy` at least or `val_loss` at most a bound, with a rationale). It
@@ -479,20 +1004,80 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   bytes of the imported package and of the scripts that ran; a report captured
   in a source checkout is admitted by an installation with byte-identical
   sources.
+- Typing scanner reports use supported Mypy JSON diagnostics and retain actual
+  commands, versions and execution failures. Explicit file scopes are labelled;
+  stale reports and mismatched tools cannot qualify a successful scan.
+
+- Python dependency auditing covers every maintained hashlocked profile and
+  every marker branch. Reports retain original pins and hashes, explicitly
+  identify the official Torch CPU upstream advisory query, and fail on missing
+  dependencies or incomplete coverage. Release evidence rejects the former
+  release-tooling-only report as unqualified coverage.
+
+- Laboratory HTTP refusals preserve explicitly authored messages and hide generated numeric-conversion and replay-validation exception text.
 
 ### Changed
 
 - `QCFSActivation` accepts `T` in `[1, 2**32 - 1]`, the step domain shared by
   every QCFS runtime.
+- Align Ruff hooks, development declarations, and hash-locked CI environments
+  on 0.16.9. The formatter retains its Python, stub, and notebook scope.
 
 ### Fixed
+- MAT IB and FS factories accept explicit baseline and history-increment
+  overrides through complete constructor validation, preserving named defaults.
+- Source `MATNeuron` reset validates retained configuration before committing
+  zero-rest dynamics. Checked Rust and Go resets report refusal; legacy void
+  resets preserve refused states. Julia validates empty inputs and preserves
+  caller state on any batch failure, with complete constant-current admission.
+- MAT Go and Mojo C ABIs reject invalid complete profiles even for empty
+  batches and refuse null pointers before output writes. Mojo enforces the
+  source threshold envelopes and retains SC resetting-MAT derivative arithmetic
+  order, preventing a false event for large finite cancelling terms.
+- `SCResettingMATNeuron` validates its complete resting candidate before
+  changing state. Checked Rust and Go resets preserve invalid configurations;
+  Julia rejects invalid empty inputs and preserves caller state when a later
+  batch sample fails. Native source MAT and SC resetting-MAT batches use owning
+  arrays and propagate allocation failures as Python `MemoryError`, releasing
+  partial outputs.
+- `SCNonResettingAdaptiveLIFNeuron` validates its complete resting candidate
+  before reset commits either dynamic value. Its native batch propagates
+  allocation failures as Python `MemoryError` and releases partial outputs.
+  Julia's constant-current simulator rejects invalid current or timestep even
+  for zero samples; valid empty calls retain their established result.
+- The published Studio OpenAPI reference matches the running application again.
+  Three landed changes never reached it: `GET /api/graph/models/{name}` was
+  absent entirely, and `/api/export/svg` and `/api/graph/validate` carried
+  outdated response schemas. The reference is published through MkDocs, so the
+  public API documentation was describing an application that no longer exists.
+  The pinned backend route count moves 125 → 126 for the added route.
 
 - Use the SHA-256 verified official Python 3.12 reference inventory to keep
   strict Sphinx documentation builds available during upstream outages.
+### Changed
+- The Studio network interchange envelope says what it is. Export wrote
+  `{"format": "nir", "version": "0.1"}` for a payload whose node `type` is a
+  catalogue model name and whose edges carry a weight and a delay — no NIR
+  primitive is mapped anywhere in it, and the importer never checked the field
+  at all. It now writes `sc-neurocore.studio.network-graph` at version `1`.
+  The loader still accepts the legacy `nir` envelope and a payload that
+  declares no format, so nothing an operator saved stops opening, and it now
+  refuses an envelope it cannot read — a real NIR file used to fail on an
+  unrecognised node type instead. The route names are unchanged.
 
 - Rust engine, standalone core crates and fuzz lockfiles use the maintained
   `chacha20 0.10.2`, replacing the yanked `0.10.0` with its SSE2 backend fix.
   The engine fuzz lock also includes the existing engine SHA-256 dependency.
+### Fixed
+- The Studio pipeline no longer reports a hardware result for a graph it cannot
+  lower. `POST /api/pipeline/run` validated and simulated the caller's network,
+  then compiled one hardcoded leaky integrate-and-fire equation — ignoring the
+  graph entirely — synthesised it, and returned success labelled
+  `graph → simulate → compile → synthesise`. An operator building a
+  Hodgkin-Huxley network received a successful synthesis report for a generic
+  neuron that shared nothing with it. The compile step now refuses, names why,
+  and lists any declared model whose descriptor records no silicon lowering.
+  The validation and simulation it genuinely performed are still reported.
 
 - The install-profile audit recognises packaged dataset and conversion runtime
   resources, rejects broader native research patterns and missing runtime files,
@@ -632,11 +1217,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The Julia lane is reported present only for the model kernel sources. The
   dense IF conversion and event-dataset Julia sources the wheel ships for their
   own APIs no longer make an installation with JuliaCall claim the Julia lane.
+### Fixed
+- Three Rust safety validators check something. `validate_astrocyte`,
+  `validate_astrocyte_adapter` and `validate_quantum_inspired_lif` returned
+  `true` unconditionally; each now mirrors exactly what the maintained model
+  enforces at construction — non-negative calcium and IP3, a gating variable
+  within `[0, 1]`, strictly positive ER, SERCA, receptor and timestep
+  parameters, cytosolic calcium below the total cell calcium, and a whole-valued
+  seed in `[1, 2**64)`. 15 cases were added; reverting the three bodies to the
+  old stub fails 12 of them, which is what makes them evidence.
+- A module comment in the Compte safety kernel documented the constant beneath
+  it rather than the module, so `cargo clippy -D warnings` failed on the crate
+  before any of the above could be verified.
 
 - Studio embedded process jobs now take per-process data, CPU, descriptor,
   output-file and core-dump limits before importing task code. A refused
   allocation ends as a failed job; nested Yosys limits respect the worker's
   inherited hard ceiling.
+### Added
+- `tools/benchmark_coverage_census.py` counts how many catalogue models have a
+  benchmark measured, so the figure stops being asserted by hand. It separates
+  three states — a committed record naming the model, a benchmark script naming
+  it with no record, and neither — because a script that exists is apparatus,
+  not a measurement. Measured now: **28 of 185 measured (15%), 73
+  apparatus_only, 84 absent**. It answers a different question from
+  `tools/benchmark_evidence_gate.py`, which judges the quality of the artefacts
+  that exist rather than how many models have any.
 
 - ANN-to-SNN conversion no longer changes the network it converts. It took
   layers in registration rather than forward order and counted a shared module
@@ -671,12 +1277,169 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   module; a new module could previously escape its size and dependency limits.
 - `ConvertedSNN` docstrings described an auto replay order without Mojo and
   without the measured comparison; they now state the order dispatch uses.
+### Fixed
+- Benchmark records name the compiler that actually built the lane. `GOTOOLCHAIN`
+  resolves a Go toolchain per module, so `go version` asked at the repository
+  root reported the installed Go — 1.24.0 on the measuring host — while the lane
+  is built inside `accel/go` by the 1.26.7 its `go.mod` requires and hosted CI
+  pins. And `mojo` on `PATH` was a prerelease, while the build and CI both use
+  the version `accel/mojo/pixi.toml` pins. Nine records published compilers that
+  did not build their lanes; all now record `go1.26.7` and `Mojo 1.0.0`, matching
+  the CI pins. The probes ask Go inside the accelerator module and Mojo through
+  the pinned manifest, the way CI exposes it.
+- A run of Brunel-Wang or Compte-WM now records the role its own profile states.
+  Two defects met in one variable. The committed descriptor calls the refractory
+  register `ref_remaining` while the canonical schema calls it
+  `refractory_time`, and the role join matched by name alone, so the variable
+  came back `unassigned` on every run. Separately, neither schema authored a
+  `[profile]` section, so all eleven and thirty-one of their state variables
+  resolved as `biological` — including the ones each schema's own
+  `state_scope_note` calls deterministic lowering registers. A role split where
+  everything is biological carries no information.
+  Both schemas now author the split their note already stated: 2 biological and
+  9 auxiliary for Brunel-Wang, 6 and 25 for Compte-WM, resolving with no
+  contract problems. The join carries an explicit per-identity record of the
+  descriptor's word for the refractory register; the schema's word is never
+  repeated, because the profile names it itself and the two cannot drift apart.
+  No public name changed, so committed conformance evidence and operator-visible
+  trace fields are untouched.
+- Seven benchmark gates that were red on stale evidence are green again. Their
+  records bound source digests that no longer matched the files they name —
+  `ci.yml`, `pyproject.toml`, two model and accelerator sources, two schemas and
+  the equation builder — so a reviewer could not tell a stale digest from a real
+  parity failure without re-running. Each was re-run at its own recorded
+  configuration, on the CPU its record names, and two of them additionally moved
+  from a slightly older release extension to the current one. No published claim
+  changed: every parity, event-count and safety assertion held before and after.
+- Five published benchmark records no longer rate the Rust lane against a debug
+  build. They bound a 525 MB unoptimised engine extension where every other
+  record bound the ~35 MB release build, so the Rust lane was measured several
+  times slower than it runs: 2.3x to 5.8x on the four records that carry
+  per-lane timings, and in all four the lane moved from *last* of the four
+  native lanes to first or second. The measurement configuration of each record
+  is unchanged — same step count, same drive, same pinned CPU — so the binary is
+  the only thing that differs. The whole record is refreshed, and the machine's
+  Go, Julia and Mojo toolchains are older now than when the records were taken,
+  so the other lanes' absolute times moved too and are not comparable with the
+  August figures; the Rust correction is the claim being made.
+- A benchmark rerun can no longer lose the name of the compiler that produced
+  it. The shared runner behind four of those records asked for versions only
+  through `.venv/bin`, where three of the four shims do not exist, so every
+  rerun silently recorded `unavailable` for compilers that were installed and in
+  use. A pinned shim is now preferred when present and the tool is otherwise
+  resolved on `PATH`, which is how the rest of the benchmark surface finds it.
+  `tests/test_benchmark_evidence_provenance.py` refuses both defects across the
+  committed corpus: no record may bind an unoptimised extension, and no record
+  that names a toolchain may leave one unrecorded.
 
 - Studio training: a run that asks for MNIST on a host without torchvision now
   fails with that reason. It used to train on the synthetic demonstration data
   while recording itself as an MNIST run.
+### Changed
+- The eight benchmark files this touched are now inside the docstring ratchet
+  (`docs/docstring_policy.toml`), so their public surface is enforced rather
+  than merely documented. The benchmark tree was entirely outside that scope.
+- A model that holds no state can now say so. `declared_state` answered
+  `undeclared` both when a descriptor was absent and when it declared nothing,
+  so `McCullochPittsNeuron` and `SiegertTransferFunction` — which evolve nothing
+  by construction — were reported with `complete=false` for ever and could not
+  be told apart from a model whose state nobody had declared. A descriptor now
+  asserts `stateless` per identity, and such a model answers `descriptor` with
+  no variables and complete custody. The published `studio.state-layout.v1`
+  payload is unchanged: `source` keeps its three values and no field was added
+  or removed.
+  The assertion is never inferred — no static rule and no single drive can tell
+  "holds nothing" from "was not exercised" — and it stays falsifiable, because
+  an asserted-stateless model that mutates anything is still reported
+  incomplete, naming what moved. Both identities were measured over 100
+  exercised steps with varying output before the assertion was recorded.
+  `InhomogeneousPoissonNeuron` mutates no attribute either and is deliberately
+  not asserted: it draws from the process-wide NumPy generator, so its run
+  cannot be reproduced from anything recorded.
+- The Amari neural field no longer records its site count as state. `n`, the
+  number of uniformly spaced sites on the periodic ring, is fixed at
+  construction and read by every step without ever being written, yet the
+  descriptor declared it in the state table with `init = 64.0`. A run therefore
+  traced a constant per step, and the runtime state census charged the Rust
+  batch lane with dropping it — a conformance gap that existed only because the
+  descriptor asked the lane to carry a number that never moves. The model's own
+  documentation page has always listed `n` under Parameters, and the Rust,
+  Julia, Go and Mojo lanes all take it as a size argument beside the parameter
+  block. It is now a curated parameter with unit, meaning and range, and the
+  census reports 415 dropped variables instead of 416. Nothing about the model's
+  behaviour changed.
+- A variable reclassified from state to parameter can now complete the move.
+  The descriptor merge preserves curated state entries the regeneration cannot
+  produce, because runtime state assigned outside the dataclass field list
+  exists nowhere else; the rule had no exception, so a name moved to the
+  parameter table kept its old curated state entry and the descriptor declared
+  it in both tables at once.
+- Spike gating returns the same numbers as an ungated run. A neuron was skipped
+  when its input was zero and its voltage sat within one percent of rest, which
+  froze the leak, the adaptation current and the refractory countdown of
+  exactly the neurons that still had relaxation to do; the documented claim
+  that skipped neurons still decayed by leak was not true of the code. A neuron
+  is now skipped only when its input is exactly zero and its whole state
+  matches a state that model's zero-input map was measured to leave unchanged,
+  so a gated run and an ungated run agree exactly. Across the catalogue, 179
+  models are comparable under a zero drive and none of them now differs;
+  previously 108 of 185 had no fixed point at rest and were skipped anyway.
+  Fewer neurons are skipped than before, which is the cost of the agreement.
+- `backend='auto'` no longer runs a different network than the one it was
+  given. The native network runner receives a model name and a neuron count, so
+  it builds default neurons; a population carrying constructor parameters,
+  independently derived seeds, or state from an earlier run was replaced by
+  defaults while every Python object went on reporting the caller's values. A
+  two-population AdEx network with `v_threshold=-45` and `v_rest=-60` ended at
+  a summed membrane voltage of -1273.982376 in Python and -1299.940210 under
+  `auto`, the latter being the default network's own result. `auto` now runs
+  such a network in Python and a forced `backend='rust'` raises, naming the
+  population and the attributes; the MPI rank-local runner keeps the Python
+  path for a rank it cannot reproduce. Neurons changed in place before a run,
+  and a second `run()` on the same network, were discarded the same way and are
+  fixed with it.
+- Importing `sc_neurocore.network` no longer provisions a Julia toolchain. The
+  cortical column discovered its native accelerators, and the gamma-oscillation
+  circuit loaded its Julia kernel, while their modules were being read, so
+  importing any module in the package resolved and could install a Julia
+  environment. Both now load on first construction of the object that uses
+  them.
+- A run's custody audit sees a random generator advance. Attribute
+  fingerprinting used `repr`, which for a NumPy generator is the address-based
+  default and does not change between draws, so `GLMNeuron`,
+  `GammaRenewalNeuron` and `SCStochasticRateAdaptationNeuron` reported complete
+  custody while the register that determines their whole trajectory moved every
+  step. A generator now fingerprints by its generator state, and a value that
+  cannot be fingerprinted is recorded as opaque rather than reported unchanged.
+- Every neuron of a population receives its own random stream. The population
+  constructed every neuron with identical keyword arguments, so a seeded model
+  gave all of them the same stream; each neuron now takes a distinct seed
+  derived reproducibly from the population's base seed.
+- `sc_neurocore.benchmarks` imports without the optional training extras. The
+  package eagerly imported a Torch-backed module, so the metrics, the MLPerf-SC
+  schema, the runner and report, the online-O1 benchmark and the task registry
+  were all unreachable in an installation without `training`, `research` or
+  `full`. The Torch-backed names now resolve lazily and raise at the point of
+  use.
+- The Studio simulation plot draws its time axis from the run rather than from
+  the request, so an exported figure carries the timebase the model actually
+  ran at.
 
 ### Documentation
+### Added
+- `Projection.delay_steps` reports the delay that executes, beside `delay`
+  which keeps the value that was asked for. The class documents that its delay
+  is in timesteps rather than milliseconds, that rounding is half to even, that
+  a positive value below half a step is floored at one step, and that the
+  scalar and per-synapse forms round differently.
+- A model may declare a state variable it holds as a vector. The descriptor's
+  initial value is now optional, because a compartment vector, a ring-attractor
+  activity profile or a competing-unit array has no single number to declare as
+  its start, and the layout reads a numeric list or tuple as the vector it is.
+  `ContinuousAttractorNeuron`, `LeakyCompeteFireNeuron` and `RallCableNeuron`
+  declare and record their state and report complete custody;
+  `AmariNeuralField.u` and `SCResettingParallelSpikingNeuron.buffer` no longer
+  claim a scalar start they do not have.
 
 - Studio: "Reviewing and Sharing Experiments" (`docs/studio/collaboration.md`)
   describes the procedure two researchers follow to review each other's work.
@@ -684,16 +1447,312 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   how to check that a run reproduces and that both sides are on the same
   state digest. It also covers commenting on a revision, keeping both sides of
   a refused save, and what is not provided.
+### Changed
+- `BrunelWangNeuron` and `CompteWMNeuron` expose `ref_remaining` under the name
+  their descriptors declare and `get_state` already returned, in place of the
+  private `_ref_remaining`. The refractory guard's message names the same
+  attribute.
+- Deleting a population on the Network Canvas now deletes it. The canvas
+  computed the new node array from a change batch and then wrote back positions
+  only, so a removal was computed and discarded: the population and every
+  projection touching it stayed in the graph and reappeared on the next render.
+  `removePopulation` already existed in the store, removed the population with
+  its incident projections, and was called from nowhere in the frontend. A
+  change batch is now read as moves and removals separately, so a delete reaches
+  the graph and a drag still changes the layout only — a position travels with
+  the graph but never changes what is simulated. Deleting a population deletes
+  the edges into and out of it, because a network cannot hold an edge whose
+  endpoint is gone; `docs/studio/network-canvas.md` states that, and that there
+  is no undo yet.
+- `QuadraticIFNeuron` accepted foreign event arrays its six siblings refuse. Its
+  complete-packet validator cast the array to `uint8` before checking it, so
+  `256` wrapped to `0` and `0.5` truncated to `0` — a spike returned by a Rust,
+  Julia, Go or Mojo lane became a silent non-spike — while `-1` and `2` were
+  caught. The event domain is now checked on the values as they arrived, as
+  every other model already did, and a contract test drives the same four
+  out-of-domain arrays through every model that has such a boundary so one
+  validator cannot drift away from the others again.
+- A foreign runtime may no longer name a state variable the model does not
+  have. The Studio's Rust batch lane transports one scalar trace, the soma
+  voltage, and the payload placed it under `states["v"]` unconditionally.
+  Measured over the catalogue: the lane runs 158 of the 185 models; of the 152
+  with a declared layout it carries 111 declared variables and drops 356; and
+  41 of them declare no `v` at all — `PinskyRinzelNeuron` declares
+  `v_s, v_d, h, n, s, c, q, ca` — so the payload named a trace after a
+  variable that model does not have, while the layout printed beside it
+  correctly reported `recorded: []`. The lane now records its trace only under
+  a declared name, and a model it can name nothing for records no state and
+  says why in its custody notes. `sc-neurocore.runtime-state-packet.v1` states
+  what a lane transports and how much of a model's declared state that
+  accounts for.
+- The same boundary now validates structure before anything is built from it.
+  A 100-step request against a ten-sample drive returned ten voltages into a
+  payload built for 100, so the reported rate covered a duration the trace
+  never spanned; spike indices were used as sample positions without a check
+  that they fall inside the run or arrive in order. Both are refused by name.
+  Finiteness is deliberately not part of this check: a diverged membrane
+  voltage is a failed simulation, and is still reported as one at the step
+  where it diverged.
+- Pressing Stop on a training run that had just finished returned a server
+  error. `cancel` reads the job's status and then writes the transition, and
+  the read is outside the ledger transaction, so under load a run reached a
+  terminal state in that gap; the ledger refused `cancelled -> cancelling` and
+  the refusal reached the operator as HTTP 500. Cancelling a job that has
+  already stopped is now a no-op even when it stops inside that window, and a
+  refusal for any other reason still propagates. `POST /api/training/stop` also
+  reports the state the run actually reached instead of claiming `stopping` for
+  a run nothing can still affect.
+- An exported evidence pack can now be rechecked by whoever receives it.
+  Measured on the real surface before this change: a model run of `AdExNeuron`
+  recorded `result_sha256` `771d8e51…`, and the identical payload — after the
+  JSON round trip every exported artefact makes through the operator's browser —
+  re-sealed to `813d3005…`. Nothing about the run had changed; `1.0` had come
+  back as `1`, `-70.0` as `-70` and `1e-07` as `1e-7`. No verifier could exist
+  while a recorded seal failed to reproduce for every honest run.
+  `studio.evidence-seal.v1` encodes values rather than one runtime's rendering
+  of them, and the server and the browser implement it identically against one
+  shared vector set. A value that would not survive the trip intact — a
+  non-finite number, an integer no double holds exactly, an unpaired surrogate —
+  is refused rather than silently altered.
+- Every Studio evidence payload now carries a receipt
+  (`studio.evidence-receipt.v1`) in one shape across the simulation, analysis,
+  training, compile, co-simulation and synthesis lanes: the seal of its subject,
+  the identity it was produced under, the inputs it rests on named by value
+  rather than by position, and whether it attests production or only the export.
+  A bundle is verified before it is written (`studio.evidence-chain.v1`) and
+  refuses to publish a pack that contradicts itself — a payload that no longer
+  matches its seal, two subjects that disagree about the model or the numerical
+  profile, evidence produced before the input it claims. A pack exported without
+  its inputs is reported as incomplete rather than refused, and `verified` and
+  `complete` are recorded separately.
+- Continuing a training run is now a different operation from starting one
+  from its weights, and the difference is measurable. Restoring weights alone
+  is a **warm start**: a new run with a fresh optimiser and generator at epoch
+  zero, which discards Adam's moment estimates and restarts the shuffle order,
+  so it does not reach where the interrupted run was heading. **Exact resume**
+  carries the optimiser state, the Python, NumPy and Torch generator states as
+  they stood at the epoch boundary, and the epochs already completed. Training
+  two epochs, and training one then resuming for the second, now produce
+  identical metrics. `POST /api/studio/training/weight-restore/attach` takes a
+  `mode` of `warm_start` (the default, unchanged) or `exact_resume`, and a
+  resume into a different architecture or configuration is refused rather than
+  approximated; asking for more epochs is not a difference. A checkpoint
+  written by a build that recorded no position supports a warm start and says
+  so. The saved position travels inside the weight checkpoint as tensors and
+  plain integers, so the artefact still loads under `weights_only=True` — a
+  checkpoint arrives from a user, and unpickling one would trade that
+  guarantee for convenience. Checkpoints also record a dataset fingerprint
+  covering the dataset length, batch size, sample layout and the first and
+  last samples; the boundary of what it detects is documented rather than
+  implied.
+- The Studio trains what was asked for, or refuses before it starts. Measured
+  through the public HTTP surface: a request for hidden widths `[128, 64]` on
+  `cifar10` with surrogate `not_a_real_surrogate` completed successfully, and
+  its exported checkpoint recorded that request beside the architecture
+  `64->128->128->10` — 128 twice, 64 nowhere, on synthetic data, with the
+  default surrogate — both blocks sealed under one `config_sha256`, so a
+  digest-verified artefact attested a configuration that never ran. Every
+  request is now resolved against a typed contract
+  (`studio.training-config.v1`) before a dataset is loaded or a model is built:
+  an unsupported dataset or surrogate, a width that is not a positive integer,
+  or a field nobody reads is refused with HTTP 422 naming the field and the
+  supported set. `SpikingNet` accepts a width per hidden layer, so `[128, 64]`
+  builds that network; a single width with a layer count still works. The
+  capability routes and the contract share one list, so the Studio cannot offer
+  a name its runner would reject.
+- A training run is replayable from the seed its checkpoint records. The seed
+  now travels in the request and is applied to the Python, NumPy and Torch
+  generators before the loaders and the model exist; two runs with the same
+  seed and configuration produce identical metrics, and a different seed does
+  not. It used to depend on whatever the calling process had seeded.
+- A process worker handed a configuration nobody can run seals failed evidence
+  saying why. No HTTP client sees that refusal, so the sandbox is the only
+  place the reason can survive.
 
 ### The model catalogue is built once on a cold start
+### Added
+- The Network Canvas has undo and redo for graph edits: `Ctrl+Z` and
+  `Ctrl+Shift+Z`, or the toolbar buttons. Adding, deleting and changing a
+  population or a projection are edits; **moving a node is not**, because a drag
+  writes a position on every frame and recording those would bury the edits
+  worth undoing under layout noise. Deleting a population removes every
+  projection touching it, which is the edit a user most wants back and
+  previously cost a return to a saved workspace revision — discarding
+  everything done since. The history holds the last 50 edits, lives for the
+  session rather than being saved with the workspace, and drops the redo branch
+  when an edit follows an undo.
+- `docs/_generated/runtime_state_conformance.json` records, per catalogue model
+  and per lane, which declared state variables a foreign runtime could carry,
+  which it would drop, and whether it exports anything the model has no name
+  for. Across all 185 models the Rust batch lane could carry 123 declared
+  variables and would drop 415; it fully accounts for 18 models and can name
+  nothing in 52. It is derived from the declared layouts and the lane packets,
+  so it is reproducible from committed sources, carries no timestamp or commit
+  hash, and a test fails when the file and the live contract disagree. It
+  deliberately does not report whether a lane is built or installed on a given
+  machine: that is a property of a toolchain rather than of a contract, and the
+  binding coverage tests hold that question.
+- `tools/studio_evidence_verify.py` rechecks an exported evidence pack without
+  the Studio: it recomputes every file digest against the manifest, re-seals
+  every subject against its receipt, re-resolves the dependency graph, and
+  compares its own finding with the verdict the pack records — the exporter
+  wrote both the evidence and that verdict. It exits non-zero when a file is
+  missing or altered, when a subject no longer matches its seal, or when the two
+  verdicts disagree. `docs/studio/evidence-verification.md` documents the
+  receipt fields, the verdicts, and what a receipt does not claim.
+- The reference-trace corpus now says, per identity, what it is a reference
+  *for*. Backends agreeing with each other can reproduce one shared scientific
+  error, so `provenance.kind` — previously free text — is a closed vocabulary
+  adjudicated into a derivation (how the expected values were produced) and an
+  attribution (what the formulation is sourced from). The two combine into the
+  class a claim may use: 34 traces rest on an externally published source, 1 on
+  published values, 1 on a pinned third-party implementation, and 9 on a
+  formulation this repository retains with no whole-model publication to be
+  independent of. Four of those nine declare an independent or analytic
+  derivation, which is accurate, while citing a project recurrence — the
+  citation settles the class. A trace declaring an unadjudicated kind is now
+  refused at load time.
+- Negative controls for the same corpus. Five deliberate errors — a flipped
+  drive sign, a unit scale off by three orders of magnitude, the drive removed,
+  events recorded on the wrong side of the state update, and a threshold
+  displaced by up to 100 % — are applied to every deterministic trace, and each
+  outcome is recorded as detected, refused (the mutated run left the numeric
+  domain), inapplicable (the mutation provably changes nothing about that
+  protocol) or undetected. No trace in the corpus survives every control. Six
+  applied controls do not bite and each is stated: a logical all-or-none unit is
+  scale-invariant above threshold and its truth table cannot distinguish
+  pre-update from post-update state, and four conductance spiking traces
+  overshoot far enough inside one timestep that they validate the trajectory
+  rather than the threshold surface.
+- `tools/reference_trace_evidence.py` prints both surfaces and exits non-zero
+  when a trace cannot be adjudicated or survives every control.
 
 - Opening the Studio asks for the model list, its facets and a query at the
   same moment, and each request built the whole catalogue on a cold server;
   with requests still running from pages already closed, the builds competed
   for the interpreter and the list could take most of a minute. Concurrent
   first requests now share one build.
+### Fixed
+- A workspace saved before revisions existed is no longer invisible. The
+  previous store kept one flat `<name>.json` per workspace in the project
+  root, and a store that reads `<name>/head.json` found an existing
+  installation's saved work simply gone. Such a file is now adopted as
+  revision 1 on first access — read, list, save and history alike — and the
+  flat file is left on disk untouched, so the adoption is reversible. Adoption
+  is idempotent, and a file in the project root that is not a readable
+  workspace is adopted by nobody and never allowed to take down the listing.
+- Studio job records are returned in submission order. Creation timestamps
+  have one-second resolution and the tie was broken by `job_id`, which is a
+  digest: "retain the latest archive" kept whichever random hex sorted higher,
+  so audit-quarantine retention pruned the wrong archive whenever the ids
+  sorted against submission order. The tie is now broken by insertion order.
+- Saving a Studio workspace can no longer destroy what was already saved.
+  Three failures, each reproduced through the public API before it was
+  replaced: two editors loaded the same workspace and the second save silently
+  replaced the first; `delete_project` removed the file with no way back; and a
+  save truncated the live file and wrote into it, so under a real
+  `RLIMIT_FSIZE` refusal a 156-byte workspace became 65,536 bytes of
+  unterminated JSON and loading it raised. A workspace is now an append-only
+  list of immutable revisions (`studio.workspace.v1`). A save states the
+  revision it was made from and a stale one is refused with HTTP 409 and the
+  revision that is current; a delete moves the workspace, with its whole
+  history, to a trash it can be restored from; and a revision is written to a
+  sibling temporary file, `fsync`ed and `os.replace`d into place, so a failed
+  write leaves the previous revision untouched. A workspace conflict is
+  translated once, in the Studio API error boundary, because it is a
+  `ValueError` and a route that forgot it would report "invalid input" for a
+  save that was valid and merely arrived second.
+- The Studio editor carries the revision it loaded and sends it with every
+  save. It does not adopt the revision a conflict reports: saving again with
+  the state it still holds is the lost update the conflict exists to prevent.
+  A refused save says so and says nothing was overwritten, and a failed request
+  now surfaces a structured error detail instead of `[object Object]`.
 
 ### NIR interoperability acceptance corpus
+### Added
+- Workspace history, forking and transfer: `GET /api/project/{name}/revisions`
+  lists every revision with its parent and state digest,
+  `GET /api/project/load/{name}?revision=N` reads one as it was written,
+  `POST /api/project/{name}/fork` copies a revision into a new workspace
+  without touching the source, and `GET /api/project/{name}/export` with
+  `POST /api/project/import` moves a workspace between installations. Forking
+  or importing onto a name in use is refused, not merged.
+- Recoverable deletion: `GET /api/project/deleted` lists what is waiting with a
+  restore token, `POST /api/project/restore` brings a workspace back under its
+  original name with every revision it had, and restoring onto a live name is
+  refused. The Studio projects panel shows the trash with a restore action, so
+  recovery does not require an API call.
+- `docs/studio/workspaces.md`: the on-disk layout, the save-against-a-revision
+  contract, history, transfer, deletion and what happens to a workspace written
+  by a newer schema.
+- A Studio started without a configured job root no longer shares one fixed
+  directory with every other Studio on the host. Since the job ledger became
+  durable, that shared path meant a second process — or a later run — opened
+  the first one's ledger and reported its jobs as its own, and on a multi-user
+  machine the directory belonged to whichever user created it first.
+  Durability is now a property of a configured root
+  (`SC_NEUROCORE_STUDIO_JOB_ROOT`); without one, Studio creates a private
+  directory for the process and says so through `configured: false`.
+- Repaired three stale test expectations that were pinning behaviour the
+  code no longer has: the code-export route now emits a script that
+  re-resolves the exported request and guards its digest rather than building
+  a model inline, a cached simulation response differs from the first one by
+  its cache report, and the catalogue-scan stubs now carry the cancellation
+  callback the real scan takes — a stub without it passed while the route it
+  stood in for raised `TypeError`.
+- Stopping a Studio job now stops the work, or says that it did not. A process
+  worker's descendants survived its termination: only the direct child was
+  signalled, so a job that spawned a subprocess left it running while the
+  record read `timed_out`. Workers now lead their own process group, the group
+  is signalled, escalated from SIGTERM to SIGKILL and then checked, and a group
+  that survives is reported with the number of processes that may still be
+  running. A thread task that never checks `context.cancelled` cannot be killed
+  at all; instead of reporting only a timeout, the record states that the
+  worker did not stop and that uncooperative work belongs in a process job, and
+  the job appears in `unreaped_workers`.
+- The catalogue scan consults its cancellation context between models. A
+  cancelled sweep stops rather than running all 185 models and being discarded,
+  and a partial sweep is never cached as a scan of the catalogue.
+- The synchronous analysis budget projects a request's cost from the model it
+  names — resolved timestep, integrator substeps and declared state count —
+  instead of `ceil(duration / dt)` at a reference timestep. A four-state
+  substepped conductance model was previously budgeted as a scalar map.
+- Studio job records survive the process that made them. They lived in one
+  in-memory dictionary, so a restarted API answered `404` for a job it had
+  completed a second earlier, a second API process over the same job root saw
+  none of the first one's work while its artifacts sat on disk, the same
+  `request_id` submitted twice ran twice, and a job that was running when its
+  process died had no terminal state and no way to acquire one. Job state now
+  lives in a durable transactional ledger under the job root
+  (`sc_neurocore.studio.platform.jobs_ledger`, `studio.job-ledger.v1`: SQLite
+  in WAL mode, forward schema migrations, an append-only transition log
+  enforced by triggers, and a state machine that refuses to rewrite a terminal
+  record). Each job carries its actor and workspace, an idempotency key (a
+  second submission with the same key returns the first job instead of running
+  the work again), the effective experiment digest, the admission decision, a
+  lease with expiry and heartbeat, and the terminal result and artifact
+  manifest committed in one transaction with the status. Reads are scopeable by
+  actor and workspace; a job outside the scope raises `KeyError` rather than
+  reporting that it exists.
+- Startup recovery resolves the jobs a departed supervisor left behind: one
+  whose supervisor is provably gone, or whose lease expired without a
+  heartbeat, becomes `interrupted`; one whose supervisor this host cannot probe
+  becomes `unknown`, which is not terminal and awaits verification. Nothing is
+  promoted to `completed` and no side effect is repeated. An artifact written
+  before a crash stays on disk and out of the manifest the job never committed.
+- Route policy counts and the operator status payload, which the
+  `/api/export/replay-pack` route had left stale.
+- Studio code export reproduces the experiment it came from. The generated
+  script is built from the resolved `studio.experiment-spec.v1` and runs it
+  through the public runner, instead of constructing the model with its default
+  constructor, calling `step(current=…)` and reading `neuron.v`. Those
+  assumptions were false for much of the catalogue: a model whose public step
+  takes `drive` produced a script that raised `TypeError`, a requested time step
+  the model did not receive ran a different length of model time while reporting
+  the requested duration, and a non-constant drive protocol was silently
+  exported as a constant one. The exported script now carries the experiment
+  digest and stops rather than reporting a result when the installed package
+  resolves a different experiment.
 
 - The NIR graphs published with the NIR paper — written by Norse, Rockpool,
   Sinabs and snnTorch, and a SpiNNaker2 debugging example — are vendored
@@ -702,8 +1761,506 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   file is refused today, each with the node or parameter responsible, through
   the importer and through `/api/graph/import-nir`; the canvas guide lists
   them.
+### Added
+- `sc_neurocore.studio.platform.jobs_reaper`: process-group reaping with
+  escalation and verification, reporting the outcome rather than raising.
+- `sc_neurocore.studio.platform.jobs_admission`: a bounded number of running
+  jobs with a bounded queue behind them; overflow is refused with
+  `job_queue_full` and never reaches the ledger. The job status payload reports
+  `admission` and `unreaped_workers`.
+- `docs/studio/job-ledger.md`: the job ledger's migration, recovery, retention
+  and backup contract, including how to read a job's transition history and how
+  to resolve an `unknown` job by hand.
+- `sc_neurocore.studio.replay_pack`: a sealed `studio.replay-pack.v1` document
+  with the re-resolvable request (a drawn stochastic seed is pinned and the
+  trial sealed as a replay), the public specification, an
+  `experiment_identity_sha256` over the scientific blocks only, the complete
+  expectation (every spike event, a digest per state trace with its endpoints
+  and range, the initial and final state, the drive digest, the run statistics)
+  and the sealing environment. `python -m sc_neurocore.studio.replay_pack
+  <pack.json>` admits or refuses the pack before anything executes — unsupported
+  schema, a document whose digest does not describe its own specification, an
+  unexecutable request field, an experiment that resolves differently here, a
+  drifted model revision, or unadmitted runtime drift — then runs it and
+  compares in full, exiting 0, 1 or 2. Identity digests describe JSON values, so
+  a pack saved by a browser still verifies.
+- `POST /api/export/replay-pack` and the Studio's **Replay pack** export.
+  `/api/codegen` now takes the same fail-closed request as the simulation
+  routes, requires the `mode` discriminator, honours `protocol`,
+  `frequency_hz`, `seed` and `trial`, and returns the experiment digest, the
+  pinned request and a replay script alongside the script and one-liner.
+- `docs/studio/replay-and-export.md`, and a browser-to-server-to-replay
+  contract (`npm run test:e2e:export`) that drives the built Studio bundle,
+  downloads a pack and replays it in a separate interpreter outside the
+  repository.
 
 ### Network graphs refuse populations their model would not build
+### Changed
+- `studio.jobs.status.v1` → `studio.jobs.status.v2`: the job status snapshot
+  gained `interrupted_count`, `unknown_count` and `recovery`. A v1 consumer
+  would have counted an interrupted job as neither active nor failed, and seen
+  no reason why. `StudioJobStatus` gained `interrupted` and `unknown`, and
+  `StudioJobRecord` gained the custody fields the ledger stores.
+- The jobs package keeps one responsibility per module: the ledger's schema,
+  writes, reads, recovery and supervisor identity are separate owners, and the
+  job manager's durable read surface moved to `jobs_manager_custody`.
+- `vite preview` now proxies `/api` to the Studio backend, as the dev server
+  does; the built bundle previously had no way to reach it.
+- Firing-pattern classification moved from `studio.codegen` to
+  `studio.firing_pattern`; code export and run description are separate
+  responsibilities with separate owners.
+- The Studio network canvas runs the graph it shows. A graph is resolved
+  into a versioned specification (`sc_neurocore.studio.network_graph_spec`,
+  `studio.network-graph-spec.v1`): every population names a catalogue model
+  whose constructor contract accepts its parameters and the graph timestep,
+  declares its external input (`none`, `constant`, `poisson`) and a positive
+  integral count; every projection carries a signed weight that agrees with
+  its source population's type, an explicit connection rule (`random` with a
+  probability or `all_to_all`), a delay that is a whole number of timesteps
+  and a seed that is given or derived from the graph seed; validation reports
+  every error of a graph at once and unknown fields, sign conflicts, rule
+  conflicts, fractional delays, inadmissible models (integer drive, shared
+  seed field) and oversized runs are rejected, never clamped, rounded or
+  shortened. The specification is lowered to public `Population`,
+  `Projection`, `SpikeMonitor` and stimulus objects and run through the
+  reference Python loop (`sc_neurocore.studio.network_execution`); the
+  result (`studio.network-graph-result.v1`) reports the executed
+  specification with its digest, the loop's semantics (previous-step
+  propagation, delay buffering, one-step synaptic current), the rejected Rust
+  runner with its reason, a topology artefact with the CSR digest and arrays
+  of every projection, every spike event of every population, rates under a
+  metric contract and a final finiteness check. The former mapping of any
+  two-population graph onto the E-I template (model, parameters and delays
+  ignored, `abs(weight)`, one probability from the last edge, template
+  defaults for absent edges) is gone; the E-I template remains available as
+  `/api/network/ei`. The canvas default model is `SCLapicqueLIFNeuron`
+  (`LIFNeuron` was never a catalogue model); new excitatory populations
+  carry a constant drive, new projections a weight signed by their source
+  type; NIR-named import requires catalogue model names and validates the
+  assembled graph. `/api/graph/models` lists only admissible models.
+- Studio analyses now state what they measure and where they are valid.
+  Every analysis payload carries a metric contract
+  (`sc_neurocore.studio.analysis_contract`, `studio.metric-contract.v1`:
+  kind, definition, units, applicability, limitations and a
+  complete/partial/empty domain verdict) and the analysis manifest records
+  its kind and domain. The precision comparison (`/api/precision`,
+  `/api/ir/cosim`) runs genuine fixed-point arithmetic: the generated
+  bit-true C kernel of the equation system, proven bit-identical to the RTL,
+  is compiled with the host C compiler and driven with one encoded input
+  word per step (`sc_neurocore.studio.bit_true_execution`); the kernel
+  generator states its value encoding, multiply width collapse and rounding,
+  accumulate overflow policy, LUT geometry and threshold/reset sequencing
+  (`kernel_arithmetic_contract`). The result keeps the float64 reference,
+  the bit-true run (decoded words, every state and spike) and a separately
+  labelled float64 run with parameters and initial state rounded to the word
+  resolution apart, compares every variable and the spike train, aligns the
+  error trace with the display projection, and reports saturation; the word
+  format, overflow and rounding modes, protocol and sine frequency are
+  request fields. A parameter, expression constant, initial value, time step
+  or drive sample the word cannot hold is rejected with its field instead of
+  being clamped, and a missing C compiler is answered with HTTP 503 instead
+  of an estimate. Nullclines (`sc_neurocore.studio.nullclines`) evaluate each
+  drift-field component with floating-point errors raised and return
+  per-component validity masks, contour cells only where all four corners
+  are valid, the held variables and the input current; an invalid sample is
+  never a zero derivative. Sensitivity reports an undefined elasticity
+  (zero base rate or zero parameter) as `null` with a reason instead of
+  `0.0`; the bifurcation route is labelled a numerical extrema sweep with
+  the analysed variable and protocol; f-I, heatmap and frequency response
+  state their rate definition. The Studio UI sends the explicit protocol and
+  word format, draws the bit-true and parameter-quantisation errors on the
+  display axis, labels a partial nullcline domain and shows undefined
+  sensitivities with their reason.
+- Every Studio simulation request now resolves into one effective experiment
+  (`sc_neurocore.studio.experiment_spec`, `studio.experiment-spec.v1`) before
+  it runs: model revision (package, module, descriptor and canonical schema
+  digests) or equation digest, numerical profile and effective time step,
+  exact step count, typed initial state, protocol with an explicit sine
+  frequency and the drive digest, randomness contract (kind, seed and its
+  source, replay or fresh trial), backend selection with rejected
+  alternatives and the runtime digest. The result cache is keyed by that
+  digest, so runs that differ in any of them cannot share an entry, and a
+  fresh stochastic trial is never cached; explicit request defaults resolve
+  to the same experiment as omitted ones. A seed on a deterministic model or
+  on noise-free equations is rejected; playground diffusion noise draws from
+  a per-run generator instead of the process-global stream; an oversized
+  synchronous run is refused with a pointer to the new `simulate` job kind
+  instead of being shortened; a protocol typo on the playground route is
+  rejected instead of becoming constant. Run manifests carry the experiment
+  digest and trial; the Studio UI sends explicit frequency, seed and trial
+  and persists them in saved sessions.
+- Studio simulation results now carry complete-state and raw-result custody.
+  Catalogue runs record the state the committed descriptor declares, joined
+  with the canonical profile roles (`sc_neurocore.studio.state_layout`), with
+  observed scalar/vector shapes, exact initial and final snapshots, a
+  post-step observation clock and a start-to-end mutation audit; name
+  heuristics are no longer a state source (they recorded AdEx parameters as
+  state and dropped the adaptive threshold). Every response returns the
+  full-resolution `raw` block next to a bounded display projection whose
+  `display.sample_index` maps each point to its raw step and preserves every
+  bucket extremum, the first and the last sample
+  (`sc_neurocore.studio.trace_projection`). Run manifests move to
+  `studio.simulation-run.v2` (raw digest, layout source, custody verdict,
+  observation clock); evidence bundles accept v1 and v2. The catalogue and
+  multi-simulate routes run on the Python custody backend; the Rust batch
+  result is labelled voltage-only without an initial snapshot. Analyses,
+  the spike-triggered average and CSV export read the raw traces.
+- Added the versioned model profile contract `sc-neurocore.model-profile.v1`
+  (`sc_neurocore.neurons.model_profile`): every schema-DSL document resolves
+  into a scientific model (authored equations, biological state and source
+  parameters with units), a numerical realisation (method and exactness class,
+  step and time unit, sub-steps and whether they subdivide time or fold the
+  stages of one scheme, macro step, evaluation order, auxiliary registers,
+  implementation and timebase parameters, admissible methods, randomness
+  contract) and a lowering profile (what the RTL emitter accepts and under
+  which limits). An optional `[profile]` section authors what cannot be
+  derived; twelve representative schemas (`lapicque`, `sc_lapicque_lif`,
+  `lif`, `adex`, `hodgkin_huxley`, `wang_buzsaki`, `exp_if`, `rulkov_map`,
+  `chialvo_map`, `escape_rate`, `poisson`, `coba_lif`) carry one in both
+  formats. No equation, parameter, step, threshold or reset value changed.
+  Exactness claims are checked: `exact-linear-relaxation` for exponential
+  Euler is verified symbolically, `exact-flow` is admitted only for an
+  authored recurrence, and an explicit-Euler or RK4 schema cannot claim either.
+- `UniversalNeuron` refuses a schema whose profile contradicts it or that is a
+  descriptive record outside the executable vocabulary, and admits overrides
+  through the profile: a method must stay in the family (a published map is
+  never integrated as an ODE; an ODE may select another ODE integrator and the
+  realisation is then reported as derived), a step override moves the
+  timebase parameters (`dt`, `dt_ms`) with it and is refused for a recurrence
+  without a continuous timebase, a parameter override that contradicts the
+  effective step is refused, and a seed is refused for a deterministic model.
+  `neuron.profile` and `neuron.realised_profile()` expose both views.
+- The static schema validator reports profile contradictions as errors,
+  classifies the thirteen descriptive records (methods or detections outside
+  the executable vocabulary) as warnings instead of passing them silently, and
+  checks the profile section for TOML/JSON parity.
+- Studio model details carry `profile_contract`; the compile configuration
+  offers only integrators inside the profile's family and refuses one that
+  leaves it; compile evidence records the realised profile (declared and
+  effective method, exactness, step, sub-steps, macro step, randomness,
+  derived flag) next to the schema digest. The descriptor skeleton generator
+  resolves the curated schema per class instead of per module.
+- Added the per-profile inventory and validator registry
+  (`sc_neurocore.neurons.profile_registry`, `tools/model_profile_ledger.py`,
+  generated `docs/_generated/model_profile_ledger.json`): one row per bound
+  (class, schema profile) with the three layers, the descriptor's own
+  integration label next to the profile method, readiness verified for exactly
+  that profile, every declared validator per facet with its resolution and
+  scope, and an admission verdict. A non-canonical profile is never admitted
+  by the canonical profile's class-scoped tests; a facet declared by prose or
+  a report alone blocks admission; declared-but-unvalidated backends are
+  listed, not decided. Documented in `docs/api/model_profiles.md`.
+- Four descriptors (`AiharaMapNeuron`, `NagumoSatoMapNeuron`,
+  `SCAdaptiveThresholdMapNeuron`, `SCChaoticMapNeuron`) stated
+  `method = "euler"`, `dt = 0.1` because the generator resolved their schema by
+  module name and found none; regenerated per class they state the bound map
+  profile (`map`, `dt = 1.0`). The `ermentrout_kopell_theta_euler_doi`
+  reference protocol declared an inert `dt = 1.0` for a map whose 0.1 Euler
+  step is fixed inside its expression; it now declares 0.1 with unchanged
+  expected features. The eight representative facet receipts were re-recorded
+  against the changed schema and compiler-front-end subjects.
+- Added evidence-bound readiness next to the declared dual-axis tiers
+  (`sc_neurocore.neurons.readiness`, `facet_receipts`, `evidence_references`).
+  Descriptor evidence fields are parsed into typed references and resolved on
+  disk; a facet is credited only through an immutable facet receipt
+  (`tools/facet_receipt.py`) that records the executed command, its tool and
+  runtime, its passed/failed/skipped counts and the digests of every subject
+  (descriptor contract, model module, schema profiles, compiler, committed RTL,
+  reports, validator tests), so one changed subject invalidates exactly the
+  facets that consume it. `tools/readiness_evidence_ledger.py` writes and
+  checks `docs/_generated/readiness_evidence_ledger.json`; Studio catalogue
+  entries carry verified tiers next to the declared ones; see
+  `docs/api/readiness_evidence.md`.
+- Corrected four descriptor evidence pointers that named test functions that
+  never existed under that name (AdaptiveThresholdIF, Brunel-Wang and
+  resonate-and-fire co-simulation; McCulloch-Pitts validation) and withdrew the
+  co-simulation claim of `SCInclusivePerfectIntegratorNeuron`, whose retained
+  schema has no RTL trace test. The corpus now fails on any evidence reference
+  that does not resolve. Eight receipts recorded from executed tests bind
+  Lapicque (S5, H1), the three corrected co-simulations and the McCulloch-Pitts
+  validation.
+- Added the canonical model identity registry
+  (`sc_neurocore.neurons.model_identity`): every registered class and import
+  alias resolves to exactly one identity record with its kind (published source,
+  project-original design, `SC` compatibility identity or API alias), count
+  membership, taxonomy family, bound schema-DSL profiles, source locator, public
+  fidelity status, revalidation status and open evidence gates. Ambiguous or
+  missing joins raise instead of being dropped: an `SC` identity with a
+  literature DOI, a schema stem owned by no class or by two, or a public row
+  naming an unregistered class. `tools/model_identity_ledger.py` writes and
+  checks the generated `docs/_generated/model_identity_ledger.json`.
+- Corrected the public catalogue figures to 57 of 160. The page sentence said
+  sixty while its own strict table carried 57 source rows, and the 155
+  denominator was a running hand tally with no live definition; the registry
+  derives the source catalogue as the 185 registered classes minus the 25
+  count-neutral `SC` compatibility identities (import aliases are never
+  registered classes), so 103 source-model units remain. The count-neutral SC
+  three-state phantom is listed as a compatibility identity awaiting its own
+  source-hashed five-runtime benchmark instead of being strict-promoted on the
+  distinct Bertram artefact. Of the 57 promoted source identities, 20 are bound
+  to an independent source receipt and 37 are explicitly recorded as not
+  revalidated.
+- Classified the three retained `SC` compatibility identities
+  (`SCInclusivePerfectIntegratorNeuron`, `SCLapicqueLIFNeuron`,
+  `SCSymmetricQuadraticIFNeuron`) in the family taxonomy, so the taxonomy
+  completeness test passes again, and bound the seven schema-DSL stems whose
+  module names differ from their stem (`aihara_map`, `nagumo_sato_map` and the
+  five `sc_*` paired profiles) in the schema alias table. The schema-gap report binds stems
+  through the same table, so paired `sc_*` profiles are no longer reported as
+  orphan schemas and its net-missing count is modules without any schema.
+- Studio model runs (`simulate_model`, `POST /api/models/simulate`,
+  `POST /api/export/svg`) are fail-closed. A new run contract validates every
+  request against the model class: unknown, non-numeric, non-finite, private,
+  derived or non-numeric-typed parameter overrides, fractional values for
+  integer fields, foreign `dt` on fixed-step or timestep-less models,
+  unsupported protocols, fractional samples for integer-drive models, and
+  `step` inputs the protocol cannot supply are rejected with the field and
+  reason (HTTP 422 `invalid_model_input`). Constructor failures, `step`
+  exceptions, non-finite or non-scalar state are reported with backend, step
+  and simulated time (HTTP 422 `model_simulation_failed`) instead of default
+  reconstruction, retried steps, or zero substitution; failed requests are not
+  cached. Successful runs carry a `studio.model-run-inputs.v1` receipt with
+  the effective parameters, timestep source, drive contract and every excluded
+  state variable. `IntegerQIFNeuron` now reports its fixed 1.0 ms step in the
+  catalogue and on both backends. The request schema forbids unknown keys and
+  non-finite numbers, and a body carrying `NaN` or `Infinity` returns 422
+  instead of 500. The OpenAPI reference declares the 422 contract.
+- Removed the pre-existing integer round-trip from the Go alpha kernel's
+  `unsafe.Pointer` region assembly. The direct pointer slice preserves the C
+  ABI while restoring clean `go vet ./...` and module-test validation.
+- Re-closed `DPINeuron` against Indiveri, Stefanini, and Chicca's 2010
+  current-mode equations (2)-(3), separating the source circuit terms from
+  maintained normalised defaults and discrete event ordering. Python,
+  production and safety Rust, PyO3, Julia, Go, and Mojo now expose
+  failure-atomic complete membrane/adaptation/refractory/event packets for the
+  configurable 18-field contract. A PDF-bound independent complete-state
+  receipt, source-hashed five-runtime benchmark, paired schemas, NetworkRunner
+  execution, 112,953-cell Q16.16 Yosys synthesis, and depth-8 reached-event
+  reset/refractory safety establish H2 without timing, PPA, device, board,
+  physical-silicon, transistor-mismatch, or universal-equivalence claims.
+- Re-closed `ThetaNeuron` against Ermentrout and Kopell's equation (2.5), with
+  `current` explicitly representing source parameter `a` or a frozen equation
+  (3.3) drive rather than the paper's full slow-oscillator bursting system.
+  Python, production and safety Rust, PyO3, Julia, Go, and Mojo now expose
+  failure-atomic complete phase/event packets for arbitrary maintained state;
+  over-wide held-drive steps fail instead of collapsing multiple passages into
+  one event bit. A PDF-bound independent receipt, source-hashed five-runtime
+  benchmark, paired exact-software/Euler-RTL contracts, 6,203-cell Q16.16 Yosys
+  receipt, and depth-110 receipt-drive phase/event safety establish the honest
+  H2 boundary without
+  timing, PPA, board, physical-silicon, or exact-flow hardware-equivalence
+  claims.
+- Corrected `QuadraticIFNeuron` to Latham et al.'s normalized source numerical
+  boundaries (`v=-1`, apex `31/3`, reset `-3`, `dt=.05`) while retaining the
+  historical `-1/+1/.01` recurrence as count-neutral
+  `SCSymmetricQuadraticIFNeuron`. Five failure-atomic complete runtimes, paired
+  schemas, a DOI/PDF-bound receipt, NetworkRunner routing, source-hashed
+  benchmark, dedicated Q16.16 source RTL, 9,379-cell Yosys synthesis, and
+  depth-20 reset/event safety now establish the honest H2 envelope without
+  timing, PPA, device, board, physical-silicon, or universal-equivalence claims.
+- Re-closed `ExpIFNeuron` against the Fourcaud-Trocmé et al. (2003) fitted
+  exponential integrate-and-fire protocol. The catalogue-counted source
+  factory now keeps the paper's -30 mV numerical handoff, deterministic
+  zero-noise Heun RK2 specialization, derived analytical exponential-only
+  tail duration, and 1.7 ms refractory interval distinct from the retained historical SC
+  candidate-first RK4/+30 mV/Q32.32 compatibility profile. Python,
+  production and safety Rust, Julia, Go, Mojo, PyO3, NetworkRunner, paired
+  schemas, an independent complete-packet receipt, source-hashed benchmark,
+  fixed-point co-simulation, 484,938-cell Yosys synthesis, and bounded
+  reset/event safety now establish the honest H2 boundary without timing, PPA, device, board,
+  physical-silicon, or universal-equivalence claims.
+- Re-closed `AdExNeuron` against the Brette–Gerstner equations and separated
+  the paper's regular-spiking fit from backwards-compatible maintained
+  defaults. Python, production and safety Rust, Julia, Go, and Mojo now expose
+  failure-atomic complete `(v,w,event)` batches with full parameter transport;
+  paired schemas and an independent source-fit receipt bind the published
+  equations. The source-hashed five-runtime benchmark retains complete packet
+  custody, while four-current Q16.16 co-simulation, a 52,014-cell Yosys receipt,
+  and depth-6 reset/event safety establish the honest H2 boundary without
+  timing, PPA, device, physical-silicon, or formal-equivalence claims.
+- Corrected `WilsonHRNeuron` to Wilson's continuous 1999 polynomial cortical
+  equations with source `C=0.8`, `tau_R=1.9 ms`, no hard reset, and an explicit
+  sampled upward-crossing observation convention. The former unit-capacitance,
+  level-detected reset recurrence remains available as the count-neutral
+  `SCResettingWilsonHRNeuron`. Both identities now carry failure-atomic
+  Python/Rust/Julia/Go/Mojo execution, production PyO3 and NetworkRunner wiring,
+  paired schemas, source-bound benchmarks, generated Q16.16 co-simulation,
+  Yosys synthesis, bounded formal safety, and language-native documentation.
+  The source catalogue count remains 55/155.
+- Re-closed `TermanWangOscillator` without changing its DOI-backed two-state
+  cubic/`tanh` equations or continuous no-reset identity. Python, production
+  Rust/PyO3, Julia, Go, and Mojo batches now reject invalid stages, candidates,
+  and results without partial state mutation; the five-runtime benchmark is
+  source-hash-bound and fail-closed; descriptor evidence resolves to current
+  tests; and committed Q16.16 co-simulation, real Yosys synthesis, and depth-4
+  bounded safety establish the honest H2 boundary without timing, PPA, device,
+  silicon, or formal-equivalence claims.
+- Re-closed `PernarowskiNeuron` without changing its DOI-backed three-state
+  equations or continuous no-reset identity. Python, production Rust/PyO3,
+  Julia, Go, and Mojo batches now reject invalid stages and candidates without
+  partial state mutation; the five-runtime benchmark is source-hash-bound and
+  fail-closed; descriptor evidence resolves to current tests; and committed
+  Q16.16 co-simulation, real Yosys synthesis, and depth-4 bounded safety
+  establish the honest H2 boundary without timing, PPA, device, or silicon
+  claims.
+- Re-closed `FitzHughRinzelNeuron` against Rinzel's 1987 equations (3.4)–(3.6)
+  and parameter profile while keeping fixed-step RK4 and sampled no-reset
+  threshold crossings explicit as repository specialisations. Python,
+  production Rust/PyO3, safety Rust, Julia, Go, and Mojo now reject non-finite
+  batch candidates without partial state mutation; the five-runtime benchmark
+  is source-hash-bound and fail-closed; descriptor evidence is executable; and
+  committed Q16.16 co-simulation, Yosys synthesis, and depth-4 bounded safety
+  establish the honest H2 boundary without timing, PPA, device, or physical
+  silicon claims.
+- Corrected `BendaHerzNeuron` to Benda and Herz's deterministic universal
+  adaptation equations (8) and phase spike generator (45), using the paper's
+  Figure 8 square-root onset and linear steady-state adaptation example. The
+  former logistic RK4/exponential-hazard recurrence remains exactly available
+  as count-neutral `SCStochasticRateAdaptationNeuron` without paper
+  attribution. Both identities carry Python/Rust/Julia/Go/Mojo surfaces,
+  paired schemas, independent receipts, RTL/Yosys/bounded formal evidence,
+  focused benchmarks, NetworkRunner wiring, and native documentation. Only the
+  source identity increments the catalogue, now 55/155.
+- Corrected `McKeanNeuron` to the source-bound space-clamped Heaviside system
+  (`dv/dt=-lambda*v+mu*H(v-a)-w+I`, `dw/dt=b*v`) and pinned the
+  right-continuous `H(0)=1`, simultaneous RK4, sampled upward switching-line
+  event, and no-reset conventions. The former three-branch recurrence remains
+  exactly available as count-neutral `SCTriangularMcKeanNeuron`. Both identities
+  now carry Python/Rust/Julia/Go/Mojo execution, paired schemas, independent
+  receipts, signed-Q32.32 RTL co-simulation, Yosys and bounded formal evidence,
+  source/binary-bound benchmarks, NetworkRunner wiring, and language-native
+  documentation. Only the source identity increments the catalogue, now
+  54/155; spatial diffusion and network behavior remain outside this scalar unit.
+- Corrected `EnergyLIFNeuron` to the Fardet-Levina (2020) coupled eLIF source
+  identity and the authors' 0.1 ms Brian RK4 profile. The former normalized
+  exact-flow recurrence remains exactly available as the count-neutral
+  `SCNormalizedEnergyLIFNeuron`. Both identities now carry complete
+  Python/Rust/Julia/Go/Mojo dispatch, paired schemas, independent receipts,
+  pinned Q32.32 RTL/Yosys/bounded-safety evidence, source/binary-bound
+  benchmarks, and language-native documentation. Only the source identity
+  increments the catalogue, now 53/155.
+- Corrected `SigmaDeltaNeuron` to a source-bound sampled specialization of
+  Yoon's asynchronous pulse sigma-delta encoder: integrating prefilter,
+  exponentially decaying local reconstruction, upper-threshold quantizer, and
+  unipolar feedback events. The former signed accumulator remains exactly
+  available as `SCSigmaDeltaAccumulatorNeuron`. Both identities now carry
+  Python/Rust/Julia/Go/Mojo execution, paired schemas, independent receipts,
+  Q32.32 RTL/Yosys/CVC5 evidence, source/binary-bound benchmarks, and native
+  documentation. Only the source identity increments the catalogue to 52/155.
+- Corrected `NonResettingLIFNeuron` to the source Kobayashi-Tsubo-Shinomoto
+  (2009) one-timescale MAT(1) identity: forward-Euler non-resetting membrane,
+  exact 50 ms threshold history, and 2 ms absolute refractory gating. The
+  frozen affine-rest exact-relaxation behavior remains as the explicitly
+  project-defined `SCNonResettingAdaptiveLIFNeuron`. Both identities now carry
+  Python/Rust/Julia/Go/Mojo execution, paired schemas, independent receipts,
+  signed Q32.32 RTL/Yosys/sequence/formal evidence, source/binary-bound local
+  benchmarks, and native-language documentation. Only MAT(1) increments the
+  public source-model fidelity count, now 51/155; timing, PPA, device, and
+  universal-equivalence claims remain open.
+- Restored `MATNeuron` to the source Kobayashi-Tsubo-Shinomoto (2009) MAT*
+  identity: non-resetting voltage, paper-profile parameters, forward-Euler
+  membrane at 0.001 ms, exact two-timescale threshold memories, and a 2 ms
+  refractory interval. The former candidate-first RK4/reset recurrence remains
+  available as the explicitly project-defined `SCResettingMATNeuron`. Both
+  identities now carry complete Python/Rust/Julia/Go/Mojo execution, paired
+  schemas, independent trace receipts, signed Q32.32 RTL co-simulation, Yosys
+  synthesis, sequence-bounded optimized-netlist equivalence, depth-12 CVC5 safety,
+  source/binary-bound local benchmarks, and native-language documentation. Only
+  the source MAT* identity increments the public fidelity count, now 50/155;
+  timing, PPA, device, and universal equivalence claims remain open.
+- Added the schema-bound `SC-COMPTE-WM-NETWORK` 16-bin circular E-to-E
+  no-autapse RTL representative. Its unsigned Q16.16/Q32.32 contract has
+  zero-LSB independent dense-oracle co-simulation across all targets,
+  busy-time input rejection, 16-cycle bounded control proof, Yosys synthesis,
+  and asserted post-`opt` equivalence. The committed receipt explicitly makes
+  no full-network binary64, device timing/PPA, board, or physical-silicon
+  claim.
+- Added identical JSON/TOML contracts for the separately named
+  `SC-COMPTE-WM-NETWORK`, covering topology, numerics, all nine state arrays,
+  behavior protocol, receipts, and an explicit bounded-representative hardware
+  boundary without conflating the preserved scalar Compte cell.
+- Established the separately named 2,560-cell `SC-COMPTE-WM-NETWORK` behavior
+  ensemble across Python, Rust, Julia, Go, and Mojo. Three reference seeds and
+  five explicit runtime anchors now satisfy predeclared circular-statistics
+  thresholds for spontaneous baseline, cue formation, persistent bump,
+  bounded bidirectional drift, distractor resistance, global response, and
+  reset, with exact long-run input/spike/count custody. Direct-current receipt
+  hashing now uses documented `1e-9 pA` custody resolution across platform
+  math libraries without changing executed binary64 currents. This is
+  deterministic SC simulator evidence, not reproduction of the paper's larger
+  distractor experiment or silicon/biological validation.
+- Corrected `CompteWMNeuron` to the source-bounded Compte et al. (2000)
+  pyramidal-cell membrane and incoming AMPA/NMDA/GABAA kinetics, including
+  separate presynaptic event paths, coupled midpoint RK2 at 0.02 ms, and
+  atomic refractory/reset semantics. Python, modular Rust, independent Rust
+  safety, Julia, Go, and Mojo preserve the complete six-state/event receipt;
+  an independent primary-equation trace, paired schemas, hand Q16.16 RTL
+  co-simulation, Yosys and bounded formal collateral, a source/binary-bound
+  200,000-step benchmark, and native-language documentation close together.
+  The existing convenience `working_memory_circuit` is now explicitly an SC
+  project-derived approximation. The paper's 2,560-cell ring, connectivity
+  footprint, Poisson drive, persistent bump, distractor resistance, and
+  network statistics are retained for a separately named SC network model.
+- Corrected `BrunelWangNeuron` to the Brunel-Wang (2001) excitatory
+  pyramidal-cell defaults and midpoint-RK2 membrane equation at 0.1 ms. Python,
+  modular Rust, independent Rust safety, Julia, Go, and Mojo now preserve the
+  complete configured four-gate voltage/refractory/event receipt; an independent
+  primary-equation oracle, paired schemas, hand Q16.16 RTL co-simulation, Yosys
+  and bounded formal collateral, a source/binary-bound 200,000-step benchmark,
+  and language-native documentation define the evidence boundary. The distinct
+  `BrunelNetwork` is unchanged, and network connectivity, Poisson input,
+  synaptic-state kinetics, persistent activity, timing, PPA, device results,
+  and binary64 formal equivalence remain unclaimed.
+- Corrected `AmariNeuralField` to the source-level Heaviside activity in Amari
+  (1977), restored a genuinely local-excitation/distal-inhibition default
+  kernel, and promoted the finite periodic-grid specialization across the
+  modular Rust engine, independent Rust safety, Julia, Go, and Mojo lanes.
+  Complete vector-state receipts, an independent DOI oracle, paired schemas,
+  Q16.16 four-site RTL co-simulation, Yosys/depth-12 safety induction, a
+  source/binary-bound benchmark, and language-native API documentation now
+  define the evidence boundary. Continuous-space convergence, persistent-bump
+  defaults, formal equivalence, timing, PPA, and device results remain unclaimed.
+- Graduated `SCChaoticMapNeuron` as its own project-specified high-fidelity
+  model without restoring the removed Aihara attribution. The preserved
+  Python/Rust/Julia/Go/Mojo recurrence is now bound to an independent project
+  receipt, paired TOML/JSON schemas, measured behavior taxonomy, Q8.24
+  schema-to-RTL co-simulation, Yosys/depth-12 safety evidence, a source- and
+  binary-bound 200,000-step benchmark, and native-language API documentation.
+- Split the misidentified `KilincBhattMapNeuron` into the source-faithful
+  one-state `NagumoSatoMapNeuron` and the retained project-designed two-state
+  `SCAdaptiveThresholdMapNeuron`; the historical name is now a deprecated
+  compatibility alias only. Both canonical models carry complete
+  Python/Rust/Julia/Go/Mojo receipts, independent equation/specification
+  traces, paired schemas, fixed-point RTL co-simulation, Yosys/SymbiYosys
+  evidence, source-bound benchmarks, and native-language API documentation.
+- Adopted language-native API documentation as a project-wide forward ratchet:
+  Python docstrings, Rustdoc, GoDoc, Julia docstrings, Mojo ABI/module comments,
+  and RTL interface/fixed-point contracts accompany new or materially changed
+  public APIs. Rust documentation builds now execute in the engine workflow;
+  historical gaps remain explicit backfill work rather than implied compliance.
+- Split two previously conflated model identities: `AiharaMapNeuron` now uses
+  Aihara's primary-author one-state recurrence and Eq. 12 level waveform
+  shaper, while the original SC two-state recurrence remains available as the
+  explicitly project-designed `SCChaoticMapNeuron`. The SC model retains its
+  two-state recurrence with measured Python/Rust/Julia/Go/Mojo trajectory and
+  event parity. Separately, all Aihara lanes now share the source Figure 4/5
+  parameter anchors, checked batch receipts, paired schemas, an independent
+  primary-equation trace, dedicated documentation, Q8.24 bounded co-simulation,
+  a depth-6 Z3 proof, and a source-periodic benchmark.
+- Raised the Python coverage gate from 98% through the intermediate 99% ratchet
+  to 100% in `pyproject.toml`, the primary CI matrix leg, and local preflight.
+  The retained aggregate at tip `2e6118ba5` is 65,373/65,373 statements; the
+  Makefile and hosted gate now reject any regression below that closure.
+- Regenerated polyglot benchmark evidence for alpha, adaptive-threshold-IF,
+  Ermentrout–Kopell population, and resonate-and-fire after the coverage-gate
+  hash surface changed; refreshed `docs/API_REFERENCE.md`.
+- Isolation throughput floors for Hindmarsh–Rose and NLIF now use the CI floor
+  under active coverage tracing (as well as under `CI=`), so full-suite
+  preflight with pytest-cov does not flake while uninstrumented local floors
+  stay strict.
+- Mojo ISA pin allowlist includes the split
+  `test_build_accel_backends_commands_and_build` suite; DPI checkout bridge
+  discovery appends the user site-packages root under `python -S`.
 
 - Graph validation checked each population parameter against its own range
   but never built the model, so values each in range that no model accepts —
@@ -719,8 +2276,120 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - A NIR file with such a population — a self-driven LIF whose leak potential
   lies above its threshold — is now refused with that reason instead of
   failing while it runs.
+### Added
+- Added explicit fail-closed public dispatch for all five complete
+  `SC-COMPTE-WM-NETWORK` runtimes. Python and Mojo execute in process;
+  repository-native Rust, Julia, and Go JSON adapters expose the same run and
+  window receipt contract without silent fallback. Rust now natively owns
+  protocol stimuli, activity windows/statistics, and SHA-256 input/spike/state
+  custody. A source/binary-bound three-repeat 1,000-step consolidated benchmark
+  records exact Python/Rust/Julia/Go/Mojo input, spike, and count parity while
+  keeping timings local and behavior/hardware claims false.
+- Added the complete Mojo runtime for `SC-COMPTE-WM-NETWORK`, with a
+  documented stable C ABI, all 2,560 states, native counter-Poisson input,
+  dependency-free radix-2 FFT coupling, control/modulated modes, explicit-
+  event co-simulation, protocol/window/run custody, and atomic validation.
+  The repository-local Mojo 0.26.2 build is pinned to `x86-64-v3`; its
+  source/binary-bound three-repeat 1,000-step receipt exactly matches the
+  Python/Rust/Julia/Go input and spike evidence without claiming network
+  behavior or hardware performance.
+- Added the complete Go runtime for `SC-COMPTE-WM-NETWORK`, with GoDoc,
+  all 2,560 states, counter Poisson input, an in-tree dependency-free radix-2
+  FFT, optional structured E-to-I coupling, explicit-event co-simulation,
+  stimuli/statistics/run receipts, and atomic validation. Native tests bind
+  the counter, preserved scalar cell, recurrent fixture, determinism, and
+  failure boundary; its source-bound three-repeat 1,000-step receipt exactly
+  matches Python/Julia input and spike evidence without claiming behavior.
+- Added the complete documented Julia runtime for `SC-COMPTE-WM-NETWORK`,
+  including all 2,560 cells, repository-local pinned FFTW dependencies,
+  counter Poisson drive, structured FFT recurrence, explicit-event
+  co-simulation, stimuli, bounded activity receipts, and atomic validation.
+  Native tests bind the counter, preserved scalar cell, and recurrent fixture
+  to Python/Rust evidence; a source-bound three-repeat 1,000-step benchmark is
+  local regression evidence only and does not claim bump persistence or
+  distractor resistance.
+- Added the documented modular Rust runtime for `SC-COMPTE-WM-NETWORK`, with
+  the full fixed population state, preplanned FFT ring coupling,
+  counter-addressed Poisson input, explicit-event co-simulation boundary,
+  control/modulated modes, and atomic validation. Native tests bind its input
+  fixture and isolated cell to Python/original-cell evidence and bind a
+  non-trivial recurrent step to the Python dense oracle. A separately compiled
+  dependency-free Rust safety surface validates complete state, input, and
+  dense no-autapse connectivity. This is Python/Rust short-trace parity, not
+  yet behavioral or all-runtime closure.
+- Added the first executable `SC-COMPTE-WM-NETWORK` layer without conflating it
+  with the preserved scalar `CompteWMNeuron`: deterministic counter-addressed
+  1,800 Hz Poisson input receipts, all 2,048+512 membrane/channel states,
+  midpoint RK2, no-autapse circular E-to-E and optional structured E-to-I
+  coupling, protocol currents, atomic validation, window statistics, and
+  canonical input/spike/state digests. Focused tests bind an isolated
+  pyramidal impulse to the original cell model and independently check the FFT
+  reduction against a dense target oracle. The source-bound 1,000-step Python
+  benchmark is local regression evidence only; behavioral ensembles and
+  native-network parity remain open and the neuron-model count is unchanged.
+- Established `SC-COMPTE-WM-NETWORK` as the explicit SC project-model identity
+  for the retained 2,560-cell working-memory ring. The public
+  `SCCompteWMNetworkSpec` freezes the 2,048+512 population split, source-derived
+  control/modulated conductances and synaptic constants, exactly normalized
+  circular footprints, reproducible compact cue contract, circular distractor
+  displacement, and population activity statistics. This specification does
+  not yet claim persistent-bump behavior, distractor resistance, runtime
+  parity, or another neuron-model completion.
+- Exact MPS / Heisenberg TEBD contracts for `SpinPoolMPS` and topology +
+  Kane-exchange contracts for `KaneSiliconMapper` (worst-offender coverage
+  debt closure for quantum_cognition + ONNX protobuf path via installed
+  `onnx`).
+- Reconstructed `AdaptiveThresholdIFNeuron` as an explicitly composite
+  reduced adaptive-threshold leaky integrate-and-fire: exact constant-input
+  LIF membrane relaxation, the Mihalas–Niebur (2009) threshold equation at
+  zero voltage coupling, and the Platkiewicz–Brette (2010) fixed post-spike
+  threshold shift; the voltage-dependent threshold equilibrium, voltage
+  coupling, and adaptation current are recorded as the reduction boundary,
+  with defaults documented as catalogue/model-family choices.
+- Added configured atomic batch execution through Python, the modular Rust
+  engine, independent Rust safety, Julia, Go C-shared, and Mojo shared-library
+  lanes; an independently derived composite-DOI reference trace; paired
+  TOML/JSON exact-map schemas; Q32.32 generated-RTL co-simulation at the
+  enrolled grid-exact operating point with the complete event vector
+  identical; a depth-4 Z3 reset-safety job; and a source/binary-hashed
+  five-runtime 200,000-step benchmark.
+- Reconstructed `AlphaNeuron` as the dual excitatory/inhibitory alpha-synapse
+  leaky integrate-and-fire on the Rall (1967) alpha kernel and the
+  Gerstner-Kistler (2002) LIF framing. Every maintained runtime now executes
+  the same exact piecewise-constant-input filter relaxation and alpha-current
+  convolution, with somatic-only reset and atomic failure semantics.
+- Added the modular Rust/PyO3, Rust-safety, Julia, Go and Mojo execution lanes;
+  paired schemas; an independent dual-drive reference trace; Q32.32 generated
+  RTL co-simulation with the complete event vector preserved at both enrolled
+  inhibitory levels; a depth-4 reset-safety proof; and source/binary-bound
+  five-runtime benchmark evidence.
 
 ### Network tutorial notebooks from the canvas
+### Fixed
+- Made the native-loading regression exercise both clean editable
+  `maturin develop` layouts and installed-wheel layouts instead of requiring
+  a stale site-packages copy of the engine package.
+- Restricted the PyPI download metrics client to the exact HTTPS pypistats API
+  origin and path, encoded package names as single URL path segments, and added
+  fail-closed tests for untrusted schemes, hosts, credentials, ports, and paths.
+- Corrected the `AdaptiveThresholdIFNeuron` "Platkiewicz & Bhatt 2010"
+  typographical attribution and the descriptor `integration.method = "euler"`
+  mismatch (production always used the exact constant-input relaxation);
+  replaced the Rust engine's forward-Euler step with the maintained exact
+  relaxation so every lane executes the same contract.
+- Reconciled schema validation with the runtime's exact state-free level-
+  threshold and Poisson contracts through one shared semantic predicate. Added
+  the missing JSON peers for both rate-model schemas and refreshed the live
+  schema-gap baseline to 38 unique schema stems.
+- Made descriptor generation follow canonical schema/module aliases, preserve
+  event-only integration semantics, and materialise public RNG replay state.
+  The nine affected descriptors are regenerated byte-for-byte from that source
+  contract, including the previously omitted resonate-and-fire equations.
+- Generalised the Tier-3 reproducibility gate for strict integer inputs,
+  constructor-declared reference parameters, tuple and array simulation returns,
+  and explicit source-text and truth-table digests. IQIF, McCulloch-Pitts, sigmoid-
+  rate, and threshold-linear reference configurations now execute through their
+  real public contracts instead of a universal ``n_steps``/float/tuple shape.
 
 - **Notebook** on the network canvas downloads a notebook that builds the
   drawn network by hand with the public `sc_neurocore.network` API: one
@@ -734,8 +2403,789 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   step is part of it.
 - `POST /api/graph/notebook` serves it; a graph that does not validate or
   fails while running answers 422.
+### Added
+- Reconstructed `ResonateAndFireNeuron` from Izhikevich's 2001 complex
+  resonator: `x` remains current-like, `y` remains voltage-like, the maintained
+  step is the exact constant-input linear flow, events are sampled upward
+  crossings of `y=threshold`, and the post-event state is the generalised
+  source reset `z=i*threshold` rather than a radius test or origin reset.
+- Added configured atomic batch execution through Python, the modular Rust
+  engine, independent Rust safety, Julia, Go C-shared, and Mojo shared-library
+  lanes; an independently derived DOI trace; paired TOML/JSON schemas;
+  five-runtime complete-trajectory parity; source/binary-bound benchmark
+  evidence; bounded Q32.32 H1 co-simulation; and a depth-4 reset-safety job.
+  Sampled event timing, the non-monotone high-drive response, the lookup-grid
+  envelope, and the absence of formal equivalence or higher-silicon evidence
+  are explicit.
+- Corrected the legacy-named `ErmentroutKopellPopulation` provenance and
+  promoted the actual Montbrió, Pazó, and Roxin (2015) equation-(12) exact QIF
+  mean field across Python, the modular Rust engine, independent Rust safety,
+  Julia, Go C-shared, and Mojo shared-library execution. Every lane restores
+  the maintained variables exactly through `R=tau*r` and `t'=t/tau`, then uses
+  the same simultaneous two-state Euler update without the previous
+  undocumented firing-rate clamp.
+- Added public atomic batch dispatch, paired TOML/JSON schemas, an independent
+  DOI-pinned equation trace, configured five-runtime trajectory parity,
+  failure-closed native contracts, and source/binary-bound local benchmark
+  evidence. Generated Q32.32 RTL is bounded by co-simulation and a depth-4
+  reset-and-event-silence catalogue job; continuous rates are not spikes,
+  explicit Euler is implementation scope, and no formal-equivalence,
+  production-speed, or higher-silicon result is claimed.
+- Promoted the Jansen and Rit (1995) equation-(6) cortical-column neural mass
+  across Python, the modular Rust engine, independent Rust safety, Julia, Go
+  C-shared, and Mojo shared-library execution. Every lane now preserves the
+  published `C2*S(C1*y0)` and `C4*S(C3*y0)` connectivity placement and commits
+  the six simultaneous explicit-Euler state candidates atomically.
+- Added a public seven-trace/six-final-state batch, paired TOML/JSON schemas, an
+  independent DOI and Brian2-source-pinned trace, five-runtime configured
+  parity, failure-closed native contracts, and a source/binary-bound local
+  benchmark. Generated Q32.32 RTL is bounded by co-simulation only; the 0.1 ms
+  Euler step is recorded as pinned implementation scope, and no production-
+  speed or higher-silicon result is claimed.
+- Promoted the Wong and Wang (2006) two-choice Appendix reduction across
+  Python, the modular Rust engine, independent Rust safety, Julia, Go C-shared,
+  and Mojo shared-library execution. Every runtime carries the same
+  pre-update transfer, simultaneous explicit-Euler NMDA gating, AMPA
+  Ornstein-Uhlenbeck current states, and explicit Gaussian-sample boundary.
+- Added a public atomic six-trace/four-final-state batch, paired TOML/JSON
+  schemas, an independent DOI and author-source-pinned reference trace,
+  five-runtime configured parity, failure-atomic native contracts, and a
+  source/binary-bound local benchmark. Generated Q32.32 RTL is bounded by
+  co-simulation only; no synthesis, timing, formal-equivalence, production-
+  speed, or hardware result is claimed.
+- Promoted the normalised `WilsonCowanUnit` coupled E/I population-rate
+  reduction across Python, the modular Rust engine, independent Rust safety,
+  Julia, Go C-shared, and Mojo shared-library lanes. Every batch carries the
+  complete configurable shifted-sigmoid RK4 contract and commits E/I together.
+- Added a public atomic dispatcher, paired TOML/JSON schemas, explicit
+  Wilson-Cowan source boundary, five-runtime trajectory parity, native failure-
+  atomicity tests, configuration-preserving reset, and a source/binary-bound
+  benchmark. Continuous rates are not spikes; no production-speed, fixed-point
+  RTL, or hardware result is claimed.
+- Completed `ThresholdLinearRateNeuron` as a validated memoryless
+  `gain * max(0, current - theta)` continuous-rate contract across Python, a
+  modular Rust-engine batch, independent Rust safety, Julia, Go, and callable
+  Mojo shared-library paths. Every native failure is atomic, reset preserves
+  configuration, and positive rates are no longer misreported as spike counts.
+- Added the algebraic TOML schema, curated Gerstner-et-al. source boundary,
+  exact five-backend trace parity, real backend-loading tests, and a source-
+  and binary-bound local benchmark. The benchmark is non-exclusive regression
+  evidence and makes no production-speed, RTL, or hardware claim.
+- Completed `SigmoidRateNeuron` across the Python reference, modular Rust-engine
+  batch, independent Rust-safety module, Julia, Go, and callable Mojo shared
+  library. Every lane carries the full configurable exact-relaxation contract;
+  reset preserves configuration and native failures are atomic.
+- Added executed five-backend trace parity and a source- and binary-bound
+  benchmark. Python, Rust, Julia, and Go are byte-identical on the enrolled
+  200,000-step trace; Mojo remains within `3.08e-14`. Timings are explicitly
+  local, affinity-pinned, non-exclusive regression evidence, not production or
+  hardware performance claims.
+- Completed the source-faithful McCulloch-Pitts 1943 logical neuron across
+  Python, the Rust engine and independent safety module, Julia, Go, and Mojo.
+  The maintained contract is a positive active-excitatory-afferent count
+  threshold with absolute veto by any active inhibitory afferent; it does not
+  substitute the later real-weighted threshold abstraction.
+- Added paired stateless TOML/JSON schemas, an independent primary-paper truth
+  table, exact varying-input five-backend parity, signed-Q32.0 registered and
+  folded RTL co-simulation, and a depth-4 Z3 safety job. The source- and
+  binary-hashed benchmark is explicitly local, affinity-pinned,
+  non-exclusive regression evidence rather than a portable speed claim.
+- Replaced the 1,018-line predictive-model GodFile with a 63-line stable facade
+  and six bounded responsibility modules for contracts, native dispatch,
+  Kalman filtering, RTS smoothing, controlled EM, and planning forecasts.
+  Historical public identities and pickle paths remain stable; architecture
+  tests enforce exclusive ownership, an acyclic import graph, and module-size
+  ceilings.
+- Corrected controlled EM statistics, lag covariance orientation, covariance
+  validation, final-candidate likelihood acceptance, and native-result shape
+  enforcement. The five maintained forward backends now include a real
+  observation-wider-than-state regression that pins the bounded Mojo workspace
+  repair. The source-bound 25-sample benchmark records all raw data and
+  loaded-host limitations without making a universal performance claim.
+- Expanded the tracked formal inventory through the McCulloch-Pitts catalogue
+  job: 50 proof jobs and 180 statements (150 assert, 7 assume, 23 cover), split
+  across 18 non-catalogue and 32 catalogue jobs.
+- Replaced the historical `IntegerQIFNeuron` square-law approximation with the
+  exact piecewise-linear, signed-integer Q0.3 recurrence from the Wu et al.
+  (2021) coauthor implementation pinned at `twetto/iq-neuron` commit
+  `a8752eba49dba9ba43a64be74090b91a51044b2f`.
+- Added atomic full-contract execution through Python, the Rust engine and
+  independent safety module, Julia, Go, and Mojo, plus TOML/JSON schema parity,
+  registered and folded signed-Q32.0 RTL co-simulation, and a depth-4 Z3 job.
+- Added an independently evaluated 400-tick source trace and a source-hashed
+  five-backend benchmark. Its timings are non-exclusive local regression
+  evidence, not production, cross-host, hardware, or universal speed claims.
+- Completed homogeneous Poisson binary-bin generation across the maintained
+  Python model and dispatcher, the Rust engine and independent safety module,
+  Julia, Go, and Mojo. Every runtime now uses the finite-bin probability
+  `1 - exp(-rate_hz * dt_ms / 1000)` and the shared seeded LFSR16 contract,
+  including deterministic reset and fail-closed batch state updates.
+- Added paired Poisson schemas, registered and folded Q24.24 RTL co-simulation,
+  a depth-4 formal safety job, independent full-period statistical evidence,
+  and a source-hashed five-backend benchmark. The benchmark record is explicitly
+  non-exclusive local-regression evidence and makes no production speed claim.
+- Replaced the 1,065-line mixed neuromorphic-profile registration module with
+  a 65-line historical facade and five bounded responsibility modules for
+  event-driven hardware, programmable/aerospace targets, heterogeneous
+  accelerators, memory compute, and physical-compute platforms. All 70 profile
+  values retain the exact parent digest, registry insertion order, public
+  `HardwareProfile` identity, and duplicate-name failure semantics.
+- Added architecture contracts for exclusive profile ownership, registry-only
+  private dependencies, the 18-step facade composition order, typed and
+  documented registrars, side-effect-free private reloads, public lookup/class
+  filtering, and module-specific size ceilings. The 206-test focused platform
+  cohort covers all 108 statements and two branches in the six governed
+  production modules exactly. This catalogue is static Python metadata, not a
+  numerical kernel, so no polyglot mirror or throughput claim applies.
+- Refreshed the generated API and capability inventory on accepted parent
+  `33d74f904`. That generated delta contains the parent's EscapeRate API, one
+  validation page, and four tests plus this lane's architecture test; it does
+  not represent the nine unrelated uncommitted Rust safety files.
+- Registered the accepted COBA-LIF and EscapeRate evidence pages in the public
+  validation navigation, closing their inherited navigation-policy gap.
+- Strict typing, lint, NumPy docstrings, security, generated documentation,
+  strict MkDocs, and clean-overlay installed-wheel checks pass. The installed
+  wheel contains every new private module and preserves the 194-profile public
+  registry, exact 70-profile digest/order, and documented platform CLI.
+- Replaced the 1,109-line photonic-emitter GodFile with a 64-line historical
+  facade and seven bounded responsibility modules for types, conversion, FDTD,
+  compilation, Meep, crosstalk, and bitstream emission. The exact public
+  export set, signatures, object identities, pickle paths, and representative
+  parent-output digests are preserved.
+- Added fail-closed physical and optional-runtime validation plus real,
+  source-bound Rust, Go, Julia, and Mojo mirrors for the crosstalk kernel. The
+  102-test focused cohort covers all 702 statements and 214 branches in the
+  facade and responsibility modules exactly. Committed 4,096-pair timings are
+  labelled non-isolated local regression evidence, not a universal speed claim;
+  FDTD, Meep, compilation, netlist, GDSII, and filesystem work remain Python-only.
+- Replaced the 1,138-line UVM generator GodFile with a 55-line historical
+  facade and six bounded responsibility modules for RTL parsing, configuration,
+  artifact packaging, UVM component emission, simulator/formal harnesses, and
+  orchestration. The exact 13-name package API, callable signatures, class
+  identities, pickle paths, and six representative parent-generated payload
+  digests are preserved.
+- Added UVM architecture contracts for exclusive definition ownership, the
+  acyclic import graph, module-specific size ceilings, and deterministic bundle
+  fingerprints. The 82-test focused cohort covers all 422 statements and 112
+  branches across the eight governed package modules exactly. The split does
+  not promote the draft emitted UVM/formal surface or its unrelated
+  Go/Rust/Julia/Mojo placeholders, and introduces no throughput claim.
+- Replaced the 1,145-line CMOS profile registration GodFile with a 67-line
+  historical facade and five bounded responsibility modules for FPGA targets,
+  conventional accelerators, embedded processors, architecture paradigms, and
+  ASIC/simulation references. The exact 72-profile value digest, historical
+  registry insertion order, public `HardwareProfile` alias, and duplicate-name
+  guard are preserved; private definition-module reloads are side-effect free.
+- Added architecture contracts for profile ownership, one-way registry-only
+  dependencies, facade composition order, and module-specific size ceilings.
+  The 197-test focused platform cohort covers all 111 statements and two
+  branches in the six governed production modules exactly. Strict typing,
+  lint, NumPy docstrings, security, generated documentation, strict MkDocs,
+  and installed-wheel checks pass. This is static hardware metadata, not a
+  numerical kernel, so no polyglot mirror or throughput claim is introduced.
+- Refreshed the generated API and capability inventory on the accepted
+  COBA-LIF parent. That generated delta contains the parent's committed COBA
+  API, validation page, and five tests plus this lane's architecture test; it
+  does not absorb uncommitted peer work.
+- Replaced the historical one-state DPI surrogate with the coupled
+  current-domain silicon-neuron equations of Indiveri, Stefanini, and Chicca
+  (2010), Eqs. (2)–(3): nonlinear positive feedback, membrane and
+  after-hyperpolarisation DPIs, simultaneous explicit Euler, post-update event
+  reset, and a spike-driven refractory pulse. Python, Rust safety and engine,
+  Go, Julia, and Mojo now share the maintained event surface and reject invalid
+  work before visible state mutation or buffer writes.
+- Added source-bound five-backend DPI parity, benchmark, reference, descriptor,
+  schema, Q16.16 co-simulation, and formal evidence. The compiled paths preserve
+  `0/0/0/0/1/3/6/11/21` events at
+  `I=-0.1/0/1/2/3/5/10/20/50` over 1,000 steps within a `5e-13` float-state
+  envelope. Hand/TOML/JSON states agree within `1e-13`; generated Q16.16 RTL
+  preserves 13 events at `I=5` over 5,000 steps with its fixed-point state and
+  timing envelopes declared, and the generated depth-4 Z3 job passes.
+- Completed Theta end-to-end fidelity across the tangent-half-angle exact-flow
+  Python reference, Rust engine and safety module, full-contract Julia and Go,
+  the Mojo shared library, paired Euler schemas, and generated Q16.16 RTL.
+  The public dispatcher exposes every lane and probes
+  Go/Julia/Mojo/compatible-Rust/Python while avoiding Julia initialisation when
+  the Go shared library is available.
+- Added source-bound Theta backend, benchmark, co-simulation, descriptor, and
+  formal evidence. Every compiled acceleration lane preserves
+  0/0/0/1/2/2/3/5/7/14/23 events over the enrolled 1,000-step current vector and
+  remains within `2e-12` circular phase error. Generated Q16.16 RTL preserves
+  the same counts, with its Euler/fixed-point phase and one-cycle timing bounds
+  stated separately from the exact-flow software contract.
+- Completed Quadratic IF end-to-end fidelity across the exact-flow Python
+  reference, the Rust safety crate and engine, full-contract Julia and Go, the
+  Mojo shared library, paired schemas, and generated Q16.16 RTL. The public
+  dispatcher follows the Go/Julia/Mojo/compatible-Rust/Python production order,
+  avoiding Julia runtime initialisation when the Go shared library is present;
+  invalid native work is rejected before caller-visible state or buffer writes.
+- Added source-bound Quadratic IF backend, benchmark, co-simulation,
+  descriptor, readiness, and formal evidence. Every acceleration lane preserves
+  0/2/3/6/11/26/100/250 events at I=0/0.333/0.5/1/2/5/20/50 over 1,000 steps
+  and stays within `2e-12` of Python. Hand/TOML/JSON events remain exact with
+  state error below `0.006`; both schema formats now reset inclusively at the
+  configured `v_peak`, including exact equality. Q16.16 RTL preserves the
+  enrolled cycle-level event vectors with voltage error below `0.011`, while
+  the I=0.1 reset-timing boundary is recorded explicitly.
+- Completed Perfect Integrator end-to-end fidelity across Python, Rust safety
+  and engine, Go, Julia, Mojo, the paired schema formats, and generated Q8.8
+  RTL. Julia/Go/Mojo now transport the complete numeric contract through real
+  executable paths, while the Rust engine retains its explicit factory-default
+  boundary; every path rejects invalid inputs before visible mutation.
+- Added source-bound Perfect Integrator backend, benchmark, analytic-reference,
+  co-simulation, descriptor, and formal evidence. All acceleration traces and
+  events are bit-exact at seven enrolled currents; hand/schema/Q8.8 RTL preserve
+  66 events at I=0.7 over 1,000 steps, while the I=0.333 quantisation boundary is
+  stated explicitly as 32/32/31 rather than misreported as parity.
+- Replaced the 1,378-line Bioware implementation and 1,139-line primary test
+  file with a 129-line historical facade, nine responsibility modules, shared
+  validation, and 13 focused test modules. The largest implementation and test
+  files are 296 and 253 lines. Package-root and historical imports reuse the
+  same objects, qualified names and pickle paths remain stable, and the
+  responsibility graph is acyclic. The focused suite passes 200 tests with
+  exact 100 percent coverage over 1,052 statements and 384 branches; strict
+  MyPy, Ruff, NumPy docstrings, and architecture contracts pass.
+- Hardened biological-interface contracts around finite MEA matrices, fixed
+  16-bit AER epochs without silent wraparound, deterministic LFSR windows,
+  area-aware optical-power accounting, deterministic spike sorting, ordered
+  audit checksums, bounded Q8.8 state, and transactional session round counts.
+  Documentation now distinguishes research heuristics from safety or clinical
+  claims, records the pharmacology wash field as reserved, and identifies the
+  legacy `energy_mw` metric as an optimisation proxy.
+- Removed generated Bioware mirrors that did not implement executable parity:
+  empty Go functions, non-parsing Julia syntax, Mojo string/zero placeholders,
+  and Rust return-zero dead code. A source-bound 30-sample parent/candidate
+  benchmark proves the maintained deterministic pipeline remains identical at
+  6,865 bytes and SHA-256
+  `2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669`.
+  Loaded-host timings regressed locally and are retained only as diagnostic
+  context, not performance claims; independent Julia plasticity solvers remain
+  separate from the Python-only orchestration.
+- Completed Lapicque end-to-end fidelity across Python, Rust safety and engine,
+  Go, Julia, Mojo, the paired schema formats, and generated Q16.16 RTL. Public
+  simulation now follows the measured Mojo/Julia/Go/compatible-Rust/Python
+  order, carries the complete numeric contract through Julia/Go/Mojo, retains
+  the Rust engine's explicit factory-default boundary, and fails before state
+  mutation on invalid inputs or non-finite candidates.
+- Added source-bound Lapicque backend, benchmark, reference, co-simulation,
+  descriptor, readiness, and formal evidence. The 100,000-step pinned run
+  records 20,000 events in every lane and a maximum voltage difference of
+  `4.44e-16`; the loaded, non-reserved host context is recorded and is not a
+  throughput claim. Hand/TOML/JSON event vectors agree exactly and their state
+  traces remain within `2e-15`; Q16.16 RTL preserves the complete event vectors
+  at three operating points with voltage error below `0.04`, and the generated
+  depth-20 Z3 job passes.
+- Replaced the 1,414-line NIR hardware-graph implementation and three primary
+  test files totalling 4,091 lines with an 84-line historical facade, seven
+  acyclic responsibility modules, and 40 focused test/support modules. All 28
+  established definitions retain their historical imports, qualified names,
+  object identities, and pickle paths. The focused package passes 240 tests
+  with two optional-runtime skips and covers all 651 statements and 324
+  branches; strict touched MyPy, Ruff, NumPy docstrings, architecture, and
+  package-boundary contracts pass.
+- Added a dedicated Python 3.12 CI step that measures the complete
+  `neuron_graph*.py` surface with branch coverage and an exact 100 percent
+  threshold independently of the broader NIR coverage exclusions. The split
+  test package preserves parser, framework-adapter, SC-NIR export, FPGA
+  compilation, file-I/O, hierarchy, dense-lowering, delay, threshold, and
+  metadata workflows through their maintained production boundaries.
+- Added a source-bound 30-sample parent/candidate NIR-to-FPGA benchmark. The
+  canonical two-population, two-connection graph still emits an identical
+  22,860-byte compilation payload at SHA-256
+  `32498fa1106229a4fe064862e20b86e0f0b1f0d42f8598d1988e06e68c13ef13`.
+  Graph lowering and FPGA compilation medians changed by +7.09 and +24.98
+  percent, while cold import and process wall medians changed by -23.26 and
+  -16.98 percent. The CPU was affinity-pinned but not reserved, so timings are
+  local regression diagnostics rather than throughput claims. Rust, Go,
+  Julia, and Mojo are not applicable to this typed metadata/orchestration
+  refactor; model-dynamics kernels remain unchanged.
+- Replaced the historical ExpIF approximation with the Fourcaud-Trocmé (2003)
+  exponential integrate-and-fire recurrence, candidate-first RK4 integration,
+  the fitted `-65/-68/-59.9/3.48/10` mV/ms parameter set, the paper's
+  `+30 mV` finite event cutoff, and its optional `1.7 ms` refractory
+  protocol. Python, Rust safety, the Rust engine, Go, Julia, and Mojo now share
+  the maintained event surface and fail closed on invalid state or candidates.
+- Added source-bound five-backend ExpIF parity, benchmark, reference,
+  descriptor, and Python-to-Verilog evidence. The compiled paths preserve
+  `0/0/2` events at `I=0/5/20` over 1,000 steps, the committed 100,000-step
+  run records 523 events in every lane within a `5e-8` voltage envelope, and
+  hand/TOML/JSON/Q32.32 co-simulation preserves the enrolled event counts. The
+  S5/H1 descriptor is linked to a generated depth-4 Z3 proof.
+- Completed the AdEx baseline-Euler acceleration chain across Rust safety, the
+  Rust engine, Go, Julia, and Mojo, and exposed Julia/Go/Mojo through the public
+  `simulate()` dispatcher. The compiled paths preserve the `0/4/12` event
+  goldens at `I=0/200/500`, remain within `5e-12` of Python, transport the full
+  maintained numeric state and parameter surface where the backend supports it,
+  and reject invalid inputs without partially committing state.
+- Added a source-hashed, five-backend AdEx benchmark and regression contract.
+  The single-logical-CPU, powersave-governor run measured Mojo, Julia, Go, Rust,
+  and Python medians of 4.658, 5.040, 12.807, 58.988, and 2202.136 ms per
+  100,000 steps, with 1065 events in every lane and maximum trace error
+  `7.40e-13`. The loaded-host timings are local regression evidence only.
+- Replaced the Hodgkin-Huxley Mojo parity note with an executable C-ABI kernel
+  for the complete four-state, gate-first baseline-Euler model. The public
+  `simulate(..., backend="mojo")` path transports every maintained numeric
+  state and parameter, rejects invalid inputs without committing state,
+  preserves the established `0/6/9` event counts at `I=0/10/20`, and keeps the
+  enrolled 100-macro-step voltage trace within `2e-9` of Python.
+- Added a source-hashed Hodgkin-Huxley closure benchmark with exact event
+  parity, bounded trace evidence, final states, affinity, runtime versions,
+  and loaded-host context. The single-logical-CPU run measured Mojo, Rust, and
+  Python medians of 1.238, 1.543, and 187.566 ms per 100 macro-steps; the
+  non-isolated, powersave-governor timings are local regression evidence only.
+- Replaced the Connor-Stevens Mojo parity note with an executable C-ABI kernel
+  for the complete six-state, candidate-first RK4 model. The public
+  `simulate(..., backend="mojo")` path transports every maintained state and
+  parameter, rejects invalid inputs without committing state, preserves the
+  established `0/2/9` event counts at `I=0/10/20`, and keeps the enrolled
+  100-macro-step trace within `2e-6` of Python.
+- Added a source-hashed Connor-Stevens closure benchmark with exact event
+  parity, bounded voltage-trace evidence, final states, affinity, runtime
+  versions, and loaded-host context. The single-logical-CPU run measured Mojo,
+  Rust, and Python medians of 5.327, 10.377, and 379.390 ms per 100 macro-steps;
+  the non-isolated timings are local regression evidence only.
+- Replaced the 1,451-line ASIC-flow GodFile and 814-line primary test file with
+  a 123-line historical facade, nine acyclic responsibility modules, and 11
+  focused test modules. The largest implementation and test files are 319 and
+  234 lines. All 38 historical definitions retain object identity, qualified
+  names, and pickle compatibility. The focused suite passes 100 tests with
+  exact 100 percent coverage over 580 statements and 66 branches; strict
+  touched MyPy, Ruff, NumPy docstrings, and architecture contracts pass.
+- Removed nonfunctional generated ASIC-flow mirrors: Rust returned constants,
+  Go exposed empty functions, Julia did not parse, and Mojo returned zeros.
+  The maintained boundary is typed Python deck generation followed by external
+  Yosys/OpenROAD/OpenSTA/KLayout/Magic/Netgen execution. A source-bound,
+  30-sample parent/candidate benchmark retains raw samples and proves the
+  canonical 10,465-byte output is unchanged at SHA-256
+  `ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653`.
+  Its non-exclusive, loaded-host timings are regression diagnostics, not
+  physical-design or throughput claims.
+- Replaced the 1,737-line evolutionary-substrate GodFile and 1,227-line
+  primary test GodFile with a 156-line historical facade, 14 acyclic
+  responsibility modules, and 18 focused test modules. No implementation file
+  exceeds 304 lines and no owned test file exceeds 312 lines. All 56 public
+  exports retain object identity, historical qualified names, and pickle
+  compatibility. A deterministic parent/candidate probe remains byte-identical
+  across genome, variation, fitness, safety, speciation, statistics, and
+  three-generation replication workflows.
+- Added fail-closed architecture, branch, runtime-fault, package, and polyglot
+  contracts for the evolutionary substrate. The complete focused Python suite
+  passes 160 tests with the real Mojo and four-runner parity paths enabled;
+  135 core tests cover all 1,005 statements and 166 branches. Native Rust,
+  Julia, Go, and Mojo checks pass 17, 17, 8, and 7 tests respectively, and the
+  18-test cross-language runner suite has no skips. Strict touched MyPy, Ruff,
+  NumPy docstrings, Bandit, SPDX, and staged-index wheel smoke checks are clean.
+- Rebuilt both evolutionary benchmark producers as source-bound schema-v2
+  evidence with raw samples, medians, runtime versions, affinity, governor,
+  frequency, and host-load context. The 30-sample Python and five-language
+  artefacts were captured without kernel-reserved cores under heavy concurrent
+  load; their timings are diagnostic regression context and require an
+  isolated-core rerun before publication.
+- Replaced the 1,910-line quantum-annealing GodFile and its 1,001-line
+  primary test GodFile with a 98-line historical facade, nine acyclic
+  responsibility modules, and focused typed tests. Every production module is
+  below 400 lines and every owned test file is below 500 lines. All 24 public
+  imports retain object identity and historical pickle paths. Models now
+  canonicalise terms and fail closed on invalid indices, labels, shapes,
+  cardinalities, schedules, samples, and non-finite data. The exact QUBO to
+  Ising mapping fixes diagonal offsets, explicit backend selectors never
+  silently substitute a requested runtime, native responses are validated,
+  exports are atomic, and decomposition reconstructs exact global indices.
+  The linked focused cohort passes 250 tests with one optional `neal` skip and
+  reaches 100 percent coverage over 1,040 statements and 442 branches.
+- Removed false quantum-annealing mirrors: the generated Rust safety file
+  returned constants, the Go service exposed empty functions, and the Julia
+  and Mojo files did not build. The maintained native authority remains
+  `engine/src/quantum.rs` with 12 focused tests. A source-hash-bound,
+  30-sample local parent/candidate benchmark records median compile, cold
+  import, Python solve, process wall, and RSS changes of +99.65 percent,
+  -25.37 percent, -16.67 percent, -23.21 percent, and -3.48 percent. The
+  non-exclusive workstation load rose during capture, so these are regression
+  diagnostics rather than release throughput or quantum-speedup claims.
+- Replaced the 1,926-line safety-certification GodFile and 2,262-line test
+  GodFile with a 98-line historical facade, ten acyclic responsibility modules,
+  and focused typed test modules, all below 600 lines. The established 32
+  public evidence classes retain object identity and historical pickle paths.
+  Package generation now fails closed: it does not invent implementation
+  files, FIT/DC data, timing inputs, or addressed checklist rows. Full-field
+  formal-evidence hashes, concrete traceability links, path-safe evidence
+  manifests, and atomic six-file package materialisation are wired end to end.
+  The focused safety/consumer cohort passes 467 tests with 100 percent
+  statement and branch coverage over 1,437 production statements and 858
+  branches; strict touched MyPy, Ruff, and public docstrings are clean.
+- Removed unreachable generated safety_cert report mirrors: Julia and Mojo did
+  not parse, Go exposed only empty functions, and Rust returned constants
+  behind a test that always passed. The distinct SafetyMonitor chain remains.
+  A source-hash-bound 30-sample local parent/candidate benchmark records median
+  import, generation, process wall, and RSS changes of +16.62 percent,
+  +37.31 percent, +6.18 percent, and -1.31 percent. Generation remains about
+  0.172 ms while performing full-field hashing and fail-closed reporting. The
+  non-exclusive workstation measurements are regression context, not
+  publishable throughput claims.
+- Replaced the 3,257-line molecular/DNA mapper GodFile with a 213-line
+  compatibility façade and nine acyclic responsibility modules, each below 600
+  lines. Historical documented imports, optional NUPACK reload/monkeypatch
+  behavior, and pickle module identities remain stable; deterministic parent
+  and candidate designs, exports, simulations, analyses, and serialized
+  artefacts match. The focused cohort passes 316 tests, and the complete
+  touched surface reaches 100% coverage over 1,220 statements and 406
+  branches. Missing simulator outputs now fail closed in noise and
+  concentration analysis. The bridge package no longer eagerly requires the
+  source-only, wheel-excluded optics tree before DNA imports can succeed.
+- Added a hash-bound 30-sample parent/candidate benchmark with raw samples and
+  explicit workstation limitations. Median cold import, repeated one-gate
+  compilation, wall time, and RSS changed by +8.25%, +4.06%, +6.94%, and
+  -0.08%, respectively, while one-minute host load rose from 10.56 to 15.00.
+  These are local regression observations requiring a reserved-core rerun, not
+  release claims. The maintained Rust safety mirror compiles standalone
+  and passes six tests. Removed generated Julia/Mojo DNA files that did not
+  parse and a Go package containing only empty functions; none was reachable
+  from canonical dispatch.
 
 ### Event-dataset manifests, group splits and declared encoders
+- Replaced the 2,318-line command-line monolith with a stable
+  `sc_neurocore.cli:main` package entry point, a 45-line parser composition
+  root, and responsibility-specific compile, deploy, formal, SC-NIR, Studio,
+  synthesis, mapping, serve, hub, status, and maintenance command modules.
+  Top-level help now presents Model, Hardware, Studio, and Maintain modes with
+  command-level progressive disclosure. The split preserves console and
+  `python -m sc_neurocore.cli` invocation, makes `compile-nir` precision flags
+  effective, and keeps SC-NIR upgrade/export destinations explicit. Focused
+  command tests reach 100% of the package's 1,172 statements and 294 branches;
+  real NIR/Icarus co-simulations use the post-reset membrane observable shared
+  by generated RTL and the bit-true Python model. Removed unreferenced
+  Rust/Julia/Mojo files that were generated comment/constant stubs rather than
+  callable CLI counterparts. A path-free 30-run local benchmark records a
+  22.27% lower median import cost, effectively unchanged process wall time,
+  and unchanged RSS versus the parent flat module, with non-exclusive CPU and
+  host-load limitations preserved in the evidence artefact.
+- Replaced the unsupported Ibarz-Tanaka beta-based rational/linear hybrid with
+  the four-branch fast/slow map from Ibarz, Tanaka, Sanjuan, and Aihara (2007),
+  DOI `10.1103/PhysRevE.75.041902`, Eqs. 2–3. The stale review citation and
+  non-source `beta`, threshold, and reset parameters were removed; an event is
+  now execution of the source's fixed `-1` reset branch.
+- Rebuilt the checked Python, Rust engine, Rust safety, Go, Julia, and Mojo
+  paths. Rust, Julia, and Go are bit-exact on the enrolled 1,000-step envelope;
+  Mojo preserves event vectors within its measured absolute-error band. A
+  source-hashed, CPU-pinned 21-call benchmark at `I=0.2` records 33 events in
+  every lane and discloses the host's high load and absent kernel isolation.
+- Added paired schemas, an independent DOI reference contract, and bounded
+  Q16.16 co-simulation. Hand/TOML/JSON trajectories are exact; the 30-step RTL
+  run exercises all four branches and preserves all three reset events with
+  `v/u` errors below `0.003/0.0001`. Q8.8 cannot represent `mu=0.001`.
+- Promoted the corrected model to S5/H1 with a generated Q16.16 catalogue core
+  and depth-4 SymbiYosys/Z3 safety proof. Schema coverage moves to 33 models;
+  the catalogue moves to 26 jobs and the full HDL tree to 63 jobs / 211
+  statements.
+- Replaced the falsely attributed Medvedev tent map with the scalar
+  slow-calcium first-return construction derived in Section 4 of Medvedev
+  (2005), DOI `10.1016/j.physd.2005.01.021`. The three source regions follow
+  equations 4.4/4.7, 4.8 with 4.13, and 4.15. The global return calibration,
+  non-zero-current perturbation, and pre-state event convention are disclosed
+  as maintained SC-NeuroCore choices rather than attributed to the paper.
+- Rebuilt the checked Python, Rust engine, Rust safety, Go, Julia, and Mojo
+  lanes around the same recurrence. Rust, Julia, and Go are trace-identical to
+  Python on the enrolled envelope; Mojo preserves event vectors with a measured
+  maximum trace difference below `5e-13`. The committed 500,000-iteration,
+  five-repeat benchmark records 375,000 events in every lane and medians of
+  8.230/10.799/19.524/20.959/242.929 ms for Julia/Rust/Mojo/Go/Python.
+- Added paired `medvedev_map` TOML/JSON schemas and an independent Section 4
+  reference contract. Hand model and both schemas agree exactly; at `I=2`,
+  emitted Q16.16 RTL preserves the complete 75-event, 100-iteration vector with
+  maximum state error below `0.007813`. Q16.16 is required because the disclosed
+  `d=2271.1927977404063` calibration cannot fit signed Q8.8. Verilog and generated
+  integer C/Rust now share a 256-entry positive-domain log LUT over
+  `[1/256, 8 + 1/256)` at step `1/32`.
+- Promoted the corrected model to S5/H1 with a generated Q16.16 catalogue core
+  and depth-4 SymbiYosys/Z3 safety proof. The public fidelity count remains 21,
+  schema-gap counts move to `32 / 121 / 123`, the formal catalogue moves to 25
+  jobs, and the full HDL tree moves to 62 jobs / 210 statements.
+- Refactored the 3,662-line Studio application godfile into a 147-line
+  composition root, 16 responsibility-specific API routers, and dedicated
+  runtime, security, schema, guard, preset-flow, and frontend support modules.
+  The hermetic public contract is unchanged: all 113 backend HTTP routes, the
+  progress WebSocket, and the 110-path OpenAPI document retain the
+  pre-refactor semantics and canonical SHA-256
+  `b1e698de8ce38e15f152a3bffdf86d24dc8f14c12747a927be320bcc25825cdb`.
+  The conditional frontend document route remains outside OpenAPI, so a local
+  ignored `dist/` build can no longer change the committed API reference.
+  Added a deterministic OpenAPI generator, committed reference document,
+  responsibility-ownership tests, normalized handler-body parity evidence,
+  and route-level failure tests covering worker, identity, audit, export,
+  training-weight, preset, precision, catalogue, and analysis boundaries.
+- Re-enrolled the already acceleration-complete Hindmarsh-Rose model (DOI
+  `10.1098/rspb.1984.0024`) on its maintained three-state RK4 path. The paired
+  schemas now match the hand model's no-reset upward `x >= x_threshold`
+  crossing semantics, replacing a stale explicit-Euler schema whose identity
+  reset turned crossing detection into level counting. An independent RK4
+  reference reproduces the 2,000-step `I=3` bursting trace without calling the
+  hand model or schema runner.
+- Hand model, TOML, JSON, and Q16.16 RTL produce exact 2,000-step crossing
+  counts `0/0/26/40/52` at `I=0/2/3/4/5`. Dedicated tests also preserve the
+  5,000-step chaotic boundary: Q16.16 produces one extra crossing at each
+  bursting point `I=2` through `I=5`. The S5/H1 descriptor adds a generated
+  Q8.8 port-only formal job whose depth-4 SymbiYosys/Z3 check passes. Existing
+  model, acceleration, backend-parity, and benchmark artefacts are unchanged;
+  schema-gap counts remain `31 / 122 / 124`, while the formal catalogue moves
+  to 24 jobs and the whole HDL inventory to 61 jobs / 209 statements.
+- Completed the source-verified Chialvo map unit (DOI
+  `10.1016/0960-0779(93)E0056-H`) across its checked Python, Rust engine,
+  Rust safety, Go, Julia, and Mojo simulation paths. All lanes implement the
+  simultaneous `x*x*exp(y-x)+k+I`, `a*y-b*x+c` recurrence; the upward
+  `x_threshold=1.0` event is documented as a maintained observation rather
+  than a paper equation. The production `auto` path now consumes the
+  host-matched committed benchmark order. A single-CPU-affinity,
+  500,000-iteration result records identical 12,935-event counts and measured
+  medians of 7.270/9.576/11.373/20.524/2,175.866 ms for
+  Rust/Julia/Mojo/Go/Python, with environment and source hashes preserved in
+  `benchmarks/results/bench_chialvo_map.json`.
+- Added paired `chialvo_map` schemas, an independently re-derived 100-iteration
+  DOI reference, and Q16.16 co-simulation. Hand/TOML/JSON states and events are
+  exact at the five enrolled currents; RTL preserves event counts `0/2/3/0/1`
+  and the declared stable-point error envelope while oscillatory event timing
+  remains an explicit boundary. The S5/H1 promotion adds a generated Q8.8
+  formal job whose depth-4 SymbiYosys/Z3 check passes. The public fidelity
+  count moves to 21; schema-gap counts move to 31 schema models / 122 net
+  missing / 124 source modules without a schema; the formal catalogue moves to
+  23 jobs and the whole HDL inventory to 60 jobs / 208 statements.
+- Enrolled the already acceleration-complete Ermentrout-Kopell hand class
+  (`ermentrout_kopell_map_neuron`, DOI `10.1137/0146017`) with paired
+  TOML/JSON schemas and an independent 2,000-step theta-flow reference. The
+  source boundary is explicit: the paper supplies the continuous Type-I theta
+  equation, while `dt=0.1`, gain, forward Euler, the upward `theta=pi` event,
+  and modulo `2*pi` are maintained implementation choices. Hand model and both
+  schemas agree exactly under varied negative/positive drive. Q16.16 RTL
+  preserves 0/45/64 spikes at `I=-0.5/0.5/1.0` over 2,000 steps, with maximum
+  circular phase error below 0.081/0.089/0.025 rad; event timing and full
+  fixed-point trajectories are not claimed exact. The equation runtime,
+  Verilog emitter, and generated integer C/Rust kernels now share explicit
+  `<state>_prev` macro-boundary aliases and Python-compatible modulo by a
+  finite positive literal, preventing a negative backward wrap from becoming
+  a false event. Integer C/Rust and Verilog state/event words co-simulate
+  cycle-exactly over the 240-step protocol for both current signs. The S5/H1
+  descriptor adds a generated
+  Q8.8 formal job whose depth-4 SymbiYosys/Z3 safety check passes. All 21
+  pre-existing catalogue jobs regenerate byte-identically; the inventory moves
+  to 22, and schema-gap counts move to 30 schema models / 123 net missing / 125
+  source modules without a schema. Existing floating-point acceleration and
+  benchmark artefacts remain unchanged.
+- Enrolled the already acceleration-complete Courbage-Nekorkin-Vdovin
+  discontinuous map (`courage_nekorkin_map`, DOI `10.1063/1.2795435`) with
+  paired TOML/JSON schemas that reproduce the maintained simultaneous
+  piecewise recurrence, Heaviside branch, and upward event crossing. The hand
+  model and both schemas agree exactly at every enrolled point. Q16.16 RTL is
+  event-exact at `I=-0.3/0/0.3` over bounded 30/20/30-iteration windows, with
+  both state errors below `0.014`; Q32.32 is event-exact at all three inputs
+  over 30 iterations with `x` error below `0.00003` and `y` error below
+  `0.000001`. The autonomous 30-iteration Q16.16 trace is pinned separately at
+  four float64 events, six RTL events, and six event-position mismatches rather
+  than admitted through a loose tolerance. The model-scoped tests add a
+  DOI-backed independent recurrence, S5/H1 descriptor and readiness evidence,
+  source-bounded public documentation, and generated Q8.8 RTL. Its port-only
+  depth-4 SymbiYosys/Z3 reset-spike safety job passes. The formal inventory
+  moves to 21 models and schema-gap counts move to 29 schema models / 124 net
+  missing / 126 source modules without a schema. The completed
+  Rust/Go/Julia/Mojo chain and its committed benchmark artefact remain
+  unchanged.
+- Enrolled the already acceleration-complete Cazelles fast/slow map
+  (`cazelles_map`, DOI `10.1209/epl/i2001-00548-y`) with paired TOML/JSON
+  schemas that mirror the maintained simultaneous clipped logistic recurrence,
+  slow-state update from the old fast coordinate, and committed-state level
+  event. Hand model and both schemas agree exactly on every state and event at
+  the enrolled points. Over 30 iterations, emitted Q16.16 RTL reproduces the
+  complete 2/1/1 event vectors at `I=0.5/1.0/2.0`, with each state coordinate
+  within `0.0004` of float64 while the operating set exercises the interior
+  expression and both fast-state clip bounds. The sensitive `I=0.05` trace is
+  pinned separately at seven float64 events, eight RTL events, and seven event
+  mismatches rather than promoted through a loose tolerance. The Cazelles
+  co-simulation and independent-reference tests live in model-scoped modules,
+  not the legacy catalogue-wide test accumulators. The unit adds the DOI-backed
+  independent map reference, S5/H1 descriptor and readiness entry, public
+  fidelity documentation, and generated Q8.8 RTL. Its port-only depth-4
+  SymbiYosys/Z3 reset-spike safety job passes. The formal inventory moves to
+  20 models and schema-gap counts move to 28 schema models / 125 net missing /
+  127 source modules without a schema. The completed Rust/Go/Julia/Mojo chain
+  and its committed benchmark artefact remain unchanged.
+- Corrected the already acceleration-complete Mihalas-Niebur co-simulation evidence after the
+  shared candidate-reset/output fix. The paired TOML/JSON schemas reproduce every event and all
+  four hand-model states exactly over a varied 1,600-step sequence with 168 adaptive resets. The
+  former `I=3`, 300-step hand/schema/RTL claim is now exact at 36/36/36, superseding the stale
+  36/36/35 record and its loose `<=2` guard. A 1,000-step Q16.16 contract now asserts exact
+  three-way counts of 0/0/0/31/60/87/131/157/207/256 at
+  `I=0/0.5/1/1.5/2/2.5/3.5/4/5/6`, while a separate regression fixes the isolated `I=3`
+  boundary at 111/111/112 rather than hiding it inside a general tolerance. The S5/H1 descriptor,
+  readiness index, fidelity page, model documentation, and co-simulation guide record the same
+  boundary; the existing depth-3 SymbiYosys/Z3 formal job remains the structural safety evidence.
+  Model, acceleration, schema, compiler, generated RTL, formal source, and benchmark artefacts are
+  unchanged.
+- Corrected the already acceleration-complete GLIF5 schema-to-RTL surface to match the maintained
+  hand model: paired TOML/JSON four-state classical RK4, candidate-level `v >= theta` detection,
+  and candidate-first adaptive reset replace the stale Euler / strict-greater-than contract. A
+  varied 4,000-step drive gives exact hand/TOML/JSON state and event parity across 181 resets. The
+  six-point 1,000-step Q16.16 contract spans silent through high-drive regimes with exact
+  hand/schema/RTL counts of 0/0/23/54/86/95 at `I=0/15/22/30/45/50`. The equation compiler and
+  bit-true C/Rust generators now evaluate reset expressions from the integrated candidate and expose
+  identical post-reset state, removing the pre-step-reset mismatch that a one-spike band had masked.
+  The DOI-backed reference is an independent, spike-bearing RK4 re-derivation; the S5/H1 descriptor
+  and readiness evidence record the same observable. Deterministic regeneration changes all ten
+  reset-using formal RTL models plus seven non-resetting single-step edge models so every spike-cycle
+  output exposes the committed candidate. The Connor-Stevens and Hodgkin-Huxley macro-step outputs
+  already exposed that candidate and remain byte-identical; all 19 jobs are therefore accounted for
+  and the inventory count is unchanged. Acceleration kernels and benchmark artefacts are unchanged.
+  The corrected reset exposes one honest legacy
+  Izhikevich Q8.8 boundary (float64 25 spikes, RTL 24 at `I=50` over 200 steps); Q16.16 remains
+  exact at 25/25 and now has a dedicated regression guard.
+- Descriptor regeneration now reads `integration.dt` from an authoritative bundled map schema when
+  a model class has no public `dt` field, preserving the unit-iteration metadata of pure discrete
+  maps such as Rulkov without changing the fallback semantics of non-map models. Readiness facet
+  application now leaves descriptors unchanged when their existing science and silicon evidence
+  already meets or exceeds the indexed floor, preventing an H0 index entry from replacing Rulkov's
+  trajectory-backed S5/H2 evidence.
+- Class-correct schema-to-RTL re-enrolment of the Rulkov fast/slow map (`rulkov_map`,
+  Rulkov 2002, DOI `10.1103/PhysRevE.65.041922`). The paired TOML/JSON schemas now mirror
+  the maintained hand model's simultaneous three-branch map and rising `x >= 0` crossing
+  semantics instead of counting every positive plateau step. At `I=1.5`, a bounded 30-iteration
+  window exercises the rational, plateau, and hard-reset branches ten times each: hand model and
+  both schema formats have exact state/event agreement, while the emitted Q16.16 RTL reproduces
+  the exact ten-event vector with both state errors below `0.001`. This short-window trajectory is
+  the class-appropriate map metric; no long-window spike-count identity is claimed. The descriptor
+  now records faithful map dynamics, S5 trajectory evidence, and the documented H2 terminal backed
+  by a raw Yosys 0.33 `synth_xilinx` report over the Q16.16 core. The resulting S5/H2 descriptor is
+  registered with the formal catalogue through generated Q8.8 RTL, a port-only harness, and a
+  depth-4 SymbiYosys/Z3 reset-spike safety job, bringing the inventory to 19 models. The existing
+  Rust/Go/Julia/Mojo acceleration chain and committed benchmark artefacts remain unchanged.
+- Faithful schema-to-RTL enrolment of the Wilson-HR two-state polynomial cortical model
+  (`wilson_hr`, Wilson 1999, DOI `10.1006/jtbi.1999.1002`). The paired TOML/JSON schemas mirror
+  the maintained hand model's simultaneous classical RK4 flow, polynomial membrane nullcline,
+  level `v >= v_peak` decision, and hard `v = -0.7` reset that preserves the candidate recovery
+  state. A varied 4,000-step drive produces 35 spikes and resets with exact hand/TOML/JSON state
+  agreement. Over 5,000 constant-current steps the hand model, schema runner, and emitted Q16.16
+  RTL agree exactly on 0, 1, and 4 spikes at `I=0.0`, `2.0`, and `10.0`. Added the DOI-backed
+  `wilson_hr_driven_spiking_doi` trace with an independent two-state RK4 re-derivation, corrected
+  the public model provenance, and marked the descriptor's RK4/co-sim facets. The resulting S5/H1
+  descriptor is wired into the formal catalogue with generated Q8.8 RTL, a port-only harness, and
+  a depth-4 SymbiYosys reset-spike safety job; the 18-model inventory and direct Z3 BMC pass.
+  Schema-gap counts move to 27 schema models / 126 net missing / 128 source modules without a
+  schema. The completed Rust/Go/Julia/Mojo acceleration chain and its committed benchmark
+  artefacts are unchanged.
+- Faithful schema-to-RTL enrolment of the Terman-Wang two-state LEGION relaxation oscillator
+  (`terman_wang`, Terman & Wang 1995, DOI `10.1016/0167-2789(94)00205-5`). The paired TOML/JSON
+  schemas mirror the maintained hand model's simultaneous classical RK4 flow, cubic fast
+  nullcline, `tanh`-gated recovery, rising-edge `v >= v_peak` decision, and no-reset semantics.
+  Over 8,000 steps the hand model, schema runner, and emitted Q16.16 RTL agree exactly on the
+  silent/single/train crossing counts: 0 at `I=-1.0`, 1 at `I=0.0`, and 3 at `I=0.5`. Added the
+  DOI-backed `terman_wang_legion_oscillation_doi` trace with an independent two-state RK4
+  re-derivation, corrected the public model citation, and marked the descriptor's RK4/co-sim
+  facets. The resulting S5/H1 descriptor is wired into the formal catalogue with generated Q8.8
+  RTL, a port-only harness, and a depth-4 SymbiYosys reset-spike safety job; the 17-model inventory
+  and direct Z3 BMC pass. Schema-gap counts move to 26 schema models / 127 net missing / 129 source
+  modules without a schema. The completed Rust/Go/Julia/Mojo acceleration chain and its committed
+  benchmark artefacts are unchanged.
+- Faithful schema-to-RTL enrolment of the Pernarowski three-state pancreatic beta-cell burster
+  (`pernarowski`, Pernarowski 1994, DOI `10.1137/S003613999223449X`). The new TOML/JSON schema
+  mirrors the maintained hand model's simultaneous classical RK4 flow, exact `v * v * v`
+  operation order, rising-edge `v >= v_threshold` decision, and no-reset semantics. The hand
+  model, schema runner, and emitted Q16.16 RTL have exact spike-count parity at all four enrolled
+  5,000-step operating points: 17 crossings at each of `I=-0.1`, `0.0`, `0.1`, and `0.2`.
+  Added the DOI-backed `pernarowski_autonomous_bursting_doi` trace with an independent
+  three-state RK4 re-derivation and marked the descriptor's RK4/co-sim facets. The resulting S5/H1
+  descriptor is also wired into the formal catalogue with generated Q8.8 RTL, a port-only harness,
+  and a depth-4 SymbiYosys reset-spike safety job; the 16-model inventory and direct Z3 BMC pass.
+  Schema-gap counts move to 25 schema models / 128 net missing / 130 source modules without a
+  schema. The already completed Rust/Go/Julia/Mojo acceleration chain and its committed benchmark
+  artefacts are unchanged.
+- Faithful schema-to-RTL enrolment of the FitzHugh-Rinzel three-state qualitative burster
+  (`fitzhugh_rinzel`, Rinzel 1987, DOI `10.1007/978-3-642-93360-8_26`). The new TOML/JSON
+  schema mirrors the maintained hand model's coupled classical RK4 flow, exact `v * v * v`
+  operation order, rising-edge `v >= v_threshold` decision, and no-reset semantics. The hand
+  model, schema runner, and emitted Q16.16 RTL have exact spike-count parity across the enrolled
+  `I=0.4` to `I=0.6` band (seven, eight, and eight crossings over 3000 steps); `I=0.7` is recorded
+  as an excluded marginal-crossing boundary rather than hidden by a tolerance. Added the
+  DOI-backed `fitzhugh_rinzel_driven_bursting_doi` trace with an independent three-state RK4
+  re-derivation, corrected the public model page's stale reset claim, and marked the descriptor
+  RK4/co-sim facets. Schema-gap counts move to 24 schema models / 129 net missing / 131 source
+  modules without a schema. The already completed Rust/Go/Julia/Mojo acceleration chain and its
+  committed benchmark artefacts are unchanged.
+- Same-name PyO3 engine binding for `StochasticLIFNeuron`. The Rust neuron
+  (`engine/src/neurons/trivial.rs` — leaky integrate-and-fire with Euler-Maruyama membrane noise and
+  an integer refractory clamp) already existed and was wired into the `NetworkRunner`, but carried no
+  `#[pyclass]` wrapper, so once the model was enrolled in the public registry the coverage map in
+  `tests/test_rust_python_neuron_parity.py` correctly flagged it as an uncovered non-Python-only
+  entry. `PyStochasticLIFNeuron` now exposes the same `new(seed)` / `step` / `reset` / `get_state`
+  surface as its `StochasticIFNeuron` sibling and is re-exported from the engine package root. It
+  joins the RNG-dependent parity set — exact traces are not claimed because the Gaussian stream is
+  `Xoshiro256++` Box-Muller rather than NumPy's PCG64 Ziggurat, so the spike count is the stated
+  parity observable. The registry map is now 160 public Python registry names, 146 same-name Rust
+  constructors, and 176 Rust PyO3 model wrappers.
+- Sequential (Gauss-Seidel) integration mode (`[integration] method = "gauss_seidel"`) in the
+  schema DSL, in both the Python runner (`EquationNeuron`) and the emitted Verilog. The state
+  variables are advanced in declaration order, each derivative reading the already-committed
+  earlier variables within the same sub-step (unlike the simultaneous `euler`/`rk4` modes, whose
+  derivatives all read the pre-step state). This lowers a conductance hand model's
+  gates-then-voltage update — the gating variables from the old membrane voltage, then the voltage
+  from the new gates. The Verilog emitter renders each earlier variable as its freshly-committed
+  `<var>_next` wire in a later variable's derivative (a commit-before-read dependency chain, no
+  combinational cycle), matching the runner. Composes with `substeps`; the default `substeps = 1`
+  simultaneous methods stay bit-for-bit unchanged.
+- Faithful re-enrolment of the Wang-Buzsáki (1996) fast-spiking interneuron. The bundled schema was
+  a single-step `method="euler"` re-derivation with a sigmoid-caricature `m_inf`, unfaithful gate
+  initial conditions (`h=0.6`, `n=0.32`), a `v > -10` threshold, and a singular `n` rate; it is now
+  `method="gauss_seidel"` with `substeps=50`, state ordered `h, n, v` (`h=0.8`, `n=0.1`, `v=-65`),
+  the true instantaneous `m_inf = alpha_m/(alpha_m+beta_m)` (with `alpha_m` in the stable exprel
+  form `1/exprel(-(v+35)/10)`), the exprel `n` rate `0.1/exprel(-(v+34)/10)`, a macro-boundary
+  `v >= v_threshold` crossing (`v_threshold=-20`), and no reset — matching `WangBuzsakiNeuron`
+  exactly (`hand == schema`, 3 action potentials at `I=10` over 20 macro steps). The Q16.16 RTL
+  tracks the schema within one spike over the bounded window (three-way exact at `I=10`,
+  `macro=20`; the residual is the `m_inf` fixed-point divide plus 256-entry exprel look-up, not a
+  datapath-precision limit). The reference trace is re-derived as `wang_buzsaki_driven_spiking_doi`
+  (`independent_macrostep_gauss_seidel_reference`, a 3-state helper bit-exact against the runner,
+  spike_count 4, first_spike_step 4), replacing the deleted resting-gate trace; the descriptor
+  dynamics are synced to the exprel form; the bundled 15%-band cosim test becomes a macro-step
+  three-way parity test (`hand == schema` exact, `|schema - verilog| <= 1`). DOI
+  `10.1523/JNEUROSCI.16-20-06402.1996` Crossref-verified.
+- Schema/module/class alias registry (`neurons/schema_module_aliases.py`) so
+  schema-DSL stems such as ``exp_if``, ``resonate_fire``, and ``lif`` join the
+  correct hand modules and descriptor classes without fuzzy matching; schema-gap
+  reporting consumes the same table.
+- Catalogue registration for the public SC flagship ``StochasticLIFNeuron``
+  (thin ``models/stochastic_lif`` re-export + curated descriptor) so Studio and
+  dual-axis coverage include the package-root quickstart neuron. Schema stem
+  ``lif`` remains Lapicque-lineage for silicon cosim — documented in the alias
+  table and descriptor notes.
+- Readiness evidence index (`tools/readiness_evidence_index.py`) that wires dual-axis
+  validation and silicon facets onto descriptors for models already enrolled in
+  schema→RTL co-simulation, and preserves those facets across descriptor corpus
+  regeneration. Studio catalogue readiness now reports H0/H1 for that shortlist
+  (Wang-Buzsaki was deferred here while its re-enrolment lane was open; that lane has since landed
+  the faithful Gauss-Seidel enrolment above, so it can join the shortlist).
+- Macro-step integration mode (`[integration] substeps = N`) in the schema DSL, in both the
+  Python runner (`EquationNeuron`) and the emitted Verilog. One macro `step()` advances `N`
+  inner integration sub-steps (any method — euler/rk4/exp_euler) before a single spike
+  decision, and the rising-edge crossing is evaluated only on the macro boundary against the
+  condition at the previous macro boundary. This lets the schema faithfully replicate the
+  maintained conductance hand models whose `step()` is itself a fixed number of fine sub-steps
+  per macro step (Hodgkin-Huxley / Connor-Stevens: 100 `dt=0.01` sub-steps per 1 ms; Wang-Buzsaki:
+  50 per 0.5 ms), so a repetitively firing oscillator counts one spike per action potential
+  rather than one per sub-step it stays above threshold. The RTL keeps one integration sub-step
+  per clock and gates the crossing to the macro boundary with a sub-step counter; the lowering is
+  bit-exact against the Python runner (proven on the polynomial FitzHugh-Nagumo at Q16.16, exact
+  across sub-step groupings). Supported for the edge (crossing, non-resetting), non-pipelined
+  datapath the conductance oscillators need; other combinations raise `NotImplementedError` rather
+  than emit RTL that silently disagrees with the golden. With the default `substeps = 1` every
+  existing model is bit-for-bit unchanged.
+- Rising-edge (`detection = "crossing"`) threshold detection in the schema DSL, in both
+  the Python runner (`EquationNeuron`) and the emitted Verilog. A non-resetting oscillator
+  (FitzHugh-Nagumo, McKean) spikes once per upward threshold crossing rather than on every
+  step it stays above threshold, so such models now co-simulate faithfully against their
+  hand models — validated by the faithful FitzHugh-Nagumo hand model / schema / Q16.16 RTL
+  three-way parity at exact spike counts (8 of 3000 steps, a sustained relaxation-oscillation
+  train). Edge detection engages only for a crossing model that declares **no reset**: a
+  reset that drops the state below threshold already clears the condition each spike, so
+  reset-based integrate-and-fire models keep the identical (previously validated) level
+  datapath whether they declare `level` or `crossing`. The RTL carries a 1-bit `_thr_prev`
+  edge-history register seeded from the initial state to match the golden bit-for-bit. The
+  folded `compile_to_datapath` path remains level-only (per-instance modules cover the
+  co-simulation path); crossing support there is a separate follow-up.
 
 - `build_manifest` records an N-MNIST, SHD or CIFAR10-DVS directory: every
   file by size and SHA-256, every sample by published split, label and
@@ -2879,6 +5329,56 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   benchmark artefact changed.
 
 ### Compiler HDL e2e CI
+### Changed
+- Split the 2,690-line NIR FPGA compiler into a 400-line composition and
+  resource-policy boundary plus focused modules for connection validation,
+  result contracts, neuron RTL, weight ROMs, SC-NIR hierarchy boundaries, and
+  direct, address-event, and folded interconnects. Valid direct, address-event,
+  folded, and hierarchical compilations retain byte-identical generated
+  artefacts; public result types keep their historical import and pickle path.
+  Empty graphs and malformed connection matrices now fail before SC-NIR
+  conversion or partial HDL emission.
+- Re-enrolled the Connor-Stevens A-current oscillator (`connor_stevens` schema, Connor &
+  Stevens 1971, DOI `10.1113/jphysiol.1971.sp009366`) faithfully using the new macro-step mode.
+  The bundled schema was single-step `method="euler"` — neither the maintained
+  `ConnorStevensNeuron`'s RK4 integrator nor its 100-sub-step-per-millisecond macro-stepping — so
+  it could only be compared schema-vs-verilog and over-counted crossings. The faithful schema is
+  now `method="rk4"` with `substeps=100` and a macro-boundary `v >= v_threshold` crossing, so the
+  schema reproduces the hand model's action-potential count exactly (`hand == schema`, ten
+  crossings at `I=100` over 60 macro steps). The Q16.16 RTL tracks the schema **within one spike**
+  over the bounded window (`I=100`, 20 macro steps): Connor-Stevens is a stiff six-state model
+  whose exprel / cube-root gating lowers to 256-entry look-up tables, and the residual drift is
+  **LUT-resolution-limited, not datapath-precision-limited** (identical spike count at Q16.16 /
+  Q24.24 / Q32.32) — an honest per-model hardware-fidelity band, three-way exact over a bounded
+  window and accumulating beyond it. The reference trace was re-derived as
+  `connor_stevens_driven_spiking_doi` (`independent_macrostep_rk4_reference`, bit-exact against the
+  runner) and the descriptor's integration updated (euler → rk4). Also fixed a pre-existing
+  toml/json drift: the `connor_stevens.json` `m`/`n` rate functions were the singular
+  `a*(V-V0)/(1-exp(...))` form (a 0/0 at `V=V0`) while the loaded `.toml` used the stable `exprel`
+  rewrite; the JSON now matches. Schema-gap counts unchanged (a re-enrolment). The schema-DSL
+  runner is Python-only; the hand `ConnorStevensNeuron` and its polyglot mirrors were already RK4,
+  so no polyglot counterpart or benchmark artefact changed.
+- Re-enrolled the Morris-Lecar calcium-potassium oscillator (`morris_lecar` schema,
+  Morris & Lecar 1981, DOI `10.1016/S0006-3495(81)84782-0`) faithfully as the first
+  **conductance** edge-crossing oscillator in the WC-A5 co-simulation set. The bundled
+  schema was `method="euler"` with a no-op `[reset]` (`v -> v`, `w -> w`) that disabled
+  edge detection, routed to the level datapath, and over-counted every above-threshold
+  step; both Python and Verilog over-counted identically so a ~15% tolerance band passed
+  while validating a caricature. The faithful schema mirrors `MorrisLecarNeuron`'s
+  maintained defaults — four-stage RK4, **no reset**, rising-edge (`v >= v_threshold`)
+  crossing, and `phi = 1/15` — so it counts one spike per action potential. At the
+  sustained depolarising regime (`I=100`, 3000 steps) the hand model, the schema runner
+  and the emitted Q16.16 RTL report the same seven upward crossings. Because the sigmoidal
+  gating lowers to 256-entry cosh/tanh look-up tables and the hand model uses `math`
+  transcendentals through a distinct RK4 driver, this is an exact **spike-count** parity
+  (robust across the whole `I in [90, 110]` band), not the bit-identical state the
+  polynomial FitzHugh-Nagumo / piecewise-linear McKean oscillators achieve. The reference
+  trace was re-derived as `morris_lecar_driven_oscillation_doi` (`independent_rk4_reference`,
+  bit-exact against the runner) and the `MorrisLecarNeuron` descriptor now carries the
+  schema's RK4 integration. Schema-gap counts are unchanged (a re-enrolment, not a new
+  schema). The schema-DSL runner is Python-only; the hand `MorrisLecarNeuron` and its
+  Rust/Julia/Go/Mojo mirrors were already RK4 / no-reset, so no polyglot counterpart or
+  benchmark artefact changed.
 - Added a path-filtered `Compiler HDL E2E` workflow for pull requests touching
   `src/sc_neurocore/compiler/`, `src/sc_neurocore/hdl_gen/`, or `tests/e2e/`.
   A focused contract test locks the trigger paths and narrow e2e selector. No
@@ -3001,8 +5501,78 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   alias coverage, and ranks missing-schema rows by source-evidence enrolment
   priority. No neuron runtime, HDL logic, polyglot mirror, benchmark dispatch,
   or benchmark artefact changed.
+### Fixed
+- Made the DPI developer build path reproducible from a clean checkout. The
+  source bridge now discovers the extension installed by `maturin develop`
+  instead of shadowing it, and the Go backend hint builds the package rather
+  than the single source file so cgo preserves the committed header identity.
+- Made Tier-3 golden-trace verification portable across NumPy's AVX-512 and
+  non-AVX-512 transcendental kernels. Chialvo and Hodgkin-Huxley now declare
+  the two measured, byte-exact SHA-256 variants; the gate accepts only those
+  hashes and separately proves their traces remain inside the existing
+  `1e-9` numeric-parity bound. This covers the two digests observed across the
+  Python 3.10-3.14 CI matrix without weakening deterministic models to an
+  unconstrained tolerance check.
+- Removed the stale Rust safety-module registry entry left after the generated
+  CLI stub was deleted. Both Rust registries now resolve every declared module,
+  and a focused source-registry contract prevents future file/declaration drift.
 
 ### Q4.12 co-simulation range classification
+- Restored a green `main` after inherited tooling drift left three required checks red, with no
+  behavioural change. The `pre-commit` and `lint` jobs reformatted 21 model/test/tool files to the
+  pinned `ruff` 0.15.16 style — adjacent-string joins and single-line calls a staler formatter had
+  wrapped — and trimmed a trailing newline the SymbiYosys catalogue commit left in
+  `hdl/formal/catalogue/INVENTORY.md`. The `test` job's `tools/readiness_evidence_index.py` imports
+  `tomli_w` (the TOML *writer*, which has no standard-library equivalent) but the dependency was
+  never declared, so its whole test module errored at collection with `ModuleNotFoundError`;
+  `tomli-w>=1.0` is now in the `dev` extra. The `v3-engine` `rust-lint` job tracks the latest stable
+  Rust (1.97.0), whose new default `clippy` lints rejected two pre-existing engine sites — a
+  redundant `seed: _` beside a `..` rest-pattern (`unneeded_wildcard_pattern`) and a
+  `[b'A', b'C', b'G', b'T']` array literal (`byte_char_slices`); both are cleared (the latter as
+  `*b"ACGT"`).
+- Pinned the Connor-Stevens polyglot kernels to the Python golden spike count. The Go
+  (`accel/go/services/connor_stevens.go`), Rust (`accel/rust/safety/connor_stevens.rs`) and Julia
+  (`accel/julia/neurons/connor_stevens.jl`) kernels already carried the real six-state macro-step
+  RK4 dynamics (100 sub-steps) but were only self-consistency / smoke tested against their own
+  arithmetic; each now asserts the Python golden counts — silent at zero drive, two action
+  potentials at `I=10` over 100 macro steps, nine at `I=20`. Connor-Stevens gating is `exp`-based,
+  so the trace is not bit-exact across C libraries; the spike count is the stated parity observable,
+  and all three languages reproduce it. Added a native Julia parity test
+  (`accel/julia/connor_stevens_parity_test.jl`), a Go golden-parity test plus an honest
+  `BenchmarkConnorStevensStep` (262.7 µs/macro-step), and the idiomatic `Default` impl on the Rust
+  side. The Mojo kernel remains an honest parity note pending the Mojo neuron-kernel lane's
+  promotion to a build target. Connor-Stevens's Python model dispatches only to the Rust engine, so
+  the Go/Julia kernels are language-native; no Python runtime path, FFI dispatch, or committed
+  benchmark artefact changed.
+- Pinned the Morris-Lecar polyglot kernels to the Python golden spike count. The Go
+  (`accel/go/services/morris_lecar.go`), Rust (`accel/rust/safety/morris_lecar.rs`) and Julia
+  (`accel/julia/neurons/morris_lecar.jl`) kernels already carried the real RK4 dynamics but were
+  only self-consistency / smoke tested against their own arithmetic; each now asserts the Python
+  golden counts — silent at zero drive, three action potentials at `I=50` over 2000 steps, five at
+  `I=100`. Morris-Lecar gating is `tanh`/`cosh`, so the trace is not bit-exact across C libraries;
+  the spike count is the stated parity observable, and all four languages reproduce it. Added a
+  native Julia parity test (`accel/julia/morris_lecar_parity_test.jl`) and an executable
+  `simulate`/`main` parity harness to the Mojo kernel (`accel/mojo/kernels/morris_lecar.mojo`, so
+  `mojo run` prints `PARITY OK`), and removed a dead `k4_v` assignment in that kernel's `next_w`
+  path. On the Rust side, dropped a vestigial `#![allow(unused_variables, dead_code,
+  non_snake_case)]` (the code is real, not a masked stub) and added the idiomatic `Default` impl.
+  Morris-Lecar's Python model dispatches only to the Rust engine, so the Go/Julia/Mojo kernels are
+  language-native; no Python runtime path, FFI dispatch, or committed benchmark artefact changed.
+- Completed the FitzHugh-Nagumo Go accel-services surface so the `accel/go/services`
+  test suite compiles and runs again. `services_test.go` called
+  `SimulateFitzHughNagumoNeuron`, which no source file defined (the FitzHugh-Nagumo Go
+  kernel existed only as a `package main` cgo shared library under
+  `accel/go/neurons/fitzhugh_nagumo/`), so the whole services package test build failed. Added
+  `services/fitzhugh_nagumo.go` — a real RK4 `SimulateFitzHughNagumoNeuron` in parity with
+  `sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron` (the cube written
+  `v*v*v`, exact arithmetic, fail-closed on non-finite input/state/candidate) — with a
+  golden-parity test (one action potential at `I=10` over 100 steps and a five-spike partial
+  train at `I=0.5` over 2000 steps, final `v` bit-identical to the NumPy reference) and an
+  honest per-step benchmark. Also strengthened the `accel/rust/safety` FitzHugh-Nagumo test
+  from a `spike is 0 or 1` smoke check to the same Python-golden spike count, dropped a
+  vestigial `#![allow(dead_code)]`, and added the idiomatic `Default` impl. The services
+  surface is Go-native, not FFI-dispatched, so no Python runtime path, FFI dispatch,
+  cross-language `simulate` benchmark, or committed benchmark artefact changed.
 - Replaced the Q4.12 LIF zero-current co-simulation xfail with an explicit
   range-classification regression that checks the Q-format diagnostics and the
   public `precision lif` CLI. The co-simulation and precision docs now state
@@ -3086,6 +5656,167 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   remain compatible. Sensor API docs, hardware docs, and module-specific tests
   were updated. No ADC arithmetic, Rust/Julia/Go/Mojo backend, dispatch order,
   benchmark output, or benchmark artefact changed.
+### Added
+- Added a discrete-map integration mode (`method="map"`) to `EquationNeuron` and
+  the schema-DSL runner: it iterates `state_{n+1} = f(state_n)` directly instead
+  of integrating an ODE. The Verilog compiler gained `IfExp` lowering (piecewise
+  `?:` selects) and a discrete-map datapath, so a piecewise map lowers to
+  Icarus-Verilog-valid RTL. The `rulkov_map` schema now uses the DOI-verified
+  Rulkov (2002) piecewise fast/slow map with `method="map"`, replacing the smooth
+  variant that was integrated with explicit Euler and diverged; its reference
+  trace is a bounded driven-spiking trace with exact independent map-iteration
+  parity, so all 17 deterministic reference traces now hold independent parity.
+  The schema-DSL runner has no polyglot mirror; no benchmark dispatch or
+  benchmark artefact changed.
+- The quantum package namespace now exports the SC→quantum compiler surface,
+  including `QuantumGate`, `SCQuantumCircuit`, probability/rotation helpers, and
+  `compile_sc_multiply` / `compile_sc_layer`. Existing submodule imports remain
+  compatible; quantum API docs, tutorial examples, and module-specific tests
+  were updated. No quantum algorithm, polyglot safety mirror, benchmark
+  dispatch, or benchmark artefact changed.
+- The training package namespace now exports the NumPy equilibrium-propagation
+  research surface as `sc_neurocore.training.EPNetwork`, making the existing
+  two-phase settle-and-nudge path selectable without importing the submodule.
+  Training docs and module-specific tests were updated. No Torch training path,
+  polyglot kernel, benchmark dispatch, or benchmark artefact changed.
+- The spintronic package namespace now exports the documented magnetic-domain
+  mapper surface, including `SpintronicMapper`, device/material models, MuMax3
+  helpers, racetrack/skyrmion utilities, aging/radiation/defect models, and the
+  Verilog generator. The quick-start docs now use actual exported symbols;
+  existing submodule imports remain compatible. Generated capability surfaces
+  were refreshed for the new package API test file. No mapper kernel,
+  Julia/Rust/Mojo mirror, benchmark dispatch, or benchmark artefact changed.
+- The memristor package namespace now exports the documented crossbar mapper
+  surface, including `MemristorMapper`, conductance/crossbar models,
+  compensation helpers, Monte Carlo reports, and the SystemVerilog emitter.
+  Existing submodule imports remain compatible; docs and package-facade tests
+  were updated. No mapper kernel, Julia/Rust/Mojo mirror, benchmark dispatch,
+  or benchmark artefact changed.
+- The JAX dense layer is now exported through the lazy public facades as
+  `sc_neurocore.JaxSCDenseLayer` and `sc_neurocore.layers.JaxSCDenseLayer`,
+  making the existing optional JAX backend selectable without importing the
+  submodule path. The package wiring stays lazy so base imports do not construct
+  accelerator state. Public API tests, layer docs, and generated capability
+  surfaces were updated; no JAX kernel, polyglot mirror, benchmark dispatch, or
+  benchmark artefact changed.
+- The analysis package namespace now exports the maintained Phi* estimator
+  functions `phi_star` and `phi_from_spike_trains`, making the existing
+  NumPy/Rust/Julia/Go/Mojo-backed integrated-information surface selectable
+  without importing the submodule path. Tests and curated analysis docs were
+  updated, and generated API freshness was verified; no backend kernel,
+  benchmark dispatch, or benchmark artefact changed.
+- Quantum-cognition coverage contracts now exercise GOTM brain local-LLM import
+  fallback and spike-index accumulation, lifting the focused `dashboard.py`,
+  `gotm_brain.py`, and `radical_pair.py` selector to 100% exact-file coverage.
+  No runtime path, polyglot mirror, benchmark dispatch, generated API surface,
+  or benchmark artefact changed.
+- The generated public API reference now excludes single-underscore classes,
+  functions, and methods while retaining public and dunder surfaces. The
+  generator contract, committed `docs/API_REFERENCE.md`, and documentation
+  workflow were updated together; no runtime path, polyglot mirror, benchmark
+  dispatch, or benchmark artefact changed.
+- Quantum-cognition CLI SNN stimulus records now emit the canonical numeric
+  fleet-memory `timestamp` field while preserving `content`, `project`, `actor`,
+  `kind`, and `source_ref`; the focused CLI contract rejects legacy `text` and
+  `source` aliases. No runtime model dynamics, polyglot kernel,
+  benchmark-dispatched path, or benchmark artefact changed.
+- Added a repeatable SNN memory-discipline audit/repair tool for SC-NeuroCore
+  stimulus producers and records. The tool validates canonical fleet-memory
+  keys, controlled actors, timestamps, entities, kinds, and source provenance,
+  and can normalize legacy local records without changing runtime model
+  dynamics, polyglot kernels, benchmark dispatch, or benchmark artefacts.
+- Added a schema-driven neuron reference-trace validation harness with immutable
+  corpus contracts, fail-closed JSON payload parsing, package-data loading,
+  `UniversalNeuron` execution, and feature-level validation reports. The seed
+  corpus covers analytic closed-form `lif`, `lapicque`, and `quadratic_if`
+  traces and is covered by strict mypy checks plus 100% exact-file focused
+  coverage; no polyglot kernel or benchmark-dispatched runtime path changed.
+- Compiler coverage-contract tests now lock the MLIR bundle fail-closed CIRCT
+  paths, pipeline tool-resolution failures, folded Verilog datapath guard paths,
+  and split expression-emitter LUT/error branches that keep the compiler core at
+  100% exact-file coverage under its focused selector.
+- The `sc.kuramoto_step` IR operation now lowers to synthesisable RTL, replacing the
+  previous hard error. The SystemVerilog emitter instantiates a new
+  `hdl/sc_kuramoto_step.v` fixed-point phase core (signed Q8.16, 64-entry sine LUT)
+  that computes one Euler step
+  `theta_n += dt * (omega_n + sum_m K_nm sin(theta_m - theta_n))` over an explicit
+  N×N coupling matrix. The core is co-simulated against a bit-exact fixed-point oracle
+  with Icarus Verilog and checked against the ideal float step within the LUT
+  resolution, and the MLIR emitter now instantiates the same core instead of a
+  passthrough. The Python IR builder gains `constant_f64_vec` and `kuramoto_step` so
+  the graph can be constructed, emitted, and simulated end to end.
+- The `sc.graph_forward` IR operation now lowers to synthesisable RTL, replacing the
+  previous hard error. The SystemVerilog emitter instantiates a new
+  `hdl/sc_graph_forward.v` fixed-point aggregation core (signed Q8.16) that computes the
+  degree-normalised neighbourhood aggregation `agg[i][f] = (Σ_j A[i][j]·X[j][f]) / deg[i]`
+  — the graph-structural half of the reference `StochasticGraphLayer` rate-mode forward
+  pass — over an explicit adjacency matrix, deferring rounding to a single signed division.
+  The core is co-simulated against a bit-exact fixed-point oracle with Icarus Verilog and
+  checked against the ideal float aggregation within fixed-point resolution, and the MLIR
+  emitter now instantiates the same core instead of a passthrough. The Python IR builder
+  gains `graph_forward`.
+- The `sc.softmax_attention` IR operation now lowers to synthesisable RTL, replacing the
+  previous hard error. The SystemVerilog emitter instantiates a new
+  `hdl/sc_softmax_attention.v` fixed-point single-head scaled-dot-product attention core
+  (signed Q8.16) that computes `softmax(Q·Kᵀ / sqrt(dim_k)) · V` — the reference
+  `StochasticAttention::forward_softmax` — with a numerically stable row-max subtraction,
+  a 256-entry exp lookup over the symmetric [-16, 16) grid at 0.125 spacing (mirroring the
+  `expr_lut_tables` / `c_fixed_emitter` transcendental machinery), and a single integer
+  division per softmax weight. Query/key/value shapes are inferred from the constant
+  operand lengths and `dim_k`, and the `1/sqrt(dim_k)` scaling plus exp-LUT geometry are
+  baked as instance parameters. The core is co-simulated against a bit-exact fixed-point
+  oracle with Icarus Verilog and checked against the ideal float softmax attention within
+  the exp-LUT resolution, and the MLIR emitter now instantiates the same core instead of a
+  passthrough. The Python IR builder gains `softmax_attention`. With this, all three IR ops
+  that previously had no synthesisable RTL (KuramotoStep, GraphForward, SoftmaxAttention)
+  now lower to co-simulated fixed-point cores.
+- `generate_ip_xact` is now re-exported from the `sc_neurocore.hdl_gen` package namespace
+  alongside the other `generate_*` HDL emitters, so the IP-XACT (IEEE 1685) component-XML
+  generator can be imported without reaching into the submodule. The generator gained a
+  dedicated structural test suite (`tests/test_ip_xact.py`) that parses the emitted
+  component tree — the AXI-Lite slave interface, the optional parameter block, and the
+  port-vector geometry — and it is no longer excluded from coverage measurement (now 100 %).
+- The bipolar stochastic-computing primitives (`core/bipolar.py`) are no longer excluded
+  from coverage measurement: the guard clauses (non-finite and out-of-range values,
+  non-binary bitstreams, wrong-dimensional MAC operands), the default-RNG path of
+  `bipolar_encode`, and the SC-layer optional-bias and `tanh` branches gained tests,
+  taking the module from 84 % to 100 %.
+- The closed-loop sleep optimiser (`sleep/sleep_optimizer.py`) is no longer excluded from
+  coverage measurement: the inactive-session guards (`add_sample` / `add_samples` /
+  `check_and_adapt` before a session starts), the None-detection fallback to WAKE, and the
+  re-induction branch (two consecutive unwanted awakenings arm a gentle N1 re-induction)
+  gained tests, taking the module from 91 % to 100 %.
+- The post-session sleep report generator (`sleep/report_generator.py`) is no longer excluded
+  from coverage measurement: the grade bands (A/B/D/F), the sleep-onset-latency scoring tiers,
+  the mid-session wakeup counter, and the N3/REM/latency/wakeup recommendation branches gained
+  tests over a controlled tick history, taking the module from 84 % to 100 %.
+- The closed-loop adaptive audio engines (`audio/adaptive_engine.py` and `audio/evs_engine.py`)
+  are no longer excluded from coverage measurement. Both were already exercised to 100 %
+  statement coverage by the existing behaviour and contract suites (`test_adaptive_audio`,
+  `test_audio_evs_contracts`, and the audio package/mapping/profile contracts); the omit
+  entries were stale, so removing them simply lets that measured coverage count.
+- The NeuroML 2 importer (`adapters/neuroml.py`) is no longer excluded from coverage
+  measurement. It is a pure-standard-library (`xml.etree`) importer with no optional
+  dependency, and the unit/current parsers' missing-value and dimensionless fall-through
+  paths, the `iafTauRefCell` refractory branch, and the `create_neuron` AdEx and
+  unknown-cell-type branches gained tests, taking the module from 91 % to 100 %.
+- The CCW/VIBRANA bridge (`interfaces/ccw_bridge.py`) gained a dedicated behavioural test
+  suite (`tests/test_ccw_bridge.py`, 45 tests) and is no longer excluded from coverage
+  measurement. Despite the "CCW system bridge" label it is a self-contained,
+  pure-standard-library-and-numpy data transformation (SCPN metrics → binaural-audio
+  parameters, L7 glyph vectors → VIBRANA visualisation states, plus metadata and session
+  configs) with no live-system dependency, so every mapping, mode-selection branch, metric
+  smoothing path, glyph-length guard, and the optional JSON file-export sink are now
+  covered at 100 %.
+- The PYNQ/hardware-in-the-loop drivers (`drivers/physical_twin.py`,
+  `drivers/sc_neurocore_driver.py`, `drivers/verify_hardware_link.py`) are no longer
+  excluded from coverage measurement — the whole `*/drivers/*` omit glob is removed. They
+  are pure-Python and already tested with mocked PYNQ overlays and sockets (no real FPGA);
+  added tests close the remaining branches — the twin's constructor validation guards, its
+  TCP connection-failure / empty-reply / non-JSON-reply error paths, the driver's
+  missing-bitstream failure, and the hardware-link diagnostic's FPGA success/unexpected-error
+  branches plus the present-but-unreachable Evo 2 and Opentrons probe outcomes — taking all
+  three modules to 100 %.
 
 ### Quantum package exports
 - Exported the SC→quantum compiler surface from `sc_neurocore.quantum`,
@@ -3094,6 +5825,36 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   compatible. Quantum API docs, tutorial examples, and module-specific tests
   were updated. No quantum algorithm, polyglot safety mirror, benchmark
   dispatch, or benchmark artefact changed.
+### Fixed
+- Capped the `nir` dependency to `<1.0.8`. nir 1.0.8 makes `Flatten.input_type` a required
+  constructor argument, which broke the NIR bridge's `Flatten` construction and turned the
+  test suite red once the release reached CI (the pinned 1.0.7 in `requirements/hub.txt` was
+  overridden when the package was built and installed with extras). The extras now match the
+  tested 1.0.7 line; the NIR canary continues to track the latest nir separately.
+- The SC IR text format was not idempotent under `parse . print` (found by the
+  `roundtrip_ir` fuzz target once the fuzz workflow was repaired). Two float-handling
+  asymmetries are corrected: (1) the printer formatted whole-number `f64` constants without a
+  decimal point (`5.0` → `"5"`, `[5.0, 6.0]` → `"[5, 6]"`), so they re-parsed to integer
+  variants (`U64`/`I64Vec`) — the printer now appends `.0` so such values re-read as floats;
+  and (2) the parser accepted non-finite float literals (`NaN`, `inf`), and a `NaN` constant
+  can never round-trip because `NaN != NaN` — the parser now rejects non-finite literals at
+  every float site (constants, vector elements, and the `scale`/`offset`/`kuramoto_step`
+  parameters). Regression tests cover whole-number scalar/vector round-tripping and non-finite
+  rejection.
+- The NeuroML 2 importer produced an unusable Adaptive-Exponential (AdEx) cell:
+  `_import_adex_cell` emitted the NeuroML attribute names (`C`, `g_L`, `E_L`, `V_T`,
+  `delta_T`, `V_reset`, `V_thresh`) rather than the `AdExNeuron` constructor names, so
+  `create_neuron` raised `TypeError: unexpected keyword argument 'C'` for every imported
+  AdEx cell. The importer now maps the attributes onto the model's own parameters in its
+  native unit system — leak reversal to `v_rest`, exponential threshold `V_T` to `v_rh`,
+  `tau = C / g_L` (pF/nS = ms) with the capacitance kept as `c_m` — and, critically,
+  parses the spike-triggered adaptation `b` as a *current* in pA (`0.0805 nA = 80.5 pA`)
+  rather than in nA, since `b`, the adaptation state `w`, and the injected current share
+  the pA unit. The correction is validated against the Brette & Gerstner (2005) hallmark
+  of spike-frequency adaptation (a lengthening inter-spike interval under sustained drive).
+- The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative
+  fixed-point constants; the sign is now placed outside the sized base (`-16'sd51`),
+  so graphs with negative vector or scalar constants emit valid Verilog.
 
 ### Training package exports
 - Exported the NumPy equilibrium-propagation research surface as
@@ -3294,6 +6055,235 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   capability manifest, snapshot, and README capability block were also refreshed
   after the public-claims selector exposed a stale tracked-test count. No
   polyglot mirror or benchmark-dispatched path changed.
+### Added
+- `compile_network_to_fpga` now fails closed on IR that would exhaust synthesis resources,
+  before any RTL is emitted: `data_width` must lie in `[1, 64]` and `fraction` must satisfy
+  `0 <= fraction < data_width` (so the signed Q-format keeps at least one integer or sign
+  bit — otherwise it would silently emit broken RTL); the neuron count is
+  capped — at 8192 for the direct/AER interconnects (which instantiate one module per
+  neuron, so an unbounded count is a synthesis-time denial of service) and higher, 262144,
+  for the folded interconnect (which shares one processing element and is bounded by its
+  state-RAM depth). A network over the direct/AER cap is pointed at `interconnect="folded"`.
+  The total synapse count is capped too (at 1048576), since every interconnect flattens all
+  weight matrices into one shared ROM — a blow-up axis independent of the neuron count.
+- `generate_host_driver` now validates its inputs before emitting any driver code: the
+  `data_width`/`fraction` Q-format (as the FPGA compiler does), a non-negative memory-mapped
+  `base_address`, and a positive, bounded bit width (`[1, 4096]`) for every parameter
+  register — so a malformed AXI-Lite/Wishbone driver request fails closed instead of
+  emitting a driver with degenerate or unbounded runtime masks.
+- `cargo-fuzz` targets (`engine/fuzz`): `parse_ir` fuzzes `ir::parser::parse` (arbitrary
+  input — exposed to Python as `ir_parse` — must only ever return `Err`, never panic);
+  `roundtrip_ir` asserts the parser and `printer::print` are inverse (`parse(print(g)) == g`,
+  and a printed graph always re-parses); `bitstream` differentially checks that
+  `bitstream::pack` and `pack_fast` agree bit-for-bit on arbitrary bytes and that
+  `unpack` round-trips; and `csr_matrix` builds a CSR matrix from `arbitrary` vectors and
+  expands it, checking that a matrix `CsrMatrix::new` accepts cannot panic on use (it found
+  a real out-of-bounds — see Fixed). The fuzz crate depends on the engine with
+  `default-features = false`, so the build skips the bundled-Z3 compile (made optional in the
+  same release) and the pyo3 module dead-strips out, keeping the instrumented build fast;
+  `fuzz/Cargo.lock` is committed so NumPy/ndarray resolve to the engine's versions. A
+  scheduled weekly `SC-NeuroCore Fuzz` workflow runs all four (not a per-PR gate).
+- The folded FPGA interconnect now folds populations with **heterogeneous per-neuron
+  parameters**. Each parameter that varies across a population's neurons is exposed on a
+  processing-element input port (`compile_to_datapath(param_ports=...)`) and streamed from
+  a per-neuron ``case(nidx)`` ROM — the parameter-space analogue of the state BRAM — so
+  every neuron receives its own parameters, bit-for-bit the direct path's per-neuron
+  ``#(.P_X(...))`` overrides (golden co-simulation parity for heterogeneous firing
+  thresholds and membrane time constants). `FoldedResourceMetrics` gains `param_rom_bits`
+  and the folded area estimator charges the parameter ROM. Populations with uniform
+  parameters are unchanged (the PE bakes them). This removes the former restriction that a
+  folded population be parameter-uniform.
+- Formal equivalence toolkit generalised to a two-state neuron shape — the
+  Izhikevich model, the first with two coupled state registers (membrane ``v`` and
+  recovery ``u``). The quadratic ``(v-VR)*(v-VT)`` product drives ``v`` and a spike
+  resets both (``v <- C``, ``u <- u + D``). Proving it equivalent unbounded needs
+  the coordinated two-register state-matching invariant: a `StateTap` for ``v`` and
+  ``u``. The point is empirically pinned by a companion proof that taps only ``v``
+  and returns `UNKNOWN` (inconclusive — the modules are equivalent, the invariant is
+  merely too weak) rather than `PASS`, establishing that every coupled state register
+  must be tapped, not just the observable output. With the one product abstracted and
+  both states tapped, a structurally distinct DUT and golden reference prove
+  equivalent unbounded by k-induction (≈8 s at 16-bit under `z3`). No toolkit code
+  change — the existing multi-tap `expose_state_taps` and `abstract_to_free_inputs`
+  already carry the two-state case, confirming the flow spans linear (LIF), quadratic
+  single-state (QIF) and quadratic two-state (Izhikevich) neurons.
+- Formal equivalence toolkit generalised to a second neuron shape — the quadratic
+  integrate-and-fire (QIF). Its state update carries a ``v*v`` *self*-multiply
+  (the LIF only multiplied state by a free input) declared inline as
+  ``wire v_sq = v * v;``. `operator_abstraction.abstract_to_free_inputs` now
+  handles both that inline-initialiser form and the declaration-plus-``assign``
+  form, and anchors the lifted name as the declared identifier so a use in another
+  statement's right-hand side is never matched. With the self-multiply abstracted
+  to a shared free input and the single membrane state tapped, a structurally
+  distinct QIF DUT and golden reference prove equivalent unbounded by k-induction —
+  demonstrating the whitebox-tap + multiplier-abstraction flow is not LIF-specific.
+- Multiplier abstraction for full-width unbounded equivalence proofs
+  (`sc_neurocore.compiler.operator_abstraction`). Whitebox taps make k-induction
+  converge, but bit-blasting the fixed-point multiplier keeps it tractable only at
+  a narrow (4-bit) datapath. `abstract_to_free_inputs` drops the signal carrying a
+  product and exposes it as a free input port; when the device-under-test and the
+  reference lift the same product to the same input name, the miter drives both
+  instances from one shared free wire, so the products are equal by construction
+  (congruence) and the solver never reasons about multiplication. The abstraction
+  is a sound over-approximation for a `PASS` (equivalence for every product value
+  implies it for the real product); a blackbox uninterpreted function would be the
+  textbook route but yosys 0.33's `smtbmc` crashes on a blackbox submodule. With
+  the multipliers abstracted and the state tapped, the LIF proves equivalent to
+  its reference **unbounded at full width** — about 1 s at 16-bit, 4 s at 32-bit,
+  and 22 s at 64-bit under `z3` k-induction, where before it was intractable past
+  4-bit; the residual growth is the datapath adders and comparators, not the
+  (now-abstracted) multiplier.
+- Unbounded equivalence proofs via whitebox state taps
+  (`sc_neurocore.compiler.whitebox_taps`). Naive k-induction on the equivalence
+  miter is intractable — the induction step starts from unreachable states where
+  the outputs agree but the hidden state differs, and the fixed-point multiplier
+  compounds it. `expose_state_taps` instruments a module to surface its internal
+  registers as observation output ports (an `output wire` plus one continuous
+  `assign`, adding no register and rewriting no logic, so behaviour on the original
+  ports is unchanged); a tap whose source is a constant lets two structurally
+  different modules present the same tap interface. The miter then compares the
+  taps like any other output, and that tap equality is the reachable-state
+  invariant that makes `prove_equivalence(mode="prove")` converge — the LIF
+  primitive is proven equivalent to its reference *unbounded*, not just to a
+  bounded depth. (yosys 0.33 resolves neither hierarchical references nor
+  SystemVerilog `bind`, so exposing the state is the route to reference it.) The
+  remaining bound is SMT tractability, not soundness: the proof closes for a narrow
+  4-bit datapath and slows as the multiplier widens.
+- Machine-checked Python↔RTL equivalence flow for generated models
+  (`sc_neurocore.compiler.equivalence_miter` + `equivalence_check`). Given the
+  compiler's generated Verilog and an independent reference module,
+  `prove_equivalence` builds a sequential miter — both instances driven by
+  identical free inputs and a shared counter-derived reset, asserting output
+  agreement on every post-reset cycle — runs it through SymbiYosys bounded model
+  checking, and returns a real verdict (`proven` with the checked depth, or a
+  counterexample with its failing assertion and trace path). This replaces the
+  prior text-only equivalence sketch and the standalone `.sby` script generator,
+  which are now cross-referenced to the runnable flow. Bounded model checking
+  proves equivalence to a configurable depth; unbounded k-induction is available
+  but not the default (wide-multiplier datapaths need an invariant to converge).
+  The proof functions raise when `sby`/`yosys` are absent, and the tests skip in
+  that case.
+- Machine-checked RTL property proofs for adaptive-precision evidence bundles
+  (`sc_neurocore.compiler.formal_property_check` + a shared
+  `sc_neurocore.compiler._sby_runner`). `write_precision_formal_evidence_bundle`
+  now renders a real synthesisable bounded-error monitor (the RTL `.v`, which the
+  previous bundle named but never wrote) and a bound assertion checker whose
+  immediate `assert`/`assume` statements encode the plan's safety obligations —
+  accumulated error within the claimed total bound, sequencer within the declared
+  bitstream length, and an accumulator wide enough that it never wraps — in place
+  of the earlier placeholder comments. `prove_property` proves the RTL satisfies
+  those obligations via SymbiYosys bounded model checking and returns a real
+  verdict; because the accumulator stops updating after the bitstream length, the
+  bounded proof to `length + 2` cycles is complete, not merely bounded. The
+  bundle gains an `execute` flag: `execute=False` (default) writes the artefacts
+  deterministically with no external tools, while `execute=True` runs the proof
+  when the toolchain (`sby`/`yosys`/`z3`) is present and records the machine-checked
+  verdict — or a skip reason when it is absent, never a fabricated pass. The
+  equivalence and property runners now share one audited `sby` invocation and
+  verdict-parse boundary. (yosys 0.33 silently ignores SystemVerilog `bind`, so
+  the checker is instantiated explicitly under `` `ifdef FORMAL `` rather than
+  bound in.)
+- Unbounded k-induction for the adaptive-precision property proof. The bounded
+  monitor's assertion checker now carries a strengthening lemma
+  (`err_acc <= step_count * per_step`) that is 1-inductive, so
+  `write_precision_formal_evidence_bundle(..., unbounded=True)` (and
+  `prove_property(mode="prove")`) prove the obligations by k-induction — an
+  unbounded proof whose depth is a small constant independent of the bitstream
+  length, where bounded model checking's completeness depth scales with it. The
+  lemma is trivially true under BMC, so both modes share one checker. k-induction
+  adds a third outcome to the runners: an *inconclusive* result (the base case
+  holds but the induction step does not converge) is recorded as `proven=False`
+  with an `UNKNOWN` verdict and no counterexample — never a fabricated pass — and
+  is distinguished from a tool failure, which still raises.
+- GPU Izhikevich neuron batch runner (`sc_neurocore_engine.GpuIzhikevichBatch`, behind
+  the Rust `gpu` feature), extending the GPU neuron-dynamics path. A wgpu/WGSL compute
+  shader runs one thread per neuron, each looping all steps internally with a constant
+  current and applying the two half-steps of the Euler update then the `v ≥ v_peak`
+  threshold with reset `v ← c`, `u ← u + d`; it returns row-major `[n_neurons × n_steps]`
+  spikes (`int32`) and voltages (`float32`). It mirrors the CPU `neuron::Izhikevich`
+  model; because WGSL has no `f64` the arithmetic is `f32`, so GPU tests check agreement
+  with the `f64` CPU oracle by tolerance — a tight sub-threshold voltage trace, spike
+  count within a small margin, and firing-rate monotonicity in the drive current. Like
+  the LIF kernel this is O(N) per-neuron work with no inter-neuron coupling, so the rayon
+  CPU stays ahead across the benchmarked range; a Criterion benchmark records the measured
+  CPU/GPU order. Tests and benches self-skip when no GPU adapter is present.
+- GPU Kuramoto oscillator integrator (`sc_neurocore_engine.GpuKuramoto`, behind the
+  Rust `gpu` feature), extending the GPU neuron-dynamics path beyond the LIF batch
+  kernel. A wgpu/WGSL compute shader runs one thread per oscillator, each summing its
+  coupling row `K_nm·sin(θ_m − θ_n)` over all others, so the O(N²) all-to-all coupling
+  is fully parallel; the host ping-pongs two phase buffers across the Euler steps in a
+  single command encoder. It mirrors the noise-free baseline of the CPU
+  `KuramotoSolver`; because WGSL has no `f64` the arithmetic is `f32`, so a GPU test
+  checks agreement with the `f64` CPU solver within tolerance (order parameter and
+  per-oscillator circular distance) plus a phase-locking sanity check, and a Criterion
+  benchmark sweeps oscillator counts for the CPU/GPU crossover. Tests and benches
+  self-skip when no GPU adapter is present.
+- Learned quantisers for quantisation-aware training in `sc_neurocore.qat`,
+  extending the previous straight-through/ternary support. `LSQLinear` /
+  `LSQQuantizer` implement Learned Step Size Quantization (Esser et al. 2020):
+  the quantiser step size is a trainable parameter — per-tensor or
+  per-output-channel — learned jointly with the weights, with the paper's
+  step-size gradient and `2*mean(|w|)/sqrt(qmax)` initialisation.
+  `PACTActivation` implements PACT (Choi et al. 2018): a learnable clipping
+  bound bounds the activation range before uniform quantisation.
+  `MinMaxObserver` and `PerChannelMinMaxObserver` derive per-tensor or
+  per-channel `(scale, zero_point)` from calibration statistics (with a
+  `fake_quantize` helper). `LSQPACTLIFNet` wires LSQ per-channel weights and a
+  PACT-quantised analogue input into a feedforward LIF SNN end to end.
+- QCFS conversion route in `sc_neurocore.conversion.convert`. When the source
+  model carries `QCFSActivation` layers, conversion now uses their learned
+  per-layer thresholds directly (no calibration pass), adopts the layers'
+  trained timestep budget when `T` is unset, and pre-loads each IF neuron to a
+  membrane potential of `theta / 2` — the optimal shift (Bu et al. 2022) that
+  cancels the quantisation flooring bias, giving near-lossless conversion of a
+  QCFS-trained ANN. `ConvertedSNN` gained an `initial_membrane_fraction` field
+  carrying this shift (`0.0` reproduces the threshold-balancing route). A new
+  `replace_relu_with_qcfs` helper substitutes every `ReLU`/`ReLU6` in a model
+  for a `QCFSActivation`, preparing it for conversion-aware fine-tuning.
+- Pre-synthesis area, latency, and power estimate for the folded interconnect
+  (`sc_neurocore.energy.estimate_folded_area` → `FoldedAreaEstimate`). It maps a folded
+  compile's `FoldedResourceMetrics` onto the existing Yosys-calibrated per-block costs in
+  `energy/fpga_models.py` — one combinational PE per neuron type, one DSP (or a LUT-based
+  multiply on a DSP-less target) per shared multiplier, a `data_width`-wide weight/threshold
+  /bias ROM mux per multiplier column, the per-neuron spike-bus double-buffer flip-flops, the
+  sequencer counters, and `state_ram_bits` of state BRAM — and turns `cycles_per_tick` into
+  latency, time, and energy per tick. `sc-neurocore compile-nir --interconnect folded` prints
+  the estimate and persists it under an `area_estimate` block in `folded_metrics.json` (skipped
+  for the non-FPGA `web` target). The estimate inherits the underlying primitives' ~20%
+  accuracy and introduces no new uncalibrated coefficients.
+- Folded (time-multiplexed) FPGA interconnect for `compile_network_to_fpga`,
+  opt-in via `interconnect="folded"` and the `sc-neurocore compile-nir
+  --interconnect folded` flag. Multi-layer networks share one combinational
+  processing element per neuron type (a per-type PE pool) across every neuron of
+  that type, hold per-neuron state in a per-population BRAM, and a single sequencer
+  walks each population in turn, advancing the whole network in `neurons + 1`
+  cycles per timestep. A single global spike bus committed at the end of each tick
+  gives recurrent and inter-population spiking fan-in a stable prior-tick
+  double-buffer. Per-source synaptic delays fold via a depth-`d` `spike_bus` history
+  shift-register (a delay of `d` ticks reads the bus committed `d` ticks ago). NIR
+  `Threshold` transforms fold too: a source threshold gates each sign-extended weight on
+  the source value (spike magnitude or external input); a destination threshold replaces a
+  connection's per-neuron weighted sum with one spike-magnitude when it exceeds the
+  threshold (selected from the per-neuron weight ROM). A per-destination-neuron connection
+  bias folds as a constant ACC_WIDTH term added to that connection's fan-in (held in the
+  same per-neuron ROM), so a destination threshold wraps the bias along with the weights.
+  An analogue source population (`li`/`cuba_li`/`integrator`, whose output is the membrane
+  voltage) folds via a global voltage bus — one `DATA_WIDTH` word per analogue source
+  neuron, committed once per tick like the spike bus — that the destination multiplies by
+  the weight (or threshold-gates), mirroring the direct path's registered `v_out`; a
+  delayed analogue source reads a depth-`d` voltage-bus history register, the analogue of
+  the spike-bus history. Bit-exact with the direct path (golden co-simulation parity for
+  connection-less, external-weighted, recurrent-spiking, two-population
+  feedforward/recurrent, delayed recurrent / mixed-per-column-delay two-population,
+  external/spiking source-threshold, mixed destination-threshold, inter-population
+  source-threshold, external-bias, biased destination-threshold, analogue-source, analogue
+  source-threshold, and delayed-analogue fan-in). Reports a `FoldedResourceMetrics` summary
+  (populations, processing elements, shared multipliers, state-RAM bits, cycles per tick,
+  collapsed direct instances) on the result, in the CLI output, and as a
+  `folded_metrics.json` artefact. The folded subset now covers every direct fan-in shape
+  except a delayed *external* (non-population) source connection, which falls back to
+  direct. Never auto-selected; the direct/AER paths and the SC-NIR source-handoff manifest
+  are unchanged.
 
 ### Go services namespace docstring ratchet
 - Promoted `accel.go.services` into the scoped NumPy docstring policy, added
@@ -3301,6 +6291,62 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   package-boundary globs, and extended the acceleration mirror-authority tests
   to cover the services namespace at 100% exact-file coverage. No Go runtime,
   polyglot mirror, or benchmark-dispatched path changed.
+### Changed
+- The engine's Z3-backed safety-verification supervisor is now behind an optional
+  `z3` Cargo feature, on by default so the published wheel and CI test matrix are
+  unchanged. Building the engine with `--no-default-features` skips the bundled-Z3
+  C++ compile (and omits the `PySpikingControllerPool` class), cutting a from-scratch
+  engine check from minutes to ~30 s for fast or instrumented builds (e.g. `cargo-fuzz`
+  targets) that do not need the verifier. `z3::` was already contained to
+  `engine/src/supervisor.rs`; a CI step guards that the no-Z3 build stays compilable.
+- Reconciled the lightweight dict-form NIR importer
+  (`sc_neurocore.compiler.intelligence.import_nir_graph`) with the authoritative
+  `nir_bridge`. It previously mapped only two node types to hand-written,
+  divergent ODE strings; it now derives every equation from the shared canonical
+  templates (extracted to `sc_neurocore.nir_bridge.neuron_templates`, the single
+  source of truth also used by the FPGA back-end) and covers the six NIR
+  point-neuron types (LIF, IF, LI, CuBa-LIF, CuBa-LI, integrator) plus an
+  explicit Izhikevich extension, resolving framework/case aliases and falling
+  back to a leaky integrator for unknown types. `NIRGraph` now also carries the
+  full multi-compartment `state_equations`, `thresholds`, `resets`, resolved
+  `parameters` and `node_types`. The docstring no longer overstates the module's
+  role: it is a dependency-free convenience front-end, and
+  `sc_neurocore.nir_bridge.from_nir` remains the authoritative typed importer for
+  real `nir.*` graphs, affine/convolutional layers, subgraphs and hardware
+  lowering.
+- Rebuilt the bit-true simulation kernel
+  (`sc_neurocore.compiler.intelligence.generate_bittrue_kernel`) onto a real
+  integer fixed-point lowering. The previous C/Rust ``step`` was a no-op that
+  only carried the equation in a comment while claiming identity with the RTL;
+  it now advances each state variable with a genuine wrap-truncate multiply and
+  saturating explicit-Euler accumulate via the new
+  `sc_neurocore.compiler.c_fixed_emitter`, and its documentation no longer
+  overstates the guarantee. A new
+  `generate_bittrue_kernel_from_neuron` emits a whole-neuron C or Rust kernel —
+  dt scaling, parameter encoding, threshold, reset rules and spike sequencing —
+  that reproduces `compile_to_verilog` bit-for-bit; the identity is proven by an
+  iverilog co-simulation that drives the compiled RTL and the kernel with the
+  same stimulus and requires equal per-cycle state traces (LIF, Izhikevich,
+  FitzHugh-Nagumo, a tanh cell and an integrate-and-fire, at Q8.8 and Q16.16),
+  with the Rust kernel checked against the C kernel for the same guarantee.
+- Rebuilt the HLS C++ export (`sc_neurocore.compiler.intelligence.generate_hls_cpp`)
+  onto a real AST-based lowering. A new `sc_neurocore.compiler.c_expr_emitter`
+  (`CExprEmitter` / `emit_c_expr`) parses each ODE expression and emits valid
+  `ap_fixed` C++ — translating Python operators, integer powers, roots, and the
+  supported transcendentals (via `hls_math` and inline sigmoid/exprel helpers)
+  instead of embedding the raw expression string. Equations are now Euler-integrated
+  (`<var>_next = <var> + dt * d<var>`, matching the Verilog backend), the membrane
+  variable resets by subtracting a configurable threshold on a spike, and free
+  identifiers become function inputs so the generated unit is self-contained. The
+  output is verified to compile with a host C++ compiler.
+- Extracted the target-independent expression-lowering numerics — the
+  compile-time constant folder, the 256-point symmetric sample grid, and the
+  quantised transcendental LUT generators (exp, log, sqrt, tanh, cosh, exprel,
+  sigmoid, sin, cos, cbrt) plus the supported-function vocabulary — into a new
+  `sc_neurocore.compiler.expr_lut_tables` module. The Verilog expression emitter
+  now delegates to it, so the generated RTL is byte-for-byte unchanged; the
+  shared tables give future C/C++/Rust lowering backends a single bit-exact
+  source of truth.
 
 ### Go acceleration namespace docstring ratchet
 - Promoted `accel.go` into the scoped NumPy docstring policy, added an
@@ -3309,6 +6355,56 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   acceleration mirror-authority tests to cover the Go namespace at 100%
   exact-file coverage. No Go runtime, polyglot mirror, or benchmark-dispatched
   path changed.
+### Fixed
+- `graph::CsrMatrix::new` validated only the lengths of the CSR arrays, not that
+  `row_offsets` is non-decreasing and starts at 0 or that every column index is `< n_cols`.
+  A malformed CSR (reachable from Python via the sparse graph constructor) was therefore
+  accepted and later panicked with an index-out-of-bounds when expanded by `to_dense`.
+  `new` now rejects a non-monotonic offset array, a non-zero first offset and any
+  out-of-range column index, so a constructed matrix is always safe to use. Found by the
+  new `csr_matrix` fuzz target.
+- The opt-in folded FPGA interconnect (`interconnect="folded"`) built its shared
+  processing element from the *quantised* population, so `Q88.encode` ran a second time
+  over already-quantised parameters and baked a corrupt value into the PE for every graph
+  carrying explicit parameters (a 16-bit `tau = 5120` re-encoded to
+  `5120 × 256 mod 2**16 = 0`). Real NIR networks always carry explicit parameters, so the
+  folded PE was silently generated with `tau = 0`. Folded PE parameters are now built from
+  the real-valued parameters (`_dequantised_pop`, a lossless rescale for fixed-point
+  values), matching the per-instance module the direct interconnect emits. The
+  double-encoding had gone undetected because the folded co-simulation suites used
+  template-default (already real-valued) parameters; a co-simulation of a real
+  explicit-parameter network now guards it.
+- Hardened the public swarm agent/evolver contracts. `AgentConfig`,
+  `SwarmAgent.weights`, `think`, `act`, `reset`, `EvolverConfig`,
+  `evaluate_individual`, mutation, and generation execution now reject
+  malformed or non-finite inputs before mutating state; the touched swarm
+  modules are strict-mypy clean, enforced by the scoped public-docstring
+  policy, and covered at 100% exact-file coverage by the focused swarm suite.
+- `network.topology.scale_free` now rejects invalid Barabasi-Albert dimensions
+  and non-finite weights before allocating the graph or sampling attachment
+  probabilities, closing the `m=0` divide-by-zero path and the `m >= n`
+  empty-graph path. The existing topology generator tests are strict-typed and
+  cover the fail-closed parameter boundary at 100% exact-file coverage.
+- Fixed the direct FPGA interconnect emitting an assignment to an undeclared
+  delay register when a connection mixed zero and non-zero per-source-column
+  synaptic delays: a delayed source's register chain was registered (and its
+  `*_spike_d1 <= *_spike` shift emitted) even for columns with delay zero, which
+  have no declared chain, so the generated RTL failed to elaborate. Undelayed
+  columns are no longer given a register chain.
+- Removed duplicate hardware-profile registrations in the built-in platform
+  modules: `cortical_labs_dishbrain` and `finalspark_neuroplatform` were each
+  registered four times, `biomemory_dna` three times, and `belousov_zhabotinsky`,
+  `fujitsu_digital_annealer`, `rl_toffoli_asic`, `ibm_microfluidic`,
+  `mems_resonator`, `brainscales2` and `spinnaker2` twice — with conflicting
+  fields silently resolved by last-registration-wins. Each profile name now
+  registers exactly once with its previously-effective values (behaviour
+  unchanged); `_reg` rejects a duplicate name unless `allow_override=True`, and
+  the `hardware_profiles`/`research_platforms` guides now match the registered
+  values.
+- Corrected the `online_learning` package docstring, which advertised "e-prop,
+  RTRL, and forward-gradient methods" though only e-prop (`EpropTrainer`) and an
+  eligibility-based online trainer (`OnlineTrainer`/`OnlineLIFLayer`) are
+  implemented. The docstring now lists only the shipped methods.
 
 ### Precision solver width and budget hardening
 - Hardened `compiler.precision_solver` with sign-inclusive integer-width
@@ -3320,6 +6416,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   refreshed generated API documentation, and regenerated capability snapshots
   for the new test-file count. No polyglot mirror or benchmark-dispatched path
   changed.
+### Physics and mathematics hardening
+- Rebuilt `MarderSTGNeuron` (Liu, Golowasch, Marder & Abbott 1998 stomatogastric
+  ganglion neuron) as a faithful thirteen-state model integrated with
+  fourth-order Runge-Kutta, replacing the prior single-step forward-Euler
+  approximation. Restored the CaS inactivation gate and the K-C activation gate
+  (`h_cas`, `m_kca`), replaced the constant gate time constants with the
+  published voltage-dependent `tau(V)` functions, made the K-C activation
+  voltage- and calcium-dependent, switched the calcium reversal to the Nernst
+  equation, and corrected the calcium dynamics to the published 20 ms relaxation
+  form (transcribed from ModelDB 93321). Propagated the same RK4 model across the
+  Rust engine, Rust safety mirror, Julia, and Go surfaces with bit-exact
+  Python-Rust spike-count parity and a reference Mojo kernel; refreshed the model
+  descriptor, the model documentation, the Rust benchmark figure, and the test
+  suite to 49 multi-angle tests. The neuron is an endogenous burster (fires at
+  zero injected current).
+- Rebuilt `PinskyRinzelNeuron` (Pinsky & Rinzel 1994, 2-compartment CA3
+  pyramidal cell) as a faithful eight-state model integrated with fourth-order
+  Runge-Kutta, replacing the prior single-step forward-Euler approximation.
+  Restored the separate voltage/Ca-dependent K-C activation gate `c` and the
+  dendritic calcium state `ca` (previously conflated), added the membrane
+  capacitance `cm = 3`, corrected `chi(Ca) = min(Ca/250, 1)` (previously a
+  voltage expression), and aligned the Na/K-DR/Ca/K-C rate functions and
+  reversal convention with the published kinetics (ModelDB 35358). Propagated
+  the same RK4 model across the Rust engine, Rust safety mirror, Julia, and Go
+  surfaces with Python-Rust spike-count parity and a reference Mojo kernel;
+  refreshed the model descriptor (RK4, `ca`, `cm`), the model documentation, the
+  Rust benchmark figure, and the test suite to 54 multi-angle tests. The model
+  fires repetitively at low somatic drive and enters depolarisation block at
+  high drive (non-monotonic f-I).
 
 ### Precision config docstring and coverage ratchet
 - Promoted `compiler.precision_config` into the scoped NumPy docstring policy,
@@ -3549,6 +6674,48 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   filesystem access. Covered valid-absent descriptor branches, the aggregate
   catalogue coverage summary, and added `neurons.model_catalogue` to the scoped
   NumPy docstring policy.
+### Fixed
+- Expanded GOTM brain coverage to 100% exact-file evidence, covering the local
+  LLM import-success path, valid directive parsing, invalid directive fallback,
+  local endpoint exception fallback, and repr/docstring policy.
+- Expanded L7 holonomic symbolic adapter coverage to 100% exact-file evidence,
+  covering single-node routing, nonstandard ring coordinates, underflowed
+  Metatron topology rejection without warnings, boolean integer parameter
+  guards, invalid golden-ratio scale rejection, mismatched input broadcast, and
+  touched docstring-policy surfaces while keeping the Rust safety mirror green.
+- Expanded radical-pair RPM coverage to 100% exact-file evidence, covering
+  invalid quadrature, explicit hyperfine tensor construction/state telemetry,
+  tensor-shape rejection, zero-nucleus density helper behavior, oversized dense
+  nuclear-bath rejection, non-positive kinetic parameter guards, and
+  repr/docstring policy while keeping the Rust safety kernel green.
+- Expanded quantum terminal dashboard coverage to 100% exact-file evidence,
+  covering terminal-size fallback, narrow-terminal hidden-neuron telemetry,
+  no-history rendering, spike-raster intensity bands, directive colour fallback,
+  empty-scale ATP bars, and repr/docstring policy.
+- Expanded spin-pool MPS coverage to 100% exact-file evidence, covering valid
+  dense exact evolution, ATP observable site rejection, status/repr telemetry,
+  and stable TEBD adjacency validation while keeping the Rust telemetry-kernel
+  tests green.
+- Expanded Kane silicon mapper coverage to 100% exact-file evidence, covering
+  triangular and hexagonal donor placement, zero-site rejection, zero-distance
+  exchange coupling, and the touched docstring policy surface while keeping the
+  Rust safety-kernel parity tests green.
+- Hardened Wong-Wang Julia, Go, and Mojo acceleration facades so `stim1`,
+  `stim2`, and `xi` must be one-dimensional time-series before backend
+  dispatch, and added module-specific dispatcher contracts for Go/Mojo loader
+  failures, unavailable libraries, C return codes, length validation, and
+  success return buffers.
+- Hardened Wilson-Cowan Julia, Go, and Mojo acceleration facades so
+  `ext_input` must be a one-dimensional time-series before backend dispatch,
+  and added module-specific dispatcher contracts for Go/Mojo unavailable
+  libraries, C return codes, and success paths.
+- Preserved local result dtype for non-root MPI gather outputs and expanded the
+  MPI driver contract tests to cover no-MPI constructor fallback, root gather
+  collection, non-root empty-gather dtype, missing communicator fallback, and
+  barrier delegation.
+- Kept `sc_neurocore.accel.mojo.MojoKernelRunner` fail-closed when the optional
+  Mojo runner import fails, replacing stale reload bindings with a placeholder
+  that raises `RuntimeError` with the captured import reason.
 
 ### Physics and mathematics hardening
 - Promoted `DendriticNMDANeuron` (two-compartment Jahr-Stevens NMDA Mg2+ block
@@ -3666,6 +6833,257 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   across Python, Go, Julia, Mojo, and Rust safety surfaces. Added native Go/Rust
   RK4 tests, refreshed Python module tests, a five-backend local non-isolated
   benchmark artifact, a regression-gate row, and updated model documentation.
+- GPFA (Gaussian Process Factor Analysis) now uses a deterministic PCA
+  initialisation (top singular vectors of the centred data with a fixed sign
+  convention) instead of a random one, so results are reproducible and
+  seed-independent. The EM loop is factored into reusable `gpfa_pca_init` and
+  `gpfa_em` entry points with a backend dispatch contract that lets acceleration
+  backends share an identical starting point, and the marginal log-likelihood is
+  the exact Gaussian form. Added a full reference test suite (deterministic init,
+  EM convergence, exact log-likelihood and its non-PSD guard, projection, dispatch).
+- GPFA Rust backend (`py_gpfa_em`) now shares the deterministic initialisation and
+  computes the exact marginal log-likelihood (previously an approximate
+  residual-sum form), so it agrees with the NumPy reference to within float64
+  round-off (same iteration count, trajectories within ~1e-10); selectable via
+  `backend="rust"`, with a gated parity test.
+- GPFA Julia backend (`accel/julia/analysis/gpfa.jl`, previously a stub) implements
+  the same EM-from-initialisation contract and agrees with the NumPy reference to
+  within ~1e-12; selectable via `backend="julia"`, gated parity test included.
+- GPFA Go backend (`accel/go/gpfa/gpfa.go`, c-shared via cgo) implements the same
+  EM-from-initialisation contract and agrees with the NumPy reference to within
+  ~1e-12; selectable via `backend="go"`, with parity and loader-branch tests.
+- GPFA Mojo backend (`accel/mojo/kernels/gpfa.mojo`, previously a stub) implements
+  the same EM-from-initialisation contract over the `@export` raw-address FFI and
+  agrees with the NumPy reference to within ~1e-10; selectable via `backend="mojo"`,
+  with parity and loader-branch tests.
+- GPFA now uses a structured Cholesky estimator across all five backends. The
+  E-step, M-step and marginal log-likelihood operate on the `n_state × n_state`
+  posterior precision (`n_state = n_latents · n_bins`) via Cholesky factorisations
+  rather than a general elimination, and the log-likelihood uses the Woodbury
+  identity and the matrix-determinant lemma so it never forms the dense
+  `(n_neurons · n_bins)²` marginal covariance. This is the exact structured
+  estimator of Yu et al. (2009): more numerically stable for the symmetric
+  positive-definite systems and far cheaper at scale (the dense form would build,
+  e.g., an 8000×8000 covariance where the structured form factors a 1600×1600
+  precision). The Rust backend factors with `nalgebra`, Julia with native LAPACK,
+  Go and Mojo with an in-place Cholesky, and the Python reference with SciPy; the
+  structured likelihood is checked against a dense brute-force covariance (~1e-11).
+- GPFA `backend="auto"` resolves to the structured Rust path when the engine is
+  present and falls back to the NumPy reference otherwise. With the dense
+  `n_obs`-sized solve removed, `benchmarks/bench_gpfa.py` measures the Rust backend
+  as the fastest path (1.43x over NumPy on the reference workload; Mojo 0.87x, Go
+  0.51x); the compiled backends remain available by name for cross-language parity
+  and portability. Added `docs/api/gpfa.md` describing the deterministic init, the
+  structured EM contract, the five backends and the benchmark.
+- Phi* (integrated information, `analysis/phi_estimation.py`) now computes the
+  Gaussian mutual information from covariance log-determinants taken via Cholesky
+  (`MI = 0.5(log|Cov_X| + log|Cov_Y| - log|Cov_XY|)`) instead of a product/ratio of
+  raw determinants with a `1e-300` clamp, which underflowed for larger channel
+  counts; the single-channel covariance now uses the unbiased (`ddof=1`) estimator
+  consistently. `phi_star(..., backend=...)` gains a polyglot dispatch over five
+  parity-verified backends — NumPy, Rust (`py_phi_star`, re-exported from the
+  bridge), Julia and Mojo (both previously non-functional stubs, now real), and a
+  new Go c-shared backend — agreeing with the reference to ~1e-15 (Mojo ~1e-10).
+  `backend="auto"` prefers Rust; `benchmarks/bench_phi.py` measures every compiled
+  backend faster than NumPy (Rust ~7x, Julia ~4.4x, Mojo ~3.5x, Go ~3.0x). Added
+  parity and loader-branch tests (phi_estimation.py at 100% statement coverage) and
+  refreshed the `docs/api/analysis.md` Phi* section.
+- Sorting-quality Mahalanobis metrics (`analysis/spike_stats/sorting_quality.py`)
+  now evaluate the squared Mahalanobis distance `(x-μ)ᵀ Σ⁻¹ (x-μ)` through the
+  Cholesky factor of the regularised cluster covariance (a triangular solve, then
+  `Σ z²`) instead of forming the covariance inverse explicitly — more accurate for
+  ill-conditioned cluster covariances and cheaper. `isolation_distance` and
+  `l_ratio` share the kernel and gain a polyglot dispatch `backend=` over five
+  parity-verified backends — NumPy, Rust (`py_isolation_distance` / `py_l_ratio`,
+  re-exported from the bridge; the Rust path previously used a Gauss-Jordan
+  inverse mislabelled as Cholesky), Julia and Mojo (both previously non-functional
+  stubs, now real), and a new Go c-shared backend — agreeing with the reference to
+  ~1e-13. `backend="auto"` prefers Rust; `benchmarks/bench_sorting_quality.py`
+  measures Mojo ~4.6x, Go ~3.8x and Rust ~1.9x over NumPy on the reference workload
+  (Julia ~0.5x, interop-bound on this size). Added Cholesky-kernel, parity and
+  loader-branch tests (sorting_quality.py at 100% statement coverage), removed two
+  unreachable defensive branches, and expanded the `docs/api/analysis.md`
+  sorting-quality section.
+- Fixed a latent type-inference error in the Rust Phi* test (`det.ln()` on an
+  ambiguous numeric literal) that prevented the engine test target from compiling.
+- Dimensionality reduction (`analysis/spike_stats/dimensionality.py`) now uses a
+  deterministic, reproducible covariance eigendecomposition — eigenvalues in
+  descending order with sign-canonicalised eigenvectors — across PCA, demixed PCA
+  and factor analysis. The Rust backend's hand-rolled Jacobi eigensolver and
+  Gauss-Jordan inverse are replaced by `nalgebra`'s symmetric eigensolver and
+  Cholesky solves; factor analysis starts from a deterministic PCA initialisation
+  (replacing a random one, so it is seed-independent) and solves its symmetric
+  positive-definite systems by Cholesky. Each estimator gains a `backend=`
+  dispatch over five parity-verified backends — NumPy, Rust (`py_pca_components`
+  / `py_demixed_components` / `py_factor_loadings`, re-exported from the bridge),
+  Julia and Mojo (both previously non-functional stubs, now real), and a new Go
+  c-shared backend (cyclic Jacobi where no LAPACK is linked) — agreeing to ~1e-13.
+  Dense symmetric eigendecomposition is LAPACK's strength, so on the reference
+  workload (`benchmarks/bench_dimensionality.py`) the NumPy/LAPACK path is the
+  fastest and `backend="auto"` resolves to it; the compiled backends are kept for
+  cross-language parity and portability. Added a dedicated test module
+  (dimensionality.py at 100% statement coverage), the benchmark and the
+  `docs/api/analysis.md` dimensionality section.
+- The Rust `cell_assembly_detection` backend (`analysis/network.rs`) replaces its
+  hand-rolled Jacobi eigensolver with `nalgebra`'s symmetric solver, returning
+  descending, sign-canonicalised eigenvectors — matching the NumPy/LAPACK
+  reference the Python path already uses. No public API change.
+- The Rust causality backend (`analysis/causality.rs`) now uses structured
+  factorisations for its dense linear algebra. The per-frequency MVAR transfer
+  function `H(f) = A(f)⁻¹` in spectral Granger causality and the directed
+  transfer function is obtained from a single `nalgebra` LU factorisation of the
+  non-Hermitian spectral matrix — one factorisation yields both the
+  near-singularity test (its determinant) and the inverse — replacing a separate
+  hand-rolled complex Gauss-Jordan inverse and Gaussian-elimination determinant.
+  The VAR fit and the Granger sum-of-squared-errors solves now solve their
+  ridge-regularised normal equations `XᵀX + εI` (symmetric positive-definite) with
+  a Cholesky factorisation rather than generic Gaussian elimination, factoring
+  once for all right-hand sides. The spectral-matrix assembly is shared across the
+  spectral Granger, partial-directed-coherence and directed-transfer-function
+  paths. Results match the previous implementation to float64 round-off; no public
+  API change.
+- The Fisher linear-discriminant decoder now solves its within-class scatter
+  system with a Cholesky factorisation in both backends. The scatter matrix
+  `S_w + εI` is symmetric positive-definite, so the per-class Fisher weights
+  `w_c = S_w⁻¹ (mean_c − overall_mean)` come from a single factorisation reused
+  across classes rather than an explicit matrix inverse (Python reference,
+  `scipy.linalg.cho_factor`/`cho_solve`) or a per-class Gaussian elimination
+  (Rust backend, `nalgebra`) — the numerically optimal route for an SPD system.
+  Decoded classes are unchanged; the naive-Bayes decoder (diagonal covariance) is
+  unaffected.
+- The Rust world-model Kalman filter (`lgssm.rs`) factors the innovation
+  covariance `S = C P_pred Cᵀ + R` with a single `nalgebra` Cholesky decomposition
+  per timestep, replacing a hand-rolled Cholesky and an explicit matrix inverse.
+  The one factor serves the log-determinant (`2 Σ log Lᵢᵢ`), the innovation
+  quadratic form (`S⁻¹ innov` via triangular solves), and the Kalman gain
+  `K = P_pred Cᵀ S⁻¹` — computed as `Kᵀ = S⁻¹ (C P_pred)` so `S⁻¹` is never formed
+  explicitly. Matches the NumPy/LAPACK reference
+  (`world_model/predictive_model.py`) to float64 round-off; the Rust-vs-Python
+  parity suite (means, covariances, log-likelihood, atol 1e-9) stays green. No
+  public API change.
+
+### Studio platform
+- Documented the optional `sc_neurocore.federation` Hub-facing Studio federation
+  surface with a dedicated API page and navigation entry, covering schema-A
+  manifest emission, evidence bundles, and verifiable-honesty envelopes.
+- The FPGA synthesis panel can export a synthesis-scoped evidence bundle from
+  the latest single-target or all-target worker job, list the bundle artefacts,
+  and download them through the authenticated Studio job-artifact route.
+
+### Public bitstream-inference API
+- Restored a stable public stochastic-inference surface over caller-owned packed
+  weight bitstreams. `sc_neurocore.accel.sc_forward(weights_packed, input_probs,
+  *, length, backend, seed)` returns the AND-then-popcount estimate of
+  `weights @ input_probs` for unipolar stochastic computing; the input encoder is
+  the deterministic 16-bit LFSR comparator, so the Rust accelerated path and the
+  NumPy fallback are bit-identical for a fixed seed. Added
+  `sc_neurocore.accel.get_backend()` / `available_backends()` as a fastest-first
+  backend selector (Rust accelerated path, NumPy fallback), the Rust engine
+  `sc_forward_packed` + PyO3 `py_sc_forward_packed`, a parity test proving the
+  estimate matches the dense reference within stochastic tolerance and that the
+  Rust and NumPy paths agree exactly, a Rust-vs-NumPy benchmark with a committed
+  artefact, and documentation.
+- `BitstreamEncoder` again accepts `BitstreamEncoder(length=..., seed=...)`:
+  `x_min`/`x_max` default to the unipolar probability domain `[0, 1]`, with
+  explicit ranges still supported.
+- `import sc_neurocore` is now lightweight and torch-free: public symbols and
+  submodules load lazily (PEP 562) instead of eagerly importing the torch-pulling
+  graph (plasticity, datasets, layers). Downstream consumers can run their
+  coverage tracers over code that imports sc-neurocore without the torch
+  C-extension crash; torch loads only when a torch-dependent feature is used.
+
+### Timing-aware formal verification
+- Added a two-flop clock-domain-crossing synchroniser property template to the
+  timing formal framework: `sc_cdc_two_flop_monitor` (in
+  `hdl/formal/timing/timing_wrapper_lib.sv`) and the `SC_ASSERT_CDC_TWO_FLOP`
+  macro (in `timing_assertions.svh`). A consumer binds it over its own
+  destination-domain synchroniser flops; the monitor proves the output is the
+  source delayed by exactly the synchroniser depth with no combinational path past
+  the last flop. The property is expressed in the open-source Yosys/SymbiYosys
+  procedural-immediate-assertion subset (no concurrent SVA). Added a worked
+  `example_cdc_two_flop_synchroniser.{sv,sby}` proof, a SymbiYosys-gated proof
+  test, a mutation test proving a one-flop synchroniser is rejected, and a
+  consumable-surface section (bounded-latency macros, CDC template, SymbiYosys task
+  convention) in `docs/formal/timing_aware_properties.md`.
+
+### Studio platform
+- Added Projects panel artifact download controls for exported project evidence
+  bundles, reusing the authenticated Studio job-artifact endpoint and showing
+  path-confined artifact names, sizes, and SHA-256 labels in the workbench.
+- Added Projects panel evidence-bundle export for saved project workspaces,
+  using the bounded Studio evidence worker from the normal workbench UI.
+- Added Admin panel audit-archive restore controls for path-free payload
+  validation and confined restore-artifact materialization, wired to the
+  existing admin-gated validate and restore endpoints.
+- Added Admin panel audit-archive controls for quarantine archive creation,
+  retention review, and prune-candidate purge execution.
+- Added an admin-gated Studio audit quarantine archive retention purge endpoint
+  that removes only archive jobs marked as prune candidates.
+- Added an admin-gated Studio audit quarantine archive restore job that
+  materializes validated archive rows as confined evidence artifacts.
+- Added an admin-gated Studio audit quarantine archive retention endpoint that
+  inventories valid archive jobs and marks non-destructive prune candidates.
+- Added an admin-gated Studio audit quarantine archive validation endpoint for
+  path-free import and restore preflight checks.
+- Added an admin-gated Studio audit quarantine archive job that persists
+  quarantined retained rows as path-confined evidence artifacts.
+- Added an admin-gated, path-free Studio audit quarantine export for legacy,
+  corrupt, or chain-broken retained audit rows.
+- Added path-free quarantine metadata to Studio audit status and export payloads
+  so legacy, corrupt, or chain-broken retained audit rows are counted separately
+  from verified retained evidence.
+- Fail closed on non-positive Studio audit retained-file settings so configured
+  rotation always keeps at least one archived JSONL segment for incident review
+  and retained-chain verification.
+- Added retained-chain integrity verification to persistent Studio JSONL audit
+  logs. Audit status, audit export, and operator status now report
+  path-free `integrity_verified`, `integrity_error`, and latest retained event
+  hash fields.
+- Authenticated `/ws/progress` when Studio route-policy enforcement is enabled.
+  Non-browser clients can use bearer headers, while the React frontend carries
+  browser-session tokens through the `studio-auth` WebSocket subprotocol.
+- Sent the active Studio bearer token on frontend project-delete requests so
+  production route-policy enforcement does not reject the saved-project delete
+  workflow.
+
+### Physics and mathematics hardening
+- Added the polyglot `adc_to_spike_windows(...)` chain for the ADC-to-spike
+  decimating rate-code encoder across python / rust / julia / go / mojo. Each
+  decimation window is centred and quantised to a Q-format code, sign-aware
+  averaged (round half away-from-zero then truncate toward zero) and converted
+  into a deterministic spike count (`|window| // threshold`) with the window sign
+  as polarity. The arithmetic is exact integer, so every backend reproduces the
+  Python floor bit-for-bit, and a dedicated test pins the Python floor against the
+  cycle-stepped golden model in `tools/adc_to_spike_reference.py`. Added the Rust
+  engine `adc_to_spike_windows` + PyO3 `py_adc_to_spike_windows`, the wired
+  `sc_neurocore.sensors.adc_to_spike_kernel` primary with fastest-first dispatch,
+  the Julia/Go/Mojo backends, unit, cross-backend and golden-reference parity
+  tests to full coverage of the primary module, a five-backend benchmark with a
+  committed artefact, and documentation.
+- Added the polyglot batched `mixed_dense_forward_batch(...)` chain for the
+  mixed-precision Q8.8 × Q16.16 dense MAC across python / rust / julia / go / mojo.
+  The integer branch (per-tensor scale folded so the accumulator divisor equals
+  the Q8.8 weight scale) contracts in a signed 64-bit accumulator, divides by an
+  arithmetic right shift (floor division) and saturates to the Q16.16 code range
+  with explicit overflow/underflow flags, so every backend reproduces the Python
+  floor bit-for-bit. Added the Rust engine `mixed_dense_forward_batch_q88_q1616` +
+  PyO3 `py_mixed_dense_forward_batch_q88_q1616`, the wired
+  `sc_neurocore.compiler.mixed_dense_kernel` primary with fastest-first dispatch,
+  the Julia/Go/Mojo backends, unit and cross-backend parity tests to full coverage
+  of the primary module, a five-backend benchmark with a committed artefact (the
+  NumPy and Julia matmul paths measured competitive with or faster than the scalar
+  FFI backends), and documentation.
+- Added the polyglot batched `dcls_max_forward_batch(...)` chain for the DCLS-max
+  Q8.8 triangular (tent) weighting kernel (Khalfaoui-Hassani, Pellegrini &
+  Masquelier 2023) across python / rust / julia / go / mojo. The kernel is exact
+  integer Q8.8 arithmetic with a Q16.16 saturating accumulator, so every backend —
+  including Mojo — reproduces the Python floor bit-for-bit with a parity tolerance
+  of exactly zero. Added the Rust engine `dcls_max_forward_batch_q88` + PyO3
+  `py_dcls_max_forward_batch_q88`, the wired `sc_neurocore.scpn.dcls_tent_kernel`
+  primary with per-channel learnable centre/sigma and fastest-first dispatch, the
+  Julia/Go/Mojo backends, unit and cross-backend parity tests to full coverage of
+  the primary module, a five-backend benchmark with a committed artefact, and a
+  documentation upgrade.
 - Replaced `ExpIFNeuron` raw Euler mutation with candidate-first RK4 across the
   maintained Python reference, Rust engine, Go service, Julia mirror, and Mojo
   mirror. The Fourcaud-Trocmé EIF ODE and hard reset are unchanged; all surfaces
@@ -3744,9 +7162,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `accel/mojo/kernels` stubs with real backends.
 
 ### Studio
-- Documented the optional `sc_neurocore.federation` Hub-facing Studio federation
-  surface with a dedicated API page and navigation entry, covering schema-A
-  manifest emission, evidence bundles, and verifiable-honesty envelopes.
 - Added the admin `POST /api/studio/training/weight-restore/attach/live` endpoint
   and the confined control channel that backs it. The endpoint delivers the
   verified weights of a completed source job to a running target training job;
@@ -3803,6 +7218,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Added the polyglot N-step `simulate` chain (python/rust/julia/go/mojo;
   Rust/Julia/Go bit-exact, Mojo ULP-bounded) with parity tests, a multi-language
   benchmark, and a rewritten model documentation page.
+- Corrected `CourageNekorkinMapNeuron` to the canonical Courbage-Nekorkin-Vdovin
+  2007 map (`Chaos` 17:043109): `x̄ = x + F(x) − y − β·H(x − d) + I`,
+  `ȳ = y + ε(x − J)` with the piecewise-linear field `F`, the Heaviside
+  discontinuity at `x = d`, and the breakpoints `J_min`, `J_max`. Replaced the
+  prior implementation, which was missing the leading `x` term, used an incorrect
+  saturating field, had no Heaviside term, an opposite-sign recovery update, and a
+  `±1e6` clip that masked divergence. Default parameters set to the published
+  chaotic spiking-bursting regime (`m0=0.0864, m1=0.65, a=0.2, d=0.235, J=0.2,
+  beta=0.085, eps=0.02`).
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  the map across python / rust / julia / go / mojo. Rust, Julia and Go reproduce
+  the NumPy reference bit-for-bit; the Mojo backend is per-step ULP-bounded with a
+  matching spike-count band. `auto` selects Rust.
+- Added the Rust engine struct plus PyO3 `py_courage_nekorkin_map_simulate`, the
+  fail-closed Rust safety mirror, the Julia/Go/Mojo backends, cross-backend parity
+  tests, a multi-language benchmark with a committed results artefact, and a
+  rewritten model documentation page.
 
 ### Dependencies
 - Migrated z3 `0.12` -> `0.20` (feature `static-link-z3` renamed to `bundled`;
@@ -3969,6 +7401,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   applications, product overview, and applications/market documentation so
   users can understand what SC-NeuroCore is for, where it has evidence, where
   optional dependencies apply, and which claims require committed artefacts.
+- Expanded the public documentation surface with an evaluator map covering
+  onboarding, notebooks, tutorials, API docs, benchmarks, hardware, industrial
+  applications, commercial evaluation, and evidence boundaries.
+- Kept benchmark, hardware, clinical, regulatory, and market language tied to
+  committed artefacts or explicit missing-evidence boundaries.
 
 ### Engine supervisor
 - Added a public Rust supervisor execution entrypoint shared by the PyO3
@@ -4559,6 +7996,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [3.15.0] — 2026-05-19
 
 ### Compiler Intelligence, Platform Registry, and Deployment (2026-05-01)
+### Wave 11: Hardware and compiler extensions (2026-05-01)
 
 #### Added
 - Expanded the hardware profile catalogue across FPGA, ASIC, neuromorphic, photonic, chiplet, PIM/CXL, rad-hard, edge AI, superconducting, spintronic, ferroelectric, mixed-signal, wafer-scale, acoustic, fluidic, biological, and molecular targets.
@@ -4571,10 +8009,380 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Added numerical and representation support for mixed precision, microscaling FP formats, IEEE FP8, posit arithmetic, auto-quantisation sweeps, photonic MZI encoding, PIM/CXL layout planning, analog noise modelling, and bit-true software kernels.
 - Added advanced co-design helpers for NIR/ONNX-SNN import, photonic configuration export, chiplet/UCIe mapping, CXL mapping, on-chip learning parameter export, drift compensation, and digital-twin generation.
 - Added documentation for compiler intelligence, research platforms, deployment, platform extensibility, multi-target deployment, safety certification, verification/debug flows, carbon sustainability, static analysis, SoC integration, and equation-to-Verilog workflows.
+#### Added — Hardware Profiles (8 new → 183 total, 35 platform classes)
+- **Thermodynamic** (2): `extropic_epu`, `normal_cn101`.
+- **Probabilistic / p-Bit** (2): `purdue_pbit`, `tohoku_sot_pbit`.
+- **Polariton / Exciton** (2): `marvell_polariton`, `stanford_polariton`.
+- **Metamaterial** (2): `mit_metamaterial`, `penn_acoustic_meta`.
 
 #### Removed
 - Removed monolithic compiler intelligence and platform profile modules in favour of responsibility-scoped packages.
 - Removed legacy delivery-scoped test entry points in favour of responsibility-scoped regression suites.
+#### Added — Compiler Features (9 new → 76 total)
+- §68 `configure_approximation()` — precision-energy tradeoff knobs per population.
+- §69 `model_energy_harvest()` — batteryless edge feasibility analysis.
+- §70 `predict_aging()` — NBTI/HCI degradation modeling with timing derating.
+- §71 `generate_dvfs_controller()` — Verilog DVFS FSM generator.
+- §72 `explore_pareto()` — multi-objective power/area/latency Pareto frontier.
+- §73 `protect_ip_pqc()` — post-quantum (CRYSTALS-Dilithium) IP protection.
+- §74 `run_fault_campaign()` — systematic bit-flip SDC testing.
+- §75 `verify_timing_closure()` — formal static timing analysis.
+- §76 `ingest_telemetry()` — digital twin ↔ hardware telemetry loop.
+
+#### Added — Tests
+- `test_wave11_features.py` — 35 tests, 0 failures.
+
+### Wave 10: Security, sovereignty & extensibility (2026-05-01)
+
+#### Added — Hardware Profiles (10 new → 175 total, 31 platform classes)
+- **Magnonic** (3): `tum_skyrmion`, `kaist_spinwave`, `imec_mtj_reservoir`.
+- **Organic Bioelectronic** (2): `cambridge_oect`, `linkoping_organic`.
+- **RISC-V Sovereign** (5): `sifive_x280_ai`, `esperanto_et_soc`,
+  `ventana_veyron_ai`, `tenstorrent_ascalon`, `andes_ax45mpv`.
+
+#### Added — Generic Profile Constructor
+- `HardwareProfile.from_constraints()` — auto-construct profile from spec
+  sheet constraints. **Any future hardware automatically supported.**
+
+#### Added — Compiler Features (8 new → 67 total)
+- `lint_hardware_trojans()` — detect dormant trigger / payload paths.
+- `generate_sbom()` — CycloneDX/SPDX SBOM for EU CRA compliance.
+- `generate_hil_calibration()` — HIL drift compensation protocol.
+- `generate_digital_twin()` — software shadow of deployed hardware.
+- `map_ucie_protocol()` — UCIe chiplet die-to-die lane mapping.
+- `schedule_seu_scrubbing()` — space-grade configuration scrubbing.
+- `obfuscate_ip()` — logic locking + structural IP protection.
+- `embed_watermark()` — verifiable netlist watermark embedding.
+
+#### Added — Tests
+- `tests/test_wave10_features.py` — 32 tests across 13 test classes.
+
+### Wave 9: Universal coverage & extensibility (2026-05-01)
+
+#### Added — Hardware Profiles (10 new → 165 total, 28 platform classes)
+- **Optical I/O** (2): `ayar_teraphy`, `intel_cpo`.
+- **Acoustic** (2): `mit_phononic`, `caltech_mems_nn`.
+- **Fluidic** (2): `stanford_microfluidic`, `eth_fluidic_logic`.
+- **Space-Qualified** (4): `bae_rad750_sq`, `seakr_sbc`, `vorago_va10820`, `frontgrade_leon5`.
+
+#### Added — Compiler Features (8 new → 59 total)
+- `analyze_cdc()` — formal CDC check.
+- `load_profiles_from_toml()` — custom HW without code changes.
+- `plan_multi_die_floorplan()` — chiplet/3D bin packing.
+- `check_regression()` — perf regression detector.
+- `check_license_compliance()` — SPDX IP compatibility.
+- `generate_power_state_machine()` — sleep/wake/hibernate FSM.
+- `register_platform_hook()` / `discover_platforms()` — runtime extensibility.
+- `generate_compilation_report()` — one-click markdown report.
+
+#### Added — Tests
+- `tests/test_wave9_features.py` — 28 tests across 10 test classes.
+
+### Wave 8: Final gap closure & trajectory synthesis (2026-05-01)
+
+#### Added — Hardware Profiles (11 new → 155 total, 24 platform classes)
+- **RRAM** (3): `weebit_reram`, `crossbar_rram`, `adesto_cbram`.
+- **SRAM-CIM** (2): `tsmc_cim_n7`, `samsung_cim_sf3`.
+- **Cryo CMOS** (2): `intel_horse_ridge`, `google_cryo_ctrl`.
+- **DNA/Molecular** (2): `microsoft_dna_store`, `asu_dna_perovskite`.
+- **Quantum Neuromorphic** (2): `ibm_qnn`, `ionq_trapped_ion`.
+
+#### Added — Compiler Intelligence Features (10 new → 51 total)
+- `import_nir_graph()` — NIR/ONNX-SNN model import.
+- `verify_ode_stability()` — Lyapunov/eigenvalue discretization check.
+- `generate_power_intent()` — IEEE 1801 UPF generation.
+- `estimate_carbon_footprint()` — lifecycle CO₂ per target.
+- `insert_debug_probes()` — ILA/SignalTap auto-insertion.
+- `generate_memory_map()` — address decoder for neuron SoC arrays.
+- `score_portability()` — cross-platform compatibility scoring.
+- `predict_reliability()` — MTTF from voltage/temp/node.
+- `generate_fault_tree()` — FTA/FMEA for DO-254 Level A.
+- `generate_testbench()` — Cocotb/UVM auto-generation.
+
+#### Added — Tests
+- `tests/test_wave8_features.py` — 38 tests across 12 test classes.
+
+### Wave 7: Compiler intelligence and platform coverage (2026-05-01)
+
+#### Added — Hardware Profiles (10 new → 144 total, 19 platform classes)
+- **Biological** (2): `finalspark_neuroplatform`, `cortical_labs_dishbrain`.
+- **Electrochemical** (3): `ibm_ecram`, `samsung_pcram`, `stanford_ecram`.
+- **Wafer-Scale** (3): `cerebras_wse3_ws`, `tesla_dojo3`, `tachyum_prodigy`.
+- **Analog Mixed-Signal** (2): `aspinity_aml100`, `renesas_analog_ai`.
+
+#### Added — Compiler Intelligence Features (8 new → 41 total)
+- `recommend_target()` — constraint-driven optimal HW selection.
+- `plan_partial_reconfiguration()` — FPGA DPR partition scheduling.
+- `score_supply_chain_risk()` — geopolitical/sole-source risk analysis.
+- `generate_bittrue_kernel()` — C/Rust code matching Verilog bit-exactly.
+- `classify_model_complexity()` — memory/compute/comm-bound routing.
+- `CompilationCache` — memoized instant re-targeting.
+- `estimate_thermal_envelope()` — junction temperature prediction.
+- `optimize_network_topology()` — multi-chip spike bandwidth minimizer.
+
+#### Added — Tests
+- `tests/test_wave7_features.py` — 41 tests across 11 test classes.
+- Total regression: **1,094 passed**, 1 xfailed, 0 failures.
+
+### Wave 6: Total paradigm coverage & overlooked compiler features (2026-05-01)
+
+#### Added — Hardware Profiles (21 new → 134 total, 79 vendors, 15 classes)
+- **Superconducting** (3): `nist_sfq`, `northrop_aqfp`, `josephson_jj`.
+- **Spintronic** (2): `everspin_stt_mram`, `samsung_sot_mram`.
+- **Ferroelectric** (2): `gf_fefet`, `sk_hynix_feram`.
+- **CGRA** (3): `samsung_cgra`, `qualcomm_npu_cgra`, `pact_xtensa`.
+- **3D-Stacked** (3): `tsmc_soic`, `intel_foveros`, `amd_3dv`.
+- **Edge MCU** (5): `rp2040`, `esp32_s3`, `stm32h7`, `nrf5340`, `max78000`.
+- **RISC-V AI** (3): `sifive_x280`, `qualcomm_ventana`, `ainekko_rv`.
+
+#### Added — Strategic Compiler Features (8 new → 33 total)
+- `generate_equivalence_sketch()` — formal ODE↔RTL proof skeleton with SVA.
+- `partition_timescales()` — multi-timescale ODE clock-domain splitting.
+- `generate_provenance_chain()` / `format_provenance_json()` — SHA-256 audit trail.
+- `generate_compliance_matrix()` / `format_compliance_report()` — DO-254/IEC 61508/ISO 26262.
+- `generate_energy_schedule()` — energy-harvesting neuron update scheduling.
+- `lint_side_channels()` — power/timing side-channel leakage analysis.
+- `generate_drift_compensator()` — analog device aging calibration controller.
+- `plan_heterogeneous_dispatch()` — multi-backend SNN model splitting.
+
+#### Added — Tests
+- `tests/test_wave6_features.py` — 58 tests across 10 test classes.
+- Total regression: **1,033 passed**, 1 xfailed, 0 failures.
+
+### Wave 5: Universal hardware coverage & strategic features (2026-05-01)
+
+#### Added — Hardware Profiles (29 new → 113 total, 66 vendors, 9 classes)
+- **Photonic / Optical Compute** (5): `lightmatter_passage`, `lightelligence_pace`,
+  `xanadu_x8`, `ipronics_smartlight`, `luminous_computing`.
+- **Chiplet / UCIe** (5): `tenstorrent_blackhole`, `cerebras_wse3`,
+  `intel_ponte_vecchio`, `amd_mi300x`, `ucie_generic`.
+- **PIM / CXL Memory** (5): `upmem_pim`, `samsung_hbm_pim`, `sk_hynix_aim`,
+  `cxl_type3`, `axdimm`.
+- **Next-Gen Neuromorphic** (5): `akida2`, `spinnaker2`, `dynapse2`,
+  `rain_neuromorphic`, `brainscales2`.
+- **Sovereign / Defence** (5): `bae_rad750`, `cobham_ut700`, `mpfs250t_rt`,
+  `versal_xqrvc1902`, `trenz_zynq_space`.
+- **Automotive / Edge AI** (6): `mythic_m1076`, `mobileye_eyeq6`, `horizon_j6`,
+  `ambarella_cv72s`, `hailo15`, `syntiant_ndp120`.
+
+#### Added — TOML Profile Loader (universal future-proofing)
+- `load_toml_profile()` — register custom hardware targets from TOML files.
+- `load_toml_profiles_dir()` — bulk-load all `*.toml` profiles from a directory.
+- Enables instant compatibility with any future chip without code changes.
+
+#### Added — Strategic Compiler Features
+- `generate_tmr_wrapper()` — SEU/TMR wrapper with majority/median voter.
+- `embed_model_checksum()` — SHA-256 hash embedding for reproducibility.
+- `auto_quantisation_sweep()` — sweep Q4→Q32 for accuracy-vs-resource DSE.
+- `format_quantisation_report()` — markdown table output for sweep results.
+- `encode_mzi_weights()` — MZI phase-shift encoding for photonic chips.
+- `generate_mzi_config()` — photonic chip config (JSON/CSV) from MZI weights.
+- `plan_pim_layout()` — PIM/CXL memory bank layout optimisation.
+- `generate_power_domain_wrapper()` — ICG clock gating for ultra-low-power edge.
+- `generate_hls_cpp()` — Vitis/Catapult HLS C++ translation.
+- `generate_bitstream_encryption()` — AES-256 bitstream encryption (Xilinx/Intel).
+- `advise_ucie_partition()` — chiplet die-to-die neuron array partitioning.
+- `advise_cxl_mapping()` — CXL.mem Type-3 device mapping with protocol selection.
+- `generate_learning_params()` / `export_learning_config()` — STDP/RSTDP on-chip
+  learning parameter export for Akida 2, BrainScaleS-2, SpiNNaker 2.
+- `inject_weight_noise()` — stochastic weight noise injection (Gaussian/uniform/
+  lognormal) for analog/memristive robustness validation.
+- `create_noise_profile()` — device-variation characterisation for analog targets.
+- `generate_pipeline_wrapper()` — auto-insert register stages for HF targets.
+- `compare_targets()` — compile once, compare N hardware targets side-by-side.
+- `format_comparison_report()` — markdown table from multi-target comparison.
+- `generate_compilation_summary()` — comprehensive markdown compilation report.
+
+#### Added — Tests
+- `tests/test_wave5_features.py` — 130 tests (profiles, TOML, TMR, checksum,
+  sweep, MZI, PIM, power-domain, HLS, encryption, UCIe, CXL, STDP, noise,
+  pipeline, comparison, summary, cross-feature E2E integration).
+- Total regression: **933 passed**, 1 xfailed, 0 failures.
+
+### Network-level compilation & thermal-aware deployment (2026-05-01)
+
+#### Added — Advanced Features: BRAM Auto-Selection
+- `storage_recommendation()` — automatic register/BRAM/URAM strategy.
+- `generate_bram_array()` — time-multiplexed BRAM-backed neuron array
+  with `(* ram_style = "block" *)` inference pragmas.
+- Supports 18Kb, 36Kb BRAM and 288Kb URAM (UltraScale+/Versal).
+
+#### Added — Advanced Features: Thermal-Aware Compilation
+- `thermal_analysis()` — ΔT estimation, frequency derating, hotspot risk.
+- `generate_thermal_constraints()` — XDC with derated clock and DSP spreading.
+- Technology model for 7nm through 65nm junction temperature.
+
+#### Added — Advanced Features: Weight ROM Generation
+- `generate_weight_rom()` — synaptic weights in 3 formats:
+  Verilog ROM, Xilinx `.coe`, and Intel `.mif`.
+
+#### Added — Tests
+- `tests/test_wave4_features.py` — 28 tests (BRAM, thermal, weights).
+- `tests/e2e/test_e2e_pipeline.py` — 22 end-to-end integration tests
+  covering 9 cross-cutting compilation pipelines.
+- Total regression: **745 passed**, 1 xfailed, 0 failures.
+
+#### Added — Hardware Profiles (7 new → 84 total)
+- **AI accelerators**: `qualcomm_nsp` (Qualcomm NSP), `sambanova` (SambaNova
+  RDU), `cambricon_mlu` (Cambricon MLU370/590).
+- **Emerging compute**: `superconducting` (AQFP/SFQ ~100 GHz),
+  `cim_sram` (compute-in-SRAM), `analog_ai` (PCM/ReRAM),
+  `event_camera` (Prophesee/Sony DVS).
+
+#### Added — Static Analysis: Pipeline Stage Analysis
+- `critical_path_depth()` — AST-based multiply chain analysis.
+- `pipeline_stages_needed()` — pipeline budget from target frequency.
+- `pipeline_analysis()` — multi-ODE per-variable pipeline report.
+
+#### Added — Static Analysis: Power Estimation
+- `estimate_power()` — switching-activity-based power model.
+- `PowerEstimate` dataclass with dynamic/static/total/energy-per-spike.
+- Technology node library: 7nm through 65nm capacitance scaling.
+
+#### Added — Deployment: Multi-Target Compilation
+- `compile_multi_target()` — compile one neuron to N targets.
+- `format_comparison_table()` — markdown comparison report.
+- `CompilationResult` dataclass with per-target metrics.
+
+#### Added — Tests
+- `tests/test_wave3_features.py` — 31 tests (profiles, pipeline,
+  power, multi-target).
+- Total regression: **695 passed**, 1 xfailed, 0 failures.
+
+#### Added — Hardware Profiles (12 new → 77 total)
+- **Neuromorphic**: `loihi3` (Intel, 4nm 8M neurons), `northpole` (IBM, 256-core),
+  `innatera_pulsar` (Innatera, analog-digital hybrid μC).
+- **FPGA**: `versal_ai_edge` (AMD, AI Engine + DSP58), `proasic3` (Microchip, flash),
+  `trion` / `titanium` (Efinix), `gowin_arora_v` (Gowin 28nm), `intel_agilex5`
+  (Intel, HBM2e).
+- **AI accelerators**: `nvidia_dla` (Orin DLA), `mediatek_apu` (APU 790),
+  `aws_inferentia` (Inferentia2/Trainium2).
+
+#### Added — Deployment: SymbiYosys Formal Verification
+- One-command `.sby` script generation for BMC, induction, and cover modes.
+- Solver support: boolector, Z3, yices via SymbiYosys + Yosys.
+
+#### Added — Deployment: RISC-V Driver + RTOS Templates
+- RISC-V C driver with volatile MMIO accessors for PolarFire SoC, Efinix
+  Titanium, and RISC-V soft-cores (Nios V, MicroBlaze V).
+- FreeRTOS task template: `xTaskCreate` + `vTaskDelay` neuron tick loop.
+- Zephyr RTOS thread template: `K_THREAD_DEFINE` + `k_msleep` integration.
+
+#### Added — Advanced Features: DVS Event-Camera → AER Bridge
+- Synthesisable Verilog bridge converting Prophesee / Sony IMX636 DVS events
+  to SC-NeuroCore AER address-event protocol.
+- Configurable FIFO depth, address width, timestamp width, polarity bit.
+- Overflow detection flag for back-pressure monitoring.
+
+#### Added — Deployment: Multi-Die SLR Placement
+- Vivado XDC PBLOCK constraint generation for multi-SLR FPGAs (Versal,
+  Agilex 7, Stratix 10, UltraScale+).
+- Auto inter-SLR pipeline register directives for >500 MHz crossing.
+
+#### Added — Advanced Features: Block-FP / MXFP Encoding
+- OCP Microscaling Spec v1.0 formats: MXFP4, MXFP6, MXFP8 (E4M3/E5M2).
+- IEEE FP8 (NVIDIA H100/B100 native) with block_size=1.
+- Encode/decode block functions for parameter transfer and weight storage.
+
+#### Added — Deployment: Safety Certification Evidence
+- XML traceability matrix generation for DO-254 (DAL-A/B/C), IEC 61508
+  (SIL 1–4), and ISO 26262 (ASIL A–D).
+- Requirement → design → verification linkage with pass/fail/untested
+  status and coverage percentage.
+
+#### Added — Tests
+- `tests/test_wave2_features.py` — 49 tests (profiles, SBY, RISC-V,
+  DVS, SLR, MXFP, certification).
+- Total regression: **650 passed**, 1 xfailed, 0 failures.
+
+### Universal hardware compilation & deployment industrialisation (2026-05-01)
+
+#### Added — Compiler: Hardware Profiles
+- Expanded hardware profile registry from 32 to **65 pre-configured profiles**
+  across 7 platform classes and 40 vendors.
+- **Rad-hard / space**: NanoXplore NG-Ultra, Microchip RTG4, Xilinx Kintex
+  UltraScale+ RT — DO-254 / MIL-STD-883 alignment.
+- **Edge AI accelerators**: Hailo-8, Kneron KL730, Groq TSP, NVIDIA Jetson
+  Orin, Intel Habana Gaudi 2/3, Renesas DRP-AI.
+- **eFPGA IP**: Achronix Speedcore, Flex Logix EFLX, Menta Origami.
+- **Vision-on-sensor**: Sony IMX500/IMX501, Samsung Exynos NPU.
+
+#### Added — Compiler: Static Analysis (`static_analysis.py`)
+- Guard-bit auto-computation from expression AST (single + multi-ODE).
+- Formal overflow proof via interval arithmetic — mathematical guarantee of
+  no overflow at compile time, no simulation required.
+- SystemVerilog Assertion (SVA) generation for DO-254 / IEC 61508 formal
+  verification (overflow assertions, reachability covers, input assumptions,
+  stability checks).
+
+#### Added — Compiler: Mixed Precision (`mixed_precision.py`)
+- Per-variable mixed-precision specification via dict API.
+- Automatic constraint solver: given value bounds, resolution requirements,
+  and a total-bit budget, auto-selects optimal Q-format per variable.
+- Preset shorthand (`from_preset({"v": "q88", "u": "q44"})`).
+
+#### Added — SoC Integration: Bus Interface (`bus_interface.py`)
+- AXI4-Lite bus wrapper generator (Xilinx/AMD compatible).
+- Wishbone B4 bus wrapper generator (LiteX/open-source RISC-V compatible).
+- Auto-generated register map with CTRL, I_T, SPIKE_COUNT, and parameter
+  registers. Spike interrupt output for GIC/NVIC integration.
+
+#### Added — Compiler: Deployment Utilities (`deployment.py`)
+- **Resource estimation**: LUT/FF/DSP/BRAM estimation from Verilog without
+  synthesis (heuristic-based, <1 ms).
+- **Constraint generation**: SDC (Intel/generic) and XDC (Xilinx) timing
+  constraint files with configurable target frequency.
+- **Host driver generation**: Python MMIO class and C header with Q-format
+  encode/decode for host-side parameter tuning.
+- **Cocotb testbench generation**: 3-scenario Python-based verification
+  (spike, zero-current, reset).
+
+#### Added — Compiler: Advanced Features (`advanced_features.py`)
+- **VHDL-2008 output mode**: generates entity/architecture wrappers for
+  mixed-language simulation and DO-254 compliance.
+- **Posit arithmetic**: posit-8 and posit-16 encode/decode with 4 standard
+  configs (POSIT8_0, POSIT8_1, POSIT16_1, POSIT16_2).
+- **CDC synchroniser generation**: multi-clock domain crossing with
+  configurable stages and `ASYNC_REG` attributes.
+- **TCL project generation**: complete Vivado and Quartus project scripts
+  (synth → P&R → bitstream → reports).
+- **Bitstream automation**: Yosys + nextpnr Makefiles for iCE40 and ECP5
+  open-source FPGA flow.
+
+#### Added — SoC Integration: IP-XACT Packaging (`ip_xact.py`)
+- IEEE 1685 IP-XACT component XML generator for Vivado IP Integrator
+  drag-and-drop integration with AXI bus interfaces, port definitions,
+  file sets, and parameter schemas.
+
+#### Added — Documentation
+- New guide: `docs/guides/static_analysis_guide.md` (217 lines) — guard bits,
+  interval arithmetic overflow proof, SVA generation.
+- New guide: `docs/guides/soc_integration_guide.md` (239 lines) — bus
+  wrappers, mixed-precision, host drivers, IP-XACT, VHDL output.
+- New guide: `docs/guides/deployment_guide.md` (338 lines) — resource
+  estimation, SDC/XDC constraints, Cocotb testbenches, Vivado/Quartus TCL,
+  CDC synchronisers, posit arithmetic, iCE40/ECP5 Makefile, complete
+  end-to-end deployment workflow.
+- Updated guide: `docs/guides/hardware_profiles.md` (431 lines) — expanded
+  from 51 to 65 profiles with rad-hard, eFPGA, edge AI, and vision tables;
+  cross-references to 3 new guides.
+- Updated roadmap: `docs/internal/COMPILER_ROADMAP_TODO.md` — all Tier 4
+  items marked DONE, cross-references to new modules.
+- 100% docstring coverage across all 13 modified/new source modules.
+
+#### Added — Tests
+- `tests/test_static_analysis.py` — 28 tests.
+- `tests/test_bus_mixed_precision.py` — 34 tests.
+- `tests/test_deployment.py` — 26 tests.
+- `tests/test_advanced_features.py` — 40 tests (IP-XACT, VHDL, posit, CDC,
+  TCL, Makefile).
+- `tests/test_hardware_profiles.py` — expanded to cover all 65 profiles.
+- Total regression: **577 passed**, 1 xfailed, 0 failures.
+
+#### Fixed — Docstring Coverage
+- Added missing docstrings to 24 functions/methods across
+  `verilog_generator.py`, `equation_builder.py`, `universal_dsl.py`, and
+  `neurons/__init__.py` to achieve 100% coverage on all session-touched files.
 
 ### Security hardening (2026-04-29)
 
