@@ -55,6 +55,26 @@ class Case:
 
 def _cases() -> tuple[Case, ...]:
     return (
+        Case(
+            "bench_initial_state_map",
+            EquationNeuron(
+                {"v": "I**1.5+clip(I,.25,1)**clip(w,-1,1)"},
+                state={"w": 0.5},
+                method="map",
+                dt=1.0,
+            ),
+        ),
+        Case(
+            "bench_held_state_rk4",
+            EquationNeuron(
+                {"v": "held + I - 0.5*v"},
+                state={"held": 0.5},
+                method="rk4",
+                dt=0.25,
+                threshold="v > 0.5",
+                reset={"held": "held + 0.25", "v": "-0.25"},
+            ),
+        ),
         Case("bench_power_literal", EquationNeuron({"v": "I**1.5"}, method="map", dt=1.0)),
         Case("bench_power_dynamic", EquationNeuron({"v": "(I*I+1)**I"}, method="map", dt=1.0)),
         Case("bench_rsqrt", EquationNeuron({"v": "rsqrt(I)"}, method="map", dt=1.0)),

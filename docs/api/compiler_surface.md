@@ -40,7 +40,8 @@ can change without a deprecation window.
 | `deployment` | direct public module | Deployment facade aggregates constraints, drivers, evidence, and multi-target helpers. |
 | `discrete_function_programs` | internal build tool | Builds the exact `round()` (ties to even) and `heaviside()` integer programs that the function-unit programs emit. |
 | `discrete_function_units` | internal build tool | Integer reference of `round()` and `heaviside()` on signed fixed-point words, mirrored by the programs and the RTL. |
-| `equation_lowering` | internal build tool | Validates authored callable bindings and prepares diffusion and threshold intrinsics for every neuron compiler entry point. |
+| `equation_lowering` | internal build tool | Validates authored callable bindings and prepares held state, diffusion and threshold intrinsics for every neuron compiler entry point. |
+| `equation_state` | internal build tool | Represents authored held-state words as identity maps or zero derivatives without mutating the caller's runtime model. |
 | `equation_compiler` | public facade | Package-level exports provide equation-to-FPGA helpers. |
 | `equation_ir_compiler` | internal build tool | Compiles maintained equation models into verified native scalar and state graphs; `EquationIR`, `compile_to_ir` and `recompile_ir` are exported through the `equation_compiler` facade. |
 | `equivalence_check` | internal build tool | SymbiYosys equivalence runner behind the hardware evidence pipeline. |

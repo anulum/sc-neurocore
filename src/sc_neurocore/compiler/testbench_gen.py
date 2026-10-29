@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from ..neurons.equation_builder import EquationNeuron
+from .equation_lowering import prepare_neuron
 from .verilog_compiler_config import Q88
 
 
@@ -60,7 +61,7 @@ def generate_testbench(
     q = Q88(data_width=data_width, fraction=fraction)
     i_val = q.encode_signed_literal(input_current)
 
-    state_vars = list(neuron.equations.keys())
+    state_vars = list(prepare_neuron(neuron).equations)
     port_connections = [
         "    .clk(clk),",
         "    .rst_n(rst_n),",

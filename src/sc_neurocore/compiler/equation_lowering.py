@@ -15,6 +15,7 @@ from collections.abc import Iterator
 
 from ..neurons.equation_builder import EquationNeuron
 from .diffusion_noise import lower_diffusion_noise
+from .equation_state import lower_held_state
 from .expr_lut_tables import check_call_bindings
 from .philox_threshold import lower_philox_threshold
 
@@ -50,7 +51,7 @@ def equation_expressions(neuron: EquationNeuron) -> Iterator[tuple[str, str]]:
 
 
 def prepare_neuron(neuron: EquationNeuron) -> EquationNeuron:
-    """Check authored bindings, then lower implicit noise and Philox thresholds.
+    """Check authored bindings, then lower held state, noise and Philox thresholds.
 
     Parameters
     ----------
@@ -60,7 +61,8 @@ def prepare_neuron(neuron: EquationNeuron) -> EquationNeuron:
     Returns
     -------
     EquationNeuron
-        Lowered model; the original is preserved by the intrinsic transforms.
+        Lowered compiler input, including held-state transitions; the original
+        model is preserved by each transform.
 
     Raises
     ------
@@ -72,7 +74,7 @@ def prepare_neuron(neuron: EquationNeuron) -> EquationNeuron:
     Internal calls introduced afterward, such as ``randn`` for ``xi`` and
     ``exprel`` for exponential Euler, are independent of numeric model bindings.
     """
-    bound = {*neuron.equations, *neuron.parameters, *neuron.constants}
+    bound = {*neuron.equations, *neuron.initial_state, *neuron.parameters, *neuron.constants}
     for _where, expression in equation_expressions(neuron):
         check_call_bindings(ast.parse(expression, mode="eval"), bound)
-    return lower_philox_threshold(lower_diffusion_noise(neuron))
+    return lower_held_state(lower_philox_threshold(lower_diffusion_noise(neuron)))

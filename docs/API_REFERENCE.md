@@ -8773,7 +8773,7 @@ tuple of str
     Location and expression, including exponential-Euler Jacobians and events.
 
 ### Function `prepare_neuron(neuron)`
-Check authored bindings, then lower implicit noise and Philox thresholds.
+Check authored bindings, then lower held state, noise and Philox thresholds.
 
 Parameters
 ----------
@@ -8783,7 +8783,8 @@ neuron : EquationNeuron
 Returns
 -------
 EquationNeuron
-    Lowered model; the original is preserved by the intrinsic transforms.
+    Lowered compiler input, including held-state transitions; the original
+    model is preserved by each transform.
 
 Raises
 ------
@@ -8794,6 +8795,35 @@ Notes
 -----
 Internal calls introduced afterward, such as ``randn`` for ``xi`` and
 ``exprel`` for exponential Euler, are independent of numeric model bindings.
+
+---
+
+## Module `compiler.equation_state`
+
+### Function `lower_held_state(neuron)`
+Return compiler equations that retain every declared initial-state word.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Authored model. Initial-state entries without equations remain constant
+    during integration and can be updated by the model's event reset rules.
+
+Returns
+-------
+EquationNeuron
+    The original model when it has no held state; otherwise a shallow copy
+    with independent equation and Jacobian maps. Held words use an identity
+    map or a zero derivative. Live state, initial values, compiled Python
+    programs and random counters are neither consumed nor modified. This
+    copy is a compiler input, not a replacement runtime model.
+
+Notes
+-----
+Original equation order is retained and held words follow their initial
+declaration order. Exponential Euler receives the held word's exact zero
+diagonal Jacobian. The same preparation feeds native IR, registered and
+folded RTL, and the bit-true C and Rust kernels.
 
 ---
 

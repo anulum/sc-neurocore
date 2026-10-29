@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "generated_at": "2026-10-29T01:21:27.943418+00:00",
+  "generated_at": "2026-10-29T09:25:07.783874+00:00",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
   "language": "Python",
@@ -43,21 +43,21 @@
       11
     ],
     "load_average_before": [
-      9.12890625,
-      8.04150390625,
-      9.3017578125
+      5.1884765625,
+      4.576171875,
+      4.27392578125
     ],
     "load_average_after": [
-      9.19873046875,
-      8.07421875,
-      9.3056640625
+      4.93310546875,
+      4.533203125,
+      4.26123046875
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 4199.931,
-      "max_observed_mhz": 4200.042,
+      "min_observed_mhz": 4500.0,
+      "max_observed_mhz": 4600.73,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -69,7 +69,7 @@
     "scipy": "1.18.1",
     "sympy": "1.14.0"
   },
-  "source_head_at_capture": "a6948ff7d09ea3e5398aca85572cc9d18bf80cbe",
+  "source_head_at_capture": "b25709eeb368814f4b141f47a604566b93e1d007",
   "source_worktree_dirty": true,
   "source_sha256": {
     "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
@@ -88,7 +88,7 @@
     "src/sc_neurocore/compiler/c_fixed_emitter.py": "533a4800e1b87481e6660f8002b253dc90d7736f1cfd4902fd79b4b01635a2e4",
     "src/sc_neurocore/compiler/certification_gen.py": "bd896738ce5d8121a5e6d4ff0d0667761df2db21d30184e00e409e62a5c23b84",
     "src/sc_neurocore/compiler/cocotb_gen.py": "c650c582b9bd6fa2924362d6f1c6d8d0ffed948202a2b6c7624c95146e5ec149",
-    "src/sc_neurocore/compiler/compiler_impl.py": "dc5fb9d51e6b579d585fd4b216ba97d886978f0ba10f5eed785bde8b7852603a",
+    "src/sc_neurocore/compiler/compiler_impl.py": "f0118df28c87c1973908cd5838e157b243c8cb4ba27d27da04880cc9635d46b1",
     "src/sc_neurocore/compiler/constraint_gen.py": "4f7fc2afb5aa6ea19a5bdede15397a83f7f9fd67410664eb367ad67977e20204",
     "src/sc_neurocore/compiler/deployment.py": "13afd40ed803f5d5ccae57b9d4b20a125b55faa9745c5557e0c4b47718afe0f7",
     "src/sc_neurocore/compiler/diffusion_noise.py": "914cadd83c183ea49624cf4d97ff88d437f1484653605ffa47922b3cf5779c86",
@@ -96,7 +96,8 @@
     "src/sc_neurocore/compiler/discrete_function_units.py": "1142cb671eee89091343e9fa22fb47749373fc91db64eeb641e211ebd3f0a952",
     "src/sc_neurocore/compiler/equation_compiler.py": "ad79489e7a07648dcd9013711c6b08c165d1e1e72e46f89fab0f8d09a5b60318",
     "src/sc_neurocore/compiler/equation_ir_compiler.py": "4dad9945cd546e57c3cee1a7c09c3168aedeec3be5251f22831618ad0765caad",
-    "src/sc_neurocore/compiler/equation_lowering.py": "e5aa083feef44972a5ca88e86a8dc6f062e27a16c944431fb2a4c31574e7b080",
+    "src/sc_neurocore/compiler/equation_lowering.py": "7bf4659b3be9c4d793f237f5b70d6635806559d7ca0ab9dc63ad743359d51c4a",
+    "src/sc_neurocore/compiler/equation_state.py": "5958e8824f343c5f79cf1d7345d83fc211f9ee174645231b65f8fa1f370de69e",
     "src/sc_neurocore/compiler/equivalence_check.py": "80ebe68a088ae38fe90116902057e67077bd38494829d5902f9e90e4e784f87c",
     "src/sc_neurocore/compiler/equivalence_miter.py": "ee9a5815a3e846fd1c04ea118cda9550cbcd1dc1084ab44bf4d8486377464dfe",
     "src/sc_neurocore/compiler/exact_normal.py": "de63c2b07408e2c36479b24d8d4f0aaf56e32a70d4aa511dafd0ecfce0919752",
@@ -163,7 +164,7 @@
     "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
     "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
     "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
-    "src/sc_neurocore/compiler/testbench_gen.py": "c00311c1b63cc9dba3d6135c664d5bfb965a453f8f8092bf4b41d8140fdca614",
+    "src/sc_neurocore/compiler/testbench_gen.py": "dbba5586242d95f55b304c337f3ed103e85aa1e73ccd6a6dd8ad8cdb62f84487",
     "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
     "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
     "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
@@ -179,7 +180,7 @@
     "src/sc_neurocore/neurons/descriptor_generator.py": "0a2bfb40c0920599303c2925522e37a26b002cf4a482e1e3d9760a7f45aaf34d",
     "src/sc_neurocore/neurons/descriptor_tiers.py": "61574e62beae09896789da9fc904d31ac7c91487654c231d579ce87a95f1a5d5",
     "src/sc_neurocore/neurons/dsl_cli.py": "cd21e37f2ac41b6bee831e259f4ad932c4e354fd3b1f497f709c963545be16a4",
-    "src/sc_neurocore/neurons/equation_builder.py": "ab50451093b73c4f7d37ed694ecadc73d46171e5c1fc836ecfa1bf12075eb7be",
+    "src/sc_neurocore/neurons/equation_builder.py": "fea065e3f69945aed0f05edb50f9e4168d863cd8d3f084b7c16d4bce639c2c7c",
     "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
     "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
     "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
@@ -218,17 +219,17 @@
   "source_unchanged_during_capture": true,
   "cases": {
     "paired_exponentials": {
-      "first_call_ns": 7849343,
+      "first_call_ns": 5708740,
       "cached_ns_per_call": [
-        347009.85,
-        380756.31,
-        261551.04,
-        252457.38,
-        238312.88,
-        247480.37,
-        259780.98
+        100795.2,
+        122180.52,
+        103465.5,
+        130973.42,
+        112528.79,
+        119822.38,
+        124848.98
       ],
-      "cached_median_ns_per_call": 259780.98,
+      "cached_median_ns_per_call": 119822.38,
       "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
       "contracts": [
         {
@@ -329,17 +330,17 @@
       "all_repeats_equal": true
     },
     "clipped_hypot": {
-      "first_call_ns": 153217935,
+      "first_call_ns": 97843415,
       "cached_ns_per_call": [
-        287260.71,
-        252853.23,
-        274970.85,
-        188831.49,
-        211576.44,
-        266075.69,
-        251435.57
+        136701.83,
+        149056.54,
+        173270.8,
+        215930.14,
+        135684.52,
+        129307.46,
+        130685.91
       ],
-      "cached_median_ns_per_call": 252853.23,
+      "cached_median_ns_per_call": 136701.83,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -412,17 +413,17 @@
       "all_repeats_equal": true
     },
     "literal_dynamic_powers": {
-      "first_call_ns": 831266957,
+      "first_call_ns": 719540563,
       "cached_ns_per_call": [
-        167461.01,
-        173420.59,
-        172593.0,
-        175866.11,
-        168954.81,
-        170531.99,
-        155838.64
+        196503.7,
+        200358.9,
+        195568.31,
+        254269.95,
+        324134.88,
+        290824.7,
+        380178.43
       ],
-      "cached_median_ns_per_call": 170531.99,
+      "cached_median_ns_per_call": 254269.95,
       "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
       "contracts": [
         {
@@ -549,17 +550,17 @@
       "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "first_call_ns": 14387628,
+      "first_call_ns": 11178566,
       "cached_ns_per_call": [
-        391364.36,
-        377741.69,
-        342410.76,
-        384321.0,
-        321456.11,
-        370295.96,
-        394031.29
+        225736.66,
+        209493.76,
+        244190.22,
+        226328.87,
+        329293.63,
+        338105.39,
+        225176.67
       ],
-      "cached_median_ns_per_call": 377741.69,
+      "cached_median_ns_per_call": 226328.87,
       "contract_sha256": "29f5d7c2da288f3b0ce00ddf60d6cf6320893b512491d1c5e5f48f96c851e1ec",
       "contracts": [
         {

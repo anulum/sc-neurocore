@@ -19,6 +19,9 @@ on:
       - "bridge/sc_neurocore_engine/ir.py"
       - "bridge/sc_neurocore_engine/_ir_native.py"
       - "tests/test_equation_ir_compiler.py"
+      - "tests/test_equation_state.py"
+      - "tests/test_equation_state_consumers.py"
+      - "tests/test_equation_builder_initial_state.py"
       - "tests/test_native_equation*.py"
       - "tests/test_ir_source.py"
       - "tests/test_ir_word_delay.py"
@@ -50,6 +53,9 @@ on:
       - "bridge/sc_neurocore_engine/ir.py"
       - "bridge/sc_neurocore_engine/_ir_native.py"
       - "tests/test_equation_ir_compiler.py"
+      - "tests/test_equation_state.py"
+      - "tests/test_equation_state_consumers.py"
+      - "tests/test_equation_builder_initial_state.py"
       - "tests/test_native_equation*.py"
       - "tests/test_ir_source.py"
       - "tests/test_ir_word_delay.py"
@@ -167,7 +173,8 @@ jobs:
           tests/test_native_equation_commits.py tests/test_equation_ir_compiler.py
           tests/test_native_equation_source.py tests/test_native_equation_discrete_functions.py
           tests/test_native_equation_hypot.py tests/test_native_equation_rsqrt.py
-          tests/test_native_equation_powers.py -q
+          tests/test_native_equation_powers.py tests/test_equation_state.py
+          tests/test_equation_state_consumers.py tests/test_equation_builder_initial_state.py -q
 
       - name: Lower and simulate public equation IR circuits
         run: python tools/check_ir_circt.py "${{ runner.temp }}/public-equation-ir-circt"

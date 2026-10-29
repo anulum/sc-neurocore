@@ -107,10 +107,10 @@ the table gives the median of seven samples.
 
 | Model | First collector call (ms) | Cached median per call (µs) |
 | --- | ---: | ---: |
-| Paired exponentials | 7.85 | 259.78 |
-| Clipped hypot | 153.22 | 252.85 |
-| Literal and dynamic powers | 831.27 | 170.53 |
-| Exponential Euler with events | 14.39 | 377.74 |
+| Paired exponentials | 5.71 | 119.82 |
+| Clipped hypot | 97.84 | 136.70 |
+| Literal and dynamic powers | 719.54 | 254.27 |
+| Exponential Euler with events | 11.18 | 226.33 |
 
 These are local measurements on a shared host, with CPU, memory, affinity,
 versions and load recorded in the result. Source hashes are checked before and
@@ -119,8 +119,8 @@ They measure Python analysis cost, not generated hardware throughput. No native
 implementation of this metadata analysis is asserted; generated C, Rust and RTL
 remain separate numerical validation targets.
 
-The complete equation-IR benchmark was also rerun on this source overlay: `benchmarks/results/local_python_2026-10-29_equation_ir.json` contains eleven
-measured transactions after two warmups for each of ten models. It includes
+The complete equation-IR benchmark was also rerun on this source overlay: `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
+measured transactions after two warmups for each of twelve models. It includes
 source replay and both native emitters, pins all compiler source files and the
 unchanged native binary, and checks identical graph/output checksums on every
 call. It makes no throughput or speedup claim.

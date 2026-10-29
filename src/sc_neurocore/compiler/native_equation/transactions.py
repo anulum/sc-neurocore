@@ -110,12 +110,12 @@ def lower_neuron(
         raise ValueError("pipeline_points must not contain duplicates")
     if pipeline_stages and pipeline_points:
         raise ValueError("global and explicit multiply pipelining are mutually exclusive")
+    neuron = prepare_neuron(neuron)
     names = {name: sanitize_ident(name, context="state variable") for name in neuron.equations}
     if "spike" in names.values() or neuron.spike_value_expr and "spike_value" in names.values():
         raise ValueError("state output collides with a spike output")
     if neuron.substeps > 1 and not getattr(neuron, "_edge_detection", False):
         raise NotImplementedError("macro substeps require crossing detection without resets")
-    neuron = prepare_neuron(neuron)
     if neuron.dt != 0.0:
         q.check_time_step(neuron.dt, neuron.method)
         if q.exact_code(neuron.dt) == 0:

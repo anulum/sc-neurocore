@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1488
+expected_file_count = 1493
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -6086,3 +6086,23 @@ rationale = "Canonical unchanged FPGA target definitions and copy-returning meta
 [[file]]
 path = "tests/test_studio_model_compile_formats.py"
 rationale = "Real compile and co-simulation requests refuse unsupported formats before job admission while preserving offered geometries and existing spelling."
+
+[[file]]
+path = "src/sc_neurocore/compiler/equation_state.py"
+rationale = "Held state becomes an identity map or zero derivative without consuming caller state or random draws."
+
+[[file]]
+path = "src/sc_neurocore/compiler/testbench_gen.py"
+rationale = "Generated testbenches bind every state output exposed by the same prepared hardware model."
+
+[[file]]
+path = "tests/test_equation_state.py"
+rationale = "Native replay, registered and folded RTL, C and Rust execute the original partial-state model and held-state events across all integrators."
+
+[[file]]
+path = "tests/test_equation_builder_initial_state.py"
+rationale = "Python trajectories retain omitted-state defaults, caller mappings, held-state event assignments and strict-unit refusals."
+
+[[file]]
+path = "tests/test_equation_state_consumers.py"
+rationale = "The real CLI, generated testbench and adaptive wrapper expose held state with the declared reset and clock behaviour."

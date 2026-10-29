@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5472
+    "test_files": 5475
   },
   "documentation": {
     "public_pages": [
@@ -5023,6 +5023,7 @@
       "tests/test_equation_builder_contracts.py",
       "tests/test_equation_builder_equation_neuron.py",
       "tests/test_equation_builder_from_equations.py",
+      "tests/test_equation_builder_initial_state.py",
       "tests/test_equation_builder_refusals.py",
       "tests/test_equation_compiler_cli.py",
       "tests/test_equation_compiler_compile_lif.py",
@@ -5045,6 +5046,8 @@
       "tests/test_equation_safety_capabilities.py",
       "tests/test_equation_safety_numeric_limits.py",
       "tests/test_equation_safety_structure.py",
+      "tests/test_equation_state.py",
+      "tests/test_equation_state_consumers.py",
       "tests/test_equation_units.py",
       "tests/test_equation_units_discrete.py",
       "tests/test_equation_units_hypot.py",

@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Preserve partial numeric initial states and held-state variables through Python integration, native IR/source replay, registered and folded RTL, fixed C/Rust kernels, adaptive wrappers and generated testbenches. Keep strict-unit initial quantities explicit and retain the legacy function-lowering default.
+
 - Keep the desktop HTTP cache separate for each interface content version so
   returning from rollback cannot display an older interface with a newer
   backend. Preserve browser sessions, the stable local origin and existing caches.

@@ -135,6 +135,12 @@ class EquationNeuron:
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings.
 
+        With ``units="none"``, a partial ``state`` supplies the named initial
+        values and every omitted equation variable starts at zero. Additional
+        state variables hold their values between events unless a reset rule
+        assigns them. The caller's mapping is never mutated. Strict units
+        still require an explicit quantity for every equation variable.
+
         The diffusion-noise symbol ``xi`` is a white-noise sample: a standard
         normal draw divided by ``sqrt(dt)``, so that ``xi * dt`` has variance
         ``dt`` (Euler–Maruyama). Every occurrence of ``xi`` in a step reads the
@@ -299,6 +305,9 @@ class EquationNeuron:
         # shared with the caller (or with every neuron of a population built from
         # one parameter set) would make them one trajectory.
         raw_state = dict(state) if state else {k: 0.0 for k in equations}
+        if not self._strict_units:
+            for name in equations:
+                raw_state.setdefault(name, 0.0)
         raw_constants = constants or {}
         previous_aliases = {f"{name}_prev" for name in equations}
         occupied_names = set(equations) | set(raw_parameters) | set(raw_state) | set(raw_constants)
@@ -691,11 +700,11 @@ class EquationNeuron:
                 return {var: evaluate_scalar(code, e) for var, code in self._compiled_eqs.items()}
 
             k1 = eval_derivs(s0)
-            s1 = {v: s0[v] + k1[v] * self.dt / 2 for v in self.equations}
+            s1 = {**s0, **{v: s0[v] + k1[v] * self.dt / 2 for v in self.equations}}
             k2 = eval_derivs(s1)
-            s2 = {v: s0[v] + k2[v] * self.dt / 2 for v in self.equations}
+            s2 = {**s0, **{v: s0[v] + k2[v] * self.dt / 2 for v in self.equations}}
             k3 = eval_derivs(s2)
-            s3 = {v: s0[v] + k3[v] * self.dt for v in self.equations}
+            s3 = {**s0, **{v: s0[v] + k3[v] * self.dt for v in self.equations}}
             k4 = eval_derivs(s3)
             for v in self.equations:
                 self.state[v] = s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6

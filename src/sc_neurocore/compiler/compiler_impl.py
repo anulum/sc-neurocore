@@ -15,6 +15,7 @@ import json
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
 from .equation_compiler import Q88, compile_to_verilog
+from .equation_lowering import prepare_neuron
 from .validation import (
     _coerce_precision,
     _validate_hysteresis,
@@ -103,6 +104,7 @@ def compile_adaptive_precision(
     thresh_up = int(threshold_up_pct * max_q)
     thresh_down = int(threshold_down_pct * max_q)
 
+    neuron = prepare_neuron(neuron)
     safe_name = sanitize_ident(module_name, context="module name")
     state_vars = list(neuron.equations.keys())
     primary_var = state_vars[0]

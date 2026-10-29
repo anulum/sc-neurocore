@@ -23,6 +23,9 @@ from tools.benchmark_evidence_gate import committed_source_hash_failures
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT = ROOT / "benchmarks/results/bench_verilog_compiler.json"
 EXPECTED_CASES = {
+    "initial_state_map_registered",
+    "initial_state_map_folded",
+    "held_state_rk4_registered",
     "power_literal_map_registered",
     "power_dynamic_map_registered",
     "rsqrt_map_registered",

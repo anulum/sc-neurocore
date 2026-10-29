@@ -20,6 +20,11 @@ dimensional validation path.
 - raw numeric floats
 - no dimensional validation
 
+A partial numeric initial-state mapping supplies its named values; omitted
+equation variables start at zero. Additional state variables hold their values
+between event resets. This applies to Python stepping and the maintained
+whole-model compiler targets, including all Runge–Kutta stages.
+
 ### `units="strict"`
 
 - requires `pint`
@@ -32,6 +37,8 @@ When `units="strict"` is enabled:
 
 - every `params` entry must be a `pint.Quantity`
 - every `init` or `state` entry must be a `pint.Quantity`
+- every equation variable must have an explicit initial quantity; omitted
+  dimensioned states never receive an untyped numeric zero
 - every dimensional `constants` entry must be a `pint.Quantity`
 - `dt` must be a time `Quantity`
 - if the equation references the special input `I`, you must provide

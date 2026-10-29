@@ -50,6 +50,7 @@ SOURCE_PATHS = (
     "src/sc_neurocore/compiler/verilog_expr_emitter.py",
     "src/sc_neurocore/compiler/expr_lut_tables.py",
     "src/sc_neurocore/compiler/equation_lowering.py",
+    "src/sc_neurocore/compiler/equation_state.py",
     "src/sc_neurocore/compiler/function_units.py",
     "src/sc_neurocore/compiler/discrete_function_units.py",
     "src/sc_neurocore/compiler/discrete_function_programs.py",
@@ -217,7 +218,37 @@ def _cases() -> tuple[CompilerCase, ...]:
     reciprocal_map = EquationNeuron({"v": "rsqrt(I)"}, method="map", dt=1.0)
     power_literal = EquationNeuron({"v": "I**1.5"}, method="map", dt=1.0)
     power_dynamic = EquationNeuron({"v": "(I*I+1)**I"}, method="map", dt=1.0)
+    initial_state_map = EquationNeuron(
+        {"v": "I**1.5+clip(I,.25,1)**clip(w,-1,1)"},
+        state={"w": 0.5},
+        method="map",
+        dt=1.0,
+    )
+    held_state_rk4 = EquationNeuron(
+        {"v": "held + I - 0.5*v"},
+        state={"held": 0.5},
+        method="rk4",
+        dt=0.25,
+        threshold="v > 0.5",
+        reset={"held": "held + 0.25", "v": "-0.25"},
+    )
     return (
+        CompilerCase(
+            "initial_state_map_registered",
+            lambda: compile_to_verilog(
+                initial_state_map, "bench_initial_map", function_lowering="v2"
+            ),
+        ),
+        CompilerCase(
+            "initial_state_map_folded",
+            lambda: compile_to_datapath(
+                initial_state_map, "bench_initial_pe", function_lowering="v2"
+            ),
+        ),
+        CompilerCase(
+            "held_state_rk4_registered",
+            lambda: compile_to_verilog(held_state_rk4, "bench_held_rk4", function_lowering="v2"),
+        ),
         CompilerCase(
             "power_literal_map_registered",
             lambda: compile_to_verilog(

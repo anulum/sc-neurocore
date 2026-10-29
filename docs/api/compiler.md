@@ -45,6 +45,36 @@ Five recurrence families share the same fixed-point expression emitter:
 | `exp_euler` | Diagonal exponential Euler using the symbolic Jacobian and `exprel`. |
 | `map` | Direct discrete recurrence $x[n+1]=f(x[n])$ without a timestep multiply. |
 
+#### Initial and held state
+
+With `units="none"`, an initial-state mapping can omit equation variables:
+each omitted variable starts at zero, as with the empty/default mapping.
+Supplied values are copied; compilation preserves the caller's live state and
+random sequence and uses the initial values for hardware reset and source replay.
+Strict units require an explicit quantity for every equation variable.
+
+An initial-state entry without its own equation is held during integration and
+may be updated by event reset rules. Python retains these bindings at every
+Runge–Kutta stage. Shared compiler preparation represents them by an identity
+map or zero derivative, with a zero diagonal Jacobian for exponential Euler.
+Native IR, registered RTL and fixed C/Rust kernels expose their state outputs;
+folded processing elements carry the words on state ports. The adaptive wrapper
+and generated testbench include them too. For example:
+
+```python
+from sc_neurocore.compiler import compile_to_ir
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+model = EquationNeuron(
+    {"v": "I**1.5 + clip(I, .25, 1)**clip(w, -1, 1)"},
+    state={"w": 0.5}, method="map", dt=1.0,
+)
+compiled = compile_to_ir(model, function_lowering="v2")
+```
+
+Here `v` starts at zero and `w` remains 0.5 unless a reset assigns it. The
+general powers select the explicit `v2` function-lowering mode.
+
 ### 1.2 Fixed-Point Encoding
 
 Parameters and states are encoded in Q$m$.$f$ signed format:
@@ -342,7 +372,7 @@ namespace with clipped `sigmoid`, `exprel`, and checked `sqrt`
 bytecode. `benchmarks/bench_equation_program.py` times fourteen expressions as
 programs and as the same arithmetic written as Python functions; its committed
 receipt `benchmarks/results/bench_equation_program.json`, recorded on a loaded
-development host, puts a program at between 0.9 and 2.5 times the function,
+development host, puts a program at between 1.0 and 2.7 times the function,
 and records the time of whole neuron steps for three configurations. The
 interpreter path that programs replaced can no longer be measured; one
 measurement made while both existed gave 1 % to 22 % more per neuron step.
@@ -856,27 +886,30 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.120903 ms | 50 |
-| Euler folded with parameter port | 0.131863 ms | 38 |
-| RK4 registered | 0.365532 ms | 92 |
-| Four-substep RK4 registered | 0.697062 ms | 136 |
-| Escape-rate registered | 1.266044 ms | 902 |
-| Square-root map registered | 0.116763 ms | 65 |
-| Negative half-LSB nearest map registered | 0.083026 ms | 45 |
-| Quadrant-aware angle map registered | 1.134433 ms | 3225 |
-| Softplus exponential Euler registered | 4.108130 ms | 11374 |
-| Ties-to-even round map registered | 0.113992 ms | 64 |
-| Heaviside map registered | 0.148671 ms | 62 |
-| Euclidean norm map registered | 0.225972 ms | 210 |
-| Reciprocal square-root map registered | 0.311925 ms | 305 |
-| Constant power map registered | 1.338232 ms | 1692 |
-| Dynamic power map registered | 1.240663 ms | 1698 |
+| Euler registered | 0.105499 ms | 50 |
+| Euler folded with parameter port | 0.118398 ms | 38 |
+| RK4 registered | 0.293785 ms | 92 |
+| Four-substep RK4 registered | 0.571696 ms | 136 |
+| Escape-rate registered | 1.096564 ms | 902 |
+| Square-root map registered | 0.105176 ms | 65 |
+| Negative half-LSB nearest map registered | 0.075978 ms | 45 |
+| Quadrant-aware angle map registered | 1.142903 ms | 3225 |
+| Softplus exponential Euler registered | 3.799519 ms | 11374 |
+| Ties-to-even round map registered | 0.095535 ms | 64 |
+| Heaviside map registered | 0.122198 ms | 62 |
+| Euclidean norm map registered | 0.203416 ms | 210 |
+| Reciprocal square-root map registered | 0.285818 ms | 305 |
+| Constant power map registered | 1.038125 ms | 1692 |
+| Dynamic power map registered | 1.047099 ms | 1698 |
+| Partial initial state with powers, registered | 2.335119 ms | 3356 |
+| Partial initial state with powers, folded | 2.139217 ms | 3342 |
+| Held-state RK4 registered | 0.430287 ms | 100 |
 
 The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_equation_ir.json` records 11 samples after two warmups for ten models, including constant and dynamic powers, reciprocal square root, norm, rounding and Heaviside. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The constant-power transaction median is 50.758693 ms; the dynamic-power median is 49.458807 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 180.056557 ms; the held-state RK4 median is 3.515496 ms. The constant-power and dynamic-power medians are 43.032467 ms and 45.890155 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather
