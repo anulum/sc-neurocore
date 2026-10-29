@@ -19,13 +19,43 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_every_head_requires_all_dependency_ecosystems() -> None:
-    """Require six unconditional audit lanes and a failure-propagating aggregate."""
-    loader = yaml.BaseLoader((ROOT / ".github/workflows/dependency-audit.yml").read_text())
+def _load(path: Path) -> dict[str, Any]:
+    """Read a workflow or action file with every scalar kept as a string."""
+    loader = yaml.BaseLoader(path.read_text())
     try:
-        workflow = cast(dict[str, Any], loader.get_single_data())
+        return cast(dict[str, Any], loader.get_single_data())
     finally:
         loader.dispose()
+
+
+def _unsuppressed_steps(steps: list[dict[str, Any]]) -> list[str]:
+    """Check pins and error handling of steps, including in-repository actions, and return their commands.
+
+    A remote action must name a full commit. An in-repository action (``./path``) is pinned by the
+    checkout itself, so it must exist as a composite action whose own steps obey the same rules.
+    """
+    commands: list[str] = []
+    for step in steps:
+        assert "continue-on-error" not in step
+        if "run" in step:
+            commands.append(step["run"])
+        if "uses" not in step:
+            continue
+        uses = step["uses"]
+        if uses.startswith("./"):
+            action = _load(ROOT / uses / "action.yml")
+            assert action["runs"]["using"] == "composite"
+            commands += _unsuppressed_steps(action["runs"]["steps"])
+            continue
+        assert "@" in uses, uses
+        revision = uses.split("@", 1)[1]
+        assert len(revision) == 40 and all(c in "0123456789abcdef" for c in revision)
+    return commands
+
+
+def test_every_head_requires_all_dependency_ecosystems() -> None:
+    """Require six unconditional audit lanes and a failure-propagating aggregate."""
+    workflow = _load(ROOT / ".github/workflows/dependency-audit.yml")
     assert workflow["permissions"] == {"contents": "read"}
     assert workflow["on"]["push"] == ""
     assert workflow["on"]["pull_request"] == {"branches": ["main"]}
@@ -42,12 +72,7 @@ def test_every_head_requires_all_dependency_ecosystems() -> None:
         "pixi",
     }
     steps = lane["steps"]
-    for step in steps:
-        assert "continue-on-error" not in step
-        if "uses" in step:
-            revision = step["uses"].split("@", 1)[1]
-            assert len(revision) == 40 and all(c in "0123456789abcdef" for c in revision)
-    commands = [step["run"] for step in steps if "run" in step]
+    commands = _unsuppressed_steps(steps)
     assert not any("||" in command or "set +e" in command for command in commands)
     audit = next(
         step for step in steps if step.get("name") == "Audit every committed lock in this ecosystem"
