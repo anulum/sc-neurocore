@@ -177,8 +177,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 32 |
-| Python test files | 5463 |
-| Public documentation pages | 656 |
+| Python test files | 5468 |
+| Public documentation pages | 657 |
 | GitHub Actions workflows | 24 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -644,6 +644,11 @@ and SystemVerilog/CIRCT emission. The public `compile_to_ir` frontend lowers
 supported equation models into these operations; `recompile_ir` checks source
 replay against the saved graph. See the [equation API and supported modes](docs/api/equation-native-ir.md)
 and [scalar word and naming contract](docs/api/sc-ir.md).
+
+The [function-call numeric contract](docs/guides/function_call_domains.md)
+reports encoded argument bounds and numerical error separately for every
+approximation call. It distinguishes conservative interval hulls from reachable
+states and records mathematical-domain exclusions and sampled measurements.
 
 ## Examples
 

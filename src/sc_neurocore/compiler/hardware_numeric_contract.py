@@ -23,12 +23,13 @@ modulo period rounds to zero. A plain literal below the resolution, such as a
 floating-point round-off guard, is reported but does not make the format
 unrepresentable: the fixed-point comparison it guards is exact.
 
-Each look-up table carries its measured error at the format against the Python
-model's function (:mod:`sc_neurocore.compiler.lut_accuracy`), over the inputs the
-format can hold. What is not stated: the range the state, and so a table's
-argument, reaches during a run (only encoded values and the initial state are
-checked, so a run can still saturate or wrap), how a table's error propagates
-through later arithmetic, timing closure, place and route, and board behaviour.
+Tables and units retain their whole-format measured error against the Python
+model's function (:mod:`sc_neurocore.compiler.lut_accuracy`). ``function_calls``
+additionally reports each call's conservative encoded operand intervals and a
+separate measurement on their mathematical-domain hull. State and input reads
+start at the complete signed-word range. These are not trajectory invariants,
+reachable-tuple proofs, propagated model-error bounds, timing closure, place and
+route, or board measurements.
 """
 
 from __future__ import annotations
@@ -51,6 +52,7 @@ from .intelligence.bit_true_kernel import (
 from .q_format import QFormat
 from .power_accuracy import measure_power
 from .power_units import power_code
+from .function_call_domains import FunctionCallContract, function_call_contracts
 
 HARDWARE_NUMERIC_CONTRACT_SCHEMA_VERSION = "sc-neurocore.hardware-numeric-contract.v1"
 
@@ -69,9 +71,9 @@ EncodingStatus = Literal["exact", "rounded", "underflows_to_zero", "out_of_range
 NOT_STATED: tuple[str, ...] = (
     "the range the state reaches during a run: only encoded values and the initial "
     "state are checked, so a run can still saturate or wrap",
-    "the range a table's or unit's argument reaches during a run: each stated "
-    "accuracy covers every input the format holds (or a stated sample of them "
-    "for wide formats), not the inputs this model produces",
+    "the inputs a call actually reaches during a run: per-call argument intervals "
+    "are conservative fixed-arithmetic hulls with unconstrained state and inputs; "
+    "they do not prove trajectory invariants or operand correlations",
     "how a table's or unit's error propagates through the model to its state and spikes",
     "timing closure, place and route, and board behaviour",
 )
@@ -233,6 +235,9 @@ class HardwareNumericContract:
         The function units the datapath instantiates (``v2``).
     random_precision:
         ``"standard"`` or ``"exact"``: how ``randn()`` is lowered.
+    function_calls:
+        Source-located approximation calls, conservative encoded argument bounds,
+        and separate measurements on each call's mathematical-domain interval hull.
 
     """
 
@@ -249,6 +254,7 @@ class HardwareNumericContract:
     function_lowering: str = "lut-v1"
     function_units: tuple[FunctionUnit, ...] = ()
     random_precision: str = "standard"
+    function_calls: tuple[FunctionCallContract, ...] = ()
 
     @property
     def resolution(self) -> float:
@@ -306,6 +312,7 @@ class HardwareNumericContract:
             "function_lowering": self.function_lowering,
             "function_units": [unit.to_public_dict() for unit in self.function_units],
             "random_precision": self.random_precision,
+            "function_calls": [call.to_public_dict(self.fraction) for call in self.function_calls],
             "timing": {
                 "cycles_per_step": 1,
                 "pipeline_latency_cycles": 0,
@@ -426,6 +433,13 @@ def hardware_numeric_contract(
             else ()
         ),
         random_precision=random_precision,
+        function_calls=function_call_contracts(
+            authored_neuron,
+            data_width,
+            fraction,
+            rounding=rounding,
+            function_lowering=function_lowering,
+        ),
     )
 
 

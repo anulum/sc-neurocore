@@ -9366,6 +9366,56 @@ list of int
 
 ---
 
+## Module `compiler.fixed_expression_ranges`
+
+### Class `CodeRange`
+Inclusive signed-code bounds and reasons for conservative widening.
+
+Parameters
+----------
+minimum, maximum : int
+    Smallest and largest possible codes, including any unproved interior.
+notes : tuple of str, optional
+    Opaque expressions or potentially undefined arithmetic encountered.
+
+- **__post_init__**()
+  - Refuse noninteger or reversed code intervals.
+- **to_public_dict**(fraction)
+  - Return inclusive code and real bounds at the supplied binary fraction.
+
+### Function `expression_code_range(expression, data_width, fraction, *, values, variables, rounding, function_lowering)`
+Infer a function operand's conservative range after signed word narrowing.
+
+Parameters
+----------
+expression : str
+    Equation expression, evaluated with the fixed C/Rust/Verilog rules.
+data_width, fraction : int
+    Signed word width and binary fraction bits.
+values : mapping of str to float, optional
+    Fixed parameters and constants, encoded before expression arithmetic.
+variables : iterable of str, optional
+    State names. They take precedence over fixed values and named constants.
+    Other unknown names are also unconstrained signed-word inputs.
+rounding : str, optional
+    Product policy: ``truncate``, ``nearest`` or ``bankers``.
+function_lowering : str, optional
+    ``v2`` or ``lut-v1``; constant function calls follow the selected units.
+
+Returns
+-------
+CodeRange
+    Inclusive interval containing every defined signed-word result.
+
+Raises
+------
+ValueError
+    For an invalid format, policy, or literal division/modulo operand.
+SyntaxError
+    If the expression cannot be parsed.
+
+---
+
 ## Module `compiler.fixed_point_quantization`
 
 ### Function `quantize_weights(weights, fmt, rounding, clip)`
@@ -9511,6 +9561,123 @@ RuntimeError
 
 ### Function `equation_to_fpga(*equation_strings, threshold, reset, params, init, constants, dt, module_name, data_width, fraction, units, input_unit)`
 One-liner: ODE string → (Python neuron, Verilog RTL).
+
+---
+
+## Module `compiler.function_call_accuracy`
+
+### Class `CallAccuracy`
+Measurement of admitted codes in an inferred argument box.
+
+Parameters
+----------
+valid_code_intervals : tuple of interval tuples
+    Closed mathematical-domain intervals for each operand, in call order.
+domain_cardinality, excluded_domain_codes : int
+    Valid and invalid tuple counts in the supplied Cartesian interval hull.
+codes_evaluated : int
+    Number of valid tuples actually measured.
+exhaustive : bool
+    Whether every valid tuple in the conservative hull was measured.
+max_error : float or None
+    Measured maximum in real units; None means the valid domain is empty.
+worst_inputs : tuple of float
+    Complete measured operand tuple at the largest error.
+declared_error_bound : float or None
+    Existing global arithmetic bound, separate from the measured maximum.
+reference : str
+    Independent real-function reference used for the comparison.
+
+- **to_public_dict**(fraction)
+  - Return the measured scope, valid domain and separate arithmetic bound.
+
+### Function `measure_call(function, data_width, fraction, operands, *, lowering, exponent)`
+Measure a function over the actual encoded argument intervals of one call.
+
+Parameters
+----------
+function : str
+    Canonical unary/binary unit name, or ``power``.
+data_width, fraction : int
+    Input and output word format.
+operands : tuple of CodeRange
+    Inclusive input intervals. State reachability and correlations are not
+    assumed. A literal power has only its base interval.
+lowering : str, optional
+    ``v2`` or ``lut-v1``; general powers require v2.
+exponent : int or float or None, optional
+    Independent literal power exponent, or None for a dynamic second input.
+
+Returns
+-------
+CallAccuracy
+    All valid tuples when their count is at most 65536 (4096 for powers),
+    otherwise a deterministic sample with endpoints and critical codes.
+
+Raises
+------
+ValueError
+    For an invalid function, format, lowering, arity or code interval, or a
+    measured violation of an existing declared arithmetic bound.
+
+---
+
+## Module `compiler.function_call_domains`
+
+### Class `FunctionCallContract`
+One source-located call, its conservative operand ranges and measured error.
+
+Parameters
+----------
+location : str
+    Equation, event, Jacobian or generated integration-expression location.
+line, column : int
+    One-based source line and zero-based UTF-8 byte column within that expression.
+function : str
+    Canonical unit name, independently of spelling aliases.
+expression : str
+    Complete call or power expression.
+arguments : tuple of str
+    Operand expressions, in call order; literal exponents are separate.
+ranges : tuple of CodeRange
+    Inclusive conservative signed-code intervals at the function boundary.
+accuracy : CallAccuracy or None
+    Measured numerical scope, or None when admission failed.
+exponent : int or float or None, optional
+    Independent literal exponent; None also denotes a dynamic power.
+implicit : bool, optional
+    Whether the integration method introduces this call.
+refusal : str, optional
+    Why argument inference or accuracy measurement was refused.
+
+- **to_public_dict**(fraction)
+  - Return source identity, actual argument hulls and explicit measured scope.
+
+### Function `function_call_contracts(neuron, data_width, fraction, *, rounding, function_lowering)`
+Infer and measure each approximation call without deduplicating its name.
+
+Parameters
+----------
+neuron : EquationNeuron
+    Authored model; compiler-owned noise and threshold intrinsics are lowered once.
+data_width, fraction : int
+    Shared signed word format.
+rounding : str, optional
+    Fixed-point multiply policy.
+function_lowering : str, optional
+    ``v2`` reports all registered units and powers. ``lut-v1`` reports its
+    approximation-table calls; exact arithmetic is not a table call.
+
+Returns
+-------
+tuple of FunctionCallContract
+    One record per source occurrence, plus each implicit exponential-Euler
+    exprel call. Invalid call arguments retain a refusal instead of an error claim.
+
+Raises
+------
+ValueError
+    For an invalid lowering, or an authored call shadowed by a numeric binding.
 
 ---
 
@@ -10458,6 +10625,9 @@ function_units:
     The function units the datapath instantiates (``v2``).
 random_precision:
     ``"standard"`` or ``"exact"``: how ``randn()`` is lowered.
+function_calls:
+    Source-located approximation calls, conservative encoded argument bounds,
+    and separate measurements on each call's mathematical-domain interval hull.
 
 - **resolution**()
   - Return the value of one least-significant bit.

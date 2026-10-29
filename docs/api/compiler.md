@@ -876,7 +876,7 @@ The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical C
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-28_equation_ir.json` records 11 samples after two warmups for ten models, including constant and dynamic powers, reciprocal square root, norm, rounding and Heaviside. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The constant-power transaction median is 63.242322 ms; the dynamic-power median is 61.992394 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_equation_ir.json` records 11 samples after two warmups for ten models, including constant and dynamic powers, reciprocal square root, norm, rounding and Heaviside. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The constant-power transaction median is 50.758693 ms; the dynamic-power median is 49.458807 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather
@@ -1317,3 +1317,22 @@ not inherit the general power approximation bound. In v2, constants merely
 near one half or one third use their actual exponent in the general unit.
 Strict units and symbolic differentiation keep the original equation's
 power semantics; runtime inputs must satisfy the real domain.
+
+### Function-call argument domains
+
+`hardware_numeric_contract(...).function_calls` retains each approximation call
+at its source location. Its argument bounds follow encoded constants, product
+rounding, reciprocal division and signed-word narrowing. Separate calls to the
+same unit retain separate measurements; `function_units` remains the shared
+unit inventory with its whole-format accuracy. State and input words begin
+unconstrained. The reported Cartesian interval hull can include unreachable
+codes and combinations; it is not a state-trajectory proof.
+
+See [Function-call domains](../guides/function_call_domains.md) for an executable
+example, mathematical-domain exclusions and measurement limits. Direct APIs:
+
+::: sc_neurocore.compiler.fixed_expression_ranges
+
+::: sc_neurocore.compiler.function_call_accuracy
+
+::: sc_neurocore.compiler.function_call_domains

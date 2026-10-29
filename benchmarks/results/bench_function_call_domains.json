@@ -1,0 +1,804 @@
+{
+  "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
+  "generated_at": "2026-10-29T01:21:27.943418+00:00",
+  "evidence_class": "local_regression",
+  "production_speed_claimed": false,
+  "language": "Python",
+  "configuration": {
+    "calls": 100,
+    "repeats": 7,
+    "data_width": 8,
+    "fraction": 4
+  },
+  "protocol": {
+    "first_call": "First collector invocation in a fresh interpreter for each model.",
+    "cached": "Later calls in that same process; numerical accuracy caches may be reused.",
+    "timed_region": "function_call_contracts only; imports, model creation and JSON excluded.",
+    "comparison": "Repeated results checked for exact serialised equality outside timing.",
+    "limits": "Shared host; no isolated throughput, hardware speed or native counterpart claim."
+  },
+  "measurement_context": {
+    "host": "aaarthuus",
+    "architecture": "x86_64",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "logical_cpu_count": 12,
+    "ram_bytes": 33422090240,
+    "operating_system": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "python_version": "3.12.16",
+    "numpy_version": "2.5.4",
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "load_average_before": [
+      9.12890625,
+      8.04150390625,
+      9.3017578125
+    ],
+    "load_average_after": [
+      9.19873046875,
+      8.07421875,
+      9.3056640625
+    ],
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_frequency_mhz": {
+      "min_observed_mhz": 4199.931,
+      "max_observed_mhz": 4200.042,
+      "sampled_cpu_count": 12.0
+    },
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
+  "reference_dependency_versions": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0"
+  },
+  "source_head_at_capture": "a6948ff7d09ea3e5398aca85572cc9d18bf80cbe",
+  "source_worktree_dirty": true,
+  "source_sha256": {
+    "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
+    "benchmarks/bench_function_call_domains.py": "a5cf1111dd1d7031481a9b98ca3f8f27aa364260bd42f142401a4cc300333bf6",
+    "src/sc_neurocore/compiler/__init__.py": "0ad6d33bea02934b65a7b02fc1c6389ae2c0ae17f7a17426d3aa684ca8fb61ac",
+    "src/sc_neurocore/compiler/_sby_runner.py": "8b337c49519dc82fc18ec1858fc30a183957c6c48d96ad74608a15cf60afe576",
+    "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
+    "src/sc_neurocore/compiler/_verilog_integrators.py": "39d74be919d7e80e009ee32c0e6b3a6e534ee4b94c140e1d6d8373ad14ff4f2b",
+    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "f6cd7b462f074fd37784937667c1ebbf8043ae2fcccfebd958576e7c4ddcb27a",
+    "src/sc_neurocore/compiler/_verilog_registered_module.py": "83686edf6c575f71c2b7e6e707c09dc0e675bc2b19cf5211bd8e089c5c56f812",
+    "src/sc_neurocore/compiler/adaptive_precision.py": "cc30a86672df225fbbc9321b3060237b767e405d02dc326d70efac301654acb5",
+    "src/sc_neurocore/compiler/auto_tune.py": "b255846676d2145f9731553ad2db00de3c122b21db59dc02af48e133e04d9e9f",
+    "src/sc_neurocore/compiler/block_floating.py": "2a47cc28b8108156acb8395342a9c06b7735ac970d5033aa62fa0f711624d06f",
+    "src/sc_neurocore/compiler/block_floating_quantization.py": "13df1cad6a901931ac3a78f76a0f83b60ba78ba5881ffaaa8d1d9d3558109909",
+    "src/sc_neurocore/compiler/c_expr_emitter.py": "583074be6c52fda03f273b2b6100a28a1dc0da6fbbbb3c07d30aa4965ca75ae3",
+    "src/sc_neurocore/compiler/c_fixed_emitter.py": "533a4800e1b87481e6660f8002b253dc90d7736f1cfd4902fd79b4b01635a2e4",
+    "src/sc_neurocore/compiler/certification_gen.py": "bd896738ce5d8121a5e6d4ff0d0667761df2db21d30184e00e409e62a5c23b84",
+    "src/sc_neurocore/compiler/cocotb_gen.py": "c650c582b9bd6fa2924362d6f1c6d8d0ffed948202a2b6c7624c95146e5ec149",
+    "src/sc_neurocore/compiler/compiler_impl.py": "dc5fb9d51e6b579d585fd4b216ba97d886978f0ba10f5eed785bde8b7852603a",
+    "src/sc_neurocore/compiler/constraint_gen.py": "4f7fc2afb5aa6ea19a5bdede15397a83f7f9fd67410664eb367ad67977e20204",
+    "src/sc_neurocore/compiler/deployment.py": "13afd40ed803f5d5ccae57b9d4b20a125b55faa9745c5557e0c4b47718afe0f7",
+    "src/sc_neurocore/compiler/diffusion_noise.py": "914cadd83c183ea49624cf4d97ff88d437f1484653605ffa47922b3cf5779c86",
+    "src/sc_neurocore/compiler/discrete_function_programs.py": "e3efab303c50eccb455c6fc077c8412f5e223acfea4fadbb0c316fa189a0481f",
+    "src/sc_neurocore/compiler/discrete_function_units.py": "1142cb671eee89091343e9fa22fb47749373fc91db64eeb641e211ebd3f0a952",
+    "src/sc_neurocore/compiler/equation_compiler.py": "ad79489e7a07648dcd9013711c6b08c165d1e1e72e46f89fab0f8d09a5b60318",
+    "src/sc_neurocore/compiler/equation_ir_compiler.py": "4dad9945cd546e57c3cee1a7c09c3168aedeec3be5251f22831618ad0765caad",
+    "src/sc_neurocore/compiler/equation_lowering.py": "e5aa083feef44972a5ca88e86a8dc6f062e27a16c944431fb2a4c31574e7b080",
+    "src/sc_neurocore/compiler/equivalence_check.py": "80ebe68a088ae38fe90116902057e67077bd38494829d5902f9e90e4e784f87c",
+    "src/sc_neurocore/compiler/equivalence_miter.py": "ee9a5815a3e846fd1c04ea118cda9550cbcd1dc1084ab44bf4d8486377464dfe",
+    "src/sc_neurocore/compiler/exact_normal.py": "de63c2b07408e2c36479b24d8d4f0aaf56e32a70d4aa511dafd0ecfce0919752",
+    "src/sc_neurocore/compiler/expr_lut_tables.py": "a7af4505632bb7c891a3c183c37bcf5950c0fcb7ffc38a899ca8d0ae4a1ae66f",
+    "src/sc_neurocore/compiler/fixed_expression_ranges.py": "1df732250a01f78d671ef2d11fd7855f795a26bb44dcd44f0366cd3173656d41",
+    "src/sc_neurocore/compiler/fixed_point_quantization.py": "5f8722aabab9b3101a1500664f97af221f5e647634615aa9e872bcc3efa35c74",
+    "src/sc_neurocore/compiler/formal_evidence.py": "9a02bd242e669a6a132ca62dac0115f3290d39dfdd99494a5e9b05e78ef15f2d",
+    "src/sc_neurocore/compiler/formal_property_check.py": "ff364ce4b660848e9f66fe42be416c85a04adc520a8d92aac3f76dd8a7dded29",
+    "src/sc_neurocore/compiler/fpga_wrapper.py": "a82626138c56263c4058f6c81d72c470196a2942604065b6f89666b14ef2754f",
+    "src/sc_neurocore/compiler/function_call_accuracy.py": "eecccd0408591cb8b5cbffb744945efb0b8e2aa7edd646e37912af8cbff2a33f",
+    "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
+    "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "ccbaa67a3b56c9520d6c796fb1a6f7e7b37e90f6f4b231128e490738b0b0824f",
+    "src/sc_neurocore/compiler/function_units.py": "0fcd1955054251a84e16d752e3840cf598f32004eb506a936e451d28a70784b5",
+    "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
+    "src/sc_neurocore/compiler/hardware_numeric_contract.py": "220efa51c8f29b64fa1dc6a70ce9c0f462559a4710ee644fc0bace8382b1f499",
+    "src/sc_neurocore/compiler/host_driver_gen.py": "05fd4dc67ec12c544d6b5a41d07d00a93c8f80989a9055c689f2622f3d4f3387",
+    "src/sc_neurocore/compiler/ir_type_checker.py": "0e85973c8cc15f4f2d10c8c6a7389c633f9afc15752df17ecade852904a3e186",
+    "src/sc_neurocore/compiler/layer_precision.py": "e7960db8ed6a70ddff6da6e8453fdd547dabbf0e9fc5e44f440ac110b52a731b",
+    "src/sc_neurocore/compiler/length_planner.py": "94019da1085715864b3c9308c2b70d5b52960db2d6ff0f1f74da7b0d47e91029",
+    "src/sc_neurocore/compiler/live_control.py": "941e58034f4312a7fefff9f28ef07528d7a90c12f666dce938639dc550ae5eb7",
+    "src/sc_neurocore/compiler/live_control_ops.py": "9a3a49d6b99e6495ba4a55d072d2ef1d98e4aadce42de936b42169b79f8f1b51",
+    "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
+    "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
+    "src/sc_neurocore/compiler/lut_accuracy.py": "09bbd9215875e1e70098eefa1069ed4e9d03d09d14b5369543ef63d4eb245bb8",
+    "src/sc_neurocore/compiler/magnitude_function_programs.py": "6562e0ac0e99366312be7028f62d316a5d4d5e895bd79a269e8b1d6afe67cd59",
+    "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
+    "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
+    "src/sc_neurocore/compiler/mixed_dense_kernel.py": "d26d86ba9c6a99d4dc383bec7df6e0569f9ac18570e8c8ad51c066d37fe7b6e3",
+    "src/sc_neurocore/compiler/mixed_dense_quantization.py": "f08176966d70043f3c3647a0491386fa3b4844c424ff82498696e5a7c6dc1b3c",
+    "src/sc_neurocore/compiler/mixed_precision.py": "68b351f32e4b107183264ed56d543986388f680b11fd00df0d4b7f21f7e2c3a6",
+    "src/sc_neurocore/compiler/mixed_precision_spec.py": "dfd2961fca978b58b59deef66385adcc73bc0c6471612e5e54c758a6b4f30391",
+    "src/sc_neurocore/compiler/mlir_emitter.py": "70012768e830577eda9fbe14701c30ffb01b61f42ef5788604072cd0dfddd926",
+    "src/sc_neurocore/compiler/multi_target.py": "4b9ca9228250f173801cbb6b8b66be08b09df228c13530d9a5afbee9940820c5",
+    "src/sc_neurocore/compiler/native_program.py": "8cf927800261374e5963633f713bd16093f9b925659ef591556f12103dbceb3e",
+    "src/sc_neurocore/compiler/operator_abstraction.py": "2e6958b7688de2532243a30ed36a3c1d36bb98aa57146e1f81a63b5b9fd5960b",
+    "src/sc_neurocore/compiler/overflow_proof.py": "11faaa112afbb4418917d916ab32200c9f17316faa30b4f10616aa062e38fb7f",
+    "src/sc_neurocore/compiler/philox_threshold.py": "bbb3663589361be314b96092de5750abec63a49496d7a4f92b31aac283a7b448",
+    "src/sc_neurocore/compiler/pipeline.py": "7d6b3f7eeb4251b092a9aa147ca3d1d083a46ed98f1d2ed0dc99faf13cc4f941",
+    "src/sc_neurocore/compiler/pipeline_analysis.py": "babc674c5035c29e0e38d32f75f000e9dc3d8322844025a97034410300c03569",
+    "src/sc_neurocore/compiler/power_accuracy.py": "f978c09259ee44e2f2a0bdd470c2c9bdc8fea7099683830b0861ab69a75b74e5",
+    "src/sc_neurocore/compiler/power_estimator.py": "3307fbaa97d4c077d163fd076638f91a3a61a8bda59745765497ab33c4959fed",
+    "src/sc_neurocore/compiler/power_unit_programs.py": "4e132f8d3fd8182f7be09ba4ae785aac45ba570e0e406f1a5b938cf92a8346fa",
+    "src/sc_neurocore/compiler/power_units.py": "7df48c1e84df8b6e0fe8455327e0344f675d29d3aaf67c9186d9d41c62646900",
+    "src/sc_neurocore/compiler/precision_config.py": "1c658ab3e4791c3fb20f37c5a9cfb41579704dc09903c1a2f2d6be07a0cc985b",
+    "src/sc_neurocore/compiler/precision_pairs.py": "82af249989cfec4eaa66e19a733541966f621843ebf58d41a9db47020749b1cf",
+    "src/sc_neurocore/compiler/precision_presets.py": "192c88ac651a584d4debd37c48154f1c226023da4e0ace67904369e287802651",
+    "src/sc_neurocore/compiler/precision_solver.py": "4974a35cab119e0c2258faae575baf19d00986564b5aeced38172515a35afef5",
+    "src/sc_neurocore/compiler/proof_transforms.py": "808decbee8fdbe0e26431a3f596beea76c56ae97ab7ddfcab34b650ad5d542bc",
+    "src/sc_neurocore/compiler/q_format.py": "c069e20de19f77fe2f42be03d4099e2de8a27e58c3553a31d3301989b1cf9052",
+    "src/sc_neurocore/compiler/quantization_reports.py": "7e8dd051596582f154f564156629b6ced93168ac52c82dc819dd43fd27e47c57",
+    "src/sc_neurocore/compiler/quantize_core.py": "cfea1879af83675f436295e4360e486f03eb03ae44394b9815a09d828f060c01",
+    "src/sc_neurocore/compiler/quantizer.py": "a1c22cffdb1877bcb1ed7c8ec520e0b906ede6d09d1cb473adb3e13b9c7122c0",
+    "src/sc_neurocore/compiler/random_unit_programs.py": "4fd7dc2f4c3a24e9567e7bd0df8a86e75572e8be7e0db877ed56256a11d27a30",
+    "src/sc_neurocore/compiler/random_units.py": "c1f41d2ecf9d9f8c26db7d99d8d64c25972ae9f5c51eef9c21470354eb20e421",
+    "src/sc_neurocore/compiler/reciprocal_root_programs.py": "d2329e8ecff469e457c55e7ee0c92f88c72254dffccf3523571235b059d912cc",
+    "src/sc_neurocore/compiler/reciprocal_root_units.py": "c9a29bc80dc4f98aaf67a3cd18e03e6f89d9fb8bd3cc6fca61909265fbb52819",
+    "src/sc_neurocore/compiler/resource_estimator.py": "9c29c031f93dc37627611c0a285217f54508d37ad12f3ecd3f9891eb2dabd7c8",
+    "src/sc_neurocore/compiler/riscv_driver.py": "ba0a7722fe42d0d270cf3b8cb1f51ffd3ed7c7881c21e769360f47143990265b",
+    "src/sc_neurocore/compiler/sby_formal.py": "69ae2b5d7ec0110cac11305bd8e68d77599c421ff476a6330675cb45dc4b9332",
+    "src/sc_neurocore/compiler/sensitivity_analysis.py": "104dd137733397908f59135f4921960fb94cc6c605cc217f4609db1091922a2b",
+    "src/sc_neurocore/compiler/slr_placement.py": "42de08c4a7ff246f6ad35d51f8b326751e2c45c8a8e0ea430500e8c30f1ac3de",
+    "src/sc_neurocore/compiler/static_analysis.py": "490f7ebff6d9053272aa5aa136b89b2f4ccffa250c123a228ce794c994bd7e2f",
+    "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
+    "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
+    "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
+    "src/sc_neurocore/compiler/testbench_gen.py": "c00311c1b63cc9dba3d6135c664d5bfb965a453f8f8092bf4b41d8140fdca614",
+    "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
+    "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
+    "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "6aa4af522d8056365a9a4c6dd3ce37527b437ec617dcd938c886c842049a11d7",
+    "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
+    "src/sc_neurocore/neurons/__init__.py": "a27b960e16776ce16f9bd70d9441a92cb808bdcffc3ebb5df32018b0e7b66598",
+    "src/sc_neurocore/neurons/__main__.py": "7512aab0b175e42dba8b28b3826508f3202c1d30cb7ee663777a56feb64547ea",
+    "src/sc_neurocore/neurons/_stochastic_threshold.py": "e8197e9fb1a2127c9c1bd18c9b2bee902d6dcf3bd85c06dcdd56358d43f3475a",
+    "src/sc_neurocore/neurons/_units.py": "c04c063bbd229425f519794919c3f6af838150eda03f8af97c741099a8c95f42",
+    "src/sc_neurocore/neurons/base.py": "0cb339b37aaf52c3eb66b44ad186d432d76326c3ead5ef99bb9276bda22557b3",
+    "src/sc_neurocore/neurons/behavior_taxonomy.py": "63388c92861adde7ccbcba610e73ef999fd92284c34f168ab0af8465ece6640a",
+    "src/sc_neurocore/neurons/dendritic.py": "0599007b6f7ba07b7e247458d017204e0a67d65fea51733b27a7d59ba3dacaf0",
+    "src/sc_neurocore/neurons/descriptor_generator.py": "0a2bfb40c0920599303c2925522e37a26b002cf4a482e1e3d9760a7f45aaf34d",
+    "src/sc_neurocore/neurons/descriptor_tiers.py": "61574e62beae09896789da9fc904d31ac7c91487654c231d579ce87a95f1a5d5",
+    "src/sc_neurocore/neurons/dsl_cli.py": "cd21e37f2ac41b6bee831e259f4ad932c4e354fd3b1f497f709c963545be16a4",
+    "src/sc_neurocore/neurons/equation_builder.py": "ab50451093b73c4f7d37ed694ecadc73d46171e5c1fc836ecfa1bf12075eb7be",
+    "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
+    "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
+    "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
+    "src/sc_neurocore/neurons/equation_random.py": "edb76121a97de6c41660b7513511f5d5c06fa040edcd2688aa2e2c52f671a9bc",
+    "src/sc_neurocore/neurons/equation_refusals.py": "5ebb46ecaaf66f8108c05bbb3207d5e6b82d70138c6ba11cc4c2848197156692",
+    "src/sc_neurocore/neurons/equation_safety.py": "5494a8c3f93de7f359048370e9b22e433fdbaec64f4f031faafbcd46e4b24569",
+    "src/sc_neurocore/neurons/equation_units_runtime.py": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+    "src/sc_neurocore/neurons/evidence_references.py": "033152ba8c881df43d0a45b324928364e950b0e72d223876cc722ba5fd027f12",
+    "src/sc_neurocore/neurons/expression_derivative.py": "eb010dedeeb34d0f82921943479099f7b8a02f20ff895aa97c427e0f7a8dde5c",
+    "src/sc_neurocore/neurons/facet_receipts.py": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+    "src/sc_neurocore/neurons/fixed_point_lif.py": "ee7a4da29078537ca6356cf9098b8c628de805b3a63dfa3c74eba91ac642a623",
+    "src/sc_neurocore/neurons/homeostatic_lif.py": "d8ca8274da7f2c5919fd8d143a4635ffaaa2ef57ed7790f6676e7e04eda7dbda",
+    "src/sc_neurocore/neurons/model_catalogue.py": "bdccedfe00872bb567b1be4c8f951e641dbdca38e82645394f32d7e8c5a008ea",
+    "src/sc_neurocore/neurons/model_descriptor.py": "9316d8dc73991cf5972e27f5d84056737b5db9170fe5c34e80956bf9dcbe907b",
+    "src/sc_neurocore/neurons/model_identity.py": "794dcf0aabbdd8509fb18bf7eee34ae73201f836a216100ec65b49ad32edba52",
+    "src/sc_neurocore/neurons/model_profile.py": "f218c52ef0533358b6dd152da9dc728aecc6e8e14c82f7a372232519ca1670ed",
+    "src/sc_neurocore/neurons/model_receipts.py": "894002e60353c5b86b3949a21ff78f793b1933f59e577f7b1cca92bcdf67fb26",
+    "src/sc_neurocore/neurons/model_taxonomy.py": "b8b8e5bbed3deda0fe92136f01221744a6c8852bc102e87da4ec7cef84ce5bed",
+    "src/sc_neurocore/neurons/profile_registry.py": "044054cabbe995067a68a1f6810073ada62164e393f03e7320f62008f56914ba",
+    "src/sc_neurocore/neurons/readiness.py": "003d04510cade55f34455b6aeb7560d882abbd5854a888d767f23f95f19bd638",
+    "src/sc_neurocore/neurons/receipt_execution.py": "757c044dfc80cf275874175106585096c3b80bd2226bb52978429e6ff5716049",
+    "src/sc_neurocore/neurons/reference_trace_contracts.py": "7238a0f0474042f2634ba337d2f804ca5fb53e63d43c578d2e89172ebd5d42c1",
+    "src/sc_neurocore/neurons/reference_trace_io.py": "8f47c9041470cb0fedd1b3c07a29519cc3c8ba4d0966b05f8f72d68cb3efb01a",
+    "src/sc_neurocore/neurons/reference_trace_mutations.py": "321e51f6a687772dd180f1992de7499afa88f877a7bf5e3ff660946fac9692df",
+    "src/sc_neurocore/neurons/reference_trace_provenance.py": "6796b3464bcda95842a2b5a604ac44efe514674def12b245457978b2927c5a92",
+    "src/sc_neurocore/neurons/reference_trace_runner.py": "5c75e5c218ded505269492964882b1d7fc57e301299e8c7c6efc2de9955003e1",
+    "src/sc_neurocore/neurons/reference_traces.py": "83d4b9de4747ffac66f527396b270eed55d0186ba7ac9b24a652566bf4b60da1",
+    "src/sc_neurocore/neurons/sc_izhikevich.py": "c393663a47eafec8fa42b6125580948b12fb37a140431de41a3a957040cd797e",
+    "src/sc_neurocore/neurons/schema_contracts.py": "971ccd3e5a78cd11982cb07e41c763a633ee05e71a66be9f48b589878e30056c",
+    "src/sc_neurocore/neurons/schema_module_aliases.py": "f72b25ee74dfc6f9969d7e45e0506561eeac1ef71cb7133121bde4a43704edae",
+    "src/sc_neurocore/neurons/schema_validator.py": "21df7b0ea62e0674ff457188d970b20f65d0adc1802beebe2030e55aa3886893",
+    "src/sc_neurocore/neurons/seed_domain.py": "0cf74987ed76c18365c4b08b6652d1d15730144fa21e8e815286d8f7287a0c34",
+    "src/sc_neurocore/neurons/stochastic_lif.py": "68cd375768b678990fe3d94f719c6c22d3167b47af0ec76423c6d12d424efe00",
+    "src/sc_neurocore/neurons/universal_dsl.py": "72a0ae374db13a4bfbab9982b4487c95b23ccdf2b6ff674ca091d259e14b9527"
+  },
+  "source_unchanged_during_capture": true,
+  "cases": {
+    "paired_exponentials": {
+      "first_call_ns": 7849343,
+      "cached_ns_per_call": [
+        347009.85,
+        380756.31,
+        261551.04,
+        252457.38,
+        238312.88,
+        247480.37,
+        259780.98
+      ],
+      "cached_median_ns_per_call": 259780.98,
+      "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
+      "contracts": [
+        {
+          "accuracy": {
+            "codes_evaluated": 256,
+            "declared_error_bound": null,
+            "domain_cardinality": 256,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03094892514116676,
+            "max_error_at_inputs": [
+              1.6875
+            ],
+            "max_error_lsb": 0.4951828022586682,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -128,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I"
+          ],
+          "column": 0,
+          "expression": "exp(I)",
+          "function": "exp",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 64,
+            "declared_error_bound": null,
+            "domain_cardinality": 64,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03094892514116676,
+            "max_error_at_inputs": [
+              1.6875
+            ],
+            "max_error_lsb": 0.4951828022586682,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -32,
+                  31
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -32,
+                31
+              ],
+              "notes": [],
+              "values": [
+                -2.0,
+                1.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I / 4"
+          ],
+          "column": 7,
+          "expression": "exp(I / 4)",
+          "function": "exp",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        }
+      ],
+      "all_repeats_equal": true
+    },
+    "clipped_hypot": {
+      "first_call_ns": 153217935,
+      "cached_ns_per_call": [
+        287260.71,
+        252853.23,
+        274970.85,
+        188831.49,
+        211576.44,
+        266075.69,
+        251435.57
+      ],
+      "cached_median_ns_per_call": 252853.23,
+      "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
+      "contracts": [
+        {
+          "accuracy": {
+            "codes_evaluated": 1089,
+            "declared_error_bound": 0.03125,
+            "domain_cardinality": 1089,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.030803480283493778,
+            "max_error_at_inputs": [
+              -0.9375,
+              -0.5625
+            ],
+            "max_error_lsb": 0.49285568453590045,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -16,
+                  16
+                ]
+              ],
+              [
+                [
+                  -16,
+                  16
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -16,
+                16
+              ],
+              "notes": [],
+              "values": [
+                -1.0,
+                1.0
+              ]
+            },
+            {
+              "codes": [
+                -16,
+                16
+              ],
+              "notes": [],
+              "values": [
+                -1.0,
+                1.0
+              ]
+            }
+          ],
+          "arguments": [
+            "clip(I, -1, 1)",
+            "clip(v, -1, 1)"
+          ],
+          "column": 0,
+          "expression": "hypot(clip(I, -1, 1), clip(v, -1, 1))",
+          "function": "hypot",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        }
+      ],
+      "all_repeats_equal": true
+    },
+    "literal_dynamic_powers": {
+      "first_call_ns": 831266957,
+      "cached_ns_per_call": [
+        167461.01,
+        173420.59,
+        172593.0,
+        175866.11,
+        168954.81,
+        170531.99,
+        155838.64
+      ],
+      "cached_median_ns_per_call": 170531.99,
+      "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
+      "contracts": [
+        {
+          "accuracy": {
+            "codes_evaluated": 128,
+            "declared_error_bound": 0.031250000000005475,
+            "domain_cardinality": 128,
+            "excluded_domain_codes": 128,
+            "exhaustive": true,
+            "max_error": 0.030779008515406936,
+            "max_error_at_inputs": [
+              2.6875
+            ],
+            "max_error_lsb": 0.492464136246511,
+            "reference": "96-digit Decimal real power, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  0,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I"
+          ],
+          "column": 0,
+          "exponent": {
+            "kind": "literal",
+            "value": 1.5
+          },
+          "expression": "I ** 1.5",
+          "function": "power",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 429,
+            "declared_error_bound": 0.03125000000001348,
+            "domain_cardinality": 429,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03120516801422868,
+            "max_error_at_inputs": [
+              0.375,
+              -0.8125
+            ],
+            "max_error_lsb": 0.49928268822765887,
+            "reference": "96-digit Decimal real power, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  4,
+                  16
+                ]
+              ],
+              [
+                [
+                  -16,
+                  16
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                4,
+                16
+              ],
+              "notes": [],
+              "values": [
+                0.25,
+                1.0
+              ]
+            },
+            {
+              "codes": [
+                -16,
+                16
+              ],
+              "notes": [],
+              "values": [
+                -1.0,
+                1.0
+              ]
+            }
+          ],
+          "arguments": [
+            "clip(I, 0.25, 1)",
+            "clip(w, -1, 1)"
+          ],
+          "column": 7,
+          "exponent": {
+            "kind": "dynamic"
+          },
+          "expression": "clip(I, 0.25, 1) ** clip(w, -1, 1)",
+          "function": "power",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        }
+      ],
+      "all_repeats_equal": true
+    },
+    "exponential_euler_events": {
+      "first_call_ns": 14387628,
+      "cached_ns_per_call": [
+        391364.36,
+        377741.69,
+        342410.76,
+        384321.0,
+        321456.11,
+        370295.96,
+        394031.29
+      ],
+      "cached_median_ns_per_call": 377741.69,
+      "contract_sha256": "29f5d7c2da288f3b0ce00ddf60d6cf6320893b512491d1c5e5f48f96c851e1ec",
+      "contracts": [
+        {
+          "accuracy": {
+            "codes_evaluated": 256,
+            "declared_error_bound": null,
+            "domain_cardinality": 256,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03094892514116676,
+            "max_error_at_inputs": [
+              1.6875
+            ],
+            "max_error_lsb": 0.4951828022586682,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -128,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I"
+          ],
+          "column": 3,
+          "expression": "exp(I)",
+          "function": "exp",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 256,
+            "declared_error_bound": null,
+            "domain_cardinality": 256,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03094892514116676,
+            "max_error_at_inputs": [
+              1.6875
+            ],
+            "max_error_lsb": 0.4951828022586682,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -128,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "v"
+          ],
+          "column": 0,
+          "expression": "exp(v)",
+          "function": "exp",
+          "implicit": false,
+          "line": 1,
+          "location": "threshold",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 256,
+            "declared_error_bound": null,
+            "domain_cardinality": 256,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.030687216576370635,
+            "max_error_at_inputs": [
+              -2.0625
+            ],
+            "max_error_lsb": 0.49099546522193016,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -128,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I"
+          ],
+          "column": 0,
+          "expression": "tanh(I)",
+          "function": "tanh",
+          "implicit": false,
+          "line": 1,
+          "location": "reset v",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 256,
+            "declared_error_bound": null,
+            "domain_cardinality": 256,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03120937337375629,
+            "max_error_at_inputs": [
+              0.125
+            ],
+            "max_error_lsb": 0.4993499739801006,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -128,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "v"
+          ],
+          "column": 0,
+          "expression": "sigmoid(v)",
+          "function": "sigmoid",
+          "implicit": false,
+          "line": 1,
+          "location": "spike value",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 1,
+            "declared_error_bound": null,
+            "domain_cardinality": 1,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.002524779323236803,
+            "max_error_at_inputs": [
+              -0.125
+            ],
+            "max_error_lsb": 0.04039646917178885,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -2,
+                  -2
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -2,
+                -2
+              ],
+              "notes": [],
+              "values": [
+                -0.125,
+                -0.125
+              ]
+            }
+          ],
+          "arguments": [
+            "-1 * 0.125"
+          ],
+          "column": 0,
+          "expression": "exprel(-1 * 0.125)",
+          "function": "exprel",
+          "implicit": true,
+          "line": 1,
+          "location": "exponential Euler v",
+          "refusal": ""
+        }
+      ],
+      "all_repeats_equal": true
+    }
+  }
+}

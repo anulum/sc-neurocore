@@ -1,0 +1,1168 @@
+{
+  "cases": {
+    "bench_euler": {
+      "clocks_per_timestep": 1,
+      "median_ms": 1.026307,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 0.5,
+          "equations": [
+            [
+              "v",
+              "(I - v) / tau"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "euler",
+          "parameters": [
+            [
+              "tau",
+              8.0
+            ]
+          ],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_euler",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 46,
+      "output_sha256": "3e7c8d2ffbddb05afaf9bac7039746a0c87ce2e40937452b19ea9e2d1626687f",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        1163275,
+        923394,
+        926787,
+        979880,
+        886027,
+        943511,
+        1128273,
+        2228129,
+        1778276,
+        1442944,
+        1026307
+      ]
+    },
+    "bench_heaviside": {
+      "clocks_per_timestep": 1,
+      "median_ms": 1.067999,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "heaviside(I, z)"
+            ],
+            [
+              "z",
+              "-z"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ],
+            [
+              "z",
+              0.25
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_heaviside",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 47,
+      "output_sha256": "3155602379dc252c1f8133fd2ec60306cc3c03c2fade5f5b8ef856016bce292b",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        1043943,
+        1029215,
+        1067999,
+        1073841,
+        946102,
+        1065433,
+        2537183,
+        2167587,
+        1455463,
+        1526258,
+        1064147
+      ]
+    },
+    "bench_hypot": {
+      "clocks_per_timestep": 1,
+      "median_ms": 4.091494,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "hypot(I,1)"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_hypot",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 248,
+      "output_sha256": "da5cee99b40ae9545af8c6df5cf0894bb7670825dd9080b5b57fc47e6892e0f2",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        4205460,
+        3777010,
+        3846972,
+        4037907,
+        3573739,
+        3787511,
+        6521863,
+        6779427,
+        4091494,
+        4887136,
+        4483472
+      ]
+    },
+    "bench_macro": {
+      "clocks_per_timestep": 3,
+      "median_ms": 1.813908,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "crossing",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "I"
+            ],
+            [
+              "w",
+              "w + I / 2"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.25
+            ],
+            [
+              "w",
+              -0.5
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": "v - v_prev",
+          "substeps": 3,
+          "threshold": "v > v_prev",
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_macro",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 79,
+      "output_sha256": "9ed71eccc810c2975c167ed4e75015f905b55cff944b93bd7e3eedc34698d1a4",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        1925203,
+        1599988,
+        1653464,
+        1602035,
+        1532560,
+        1813908,
+        1650280,
+        3385758,
+        3550139,
+        2989816,
+        2207596
+      ]
+    },
+    "bench_power_dynamic": {
+      "clocks_per_timestep": 1,
+      "median_ms": 49.458807,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "(I*I+1)**I"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_power_dynamic",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 1834,
+      "output_sha256": "cb2ba84712cafa7b2e4501b4a35bbb677aa62bb1c7366ac83692930cb90328d0",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        49458807,
+        45827489,
+        47075884,
+        45493950,
+        43270418,
+        47964524,
+        54845195,
+        81461103,
+        62718189,
+        56288526,
+        54300876
+      ]
+    },
+    "bench_power_literal": {
+      "clocks_per_timestep": 1,
+      "median_ms": 50.758693,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "I**1.5"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_power_literal",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 1811,
+      "output_sha256": "dfd24e637641b1af0fcfd33548b7f0fb4cff4156ed427f08c4fd123567053fad",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        60879801,
+        46117023,
+        45137022,
+        44674433,
+        42631469,
+        43708460,
+        50758693,
+        75032683,
+        73112958,
+        57484649,
+        51161659
+      ]
+    },
+    "bench_random": {
+      "clocks_per_timestep": 1,
+      "median_ms": 4.366197,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "rand(0) * gain + I"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              -0.5
+            ]
+          ],
+          "method": "map",
+          "parameters": [
+            [
+              "gain",
+              0.5
+            ]
+          ],
+          "probability_expression": null,
+          "random_stream": 2147483655,
+          "rate_expression": null,
+          "reset": [
+            [
+              "v",
+              "0"
+            ]
+          ],
+          "rng_seed": 9223372036854775819,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": "v > 1",
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_random",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 335,
+      "output_sha256": "89d8cd010a4030c7dc776abf1f0795b1a8a4d3211f5a028e340c396b024c548f",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        4392741,
+        4140078,
+        3869900,
+        4032322,
+        3570551,
+        3754719,
+        4366197,
+        8521324,
+        7807753,
+        4568579,
+        4653244
+      ]
+    },
+    "bench_rk4": {
+      "clocks_per_timestep": 5,
+      "median_ms": 5.738072,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [
+            [
+              "tau",
+              8.0
+            ]
+          ],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 0.5,
+          "equations": [
+            [
+              "v",
+              "gain * (I - v + w)"
+            ],
+            [
+              "w",
+              "(v - w) / tau"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              -0.5
+            ],
+            [
+              "w",
+              0.75
+            ]
+          ],
+          "method": "rk4",
+          "parameters": [
+            [
+              "gain",
+              0.25
+            ]
+          ],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [
+            [
+              "v",
+              "w"
+            ],
+            [
+              "w",
+              "v_prev"
+            ]
+          ],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": "v - w_prev",
+          "substeps": 1,
+          "threshold": "v > 2",
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_rk4",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 1
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 289,
+      "output_sha256": "62d20072f11f4790bb3cb391472be1aae656efc836f50149050f94cbeb969a82",
+      "pipeline_registers": 4,
+      "samples_ns": [
+        5502515,
+        5800428,
+        6025196,
+        5206937,
+        5477577,
+        5066710,
+        5029424,
+        9212816,
+        8701507,
+        7175765,
+        5738072
+      ]
+    },
+    "bench_round": {
+      "clocks_per_timestep": 1,
+      "median_ms": 1.4364,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "round(I)"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_round",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 53,
+      "output_sha256": "6f384c8a3e7af90c32d537b7da1cff0558b672eb3a6379c0d24e9dbc82bf1863",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        1118729,
+        1504411,
+        1043517,
+        1402115,
+        1003163,
+        1299160,
+        2424589,
+        2170267,
+        1909025,
+        1509796,
+        1436400
+      ]
+    },
+    "bench_rsqrt": {
+      "clocks_per_timestep": 1,
+      "median_ms": 6.234584,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "rsqrt(I)"
+            ]
+          ],
+          "initial_state": [
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_rsqrt",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 369,
+      "output_sha256": "c0a833361fdde93cb23b5e8e9b81de045b7c5b14882cc85952d76e7a1e18afca",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        6104830,
+        5671512,
+        5741165,
+        5818839,
+        5989827,
+        6234584,
+        9454858,
+        10932533,
+        7595948,
+        6504778,
+        6705799
+      ]
+    }
+  },
+  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json benchmarks/results/local_python_2026-10-29_equation_ir.json",
+  "cross_language_comparison": false,
+  "generated_at": "2026-10-29T01:44:33.524121+00:00",
+  "hardware_measurement_claimed": false,
+  "implementation_scope": "Python model frontend with maintained Rust graph backend",
+  "isolation": "shared loaded host; no exclusive core reservation",
+  "load_average_after": [
+    9.732421875,
+    12.3349609375,
+    11.005859375
+  ],
+  "measurement_context": {
+    "architecture": "x86_64",
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cpu_frequency_mhz": {
+      "max_observed_mhz": 4101.292,
+      "min_observed_mhz": 4099.04,
+      "sampled_cpu_count": 12.0
+    },
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "host": "aaarthuus",
+    "host_load": "workstation under concurrent load during capture",
+    "load_average_after": [
+      9.732421875,
+      12.3349609375,
+      11.005859375
+    ],
+    "load_average_before": [
+      9.732421875,
+      12.3349609375,
+      11.005859375
+    ],
+    "logical_cpu_count": 12,
+    "numpy_version": "2.5.4",
+    "operating_system": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "python_version": "3.12.16",
+    "ram_bytes": 33422090240,
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+  },
+  "native_sha256": "4d9bd287076a5e39206df9478475b42cd76c5b65d26b2b678389b645c4720095",
+  "performance_promotion_claimed": false,
+  "samples_per_case": 11,
+  "schema_version": 1,
+  "source_base_sha": "477cca4606ef852dda99e50c0a183591b9652577",
+  "source_sha256": {
+    "Cargo.lock": "93b9587e155958f9e3f641be9be53c941fa2847a6a873c71040e1d9557995510",
+    "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
+    "benchmarks/bench_equation_ir.py": "6b7c2aa6c7097f79e3b86d80cfb867a90f5763f5cc57fe589e9ed83a55dde865",
+    "bridge/sc_neurocore_engine/_ir_native.py": "7e4d716b3532f7d8aef70fb0f4bec0de6348ab73b7577a506cbc5cef430bfe17",
+    "bridge/sc_neurocore_engine/ir.py": "f5e9ac833bd01a3dae2f1fadb4fe56084e522804049925727ffc0ce11b3670f1",
+    "engine/Cargo.toml": "4e3b406ee85f5b2773e37b63469aef0a677744425103044833f081fa5ae747fa",
+    "engine/src/ir/bindings.rs": "1c7358acb709fa0904bbc53528ff0b2cf550a782ef337e6f8a90656aec6890de",
+    "engine/src/ir/builder.rs": "7aa64bba746103a5acd60895fb66381d662fc536ceddaac7b1c0fb7094dc3c6b",
+    "engine/src/ir/constant_words.rs": "82d15fc1fb109d5afc9c4a2a45663e51c0395b0a4ff95ac5250872c2735a0083",
+    "engine/src/ir/dense_contract.rs": "b3f77260387fa448613949fc0f19ccc471a1e0cbba5d8622858a74ff33635e2e",
+    "engine/src/ir/emit_mlir.rs": "abc34c388eaac79a7c7cda5292206acea354d21dd4c56a0361c1f8d3421498eb",
+    "engine/src/ir/emit_mlir/divide.rs": "bb27bfa3a199de892dcb1107e9ac20723e9636636a0e0d6f9a8e958d2c4f31a7",
+    "engine/src/ir/emit_mlir/primitives.rs": "13fdffb79a7901a1aeabae7a4be1f569921bdc89b1c4a2d52539b94a07bdb63e",
+    "engine/src/ir/emit_mlir/runtime_check.rs": "cdf8e4d23965f0f0ae0beeb9a56e4bcbc61a8e64a9105c885b4fe3d6086be485",
+    "engine/src/ir/emit_mlir/state.rs": "5146aeaef6436d4a1f317c32cd093ae7c5b441dd47ca09f9af226f913af0043c",
+    "engine/src/ir/emit_mlir/word.rs": "78fdc0b6921c9682a7647615e1cbbb72215b196570ea27a786060754323387a5",
+    "engine/src/ir/emit_sv.rs": "c9c99d972ee77e7264c55dcc10fd5892b8777422a14506b218fb2514c6dbaed7",
+    "engine/src/ir/emit_sv/constants.rs": "2d241b1dab15f2c040e1ad54624aa1b52546225db84cb77623d648e65347bf00",
+    "engine/src/ir/emit_sv/count.rs": "1d98fa36aa230373a48582734d9f219cb665ccd8c6544db06e9787dff833695d",
+    "engine/src/ir/emit_sv/dense.rs": "3a3a4b32ee6b74270116c3a340233c99a301472eda9f3da2c6d5fcf082d89b5a",
+    "engine/src/ir/emit_sv/divide.rs": "410992c56ea77530dc5e4fdc96037c642c873e19032386a74384a3c2f4b7b5f6",
+    "engine/src/ir/emit_sv/probability.rs": "0d38e7add9b9b4b6dd684915516d7529174469c01c13ee0e6eaafc98ddb3253b",
+    "engine/src/ir/emit_sv/runtime_check.rs": "33d55e50dfd000eff9ebd141bb8b846ad8292bf3a3336231d820ced148c44d5a",
+    "engine/src/ir/emit_sv/state.rs": "60de4570352a77f6f27113aee41afc36eda624eeaed1dfe693f48fd459281f29",
+    "engine/src/ir/emit_sv/word.rs": "7dc94886961b9d2363f835897570f246f8a84af4746d3a018b7ccdd27cadd72a",
+    "engine/src/ir/graph.rs": "7f9e04bb7fa205db73b640c1a671bc7eb17e8e4c2ca2e96b1d026570f9570e04",
+    "engine/src/ir/identifiers.rs": "e548abf49f918e6c0e98ae59a95f82007fe10cff146b2c025c20c54d1eea7d39",
+    "engine/src/ir/mod.rs": "4ea7ecd1394d4adad3fe3acabe3e51bf3eae56095c2c2f30057bcae267dbcc53",
+    "engine/src/ir/parser.rs": "8cc8ad8ea38532bba6f3bf2330fc9d78c565843f621aac957f319a56732cd1c7",
+    "engine/src/ir/parser/neuron.rs": "cb8270da55e138d7e1b7aaf4968b2cb600d9720735dbe8e80c7c3fcf84401751",
+    "engine/src/ir/parser/runtime_check.rs": "ac275312b486c3d94329cfbc483a46debd76b493ce0ad76fb494872d20d9717a",
+    "engine/src/ir/parser/state.rs": "8554afdff0a26a9066640ba1b553039b2d4f9ed2ada1348a1d43e4f362c28ca6",
+    "engine/src/ir/parser/word.rs": "64bcd188833d626577f4d2197d01436bfe2d84acf2827ad68796da80d977bf9e",
+    "engine/src/ir/printer.rs": "7cf520d01b365accc07152fe5c243840a49d660c991049a33b635a8e25c489e8",
+    "engine/src/ir/qformat.rs": "0ebd6a434df17c2438fb4ff75366260273f7745a5b0fd5675783fd12e13562da",
+    "engine/src/ir/qformat/block_floating.rs": "77fba17591c7af9573510953536b08adebbcc89c03c85d59e54464ba277713d2",
+    "engine/src/ir/qformat/dense_result.rs": "605cc0c9a6cf431778c9e1420a596790ac56c001a8d54ea3525689a6d5b1bce3",
+    "engine/src/ir/qformat/fixed_format.rs": "54d58daf03cd70fac8041fa95f4356d038f35949b58cdf6aa8cbe53abbc4a1ad",
+    "engine/src/ir/qformat/mixed_dense.rs": "013e1ce8616115f214118dccde1401f94f8a51c609468dc46c71d0c758338cc1",
+    "engine/src/ir/runtime_check.rs": "4d7c224120fc23d29aaecdabdea36bc7edc7a12436a5222ddacd29c03a203a99",
+    "engine/src/ir/source.rs": "333b16c0d6193c651b213b428cbfe8705ed671692f882166d1d9926c9b76d8d4",
+    "engine/src/ir/state_contract.rs": "b4ee74fcfac0d1b9c935b0a734a69317d2891ff4ab688edbec1e247e5cf74651",
+    "engine/src/ir/stream_contract.rs": "84f63f4909c9c642a6a2a481ac2f2ab734708cb5d9ead83442494446912f9d65",
+    "engine/src/ir/sv_target.rs": "6dbc1ba2423676425cab138c1a55e586d4f0e10b6723d12a01b0d8591cf5e0af",
+    "engine/src/ir/type_contract.rs": "b2cdf72052e8887a47e0fd208f2664a670c085232474f1a6178a266496d835e9",
+    "engine/src/ir/verify.rs": "e8b203a5054f2e630faeed24b390cd84ab308632f880c900e4b580fc19fb6620",
+    "engine/src/ir/word.rs": "857881a216027aff2f3b45c886b70a5dcffc029686a7d5fa11bb67ba5fae23e6",
+    "engine/src/ir/word_contract.rs": "c83a96d5a006d3c09bbbe9bd20309701e78b6f23549db4972476ca86baf8e206",
+    "src/sc_neurocore/compiler/__init__.py": "0ad6d33bea02934b65a7b02fc1c6389ae2c0ae17f7a17426d3aa684ca8fb61ac",
+    "src/sc_neurocore/compiler/_sby_runner.py": "8b337c49519dc82fc18ec1858fc30a183957c6c48d96ad74608a15cf60afe576",
+    "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
+    "src/sc_neurocore/compiler/_verilog_integrators.py": "39d74be919d7e80e009ee32c0e6b3a6e534ee4b94c140e1d6d8373ad14ff4f2b",
+    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "f6cd7b462f074fd37784937667c1ebbf8043ae2fcccfebd958576e7c4ddcb27a",
+    "src/sc_neurocore/compiler/_verilog_registered_module.py": "83686edf6c575f71c2b7e6e707c09dc0e675bc2b19cf5211bd8e089c5c56f812",
+    "src/sc_neurocore/compiler/adaptive_precision.py": "cc30a86672df225fbbc9321b3060237b767e405d02dc326d70efac301654acb5",
+    "src/sc_neurocore/compiler/adaptive_runtime_precision/__init__.py": "6e2d41a14129e14a2dcea7c1cacf2269fb5a782f5e9f61c796944165ae109748",
+    "src/sc_neurocore/compiler/adaptive_runtime_precision/validation.py": "dae4ef2b95545bc0ef9cea35341cb6688907a78b44b6d263982c4664c121c1c8",
+    "src/sc_neurocore/compiler/auto_tune.py": "b255846676d2145f9731553ad2db00de3c122b21db59dc02af48e133e04d9e9f",
+    "src/sc_neurocore/compiler/block_floating.py": "2a47cc28b8108156acb8395342a9c06b7735ac970d5033aa62fa0f711624d06f",
+    "src/sc_neurocore/compiler/block_floating_quantization.py": "13df1cad6a901931ac3a78f76a0f83b60ba78ba5881ffaaa8d1d9d3558109909",
+    "src/sc_neurocore/compiler/c_expr_emitter.py": "583074be6c52fda03f273b2b6100a28a1dc0da6fbbbb3c07d30aa4965ca75ae3",
+    "src/sc_neurocore/compiler/c_fixed_emitter.py": "533a4800e1b87481e6660f8002b253dc90d7736f1cfd4902fd79b4b01635a2e4",
+    "src/sc_neurocore/compiler/certification_gen.py": "bd896738ce5d8121a5e6d4ff0d0667761df2db21d30184e00e409e62a5c23b84",
+    "src/sc_neurocore/compiler/cocotb_gen.py": "c650c582b9bd6fa2924362d6f1c6d8d0ffed948202a2b6c7624c95146e5ec149",
+    "src/sc_neurocore/compiler/compiler_impl.py": "dc5fb9d51e6b579d585fd4b216ba97d886978f0ba10f5eed785bde8b7852603a",
+    "src/sc_neurocore/compiler/constraint_gen.py": "4f7fc2afb5aa6ea19a5bdede15397a83f7f9fd67410664eb367ad67977e20204",
+    "src/sc_neurocore/compiler/deployment.py": "13afd40ed803f5d5ccae57b9d4b20a125b55faa9745c5557e0c4b47718afe0f7",
+    "src/sc_neurocore/compiler/diffusion_noise.py": "914cadd83c183ea49624cf4d97ff88d437f1484653605ffa47922b3cf5779c86",
+    "src/sc_neurocore/compiler/discrete_function_programs.py": "e3efab303c50eccb455c6fc077c8412f5e223acfea4fadbb0c316fa189a0481f",
+    "src/sc_neurocore/compiler/discrete_function_units.py": "1142cb671eee89091343e9fa22fb47749373fc91db64eeb641e211ebd3f0a952",
+    "src/sc_neurocore/compiler/equation_compiler.py": "ad79489e7a07648dcd9013711c6b08c165d1e1e72e46f89fab0f8d09a5b60318",
+    "src/sc_neurocore/compiler/equation_ir_compiler.py": "4dad9945cd546e57c3cee1a7c09c3168aedeec3be5251f22831618ad0765caad",
+    "src/sc_neurocore/compiler/equation_lowering.py": "e5aa083feef44972a5ca88e86a8dc6f062e27a16c944431fb2a4c31574e7b080",
+    "src/sc_neurocore/compiler/equivalence_check.py": "80ebe68a088ae38fe90116902057e67077bd38494829d5902f9e90e4e784f87c",
+    "src/sc_neurocore/compiler/equivalence_miter.py": "ee9a5815a3e846fd1c04ea118cda9550cbcd1dc1084ab44bf4d8486377464dfe",
+    "src/sc_neurocore/compiler/exact_normal.py": "de63c2b07408e2c36479b24d8d4f0aaf56e32a70d4aa511dafd0ecfce0919752",
+    "src/sc_neurocore/compiler/expr_lut_tables.py": "a7af4505632bb7c891a3c183c37bcf5950c0fcb7ffc38a899ca8d0ae4a1ae66f",
+    "src/sc_neurocore/compiler/fixed_expression_ranges.py": "1df732250a01f78d671ef2d11fd7855f795a26bb44dcd44f0366cd3173656d41",
+    "src/sc_neurocore/compiler/fixed_point_quantization.py": "5f8722aabab9b3101a1500664f97af221f5e647634615aa9e872bcc3efa35c74",
+    "src/sc_neurocore/compiler/formal_evidence.py": "9a02bd242e669a6a132ca62dac0115f3290d39dfdd99494a5e9b05e78ef15f2d",
+    "src/sc_neurocore/compiler/formal_property_check.py": "ff364ce4b660848e9f66fe42be416c85a04adc520a8d92aac3f76dd8a7dded29",
+    "src/sc_neurocore/compiler/fpga_wrapper.py": "a82626138c56263c4058f6c81d72c470196a2942604065b6f89666b14ef2754f",
+    "src/sc_neurocore/compiler/function_call_accuracy.py": "eecccd0408591cb8b5cbffb744945efb0b8e2aa7edd646e37912af8cbff2a33f",
+    "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
+    "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "ccbaa67a3b56c9520d6c796fb1a6f7e7b37e90f6f4b231128e490738b0b0824f",
+    "src/sc_neurocore/compiler/function_units.py": "0fcd1955054251a84e16d752e3840cf598f32004eb506a936e451d28a70784b5",
+    "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
+    "src/sc_neurocore/compiler/hardware_numeric_contract.py": "220efa51c8f29b64fa1dc6a70ce9c0f462559a4710ee644fc0bace8382b1f499",
+    "src/sc_neurocore/compiler/host_driver_gen.py": "05fd4dc67ec12c544d6b5a41d07d00a93c8f80989a9055c689f2622f3d4f3387",
+    "src/sc_neurocore/compiler/intelligence/__init__.py": "c4db86640d2a828dec7664415af44dee7a9dad54b1b6d0039fdaf446a28dafbd",
+    "src/sc_neurocore/compiler/intelligence/adiabatic_clocks.py": "b3b458385e4ca8bac9f82cb10771af807e5569259bc6458f469c3f1a4d2b1b98",
+    "src/sc_neurocore/compiler/intelligence/aging_reliability.py": "1998ca7a327ae6e0a157576e991ad7b3f8c356c2f514b9152b6e9a968631e893",
+    "src/sc_neurocore/compiler/intelligence/approximate_computing.py": "8097386bee8a7348cdf8b7eed38eac417ac64e9cd36d14d995aa638fd3310d27",
+    "src/sc_neurocore/compiler/intelligence/auto_quantization.py": "28d01234c9ecf412d3715d698621dc9cb1103c4afc8d53a57fd0116bb7300eed",
+    "src/sc_neurocore/compiler/intelligence/bit_true_kernel.py": "80dcc0c1212c8340e182fbcc227af96545ad96ec758364bddfc061f21bde7822",
+    "src/sc_neurocore/compiler/intelligence/bitstream_encryption.py": "1c1c57d16a8349c1f8c8697274e657784eafd032992ac34095e25d6fe9e7db9d",
+    "src/sc_neurocore/compiler/intelligence/bitstream_flow.py": "e80534a2764bd1eead7ba12433bb34a6c1850517ccb14c7a46c4197315555897",
+    "src/sc_neurocore/compiler/intelligence/bram_array.py": "ef3c64b1fd87bfe35707b02028238dd41444a03e38f5e89b67de1e0ba55a2107",
+    "src/sc_neurocore/compiler/intelligence/carbon_footprint.py": "62b488f3391da6f96835e79351f300896cda29bf28af00d55b7b992312874339",
+    "src/sc_neurocore/compiler/intelligence/cdc_analyzer.py": "5cd94bee16281bea9a2e36d189a5cfd556ef31d391a338da07e3d34132b74804",
+    "src/sc_neurocore/compiler/intelligence/cdc_synchroniser.py": "00ec445667f8b39be539e67f778ec4fca3f0b62bc47386935ffe8ea55d613756",
+    "src/sc_neurocore/compiler/intelligence/checksum.py": "b9177f4a05f7d0896c721be0cb864185782980bb7b514b4f4ad76e9ef7ea6094",
+    "src/sc_neurocore/compiler/intelligence/cognitive_bounds.py": "3efcf6b4d657eaeb551653b25fc21dddd37d1e79d2b3822fe51e2ec35f853290",
+    "src/sc_neurocore/compiler/intelligence/compilation_cache.py": "520f9a7b80a34a2219ea000269f1d01fd4500f24ea85a8273bcfd951351265dc",
+    "src/sc_neurocore/compiler/intelligence/compilation_report.py": "37c312d0a7e9e561bd71240a98cf329d0e598ed3a5209f45fc81d0fc05546b4e",
+    "src/sc_neurocore/compiler/intelligence/compilation_summary.py": "7143b221928a97bb3a871c25f35f5198d149f4228cb4c6be86c1af6110a602e6",
+    "src/sc_neurocore/compiler/intelligence/compliance_matrix.py": "bc99718594838af5c5e435f205fc9c91c29f6efa61e9d11836a591e2958cd213",
+    "src/sc_neurocore/compiler/intelligence/core.py": "ca22882f14dfae728b6eac9c534eec568bb2a1e3b3565d49d0d52dce0ad384e1",
+    "src/sc_neurocore/compiler/intelligence/cxl_coherence.py": "971bac73312a35551ee420013f5989d04110d1d8ebdb27194269394723a4a57e",
+    "src/sc_neurocore/compiler/intelligence/debug_probes.py": "e7d6d1eea2a59de0491f11e0d0cd2abd7063e9bb70b0eab1562fe2c5ddd7619f",
+    "src/sc_neurocore/compiler/intelligence/digital_twin.py": "79a85c0760f190e02c96bedc0648695725d64de6ae5425d44fddd0e7737408b1",
+    "src/sc_neurocore/compiler/intelligence/dispatch_planner.py": "7da287ef43d6c13adbcf56002411eb9d8e7da55fb736f25d1a7107c5b040ff12",
+    "src/sc_neurocore/compiler/intelligence/drift_compensation.py": "0765b5a9963801fef4787fc410cf9cace999744fe1f1a34ec2f8446e415b2ac1",
+    "src/sc_neurocore/compiler/intelligence/dvfs_controller.py": "0398d63382e3c635fffbc3da1a8d23b935ba1733caf323d2c5b6a01bbfe9f8a6",
+    "src/sc_neurocore/compiler/intelligence/dvs_bridge.py": "945af50e6f54fd3826a9c31a0998d241781055d932b2e34802fbe57e4d0c2979",
+    "src/sc_neurocore/compiler/intelligence/energy_harvesting.py": "2de743d4351c1ebb14415b512b2e06a2835ef0f81870c5278ee4c400ef81950d",
+    "src/sc_neurocore/compiler/intelligence/equivalence_sketch.py": "423a1c6e366dc0f0ae8a498656203c58236ae1b8accf2a1bb7d2ef803e247018",
+    "src/sc_neurocore/compiler/intelligence/exotic_physics.py": "adfd90155f87413d78cceb82b31520300cd8b9cc45b17e403f18e8f30ce20a78",
+    "src/sc_neurocore/compiler/intelligence/fault_injection.py": "60188dce5fa0b03963dcd5146d8592adec4073bc57f2164d5155322d8d8bef7e",
+    "src/sc_neurocore/compiler/intelligence/fault_tree.py": "d1da042fac6ec2477ded41e0049892b9b9428a0b0dcc8334b7a200cb02004143",
+    "src/sc_neurocore/compiler/intelligence/hil_calibration.py": "4287f64fe9fb99c32df0731eb37e1170ed7b16c6b9de813ccda9cd0116b37f54",
+    "src/sc_neurocore/compiler/intelligence/hls_export.py": "416fecfc0a648794e8255ddd43ae931674d09d7e9688e30e2e7a198256d44b84",
+    "src/sc_neurocore/compiler/intelligence/holographic_interconnect.py": "00e8c6e15767e9384a0221f9c4a07d3d72f23c3ea6ef9059fba445529e220925",
+    "src/sc_neurocore/compiler/intelligence/ip_obfuscation.py": "d786c64d0083a13619bd3940d05f35eaa83ef73f2a0e1987c5623a70564d7d07",
+    "src/sc_neurocore/compiler/intelligence/learning_export.py": "1dc0780c02a71f895ad4127e24ca6b35daba5f398be518e88785a07c6628eb67",
+    "src/sc_neurocore/compiler/intelligence/license_compliance.py": "31f69620ed8cad0318779835a08a641a3a155621b577890d1252d0bf4779faa9",
+    "src/sc_neurocore/compiler/intelligence/memory_map.py": "f42b6e9962b31b4a2392d22bc8c818b0f26dd4fe7797645ad3d2d876b4582a01",
+    "src/sc_neurocore/compiler/intelligence/model_complexity.py": "951cdcd33bb704c4fd9bb2f0366e63bce7a675c086fb49a8fc3a67c549e93c43",
+    "src/sc_neurocore/compiler/intelligence/morphology_synth.py": "a999ea9e188e64f7b94c7d5440b8b0e33020413f58e890beea455aced247223a",
+    "src/sc_neurocore/compiler/intelligence/multi_die_floorplan.py": "4136f0f20f610a64b3b61e7f9687adfae43a429626b7a45ab504eaba043033d7",
+    "src/sc_neurocore/compiler/intelligence/mxfp_encoding.py": "2f108300818878a9252636018da704948e2dd912a08eceb5f26911a9afd0b2d1",
+    "src/sc_neurocore/compiler/intelligence/network_optimizer.py": "c344d5c4284b89abb277e03e794235b8ffb8401026225111372d4e39ed835410",
+    "src/sc_neurocore/compiler/intelligence/nir_import.py": "43681a4e871d8ceb392dc22b8a7dc50eb18d145c50bdb15b3fe3ef22285c9413",
+    "src/sc_neurocore/compiler/intelligence/ode_stability.py": "f825d9c211ce111f64af61b7d03a29fca466ddc0ddab5bcf82beb6e1213a2b32",
+    "src/sc_neurocore/compiler/intelligence/omni_paradigm.py": "eb7584a8fd543c5fdf157eb45e9ddc8889ee49df4c950995368cf180ee8480ca",
+    "src/sc_neurocore/compiler/intelligence/optical_encoding.py": "32fab4cd5514563eabdce8a0d8ce474f644a90759ed9b119d01d53df0c04df72",
+    "src/sc_neurocore/compiler/intelligence/pareto_explorer.py": "8eefcc5efe4d8eda8fa56908a299f30a5341854cf974ef21e6dfc58a3f3c09fb",
+    "src/sc_neurocore/compiler/intelligence/pim_layout.py": "e4c78bb752f57b1fa2a6ab3b1447b1ade9de8738919323a62bf3b4b1d43ef3c2",
+    "src/sc_neurocore/compiler/intelligence/pipeline_wrapper.py": "7ac10f1bb6a5916b1b8f981a913e2e846e674cbdda48a70c72ee7ba6ed9cce08",
+    "src/sc_neurocore/compiler/intelligence/portability_scorer.py": "5258ceba365ff3202a986468e0664f9c2d0fd85353c98b9253adf3ac39c6d15a",
+    "src/sc_neurocore/compiler/intelligence/posit_arithmetic.py": "ade3bd9abc89c5aaac511a2a36bf9a0540b4a18b371a30c4ce63db3b48928e5f",
+    "src/sc_neurocore/compiler/intelligence/power_and_thermal.py": "5f1fac1bf1e805607aa26d588b92f73e852c78925b27d57c4f9f67d879cc3d34",
+    "src/sc_neurocore/compiler/intelligence/power_domain_wrapper.py": "badd39c2c4a9c60db5b940b76c352a9437a556be143018086e7345bf093ae9c4",
+    "src/sc_neurocore/compiler/intelligence/power_intent.py": "8a3b00a919e1e6fc0cbd5381f61a297cc6daf97a7e631bb7f40d9d491f5b10b1",
+    "src/sc_neurocore/compiler/intelligence/power_state_machine.py": "7be2cf976c34bf7a5947e2b54631be328d4fa75d2afd4b3dc61cfd6789ce2ffb",
+    "src/sc_neurocore/compiler/intelligence/pqc_protection.py": "3e0207a2ac2c1c200cb213580ea4ed940e3ad0bd941b78c28667d7e069d5e534",
+    "src/sc_neurocore/compiler/intelligence/provenance_chain.py": "5632be979bbcea29b655c71fb418af2482107fe9784e61f0122ce0ab0f60d054",
+    "src/sc_neurocore/compiler/intelligence/reconfig_planner.py": "2eddefe0f4f3b02b934901865bcd21d36590cbdce17f1662bcf1314bfadc6f51",
+    "src/sc_neurocore/compiler/intelligence/regression_watchdog.py": "c97f99156dacd46442cacd2eba6b70c9182e524cccd48d96effb4d24f412aa4a",
+    "src/sc_neurocore/compiler/intelligence/reporting.py": "97cd2e1a27879cf4b2606e1fbce057fea2e0b721181891ec54f0542e185c2260",
+    "src/sc_neurocore/compiler/intelligence/reversible_logic.py": "485627a5152a4bc1bcc31b0c1b77dbe5c7a99ff5584fa084b7185d4637b8e120",
+    "src/sc_neurocore/compiler/intelligence/sbom_gen.py": "2925c8e10cac30183f152042bdde80536467324dda03d7efeb2837c8ce3d3581",
+    "src/sc_neurocore/compiler/intelligence/security_and_compliance.py": "30f4f032f191fae8df66af56a0a2a8a18e2e5d8996df6704a2c6f04d20668dbd",
+    "src/sc_neurocore/compiler/intelligence/seu_scrub_scheduler.py": "bfc20ab524d7910291aef4d2936124b0abeb60f637d3717ae5297832f250607b",
+    "src/sc_neurocore/compiler/intelligence/shadow_twin.py": "8b1f9526880384ca26fbdc3a97ebe7d49adeaaab5b9e0c945288e2f69504692b",
+    "src/sc_neurocore/compiler/intelligence/side_channel_lint.py": "3488e336d7e2be0eb610654ce677004fbf14cc01bb3e4419b36aaa2045e5ceaf",
+    "src/sc_neurocore/compiler/intelligence/soc_and_chiplet.py": "6f32cc4dbef12262e5a0ea7b3b0aff384c6131284e7668ee66c88aa29045b088",
+    "src/sc_neurocore/compiler/intelligence/storage_recommendation.py": "9434843c34f8a25d0f172587028100e7234607ea708faf4d0137422a5aa3e03d",
+    "src/sc_neurocore/compiler/intelligence/supply_chain_risk.py": "45897795d0a5d0e4fed40f928b1ce9a830dba445809ec8859a5092a6bf426154",
+    "src/sc_neurocore/compiler/intelligence/target_comparison.py": "18ff546ca04df06b513a5eecccbd2dc0d473206161d5ed01fb7d1a2f9f9ca2d4",
+    "src/sc_neurocore/compiler/intelligence/target_recommender.py": "067d5e784698bf5fb056d0dfdaf3f66d03ce18f12e8f0d925e54a121a03b8bc6",
+    "src/sc_neurocore/compiler/intelligence/tcl_gen.py": "2e93fefd84706f7580213feb6dc4e6c272c4c67f85de32c2dea1234f46b16f67",
+    "src/sc_neurocore/compiler/intelligence/telemetry_ingestion.py": "a7d75b6418535ac84ffa78c076f8ced3071b9f40a3aaad9bf595c999e611c3b4",
+    "src/sc_neurocore/compiler/intelligence/testbench_gen.py": "ef3c7dbf5d700067b3eb756145505aa52b8adeeae9760ed511ba17fe11345325",
+    "src/sc_neurocore/compiler/intelligence/thermal_analysis.py": "1fe037cba8041b911cd43aa865b82346ba571bb46e56716516da919e3718ec18",
+    "src/sc_neurocore/compiler/intelligence/timescale_partitioner.py": "0b7400a84f542c4ed26ab750157e9d9c9668e751d8e0aad556568c137cde9273",
+    "src/sc_neurocore/compiler/intelligence/timing_closure.py": "7cb030fc50d2f0c3c02155c5f9047f766e246924eea2aa7b295b5465225b81ff",
+    "src/sc_neurocore/compiler/intelligence/tmr_wrapper.py": "839e802c6f005f5ef84f241acc8054d27e790dd6c00313e958efd3bc233d06ad",
+    "src/sc_neurocore/compiler/intelligence/trojan_lint.py": "504ca419ecef3d7430c4af641d3237f5050c6f4b70d36310ba3c070aa1d69a02",
+    "src/sc_neurocore/compiler/intelligence/ucie_partitioning.py": "f5a5a0720303a87de61fc85245e657fb47ca8cea5f20f11f7047c06b37be6083",
+    "src/sc_neurocore/compiler/intelligence/ucie_protocol_mapper.py": "74402ca357952f9b56a5fb14c527d9906364290cdf639ada746be1fd9eb3bc1e",
+    "src/sc_neurocore/compiler/intelligence/verification_and_safety.py": "5f79f7727ccf69b7b7a691a028311d6a80d7e02dd528e3f3f8ff91d03c64010a",
+    "src/sc_neurocore/compiler/intelligence/vhdl_emitter.py": "bf3740a3c65826d5f7a24f4a2de68ae54fc651ee9c7ef504ca762b5e60662870",
+    "src/sc_neurocore/compiler/intelligence/watermark.py": "41dba40d36a4e422477826856497603b342e0cabbb6d66ed44c7b63032e93852",
+    "src/sc_neurocore/compiler/intelligence/weight_noise.py": "d0fd0347acbb3d71d091c9c6b35e690919daa20ab4e8319149646e1563f11962",
+    "src/sc_neurocore/compiler/intelligence/weight_rom.py": "277a4e8e15f8c02ac56d430c6ab03ce934fb8c8595d6cddbcb0ac1327aab6cf6",
+    "src/sc_neurocore/compiler/intelligence/wetware_mea.py": "593818bee10ac91565de31b967dc4604ca952174df726d422637b2531d26ce4d",
+    "src/sc_neurocore/compiler/ir_type_checker.py": "0e85973c8cc15f4f2d10c8c6a7389c633f9afc15752df17ecade852904a3e186",
+    "src/sc_neurocore/compiler/layer_precision.py": "e7960db8ed6a70ddff6da6e8453fdd547dabbf0e9fc5e44f440ac110b52a731b",
+    "src/sc_neurocore/compiler/length_planner.py": "94019da1085715864b3c9308c2b70d5b52960db2d6ff0f1f74da7b0d47e91029",
+    "src/sc_neurocore/compiler/live_control.py": "941e58034f4312a7fefff9f28ef07528d7a90c12f666dce938639dc550ae5eb7",
+    "src/sc_neurocore/compiler/live_control_ops.py": "9a3a49d6b99e6495ba4a55d072d2ef1d98e4aadce42de936b42169b79f8f1b51",
+    "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
+    "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
+    "src/sc_neurocore/compiler/lut_accuracy.py": "09bbd9215875e1e70098eefa1069ed4e9d03d09d14b5369543ef63d4eb245bb8",
+    "src/sc_neurocore/compiler/magnitude_function_programs.py": "6562e0ac0e99366312be7028f62d316a5d4d5e895bd79a269e8b1d6afe67cd59",
+    "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
+    "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
+    "src/sc_neurocore/compiler/mixed_dense_kernel.py": "d26d86ba9c6a99d4dc383bec7df6e0569f9ac18570e8c8ad51c066d37fe7b6e3",
+    "src/sc_neurocore/compiler/mixed_dense_quantization.py": "f08176966d70043f3c3647a0491386fa3b4844c424ff82498696e5a7c6dc1b3c",
+    "src/sc_neurocore/compiler/mixed_precision.py": "68b351f32e4b107183264ed56d543986388f680b11fd00df0d4b7f21f7e2c3a6",
+    "src/sc_neurocore/compiler/mixed_precision_spec.py": "dfd2961fca978b58b59deef66385adcc73bc0c6471612e5e54c758a6b4f30391",
+    "src/sc_neurocore/compiler/mlir_emitter.py": "70012768e830577eda9fbe14701c30ffb01b61f42ef5788604072cd0dfddd926",
+    "src/sc_neurocore/compiler/multi_target.py": "4b9ca9228250f173801cbb6b8b66be08b09df228c13530d9a5afbee9940820c5",
+    "src/sc_neurocore/compiler/native_equation/__init__.py": "be45609796439c8cc4f864cd819cabc358f7b627b5f20e070380fa7bd1ef2063",
+    "src/sc_neurocore/compiler/native_equation/arithmetic.py": "2d34d12a454ab34a4419a99ab0f027605148ca90bf84abf5ea0a868854c8dc10",
+    "src/sc_neurocore/compiler/native_equation/clock.py": "8c6322e513cca6af9580f5cd8c438dceadbaae71da6a8856a6dc42a29791b7e1",
+    "src/sc_neurocore/compiler/native_equation/commits.py": "ac9367b7462c99f8442fa0c2646b04349b0f79e1b4c8697870620a48b17c2df0",
+    "src/sc_neurocore/compiler/native_equation/division.py": "1628c778f04c28b9b9d47d3d97b16efe2ad32055bccc734b096a562e340f5554",
+    "src/sc_neurocore/compiler/native_equation/events.py": "f50cb124eb7177c02b22406fb5cff9c3ebc2d6d53a181e5bb19c991806fb1900",
+    "src/sc_neurocore/compiler/native_equation/expressions.py": "7a43e88b4ad3c5bfa52936a7d2b7c2843384ca1190a934c6a3380177afe3fb16",
+    "src/sc_neurocore/compiler/native_equation/functions.py": "71c2d526b1135c14359c1ba202427ebb3c871da024fe686952715f0c5de397aa",
+    "src/sc_neurocore/compiler/native_equation/integrators.py": "86a8874460467a7919dafcecbcdc5c9437cbd666b71f028d15e80000246ecf79",
+    "src/sc_neurocore/compiler/native_equation/replay.py": "a2964423652be6720d655586702bd52cb3166fbfa3fce70146b9e8e5556408a5",
+    "src/sc_neurocore/compiler/native_equation/scheduling.py": "e9fde245f1a0169261a228ad2679a7a99bb1a620c03d9056cc2abef603835a3c",
+    "src/sc_neurocore/compiler/native_equation/source.py": "68786d3e21edcdc3c7a057f0a7773089fdeb69856ebbc624098463dfb6e188dd",
+    "src/sc_neurocore/compiler/native_equation/transactions.py": "f4e124f9c299f4f7924ede0c79c6006d6376c6fb59480869cac369d397824122",
+    "src/sc_neurocore/compiler/native_program.py": "8cf927800261374e5963633f713bd16093f9b925659ef591556f12103dbceb3e",
+    "src/sc_neurocore/compiler/operator_abstraction.py": "2e6958b7688de2532243a30ed36a3c1d36bb98aa57146e1f81a63b5b9fd5960b",
+    "src/sc_neurocore/compiler/overflow_proof.py": "11faaa112afbb4418917d916ab32200c9f17316faa30b4f10616aa062e38fb7f",
+    "src/sc_neurocore/compiler/philox_threshold.py": "bbb3663589361be314b96092de5750abec63a49496d7a4f92b31aac283a7b448",
+    "src/sc_neurocore/compiler/pipeline.py": "7d6b3f7eeb4251b092a9aa147ca3d1d083a46ed98f1d2ed0dc99faf13cc4f941",
+    "src/sc_neurocore/compiler/pipeline_analysis.py": "babc674c5035c29e0e38d32f75f000e9dc3d8322844025a97034410300c03569",
+    "src/sc_neurocore/compiler/platforms/__init__.py": "fa13610342f0a5d90835a0c905d5acc14ca3392a482214aace697b8ff1072d05",
+    "src/sc_neurocore/compiler/platforms/_cmos_accelerator_profiles.py": "78d96a5d6c5e10768ac7442392d93cb93aa565b36480a96889c99530391f9d4a",
+    "src/sc_neurocore/compiler/platforms/_cmos_architecture_profiles.py": "bfdf8f9bd83ae9b83345581ad48300379561281bca87557162ab768fd9ade2ef",
+    "src/sc_neurocore/compiler/platforms/_cmos_fpga_profiles.py": "fdd8e3129ceb17aaf1a6f9f3dfcafa7a4184de5f3be8a0f4259c13ef52dce65d",
+    "src/sc_neurocore/compiler/platforms/_cmos_processor_profiles.py": "5e817c2a8772f4b3721a67866465ea9bc95b5a96bfdcb52c21a5b56b0c036b0c",
+    "src/sc_neurocore/compiler/platforms/_cmos_reference_profiles.py": "dd4cf30ab39d4538f9eff82a2707a7c69e3408c3ac87753bb3a01ba8182e48f1",
+    "src/sc_neurocore/compiler/platforms/_event_driven_hardware_profiles.py": "4a23a6bd5e75b61c5a728069e5fe97c3f492a064963f6dc30e591e95272310ff",
+    "src/sc_neurocore/compiler/platforms/_heterogeneous_accelerator_profiles.py": "086d214c28d3d570f1de2e275a45f42a82dada4c936d71cdc75d17f4cf482e6a",
+    "src/sc_neurocore/compiler/platforms/_memory_compute_profiles.py": "e6b64766af114a41346e51288e87b0f7394d528ee232429519e3c3c623886322",
+    "src/sc_neurocore/compiler/platforms/_physical_compute_profiles.py": "70a09582ab2ead1e78200e329480dbaafe965cb47074b8b64341941d68190929",
+    "src/sc_neurocore/compiler/platforms/_programmable_aerospace_profiles.py": "605d330e72162dab920599287b2b1083551841801f4033c3e6d22e6faed49689",
+    "src/sc_neurocore/compiler/platforms/cmos_profiles.py": "88d565c29899204017a95a6d4e3a62282d2f2ce68a2658b55ac657a49f20a559",
+    "src/sc_neurocore/compiler/platforms/exotic_profiles.py": "4a307b9c7b6588030b67807f2f7a77c08701d89fe69373f97a16da984168cf94",
+    "src/sc_neurocore/compiler/platforms/neuromorphic_profiles.py": "a2e896cc1d51863e8d0d94e8f186bc7ded215b5149c77136430c9b6ac03fb58d",
+    "src/sc_neurocore/compiler/platforms/registry.py": "b8474f5f58c50e3b448f6db05beee85fb57c6b79dfd528620673b8a6f83f6068",
+    "src/sc_neurocore/compiler/power_accuracy.py": "f978c09259ee44e2f2a0bdd470c2c9bdc8fea7099683830b0861ab69a75b74e5",
+    "src/sc_neurocore/compiler/power_estimator.py": "3307fbaa97d4c077d163fd076638f91a3a61a8bda59745765497ab33c4959fed",
+    "src/sc_neurocore/compiler/power_unit_programs.py": "4e132f8d3fd8182f7be09ba4ae785aac45ba570e0e406f1a5b938cf92a8346fa",
+    "src/sc_neurocore/compiler/power_units.py": "7df48c1e84df8b6e0fe8455327e0344f675d29d3aaf67c9186d9d41c62646900",
+    "src/sc_neurocore/compiler/precision_config.py": "1c658ab3e4791c3fb20f37c5a9cfb41579704dc09903c1a2f2d6be07a0cc985b",
+    "src/sc_neurocore/compiler/precision_pairs.py": "82af249989cfec4eaa66e19a733541966f621843ebf58d41a9db47020749b1cf",
+    "src/sc_neurocore/compiler/precision_presets.py": "192c88ac651a584d4debd37c48154f1c226023da4e0ace67904369e287802651",
+    "src/sc_neurocore/compiler/precision_solver.py": "4974a35cab119e0c2258faae575baf19d00986564b5aeced38172515a35afef5",
+    "src/sc_neurocore/compiler/proof_transforms.py": "808decbee8fdbe0e26431a3f596beea76c56ae97ab7ddfcab34b650ad5d542bc",
+    "src/sc_neurocore/compiler/q_format.py": "c069e20de19f77fe2f42be03d4099e2de8a27e58c3553a31d3301989b1cf9052",
+    "src/sc_neurocore/compiler/quantization_reports.py": "7e8dd051596582f154f564156629b6ced93168ac52c82dc819dd43fd27e47c57",
+    "src/sc_neurocore/compiler/quantize_core.py": "cfea1879af83675f436295e4360e486f03eb03ae44394b9815a09d828f060c01",
+    "src/sc_neurocore/compiler/quantizer.py": "a1c22cffdb1877bcb1ed7c8ec520e0b906ede6d09d1cb473adb3e13b9c7122c0",
+    "src/sc_neurocore/compiler/random_unit_programs.py": "4fd7dc2f4c3a24e9567e7bd0df8a86e75572e8be7e0db877ed56256a11d27a30",
+    "src/sc_neurocore/compiler/random_units.py": "c1f41d2ecf9d9f8c26db7d99d8d64c25972ae9f5c51eef9c21470354eb20e421",
+    "src/sc_neurocore/compiler/reciprocal_root_programs.py": "d2329e8ecff469e457c55e7ee0c92f88c72254dffccf3523571235b059d912cc",
+    "src/sc_neurocore/compiler/reciprocal_root_units.py": "c9a29bc80dc4f98aaf67a3cd18e03e6f89d9fb8bd3cc6fca61909265fbb52819",
+    "src/sc_neurocore/compiler/resource_estimator.py": "9c29c031f93dc37627611c0a285217f54508d37ad12f3ecd3f9891eb2dabd7c8",
+    "src/sc_neurocore/compiler/riscv_driver.py": "ba0a7722fe42d0d270cf3b8cb1f51ffd3ed7c7881c21e769360f47143990265b",
+    "src/sc_neurocore/compiler/sby_formal.py": "69ae2b5d7ec0110cac11305bd8e68d77599c421ff476a6330675cb45dc4b9332",
+    "src/sc_neurocore/compiler/sensitivity_analysis.py": "104dd137733397908f59135f4921960fb94cc6c605cc217f4609db1091922a2b",
+    "src/sc_neurocore/compiler/slr_placement.py": "42de08c4a7ff246f6ad35d51f8b326751e2c45c8a8e0ea430500e8c30f1ac3de",
+    "src/sc_neurocore/compiler/static_analysis.py": "490f7ebff6d9053272aa5aa136b89b2f4ccffa250c123a228ce794c994bd7e2f",
+    "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
+    "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
+    "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
+    "src/sc_neurocore/compiler/testbench_gen.py": "c00311c1b63cc9dba3d6135c664d5bfb965a453f8f8092bf4b41d8140fdca614",
+    "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
+    "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
+    "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "6aa4af522d8056365a9a4c6dd3ce37527b437ec617dcd938c886c842049a11d7",
+    "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
+    "src/sc_neurocore/neurons/_units.py": "c04c063bbd229425f519794919c3f6af838150eda03f8af97c741099a8c95f42",
+    "src/sc_neurocore/neurons/equation_builder.py": "ab50451093b73c4f7d37ed694ecadc73d46171e5c1fc836ecfa1bf12075eb7be",
+    "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
+    "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
+    "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
+    "src/sc_neurocore/neurons/equation_random.py": "edb76121a97de6c41660b7513511f5d5c06fa040edcd2688aa2e2c52f671a9bc",
+    "src/sc_neurocore/neurons/equation_refusals.py": "5ebb46ecaaf66f8108c05bbb3207d5e6b82d70138c6ba11cc4c2848197156692",
+    "src/sc_neurocore/neurons/equation_safety.py": "5494a8c3f93de7f359048370e9b22e433fdbaec64f4f031faafbcd46e4b24569",
+    "src/sc_neurocore/neurons/equation_units_runtime.py": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+    "src/sc_neurocore/neurons/expression_derivative.py": "eb010dedeeb34d0f82921943479099f7b8a02f20ff895aa97c427e0f7a8dde5c"
+  },
+  "source_state": "base plus source-hash-bound working overlay",
+  "timed_region": "compile_to_ir, source replay, both native emitters and output checksum",
+  "versions": {
+    "numpy": "2.5.4",
+    "pint": "0.26.2",
+    "sc-neurocore": "3.16.0",
+    "sc-neurocore-engine": "3.16.0",
+    "sympy": "1.14.0"
+  },
+  "warmup_per_case": 2
+}

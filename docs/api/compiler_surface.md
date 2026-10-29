@@ -49,10 +49,13 @@ can change without a deprecation window.
 | `philox_threshold` | internal build tool | Lowers a `threshold_rng="philox"` stochastic threshold to the level threshold `rand(STOCHASTIC_SITE) < p` before RTL and kernel emission. |
 | `exact_normal` | internal build tool | Integer reference of the 60-bit `randn()` lowering (`random_precision="exact"`) the random-unit programs mirror. |
 | `expr_lut_tables` | internal build tool | Shared transcendental look-up tables for the expression emitters. |
+| `fixed_expression_ranges` | direct public module | Conservative encoded argument intervals with the expression datapath's rounding and signed narrowing. |
 | `fixed_point_quantization` | direct public module | Fixed-point quantization primitives back direct quantization workflows. |
 | `formal_evidence` | internal build tool | Evidence writer used by hardware audit pipelines. |
 | `formal_property_check` | internal build tool | SymbiYosys RTL-property runner behind the hardware evidence pipeline. |
 | `fpga_wrapper` | internal build tool | Wrapper generator behind compiler and deployment paths. |
+| `function_call_accuracy` | direct public module | Measures individual call-domain interval hulls with explicit mathematical-domain exclusions and sampled or exhaustive scope. |
+| `function_call_domains` | direct public module | Source-located per-call domains and accuracy records for authored equations, events and implicit integration calls. |
 | `function_unit_ir` | internal build tool | Straight-line 64-bit integer program behind the `v2` function units and the random draws, emitted to Verilog, C and Rust. |
 | `function_unit_programs` | internal build tool | Builds each `v2` function unit as an integer program for the expression emitters. |
 | `function_units` | internal build tool | Integer reference of the `v2` function units that the RTL and the bit-true kernel mirror. |

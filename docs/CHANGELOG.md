@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Report source-located encoded argument intervals and separate numerical measurements for each approximation call, including event and exponential-Euler expressions. Preserve mathematical-domain exclusions, empty-domain results and exhaustive versus sampled scope. Add a source-bound first-call/cached analysis benchmark; generated arithmetic and the legacy lowering default remain unchanged.
+
 - Add opt-in v2 general constant and dynamic positive-base powers across Verilog, fixed C/Rust and source-bound native IR, with portable C++ math-library execution. Keep literal exponents independent of the base format and publish conditional domains, sampled measurements and conservative arithmetic bounds. Preserve the legacy default and repeated-multiply arithmetic.
 - Add opt-in v2 `rsqrt(x)` across Python equations, Verilog, fixed C/Rust, portable C++ and native IR/source replay. Preserve inverse-square-root physical units; round positive encoded inputs with a half-LSB bound using bounded integer arithmetic and require proven positivity for state-dependent derivatives.
 

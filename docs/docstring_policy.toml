@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1471
+expected_file_count = 1480
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -6018,3 +6018,39 @@ rationale = "Hosted submission and administrator cancellation keep their explici
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_cancel.py"
 rationale = "Authoritative cancellation preserves laboratory actor custody on both laboratory and general administrator routes."
+
+[[file]]
+path = "src/sc_neurocore/compiler/fixed_expression_ranges.py"
+rationale = "Encoded argument intervals follow signed narrowing, reciprocal arithmetic and admitted rounding, with conservative bounds for unconstrained inputs."
+
+[[file]]
+path = "src/sc_neurocore/compiler/function_call_accuracy.py"
+rationale = "Per-call mathematical domains retain exclusions, exhaustive or sampled scope and independent numerical references; failed error bounds propagate."
+
+[[file]]
+path = "src/sc_neurocore/compiler/function_call_domains.py"
+rationale = "Every source occurrence and implicit integration call keeps its own encoded argument bounds and measured numerical scope."
+
+[[file]]
+path = "tests/test_fixed_expression_ranges.py"
+rationale = "Generated C with undefined-behaviour checks, Rust with overflow checks and clocked Verilog exercise inferred intervals and exact singleton bounds."
+
+[[file]]
+path = "tests/test_function_call_accuracy.py"
+rationale = "Real unit outputs are compared with independent references over admitted domains, including empty domains and deliberately corrupted bounds."
+
+[[file]]
+path = "tests/test_function_call_domains.py"
+rationale = "Authored calls, event paths, implicit exponential Euler and preserved powers retain separate contracts through the public collector."
+
+[[file]]
+path = "tests/test_hardware_numeric_contract_call_domains.py"
+rationale = "The public numeric contract and its JSON carry separate source domains; the documented example executes through that same API."
+
+[[file]]
+path = "benchmarks/bench_function_call_domains.py"
+rationale = "Fresh per-model interpreters distinguish first analysis from cached repetitions, with real context, complete result checks and source snapshots."
+
+[[file]]
+path = "tests/test_bench_function_call_domains.py"
+rationale = "Actual benchmark workers and recorded timings are exercised, while invalid counts, changed contracts, imports and source snapshots are refused."
