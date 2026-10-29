@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Lock the Mojo environment to conda-forge Python 3.15.2, which fixes CVE-2026-114583 (`tarfile.tar_filter` link bypass) reported for 3.15.0, with the matching ICU-enabled SQLite 3.54.1. Remove the now unused CVE-2025-15367 exception and keep its acceptance rules tested on the recorded hosted scanner match. The dependency-audit policy test also checks in-repository composite actions.
+
 - Accept partial numeric initial values and held state in Studio projects,
   simulation and native equation compilation. Preserve held variables in the
   experiment digest, recorded traces, source replay and exported requests;

@@ -119,21 +119,26 @@ coverage. See [Anchore's ecosystem documentation](https://oss.anchore.com/docs/g
 
 ### Exact fixed-code exceptions
 
-`tools/security_scan/advisory_exceptions.toml` names one advisory, locked package
-version, artifact digest, fixed source path, source digest and review-by date.
+Each record in `tools/security_scan/advisory_exceptions.toml` names one advisory,
+locked package version, artifact digest, fixed source path, source digest and
+review-by date.
 An exception applies only if its lock exists in the committed inventory, its
 exact package and advisory match, and every audit re-establishes its proof.
 Unused, expired or unavailable proofs block the audit; no finding is hidden from
 the raw Grype output or the accepted/blocked decision.
 
-The current record addresses Grype's generic comparison of Python 3.15.0 against
-its prerelease fix boundary 3.15.0a6 for CVE-2025-15367. Python version ordering
-places the final release after that boundary. The installed `poplib.py` must be
-byte-identical to its SHA-256-bound file from the immutable CPython 3.15.0 release
-commit, which contains the [vendor fix](https://github.com/python/cpython/pull/143924).
-Changing the locked artifact, the installed source, the reported fix or the
-review date invalidates acceptance. This record concerns that one fixed module;
-it does not assert that the interpreter has no other vulnerabilities.
+No record is currently needed. The last one addressed Grype's generic comparison
+of Python 3.15.0 against its prerelease fix boundary 3.15.0a6 for CVE-2025-15367:
+Python version ordering places the final release after that boundary, and the
+installed `poplib.py` had to be byte-identical to its SHA-256-bound file from the
+immutable CPython 3.15.0 release commit, which contains the
+[vendor fix](https://github.com/python/cpython/pull/143924). On 2026-10-29 the
+Mojo lock moved to Python 3.15.2, which also fixes CVE-2026-114583
+(`tarfile.tar_filter` link bypass, blocked in 3.15.0). Grype does not report
+CVE-2025-15367 for 3.15.2, so the record became unused and was removed. Its
+acceptance and refusal rules stay tested on the recorded hosted Grype match
+(`tests/fixtures/grype_conda_python_3_15_0_cve_2025_15367.json`) and the
+immutable vendor source.
 
 The additional security-packet OSV runner also treats every nonzero scanner
 exit as failure. A partially written report cannot turn a service error green.

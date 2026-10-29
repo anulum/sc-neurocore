@@ -16,10 +16,10 @@ platforms = ["linux-64"]
 
 [dependencies]
 mojo = "==1.0.0"
-python = ">=3.15,<3.16"
-libpython = ">=3.15,<3.16"
+python = ">=3.15.2,<3.16"
+libpython = ">=3.15.2,<3.16"
 # Keep SQLite Unicode casing and collation through its ICU-enabled Linux build.
-libsqlite = { version = "==3.54.0", build = "h13e7031_1" }
+libsqlite = { version = "==3.54.1", build = "hf739112_1" }
 
 [tasks]
 run-kernels = "mojo run kernels.mojo"

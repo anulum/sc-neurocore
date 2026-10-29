@@ -1,0 +1,141 @@
+{
+  "artifact": {
+    "id": "db2d22090912427e",
+    "metadata": {
+      "build": "h6e52b48_100_cp315",
+      "build_number": 100,
+      "channel": "https://conda.anaconda.org/conda-forge/",
+      "fn": "python-3.15.0-h6e52b48_100_cp315.conda",
+      "md5": "29cb4ef071444f9debb0efdce620e1d6",
+      "name": "python",
+      "sha256": "66b6ac5dd5c64ce34a9c610cacdcc25fe43d7daf29611b6c48036a3c51771374",
+      "size": 32711189,
+      "subdir": "linux-64",
+      "version": "3.15.0"
+    },
+    "metadataType": "conda-metadata-entry",
+    "name": "python",
+    "purl": "",
+    "type": "conda",
+    "version": "3.15.0"
+  },
+  "match": {
+    "artifact": {
+      "cpes": [
+        "cpe:2.3:a:python:python:3.15.0:*:*:*:*:*:*:*"
+      ],
+      "id": "db2d22090912427e",
+      "language": "",
+      "licenses": [
+        "Python-2.0"
+      ],
+      "locations": [
+        {
+          "accessPath": "/conda-meta/python-3.15.0-h6e52b48_100_cp315.json",
+          "path": "/conda-meta/python-3.15.0-h6e52b48_100_cp315.json"
+        }
+      ],
+      "name": "python",
+      "purl": "",
+      "type": "conda",
+      "upstreams": [],
+      "version": "3.15.0"
+    },
+    "matchDetails": [
+      {
+        "fix": {
+          "suggestedVersion": "3.15.0a6"
+        },
+        "found": {
+          "cpes": [
+            "cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"
+          ],
+          "versionConstraint": "< 3.15.0a6 (unknown)",
+          "vulnerabilityID": "CVE-2025-15367"
+        },
+        "matcher": "stock-matcher",
+        "searchedBy": {
+          "cpes": [
+            "cpe:2.3:a:python:python:3.15.0:*:*:*:*:*:*:*"
+          ],
+          "namespace": "nvd:cpe",
+          "package": {
+            "name": "python",
+            "version": "3.15.0"
+          }
+        },
+        "type": "cpe-match"
+      }
+    ],
+    "relatedVulnerabilities": [],
+    "vulnerability": {
+      "advisories": [],
+      "cvss": [
+        {
+          "metrics": {
+            "baseScore": 5.9
+          },
+          "source": "cna@python.org",
+          "type": "Secondary",
+          "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:H/UI:N/VC:L/VI:H/VA:N/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+          "vendorMetadata": {},
+          "version": "4.0"
+        }
+      ],
+      "cwes": [
+        {
+          "cve": "CVE-2025-15367",
+          "cwe": "CWE-77",
+          "source": "cna@python.org",
+          "type": "Secondary"
+        }
+      ],
+      "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2025-15367",
+      "description": "The poplib module, when passed a user-controlled command, can have\nadditional commands injected using newlines. Mitigation rejects commands\ncontaining control characters.",
+      "epss": [
+        {
+          "cve": "CVE-2025-15367",
+          "date": "2026-10-28",
+          "epss": 0.00377,
+          "percentile": 0.31581
+        }
+      ],
+      "fix": {
+        "available": [
+          {
+            "date": "2026-03-03",
+            "kind": "first-observed",
+            "version": "3.15.0a6"
+          }
+        ],
+        "state": "fixed",
+        "versions": [
+          "3.15.0a6"
+        ]
+      },
+      "id": "CVE-2025-15367",
+      "namespace": "nvd:cpe",
+      "risk": 0.20546500000000004,
+      "severity": "Medium",
+      "urls": [
+        "https://github.com/python/cpython/commit/b234a2b67539f787e191d2ef19a7cbdce32874e7",
+        "https://github.com/python/cpython/issues/143923",
+        "https://github.com/python/cpython/pull/143924",
+        "https://mail.python.org/archives/list/security-announce@python.org/thread/CBFBOWVGGUJFSGITQCCBZS4GEYYZ7ZNE/"
+      ]
+    }
+  },
+  "provenance": {
+    "artifact": "dependency-audit-pixi",
+    "artifact_sha256": "29020c1ddcb12394ddfcdc9473fe4d581308732a53f4fb5c56395d9afffaa5d0",
+    "artifact_trimmed_to": "id, name, version, type, purl, metadataType and the package identity fields of metadata; the installed file list is omitted",
+    "description": "Verbatim Grype match and matched Syft artifact from the hosted pixi lock audit of commit 00067665fc50b9ab07f8574ee5f97e67b1e771d9 (Mojo environment with conda-forge python 3.15.0), kept so the fixed-code exception path is exercised on real scanner output after the lock moved to python 3.15.2.",
+    "grype_report": "lock-1/grype/stdout.json",
+    "grype_report_sha256": "698e120fff612f20f5f109ca04683c50ed139782b12323f45aa8f08f4a845572",
+    "grype_version": "0.120.1",
+    "syft_report": "lock-1/syft/stdout.json",
+    "syft_report_sha256": "319149cfb2eb58c06ca69e3efde3ab69ab6aaca24dbb0d7d25b15784999dbb5a",
+    "syft_version": "1.54.1",
+    "workflow_run": "https://github.com/anulum/sc-neurocore/actions/runs/40876783139"
+  }
+}
