@@ -178,7 +178,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Studio catalogue models | 185 |
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
-| Optional extras | 32 |
+| Optional extras | 31 |
 | Python test files | 5479 |
 | Public documentation pages | 657 |
 | GitHub Actions workflows | 24 |
@@ -786,7 +786,6 @@ pip install sc-neurocore[gpu]         # CuPy CUDA experiments
 pip install sc-neurocore[jax]         # JAX-backed experiments
 pip install sc-neurocore[quantum]     # research-grade Qiskit/PennyLane bridges
 pip install sc-neurocore[annealing]   # dimod/neal parity for the Ising/QUBO bridge
-pip install sc-neurocore[lava]        # Lava interop experiments
 pip install sc-neurocore[research]    # plotting, graph, ONNX, and torch research stack
 pip install sc-neurocore[full]        # local research environment only; pulls heavy extras
 ```

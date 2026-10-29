@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Breaking: the `lava` optional extra is removed. Its only requirement, `lava-nc`, has no release for Python 3.11 or later (the latest, 0.10.0, requires `<3.11`), so on the supported Pythons `pip install "sc-neurocore[lava]"` installed nothing. The Lava adapter remains a handoff artefact that names `lava-nc` in its generated manifest; the optional dependency matrix states why it cannot be installed alongside SC-NeuroCore.
+
 - Breaking: Python 3.11 is now the minimum supported version (`requires-python = ">=3.11"`); Python 3.10 is no longer tested, built or published for, and the `tomli` fallback for Python 3.10 is dropped. Install on Python 3.11 to 3.14.
 
 - The generated safety-manual template names the fields an assessor must fill as "to be supplied by the assessor" instead of printing `TODO`. The template remains a non-certifying draft.

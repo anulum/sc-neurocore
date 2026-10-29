@@ -975,7 +975,7 @@
   "counts": {
     "github_workflows": 24,
     "model_documentation_pages": 200,
-    "optional_extras": 32,
+    "optional_extras": 31,
     "public_api_exports": 45,
     "public_documentation_pages": 657,
     "python_model_classes": 183,
@@ -3246,7 +3246,6 @@
       "hdl",
       "jax",
       "julia",
-      "lava",
       "license",
       "minimal",
       "mpi",

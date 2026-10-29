@@ -70,7 +70,7 @@ EXPECTED_ROWS = (
     DependencyRow(
         import_name="lava-nc",
         distribution="lava-nc",
-        declared_extra="lava",
+        declared_extra=None,
         test_paths=("tests/test_nir_neuromorphic_adapters.py",),
     ),
     DependencyRow(
