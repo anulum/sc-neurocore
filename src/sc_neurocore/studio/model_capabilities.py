@@ -38,7 +38,8 @@ from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.readiness import REPO_ROOT
 from sc_neurocore.studio.model_catalogue import _compile_configuration
 from sc_neurocore.studio.model_numeric_contracts import bit_true_mirrored
-from sc_neurocore.studio.synthesis import _TARGETS, check_tools
+from sc_neurocore.studio.synthesis import check_tools
+from sc_neurocore.studio.synthesis_profiles import _TARGETS
 
 MODEL_CAPABILITIES_SCHEMA_VERSION = "sc-neurocore.studio.model-capabilities.v1"
 FORMAL_INVENTORY = REPO_ROOT / "hdl" / "formal" / "catalogue" / "inventory.json"

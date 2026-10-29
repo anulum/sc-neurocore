@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1493
+expected_file_count = 1494
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -6106,3 +6106,7 @@ rationale = "Python trajectories retain omitted-state defaults, caller mappings,
 [[file]]
 path = "tests/test_equation_state_consumers.py"
 rationale = "The real CLI, generated testbench and adaptive wrapper expose held state with the declared reset and clock behaviour."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_capabilities.py"
+rationale = "Catalogue operations report the same canonical synthesis targets as the tools that execute them."
