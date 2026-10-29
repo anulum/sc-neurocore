@@ -124,6 +124,27 @@ it("emits native RTL with every authored equation and initial state through the 
   expect(state.svSource).toContain("module sc_equation_neuron");
 }, 60_000);
 
+it("compiles partial initial and held state through the visible Inspector controls", async () => {
+  const configuration = defaultEquationIrConfiguration();
+  configuration.model.method = "map";
+  configuration.profile.function_lowering = "v2";
+  act(() => { useStudioStore.setState({
+    equations: ["dv/dt = I**1.5+clip(I,.25,1)**clip(w,-1,1)"],
+    odeInit: { w: 0.5 }, dt: 1, equationIrConfig: configuration,
+  }); });
+  await click("Build IR");
+  const built = useStudioStore.getState().irResult;
+  expect(built?.output_widths).toEqual([
+    { name: "v_out", width: 16 }, { name: "w_out", width: 16 },
+    { name: "spike_out", width: 1 },
+  ]);
+  await click("Replay source");
+  expect(useStudioStore.getState().irResult?.source_replay).toBe("passed");
+  await click("Emit SV");
+  expect(useStudioStore.getState().svSource).toContain("w_out");
+  expect(useStudioStore.getState().irResult?.source_graph_sha256).toBe(built?.source_graph_sha256);
+}, 60_000);
+
 it("compiles, checks, replays and exports the authored source through Inspector controls", async () => {
   await click("Build IR");
   const built = useStudioStore.getState().irResult;

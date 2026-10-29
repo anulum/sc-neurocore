@@ -181,7 +181,8 @@ export function readEquationIrConfiguration(value: unknown): EquationIrConfigura
  *
  * Declaration arrays preserve author order through sorted worker JSON. Constant
  * selections deliberately freeze named playground parameter values. Unknown unit
- * keys, constant selections and initial states refuse instead of disappearing.
+ * keys and constant selections refuse instead of disappearing. Initial-state
+ * names also declare held words; missing numeric equation states stay implicit.
  *
  * @param input - Current equation playground and compiler configuration.
  * @returns Full native compiler inputs, with exact seed text.
@@ -197,12 +198,13 @@ export function equationIrRequest(input: EquationIrSourceInput): EquationIRReque
   const constants = names(m.constant_names, "Immutable constants");
   const points = names(p.pipeline_points, "Product pipeline points");
   declared(constants, Object.keys(input.odeParams), "Immutable constants");
-  declared(Object.keys(input.odeInit), states, "Initial state");
-  if (Object.keys(input.odeInit).length > 0 && Object.keys(input.odeInit).length !== states.length) {
-    throw new Error("Initial state must initialise every equation state.");
-  }
-  const stateUnits = unitMap(m.state_units, states, "State units");
+  const initialStates = Object.keys(input.odeInit);
+  const declaredStates = [...states, ...initialStates];
+  const stateUnits = unitMap(m.state_units, declaredStates, "State units");
   declared([...stateUnits.keys()], Object.keys(input.odeInit), "Initial state units");
+  if (m.units === "strict" && states.some((name) => !initialStates.includes(name))) {
+    throw new Error("Strict units require an initial value for every equation state.");
+  }
   const parameterUnits = unitMap(m.parameter_units, Object.keys(input.odeParams), "Parameter units");
   const dtUnit = optional(m.dt_unit), inputUnit = optional(m.input_unit);
   const dt = finite(input.dt, "Timestep");
@@ -226,7 +228,7 @@ export function equationIrRequest(input: EquationIrSourceInput): EquationIRReque
   const reset = input.reset.split(/[;\n]/).filter((line) => line.trim().length > 0)
     .map((line) => declaration(line, false));
   unique(reset.map((item) => item.name), "Reset");
-  declared(reset.map((item) => item.name), states, "Reset");
+  declared(reset.map((item) => item.name), declaredStates, "Reset");
   return {
     schema_version: "studio.equation-ir-request.v1",
     model: {

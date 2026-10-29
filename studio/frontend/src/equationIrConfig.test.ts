@@ -150,21 +150,39 @@ describe("ordered native equation requests", () => {
     expect(() => equationIrRequest(missing)).toThrow("undeclared symbol tau");
     const repeated = model({ constant_names: "tau,tau" }); repeated.odeParams = { tau: 10 };
     expect(() => equationIrRequest(repeated)).toThrow("repeat");
-    const initial = source(); initial.odeInit = { unknown: 1 };
-    expect(() => equationIrRequest(initial)).toThrow("undeclared symbol unknown");
     const reset = source(); reset.reset = "unknown = 0";
     expect(() => equationIrRequest(reset)).toThrow("undeclared symbol unknown");
     reset.reset = "v=0;v=1";
     expect(() => equationIrRequest(reset)).toThrow("repeat");
   });
 
-  it("refuses a partial initial state while retaining an explicit constructor default", () => {
+  it("preserves partial numeric state and requires explicit dimensional state", () => {
     const input = source();
     input.equations = ["dv/dt = -v + w + I", "dw/dt = -w"];
     input.odeInit = { v: 2 };
-    expect(() => equationIrRequest(input)).toThrow("Initial state must initialise every equation state.");
+    expect(equationIrRequest(input).model.initial_state).toEqual([{ name: "v", value: 2, unit: null }]);
+    input.equationIrConfig.model.units = "strict";
+    expect(() => equationIrRequest(input)).toThrow("every equation state");
+    input.odeInit = { v: 2, held: 1 };
+    expect(() => equationIrRequest(input)).toThrow("every equation state");
+    input.equationIrConfig.model.units = "none";
     input.odeInit = {};
     expect(equationIrRequest(input).model.initial_state).toEqual([]);
+  });
+
+  it("preserves held initial values and reset targets without inventing an equation", () => {
+    const input = model({ method: "map", rng_seed: "18446744073709551615", random_stream: "4294967295" });
+    input.equations = ["dv/dt = I**1.5+clip(I,.25,1)**clip(w,-1,1)"];
+    input.odeInit = { w: 0.5 };
+    input.reset = "w = w + .25";
+    input.dt = 1;
+    const request = equationIrRequest(input);
+    expect(request.model.equations).toEqual([
+      { name: "v", expression: "I**1.5+clip(I,.25,1)**clip(w,-1,1)" },
+    ]);
+    expect(request.model.initial_state).toEqual([{ name: "w", value: 0.5, unit: null }]);
+    expect(request.model.reset).toEqual([{ name: "w", expression: "w + .25" }]);
+    expect(input.odeInit).toEqual({ w: 0.5 });
   });
 
   it("refuses invalid source syntax and nonfinite playground values", () => {

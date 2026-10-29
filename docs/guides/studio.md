@@ -307,9 +307,11 @@ the result cache:
   unit; `steps` — the exact step count and effective duration. An oversized
   synchronous run is refused with `execution_mode = job_required` and the job
   route, never shortened.
-- `initial_state` — typed initial values (descriptor-declared for models,
-  explicit for every playground variable, undeclared ones at 0.0; an initial
-  value for an undeclared variable is rejected).
+- `initial_state` — typed initial values (descriptor-declared for models;
+  playground equation variables default to 0.0, and additional initial values
+  declare held state). Held variables keep their value between steps unless
+  an authored reset changes it. Both equation and held states enter the
+  experiment digest and the recorded state traces.
 - `protocol` — kind, amplitude, the explicit sine `frequency_hz`, the fixed
   step/ramp/pulse fractions and the SHA-256 of the drive samples.
 - `randomness` — `kind` (`none`, `seeded-model`, `diffusion-noise`), the

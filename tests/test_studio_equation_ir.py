@@ -88,6 +88,43 @@ class AuthoredEquationCompilerTests(unittest.TestCase):
                 self.assertEqual(replay.ir_text, result.ir_text)
                 self.assertEqual(replay.output_widths, result.output_widths)
 
+    def test_partial_and_held_states_reach_every_integrator_and_source_replay(self) -> None:
+        """The public constructor and compiler retain held words and omitted numeric zeros."""
+        for method in ("euler", "rk4", "exp_euler", "map", "gauss_seidel"):
+            with self.subTest(method=method):
+                request = EquationIRRequest.model_validate(
+                    {
+                        "schema_version": "studio.equation-ir-request.v1",
+                        "model": {
+                            "equations": [{"name": "v", "expression": "-v + w + I"}],
+                            "initial_state": [{"name": "w", "value": 0.5}],
+                            "method": method,
+                            "rng_seed": "18446744073709551615",
+                            "random_stream": 4294967295,
+                        },
+                    }
+                )
+                neuron = equation_model(request.model)
+                self.assertEqual(neuron.get_state(), {"w": 0.5, "v": 0.0})
+                neuron.step(0.5)
+                self.assertEqual(neuron.get_state()["w"], 0.5)
+                self.assertGreater(neuron.get_state()["v"], 0)
+                result = build_equation_ir(request)
+                source = json.loads(str(parse_ir(result.ir_text).source_payload))
+                self.assertEqual(source["model"]["initial_state"], [["w", 0.5], ["v", 0.0]])
+                self.assertEqual(source["model"]["equations"], [["v", "-v + w + I"]])
+                self.assertEqual(source["model"]["rng_seed"], 2**64 - 1)
+                self.assertEqual(source["model"]["random_stream"], 2**32 - 1)
+                self.assertEqual(
+                    [port.name for port in result.output_widths or []],
+                    ["v_out", "w_out", "spike_out"],
+                )
+                replay = replay_equation_ir(EquationIRTextRequest(ir_text=result.ir_text))
+                self.assertEqual(replay.ir_text, result.ir_text)
+                emitted = emit_equation_systemverilog(EquationIREmitRequest(ir_text=result.ir_text))
+                self.assertIn("w_out", emitted.systemverilog or "")
+                self.assertEqual(emitted.source_replay, "passed")
+
     def test_gauss_seidel_keeps_authored_state_order(self) -> None:
         """Canonical JSON key sorting cannot reorder the equation declaration array."""
         request = _request()
@@ -210,6 +247,36 @@ class AuthoredEquationCompilerTests(unittest.TestCase):
         self.assertEqual(
             source["model"]["base_state_units"]["v"], "kilogram * meter ** 2 / ampere / second ** 3"
         )
+        self.assertEqual(
+            replay_equation_ir(EquationIRTextRequest(ir_text=result.ir_text)).ir_text,
+            result.ir_text,
+        )
+
+    def test_strict_quantities_preserve_a_held_word_with_explicit_equation_state(self) -> None:
+        """Held-state admission retains physical quantities and still uses native source replay."""
+        model = AuthoredEquationModel(
+            equations=[EquationExpression(name="v", expression="(I - v + w) / tau")],
+            initial_state=[
+                NamedEquationValue(name="v", value=-65, unit="millivolt"),
+                NamedEquationValue(name="w", value=0.5, unit="millivolt"),
+            ],
+            parameters=[NamedEquationValue(name="tau", value=10, unit="millisecond")],
+            dt=EquationValue(value=0.1, unit="millisecond"),
+            units="strict",
+            input_unit=EquationValue(value=1, unit="millivolt"),
+        )
+        neuron = equation_model(model)
+        self.assertAlmostEqual(neuron.get_state()["w"].to("volt").magnitude, 0.0005)
+        result = build_equation_ir(
+            EquationIRRequest(
+                schema_version="studio.equation-ir-request.v1",
+                model=model,
+                profile=EquationIRProfile(data_width=32, fraction=16),
+            )
+        )
+        source = json.loads(str(parse_ir(result.ir_text).source_payload))
+        self.assertEqual(source["model"]["display_state_units"]["w"], "millivolt")
+        self.assertIn("w_out", [port.name for port in result.output_widths or []])
         self.assertEqual(
             replay_equation_ir(EquationIRTextRequest(ir_text=result.ir_text)).ir_text,
             result.ir_text,

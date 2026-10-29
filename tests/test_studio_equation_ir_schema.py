@@ -78,35 +78,69 @@ class EquationIRRequestTests(unittest.TestCase):
                     {"schema_version": "studio.equation-ir-request.v1", "model": model}
                 )
 
-    def test_initial_and_reset_writes_require_declared_states(self) -> None:
-        """Unknown state writes fail instead of disappearing during conversion."""
-        for field, declaration in (
-            ("initial_state", {"name": "missing", "value": 1}),
-            ("reset", {"name": "missing", "expression": "0"}),
-        ):
-            with self.subTest(field=field), self.assertRaises(ValidationError):
-                EquationIRRequest.model_validate(
-                    {
-                        "schema_version": "studio.equation-ir-request.v1",
-                        "model": {
-                            "equations": [{"name": "v", "expression": "I"}],
-                            field: [declaration],
-                        },
-                    }
-                )
-
-    def test_partial_initial_state_refuses_instead_of_losing_an_authored_state(self) -> None:
-        """Reject an explicit state map that would leave native lowering without a value."""
-        with self.assertRaisesRegex(ValidationError, "initialise every declared state"):
+    def test_reset_writes_require_an_equation_or_initial_state_declaration(self) -> None:
+        """A reset cannot introduce a new state that has neither equation nor initial value."""
+        with self.assertRaisesRegex(ValidationError, "reset contains an undeclared state"):
             EquationIRRequest.model_validate(
                 {
                     "schema_version": "studio.equation-ir-request.v1",
                     "model": {
-                        "equations": [
-                            {"name": "v", "expression": "-v + w + I"},
-                            {"name": "w", "expression": "-w"},
-                        ],
-                        "initial_state": [{"name": "v", "value": 2}],
+                        "equations": [{"name": "v", "expression": "I"}],
+                        "reset": [{"name": "missing", "expression": "0"}],
+                    },
+                }
+            )
+
+    def test_partial_numeric_initial_state_keeps_supplied_values_and_implicit_defaults(
+        self,
+    ) -> None:
+        """Transport does not fill omitted values or erase a supplied nonzero state."""
+        request = EquationIRRequest.model_validate(
+            {
+                "schema_version": "studio.equation-ir-request.v1",
+                "model": {
+                    "equations": [
+                        {"name": "v", "expression": "-v + w + I"},
+                        {"name": "w", "expression": "-w"},
+                    ],
+                    "initial_state": [{"name": "v", "value": 2}],
+                },
+            }
+        )
+        self.assertEqual(
+            [(item.name, item.value) for item in request.model.initial_state], [("v", 2)]
+        )
+        self.assertEqual([item.name for item in request.model.equations], ["v", "w"])
+
+    def test_numeric_partial_and_held_states_preserve_the_authored_source(self) -> None:
+        """Defaulting belongs to the constructor; transport retains the original declaration."""
+        body = {
+            "schema_version": "studio.equation-ir-request.v1",
+            "model": {
+                "equations": [{"name": "v", "expression": "I**1.5+clip(I,.25,1)**clip(w,-1,1)"}],
+                "initial_state": [{"name": "w", "value": 0.5}],
+                "method": "map",
+                "dt": {"value": 1},
+                "reset": [{"name": "w", "expression": "w + .25"}],
+            },
+        }
+        request = EquationIRRequest.model_validate(body)
+        self.assertEqual([item.name for item in request.model.initial_state], ["w"])
+        self.assertEqual(request.model.initial_state[0].value, 0.5)
+        self.assertEqual(request.model.reset[0].name, "w")
+        self.assertEqual(EquationIRRequest.model_validate_json(request.model_dump_json()), request)
+
+    def test_strict_initial_state_cannot_hide_a_missing_equation_behind_a_held_word(self) -> None:
+        """Equal array lengths do not prove that every dimensional state has a quantity."""
+        with self.assertRaisesRegex(ValidationError, "every equation state"):
+            EquationIRRequest.model_validate(
+                {
+                    "schema_version": "studio.equation-ir-request.v1",
+                    "model": {
+                        "equations": [{"name": "v", "expression": "I"}],
+                        "initial_state": [{"name": "w", "value": 1, "unit": "volt"}],
+                        "units": "strict",
+                        "dt": {"value": 1, "unit": "second"},
                     },
                 }
             )

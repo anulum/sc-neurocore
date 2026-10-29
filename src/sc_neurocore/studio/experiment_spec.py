@@ -528,11 +528,15 @@ def resolve_ode_experiment(
 ) -> ExperimentSpec:
     """Resolve an equation-playground request into its effective experiment.
 
+    Initial values without differential equations declare held state. Omitted
+    equation variables start at zero; every declared word enters the effective
+    specification, cache identity and simulation observation layout.
+
     Raises
     ------
     ExperimentRejected
-        Unparsable equation, initial value for an undeclared variable, seed
-        on noise-free equations, no complete step or an oversized run.
+        Unparsable equation, seed on noise-free equations, no complete step
+        or an oversized run.
     """
     equations = list(request.get("equations") or [])
     threshold = request.get("threshold") or None
@@ -551,11 +555,8 @@ def resolve_ode_experiment(
     if not equations:
         raise ExperimentRejected(field="equations", reason="at least one equation is required")
     variables = _equation_variables(equations)
-    unknown = sorted(set(init) - set(variables))
-    if unknown:
-        raise ExperimentRejected(
-            field="init", reason=f"initial values for undeclared variables: {', '.join(unknown)}"
-        )
+    equation_variables = set(variables)
+    variables.extend(name for name in init if name not in equation_variables)
     initial_state = {name: float(init.get(name, 0.0)) for name in variables}
     expressions = list(equations) + [text for text in (threshold, reset) if text]
     noise = any(_NOISE_PATTERN.search(text) is not None for text in expressions)
@@ -646,7 +647,8 @@ def resolve_ode_experiment(
         },
         "parameters": params,
         "initial_state": initial_state,
-        "initial_state_source": "request init; undeclared variables start at 0.0",
+        "initial_state_source": "request init; omitted equation variables start at 0.0; "
+        "additional initial values declare held state",
         "protocol": _protocol_block(
             protocol=protocol, current=current, frequency_hz=frequency_hz, samples=samples
         ),

@@ -34,7 +34,9 @@ dv/dt = -v / tau + I
 Supply `tau` in the parameter controls and `v` in the initial-state controls.
 Keep `tau` positive and choose a suitable timestep. The editor's colouring is
 not equation validation; simulation admission checks names, syntax and allowed
-operations. An initial value for an undeclared variable is refused.
+operations. Omitted equation variables start at zero. An additional initial
+value declares a held state variable: it keeps its value between steps unless
+an authored reset changes it. The result records both equation and held states.
 [ODE editor](../ode-editor.md) describes the syntax.
 
 Changing to ODE mode does not make every catalogue analysis available.

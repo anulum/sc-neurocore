@@ -92,6 +92,54 @@ def test_native_build_verify_replay_emission_keep_actual_outcomes(
         assert artifact.sha256 == hashlib.sha256(encoded).hexdigest()
 
 
+def test_original_partial_power_source_reaches_hosted_worker_and_native_replay(
+    context: StudioJobContext,
+) -> None:
+    """The hosted boundary retains the exact original partial-state compiler counterexample."""
+    from sc_neurocore_engine.ir import parse_ir
+
+    request = {
+        "schema_version": "studio.equation-ir-request.v1",
+        "model": {
+            "equations": [{"name": "v", "expression": "I**1.5+clip(I,.25,1)**clip(w,-1,1)"}],
+            "initial_state": [{"name": "w", "value": 0.5}],
+            "method": "map",
+            "dt": {"value": 1},
+            "rng_seed": "18446744073709551615",
+            "random_stream": 4294967295,
+        },
+        "profile": {"function_lowering": "v2"},
+    }
+    result = run_host_compiler_task(
+        context,
+        {"envelope_json": json.dumps({"operation": "ir.build", "request": request})},
+    )
+    assert result["accepted"] is True
+    graph = result["result"]
+    assert isinstance(graph, dict)
+    text = graph["ir_text"]
+    assert isinstance(text, str)
+    source = json.loads(str(parse_ir(text).source_payload))
+    assert source["model"]["initial_state"] == [["w", 0.5], ["v", 0.0]]
+    assert source["model"]["equations"] == [["v", "I**1.5+clip(I,.25,1)**clip(w,-1,1)"]]
+    assert source["model"]["rng_seed"] == 2**64 - 1
+    assert source["model"]["random_stream"] == 2**32 - 1
+    for operation in ("ir.replay", "ir.emit-sv"):
+        replay = run_host_compiler_task(
+            context,
+            {"envelope_json": json.dumps({"operation": operation, "request": {"ir_text": text}})},
+        )
+        assert replay["accepted"] is True
+        outcome = replay["result"]
+        assert isinstance(outcome, dict)
+        assert outcome["source_replay"] == "passed"
+        assert outcome["ir_text"] == text
+        if operation == "ir.emit-sv":
+            rtl = outcome["systemverilog"]
+            assert isinstance(rtl, str)
+            assert "w_out" in rtl
+
+
 def test_native_refusal_is_preserved_in_a_completed_worker_artifact(
     context: StudioJobContext,
 ) -> None:

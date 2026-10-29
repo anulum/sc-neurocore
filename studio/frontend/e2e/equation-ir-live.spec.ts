@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 import { expect, test, type Page, type Response } from "@playwright/test";
 import type { IRBuildResponse, EquationIRResult } from "../src/api/equationIrTypes";
 import type { StudioEvidenceBundleResponse } from "../src/api/types";
+import { defaultEquationIrConfiguration, type EquationIrSourceInput } from "../src/equationIrConfig";
 
 /** Recognise one real native compiler response without replacing its payload. */
 function operation(path: string): (response: Response) => boolean {
@@ -22,8 +23,9 @@ function operation(path: string): (response: Response) => boolean {
  *
  * @param page - Real browser connected to the production Studio application.
  * @param name - Test-owned project namespace.
+ * @param source - Explicit authored source overrides preserved in the saved project.
  */
-async function openEquationProject(page: Page, name: string): Promise<void> {
+async function openEquationProject(page: Page, name: string, source: Partial<EquationIrSourceInput> = {}): Promise<void> {
   await page.addInitScript(() => {
     localStorage.setItem("sc-studio-onboarding-dismissed", "true");
   });
@@ -32,7 +34,7 @@ async function openEquationProject(page: Page, name: string): Promise<void> {
     data: { name, state: { sourceMode: "ode", equations: ["dv/dt = I"],
       threshold: "", reset: "", odeParams: {}, odeInit: { v: 7 },
       dt: 0.5, duration: 2, current: 1, protocol: "constant", frequencyHz: 10,
-      seed: null, trial: "replay" } },
+      seed: null, trial: "replay", ...source } },
   });
   expect(saved.ok(), await saved.text()).toBe(true);
   await page.goto("./");
@@ -163,6 +165,55 @@ test("authored native compiler inputs survive graph replay, RTL export and proje
   await expect(page.getByLabel("Compiler random key", { exact: true })).toHaveValue("18446744073709551615");
   await expect(page.getByLabel("Integrator", { exact: true })).toHaveValue("rk4");
   await expect(page.getByLabel("Total scalar bits", { exact: true })).toHaveValue("32");
+  const reopened = await build(page);
+  expect(reopened.source_sha256).toBe(first.source_sha256);
+  expect(reopened.source_graph_sha256).toBe(first.source_graph_sha256);
+});
+
+test("authored native compiler inputs survive graph replay with partial initial and held state", async ({ page }, info) => {
+  const configuration = defaultEquationIrConfiguration();
+  configuration.model.method = "map";
+  configuration.model.rng_seed = "18446744073709551615";
+  configuration.model.random_stream = "4294967295";
+  configuration.profile.function_lowering = "v2";
+  const name = `native-held-equation-${Date.now()}`;
+  await openEquationProject(page, name, {
+    equations: ["dv/dt = I**1.5+clip(I,.25,1)**clip(w,-1,1)"],
+    odeInit: { w: 0.5 }, dt: 1, equationIrConfig: configuration,
+  });
+  await expect(page.getByRole("slider", { name: "w₀", exact: true })).toHaveValue("0.5");
+  const first = await build(page);
+  expect(first.output_widths).toEqual([
+    { name: "v_out", width: 16 }, { name: "w_out", width: 16 },
+    { name: "spike_out", width: 1 },
+  ]);
+  for (const [label, route] of [["Replay source", "replay"], ["Emit SV", "emit-sv"]] as const) {
+    const completed = page.waitForResponse(operation(route));
+    await page.getByRole("button", { name: label, exact: true }).click();
+    const response = await completed;
+    expect(response.ok(), await response.text()).toBe(true);
+    const result = await response.json() as EquationIRResult;
+    expect(result.ir_text).toBe(first.ir_text);
+    expect(result.source_replay).toBe("passed");
+    if (route === "emit-sv") expect(result.systemverilog).toContain("w_out");
+  }
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download compiler request", exact: true }).click();
+  const requestPath = info.outputPath("held-state-compiler-request.json");
+  await (await download).saveAs(requestPath);
+  const request: unknown = JSON.parse(readFileSync(requestPath, "utf-8"));
+  expect(request).toMatchObject({ model: {
+    equations: [{ name: "v", expression: "I**1.5+clip(I,.25,1)**clip(w,-1,1)" }],
+    initial_state: [{ name: "w", value: 0.5, unit: null }], method: "map",
+    rng_seed: "18446744073709551615", random_stream: 4294967295,
+  }, profile: { function_lowering: "v2" } });
+  await page.reload();
+  await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
+  const simulated = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/simulate");
+  await page.getByRole("button", { name: `Open project ${name} revision 1`, exact: true }).click();
+  expect((await simulated).ok()).toBe(true);
+  await page.getByRole("tab", { name: "IR", exact: true }).click();
+  await page.getByText("Equation compiler settings", { exact: true }).click();
   const reopened = await build(page);
   expect(reopened.source_sha256).toBe(first.source_sha256);
   expect(reopened.source_graph_sha256).toBe(first.source_graph_sha256);

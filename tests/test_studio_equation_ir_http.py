@@ -42,6 +42,51 @@ def _source(expression: str, initial: int) -> dict[str, object]:
 class EquationIRHttpTests(unittest.TestCase):
     """Exercise actual routers, schema admission and child-process compilation."""
 
+    def test_numeric_partial_held_state_executes_in_a_real_compiler_worker(self) -> None:
+        """HTTP admission preserves held reset declarations and native output/source custody."""
+        with tempfile.TemporaryDirectory(prefix="studio-held-equation-http-") as directory:
+            app = create_app(
+                StudioRuntimeSettings(
+                    job_root_path=str(Path(directory) / "jobs"),
+                    audit_log_path=str(Path(directory) / "audit.jsonl"),
+                    job_default_timeout_seconds=60.0,
+                )
+            )
+            try:
+                with TestClient(
+                    app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+                ) as client:
+                    response = client.post(
+                        "/api/ir/build",
+                        json={
+                            "schema_version": "studio.equation-ir-request.v1",
+                            "model": {
+                                "equations": [{"name": "v", "expression": "w + I"}],
+                                "initial_state": [{"name": "w", "value": 0.5}],
+                                "method": "map",
+                                "threshold": "v > 1",
+                                "reset": [{"name": "w", "expression": "w + .25"}],
+                            },
+                        },
+                    )
+                    self.assertEqual(response.status_code, 200, response.text)
+                    built = response.json()
+                    self.assertEqual(built["studio_job_receipt"]["status"], "completed")
+                    self.assertEqual(
+                        [port["name"] for port in built["output_widths"]],
+                        ["v_out", "w_out", "spike_out"],
+                    )
+                    replay = client.post("/api/ir/replay", json={"ir_text": built["ir_text"]})
+                    self.assertEqual(replay.status_code, 200, replay.text)
+                    self.assertEqual(replay.json()["source_replay"], "passed")
+                    self.assertEqual(replay.json()["ir_text"], built["ir_text"])
+                    emitted = client.post("/api/ir/emit-sv", json={"ir_text": built["ir_text"]})
+                    self.assertEqual(emitted.status_code, 200, emitted.text)
+                    self.assertIn("w_out", emitted.json()["systemverilog"])
+            finally:
+                app.state.studio_job_manager._ledger.close()
+                gc.collect()
+
     def test_authored_build_semantic_replay_emission_and_input_refusals(self) -> None:
         """Source changes affect IR and semantic outcomes retain exact worker custody."""
         with tempfile.TemporaryDirectory(prefix="studio-equation-http-") as directory:
@@ -120,6 +165,7 @@ class EquationIRHttpTests(unittest.TestCase):
                                         {"name": "w", "expression": "-w"},
                                     ],
                                     "initial_state": [{"name": "v", "value": 2}],
+                                    "units": "strict",
                                 },
                             },
                         ),

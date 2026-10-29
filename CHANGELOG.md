@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Accept partial numeric initial values and held state in Studio projects,
+  simulation and native equation compilation. Preserve held variables in the
+  experiment digest, recorded traces, source replay and exported requests;
+  keep strict-unit equation initial values explicit.
+
 - Preserve partial numeric initial states and held-state variables through Python integration, native IR/source replay, registered and folded RTL, fixed C/Rust kernels, adaptive wrappers and generated testbenches. Keep strict-unit initial quantities explicit and retain the legacy function-lowering default.
 
 - Keep the desktop HTTP cache separate for each interface content version so
@@ -34,7 +39,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 - Declare `federation:config` through the typed SDK in local-host Studio bundles, preserving the published default and requiring SDK support before packaging.
 
-- Refuse incomplete authored equation initial states before native compilation, and keep native compiler tests in their real-backend browser and integration lanes.
+- Require explicit equation initial quantities for strict-unit native compilation, and keep native compiler tests in their real-backend browser and integration lanes.
 
 - Compile authored Studio equations through bounded native IR workers, preserving initial state, units, integrators, arithmetic profiles and exact random keys. Separate graph checks from source replay and native RTL emission; retain compiler settings in projects and sessions and export source-bound job evidence.
 

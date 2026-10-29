@@ -29,9 +29,13 @@ compiler action while work is running does not submit a duplicate job.
 ## Equations, events and arithmetic
 
 The native request retains the authored equation order and nonzero initial
-state. An explicit nonempty list of initial values must include every equation
-state; partial lists are refused before a worker starts. An empty list selects
-the equation constructor's default. The integration choices are Euler, RK4,
+state. In numeric mode, an omitted equation state starts at zero. An additional
+initial-state name declares a held word: it retains its value between events,
+and a reset rule may assign it. The request and downloaded source keep the
+supplied declarations; zero defaults are applied by the equation constructor.
+Strict physical units require an explicit initial value for every equation
+state. An empty numeric list selects the constructor's zero defaults.
+The integration choices are Euler, RK4,
 exponential Euler, discrete map and Gauss–Seidel. For Gauss–Seidel, changing the
 equation order can change the model; the order survives worker transport and
 source replay.
@@ -116,6 +120,14 @@ A minimal native build request is:
   }
 }
 ```
+
+For example, an authored map can use a held `w` without a differential equation
+for it. Set `method` to `map`, `initial_state` to
+`[{"name": "w", "value": 0.5}]`, and the `v` equation to
+`I**1.5+clip(I,.25,1)**clip(w,-1,1)`. The constructor supplies `v = 0`, while the
+compiler exposes both `v_out` and `w_out`. This expression requires the explicit
+`v2` function-lowering profile. A reset such as `w = w + .25` changes the held
+word only when the authored event condition fires.
 
 Ordered declarations are arrays in the API. The request schema rejects repeated
 names, unknown fields, lossy random keys and the former unversioned simulation

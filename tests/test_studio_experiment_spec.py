@@ -192,14 +192,11 @@ class TestEffectiveConfiguration:
         monkeypatch.setattr(module, "_runtime_block", lambda: {"package_version": "0.0.0-test"})
         assert _spec(name=ATIF)["experiment_sha256"] != before
 
-    def test_protocol_typo_and_undeclared_init_are_rejected(self) -> None:
-        """Refuse unknown waveforms, undeclared initial states and malformed equations."""
+    def test_protocol_typo_and_malformed_equations_are_rejected(self) -> None:
+        """Refuse unknown waveforms and malformed equations on their owning fields."""
         with pytest.raises(ExperimentRejected) as info:
             resolve_ode_experiment({"equations": ["dv/dt = -v"], "protocol": "sawtooth"})
         assert info.value.field == "protocol"
-        with pytest.raises(ExperimentRejected) as info:
-            resolve_ode_experiment({"equations": ["dv/dt = -v"], "init": {"w": 1.0}})
-        assert info.value.field == "init" and "w" in info.value.reason
         with pytest.raises(ExperimentRejected) as info:
             resolve_ode_experiment({"equations": ["v = I"]})
         assert info.value.field == "equations"
@@ -221,6 +218,46 @@ class TestEffectiveConfiguration:
         with pytest.raises(ExperimentRejected) as info:
             resolve_ode_experiment({"equations": ["dv/dt = -v"], "duration": 0.01, "dt": 0.1})
         assert "no complete step" in info.value.reason
+
+    def test_held_initial_value_enters_the_effective_spec_cache_and_every_state_trace(self) -> None:
+        """Initial declarations without derivatives remain observable and affect execution identity."""
+        request = {
+            "equations": ["dv/dt = w + I"],
+            "init": {"w": 0.5},
+            "dt": 1.0,
+            "duration": 3.0,
+        }
+        spec = resolve_ode_experiment(request)
+        public = spec.to_public_dict()
+        assert public["equations"]["variables"] == ["v", "w"]
+        assert public["initial_state"] == {"v": 0.0, "w": 0.5}
+        result = run_experiment(spec)
+        assert result["initial_state"] == {"v": 0.0, "w": 0.5}
+        assert result["final_state"] == {"v": 1.5, "w": 0.5}
+        assert result["raw"]["states"] == {"v": [0.5, 1.0, 1.5], "w": [0.5, 0.5, 0.5]}
+        assert result["experiment"] == public
+        changed = resolve_ode_experiment({**request, "init": {"w": 0.75}})
+        assert changed.experiment_sha256 != spec.experiment_sha256
+        assert request["init"] == {"w": 0.5}
+
+    def test_held_state_event_reset_is_retained_in_the_experiment_and_raw_result(self) -> None:
+        """A held word changes only through the authored reset while both states remain recorded."""
+        spec = resolve_ode_experiment(
+            {
+                "equations": ["dv/dt = I"],
+                "init": {"v": 0.0, "w": 1.0},
+                "threshold": "v > 0.5",
+                "reset": "v = 0; w = w + 1",
+                "dt": 1.0,
+                "duration": 3.0,
+                "current": 1.0,
+            }
+        )
+        result = run_experiment(spec)
+        assert result["raw"]["states"] == {"v": [0.0, 0.0, 0.0], "w": [2.0, 3.0, 4.0]}
+        assert result["final_state"] == {"v": 0.0, "w": 4.0}
+        assert result["experiment"]["initial_state"] == {"v": 0.0, "w": 1.0}
+        assert result["experiment"]["equations"]["reset"] == "v = 0; w = w + 1"
 
     def test_ode_spec_declares_every_variable_and_the_equation_digest(self) -> None:
         """Bind ordered equation variables, implicit zero initial state and equation digest."""

@@ -44662,7 +44662,9 @@ Attributes
 equations, initial_state, parameters, constants, reset : list
     Ordered declarations. Repeated names refuse before dictionary conversion.
     An empty initial state selects the public constructor's default.
-    An explicit nonempty initial state must initialise every equation state.
+    Numeric partial states retain their supplied values; omitted equation
+    states start at zero. Additional initial-state names declare held words.
+    Strict units require an explicit initial value for every equation state.
 dt : EquationValue
     Positive inner timestep, with an explicit time unit in strict mode.
 method : str
@@ -45392,11 +45394,15 @@ ExperimentRejected
 ### Function `resolve_ode_experiment(request, *, max_steps)`
 Resolve an equation-playground request into its effective experiment.
 
+Initial values without differential equations declare held state. Omitted
+equation variables start at zero; every declared word enters the effective
+specification, cache identity and simulation observation layout.
+
 Raises
 ------
 ExperimentRejected
-    Unparsable equation, initial value for an undeclared variable, seed
-    on noise-free equations, no complete step or an oversized run.
+    Unparsable equation, seed on noise-free equations, no complete step
+    or an oversized run.
 
 ### Function `resolve_experiment(request, *, max_steps)`
 Resolve a model or equation request into its effective experiment.

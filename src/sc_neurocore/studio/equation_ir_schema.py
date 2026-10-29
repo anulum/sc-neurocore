@@ -92,7 +92,9 @@ class AuthoredEquationModel(BaseModel):
     equations, initial_state, parameters, constants, reset : list
         Ordered declarations. Repeated names refuse before dictionary conversion.
         An empty initial state selects the public constructor's default.
-        An explicit nonempty initial state must initialise every equation state.
+        Numeric partial states retain their supplied values; omitted equation
+        states start at zero. Additional initial-state names declare held words.
+        Strict units require an explicit initial value for every equation state.
     dt : EquationValue
         Positive inner timestep, with an explicit time unit in strict mode.
     method : str
@@ -161,10 +163,10 @@ class AuthoredEquationModel(BaseModel):
             if len(names) != len(set(names)):
                 raise ValueError(f"{label} cannot repeat a symbol")
         declared = {item.name for item in self.equations}
-        if any(item.name not in declared for item in self.initial_state):
-            raise ValueError("initial_state contains an undeclared state")
-        if self.initial_state and len(self.initial_state) != len(declared):
-            raise ValueError("initial_state must initialise every declared state")
+        initial = {item.name for item in self.initial_state}
+        if self.units == "strict" and not declared.issubset(initial):
+            raise ValueError("Strict units require an initial value for every equation state")
+        declared |= initial
         if any(item.name not in declared for item in self.reset):
             raise ValueError("reset contains an undeclared state")
         if self.dt.value <= 0:
