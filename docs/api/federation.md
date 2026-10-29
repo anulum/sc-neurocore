@@ -113,7 +113,7 @@ result = ScInferenceResult(
 bundle = sc_inference_evidence(
     result,
     operator="opaque:tenant-1",
-    studio_version="3.16.0",
+    studio_version="4.0.0",
     started=started,
     ended=datetime.now(timezone.utc).isoformat(),
     freshness=Freshness.VERIFIED_AT_SOURCE,

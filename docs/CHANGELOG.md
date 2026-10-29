@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-29
+
 - Require the published stable Studio platform SDK 0.11.3 for federation, with its verified release hashes and matching capability manifest. Retain the other locked dependency versions and package hashes.
 
 - Validate candidate equations against every declared unit and numeric scale before simulation or review, including conditional branches, resets and stochastic thresholds. Report located refusals without converting model magnitudes; preserve the real AdEx trace. Give diffusion noise its actual inverse-square-root time unit in candidate and strict-unit equation admission, preserving seeded sampling and integration. Candidate runs remain synchronous, catalogue-start assistance is deferred, and scientific acceptance and promotion remain separate.

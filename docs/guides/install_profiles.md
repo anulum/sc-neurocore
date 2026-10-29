@@ -73,7 +73,7 @@ Historical measured evidence (2026-06-27):
 | Elapsed time | 12.942 s |
 | Installed packages | `defusedxml`, `numpy`, `pip`, `sc-neurocore`, `scipy` |
 | Heavy optional packages installed | None |
-| Public import smoke | `sc_neurocore.__version__ == "3.16.0"` and 45 public exports |
+| Public import smoke | `sc_neurocore.__version__ == "4.0.0"` and 45 public exports |
 
 The root package import and distribution contracts are enforced by
 `tests/test_public_api_lazy_facades.py`, `tests/test_public_api_install_profiles.py`,

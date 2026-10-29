@@ -669,5 +669,5 @@ The HR model rapidly became the standard testbed for:
 
 ---
 
-*SC-NeuroCore v3.16.0 — ANULUM / Fortis Studio*
+*SC-NeuroCore v4.0.0 — ANULUM / Fortis Studio*
 *© 2020–2026 Miroslav Šotek. All rights reserved.*

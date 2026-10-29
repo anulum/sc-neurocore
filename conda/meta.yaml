@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Source/config provenance header
 
-{% set version = "3.16.0" %}
+{% set version = "4.0.0" %}
 
 package:
   name: sc-neurocore

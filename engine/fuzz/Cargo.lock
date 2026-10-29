@@ -602,7 +602,7 @@ dependencies = [
 
 [[package]]
 name = "sc_neurocore_engine"
-version = "3.16.0"
+version = "4.0.0"
 dependencies = [
  "core_affinity",
  "crossbeam-channel",
