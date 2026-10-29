@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 import copy
+import json
+from typing import Any
 
 import yaml
 
@@ -27,6 +29,45 @@ from tools.security_scan.conda_dependency_reports import (
     grype_matches,
     syft_lock_inventory,
 )
+
+RECORDED = ROOT / "tests/fixtures/grype_conda_python_3_15_0_cve_2025_15367.json"
+
+
+def report_with_a_finding(
+    grype: dict[str, Any], artifacts: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Return the live Grype report with at least one finding bound to a live Syft artifact.
+
+    The finding refusals below need a match to alter. When the committed lock has no native
+    finding, the verbatim match recorded by the hosted audit of the previous lock is bound to
+    the live identity of the same package, so only the alteration under test can refuse it.
+
+    Parameters
+    ----------
+    grype : dict
+        Actual Grype report for the committed lock.
+    artifacts : dict of str to dict
+        Validated Syft identities of the installed packages.
+
+    Returns
+    -------
+    dict
+        A copy of the report carrying at least one match.
+    """
+    candidate = copy.deepcopy(grype)
+    if candidate["matches"]:
+        return candidate
+    match = json.loads(RECORDED.read_text(encoding="utf-8"))["match"]
+    live_id, live = next(
+        (identifier, record)
+        for identifier, record in artifacts.items()
+        if record["name"] == match["artifact"]["name"]
+    )
+    match["artifact"].update(
+        id=live_id, name=live["name"], version=live["version"], type=live["type"]
+    )
+    candidate["matches"] = [match]
+    return candidate
 
 
 @pytest.mark.parametrize(
@@ -116,13 +157,15 @@ def test_native_grype_report_refuses_filtered_or_unbound_results(
     Parameters
     ----------
     native_pixi_audit : tuple
-        Real Syft and Grype output for the committed lock.
+        Real Syft and Grype output for the committed lock; it must validate, with a finding
+        to alter, before the change is applied.
     change : str
         Required scanner setting or input identity to invalidate.
     """
     syft, grype, _, prefix, _ = native_pixi_audit
     artifacts = syft_lock_inventory(syft, (ROOT / LOCK).read_bytes(), prefix)
-    candidate = copy.deepcopy(grype)
+    candidate = report_with_a_finding(grype, artifacts)
+    assert grype_matches(copy.deepcopy(candidate), artifacts, prefix)
     descriptor = candidate["descriptor"]
     config = descriptor["configuration"]
     if change == "matches":
