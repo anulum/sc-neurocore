@@ -340,7 +340,7 @@ When installed, SC-NeuroCore automatically uses the Rust engine for:
 - **NetworkRunner:** 180-model fused Rayon-parallel simulation loop
 - **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
 - **Batch simulate:** model dispatch loop in compiled Rust
-- **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
+- **SIMD bitstream ops:** popcount dispatched to AVX2/AVX-512 when the CPU has them (measured figures with their host and size are in [the benchmark report](docs/benchmarks/BENCHMARKS.md))
 
 The pure Python package works without the engine — NumPy fallbacks are
 used for all operations. Install or build the engine only when you need the
