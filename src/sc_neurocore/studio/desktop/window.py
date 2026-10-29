@@ -140,13 +140,19 @@ class StudioWindow(QMainWindow):
         self.setCentralWidget(panel)
 
     def _ready(self, instance: DesktopInstance) -> None:
-        """Mount the admitted real UI with persistent, profile-specific browser storage."""
+        """Mount the admitted UI with persistent storage and its own HTTP cache.
+
+        Parameters
+        ----------
+        instance : DesktopInstance
+            Admitted backend with the content identity of the interface it serves.
+        """
         self.instance = instance
         if self._closing:
             return
         profile = QWebEngineProfile("sc-neurocore-studio", self)
         profile.setPersistentStoragePath(str(self.backend.paths.data / "webengine"))
-        profile.setCachePath(str(self.backend.paths.cache / "webengine"))
+        profile.setCachePath(str(self.backend.paths.cache / "webengine" / instance.ui_sha256))
         self._request_policy = DesktopRequestPolicy(instance.origin, profile)
         profile.setUrlRequestInterceptor(self._request_policy)
         profile.downloadRequested.connect(self._download)

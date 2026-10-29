@@ -110,6 +110,10 @@ in the profile, so reopening the same profile retains the browser-storage origin
 If another application occupies that port, close that application or resolve the
 conflict before retrying. Two instances cannot own the same desktop profile.
 
+The desktop keeps a separate HTTP cache for each interface content version.
+Updates and rollback therefore load their matching interface while browser
+sessions retain the same storage and origin. Existing caches are preserved.
+
 Use **File → Quit** or the window's close button to stop the desktop and its
 owned backend. Keep the window open while **Closing Studio…** is displayed.
 If cleanup cannot be confirmed, Studio keeps a visible retry message; use

@@ -18,15 +18,19 @@ import time
 import urllib.request
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Thread
 
 import pytest
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QThread, Qt, QTimer, QUrl
 from PySide6.QtTest import QTest
-from PySide6.QtWebEngineCore import QWebEngineProfile
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
+from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QLabel, QPushButton
 
 from sc_neurocore.studio.desktop.runtime import DesktopBackend
+from sc_neurocore.studio.desktop.configuration import DesktopConfiguration, write_configuration
 from sc_neurocore.studio.desktop.window import StudioWindow
 
 pytestmark = pytest.mark.usefixtures("application")
@@ -116,6 +120,107 @@ def _health(backend: DesktopBackend, origin: str) -> None:
     with opener.open(origin + "/api/health", timeout=5) as response:
         assert json.loads(response.read(1024)) == {"status": "ok"}
     assert backend.returncode is None
+
+
+def test_cached_previous_interface_cannot_replace_current_ui_or_erase_session(
+    desktop_backend: DesktopBackend,
+) -> None:
+    """Load current Studio over a retained old HTTP cache at the same origin.
+
+    Parameters
+    ----------
+    desktop_backend : DesktopBackend
+        Actual application backend using the primed browser storage and port.
+    """
+
+    class PreviousInterface(BaseHTTPRequestHandler):
+        """Serve the cacheable HTML left by a previous installed application."""
+
+        def do_GET(self) -> None:
+            """Return an old page whose explicit freshness outlives this server."""
+            body = b'<html><body id="previous-interface">Previous Studio</body></html>'
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "public, max-age=3600")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args: object) -> None:
+            """Keep fixture request logging out of the application's output.
+
+            Parameters
+            ----------
+            format : str
+                Standard HTTP server log template.
+            *args : object
+                Standard request details supplied by the HTTP server.
+            """
+            del format, args
+
+    paths = desktop_backend.paths
+    paths.prepare()
+    server = ThreadingHTTPServer(("127.0.0.1", 0), PreviousInterface)
+    port = server.server_port
+    origin = f"http://127.0.0.1:{port}"
+    worker = Thread(target=server.serve_forever)
+    worker.start()
+    legacy_cache = paths.cache / "webengine"
+    profile = QWebEngineProfile("sc-neurocore-studio")
+    profile.setPersistentStoragePath(str(paths.data / "webengine"))
+    profile.setCachePath(str(legacy_cache))
+    view = QWebEngineView()
+    page = QWebEnginePage(profile, view)
+    view.setPage(page)
+    values: list[object] = []
+    view.load(QUrl(origin + "/studios/sc-neurocore/"))
+    view.show()
+    try:
+
+        def previous_loaded() -> bool:
+            """Observe the actual cached predecessor through the native renderer."""
+            values.clear()
+            page.runJavaScript("document.body?.id === 'previous-interface'", values.append)
+            _wait(lambda: bool(values))
+            return values[0] is True
+
+        _wait(previous_loaded)
+        values.clear()
+        page.runJavaScript(
+            "localStorage.setItem('desktop-cache-session', 'retained');"
+            "localStorage.getItem('desktop-cache-session')",
+            values.append,
+        )
+        _wait(lambda: bool(values))
+        assert values == ["retained"]
+    finally:
+        view.close()
+        view.deleteLater()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        disposed: list[bool] = []
+        profile.destroyed.connect(lambda: disposed.append(True))
+        profile.deleteLater()
+        _wait(lambda: bool(disposed))
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=5)
+        assert not worker.is_alive()
+    retained_cache = {p: p.read_bytes() for p in legacy_cache.rglob("*") if p.is_file()}
+    assert retained_cache
+    write_configuration(
+        paths.config / "desktop.json", DesktopConfiguration(port, paths.data / "projects")
+    )
+    with _shown(desktop_backend) as window:
+        _wait(lambda: _interface_loaded(window))
+        assert window.instance is not None and window.instance.origin == origin
+        assert window.view is not None
+        values.clear()
+        window.view.page().runJavaScript(
+            "localStorage.getItem('desktop-cache-session')", values.append
+        )
+        _wait(lambda: bool(values))
+        assert values == ["retained"]
+        assert {p: p.read_bytes() for p in retained_cache} == retained_cache
 
 
 def test_backend_loss_is_visible_and_close_releases_the_profile(

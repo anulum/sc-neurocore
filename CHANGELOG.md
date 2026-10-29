@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Keep the desktop HTTP cache separate for each interface content version so
+  returning from rollback cannot display an older interface with a newer
+  backend. Preserve browser sessions, the stable local origin and existing caches.
+
 - Reject unsupported model compiler Q-formats as invalid requests before
   starting compile or co-simulation jobs. Preserve the offered Q8.8 and
   Q16.16 formats, their default and accepted zero-padded spelling.
