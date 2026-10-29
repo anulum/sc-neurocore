@@ -110,14 +110,36 @@ fn verify_hardware_words(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
             } => super::dense_contract::validate_dense(
                 graph, *inputs, *weights, *leak, *gain, params,
             ),
+            ScOp::LifStep {
+                current,
+                leak,
+                gain,
+                noise,
+                params,
+                ..
+            } => super::neuron_contract::lif(graph, [*current, *leak, *gain, *noise], params),
+            ScOp::DclsLayer {
+                spike,
+                weights,
+                centre,
+                sigma,
+                params,
+                ..
+            } => super::neuron_contract::dcls(graph, [*spike, *weights, *centre, *sigma], params),
             ScOp::Encode { prob, seed, .. } => {
                 if *seed == 0 {
                     Err("Encode seed must be nonzero".into())
                 } else {
                     super::dense_contract::value_type(graph, *prob)
-                        .and_then(super::dense_contract::probability_layout)
+                        .and_then(|ty| super::dense_contract::probability_layout(&ty))
                         .map(|_| ())
                 }
+            }
+            ScOp::GraphForward { .. }
+            | ScOp::SoftmaxAttention { .. }
+            | ScOp::KuramotoStep { .. } => super::kernel_contract::validate(graph, op),
+            ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::Reduce { .. } => {
+                super::arithmetic_contract::validate(graph, op)
             }
             _ => Ok(()),
         };

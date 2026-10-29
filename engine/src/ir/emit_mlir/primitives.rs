@@ -98,7 +98,7 @@ fn encode(
     input: ValueId,
     seed: u16,
 ) -> Result<(), String> {
-    let layout = probability_layout(value_type(g, input)?)?;
+    let layout = probability_layout(&value_type(g, input)?)?;
     let (w, frac) = (layout.width, layout.fraction);
     let wide = w + 17;
     let p = format!("v{}_encoder", id.0);

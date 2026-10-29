@@ -81,6 +81,12 @@ EXPECTED_STATIC_PRIMITIVES = (
     "hdl/primitives/sc_dotproduct_to_current.v",
     "hdl/primitives/sc_firing_rate_bank.v",
     "hdl/primitives/sc_lif_neuron.v",
+    "hdl/primitives/sc_dcls_layer_core.v",
+    "hdl/primitives/sc_dcls_tent_kernel.v",
+    "hdl/primitives/sc_dcls_axonal_delay.v",
+    "hdl/primitives/sc_graph_forward.v",
+    "hdl/primitives/sc_softmax_attention.v",
+    "hdl/primitives/sc_kuramoto_step.v",
 )
 #: A dependency name followed by its version specifier, as ``pyproject.toml``
 #: writes it. The specifier may be empty for an unconstrained requirement.

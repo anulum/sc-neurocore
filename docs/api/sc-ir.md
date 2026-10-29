@@ -105,6 +105,81 @@ in text but ignored by the emitter. Explicit 65535 with `dw=16` now produces an
 error; regenerate the graph with the intended signed current endpoint rather
 than relying on truncation.
 
+## Compound hardware lowering
+
+The native `emit_mlir` and `emit_sv` entry points verify the graph before
+constructing hardware ports. CIRCT output uses typed HW, Comb and Seq
+operations for the complete supported computation and asynchronous reset.
+The direct SystemVerilog backend instantiates the maintained neuron/kernel
+RTL where appropriate. Both entry points refuse malformed operand formats,
+dimensions, constants and delay addresses.
+
+| Operation | Runtime contract |
+| --- | --- |
+| `lif_step` | Four runtime current/leak/gain/noise words, signed `dw`-bit state, `frac` fractional bits, declared rest/reset/threshold and refractory count. Products wrap at `2*dw`; shifted increments and additions wrap at `dw`. |
+| `dense_forward` | All input probabilities, row-major weights, leak and gain remain runtime operands. Encoder and neuron timing follows the Dense contract above. |
+| `dcls_layer` | One Boolean or temporal spike, runtime signed weights/centre/sigma and configured tap history. See [DCLS RTL](../compiler/dcls_rtl.md). |
+| `scale`, `offset` | One numeric scalar. The coefficient is quantized toward zero to signed Q8.8. Scale returns bits 8 through 71 of the 128-bit product; offset adds the encoded coefficient modulo 64 bits. The result type is `i64`, with the input's encoded units retained. |
+| `reduce` | All homogeneous packed numeric lanes participate. Sum wraps at 64 bits. Max compares at the full declared lane width before retaining the low 64 result bits. Signedness follows the element type; Boolean lanes produce `u64`. |
+| `graph_forward` | Constant node features and square adjacency, signed Q8.16 lanes. Each row accumulates full products before degree normalization. A zero signed degree retains the unnormalized sum shifted by 16. |
+| `softmax_attention` | Constant complete query/key/value rows, scaled dot products, stable row-maximum subtraction, the maintained 256-entry exponential grid and fixed-point weighted values. |
+| `kuramoto_step` | Constant phase/frequency/coupling vectors, the maintained 64-entry sine grid, quantized Euler timestep and one-modulus phase correction. |
+
+The historical `: rate` text suffix on arithmetic and constant-vector kernel
+operations is retained. Verification and hardware emission infer the physical
+result formats listed above from the opcode and its operands.
+
+The Python wheel bundles the direct Verilog backend's required RTL cores.
+Use `sc_neurocore.hdl.resources.list_baseline_primitive_rtl()` and
+`baseline_primitive_path(name)` to locate the installed sources for the
+Verilog compiler or simulator. DCLS and the graph, attention and phase cores
+are included with the existing stochastic primitives. Native MLIR lowering
+produces self-contained HW/Comb/Seq modules.
+
+LIF uses a Boolean internal result. Its legacy external output remains a
+zero-padded `dw`-bit bus. A spike can therefore feed a Boolean operation or be
+explicitly resized to an integer word before a typed delay. Dense produces a
+packed vector of Boolean lanes, which may feed `reduce` and then a `u64`
+delay. Clocked consumers read the preceding registered producer value on
+the same edge.
+
+LIF operands require matching signed widths and binary points; explicitly
+encoded `i<dw>` words are accepted without rescaling. Graph, attention and
+phase kernels retain their existing constant-operand Q8.16 contract, with
+nearest rounding and ties away from zero. They do not accept arbitrary
+runtime matrices. The lookup grids and wrap rules define quantized behavior;
+they do not establish a continuous-model approximation bound.
+For these three kernels, `F64Vec` and `I64Vec` entries denote real-unit
+numbers, which the kernel quantizes to signed Q8.16.
+
+`engine/tests/test_ir_compound_runtime.rs` exercises the public builder,
+text roundtrip and actual RTL against independent integer trajectories.
+With `SCN_IR_CIRCT_RECEIPT_DIR` set, the same tests retain MLIR, stimuli and
+expected observations for `tools/check_ir_circt.py`. The maintained corpus
+includes runtime operand changes, midstream reset, wide fractions, signed
+endpoints, composition, degree cancellation and every sine grid index.
+
+From a source checkout, save the actual compiler outputs and compare their
+complete RTL traces before timing the public compiler transaction:
+
+```bash
+corpus_dir="$(mktemp -d)"
+SCN_IR_CIRCT_RECEIPT_DIR="$corpus_dir" \
+  cargo test --locked --manifest-path engine/Cargo.toml \
+  --test test_ir_compound_runtime -- --test-threads=1
+python tools/check_ir_circt.py "$corpus_dir"
+cargo run --locked --manifest-path engine/Cargo.toml \
+  --example bench_compound_ir -- "$corpus_dir" 10 7 > compound-ir-benchmark.json
+```
+
+The benchmark requires canonical graph text and exact agreement with both
+saved compiler outputs before timing. Each sample includes parsing,
+verification, text roundtrip and both emitters; filesystem input and CIRCT
+execution are outside the timed region. The JSON retains all samples, source
+and output digests, build profile and host scheduling context. The command
+above uses the debug profile. Select `--release` for optimized compiler
+measurements and reserve isolated CPUs before making throughput claims.
+
 ## Constant representation
 
 Floating constants are scaled using their declared binary point and truncated

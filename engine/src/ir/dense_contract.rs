@@ -11,24 +11,9 @@
 use super::constant_words::{scalar_layout, ScalarLayout};
 use super::graph::*;
 
-/// Find a producer's declared type; untyped arithmetic is not a probability word.
-pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<&ScType, String> {
-    graph
-        .ops
-        .iter()
-        .find_map(|op| match op {
-            ScOp::Input { id: result, ty, .. }
-            | ScOp::Constant { id: result, ty, .. }
-            | ScOp::State { id: result, ty, .. }
-                if *result == id =>
-            {
-                Some(ty)
-            }
-            ScOp::Word { id: result, op } if *result == id => Some(op.result_type()),
-            ScOp::Decode { id: result, .. } if *result == id => Some(&ScType::Rate),
-            _ => None,
-        })
-        .ok_or_else(|| format!("{id} needs a declared numeric input or constant type"))
+/// Resolve one canonical declared or inferred numeric type without duplicating producer rules.
+pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<ScType, String> {
+    super::stream_contract::value_type(graph, id)
 }
 
 /// Resolve signed probability words, including Rate's Q8.8 representation.
@@ -46,8 +31,8 @@ fn probability_vector(graph: &ScGraph, id: ValueId, count: usize) -> Result<(), 
         ScType::Vec {
             element,
             count: actual,
-        } if *actual == count => {
-            probability_layout(element)?;
+        } if actual == count => {
+            probability_layout(&element)?;
             Ok(())
         }
         actual => Err(format!(
@@ -64,7 +49,7 @@ fn state_word(graph: &ScGraph, id: ValueId, width: u32) -> Result<(), String> {
             frac: 8,
         }
         | ScType::SInt { width: actual }
-            if *actual == width =>
+            if actual == width =>
         {
             Ok(())
         }

@@ -137,23 +137,12 @@ fn validate(op: &WordOp, types: &HashMap<ValueId, ScType>) -> Result<(), String>
 pub(crate) fn verify(graph: &ScGraph, errors: &mut Vec<VerifyError>) {
     let mut types = HashMap::new();
     for (op_index, op) in graph.ops.iter().enumerate() {
-        let ty = match op {
-            ScOp::Word { op, .. } => {
-                if let Err(message) = validate(op, &types) {
-                    errors.push(VerifyError { op_index, message });
-                }
-                Some(op.result_type().clone())
+        if let ScOp::Word { op, .. } = op {
+            if let Err(message) = validate(op, &types) {
+                errors.push(VerifyError { op_index, message });
             }
-            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } | ScOp::State { ty, .. } => {
-                Some(ty.clone())
-            }
-            ScOp::Encode { length, .. } => Some(ScType::Bitstream { length: *length }),
-            ScOp::BitwiseAnd { lhs, .. } | ScOp::BitwiseXor { lhs, .. } => types.get(lhs).cloned(),
-            ScOp::Popcount { .. } | ScOp::DivConst { .. } => Some(ScType::UInt { width: 64 }),
-            ScOp::Decode { .. } => Some(ScType::Rate),
-            _ => None,
-        };
-        if let Some(ty) = ty {
+        }
+        if let Some(ty) = super::stream_contract::result_type(op, &types) {
             types.insert(op.result_id(), ty);
         }
     }

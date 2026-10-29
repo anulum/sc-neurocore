@@ -11,8 +11,8 @@
 //! A Rust-native intermediate representation for stochastic computing
 //! pipelines. The IR captures the semantics of the planned MLIR "sc"
 //! dialect (Blueprint §5) and can be lowered directly to synthesizable
-//! SystemVerilog or exported as a text format for future MLIR/CIRCT
-//! integration.
+//! SystemVerilog or to typed HW/Comb/Seq MLIR for CIRCT lowering. The
+//! public parser/printer retain a separate compute-graph text format.
 //!
 //! # Design Principles
 //!
@@ -21,6 +21,7 @@
 //! - **Acyclic**: The operation list forms a DAG (verified by `verify()`).
 //! - **Portable**: Typed Rust enums and structs; source checksums use the crate's SHA-256 dependency.
 
+pub(crate) mod arithmetic_contract;
 pub(crate) mod bindings;
 pub mod builder;
 pub(crate) mod constant_words;
@@ -29,6 +30,8 @@ pub mod emit_mlir;
 pub mod emit_sv;
 pub mod graph;
 pub(crate) mod identifiers;
+pub(crate) mod kernel_contract;
+pub(crate) mod neuron_contract;
 pub mod parser;
 pub mod printer;
 pub mod qformat;

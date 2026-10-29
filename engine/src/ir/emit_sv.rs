@@ -16,6 +16,7 @@
 //! - One port per `sc.input` / `sc.output` operation
 //! - Internal wiring for all intermediate values
 
+mod arithmetic;
 mod constants;
 mod count;
 mod dense;
@@ -26,6 +27,9 @@ mod state;
 mod word;
 
 use crate::ir::graph::*;
+use crate::ir::kernel_contract::{
+    attention_shape as softmax_attention_shape, const_f64_vec, q_fixed,
+};
 use crate::ir::sv_target::{ResourceReport, SvTarget};
 
 /// Emit a synthesizable SystemVerilog module from an SC graph.
@@ -80,7 +84,7 @@ pub fn emit_systemverilog_with_target(
                 }
             }
             ScOp::Output { name, source, .. } => {
-                let width = find_value_width(graph, *source);
+                let width = find_port_width(graph, *source);
                 if width == 1 {
                     sv.push_str(&format!(",\n    output wire {}", name));
                 } else {
@@ -201,6 +205,9 @@ pub fn emit_systemverilog_with_target(
 
     // Module instantiations
     for op in &graph.ops {
+        if arithmetic::emit(&mut sv, graph, op)? {
+            continue;
+        }
         match op {
             ScOp::Store {
                 state,
@@ -390,20 +397,7 @@ pub fn emit_systemverilog_with_target(
                     id.0, lhs_wire, rhs_wire
                 ));
             }
-            ScOp::Reduce { id, input, mode } => {
-                let in_wire = value_to_wire(graph, *input);
-                let label = match mode {
-                    ReduceMode::Sum => "reduce_sum",
-                    ReduceMode::Max => "reduce_max",
-                };
-                sv.push_str(&format!(
-                    "    // {label}: passthrough for single-element; multi-element requires adder/comparator tree\n\
-                     \x20   assign v{id} = {wire};\n",
-                    label = label,
-                    id = id.0,
-                    wire = in_wire,
-                ));
-            }
+            ScOp::Reduce { .. } => {}
             ScOp::GraphForward {
                 id,
                 features,
@@ -441,24 +435,15 @@ pub fn emit_systemverilog_with_target(
             }
             ScOp::Output { name, source, .. } => {
                 let src_wire = value_to_wire(graph, *source);
-                sv.push_str(&format!("    assign {} = {};\n", name, src_wire));
+                let padding = find_port_width(graph, *source) - find_value_width(graph, *source);
+                let value = if padding > 0 {
+                    format!("{{{{{padding}{{1'b0}}}}, {src_wire}}}")
+                } else {
+                    src_wire
+                };
+                sv.push_str(&format!("    assign {name} = {value};\n"));
             }
-            ScOp::Scale { id, input, factor } => {
-                let in_wire = value_to_wire(graph, *input);
-                let scale_int = (*factor * 256.0) as i64; // Q8.8
-                sv.push_str(&format!(
-                    "    assign v{} = ({} * {}) >>> 8;\n",
-                    id.0, in_wire, scale_int
-                ));
-            }
-            ScOp::Offset { id, input, offset } => {
-                let in_wire = value_to_wire(graph, *input);
-                let offset_int = (*offset * 256.0) as i64;
-                sv.push_str(&format!(
-                    "    assign v{} = {} + {};\n",
-                    id.0, in_wire, offset_int
-                ));
-            }
+            ScOp::Scale { .. } | ScOp::Offset { .. } => {}
             ScOp::DivConst { id, input, divisor } => {
                 let in_wire = value_to_wire(graph, *input);
                 divide::emit(
@@ -500,7 +485,7 @@ pub(crate) fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 }
                 ScOp::Decode { .. } => 16,
                 ScOp::Popcount { .. } | ScOp::Reduce { .. } => 64,
-                ScOp::LifStep { params, .. } => params.data_width as usize,
+                ScOp::LifStep { .. } => 1,
                 ScOp::DenseForward { params, .. } => params.n_neurons,
                 ScOp::DclsLayer { params, .. } => params.data_width as usize,
                 ScOp::GraphForward {
@@ -524,6 +509,14 @@ pub(crate) fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
         }
     }
     16
+}
+
+/// Preserve the historical widened LIF spike output port while keeping its internal value Boolean.
+pub(crate) fn find_port_width(graph: &ScGraph, id: ValueId) -> usize {
+    match graph.ops.iter().find(|op| op.result_id() == id) {
+        Some(ScOp::LifStep { params, .. }) => params.data_width as usize,
+        _ => find_value_width(graph, id),
+    }
 }
 
 fn value_to_wire(graph: &ScGraph, id: ValueId) -> String {
@@ -580,18 +573,6 @@ const GRAPH_FRACTION: usize = 16;
 const ATTN_DATA_WIDTH: usize = 24;
 const ATTN_FRACTION: usize = 16;
 
-/// Quantise a finite real into signed Q(`frac`) of `width` bits, or `None` when the
-/// value is non-finite or falls outside the representable two's-complement range.
-fn q_fixed(value: f64, frac: usize, width: usize) -> Option<i64> {
-    if !value.is_finite() {
-        return None;
-    }
-    let scaled = (value * (1i64 << frac) as f64).round() as i64;
-    let min = -(1i64 << (width - 1));
-    let max = (1i64 << (width - 1)) - 1;
-    (min..=max).contains(&scaled).then_some(scaled)
-}
-
 /// Q(FRACTION) representation of the `2*pi` phase modulus.
 fn kuramoto_phase_modulus() -> i64 {
     (std::f64::consts::TAU * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64
@@ -642,26 +623,6 @@ fn pack_q_bus(values: &[i64], width: usize) -> String {
         .map(|v| format!("{}'d{}", width, v & mask))
         .collect();
     format!("{{{}}}", fields.join(", "))
-}
-
-/// Resolve a constant vector operand to its `f64` values, if present.
-fn const_f64_vec(graph: &ScGraph, id: ValueId) -> Option<Vec<f64>> {
-    for op in &graph.ops {
-        if op.result_id() == id {
-            return match op {
-                ScOp::Constant {
-                    value: ScConst::F64Vec(v),
-                    ..
-                } => Some(v.clone()),
-                ScOp::Constant {
-                    value: ScConst::I64Vec(v),
-                    ..
-                } => Some(v.iter().map(|x| *x as f64).collect()),
-                _ => None,
-            };
-        }
-    }
-    None
 }
 
 /// Infer the oscillator count from the phase operand's vector length.
@@ -764,7 +725,7 @@ fn emit_kuramoto_step(
          \x20       .DATA_WIDTH({dw}),\n\
          \x20       .FRACTION({frac}),\n\
          \x20       .LUT_SIZE({lut}),\n\
-         \x20       .DT_FIXED({dw}'sd{dt_fixed}),\n\
+         \x20       .DT_FIXED({dt_literal}),\n\
          \x20       .PHASE_MODULUS({dw}'sd{modulus}),\n\
          \x20       .HALF_PHASE_MODULUS({dw}'sd{half})\n\
          \x20   ) u_kuramoto_{inst_idx} (\n\
@@ -774,6 +735,7 @@ fn emit_kuramoto_step(
          \x20       .phases_out(v{result})\n\
          \x20   );\n\n",
         frac = KURAMOTO_FRACTION,
+        dt_literal = signed_q_literal(dt_fixed, KURAMOTO_DATA_WIDTH),
         lut = KURAMOTO_LUT_SIZE,
         modulus = kuramoto_phase_modulus(),
         half = kuramoto_half_phase_modulus(),
@@ -857,38 +819,6 @@ fn emit_graph_forward(
         result = id.0,
     ));
     Ok(())
-}
-
-/// Infer the `(q_rows, k_rows, v_cols)` attention shape from the constant operand
-/// lengths and `dim_k`, or `None` when the operands are non-constant or ill-shaped.
-///
-/// `q` is `q_rows × dim_k`, `k` is `k_rows × dim_k` and `v` is `k_rows × v_cols`.
-fn softmax_attention_shape(
-    graph: &ScGraph,
-    q: ValueId,
-    k: ValueId,
-    v: ValueId,
-    dim_k: usize,
-) -> Option<(usize, usize, usize)> {
-    if dim_k == 0 {
-        return None;
-    }
-    let q_vals = const_f64_vec(graph, q)?;
-    let k_vals = const_f64_vec(graph, k)?;
-    let v_vals = const_f64_vec(graph, v)?;
-    if q_vals.len() % dim_k != 0 || k_vals.len() % dim_k != 0 {
-        return None;
-    }
-    let q_rows = q_vals.len() / dim_k;
-    let k_rows = k_vals.len() / dim_k;
-    if k_rows == 0 || v_vals.len() % k_rows != 0 {
-        return None;
-    }
-    let v_cols = v_vals.len() / k_rows;
-    if q_rows == 0 || v_cols == 0 {
-        return None;
-    }
-    Some((q_rows, k_rows, v_cols))
 }
 
 /// Instantiate the fixed-point `sc_softmax_attention` core for a single attention op.

@@ -23692,7 +23692,7 @@ Return the static baseline Verilog primitives bundled with the wheel.
 Returns
 -------
 tuple of str
-    Allowed resource names, including the row-major dense matrix core.
+    Allowed resource names, including dense, delay and constant-vector kernel cores.
 
 ### Function `baseline_primitive_path(name)`
 Return an importlib resource handle for a known baseline primitive.

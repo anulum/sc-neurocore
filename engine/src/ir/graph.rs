@@ -167,7 +167,7 @@ impl Default for DenseParams {
 // DCLS layer parameters
 
 /// Parameters for a delay-coded learnable-spike layer.
-/// Maps to `sc_dcls_layer_core` and its Q8.8 tent kernel.
+/// Maps to `sc_dcls_layer_core` and its parameterized signed fixed-point tent kernel.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DclsParams {
     /// Number of delayed taps sampled from the input spike stream.

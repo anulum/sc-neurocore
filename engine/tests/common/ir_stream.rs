@@ -27,6 +27,7 @@ pub fn run(label: &str, graph: &ScGraph, bench: &str, expected: &[String]) {
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("graph.scir"), text).unwrap();
         fs::write(dir.join("graph.mlir"), mlir).unwrap();
+        fs::write(dir.join("graph.sv"), &sv).unwrap();
         fs::write(dir.join("tb.sv"), bench).unwrap();
         fs::write(dir.join("expected.txt"), expected.join("\n") + "\n").unwrap();
     }

@@ -20,9 +20,9 @@ pub(super) fn emit(
     name: &str,
 ) -> Result<(), String> {
     let ty = value_type(graph, id)?;
-    let element = match ty {
+    let element = match &ty {
         ScType::Vec { element, .. } => element.as_ref(),
-        _ => ty,
+        _ => &ty,
     };
     let layout = probability_layout(element)?;
     let (width, frac) = (layout.width, layout.fraction);

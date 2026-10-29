@@ -31,6 +31,10 @@ on:
       - "tests/test_mlir_emitter.py"
       - "tests/test_compiler_pipeline_contracts.py"
       - "engine/src/ir/**"
+      - "engine/tests/ir_compound_contracts.rs"
+      - "engine/tests/test_ir_compound_runtime.rs"
+      - "engine/tests/common/compound_*.rs"
+      - "hdl/sc_dcls_tent_kernel.v"
       - "engine/tests/test_ir_streaming*.rs"
       - "engine/tests/test_ir_scalar*.rs"
       - "engine/tests/test_ir_state*.rs"
@@ -65,6 +69,10 @@ on:
       - "tests/test_mlir_emitter.py"
       - "tests/test_compiler_pipeline_contracts.py"
       - "engine/src/ir/**"
+      - "engine/tests/ir_compound_contracts.rs"
+      - "engine/tests/test_ir_compound_runtime.rs"
+      - "engine/tests/common/compound_*.rs"
+      - "hdl/sc_dcls_tent_kernel.v"
       - "engine/tests/test_ir_streaming*.rs"
       - "engine/tests/test_ir_scalar*.rs"
       - "engine/tests/test_ir_state*.rs"
@@ -149,6 +157,7 @@ jobs:
           --test test_ir_runtime_check --test test_ir_identifiers
           --test test_ir_source --test test_ir_word_delay --test test_ir_word_delay_admission
           --test test_ir_state --test test_ir_state_text --test test_ir_state_runtime
+          --test ir_compound_contracts --test test_ir_compound_runtime
           -- --test-threads=1
 
       - name: Lower and simulate every native CIRCT reference circuit

@@ -86,6 +86,9 @@ required-features = ["gpu"]
 name = "bench_dcls_q88"
 
 [[example]]
+name = "bench_compound_ir"
+
+[[example]]
 name = "bench_mixed_dense"
 
 [[example]]

@@ -26,6 +26,12 @@ BASELINE_PRIMITIVE_RTL: tuple[str, ...] = (
     "sc_dotproduct_to_current.v",
     "sc_firing_rate_bank.v",
     "sc_lif_neuron.v",
+    "sc_dcls_layer_core.v",
+    "sc_dcls_tent_kernel.v",
+    "sc_dcls_axonal_delay.v",
+    "sc_graph_forward.v",
+    "sc_softmax_attention.v",
+    "sc_kuramoto_step.v",
 )
 _BASELINE_PRIMITIVE_SET = frozenset(BASELINE_PRIMITIVE_RTL)
 
@@ -36,7 +42,7 @@ def list_baseline_primitive_rtl() -> tuple[str, ...]:
     Returns
     -------
     tuple of str
-        Allowed resource names, including the row-major dense matrix core.
+        Allowed resource names, including dense, delay and constant-vector kernel cores.
     """
     return BASELINE_PRIMITIVE_RTL
 

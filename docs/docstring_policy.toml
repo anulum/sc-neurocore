@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1498
+expected_file_count = 1499
+
+[[file]]
+path = "tests/test_dcls_parameterized_cosim.py"
+rationale = "Real parameterized DCLS RTL is compared with independent arbitrary-precision arithmetic, including saturation telemetry and invalid format refusal."
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"

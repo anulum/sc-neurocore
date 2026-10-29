@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Changelog -->
+
 # Changelog
 
 - Restore the engine-test inventory for the five published native IR suites and bind the historical NIR graph benchmark gate to its measured source snapshot, including all eight per-file hashes. Upgrade the workstation notebook converter to 7.17.2 for GHSA-pjvx-prjx-h659 and verify the exact development documentation stylesheet policy. Refresh the pinned Rust cache and PyPI publishing Actions, and update crossbeam-channel to 0.5.17.
@@ -11,6 +19,8 @@
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
 ## [Unreleased]
+
+- Lower native compound LIF, Dense, DCLS, scalar arithmetic and constant Q8.16 graph, attention and Kuramoto operations to typed HW/Comb/Seq MLIR. Verify operand formats and dimensions before hardware emission, preserve Boolean spike composition and compute parameterized DCLS tents without fixed-width clipping. Add independent integer trajectories through real RTL and CIRCT.
 
 - Accept partial numeric initial values and held state in Studio projects,
   simulation and native equation compilation. Preserve held variables in the

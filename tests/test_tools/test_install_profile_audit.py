@@ -93,6 +93,12 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
             "hdl/primitives/sc_dotproduct_to_current.v",
             "hdl/primitives/sc_firing_rate_bank.v",
             "hdl/primitives/sc_lif_neuron.v",
+            "hdl/primitives/sc_dcls_layer_core.v",
+            "hdl/primitives/sc_dcls_tent_kernel.v",
+            "hdl/primitives/sc_dcls_axonal_delay.v",
+            "hdl/primitives/sc_graph_forward.v",
+            "hdl/primitives/sc_softmax_attention.v",
+            "hdl/primitives/sc_kuramoto_step.v",
         ],
         "missing_static_primitives": [],
         "conda_run_dependencies_expected": [

@@ -1,4 +1,12 @@
-# DCLS Q8.8 RTL Contract
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Parameterized DCLS RTL and fixed Q8.8 runtime contract -->
+
+# DCLS RTL Contract
 
 SC-NeuroCore now has a synthesizable scalar DCLS path for delay-coded
 learnable-spike kernels.  The implementation targets the deterministic
@@ -14,13 +22,39 @@ Q8.8 triangular tent gate:
 ```text
 delay_q88 = tap_index << 8
 distance_q88 = abs(delay_q88 - centre_q88)
-gate_q88 = max(0, sigma_q88 - distance_q88) << 8 / sigma_q88
+gate_q88 = (max(0, sigma_q88 - distance_q88) << 8) / sigma_q88
 contribution_q16_16 = weight_q88 * gate_q88
 ```
 
 The accumulator is Q16.16 and the emitted output is saturated back to Q8.8.
 `sigma_q88 <= 0` is invalid and raises `invalid_sigma` in RTL or a fail-closed
 error in the Rust/Python references.
+
+### Parameterized hardware words
+
+The RTL and native graph emitters also support signed `DATA_WIDTH=2..64`
+with `0 <= FRACTION < DATA_WIDTH`. Weights, centre, sigma and the output
+share that binary point. The compatibility port names retain their
+`q88`/`q16_16` spelling; they do not override the configured format.
+The tent position is `tap_index << FRACTION`. Positive gate division truncates
+toward zero, and the final signed output shifts right by `FRACTION` and
+saturates to the declared data word.
+
+The kernel retains the entire tent numerator, weighted products and tap sum
+before saturation. `ACC_WIDTH=1..64` controls the separately saturated
+accumulator output, whose binary point is `2*FRACTION`. `overflow` reports
+saturation of either exposed result. Invalid sigma produces zero data and
+sets `invalid_sigma`; invalid structural parameters terminate simulation.
+
+Each configured offset must address a nonempty delay line and fit its pointer
+width. Offset zero selects the live input bit. Positive offsets select the
+corresponding history sample; asynchronous reset clears history. The graph
+layer samples continuously, with no additional external input handshake.
+
+The Python, Rust, Julia, Go and Mojo runtime references below retain their
+fixed Q8.8 data and Q16.16 accumulator interfaces. Parameterized hardware
+support does not change those CPU APIs. Their default 16/8/32 arithmetic
+continues to use the same contract.
 
 ## Implemented surfaces
 
@@ -30,7 +64,7 @@ error in the Rust/Python references.
 | IR graph | `engine/src/ir/graph.rs` | `DclsLayer` operation and `DclsParams` |
 | SystemVerilog emitter | `engine/src/ir/emit_sv.rs` | Emits `sc_dcls_layer_core` with packed tap offsets |
 | Axonal delay RTL | `hdl/sc_dcls_axonal_delay.v` | DCLS-specific delay-line module preserving legacy behaviour |
-| Tent kernel RTL | `hdl/sc_dcls_tent_kernel.v` | Q8.8 tent weighting and Q16.16 accumulation |
+| Tent kernel RTL | `hdl/sc_dcls_tent_kernel.v` | Parameterized signed tent weighting; Q8.8/Q16.16 defaults |
 | Layer core RTL | `hdl/sc_dcls_layer_core.v` | Composes delay lines and tent kernel |
 | Formal harness | `hdl/formal/sc_dcls_layer_core.sby` | Non-negative monotonic-input safety and valid liveness |
 | Cosim reference | `tools/cosim_dcls_q88_vs_pytorch.py` | Python/PyTorch deterministic parity |
@@ -75,6 +109,8 @@ elaboration, not board-level throughput:
 | Bounded formal check | `sby -f hdl/formal/sc_dcls_layer_core.sby` |
 | Python/SystemVerilog benchmark evidence | `benchmarks/bench_dcls_q88_rtl.py` |
 | Rust benchmark evidence | `cargo run --manifest-path engine/Cargo.toml --release --example bench_dcls_q88` |
+| Parameterized kernel outputs and error flags | `pytest tests/test_dcls_parameterized_cosim.py -q` |
+| Native graph history, live operands and CIRCT receipts | `cargo test --manifest-path engine/Cargo.toml --test test_ir_compound_runtime dcls_dynamic_taps -- --test-threads=1` |
 
 The 2026-06-04 benchmark artefacts are local contract/regression evidence:
 Python/PyTorch/SystemVerilog `6349.497 ns/sample`, Rust `40.184 ns/sample`,

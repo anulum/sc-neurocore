@@ -30,22 +30,11 @@ impl BitShape {
     }
 }
 
-/// Infer primitive result types in definition order, without following graph cycles.
+/// Infer all supported result types in definition order, without following graph cycles.
 pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<ScType, String> {
     let mut types = HashMap::new();
     for op in &graph.ops {
-        let ty = match op {
-            ScOp::Word { op, .. } => Some(op.result_type().clone()),
-            ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } | ScOp::State { ty, .. } => {
-                Some(ty.clone())
-            }
-            ScOp::Encode { length, .. } => Some(ScType::Bitstream { length: *length }),
-            ScOp::BitwiseAnd { lhs, .. } | ScOp::BitwiseXor { lhs, .. } => types.get(lhs).cloned(),
-            ScOp::Popcount { .. } | ScOp::DivConst { .. } => Some(ScType::UInt { width: 64 }),
-            ScOp::Decode { .. } => Some(ScType::Rate),
-            _ => None,
-        };
-        if let Some(ty) = ty {
+        if let Some(ty) = result_type(op, &types) {
             if op.result_id() == id {
                 return Ok(ty);
             }
@@ -53,6 +42,87 @@ pub(crate) fn value_type(graph: &ScGraph, id: ValueId) -> Result<ScType, String>
         }
     }
     Err(format!("{id} has no declared or inferred bit operand type"))
+}
+
+/// Infer one producer from already defined values, shared by all verification consumers.
+pub(crate) fn result_type(op: &ScOp, types: &HashMap<ValueId, ScType>) -> Option<ScType> {
+    match op {
+        ScOp::Word { op, .. } => Some(op.result_type().clone()),
+        ScOp::Input { ty, .. } | ScOp::Constant { ty, .. } | ScOp::State { ty, .. } => {
+            Some(ty.clone())
+        }
+        ScOp::Encode { length, .. } => Some(ScType::Bitstream { length: *length }),
+        ScOp::BitwiseAnd { lhs, .. } | ScOp::BitwiseXor { lhs, .. } => types.get(lhs).cloned(),
+        ScOp::Popcount { .. } | ScOp::DivConst { .. } => Some(ScType::UInt { width: 64 }),
+        ScOp::Decode { .. } => Some(ScType::Rate),
+        ScOp::LifStep { .. } => Some(ScType::Bool),
+        ScOp::DenseForward { params, .. } => Some(ScType::Vec {
+            element: Box::new(ScType::Bool),
+            count: params.n_neurons,
+        }),
+        ScOp::DclsLayer { params, .. } => Some(ScType::FixedPoint {
+            width: params.data_width,
+            frac: params.fraction,
+        }),
+        ScOp::Scale { .. } | ScOp::Offset { .. } => Some(ScType::SInt { width: 64 }),
+        ScOp::Reduce { input, .. } => types.get(input).and_then(reduction_type),
+        ScOp::GraphForward {
+            n_nodes,
+            n_features,
+            ..
+        } => n_nodes.checked_mul(*n_features).map(kernel_vector),
+        ScOp::SoftmaxAttention { q, k, v, dim_k, .. } => {
+            attention_type(types, [*q, *k, *v], *dim_k)
+        }
+        ScOp::KuramotoStep { phases, .. } => vector_count(types.get(phases)).map(kernel_vector),
+        _ => None,
+    }
+}
+
+/// Return the lane count of one declared, unnested numeric vector.
+fn vector_count(ty: Option<&ScType>) -> Option<usize> {
+    match ty {
+        Some(ScType::Vec { count, .. }) => Some(*count),
+        _ => None,
+    }
+}
+
+/// Describe the maintained signed Q8.16 compound kernel result lanes.
+fn kernel_vector(count: usize) -> ScType {
+    ScType::Vec {
+        element: Box::new(ScType::FixedPoint {
+            width: 24,
+            frac: 16,
+        }),
+        count,
+    }
+}
+
+/// Infer rectangular attention output geometry without dividing by zero or overflowing.
+fn attention_type(
+    types: &HashMap<ValueId, ScType>,
+    operands: [ValueId; 3],
+    dim: usize,
+) -> Option<ScType> {
+    let [q, k, v] = operands;
+    let queries = vector_count(types.get(&q))?.checked_div(dim)?;
+    let keys = vector_count(types.get(&k))?.checked_div(dim)?;
+    let columns = vector_count(types.get(&v))?.checked_div(keys)?;
+    queries.checked_mul(columns).map(kernel_vector)
+}
+
+/// Retain numeric signedness while reducing all homogeneous packed lanes to a raw word.
+fn reduction_type(mut ty: &ScType) -> Option<ScType> {
+    while let ScType::Vec { element, .. } = ty {
+        ty = element;
+    }
+    match ty {
+        ScType::Bool | ScType::UInt { .. } => Some(ScType::UInt { width: 64 }),
+        ScType::Rate | ScType::SInt { .. } | ScType::FixedPoint { .. } => {
+            Some(ScType::SInt { width: 64 })
+        }
+        _ => None,
+    }
 }
 
 /// Resolve packed integer geometry or a vector of synchronous temporal streams.

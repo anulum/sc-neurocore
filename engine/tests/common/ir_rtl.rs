@@ -48,6 +48,12 @@ pub fn simulate(label: &str, sv: &str, bench: &str, primitives: &Path) -> String
         "sc_dotproduct_to_current.v",
         "sc_lif_neuron.v",
         "sc_dense_matrix_layer.v",
+        "sc_dcls_layer_core.v",
+        "sc_dcls_tent_kernel.v",
+        "sc_dcls_axonal_delay.v",
+        "sc_graph_forward.v",
+        "sc_softmax_attention.v",
+        "sc_kuramoto_step.v",
     ] {
         command.arg(primitives.join(name));
     }

@@ -81,6 +81,12 @@ def test_hdl_resource_helper_rejects_unknown_primitive_names() -> None:
         "sc_dotproduct_to_current.v",
         "sc_firing_rate_bank.v",
         "sc_lif_neuron.v",
+        "sc_dcls_layer_core.v",
+        "sc_dcls_tent_kernel.v",
+        "sc_dcls_axonal_delay.v",
+        "sc_graph_forward.v",
+        "sc_softmax_attention.v",
+        "sc_kuramoto_step.v",
     )
     assert "module sc_bitstream_encoder" in baseline_primitive_text("sc_bitstream_encoder.v")
     try:
@@ -118,6 +124,15 @@ def test_hdl_resource_helper_contract_and_missing_packaged_file(
     monkeypatch.setattr(hdl_resources, "files", lambda _pkg: _MissingResource())
     with pytest.raises(FileNotFoundError, match="Missing packaged HDL primitive"):
         hdl_resources.baseline_primitive_path("sc_lif_neuron.v")
+
+
+def test_packaged_primitives_match_the_canonical_emitter_dependencies() -> None:
+    """The public resource catalogue supplies the exact maintained source of every core."""
+    from sc_neurocore.hdl.resources import baseline_primitive_text, list_baseline_primitive_rtl
+
+    root = Path(__file__).resolve().parents[1]
+    for name in list_baseline_primitive_rtl():
+        assert baseline_primitive_text(name) == (root / "hdl" / name).read_text(encoding="utf-8")
 
 
 def test_base_wheel_does_not_package_polyglot_research_sources(tmp_path: Path) -> None:
@@ -174,6 +189,13 @@ def test_base_wheel_does_not_package_polyglot_research_sources(tmp_path: Path) -
         "accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
     }
     with ZipFile(wheels[0]) as wheel:
+        from sc_neurocore.hdl.resources import list_baseline_primitive_rtl
+
+        for name in list_baseline_primitive_rtl():
+            assert (
+                wheel.read("sc_neurocore/hdl/primitives/" + name)
+                == (root / "hdl" / name).read_bytes()
+            )
         native = {
             name.removeprefix("sc_neurocore/")
             for name in wheel.namelist()

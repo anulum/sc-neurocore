@@ -251,6 +251,12 @@ path:
 - `sc_dotproduct_to_current.v`
 - `sc_firing_rate_bank.v`
 - `sc_lif_neuron.v`
+- `sc_dcls_layer_core.v`
+- `sc_dcls_tent_kernel.v`
+- `sc_dcls_axonal_delay.v`
+- `sc_graph_forward.v`
+- `sc_softmax_attention.v`
+- `sc_kuramoto_step.v`
 
 Python consumers can enumerate or read those files from the installed wheel:
 

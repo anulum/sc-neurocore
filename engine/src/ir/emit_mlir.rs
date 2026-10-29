@@ -12,7 +12,13 @@
 
 use crate::ir::graph::*;
 
+mod arithmetic;
+mod dcls;
+mod dense;
 mod divide;
+mod kernels;
+mod lif;
+mod ops;
 mod primitives;
 mod runtime_check;
 mod state;
@@ -48,7 +54,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             ScOp::Output { name, source, .. } => {
                 ports.push(format!(
                     "out {name}: i{}",
-                    crate::ir::emit_sv::find_value_width(graph, *source)
+                    crate::ir::emit_sv::find_port_width(graph, *source)
                 ));
             }
             _ => {}
@@ -73,6 +79,12 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
         if primitives::emit(&mut mlir, graph, op)? {
             continue;
         }
+        if arithmetic::emit(&mut mlir, graph, op)? {
+            continue;
+        }
+        if kernels::emit(&mut mlir, graph, op)? {
+            continue;
+        }
         match op {
             ScOp::State { id, initial, ty } => state::emit(&mut mlir, graph, *id, *initial, ty)?,
             ScOp::Store { .. } => {}
@@ -94,120 +106,55 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             ScOp::LifStep {
                 id,
                 current,
+                leak,
+                gain,
+                noise,
                 params,
-                ..
             } => {
-                let cur = value_wire(graph, *current);
-                mlir.push_str(&format!(
-                    "  %v{id}_spike, %v{id}_v = hw.instance \"lif_{id}\" \
-                     @sc_lif_neuron<DATA_WIDTH: i32 = {dw}, V_THRESHOLD: i32 = {vt}>(\
-                     clk: %clk: i1, rst_n: %rst_n: i1, I_t: {cur}: i1) -> \
-                     (spike_out: i1, v_out: i{dw})\n",
-                    id = id.0,
-                    dw = params.data_width,
-                    vt = params.v_threshold,
-                    cur = cur,
-                ));
+                lif::emit(
+                    &mut mlir,
+                    graph,
+                    *id,
+                    [*current, *leak, *gain, *noise],
+                    params,
+                );
             }
-            ScOp::DenseForward { id, params, .. } => {
-                mlir.push_str(&format!(
-                    "  %v{} = hw.instance \"dense_{}\" @sc_dense_layer_core<\
-                     N_INPUTS: i32 = {}, N_NEURONS: i32 = {}>(\
-                     clk: %clk: i1, rst_n: %rst_n: i1) -> (spikes: i{})\n",
-                    id.0, id.0, params.n_inputs, params.n_neurons, params.n_neurons
-                ));
-            }
-            ScOp::DclsLayer { id, params, .. } => {
-                mlir.push_str(&format!(
-                    "  %v{} = hw.instance \"dcls_{}\" @sc_dcls_layer_core<\
-                     N_TAPS: i32 = {}, DATA_WIDTH: i32 = {}, FRACTION: i32 = {}>(\
-                     clk: %clk: i1, rst_n: %rst_n: i1) -> (weighted_sum_q88: i{})\n",
-                    id.0,
-                    id.0,
-                    params.n_taps,
-                    params.data_width,
-                    params.fraction,
-                    params.data_width
-                ));
-            }
-            ScOp::GraphForward {
+            ScOp::DenseForward {
                 id,
-                features,
-                adjacency,
-                n_nodes,
-                n_features,
+                inputs,
+                weights,
+                leak,
+                gain,
+                params,
             } => {
-                let features_w = value_wire(graph, *features);
-                let adjacency_w = value_wire(graph, *adjacency);
-                mlir.push_str(&format!(
-                    "  %v{id} = hw.instance \"graph_{id}\" @sc_graph_forward<\
-                     N_NODES: i32 = {n_nodes}, N_FEATURES: i32 = {n_features}>(\
-                     features: {features_w}: i64, adjacency: {adjacency_w}: i64) \
-                     -> (agg: i64)\n",
-                    id = id.0,
-                ));
+                dense::emit(
+                    &mut mlir,
+                    graph,
+                    *id,
+                    [*inputs, *weights, *leak, *gain],
+                    params,
+                )?;
             }
-            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
-                let q_w = value_wire(graph, *q);
-                let k_w = value_wire(graph, *k);
-                let v_w = value_wire(graph, *v);
-                mlir.push_str(&format!(
-                    "  %v{id} = hw.instance \"softmax_{id}\" @sc_softmax_attention<\
-                     DIM_K: i32 = {dim_k}>(\
-                     q_in: {q_w}: i64, k_in: {k_w}: i64, v_in: {v_w}: i64) \
-                     -> (attn_out: i64)\n",
-                    id = id.0,
-                ));
-            }
-            ScOp::KuramotoStep {
+            ScOp::DclsLayer {
                 id,
-                phases,
-                omega,
-                coupling,
-                dt,
+                spike,
+                weights,
+                centre,
+                sigma,
+                params,
             } => {
-                let phases_w = value_wire(graph, *phases);
-                let omega_w = value_wire(graph, *omega);
-                let coupling_w = value_wire(graph, *coupling);
-                let dt_fixed = (*dt * 65536.0).round() as i64;
-                mlir.push_str(&format!(
-                    "  %v{id} = hw.instance \"kuramoto_{id}\" @sc_kuramoto_step<\
-                     DT_FIXED: i32 = {dt}>(\
-                     phases_in: {phases_w}: i64, omega: {omega_w}: i64, \
-                     coupling: {coupling_w}: i64) -> (phases_out: i64)\n",
-                    id = id.0,
-                    dt = dt_fixed,
-                ));
+                dcls::emit(
+                    &mut mlir,
+                    graph,
+                    *id,
+                    [*spike, *weights, *centre, *sigma],
+                    params,
+                );
             }
-            ScOp::Scale { id, input, factor } => {
-                let inp = value_wire(graph, *input);
-                let scale_int = (*factor * 256.0) as i64;
-                mlir.push_str(&format!(
-                    "  %v{} = comb.mul {inp}, %c_scale_{id} : i16\n",
-                    id.0,
-                    inp = inp,
-                    id = id.0,
-                ));
-                let _ = scale_int; // used in constant emission
-            }
-            ScOp::Offset { id, input, offset } => {
-                let inp = value_wire(graph, *input);
-                let _ = offset;
-                mlir.push_str(&format!(
-                    "  %v{} = comb.add {inp}, %c_off_{id} : i16\n",
-                    id.0,
-                    inp = inp,
-                    id = id.0,
-                ));
-            }
-            ScOp::Reduce { id, input, mode } => {
-                let inp = value_wire(graph, *input);
-                let op_name = match mode {
-                    ReduceMode::Sum => "add",
-                    ReduceMode::Max => "max",
-                };
-                mlir.push_str(&format!("  %v{} = comb.{op_name} {inp} : i64\n", id.0,));
-            }
+            ScOp::GraphForward { .. } => {}
+            ScOp::SoftmaxAttention { .. } => {}
+            ScOp::KuramotoStep { .. } => {}
+            ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::Reduce { .. } => {}
         }
     }
 
@@ -215,12 +162,26 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
     let mut results = Vec::new();
     let mut result_types = Vec::new();
     for op in &graph.ops {
-        if let ScOp::Output { source, .. } = op {
-            results.push(value_wire(graph, *source));
-            result_types.push(format!(
-                "i{}",
-                crate::ir::emit_sv::find_value_width(graph, *source)
-            ));
+        if let ScOp::Output { id, source, .. } = op {
+            let width = crate::ir::emit_sv::find_value_width(graph, *source);
+            let port_width = crate::ir::emit_sv::find_port_width(graph, *source);
+            let value = if width != port_width {
+                let mut n = ops::Net::new(&mut mlir, id.0);
+                n.resize(
+                    &ops::Value {
+                        name: value_wire(graph, *source),
+                        width,
+                        signed: false,
+                    },
+                    port_width,
+                    false,
+                )
+                .name
+            } else {
+                value_wire(graph, *source)
+            };
+            results.push(value);
+            result_types.push(format!("i{port_width}"));
         }
     }
     if results.is_empty() {

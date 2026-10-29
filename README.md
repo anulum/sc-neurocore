@@ -1,9 +1,11 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<!-- © 1998–2026 Miroslav Šotek. All rights reserved. -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
-<!-- ORCID: https://orcid.org/0009-0009-3560-0851 -->
-<!-- License: GNU AFFERO GENERAL PUBLIC LICENSE v3 -->
-<!-- Commercial Licensing: Available -->
+<!-- SC-NeuroCore — Universal stochastic computing framework -->
+<!-- © 1998–2026 Miroslav Šotek. All rights reserved. -->
 
 # SC-NeuroCore
 
@@ -177,7 +179,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 32 |
-| Python test files | 5477 |
+| Python test files | 5478 |
 | Public documentation pages | 657 |
 | GitHub Actions workflows | 24 |
 
