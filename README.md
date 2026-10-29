@@ -382,8 +382,8 @@ sc-neurocore studio              # opens browser at http://127.0.0.1:8001
 
 | Feature | What it does |
 |---------|-------------|
-| **160-entry Model Browser** | Browse every registered catalogue entry by category, simulate with parameter sliders |
-| **18+ Analysis Views** | Trace, phase portrait, ISI, f-I curve, bifurcation, heatmap, STA, frequency response, characterisation dashboard |
+| **Model Browser** | Browse every registered catalogue entry by category (count in the capability snapshot above), simulate with parameter sliders |
+| **Analysis Views** | Trace, phase portrait, ISI, f-I curve, bifurcation, heatmap, STA, frequency response, characterisation dashboard |
 | **Compiler Inspector** | Lower authored equations and numeric profiles to native IR, inspect graph structure, replay bound source and emit SystemVerilog |
 | **Synthesis Dashboard** | One-click Yosys synthesis to ice40/ECP5/Gowin/Xilinx, multi-target comparison, resource bars |
 | **Training Monitor** | Live loss/accuracy curves via SSE, 6 surrogate gradients, per-layer spike rates |
@@ -561,7 +561,7 @@ hdl/
   sc_aer_encoder.v            -- AER spike encoder (event-driven output)
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
-  tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
+  tb_sc_*.v                   -- Self-checking simulation testbenches
   formal/ (90 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
