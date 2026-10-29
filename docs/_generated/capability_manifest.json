@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5468
+    "test_files": 5471
   },
   "documentation": {
     "public_pages": [
@@ -8005,6 +8005,8 @@
       "tests/test_studio_generator_state_visibility.py",
       "tests/test_studio_graph_model_contract.py",
       "tests/test_studio_graph_validation_locations.py",
+      "tests/test_studio_hardware_catalogue.py",
+      "tests/test_studio_hardware_catalogue_routes.py",
       "tests/test_studio_host_job_tasks.py",
       "tests/test_studio_host_jobs.py",
       "tests/test_studio_host_jobs_schema.py",
@@ -8261,6 +8263,7 @@
       "tests/test_studio_synthesis_provenance_run_and_endpoint.py",
       "tests/test_studio_synthesis_provenance_target_build.py",
       "tests/test_studio_synthesis_run.py",
+      "tests/test_studio_synthesis_target_profiles.py",
       "tests/test_studio_synthesis_terminal.py",
       "tests/test_studio_synthesis_tool_detection.py",
       "tests/test_studio_synthesis_yosys_json.py",

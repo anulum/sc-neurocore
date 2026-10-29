@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Hardware catalogue exact coverage
+
+[run]
+branch = True
+source_dirs = src/sc_neurocore/studio
+parallel = True
+patch =
+    subprocess
+    _exit
+
+[report]
+include =
+    */sc_neurocore/studio/hardware_catalogue.py
+    */sc_neurocore/studio/synthesis_profiles.py
+    */sc_neurocore/studio/api/hardware.py
+fail_under = 100
+show_missing = True

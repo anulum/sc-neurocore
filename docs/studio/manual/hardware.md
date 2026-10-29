@@ -76,6 +76,36 @@ coverage; formats/integrators are not interchangeable just because they emit RTL
 
 ## FPGA target profiles
 
+Open **Hardware catalogue** from the main toolbar to browse registrations,
+including on installations without synthesis tools. The native dialog keeps
+keyboard focus inside it; Escape or **Close hardware catalogue** returns to
+the workbench. The same browser is available in **FPGA synthesis** when that
+panel's tool requirements are met. Search by name or target identity, or filter
+device planning profiles, FPGA synthesis profiles and board drivers. The
+catalogue combines the core device registry, NIR capability manifests, current
+synthesis configurations and the PYNQ-Z2 driver registration. Distinct hardware
+generations retain their own identities.
+
+Each entry names its registration source, required software and limitations.
+NIR entries retain declared nodes, transport and precision constraints; an
+adapter handoff package is identified separately from vendor runtime execution.
+Core planning assumptions are not presented as measured device specifications.
+No physical measurement receipts are attached to these registration entries.
+Measured behaviour requires the device/operator/image and instrument-bound
+experiment report rather than a profile declaration.
+
+**Use … target** selects an FPGA profile in the existing synthesis controls;
+it starts no tool or board operation. Catalogue-model mode retains its admitted
+routing targets. Browsing other categories leaves the selected target and
+experiment unchanged. A catalogue request failure remains visible and can be
+retried; it is not shown as an empty supported-hardware inventory.
+
+The read-only `GET /api/hardware/catalogue` response uses
+`studio.hardware-catalogue.v1`. It describes registration only and performs no
+device detection, vendor SDK invocation or EDA tool probe. Current tool
+reachability remains in the synthesis tool status; current compile/synthesis
+reports retain their own source-bound evidence.
+
 This table is a catalogue of the **synthesis profiles exposed by Studio**.
 It is not a list of qualified physical boards or a guarantee that every model
 can be deployed on them.

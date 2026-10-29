@@ -14,6 +14,7 @@ export default defineConfig({
   // Live-backend specs run under their own configs (graph, live, event, export),
   // which start the real API they need; the mocked default run cannot serve them.
   testIgnore: [
+    "hardware-catalogue-live.spec.ts",
     "candidate-authoring-live.spec.ts",
     "catalogue-to-silicon-live.spec.ts",
     "equation-ir-live.spec.ts",

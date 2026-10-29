@@ -210,6 +210,21 @@ jobs:
         working-directory: studio/frontend
         run: npm test
 
+      - name: Hardware catalogue interface exact coverage
+        working-directory: studio/frontend
+        run: >-
+          npm exec -- vitest run src/components/HardwareCatalogue.test.tsx
+          src/components/HardwareCatalogueDialog.test.tsx
+          src/workbenchKeyboard.test.ts
+          src/api/hardwareApi.test.ts --coverage
+          --coverage.include=src/components/HardwareCatalogue.tsx
+          --coverage.include=src/components/HardwareCatalogueDialog.tsx
+          --coverage.include=src/workbenchKeyboard.ts
+          --coverage.include=src/api/hardwareApi.ts
+          --coverage.thresholds.perFile=true
+          --coverage.thresholds.lines=100 --coverage.thresholds.branches=100
+          --coverage.thresholds.functions=100 --coverage.thresholds.statements=100
+
       - name: TypeScript and Vite build
         working-directory: studio/frontend
         run: npm run build
@@ -736,6 +751,7 @@ jobs:
           export SC_NEUROCORE_STUDIO_PROJECT_ROOT="$namespace/projects"
           npx playwright install --with-deps chromium
           npx playwright test --config playwright.live.config.ts equation-ir-live.spec.ts \
+            hardware-catalogue-live.spec.ts \
             --output="$namespace/playwright"
 
       - name: Preserve equation compiler browser diagnostics
@@ -844,6 +860,17 @@ jobs:
             --rcfile=/dev/null \
             --include='src/sc_neurocore/studio/replay_pack.py' \
             --fail-under=100 --show-missing
+
+      - name: Hardware catalogue exact coverage
+        if: matrix.coverage && matrix.shard-index == 2
+        env:
+          COVERAGE_FILE: .coverage-studio-hardware-catalogue
+        run: |
+          python -m pytest tests/test_studio_hardware_catalogue.py \
+            tests/test_studio_synthesis_target_profiles.py \
+            tests/test_studio_hardware_catalogue_routes.py -q \
+            --cov --cov-config=tests/studio_hardware_catalogue.coveragerc \
+            --cov-report=term-missing --cov-fail-under=100
 
       - name: Studio policy exact coverage
         if: matrix.coverage && matrix.shard-index == 2

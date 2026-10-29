@@ -14,6 +14,8 @@ export {
 } from "./http";
 
 export type * from "./types";
+export type * from "../hardwareCatalogueTypes";
+export { fetchHardwareCatalogue } from "./hardwareApi";
 
 export {
   fetchTemplates,

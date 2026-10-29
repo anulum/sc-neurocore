@@ -5,6 +5,15 @@ analysing spiking neurons interactively. It combines <!-- count:studio_catalogue
 custom ODE editing, 15 analysis views, and Verilog RTL generation in a single
 interface.
 
+The main toolbar opens a searchable **Hardware catalogue** without requiring
+optional synthesis tools. The **FPGA synthesis** workbench includes the same browser
+for registered device-planning profiles, NIR capability manifests, FPGA targets
+and board drivers. It shows required software, constraints and registration
+sources while keeping tool reachability and physical evidence separate.
+Selecting a registered FPGA target updates the existing synthesis controls
+without running a tool. See the [hardware manual](../studio/manual/hardware.md)
+and read-only `GET /api/hardware/catalogue` API.
+
 ## Installation
 
 ```bash

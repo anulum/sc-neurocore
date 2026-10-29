@@ -123,6 +123,29 @@ Use the Node version pinned in the workflows and npm 12.2.1, as declared by
 package scripts without changing the shared machine's global npm installation.
 The producer and federation test host use matching React singleton versions.
 
+### Hardware catalogue coverage
+
+The hardware catalogue uses three separate metadata modules: current synthesis
+profile definitions, their hardware/NIR projection, and the public HTTP route.
+Their focused gate retains branch and subprocess tracing and requires 100%:
+
+```bash
+python -m pytest tests/test_studio_hardware_catalogue.py \
+  tests/test_studio_synthesis_target_profiles.py \
+  tests/test_studio_hardware_catalogue_routes.py -q \
+  --cov --cov-config=tests/studio_hardware_catalogue.coveragerc \
+  --cov-report=term-missing --cov-fail-under=100
+```
+
+The frontend CI job runs the catalogue/modal DOM and shared HTTP transport tests with
+per-file statement, branch, function and line thresholds of 100%. The real
+backend browser contract is `e2e/hardware-catalogue-live.spec.ts`, selected by
+`playwright.live.config.ts` in the native Studio lane. It checks registration
+conservation, target selection and refusal/retry without synthesising or
+programming hardware. These checks attest the software catalogue, not a vendor
+SDK or physical device. Shared-host local checks remain module-specific and
+serial; the commands above describe the hosted gate.
+
 ### Equation compiler frontend coverage
 
 From `studio/frontend`, `npm run test:compiler-coverage` checks the compiler

@@ -42809,6 +42809,18 @@ app_module_file:
 
 ---
 
+## Module `studio.api.hardware`
+
+### Function `build_hardware_router()`
+Build the read-only hardware discovery router.
+
+Returns
+-------
+APIRouter
+    Public registration metadata. No device probe, job or vendor call.
+
+---
+
 ## Module `studio.api.host_job_tasks`
 
 ### Function `run_host_analysis_task(context, payload)`
@@ -45420,6 +45432,34 @@ Returns
 -------
 pathlib.Path or None
     First built interface, or no interface when every candidate is absent.
+
+---
+
+## Module `studio.hardware_catalogue`
+
+### Class `HardwareCatalogueEntry`
+One registered target and the exact software paths it declares.
+
+A NIR capability manifest describes intended lowering constraints, not
+conformance to a vendor SDK. Physical evidence is deliberately separate
+from registration; this catalogue does not import measurement receipts.
+
+
+### Class `HardwareCatalogue`
+A deterministic catalogue of registrations, with no hardware probing.
+
+
+### Function `hardware_catalogue()`
+Read current public registries without opening hardware or running tools.
+
+Returns
+-------
+HardwareCatalogue
+    Device planning profiles, NIR manifests, synthesis configurations and
+    the existing PYNQ driver. Identity matching is exact: BrainScaleS-2
+    and the separately declared BrainScaleS-3 manifest remain distinct.
+    Device planning constants are not published as measured specifications.
+    This function performs no vendor SDK calls, tool probes or writes.
 
 ---
 
@@ -54681,6 +54721,28 @@ Returns
 dict&#91;str, Any&#93;
     Path-free PnR result with success state, timing metadata, log excerpt,
     or a bounded error message.
+
+---
+
+## Module `studio.synthesis_profiles`
+
+### Class `SynthesisTargetProfile`
+Registered synthesis configuration, without a run or board verdict.
+
+Capacity names a reference device. A missing device selector means the
+synthesis command is not bound to that device. The returned capacity is
+a copy, so catalogue readers cannot mutate the synthesis registry.
+
+
+### Function `synthesis_target_profiles()`
+Describe registered targets without probing tools or running synthesis.
+
+Returns
+-------
+tuple of SynthesisTargetProfile
+    Independent snapshots in the same order as ``supported_targets``.
+    Registration and reference capacity do not attest tool availability,
+    compilation, timing closure, board execution or measured power.
 
 ---
 

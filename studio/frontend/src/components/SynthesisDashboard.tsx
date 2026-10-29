@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import type {
   SiliconTerminalResult,
@@ -15,6 +15,7 @@ import type {
   SynthResult,
 } from "../api/client";
 import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
+import HardwareCatalogue from "./HardwareCatalogue";
 
 /**
  * One resource's usage against the device's capacity, as a labelled bar.
@@ -318,7 +319,8 @@ export default function SynthesisDashboard() {
 
   useEffect(() => { void checkSynthTools(); }, [checkSynthTools]);
 
-  const targets = ["ice40", "ecp5", "gowin", "xilinx"];
+  const [registeredTargets, setRegisteredTargets] = useState<string[]>([]);
+  const targets = registeredTargets.length > 0 ? registeredTargets : [synthTarget];
   const hasSV = svSource.length > 0 || verilogSrc.length > 0;
   const hasIR = irText.length > 0;
   const selectedTerminalTarget = synthTarget === "ice40" || synthTarget === "ecp5";
@@ -355,6 +357,8 @@ export default function SynthesisDashboard() {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
+      <HardwareCatalogue selectedTarget={synthTarget} modelMode={sourceMode === "model"}
+        onSelectTarget={setSynthTarget} onTargetsLoaded={setRegisteredTargets} />
       {/* Header */}
       <div style={{
         padding: "8px 12px", background: "var(--bg-secondary)",

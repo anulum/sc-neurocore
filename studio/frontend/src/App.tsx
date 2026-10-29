@@ -65,6 +65,8 @@ import {
 import { Btn, CapabilityUnavailable } from "./appChrome";
 import ViewTabs from "./components/ViewTabs";
 import TextPromptDialog from "./components/TextPromptDialog";
+import HardwareCatalogueDialog from "./components/HardwareCatalogueDialog";
+import { isWorkbenchShortcutTarget } from "./workbenchKeyboard";
 import SessionStorageStatus from "./components/SessionStorageStatus";
 import type { TextPromptRequest } from "./components/TextPromptDialog";
 import { viewTabGroups, viewTabId, VIEW_PANEL_ID } from "./viewTabs";
@@ -96,6 +98,7 @@ export default function App() {
   const [guidedTrainingSkipped, setGuidedTrainingSkipped] = useState(false);
   const [textPrompt, setTextPrompt] = useState<TextPromptRequest | null>(null);
   const [textPromptKey, setTextPromptKey] = useState(0);
+  const [hardwareCatalogueOpen, setHardwareCatalogueOpen] = useState(false);
   const evidenceSession = useEvidenceCartSession();
   const s = useStudioStore();
   const { loadCapabilities, loadAuditStatus, loadAuthSession, loadOperatorStatus, loadPresets } = s;
@@ -382,7 +385,7 @@ export default function App() {
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (!isWorkbenchShortcutTarget(e.target)) return;
       if (e.code === "Space") {
         e.preventDefault();
         if (!panelUnavailable("trace")) void s.runSimulation();
@@ -423,6 +426,9 @@ export default function App() {
             </span>
           )}
           <AuthControl />
+          <button type="button" className="btn btn--ghost" onClick={() => { setHardwareCatalogueOpen(true); }}>
+            Hardware catalogue
+          </button>
         </div>
 
         <div className="header-row header-actions">
@@ -887,6 +893,9 @@ export default function App() {
       </div>
       <StatusBar />
       <KeyboardHelp />
+      {hardwareCatalogueOpen && <HardwareCatalogueDialog selectedTarget={s.synthTarget}
+        modelMode={s.sourceMode === "model"} onSelectTarget={s.setSynthTarget}
+        onClose={() => { setHardwareCatalogueOpen(false); }} />}
       <TextPromptDialog request={textPrompt} requestKey={textPromptKey}
         onClose={() => { setTextPrompt(null); }} />
       <OnboardingOverlay modelCount={modelCount} />

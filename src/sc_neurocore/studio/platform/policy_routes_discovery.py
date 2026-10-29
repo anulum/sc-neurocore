@@ -13,6 +13,7 @@ from __future__ import annotations
 from sc_neurocore.studio.platform.policy_models import RouteVisibility
 
 DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
+    ("GET", "/api/hardware/catalogue", RouteVisibility.PUBLIC, "studio.hardware.catalogue"),
     ("GET", "/", RouteVisibility.PUBLIC, "studio.frontend.read"),
     ("GET", "/docs", RouteVisibility.PUBLIC, "studio.api.docs.read"),
     ("GET", "/redoc", RouteVisibility.PUBLIC, "studio.api.docs.read"),

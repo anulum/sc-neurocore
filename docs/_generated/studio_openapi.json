@@ -1534,6 +1534,142 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HardwareCatalogue": {
+        "description": "A deterministic catalogue of registrations, with no hardware probing.",
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/HardwareCatalogueEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "evidence_scope": {
+            "default": "Registration only. Tool availability and source-bound run evidence are separate; no physical measurement receipts are attached here.",
+            "title": "Evidence Scope",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "studio.hardware-catalogue.v1",
+            "default": "studio.hardware-catalogue.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "title": "HardwareCatalogue",
+        "type": "object"
+      },
+      "HardwareCatalogueEntry": {
+        "description": "One registered target and the exact software paths it declares.\n\nA NIR capability manifest describes intended lowering constraints, not\nconformance to a vendor SDK. Physical evidence is deliberately separate\nfrom registration; this catalogue does not import measurement receipts.",
+        "properties": {
+          "adapter_package": {
+            "default": false,
+            "title": "Adapter Package",
+            "type": "boolean"
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver"
+          },
+          "evidence_level": {
+            "const": "registration",
+            "default": "registration",
+            "title": "Evidence Level",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "neuromorphic",
+              "fpga",
+              "board"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nir_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NeuromorphicHardwareProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "physical_evidence": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Physical Evidence",
+            "type": "array"
+          },
+          "planning_profile": {
+            "default": false,
+            "title": "Planning Profile",
+            "type": "boolean"
+          },
+          "registration_sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Registration Sources",
+            "type": "array"
+          },
+          "requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Requirements",
+            "type": "array"
+          },
+          "synthesis_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SynthesisTargetProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "name",
+          "kind",
+          "registration_sources",
+          "requirements",
+          "limitations"
+        ],
+        "title": "HardwareCatalogueEntry",
+        "type": "object"
+      },
       "HeatmapRequest": {
         "description": "Request body for two-parameter response heatmap analysis.\n\nEvery grid point runs under ``protocol`` at ``current`` (``frequency_hz``\nfor a sine): the drive the Studio shows, not a fixed constant one.",
         "properties": {
@@ -2471,6 +2607,58 @@
         "title": "NetworkRequest",
         "type": "object"
       },
+      "NeuromorphicHardwareProfile": {
+        "description": "NIR extension profile for a named neuromorphic target.",
+        "properties": {
+          "backend_status": {
+            "title": "Backend Status",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "sc_constraints": {
+            "$ref": "#/components/schemas/SCMappingConstraints"
+          },
+          "supported_nir_nodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supported Nir Nodes",
+            "type": "array"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          },
+          "unsupported_nir_nodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unsupported Nir Nodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "target_id",
+          "display_name",
+          "backend_status",
+          "supported_nir_nodes",
+          "unsupported_nir_nodes",
+          "sc_constraints"
+        ],
+        "title": "NeuromorphicHardwareProfile",
+        "type": "object"
+      },
       "NullclineRequest": {
         "additionalProperties": false,
         "description": "Request body for two-dimensional nullcline analysis.\n\n``current`` is the input the drift field is evaluated at and ``held``\nfixes every equation variable that is not swept (an unlisted one is held\nat its initial value). Invalid grid samples are reported as validity\nmasks, never as zero derivatives.",
@@ -3095,6 +3283,52 @@
           "body"
         ],
         "title": "ReviewCommentBody",
+        "type": "object"
+      },
+      "SCMappingConstraints": {
+        "description": "SC-specific constraints used before lowering NIR graphs to a target.",
+        "properties": {
+          "back_annotation_channels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Back Annotation Channels",
+            "type": "array"
+          },
+          "bitstream_lengths": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Bitstream Lengths",
+            "type": "array"
+          },
+          "precision_modes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Precision Modes",
+            "type": "array"
+          },
+          "stochastic_sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stochastic Sources",
+            "type": "array"
+          },
+          "stream_transport": {
+            "title": "Stream Transport",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bitstream_lengths",
+          "stream_transport",
+          "precision_modes",
+          "stochastic_sources",
+          "back_annotation_channels"
+        ],
+        "title": "SCMappingConstraints",
         "type": "object"
       },
       "SensitivityRequest": {
@@ -3781,6 +4015,81 @@
           "source_job_id"
         ],
         "title": "StudioTrainingWeightRestoreRequest",
+        "type": "object"
+      },
+      "SynthesisTargetProfile": {
+        "description": "Registered synthesis configuration, without a run or board verdict.\n\nCapacity names a reference device. A missing device selector means the\nsynthesis command is not bound to that device. The returned capacity is\na copy, so catalogue readers cannot mutate the synthesis registry.",
+        "properties": {
+          "capacity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Capacity",
+            "type": "object"
+          },
+          "capacity_device": {
+            "title": "Capacity Device",
+            "type": "string"
+          },
+          "device_selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Selector"
+          },
+          "package_selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Selector"
+          },
+          "routing_tool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routing Tool"
+          },
+          "synthesis_command": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Synthesis Command"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "capacity_device",
+          "capacity",
+          "synthesis_command",
+          "routing_tool",
+          "device_selector",
+          "package_selector"
+        ],
+        "title": "SynthesisTargetProfile",
         "type": "object"
       },
       "SynthesisTerminalRequest": {
@@ -5573,6 +5882,25 @@
           }
         },
         "summary": "Api Validate Graph"
+      }
+    },
+    "/api/hardware/catalogue": {
+      "get": {
+        "description": "Return registered paths without attesting device execution.",
+        "operationId": "api_hardware_catalogue_api_hardware_catalogue_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwareCatalogue"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Hardware Catalogue"
       }
     },
     "/api/health": {

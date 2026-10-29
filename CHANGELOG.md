@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Browse registered hardware profiles, NIR constraints, FPGA toolchain targets
+  and the board-driver interface in Studio. Keep registration distinct from
+  tool availability and physical evidence, and select synthesis targets from
+  the same backend catalogue without starting a tool or device operation.
+
 - Connect hosted Studio to an explicitly configured local runtime for simulation,
   analysis and native equation jobs. Preserve original scientific JSON through
   real process workers; expose actual cancellation, digest-bound results and

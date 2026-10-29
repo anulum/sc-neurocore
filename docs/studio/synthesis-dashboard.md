@@ -7,6 +7,17 @@ to any supported FPGA target to see resource usage and timing estimates.
 These reports describe the generated RTL and selected tool targets;
 physical board deployment needs separate validation.
 
+The expandable **Hardware catalogue** lists the running backend's device and
+NIR planning registrations, FPGA synthesis configurations and board-driver
+registration. Search and category filters preserve the current experiment.
+FPGA selection and the main target dropdown consume the same registered
+profiles; selection starts no synthesis or programming. Required tools, device
+selectors, capacity references and routing availability are explicit. Tool
+reachability, source-bound synthesis results and physical measurement receipts
+remain separate from registration. See the
+[hardware user guide](manual/hardware.md#fpga-target-profiles) for the evidence
+boundary and the read-only catalogue API.
+
 ## Quick Start
 
 1. Start with a schema-backed catalogue model or a supported direct Python

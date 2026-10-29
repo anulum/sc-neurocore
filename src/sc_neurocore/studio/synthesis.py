@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Synthesis Dashboard backend for Studio
 
+"""Run bounded FPGA toolchains and describe their registered target profiles."""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
@@ -19,6 +21,14 @@ import shutil
 import subprocess  # nosec B404
 import tempfile
 from pathlib import Path
+
+from sc_neurocore.studio.synthesis_profiles import (
+    _TARGETS,
+    _DEVICE_CAPACITY,
+    _CAPACITY_DEVICE,
+    SynthesisTargetProfile as SynthesisTargetProfile,
+    synthesis_target_profiles as synthesis_target_profiles,
+)
 
 from sc_neurocore.studio.synthesis_provenance import (
     ToolStatusMap,
@@ -51,7 +61,6 @@ class EdaProcessLimits:
 
     def __post_init__(self) -> None:
         """Validate positive resource ceilings when they are configured."""
-
         if self.cpu_seconds is not None and self.cpu_seconds <= 0:
             raise ValueError("EDA process CPU limit must be positive.")
         if self.address_space_bytes is not None and self.address_space_bytes <= 0:
@@ -69,7 +78,6 @@ class SynthesisTerminalExecution:
 
 def _resolve_eda_tool(name: str) -> str | None:
     """Resolve an allowlisted EDA executable to an absolute path."""
-
     if name not in _EDA_TOOL_ALLOWLIST:
         raise ValueError(f"Unsupported EDA tool: {name}")
     return shutil.which(name)
@@ -77,13 +85,11 @@ def _resolve_eda_tool(name: str) -> str | None:
 
 def _eda_process_limits_supported() -> bool:
     """Return whether this host can apply POSIX child-process limits."""
-
     return os.name == "posix"
 
 
 def _build_limit_preexec(limits: EdaProcessLimits | None) -> Callable[[], None] | None:
     """Build a POSIX pre-exec hook that applies configured EDA limits."""
-
     if limits is None or not _eda_process_limits_supported():
         return None
     if limits.cpu_seconds is None and limits.address_space_bytes is None:
@@ -116,7 +122,6 @@ def _run_eda_command(
     process_limits: EdaProcessLimits | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run one allowlisted EDA command with optional child-process limits."""
-
     limit_preexec = _build_limit_preexec(process_limits)
     if limit_preexec is None:
         return subprocess.run(  # nosec B603
@@ -159,47 +164,6 @@ def check_tools() -> dict[str, Any]:
         except (FileNotFoundError, subprocess.TimeoutExpired):
             tools[name] = {"available": False, "version": None}
     return tools
-
-
-_TARGETS: dict[str, dict[str, str | None]] = {
-    "ice40": {"synth_cmd": "synth_ice40", "pnr": "nextpnr-ice40", "device": "up5k"},
-    "ecp5": {
-        "synth_cmd": "synth_ecp5",
-        "pnr": "nextpnr-ecp5",
-        "device": "25k",
-        "package": "CABGA381",
-    },
-    "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
-    "xilinx": {"synth_cmd": "synth_xilinx -flatten", "pnr": None, "device": None},
-}
-
-#: Resource capacity of the device each target is judged against, and that
-#: device's name. Gowin and Xilinx synthesis here is not device-bound, so the
-#: device is named with the verdict rather than implied by the family.
-#:
-#: - iCE40 UltraPlus UP5K: 5280 LUT4 and flip-flops, 30 EBR, 8 SB_MAC16
-#:   (Lattice FPGA-DS-02008; nextpnr-ice40 --up5k reports the same).
-#: - ECP5 LFE5U-25F: 24288 LUT4 and flip-flops, 56 DP16KD, 28 MULT18X18D, as
-#:   nextpnr-ecp5 --25k reports them (the data sheet rounds to "24K"). The row
-#:   said 24576.
-#: - Gowin GW2A-18: 20736 LUT4, 15552 flip-flops, 46 B-SRAM, 48 18x18
-#:   multipliers (Gowin DS102). The row said 20736 flip-flops, 41 B-SRAM and
-#:   no multipliers, matching no device.
-#: - Artix-7 XC7A35T: 20800 LUT6, 41600 flip-flops, 50 RAMB36 (counted as 100
-#:   RAMB18 halves, so an 18 Kb block counts once), 90 DSP48E1 (Xilinx DS180).
-_DEVICE_CAPACITY = {
-    "ice40": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8},
-    "ecp5": {"luts": 24288, "ffs": 24288, "brams": 56, "dsps": 28},
-    "gowin": {"luts": 20736, "ffs": 15552, "brams": 46, "dsps": 48},
-    "xilinx": {"luts": 20800, "ffs": 41600, "brams": 100, "dsps": 90},
-}
-
-_CAPACITY_DEVICE = {
-    "ice40": "iCE40 UP5K",
-    "ecp5": "ECP5 LFE5U-25F",
-    "gowin": "Gowin GW2A-18",
-    "xilinx": "Artix-7 XC7A35T",
-}
 
 
 _CAPACITY_KEYS = ("luts", "ffs", "brams", "dsps")
@@ -411,7 +375,6 @@ def capacity_sentence(target: str, exceeds: Mapping[str, Mapping[str, int]]) -> 
 
 def supported_targets() -> tuple[str, ...]:
     """Return synthesis targets accepted by the Studio EDA routes."""
-
     return tuple(_TARGETS)
 
 
@@ -479,7 +442,6 @@ def run_synthesis_terminal(
     process_limits: EdaProcessLimits | None = None,
 ) -> SynthesisTerminalExecution:
     """Run digest-bound synthesis and PnR for one parity-verified model RTL source."""
-
     if not isinstance(verilog_source, str) or not verilog_source.strip():
         raise ValueError("verilog_source must be a non-empty string")
     if len(verilog_source.encode("utf-8")) > 2 * 1024 * 1024:
@@ -569,7 +531,6 @@ def _run_synthesis_in_directory(
     target_provenance: Mapping[str, object],
 ) -> tuple[dict[str, Any], Path | None]:
     """Run Yosys in one trusted directory and retain its netlist for a caller."""
-
     v_path = root / "design.v"
     json_path = root / "design.json"
     log_path = root / "yosys.log"
@@ -691,7 +652,6 @@ def _validate_selected_rtl_chain(
     cosim_parity: Mapping[str, object],
 ) -> dict[str, object]:
     """Validate selected-model compile and bit-exact parity evidence against RTL bytes."""
-
     actual_rtl_sha256 = _sha256_bytes(verilog_source.encode("utf-8"))
     if compile_traceability.get("schema_version") != "studio.compile-traceability.v1":
         raise ValueError("Selected RTL terminal requires studio.compile-traceability.v1 evidence.")
@@ -745,7 +705,6 @@ def _browser_stable_model_source_payload(
     source_payload: Mapping[str, object],
 ) -> dict[str, object]:
     """Restore model float fields after a standards-compliant browser JSON round trip."""
-
     dt = source_payload.get("dt")
     params = source_payload.get("params")
     if isinstance(dt, bool) or not isinstance(dt, (int, float)):
@@ -1056,7 +1015,6 @@ def run_pnr(
 
 def _pnr_output_path(json_path: Path, target: str) -> Path:
     """Return the target-native routed-design artifact path."""
-
     suffix = ".config" if target == "ecp5" else ".asc"
     return json_path.with_suffix(suffix)
 
@@ -1069,7 +1027,6 @@ def _pnr_command(
     output_path: Path,
 ) -> list[str]:
     """Build a target-correct nextpnr command without accepting client flags."""
-
     device = config.get("device")
     if device is None:
         raise ValueError("PnR target device is not configured.")

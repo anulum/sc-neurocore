@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1480
+expected_file_count = 1487
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -6054,3 +6054,31 @@ rationale = "Fresh per-model interpreters distinguish first analysis from cached
 [[file]]
 path = "tests/test_bench_function_call_domains.py"
 rationale = "Actual benchmark workers and recorded timings are exercised, while invalid counts, changed contracts, imports and source snapshots are refused."
+
+[[file]]
+path = "src/sc_neurocore/studio/hardware_catalogue.py"
+rationale = "Projection preserves exact registry identities and NIR constraints without inventing physical measurements."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/hardware.py"
+rationale = "Public read-only HTTP metadata has a declared schema and submits no hardware or scientific job."
+
+[[file]]
+path = "src/sc_neurocore/studio/synthesis.py"
+rationale = "The existing toolchain consumes one shared profile owner and publicly re-exports independent metadata snapshots."
+
+[[file]]
+path = "tests/test_studio_hardware_catalogue.py"
+rationale = "Registry conservation, generation identity, snapshot isolation and absent optional SDKs are tested through public discovery."
+
+[[file]]
+path = "tests/test_studio_hardware_catalogue_routes.py"
+rationale = "The actual application and production route policy expose metadata without admitting jobs or requiring a vendor identity."
+
+[[file]]
+path = "tests/test_studio_synthesis_target_profiles.py"
+rationale = "Public target metadata preserves synthesis commands, device selectors and copy isolation against actual compiler accessors."
+
+[[file]]
+path = "src/sc_neurocore/studio/synthesis_profiles.py"
+rationale = "Canonical unchanged FPGA target definitions and copy-returning metadata separate profile registration from EDA execution."
