@@ -43097,6 +43097,8 @@ Direct RTL export with its historical default module name.
 ### Class `ModelCompileRequest`
 Request body for schema-backed catalogue-model RTL compilation.
 
+- **validate_model_q_format**(value)
+  - Refuse unoffered geometries before admitting a compiler worker.
 
 ### Class `ModelCosimRequest`
 Request body for real selected-model RTL co-simulation.

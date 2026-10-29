@@ -2053,6 +2053,7 @@
           },
           "q_format": {
             "default": "Q8.8",
+            "description": "Supported model compiler formats: Q8.8, Q16.16.",
             "pattern": "^Q\\d+\\.\\d+$",
             "title": "Q Format",
             "type": "string"
@@ -2129,6 +2130,7 @@
           },
           "q_format": {
             "default": "Q8.8",
+            "description": "Supported model compiler formats: Q8.8, Q16.16.",
             "pattern": "^Q\\d+\\.\\d+$",
             "title": "Q Format",
             "type": "string"

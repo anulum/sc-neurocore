@@ -15,6 +15,9 @@ from typing import Annotated, Any, Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
+from sc_neurocore.compiler.q_format import QFormat
+from sc_neurocore.studio.model_numeric_contracts import STUDIO_Q_FORMATS
+
 FiniteFloat = Annotated[float, Field(strict=True, allow_inf_nan=False)]
 PositiveFiniteFloat = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
 StudioProtocol = Literal["constant", "step", "ramp", "pulse", "sine"]
@@ -236,8 +239,38 @@ class ModelCompileRequest(BaseModel):
     params: dict[str, float] = Field(default_factory=dict)
     dt: float | None = Field(default=None, gt=0)
     integrator: str | None = Field(default=None, min_length=1)
-    q_format: str = Field(default="Q8.8", pattern=r"^Q\d+\.\d+$")
+    q_format: str = Field(
+        default="Q8.8",
+        pattern=r"^Q\d+\.\d+$",
+        description="Supported model compiler formats: " + ", ".join(STUDIO_Q_FORMATS) + ".",
+    )
     module_name: str | None = Field(default=None, min_length=1)
+
+    @field_validator("q_format")
+    @classmethod
+    def validate_model_q_format(cls, value: str) -> str:
+        """Refuse unoffered geometries before admitting a compiler worker.
+
+        Parameters
+        ----------
+        value : str
+            Syntactically valid fixed-point format from the request.
+
+        Returns
+        -------
+        str
+            Original spelling of an offered format, including zero padding.
+
+        Raises
+        ------
+        ValueError
+            The geometry is invalid or the model compiler does not offer it.
+        """
+        if QFormat.from_string(value).q_label not in STUDIO_Q_FORMATS:
+            raise ValueError(
+                "Choose a supported model compiler format: " + ", ".join(STUDIO_Q_FORMATS)
+            )
+        return value
 
 
 class ModelCosimRequest(ModelCompileRequest):

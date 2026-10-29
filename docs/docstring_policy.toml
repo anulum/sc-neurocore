@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1487
+expected_file_count = 1488
 
 [[file]]
 path = "tests/test_ir_neuron_text.py"
@@ -6082,3 +6082,7 @@ rationale = "Public target metadata preserves synthesis commands, device selecto
 [[file]]
 path = "src/sc_neurocore/studio/synthesis_profiles.py"
 rationale = "Canonical unchanged FPGA target definitions and copy-returning metadata separate profile registration from EDA execution."
+
+[[file]]
+path = "tests/test_studio_model_compile_formats.py"
+rationale = "Real compile and co-simulation requests refuse unsupported formats before job admission while preserving offered geometries and existing spelling."
