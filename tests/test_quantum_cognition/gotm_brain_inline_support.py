@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_gotm_brain_inline.py
 
+"""Shared imports for the GOTMBrain persistence, language-model fallback and CLI tests."""
+
 from __future__ import annotations
 
-"""Inline tests for GOTMBrain — persistence, LLM fallback, CLI."""
 from pathlib import Path
 import numpy as np
 import pytest

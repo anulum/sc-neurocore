@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_radical_pair.py
 
+"""Shared imports for the radical-pair model tests."""
+
 from __future__ import annotations
 
-"""Inline tests for RadicalPairModel."""
 import numpy as np
 import pytest
 from sc_neurocore.quantum_cognition.radical_pair import (

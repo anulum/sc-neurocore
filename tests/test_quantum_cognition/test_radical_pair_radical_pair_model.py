@@ -10,14 +10,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from radical_pair_support import *  # noqa: F403
+from tests.test_quantum_cognition.radical_pair_support import *  # noqa: F403
 
 
 class TestRadicalPairModel:
+    """Singlet yield and state reporting of the radical-pair model."""
+
     def test_singlet_yield_zero_field(self) -> None:
         """At zero field, singlet yield depends only on exchange/hyperfine ratio."""
         model = RadicalPairModel()
@@ -73,6 +71,7 @@ class TestRadicalPairModel:
         assert "lifetime_us" in state
 
     def test_repr(self) -> None:
+        """The representation names the class and states frequencies in MHz."""
         model = RadicalPairModel()
         r = repr(model)
         assert "RadicalPairModel" in r

@@ -5,3 +5,5 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Quantum cognition test package
+
+"""Tests for the quantum cognition layer: spin pools, Fisher-Posner neurons, radical pairs and GOTMBrain."""

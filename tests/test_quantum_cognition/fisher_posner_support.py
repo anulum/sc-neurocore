@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_fisher_posner.py
 
+"""Shared fixture and imports for the hybrid Fisher-Posner LIF tests."""
+
 from __future__ import annotations
 
-"""Inline tests for HybridFisherPosnerLIF."""
 import pytest
 from sc_neurocore.quantum_cognition.fisher_posner import (
     HybridFisherPosnerLIF,
@@ -21,6 +22,7 @@ PoolAndNeuron = tuple[SpinPoolMPS, HybridFisherPosnerLIF]
 
 @pytest.fixture
 def pool_and_neuron() -> PoolAndNeuron:
+    """Return an eight-site spin pool and the neuron coupled to its first site."""
     pool = SpinPoolMPS(n_sites=8)
     neuron = HybridFisherPosnerLIF(neuron_id=0, spin_pool=pool)
     return pool, neuron

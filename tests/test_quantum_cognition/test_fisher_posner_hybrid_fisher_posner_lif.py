@@ -10,15 +10,16 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import cast
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from fisher_posner_support import *  # noqa: F403
+from tests.test_quantum_cognition.fisher_posner_support import *  # noqa: F403
 
 
 class TestHybridFisherPosnerLIF:
+    """Membrane, ATP and spin-pool coupling of the hybrid Fisher-Posner LIF neuron."""
+
     def test_resting_state(self, pool_and_neuron: PoolAndNeuron) -> None:
+        """A new neuron rests at -70 mV with full ATP and no spike."""
         _, neuron = pool_and_neuron
         assert neuron.Vm == -70.0
         assert neuron.atp_level == 1.0
@@ -70,7 +71,7 @@ class TestHybridFisherPosnerLIF:
             assert pool._measurement_count > initial_count
 
     def test_v_property(self, pool_and_neuron: PoolAndNeuron) -> None:
-        """v property should alias Vm."""
+        """The v property aliases Vm in both directions."""
         _, neuron = pool_and_neuron
         neuron.Vm = -55.0
         assert neuron.v == -55.0
@@ -78,6 +79,7 @@ class TestHybridFisherPosnerLIF:
         assert neuron.Vm == -60.0
 
     def test_reset(self, pool_and_neuron: PoolAndNeuron) -> None:
+        """Resetting restores the resting potential, full ATP and a zero spike count."""
         _, neuron = pool_and_neuron
         neuron.step(100.0)
         neuron.reset_state()
@@ -86,6 +88,7 @@ class TestHybridFisherPosnerLIF:
         assert neuron._total_spikes == 0
 
     def test_get_state(self, pool_and_neuron: PoolAndNeuron) -> None:
+        """The state snapshot names the neuron and reports its membrane and ATP."""
         _, neuron = pool_and_neuron
         state = neuron.get_state()
         assert "neuron_id" in state
@@ -93,10 +96,12 @@ class TestHybridFisherPosnerLIF:
         assert "atp_level" in state
 
     def test_invalid_neuron_id(self) -> None:
+        """A neuron index outside the spin pool is refused."""
         pool = SpinPoolMPS(n_sites=4)
         with pytest.raises(ValueError):
             HybridFisherPosnerLIF(neuron_id=5, spin_pool=pool)
 
     def test_invalid_type(self) -> None:
+        """A spin pool of the wrong type is refused."""
         with pytest.raises(TypeError):
-            HybridFisherPosnerLIF(neuron_id=0, spin_pool="not a pool")  # type: ignore[arg-type]
+            HybridFisherPosnerLIF(neuron_id=0, spin_pool=cast(SpinPoolMPS, "not a pool"))

@@ -279,7 +279,6 @@ omit = [
     # (tests/test_pynq_driver.py, test_physical_twin_*.py, test_verify_hardware_link.py, 100%);
     # no longer omitted.
     "*/quantum_cognition/fs_watcher.py",  # filesystem daemon, integration-tested outside unit CI
-    "*/quantum_cognition/tests/*",        # package-local tests are not source modules
     # audio/adaptive_engine.py + audio/evs_engine.py are now covered
     # (test_adaptive_audio.py, test_audio_evs_contracts.py, ...); no longer omitted.
     # sleep/report_generator.py + sleep/sleep_optimizer.py are now covered
@@ -346,7 +345,6 @@ ignore = [
 # module (pre-commit ruff hook covers the whole tree, not only tests/).
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["F403", "F405"]
-"src/sc_neurocore/quantum_cognition/tests/**/*.py" = ["F403", "F405"]
 "tools/test_*.py" = ["F403", "F405"]
 "crates/**/test_*.py" = ["F403", "F405"]
 # NumPy-convention docstrings (BROADCAST_2026-06-17). `D` is not yet in the global
@@ -371,9 +369,6 @@ exclude_dirs = [
 [tool.mypy]
 strict = true
 ignore_missing_imports = false
-exclude = [
-    "src/sc_neurocore/quantum_cognition/tests/",
-]
 
 # External untyped third-party dependencies — no upstream stubs available.
 [[tool.mypy.overrides]]

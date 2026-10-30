@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1558
+expected_file_count = 1575
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6366,3 +6366,71 @@ rationale = "Actual framework admission rejects unsupported dynamics, hooks, top
 [[file]]
 path = "tests/test_nir_bridge/test_neuron_graph_architecture.py"
 rationale = "Real module ownership, public pickle identity and bounded source/test responsibilities retain the established neuron-graph architecture without weakening its limits."
+
+[[file]]
+path = "tests/test_quantum_cognition/__init__.py"
+rationale = "The quantum cognition suite is a package under the collected tests root, so its support modules import by package path."
+
+[[file]]
+path = "tests/test_quantum_cognition/fisher_posner_support.py"
+rationale = "A real eight-site spin pool and the hybrid Fisher-Posner neuron coupled to it, shared by the neuron suites."
+
+[[file]]
+path = "tests/test_quantum_cognition/gotm_brain_inline_support.py"
+rationale = "Real GOTMBrain, content-chunk and learning-step types shared by the persistence, language-model fallback and CLI suites."
+
+[[file]]
+path = "tests/test_quantum_cognition/radical_pair_support.py"
+rationale = "Real radical-pair model and parameter types shared by the radical-pair suites."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_dashboard.py"
+rationale = "Module tests for the quantum cognition terminal dashboard."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_fisher_posner_hybrid_fisher_posner_lif.py"
+rationale = "Membrane, ATP regeneration, metabolic failure and spin-pool feedback of the hybrid Fisher-Posner neuron, with invalid construction refused."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_fisher_posner_hybrid_fisher_posner_lif_neuron.py"
+rationale = "The catalogue wrapper of the hybrid Fisher-Posner neuron steps to binary spikes and exposes a float membrane."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_gotm_brain_inline_gotm_brain_llm.py"
+rationale = "GOTMBrain falls back to a stabilising directive when no language model is available."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_gotm_brain_inline_gotm_brain_misc.py"
+rationale = "GOTMBrain reset, learning-state report, representation and learning-step serialisation."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_gotm_brain_inline_gotm_brain_persistence.py"
+rationale = "GOTMBrain state survives a real save and load round trip."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_gotm_brain_llm_contracts.py"
+rationale = "Local language-model contracts on the GOTMBrain learning directive path."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_kane_mapper.py"
+rationale = "Behaviour of the Kane silicon mapper."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_radical_pair_contracts.py"
+rationale = "Radical-pair validation and helper-branch contracts."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_radical_pair_radical_pair_model.py"
+rationale = "Singlet yield, field dependence and state reporting of the radical-pair model."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_radical_pair_radical_pair_params.py"
+rationale = "Default and supplied radical-pair parameters."
+
+[[file]]
+path = "tests/test_quantum_cognition/test_spin_pool.py"
+rationale = "Construction, measurement and coupling of the spin-pool matrix product state."
+
+[[file]]
+path = "tests/test_source_tree_ships_no_test_packages.py"
+rationale = "The wheel's real package discovery ships no test package, and the relocated quantum cognition suite is collected from tests."

@@ -10,15 +10,13 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from gotm_brain_inline_support import *  # noqa: F403
+from tests.test_quantum_cognition.gotm_brain_inline_support import *  # noqa: F403
 
 
 class TestGOTMBrainLLM:
+    """Directive selection of GOTMBrain when no language model is available."""
+
     def test_fallback_directive(self) -> None:
         """Without LLM, should return STABILIZE."""
         brain = GOTMBrain(n_neurons=4)

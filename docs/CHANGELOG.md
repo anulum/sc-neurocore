@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Stop shipping the quantum cognition test suite inside the package. Its 88 cases moved from `src/sc_neurocore/quantum_cognition/tests` to `tests/test_quantum_cognition`, where CI now collects them; before, pytest never ran them and every wheel carried them.
+
 - Keep keyboard focus inside the first-run Studio tour and let Escape dismiss it. Preserve dismissal across visits, and keep tour keys from activating workbench shortcuts.
 
 ## [4.0.0] - 2026-10-29

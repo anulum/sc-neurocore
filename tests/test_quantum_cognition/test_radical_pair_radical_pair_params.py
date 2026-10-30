@@ -10,20 +10,20 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from radical_pair_support import *  # noqa: F403
+from tests.test_quantum_cognition.radical_pair_support import *  # noqa: F403
 
 
 class TestRadicalPairParams:
+    """Default and custom radical-pair parameters."""
+
     def test_defaults(self) -> None:
+        """Defaults are 10 MHz hyperfine, 1 MHz exchange and a 100 us lifetime."""
         p = RadicalPairParams()
         assert p.hyperfine_a == 10.0
         assert p.exchange_j == 1.0
         assert p.lifetime_us == 100.0
 
     def test_custom(self) -> None:
+        """Supplied hyperfine and exchange values are kept."""
         p = RadicalPairParams(hyperfine_a=50.0, exchange_j=5.0)
         assert p.hyperfine_a == 50.0

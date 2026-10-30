@@ -10,16 +10,15 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from gotm_brain_inline_support import *  # noqa: F403
+from tests.test_quantum_cognition.gotm_brain_inline_support import *  # noqa: F403
 
 
 class TestGOTMBrainMisc:
+    """Reset, state reporting and serialisation helpers of GOTMBrain."""
+
     def test_reset(self) -> None:
+        """Resetting clears the learning step count and history."""
         brain = GOTMBrain(n_neurons=4)
         chunk = ContentChunk(
             repo_name="t",
@@ -36,6 +35,7 @@ class TestGOTMBrainMisc:
         assert len(brain._history) == 0
 
     def test_get_learning_state(self) -> None:
+        """The learning state reports the neuron count and mean ATP and entanglement."""
         brain = GOTMBrain(n_neurons=4)
         state = brain.get_learning_state()
         assert state["n_neurons"] == 4
@@ -43,12 +43,14 @@ class TestGOTMBrainMisc:
         assert "avg_entanglement" in state
 
     def test_repr(self) -> None:
+        """The representation names the class and its neuron count."""
         brain = GOTMBrain(n_neurons=8)
         r = repr(brain)
         assert "GOTMBrain" in r
         assert "8" in r
 
     def test_learning_step_to_dict(self) -> None:
+        """A learning step serialises every recorded field."""
         step = LearningStep(
             step_index=0,
             directive="FOCUS",

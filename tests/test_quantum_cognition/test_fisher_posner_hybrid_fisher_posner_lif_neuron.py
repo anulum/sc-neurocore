@@ -10,14 +10,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from fisher_posner_support import *  # noqa: F403
+from tests.test_quantum_cognition.fisher_posner_support import *  # noqa: F403
 
 
 class TestHybridFisherPosnerLIFNeuron:
+    """Catalogue wrapper around the hybrid Fisher-Posner LIF neuron."""
+
     def test_wrapper_step(self) -> None:
         """Wrapper step should return int (0 or 1)."""
         HybridFisherPosnerLIFNeuron._reset_pools()
@@ -26,6 +24,7 @@ class TestHybridFisherPosnerLIFNeuron:
         assert result in (0, 1)
 
     def test_wrapper_v_property(self) -> None:
+        """The wrapper exposes its membrane potential as a float."""
         HybridFisherPosnerLIFNeuron._reset_pools()
         n = HybridFisherPosnerLIFNeuron(n_sites=4)
         assert isinstance(n.v, float)
