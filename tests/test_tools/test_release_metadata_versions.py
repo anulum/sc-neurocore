@@ -60,3 +60,28 @@ def test_archive_citation_and_packages_state_the_same_version() -> None:
     }
     assert len(set(versions.values())) == 1, versions
     assert not str(archive["version"]).startswith("v"), "The archive label carries no prefix."
+
+
+def test_committed_sbom_lists_exactly_the_declared_base_install_contract() -> None:
+    """The root SBOM names every base dependency with its declared range, and nothing else.
+
+    The committed ``sbom.cdx.json`` describes the install contract in
+    ``pyproject.toml``; resolved versions belong to the environment SBOMs that
+    the release attaches. A root SBOM generated from an older requirements
+    file once listed two of the five dependencies with ranges the package no
+    longer declares, while the offline audit passed because it checks only the
+    root component.
+    """
+    declared = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "dependencies"
+    ]
+    sbom = json.loads((ROOT / "sbom.cdx.json").read_text(encoding="utf-8"))
+    listed = sorted(
+        component["description"].split(": ", maxsplit=1)[1] for component in sbom["components"]
+    )
+
+    assert listed == sorted(declared), "Regenerate sbom.cdx.json from pyproject.toml."
+    assert {entry["ref"] for entry in sbom["dependencies"]} == {
+        "root-component",
+        *(component["bom-ref"] for component in sbom["components"]),
+    }

@@ -1,8 +1,22 @@
 {
   "components": [
     {
-      "bom-ref": "requirements-L4",
-      "description": "requirements line 4: numpy>=1.22,<2.0",
+      "bom-ref": "requirements-L3",
+      "description": "requirements line 3: defusedxml>=0.7.1",
+      "externalReferences": [
+        {
+          "comment": "implicit dist url",
+          "type": "distribution",
+          "url": "https://pypi.org/simple/defusedxml/"
+        }
+      ],
+      "name": "defusedxml",
+      "purl": "pkg:pypi/defusedxml",
+      "type": "library"
+    },
+    {
+      "bom-ref": "requirements-L1",
+      "description": "requirements line 1: numpy>=1.24",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -15,8 +29,8 @@
       "type": "library"
     },
     {
-      "bom-ref": "requirements-L5",
-      "description": "requirements line 5: scipy>=1.7,<2.0",
+      "bom-ref": "requirements-L2",
+      "description": "requirements line 2: scipy>=1.10",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -27,9 +41,46 @@
       "name": "scipy",
       "purl": "pkg:pypi/scipy",
       "type": "library"
+    },
+    {
+      "bom-ref": "requirements-L4",
+      "description": "requirements line 4: tomli-w>=1.0",
+      "externalReferences": [
+        {
+          "comment": "implicit dist url",
+          "type": "distribution",
+          "url": "https://pypi.org/simple/tomli-w/"
+        }
+      ],
+      "name": "tomli-w",
+      "purl": "pkg:pypi/tomli-w",
+      "type": "library"
+    },
+    {
+      "bom-ref": "requirements-L5",
+      "description": "requirements line 5: typing-extensions>=4.0,<5",
+      "externalReferences": [
+        {
+          "comment": "implicit dist url",
+          "type": "distribution",
+          "url": "https://pypi.org/simple/typing-extensions/"
+        }
+      ],
+      "name": "typing-extensions",
+      "purl": "pkg:pypi/typing-extensions",
+      "type": "library"
     }
   ],
   "dependencies": [
+    {
+      "ref": "requirements-L1"
+    },
+    {
+      "ref": "requirements-L2"
+    },
+    {
+      "ref": "requirements-L3"
+    },
     {
       "ref": "requirements-L4"
     },
@@ -68,7 +119,7 @@
         {
           "comment": "from pyproject urls: Changelog",
           "type": "release-notes",
-          "url": "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
+          "url": "https://github.com/anulum/sc-neurocore/blob/main/docs/CHANGELOG.md"
         },
         {
           "comment": "from pyproject urls: Homepage",
@@ -143,7 +194,7 @@
           ],
           "name": "cyclonedx-py",
           "type": "application",
-          "version": "7.2.2"
+          "version": "7.6.0"
         },
         {
           "description": "Python library for CycloneDX",
@@ -192,7 +243,7 @@
           ],
           "name": "cyclonedx-python-lib",
           "type": "library",
-          "version": "11.6.0"
+          "version": "11.12.0"
         }
       ]
     }

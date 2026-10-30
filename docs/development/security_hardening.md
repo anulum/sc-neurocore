@@ -68,6 +68,24 @@ The tag workflow runs this check after Syft writes
 `security/ci-security-packet/security/sbom.cdx.json` and records
 `security/ci-security-packet/security/supply_chain_audit.json`.
 
+### Committed SBOM
+
+The root `sbom.cdx.json` describes the base install contract: the package and
+each entry of `[project].dependencies` in `pyproject.toml`, with the declared
+range and no resolved version. The versions an installation actually resolves
+are in the SBOMs the release attaches (the CycloneDX SBOM of the accepted
+install environment, and the Syft SBOM of `Cargo.lock`).
+`tests/test_tools/test_release_metadata_versions.py` fails when the committed
+file lists a different set of requirements than `pyproject.toml` declares.
+Regenerate it with the pinned generator from `requirements/release.txt`:
+
+```bash
+python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" \
+  | cyclonedx-py requirements - --pyproject pyproject.toml --sv 1.6 \
+      --output-reproducible --validate -o sbom.cdx.json
+echo >> sbom.cdx.json
+```
+
 ### Static analysis
 
 Run Bandit on Python sources:
