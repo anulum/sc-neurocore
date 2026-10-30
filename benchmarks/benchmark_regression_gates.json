@@ -4977,6 +4977,7 @@
         "configuration.repeats": 2
       },
       "source_hashes": {
+        "src/sc_neurocore/compiler/function_unit_hardware.py": "source_sha256.src/sc_neurocore/compiler/function_unit_hardware.py",
         "benchmarks/_benchmark_context.py": "source_sha256.benchmarks/_benchmark_context.py",
         "benchmarks/bench_function_call_domains.py": "source_sha256.benchmarks/bench_function_call_domains.py",
         "src/sc_neurocore/compiler/__init__.py": "source_sha256.src/sc_neurocore/compiler/__init__.py",
@@ -5178,6 +5179,7 @@
         "cases.bench_rsqrt.pipeline_registers"
       ],
       "source_hashes": {
+        "src/sc_neurocore/compiler/function_unit_hardware.py": "source_sha256.src/sc_neurocore/compiler/function_unit_hardware.py",
         "Cargo.lock": "source_sha256.Cargo.lock",
         "benchmarks/_benchmark_context.py": "source_sha256.benchmarks/_benchmark_context.py",
         "benchmarks/bench_equation_ir.py": "source_sha256.benchmarks/bench_equation_ir.py",
@@ -5515,6 +5517,7 @@
         "cases.bench_rsqrt.pipeline_registers"
       ],
       "source_hashes": {
+        "src/sc_neurocore/compiler/function_unit_hardware.py": "source_sha256.src/sc_neurocore/compiler/function_unit_hardware.py",
         "Cargo.lock": "source_sha256.Cargo.lock",
         "benchmarks/_benchmark_context.py": "source_sha256.benchmarks/_benchmark_context.py",
         "benchmarks/bench_equation_ir.py": "source_sha256.benchmarks/bench_equation_ir.py",

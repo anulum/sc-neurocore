@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1552
+expected_file_count = 1555
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6342,3 +6342,15 @@ rationale = "Real public lowering measurements bind both graph modules and the p
 [[file]]
 path = "tests/test_bench_nir_graph.py"
 rationale = "The actual benchmark command retains byte-identical FPGA output and fingerprints every measured lowering producer."
+
+[[file]]
+path = "src/sc_neurocore/compiler/function_unit_hardware.py"
+rationale = "The public standalone function API admits canonical functions and signed fixed-point formats, then emits independent ports using existing numerical semantics."
+
+[[file]]
+path = "tests/test_function_unit_hardware.py"
+rationale = "Real Icarus simulations exercise every standalone function in both supported lowerings, independent binary inputs, exhaustive narrow words and public refusal contracts."
+
+[[file]]
+path = "tests/test_compiler_surface_policy.py"
+rationale = "The package facade and documented compiler module inventory are checked against the actual source modules and public exports."

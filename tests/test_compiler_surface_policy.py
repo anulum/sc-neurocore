@@ -22,6 +22,7 @@ SURFACE_DOC = REPO_ROOT / "docs" / "api" / "compiler_surface.md"
 PUBLIC_FACADE_MODULES = {
     "adaptive_precision",
     "equation_compiler",
+    "function_unit_hardware",
     "ir_type_checker",
     "live_control",
     "mlir_emitter",

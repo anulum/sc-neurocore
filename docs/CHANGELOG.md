@@ -12,6 +12,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add public `function_unit_functions()` discovery and `emit_function_unit_verilog()` generation for isolated combinational fixed-point functions. Unary and binary units expose independent signed ports and reuse the existing arithmetic. The new API defaults to `v2`; the existing equation compiler retains its `lut-v1` default.
 - Add `from_snntorch()` and `to_snntorch()` for supported sequential inference networks on CPU float64, preserving admitted spikes, membrane states and independently owned parameters. These APIs exchange fresh-state inference definitions rather than training checkpoints; unsupported dynamics, topologies, precision and SC bitstream, encoding or Q-format contracts are refused.
 - Add separate `interop-snntorch` and `interop-sinabs` optional dependency profiles. The Sinabs profile uses its compatible legacy NIR file route and does not imply identical native Sinabs and SC discrete dynamics.
 - Preserve NIR graph and node metadata, primitive definitions and graph ordering through real file round trips. A versioned execution-metadata extension carries the timestep and reset convention.

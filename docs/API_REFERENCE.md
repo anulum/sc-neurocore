@@ -9711,6 +9711,60 @@ ValueError
 
 ---
 
+## Module `compiler.function_unit_hardware`
+
+### Function `function_unit_functions(function_lowering)`
+Return the canonical standalone functions supported by a lowering.
+
+Parameters
+----------
+function_lowering : str, optional
+    ``"v2"`` for integer function units or ``"lut-v1"`` for legacy tables
+    and the exact functions shared by both lowerings.
+
+Returns
+-------
+tuple of str
+    Sorted canonical names. Aliases, random generators and inline
+    arithmetic constructs are not separate function units.
+
+Raises
+------
+ValueError
+    If the lowering is unknown.
+
+### Function `emit_function_unit_verilog(function, *, data_width, fraction, function_lowering)`
+Emit one deterministic combinational module named ``function_unit``.
+
+Parameters
+----------
+function : str
+    A canonical function name or the ``expit`` alias for ``sigmoid``.
+    ``cbrt`` uses the equation grammar's power-one-third lowering.
+data_width : int, optional
+    Signed input and output width, between 2 and 32 bits.
+fraction : int, optional
+    Fractional bits, less than the word width and at most 30. The sum
+    of word and fractional widths must not exceed 61.
+function_lowering : str, optional
+    ``"v2"`` or ``"lut-v1"``. Existing function arithmetic is preserved.
+
+Returns
+-------
+str
+    Synthesisable Verilog with signed ``argument0`` and, for binary
+    functions, ``argument1`` ports, and a signed ``result`` port. There
+    is no clock, reset or neuron-update overhead; latency is zero cycles.
+
+Raises
+------
+TypeError
+    If the function or fixed-point geometry has the wrong runtime type.
+ValueError
+    If the function, lowering or format is unsupported.
+
+---
+
 ## Module `compiler.function_unit_ir`
 
 ### Class `Step`

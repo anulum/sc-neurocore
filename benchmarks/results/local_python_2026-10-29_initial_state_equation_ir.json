@@ -2,7 +2,7 @@
   "cases": {
     "bench_euler": {
       "clocks_per_timestep": 1,
-      "median_ms": 2.207511,
+      "median_ms": 1.031677,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -68,22 +68,22 @@
       "output_sha256": "3e7c8d2ffbddb05afaf9bac7039746a0c87ce2e40937452b19ea9e2d1626687f",
       "pipeline_registers": 0,
       "samples_ns": [
-        3000748,
-        2227158,
-        1852716,
-        2207511,
-        3215134,
-        1662815,
-        1751171,
-        1715811,
-        2305218,
-        2085972,
-        2985282
+        944895,
+        1436000,
+        1314585,
+        1056861,
+        1020356,
+        938532,
+        982600,
+        1016383,
+        1486339,
+        1031677,
+        1903893
       ]
     },
     "bench_heaviside": {
       "clocks_per_timestep": 1,
-      "median_ms": 2.346945,
+      "median_ms": 1.241181,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -152,22 +152,22 @@
       "output_sha256": "3155602379dc252c1f8133fd2ec60306cc3c03c2fade5f5b8ef856016bce292b",
       "pipeline_registers": 0,
       "samples_ns": [
-        2645043,
-        1892667,
-        3057236,
-        2346945,
-        1904546,
-        3402938,
-        1689057,
-        2339867,
-        2348017,
-        2243396,
-        2547576
+        999236,
+        1354284,
+        1257671,
+        1241181,
+        1084658,
+        972753,
+        1199472,
+        1197648,
+        2007853,
+        1380614,
+        2269288
       ]
     },
     "bench_held_state_rk4": {
       "clocks_per_timestep": 1,
-      "median_ms": 6.988486,
+      "median_ms": 3.771867,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -241,22 +241,22 @@
       "output_sha256": "51963fd09648b55e260166cf8d3c41668a1c5060c9585850f5f12d12b3069136",
       "pipeline_registers": 0,
       "samples_ns": [
-        7323691,
-        6988486,
-        7811077,
-        7275669,
-        5445083,
-        6182044,
-        6293334,
-        9039855,
-        6446055,
-        6710507,
-        8184595
+        3684249,
+        3697688,
+        3449058,
+        5030587,
+        3603250,
+        3352880,
+        3771867,
+        7138930,
+        6945813,
+        6420577,
+        4399995
       ]
     },
     "bench_hypot": {
       "clocks_per_timestep": 1,
-      "median_ms": 6.57805,
+      "median_ms": 3.932084,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -317,22 +317,22 @@
       "output_sha256": "da5cee99b40ae9545af8c6df5cf0894bb7670825dd9080b5b57fc47e6892e0f2",
       "pipeline_registers": 0,
       "samples_ns": [
-        6348620,
-        6578050,
-        8783440,
-        8068066,
-        6036715,
-        4434622,
-        7678035,
-        5719740,
-        6353446,
-        7616157,
-        6714724
+        3450100,
+        4855581,
+        3769597,
+        3603513,
+        3932084,
+        4061663,
+        3674191,
+        5039717,
+        6526841,
+        3875616,
+        6196266
       ]
     },
     "bench_initial_state_map": {
       "clocks_per_timestep": 1,
-      "median_ms": 330.275648,
+      "median_ms": 213.236117,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -397,22 +397,22 @@
       "output_sha256": "f1f29522fcc5a1baa651f44a5c9ec5aa411342066f273d24144f8289ba430e58",
       "pipeline_registers": 0,
       "samples_ns": [
-        315356877,
-        388163163,
-        346448028,
-        330275648,
-        273789646,
-        270588191,
-        365864858,
-        399316165,
-        327110907,
-        294175612,
-        369872225
+        214597191,
+        235697729,
+        194950063,
+        213236117,
+        193811378,
+        194044987,
+        186616327,
+        268411564,
+        208636513,
+        237937853,
+        237332507
       ]
     },
     "bench_macro": {
       "clocks_per_timestep": 3,
-      "median_ms": 3.672037,
+      "median_ms": 1.990576,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -481,22 +481,22 @@
       "output_sha256": "9ed71eccc810c2975c167ed4e75015f905b55cff944b93bd7e3eedc34698d1a4",
       "pipeline_registers": 0,
       "samples_ns": [
-        3672037,
-        3742141,
-        4120909,
-        4607318,
-        2834593,
-        2936314,
-        3704548,
-        3635777,
-        2625332,
-        5089330,
-        3360917
+        1850441,
+        1857332,
+        1990576,
+        3098741,
+        2235135,
+        1756307,
+        1606371,
+        2833626,
+        2236475,
+        3661252,
+        1725933
       ]
     },
     "bench_power_dynamic": {
       "clocks_per_timestep": 1,
-      "median_ms": 86.356591,
+      "median_ms": 50.264878,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -557,22 +557,22 @@
       "output_sha256": "cb2ba84712cafa7b2e4501b4a35bbb677aa62bb1c7366ac83692930cb90328d0",
       "pipeline_registers": 0,
       "samples_ns": [
-        90555680,
-        84729956,
-        102881422,
-        110556572,
-        63421099,
-        82104541,
-        88222557,
-        104638988,
-        75187773,
-        82023572,
-        86356591
+        47291825,
+        47780745,
+        58792935,
+        46084347,
+        47266098,
+        55806785,
+        50264878,
+        69027422,
+        79375902,
+        47468746,
+        62323056
       ]
     },
     "bench_power_literal": {
       "clocks_per_timestep": 1,
-      "median_ms": 85.374382,
+      "median_ms": 53.67992,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -633,22 +633,22 @@
       "output_sha256": "dfd24e637641b1af0fcfd33548b7f0fb4cff4156ed427f08c4fd123567053fad",
       "pipeline_registers": 0,
       "samples_ns": [
-        105684504,
-        83157315,
-        99277530,
-        85374382,
-        66151133,
-        60423523,
-        96160474,
-        95393077,
-        73912996,
-        76417757,
-        86598639
+        45008175,
+        49360230,
+        61283800,
+        57001369,
+        45411839,
+        43179756,
+        43253366,
+        79555432,
+        69661833,
+        53679920,
+        69231867
       ]
     },
     "bench_random": {
       "clocks_per_timestep": 1,
-      "median_ms": 8.136685,
+      "median_ms": 4.256523,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -719,22 +719,22 @@
       "output_sha256": "89d8cd010a4030c7dc776abf1f0795b1a8a4d3211f5a028e340c396b024c548f",
       "pipeline_registers": 0,
       "samples_ns": [
-        6882245,
-        9118812,
-        9754876,
-        8789467,
-        6528615,
-        5501707,
-        6430704,
-        10847328,
-        6764229,
-        9038959,
-        8136685
+        3773130,
+        4256523,
+        4100505,
+        4293857,
+        4361779,
+        3751885,
+        3737250,
+        5729276,
+        4339239,
+        8137411,
+        4058244
       ]
     },
     "bench_rk4": {
       "clocks_per_timestep": 5,
-      "median_ms": 10.456455,
+      "median_ms": 6.020432,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -822,22 +822,22 @@
       "output_sha256": "62d20072f11f4790bb3cb391472be1aae656efc836f50149050f94cbeb969a82",
       "pipeline_registers": 4,
       "samples_ns": [
-        11076522,
-        12119909,
-        9499314,
-        11867298,
-        9353550,
-        6991429,
-        7433325,
-        10456455,
-        8639337,
-        11028455,
-        10973266
+        4769020,
+        6140572,
+        6020432,
+        5314084,
+        6202730,
+        5368146,
+        5099746,
+        6197912,
+        5375356,
+        9888610,
+        10030977
       ]
     },
     "bench_round": {
       "clocks_per_timestep": 1,
-      "median_ms": 2.278401,
+      "median_ms": 1.127689,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -898,22 +898,22 @@
       "output_sha256": "6f384c8a3e7af90c32d537b7da1cff0558b672eb3a6379c0d24e9dbc82bf1863",
       "pipeline_registers": 0,
       "samples_ns": [
-        2278401,
-        2073673,
-        3753155,
-        2678626,
-        1941343,
-        1413244,
-        1379779,
-        1836986,
-        2402738,
-        2659302,
-        2461204
+        933795,
+        1437166,
+        1127689,
+        1089544,
+        1024776,
+        1005327,
+        1030294,
+        1900564,
+        1881010,
+        1352001,
+        2675874
       ]
     },
     "bench_rsqrt": {
       "clocks_per_timestep": 1,
-      "median_ms": 11.388742,
+      "median_ms": 6.928102,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -974,30 +974,30 @@
       "output_sha256": "c0a833361fdde93cb23b5e8e9b81de045b7c5b14882cc85952d76e7a1e18afca",
       "pipeline_registers": 0,
       "samples_ns": [
-        11353418,
-        11208108,
-        15110797,
-        11869156,
-        11315623,
-        9833003,
-        12403058,
-        11388742,
-        12435454,
-        11379188,
-        11547292
+        5577520,
+        8051164,
+        6208210,
+        7297042,
+        6928102,
+        5711448,
+        6664301,
+        8189340,
+        10902030,
+        5722311,
+        10228291
       ]
     }
   },
-  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json benchmarks/results/local_python_2026-10-29_equation_ir.json",
+  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json /media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/agentic_group_workspace/SC-NEUROCORE/01a18246-737c-7300-8346-8d78a0b40144/scratch/standalone-function-api-20261030/canonical-qualification-retry/bench_equation_ir.json",
   "cross_language_comparison": false,
-  "generated_at": "2026-10-30T17:19:33.280164+00:00",
+  "generated_at": "2026-10-30T19:04:51.782582+00:00",
   "hardware_measurement_claimed": false,
   "implementation_scope": "Python model frontend with maintained Rust graph backend",
   "isolation": "shared loaded host; no exclusive core reservation",
   "load_average_after": [
-    26.3056640625,
-    22.02880859375,
-    20.7587890625
+    9.42041015625,
+    11.4384765625,
+    11.6357421875
   ],
   "measurement_context": {
     "architecture": "x86_64",
@@ -1017,8 +1017,8 @@
       11
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3800.0,
-      "min_observed_mhz": 3795.388,
+      "max_observed_mhz": 3900.07,
+      "min_observed_mhz": 3899.96,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -1029,14 +1029,14 @@
     "host": "aaarthuus",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      26.3056640625,
-      22.02880859375,
-      20.7587890625
+      9.42041015625,
+      11.4384765625,
+      11.6357421875
     ],
     "load_average_before": [
-      25.94873046875,
-      21.8095703125,
-      20.6748046875
+      9.9794921875,
+      11.5810546875,
+      11.6826171875
     ],
     "logical_cpu_count": 12,
     "numpy_version": "2.5.4",
@@ -1050,7 +1050,7 @@
   "performance_promotion_claimed": false,
   "samples_per_case": 11,
   "schema_version": 1,
-  "source_base_sha": "a91a5255e985cb60e63e1a4b4df3a6bb21f83cff",
+  "source_base_sha": "8570fc9e048fd2e0e4c2a5e1c7b0d53b8ef4ef5d",
   "source_sha256": {
     "Cargo.lock": "207694cd848ac6746a5c4aba0794be31367c06682f6c5a04e90e4036037fe220",
     "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
@@ -1113,7 +1113,7 @@
     "engine/src/ir/verify.rs": "883a3e8cf11d4f2f5ea4691052274385cab5821d861fd38fa35058eb756da068",
     "engine/src/ir/word.rs": "857881a216027aff2f3b45c886b70a5dcffc029686a7d5fa11bb67ba5fae23e6",
     "engine/src/ir/word_contract.rs": "06da7f4e72c53684193abcd24c6d5b746b30e20711574d2df0eb1d83152acc20",
-    "src/sc_neurocore/compiler/__init__.py": "0ad6d33bea02934b65a7b02fc1c6389ae2c0ae17f7a17426d3aa684ca8fb61ac",
+    "src/sc_neurocore/compiler/__init__.py": "035ea8fe16dfe3126f6f685c164801de1da08a49e89495a40d6358be9b7cac97",
     "src/sc_neurocore/compiler/_sby_runner.py": "8b337c49519dc82fc18ec1858fc30a183957c6c48d96ad74608a15cf60afe576",
     "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
     "src/sc_neurocore/compiler/_verilog_integrators.py": "39d74be919d7e80e009ee32c0e6b3a6e534ee4b94c140e1d6d8373ad14ff4f2b",
@@ -1150,6 +1150,7 @@
     "src/sc_neurocore/compiler/fpga_wrapper.py": "a82626138c56263c4058f6c81d72c470196a2942604065b6f89666b14ef2754f",
     "src/sc_neurocore/compiler/function_call_accuracy.py": "eecccd0408591cb8b5cbffb744945efb0b8e2aa7edd646e37912af8cbff2a33f",
     "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
+    "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
     "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
     "src/sc_neurocore/compiler/function_unit_programs.py": "ccbaa67a3b56c9520d6c796fb1a6f7e7b37e90f6f4b231128e490738b0b0824f",
     "src/sc_neurocore/compiler/function_units.py": "0fcd1955054251a84e16d752e3840cf598f32004eb506a936e451d28a70784b5",

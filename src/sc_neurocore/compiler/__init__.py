@@ -26,6 +26,7 @@ from .equation_compiler import (
     equation_to_fpga,
     recompile_ir,
 )
+from .function_unit_hardware import emit_function_unit_verilog, function_unit_functions
 from .ir_type_checker import (
     IREdge,
     IRNode,
@@ -97,6 +98,8 @@ __all__ = [
     "q_weights_to_sc_probabilities",
     "quantization_error",
     "check_ir_types",
+    "emit_function_unit_verilog",
+    "function_unit_functions",
     "IRNode",
     "IREdge",
     "IRTypeError",

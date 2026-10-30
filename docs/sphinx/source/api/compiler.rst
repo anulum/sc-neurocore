@@ -12,6 +12,12 @@ MLIR Emitter
    :members:
    :show-inheritance:
 
+Standalone Function Units
+-------------------------
+
+.. automodule:: sc_neurocore.compiler.function_unit_hardware
+   :members:
+
 Pipeline
 --------
 

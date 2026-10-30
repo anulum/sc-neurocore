@@ -57,6 +57,7 @@ can change without a deprecation window.
 | `fpga_wrapper` | internal build tool | Wrapper generator behind compiler and deployment paths. |
 | `function_call_accuracy` | direct public module | Measures individual call-domain interval hulls with explicit mathematical-domain exclusions and sampled or exhaustive scope. |
 | `function_call_domains` | direct public module | Source-located per-call domains and accuracy records for authored equations, events and implicit integration calls. |
+| `function_unit_hardware` | public facade | Package-level exports list standalone functions and emit isolated combinational RTL using the existing arithmetic. |
 | `function_unit_ir` | internal build tool | Straight-line 64-bit integer program behind the `v2` function units and the random draws, emitted to Verilog, C and Rust. |
 | `function_unit_programs` | internal build tool | Builds each `v2` function unit as an integer program for the expression emitters. |
 | `function_units` | internal build tool | Integer reference of the `v2` function units that the RTL and the bit-true kernel mirror. |

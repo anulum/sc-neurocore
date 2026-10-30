@@ -977,12 +977,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 659,
+    "public_documentation_pages": 660,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5498
+    "test_files": 5499
   },
   "documentation": {
     "public_pages": [
@@ -1379,6 +1379,7 @@
       "docs/benchmarks/training.md",
       "docs/compiler/dcls_rtl.md",
       "docs/compiler/mixed_dense_kernel.md",
+      "docs/compiler/standalone_function_units.md",
       "docs/development/RELEASE_NOTES_v2.0.0.md",
       "docs/development/RELEASE_NOTES_v4.0.0.md",
       "docs/development/audit_cadence.md",
@@ -5390,6 +5391,7 @@
       "tests/test_function_lowering_rsqrt_cosim.py",
       "tests/test_function_lowering_softplus_cosim.py",
       "tests/test_function_lowering_v2_cosim.py",
+      "tests/test_function_unit_hardware.py",
       "tests/test_function_unit_ir.py",
       "tests/test_function_unit_programs.py",
       "tests/test_function_unit_programs_atan2.py",

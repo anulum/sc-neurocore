@@ -22,6 +22,12 @@ modules, compatibility facades, or internal build tools.
 Native compute-graph text and its hardware parameter roundtrip are described
 in [Compute graph text](sc-ir.md).
 
+Generate isolated combinational function hardware with
+`emit_function_unit_verilog()` and discover supported functions with
+`function_unit_functions()` from `sc_neurocore.compiler`. See
+[Standalone fixed-point function units](../compiler/standalone_function_units.md)
+for signed ports, format limits and lowering semantics.
+
 ---
 
 ## 1. Mathematical Formalism
@@ -918,7 +924,7 @@ The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical C
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 330.275648 ms; the held-state RK4 median is 6.988486 ms. The constant-power and dynamic-power medians are 85.374382 ms and 86.356591 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim. Both equation-IR result filenames contain this same twelve-case capture.
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 213.236117 ms; the held-state RK4 median is 3.771867 ms. The constant-power and dynamic-power medians are 53.679920 ms and 50.264878 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim. Both equation-IR result filenames contain this same twelve-case capture.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather
