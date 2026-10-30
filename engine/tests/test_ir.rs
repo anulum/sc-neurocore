@@ -276,20 +276,39 @@ fn kuramoto_step_round_trip() {
 }
 
 #[test]
+/// New kernels admit complete constant operands with their declared geometry.
 fn new_ops_verify() {
     let mut b = ScGraphBuilder::new("all_new_ops");
     let a = b.input("a", ScType::Rate);
-    let c = b.input("b", ScType::Rate);
-    let d = b.input("c", ScType::Rate);
     let bits_a = b.input("bits_a", ScType::UInt { width: 16 });
     let bits_b = b.input("bits_b", ScType::UInt { width: 16 });
     let _ = b.bitwise_xor(bits_a, bits_b);
     let _ = b.reduce(a, ReduceMode::Sum);
-    let _ = b.graph_forward(a, c, 4, 2);
-    let _ = b.softmax_attention(a, c, d, 32);
-    let _ = b.kuramoto_step(a, c, d, 0.01);
+    let vector = |builder: &mut ScGraphBuilder, values: Vec<f64>| {
+        let count = values.len();
+        builder.constant(
+            ScConst::F64Vec(values),
+            ScType::Vec {
+                element: Box::new(ScType::Rate),
+                count,
+            },
+        )
+    };
+    let features = vector(&mut b, vec![0.25; 8]);
+    let adjacency = vector(&mut b, vec![0.0; 16]);
+    let query = vector(&mut b, vec![0.25; 32]);
+    let key = vector(&mut b, vec![0.5; 32]);
+    let phases = vector(&mut b, vec![0.0, 0.5]);
+    let omega = vector(&mut b, vec![1.0, 2.0]);
+    let coupling = vector(&mut b, vec![0.0, 0.5, 0.5, 0.0]);
+    let graph = b.graph_forward(features, adjacency, 4, 2);
+    let attention = b.softmax_attention(query, key, phases, 32);
+    let next_phases = b.kuramoto_step(phases, omega, coupling, 0.01);
+    b.output("graph", graph);
+    b.output("attention", attention);
+    b.output("next_phases", next_phases);
     let g = b.build();
-    assert!(verify::verify(&g).is_ok());
+    verify::verify(&g).expect("complete constant kernel operands must verify");
 }
 
 // --- Parse/print round-trip regressions (found by the roundtrip_ir fuzz target) ---
