@@ -33,6 +33,7 @@ from sc_neurocore.studio.candidate_run import (
     run_reference_tests,
     simulate_candidate,
 )
+from tests.studio_candidate_jobs_support import finish_candidate_job
 from tests.studio_candidate_support import adex_candidate
 
 
@@ -200,10 +201,16 @@ class TestRoutes:
         )
         packet = client.post("/api/candidates/review-packet", json={"candidate": document})
 
-        assert diff.status_code == run.status_code == packet.status_code == 200
+        assert diff.status_code == 200
+        assert run.status_code == packet.status_code == 202
         assert diff.json()["parent_schema"] == "adex"
-        assert run.json()["spike_count"] > 0
-        assert packet.json()["reference_tests_passed"] is True
+        assert finish_candidate_job(client, run.json()["status_route"])["result"]["spike_count"] > 0
+        assert (
+            finish_candidate_job(client, packet.json()["status_route"])["result"][
+                "reference_tests_passed"
+            ]
+            is True
+        )
 
     def test_the_request_bounds_are_enforced_before_the_candidate_is_read(
         self, client: TestClient

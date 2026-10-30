@@ -15,6 +15,7 @@ from fastapi import APIRouter
 from sc_neurocore.studio.api.adaptive_precision import build_adaptive_precision_router
 from sc_neurocore.studio.api.audit import build_audit_router
 from sc_neurocore.studio.api.candidates import build_candidates_router
+from sc_neurocore.studio.api.candidate_jobs import build_candidate_jobs_router
 from sc_neurocore.studio.api.catalogue import build_catalogue_router
 from sc_neurocore.studio.api.fits import build_fits_router
 from sc_neurocore.studio.api.compiler import build_compiler_router
@@ -58,6 +59,7 @@ def build_studio_routers(context: StudioApiContext) -> tuple[APIRouter, ...]:
         build_identity_router(context),
         build_catalogue_router(context),
         build_candidates_router(context),
+        build_candidate_jobs_router(context),
         build_fits_router(context),
         build_presets_router(context),
         build_simulation_router(context),

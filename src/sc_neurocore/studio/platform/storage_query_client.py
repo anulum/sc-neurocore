@@ -155,8 +155,10 @@ class QueryReader:
             deadline=time.monotonic() + self._timeout,
         )
 
-    def records(self, requester: StorageRequester | None) -> tuple[StudioJobRecord, ...]:
-        """Return every record of the workspace in creation order.
+    def records(
+        self, requester: StorageRequester | None, *, candidate_only: bool = False
+    ) -> tuple[StudioJobRecord, ...]:
+        """Return workspace records, or only the requester’s candidate summaries.
 
         Raises
         ------
@@ -167,7 +169,12 @@ class QueryReader:
         records: list[StudioJobRecord] = []
         after: str | None = None
         while True:
-            page = self._query("records", requester, limit=1000, after=after)
+            page = self._query(
+                "candidate_records" if candidate_only else "records",
+                requester,
+                limit=1000,
+                after=after,
+            )
             decoded = [storage_job_record(decode_job_snapshot(item)) for item in page.items]
             if any(record.workspace != self._workspace for record in decoded):
                 raise ValueError("storage record page names another workspace")

@@ -8,11 +8,11 @@
 
 """Validate, diff, simulate and review candidate model packages.
 
-The routes are stateless: a candidate travels in the request and is kept by
-the workspace that holds it. None of them writes a canonical file or changes
-the catalogue. An invalid candidate is refused by the three routes that act on
-it with HTTP 422 and the located diagnostics, so the editor can mark each
-field; the validation route reports the diagnostics with HTTP 200.
+Candidates travel in complete requests and remain workspace-local proposals.
+Validation and diff do not execute the model. Simulation and reference review
+return HTTP 202 after admission into the existing durable process-job ledger.
+No route modifies the catalogue. Invalid candidates retain their located
+HTTP 422 diagnostics; validation reports those diagnostics with HTTP 200.
 """
 
 from __future__ import annotations
@@ -20,27 +20,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, HTTPException, Request
 
 from sc_neurocore.studio.api.runtime import StudioApiContext
-from sc_neurocore.studio.api.schemas import FiniteFloat
-from sc_neurocore.studio.candidate_package import MAX_CANDIDATE_STEPS
-
-
-class CandidateRequest(BaseModel):
-    """A candidate package, sent whole."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    candidate: dict[str, Any]
-
-
-class CandidateSimulateRequest(CandidateRequest):
-    """A candidate package and the run to perform with it."""
-
-    current: FiniteFloat = 0.0
-    steps: int = Field(default=1000, ge=1, le=MAX_CANDIDATE_STEPS)
+from sc_neurocore.studio.api.candidate_jobs import submit_candidate_job
+from sc_neurocore.studio.candidate_job_contract import CandidateRequest, CandidateSimulateRequest
 
 
 def _acting_on_valid(action: Callable[[], dict[str, Any]]) -> dict[str, Any]:
@@ -62,9 +46,8 @@ def build_candidates_router(context: StudioApiContext) -> APIRouter:
     Parameters
     ----------
     context:
-        Shared runtime state; the candidate routes hold none of their own.
+        Shared runtime, policy and durable job custody.
     """
-    del context
     router = APIRouter()
 
     @router.post("/api/candidates/validate")
@@ -86,23 +69,17 @@ def build_candidates_router(context: StudioApiContext) -> APIRouter:
 
         return _acting_on_valid(act)
 
-    @router.post("/api/candidates/simulate")
-    def api_candidate_simulate(request: CandidateSimulateRequest) -> dict[str, Any]:
-        """Simulate a valid candidate under its own profile and a constant current."""
-        from sc_neurocore.studio.candidate_run import simulate_candidate
+    @router.post("/api/candidates/simulate", status_code=202)
+    def api_candidate_simulate(
+        body: CandidateSimulateRequest, request: Request
+    ) -> dict[str, object]:
+        """Admit a valid simulation as an owned, bounded durable process job."""
+        return submit_candidate_job(context, body, "simulate", request)
 
-        return _acting_on_valid(
-            lambda: simulate_candidate(
-                request.candidate, current=request.current, steps=request.steps
-            )
-        )
-
-    @router.post("/api/candidates/review-packet")
-    def api_candidate_review_packet(request: CandidateRequest) -> dict[str, Any]:
-        """Run a valid candidate's reference tests and return its review packet."""
-        from sc_neurocore.studio.candidate_run import review_packet
-
-        return _acting_on_valid(lambda: review_packet(request.candidate))
+    @router.post("/api/candidates/review-packet", status_code=202)
+    def api_candidate_review_packet(body: CandidateRequest, request: Request) -> dict[str, object]:
+        """Admit the complete reference review as an owned durable process job."""
+        return submit_candidate_job(context, body, "review", request)
 
     return router
 

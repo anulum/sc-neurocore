@@ -16,6 +16,7 @@ Damage is done to the real sealed files.
 from __future__ import annotations
 
 import os
+import socket
 import time
 from pathlib import Path
 from dataclasses import replace
@@ -29,6 +30,9 @@ from sc_neurocore.studio.platform.jobs_models import (
 )
 from sc_neurocore.studio.platform.storage_artifact_client import artifact_request, exchange_artifact
 from sc_neurocore.studio.platform.storage_artifact_protocol import ArtifactRoute
+from sc_neurocore.studio.platform.storage_artifact_read import serve_artifact_read
+from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
+from sc_neurocore.studio.platform.policy_models import InMemoryAuditSink
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 from tests.studio_storage_finish_support import FILES, finish, request, started, stop
 from tests.studio_storage_generation_support import FRAME, Authority
@@ -41,7 +45,7 @@ RESTORE: ArtifactRoute = "/api/studio/training/weight-restore"
 
 @pytest.fixture
 def sealed(ledger: StudioJobLedger) -> Path:
-    """A completed job whose artefacts the authority sealed."""
+    """Return the root of a completed job sealed by the real authority."""
     stop(started(ledger))
     assert finish(ledger, request(FILES), list(FILES.values())).reply == "sealed"
     return ledger.path.parent / JOB
@@ -147,3 +151,38 @@ def test_artifacts_span_frames_and_obey_the_content_budget(ledger: StudioJobLedg
     with pytest.raises(StudioJobArtifactUnavailable):
         _read(authority, "large.bin")
     authority.join()
+
+
+def test_empty_sealed_artifact_returns_metadata_without_a_content_frame(
+    ledger: StudioJobLedger,
+) -> None:
+    """A real zero-byte finish and read preserve the declared empty payload."""
+    stop(started(ledger))
+    files = {"empty.bin": b""}
+    assert finish(ledger, request(files), list(files.values())).reply == "sealed"
+    authority = Authority(ledger)
+    observed = _read(authority, "empty.bin")
+    assert observed.payload == b""
+    assert observed.artifact.size_bytes == 0
+    authority.join()
+
+
+@pytest.mark.parametrize("limit", [0, -1, True])
+def test_invalid_artifact_service_budget_closes_the_real_channel_before_any_read(
+    ledger: StudioJobLedger,
+    limit: int,
+) -> None:
+    """A nonpositive or Boolean operator limit cannot start an artifact exchange."""
+    channel, peer = socket.socketpair()
+    with peer, pytest.raises(ValueError, match="invalid artifact content limit"):
+        serve_artifact_read(
+            channel,
+            ledger=ledger,
+            gateway=PolicyGateway(InMemoryAuditSink()),
+            workspace="default",
+            expected_api_uid=os.getuid(),
+            max_bytes=FRAME,
+            max_artifact_bytes=limit,
+            deadline=time.monotonic() + 1,
+        )
+    assert channel.fileno() == -1

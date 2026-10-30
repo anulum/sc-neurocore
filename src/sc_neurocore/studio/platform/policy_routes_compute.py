@@ -109,6 +109,25 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.candidates.review_packet",
     ),
     ("POST", "/api/fits/jobs", RouteVisibility.AUTHENTICATED, "studio.fits.job"),
+    ("GET", "/api/candidates/jobs", RouteVisibility.AUTHENTICATED, "studio.candidates.jobs"),
+    (
+        "GET",
+        "/api/candidates/jobs/{job_id}",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.job_status",
+    ),
+    (
+        "POST",
+        "/api/candidates/jobs/{job_id}/cancel",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.job_cancel",
+    ),
+    (
+        "GET",
+        "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.job_artifact",
+    ),
     ("POST", "/api/fits/replay/jobs", RouteVisibility.AUTHENTICATED, "studio.fits.replay_job"),
     ("GET", "/api/fits/jobs/{job_id}", RouteVisibility.AUTHENTICATED, "studio.fits.job_status"),
     (

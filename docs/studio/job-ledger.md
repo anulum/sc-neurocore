@@ -144,6 +144,21 @@ key sorting cannot change the ordering of equal sensitivity values or the
 result's evidence seal. The public receipt remains `studio.analysis.job.v1`;
 job records identify `execution_model: process`.
 
+Candidate simulation and reference review use two registered requester-owned
+process tasks in the `analysis` resource class. Their HTTP entrypoints return
+`studio.candidate.job.v1` admission receipts, with exact request and canonical
+candidate digests and a projected model-step count. Complete scientific inputs
+travel as ordered UTF-8 seed bytes, independently digest-bound to the worker
+envelope. Each worker revalidates both the candidate and its input binding
+before producing request, candidate and result artifacts. Candidate history,
+status, cancellation and artifact routes retain requester custody through the
+isolated storage authority, including its bounded paginated history view.
+History omits result arrays; individual status recovers the stored result.
+See [Candidate models](candidate-models.md#durable-execution-and-recovery) for
+the HTTP migration and the difference between retained results and interrupted
+execution. No candidate job resumes unfinished numerical work or promotes a
+model into the catalogue.
+
 Process execution is not an operating-system isolation guarantee. Embedded
 workers still use the launching user's identity. On POSIX, each embedded
 process worker takes hard `RLIMIT_DATA`, `RLIMIT_CPU`, `RLIMIT_NOFILE`,

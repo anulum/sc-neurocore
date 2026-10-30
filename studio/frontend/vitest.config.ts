@@ -10,6 +10,8 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    // The candidate panel's HTTP history uses a real Python server in the
+    // native candidate runner; its cases remain enrolled there.
+    exclude: [...configDefaults.exclude, "e2e/**", "src/components/CandidatePanel.test.tsx"],
   },
 });

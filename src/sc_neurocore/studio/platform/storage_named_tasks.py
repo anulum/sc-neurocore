@@ -15,6 +15,7 @@ selected route before any admission. A name alone grants no operation.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -41,8 +42,8 @@ class NamedStudioTask:
     def owner_for(self, principal_id: str | None) -> str:
         """Derive actor custody from the authenticated delegation when required.
 
-        Service tasks retain their registered owner. Laboratory tasks require
-        a nonempty authenticated actor; no client-selected owner is accepted.
+        Service tasks retain their registered owner. Laboratory and candidate
+        tasks require a nonempty authenticated actor, never a client-selected owner.
         """
         if not self.requester_owned:
             return self.owner
@@ -57,11 +58,26 @@ class NamedStudioTask:
         payload: Mapping[str, object],
         admission: Mapping[str, object] | None,
     ) -> None:
-        """Bind laboratory operation and custody before connection or allocation.
+        """Bind the registered operation and input custody before allocation.
 
         Both the isolated API facade and authority apply this registered
         contract. Existing service-task payload contracts remain unchanged.
         """
+        if self.name in {"candidate.simulate", "candidate.review"}:
+            candidate_operation = "simulate" if self.name == "candidate.simulate" else "review"
+            if (
+                set(payload) != {"request_sha256", "candidate_sha256"}
+                or not all(
+                    isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+                    for value in payload.values()
+                )
+                or not isinstance(admission, Mapping)
+                or admission.get("candidate_operation") != candidate_operation
+                or admission.get("request_sha256") != payload.get("request_sha256")
+                or admission.get("candidate_sha256") != payload.get("candidate_sha256")
+            ):
+                raise StudioJobRefused("candidate operation and digests must match admission")
+            return
         if self.name != "laboratory.run":
             return
         operation = {
@@ -81,6 +97,22 @@ class NamedStudioTask:
 
 
 _TASKS = (
+    NamedStudioTask(
+        "candidate.simulate",
+        "analysis",
+        "studio-candidate",
+        "sc_neurocore.studio.candidate_job_tasks:execute_candidate_simulation_task",
+        ("/api/candidates/simulate",),
+        requester_owned=True,
+    ),
+    NamedStudioTask(
+        "candidate.review",
+        "analysis",
+        "studio-candidate",
+        "sc_neurocore.studio.candidate_job_tasks:execute_candidate_review_task",
+        ("/api/candidates/review-packet",),
+        requester_owned=True,
+    ),
     NamedStudioTask(
         "host.analysis",
         "analysis",

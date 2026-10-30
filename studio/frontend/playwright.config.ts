@@ -16,6 +16,7 @@ export default defineConfig({
   testIgnore: [
     "hardware-catalogue-live.spec.ts",
     "candidate-authoring-live.spec.ts",
+    "candidate-jobs-live.spec.ts",
     "catalogue-to-silicon-live.spec.ts",
     "equation-ir-live.spec.ts",
     "event-training-live.spec.ts",

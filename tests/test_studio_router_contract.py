@@ -33,6 +33,7 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.adaptive_precision",
         "sc_neurocore.studio.api.audit",
         "sc_neurocore.studio.api.candidates",
+        "sc_neurocore.studio.api.candidate_jobs",
         "sc_neurocore.studio.api.catalogue",
         "sc_neurocore.studio.api.compiler",
         "sc_neurocore.studio.api.cosim",
@@ -154,7 +155,8 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     # The authored compiler added POST /api/ir/replay, bringing the baseline to151.
     # The three closed hosted description/submission/cancellation routes add three.
     # Read-only hardware registration discovery adds one public route.
-    assert len(backend_routes) == 155
+    # Actor-owned candidate history, status, cancellation and artifacts add four.
+    assert len(backend_routes) == 159
     assert {
         (route.path, tuple(sorted(route.methods or ())))
         for route in backend_routes

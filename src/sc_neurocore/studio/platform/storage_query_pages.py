@@ -113,20 +113,29 @@ def read_record_page(
     """
     budget = max_bytes - len(encode_query_message(_page_response(request, [], "sj_" + "0" * 16)))
     items: list[dict[str, JsonValue]] = []
+    candidate_only = request.view == "candidate_records"
+    custody_parameters = (
+        candidate_only,
+        request.requester.principal_id if request.requester else "",
+    )
     with ledger.transaction() as connection:
         cursor: tuple[str, int] = ("", 0)
         if request.after is not None:
             row = connection.execute(
-                "SELECT created_at_utc, rowid FROM jobs WHERE job_id = ? AND workspace = ?",
-                (request.after, request.workspace),
+                "SELECT created_at_utc, rowid FROM jobs WHERE job_id = ? AND workspace = ? "
+                "AND (? = 0 OR (kind = 'analysis' AND actor = ? AND "
+                "json_extract(admission, '$.candidate_operation') IN ('simulate', 'review')))",
+                (request.after, request.workspace, *custody_parameters),
             ).fetchone()
             if row is None:
                 return None
             cursor = (str(row[0]), int(row[1]))
         rows = connection.execute(
             "SELECT * FROM jobs WHERE workspace = ? AND (created_at_utc, rowid) > (?, ?) "
+            "AND (? = 0 OR (kind = 'analysis' AND actor = ? AND "
+            "json_extract(admission, '$.candidate_operation') IN ('simulate', 'review'))) "
             "ORDER BY created_at_utc, rowid LIMIT ?",
-            (request.workspace, *cursor, request.limit + 1),
+            (request.workspace, *cursor, *custody_parameters, request.limit + 1),
         )
         try:
             for row in rows:
@@ -136,6 +145,8 @@ def read_record_page(
                     json.dumps(record_from_row(row).to_public_dict(), allow_nan=False)
                 )
                 item = {str(key): value for key, value in decoded.items()}
+                if candidate_only:
+                    item["result"] = None
                 size = (
                     len(
                         json.dumps(

@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5483
+    "test_files": 5489
   },
   "documentation": {
     "public_pages": [
@@ -3795,6 +3795,7 @@
       "tests/studio_analysis_support.py",
       "tests/studio_app_support.py",
       "tests/studio_audit_quarantine_support.py",
+      "tests/studio_candidate_jobs_support.py",
       "tests/studio_candidate_support.py",
       "tests/studio_compiler_support.py",
       "tests/studio_endpoints_support.py",
@@ -7924,6 +7925,11 @@
       "tests/test_studio_candidate_diff.py",
       "tests/test_studio_candidate_diff_refusals.py",
       "tests/test_studio_candidate_expressions.py",
+      "tests/test_studio_candidate_job_contract.py",
+      "tests/test_studio_candidate_job_tasks.py",
+      "tests/test_studio_candidate_jobs.py",
+      "tests/test_studio_candidate_jobs_isolated.py",
+      "tests/test_studio_candidate_jobs_recovery.py",
       "tests/test_studio_candidate_package.py",
       "tests/test_studio_candidate_package_refusals.py",
       "tests/test_studio_candidate_run.py",

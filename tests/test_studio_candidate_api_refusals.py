@@ -18,6 +18,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
+from tests.studio_candidate_jobs_support import finish_candidate_job
 from tests.studio_candidate_support import adex_candidate
 
 _DEEP_EXPRESSION = " + ".join(["v"] * 1100)
@@ -188,13 +189,19 @@ def test_unicode_attribution_survives_valid_simulation_and_review(
     simulation = candidate_client.post(
         "/api/candidates/simulate", json={"candidate": document, "steps": 10}
     )
-    assert simulation.status_code == 200
-    assert simulation.json()["diverged_at_step"] is None
+    assert simulation.status_code == 202
+    assert (
+        finish_candidate_job(candidate_client, simulation.json()["status_route"])["result"][
+            "diverged_at_step"
+        ]
+        is None
+    )
     review = candidate_client.post("/api/candidates/review-packet", json={"candidate": document})
-    assert review.status_code == 200
-    assert review.json()["candidate"] == document
-    assert review.json()["reference_tests_passed"] is True
-    assert review.json()["candidate_sha256"] == validation.json()["candidate_sha256"]
+    assert review.status_code == 202
+    packet = finish_candidate_job(candidate_client, review.json()["status_route"])["result"]
+    assert packet["candidate"] == document
+    assert packet["reference_tests_passed"] is True
+    assert packet["candidate_sha256"] == validation.json()["candidate_sha256"]
 
 
 @pytest.mark.parametrize("route", ["simulate", "review-packet"])
@@ -230,8 +237,12 @@ def test_real_expression_failure_reports_a_failed_run_without_interpreter_text(
     document = adex_candidate()
     document["model"]["dynamics"]["v"] = expression
     response = candidate_client.post(f"/api/candidates/{route}", json={"candidate": document})
-    assert response.status_code == (200 if admitted else 422)
-    body = response.json()
+    assert response.status_code == (202 if admitted else 422)
+    body = (
+        finish_candidate_job(candidate_client, response.json()["status_route"])["result"]
+        if admitted
+        else response.json()
+    )
     if not admitted:
         assert body["detail"]["reason"] == "invalid_candidate"
         assert {"location": "/model/dynamics/v", "message": reason} in body["detail"]["validation"][

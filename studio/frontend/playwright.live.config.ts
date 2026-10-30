@@ -43,6 +43,8 @@ const auditLogPath = process.env.SC_NEUROCORE_STUDIO_LIVE_AUDIT_LOG_PATH
 export default defineConfig({
   testDir: "./e2e",
   testMatch: [
+    "candidate-authoring-live.spec.ts",
+    "candidate-jobs-live.spec.ts",
     "hardware-catalogue-live.spec.ts",
     "catalogue-to-silicon-live.spec.ts",
     "equation-ir-live.spec.ts",

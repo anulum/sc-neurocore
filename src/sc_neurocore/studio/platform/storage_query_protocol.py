@@ -8,9 +8,10 @@
 
 """Strict wire contract for bounded read-only views of the storage authority.
 
-``studio.storage.query.v2`` carries one of three views, each governed by the
+``studio.storage.query.v2`` carries bounded views, each governed by the
 policy of the HTTP route it serves: ``records`` (a page of the workspace's job
-records in creation order), ``status`` (aggregate counts, admission occupancy
+records in creation order), ``candidate_records`` (only the requester’s candidate
+records, with large result arrays omitted), ``status`` (aggregate counts, admission occupancy
 and pending purges) and ``purges`` (the operator purge journal page). The
 requester is the API's authenticated principal, delegated only by the
 peer-verified API; the authority applies the existing policy before reading.
@@ -36,9 +37,10 @@ _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
 _JobId = Annotated[str, Field(pattern=r"^sj_[0-9a-f]{16}$")]
 _Workspace = Annotated[str, Field(min_length=1, max_length=256)]
 
-QueryView = Literal["records", "status", "purges"]
+QueryView = Literal["records", "candidate_records", "status", "purges"]
 QueryStatus = Literal["ok", "forbidden", "invalid_cursor"]
 QUERY_ROUTES: Final[dict[str, str]] = {
+    "candidate_records": "/api/candidates/jobs",
     "records": "/api/studio/jobs",
     "status": "/api/studio/jobs/status",
     "purges": "/api/studio/jobs/purges",

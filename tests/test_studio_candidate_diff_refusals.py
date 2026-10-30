@@ -12,17 +12,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import json
+
 import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.neurons import universal_dsl
 from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.candidate_run import review_packet
 from tests.studio_candidate_support import adex_candidate
 
 
-@pytest.mark.parametrize("route", ["diff", "review-packet"])
 def test_corrupt_parent_resource_remains_a_generic_server_failure(
-    route: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Read an actual malformed schema without treating corruption as no parent."""
     document = adex_candidate()
@@ -40,8 +42,13 @@ def test_corrupt_parent_resource_remains_a_generic_server_failure(
         raise_server_exceptions=False,
         headers={"sec-fetch-site": "none"},
     ) as client:
-        response = client.post(f"/api/candidates/{route}", json={"candidate": document})
+        response = client.post("/api/candidates/diff", json={"candidate": document})
     assert response.status_code == 500
     assert response.text == "Internal Server Error"
     assert "private-corrupt-parent-marker" not in response.text
+    # A process worker owns its independent resource environment. Exercise the
+    # same review kernel against the corrupt resource here, without pretending
+    # that a parent-process monkeypatch changes a launched interpreter.
+    with pytest.raises(json.JSONDecodeError):
+        review_packet(document)
     assert parent.read_bytes() == raw

@@ -25,6 +25,8 @@ from tests.studio_seccomp_support import run_child
 
 
 _NAMED_ROUTES = {
+    "candidate.simulate": "/api/candidates/simulate",
+    "candidate.review": "/api/candidates/review-packet",
     "host.analysis": "/api/studio/host-jobs",
     "host.compiler": "/api/studio/host-jobs",
     "laboratory.run": "/api/fits/jobs",
@@ -51,7 +53,7 @@ def test_named_process_tasks_require_actual_nonpublic_post_policies() -> None:
     """All observed process submissions have an exact protected policy route."""
     policies = build_default_studio_route_policy_registry()
     source_root = Path(__file__).resolve().parents[1] / "src"
-    assert len(_NAMED_ROUTES) == 19
+    assert len(_NAMED_ROUTES) == 21
     for name, route in _NAMED_ROUTES.items():
         task = resolve_named_studio_task(name, authorized_route=route)
         assert task.name == name
@@ -164,3 +166,33 @@ def test_import_path_selection_refuses_a_different_reviewed_route() -> None:
         named_studio_task_for_path(task.task_path, authorized_route="/api/analysis/jobs")
     assert isinstance(caught.value, AuthoredRefusal)
     assert str(caught.value) == "named Studio task is not available on this route"
+
+
+@pytest.mark.parametrize("operation", ["simulate", "review"])
+def test_candidate_registration_requires_matching_operation_and_both_input_digests(
+    operation: str,
+) -> None:
+    """Real named candidate contracts refuse inconsistent envelopes before allocation."""
+    route = "/api/candidates/" + ("simulate" if operation == "simulate" else "review-packet")
+    task = resolve_named_studio_task("candidate." + operation, authorized_route=route)
+    payload: dict[str, object] = {"request_sha256": "a" * 64, "candidate_sha256": "b" * 64}
+    admission: dict[str, object] = {**payload, "candidate_operation": operation}
+    assert task.owner_for("alice") == "alice"
+    task.validate_admission(authorized_route=route, payload=payload, admission=admission)
+    invalid: list[tuple[dict[str, object], dict[str, object] | None]] = [
+        ({}, admission),
+        ({**payload, "request_sha256": 3}, admission),
+        ({**payload, "request_sha256": "not-a-digest"}, admission),
+        (payload, None),
+        (payload, {**admission, "candidate_operation": "other"}),
+        (payload, {**admission, "request_sha256": "c" * 64}),
+        (payload, {**admission, "candidate_sha256": "c" * 64}),
+    ]
+    for changed_payload, changed_admission in invalid:
+        with pytest.raises(ValueError, match="candidate operation and digests"):
+            task.validate_admission(
+                authorized_route=route, payload=changed_payload, admission=changed_admission
+            )
+    service = resolve_named_studio_task("model.scan", authorized_route="/api/models/scan/jobs")
+    assert service.owner_for(None) == service.owner
+    service.validate_admission(authorized_route=service.routes[0], payload={}, admission=None)

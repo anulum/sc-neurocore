@@ -14,7 +14,11 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1512
+expected_file_count = 1526
+
+[[file]]
+path = "tests/test_studio_storage_artifact_read.py"
+rationale = "Real storage sockets preserve sealed artifact bytes, including empty payloads, and refuse invalid transfer budgets before transmission."
 
 [[file]]
 path = "tests/test_dcls_parameterized_cosim.py"
@@ -6182,3 +6186,55 @@ rationale = "Strict equation admission assigns the actual inverse-root-time diff
 [[file]]
 path = "tests/test_equation_units_runtime.py"
 rationale = "Real seeded strict-unit diffusion matches the numeric runtime and independent Euler-Maruyama increments, while wrong coefficient units refuse before draws."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/candidate_jobs.py"
+rationale = "Requester-owned HTTP routes bind admission, history, status, cancellation and verified artefact downloads to the existing durable ledger."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/candidates.py"
+rationale = "Static candidate validation and comparison retain their diagnostics while valid simulations and reviews enter supervised process execution."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_job_contract.py"
+rationale = "Ordered immutable scientific inputs retain separate candidate and request digests, byte limits and projected model steps before allocation."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_job_tasks.py"
+rationale = "Supervised workers verify seed bytes and both admitted digests before executing the unchanged scientific runtime and publishing artefacts."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_artifact_read.py"
+rationale = "The real storage authority serves only sealed digest-verified artefact bytes and enforces requester custody for candidate downloads."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_query.py"
+rationale = "Read-only authority queries apply the registered route policy before exposing bounded candidate history or administrator views."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_query_pages.py"
+rationale = "Fixed parameterised SQL filters candidate ownership and cursor custody before paginating summaries without result arrays."
+
+[[file]]
+path = "tests/studio_candidate_jobs_support.py"
+rationale = "Real HTTP observations wait for completed candidate workers and reject failed or uncertain recovery states under a finite deadline."
+
+[[file]]
+path = "tests/test_studio_candidate_job_contract.py"
+rationale = "Scientific request admission preserves declared ordering and frozen bytes, separates operating-point identity and refuses invalid units or byte limits."
+
+[[file]]
+path = "tests/test_studio_candidate_job_tasks.py"
+rationale = "Actual supervised workers refuse substituted seed bytes, envelope keys or scientific digests without publishing a result or artefacts."
+
+[[file]]
+path = "tests/test_studio_candidate_jobs.py"
+rationale = "Both HTTP operations preserve Euler, declared-order Gauss-Seidel and seeded diffusion results, exact artefacts and actual admission limits."
+
+[[file]]
+path = "tests/test_studio_candidate_jobs_isolated.py"
+rationale = "Production routers reach the real authority and launcher while foreign actors cannot read, cancel or download another candidate job."
+
+[[file]]
+path = "tests/test_studio_candidate_jobs_recovery.py"
+rationale = "Distinct API interpreters retain completed results and artefacts across restart, while real supervisor cancellation and deadlines retain separate outcomes."

@@ -157,6 +157,15 @@ class IsolatedJobManager:
                     "/api/fits/jobs/{job_id}",
                     "/api/fits/jobs/{job_id}/cancel",
                 }
+                else "/api/candidates/jobs/{job_id}"
+                if _delegation().route
+                in {
+                    "/api/candidates/simulate",
+                    "/api/candidates/review-packet",
+                    "/api/candidates/jobs/{job_id}",
+                    "/api/candidates/jobs/{job_id}/cancel",
+                    "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}",
+                }
                 else None
             ),
         )
@@ -193,7 +202,9 @@ class IsolatedJobManager:
         self, *, actor: str | None = None, workspace: str | None = None
     ) -> tuple[StudioJobRecord, ...]:
         """Return the workspace's records in creation order, scoped when asked."""
-        records = self._reader.records(_delegation().requester)
+        records = self._reader.records(
+            _delegation().requester, candidate_only=_delegation().route == "/api/candidates/jobs"
+        )
         return tuple(
             record
             for record in records
@@ -238,6 +249,7 @@ class IsolatedJobManager:
         the admitted registered task, independently of the cancellation route.
         """
         signal_worker = self._threads.is_service_task(job_id) and _delegation().route not in {
+            "/api/candidates/jobs/{job_id}/cancel",
             "/api/fits/jobs/{job_id}/cancel",
             "/api/studio/jobs/{job_id}/cancel",
         }
@@ -253,6 +265,8 @@ class IsolatedJobManager:
                         if _delegation().route == "/api/fits/jobs/{job_id}/cancel"
                         else "/api/studio/jobs/{job_id}/cancel"
                         if _delegation().route == "/api/studio/jobs/{job_id}/cancel"
+                        else "/api/candidates/jobs/{job_id}/cancel"
+                        if _delegation().route == "/api/candidates/jobs/{job_id}/cancel"
                         else None
                     ),
                 ),

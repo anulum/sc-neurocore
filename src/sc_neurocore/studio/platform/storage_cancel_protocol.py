@@ -11,7 +11,7 @@
 ``studio.storage.cancel.v2`` asks the authority to record that one job of the
 workspace should stop, for the requester the peer-verified API delegated,
 under the policy of ``POST /api/training/stop`` by default. An explicit
-``authorized_route`` can select laboratory or administrator cancellation.
+``authorized_route`` can select laboratory, candidate or administrator cancellation.
 The authority retains actor custody for laboratory tasks on every route.
 The reply carries the job's record after the request, as the embedded
 manager returns it. Cancelling is idempotent, so a lost reply is resent.
@@ -33,7 +33,9 @@ from sc_neurocore.studio.platform.storage_record_protocol import StorageRequeste
 CANCEL_SCHEMA_VERSION: Final[Literal["studio.storage.cancel.v2"]] = "studio.storage.cancel.v2"
 CANCEL_ROUTE: Final = ("POST", "/api/training/stop")
 CancelAuthorizedRoute = Literal[
-    "/api/fits/jobs/{job_id}/cancel", "/api/studio/jobs/{job_id}/cancel"
+    "/api/fits/jobs/{job_id}/cancel",
+    "/api/studio/jobs/{job_id}/cancel",
+    "/api/candidates/jobs/{job_id}/cancel",
 ]
 
 _RequestId = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]

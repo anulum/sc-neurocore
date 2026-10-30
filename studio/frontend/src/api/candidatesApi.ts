@@ -6,7 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio frontend API
 // Studio API: candidate model packages.
-import { post } from "./http";
+import { encodeArtifactPath, get, getBlob, post } from "./http";
+import { parseCandidateJob, parseCandidateJobHistory, parseCandidateJobReceipt } from "../candidateJobs";
 
 /** One problem with a candidate, located by a JSON pointer. */
 export interface CandidateDiagnostic {
@@ -15,12 +16,10 @@ export interface CandidateDiagnostic {
 }
 
 /** What `POST /api/candidates/validate` answers. */
-export interface CandidateValidation {
+export type CandidateValidation = {
   schema_version: string;
-  valid: boolean;
-  candidate_sha256: string | null;
   diagnostics: CandidateDiagnostic[];
-}
+} & ({ valid: true; candidate_sha256: string } | { valid: false; candidate_sha256: null });
 
 /** One value (state or parameter) compared with the parent's. */
 export interface CandidateValueRow {
@@ -54,8 +53,8 @@ export interface CandidateDiff {
   integration?: { status: string; changed_fields: string[] };
 }
 
-/** What `POST /api/candidates/simulate` answers. */
-export interface CandidateRun {
+/** Stored result of a completed candidate simulation. */
+interface CandidateRunFields {
   candidate: string;
   candidate_sha256: string;
   units: { current: string; time: string };
@@ -64,12 +63,15 @@ export interface CandidateRun {
   profile: { method: string; dt: number; time_unit: string };
   spike_count: number;
   spike_steps: number[];
-  final_state: Record<string, number> | null;
-  diverged_at_step: number | null;
-  divergence: string | null;
   sample_every: number;
   trace: Record<string, number[]>;
 }
+
+/** A completed trace retains a final state, or a located divergence and no final state. */
+export type CandidateRun = CandidateRunFields & (
+  | { final_state: Record<string, number>; diverged_at_step: null; divergence: null }
+  | { final_state: null; diverged_at_step: number; divergence: string }
+);
 
 /** One reference test's outcome in a review packet. */
 export interface CandidateTestResult {
@@ -79,7 +81,7 @@ export interface CandidateTestResult {
   checks: { quantity: string; observed: number | null; held: boolean }[];
 }
 
-/** What `POST /api/candidates/review-packet` answers. */
+/** Stored result of a completed candidate reference review. */
 export interface CandidateReviewPacket {
   schema_version: string;
   candidate_sha256: string;
@@ -113,16 +115,56 @@ export const diffCandidate = (candidate: unknown) =>
  * @param candidate - The parsed package.
  * @param current - Constant injected current, in the candidate's current unit.
  * @param steps - Integration steps to take.
- * @returns The run.
+ * @returns The admitted durable job receipt.
  */
 export const simulateCandidate = (candidate: unknown, current: number, steps: number) =>
-  post<CandidateRun>("/candidates/simulate", { candidate, current, steps });
+  post<unknown>("/candidates/simulate", { candidate, current, steps })
+    .then((value) => parseCandidateJobReceipt(value, "simulate"));
 
 /**
  * Run a valid candidate's reference tests and assemble its review packet.
  *
  * @param candidate - The parsed package.
- * @returns The packet, bound under one digest.
+ * @returns The admitted durable job receipt.
  */
 export const candidateReviewPacket = (candidate: unknown) =>
-  post<CandidateReviewPacket>("/candidates/review-packet", { candidate });
+  post<unknown>("/candidates/review-packet", { candidate })
+    .then((value) => parseCandidateJobReceipt(value, "review"));
+
+/**
+ * Retrieve the current actor's latest candidate jobs without large result arrays.
+ *
+ * @returns Checked newest-first ledger summaries.
+ */
+export const listCandidateJobs = () =>
+  get<unknown>("/candidates/jobs").then(parseCandidateJobHistory);
+
+/**
+ * Recover one candidate job, checking the response against the requested identifier.
+ *
+ * @param jobId - Exact identifier returned by candidate job admission.
+ * @returns Checked state and any retained scientific result.
+ */
+export const getCandidateJob = (jobId: string) =>
+  get<unknown>(`/candidates/jobs/${encodeURIComponent(jobId)}`)
+    .then((value) => parseCandidateJob(value, jobId));
+
+/**
+ * Request cancellation and retain the actual supervisor state.
+ *
+ * @param jobId - Exact identifier returned by candidate job admission.
+ * @returns Checked actual supervisor state after requesting cancellation.
+ */
+export const cancelCandidateJob = (jobId: string) =>
+  post<unknown>(`/candidates/jobs/${encodeURIComponent(jobId)}/cancel`, {})
+    .then((value) => parseCandidateJob(value, jobId));
+
+/**
+ * Download an artifact only through the actor-scoped custody route.
+ *
+ * @param jobId - Exact identifier returned by candidate job admission.
+ * @param path - Relative path declared by this job’s artifact manifest.
+ * @returns The retained bytes verified by server artifact custody.
+ */
+export const candidateJobArtifact = (jobId: string, path: string) =>
+  getBlob(`/candidates/jobs/${encodeURIComponent(jobId)}/artifacts/${encodeArtifactPath(path)}`);

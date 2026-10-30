@@ -827,6 +827,22 @@ jobs:
           export SC_NEUROCORE_STUDIO_COMPILER_COVERAGE_DIR="$namespace/reports"
           npm run test:compiler-coverage
 
+      - name: Native candidate job frontend exact coverage
+        if: matrix.primary
+        working-directory: studio/frontend
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          namespace="$RUNNER_TEMP/studio-candidate-coverage"
+          mkdir -p "$namespace"/{tmp,config,data,state,cache}
+          export TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          export SC_NEUROCORE_STUDIO_CANDIDATE_COVERAGE_DIR="$namespace/reports"
+          npx vitest run --config vitest.candidates.config.ts
+
       - name: Native equation compiler browser workflow
         if: matrix.primary
         working-directory: studio/frontend
@@ -848,6 +864,7 @@ jobs:
           npx playwright install --with-deps chromium
           npx playwright test --config playwright.live.config.ts equation-ir-live.spec.ts \
             hardware-catalogue-live.spec.ts \
+            candidate-authoring-live.spec.ts candidate-jobs-live.spec.ts \
             --output="$namespace/playwright"
 
       - name: Preserve equation compiler browser diagnostics
@@ -858,6 +875,7 @@ jobs:
           path: |
             ${{ runner.temp }}/studio-equation-browser
             ${{ runner.temp }}/studio-equation-coverage
+            ${{ runner.temp }}/studio-candidate-coverage
           include-hidden-files: true
           retention-days: 7
 
@@ -983,6 +1001,55 @@ jobs:
             tests/test_studio_candidate_api_refusals.py -q \
             --cov --cov-config=tests/studio_candidate_units.coveragerc \
             --cov-report=term-missing --cov-fail-under=100
+
+      - name: Candidate jobs and storage custody exact coverage
+        if: matrix.coverage && matrix.shard-index == 2
+        shell: bash
+        env:
+          COVERAGE_FILE: ${{ runner.temp }}/studio-candidate-jobs/.coverage
+          COVERAGE_RCFILE: ${{ github.workspace }}/tests/studio_candidate_jobs.coveragerc
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          namespace="$RUNNER_TEMP/studio-candidate-jobs"
+          mkdir -p "$namespace"/{config,data,state,cache}
+          # The real isolated launcher adds Unix socket names below TMPDIR.
+          # Keep this prefix short; every fixture owns and removes its subdirectory.
+          export TMPDIR="$RUNNER_TEMP"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          python -m coverage run -m pytest --no-cov -q \
+            tests/test_studio_candidate_job_contract.py \
+            tests/test_studio_candidate_job_tasks.py \
+            tests/test_studio_candidate_jobs.py \
+            tests/test_studio_candidate_jobs_recovery.py \
+            tests/test_studio_candidate_jobs_isolated.py \
+            tests/test_studio_candidate_run.py \
+            tests/test_studio_candidate_api_refusals.py \
+            tests/test_studio_candidate_diff_refusals.py \
+            tests/test_studio_storage_named_tasks.py \
+            tests/test_studio_storage_named_admission.py \
+            tests/test_studio_storage_artifact_read.py \
+            tests/test_studio_storage_artifact_client.py \
+            tests/test_studio_storage_cancel.py \
+            tests/test_studio_storage_isolated_jobs.py \
+            tests/test_studio_storage_query.py \
+            tests/test_studio_storage_query_client.py \
+            tests/test_studio_storage_query_pages.py \
+            tests/test_studio_storage_query_protocol.py \
+            tests/test_studio_storage_record.py \
+            tests/test_studio_storage_record_client.py
+          python -m coverage combine --keep "$namespace"
+          python -m coverage report --show-missing
+
+      - name: Preserve candidate durable job diagnostics
+        if: always() && matrix.coverage && matrix.shard-index == 2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-candidate-jobs-diagnostics
+          path: ${{ runner.temp }}/studio-candidate-jobs
+          include-hidden-files: true
+          retention-days: 7
 
       - name: Studio policy exact coverage
         if: matrix.coverage && matrix.shard-index == 2

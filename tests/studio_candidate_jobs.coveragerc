@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Candidate durable job exact branch coverage
+
+[run]
+branch = True
+source_dirs =
+    src/sc_neurocore/studio
+parallel = True
+patch =
+    subprocess
+    _exit
+
+[report]
+include =
+    */sc_neurocore/studio/api/__init__.py
+    */sc_neurocore/studio/candidate_job_contract.py
+    */sc_neurocore/studio/candidate_job_tasks.py
+    */sc_neurocore/studio/api/candidate_jobs.py
+    */sc_neurocore/studio/api/candidates.py
+    */sc_neurocore/studio/platform/policy_routes_compute.py
+    */sc_neurocore/studio/platform/storage_artifact_protocol.py
+    */sc_neurocore/studio/platform/storage_artifact_read.py
+    */sc_neurocore/studio/platform/storage_cancel.py
+    */sc_neurocore/studio/platform/storage_cancel_protocol.py
+    */sc_neurocore/studio/platform/storage_isolated_jobs.py
+    */sc_neurocore/studio/platform/storage_named_tasks.py
+    */sc_neurocore/studio/platform/storage_query.py
+    */sc_neurocore/studio/platform/storage_query_client.py
+    */sc_neurocore/studio/platform/storage_query_pages.py
+    */sc_neurocore/studio/platform/storage_query_protocol.py
+    */sc_neurocore/studio/platform/storage_record.py
+    */sc_neurocore/studio/platform/storage_record_protocol.py
+fail_under = 100
+show_missing = True

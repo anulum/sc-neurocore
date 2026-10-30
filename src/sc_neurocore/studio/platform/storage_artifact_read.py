@@ -108,6 +108,13 @@ def _answer(
     if allowed:
         try:
             record = ledger.record(request.job_id, workspace=request.workspace)
+            if request.route == "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}" and (
+                request.requester is None
+                or record.owner != request.requester.principal_id
+                or record.kind != "analysis"
+                or record.admission.get("candidate_operation") not in ("simulate", "review")
+            ):
+                raise KeyError(request.job_id)
             artifact = _find_artifact(
                 record.artifacts, _normalize_artifact_lookup_path(request.relative_path)
             )
@@ -222,14 +229,13 @@ def serve_artifact_read(
             (encode_artifact_message(response),),
             (payload[offset : offset + max_bytes] for offset in range(0, len(payload), max_bytes)),
         ):
-            if frame_bytes:
-                write_verified_frame(
-                    channel,
-                    frame_bytes,
-                    expected_uid=expected_api_uid,
-                    max_bytes=max_bytes,
-                    deadline=deadline,
-                )
+            write_verified_frame(
+                channel,
+                frame_bytes,
+                expected_uid=expected_api_uid,
+                max_bytes=max_bytes,
+                deadline=deadline,
+            )
 
 
 __all__ = ["read_sealed_artifact", "serve_artifact_read"]

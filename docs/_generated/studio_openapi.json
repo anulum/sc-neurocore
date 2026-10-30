@@ -583,7 +583,7 @@
       },
       "CandidateRequest": {
         "additionalProperties": false,
-        "description": "A candidate package, sent whole.",
+        "description": "A complete candidate package, without caller-selected task authority.",
         "properties": {
           "candidate": {
             "additionalProperties": true,
@@ -599,7 +599,7 @@
       },
       "CandidateSimulateRequest": {
         "additionalProperties": false,
-        "description": "A candidate package and the run to perform with it.",
+        "description": "A candidate and its finite constant current and bounded step count.",
         "properties": {
           "candidate": {
             "additionalProperties": true,
@@ -4546,9 +4546,185 @@
         "summary": "Api Candidate Diff"
       }
     },
+    "/api/candidates/jobs": {
+      "get": {
+        "description": "List the actor's most recent candidate jobs without full result arrays.",
+        "operationId": "candidate_job_history_api_candidates_jobs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Candidate Job History Api Candidates Jobs Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Candidate Job History"
+      }
+    },
+    "/api/candidates/jobs/{job_id}": {
+      "get": {
+        "description": "Recover the actor's actual state and stored result, including interruptions.",
+        "operationId": "candidate_job_status_api_candidates_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Candidate Job Status Api Candidates Jobs  Job Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Candidate Job Status"
+      }
+    },
+    "/api/candidates/jobs/{job_id}/artifacts/{artifact_path}": {
+      "get": {
+        "description": "Download one actor-owned declared artifact after verifying its digest.",
+        "operationId": "candidate_job_artifact_api_candidates_jobs__job_id__artifacts__artifact_path__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_path",
+            "required": true,
+            "schema": {
+              "title": "Artifact Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Candidate Job Artifact"
+      }
+    },
+    "/api/candidates/jobs/{job_id}/cancel": {
+      "post": {
+        "description": "Request supervisor cancellation; retain the actual returned job state.",
+        "operationId": "candidate_job_cancel_api_candidates_jobs__job_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Candidate Job Cancel Api Candidates Jobs  Job Id  Cancel Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Candidate Job Cancel"
+      }
+    },
     "/api/candidates/review-packet": {
       "post": {
-        "description": "Run a valid candidate's reference tests and return its review packet.",
+        "description": "Admit the complete reference review as an owned durable process job.",
         "operationId": "api_candidate_review_packet_api_candidates_review_packet_post",
         "requestBody": {
           "content": {
@@ -4561,7 +4737,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
@@ -4589,7 +4765,7 @@
     },
     "/api/candidates/simulate": {
       "post": {
-        "description": "Simulate a valid candidate under its own profile and a constant current.",
+        "description": "Admit a valid simulation as an owned, bounded durable process job.",
         "operationId": "api_candidate_simulate_api_candidates_simulate_post",
         "requestBody": {
           "content": {
@@ -4602,7 +4778,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {

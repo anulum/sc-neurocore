@@ -30,6 +30,8 @@ from sc_neurocore.studio.codegen import generate_experiment_script, generate_one
 from sc_neurocore.studio.model_catalogue import corpus_revision, list_models
 from sc_neurocore.studio.experiment_spec import resolve_experiment
 from sc_neurocore.studio.replay_pack import build_replay_pack
+from sc_neurocore.studio.candidate_run import review_packet, simulate_candidate
+from tests.studio_candidate_support import adex_candidate
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -52,7 +54,18 @@ def distribution_source(tmp_path_factory: pytest.TempPathFactory) -> Path:
     source = tmp_path_factory.mktemp("studio-distribution") / "source"
     source.mkdir()
     tracked = subprocess.run(
-        ["git", "ls-files", "-z", "--", "src", "docs/api/models", *CONVERSION_BENCHMARK],
+        [
+            "git",
+            "ls-files",
+            "-z",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+            "--",
+            "src",
+            "docs/api/models",
+            *CONVERSION_BENCHMARK,
+        ],
         cwd=root,
         capture_output=True,
         text=True,
@@ -212,6 +225,153 @@ def test_wheel_contains_exact_model_resources(
         installed = tmp_path / "installed"
         wheel.extractall(installed)
     verify_installed_replays(installed, tmp_path)
+    verify_installed_candidate_jobs(installed, tmp_path)
+
+
+def verify_installed_candidate_jobs(installed: Path, workspace: Path) -> None:
+    """Compare installed process jobs with the same ordered source calculations.
+
+    Parameters
+    ----------
+    installed : Path
+        Actual extracted wheel, searched before existing dependency packages.
+    workspace : Path
+        Consumer directory outside the checkout, holding original requests.
+    """
+    cases = []
+    for numerical in ["euler", "gauss_seidel", "diffusion"]:
+        document = adex_candidate()
+        document["model"]["state"] = {"w": 7.0, "v": -65.0}
+        document["reference_tests"] = document["reference_tests"][:1]
+        document["reference_tests"][0]["steps"] = 20
+        if numerical == "gauss_seidel":
+            document["model"]["integration"]["method"] = "gauss_seidel"
+            dynamics = document["model"]["dynamics"]
+            document["model"]["dynamics"] = {"w": dynamics["w"], "v": dynamics["v"]}
+        elif numerical == "diffusion":
+            for name, magnitude, unit in [
+                ("sigma_v", 0.5, "mV / ms**0.5"),
+                ("sigma_w", 0.25, "pA / ms**0.5"),
+            ]:
+                document["model"]["parameters"][name] = magnitude
+                document["units"]["parameters"][name] = unit
+                document["model"]["profile"]["parameters"][name] = "source"
+                document["model"]["profile"]["units"][name] = unit
+            document["model"]["dynamics"] = {"w": "sigma_w * xi", "v": "sigma_v * xi"}
+            document["model"]["threshold"]["rng_seed"] = 17
+        for operation in ["simulate", "review-packet"]:
+            cases.append(
+                {
+                    "operation": operation,
+                    "body": {
+                        "candidate": document,
+                        **({"current": 800.0, "steps": 20} if operation == "simulate" else {}),
+                    },
+                    "expected": simulate_candidate(document, current=800.0, steps=20)
+                    if operation == "simulate"
+                    else review_packet(document),
+                }
+            )
+    (workspace / "candidate-cases.json").write_text(json.dumps(cases), encoding="utf-8")
+    probe = """
+import hashlib, json, sys, time
+from pathlib import Path
+assert sys.flags.isolated and sys.flags.no_site
+installed = Path(sys.argv[1])
+sys.path[:0] = [str(installed), sys.argv[2]]
+import sc_neurocore
+assert Path(sc_neurocore.__file__).is_relative_to(installed)
+from starlette.testclient import TestClient
+from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
+app = create_app(StudioRuntimeSettings(job_root_path='candidate-jobs', enforce_route_policies=True))
+headers = {'sec-fetch-site': 'none', 'x-studio-principal': 'alice'}
+with TestClient(app, base_url='http://127.0.0.1', headers=headers) as client:
+    before = client.get('/api/candidates/jobs').json()
+    candidate = json.loads(Path('candidate-cases.json').read_text())[0]['body']['candidate']
+    for current in [True, '800']:
+        response = client.post('/api/candidates/simulate', json={'candidate': candidate, 'current': current, 'steps': 2})
+        assert response.status_code == 422, response.text
+    assert client.get('/api/candidates/jobs').json() == before
+    for case in json.loads(Path('candidate-cases.json').read_text()):
+        response = client.post('/api/candidates/' + case['operation'], json=case['body'])
+        assert response.status_code == 202, response.text
+        receipt = response.json()
+        deadline = time.monotonic() + 45
+        while True:
+            record = client.get(receipt['status_route']).json()
+            if record['status'] == 'completed':
+                break
+            assert record['status'] in {'pending', 'running'}, record
+            assert time.monotonic() < deadline, record
+            time.sleep(0.02)
+        assert record['owner'] == 'alice' and record['execution_model'] == 'process'
+        assert record['result'] == case['expected']
+        assert record['admission']['candidate_sha256'] == case['expected']['candidate_sha256']
+        for artifact in record['artifacts']:
+            response = client.get(receipt['status_route'] + '/artifacts/' + artifact['relative_path'])
+            assert response.status_code == 200, response.text
+            assert hashlib.sha256(response.content).hexdigest() == artifact['sha256']
+            if artifact['relative_path'] == 'request.json':
+                assert response.json() == case['body']
+                assert hashlib.sha256(response.content).hexdigest() == receipt['request_sha256']
+                assert list(response.json()['candidate']['model']['state']) == ['w', 'v']
+    parent = installed / 'sc_neurocore/neurons/model_schemas/adex.toml'
+    original_parent = parent.read_bytes()
+    corrupt_parent = b'{"metadata":"private-corrupt-parent-marker",'
+    parent.write_bytes(corrupt_parent)
+    try:
+        case = json.loads(Path('candidate-cases.json').read_text())[0]
+        response = client.post('/api/candidates/review-packet', json={'candidate': case['body']['candidate']})
+        assert response.status_code == 202, response.text
+        route = response.json()['status_route']
+        deadline = time.monotonic() + 45
+        while True:
+            record = client.get(route).json()
+            if record['status'] not in {'pending', 'running'}:
+                break
+            assert time.monotonic() < deadline, record
+            time.sleep(0.02)
+        assert record['status'] == 'failed', record
+        assert record['result'] is None
+        assert 'private-corrupt-parent-marker' not in json.dumps(record)
+        assert parent.read_bytes() == corrupt_parent
+    finally:
+        parent.write_bytes(original_parent)
+    task = installed / 'sc_neurocore/studio/candidate_job_tasks.py'
+    retained = task.with_suffix('.retained')
+    task.rename(retained)
+    try:
+        case = json.loads(Path('candidate-cases.json').read_text())[0]
+        response = client.post('/api/candidates/simulate', json=case['body'])
+        assert response.status_code == 202, response.text
+        route = response.json()['status_route']
+        deadline = time.monotonic() + 45
+        while True:
+            record = client.get(route).json()
+            if record['status'] not in {'pending', 'running'}:
+                break
+            assert time.monotonic() < deadline, record
+            time.sleep(0.02)
+        assert record['status'] == 'failed', record
+        assert record['result'] is None
+    finally:
+        retained.rename(task)
+    assert app.state.studio_job_manager.unreaped_workers == ()
+assert all(Path(module.__file__).is_relative_to(installed)
+    for name, module in tuple(sys.modules.items())
+    if name.startswith('sc_neurocore.') and getattr(module, '__file__', None))
+print('six installed Euler/Gauss-Seidel/diffusion HTTP jobs match source; corrupt parent and missing installed worker refuse')
+"""
+    result = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", probe, str(installed), sysconfig.get_path("purelib")],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        timeout=90,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def verify_installed_replays(installed: Path, workspace: Path) -> None:

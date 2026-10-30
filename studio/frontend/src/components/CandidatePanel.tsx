@@ -19,13 +19,12 @@
 import { useRef, useState, type CSSProperties } from "react";
 
 import {
+  candidateJobArtifact,
   candidateReviewPacket,
   diffCandidate,
   simulateCandidate,
   validateCandidate,
   type CandidateDiff,
-  type CandidateReviewPacket,
-  type CandidateRun,
   type CandidateValidation,
 } from "../api/candidatesApi";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
@@ -37,6 +36,9 @@ import {
   parseCandidateText,
 } from "../candidateWorkbench";
 import { useStudioStore } from "../stores/studio";
+import type { CandidateJob } from "../candidateJobs";
+import { useCandidateJobs } from "../useCandidateJobs";
+import CandidateJobHistory from "./CandidateJobHistory";
 
 const button: CSSProperties = {
   background: "transparent",
@@ -60,12 +62,10 @@ const cell: CSSProperties = {
 interface Outcome {
   validation: CandidateValidation | null;
   diff: CandidateDiff | null;
-  run: CandidateRun | null;
-  packet: CandidateReviewPacket | null;
   message: string | null;
 }
 
-const NOTHING: Outcome = { validation: null, diff: null, run: null, packet: null, message: null };
+const NOTHING: Outcome = { validation: null, diff: null, message: null };
 
 /**
  * The candidate workbench panel.
@@ -80,6 +80,29 @@ export default function CandidatePanel() {
   const [current, setCurrent] = useState("0");
   const [steps, setSteps] = useState("1000");
   const fileInput = useRef<HTMLInputElement>(null);
+  const jobs = useCandidateJobs();
+  const selected = jobs.selected;
+  const result = selected?.status === "completed" ? selected.result : null;
+  const run = result !== null && "spike_count" in result ? result : null;
+  const packet = result !== null && "packet_sha256" in result ? result : null;
+
+  /**
+   * Download retained bytes under the selected job's original identity.
+   *
+   * @param job - Exact retained record whose artifact the caller selected.
+   * @param path - Relative artifact path declared by the selected job.
+   */
+  async function downloadJobArtifact(job: CandidateJob, path: string): Promise<void> {
+    try {
+      const artifact = await candidateJobArtifact(job.job_id, path);
+      const filename = path === "result.json" && job.admission.candidate_operation === "review"
+        ? candidateFileName({ name: job.admission.candidate_name }, "review")
+        : `${job.job_id}.${path}`;
+      downloadBrowserArtefact(artifact, filename);
+    } catch (error) {
+      setOutcome({ ...NOTHING, message: String(error) });
+    }
+  }
 
   /**
    * Parse the draft and run one server action on it, reporting what happens.
@@ -100,7 +123,7 @@ export default function CandidatePanel() {
       setOutcome(
         refused !== null
           ? { ...NOTHING, validation: refused, message: "The candidate is not valid; fix the fields listed." }
-          : { ...NOTHING, message: error instanceof Error ? error.message : String(error) },
+          : { ...NOTHING, message: String(error) },
       );
     } finally {
       setBusy(false);
@@ -163,20 +186,14 @@ export default function CandidatePanel() {
           void act(async (document) => ({ diff: await diffCandidate(document) }));
         }}>Diff against parent</button>
         <button type="button" style={button} disabled={busy} onClick={() => {
-          void act(async (document) => ({ packet: await candidateReviewPacket(document) }));
+          void act(async (document) => { jobs.accept(await candidateReviewPacket(document)); return {}; });
         }}>Run reference tests</button>
         <button
           type="button"
           style={button}
-          disabled={outcome.packet === null}
-          onClick={() => {
-            if (outcome.packet === null) return;
-            const parsed = parseCandidateText(draft);
-            downloadBrowserArtefact(
-              new Blob([JSON.stringify(outcome.packet, null, 2)], { type: "application/json" }),
-              candidateFileName(parsed.ok ? parsed.document : null, "review"),
-            );
-          }}
+          disabled={packet === null}
+          onClick={selected !== null
+            ? () => { void downloadJobArtifact(selected, "result.json"); } : undefined}
         >
           Export review packet
         </button>
@@ -203,17 +220,21 @@ export default function CandidatePanel() {
         <input id="candidate-steps" type="number" min={1} value={steps}
           onChange={(event) => { setSteps(event.target.value); }} style={{ width: 80 }} />
         <button type="button" style={button} disabled={busy} onClick={() => {
-          void act(async (document) => ({
-            run: await simulateCandidate(document, Number(current), Number(steps)),
-          }));
+          void act(async (document) => {
+            jobs.accept(await simulateCandidate(document, Number(current), Number(steps)));
+            return {};
+          });
         }}>Simulate</button>
       </div>
+
+        <CandidateJobHistory history={jobs.history} selected={jobs.selected} error={jobs.error}
+          refresh={jobs.refresh} select={jobs.select} cancel={jobs.cancel} download={downloadJobArtifact} />
 
       <div id="candidate-outcome" role="status" style={{ fontSize: "var(--fs-body)" }}>
         {outcome.message !== null && <p style={{ margin: 0 }}>{outcome.message}</p>}
         {validation !== null && (validation.valid ? (
           <p style={{ margin: 0 }}>
-            Valid. Digest {validation.candidate_sha256?.slice(0, 16)}…
+            Valid. Digest {validation.candidate_sha256.slice(0, 16)}…
           </p>
         ) : (
           <ul aria-label="Candidate problems" style={{ margin: 0, paddingLeft: 16 }}>
@@ -225,14 +246,14 @@ export default function CandidatePanel() {
             ))}
           </ul>
         ))}
-        {outcome.run !== null && (
+        {run !== null && (
           <p style={{ margin: 0 }}>
-            {outcome.run.spike_count} spikes in {outcome.run.steps} steps
-            ({outcome.run.profile.method}, dt {outcome.run.profile.dt} {outcome.run.profile.time_unit}
-            {" "}at {outcome.run.current} {outcome.run.units.current})
-            {outcome.run.diverged_at_step !== null
-              ? `; diverged at step ${outcome.run.diverged_at_step}: ${outcome.run.divergence ?? ""}`
-              : `; final state ${Object.entries(outcome.run.final_state ?? {})
+            {run.spike_count} spikes in {run.steps} steps
+            ({run.profile.method}, dt {run.profile.dt} {run.profile.time_unit}
+            {" "}at {run.current} {run.units.current})
+            {run.diverged_at_step !== null
+              ? `; diverged at step ${run.diverged_at_step}: ${run.divergence}`
+              : `; final state ${Object.entries(run.final_state)
                 .map(([name, value]) => `${name}=${value.toPrecision(6)}`).join(", ")}`}
           </p>
         )}
@@ -265,14 +286,14 @@ export default function CandidatePanel() {
             </table>
           )
         )}
-        {outcome.packet !== null && (
+        {packet !== null && (
           <div>
             <p style={{ margin: 0 }}>
-              Reference tests {outcome.packet.reference_tests_passed ? "passed" : "failed"}. Packet
-              {" "}{outcome.packet.packet_sha256.slice(0, 16)}…
+              Reference tests {packet.reference_tests_passed ? "passed" : "failed"}. Packet
+              {" "}{packet.packet_sha256.slice(0, 16)}…
             </p>
             <ul style={{ margin: 0, paddingLeft: 16 }}>
-              {outcome.packet.reference_tests.map((test) => (
+              {packet.reference_tests.map((test) => (
                 <li key={test.name}>
                   {test.name}: {test.passed ? "passed" : "failed"}
                   {test.checks.map((check) => ` · ${check.quantity} ${String(check.observed)}${check.held ? "" : " (outside bounds)"}`).join("")}
@@ -281,7 +302,7 @@ export default function CandidatePanel() {
             </ul>
             <p style={{ margin: 0, color: "var(--text-secondary)" }}>Not established:</p>
             <ul style={{ margin: 0, paddingLeft: 16, color: "var(--text-secondary)" }}>
-              {outcome.packet.not_established.map((item) => <li key={item}>{item}</li>)}
+              {packet.not_established.map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
         )}

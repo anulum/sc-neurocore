@@ -131,7 +131,7 @@ def apply_query(
         return encode_query_message(_response(request, "ok", summary=summary))
     page = (
         read_record_page(ledger, request, max_bytes=max_bytes)
-        if request.view == "records"
+        if request.view in {"records", "candidate_records"}
         else _purges(ledger, request)
     )
     if page is None:

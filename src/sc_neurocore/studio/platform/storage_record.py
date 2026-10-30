@@ -128,8 +128,16 @@ def serve_record_read(
                 if request.authorized_route is not None and (
                     principal is None
                     or record.owner != principal.principal_id
-                    or record.admission.get("laboratory_task")
-                    not in {"fit", "fit_replay", "cohort"}
+                    or (
+                        (
+                            record.kind != "analysis"
+                            or record.admission.get("candidate_operation")
+                            not in ("simulate", "review")
+                        )
+                        if request.authorized_route == "/api/candidates/jobs/{job_id}"
+                        else record.admission.get("laboratory_task")
+                        not in {"fit", "fit_replay", "cohort"}
+                    )
                 ):
                     response["status"] = "not_found"
                 else:

@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Breaking: candidate simulation and reference-review HTTP routes now return 202 durable process-job receipts. Follow the actor-owned status route for results; recover history and artifacts after reconnecting or restarting the API, and request cancellation through the supervisor. Preserve ordered scientific inputs, numerical profiles and canonical candidate/review digests. Selected results retain their original identity when the draft changes. Direct numerical Python calls retain their existing return values. Catalogue-start assistance, independent scientific acceptance and promotion remain separate.
+
 ## [4.0.0] - 2026-10-29
 
 - Require the published stable Studio platform SDK 0.11.3 for federation, with its verified release hashes and matching capability manifest. Retain the other locked dependency versions and package hashes.

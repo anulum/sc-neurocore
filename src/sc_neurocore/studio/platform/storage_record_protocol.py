@@ -44,8 +44,8 @@ class StorageRecordRequest(BaseModel):
     job_id: _Name
     workspace: _Name
     requester: StorageRequester | None
-    authorized_route: Literal["/api/fits/jobs/{job_id}"] | None = Field(
-        default=None, exclude_if=lambda route: route is None
+    authorized_route: Literal["/api/fits/jobs/{job_id}", "/api/candidates/jobs/{job_id}"] | None = (
+        Field(default=None, exclude_if=lambda route: route is None)
     )
 
 
@@ -102,7 +102,7 @@ def decode_record_request(payload: bytes) -> StorageRecordRequest:
     Notes
     -----
     Nullable identity and trace fields remain mandatory. The optional
-    ``authorized_route`` selects only actor-owned laboratory reads; omission
+    ``authorized_route`` selects only actor-owned laboratory or candidate reads; omission
     retains the existing administrator read policy and original wire shape.
     Workspace and requester checks belong to the authority before ledger access.
     """

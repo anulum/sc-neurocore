@@ -52,7 +52,7 @@ The `.githooks/pre-push` hook runs `preflight-fast` automatically before every `
 ### Code Style
 
 - **Rust**: `cargo fmt` before committing.
-- **Python**: `ruff format` + `ruff check` (both enforced in CI and preflight). Use type hints on public APIs only.
+- **Python**: `ruff format` + `ruff check` (both enforced in CI and preflight). Annotate new and changed code fully and run strict mypy.
 - **SPDX header**: Every `.py`, `.rs`, `.v` file must start with `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 
 ### Language-native API documentation
@@ -192,6 +192,40 @@ reopen, and checks located refusals for a parseable voltage-as-time declaration.
 These gates check dimensional admission and unchanged numeric execution, not
 independent scientific validation or catalogue promotion.
 
+### Candidate process jobs and storage custody
+
+The native candidate frontend cohort uses the actual FastAPI server and
+supervised Python workers. From `studio/frontend`, run:
+
+```bash
+npx vitest run --config vitest.candidates.config.ts
+```
+
+It retains per-file statement, branch, function and line thresholds of 100%
+for the request client, record parser, observation hook, history and panel.
+The tests forward real backend responses through controlled loopback sockets
+to check delayed replies and disconnections without replacing fetch or the
+scientific runtime. Set `SC_NEUROCORE_STUDIO_CANDIDATE_PYTHON` to select an
+existing Studio interpreter and `SC_NEUROCORE_STUDIO_CANDIDATE_COVERAGE_DIR`
+for reports. The real Chromium contracts are
+`e2e/candidate-authoring-live.spec.ts` and `e2e/candidate-jobs-live.spec.ts`.
+
+The Python 3.12 candidate gate combines branch and subprocess observations
+from the candidate workflow and the owning storage protocol/client tests,
+then applies `tests/studio_candidate_jobs.coveragerc` at 100%. Preserve both
+the candidate and storage modules in that report; admission, actor custody,
+cancellation and artifact reads cross the isolated authority boundary.
+Use a short, test-owned `TMPDIR` for its Unix socket names. Hosted CI uses
+`RUNNER_TEMP`; shared-machine checks remain serial, module-specific and bounded.
+
+`tests/test_studio_distribution.py` also compares real installed-wheel jobs
+with source results for Euler, declared-order Gauss–Seidel and seeded
+diffusion through both direct wheel and sdist-to-wheel builds. Its missing
+installed worker control must fail rather than import the checkout; a corrupt
+installed parent schema must fail the review job without leaking its contents. These
+checks establish software result and artifact custody, not independent
+scientific acceptance or OS isolation.
+
 ### Equation compiler frontend coverage
 
 From `studio/frontend`, `npm run test:compiler-coverage` checks the compiler
@@ -218,6 +252,9 @@ project saves, local sessions, downloads and a separate replay
 interpreter. An editable source import is refused before the browser starts.
 The same acceptance also compiles authored equations through the installed
 native engine, checks source replay and RTL, and downloads compiler evidence.
+Candidate authoring and process-job cases also run through the installed UI:
+they retain original request bytes after draft changes and reloads, export
+the review packet, and cancel a long reference job through its supervisor.
 Both wheels come from the same checkout: publishing consumes the matching
 Linux engine artifact; release validation builds it with the locked Cargo graph.
 

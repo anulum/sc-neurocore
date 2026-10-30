@@ -42581,15 +42581,49 @@ ValueError
 
 ---
 
+## Module `studio.api.candidate_jobs`
+
+### Function `submit_candidate_job(context, body, operation, request)`
+Admit a complete ordered candidate request before starting a process.
+
+Parameters
+----------
+context : StudioApiContext
+    Existing job, settings and policy collaborators.
+body : CandidateRequest
+    Complete scientific request, validated before capacity allocation.
+operation : {"simulate", "review"}
+    Registered candidate task selected by the route.
+request : Request
+    Policy-authenticated principal and middleware request trace.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Versioned receipt, input digests, projected model steps and status route.
+
+Raises
+------
+HTTPException
+    Located 422 for an invalid candidate, 422 for byte admission, or 503
+    when the existing manager refuses capacity or process admission.
+
+### Function `build_candidate_jobs_router(context)`
+Build actor-scoped candidate history, observation, control and downloads.
+
+Parameters
+----------
+context : StudioApiContext
+    Shared durable job service; this router owns no alternate ledger.
+
+Returns
+-------
+APIRouter
+    Registered candidate custody routes for embedded and isolated profiles.
+
+---
+
 ## Module `studio.api.candidates`
-
-### Class `CandidateRequest`
-A candidate package, sent whole.
-
-
-### Class `CandidateSimulateRequest`
-A candidate package and the run to perform with it.
-
 
 ### Function `build_candidates_router(context)`
 Build the candidate-package router.
@@ -42597,7 +42631,7 @@ Build the candidate-package router.
 Parameters
 ----------
 context:
-    Shared runtime state; the candidate routes hold none of their own.
+    Shared runtime, policy and durable job custody.
 
 ---
 
@@ -43783,6 +43817,94 @@ Raises
 EquationRefusal
     If a direct callee is not a namespace function or its argument count
     cannot be accepted by that function.
+
+---
+
+## Module `studio.candidate_job_contract`
+
+### Class `CandidateRequest`
+A complete candidate package, without caller-selected task authority.
+
+
+### Class `CandidateSimulateRequest`
+A candidate and its finite constant current and bounded step count.
+
+
+### Class `CandidateJobInput`
+Validated immutable request bytes and their independent custody digests.
+
+
+### Function `prepare_candidate_job(request, operation, *, max_request_bytes)`
+Validate a candidate and freeze the exact request before allocating a job.
+
+Parameters
+----------
+request : CandidateRequest
+    Complete candidate; simulation additionally carries current and steps.
+operation : {"simulate", "review"}
+    Selected registered operation, never an import path from the caller.
+max_request_bytes : int
+    Submission ceiling, further restricted by the configured artifact limit.
+
+Returns
+-------
+CandidateJobInput
+    Ordered UTF-8 JSON, request and candidate hashes, and model-step estimate.
+
+Raises
+------
+CandidateRejected
+    Candidate admission fails with located diagnostics.
+CandidateRunRefused
+    Operation, request shape or encoded byte budget is invalid.
+
+---
+
+## Module `studio.candidate_job_tasks`
+
+### Function `execute_candidate_simulation_task(context, payload)`
+Run one digest-bound candidate simulation in its supervised worker.
+
+Parameters
+----------
+context : StudioJobContext
+    Existing bounded process context and confined input/artifact custody.
+payload : mapping
+    Exactly the admitted request and candidate SHA-256 digests.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Unchanged simulation result; request, candidate and result are artifacts.
+
+Raises
+------
+ValueError
+    The seed, candidate, envelope or digest binding is invalid.
+StudioJobCancelled
+    Cancellation was observed before or after scientific execution.
+
+### Function `execute_candidate_review_task(context, payload)`
+Run every proposed reference test and preserve the original review digest.
+
+Parameters
+----------
+context : StudioJobContext
+    Existing supervised process context with confined artifact custody.
+payload : mapping
+    Exactly the admitted request and candidate SHA-256 digests.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Existing review packet, without catalogue promotion or independent grade.
+
+Raises
+------
+ValueError
+    The request, candidate or digest binding is invalid.
+StudioJobCancelled
+    Cancellation was observed before or after scientific execution.
 
 ---
 
@@ -51372,7 +51494,7 @@ Constructing this value does not authorize or execute the task.
 - **owner_for**(principal_id)
   - Derive actor custody from the authenticated delegation when required.
 - **validate_admission**(\*, authorized_route, payload, admission)
-  - Bind laboratory operation and custody before connection or allocation.
+  - Bind the registered operation and input custody before allocation.
 
 ### Function `resolve_named_studio_task(name, *, authorized_route)`
 Return one exact reviewed task for an already authorized POST route.
@@ -51776,8 +51898,8 @@ Read whole views through a connection factory and bounded exchanges.
 
 - **__init__**(connect, \*, workspace, storage_uid, max_bytes, timeout_seconds, max_content_bytes)
   - Keep the trusted endpoint settings; nothing is sent yet.
-- **records**(requester)
-  - Return every record of the workspace in creation order.
+- **records**(requester, \*, candidate_only)
+  - Return workspace records, or only the requester’s candidate summaries.
 - **status**(requester)
   - Return the authority's aggregate summary for the workspace.
 - **purges**(requester, \*, limit, after)
@@ -52044,7 +52166,7 @@ ValueError
 Notes
 -----
 Nullable identity and trace fields remain mandatory. The optional
-``authorized_route`` selects only actor-owned laboratory reads; omission
+``authorized_route`` selects only actor-owned laboratory or candidate reads; omission
 retains the existing administrator read policy and original wire shape.
 Workspace and requester checks belong to the authority before ledger access.
 

@@ -30,12 +30,14 @@ from sc_neurocore.studio.platform.storage_record_protocol import StorageRequeste
 ARTIFACT_SCHEMA_VERSION: Final[Literal["studio.storage.artifact.v2"]] = "studio.storage.artifact.v2"
 
 ArtifactRoute = Literal[
+    "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}",
     "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
     "/api/studio/training/weight-restore",
     "/api/studio/training/weight-restore/attach",
     "/api/studio/training/weight-restore/attach/live",
 ]
 ARTIFACT_ROUTE_METHODS: Final[dict[str, str]] = {
+    "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}": "GET",
     "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}": "GET",
     "/api/studio/training/weight-restore": "POST",
     "/api/studio/training/weight-restore/attach": "POST",

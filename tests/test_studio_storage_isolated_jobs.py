@@ -259,6 +259,20 @@ def test_sealed_artefacts_are_read_only_on_an_artefact_route(
         manager.read_artifact(JOB, "weights.bin")
 
 
+def test_cancellation_of_a_completed_job_with_no_local_generation_preserves_its_record(
+    manager: IsolatedJobManager,
+    ledger: StudioJobLedger,
+) -> None:
+    """A restarted facade can observe terminal cancellation without a local event handle."""
+    stop(started(ledger))
+    assert finish(ledger, request(FILES), list(FILES.values())).reply == "sealed"
+    before = ledger.record(JOB)
+    assert before.status == "completed"
+    with request_on("/api/studio/jobs/{job_id}/cancel"):
+        assert manager.cancel(JOB) == before
+    assert ledger.record(JOB) == before
+
+
 def test_waiting_on_a_job_supervised_elsewhere_polls_the_record(
     manager: IsolatedJobManager, ledger: StudioJobLedger
 ) -> None:

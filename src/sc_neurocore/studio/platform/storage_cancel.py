@@ -57,6 +57,23 @@ def apply_cancel(
         except KeyError:
             status = "not_found"
         else:
+            candidate = current.kind == "analysis" and current.admission.get(
+                "candidate_operation"
+            ) in ("simulate", "review")
+            candidate_route = request.authorized_route == "/api/candidates/jobs/{job_id}/cancel"
+            if (candidate or candidate_route) and (
+                not candidate
+                or request.requester is None
+                or current.owner != request.requester.principal_id
+            ):
+                return StorageCancelResponse(
+                    schema_version=CANCEL_SCHEMA_VERSION,
+                    operation="cancel",
+                    request_id=request.request_id,
+                    job_id=request.job_id,
+                    status="not_found",
+                    record=None,
+                )
             if (
                 request.authorized_route == "/api/fits/jobs/{job_id}/cancel"
                 or current.admission.get("laboratory_task") in {"fit", "fit_replay", "cohort"}

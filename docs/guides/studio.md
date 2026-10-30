@@ -589,8 +589,12 @@ with that reason.
 | POST | `/api/ir/emit-sv` | Emit native SystemVerilog with replay of bound source |
 | POST | `/api/candidates/validate` | Locate every problem with a candidate model package ([Candidate Models](../studio/candidate-models.md)) |
 | POST | `/api/candidates/diff` | Diff a candidate against its parent, mathematically and semantically |
-| POST | `/api/candidates/simulate` | Run a candidate under its own profile, bounded |
-| POST | `/api/candidates/review-packet` | Run a candidate's reference tests and return its review packet |
+| POST | `/api/candidates/simulate` | Admit a bounded candidate process job (HTTP 202); follow its status route |
+| POST | `/api/candidates/review-packet` | Admit a reference-review process job (HTTP 202); recover its packet from the completed result |
+| GET | `/api/candidates/jobs` | Current actor's newest candidate jobs, without result arrays |
+| GET | `/api/candidates/jobs/{job_id}` | Actual candidate job state and retained result |
+| POST | `/api/candidates/jobs/{job_id}/cancel` | Request supervisor cancellation |
+| GET | `/api/candidates/jobs/{job_id}/artifacts/{artifact_path}` | Download a declared actor-owned artifact |
 | POST | `/api/fits` | Fit a model's parameters to a split cohort, with hold-out error and identifiability ([Parameter Fitting](../studio/parameter-fitting.md)) |
 | POST | `/api/fits/replay` | Run an exported fit again and report whether it reproduced |
 | GET | `/api/project/{name}/comments` | Review comments, each checked against its revision ([Workspaces](../studio/workspaces.md)) |

@@ -142,7 +142,7 @@ admitted expression can still divide by zero, leave a function's numerical
 domain, or produce a non-finite state. It reports the failed step with an
 authored reason and a `null` `final_state`. Its reference tests fail, and the review packet retains the
 candidate and digest so the author can repair that proposal. Corrupt canonical
-resources and internal engine faults remain server errors.
+resources and internal engine faults fail the job; synchronous diff faults remain server errors.
 
 The reference tests are the author's proposals. Running them shows that the
 candidate does what its author says; it is not an independent check against
@@ -162,13 +162,44 @@ them, and what the packet does not establish:
 The packet is bound under one `packet_sha256`, and the candidate under its own
 `candidate_sha256`.
 
-Candidate simulations and author-proposed reference tests run synchronously
-within the existing per-run step and reference-test limits. Durable jobs,
-cancellation and restart recovery are deferred. Packages currently start
-through import and text editing; starting a candidate directly from the
-catalogue is deferred. Independent scientific acceptance and authorised
-catalogue promotion remain separate later work, with no automatic catalogue
-changes.
+## Durable execution and recovery
+
+**Simulate** and **Run reference tests** submit supervised process jobs and
+return HTTP 202. Validation happens before job allocation. Each immutable
+request is limited to 4,000,000 encoded bytes, further restricted by the
+configured artifact ceiling. The job records its operation, original candidate
+name, canonical candidate digest, exact ordered request digest, and projected
+model steps (the simulation length or the sum of every reference-test length).
+The original numerical profile, seed and magnitude conventions are preserved.
+
+**Candidate jobs** lists the current actor's latest jobs; **Refresh candidate
+jobs** recovers history after reconnecting or reopening the browser. Select a
+stored job to recover its result. Editing or importing a different draft does
+not rename the selected job or change its input identity. **Export review
+packet** downloads that selected review's stored bytes under its original
+candidate name. The request, candidate and result are also downloadable as
+`request.json`, `candidate.json` and `result.json` once declared by the job.
+
+**Cancel candidate job** requests a supervisor stop. `cancelling` means the
+worker has not yet been confirmed stopped; `cancelled` and `timed_out` retain
+distinct outcomes. An observation failure does not resubmit the computation.
+Refresh explicitly retries observation. A completed calculation remains in the
+configured durable job root across API restarts. If a supervisor dies during
+execution, normal ledger recovery reports `interrupted` or `unknown` until its
+worker custody is resolved. The calculation is not resumed or replayed.
+
+The existing analysis resource class supplies finite process deadlines and
+worker limits in embedded and isolated storage profiles. Embedded workers run
+as the launching user; process dispatch does not establish OS isolation.
+History responses contain at most 100 records (50 by default) and omit result
+arrays. Individual status responses retain the full stored result. All new
+custody routes enforce actor ownership; another actor receives no record,
+control or artifact. Preserve the configured job root to retain this history.
+
+Packages currently start through import and text editing; starting a candidate
+directly from the catalogue is deferred. Independent scientific acceptance and
+authorised catalogue promotion remain separate work, with no automatic
+catalogue changes.
 
 ## In the workspace
 
@@ -197,12 +228,23 @@ not JSON is not sent to the server; the panel says why.
 |-------|---------|
 | `POST /api/candidates/validate` | the located diagnostics, with HTTP 200 whether or not the candidate is valid |
 | `POST /api/candidates/diff` | the diff against the parent |
-| `POST /api/candidates/simulate` | a bounded run under the candidate's own profile (`current`, `steps`) |
-| `POST /api/candidates/review-packet` | the reference-test results and the review packet |
+| `POST /api/candidates/simulate` | HTTP 202 `studio.candidate.job.v1` receipt for a bounded simulation (`current`, `steps`) |
+| `POST /api/candidates/review-packet` | HTTP 202 receipt for all proposed reference tests and the review packet |
+| `GET /api/candidates/jobs?limit=50` | newest-first actor-owned summaries; `limit` is 1–100 |
+| `GET /api/candidates/jobs/{job_id}` | actual state, immutable input identity and stored result |
+| `POST /api/candidates/jobs/{job_id}/cancel` | actual state after requesting cancellation |
+| `GET /api/candidates/jobs/{job_id}/artifacts/{artifact_path}` | declared bytes with SHA-256 and size headers |
 
-Each takes `{"candidate": <package>}`. The three routes that act on a
+Each computation or validation POST takes `{"candidate": <package>}`. The three routes that act on a
 candidate refuse an invalid one with HTTP 422, `detail.reason` =
 `invalid_candidate` and the same located diagnostics in
-`detail.validation`. With route policies enforced, all four require an
+`detail.validation`. With route policies enforced, all candidate routes require an
 authenticated principal, like the other simulation routes. Units and diffs
 need `pint` and `sympy`, which the `studio` extra installs.
+
+Existing direct numerical Python functions still return their results directly.
+HTTP consumers must follow the new receipt's `status_route`, wait for
+`status == "completed"`, then read `result`; HTTP 202 is admission, not success.
+An unknown submission response must be investigated in history before a manual
+retry, since a second submission can create a second job. This API does not
+promise automatic submission idempotency.
