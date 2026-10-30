@@ -31,6 +31,16 @@ of [CHANGELOG.md](https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md)
 SNN Studio ships in this release as a **development preview**, labelled experimental. It is not the Studio 1.0
 release; Studio 1.0 will be released separately after its own acceptance.
 
+Changes in this preview:
+
+- **Breaking for Studio HTTP clients.** The candidate simulation and reference-review routes return `202` with a
+  durable process-job receipt instead of the result. Fetch the result from the actor-owned status route; history and
+  artifacts survive a reconnect or an API restart, and cancellation goes through the supervisor. Direct numerical
+  Python calls return what they returned before.
+- **Candidates from the catalogue.** A workspace candidate can be started from a catalogue model's canonical schema,
+  previewed before it replaces an existing draft, and then validated, run, reviewed and exported through the
+  existing candidate workflow. Canonical models and their evidence are unchanged.
+
 ## Breaking changes and migration
 
 - **Python 3.11 is the minimum.** Python 3.10 is no longer tested, built or published for.
