@@ -174,6 +174,8 @@ jobs:
 
       # GitHub refuses release bodies over 125,000 characters. The body is the curated notes of this
       # version plus the SHA-256 of every attached file; the full history stays in the CHANGELOG.
+      # This step owns the one list of attachments: it hashes exactly the files the release step
+      # attaches, and refuses a missing or empty attachment.
       - name: Release notes for this tag
         id: changelog
         run: |
@@ -181,18 +183,36 @@ jobs:
           VERSION="${TAG#v}"
           NOTES="docs/development/RELEASE_NOTES_v${VERSION}.md"
           test -s "$NOTES" || { echo "missing curated release notes: $NOTES" >&2; exit 1; }
+          shopt -s nullglob
+          dist=(dist/sc_neurocore-*)
+          test "${#dist[@]}" -gt 0 || { echo "no package distributions to attach" >&2; exit 1; }
+          attachments=(
+            "${dist[@]}"
+            sbom.json
+            sbom-engine-rust.json
+            security/ci-security-packet/release_security_artifact_index.json
+            security/ci-security-packet/security/release_security_sweep_summary.json
+          )
+          for f in "${attachments[@]}"; do
+            test -s "$f" || { echo "missing release attachment: $f" >&2; exit 1; }
+          done
           {
             cat "$NOTES"
             echo
             echo "| File | SHA-256 |"
             echo "|---|---|"
-            for f in dist/sc_neurocore-* sbom.json sbom-engine-rust.json; do
+            for f in "${attachments[@]}"; do
               echo "| \`$(basename "$f")\` | \`$(sha256sum "$f" | cut -d' ' -f1)\` |"
             done
           } > /tmp/release_notes.md
           size="$(wc -c < /tmp/release_notes.md)"
           test "$size" -le 125000 || { echo "release body is $size bytes; GitHub allows 125000 characters" >&2; exit 1; }
           echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
+          {
+            echo "files<<RELEASE_ATTACHMENTS"
+            printf '%s\n' "${attachments[@]}"
+            echo "RELEASE_ATTACHMENTS"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.publish }}
@@ -201,9 +221,4 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           body_path: ${{ steps.changelog.outputs.notes_file }}
           generate_release_notes: false
-          files: |
-            dist/sc_neurocore-*
-            sbom.json
-            sbom-engine-rust.json
-            security/ci-security-packet/release_security_artifact_index.json
-            security/ci-security-packet/security/release_security_sweep_summary.json
+          files: ${{ steps.changelog.outputs.files }}

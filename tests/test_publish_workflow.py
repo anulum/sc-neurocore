@@ -16,6 +16,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, cast
 
+import pytest
 import yaml
 
 
@@ -208,7 +209,20 @@ def _step(job: dict[str, Any], name: str) -> tuple[int, dict[str, Any]]:
     return found[0]
 
 
-def _run_release_notes_step(tmp_path: Path, notes: str) -> subprocess.CompletedProcess[str]:
+#: Every file the release attaches, as the workflow's job produces them.
+RELEASE_ATTACHMENTS = (
+    "dist/sc_neurocore-4.0.0.tar.gz",
+    "dist/sc_neurocore-4.0.0-py3-none-any.whl",
+    "sbom.json",
+    "sbom-engine-rust.json",
+    "security/ci-security-packet/release_security_artifact_index.json",
+    "security/ci-security-packet/security/release_security_sweep_summary.json",
+)
+
+
+def _run_release_notes_step(
+    tmp_path: Path, notes: str, *, omit: tuple[str, ...] = (), empty: str | None = None
+) -> subprocess.CompletedProcess[str]:
     """Run the release-notes step of ``release.yml`` against written notes and dummy artefacts.
 
     Parameters
@@ -217,6 +231,10 @@ def _run_release_notes_step(tmp_path: Path, notes: str) -> subprocess.CompletedP
         Working directory that stands in for the checkout.
     notes : str
         Text of ``docs/development/RELEASE_NOTES_v4.0.0.md`` in that checkout.
+    omit : tuple of str
+        Entries of ``RELEASE_ATTACHMENTS`` that are not written.
+    empty : str or None
+        One entry of ``RELEASE_ATTACHMENTS`` that is written with no bytes.
 
     Returns
     -------
@@ -227,14 +245,11 @@ def _run_release_notes_step(tmp_path: Path, notes: str) -> subprocess.CompletedP
     script = _step(release, "Release notes for this tag")[1]["run"]
     (tmp_path / "docs/development").mkdir(parents=True)
     (tmp_path / "docs/development/RELEASE_NOTES_v4.0.0.md").write_text(notes, "utf-8")
-    (tmp_path / "dist").mkdir()
-    for name in (
-        "dist/sc_neurocore-4.0.0.tar.gz",
-        "dist/sc_neurocore-4.0.0-py3-none-any.whl",
-    ):
-        (tmp_path / name).write_bytes(b"artefact " + name.encode())
-    (tmp_path / "sbom.json").write_text("{}", "utf-8")
-    (tmp_path / "sbom-engine-rust.json").write_text("{}", "utf-8")
+    for name in RELEASE_ATTACHMENTS:
+        if name in omit:
+            continue
+        (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / name).write_bytes(b"" if name == empty else b"artefact " + name.encode())
     return subprocess.run(
         [
             "bash",
@@ -274,14 +289,67 @@ def test_release_body_is_the_curated_notes_with_checksums_and_fits_github(
     assert done.returncode == 0, done.stderr
     body = (tmp_path / "body.md").read_text("utf-8")
     assert body.startswith(notes)
-    for name in (
-        "sc_neurocore-4.0.0.tar.gz",
-        "sc_neurocore-4.0.0-py3-none-any.whl",
-        "sbom-engine-rust.json",
-    ):
-        digest = hashlib.sha256((next(tmp_path.rglob(name))).read_bytes()).hexdigest()
-        assert f"| `{name}` | `{digest}` |" in body
-    assert (tmp_path / "github_output").read_text("utf-8") == f"notes_file={tmp_path / 'body.md'}\n"
+    rows = [line for line in body.splitlines() if line.startswith("| `")]
+    assert len(rows) == len(RELEASE_ATTACHMENTS), rows
+    for name in RELEASE_ATTACHMENTS:
+        digest = hashlib.sha256((tmp_path / name).read_bytes()).hexdigest()
+        assert f"| `{Path(name).name}` | `{digest}` |" in body
+    # The step's glob expands distributions in C-locale order, then the fixed attachments follow.
+    dists = sorted(name for name in RELEASE_ATTACHMENTS if name.startswith("dist/"))
+    fixed = [name for name in RELEASE_ATTACHMENTS if not name.startswith("dist/")]
+    attached = "".join(f"{name}\n" for name in [*dists, *fixed])
+    output = (tmp_path / "github_output").read_text("utf-8")
+    assert output == (
+        f"notes_file={tmp_path / 'body.md'}\n"
+        f"files<<RELEASE_ATTACHMENTS\n{attached}RELEASE_ATTACHMENTS\n"
+    )
+
+
+def test_release_attaches_exactly_the_files_whose_checksums_it_publishes() -> None:
+    """The release step takes its file list from the step that hashes it, and from nowhere else.
+
+    A second hand-written list once attached two security summaries that the body's checksum
+    table omitted, so the notes' promise of a SHA-256 for every attachment was false.
+    """
+    release = _named_workflow("release.yml")["jobs"]["release"]
+    notes_index, _ = _step(release, "Release notes for this tag")
+    create_index, create = _step(release, "Create GitHub Release")
+    assert notes_index < create_index
+    assert create["with"]["files"] == "${{ steps.changelog.outputs.files }}"
+
+
+@pytest.mark.parametrize("name", RELEASE_ATTACHMENTS)
+def test_release_body_refuses_a_missing_or_empty_attachment(tmp_path: Path, name: str) -> None:
+    """Each attachment must exist with content before the release can be created.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Working directory for the step runs.
+    name : str
+        The attachment that is withheld or left empty.
+    """
+    notes = "# Notes\n"
+    hollow = _run_release_notes_step(tmp_path / "hollow", notes, empty=name)
+    assert hollow.returncode != 0 and f"missing release attachment: {name}" in hollow.stderr
+    if not name.startswith("dist/"):
+        # A fixed attachment is named explicitly; a missing one must stop the step. Package
+        # distributions come from a glob, whose empty case is the test below.
+        absent = _run_release_notes_step(tmp_path / "absent", notes, omit=(name,))
+        assert absent.returncode != 0 and f"missing release attachment: {name}" in absent.stderr
+
+
+def test_release_body_refuses_a_release_without_package_distributions(tmp_path: Path) -> None:
+    """No built distribution stops the step instead of releasing only the SBOMs.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Working directory for the step run.
+    """
+    dists = tuple(name for name in RELEASE_ATTACHMENTS if name.startswith("dist/"))
+    done = _run_release_notes_step(tmp_path, "# Notes\n", omit=dists)
+    assert done.returncode != 0 and "no package distributions to attach" in done.stderr
 
 
 def test_release_body_refuses_missing_or_oversized_notes(tmp_path: Path) -> None:
@@ -308,7 +376,11 @@ def test_release_sboms_describe_what_users_install() -> None:
     published = [
         s for s in job["steps"] if "softprops/action-gh-release@" in str(s.get("uses", ""))
     ]
-    assert "sbom-engine-rust.json" in published[0]["with"]["files"]
+    # The release takes its files from the attachment list of the release-notes step.
+    assert published[0]["with"]["files"] == "${{ steps.changelog.outputs.files }}"
+    attachments = _step(job, "Release notes for this tag")[1]["run"]
+    assert re.search(r"^\s+sbom\.json$", attachments, re.MULTILINE)
+    assert re.search(r"^\s+sbom-engine-rust\.json$", attachments, re.MULTILINE)
 
 
 def test_unpublished_dispatch_runs_the_full_crate_verify_build() -> None:
