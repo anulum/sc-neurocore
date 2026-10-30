@@ -8,8 +8,8 @@
 
 # SC-NeuroCore — System Architecture Map
 
-> Canonical architecture map. Package version `3.16.0`; refreshed against the
-> current tree on 2026-07-14. Supersedes the earlier `architecture.md` and
+> Canonical architecture map, last refreshed against the tree on 2026-07-14, when
+> the package version was `3.16.0`; later releases are not yet reflected. Supersedes the earlier `architecture.md` and
 > `COMPONENT_INVENTORY.md` in this directory, which are stale (see *Provenance*).
 >
 > Purpose: a single, factual reference to SC-NeuroCore's capabilities, data flow,
