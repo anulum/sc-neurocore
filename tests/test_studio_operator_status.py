@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Studio operator status tests
+# SC-NeuroCore — Studio operator status tests
 
 """The operator status payload and its admin-only endpoint report real platform health."""
 
@@ -145,15 +145,16 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     # GET/HEAD /studios/sc-neurocore) as public and made one public read
     # authenticated. The authenticated compiler replay route adds one; hosted
     # description, submission and cancellation add public/authenticated/admin.
+    # 160 to 165 since the five authenticated candidate catalogue and job routes.
     assert payload["route_policies"] == {
         "admin_count": 29,
-        "authenticated_count": 89,
+        "authenticated_count": 94,
         "enforced": True,
-        "protected_audit_action_count": 118,
-        "protected_count": 118,
+        "protected_audit_action_count": 123,
+        "protected_count": 123,
         "protected_routes_audited": True,
         "public_count": 42,
-        "total_count": 160,
+        "total_count": 165,
     }
     assert payload["identity"] == {
         "configured": True,
