@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5499
+    "test_files": 5501
   },
   "documentation": {
     "public_pages": [
@@ -6896,6 +6896,7 @@
       "tests/test_nir_bridge/scnir_dense_graphs.py",
       "tests/test_nir_bridge/scnir_hierarchy_graphs.py",
       "tests/test_nir_bridge/scnir_metadata_graphs.py",
+      "tests/test_nir_bridge/snntorch_models.py",
       "tests/test_nir_bridge/support.py",
       "tests/test_nir_bridge/test_execution.py",
       "tests/test_nir_bridge/test_execution_metadata.py",
@@ -6932,6 +6933,7 @@
       "tests/test_nir_bridge/test_sinabs_runtime.py",
       "tests/test_nir_bridge/test_snntorch_bridge.py",
       "tests/test_nir_bridge/test_snntorch_bridge_export.py",
+      "tests/test_nir_bridge/test_snntorch_bridge_refusals.py",
       "tests/test_nir_bridge/test_snntorch_interop.py",
       "tests/test_nir_bridge/test_spikingjelly_interop.py",
       "tests/test_nir_bridge/test_studio_profile_templates.py",

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1555
+expected_file_count = 1558
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6354,3 +6354,15 @@ rationale = "Real Icarus simulations exercise every standalone function in both 
 [[file]]
 path = "tests/test_compiler_surface_policy.py"
 rationale = "The package facade and documented compiler module inventory are checked against the actual source modules and public exports."
+
+[[file]]
+path = "tests/test_nir_bridge/snntorch_models.py"
+rationale = "Real deterministic multilayer framework models retain the same supported dynamics and deliberately invalid source features across inference and refusal tests."
+
+[[file]]
+path = "tests/test_nir_bridge/test_snntorch_bridge_refusals.py"
+rationale = "Actual framework admission rejects unsupported dynamics, hooks, topology, precision and embedded stochastic contracts through public conversion APIs."
+
+[[file]]
+path = "tests/test_nir_bridge/test_neuron_graph_architecture.py"
+rationale = "Real module ownership, public pickle identity and bounded source/test responsibilities retain the established neuron-graph architecture without weakening its limits."

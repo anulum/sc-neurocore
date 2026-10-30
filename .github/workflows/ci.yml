@@ -1631,6 +1631,7 @@ jobs:
         run: |
           python -m coverage run --rcfile=/dev/null --branch --omit= --source=sc_neurocore.nir_bridge \
             -m pytest "$GITHUB_WORKSPACE/tests/test_nir_bridge/test_snntorch_bridge.py" \
+            "$GITHUB_WORKSPACE/tests/test_nir_bridge/test_snntorch_bridge_refusals.py" \
             "$GITHUB_WORKSPACE/tests/test_nir_bridge/test_snntorch_bridge_export.py" \
             "$GITHUB_WORKSPACE/tests/test_nir_bridge/test_scalar_broadcast.py" \
             "$GITHUB_WORKSPACE/tests/test_nir_bridge/test_graph_identity.py" \

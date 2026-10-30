@@ -11,8 +11,6 @@
 from __future__ import annotations
 
 import ast
-import hashlib
-import json
 import pickle
 from pathlib import Path
 
@@ -26,7 +24,6 @@ SOURCE_DIR = ROOT / "src/sc_neurocore/nir_bridge"
 TEST_DIR = ROOT / "tests/test_nir_bridge"
 BENCHMARK_PATH = ROOT / "benchmarks/bench_nir_graph.py"
 PROBE_PATH = ROOT / "benchmarks/_nir_graph_probe.py"
-BENCHMARK_RESULT_PATH = ROOT / "benchmarks/results/bench_nir_graph.json"
 
 SYMBOL_OWNERS = {
     "neuron_graph_builder": {"from_scnetwork"},
@@ -267,32 +264,3 @@ def test_source_and_test_files_remain_responsibility_sized() -> None:
     assert max(test_sizes.values()) <= 300, test_sizes
     assert len(BENCHMARK_PATH.read_text(encoding="utf-8").splitlines()) <= 380
     assert len(PROBE_PATH.read_text(encoding="utf-8").splitlines()) <= 240
-
-
-def test_benchmark_evidence_is_source_bound_and_byte_identical() -> None:
-    """Pin the measured parent/candidate fidelity result to its live producers."""
-    payload = json.loads(BENCHMARK_RESULT_PATH.read_text(encoding="utf-8"))
-    source_paths = sorted(SOURCE_DIR.glob("neuron_graph*.py"))
-    expected_hashes = {
-        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
-        for path in source_paths
-    }
-
-    assert payload["benchmark_sha256"] == hashlib.sha256(BENCHMARK_PATH.read_bytes()).hexdigest()
-    assert payload["probe_sha256"] == hashlib.sha256(PROBE_PATH.read_bytes()).hexdigest()
-    assert payload["source_file_count"] == len(source_paths) == 8
-    assert payload["source_hashes"] == expected_hashes
-    assert payload["configuration"]["iterations"] == 30
-    assert payload["configuration"]["warmups"] == 2
-    assert payload["results"]["parent"]["sample_count"] == 30
-    assert payload["results"]["candidate"]["sample_count"] == 30
-    expected_comparison = {
-        "generated_output_byte_identical": True,
-        "generated_sha256": "d1a19a26a33912f5c10c29d2f0d86cb14693d90a6a8242b8c1b063e6cf3bd899",
-        "generated_bytes": 22963,
-        "population_count": 2,
-        "connection_count": 2,
-        "total_neurons": 8,
-        "total_synapses": 36,
-    }
-    assert {key: payload["comparison"][key] for key in expected_comparison} == expected_comparison

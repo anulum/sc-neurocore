@@ -330,7 +330,7 @@ class TestRandomnessContract:
         assert deterministic.cacheable is True
 
     def test_fresh_trials_of_a_seeded_model_are_independent_and_replayable(self) -> None:
-        """Reproduce a fresh Poisson trace by its recorded seed and distinguish another seed."""
+        """Replay a fresh Poisson trial exactly and distinguish another generator state."""
         first = run_experiment(
             resolve_model_experiment({"name": "PoissonNeuron", "duration": 200.0, "trial": "fresh"})
         )
@@ -345,7 +345,20 @@ class TestRandomnessContract:
                 {"name": "PoissonNeuron", "duration": 200.0, "seed": (seed % 65_535) + 1}
             )
         )
-        assert other["spikes"] != first["spikes"]
+        assert other["raw"]["states"]["rng_state"] != first["raw"]["states"]["rng_state"]
+
+    def test_distinct_seeded_trials_can_share_an_empty_spike_trace(self) -> None:
+        """Distinguish actual generator trajectories even when both event traces are empty."""
+        first, second = (
+            run_experiment(
+                resolve_model_experiment({"name": "PoissonNeuron", "duration": 200.0, "seed": seed})
+            )
+            for seed in (143, 144)
+        )
+        assert first["spikes"] == second["spikes"] == []
+        assert len(first["raw"]["states"]["rng_state"]) == 200
+        assert len(second["raw"]["states"]["rng_state"]) == 200
+        assert first["raw"]["states"]["rng_state"] != second["raw"]["states"]["rng_state"]
 
     def test_playground_noise_is_seeded_per_run_not_process_global(self) -> None:
         """Replay the sealed noise trace (Philox, keyed by the seed) without NumPy's global RNG."""
