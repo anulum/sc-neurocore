@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1526
+expected_file_count = 1528
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6238,3 +6238,11 @@ rationale = "Production routers reach the real authority and launcher while fore
 [[file]]
 path = "tests/test_studio_candidate_jobs_recovery.py"
 rationale = "Distinct API interpreters retain completed results and artefacts across restart, while real supervisor cancellation and deadlines retain separate outcomes."
+
+[[file]]
+path = "src/sc_neurocore/studio/candidate_catalogue.py"
+rationale = "Copy complete canonical model schemas into workspace proposals without guessing units, authors or scientific evidence."
+
+[[file]]
+path = "tests/test_studio_candidate_catalogue.py"
+rationale = "Actual catalogue and candidate HTTP workflows preserve source declarations, numeric tokens, durable results and source-fault classification."

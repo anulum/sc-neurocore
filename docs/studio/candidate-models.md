@@ -11,6 +11,38 @@ nothing in the Studio writes a canonical file for it. Promoting a candidate
 into the catalogue is a separate, authorised step that needs the evidence the
 catalogue requires of every model.
 
+## Start from a catalogue model
+
+Select a model in the catalogue, then open **Candidate model** and choose
+**Prepare catalogue draft**. The preview copies that class's complete bound
+Universal DSL schema, including its state, parameters, equation declaration
+order, threshold, resets, numerical profile and source metadata. It names the
+parent schema and its SHA-256 over order-preserving compact UTF-8 JSON.
+The candidate text travels as text, so preparing it does not round integer
+tokens or reorder equations in the browser.
+
+Preparing a preview leaves the current draft untouched. Choose **Use catalogue
+draft**, or **Replace current candidate draft** when a draft already exists,
+to adopt it. A later catalogue selection or a closed view discards an earlier
+request's response. Existing edits remain until an explicit adoption.
+
+The proposal retains declared state and parameter units. Undeclared units
+stay blank; an iteration-only time profile is represented by dimensionless
+`1`. Fill in the candidate's authors, injected-current unit, missing units,
+assumptions and proposed reference tests, then validate it before running.
+Source authorship is retained inside the copied model and citation; it is
+not treated as authorship of your proposal. No reference observations or
+independent scientific claims are invented. A model without a bound canonical
+schema is refused rather than replaced by a different template.
+
+The authenticated read-only route is
+`GET /api/candidates/from-catalogue/{model_name}`. It returns the exact
+`candidate_text`, `parent_model`, `parent_schema` and `parent_schema_sha256`
+under `studio.candidate-catalogue-start.v1`. The candidate itself keeps the
+existing candidate schema below. These drafts use the same validation,
+diff, supervised jobs, export and versioned workspace workflow as imported
+candidates. No catalogue entry or canonical file is changed.
+
 ## The package
 
 A candidate package is one JSON document:
@@ -196,10 +228,9 @@ arrays. Individual status responses retain the full stored result. All new
 custody routes enforce actor ownership; another actor receives no record,
 control or artifact. Preserve the configured job root to retain this history.
 
-Packages currently start through import and text editing; starting a candidate
-directly from the catalogue is deferred. Independent scientific acceptance and
-authorised catalogue promotion remain separate work, with no automatic
-catalogue changes.
+Packages start from an explicit catalogue draft, an import or text editing.
+Independent scientific acceptance and authorised catalogue promotion remain
+separate work, with no automatic catalogue changes.
 
 ## In the workspace
 
@@ -226,6 +257,7 @@ not JSON is not sent to the server; the panel says why.
 
 | Route | Answers |
 |-------|---------|
+| `GET /api/candidates/from-catalogue/{model_name}` | an unfinished candidate's unchanged JSON text and canonical parent provenance |
 | `POST /api/candidates/validate` | the located diagnostics, with HTTP 200 whether or not the candidate is valid |
 | `POST /api/candidates/diff` | the diff against the parent |
 | `POST /api/candidates/simulate` | HTTP 202 `studio.candidate.job.v1` receipt for a bounded simulation (`current`, `steps`) |

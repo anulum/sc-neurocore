@@ -39,6 +39,7 @@ import { useStudioStore } from "../stores/studio";
 import type { CandidateJob } from "../candidateJobs";
 import { useCandidateJobs } from "../useCandidateJobs";
 import CandidateJobHistory from "./CandidateJobHistory";
+import CandidateCatalogueStart from "./CandidateCatalogueStart";
 
 const button: CSSProperties = {
   background: "transparent",
@@ -73,7 +74,7 @@ const NOTHING: Outcome = { validation: null, diff: null, message: null };
  * @returns The panel.
  */
 export default function CandidatePanel() {
-  const { candidates, setCandidateDraft } = useStudioStore();
+  const { candidates, setCandidateDraft, selectedModelName } = useStudioStore();
   const draft = candidates[0]?.text ?? "";
   const [outcome, setOutcome] = useState<Outcome>(NOTHING);
   const [busy, setBusy] = useState(false);
@@ -144,6 +145,10 @@ export default function CandidatePanel() {
         A candidate is a proposal. It is never listed as a catalogue model and nothing here changes
         a canonical file; promotion into the catalogue is a separate, reviewed step.
       </p>
+
+      <CandidateCatalogueStart modelName={selectedModelName} draft={draft} onAdopt={(text) => {
+        setCandidateDraft(text); setOutcome(NOTHING);
+      }} />
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <button type="button" style={button} onClick={() => { fileInput.current?.click(); }}>

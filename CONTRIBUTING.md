@@ -194,6 +194,17 @@ independent scientific validation or catalogue promotion.
 
 ### Candidate process jobs and storage custody
 
+Catalogue-to-candidate preparation is enrolled in the same exact Python and
+frontend coverage gates. `tests/test_studio_candidate_catalogue.py` reads every
+bound canonical schema through the actual HTTP route, checks declaration and
+source conservation, then runs a completed proposal through durable simulation
+and review. The native frontend runner also covers proposal preview, explicit
+replacement and delayed/disconnected HTTP response ownership. The real browser
+case in `e2e/candidate-authoring-live.spec.ts` continues through validation,
+diff, jobs, downloads and workspace reopen; it also runs in installed-wheel
+acceptance. These checks establish proposal custody, not independent scientific
+acceptance or catalogue promotion.
+
 The native candidate frontend cohort uses the actual FastAPI server and
 supervised Python workers. From `studio/frontend`, run:
 

@@ -43738,6 +43738,38 @@ ValueError
 
 ---
 
+## Module `studio.candidate_catalogue`
+
+### Class `CatalogueCandidateUnavailable`
+The requested catalogue model has no bound authoring schema.
+
+
+### Function `candidate_from_catalogue(model_name)`
+Return a workspace-local draft retaining the complete canonical model.
+
+Parameters
+----------
+model_name : str
+    Registered catalogue class, resolved through its own schema identity.
+
+Returns
+-------
+dict&#91;str, str&#93;
+    Candidate JSON text, parent identity and an order-sensitive SHA-256 of
+    the compact parent schema. Text preserves declaration order and exact
+    integer tokens. Authors and reference tests remain empty; undeclared
+    units remain blank for the author to supply before validation.
+
+Raises
+------
+CatalogueCandidateUnavailable
+    If the class is unknown or has no bound canonical schema.
+RuntimeError
+    If an identified source resource cannot be read or encoded. Resource
+    faults must not be presented as defects in the author's proposal.
+
+---
+
 ## Module `studio.candidate_diff`
 
 ### Function `compare_expressions(parent, candidate)`

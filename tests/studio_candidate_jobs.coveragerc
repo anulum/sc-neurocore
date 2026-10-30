@@ -20,6 +20,7 @@ include =
     */sc_neurocore/studio/api/__init__.py
     */sc_neurocore/studio/candidate_job_contract.py
     */sc_neurocore/studio/candidate_job_tasks.py
+    */sc_neurocore/studio/candidate_catalogue.py
     */sc_neurocore/studio/api/candidate_jobs.py
     */sc_neurocore/studio/api/candidates.py
     */sc_neurocore/studio/platform/policy_routes_compute.py

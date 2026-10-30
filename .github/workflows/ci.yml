@@ -1020,6 +1020,7 @@ jobs:
           export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
           python -m coverage run -m pytest --no-cov -q \
             tests/test_studio_candidate_job_contract.py \
+            tests/test_studio_candidate_catalogue.py \
             tests/test_studio_candidate_job_tasks.py \
             tests/test_studio_candidate_jobs.py \
             tests/test_studio_candidate_jobs_recovery.py \

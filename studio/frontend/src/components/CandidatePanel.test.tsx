@@ -113,6 +113,18 @@ async function press(label: string): Promise<void> {
 }
 
 describe("CandidatePanel", () => {
+  it("adopts actual canonical text only after the explicit workspace action", async () => {
+    await act(async () => { useStudioStore.setState({ selectedModelName: "AdExNeuron" }); });
+    await press("Prepare catalogue draft");
+    await until(() => container.querySelector('[aria-label="Catalogue candidate preview"]') !== null);
+    const text = container.querySelector<HTMLTextAreaElement>('[aria-label="Catalogue candidate preview"]')?.value;
+    expect(useStudioStore.getState().candidates).toEqual([]);
+    await press("Use catalogue draft");
+    expect(useStudioStore.getState().candidates).toEqual([{ text }]);
+    expect(container.querySelector<HTMLTextAreaElement>("#candidate-draft")?.value).toBe(text);
+    expect(status()).toBe("");
+  });
+
   it("says a candidate is a proposal and labels its draft", () => {
     expect(container.textContent).toContain("It is never listed as a catalogue model");
     const draft = container.querySelector<HTMLTextAreaElement>("#candidate-draft");

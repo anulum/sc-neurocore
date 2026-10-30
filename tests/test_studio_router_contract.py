@@ -156,7 +156,8 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     # The three closed hosted description/submission/cancellation routes add three.
     # Read-only hardware registration discovery adds one public route.
     # Actor-owned candidate history, status, cancellation and artifacts add four.
-    assert len(backend_routes) == 159
+    # Read-only catalogue-to-candidate preparation adds one authenticated route.
+    assert len(backend_routes) == 160
     assert {
         (route.path, tuple(sorted(route.methods or ())))
         for route in backend_routes

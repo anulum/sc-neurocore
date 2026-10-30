@@ -18,7 +18,7 @@ HTTP 422 diagnostics; validation reports those diagnostics with HTTP 200.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -49,6 +49,23 @@ def build_candidates_router(context: StudioApiContext) -> APIRouter:
         Shared runtime, policy and durable job custody.
     """
     router = APIRouter()
+
+    @router.get("/api/candidates/from-catalogue/{model_name}")
+    def api_candidate_from_catalogue(model_name: str) -> dict[str, str]:
+        """Copy a bound canonical schema into an unattributed workspace proposal."""
+        from sc_neurocore.studio.api.common import _safe
+        from sc_neurocore.studio.candidate_catalogue import (
+            CatalogueCandidateUnavailable,
+            candidate_from_catalogue,
+        )
+
+        def draft() -> dict[str, str]:
+            try:
+                return candidate_from_catalogue(model_name)
+            except CatalogueCandidateUnavailable as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from None
+
+        return cast(dict[str, str], _safe(draft))
 
     @router.post("/api/candidates/validate")
     def api_candidate_validate(request: CandidateRequest) -> dict[str, Any]:

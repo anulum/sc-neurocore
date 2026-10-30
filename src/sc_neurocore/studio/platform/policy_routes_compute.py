@@ -90,6 +90,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     ("POST", "/api/codegen", RouteVisibility.AUTHENTICATED, "studio.codegen.generate"),
     (
+        "GET",
+        "/api/candidates/from-catalogue/{model_name}",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.from_catalogue",
+    ),
+    (
         "POST",
         "/api/candidates/validate",
         RouteVisibility.AUTHENTICATED,

@@ -8,6 +8,17 @@
 // Studio API: candidate model packages.
 import { encodeArtifactPath, get, getBlob, post } from "./http";
 import { parseCandidateJob, parseCandidateJobHistory, parseCandidateJobReceipt } from "../candidateJobs";
+import { parseCatalogueCandidate } from "../candidateCatalogue";
+
+/**
+ * Prepare a complete canonical model as an explicitly unfinished workspace proposal.
+ *
+ * @param modelName - Selected registered catalogue class.
+ * @returns Checked provenance and unchanged candidate JSON text.
+ */
+export const candidateFromCatalogue = (modelName: string) =>
+  get<unknown>(`/candidates/from-catalogue/${encodeURIComponent(modelName)}`)
+    .then((value) => parseCatalogueCandidate(value, modelName));
 
 /** One problem with a candidate, located by a JSON pointer. */
 export interface CandidateDiagnostic {

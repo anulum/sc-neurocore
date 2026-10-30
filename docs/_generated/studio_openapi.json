@@ -4546,6 +4546,50 @@
         "summary": "Api Candidate Diff"
       }
     },
+    "/api/candidates/from-catalogue/{model_name}": {
+      "get": {
+        "description": "Copy a bound canonical schema into an unattributed workspace proposal.",
+        "operationId": "api_candidate_from_catalogue_api_candidates_from_catalogue__model_name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "model_name",
+            "required": true,
+            "schema": {
+              "title": "Model Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Api Candidate From Catalogue Api Candidates From Catalogue  Model Name  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Candidate From Catalogue"
+      }
+    },
     "/api/candidates/jobs": {
       "get": {
         "description": "List the actor's most recent candidate jobs without full result arrays.",
