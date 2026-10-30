@@ -148,8 +148,12 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      # The SBOMs describe what users install: the clean environment the release wheels were
+      # accepted in, and the Rust dependency graph locked for the engine.
       - name: Generate SBOM
-        run: cyclonedx-py environment -o sbom.json --output-format json
+        run: |
+          cyclonedx-py environment "$RUNNER_TEMP/installed/bin/python" -o sbom.json --output-format json
+          syft scan file:Cargo.lock -o cyclonedx-json=sbom-engine-rust.json
 
       - name: Generate release security packet
         run: |
@@ -167,17 +171,26 @@ jobs:
           path: security/ci-security-packet
           retention-days: 30
 
-      - name: Extract changelog for this tag
+      # GitHub refuses release bodies over 125,000 characters. The body is the curated notes of this
+      # version plus the SHA-256 of every attached file; the full history stays in the CHANGELOG.
+      - name: Release notes for this tag
         id: changelog
         run: |
           TAG="$RELEASE_TAG"
           VERSION="${TAG#v}"
-          awk -v version="${VERSION}" '
-            $0 ~ "^## \\[?" version "\\]" { in_section = 1; print; next }
-            in_section && $0 ~ "^## \\[[0-9]" { exit }
-            in_section { print }
-          ' docs/CHANGELOG.md > /tmp/release_notes.md
-          test -s /tmp/release_notes.md
+          NOTES="docs/development/RELEASE_NOTES_v${VERSION}.md"
+          test -s "$NOTES" || { echo "missing curated release notes: $NOTES" >&2; exit 1; }
+          {
+            cat "$NOTES"
+            echo
+            echo "| File | SHA-256 |"
+            echo "|---|---|"
+            for f in dist/sc_neurocore-* sbom.json sbom-engine-rust.json; do
+              echo "| \`$(basename "$f")\` | \`$(sha256sum "$f" | cut -d' ' -f1)\` |"
+            done
+          } > /tmp/release_notes.md
+          size="$(wc -c < /tmp/release_notes.md)"
+          test "$size" -le 125000 || { echo "release body is $size bytes; GitHub allows 125000 characters" >&2; exit 1; }
           echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
@@ -190,5 +203,6 @@ jobs:
           files: |
             dist/sc_neurocore-*
             sbom.json
+            sbom-engine-rust.json
             security/ci-security-packet/release_security_artifact_index.json
             security/ci-security-packet/security/release_security_sweep_summary.json

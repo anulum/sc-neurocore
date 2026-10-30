@@ -216,6 +216,19 @@ jobs:
           password: ${{ secrets.PYPI_ENGINE_TOKEN }}
           skip-existing: true
 
+  # A manual run without publishing still proves the crate: the full verify-build that
+  # `cargo publish` performs, without uploading. The publish job itself is skipped then.
+  dry-run-crate:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish != 'true'
+    runs-on: ubuntu-latest
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - name: Verify the crate as crates.io would build it
+        run: cargo publish --manifest-path engine/Cargo.toml --dry-run --locked
+
   publish-crate:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [publish-python-pypi]
@@ -231,11 +244,6 @@ jobs:
           if [ -z "$CRATE_NAME" ] || [ -z "$CRATE_VERSION" ]; then
             echo "failed to read crate name/version from engine/Cargo.toml" >&2
             exit 1
-          fi
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.publish }}" != "true" ]; then
-            cargo publish --manifest-path engine/Cargo.toml --dry-run
-            exit 0
           fi
 
           CRATE_STATUS_PATH="$(mktemp)"

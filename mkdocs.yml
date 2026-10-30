@@ -537,6 +537,8 @@ nav:
       - Security Scanner CI Packet: development/security_scanner_ci.md
       - Dependency Audits: development/dependency_audits.md
       - V3 Migration: development/v3_migration.md
+      - Release Notes v4.0.0: development/RELEASE_NOTES_v4.0.0.md
+      - Release Rollback: development/release_rollback.md
       - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
   - Changelog: CHANGELOG.md
   - Pricing: pricing.md

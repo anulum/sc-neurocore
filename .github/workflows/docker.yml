@@ -88,11 +88,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # `latest` follows the newest final release tag; a dispatched image_tag never moves it.
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
           tags: |
             type=raw,value=${{ inputs.image_tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.image_tag != '' }}
             type=ref,event=tag
@@ -100,7 +103,52 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha
 
-      - name: Build and push
+      # Nothing reaches the registry before the vulnerability gate: build into the local
+      # daemon, scan that image, and push only after the scan passed.
+      - name: Build the image locally
+        id: build_local
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: true
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Trivy fail on CRITICAL/HIGH
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+        run: |
+          test -n "${IMAGE_REF}"
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.70.0 image \
+            --scanners vuln \
+            --ignore-unfixed \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            "${IMAGE_REF}"
+
+      - name: Trivy SARIF report
+        if: always() && steps.build_local.outcome == 'success'
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}:/work" \
+            aquasec/trivy:0.70.0 image \
+            --scanners vuln \
+            --ignore-unfixed \
+            --severity CRITICAL,HIGH \
+            --format sarif \
+            --output /work/trivy-results.sarif \
+            "${IMAGE_REF}"
+
+      - name: Push the scanned image
         id: build_push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
@@ -123,37 +171,6 @@ jobs:
             sleep 10
           done
           docker pull "${IMAGE_REF}"
-
-      - name: Trivy fail on CRITICAL/HIGH
-        shell: bash
-        env:
-          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-        run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:0.70.0 image \
-            --scanners vuln \
-            --ignore-unfixed \
-            --severity CRITICAL,HIGH \
-            --exit-code 1 \
-            "${IMAGE_REF}"
-
-      - name: Trivy SARIF report
-        if: always() && steps.build_push.outcome == 'success'
-        shell: bash
-        env:
-          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-        run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "${PWD}:/work" \
-            aquasec/trivy:0.70.0 image \
-            --scanners vuln \
-            --ignore-unfixed \
-            --severity CRITICAL,HIGH \
-            --format sarif \
-            --output /work/trivy-results.sarif \
-            "${IMAGE_REF}"
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1

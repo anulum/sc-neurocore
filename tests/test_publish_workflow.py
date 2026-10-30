@@ -9,6 +9,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
+import subprocess
 from pathlib import Path
 from typing import Any, cast
 
@@ -32,7 +35,9 @@ def _run_text(job: dict[str, Any]) -> str:
     """Return the concatenated shell commands from a workflow job."""
     steps = job["steps"]
     assert isinstance(steps, list)
-    return "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
+    return "\n".join(
+        step["run"] for step in steps if isinstance(step, dict) and "run" in step
+    )
 
 
 def _uses_step(job: dict[str, Any], action_prefix: str) -> dict[str, Any]:
@@ -42,7 +47,8 @@ def _uses_step(job: dict[str, Any], action_prefix: str) -> dict[str, Any]:
     matches = [
         step
         for step in steps
-        if isinstance(step, dict) and str(step.get("uses", "")).startswith(action_prefix)
+        if isinstance(step, dict)
+        and str(step.get("uses", "")).startswith(action_prefix)
     ]
     assert len(matches) == 1
     return cast(dict[str, Any], matches[0])
@@ -82,7 +88,9 @@ def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
 
     assert "CRATE_NAME=" in publish_text
     assert "CRATE_VERSION=" in publish_text
-    assert "https://crates.io/api/v1/crates/${CRATE_NAME}/${CRATE_VERSION}" in publish_text
+    assert (
+        "https://crates.io/api/v1/crates/${CRATE_NAME}/${CRATE_VERSION}" in publish_text
+    )
     assert "HTTP_STATUS" in publish_text
     assert '"200")' in publish_text
     assert "already exists on crates.io" in publish_text
@@ -133,9 +141,13 @@ def test_rust_engine_release_fallback_docs_name_wheel_and_source_paths() -> None
     docs = "\n".join(
         (
             (root / "README.md").read_text(encoding="utf-8"),
-            (root / "docs" / "guides" / "install_profiles.md").read_text(encoding="utf-8"),
+            (root / "docs" / "guides" / "install_profiles.md").read_text(
+                encoding="utf-8"
+            ),
             (root / "docs" / "studio" / "index.md").read_text(encoding="utf-8"),
-            (root / "docs" / "development" / "v3_migration.md").read_text(encoding="utf-8"),
+            (root / "docs" / "development" / "v3_migration.md").read_text(
+                encoding="utf-8"
+            ),
         )
     )
 
@@ -150,7 +162,9 @@ def test_python_dist_is_accepted_installed_before_it_can_be_published() -> None:
     """The wheel PyPI receives serves its Studio from a clean installation."""
     jobs = _workflow()["jobs"]
     build = _run_text(jobs["build-python-dist"])
-    steps = [step for step in jobs["build-python-dist"]["steps"] if isinstance(step, dict)]
+    steps = [
+        step for step in jobs["build-python-dist"]["steps"] if isinstance(step, dict)
+    ]
     names = [step.get("name", step.get("run", step.get("uses", ""))) for step in steps]
 
     assert names.index("Accept the installed Studio the wheel provides") > names.index(
@@ -158,8 +172,207 @@ def test_python_dist_is_accepted_installed_before_it_can_be_published() -> None:
     )
     assert "--require-hashes" in build
     assert "--no-deps dist/sc_neurocore-*.whl" in build
-    assert 'tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"' in (
-        build
+    assert (
+        'tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"'
+        in (build)
     )
     assert jobs["publish-python-pypi"]["needs"] == ["build-python-dist"]
     assert (_repo_root() / "tools" / "studio_installed_acceptance.py").is_file()
+
+
+def _named_workflow(name: str) -> dict[str, Any]:
+    """Load one workflow of the checkout by file name.
+
+    Parameters
+    ----------
+    name : str
+        File name under ``.github/workflows``.
+
+    Returns
+    -------
+    dict
+        The parsed workflow.
+    """
+    workflow = yaml.safe_load(
+        (_repo_root() / ".github" / "workflows" / name).read_text("utf-8")
+    )
+    assert isinstance(workflow, dict)
+    return cast(dict[str, Any], workflow)
+
+
+def _step(job: dict[str, Any], name: str) -> tuple[int, dict[str, Any]]:
+    """Return the position and body of the single step called ``name``.
+
+    Parameters
+    ----------
+    job : dict
+        Workflow job.
+    name : str
+        Step name.
+
+    Returns
+    -------
+    tuple of int and dict
+        Index of the step and the step.
+    """
+    found = [
+        (i, s)
+        for i, s in enumerate(job["steps"])
+        if isinstance(s, dict) and s.get("name") == name
+    ]
+    assert len(found) == 1, name
+    return found[0]
+
+
+def _run_release_notes_step(
+    tmp_path: Path, notes: str
+) -> subprocess.CompletedProcess[str]:
+    """Run the release-notes step of ``release.yml`` against written notes and dummy artefacts.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Working directory that stands in for the checkout.
+    notes : str
+        Text of ``docs/development/RELEASE_NOTES_v4.0.0.md`` in that checkout.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The finished step, with ``GITHUB_OUTPUT`` written to ``tmp_path/github_output``.
+    """
+    release = _named_workflow("release.yml")["jobs"]["release"]
+    script = _step(release, "Release notes for this tag")[1]["run"]
+    (tmp_path / "docs/development").mkdir(parents=True)
+    (tmp_path / "docs/development/RELEASE_NOTES_v4.0.0.md").write_text(notes, "utf-8")
+    (tmp_path / "dist").mkdir()
+    for name in (
+        "dist/sc_neurocore-4.0.0.tar.gz",
+        "dist/sc_neurocore-4.0.0-py3-none-any.whl",
+    ):
+        (tmp_path / name).write_bytes(b"artefact " + name.encode())
+    (tmp_path / "sbom.json").write_text("{}", "utf-8")
+    (tmp_path / "sbom-engine-rust.json").write_text("{}", "utf-8")
+    return subprocess.run(
+        [
+            "bash",
+            "-e",
+            "-c",
+            script.replace("/tmp/release_notes.md", str(tmp_path / "body.md")),
+        ],
+        cwd=tmp_path,
+        env={
+            "PATH": os.environ["PATH"],
+            "RELEASE_TAG": "v4.0.0",
+            "GITHUB_OUTPUT": str(tmp_path / "github_output"),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_release_body_is_the_curated_notes_with_checksums_and_fits_github(
+    tmp_path: Path,
+) -> None:
+    """The GitHub Release body is the version's curated notes plus every attachment's SHA-256.
+
+    GitHub refuses bodies over 125,000 characters, and the full ``[4.0.0]`` CHANGELOG section is
+    several times larger; a refused body would fail the release after the registries published.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Working directory for the step run.
+    """
+    notes = (_repo_root() / "docs/development/RELEASE_NOTES_v4.0.0.md").read_text(
+        "utf-8"
+    )
+    assert len(notes.encode()) < 100_000, "leave room for the checksum table"
+    assert "Studio 1.0.0" not in notes, (
+        "4.0.0 ships SNN Studio as a development preview"
+    )
+    done = _run_release_notes_step(tmp_path, notes)
+    assert done.returncode == 0, done.stderr
+    body = (tmp_path / "body.md").read_text("utf-8")
+    assert body.startswith(notes)
+    for name in (
+        "sc_neurocore-4.0.0.tar.gz",
+        "sc_neurocore-4.0.0-py3-none-any.whl",
+        "sbom-engine-rust.json",
+    ):
+        digest = hashlib.sha256((next(tmp_path.rglob(name))).read_bytes()).hexdigest()
+        assert f"| `{name}` | `{digest}` |" in body
+    assert (tmp_path / "github_output").read_text(
+        "utf-8"
+    ) == f"notes_file={tmp_path / 'body.md'}\n"
+
+
+def test_release_body_refuses_missing_or_oversized_notes(tmp_path: Path) -> None:
+    """The step fails closed instead of handing GitHub a body it would refuse.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Working directory for the step runs.
+    """
+    oversized = _run_release_notes_step(tmp_path / "big", "x" * 125_001)
+    assert oversized.returncode != 0 and "GitHub allows 125000" in oversized.stderr
+    empty = _run_release_notes_step(tmp_path / "empty", "")
+    assert empty.returncode != 0 and "missing curated release notes" in empty.stderr
+
+
+def test_release_sboms_describe_what_users_install() -> None:
+    """The attached SBOMs cover the accepted install environment and the locked Rust graph."""
+    job = _named_workflow("release.yml")["jobs"]["release"]
+    sbom_position, sbom = _step(job, "Generate SBOM")
+    assert (
+        sbom_position > _step(job, "Accept the installed Studio the wheel provides")[0]
+    )
+    assert 'cyclonedx-py environment "$RUNNER_TEMP/installed/bin/python"' in sbom["run"]
+    assert (
+        "syft scan file:Cargo.lock -o cyclonedx-json=sbom-engine-rust.json"
+        in sbom["run"]
+    )
+    published = [
+        s
+        for s in job["steps"]
+        if "softprops/action-gh-release@" in str(s.get("uses", ""))
+    ]
+    assert "sbom-engine-rust.json" in published[0]["with"]["files"]
+
+
+def test_unpublished_dispatch_runs_the_full_crate_verify_build() -> None:
+    """``publish=false`` still proves the crate, while the upload job stays skipped."""
+    jobs = _workflow()["jobs"]
+    dry_run = jobs["dry-run-crate"]
+    assert dry_run["if"] == (
+        "github.event_name == 'workflow_dispatch' && github.event.inputs.publish != 'true'"
+    )
+    commands = _run_text(dry_run)
+    assert (
+        "cargo publish --manifest-path engine/Cargo.toml --dry-run --locked" in commands
+    )
+    assert "--no-verify" not in commands
+    assert "--dry-run" not in _run_text(jobs["publish-crate"])
+
+
+def test_container_image_is_scanned_before_any_push() -> None:
+    """No image tag reaches GHCR before the CRITICAL/HIGH gate passed."""
+    job = _named_workflow("docker.yml")["jobs"]["build-push"]
+    build_at, build = _step(job, "Build the image locally")
+    scan_at, scan = _step(job, "Trivy fail on CRITICAL/HIGH")
+    push_at, push = _step(job, "Push the scanned image")
+    assert build_at < scan_at < push_at
+    assert build["with"]["load"] is True and build["with"]["push"] is False
+    assert "--exit-code 1" in scan["run"]
+    assert push["with"]["push"] is True
+    pushes = [
+        s
+        for s in job["steps"]
+        if isinstance(s, dict) and s.get("with", {}).get("push") is True
+    ]
+    assert pushes == [push]
+    assert _step(job, "Extract metadata")[1]["with"]["flavor"].split() == [
+        "latest=auto"
+    ]

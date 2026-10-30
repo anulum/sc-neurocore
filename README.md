@@ -96,10 +96,11 @@ integration of the complete workflow. Focused repositories give teams clearer
 entry points and smaller dependency boundaries when they need one part of it.
 SC-NeuroCore continues as the place to bring those parts together.
 
-The split architecture is prepared for the **unpublished 4.0.0 roadmap**.
-Repository names and responsibilities are established; implementation and release
-status are described separately in the map. The current public package remains
-at the version shown above, with its existing installation instructions.
+The split into focused repositories is planned and is not part of the 4.0.0
+release. Repository names and responsibilities are established; implementation and
+release status are described separately in the map. SC-NeuroCore 4.0.0 is
+published as one package from this repository; it installs as shown in
+[Quick Start](#quick-start).
 
 | Part of the map | Repositories and purpose |
 | --- | --- |
@@ -180,7 +181,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 31 |
 | Python test files | 5489 |
-| Public documentation pages | 657 |
+| Public documentation pages | 659 |
 | GitHub Actions workflows | 24 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
