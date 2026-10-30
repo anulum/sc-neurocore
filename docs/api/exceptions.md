@@ -134,6 +134,29 @@ Raised by `compiler/pipeline.py` when:
 | `drivers/sc_neurocore_driver.py:69` | loaded bitstream lacks `scpn_layer_1_0` IP |
 | `network/export.py:49` | model class is not in `_LIF_MODELS` whitelist |
 
+### 3.5 `NotImplementedError` — unsupported configuration
+
+`NotImplementedError` raised from a public entry point means that the operation exists, but this release does
+not support the configuration it was asked for. The message names the unsupported option and, where one exists,
+the supported alternative, for example "use `backend='python'`" or "use `pipeline_stages=0`". Abstract base
+methods, such as those of `BaseNeuron`, raise it only when a subclass does not implement them.
+
+Areas that refuse unsupported configurations this way:
+
+- `Network` backends: options that the Rust or MPI backend does not implement;
+- `Network.to_torch()`: models, projections and neuron settings the Torch bridge cannot represent;
+- array-based BPTT learners: network topologies other than a direct input-to-output projection;
+- the NIR bridge: node types it does not yet map;
+- the equation-to-Verilog and native-equation compilers: unsigned state, stochastic rounding without an LFSR,
+  and combinations of substeps, resets and multiply pipelining;
+- the hardware driver: DMA transfer without a PYNQ overlay.
+
+A function whose whole body is "not implemented" is not part of the public API.
+
+One known exception: `sc_neurocore.optics` `CompilationResult.to_gdsii()` raises `NotImplementedError` when the
+compiler produced an empty layout (`num_modulators == 0`). That is an input error rather than an unsupported
+configuration; changing the exception type is an API change and is planned for the next major release.
+
 ---
 
 ## 4. The other 9 classes — reserved for future use (DOCUMENTED by task #36)
