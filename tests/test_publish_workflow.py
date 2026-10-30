@@ -98,7 +98,7 @@ def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -
     jobs = _workflow()["jobs"]
 
     build_text = _run_text(jobs["build-engine-wheels"])
-    assert "maturin build --release --out ../dist-engine/" in build_text
+    assert "maturin build --release --locked --out ../dist-engine/" in build_text
 
     smoke = jobs["smoke-engine-wheels"]
     assert smoke["needs"] == ["build-engine-wheels", "build-engine-linux-arm"]
@@ -126,7 +126,7 @@ def test_publish_workflow_engine_wheel_release_matrix_matches_ci() -> None:
     build_text = _run_text(jobs["build-engine-wheels"])
     arm_text = _run_text(jobs["build-engine-linux-arm"])
     assert "Remove tracked Windows bridge binary" in str(jobs["build-engine-wheels"])
-    assert "maturin build --release --out ../dist-engine/" in build_text
+    assert "maturin build --release --locked --out ../dist-engine/" in build_text
     assert "aarch64-unknown-linux-gnu" in arm_text
     assert "--interpreter python${{ matrix.python-version }}" in arm_text
 
@@ -380,3 +380,25 @@ def test_container_build_context_holds_every_wheel_build_input() -> None:
     for name in benchmarks:
         assert (root / "benchmarks" / name).is_file()
     assert list((root / "docs" / "api" / "models").glob("*.md"))
+
+
+def test_release_path_builds_resolve_only_the_committed_locks() -> None:
+    """Every engine build and Rust tool install on a release path refuses to re-resolve its lock.
+
+    Without ``--locked`` maturin and ``cargo install`` silently pick newer dependency versions than
+    the committed lock, so a published wheel or a security tool could differ from what CI tested.
+    """
+    root = _repo_root()
+    sources = [
+        root / ".github" / "workflows" / name
+        for name in ("publish.yml", "release.yml", "fuzz.yml", "security-scanners.yml")
+    ] + [root / "deploy" / "Dockerfile"]
+    commands = [
+        (source.name, line.strip())
+        for source in sources
+        for line in source.read_text("utf-8").splitlines()
+        if re.search(r"\bmaturin build\b|\bcargo install\b", line)
+        and not line.lstrip().startswith("#")
+    ]
+    assert len(commands) >= 7, commands
+    assert [command for command in commands if "--locked" not in command[1]] == []

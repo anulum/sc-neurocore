@@ -182,7 +182,7 @@ jobs:
           toolchain: nightly
 
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --version 0.13.2
+        run: cargo install cargo-fuzz --version 0.13.2 --locked
 
       - name: Run bounded fuzz targets
         run: |

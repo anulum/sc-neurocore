@@ -90,7 +90,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           cargo install cargo-audit --version 0.22.1 --locked
           cargo install cargo-deny --version 0.19.6 --locked
-          cargo install cargo-fuzz --version 0.13.2
+          cargo install cargo-fuzz --version 0.13.2 --locked
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
