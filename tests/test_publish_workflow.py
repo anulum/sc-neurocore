@@ -125,7 +125,6 @@ def test_publish_workflow_engine_wheel_release_matrix_matches_ci() -> None:
 
     build_text = _run_text(jobs["build-engine-wheels"])
     arm_text = _run_text(jobs["build-engine-linux-arm"])
-    assert "Remove tracked Windows bridge binary" in str(jobs["build-engine-wheels"])
     assert "maturin build --release --locked --out ../dist-engine/" in build_text
     assert "aarch64-unknown-linux-gnu" in arm_text
     assert "--interpreter python${{ matrix.python-version }}" in arm_text
@@ -402,3 +401,22 @@ def test_release_path_builds_resolve_only_the_committed_locks() -> None:
     ]
     assert len(commands) >= 7, commands
     assert [command for command in commands if "--locked" not in command[1]] == []
+
+
+def test_wheel_workflows_carry_no_step_for_the_untracked_windows_extension() -> None:
+    """The Windows extension left the tree in February 2026, so no workflow deletes it any more.
+
+    A fresh checkout cannot contain the file, and no earlier step of these jobs writes it; a step
+    that removes it only suggests a tracked binary that the repository no longer has.
+    """
+    tracked = subprocess.run(
+        ["git", "ls-files", "--", "bridge/sc_neurocore_engine/*.pyd"],
+        cwd=_repo_root(),
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert tracked == ""
+    for name in ("publish.yml", "v3-wheels.yml", "v3-engine.yml"):
+        text = (_repo_root() / ".github" / "workflows" / name).read_text("utf-8")
+        assert "cp312-win_amd64.pyd" not in text, name
