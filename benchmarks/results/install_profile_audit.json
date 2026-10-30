@@ -213,7 +213,7 @@
   ],
   "project": {
     "name": "sc-neurocore",
-    "version": "3.16.0"
+    "version": "4.0.0"
   },
   "schema_version": "sc-neurocore.install-profile-audit.v1"
 }
