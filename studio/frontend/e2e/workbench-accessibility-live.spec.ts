@@ -11,24 +11,77 @@
  * or uses a keyboard, checked in a real browser against a real backend.
  */
 
-import { expect, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+import { parseStudioJson } from "../src/studioJson";
 
 test.describe.configure({ mode: "serial" });
 
-test.beforeEach(async ({ page }) => {
+/** Open an already-dismissed tour and wait for its first simulation to arrive. */
+async function openWorkbench(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.localStorage.setItem("sc-studio-onboarding-dismissed", "true");
   });
-});
-
-/** Open the Studio and wait for its first simulation to arrive. */
-async function openWorkbench(page: Page): Promise<void> {
   const simulated = page.waitForResponse(
     (response) => new URL(response.url()).pathname === "/api/models/simulate" && response.ok(),
   );
   await page.goto("./");
   await simulated;
 }
+
+/**
+ * Reach a toolbar action through the browser's actual tab order.
+ *
+ * @param page - The running workbench.
+ * @param target - The accessible control the researcher is looking for.
+ */
+async function tabToControl(page: Page, target: Locator): Promise<void> {
+  for (let count = 0; count < 100; count += 1) {
+    if (await target.evaluate((element) => element === document.activeElement)) return;
+    await page.keyboard.press("Tab");
+  }
+  await expect(target).toBeFocused();
+}
+
+test("the first-run tour keeps keys inside until Escape, then a keyboard export matches the real run", async ({ page }) => {
+  const simulated = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/models/simulate" && response.ok(),
+  );
+  await page.goto("./");
+  const response = await simulated;
+  const expected: unknown = parseStudioJson(await response.text());
+  const tour = page.getByRole("dialog", { name: "Welcome to SC-NeuroCore Studio", exact: true });
+  await expect(tour).toBeVisible();
+  const skip = tour.getByRole("button", { name: "Skip tour", exact: true });
+  await expect(skip).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(tour.getByRole("button", { name: "Next", exact: true })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(skip).toBeFocused();
+  await page.keyboard.press("3");
+  await expect(page.getByRole("tab", { name: "Trace", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(tour).toBeVisible();
+  await page.setViewportSize({ width: 640, height: 400 });
+  const bounds = await tour.boundingBox();
+  if (bounds === null) throw new Error("The visible tour has no browser geometry");
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(640);
+  await page.keyboard.press("Escape");
+  await expect(tour).not.toBeVisible();
+  const exportButton = page.getByRole("button", { name: "JSON", exact: true });
+  await tabToControl(page, exportButton);
+  const downloaded = page.waitForEvent("download");
+  await page.keyboard.press("Enter");
+  const file = await downloaded;
+  expect(await file.failure()).toBeNull();
+  const path = await file.path();
+  const actual: unknown = parseStudioJson(readFileSync(path, "utf8"));
+  if (expected === null || typeof expected !== "object" || Array.isArray(expected)) throw new Error("Simulation returned no result object");
+  expect(actual).toMatchObject(expected as Record<string, unknown>);
+  await page.reload();
+  await expect(page.getByRole("img", { name: /^Trace of / })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Welcome to SC-NeuroCore Studio", exact: true })).toHaveCount(0);
+});
 
 test("every slider is named and says its value", async ({ page }) => {
   await openWorkbench(page);

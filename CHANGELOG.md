@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Keep keyboard focus inside the first-run Studio tour and let Escape dismiss it. Preserve dismissal across visits, and keep tour keys from activating workbench shortcuts.
+
 ## [4.0.0] - 2026-10-29
 
 - The curated summary of this release is `docs/development/RELEASE_NOTES_v4.0.0.md`, which is also the GitHub Release text.

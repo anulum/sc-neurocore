@@ -107,6 +107,10 @@ turn it into complete scientific-state coverage.
 
 ## Keyboard route
 
+On the first visit, the tour keeps keyboard focus inside its dialog. Use
+**Tab** or **Shift+Tab** to move between its controls, or **Escape** to dismiss
+it. Dismissing or finishing the tour keeps it closed on your next visit.
+
 Use **Tab** to reach controls and **Enter** to activate them. In the view
 switcher, **Left/Right** change views; **Home/End** select the first/last enabled
 view. Press **?** for shortcut help and **Esc** to close it. Number shortcuts

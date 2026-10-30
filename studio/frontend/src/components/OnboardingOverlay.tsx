@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type KeyboardEvent } from "react";
 
 const STORAGE_KEY = "sc-studio-onboarding-dismissed";
 
@@ -49,6 +49,9 @@ const steps = [
 /**
  * The first-run tour, until it is dismissed.
  *
+ * A native modal keeps keyboard focus in the tour; Escape dismisses it and
+ * records the same preference as Skip tour or completing the last step.
+ *
  * A step that names the catalogue takes the number of models loaded from it,
  * so the tour never states a count the catalogue has outgrown.
  *
@@ -58,6 +61,9 @@ const steps = [
 export default function OnboardingOverlay({ modelCount }: { modelCount: number }) {
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
+  const open = useCallback((dialog: HTMLDialogElement | null) => {
+    if (dialog !== null) dialog.showModal();
+  }, []);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
@@ -83,6 +89,26 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
     if (step > 0) setStep(step - 1);
   }
 
+  /**
+   * Keep shortcuts local and wrap Tab at the tour's enabled button boundaries.
+   *
+   * @param event - A key from the native modal.
+   */
+  function containKeys(event: KeyboardEvent<HTMLDialogElement>) {
+    event.stopPropagation();
+    if (event.key !== "Tab") return;
+    const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    const active = event.currentTarget.ownerDocument.activeElement;
+    const target = event.shiftKey && active === first ? last
+      : !event.shiftKey && active === last ? first : undefined;
+    if (target !== undefined) {
+      event.preventDefault();
+      target.focus();
+    }
+  }
+
   const current = steps[step];
   // `step` only ever moves inside the tour's own bounds, so this cannot miss;
   // rendering nothing rather than asserting keeps a future off-by-one from
@@ -90,12 +116,9 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
   if (current === undefined) return null;
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 9999,
-      background: "rgba(0, 0, 0, 0.75)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <div style={{
+    <dialog ref={open} className="text-prompt" aria-labelledby="onboarding-title"
+      aria-describedby="onboarding-description" onClose={dismiss}
+      onKeyDown={containKeys} style={{
         background: "var(--bg-secondary)", border: "1px solid var(--border)",
         borderRadius: 12, padding: 24, maxWidth: 480, width: "90%",
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
@@ -110,10 +133,10 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
           }}>Skip tour</button>
         </div>
 
-        <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--accent)", marginBottom: 8 }}>
+        <h2 id="onboarding-title" style={{ fontSize: 16, fontWeight: 600, color: "var(--accent)", marginBottom: 8 }}>
           {current.title}
         </h2>
-        <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 20 }}>
+        <p id="onboarding-description" style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 20 }}>
           {typeof current.text === "function" ? current.text(modelCount) : current.text}
         </p>
 
@@ -145,7 +168,6 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
             {step < steps.length - 1 ? "Next" : "Get Started"}
           </button>
         </div>
-      </div>
-    </div>
+    </dialog>
   );
 }
