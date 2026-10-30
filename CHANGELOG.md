@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Preserve a positive signed LUT index bound for narrow fixed-point words. In particular, `sqrt(0)` and `log(1)` at signed two-bit integer precision now return zero; exhaustive small-word RTL regressions check every admitted input code against independent table oracles. C and Rust kernels retain their existing full-width clamp.
+
 ## [4.0.0] - 2026-10-29
 
 - Start a workspace-local candidate from the selected catalogue model's complete canonical schema. Preview it before explicitly replacing an existing draft; retain declaration order, numeric tokens, source and profile metadata, and leave undeclared units and proposal authorship for the author to complete. Validate, diff, run, review, export and reopen the proposal through the existing candidate workflow. Canonical models and their evidence remain unchanged.

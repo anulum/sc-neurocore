@@ -2,7 +2,7 @@
   "cases": {
     "bench_euler": {
       "clocks_per_timestep": 1,
-      "median_ms": 1.026307,
+      "median_ms": 2.207511,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -68,22 +68,22 @@
       "output_sha256": "3e7c8d2ffbddb05afaf9bac7039746a0c87ce2e40937452b19ea9e2d1626687f",
       "pipeline_registers": 0,
       "samples_ns": [
-        1163275,
-        923394,
-        926787,
-        979880,
-        886027,
-        943511,
-        1128273,
-        2228129,
-        1778276,
-        1442944,
-        1026307
+        3000748,
+        2227158,
+        1852716,
+        2207511,
+        3215134,
+        1662815,
+        1751171,
+        1715811,
+        2305218,
+        2085972,
+        2985282
       ]
     },
     "bench_heaviside": {
       "clocks_per_timestep": 1,
-      "median_ms": 1.067999,
+      "median_ms": 2.346945,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -152,22 +152,111 @@
       "output_sha256": "3155602379dc252c1f8133fd2ec60306cc3c03c2fade5f5b8ef856016bce292b",
       "pipeline_registers": 0,
       "samples_ns": [
-        1043943,
-        1029215,
-        1067999,
-        1073841,
-        946102,
-        1065433,
-        2537183,
-        2167587,
-        1455463,
-        1526258,
-        1064147
+        2645043,
+        1892667,
+        3057236,
+        2346945,
+        1904546,
+        3402938,
+        1689057,
+        2339867,
+        2348017,
+        2243396,
+        2547576
+      ]
+    },
+    "bench_held_state_rk4": {
+      "clocks_per_timestep": 1,
+      "median_ms": 6.988486,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 0.25,
+          "equations": [
+            [
+              "v",
+              "held + I - 0.5*v"
+            ]
+          ],
+          "initial_state": [
+            [
+              "held",
+              0.5
+            ],
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "rk4",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [
+            [
+              "held",
+              "held + 0.25"
+            ],
+            [
+              "v",
+              "-0.25"
+            ]
+          ],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": "v > 0.5",
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_held_state_rk4",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 223,
+      "output_sha256": "51963fd09648b55e260166cf8d3c41668a1c5060c9585850f5f12d12b3069136",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        7323691,
+        6988486,
+        7811077,
+        7275669,
+        5445083,
+        6182044,
+        6293334,
+        9039855,
+        6446055,
+        6710507,
+        8184595
       ]
     },
     "bench_hypot": {
       "clocks_per_timestep": 1,
-      "median_ms": 4.091494,
+      "median_ms": 6.57805,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -228,22 +317,102 @@
       "output_sha256": "da5cee99b40ae9545af8c6df5cf0894bb7670825dd9080b5b57fc47e6892e0f2",
       "pipeline_registers": 0,
       "samples_ns": [
-        4205460,
-        3777010,
-        3846972,
-        4037907,
-        3573739,
-        3787511,
-        6521863,
-        6779427,
-        4091494,
-        4887136,
-        4483472
+        6348620,
+        6578050,
+        8783440,
+        8068066,
+        6036715,
+        4434622,
+        7678035,
+        5719740,
+        6353446,
+        7616157,
+        6714724
+      ]
+    },
+    "bench_initial_state_map": {
+      "clocks_per_timestep": 1,
+      "median_ms": 330.275648,
+      "model_source": {
+        "model": {
+          "base_state_units": {},
+          "constants": [],
+          "detection": "level",
+          "display_state_units": {},
+          "dt": 1.0,
+          "equations": [
+            [
+              "v",
+              "I**1.5+clip(I,.25,1)**clip(w,-1,1)"
+            ]
+          ],
+          "initial_state": [
+            [
+              "w",
+              0.5
+            ],
+            [
+              "v",
+              0.0
+            ]
+          ],
+          "method": "map",
+          "parameters": [],
+          "probability_expression": null,
+          "random_stream": 0,
+          "rate_expression": null,
+          "reset": [],
+          "rng_seed": 44257,
+          "runtime_units": {},
+          "spike_value": null,
+          "substeps": 1,
+          "threshold": null,
+          "threshold_rng": "lfsr16",
+          "units": "none"
+        },
+        "module_name": "bench_initial_state_map",
+        "numeric": {
+          "data_width": 16,
+          "fraction": 8,
+          "function_lowering": "v2",
+          "overflow": "saturate",
+          "random_precision": "standard",
+          "rounding": "bankers",
+          "signed": true
+        },
+        "pipeline": {
+          "points": [],
+          "stages": 0
+        },
+        "schema": "sc-equation-source.v1",
+        "semantics": {
+          "division": "encoded-nonzero-or-source-guard",
+          "event_overflow": "saturate",
+          "reset": "asynchronous-active-low-initial-state",
+          "rng": "model-seed64-stream32-site-counter",
+          "state_overflow": "saturate"
+        }
+      },
+      "operations": 3639,
+      "output_sha256": "f1f29522fcc5a1baa651f44a5c9ec5aa411342066f273d24144f8289ba430e58",
+      "pipeline_registers": 0,
+      "samples_ns": [
+        315356877,
+        388163163,
+        346448028,
+        330275648,
+        273789646,
+        270588191,
+        365864858,
+        399316165,
+        327110907,
+        294175612,
+        369872225
       ]
     },
     "bench_macro": {
       "clocks_per_timestep": 3,
-      "median_ms": 1.813908,
+      "median_ms": 3.672037,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -312,22 +481,22 @@
       "output_sha256": "9ed71eccc810c2975c167ed4e75015f905b55cff944b93bd7e3eedc34698d1a4",
       "pipeline_registers": 0,
       "samples_ns": [
-        1925203,
-        1599988,
-        1653464,
-        1602035,
-        1532560,
-        1813908,
-        1650280,
-        3385758,
-        3550139,
-        2989816,
-        2207596
+        3672037,
+        3742141,
+        4120909,
+        4607318,
+        2834593,
+        2936314,
+        3704548,
+        3635777,
+        2625332,
+        5089330,
+        3360917
       ]
     },
     "bench_power_dynamic": {
       "clocks_per_timestep": 1,
-      "median_ms": 49.458807,
+      "median_ms": 86.356591,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -388,22 +557,22 @@
       "output_sha256": "cb2ba84712cafa7b2e4501b4a35bbb677aa62bb1c7366ac83692930cb90328d0",
       "pipeline_registers": 0,
       "samples_ns": [
-        49458807,
-        45827489,
-        47075884,
-        45493950,
-        43270418,
-        47964524,
-        54845195,
-        81461103,
-        62718189,
-        56288526,
-        54300876
+        90555680,
+        84729956,
+        102881422,
+        110556572,
+        63421099,
+        82104541,
+        88222557,
+        104638988,
+        75187773,
+        82023572,
+        86356591
       ]
     },
     "bench_power_literal": {
       "clocks_per_timestep": 1,
-      "median_ms": 50.758693,
+      "median_ms": 85.374382,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -464,22 +633,22 @@
       "output_sha256": "dfd24e637641b1af0fcfd33548b7f0fb4cff4156ed427f08c4fd123567053fad",
       "pipeline_registers": 0,
       "samples_ns": [
-        60879801,
-        46117023,
-        45137022,
-        44674433,
-        42631469,
-        43708460,
-        50758693,
-        75032683,
-        73112958,
-        57484649,
-        51161659
+        105684504,
+        83157315,
+        99277530,
+        85374382,
+        66151133,
+        60423523,
+        96160474,
+        95393077,
+        73912996,
+        76417757,
+        86598639
       ]
     },
     "bench_random": {
       "clocks_per_timestep": 1,
-      "median_ms": 4.366197,
+      "median_ms": 8.136685,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -550,22 +719,22 @@
       "output_sha256": "89d8cd010a4030c7dc776abf1f0795b1a8a4d3211f5a028e340c396b024c548f",
       "pipeline_registers": 0,
       "samples_ns": [
-        4392741,
-        4140078,
-        3869900,
-        4032322,
-        3570551,
-        3754719,
-        4366197,
-        8521324,
-        7807753,
-        4568579,
-        4653244
+        6882245,
+        9118812,
+        9754876,
+        8789467,
+        6528615,
+        5501707,
+        6430704,
+        10847328,
+        6764229,
+        9038959,
+        8136685
       ]
     },
     "bench_rk4": {
       "clocks_per_timestep": 5,
-      "median_ms": 5.738072,
+      "median_ms": 10.456455,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -653,22 +822,22 @@
       "output_sha256": "62d20072f11f4790bb3cb391472be1aae656efc836f50149050f94cbeb969a82",
       "pipeline_registers": 4,
       "samples_ns": [
-        5502515,
-        5800428,
-        6025196,
-        5206937,
-        5477577,
-        5066710,
-        5029424,
-        9212816,
-        8701507,
-        7175765,
-        5738072
+        11076522,
+        12119909,
+        9499314,
+        11867298,
+        9353550,
+        6991429,
+        7433325,
+        10456455,
+        8639337,
+        11028455,
+        10973266
       ]
     },
     "bench_round": {
       "clocks_per_timestep": 1,
-      "median_ms": 1.4364,
+      "median_ms": 2.278401,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -729,22 +898,22 @@
       "output_sha256": "6f384c8a3e7af90c32d537b7da1cff0558b672eb3a6379c0d24e9dbc82bf1863",
       "pipeline_registers": 0,
       "samples_ns": [
-        1118729,
-        1504411,
-        1043517,
-        1402115,
-        1003163,
-        1299160,
-        2424589,
-        2170267,
-        1909025,
-        1509796,
-        1436400
+        2278401,
+        2073673,
+        3753155,
+        2678626,
+        1941343,
+        1413244,
+        1379779,
+        1836986,
+        2402738,
+        2659302,
+        2461204
       ]
     },
     "bench_rsqrt": {
       "clocks_per_timestep": 1,
-      "median_ms": 6.234584,
+      "median_ms": 11.388742,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -805,30 +974,30 @@
       "output_sha256": "c0a833361fdde93cb23b5e8e9b81de045b7c5b14882cc85952d76e7a1e18afca",
       "pipeline_registers": 0,
       "samples_ns": [
-        6104830,
-        5671512,
-        5741165,
-        5818839,
-        5989827,
-        6234584,
-        9454858,
-        10932533,
-        7595948,
-        6504778,
-        6705799
+        11353418,
+        11208108,
+        15110797,
+        11869156,
+        11315623,
+        9833003,
+        12403058,
+        11388742,
+        12435454,
+        11379188,
+        11547292
       ]
     }
   },
   "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json benchmarks/results/local_python_2026-10-29_equation_ir.json",
   "cross_language_comparison": false,
-  "generated_at": "2026-10-29T01:44:33.524121+00:00",
+  "generated_at": "2026-10-30T17:19:33.280164+00:00",
   "hardware_measurement_claimed": false,
   "implementation_scope": "Python model frontend with maintained Rust graph backend",
   "isolation": "shared loaded host; no exclusive core reservation",
   "load_average_after": [
-    9.732421875,
-    12.3349609375,
-    11.005859375
+    26.3056640625,
+    22.02880859375,
+    20.7587890625
   ],
   "measurement_context": {
     "architecture": "x86_64",
@@ -848,8 +1017,8 @@
       11
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 4101.292,
-      "min_observed_mhz": 4099.04,
+      "max_observed_mhz": 3800.0,
+      "min_observed_mhz": 3795.388,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -860,14 +1029,14 @@
     "host": "aaarthuus",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      9.732421875,
-      12.3349609375,
-      11.005859375
+      26.3056640625,
+      22.02880859375,
+      20.7587890625
     ],
     "load_average_before": [
-      9.732421875,
-      12.3349609375,
-      11.005859375
+      25.94873046875,
+      21.8095703125,
+      20.6748046875
     ],
     "logical_cpu_count": 12,
     "numpy_version": "2.5.4",
@@ -881,36 +1050,49 @@
   "performance_promotion_claimed": false,
   "samples_per_case": 11,
   "schema_version": 1,
-  "source_base_sha": "477cca4606ef852dda99e50c0a183591b9652577",
+  "source_base_sha": "a91a5255e985cb60e63e1a4b4df3a6bb21f83cff",
   "source_sha256": {
-    "Cargo.lock": "93b9587e155958f9e3f641be9be53c941fa2847a6a873c71040e1d9557995510",
+    "Cargo.lock": "207694cd848ac6746a5c4aba0794be31367c06682f6c5a04e90e4036037fe220",
     "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
-    "benchmarks/bench_equation_ir.py": "6b7c2aa6c7097f79e3b86d80cfb867a90f5763f5cc57fe589e9ed83a55dde865",
+    "benchmarks/bench_equation_ir.py": "21b3a64b7b29c45ac87df891788dbf460c825a111d6aed870d6146f6ef973dda",
     "bridge/sc_neurocore_engine/_ir_native.py": "7e4d716b3532f7d8aef70fb0f4bec0de6348ab73b7577a506cbc5cef430bfe17",
     "bridge/sc_neurocore_engine/ir.py": "f5e9ac833bd01a3dae2f1fadb4fe56084e522804049925727ffc0ce11b3670f1",
-    "engine/Cargo.toml": "4e3b406ee85f5b2773e37b63469aef0a677744425103044833f081fa5ae747fa",
+    "engine/Cargo.toml": "d35f59be196fa91d581eabe7f6cf93f7788cd5e4ef36f64869f9fb40ebf15e54",
+    "engine/src/ir/arithmetic_contract.rs": "c001b88dfe8526950dc7af40d3fc390f8023e7f29822265724ce9e425f98196e",
     "engine/src/ir/bindings.rs": "1c7358acb709fa0904bbc53528ff0b2cf550a782ef337e6f8a90656aec6890de",
     "engine/src/ir/builder.rs": "7aa64bba746103a5acd60895fb66381d662fc536ceddaac7b1c0fb7094dc3c6b",
     "engine/src/ir/constant_words.rs": "82d15fc1fb109d5afc9c4a2a45663e51c0395b0a4ff95ac5250872c2735a0083",
-    "engine/src/ir/dense_contract.rs": "b3f77260387fa448613949fc0f19ccc471a1e0cbba5d8622858a74ff33635e2e",
-    "engine/src/ir/emit_mlir.rs": "abc34c388eaac79a7c7cda5292206acea354d21dd4c56a0361c1f8d3421498eb",
+    "engine/src/ir/dense_contract.rs": "b7048b4fd197508fc2a867c80c815ffb2c2ccdc5de9dda6c0e20207e2c38d8b3",
+    "engine/src/ir/emit_mlir.rs": "c4342646f446e5116fdf583779942b92695e43bee74143dee8f27e27eac929bf",
+    "engine/src/ir/emit_mlir/arithmetic.rs": "ff0be9c12a1c83c728c121b50d400cc1e34cb0d76b8a8940989766f38fd475f5",
+    "engine/src/ir/emit_mlir/dcls.rs": "0c4f9a99f9be159318e83d89e94e883ebb6e84274aa804858264e244a5cb706c",
+    "engine/src/ir/emit_mlir/dense.rs": "21937753fbcfbe46d89dcf08e557b1628e6c389d9b29f0a3d74b5342950a7ec9",
     "engine/src/ir/emit_mlir/divide.rs": "bb27bfa3a199de892dcb1107e9ac20723e9636636a0e0d6f9a8e958d2c4f31a7",
-    "engine/src/ir/emit_mlir/primitives.rs": "13fdffb79a7901a1aeabae7a4be1f569921bdc89b1c4a2d52539b94a07bdb63e",
+    "engine/src/ir/emit_mlir/kernels.rs": "665119e4ebb33adfd990af4560476030e805413ef1b024524ff6c56bcf8ba973",
+    "engine/src/ir/emit_mlir/kernels/attention.rs": "e7fe4d88b77a0eb5566d342cb76351c21f80aa88dac6d1c7c165947dfb897fd3",
+    "engine/src/ir/emit_mlir/kernels/graph.rs": "fef5b14b4b7a5f995fcb949d2de679c1c59660c03d3d97d7f211acb9972fa708",
+    "engine/src/ir/emit_mlir/kernels/kuramoto.rs": "5a5333f2ea236a60080f1eaef7e2eef87d34b5eeed4dbc13d8b2a1479c66211a",
+    "engine/src/ir/emit_mlir/lif.rs": "79e3450f87501db5333c358f71abd1c31b078d95bea35c7fc752462b9a5ec718",
+    "engine/src/ir/emit_mlir/ops.rs": "c5e4d22baa29b2817f533025e62201a04ddf4947fc65ceb8014e86e6009a50ce",
+    "engine/src/ir/emit_mlir/primitives.rs": "63a9d55d4a2214184956aa4c48147e50e0d0e78916081c3e2714225f1917b7df",
     "engine/src/ir/emit_mlir/runtime_check.rs": "cdf8e4d23965f0f0ae0beeb9a56e4bcbc61a8e64a9105c885b4fe3d6086be485",
     "engine/src/ir/emit_mlir/state.rs": "5146aeaef6436d4a1f317c32cd093ae7c5b441dd47ca09f9af226f913af0043c",
     "engine/src/ir/emit_mlir/word.rs": "78fdc0b6921c9682a7647615e1cbbb72215b196570ea27a786060754323387a5",
-    "engine/src/ir/emit_sv.rs": "c9c99d972ee77e7264c55dcc10fd5892b8777422a14506b218fb2514c6dbaed7",
+    "engine/src/ir/emit_sv.rs": "250c916ba505905b42c7d1f80335280bdd4ad63f7981f06a8a25f3e211f00ecf",
+    "engine/src/ir/emit_sv/arithmetic.rs": "467d8bb9206e7b29894f40b900cf5f437ccaf00cda6802a8fadb2a76782d8c6a",
     "engine/src/ir/emit_sv/constants.rs": "2d241b1dab15f2c040e1ad54624aa1b52546225db84cb77623d648e65347bf00",
     "engine/src/ir/emit_sv/count.rs": "1d98fa36aa230373a48582734d9f219cb665ccd8c6544db06e9787dff833695d",
     "engine/src/ir/emit_sv/dense.rs": "3a3a4b32ee6b74270116c3a340233c99a301472eda9f3da2c6d5fcf082d89b5a",
     "engine/src/ir/emit_sv/divide.rs": "410992c56ea77530dc5e4fdc96037c642c873e19032386a74384a3c2f4b7b5f6",
-    "engine/src/ir/emit_sv/probability.rs": "0d38e7add9b9b4b6dd684915516d7529174469c01c13ee0e6eaafc98ddb3253b",
+    "engine/src/ir/emit_sv/probability.rs": "e2b1234a09245e2165b428f300253df85eddd4fced6a130703f1cbfcad7ae24a",
     "engine/src/ir/emit_sv/runtime_check.rs": "33d55e50dfd000eff9ebd141bb8b846ad8292bf3a3336231d820ced148c44d5a",
     "engine/src/ir/emit_sv/state.rs": "60de4570352a77f6f27113aee41afc36eda624eeaed1dfe693f48fd459281f29",
     "engine/src/ir/emit_sv/word.rs": "7dc94886961b9d2363f835897570f246f8a84af4746d3a018b7ccdd27cadd72a",
-    "engine/src/ir/graph.rs": "7f9e04bb7fa205db73b640c1a671bc7eb17e8e4c2ca2e96b1d026570f9570e04",
+    "engine/src/ir/graph.rs": "84856c15cab924b847bd3cedfa7b3994b360fdb090794c50bafe1020a49a874b",
     "engine/src/ir/identifiers.rs": "e548abf49f918e6c0e98ae59a95f82007fe10cff146b2c025c20c54d1eea7d39",
-    "engine/src/ir/mod.rs": "4ea7ecd1394d4adad3fe3acabe3e51bf3eae56095c2c2f30057bcae267dbcc53",
+    "engine/src/ir/kernel_contract.rs": "c711a4f91af18b0ea16c150c24d8b539bac23f354c60477df83ff0d97c66a34a",
+    "engine/src/ir/mod.rs": "6858a20f824c31089870e9e85d2b66c0beadda5f8e2633fee3d1da094f112c72",
+    "engine/src/ir/neuron_contract.rs": "0870c779281b6e8bfa0f5bf1f964296d81be0e2f9849eced68ccf02124c5b152",
     "engine/src/ir/parser.rs": "8cc8ad8ea38532bba6f3bf2330fc9d78c565843f621aac957f319a56732cd1c7",
     "engine/src/ir/parser/neuron.rs": "cb8270da55e138d7e1b7aaf4968b2cb600d9720735dbe8e80c7c3fcf84401751",
     "engine/src/ir/parser/runtime_check.rs": "ac275312b486c3d94329cfbc483a46debd76b493ce0ad76fb494872d20d9717a",
@@ -925,12 +1107,12 @@
     "engine/src/ir/runtime_check.rs": "4d7c224120fc23d29aaecdabdea36bc7edc7a12436a5222ddacd29c03a203a99",
     "engine/src/ir/source.rs": "333b16c0d6193c651b213b428cbfe8705ed671692f882166d1d9926c9b76d8d4",
     "engine/src/ir/state_contract.rs": "b4ee74fcfac0d1b9c935b0a734a69317d2891ff4ab688edbec1e247e5cf74651",
-    "engine/src/ir/stream_contract.rs": "84f63f4909c9c642a6a2a481ac2f2ab734708cb5d9ead83442494446912f9d65",
+    "engine/src/ir/stream_contract.rs": "8cf036d4f9f36a0ef6e578fcebc6dd1bc87576f4a48f123f96f5fe3174d88c68",
     "engine/src/ir/sv_target.rs": "6dbc1ba2423676425cab138c1a55e586d4f0e10b6723d12a01b0d8591cf5e0af",
     "engine/src/ir/type_contract.rs": "b2cdf72052e8887a47e0fd208f2664a670c085232474f1a6178a266496d835e9",
-    "engine/src/ir/verify.rs": "e8b203a5054f2e630faeed24b390cd84ab308632f880c900e4b580fc19fb6620",
+    "engine/src/ir/verify.rs": "883a3e8cf11d4f2f5ea4691052274385cab5821d861fd38fa35058eb756da068",
     "engine/src/ir/word.rs": "857881a216027aff2f3b45c886b70a5dcffc029686a7d5fa11bb67ba5fae23e6",
-    "engine/src/ir/word_contract.rs": "c83a96d5a006d3c09bbbe9bd20309701e78b6f23549db4972476ca86baf8e206",
+    "engine/src/ir/word_contract.rs": "06da7f4e72c53684193abcd24c6d5b746b30e20711574d2df0eb1d83152acc20",
     "src/sc_neurocore/compiler/__init__.py": "0ad6d33bea02934b65a7b02fc1c6389ae2c0ae17f7a17426d3aa684ca8fb61ac",
     "src/sc_neurocore/compiler/_sby_runner.py": "8b337c49519dc82fc18ec1858fc30a183957c6c48d96ad74608a15cf60afe576",
     "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
@@ -947,7 +1129,7 @@
     "src/sc_neurocore/compiler/c_fixed_emitter.py": "533a4800e1b87481e6660f8002b253dc90d7736f1cfd4902fd79b4b01635a2e4",
     "src/sc_neurocore/compiler/certification_gen.py": "bd896738ce5d8121a5e6d4ff0d0667761df2db21d30184e00e409e62a5c23b84",
     "src/sc_neurocore/compiler/cocotb_gen.py": "c650c582b9bd6fa2924362d6f1c6d8d0ffed948202a2b6c7624c95146e5ec149",
-    "src/sc_neurocore/compiler/compiler_impl.py": "dc5fb9d51e6b579d585fd4b216ba97d886978f0ba10f5eed785bde8b7852603a",
+    "src/sc_neurocore/compiler/compiler_impl.py": "f0118df28c87c1973908cd5838e157b243c8cb4ba27d27da04880cc9635d46b1",
     "src/sc_neurocore/compiler/constraint_gen.py": "4f7fc2afb5aa6ea19a5bdede15397a83f7f9fd67410664eb367ad67977e20204",
     "src/sc_neurocore/compiler/deployment.py": "13afd40ed803f5d5ccae57b9d4b20a125b55faa9745c5557e0c4b47718afe0f7",
     "src/sc_neurocore/compiler/diffusion_noise.py": "914cadd83c183ea49624cf4d97ff88d437f1484653605ffa47922b3cf5779c86",
@@ -955,7 +1137,8 @@
     "src/sc_neurocore/compiler/discrete_function_units.py": "1142cb671eee89091343e9fa22fb47749373fc91db64eeb641e211ebd3f0a952",
     "src/sc_neurocore/compiler/equation_compiler.py": "ad79489e7a07648dcd9013711c6b08c165d1e1e72e46f89fab0f8d09a5b60318",
     "src/sc_neurocore/compiler/equation_ir_compiler.py": "4dad9945cd546e57c3cee1a7c09c3168aedeec3be5251f22831618ad0765caad",
-    "src/sc_neurocore/compiler/equation_lowering.py": "e5aa083feef44972a5ca88e86a8dc6f062e27a16c944431fb2a4c31574e7b080",
+    "src/sc_neurocore/compiler/equation_lowering.py": "7bf4659b3be9c4d793f237f5b70d6635806559d7ca0ab9dc63ad743359d51c4a",
+    "src/sc_neurocore/compiler/equation_state.py": "5958e8824f343c5f79cf1d7345d83fc211f9ee174645231b65f8fa1f370de69e",
     "src/sc_neurocore/compiler/equivalence_check.py": "80ebe68a088ae38fe90116902057e67077bd38494829d5902f9e90e4e784f87c",
     "src/sc_neurocore/compiler/equivalence_miter.py": "ee9a5815a3e846fd1c04ea118cda9550cbcd1dc1084ab44bf4d8486377464dfe",
     "src/sc_neurocore/compiler/exact_normal.py": "de63c2b07408e2c36479b24d8d4f0aaf56e32a70d4aa511dafd0ecfce0919752",
@@ -1090,7 +1273,7 @@
     "src/sc_neurocore/compiler/native_equation/replay.py": "a2964423652be6720d655586702bd52cb3166fbfa3fce70146b9e8e5556408a5",
     "src/sc_neurocore/compiler/native_equation/scheduling.py": "e9fde245f1a0169261a228ad2679a7a99bb1a620c03d9056cc2abef603835a3c",
     "src/sc_neurocore/compiler/native_equation/source.py": "68786d3e21edcdc3c7a057f0a7773089fdeb69856ebbc624098463dfb6e188dd",
-    "src/sc_neurocore/compiler/native_equation/transactions.py": "f4e124f9c299f4f7924ede0c79c6006d6376c6fb59480869cac369d397824122",
+    "src/sc_neurocore/compiler/native_equation/transactions.py": "5bb8f44497eb35efc3eb81e7dd18af6d1486ddaa49d9659772cf6a0b2a13e1df",
     "src/sc_neurocore/compiler/native_program.py": "8cf927800261374e5963633f713bd16093f9b925659ef591556f12103dbceb3e",
     "src/sc_neurocore/compiler/operator_abstraction.py": "2e6958b7688de2532243a30ed36a3c1d36bb98aa57146e1f81a63b5b9fd5960b",
     "src/sc_neurocore/compiler/overflow_proof.py": "11faaa112afbb4418917d916ab32200c9f17316faa30b4f10616aa062e38fb7f",
@@ -1138,21 +1321,21 @@
     "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
     "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
     "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
-    "src/sc_neurocore/compiler/testbench_gen.py": "c00311c1b63cc9dba3d6135c664d5bfb965a453f8f8092bf4b41d8140fdca614",
+    "src/sc_neurocore/compiler/testbench_gen.py": "dbba5586242d95f55b304c337f3ed103e85aa1e73ccd6a6dd8ad8cdb62f84487",
     "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
     "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
     "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
-    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "6aa4af522d8056365a9a4c6dd3ce37527b437ec617dcd938c886c842049a11d7",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "6737c50072aa3dc1d8f8f283901504f7369d137d99131772e703e58bc5a7b674",
     "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
     "src/sc_neurocore/neurons/_units.py": "c04c063bbd229425f519794919c3f6af838150eda03f8af97c741099a8c95f42",
-    "src/sc_neurocore/neurons/equation_builder.py": "ab50451093b73c4f7d37ed694ecadc73d46171e5c1fc836ecfa1bf12075eb7be",
+    "src/sc_neurocore/neurons/equation_builder.py": "fea065e3f69945aed0f05edb50f9e4168d863cd8d3f084b7c16d4bce639c2c7c",
     "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
     "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
     "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
     "src/sc_neurocore/neurons/equation_random.py": "edb76121a97de6c41660b7513511f5d5c06fa040edcd2688aa2e2c52f671a9bc",
     "src/sc_neurocore/neurons/equation_refusals.py": "5ebb46ecaaf66f8108c05bbb3207d5e6b82d70138c6ba11cc4c2848197156692",
     "src/sc_neurocore/neurons/equation_safety.py": "5494a8c3f93de7f359048370e9b22e433fdbaec64f4f031faafbcd46e4b24569",
-    "src/sc_neurocore/neurons/equation_units_runtime.py": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+    "src/sc_neurocore/neurons/equation_units_runtime.py": "15cd730c6222bd55891a7746c0de9c4b76d4217da049b7bfceff99a0c2479fb6",
     "src/sc_neurocore/neurons/expression_derivative.py": "eb010dedeeb34d0f82921943479099f7b8a02f20ff895aa97c427e0f7a8dde5c"
   },
   "source_state": "base plus source-hash-bound working overlay",
@@ -1160,7 +1343,7 @@
   "versions": {
     "numpy": "2.5.4",
     "pint": "0.26.2",
-    "sc-neurocore": "3.16.0",
+    "sc-neurocore": "4.0.0",
     "sc-neurocore-engine": "3.16.0",
     "sympy": "1.14.0"
   },

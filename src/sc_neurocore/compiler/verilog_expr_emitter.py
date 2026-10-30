@@ -577,9 +577,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         s = round(-math.log2(lut_step))  # lut_step == 2**(-s)
         shift = frac - s
         min_q = round(lut_min * (1 << frac))
-        # Width of the offset sum: dw+1 bits wrap the [-16, 16) offset at Q4.12 or Q1.15,
-        # and the left shift of a low-fraction format (Q8.0) before the index is clamped.
-        ow = expr_lut_tables.lut_offset_width(dw, min_q, max(0, -shift))
+        # Hold the offset sum, any left shift, and the positive signed table bound;
+        # narrow inputs still need idx_bits+1 bits to represent the last entry.
+        ow = max(expr_lut_tables.lut_offset_width(dw, min_q, max(0, -shift)), idx_bits + 1)
         # Entries a word of this width cannot hold are saturated, not wrapped.
         entries = expr_lut_tables.saturate_entries(entries, dw)
         self.intermediates.append(

@@ -156,3 +156,41 @@ def test_q88_lut_wires_are_unchanged() -> None:
 
     _r, inter, *_ = _emit_expr("exp(v)", {"v": "v"}, {}, Q88(data_width=16, fraction=8))
     assert any("wire signed [16:0] _exp_lut0_raw" in line and "17'sd4096" in line for line in inter)
+
+
+@pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
+@pytest.mark.parametrize(
+    ("fname", "dw", "fr"),
+    [
+        (fname, dw, fr)
+        for fname in ("sqrt", "log")
+        for dw, fr in [(2, 0), (2, 1), (3, 0), (3, 2), (4, 0), (4, 3)]
+    ]
+    + [("sqrt", 3, 1), ("log", 3, 1), ("log", 5, 4), ("log", 6, 5), ("log", 7, 6)],
+)
+def test_narrow_lut_map_keeps_a_positive_signed_index_bound(dw: int, fr: int, fname: str) -> None:
+    """Every admitted narrow input selects its independent table entry through public RTL compilation.
+
+    The square-root and logarithm tables need positive signed clamp bounds
+    of fifteen and 255, even when the shifted input fits in fewer bits.
+    Logarithm inputs stay within the declared positive domain.
+    """
+    neuron = EquationNeuron(equations={"v": f"{fname}(I)"}, state={"v": 0.0}, dt=1.0, method="map")
+    scale = 1 << fr
+    high = (1 << (dw - 1)) - 1
+    for code in range(-high - 1 if fname == "sqrt" else 1, high + 1):
+        if fname == "sqrt":
+            shifted = code << 1 if fr == 0 else code >> (fr - 1)
+            index = min(max(shifted, 0), 15)
+            value = math.sqrt(index / 2)
+        else:
+            offset = code - round(scale / 256)
+            shift = fr - 5
+            index = min(max(offset >> shift if shift >= 0 else offset << -shift, 0), 255)
+            value = math.log(1 / 256 + index / 32)
+        expected = max(-high - 1, min(round(value * scale), high))
+        with tempfile.TemporaryDirectory() as directory:
+            rtl = _verilog_trace(
+                neuron, f"narrow_{fname}_{dw}_{fr}", code / scale, 2, dw, fr, Path(directory)
+            )
+        assert int(rtl[-1][1]) == expected, f"{fname} input code {code} at Q{dw - fr}.{fr}"

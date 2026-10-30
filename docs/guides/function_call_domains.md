@@ -107,10 +107,10 @@ the table gives the median of seven samples.
 
 | Model | First collector call (ms) | Cached median per call (µs) |
 | --- | ---: | ---: |
-| Paired exponentials | 5.71 | 119.82 |
-| Clipped hypot | 97.84 | 136.70 |
-| Literal and dynamic powers | 719.54 | 254.27 |
-| Exponential Euler with events | 11.18 | 226.33 |
+| Paired exponentials | 5.84 | 123.87 |
+| Clipped hypot | 226.99 | 215.62 |
+| Literal and dynamic powers | 1112.72 | 375.47 |
+| Exponential Euler with events | 70.07 | 590.58 |
 
 These are local measurements on a shared host, with CPU, memory, affinity,
 versions and load recorded in the result. Source hashes are checked before and
