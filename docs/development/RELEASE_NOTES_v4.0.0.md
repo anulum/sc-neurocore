@@ -25,6 +25,11 @@ of [CHANGELOG.md](https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md)
   they checked and go stale when those sources change.
 - **Supply chain.** Hash-locked requirements and blocking audits of the committed locks for Python, Rust, npm, Go,
   Julia and Pixi.
+- **Framework interchange.** NIR files now keep graph and node metadata, ordering and the timestep and reset
+  convention through real round trips. New `from_snntorch()` and `to_snntorch()` exchange supported CPU float64
+  inference networks with snnTorch and refuse what they cannot preserve, including stochastic-bitstream contracts.
+- **Standalone function units.** `emit_function_unit_verilog()` emits one combinational fixed-point function as its
+  own Verilog module, reusing the compiler's existing arithmetic.
 
 ## SNN Studio: development preview
 

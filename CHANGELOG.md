@@ -12,6 +12,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-29
+
+- The curated summary of this release is `docs/development/RELEASE_NOTES_v4.0.0.md`, which is also the GitHub Release text.
 - Add public `function_unit_functions()` discovery and `emit_function_unit_verilog()` generation for isolated combinational fixed-point functions. Unary and binary units expose independent signed ports and reuse the existing arithmetic. The new API defaults to `v2`; the existing equation compiler retains its `lut-v1` default.
 - Add `from_snntorch()` and `to_snntorch()` for supported sequential inference networks on CPU float64, preserving admitted spikes, membrane states and independently owned parameters. These APIs exchange fresh-state inference definitions rather than training checkpoints; unsupported dynamics, topologies, precision and SC bitstream, encoding or Q-format contracts are refused.
 - Add separate `interop-snntorch` and `interop-sinabs` optional dependency profiles. The Sinabs profile uses its compatible legacy NIR file route and does not imply identical native Sinabs and SC discrete dynamics.
@@ -23,10 +26,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Refuse exporting nonzero reset potentials or CubaLI primitives to NIR versions that cannot represent them.
 - Write Studio graph envelope version 3 with timestep, duration, graph seed, population drives, layout and projection identifiers. Continue reading versions 1 and 2 and the legacy envelope.
 - Record 58.63% median public NIR parsing/lowering overhead against the parent in a 30-sample shared-workstation comparison, with byte-identical generated output; these are local regression timings, not isolated throughput measurements. Retaining definitions copies weights beyond runtime parameter storage, so copy work grows with weight size; metadata custody and per-graph order/execution validation add work with their input sizes and were not timed separately.
-
 - Preserve a positive signed LUT index bound for narrow fixed-point words. In particular, `sqrt(0)` and `log(1)` at signed two-bit integer precision now return zero; exhaustive small-word RTL regressions check every admitted input code against independent table oracles. C and Rust kernels retain their existing full-width clamp.
-
-## [4.0.0] - 2026-10-29
+- Publish the SHA-256 of exactly the files attached to the GitHub Release; the release workflow refuses a missing or empty attachment.
 
 - Start a workspace-local candidate from the selected catalogue model's complete canonical schema. Preview it before explicitly replacing an existing draft; retain declaration order, numeric tokens, source and profile metadata, and leave undeclared units and proposal authorship for the author to complete. Validate, diff, run, review, export and reopen the proposal through the existing candidate workflow. Canonical models and their evidence remain unchanged.
 
