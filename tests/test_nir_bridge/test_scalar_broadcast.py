@@ -124,41 +124,21 @@ class TestScalarBroadcast:
         assert len(results["output"][0]) == 6
 
     def test_snntorch_export_reaches_the_bridge(self) -> None:
-        """A graph exported by snnTorch itself imports and runs.
-
-        Skipped when snnTorch is absent, and when snnTorch's own exporter is
-        refused by NIR's type inference before the bridge is reached: snnTorch
-        1.0.0 with nir 1.0.7 and nirtorch 2.6 fails inside ``export_to_nir`` for
-        any sample shape (upstream incompatibility, recorded 2026-10-18).
-        """
-        try:
-            import snntorch as snn
-            import torch
-            from snntorch.export_nir import (
-                export_to_nir,
-            )
-        except ImportError:
-            pytest.skip("snntorch not installed")
+        """Scalar snnTorch parameters cross the supported public FX import path."""
+        snn = pytest.importorskip("snntorch")
+        torch = pytest.importorskip("torch")
+        pytest.importorskip("nirtorch")
+        from sc_neurocore.nir_bridge import from_snntorch
 
         torch.manual_seed(42)
         model = torch.nn.Sequential(
-            torch.nn.Linear(4, 6),
-            snn.Synaptic(alpha=0.9, beta=0.8),
-        )
-        try:
-            graph = export_to_nir(model, torch.randn(1, 4))
-        except ValueError as error:
-            if "Type inference error" not in str(error):
-                raise
-            pytest.skip(
-                f"snntorch {snn.__version__} export refused by nir {nir.version} type inference "
-                f"before the bridge: {error}"
-            )
-
-        net = from_nir(graph, dt=1e-4)
-        results = net.run({"input": np.array([1.0, 2.0, 3.0, 4.0])}, steps=10)
-        assert len(results["output"]) == 10
-        assert len(results["output"][0]) == 6
+            torch.nn.Linear(4, 6, dtype=torch.float64),
+            snn.Synaptic(alpha=0.9, beta=0.8, init_hidden=True, reset_delay=False),
+        ).double()
+        net = from_snntorch(model, torch.ones(4, dtype=torch.float64), dt=1e-4)
+        results = net.run({net.input_nodes[0]: np.array([1.0, 2.0, 3.0, 4.0])}, steps=10)
+        assert len(results[net.output_nodes[0]]) == 10
+        assert len(results[net.output_nodes[0]][0]) == 6
 
 
 # --- Threshold and reset mode tests ---

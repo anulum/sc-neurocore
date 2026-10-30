@@ -68,7 +68,7 @@ def test_every_import_names_the_timestep_and_the_reset_rule_it_supplied() -> Non
             "assumed",
             "",
             "NIR stores no reset rule; spiking nodes use 'subtract' "
-            "(the NIR convention is 'reset' to v_reset)",
+            "(this bridge defaults to 'reset' to v_reset)",
         ),
     ]
 
@@ -111,9 +111,10 @@ def test_metadata_extra_ports_fractional_delays_and_recurrence_are_named() -> No
         metadata={"source": "snnTorch", "author": "x"},
         type_check=False,
     )
-    notes = _kinds(from_nir(graph, dt=1.0).interchange_notes)
+    network = from_nir(graph, dt=1.0)
+    notes = _kinds(network.interchange_notes)
 
-    assert ("not-carried", "", "graph metadata is not imported: author, source") in notes
+    assert network.nir_metadata == {"source": "snnTorch", "author": "x"}
     assert ("approximated", "in", "only the first input port's shape is used") in notes
     assert ("approximated", "out", "only the first output port's shape is used") in notes
     assert (
@@ -152,9 +153,10 @@ def test_notes_inside_subgraphs_carry_the_subgraph_path() -> None:
         edges=[("in", "single"), ("single", "multi"), ("multi", "out")],
         type_check=False,
     )
-    notes = _kinds(from_nir(graph).interchange_notes)
+    network = from_nir(graph)
+    notes = _kinds(network.interchange_notes)
 
-    assert ("not-carried", "single", "graph metadata is not imported: note") in notes
+    assert network.nodes["single"].network.nir_metadata == {"note": "inner"}
     assert (
         "approximated",
         "single.d",
@@ -189,7 +191,7 @@ def test_a_file_without_a_version_reports_none(tmp_path: Path) -> None:
 
 
 def test_exporting_names_what_nir_cannot_store() -> None:
-    """Timestep, subtract reset, node state and pooling input shape are not written."""
+    """State and pooling shape limitations remain explicit after profile preservation."""
     source, sink = _io(4)
     pooled = nir.NIRGraph(
         nodes={
@@ -213,17 +215,6 @@ def test_exporting_names_what_nir_cannot_store() -> None:
         (
             "not-carried",
             "",
-            "NIR stores no timestep; dt=0.25 must be supplied again on import",
-        ),
-        (
-            "not-carried",
-            "",
-            "NIR stores no reset rule; the subtract reset is lost and importers "
-            "apply the NIR convention of reset to v_reset",
-        ),
-        (
-            "not-carried",
-            "",
             "NIR stores no node state; membrane, current and delay-buffer state is "
             "not written and an importer starts from the initial state",
         ),
@@ -231,8 +222,8 @@ def test_exporting_names_what_nir_cannot_store() -> None:
     ]
 
 
-def test_a_stateless_reset_graph_exports_with_only_the_timestep_note() -> None:
-    """With nothing else lost, only the timestep remains to be supplied."""
+def test_a_stateless_reset_graph_keeps_its_timestep_without_loss_notes() -> None:
+    """Execution metadata carries the timestep and no state is lost."""
     source, sink = _io()
     graph = nir.NIRGraph(
         nodes={"in": source, "scale": nir.Scale(scale=np.array([2.0])), "out": sink},
@@ -240,8 +231,10 @@ def test_a_stateless_reset_graph_exports_with_only_the_timestep_note() -> None:
     )
     network = from_nir(graph)
 
-    assert [note.kind for note in export_notes(network)] == ["not-carried"]
-    assert isinstance(to_nir(network), nir.NIRGraph)
+    assert export_notes(network) == []
+    exported = to_nir(network)
+    assert isinstance(exported, nir.NIRGraph)
+    assert from_nir(exported).dt == network.dt
 
 
 def test_notes_serialise_for_the_studio_and_the_compile_result_carries_them(

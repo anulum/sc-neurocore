@@ -31,7 +31,9 @@ def add_mapping_command(
     )
     parser.add_argument("model", nargs="?", help="NIR model file")
     parser.add_argument("--output", "-o", default="build", help="Report output directory")
-    parser.add_argument("--dt", type=float, default=1.0, help="NIR simulation timestep")
+    parser.add_argument(
+        "--dt", type=float, default=None, help="NIR timestep (recorded clock, otherwise 1)"
+    )
     parser.add_argument("--T", type=int, default=256, help="Stochastic bitstream length")
     parser.add_argument(
         "--hardware-targets",
@@ -80,7 +82,7 @@ def run_mapping(args: argparse.Namespace) -> int:
         )
 
         graph = nir_lib.read(model_path)
-        network = from_nir(graph, dt=float(args.dt))
+        network = from_nir(graph, dt=args.dt)
         report_path = write_silicon_mapping_report(
             str(args.output),
             network,

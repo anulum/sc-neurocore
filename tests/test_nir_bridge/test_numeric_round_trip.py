@@ -92,7 +92,7 @@ def _trace(network: Any, drive: list[np.ndarray[Any, Any]]) -> list[np.ndarray[A
 def test_a_network_read_back_from_its_nir_file_computes_identically(
     tmp_path: Path, build: Any, width: int, dt: float
 ) -> None:
-    """Same inputs, same outputs, shapes and parameters after a file round trip."""
+    """Preserve outputs, shapes and parameters after a real file round trip."""
     original = from_nir(build(), dt=dt)
     path = tmp_path / "round_trip.nir"
     to_nir(original, path)
@@ -115,3 +115,181 @@ def test_a_network_read_back_from_its_nir_file_computes_identically(
         np.testing.assert_array_equal(right, left, err_msg=f"step {step}")
     # A silent network would agree trivially; both cases spike repeatedly.
     assert sum(int(np.count_nonzero(trace)) for trace in expected) >= 5
+
+
+@pytest.mark.parametrize(
+    ("build", "width", "dt"),
+    [(_feedforward, 3, 1.0), (_current_based_with_delay_and_recurrence, 2, 0.5)],
+    ids=["feedforward-lif", "cuba-delay-recurrent"],
+)
+def test_import_owns_parameters_and_metadata_after_source_mutation(
+    tmp_path: Path, build: Any, width: int, dt: float
+) -> None:
+    """Keep imported and re-exported dynamics independent of caller-owned arrays."""
+    graph = build()
+    graph.metadata = {"note": {"tag": "original"}}
+    reference = from_nir(graph, dt=dt)
+    network = from_nir(graph, dt=dt)
+
+    for node in graph.nodes.values():
+        for value in vars(node).values():
+            if isinstance(value, np.ndarray) and value.dtype.kind in "fiu":
+                value[...] += 7
+    graph.metadata["note"]["tag"] = "changed"
+
+    drive = _drive(width)
+    expected = _trace(reference, drive)
+    for actual, wanted in zip(_trace(network, drive), expected, strict=True):
+        np.testing.assert_array_equal(actual, wanted)
+    assert sum(int(np.count_nonzero(trace)) for trace in expected) >= 5
+
+    path = tmp_path / "owned_parameters.nir"
+    to_nir(network, path)
+    restored = from_nir(path, dt=dt)
+    assert restored.nir_metadata["note"]["tag"] == "original"
+    for actual, wanted in zip(_trace(restored, drive), expected, strict=True):
+        np.testing.assert_array_equal(actual, wanted)
+
+
+def test_import_owns_mutable_convolution_geometry_and_export_definition(tmp_path: Path) -> None:
+    """Isolate mutable convolution shapes, weights and retained export definitions."""
+    shape = np.array([3, 3])
+    conv = nir.Conv2d(
+        input_shape=shape,
+        weight=np.ones((1, 1, 2, 2)),
+        bias=np.zeros(1),
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+    )
+    graph = nir.NIRGraph(
+        nodes={
+            "in": nir.Input(input_type=conv.input_type),
+            "conv": conv,
+            "out": nir.Output(output_type=conv.output_type),
+        },
+        edges=[("in", "conv"), ("conv", "out")],
+    )
+    network = from_nir(graph)
+    conv.input_shape[...] = 99
+    conv.weight[...] = 19
+    conv.bias[...] = -3
+    mapped = network.nodes["conv"]
+    np.testing.assert_array_equal(mapped.input_shape, [3, 3])
+    np.testing.assert_array_equal(network.step({"in": np.ones(9)})["out"], np.full((1, 2, 2), 4.0))
+
+    mapped.weight[...] = 2
+    np.testing.assert_array_equal(conv.weight, np.full((1, 1, 2, 2), 19.0))
+    np.testing.assert_array_equal(
+        network.nir_node_definitions["conv"].weight, np.ones((1, 1, 2, 2))
+    )
+    path = tmp_path / "owned_convolution.nir"
+    to_nir(network, path)
+    restored = from_nir(path)
+    np.testing.assert_array_equal(restored.step({"in": np.ones(9)})["out"], np.full((1, 2, 2), 8.0))
+
+
+def _convolution_fixture(
+    dimensions: int,
+) -> tuple[Any, Any, np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    """Build reference convolutions with caller-owned NumPy geometry."""
+    weights: np.ndarray[Any, np.dtype[np.float64]]
+    inputs: np.ndarray[Any, np.dtype[np.float64]]
+    if dimensions == 1:
+        weights = np.arange(1.0, 13.0).reshape(2, 2, 3)
+        inputs = np.arange(14.0).reshape(2, 7)
+        conv = nir.Conv1d(
+            input_shape=7,
+            weight=weights,
+            bias=np.array([0.25, -0.5]),
+            stride=1,
+            padding=0,
+            dilation=1,
+            groups=1,
+        )
+        expected = (
+            np.stack(
+                [
+                    sum(np.correlate(inputs[c], weights[o, c], mode="valid") for c in range(2))
+                    for o in range(2)
+                ]
+            )
+            + conv.bias[:, None]
+        )
+    else:
+        weights = np.arange(1.0, 17.0).reshape(2, 2, 2, 2)
+        inputs = np.arange(18.0).reshape(2, 3, 3)
+        conv = nir.Conv2d(
+            input_shape=(3, 3),
+            weight=weights,
+            bias=np.array([0.25, -0.5]),
+            stride=1,
+            padding=0,
+            dilation=1,
+            groups=1,
+        )
+        windows = np.lib.stride_tricks.sliding_window_view(inputs, (2, 2), axis=(1, 2))
+        expected = np.einsum("ockl,cijkl->oij", weights, windows) + conv.bias[:, None, None]
+    graph = nir.NIRGraph(
+        nodes={
+            "in": nir.Input(input_type=conv.input_type),
+            "conv": conv,
+            "out": nir.Output(output_type=conv.output_type),
+        },
+        edges=[("in", "conv"), ("conv", "out")],
+    )
+    # Admit the real reference graph with equivalent mutable NumPy geometry.
+    # NIR's constructor already established its input and output edge types.
+    for field in ("stride", "padding", "dilation", "groups", "input_shape"):
+        setattr(conv, field, np.asarray(getattr(conv, field)).copy())
+    return graph, conv, inputs, expected
+
+
+@pytest.mark.parametrize("dimensions", [1, 2], ids=["conv1d", "conv2d"])
+def test_mutable_source_convolution_geometry_cannot_change_execution_or_file(
+    tmp_path: Path,
+    dimensions: int,
+) -> None:
+    """Own every geometry field across import, source mutation and real file execution."""
+    graph, conv, inputs, expected = _convolution_fixture(dimensions)
+    network = from_nir(graph)
+    np.testing.assert_array_equal(network.step({"in": inputs})["out"], expected)
+    for field in ("stride", "padding", "dilation", "groups", "input_shape"):
+        getattr(conv, field)[...] = 2 if field == "groups" else 99
+    np.testing.assert_array_equal(network.step({"in": inputs})["out"], expected)
+    path = tmp_path / f"owned_geometry_{dimensions}d.nir"
+    to_nir(network, path)
+    restored = from_nir(path)
+    np.testing.assert_array_equal(restored.step({"in": inputs})["out"], expected)
+    for imported in (network, restored):
+        mapped = imported.nodes["conv"]
+        for field in ("stride", "padding", "dilation", "groups", "input_shape"):
+            value = getattr(mapped, field)
+            assert type(value) in (int, tuple)
+            if isinstance(value, tuple):
+                assert all(type(item) is int for item in value)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("groups", True),
+        ("groups", 1.5),
+        ("groups", 0),
+        ("groups", np.array([1, 2])),
+        ("stride", 0),
+        ("dilation", 0),
+        ("padding", -1),
+        ("input_shape", 0),
+    ],
+)
+def test_convolution_geometry_refuses_noninteger_or_invalid_extents_at_import(
+    field: str,
+    value: Any,
+) -> None:
+    """Refuse lossy scalar coercion and invalid geometry before real graph execution."""
+    graph, conv, _, _ = _convolution_fixture(1)
+    setattr(conv, field, value)
+    with pytest.raises(ValueError, match=f"Convolution {field}"):
+        from_nir(graph)

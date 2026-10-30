@@ -127,6 +127,10 @@ annealing = ["dwave-neal", "dimod"]
 quantum = ["qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental layer
 nir = ["nir>=1.0,<1.0.9"]  # nir 1.0.8 makes Flatten.input_type mandatory; supplied by nir_bridge.export
+interop-snntorch = ["nir==1.0.8", "snntorch==1.0.0", "nirtorch==2.6", "torch>=2.0"]
+# Sinabs 3.1.3 requires nir<=1.0.4; NIRTorch 2.0.3+ requires nir>=1.0.6.
+# Keep this legacy reference profile separate from interop-snntorch.
+interop-sinabs = ["nir==1.0.4", "sinabs==3.1.3", "nirtorch==2.0.2", "torch>=2.0"]
 neuroml = ["libNeuroML>=0.6.7,<0.7"]  # write and schema-validate NeuroML 2 documents
 sonata = ["libsonata>=0.2.2,<0.3"]  # read SONATA circuits through the reference library
 mpi = ["mpi4py>=3.0"]

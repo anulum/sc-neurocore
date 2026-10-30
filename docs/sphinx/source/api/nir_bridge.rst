@@ -3,7 +3,7 @@ NIR Bridge
 
 SC-NeuroCore provides bidirectional conversion between
 `NIR <https://neuroir.org/>`_ graphs and SC-NeuroCore networks,
-giving NIR its first FPGA synthesis backend.
+with explicit execution settings and a validated hardware lowering path.
 
 .. contents:: On this page
    :local:
@@ -47,3 +47,12 @@ Export
 .. automodule:: sc_neurocore.nir_bridge.export
    :members:
    :show-inheritance:
+
+Framework inference
+-------------------
+
+The package facade exposes ``from_snntorch`` and ``to_snntorch`` lazily.
+The qualified lane uses separate pinned profiles, CPU float64 vectors and
+real snnTorch cells. Unsupported reset, topology and stochastic bitstream
+contracts are refused. See the NIR integration guide for the exact preserved
+semantics and the distinction between native Sinabs and SC reference execution.

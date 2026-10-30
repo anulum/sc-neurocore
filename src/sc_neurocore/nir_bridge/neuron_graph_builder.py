@@ -102,6 +102,11 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
     for name in topo_order:
         node = nodes[name]
         class_name = type(node).__name__
+        if class_name in {"SCLIFNode", "SCIFNode", "SCCubaLIFNode"} and node.reset_mode != "reset":
+            raise ValueError(
+                f"Hardware lowering cannot preserve subtract reset at {name!r}; "
+                "the current neuron templates reset to v_reset"
+            )
         if class_name == "SCInputNode":
             if name in boundary_inputs or not input_pop:
                 input_pop = name

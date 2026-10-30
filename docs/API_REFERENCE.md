@@ -35414,6 +35414,68 @@ list of str
 
 ---
 
+## Module `nir_bridge.execution_metadata`
+
+### Class `ExecutionSettings`
+Describe one discrete-time network execution convention.
+
+Parameters
+----------
+dt : float
+    Positive finite timestep in the same time unit as the NIR parameters.
+reset_mode : str
+    Immediate reset to the declared reset potential, or threshold subtraction.
+
+
+### Function `read_execution_settings(metadata, *, dt, reset_mode)`
+Resolve import options against the execution contract in NIR metadata.
+
+Parameters
+----------
+metadata : mapping
+    Graph metadata read by the reference NIR library.
+dt : float or None
+    Requested timestep. A recorded timestep is used when this is absent.
+reset_mode : str or None
+    Requested reset convention. A recorded convention is used when absent.
+
+Returns
+-------
+ExecutionSettings
+    Recorded settings, explicit options, or the foreign-graph defaults of
+    timestep one and immediate reset to the reset potential.
+
+Raises
+------
+ValueError
+    The recorded contract is malformed, options are invalid, or an option
+    contradicts a setting already recorded in the graph.
+
+### Function `write_execution_metadata(metadata, *, dt, reset_mode)`
+Copy graph metadata and record the current execution settings.
+
+Parameters
+----------
+metadata : mapping
+    Original metadata, retained independently of the source object.
+dt : float
+    Positive finite timestep in the graph's declared time unit.
+reset_mode : str
+    Immediate reset to the reset potential, or threshold subtraction.
+
+Returns
+-------
+dict
+    Independent metadata with the versioned execution extension.
+
+Raises
+------
+ValueError
+    Existing execution metadata is not a recognised contract, or the
+    supplied settings are invalid.
+
+---
+
 ## Module `nir_bridge.export`
 
 ### Function `to_nir(network, path)`
@@ -35982,6 +36044,62 @@ str
 
 ---
 
+## Module `nir_bridge.graph_identity`
+
+### Function `preserve_definition(original, exported)`
+Restore original parameter shapes and dtypes where values are unchanged.
+
+Parameters
+----------
+original : nir.NIRNode or None
+    Independent primitive definition retained at import.
+exported : nir.NIRNode
+    Definition reconstructed from the current executable parameters.
+
+Returns
+-------
+nir.NIRNode
+    Current definition, with unchanged fields represented as in the source.
+    Changed parameters keep their current values rather than stale originals.
+
+### Function `graph_order(graph)`
+Read a graph's declared scheduling order, refusing stale order metadata.
+
+Parameters
+----------
+graph : nir.NIRGraph
+    Graph read through the ordinary NIR reader or supplied by the caller.
+
+Returns
+-------
+tuple
+    Node names and edges in their original order. Foreign graphs retain
+    their current insertion order.
+
+Raises
+------
+ValueError
+    Recorded order is malformed or disagrees with the graph topology.
+
+### Function `write_graph_order(metadata, nodes, edges)`
+Record ordering lost when HDF5 groups enumerate node names alphabetically.
+
+Parameters
+----------
+metadata : dict
+    Independent metadata created for the exported graph.
+nodes : list of str
+    Executable node order, excluding internal recurrent delay nodes.
+edges : list of tuple
+    Original edge order, including duplicate edges where present.
+
+Returns
+-------
+dict
+    Metadata carrying a portable JSON order contract.
+
+---
+
 ## Module `nir_bridge.hardware_targets`
 
 ### Class `SCMappingConstraints`
@@ -36229,11 +36347,13 @@ hierarchy : tuple&#91;HierarchyInstanceSpec, ...&#93;
 Graph entry point — passes input through unchanged.
 
 - **forward**(x)
+  - Return the caller-supplied input without changing its values.
 
 ### Class `SCOutputNode`
 Graph exit point — collects output.
 
 - **forward**(x)
+  - Expose the incoming graph value at this output boundary.
 
 ### Class `SCLIFNode`
 LIF neuron mapped from NIR LIF primitive.
@@ -36242,9 +36362,13 @@ NIR LIF: tau*dv/dt = (v_leak - v) + R*I, spike when v > v_threshold
 Euler: v += ((v_leak - v) + R*I) * dt/tau
 
 - **from_nir**(name, node, dt, reset_mode)
+  - Copy LIF parameters and select its Euler timestep and reset convention.
 - **__post_init__**()
+  - Initialise floating membrane state at the declared leak potential.
 - **forward**(x)
+  - Advance Euler voltage, detect spikes and apply the selected reset.
 - **reset**()
+  - Restore membrane voltage to the declared leak potential.
 
 ### Class `SCIFNode`
 IF neuron — integrator with threshold, no leak.
@@ -36253,9 +36377,13 @@ NIR IF: dv/dt = R*I, spike when v > v_threshold
 Euler: v += R*I*dt
 
 - **from_nir**(name, node, dt, reset_mode)
+  - Copy IF resistance, threshold and reset voltage at the requested timestep.
 - **__post_init__**()
+  - Initialise the IF membrane at zero in floating precision.
 - **forward**(x)
+  - Integrate input current, detect spikes and apply the selected IF reset.
 - **reset**()
+  - Clear the IF membrane to its initial zero voltage.
 
 ### Class `SCLINode`
 Leaky integrator — LIF without threshold.
@@ -36263,49 +36391,67 @@ Leaky integrator — LIF without threshold.
 NIR LI: tau*dv/dt = (v_leak - v) + R*I
 
 - **from_nir**(name, node, dt)
+  - Copy the leaky integrator parameters and its Euler timestep.
 - **__post_init__**()
+  - Initialise floating integrator voltage at the leak potential.
 - **forward**(x)
+  - Advance the leaky Euler state and return the resulting voltage.
 - **reset**()
+  - Restore the leaky integrator voltage to its leak potential.
 
 ### Class `SCAffineNode`
-Dense linear transform with bias: y = Wx + b
+Dense linear transform with bias: y = Wx + b.
 
 - **from_nir**(name, node)
+  - Copy a NIR weight matrix and bias into independent NumPy arrays.
 - **forward**(x)
+  - Flatten the input vector and apply its weighted affine projection.
 
 ### Class `SCLinearNode`
-Matrix multiply without bias: y = Wx
+Matrix multiply without bias: y = Wx.
 
 - **from_nir**(name, node)
+  - Copy a NIR weight matrix into an independent NumPy array.
 - **forward**(x)
+  - Flatten the input vector and apply its matrix projection.
 
 ### Class `SCScaleNode`
-Element-wise scaling: y = s * x
+Element-wise scaling: y = s * x.
 
 - **from_nir**(name, node)
+  - Copy the NIR elementwise scale into an independent NumPy array.
 - **forward**(x)
+  - Multiply incoming values by the declared elementwise scale.
 
 ### Class `SCThresholdNode`
-Spike threshold: y = 1 if x > threshold else 0
+Spike threshold: y = 1 if x > threshold else 0.
 
 - **from_nir**(name, node)
+  - Copy the NIR detection thresholds into an independent NumPy array.
 - **forward**(x)
+  - Emit binary spikes where inputs strictly exceed their thresholds.
 
 ### Class `SCFlattenNode`
 Reshape tensor — flatten dimensions.
 
 - **from_nir**(name, node)
+  - Retain the source shape and dimension interval of a NIR flatten operation.
 - **forward**(x)
+  - Reshape the declared dimension interval while preserving element order.
 
 ### Class `SCIntegratorNode`
-Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt
+Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt.
 
 - **from_nir**(name, node, dt)
+  - Copy the NIR integrator resistance and assign its Euler timestep.
 - **n_neurons**()
   - Number of integrator state channels.
 - **__post_init__**()
+  - Initialise the integrator state to floating zero.
 - **forward**(x)
+  - Accumulate resistance-weighted input current over one timestep.
 - **reset**()
+  - Clear the accumulated integrator voltage to floating zero.
 
 ### Class `SCDelayNode`
 Temporal delay: output = input(t - delay).
@@ -36314,9 +36460,13 @@ NIR Delay: I(t - tau). Implemented as a circular buffer per element.
 Delay values are rounded to integer timesteps.
 
 - **from_nir**(name, node, dt)
+  - Convert NIR delay times to rounded per-channel timestep counts.
 - **__post_init__**()
+  - Allocate the delay history required by the longest channel latency.
 - **forward**(x)
+  - Return each channel from its declared historical timestep.
 - **reset**()
+  - Clear all channel delay history and restore the buffer index.
 
 ### Class `SCCubaLIFNode`
 Current-based LIF with synaptic filter.
@@ -36326,9 +36476,13 @@ NIR CubaLIF: tau_syn * dI_syn/dt = -I_syn + w_in * I
              spike when v > v_threshold, reset to v_reset
 
 - **from_nir**(name, node, dt, reset_mode)
+  - Copy current-based LIF parameters, timestep and reset convention.
 - **__post_init__**()
+  - Initialise floating membrane voltage and zero synaptic current.
 - **forward**(x)
+  - Advance synaptic current before membrane voltage, then detect and reset spikes.
 - **reset**()
+  - Restore leak voltage and clear the accumulated synaptic current.
 
 ### Class `SCCubaLINode`
 Current-based leaky integrator (CubaLIF without threshold).
@@ -36337,33 +36491,45 @@ NIR CubaLI: tau_syn * dI_syn/dt = -I_syn + w_in * I
             tau_mem * dv/dt = (v_leak - v) + R * I_syn
 
 - **from_nir**(name, node, dt)
+  - Copy current-based integrator parameters and its Euler timestep.
 - **__post_init__**()
+  - Initialise the current-based integrator voltage and synaptic current.
 - **forward**(x)
+  - Advance the synaptic and membrane Euler states and return voltage.
 - **reset**()
+  - Restore leak voltage and clear the current-based integrator current.
 
 ### Class `SCSumPool2dNode`
 2D sum pooling: sum over spatial kernel windows.
 
 - **from_nir**(name, node)
+  - Retain sum-pooling geometry and declared channel-spatial input shape.
 - **forward**(x)
+  - Sum spatial windows with the declared padding, stride and kernel.
 
 ### Class `SCAvgPool2dNode`
 2D average pooling: SumPool / kernel_area.
 
 - **from_nir**(name, node)
+  - Retain average-pooling geometry and declared channel-spatial input shape.
 - **forward**(x)
+  - Average spatial windows with the declared padding, stride and kernel.
 
 ### Class `SCConv1dNode`
 1D convolution: y = conv1d(x, weight) + bias.
 
 - **from_nir**(name, node)
+  - Copy one-dimensional convolution weights and resolve symmetric padding.
 - **forward**(x)
+  - Apply the grouped one-dimensional convolution to channel-spatial input.
 
 ### Class `SCConv2dNode`
 2D convolution: y = conv2d(x, weight) + bias.
 
 - **from_nir**(name, node)
+  - Copy two-dimensional convolution weights and normalise spatial geometry.
 - **forward**(x)
+  - Apply the grouped two-dimensional convolution to channel-spatial input.
 
 ### Function `map_node(name, node, **kwargs)`
 Convert a single NIR node to its SC-NeuroCore equivalent.
@@ -36376,8 +36542,11 @@ Convert a single NIR node to its SC-NeuroCore equivalent.
 Executable wrapper for a nested NIR subgraph (single I/O port).
 
 - **__post_init__**()
+  - Require one named input and output at a single-port nested boundary.
 - **forward**(x)
+  - Advance the nested graph once using its sole input and output ports.
 - **reset**()
+  - Restore every stateful node inside the nested graph.
 
 ### Class `SCMultiPortSubgraphNode`
 Executable wrapper for a nested NIR subgraph with multiple I/O ports.
@@ -36386,13 +36555,17 @@ Supports modular architectures where subgraphs expose multiple named
 inputs and outputs (e.g., encoder-decoder, skip connections).
 
 - **__post_init__**()
+  - Require a nested graph with at least one input and output boundary.
 - **input_ports**()
+  - Return the nested graph's input names in their declared order.
 - **output_ports**()
+  - Return the nested graph's output names in their declared order.
 - **forward**(x)
   - Single-input convenience: feeds x to first input, returns first output.
 - **forward_multi**(inputs)
   - Multi-port forward: provide named inputs, get named outputs.
 - **reset**()
+  - Restore every stateful node across all nested ports.
 
 ### Class `SCNetwork`
 Executable network parsed from a NIR graph.
@@ -36404,11 +36577,17 @@ number of timesteps and returns the output node's accumulated result.
 Recurrent edges (cycles) are automatically handled by inserting
 unit-delay nodes that feed from the previous timestep.
 
+Original graph and primitive metadata are kept independently of the input
+object. NIR export records the timestep and reset convention in the
+versioned execution extension; it does not export an in-progress state
+checkpoint.
+
 - **from_nir**(source, dt, reset_mode)
-  - Build an ``SCNetwork`` directly from a NIR graph or file path.
+  - Build a network using the same metadata and admission as the importer.
 - **to_hardware**(\*, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target, dt, online_learning)
   - Compile this parsed network to the existing FPGA artefact bundle.
 - **topo_order**()
+  - Return the execution order, inserting declared recurrent delays once.
 - **step**(inputs)
   - Execute one timestep through the graph.
 - **run**(inputs, steps)
@@ -36425,11 +36604,14 @@ Parameters
 ----------
 source : nir.NIRGraph or str or Path
     NIR graph object, or path to a .nir file.
-dt : float
-    Timestep for leaky integrator dynamics.
-reset_mode : str
-    Spike reset mechanism: "reset" (v = v_reset, NIR spec default)
-    or "subtract" (v = v - v_threshold, used by snnTorch).
+dt : float or None
+    Timestep for leaky integrator dynamics. Recorded execution metadata is
+    used when omitted; foreign graphs without it default to one time unit.
+reset_mode : str or None
+    Spike reset mechanism: "reset" (v = v_reset, bridge default)
+    or "subtract" (ordinary SC subtraction). "snntorch-subtract" also accounts
+    for the previous membrane reset signal before detection. When omitted,
+    recorded settings apply, or foreign graphs default to "reset".
 
 Returns
 -------
@@ -36441,8 +36623,8 @@ SCNetwork
 Raises
 ------
 ValueError
-    ``dt`` is not a positive finite number, ``reset_mode`` is neither
-    ``"reset"`` nor ``"subtract"``, or the graph is malformed.
+    ``dt`` is not a positive finite number, ``reset_mode`` is unsupported,
+    or the graph is malformed.
 
 ---
 
@@ -36502,6 +36684,63 @@ Build a deterministic target-mapping report for a parsed NIR network.
 
 ### Function `write_silicon_mapping_report(output_dir, source, config)`
 Write `nir_silicon_mapping_report.json` in deterministic form.
+
+---
+
+## Module `nir_bridge.snntorch_bridge`
+
+### Function `from_snntorch(model, sample, *, dt, scnir)`
+Import a sequential snnTorch inference definition through public NIRTorch FX.
+
+Parameters
+----------
+model : torch.nn.Sequential
+    Flat sequence of Linear, Leaky and Synaptic layers, CPU float64.
+    Cells must use immediate, uniform zero or subtract reset, hidden state
+    and spike-only outputs. Source parameters and live state are untouched.
+sample : torch.Tensor
+    Finite unbatched input vector defining the boundary width.
+dt : float
+    Positive finite timestep in the intended NIR time unit.
+scnir : object or None
+    An attached stochastic stream contract is refused rather than erased.
+
+Returns
+-------
+SCNetwork
+    Fresh-state inference graph with recorded timestep and reset convention.
+
+Raises
+------
+TypeError
+    The source is not a supported Torch sequence or tensor.
+ValueError
+    Precision, dynamics, topology or an SC contract cannot be preserved.
+
+### Function `to_snntorch(network, *, scnir)`
+Export a supported SCNetwork chain as real Torch and snnTorch modules.
+
+Parameters
+----------
+network : SCNetwork
+    Single-input, single-output chain of Affine, Linear, IF, LIF and CubaLIF
+    primitives. Leak and hard-reset potentials must be zero; decay factors
+    must lie in &#91;0,1&#93;. Export starts from reset state, not current live state.
+scnir : object or None
+    SC-NIR bitstream contracts cannot be preserved by float inference.
+
+Returns
+-------
+torch.nn.Sequential
+    Independent CPU float64 layers with real snnTorch cells. Each call
+    advances one timestep. Reset individual cells with their reset_mem().
+
+Raises
+------
+TypeError
+    The argument is not an SCNetwork floating reference graph.
+ValueError
+    A primitive, topology, dynamics or stochastic contract is unsupported.
 
 ---
 
@@ -46677,8 +46916,9 @@ round trip returns the network that was exported. A version-1 document
 carried none of those: its edges connect all-to-all, which is what it has
 always meant, and its populations are named by their identifiers.
 
-The assembled graph is validated against the graph schema with the Studio
-default timestep, so an import that would not execute (sign conflicts,
+Version 3 also carries timestep, duration, seed, drive, projection identity
+and layout. Older documents keep their documented defaults. The assembled
+graph is validated against the graph schema, so a non-executable import (sign conflicts,
 delays that are not whole default steps, inadmissible models, budgets) is
 rejected here instead of surfacing later on the canvas.
 

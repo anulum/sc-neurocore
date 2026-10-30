@@ -6,9 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Export SC-NeuroCore networks to NIR format
 
+"""Export executable networks and their execution metadata through reference NIR."""
+
 from __future__ import annotations
 
 from pathlib import Path
+from copy import deepcopy
+from collections import Counter
+from dataclasses import fields
+from typing import Any
 
 import numpy as np
 
@@ -37,6 +43,18 @@ from .node_map import (
     SCSumPool2dNode,
     SCThresholdNode,
 )
+from .execution_metadata import write_execution_metadata
+from .graph_identity import preserve_definition, write_graph_order
+
+
+def _spiking_definition(node_type: Any, **parameters: Any) -> Any:
+    if "v_reset" not in {field.name for field in fields(node_type)}:
+        if np.any(parameters["v_reset"] != 0):
+            raise ValueError(
+                "This NIR version cannot preserve nonzero reset potentials; use NIR 1.0.8"
+            )
+        parameters.pop("v_reset")
+    return node_type(**parameters)
 
 
 def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-untyped-def]
@@ -46,7 +64,8 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-unty
     if isinstance(node, SCOutputNode):
         return nir.Output(output_type={"output": np.array(list(node.shape))})
     if isinstance(node, SCLIFNode):
-        return nir.LIF(
+        return _spiking_definition(
+            nir.LIF,
             tau=node.tau.copy(),
             r=node.r.copy(),
             v_leak=node.v_leak.copy(),
@@ -54,7 +73,8 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-unty
             v_reset=node.v_reset.copy(),
         )
     if isinstance(node, SCIFNode):
-        return nir.IF(
+        return _spiking_definition(
+            nir.IF,
             r=node.r.copy(),
             v_threshold=node.v_threshold.copy(),
             v_reset=node.v_reset.copy(),
@@ -88,7 +108,8 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-unty
             end_dim=node.end_dim,
         )
     if isinstance(node, SCCubaLIFNode):
-        return nir.CubaLIF(
+        return _spiking_definition(
+            nir.CubaLIF,
             tau_syn=node.tau_syn.copy(),
             tau_mem=node.tau_mem.copy(),
             r=node.r.copy(),
@@ -98,6 +119,8 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-unty
             v_reset=node.v_reset.copy(),
         )
     if isinstance(node, SCCubaLINode):
+        if not hasattr(nir, "CubaLI"):
+            raise ValueError("This NIR version cannot represent CubaLI; use NIR 1.0.8")
         return nir.CubaLI(
             tau_syn=node.tau_syn.copy(),
             tau_mem=node.tau_mem.copy(),
@@ -181,6 +204,13 @@ def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:  # type: ig
         nir_node = _node_to_nir(name, node)
         if nir_node is None:
             raise ValueError(f"Cannot export node {name!r} of type {type(node).__name__} to NIR")
+        nir_node = preserve_definition(network.nir_node_definitions.get(name), nir_node)
+        if isinstance(node, (SCConv1dNode, SCConv2dNode)):
+            # Keep canonical geometry after restoring parameter representation;
+            # reference NIR cannot write compressed zero-dimensional arrays.
+            for field_name in ("stride", "padding", "dilation", "groups", "input_shape"):
+                setattr(nir_node, field_name, getattr(node, field_name))
+        nir_node.metadata = deepcopy(network.nir_node_metadata.get(name, {}))
         nodes[name] = nir_node
 
     # Replace delay edges with original recurrent edges
@@ -196,7 +226,19 @@ def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:  # type: ig
         else:
             clean_edges.append((src, dst))
 
-    graph = nir.NIRGraph(nodes=nodes, edges=clean_edges)
+    if Counter(clean_edges) == Counter(network._nir_source_edges):
+        clean_edges = network._nir_source_edges.copy()
+    graph = nir.NIRGraph(
+        nodes=nodes,
+        edges=clean_edges,
+        metadata=write_graph_order(
+            write_execution_metadata(
+                network.nir_metadata, dt=network.dt, reset_mode=network.reset_mode
+            ),
+            list(nodes),
+            clean_edges,
+        ),
+    )
 
     if path is not None:
         nir.write(str(path), graph)

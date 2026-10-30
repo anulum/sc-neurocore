@@ -6,10 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR graph parser
 
+"""Execute NIR graphs with explicit clocks, reset conventions and metadata custody."""
+
 from __future__ import annotations
 
-import math
 from collections.abc import Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -22,9 +24,9 @@ except ImportError as e:
     raise ImportError("pip install nir") from e
 
 from .interchange_notes import InterchangeNote, import_notes, read_nir_file_version
+from .execution_metadata import read_execution_settings
+from .graph_identity import graph_order
 from .node_map import map_node
-
-_RESET_MODES = ("reset", "subtract")
 
 
 @dataclass
@@ -59,14 +61,17 @@ class SCSubgraphNode:
     network: SCNetwork
 
     def __post_init__(self) -> None:
+        """Require one named input and output at a single-port nested boundary."""
         if len(self.network.input_nodes) != 1 or len(self.network.output_nodes) != 1:
             raise ValueError("Nested NIRGraph nodes must expose exactly one input and one output")
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Advance the nested graph once using its sole input and output ports."""
         outputs = self.network.step({self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))})
         return outputs[self.network.output_nodes[0]]
 
     def reset(self) -> None:
+        """Restore every stateful node inside the nested graph."""
         self.network.reset()
 
 
@@ -82,15 +87,18 @@ class SCMultiPortSubgraphNode:
     network: SCNetwork
 
     def __post_init__(self) -> None:
+        """Require a nested graph with at least one input and output boundary."""
         if not self.network.input_nodes or not self.network.output_nodes:
             raise ValueError("Multi-port subgraph must have at least one input and one output")
 
     @property
     def input_ports(self) -> list[str]:
+        """Return the nested graph's input names in their declared order."""
         return self.network.input_nodes
 
     @property
     def output_ports(self) -> list[str]:
+        """Return the nested graph's output names in their declared order."""
         return self.network.output_nodes
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -106,6 +114,7 @@ class SCMultiPortSubgraphNode:
         return self.network.step(inputs)
 
     def reset(self) -> None:
+        """Restore every stateful node across all nested ports."""
         self.network.reset()
 
 
@@ -119,6 +128,11 @@ class SCNetwork:
 
     Recurrent edges (cycles) are automatically handled by inserting
     unit-delay nodes that feed from the previous timestep.
+
+    Original graph and primitive metadata are kept independently of the input
+    object. NIR export records the timestep and reset convention in the
+    versioned execution extension; it does not export an in-progress state
+    checkpoint.
     """
 
     nodes: dict[str, Any] = field(default_factory=dict)
@@ -133,11 +147,36 @@ class SCNetwork:
     reset_mode: str = "reset"
     nir_version: str | None = None
     interchange_notes: list[InterchangeNote] = field(default_factory=list)
+    nir_metadata: dict[str, Any] = field(default_factory=dict)
+    nir_node_metadata: dict[str, dict[str, Any]] = field(default_factory=dict)
+    nir_node_definitions: dict[str, Any] = field(default_factory=dict)
+    _nir_source_edges: list[tuple[str, str]] = field(default_factory=list)
 
     @classmethod
-    def from_nir(cls, source: Any, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:
-        """Build an ``SCNetwork`` directly from a NIR graph or file path."""
+    def from_nir(
+        cls, source: Any, dt: float | None = None, reset_mode: str | None = None
+    ) -> SCNetwork:
+        """Build a network using the same metadata and admission as the importer.
 
+        Parameters
+        ----------
+        source : object
+            Reference NIR graph or path to its HDF5 file.
+        dt : float or None
+            Explicit timestep, or the recorded clock and foreign-graph default.
+        reset_mode : str or None
+            Explicit reset convention, or the recorded convention and default.
+
+        Returns
+        -------
+        SCNetwork
+            Executable graph with independent metadata custody.
+
+        Raises
+        ------
+        ValueError
+            The graph, execution metadata or explicit import options are invalid.
+        """
         network = from_nir(source, dt=dt, reset_mode=reset_mode)
         if not isinstance(network, cls):
             raise TypeError(f"Expected {cls.__name__}, got {type(network).__name__}")
@@ -156,8 +195,19 @@ class SCNetwork:
         dt: float | None = None,
         online_learning: Mapping[str, Mapping[str, Any]] | None = None,
     ) -> Any:
-        """Compile this parsed network to the existing FPGA artefact bundle."""
+        """Compile this parsed network to the existing FPGA artefact bundle.
 
+        Returns
+        -------
+        NetworkCompilationResult
+            The normal hardware compiler result for the declared target and
+            stream, precision, seed and learning configuration.
+
+        Raises
+        ------
+        ValueError
+            The graph or requested hardware configuration cannot be lowered.
+        """
         from .fpga_compiler import compile_network_to_fpga
         from .neuron_graph import from_scnetwork
 
@@ -240,6 +290,7 @@ class SCNetwork:
 
     @property
     def topo_order(self) -> list[str]:
+        """Return the execution order, inserting declared recurrent delays once."""
         if self._topo_order is None:
             self._topo_order = self._topological_sort()
         return self._topo_order
@@ -275,6 +326,19 @@ class SCNetwork:
                 else:
                     x = np.array([0.0])
                 values[name] = node.forward(x)
+
+            # Primitive executors use flat state vectors or squeeze convolution
+            # results internally. Restore the NIR edge's declared tensor rank
+            # before the next graph node consumes it. A scalar broadcast import
+            # without a matching declared width retains its inferred width.
+            definition = self.nir_node_definitions.get(name)
+            declared = getattr(definition, "output_type", None)
+            if declared and len(declared) == 1:
+                shape = next(iter(declared.values()))
+                if shape is not None:
+                    dimensions = tuple(int(value) for value in np.asarray(shape).reshape(-1))
+                    if np.prod(dimensions, dtype=np.int64) == np.size(values[name]):
+                        values[name] = np.asarray(values[name]).reshape(dimensions)
 
         # Update delay buffers with this timestep's source values
         for delay_name, src_name in self._recurrent_map.items():
@@ -323,18 +387,21 @@ class SCNetwork:
         return "\n".join(lines)
 
 
-def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:  # type: ignore[no-untyped-def]
+def from_nir(source: object, dt: float | None = None, reset_mode: str | None = None) -> SCNetwork:
     """Convert a NIR graph to an executable SC-NeuroCore network.
 
     Parameters
     ----------
     source : nir.NIRGraph or str or Path
         NIR graph object, or path to a .nir file.
-    dt : float
-        Timestep for leaky integrator dynamics.
-    reset_mode : str
-        Spike reset mechanism: "reset" (v = v_reset, NIR spec default)
-        or "subtract" (v = v - v_threshold, used by snnTorch).
+    dt : float or None
+        Timestep for leaky integrator dynamics. Recorded execution metadata is
+        used when omitted; foreign graphs without it default to one time unit.
+    reset_mode : str or None
+        Spike reset mechanism: "reset" (v = v_reset, bridge default)
+        or "subtract" (ordinary SC subtraction). "snntorch-subtract" also accounts
+        for the previous membrane reset signal before detection. When omitted,
+        recorded settings apply, or foreign graphs default to "reset".
 
     Returns
     -------
@@ -346,11 +413,9 @@ def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:  
     Raises
     ------
     ValueError
-        ``dt`` is not a positive finite number, ``reset_mode`` is neither
-        ``"reset"`` nor ``"subtract"``, or the graph is malformed.
+        ``dt`` is not a positive finite number, ``reset_mode`` is unsupported,
+        or the graph is malformed.
     """
-    _validate_import_options(dt, reset_mode)
-
     version: str | None = None
     if isinstance(source, (str, Path)):
         graph = _read_nir_file(source)
@@ -361,19 +426,13 @@ def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:  
         raise TypeError(f"Expected NIRGraph or path, got {type(source)}")
 
     _validate_nir_graph_boundary(graph)
-    network = _parse_graph(graph, dt=dt, reset_mode=reset_mode)
+    settings = read_execution_settings(graph.metadata, dt=dt, reset_mode=reset_mode)
+    network = _parse_graph(graph, dt=settings.dt, reset_mode=settings.reset_mode)
     network.nir_version = version
-    network.interchange_notes = import_notes(graph, network, dt=dt, reset_mode=reset_mode)
+    network.interchange_notes = import_notes(
+        graph, network, dt=settings.dt, reset_mode=settings.reset_mode
+    )
     return network
-
-
-def _validate_import_options(dt: float, reset_mode: str) -> None:
-    if not isinstance(dt, (int, float)) or isinstance(dt, bool) or not math.isfinite(float(dt)):
-        raise ValueError("NIR import dt must be a finite number")
-    if float(dt) <= 0:
-        raise ValueError("NIR import dt must be positive")
-    if reset_mode not in _RESET_MODES:
-        raise ValueError(f"NIR import reset_mode must be one of {_RESET_MODES}, got {reset_mode!r}")
 
 
 def _read_nir_file(source: str | Path) -> Any:
@@ -419,11 +478,14 @@ def _parse_graph(
     reset_mode: str = "reset",
 ) -> SCNetwork:
     """Recursively parse a NIR graph into an SCNetwork."""
+    read_execution_settings(graph.metadata, dt=dt, reset_mode=reset_mode)
+    ordered_names, edges = graph_order(graph)
     nodes = {}
     input_nodes = []
     output_nodes = []
 
-    for name, node in graph.nodes.items():
+    for name in ordered_names:
+        node = graph.nodes[name]
         if isinstance(node, nir.NIRGraph):
             sub_net = _parse_graph(node, dt=dt, reset_mode=reset_mode)
             if len(sub_net.input_nodes) == 1 and len(sub_net.output_nodes) == 1:
@@ -431,14 +493,14 @@ def _parse_graph(
             else:
                 nodes[name] = SCMultiPortSubgraphNode(name=name, network=sub_net)  # type: ignore[assignment]
         else:
+            # Factories own their numerical arrays and mutable geometry. Retain
+            # one independent original definition below, without copying twice.
             sc_node = map_node(name, node, dt=dt, reset_mode=reset_mode)
             nodes[name] = sc_node
             if isinstance(node, nir.Input):
                 input_nodes.append(name)
             elif isinstance(node, nir.Output):
                 output_nodes.append(name)
-
-    edges = [(src, dst) for src, dst in graph.edges]
 
     return SCNetwork(
         nodes=nodes,
@@ -447,4 +509,16 @@ def _parse_graph(
         output_nodes=output_nodes,
         dt=float(dt),
         reset_mode=reset_mode,
+        _nir_source_edges=edges.copy(),
+        nir_node_definitions={
+            name: deepcopy(node)
+            for name, node in graph.nodes.items()
+            if not isinstance(node, nir.NIRGraph)
+        },
+        nir_metadata=deepcopy(graph.metadata),
+        nir_node_metadata={
+            name: deepcopy(getattr(node, "metadata", {}))
+            for name, node in graph.nodes.items()
+            if not isinstance(node, nir.NIRGraph)
+        },
     )

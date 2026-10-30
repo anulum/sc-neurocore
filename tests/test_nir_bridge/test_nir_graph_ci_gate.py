@@ -31,3 +31,26 @@ def test_ci_enforces_exact_neuron_graph_coverage_on_python_312() -> None:
     assert "--include='src/sc_neurocore/nir_bridge/neuron_graph*.py'" in step
     assert "-m pytest tests/test_nir_bridge -q" in step
     assert "--fail-under=100 --show-missing" in step
+
+
+def test_framework_profiles_require_installed_real_boundaries_and_no_skips() -> None:
+    """Keep the required profiles pinned, installed and independently qualified."""
+    import yaml
+
+    workflow = yaml.safe_load(WORKFLOW.read_text())
+    job = workflow["jobs"]["test-nir-interoperability"]
+    assert job["strategy"]["matrix"]["profile"] == ["snntorch", "sinabs"]
+    assert "test-nir-interoperability" in workflow["jobs"]["build"]["needs"]
+    commands = "\n".join(step.get("run", "") for step in job["steps"])
+    assert "--require-hashes --only-binary :all:" in commands
+    assert "python -m installer dist/sc_neurocore-*.whl" in commands
+    assert "metadata.version(name) == version" in commands
+    assert 'case.find("skipped") is None' in commands
+    assert "assert cases" in commands
+    for name in (
+        "test_snntorch_bridge.py",
+        "test_snntorch_bridge_export.py",
+        "test_sinabs_runtime.py",
+    ):
+        assert name in commands
+    assert "--confcutdir=" in commands and "-o pythonpath=" in commands

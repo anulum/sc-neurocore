@@ -3795,8 +3795,8 @@
         "polyglot_applicability.python": "measured_parent_candidate",
         "polyglot_applicability.rust": "not_applicable",
         "schema_version": "sc-neurocore.nir-graph-modularisation-benchmark.v1",
-        "source_file_count": 8,
-        "source_sha256": "0e9e79a2e9e12ac7ce02a6a2e289e24a768c25f893d4624743783883665cbd5c"
+        "source_file_count": 14,
+        "source_sha256": "c38b195666c10bc6103425c9ff04d7bb79e27b790fb4a2af6e9a8028fcbd1605"
       },
       "id": "nir-graph-modularisation-local-diagnostics",
       "required_numbers": [
@@ -3815,6 +3815,12 @@
         "results.candidate.max_rss_kib.median"
       ],
       "source_hashes": {
+        "src/sc_neurocore/nir_bridge/__init__.py": "source_hashes.src/sc_neurocore/nir_bridge/__init__.py",
+        "src/sc_neurocore/nir_bridge/execution_metadata.py": "source_hashes.src/sc_neurocore/nir_bridge/execution_metadata.py",
+        "src/sc_neurocore/nir_bridge/graph_identity.py": "source_hashes.src/sc_neurocore/nir_bridge/graph_identity.py",
+        "src/sc_neurocore/nir_bridge/interchange_notes.py": "source_hashes.src/sc_neurocore/nir_bridge/interchange_notes.py",
+        "src/sc_neurocore/nir_bridge/node_map.py": "source_hashes.src/sc_neurocore/nir_bridge/node_map.py",
+        "src/sc_neurocore/nir_bridge/parser.py": "source_hashes.src/sc_neurocore/nir_bridge/parser.py",
         "src/sc_neurocore/nir_bridge/neuron_graph.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph.py",
         "src/sc_neurocore/nir_bridge/neuron_graph_builder.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_builder.py",
         "src/sc_neurocore/nir_bridge/neuron_graph_connections.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_connections.py",

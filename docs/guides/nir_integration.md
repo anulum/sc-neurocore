@@ -76,9 +76,44 @@ nir.write("exported.nir", graph_out)
 | `SumPool2d` | `SCSumPool2dNode` | Spatial sum pooling over kernel windows |
 | `AvgPool2d` | `SCAvgPool2dNode` | Average pooling (SumPool / kernel_area) |
 
-All 18 NIR primitives are supported. 100% coverage of the NIR standard.
-Bidirectional: `from_nir()` imports, `to_nir()` exports — full roundtrip
-with parameter fidelity verified for all node types.
+The table names the mapped primitives. Faithful exchange also depends on the
+clock, reset convention, shapes and topology described below. A type mapping
+alone does not establish equivalence with another framework's discrete solver.
+With NIR 1.0.8, Conv2d declarations whose non-square kernel produces an
+incorrect inferred output shape are refused with the conflicting geometry.
+
+## Graph and execution round trips
+
+`to_nir()` retains independently owned graph and primitive metadata and records
+the timestep and reset convention as JSON text under `sc_neurocore.execution`
+(schema `sc-neurocore.nir-execution.v1`). A default `from_nir(path)` restores
+those settings. Explicit options that contradict the recorded settings fail.
+A graph without this extension uses the SC reference defaults: `dt=1.0` and
+reset to `v_reset`.
+
+The `sc_neurocore.graph_order` extension (schema
+`sc-neurocore.nir-order.v1`) retains node and edge order, including repeated
+edges. This matters for summation and the choice of recurrent back edges:
+HDF5 otherwise enumerates node groups alphabetically. Stale or malformed order
+metadata is refused. Unchanged parameter arrays keep their values, shapes and
+dtypes; changed parameters are exported from the current executable definition.
+Convolution geometry is owned as integer scalars or tuples and exported in
+that canonical form, including when the source supplied mutable NumPy arrays.
+HDF5 normalises structural tuples to integer arrays. Tensor rank is restored
+on graph edges, including singleton convolution and pooling dimensions.
+
+The reference NIR reader/writer carries these metadata extensions. A different
+consumer must implement their conventions; merely reading the metadata does
+not make its solver agree. Time units are unchanged, with no automatic
+millisecond/second conversion. Dynamic membrane/current/delay state and
+optimizer state are not checkpoints in this format: an import starts fresh.
+
+Real file tests cover primitive graphs, signed dense projections, pooling,
+convolutions, nested graphs, branches and recurrence. Fractional delays are
+rounded to steps and reported as approximations. Nested multi-port graphs used
+as one node still consume/return their first port; `forward_multi()` is the
+explicit named-port surface. These approximations are outside faithful
+snnTorch sequence export.
 
 ## Recurrent Connections
 
@@ -183,194 +218,164 @@ semantics for additive synaptic currents.
 
 ## Interoperability
 
-### Import from Norse
+The qualified profiles use Linux x86_64, Python 3.12.16 and CPU
+`torch==2.14.1+cpu`. Their complete hash-pinned dependency sets live in
+`requirements/ci-torch-cpu.txt` and `requirements/ci-nir-<profile>.txt`.
+Install the profiles in separate environments:
+
+| Profile | Packages | Boundary exercised |
+| --- | --- | --- |
+| `interop-snntorch` | `nir==1.0.8`, `nirtorch==2.6`, `snntorch==1.0.0` | Actual snnTorch → SC → NIR file → SC → snnTorch inference |
+| `interop-sinabs` | `nir==1.0.4`, `nirtorch==2.0.2`, `sinabs==3.1.3` | Actual Sinabs export, SC reference execution and NIR file round trip; native Sinabs solver equivalence is not claimed |
+
+Sinabs 3.1.3 requires NIR at most 1.0.4; NIRTorch 2.0.3 and later require
+NIR at least 1.0.6. The separate legacy profile resolves this conflict.
+It has no CubaLI primitive or reset-voltage field: nonzero reset voltages and
+CubaLI export are refused where that schema cannot represent them.
+
+### snnTorch and PyTorch inference
 
 ```python
-import torch
-import norse.torch as norse
-
-# Build a Norse SNN
-model = norse.SequentialState(
-    norse.LIFBoxCell(),
-    norse.LILinearCell(128, 10),
-)
-
-# Export to NIR (requires sample_data for tracing)
-graph = norse.to_nir(model, torch.randn(1, 128))
-
-# Import into SC-NeuroCore
-from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1.0)
-```
-
-**Note on Norse tau values:** Norse `export_nir.py` computes
-`tau = dt / tau_inv` (default dt=0.001), which bakes the simulation
-timestep into the exported time constants. Norse `import_nir.py` inverts
-as `tau_inv = 1 / tau` without compensating for dt. We observed that
-Norse's own export-import cycle produces different spike patterns on
-identical input (verified with Norse 1.1.0). If importing Norse-exported
-NIR graphs, verify that tau values match your expected dynamics. See
-`examples/norse_nir_roundtrip.py` for a documented workaround.
-
-### Import from snnTorch
-
-```python
-import torch
-from snntorch.export_nir import export_to_nir
-
-# Export snnTorch model to NIR
-graph = export_to_nir(model, torch.randn(1, n_input))
-
-# Import into SC-NeuroCore (dt must match snnTorch's hardcoded 1e-4)
-from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1e-4, reset_mode="subtract")
-```
-
-**Note on snnTorch interop:** snnTorch uses subtract-reset (`v = v - threshold`)
-but exports `v_reset=0` to NIR. Pass `reset_mode="subtract"` to match.
-snnTorch hardcodes `dt=1e-4` in its export; use the same value in `from_nir()`.
-The reproduced exporter profile uses `snntorch==0.9.4`, `nirtorch==2.6`, and
-`nir==1.0.8`; snnTorch 1.0.0 currently fails inside its upstream NIR exporter
-before SC-NeuroCore receives a graph.
-Some configurations show spike mismatches (measured 6-8% across 600 steps on
-12 configs) caused by float32 (torch) vs float64 (numpy) precision divergence
-at threshold boundaries. The equations are algorithmically equivalent.
-
-### Import from SpikingJelly
-
-```python
-import torch
-from spikingjelly.activation_based import neuron, layer, functional
-from spikingjelly.activation_based.nir_exchange import export_to_nir
-
-# Build and export SpikingJelly model
-functional.set_step_mode(model, "s")
-graph = export_to_nir(model, torch.randn(1, n_input), dt=1e-4)
-
-# Import into SC-NeuroCore (dt must match SpikingJelly's export dt)
-from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1e-4)
-```
-
-**Note on SpikingJelly interop:** Verified exact spike match across 27
-configurations (3 seeds, 3 tau values, 3 inputs, 1350 total steps, 0
-mismatches). SpikingJelly exports LIFNode as `nir.LIF` with `tau=tau*dt`.
-The reproduced profile uses upstream commit
-`2797c5575515b59d7f09a3d5b732d6d25e148d13` with `nir==1.0.7`. NIR 1.0.8
-removed the `input_type` and `output_type` constructor arguments that this
-SpikingJelly exporter still supplies, so that latest/latest pairing currently
-fails before SC-NeuroCore receives the graph. SpikingJelly's `CUBALIFNode` is
-not yet mapped by their NIR export.
-
-### Import from Sinabs
-
-```python
-import sinabs
-import sinabs.nir
-
-# Export sinabs model to NIR
-graph = sinabs.nir.to_nir(model)
-
-# Import into SC-NeuroCore (no dt baked into sinabs params)
-from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1.0)
-```
-
-**Sinabs conventions:**
-- Exports `nir.LIF` (for `LIF`/`LIFSqueeze`), `nir.IF` (for `IAF`/`IAFSqueeze`),
-  `nir.LI` (for `ExpLeak`/`ExpLeakSqueeze`)
-- Always exports `nir.Affine` (never `nir.Linear`) — fills bias with zeros
-  even for bias-free layers
-- Fixed: `r=1.0`, `v_leak=0.0` for all neuron types
-- **No dt baked into parameters.** Tau is the physical time constant.
-  Use `dt=1.0` for sinabs graphs.
-- Does not export `CubaLIF`. No synaptic neuron types in sinabs NIR export.
-- **Discretization difference:** Sinabs uses exponential decay
-  (`alpha = exp(-dt/tau)`) while SC-NeuroCore uses Euler (`alpha = 1 - dt/tau`).
-  With `dt=1.0, tau=10.0`: Euler gives 0.9, exact gives 0.9048 (~0.5% per step).
-  After many steps the difference accumulates but remains bounded.
-
-### Import from Rockpool
-
-```python
-from rockpool.nn.modules.torch.nir import to_nir
-
-# Export rockpool model to NIR
-graph = to_nir(model)
-
-# Import into SC-NeuroCore (dt must match rockpool module's dt)
-from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1e-3)  # rockpool tests use dt=1e-3
-```
-
-**Rockpool conventions:**
-- Exports `nir.LIF` (for `LIFNeuronTorch`), `nir.CubaLIF` (for `LIFTorch`),
-  `nir.LI` (for `ExpSynTorch`)
-- **r encoding**: `r = tau * exp(-dt/tau) / dt` — encodes dt into the `r` field.
-  You must use the same dt when calling `from_nir()`.
-- `w_in` defaults to 1.0 (NIR default) for CubaLIF.
-- **Weight transposition:** Rockpool transposes weights on NIR export
-  (rockpool stores `(in, out)`, NIR expects `(out, in)`). Already transposed
-  in the NIR graph, so `from_nir()` handles it transparently.
-- `v_leak=0`, `v_reset=0` (NIR defaults) for all neuron types.
-- **Discretization difference:** Rockpool uses exact exponential decay internally.
-  With `dt=1e-3, tau=10.0`, the per-step Euler error is <1ppm, accumulating to
-  <1% after 10,000 steps. At larger dt/tau ratios, divergence increases.
-
-### Import from snnTorch RSynaptic (recurrent)
-
-```python
+import numpy as np
 import snntorch as snn
-from snntorch.export_nir import export_to_nir
+import torch
+from sc_neurocore.nir_bridge import from_snntorch, from_nir, to_nir, to_snntorch
 
-# RSynaptic model: recurrent CubaLIF
 model = torch.nn.Sequential(
-    torch.nn.Linear(4, 6),
-    snn.RSynaptic(alpha=0.9, beta=0.8, all_to_all=True,
-                  linear_features=6),
-)
-graph = export_to_nir(model, torch.randn(1, 4))
+    torch.nn.Linear(4, 6, dtype=torch.float64),
+    snn.Synaptic(alpha=0.9, beta=0.8, init_hidden=True, reset_delay=False),
+).double()
+network = from_snntorch(model, torch.zeros(4, dtype=torch.float64), dt=1e-4)
+to_nir(network, "network.nir")
+restored = from_nir("network.nir")
+foreign = to_snntorch(restored)
 
-# Import — RSynaptic exports as NIRGraph subgraph
-from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1e-4, reset_mode="subtract")
+current = np.array([1.0, 2.0, 3.0, 4.0])
+sc_output = restored.step({restored.input_nodes[0]: current})
+with torch.no_grad():
+    torch_output = foreign(torch.from_numpy(current))
 ```
 
-**snnTorch RSynaptic conventions:**
-- Exports as a `nir.NIRGraph` subgraph: `Input → CubaLIF → Linear(w_rec) → CubaLIF → Output`
-- SC-NeuroCore parses this as `SCSubgraphNode` with automatic cycle breaking
-- Same dt=1e-4, subtract-reset, and float32/64 precision notes as snnTorch Synaptic above
-- `RLeaky` exports similarly but with `nir.LIF` instead of `nir.CubaLIF`
+The importer uses the public NIRTorch FX API with normalised cell parameters;
+it does not depend on snnTorch's scalar-parameter NIR exporter succeeding.
+It snapshots definitions without changing the original model's parameters,
+training mode or live state. The returned network starts from reset state.
 
-### Lava-DL (Intel Loihi)
+Supported source models are nonempty, flat `torch.nn.Sequential` sequences of
+Linear, Leaky and Synaptic layers. Cells need `init_hidden=True`,
+`output=False`, `reset_delay=False`, unit spike grading, and the standard ATan
+or disabled surrogate spike decision. Input and model tensors must be finite
+CPU float64 values, one vector per step. Forward hooks, custom spike decisions,
+inhibition, state quantisation, mixed resets, batches and other layer types
+are refused. Leaky permits beta in [0,1), or uniformly one for IF; Synaptic
+requires alpha and beta in [0,1).
 
-Lava-DL does not have a public NIR export function. It uses its own HDF5 network
-exchange format. Interop with SC-NeuroCore requires manual graph construction or
-conversion through an intermediate NIR graph. If Intel publishes NIR export support
-in the future, `from_nir()` will handle it transparently.
+snnTorch's default scalar spike grading leaves binary outputs float32 even
+for double membrane state. A multilayer double source sequence needs each
+cell's `graded_spikes_factor = torch.ones(width, dtype=torch.float64)` before
+the next double Linear layer. The importer checks that the actual source can
+execute its declared input. Exported cells cast binary spikes exactly to
+float64 between layers.
 
-## Framework dt/r Quick Reference
+`to_snntorch()` returns independent real Torch Linear and snnTorch cells for a
+single-input/single-output chain of Affine, Linear, IF, LIF and CubaLIF nodes.
+It preserves the input gains, thresholds and supported decay factors. Leak
+and reset potentials must be zero. Branches, merges, recurrence, complex
+parameters, non-vector boundaries, unsupported decays and approximated imports
+are refused. Membrane voltage keeps its units; a CubaLIF cell's internal
+snnTorch synaptic state is scaled by `r*dt/tau_mem`. Reset exported cells with
+their `reset_mem()` method. This is inference interchange, with no claim to
+preserve optimizer state, surrogate gradients or a live simulation checkpoint.
 
-| Framework | `r` encoding | `dt` for `from_nir()` |
-|---|---|---|
-| Sinabs | `r = 1.0` (fixed) | `dt=1.0` |
-| snnTorch | `r = tau_mem / dt` (dt=1e-4) | `dt=1e-4` |
-| Rockpool | `r = tau * exp(-dt/tau) / dt` | Match module's dt |
-| Norse | `r = 1.0` | `dt=1.0` |
-| SpikingJelly | tau has dt baked in | Match export dt |
+Euler and decay-form arithmetic may round differently. The real multilayer
+corpus requires identical spikes and membrane/current errors at most 1e-12
+in float64. This is a measured corpus contract, not a universal guarantee at
+arbitrarily close threshold boundaries. Float32 and GPU inference are outside
+this qualified profile.
 
-**The `r` field is the main cross-framework incompatibility.** The same physical
-neuron produces different NIR `r` values depending on which framework exported it.
-Always use the dt value that matches the exporting framework.
+### Reset conventions
 
-## `reset_mode` Parameter
+| Mode | Spike decision and reset |
+| --- | --- |
+| `reset` | Detect `v > threshold`, then set spiking voltages to `v_reset` |
+| `subtract` | Detect `v > threshold`, then subtract one threshold |
+| `snntorch-subtract` | Account for the previous membrane reset signal before detection, matching snnTorch's immediate subtract convention |
 
-`from_nir()` accepts `reset_mode` to control spike reset behavior:
+The last two differ when an earlier post-reset voltage still exceeds its
+threshold. `from_snntorch()` records the third convention automatically;
+ordinary SC subtract graphs are refused on snnTorch export. Hardware lowering
+currently implements reset to `v_reset` and refuses both subtract variants.
 
-| Mode | Behavior | Use when |
-|---|---|---|
-| `"reset"` (default) | `v = v_reset` | NIR spec default, Norse |
-| `"subtract"` | `v = v - v_threshold` | snnTorch models |
+### Stochastic-computing contracts
+
+Floating Torch inference cannot preserve bitstream length, unipolar/bipolar
+or random-source encoding, Q-format, rounding/overflow, random-source identity
+or stream correlations. Passing a real SC-NIR document through the `scnir=`
+argument is refused in both framework directions. Attached SC-NIR documents
+and declared stream/precision semantics in graph or node metadata are also
+refused. Keep these contracts in SC-NIR and use its validated hardware path;
+do not interpret float inference as a stochastic hardware equivalent.
+
+### Sinabs and other exporters
+
+The legacy Sinabs tests call `sinabs.nir.to_nir(model, sample_data)` on a real
+Linear → LIFSqueeze model and exercise its parameters, SC execution and HDF5
+round trip. They also require a nontrivial native Sinabs/SC trace mismatch to
+remain visible: Sinabs uses exponential decay and inclusive spike detection,
+whereas this reference interpreter uses Euler integration and strict detection.
+A successful import is not native Sinabs behavioral acceptance.
+
+Norse, Rockpool, SpikingJelly and snnTorch recurrent layers are outside these
+qualified framework profiles. A graph their exporters produce may be admitted
+by `from_nir()`, but its solver, clock, reset, gains and recurrence conventions
+must be checked separately. Hand-built framework-shaped fixtures do not qualify
+a real framework exporter.
+
+### Studio graph envelopes
+
+The Studio JSON graph envelope is separate from a real NIR HDF5 file.
+Version 3 preserves execution timestep, duration, graph seed, population drive,
+layout, projection identity and seeded connectivity; versions 1, 2 and the
+legacy `nir`/`0.1` envelope remain readable with their documented defaults.
+Unknown versions and missing version-3 execution settings are refused.
+`graph_to_envelope()` / `envelope_to_graph()` are tested through JSON and the
+actual Studio simulation, including random connectivity and Poisson drive.
+The real HDF5 surface remains `graph_to_nir_file()` / `nir_file_to_graph()`.
+
+## Reproduce inference measurements
+
+The committed `benchmarks/results/bench_nir_interop.json` recording
+contains 30 measured traces after two warmups for actual snnTorch, SC reference,
+SC restored from HDF5 NIR, and exported snnTorch. Both immediate reset conventions
+must produce identical spikes before timing; final source/SC membrane error must
+be at most 1e-12. Producer hashes bind the recording to the executed code.
+
+From a checkout with the qualified snnTorch profile installed:
+
+```bash
+PYTHONPATH=src python benchmarks/bench_nir_interop.py \
+  --iterations 30 --warmups 2 --steps 256 \
+  --output benchmarks/results/bench_nir_interop.json
+```
+
+These are local CPU float64 inference regression measurements on a shared host.
+They do not measure a stochastic bitstream, FPGA throughput or an isolated
+production deployment. The separate NIR graph benchmark retains its identical
+RTL comparison against the parent source snapshot. On 2026-10-30, host
+`aaarthuus` (Intel Core i5-11600K), 30 cold-process samples per variant after
+two warmups measured median public parsing and lowering at 266,281.5 ns for
+parent `a21b41442` and 422,404.5 ns for this implementation: 58.63% overhead.
+Retaining original definitions copies weight arrays beyond the executable
+parameters, so copy work grows with weight size; metadata custody and per-graph
+order/execution validation add work with metadata size and topology, but these
+costs were not measured separately. Reusing retained-definition metadata
+directly would alias two mutable containers; retaining their current independent
+ownership requires another copy or a separately reviewed custody redesign.
+Each sample lowers the graph 25 times and compiles it five times. These
+shared-workstation medians describe local regression context rather than
+production throughput.
+The committed graph recording fingerprints the parser and node factories as
+well as the graph modules.
 
 ## Runnable Demos
 
@@ -396,9 +401,8 @@ pip install 'spikingjelly @ git+https://github.com/fangwei123456/spikingjelly.gi
 python examples/spikingjelly_nir_roundtrip.py
 ```
 
-All demos verify full roundtrip: node names, edge sets, CubaLIF parameter
-preservation, and file save/load. SC-NeuroCore's roundtrip preserves all
-7 CubaLIF parameters exactly (bit-for-bit verified).
+The examples illustrate foreign graph conventions; they are not substitutes
+for the qualified installed-framework profiles above.
 
 ## FPGA Compilation
 

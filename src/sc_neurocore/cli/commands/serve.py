@@ -31,7 +31,9 @@ def add_serve_command(
     )
     parser.add_argument("model", nargs="?", help="NIR model file")
     parser.add_argument("--port", type=int, default=8001, help="Server port (default: 8001)")
-    parser.add_argument("--dt", type=float, default=1.0, help="NIR simulation timestep")
+    parser.add_argument(
+        "--dt", type=float, default=None, help="NIR timestep (recorded clock, otherwise 1)"
+    )
     parser.set_defaults(handler=run_serve)
 
 
@@ -63,7 +65,7 @@ def run_serve(args: argparse.Namespace) -> int:
     from sc_neurocore.serve import SpikeServer
 
     graph = nir_lib.read(model_path)
-    network = from_nir(graph, dt=float(args.dt))
+    network = from_nir(graph, dt=args.dt)
     print(f"Loaded NIR graph with {len(network.topo_order)} nodes")
     server = SpikeServer(network, port=int(args.port))
     server.start(blocking=True)

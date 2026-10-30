@@ -75,10 +75,23 @@ EXPECTED_ROWS = (
     ),
     DependencyRow(
         import_name="snntorch",
-        distribution="snntorch",
-        declared_extra=None,
+        distribution="snntorch==1.0.0",
+        declared_extra="interop-snntorch",
         test_paths=(
+            "tests/test_nir_bridge/test_snntorch_bridge.py",
+            "tests/test_nir_bridge/test_snntorch_bridge_export.py",
             "tests/test_nir_bridge/test_scalar_broadcast.py",
+            ".github/workflows/ci.yml",
+            "docs/guides/nir_integration.md",
+        ),
+    ),
+    DependencyRow(
+        import_name="sinabs",
+        distribution="sinabs==3.1.3",
+        declared_extra="interop-sinabs",
+        test_paths=(
+            "tests/test_nir_bridge/test_sinabs_runtime.py",
+            ".github/workflows/ci.yml",
             "docs/guides/nir_integration.md",
         ),
     ),

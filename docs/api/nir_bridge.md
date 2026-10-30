@@ -161,12 +161,17 @@ detail)`:
 
 | Kind | Recorded when |
 | --- | --- |
-| `assumed` | the timestep `dt` (NIR stores none); the reset rule of spiking nodes; a recurrent edge realised with a one-timestep delay |
+| `assumed` | dt/reset where the graph has no execution extension; a recurrent edge realised with a one-timestep delay |
 | `approximated` | a delay that is not a whole number of timesteps; an `Input` or `Output` with more than one port (only the first is used); a multi-port subgraph used as one node |
-| `not-carried` | graph metadata, which is not imported |
+| `not-carried` | live node state on export; pooling input shapes are derived from the graph rather than written as primitive fields |
 
-`reset_mode` must be `"reset"` (the NIR convention) or `"subtract"`; any other
-value raises `ValueError`. A network read from a `.nir` file keeps the NIR
+`reset_mode` accepts `"reset"`, `"subtract"` and `"snntorch-subtract"`; other
+values raise `ValueError`. The last convention includes the previous membrane
+reset signal in detection and is distinct from ordinary SC subtract after
+overshoot. Graph and primitive metadata are copied independently. The versioned
+`sc_neurocore.execution` extension carries dt/reset; default import restores it
+and conflicting explicit options are refused. `sc_neurocore.graph_order` retains
+node/edge ordering through HDF5 and refuses stale topology declarations. A network read from a `.nir` file keeps the NIR
 version the file records in `network.nir_version` (`None` for an in-memory
 graph or a file that stores no version). `sc-neurocore compile-nir` prints the
 notes, and the Studio's `/api/nir/compile` returns them as
@@ -174,14 +179,34 @@ notes, and the Studio's `/api/nir/compile` returns them as
 
 Exporting cannot carry everything either:
 `sc_neurocore.nir_bridge.interchange_notes.export_notes(network)` lists what
-`to_nir()` does not write -- the timestep, a subtract reset, node state and
-pooling input shapes. A node type the bridge cannot realise is still refused
+`to_nir()` does not write: dynamic node state and standalone pooling input
+shape fields. It does write execution settings and original metadata; pooling
+shapes are reconstructed from graph boundaries. A node type the bridge cannot realise is still refused
 rather than noted.
+
+### snnTorch inference
+
+The lazy public `from_snntorch(model, sample, dt=...)` and
+`to_snntorch(network, scnir=None)` functions import their framework dependencies
+only when called. Use the separate `interop-snntorch` or `interop-sinabs`
+profiles documented in the [integration guide](../guides/nir_integration.md).
+The installed snnTorch lane is CPU float64 and uses real Linear, Leaky and
+Synaptic cells. It preserves supported clocks, reset conventions, gains and
+thresholds, starts fresh state and refuses unsupported topologies or dynamics.
+
+SC-NIR bitstream length, encoding, Q-format, random-source and correlation
+contracts are explicitly refused rather than dropped into floating inference.
+Attached stream declarations in metadata receive the same refusal. Exporting
+ordinary SC subtract reset as snnTorch subtract is refused because their spike
+decisions differ after overshoot. Hardware lowering supports reset to v_reset
+and refuses subtract variants. Native Sinabs/exponential solver equivalence
+is outside the legacy export/file profile.
 
 ### Other Interchange Formats
 
 NeuroML and SONATA are supported for import only (see the adapters); the
-library has no NeuroML or SONATA exporter, and NIR is the only export format.
+library has no NeuroML or SONATA exporter. NIR and the qualified snnTorch
+inference path are separate export surfaces.
 
 ### High-Level Hardware Path
 

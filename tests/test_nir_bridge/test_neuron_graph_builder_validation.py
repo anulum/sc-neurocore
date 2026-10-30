@@ -49,6 +49,24 @@ def _affine(name: str = "affine", rows: int = 2, columns: int = 2) -> SCAffineNo
     return SCAffineNode(name, np.ones((rows, columns), dtype=np.float32), np.zeros(rows))
 
 
+def test_hardware_lowering_refuses_subtract_reset_instead_of_changing_it() -> None:
+    """Refuse an imported spiking reset unsupported by actual hardware templates."""
+    import nir
+    from sc_neurocore.nir_bridge import from_nir
+
+    graph = nir.NIRGraph(
+        nodes={
+            "input": nir.Input(np.array([2])),
+            "lif": nir.LIF(np.ones(2) * 5, np.ones(2), np.zeros(2), np.ones(2)),
+            "output": nir.Output(np.array([2])),
+        },
+        edges=[("input", "lif"), ("lif", "output")],
+    )
+    network = from_nir(graph, dt=0.25, reset_mode="subtract")
+    with pytest.raises(ValueError, match="cannot preserve subtract reset"):
+        from_scnetwork(network)
+
+
 @pytest.mark.parametrize(
     ("node", "neuron_type", "parameter_keys"),
     [

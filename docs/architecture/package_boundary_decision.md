@@ -80,6 +80,8 @@ they satisfy the same promotion gate:
 | `quantum` | optional extra | Qiskit and PennyLane quantum-circuit experiments. |
 | `quantum-cognition` | optional extra | Alias over the quantum stack for Fisher-Posner experiments. |
 | `nir` | optional extra | Neuromorphic Intermediate Representation import/export. |
+| `interop-snntorch` | optional extra | Inference interchange with snnTorch through NIR, qualified against real CPU spikes and membrane states; training and stochastic-bitstream semantics are outside this profile. |
+| `interop-sinabs` | optional extra | Sinabs interchange through the legacy NIRTorch file route, with a separate compatible dependency profile and real CPU execution checks. |
 | `sonata` | optional extra | libsonata, the reference reader the SONATA importer requires. |
 | `neuroml` | optional extra | libNeuroML for writing and schema-validating NeuroML 2 documents; the NeuroML importer itself needs no extra. |
 | `mpi` | optional extra | Distributed simulation through `mpi4py`. |

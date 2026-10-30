@@ -96,6 +96,25 @@ def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100, 100, 100)
 
 
+def test_qualified_nir_inference_closes_all_new_interoperability_modules() -> None:
+    """Measure installed framework code without inheriting the global NIR omission."""
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    job = workflow["jobs"]["test-nir-interoperability"]
+    step = next(
+        item
+        for item in job["steps"]
+        if item.get("name") == "Installed snnTorch graph identity and both inference directions"
+    )
+    assert step["if"] == "matrix.profile == 'snntorch'"
+    commands = step["run"]
+    assert "coverage run --rcfile=/dev/null --branch --omit=" in commands
+    assert "coverage report --rcfile=/dev/null --omit= --fail-under=100" in commands
+    for module in ("snntorch_bridge", "graph_identity", "execution_metadata"):
+        assert f"*/nir_bridge/{module}.py" in commands
+
+
 def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     """Run every matrix leg in bounded batches without weakening coverage."""
     workflow_path = _ROOT / ".github/workflows/ci.yml"

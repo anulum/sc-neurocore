@@ -94,7 +94,9 @@ def add_compile_commands(
     nir.add_argument("model", nargs="?", help="NIR model file (.nir)")
     _add_target_argument(nir)
     _add_output_argument(nir)
-    nir.add_argument("--dt", type=float, default=1.0, help="NIR simulation timestep")
+    nir.add_argument(
+        "--dt", type=float, default=None, help="NIR timestep (recorded clock, otherwise 1)"
+    )
     nir.add_argument("--T", type=int, default=256, help="Stochastic bitstream length")
     nir.add_argument("--data-width", type=int, default=16, help="Fixed-point word width")
     nir.add_argument("--fraction", type=int, default=8, help="Fixed-point fractional bits")

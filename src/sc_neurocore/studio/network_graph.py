@@ -20,6 +20,7 @@ and drives it declares, or is rejected with the field and reason.
 from __future__ import annotations
 
 import secrets
+from copy import deepcopy
 from collections.abc import Mapping
 from typing import Any
 
@@ -56,14 +57,15 @@ GRAPH_ENVELOPE_FORMAT = "sc-neurocore.studio.network-graph"
 
 #: Version of the honest envelope. The loader still accepts the legacy pair
 #: below, so files exported before the rename keep opening.
-#: Envelope version. `"2"` carries the population label and the connectivity
+#: Envelope version. `"3"` also retains execution settings, drives, layout and
+#: projection identities. `"2"` carries the population label and connectivity
 #: rule with its probability, seed and autapse decision; `"1"` carried none of
 #: them, so a round trip through it silently became all-to-all. Both are read;
 #: a `"1"` document keeps the documented defaults.
-GRAPH_ENVELOPE_VERSION = "2"
+GRAPH_ENVELOPE_VERSION = "3"
 LEGACY_GRAPH_ENVELOPE_VERSION = "1"
 ACCEPTED_GRAPH_ENVELOPE_VERSIONS = frozenset(
-    {GRAPH_ENVELOPE_VERSION, LEGACY_GRAPH_ENVELOPE_VERSION}
+    {GRAPH_ENVELOPE_VERSION, "2", LEGACY_GRAPH_ENVELOPE_VERSION}
 )
 
 #: The envelope earlier exports wrote. Accepted on import, never written.
@@ -275,6 +277,7 @@ def graph_to_envelope(graph: object) -> dict[str, Any]:
     errors = validate_graph(graph)
     if errors:
         raise GraphEnvelopeRefusal(f"Invalid network graph: {'; '.join(errors)}")
+    spec = resolve_graph(graph)
 
     nodes = {}
     edges = []
@@ -284,13 +287,16 @@ def graph_to_envelope(graph: object) -> dict[str, Any]:
             "type": pop.get("model", DEFAULT_MODEL),
             "count": pop.get("count", 1),
             "neuron_type": pop.get("neuron_type", "excitatory"),
-            "params": pop.get("params", {}),
+            "params": deepcopy(pop.get("params", {})),
         }
         # The label is what a reader named the population. Dropping it replaced
         # every name with its identifier on the way back in.
         label = pop.get("label")
         if isinstance(label, str) and label:
             node["label"] = label
+        for field in ("position", "drive"):
+            if field in pop:
+                node[field] = deepcopy(pop[field])
         nodes[pop["id"]] = node
 
     for proj in graph.get("projections", []):
@@ -306,11 +312,15 @@ def graph_to_envelope(graph: object) -> dict[str, Any]:
         for field in ("rule", "probability", "seed", "autapses"):
             if field in proj:
                 edge[field] = proj[field]
+        edge["id"] = proj["id"]
         edges.append(edge)
 
     return {
         "format": GRAPH_ENVELOPE_FORMAT,
         "version": GRAPH_ENVELOPE_VERSION,
+        "dt": spec.dt,
+        "duration": spec.duration_ms,
+        "seed": spec.seed,
         "nodes": nodes,
         "edges": edges,
     }
@@ -329,8 +339,9 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
     carried none of those: its edges connect all-to-all, which is what it has
     always meant, and its populations are named by their identifiers.
 
-    The assembled graph is validated against the graph schema with the Studio
-    default timestep, so an import that would not execute (sign conflicts,
+    Version 3 also carries timestep, duration, seed, drive, projection identity
+    and layout. Older documents keep their documented defaults. The assembled
+    graph is validated against the graph schema, so a non-executable import (sign conflicts,
     delays that are not whole default steps, inadmissible models, budgets) is
     rejected here instead of surfacing later on the canvas.
 
@@ -351,6 +362,16 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
             "It does not read the Neuromorphic Intermediate Representation; NIR "
             "files are imported as NIR, not as this envelope."
         )
+    version = nir_data.get("version", LEGACY_GRAPH_ENVELOPE_VERSION)
+    if not isinstance(version, str) or (
+        version not in ACCEPTED_GRAPH_ENVELOPE_VERSIONS
+        and not (declared == LEGACY_GRAPH_ENVELOPE_FORMAT and version == "0.1")
+    ):
+        raise GraphEnvelopeRefusal("Graph envelope version is unsupported")
+    if version == GRAPH_ENVELOPE_VERSION and any(
+        field not in nir_data for field in ("dt", "duration", "seed")
+    ):
+        raise GraphEnvelopeRefusal("Version 3 graph envelope needs dt, duration and seed")
     raw_nodes = nir_data.get("nodes", {})
     raw_edges = nir_data.get("edges", [])
     if not isinstance(raw_nodes, Mapping):
@@ -380,9 +401,9 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
                 "model": model,
                 "count": node.get("count", 1),
                 "neuron_type": node.get("neuron_type", "excitatory"),
-                "position": {"x": x_offset, "y": 0},
-                "params": node.get("params", {}),
-                "drive": {"kind": "none"},
+                "position": deepcopy(node.get("position", {"x": x_offset, "y": 0})),
+                "params": deepcopy(node.get("params", {})),
+                "drive": deepcopy(node.get("drive", {"kind": "none"})),
                 **(
                     {"label": node["label"]}
                     if isinstance(node.get("label"), str) and node["label"]
@@ -406,7 +427,7 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
                 f"Graph envelope edge {index} target must be a non-empty string"
             )
         projection: dict[str, Any] = {
-            "id": f"proj_{secrets.token_hex(4)}",
+            "id": edge.get("id", f"proj_{secrets.token_hex(4)}"),
             "source": source,
             "target": target,
             "weight": edge.get("weight", 1.0),
@@ -422,6 +443,9 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
         projections.append(projection)
 
     graph = {"populations": populations, "projections": projections}
+    for field in ("dt", "duration", "seed"):
+        if field in nir_data:
+            graph[field] = nir_data[field]
     errors = validate_graph(graph)
     if errors:
         raise GraphEnvelopeRefusal(f"Imported graph is not executable: {'; '.join(errors)}")

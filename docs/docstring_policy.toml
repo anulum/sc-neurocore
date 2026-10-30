@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1528
+expected_file_count = 1552
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6246,3 +6246,99 @@ rationale = "Copy complete canonical model schemas into workspace proposals with
 [[file]]
 path = "tests/test_studio_candidate_catalogue.py"
 rationale = "Actual catalogue and candidate HTTP workflows preserve source declarations, numeric tokens, durable results and source-fault classification."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/__init__.py"
+rationale = "Lazy public imports expose supported graph and framework boundaries without requiring optional framework packages at base import."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/execution_metadata.py"
+rationale = "NIR files retain validated clocks and reset conventions, refusing ambiguous or contradictory settings."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/export.py"
+rationale = "Graph export preserves current primitive definitions and refuses representations unavailable in the selected NIR schema."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/graph_identity.py"
+rationale = "Real graph definitions preserve arrays and scheduling through reference HDF5 files and reject stale order declarations."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/interchange_notes.py"
+rationale = "The interpreter identifies the execution assumptions and approximations that cross a graph boundary."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/node_map.py"
+rationale = "NIR primitives retain floating state, tensor geometry and explicit spiking reset conventions in the reference executor."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/parser.py"
+rationale = "The public importer owns metadata and primitive definitions and restores their declared clock and tensor ranks."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/snntorch_bridge.py"
+rationale = "Actual framework inference retains supported gains and reset decisions and refuses unsupported stochastic contracts and dynamics."
+
+[[file]]
+path = "src/sc_neurocore/studio/network_graph.py"
+rationale = "Studio graph envelopes preserve the execution settings, seeded connectivity and drives used by the real simulator."
+
+[[file]]
+path = "tests/test_cli_nir_execution_metadata.py"
+rationale = "Real CLI processes inherit the NIR clock in generated RTL, mapping reports and HTTP spike replay and refuse conflicting options."
+
+[[file]]
+path = "tests/test_nir_bridge/test_execution_metadata.py"
+rationale = "Reference HDF5 files retain clocks, reset conventions and independent metadata while invalid or contradictory declarations are refused."
+
+[[file]]
+path = "tests/test_nir_bridge/test_graph_identity.py"
+rationale = "Primitive, tensor, nested and recurrent graphs keep their parameter representation and actual scheduling across HDF5."
+
+[[file]]
+path = "tests/test_nir_bridge/test_interchange_notes.py"
+rationale = "Foreign graph assumptions and approximations remain visible while retained execution metadata is not misreported as lost."
+
+[[file]]
+path = "tests/test_nir_bridge/test_neuron_graph_builder_validation.py"
+rationale = "Hardware lowering retains supported graph parameters and refuses reset behavior absent from its actual templates."
+
+[[file]]
+path = "tests/test_nir_bridge/test_nir_graph_ci_gate.py"
+rationale = "Required CI profiles execute installed real frameworks, preserve exact coverage and reject every supported-profile skip."
+
+[[file]]
+path = "tests/test_nir_bridge/test_sinabs_runtime.py"
+rationale = "Actual Sinabs export executes under a coherent legacy profile while native solver differences and schema limits remain explicit."
+
+[[file]]
+path = "tests/test_nir_bridge/test_snntorch_bridge.py"
+rationale = "Actual multilayer framework spikes and states agree across both conversions without altering source parameters or live state."
+
+[[file]]
+path = "tests/test_nir_bridge/test_snntorch_bridge_export.py"
+rationale = "Independent SC definitions preserve gains in real target cells and refuse unsupported dynamics, topology and stream contracts."
+
+[[file]]
+path = "tests/test_studio_network_interchange_fidelity.py"
+rationale = "JSON envelopes preserve the clocks, drives, seeds, topology and identities used by actual Studio simulation."
+
+[[file]]
+path = "benchmarks/bench_nir_interop.py"
+rationale = "Real framework, SC, NIR-restored and re-exported inference must agree before source-bound timing samples are recorded."
+
+[[file]]
+path = "tests/test_bench_nir_interop.py"
+rationale = "The real benchmark command and committed measurements retain actual spikes, complete samples and imported producer hashes."
+
+[[file]]
+path = "tests/test_nir_bridge/test_numeric_round_trip.py"
+rationale = "Real file execution preserves spikes and mutable parameter, geometry and metadata ownership across NIR conversion."
+
+[[file]]
+path = "benchmarks/bench_nir_graph.py"
+rationale = "Real public lowering measurements bind both graph modules and the parser/factories that perform the measured conversion."
+
+[[file]]
+path = "tests/test_bench_nir_graph.py"
+rationale = "The actual benchmark command retains byte-identical FPGA output and fingerprints every measured lowering producer."

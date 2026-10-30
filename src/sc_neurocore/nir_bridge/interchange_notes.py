@@ -19,9 +19,9 @@ point is recorded as a note rather than decided silently:
     A value NIR does store that the bridge could not realise exactly: a delay
     that is not a whole number of timesteps, a port beyond the first.
 ``not-carried``
-    Something present on one side that the other side does not keep: graph
-    metadata on import; the timestep, a subtract reset, node state or pooling
-    input shapes on export.
+    Something present on one side that the other side does not keep: node state
+    or pooling input shapes on export. Timestep and reset settings are carried
+    by this bridge's versioned NIR metadata extension.
 
 Notes never replace a refusal: a node type the bridge cannot realise is still
 rejected.
@@ -36,6 +36,8 @@ from typing import Any, Literal
 
 import nir
 import numpy as np
+
+from .execution_metadata import EXECUTION_METADATA_KEY
 
 NoteKind = Literal["assumed", "approximated", "not-carried"]
 
@@ -134,20 +136,24 @@ def import_notes(
     list of InterchangeNote
         Graph-level notes first, then per-node and per-edge notes in graph order.
     """
-    notes = [
-        InterchangeNote(
-            "assumed",
-            "",
-            f"NIR stores no timestep; dynamics use dt={float(dt)!r} supplied to the importer",
-        )
-    ]
-    if _contains_spiking(graph):
+    notes = (
+        []
+        if EXECUTION_METADATA_KEY in graph.metadata
+        else [
+            InterchangeNote(
+                "assumed",
+                "",
+                f"NIR stores no timestep; dynamics use dt={float(dt)!r} supplied to the importer",
+            )
+        ]
+    )
+    if EXECUTION_METADATA_KEY not in graph.metadata and _contains_spiking(graph):
         notes.append(
             InterchangeNote(
                 "assumed",
                 "",
                 f"NIR stores no reset rule; spiking nodes use {reset_mode!r} "
-                "(the NIR convention is 'reset' to v_reset)",
+                "(this bridge defaults to 'reset' to v_reset)",
             )
         )
     notes.extend(_graph_notes(graph, network, dt=dt, prefix=""))
@@ -158,12 +164,6 @@ def _graph_notes(
     graph: nir.NIRGraph, network: Any, *, dt: float, prefix: str
 ) -> list[InterchangeNote]:
     notes: list[InterchangeNote] = []
-    metadata = getattr(graph, "metadata", None) or {}
-    if metadata:
-        keys = ", ".join(sorted(str(key) for key in metadata))
-        notes.append(
-            InterchangeNote("not-carried", prefix, f"graph metadata is not imported: {keys}")
-        )
     for name, node in graph.nodes.items():
         subject = _path(prefix, name)
         if isinstance(node, nir.NIRGraph):
@@ -230,22 +230,7 @@ def export_notes(network: Any) -> list[InterchangeNote]:
         Graph-level notes first, then per-node notes.
     """
     classes = set(_node_class_names(network))
-    notes = [
-        InterchangeNote(
-            "not-carried",
-            "",
-            f"NIR stores no timestep; dt={float(network.dt)!r} must be supplied again on import",
-        )
-    ]
-    if network.reset_mode == "subtract" and classes & _SPIKING_NAMES:
-        notes.append(
-            InterchangeNote(
-                "not-carried",
-                "",
-                "NIR stores no reset rule; the subtract reset is lost and importers "
-                "apply the NIR convention of reset to v_reset",
-            )
-        )
+    notes: list[InterchangeNote] = []
     if classes & _STATEFUL_NAMES:
         notes.append(
             InterchangeNote(

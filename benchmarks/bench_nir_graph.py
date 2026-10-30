@@ -91,7 +91,22 @@ def _sha256(path: Path) -> str:
 
 def _source_digest(root: Path) -> tuple[str, int, dict[str, str]]:
     """Hash relative names and bytes for the imported neuron-graph surface."""
-    files = sorted((root / "src/sc_neurocore/nir_bridge").glob("neuron_graph*.py"))
+    directory = root / "src/sc_neurocore/nir_bridge"
+    files = sorted(
+        set(directory.glob("neuron_graph*.py"))
+        | {
+            path
+            for name in (
+                "__init__",
+                "parser",
+                "node_map",
+                "execution_metadata",
+                "graph_identity",
+                "interchange_notes",
+            )
+            if (path := directory / f"{name}.py").is_file()
+        }
+    )
     if not files:
         raise ValueError(f"no neuron-graph source found below {root}")
     digest = hashlib.sha256()
@@ -109,6 +124,7 @@ def _source_digest(root: Path) -> tuple[str, int, dict[str, str]]:
 
 def _source_metadata(variant: Variant) -> dict[str, object]:
     """Return path-free source identity and integrity metadata."""
+    digest, count, hashes = _source_digest(variant.root)
     head = subprocess.run(
         ["git", "-C", str(variant.root), "rev-parse", "HEAD"],
         capture_output=True,
@@ -123,13 +139,12 @@ def _source_metadata(variant: Variant) -> dict[str, object]:
             "status",
             "--porcelain",
             "--",
-            "src/sc_neurocore/nir_bridge/neuron_graph*.py",
+            *hashes,
         ],
         capture_output=True,
         text=True,
         check=False,
     )
-    digest, count, hashes = _source_digest(variant.root)
     return {
         "label": variant.label,
         "source_ref": variant.source_ref,

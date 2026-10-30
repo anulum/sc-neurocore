@@ -6,9 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR node type → SC-NeuroCore primitive factories
 
+"""Execute NIR primitives with explicit Euler clocks and independently owned state.
+
+Stateful voltages use float64 even when source parameters are integer arrays.
+The snntorch-subtract convention additionally accounts for the previous
+membrane reset signal before spike detection; it differs from SC subtract
+when the previous post-reset voltage still exceeds the threshold.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+from operator import index
 from typing import Any
 
 import numpy as np
@@ -21,7 +30,6 @@ except ImportError as e:
 
 def _shape_tuple_from_type(type_map: Any, key: str) -> tuple[int, ...] | None:
     """Return a positive integer shape tuple from a NIR type map."""
-
     if not type_map:
         return None
     raw_shape = type_map.get(key)
@@ -37,7 +45,6 @@ def _shape_tuple_from_type(type_map: Any, key: str) -> tuple[int, ...] | None:
 
 def _shape3_tuple_from_type(type_map: Any, key: str) -> tuple[int, int, int] | None:
     """Return a rank-3 positive integer shape tuple from a NIR type map."""
-
     shape = _shape_tuple_from_type(type_map, key)
     if shape is None:
         return None
@@ -54,6 +61,7 @@ class SCInputNode:
     shape: tuple[int, ...]
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Return the caller-supplied input without changing its values."""
         return x
 
 
@@ -66,6 +74,7 @@ class SCOutputNode:
     last_output: np.ndarray[Any, Any] | None = None
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Expose the incoming graph value at this output boundary."""
         self.last_output = x
         return x
 
@@ -97,13 +106,14 @@ class SCLIFNode:
         dt: float = 1.0,
         reset_mode: str = "reset",
     ) -> SCLIFNode:
+        """Copy LIF parameters and select its Euler timestep and reset convention."""
         tau = np.atleast_1d(node.tau).flatten()
         r = np.atleast_1d(node.r).flatten()
         v_leak = np.atleast_1d(node.v_leak).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
         v_reset = (
             np.atleast_1d(node.v_reset).flatten()
-            if node.v_reset is not None
+            if getattr(node, "v_reset", None) is not None
             else np.zeros_like(v_threshold)
         )
         return cls(
@@ -119,8 +129,9 @@ class SCLIFNode:
         )
 
     def __post_init__(self) -> None:
+        """Initialise floating membrane state at the declared leak potential."""
         if self.v is None:
-            self.v = self.v_leak.copy()
+            self.v = self.v_leak.astype(np.float64, copy=True)
 
     def _broadcast_to(self, size: int) -> None:
         self.n_neurons = size
@@ -132,21 +143,27 @@ class SCLIFNode:
         self.v = np.broadcast_to(self.v, (size,)).copy()
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Advance Euler voltage, detect spikes and apply the selected reset."""
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
         x = x[: self.n_neurons]
+        prior_reset = (
+            (self.v > self.v_threshold) if self.reset_mode == "snntorch-subtract" else None
+        )
         dv = (self.v_leak - self.v + self.r * x) * (self.dt / self.tau)
         self.v += dv
-        spikes = (self.v > self.v_threshold).astype(np.float64)
-        if self.reset_mode == "subtract":
+        detection = self.v if prior_reset is None else self.v - prior_reset * self.v_threshold
+        spikes = (detection > self.v_threshold).astype(np.float64)
+        if self.reset_mode in ("subtract", "snntorch-subtract"):
             self.v = np.where(spikes > 0, self.v - self.v_threshold, self.v)
         else:
             self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self) -> None:
-        self.v = self.v_leak.copy()
+        """Restore membrane voltage to the declared leak potential."""
+        self.v = self.v_leak.astype(np.float64, copy=True)
 
 
 @dataclass
@@ -174,10 +191,13 @@ class SCIFNode:
         dt: float = 1.0,
         reset_mode: str = "reset",
     ) -> SCIFNode:
+        """Copy IF resistance, threshold and reset voltage at the requested timestep."""
         r = np.atleast_1d(node.r).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
         v_reset = (
-            np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else np.zeros_like(r)
+            np.atleast_1d(node.v_reset).flatten()
+            if getattr(node, "v_reset", None) is not None
+            else np.zeros_like(r)
         )
         return cls(
             name=name,
@@ -190,6 +210,7 @@ class SCIFNode:
         )
 
     def __post_init__(self) -> None:
+        """Initialise the IF membrane at zero in floating precision."""
         if self.v is None:
             self.v = np.zeros(self.n_neurons)
 
@@ -202,21 +223,27 @@ class SCIFNode:
         self.v = np.zeros(size)
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Integrate input current, detect spikes and apply the selected IF reset."""
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
         x = x[: self.n_neurons]
         if self.v is None:
             raise RuntimeError("IF state was not initialised")
+        prior_reset = (
+            (self.v > self.v_threshold) if self.reset_mode == "snntorch-subtract" else None
+        )
         self.v += self.r * x * self.dt
-        spikes = (self.v > self.v_threshold).astype(np.float64)
-        if self.reset_mode == "subtract":
+        detection = self.v if prior_reset is None else self.v - prior_reset * self.v_threshold
+        spikes = (detection > self.v_threshold).astype(np.float64)
+        if self.reset_mode in ("subtract", "snntorch-subtract"):
             self.v = np.where(spikes > 0, self.v - self.v_threshold, self.v)
         else:
             self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self) -> None:
+        """Clear the IF membrane to its initial zero voltage."""
         self.v = np.zeros(self.n_neurons)
 
 
@@ -237,14 +264,16 @@ class SCLINode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.LI, dt: float = 1.0) -> SCLINode:
+        """Copy the leaky integrator parameters and its Euler timestep."""
         tau = np.atleast_1d(node.tau).flatten()
         r = np.atleast_1d(node.r).flatten()
         v_leak = np.atleast_1d(node.v_leak).flatten()
         return cls(name=name, n_neurons=len(tau), tau=tau, r=r, v_leak=v_leak, dt=dt)
 
     def __post_init__(self) -> None:
+        """Initialise floating integrator voltage at the leak potential."""
         if self.v is None:
-            self.v = self.v_leak.copy()
+            self.v = self.v_leak.astype(np.float64, copy=True)
 
     def _broadcast_to(self, size: int) -> None:
         self.n_neurons = size
@@ -256,6 +285,7 @@ class SCLINode:
         self.v = np.broadcast_to(self.v, (size,)).copy()
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Advance the leaky Euler state and return the resulting voltage."""
         assert self.v is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
@@ -266,12 +296,13 @@ class SCLINode:
         return self.v.copy()
 
     def reset(self) -> None:
-        self.v = self.v_leak.copy()
+        """Restore the leaky integrator voltage to its leak potential."""
+        self.v = self.v_leak.astype(np.float64, copy=True)
 
 
 @dataclass
 class SCAffineNode:
-    """Dense linear transform with bias: y = Wx + b"""
+    """Dense linear transform with bias: y = Wx + b."""
 
     name: str
     weight: np.ndarray[Any, Any]
@@ -279,9 +310,13 @@ class SCAffineNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Affine) -> SCAffineNode:
-        return cls(name=name, weight=node.weight, bias=node.bias)
+        """Copy a NIR weight matrix and bias into independent NumPy arrays."""
+        return cls(
+            name=name, weight=np.asarray(node.weight).copy(), bias=np.asarray(node.bias).copy()
+        )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Flatten the input vector and apply its weighted affine projection."""
         x = np.atleast_1d(x).flatten()
         result: np.ndarray[Any, Any] = self.weight @ x + self.bias
         return result
@@ -289,16 +324,18 @@ class SCAffineNode:
 
 @dataclass
 class SCLinearNode:
-    """Matrix multiply without bias: y = Wx"""
+    """Matrix multiply without bias: y = Wx."""
 
     name: str
     weight: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Linear) -> SCLinearNode:
-        return cls(name=name, weight=node.weight)
+        """Copy a NIR weight matrix into an independent NumPy array."""
+        return cls(name=name, weight=np.asarray(node.weight).copy())
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Flatten the input vector and apply its matrix projection."""
         x = np.atleast_1d(x).flatten()
         projected: np.ndarray[Any, Any] = self.weight @ x
         return projected
@@ -306,32 +343,36 @@ class SCLinearNode:
 
 @dataclass
 class SCScaleNode:
-    """Element-wise scaling: y = s * x"""
+    """Element-wise scaling: y = s * x."""
 
     name: str
     scale: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Scale) -> SCScaleNode:
-        return cls(name=name, scale=node.scale)
+        """Copy the NIR elementwise scale into an independent NumPy array."""
+        return cls(name=name, scale=np.asarray(node.scale).copy())
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Multiply incoming values by the declared elementwise scale."""
         scaled: np.ndarray[Any, Any] = self.scale * x
         return scaled
 
 
 @dataclass
 class SCThresholdNode:
-    """Spike threshold: y = 1 if x > threshold else 0"""
+    """Spike threshold: y = 1 if x > threshold else 0."""
 
     name: str
     threshold: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Threshold) -> SCThresholdNode:
-        return cls(name=name, threshold=node.threshold)
+        """Copy the NIR detection thresholds into an independent NumPy array."""
+        return cls(name=name, threshold=np.asarray(node.threshold).copy())
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Emit binary spikes where inputs strictly exceed their thresholds."""
         return (x > self.threshold).astype(np.float64)
 
 
@@ -347,6 +388,7 @@ class SCFlattenNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Flatten) -> SCFlattenNode:
+        """Retain the source shape and dimension interval of a NIR flatten operation."""
         input_shape = _shape_tuple_from_type(getattr(node, "input_type", None), "input")
         output_shape = _shape_tuple_from_type(getattr(node, "output_type", None), "output")
         return cls(
@@ -358,6 +400,7 @@ class SCFlattenNode:
         )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Reshape the declared dimension interval while preserving element order."""
         x = np.asarray(x)
         if x.ndim == 0:
             if self.start_dim not in (0, -1) or self.end_dim not in (0, -1):
@@ -382,7 +425,7 @@ class SCFlattenNode:
 
 @dataclass
 class SCIntegratorNode:
-    """Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt"""
+    """Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt."""
 
     name: str
     r: np.ndarray[Any, Any]
@@ -391,20 +434,22 @@ class SCIntegratorNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.I, dt: float = 1.0) -> SCIntegratorNode:
+        """Copy the NIR integrator resistance and assign its Euler timestep."""
         r = np.atleast_1d(node.r).flatten()
         return cls(name=name, r=r, dt=dt)
 
     @property
     def n_neurons(self) -> int:
         """Number of integrator state channels."""
-
         return int(self.r.size)
 
     def __post_init__(self) -> None:
+        """Initialise the integrator state to floating zero."""
         if self.v is None:
-            self.v = np.zeros_like(self.r)
+            self.v = np.zeros_like(self.r, dtype=np.float64)
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Accumulate resistance-weighted input current over one timestep."""
         x = np.atleast_1d(x).flatten()[: len(self.r)]
         if self.v is None:
             raise RuntimeError("integrator state was not initialised")
@@ -412,7 +457,8 @@ class SCIntegratorNode:
         return self.v.copy()
 
     def reset(self) -> None:
-        self.v = np.zeros_like(self.r)
+        """Clear the accumulated integrator voltage to floating zero."""
+        self.v = np.zeros_like(self.r, dtype=np.float64)
 
 
 @dataclass
@@ -430,15 +476,18 @@ class SCDelayNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Delay, dt: float = 1.0) -> SCDelayNode:
+        """Convert NIR delay times to rounded per-channel timestep counts."""
         delay = np.atleast_1d(node.delay).flatten()
         steps = np.round(delay / dt).astype(int)
         return cls(name=name, delay_steps=steps, delay_time=delay.copy())
 
     def __post_init__(self) -> None:
+        """Allocate the delay history required by the longest channel latency."""
         if self._buffers is None:
             self._buffers = [[np.zeros(1) for _ in range(int(d))] for d in self.delay_steps]
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Return each channel from its declared historical timestep."""
         assert self._buffers is not None
         x = np.atleast_1d(x).flatten()
         out = np.zeros(len(self.delay_steps))
@@ -453,6 +502,7 @@ class SCDelayNode:
         return out
 
     def reset(self) -> None:
+        """Clear all channel delay history and restore the buffer index."""
         self._buffers = [[np.zeros(1) for _ in range(int(d))] for d in self.delay_steps]
 
 
@@ -487,6 +537,7 @@ class SCCubaLIFNode:
         dt: float = 1.0,
         reset_mode: str = "reset",
     ) -> SCCubaLIFNode:
+        """Copy current-based LIF parameters, timestep and reset convention."""
         tau_syn = np.atleast_1d(node.tau_syn).flatten()
         tau_mem = np.atleast_1d(node.tau_mem).flatten()
         r = np.atleast_1d(node.r).flatten()
@@ -494,7 +545,7 @@ class SCCubaLIFNode:
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
         v_reset = (
             np.atleast_1d(node.v_reset).flatten()
-            if node.v_reset is not None
+            if getattr(node, "v_reset", None) is not None
             else np.zeros_like(v_threshold)
         )
         w_in = np.atleast_1d(node.w_in).flatten()
@@ -513,8 +564,9 @@ class SCCubaLIFNode:
         )
 
     def __post_init__(self) -> None:
+        """Initialise floating membrane voltage and zero synaptic current."""
         if self.v is None:
-            self.v = self.v_leak.copy()
+            self.v = self.v_leak.astype(np.float64, copy=True)
         if self.i_syn is None:
             self.i_syn = np.zeros(self.n_neurons)
 
@@ -530,6 +582,7 @@ class SCCubaLIFNode:
         self.i_syn = np.zeros(size)
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Advance synaptic current before membrane voltage, then detect and reset spikes."""
         assert self.v is not None and self.i_syn is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
@@ -537,17 +590,22 @@ class SCCubaLIFNode:
         x = x[: self.n_neurons]
         di = (-self.i_syn + self.w_in * x) * (self.dt / self.tau_syn)
         self.i_syn += di
+        prior_reset = (
+            (self.v > self.v_threshold) if self.reset_mode == "snntorch-subtract" else None
+        )
         dv = (self.v_leak - self.v + self.r * self.i_syn) * (self.dt / self.tau_mem)
         self.v += dv
-        spikes = (self.v > self.v_threshold).astype(np.float64)
-        if self.reset_mode == "subtract":
+        detection = self.v if prior_reset is None else self.v - prior_reset * self.v_threshold
+        spikes = (detection > self.v_threshold).astype(np.float64)
+        if self.reset_mode in ("subtract", "snntorch-subtract"):
             self.v = np.where(spikes > 0, self.v - self.v_threshold, self.v)
         else:
             self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self) -> None:
-        self.v = self.v_leak.copy()
+        """Restore leak voltage and clear the accumulated synaptic current."""
+        self.v = self.v_leak.astype(np.float64, copy=True)
         self.i_syn = np.zeros(self.n_neurons)
 
 
@@ -572,6 +630,7 @@ class SCCubaLINode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.CubaLI, dt: float = 1.0) -> SCCubaLINode:
+        """Copy current-based integrator parameters and its Euler timestep."""
         tau_syn = np.atleast_1d(node.tau_syn).flatten()
         tau_mem = np.atleast_1d(node.tau_mem).flatten()
         r = np.atleast_1d(node.r).flatten()
@@ -589,8 +648,9 @@ class SCCubaLINode:
         )
 
     def __post_init__(self) -> None:
+        """Initialise the current-based integrator voltage and synaptic current."""
         if self.v is None:
-            self.v = self.v_leak.copy()
+            self.v = self.v_leak.astype(np.float64, copy=True)
         if self.i_syn is None:
             self.i_syn = np.zeros(self.n_neurons)
 
@@ -605,6 +665,7 @@ class SCCubaLINode:
         self.i_syn = np.zeros(size)
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Advance the synaptic and membrane Euler states and return voltage."""
         assert self.v is not None and self.i_syn is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
@@ -617,7 +678,8 @@ class SCCubaLINode:
         return self.v.copy()
 
     def reset(self) -> None:
-        self.v = self.v_leak.copy()
+        """Restore leak voltage and clear the current-based integrator current."""
+        self.v = self.v_leak.astype(np.float64, copy=True)
         self.i_syn = np.zeros(self.n_neurons)
 
 
@@ -634,6 +696,7 @@ class SCSumPool2dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.SumPool2d) -> SCSumPool2dNode:
+        """Retain sum-pooling geometry and declared channel-spatial input shape."""
         ks_raw = tuple(int(x) for x in np.atleast_1d(node.kernel_size).flatten()[:2])
         st_raw = tuple(int(x) for x in np.atleast_1d(node.stride).flatten()[:2])
         pad_raw = tuple(int(x) for x in np.atleast_1d(node.padding).flatten()[:2])
@@ -650,6 +713,7 @@ class SCSumPool2dNode:
         )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Sum spatial windows with the declared padding, stride and kernel."""
         if x.ndim < 2:
             return x
         # Expect (C, H, W) or (H, W)
@@ -684,6 +748,7 @@ class SCAvgPool2dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.AvgPool2d) -> SCAvgPool2dNode:
+        """Retain average-pooling geometry and declared channel-spatial input shape."""
         ks_raw = tuple(int(x) for x in np.atleast_1d(node.kernel_size).flatten()[:2])
         st_raw = tuple(int(x) for x in np.atleast_1d(node.stride).flatten()[:2])
         pad_raw = tuple(int(x) for x in np.atleast_1d(node.padding).flatten()[:2])
@@ -700,6 +765,7 @@ class SCAvgPool2dNode:
         )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Average spatial windows with the declared padding, stride and kernel."""
         sum_node = SCSumPool2dNode(
             name=self.name + "_sum",
             kernel_size=self.kernel_size,
@@ -709,6 +775,20 @@ class SCAvgPool2dNode:
         summed = sum_node.forward(x)
         area = self.kernel_size[0] * self.kernel_size[1]
         return summed / area
+
+
+def _conv_integer(value: Any, field_name: str, minimum: int = 1) -> int:
+    """Own one integral convolution extent without truncating fractional geometry."""
+    try:
+        scalar = np.asarray(value).item()
+        if isinstance(scalar, bool):
+            raise TypeError
+        result = index(scalar)
+    except (TypeError, ValueError):
+        raise ValueError(f"Convolution {field_name} must be a single integer") from None
+    if result < minimum:
+        raise ValueError(f"Convolution {field_name} must be at least {minimum}")
+    return result
 
 
 def _resolve_conv_padding(spec: int | str, *, kernel: int, dilation: int, stride: int) -> int:
@@ -738,7 +818,7 @@ def _resolve_conv_padding(spec: int | str, *, kernel: int, dilation: int, stride
         raise ValueError(
             f"Unsupported conv padding mode {spec!r}; use 'same', 'valid', or an integer"
         )
-    return int(spec)
+    return _conv_integer(spec, "padding", minimum=0)
 
 
 @dataclass
@@ -756,25 +836,33 @@ class SCConv1dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv1d) -> SCConv1dNode:
+        """Copy one-dimensional convolution weights and resolve symmetric padding."""
+        stride = _conv_integer(node.stride, "stride")
+        dilation = _conv_integer(node.dilation, "dilation")
         padding = _resolve_conv_padding(
             node.padding,
             kernel=int(node.weight.shape[2]),
-            dilation=node.dilation,
-            stride=node.stride,
+            dilation=dilation,
+            stride=stride,
         )
+        raw_shape = getattr(node, "input_shape", None)
+        input_shape = None if raw_shape is None else _conv_integer(raw_shape, "input_shape")
         return cls(
             name=name,
-            weight=node.weight,
-            bias=node.bias if node.bias is not None else np.zeros(node.weight.shape[0]),
-            stride=node.stride,
+            weight=np.asarray(node.weight).copy(),
+            bias=np.asarray(node.bias).copy()
+            if node.bias is not None
+            else np.zeros(node.weight.shape[0]),
+            stride=stride,
             padding=padding,
-            dilation=node.dilation,
-            groups=node.groups,
-            input_shape=getattr(node, "input_shape", None),
+            dilation=dilation,
+            groups=_conv_integer(node.groups, "groups"),
+            input_shape=input_shape,
         )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         # x: (C_in, L) or (L,)
+        """Apply the grouped one-dimensional convolution to channel-spatial input."""
         if x.ndim == 1:
             x = x[np.newaxis, :]
         c_out, c_in_per_group, k = self.weight.shape
@@ -814,14 +902,16 @@ class SCConv2dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv2d) -> SCConv2dNode:
-        stride = node.stride if isinstance(node.stride, tuple) else (node.stride, node.stride)
+        """Copy two-dimensional convolution weights and normalise spatial geometry."""
+        raw_stride = np.broadcast_to(np.asarray(node.stride), (2,))
+        stride = (_conv_integer(raw_stride[0], "stride"), _conv_integer(raw_stride[1], "stride"))
+        raw_dilation = np.broadcast_to(np.asarray(node.dilation), (2,))
         dilation = (
-            node.dilation if isinstance(node.dilation, tuple) else (node.dilation, node.dilation)
+            _conv_integer(raw_dilation[0], "dilation"),
+            _conv_integer(raw_dilation[1], "dilation"),
         )
         kh, kw = int(node.weight.shape[2]), int(node.weight.shape[3])
-        raw_padding = (
-            node.padding if isinstance(node.padding, tuple) else (node.padding, node.padding)
-        )
+        raw_padding = tuple(np.broadcast_to(np.asarray(node.padding), (2,)))
         padding = (
             _resolve_conv_padding(
                 raw_padding[0], kernel=kh, dilation=dilation[0], stride=stride[0]
@@ -830,20 +920,44 @@ class SCConv2dNode:
                 raw_padding[1], kernel=kw, dilation=dilation[1], stride=stride[1]
             ),
         )
+        raw_shape = getattr(node, "input_shape", None)
+        input_shape = None
+        if raw_shape is not None:
+            height, width = raw_shape
+            input_shape = (
+                _conv_integer(height, "input_shape"),
+                _conv_integer(width, "input_shape"),
+            )
+        output_shape = _shape3_tuple_from_type(getattr(node, "output_type", None), "output")
+        if input_shape is not None and output_shape is not None:
+            height, width = (int(v) for v in input_shape)
+            expected = (
+                int(node.weight.shape[0]),
+                (height + 2 * padding[0] - dilation[0] * (kh - 1) - 1) // stride[0] + 1,
+                (width + 2 * padding[1] - dilation[1] * (kw - 1) - 1) // stride[1] + 1,
+            )
+            if output_shape != expected:
+                raise ValueError(
+                    "Conv2d output shape conflicts with its kernel geometry; "
+                    "this NIR version infers non-square kernels incorrectly"
+                )
         return cls(
             name=name,
-            weight=node.weight,
-            bias=node.bias if node.bias is not None else np.zeros(node.weight.shape[0]),
+            weight=np.asarray(node.weight).copy(),
+            bias=np.asarray(node.bias).copy()
+            if node.bias is not None
+            else np.zeros(node.weight.shape[0]),
             stride=stride,
             padding=padding,
             dilation=dilation,
-            groups=node.groups,
-            input_shape=getattr(node, "input_shape", None),
-            output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
+            groups=_conv_integer(node.groups, "groups"),
+            input_shape=input_shape,
+            output_shape=output_shape,
         )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         # x: (C_in, H, W) or (H, W)
+        """Apply the grouped two-dimensional convolution to channel-spatial input."""
         if x.ndim == 2:
             x = x[np.newaxis, :, :]
         c_out, c_in_per_group, kh, kw = self.weight.shape
@@ -905,12 +1019,17 @@ NODE_MAP: dict[type, Any] = {
     nir.CubaLIF: lambda name, node, **kw: SCCubaLIFNode.from_nir(
         name, node, dt=kw.get("dt", 1.0), reset_mode=kw.get("reset_mode", "reset")
     ),
-    nir.CubaLI: lambda name, node, **kw: SCCubaLINode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.SumPool2d: lambda name, node, **kw: SCSumPool2dNode.from_nir(name, node),
     nir.AvgPool2d: lambda name, node, **kw: SCAvgPool2dNode.from_nir(name, node),
     nir.Conv1d: lambda name, node, **kw: SCConv1dNode.from_nir(name, node),
     nir.Conv2d: lambda name, node, **kw: SCConv2dNode.from_nir(name, node),
 }
+
+
+if hasattr(nir, "CubaLI"):
+    NODE_MAP[nir.CubaLI] = lambda name, node, **kw: SCCubaLINode.from_nir(
+        name, node, dt=kw.get("dt", 1.0)
+    )
 
 
 def map_node(name: str, node: nir.NIRNode, **kwargs: Any) -> Any:
