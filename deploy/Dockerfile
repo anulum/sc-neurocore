@@ -50,6 +50,9 @@ COPY requirements/hub.txt ./requirements/hub.txt
 COPY requirements/runtime.txt ./requirements/runtime.txt
 COPY pyproject.toml README.md LICENSE ./
 COPY src/ ./src/
+# src/build_support.py packages these into the wheel and refuses to build without them.
+COPY docs/api/models/ ./docs/api/models/
+COPY benchmarks/bench_ann_to_snn_replay.py benchmarks/_ann_to_snn_replay_profiles.py benchmarks/_ann_to_snn_replay_measurement.py ./benchmarks/
 
 RUN pip install --no-cache-dir --require-hashes -r requirements/build.txt \
     && pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/runtime.txt

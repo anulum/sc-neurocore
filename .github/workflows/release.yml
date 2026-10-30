@@ -80,7 +80,8 @@ jobs:
           python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt
           deactivate
           echo "$SEMGREP_VENV/bin" >> "$GITHUB_PATH"
-          python -m pip install --require-hashes -r requirements/fuzz.txt
+          # The fuzz subset imports the package, so the runtime lock is installed with it.
+          python -m pip install --require-hashes -r requirements/fuzz.txt -r requirements/runtime.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
           go install github.com/anchore/syft/cmd/syft@v1.20.0

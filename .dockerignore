@@ -42,3 +42,11 @@ htmlcov/
 *.onnx
 *.pkl
 *.pt
+
+# The wheel build (src/build_support.py) packages the model reference pages and the
+# conversion-benchmark sources; exceptions come last so that they win.
+!docs/api/models/
+!docs/api/models/*.md
+!benchmarks/bench_ann_to_snn_replay.py
+!benchmarks/_ann_to_snn_replay_profiles.py
+!benchmarks/_ann_to_snn_replay_measurement.py

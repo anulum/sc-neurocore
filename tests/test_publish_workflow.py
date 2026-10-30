@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, cast
@@ -339,3 +340,43 @@ def test_container_image_is_scanned_before_any_push() -> None:
     ]
     assert pushes == [push]
     assert _step(job, "Extract metadata")[1]["with"]["flavor"].split() == ["latest=auto"]
+
+
+def test_release_fuzz_subset_can_import_the_package() -> None:
+    """The release sweep's fuzz subset imports the package, so the runtime lock is installed with it."""
+    release = _named_workflow("release.yml")["jobs"]["release"]
+    tools = _step(release, "Install release security sweep tools")[1]["run"]
+    assert "-r requirements/fuzz.txt -r requirements/runtime.txt" in tools
+
+
+def test_container_build_context_holds_every_wheel_build_input() -> None:
+    """Docker copies each source the wheel build hook packages, and does not ignore it.
+
+    ``src/build_support.py`` refuses to build a wheel without the model reference pages and the
+    conversion-benchmark sources; a context that drops them fails the image build.
+    """
+    root = _repo_root()
+    hook = (root / "src" / "build_support.py").read_text("utf-8")
+    benchmarks = re.findall(r'"((?:bench_|_)ann_to_snn_replay[a-z_]*\.py)"', hook)
+    assert sorted(benchmarks) == [
+        "_ann_to_snn_replay_measurement.py",
+        "_ann_to_snn_replay_profiles.py",
+        "bench_ann_to_snn_replay.py",
+    ]
+    assert '"docs" / "api" / "models"' in hook
+    dockerfile = (root / "deploy" / "Dockerfile").read_text("utf-8")
+    build_at = dockerfile.index("RUN python -m build --wheel")
+    assert dockerfile.index("COPY docs/api/models/ ./docs/api/models/") < build_at
+    copy_line = next(line for line in dockerfile.splitlines() if "./benchmarks/" in line)
+    assert dockerfile.index(copy_line) < build_at
+    ignore = [line.strip() for line in (root / ".dockerignore").read_text("utf-8").splitlines()]
+    for kept in ["docs/api/models/", "docs/api/models/*.md"] + [
+        f"benchmarks/{b}" for b in benchmarks
+    ]:
+        assert kept in copy_line or kept.startswith("docs/")
+        assert ignore.index(f"!{kept}") > max(
+            ignore.index("docs/"), ignore.index("*.md"), ignore.index("benchmarks/")
+        )
+    for name in benchmarks:
+        assert (root / "benchmarks" / name).is_file()
+    assert list((root / "docs" / "api" / "models").glob("*.md"))
