@@ -31,6 +31,7 @@ export default defineConfig({
     "review-live.spec.ts",
     "training-conversion-live.spec.ts",
     "training-preregistration-live.spec.ts",
+    "trace-data-custody-live.spec.ts",
     "workbench-accessibility-live.spec.ts",
   ],
   timeout: 30_000,

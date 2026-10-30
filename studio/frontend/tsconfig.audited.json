@@ -31,6 +31,7 @@
     "e2e/notebook-export-live.spec.ts",
     "e2e/review-live.spec.ts",
     "e2e/workbench-accessibility-live.spec.ts",
+    "e2e/trace-data-custody-live.spec.ts",
     "playwright.config.ts",
     "playwright.export.config.ts",
     "playwright.installed.config.ts",

@@ -52,6 +52,7 @@ export default defineConfig({
     "guided-flow-truth-live.spec.ts",
     "candidate-authoring-live.spec.ts",
     "workbench-accessibility-live.spec.ts",
+    "trace-data-custody-live.spec.ts",
     "fit-live.spec.ts",
     "review-live.spec.ts",
     "notebook-export-live.spec.ts",
