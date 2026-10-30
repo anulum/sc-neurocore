@@ -93,7 +93,7 @@ def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     """Makefile and primary hosted CI must not weaken the canonical threshold."""
     assert _cov_thresholds(_ROOT / "Makefile") == (100,)
-    assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100, 100)
+    assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100, 100, 100)
 
 
 def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
