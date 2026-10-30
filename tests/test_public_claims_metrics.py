@@ -447,6 +447,26 @@ def test_conda_forge_claims_are_recipe_draft_until_published() -> None:
     assert "conda install conda-forge::sc-neurocore" not in compact
 
 
+def test_conda_recipe_restates_no_inventory_or_release_specific_facts() -> None:
+    """Keep the recipe draft free of copies that drift from their sources.
+
+    Inventory counts belong to the generated capability manifest, the base
+    install contract to ``pyproject.toml``, and the release version to the
+    recipe's single ``{% set version %}`` line. A summary with model counts or
+    submission steps naming one past release go stale on the next change.
+    """
+    root = _repo_root()
+    recipe = (root / "conda" / "meta.yaml").read_text(encoding="utf-8")
+    guide = (root / "conda" / "README.md").read_text(encoding="utf-8")
+    summary = re.findall(r'^  summary: "([^"]*)"$', recipe, re.MULTILINE)
+
+    assert len(summary) == 1, "The recipe states its summary exactly once."
+    assert not re.search(r"\d", summary[0]), summary[0]
+    assert not re.search(r"sc[-_]neurocore[-=]=?\d", guide), "Steps name no fixed release."
+    assert "requires-python" in guide
+    assert not re.search(r"Python\s*>=\s*3\.\d", guide), "The guide does not copy the bound."
+
+
 def test_public_maturity_classifier_stays_beta_until_stable_gate() -> None:
     """Keep package maturity below stable until the evidence gate is met."""
     root = _repo_root()

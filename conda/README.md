@@ -11,11 +11,18 @@ accepted and the feedstock publishes packages.
 
 1. Fork [conda-forge/staged-recipes](https://github.com/conda-forge/staged-recipes)
 2. Copy `meta.yaml` to `recipes/sc-neurocore/meta.yaml`
-3. Replace `PLACEHOLDER` with the SHA256 of the PyPI sdist tarball:
+3. Replace `PLACEHOLDER` with the SHA256 of the published PyPI sdist of the
+   version the recipe sets. The digest can exist only after that sdist is on
+   PyPI, so the tagged tree keeps the placeholder and the filled recipe lives
+   in the staged-recipes pull request or the feedstock:
    ```bash
-   pip download sc-neurocore==3.15.7 --no-binary :all: --no-deps -d /tmp
-   sha256sum /tmp/sc_neurocore-3.15.7.tar.gz
+   VERSION=$(sed -n 's/^{% set version = "\(.*\)" %}$/\1/p' conda/meta.yaml)
+   DEST=$(mktemp -d)
+   pip download "sc-neurocore==${VERSION}" --no-binary :all: --no-deps -d "$DEST"
+   sha256sum "$DEST/sc_neurocore-${VERSION}.tar.gz"
    ```
+   Compare the result with the `sha256` digest PyPI lists for that file
+   before using it.
 4. Open a PR against `conda-forge/staged-recipes`
 5. Wait for review (typically 1-2 weeks)
 
@@ -27,9 +34,8 @@ conda build conda/
 ```
 
 The recipe must stay aligned with the base install contract in
-`pyproject.toml`: Python >=3.10, NumPy >=1.24, SciPy >=1.10, defusedxml
->=0.7.1, tomli-w >=1.0, typing-extensions >=4.0,<5, and tomli only on
-Python <3.11. `tools/install_profile_audit.py`
+`pyproject.toml` (`requires-python` and `dependencies`). This page does not
+repeat that list, so it cannot drift from it. `tools/install_profile_audit.py`
 derives the expected `run:` list from `pyproject.toml` rather than from a copy
 of this recipe, and reports any row the recipe is missing by name. Its import
 tests also verify the packaged offline HDL primitive resources used by

@@ -49,7 +49,7 @@ test:
 
 about:
   home: https://github.com/anulum/sc-neurocore
-  summary: "Stochastic Computing SNN framework: 176 neuron models, 127 analysis functions, FPGA RTL"
+  summary: "Stochastic computing spiking neural network framework with bit-true models and FPGA RTL"
   license: AGPL-3.0-or-later
   license_file: LICENSE
   doc_url: https://anulum.github.io/sc-neurocore/
