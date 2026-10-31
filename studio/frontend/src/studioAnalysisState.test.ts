@@ -227,3 +227,14 @@ describe("studio analysis state helpers", () => {
     }))).toBeNull();
   });
 });
+
+it("does not average a display projection when raw samples were explicitly omitted", () => {
+  const result = simulationResult({ dt: 5, spikes: [3, 10, 20],
+    states: { v: Array.from({ length: 30 }, (_, index) => index) } });
+  result.raw = { schema_version: "studio.raw-trace.v1", included: false,
+    element_count: 2_100_000, element_budget: 2_000_000, dt: 5, n_steps: 100_000,
+    sample_time_ms: "(index + 1) * dt", drive_interval_ms: "[index * dt, (index + 1) * dt)",
+    spike_indices: result.spikes, spike_times_ms: [20, 55, 105], vector_snapshots_only: [],
+    reason: "Raw traces exceed the data limit." };
+  expect(studioSTAResultState(result)).toBeNull();
+});

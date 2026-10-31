@@ -188,12 +188,11 @@ import {
   studioNetworkResultState,
   studioNullclineResultState,
   studioPrecisionResultState,
-  studioSTAResultState,
 } from "../studioAnalysisState";
 import {
   replayPackExport,
-  simulationExportPlan,
 } from "../simulationExports";
+import { computeStudioSTA, exportStudioTrace } from "./studioTraceActions";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 import {
   networkNirExportNotice,
@@ -974,28 +973,9 @@ export function createStudioStoreActions(
     } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 
-  exportData: () => {
-    const plan = simulationExportPlan("json", get().result);
-    if (plan.available) {
-      plan.writeArtefact();
-    }
-  },
-
-  exportCSV: () => {
-    const plan = simulationExportPlan("csv", get().result);
-    if (plan.available) {
-      plan.writeArtefact();
-    }
-  },
-
-  exportSVG: () => {
-    const plan = simulationExportPlan("svg", get().result);
-    if (plan.available) {
-      plan.writeArtefact();
-    } else {
-      plan.runFallback();
-    }
-  },
+  exportData: () => { exportStudioTrace("json", get, set); },
+  exportCSV: () => { exportStudioTrace("csv", get, set); },
+  exportSVG: () => { exportStudioTrace("svg", get, set); },
 
   runCharacterize: () => {
     runStoreCharacterize(get, studioStageSet("analyse", get, set));
@@ -1072,12 +1052,7 @@ export function createStudioStoreActions(
     return studioFrequencyResultState(freqResult);
   }, "freq"),
 
-  computeSTA: () => {
-    const { result } = get();
-    if (!result) return;
-    const state = studioSTAResultState(result);
-    if (state !== null) set(state);
-  },
+  computeSTA: () => { computeStudioSTA(get, set); },
 
 
   setSynthTarget: (t) => { set(synthesisTargetState(t)); },

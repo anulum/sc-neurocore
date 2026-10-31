@@ -20,7 +20,7 @@ import { parseStudioJson } from "../src/studioJson";
  * @param name - The export action.
  * @returns The downloaded UTF-8 content.
  */
-async function downloadText(page: Page, name: "JSON" | "CSV"): Promise<string> {
+async function downloadText(page: Page, name: "JSON" | "CSV" | "SVG"): Promise<string> {
   const downloading = page.waitForEvent("download");
   await page.getByRole("button", { name, exact: true }).click();
   const file = await downloading;
@@ -151,4 +151,73 @@ test("a long trace retains raw sample custody through reduction, pointer interac
   }
   expect(Math.max(...numeric.map((row, step) => Math.abs((row.at(-1) ?? NaN) - (drive[step] ?? NaN)))))
     .toBeLessThanOrEqual(0.000050001);
+});
+
+test("omitted raw samples refuse CSV and STA, retain display documents, and recover after a shorter run", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("sc-studio-onboarding-dismissed", "true");
+  });
+  const name = `raw-custody-${Date.now()}`;
+  const equations = Array.from({ length: 20 }, (_, index) => index === 0
+    ? "dv0/dt = I - 2*v0 + v1"
+    : index === 19 ? "dv19/dt = v18 - v19"
+      : `dv${index}/dt = v${index - 1} - 2*v${index} + v${index + 1}`);
+  const saved = await page.request.post("/api/project/save", {
+    headers: { "Sec-Fetch-Site": "none" },
+    data: { name, state: {
+      sourceMode: "ode", equations, threshold: "v0 > 1", reset: "v0 = 0",
+      odeParams: {}, odeInit: Object.fromEntries(equations.map((_, index) => [`v${index}`, 0])),
+      dt: 0.01, duration: 1000, current: 10, protocol: "constant", frequencyHz: 10,
+      seed: null, trial: "replay",
+    } },
+  });
+  expect(saved.ok(), await saved.text()).toBe(true);
+  await page.goto("./");
+  await page.getByRole("button", { name: "Refresh projects", exact: true }).click();
+  const simulated = page.waitForResponse((response) => {
+    if (new URL(response.url()).pathname !== "/api/simulate" || !response.ok()) return false;
+    const input = response.request().postDataJSON() as Record<string, unknown>;
+    return input.duration === 1000 && input.dt === 0.01;
+  });
+  await page.getByRole("button", { name: `Open project ${name} revision 1`, exact: true }).click();
+  const result = parseStudioJson(await (await simulated).text()) as SimulateResponse;
+  expect(result.n_steps).toBe(100_000);
+  expect(Object.keys(result.states)).toHaveLength(20);
+  expect(result.raw?.included).toBe(false);
+  expect(result.time.length).toBeLessThan(result.n_steps);
+  expect(result.spikes.length).toBeGreaterThan(3);
+  const plot = page.getByRole("img", { name: /^Trace of / });
+  await expect(plot).toHaveAccessibleName(/100000 steps/);
+
+  const downloads: string[] = [];
+  page.on("download", (file) => { downloads.push(file.suggestedFilename()); });
+  await page.getByRole("button", { name: "CSV", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "CSV export requires full-resolution traces." })).toBeVisible();
+  const reason = result.raw?.reason;
+  if (reason === undefined) throw new Error("The public raw omission must explain how to reduce the run");
+  await expect(page.getByRole("alert").filter({ hasText: reason })).toBeVisible();
+  await page.getByRole("button", { name: "Compute STA", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Spike-triggered average requires full-resolution traces." })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Trace", exact: true })).toHaveAttribute("aria-selected", "true");
+  expect(parseStudioJson(await downloadText(page, "JSON"))).toEqual(result);
+  expect(await downloadText(page, "SVG")).toContain("<svg");
+  expect(downloads).toHaveLength(2);
+  expect(downloads.some((filename) => filename.endsWith(".csv"))).toBe(false);
+
+  const shortened = page.waitForResponse((response) => {
+    if (new URL(response.url()).pathname !== "/api/simulate" || !response.ok()) return false;
+    const input = response.request().postDataJSON() as Record<string, unknown>;
+    return input.duration === 100 && input.dt === 0.01;
+  });
+  await page.getByTestId("slider-T (ms)").fill("100");
+  const complete = parseStudioJson(await (await shortened).text()) as SimulateResponse;
+  expect(complete.n_steps).toBe(10_000);
+  expect(complete.raw?.included).toBe(true);
+  await expect(plot).toHaveAccessibleName(/10000 steps/);
+  await expect(page.getByRole("alert").filter({ hasText: "requires full-resolution traces." })).toHaveCount(0);
+  const [header, ...rows] = (await downloadText(page, "CSV")).split("\n");
+  expect(header).toBe(["time", ...Object.keys(complete.raw?.states ?? {}), "current"].join(","));
+  expect(rows).toHaveLength(complete.n_steps);
+  await page.getByRole("button", { name: "Compute STA", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "STA", exact: true })).toHaveAttribute("aria-selected", "true");
 });

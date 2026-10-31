@@ -12,8 +12,20 @@ The Studio supports three data export formats:
 | Format | Button | Contents | Use Case |
 |--------|--------|----------|----------|
 | **SVG** | SVG | Vector traces with axes and legend | Paper figures, presentations |
-| **CSV** | CSV | Time column + state variable columns | External tools (MATLAB, R, pandas) |
-| **JSON** | JSON | Full result (time, states, spikes, params) | Reproducibility, archival |
+| **CSV** | CSV | Full-resolution time, scalar state and drive columns, when available | External tools (MATLAB, R, pandas) |
+| **JSON** | JSON | Complete response, including raw availability and display projection metadata | Reproducibility, archival |
+
+CSV uses every raw sample, with time and drive rounded to four decimal places
+and scalar states to six. A large run may exceed the server's raw-data limit
+while still returning a reduced trace for display. In that case, **CSV** and
+**Compute STA** show the server's explanation and refuse the operation. They
+do not substitute display samples for the full trace. Shorten the simulation
+or reduce its state count, then run it again to obtain full-resolution data.
+
+**JSON** remains available and preserves the response's `raw.included: false`
+declaration and reason. **SVG** remains available as a figure of the display
+trace; its plotted vertices are not a full-resolution data export. Older saved
+results without a raw-availability block retain their original array exports.
 
 ## Frontend SVG Generation
 

@@ -21,16 +21,30 @@ export function hasRawTraces(result: SimulateResponse): boolean {
 }
 
 /**
+ * Explain why a modern result cannot provide its full-resolution samples.
+ *
+ * @param result - The simulation response, including its raw-custody declaration.
+ * @returns The server's omission reason, or null when the trace is available
+ *   or comes from the legacy schema without a raw block.
+ */
+export function fullTraceUnavailableReason(result: SimulateResponse): string | null {
+  if (result.raw?.included !== false) return null;
+  return result.raw.reason ?? "The full-resolution samples were omitted.";
+}
+
+/**
  * Full-resolution trace of one scalar state.
  *
  * Uses the ``raw`` block when the result carries it; a legacy result without
- * raw custody falls back to its (display) ``states`` field.
+ * raw custody falls back to its ``states`` field. An explicit raw omission
+ * never falls back to the display projection.
  *
  * @param result - One simulation response.
  * @param name - The scalar state to read.
- * @returns Its trace, or `undefined` when the result carries no such state.
+ * @returns Its trace, or `undefined` when it is unavailable.
  */
 export function fullStateTrace(result: SimulateResponse, name: string): number[] | undefined {
+  if (result.raw?.included === false) return undefined;
   if (hasRawTraces(result)) {
     return result.raw?.states?.[name];
   }
@@ -41,9 +55,10 @@ export function fullStateTrace(result: SimulateResponse, name: string): number[]
  * Names of the scalar states that have a full-resolution trace.
  *
  * @param result - One simulation response.
- * @returns The state names a full-resolution trace can be read for.
+ * @returns The state names, or none when raw traces were explicitly omitted.
  */
 export function fullStateNames(result: SimulateResponse): string[] {
+  if (result.raw?.included === false) return [];
   if (hasRawTraces(result)) {
     return Object.keys(result.raw?.states ?? {});
   }
@@ -54,9 +69,10 @@ export function fullStateNames(result: SimulateResponse): string[] {
  * Full-resolution drive samples (raw when present, else the display trace).
  *
  * @param result - One simulation response.
- * @returns The drive samples, at raw resolution where the result carries them.
+ * @returns The drive samples, or none when raw traces were explicitly omitted.
  */
 export function fullDriveTrace(result: SimulateResponse): number[] {
+  if (result.raw?.included === false) return [];
   if (hasRawTraces(result) && result.raw?.drive !== undefined) {
     return result.raw.drive;
   }
@@ -67,9 +83,10 @@ export function fullDriveTrace(result: SimulateResponse): number[] {
  * Post-step sample times of the full-resolution traces: ``(index + 1) * dt``.
  *
  * @param result - One simulation response.
- * @returns One time per full-resolution sample, in milliseconds.
+ * @returns One time per full-resolution sample, or none for an explicit omission.
  */
 export function fullSampleTimes(result: SimulateResponse): number[] {
+  if (result.raw?.included === false) return [];
   if (hasRawTraces(result)) {
     return Array.from({ length: result.raw?.n_steps ?? 0 }, (_, index) => (index + 1) * result.dt);
   }

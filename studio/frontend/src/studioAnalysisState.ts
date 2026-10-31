@@ -393,7 +393,7 @@ export function studioFrequencyResultState(
  * would sample the wrong instants.
  *
  * @param result - The run to average.
- * @returns The patch, or `null` when there were fewer than three spikes.
+ * @returns The patch, or `null` when raw samples or spike windows are unavailable.
  */
 export function studioSTAResultState(result: SimulateResponse): StudioSTAResultStatePatch | null {
   if (result.spikes.length < 3) {

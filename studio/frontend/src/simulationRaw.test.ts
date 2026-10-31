@@ -15,6 +15,7 @@ import {
   fullSampleTimes,
   fullStateNames,
   fullStateTrace,
+  fullTraceUnavailableReason,
   hasRawTraces,
   rawStepAtTime,
 } from "./simulationRaw";
@@ -109,4 +110,22 @@ describe("simulation raw-trace accessors", () => {
     expect(rawStepAtTime(legacyResult, 0.2)).toBe(1);
     expect(rawStepAtTime(legacyResult, 0.0)).toBe(0);
   });
+});
+
+it("keeps an explicit raw omission separate from legacy complete traces", () => {
+  const raw = custodyResult.raw;
+  if (raw === undefined) throw new Error("The custody fixture needs its declared raw block");
+  const omitted: SimulateResponse = { ...custodyResult,
+    raw: { ...raw, included: false, states: undefined, drive: undefined,
+      reason: "Raw traces exceed the data limit." } };
+  expect(hasRawTraces(omitted)).toBe(false);
+  expect(fullStateNames(omitted)).toEqual([]);
+  expect(fullStateTrace(omitted, "v")).toBeUndefined();
+  expect(fullDriveTrace(omitted)).toEqual([]);
+  expect(fullSampleTimes(omitted)).toEqual([]);
+  expect(fullTraceUnavailableReason(omitted)).toBe("Raw traces exceed the data limit.");
+  expect(fullTraceUnavailableReason({ ...omitted, raw: { ...raw,
+    included: false, reason: undefined } })).toBe("The full-resolution samples were omitted.");
+  expect(fullTraceUnavailableReason(custodyResult)).toBeNull();
+  expect(fullTraceUnavailableReason(legacyResult)).toBeNull();
 });

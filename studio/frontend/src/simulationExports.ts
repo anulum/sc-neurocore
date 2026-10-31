@@ -24,7 +24,7 @@ import type { SimulateResponse } from "./api/client";
 import type { ReplayPack } from "./api/types";
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
 import { downloadCanvasPng } from "./browserCanvasExport";
-import { fullDriveTrace, fullSampleTimes, fullStateNames, fullStateTrace } from "./simulationRaw";
+import { fullDriveTrace, fullSampleTimes, fullStateNames, fullStateTrace, fullTraceUnavailableReason } from "./simulationRaw";
 import { at } from "./arrayAt";
 import { PLOT_AXIS } from "./simulationPlotCanvas";
 
@@ -56,6 +56,7 @@ export interface SimulationExportReadyPlan {
 /** An export that cannot, and why. */
 export interface SimulationExportUnavailablePlan {
   available: false;
+  reason?: string;
   runFallback: (fallback?: SimulationExportCanvasFallback) => boolean;
 }
 
@@ -157,6 +158,8 @@ export function simulationJsonExport(result: SimulateResponse): SimulationExport
  * @returns The CSV text.
  */
 export function simulationCsvText(result: SimulateResponse): string {
+  const reason = fullTraceUnavailableReason(result);
+  if (reason !== null) throw new Error(`CSV export requires full-resolution traces. ${reason}`);
   // Export the full-resolution raw traces (post-step sample times); a legacy
   // result without raw custody exports the arrays it carries.
   const variables = fullStateNames(result);
@@ -367,6 +370,14 @@ export function simulationExportPlan(
       available: false,
       runFallback: (fallback = kind === "svg" ? downloadCanvasPng : undefined) =>
         fallback?.() ?? false,
+    };
+  }
+  const reason = fullTraceUnavailableReason(result);
+  if (kind === "csv" && reason !== null) {
+    return {
+      available: false,
+      reason: `CSV export requires full-resolution traces. ${reason}`,
+      runFallback: () => false,
     };
   }
   const artefact = simulationExportArtefact(kind, result);

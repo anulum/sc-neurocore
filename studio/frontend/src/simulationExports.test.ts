@@ -218,3 +218,25 @@ it("retains exact seed digits in replay pack download bytes", async () => {
   expect(blob.type).toBe("application/json");
   expect(await blob.text()).toContain('"seed": 9223372036854775807');
 });
+
+it("refuses CSV for declared raw omission while preserving JSON and display SVG", async () => {
+  const omitted: SimulateResponse = { ...result, raw: {
+    schema_version: "studio.raw-trace.v1", included: false,
+    element_count: 2_100_000, element_budget: 2_000_000,
+    dt: result.dt, n_steps: 100_000, sample_time_ms: "(index + 1) * dt",
+    drive_interval_ms: "[index * dt, (index + 1) * dt)",
+    spike_indices: result.spikes, spike_times_ms: [0.2], vector_snapshots_only: [],
+    reason: "Raw traces exceed the data limit.",
+  } };
+  expect(() => simulationCsvText(omitted)).toThrow("CSV export requires full-resolution traces.");
+  const plan = simulationExportPlan("csv", omitted);
+  expect(plan.available).toBe(false);
+  if (plan.available) throw new Error("An omitted full trace must not produce CSV");
+  expect(plan.reason).toContain("Raw traces exceed the data limit.");
+  expect(plan.runFallback()).toBe(false);
+  const json = simulationExportPlan("json", omitted);
+  const svg = simulationExportPlan("svg", omitted);
+  if (!json.available || !svg.available) throw new Error("Display documents remain available");
+  expect(await json.artefact.blob.text()).toContain('"included": false');
+  expect(await svg.artefact.blob.text()).toContain("<svg");
+});
