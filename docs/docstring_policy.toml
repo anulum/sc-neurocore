@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1576
+expected_file_count = 1578
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6438,3 +6438,11 @@ rationale = "The wheel's real package discovery ships no test package, and the r
 [[file]]
 path = "tests/test_tools/test_release_workflow_security_packet.py"
 rationale = "The release workflow runs the security sweep with pinned scanners, uploads its packet even on failure, and publishes both security summaries among the checksummed attachments."
+
+[[file]]
+path = "tools/security_scan/run_cargo_fuzz_scanners.py"
+rationale = "Every cargo-fuzz build and run is bounded, and a timeout kills the whole process group so no orphaned compiler holds the build lock."
+
+[[file]]
+path = "tests/test_tools/test_run_cargo_fuzz_scanners.py"
+rationale = "Real process groups prove a timed-out command leaves no child behind; budgets, discovery edge cases and exit statuses are checked through the real runner."

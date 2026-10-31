@@ -13,23 +13,60 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import signal
 import subprocess
+import tomllib
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
-try:  # pragma: no cover - covered by Python-version matrix.
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover
-    import tomli as tomllib  # type: ignore[no-redef]
-
 CARGO_FUZZ_SCHEMA_VERSION = "sc-neurocore.cargo-fuzz-scanners.v1"
 CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS = 300
-CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 1800
+# The first instrumented build compiles the whole engine with sanitizer and
+# coverage instrumentation: 22 to 25 minutes on a hosted runner, and more than
+# 30 minutes on a slow one. Later targets reuse that build.
+CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 3600
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
+def run_in_process_group(
+    command: list[str],
+    *,
+    cwd: Path,
+    capture_output: bool,
+    text: bool,
+    timeout: int,
+    check: bool,
+) -> subprocess.CompletedProcess[str]:
+    """Run ``command`` like ``subprocess.run``, but kill its whole process group on timeout.
+
+    ``cargo +nightly fuzz`` runs a toolchain proxy, cargo, cargo-fuzz, a nested
+    cargo and rustc. ``subprocess.run`` kills only the first of them on timeout;
+    the orphaned compiler keeps the build directory locked, and the next target
+    waits on that lock.
+    """
+    if not capture_output or not text or check:
+        raise ValueError("run_in_process_group captures text output and never checks")
+    process = subprocess.Popen(
+        command,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        stdout, stderr = process.communicate()
+        raise subprocess.TimeoutExpired(command, timeout, output=stdout, stderr=stderr) from None
+    return subprocess.CompletedProcess(command, process.returncode, stdout=stdout, stderr=stderr)
+
+
 def build_parser() -> argparse.ArgumentParser:
+    """Return the command-line parser for the bounded cargo-fuzz runner."""
     parser = argparse.ArgumentParser(description="Run bounded cargo-fuzz targets.")
     parser.add_argument(
         "--repo-root",
@@ -78,6 +115,7 @@ def _tail_lines(text: str, *, limit: int = 12) -> list[str]:
 
 
 def discover_fuzz_targets(repo_root: Path) -> list[str]:
+    """Return the sorted fuzz targets in ``fuzz/Cargo.toml`` whose sources exist."""
     manifest_path = repo_root / "fuzz" / "Cargo.toml"
     payload = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
     bins = payload.get("bin", [])
@@ -176,8 +214,9 @@ def run_cargo_fuzz_scanners(
     selected_targets: Sequence[str] = ("all",),
     max_total_time: int = 300,
     build_timeout: int = CARGO_FUZZ_BUILD_TIMEOUT_SECONDS,
-    run_command: RunCommand = subprocess.run,
+    run_command: RunCommand = run_in_process_group,
 ) -> dict[str, Any]:
+    """Build and run each selected target within its budget and write the packet reports."""
     targets = _selected_targets(repo_root, selected_targets)
     if not targets:
         raise ValueError("no fuzz targets discovered")
@@ -257,6 +296,7 @@ def main(
     *,
     runner: Callable[..., dict[str, Any]] = run_cargo_fuzz_scanners,
 ) -> int:
+    """Run the scanners from the command line and return the process exit status."""
     args = build_parser().parse_args(argv)
     try:
         summary = runner(

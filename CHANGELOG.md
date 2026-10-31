@@ -12,8 +12,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-- Refuse GPU waveform stream dimensions beyond the CPU packet and shader limits, and reject buffers larger than the device allocation or storage-binding limits before creating them. Add physical-GPU packet parity, lossless decoding and error-recovery checks at channel, ADC, workgroup and adaptive-count boundaries.
-
 ## [4.0.0] - 2026-10-29
 
 - The curated summary of this release is `docs/development/RELEASE_NOTES_v4.0.0.md`, which is also the GitHub Release text.
@@ -33,6 +31,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Record 58.63% median public NIR parsing/lowering overhead against the parent in a 30-sample shared-workstation comparison, with byte-identical generated output; these are local regression timings, not isolated throughput measurements. Retaining definitions copies weights beyond runtime parameter storage, so copy work grows with weight size; metadata custody and per-graph order/execution validation add work with their input sizes and were not timed separately.
 - Preserve a positive signed LUT index bound for narrow fixed-point words. In particular, `sqrt(0)` and `log(1)` at signed two-bit integer precision now return zero; exhaustive small-word RTL regressions check every admitted input code against independent table oracles. C and Rust kernels retain their existing full-width clamp.
 - Publish the SHA-256 of exactly the files attached to the GitHub Release; the release workflow refuses a missing or empty attachment.
+- Refuse GPU waveform stream dimensions beyond the CPU packet and shader limits, and reject buffers larger than the device allocation or storage-binding limits before creating them. Add physical-GPU packet parity, lossless decoding and error-recovery checks at channel, ADC, workgroup and adaptive-count boundaries.
+- Give the release cargo-fuzz build one hour instead of 30 minutes, since the instrumented engine build alone has taken more than 30 minutes on a hosted runner. A timed-out fuzz command now terminates its whole process group, so an orphaned compiler no longer holds the build lock for the next target.
 
 - Start a workspace-local candidate from the selected catalogue model's complete canonical schema. Preview it before explicitly replacing an existing draft; retain declaration order, numeric tokens, source and profile metadata, and leave undeclared units and proposal authorship for the author to complete. Validate, diff, run, review, export and reopen the proposal through the existing candidate workflow. Canonical models and their evidence remain unchanged.
 
