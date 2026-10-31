@@ -25,7 +25,7 @@ from pathlib import Path
 from collections.abc import Mapping
 from typing import Any
 
-from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.hdl_gen import sanitize_ident
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.project_manifest import build_project_save_manifest
 from sc_neurocore.studio.project_paths import resolve_studio_project_root

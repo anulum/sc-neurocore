@@ -153,3 +153,7 @@ The native **Emit SV** action does not silently switch to this route.
 Neither compilation path alone qualifies a model for a hardware target.
 Retain the compiler/profile identity and run the applicable numerical,
 co-simulation and tool checks for the emitted design.
+
+Names interpolated into HDL follow the shared
+[identifier contract](hdl-identifiers.md). Invalid names are refused rather
+than rewritten; project loading and co-simulation use the same library API.

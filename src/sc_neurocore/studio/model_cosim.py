@@ -22,7 +22,7 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import (
     generate_bittrue_kernel_from_neuron,
 )
 from sc_neurocore.compiler.verilog_compiler_config import Q88
-from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.hdl_gen import sanitize_ident
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.studio.bit_true_execution import (
     NATIVE_TOOL_NAMES,

@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Expose the shared HDL identifier validator through the public library API;
+  Studio project loading and native co-simulation use that same documented contract.
 - Read-only model discovery API shared by the Studio catalogue, simulation,
   candidate authoring and network validation.
 - Identify the release client in crates.io registry queries so the version check can proceed before publishing.

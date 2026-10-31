@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — HDL identifier validation helpers
 
+"""Shared identifier policy used by the public HDL generation interface."""
+
 from __future__ import annotations
 
 import re
@@ -112,7 +114,34 @@ _VERILOG_RESERVED = frozenset(
 
 
 def sanitize_ident(name: str, context: str = "identifier") -> str:
-    """Validate an HDL-facing identifier before interpolating it into source."""
+    """Validate an HDL identifier and return it unchanged.
+
+    Parameters
+    ----------
+    name : str
+        Case-sensitive ASCII name of one to 64 characters. The first must
+        be a letter or underscore; the rest may also be digits. Names in
+        the generator's reserved-word set are refused.
+    context : str, default="identifier"
+        Description included in the ``ValueError`` message, such as
+        ``"state variable"`` or ``"module name"``.
+
+    Returns
+    -------
+    str
+        The original name, without replacement, escaping or normalisation.
+
+    Raises
+    ------
+    ValueError
+        If the name is outside the accepted syntax or is reserved.
+
+    Notes
+    -----
+    This is the shared project policy for generated HDL names, not a
+    complete parser for escaped Verilog identifiers. It has no side effects
+    and does not qualify the generated circuit or a synthesis target.
+    """
     if not _IDENT_RE.fullmatch(name):
         raise ValueError(f"Invalid {context}: {name!r}")
     if name in _VERILOG_RESERVED:

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1584
+expected_file_count = 1588
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6470,3 +6470,19 @@ rationale = "Studio class loading and field introspection consume the public mod
 [[file]]
 path = "tests/test_studio_catalogue_metadata_state.py"
 rationale = "Catalogue API health retains every identity and exposes unreadable metadata without leaking internal errors."
+
+[[file]]
+path = "src/sc_neurocore/hdl_gen/__init__.py"
+rationale = "Public HDL generation exports the one shared identifier validator without changing its accepted domain."
+
+[[file]]
+path = "src/sc_neurocore/hdl_gen/_ident.py"
+rationale = "The identifier contract documents exact syntax, length, reserved-word refusal and unchanged names."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_cosim.py"
+rationale = "Native co-simulation consumes the public HDL identifier contract and reports exact state-cycle comparisons."
+
+[[file]]
+path = "tests/test_hdl_gen/test_ident.py"
+rationale = "Public validation, real project files and compiler entrypoints refuse malformed HDL names."
