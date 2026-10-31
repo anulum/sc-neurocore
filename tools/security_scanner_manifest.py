@@ -239,7 +239,7 @@ _MANDATORY_SCANNERS = (
         name="reuse",
         ecosystem="docs",
         cadence="on-push",
-        blocking_policy="allowed_to_fail",
+        blocking_policy="blocking",
         command="reuse --root . lint --json",
         inputs=(
             _input(path="REUSE.toml", purpose="Reuse lint config"),
@@ -249,10 +249,7 @@ _MANDATORY_SCANNERS = (
         owner="SC-NeuroCore docs compliance owner",
         noise="low",
         pinned_version="reuse==6.2.0",
-        allowed_to_fail_rationale=(
-            "REUSE lint currently exposes repo-wide legacy SPDX coverage debt; "
-            "CI records the JSON artefact while remediation is tracked separately."
-        ),
+        allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
         name="actionlint",

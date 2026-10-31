@@ -26,11 +26,13 @@ if __package__ in {None, ""}:
 from tools.security_scan.python_dependency_audit import run_dependency_audit
 
 PYTHON_COMPLIANCE_SCHEMA_VERSION = "sc-neurocore.python-compliance-scanners.v2"
-NON_BLOCKING_SCANNERS = frozenset({"reuse"})
+# REUSE became blocking once the repository-wide SPDX coverage debt was remediated.
+NON_BLOCKING_SCANNERS: frozenset[str] = frozenset()
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Return the command-line parser for the Python compliance scanners."""
     parser = argparse.ArgumentParser(description="Run Python compliance scanners.")
     parser.add_argument(
         "--repo-root",
@@ -99,7 +101,7 @@ def run_python_compliance_scanners(
     output_dir: Path,
     run_command: RunCommand = subprocess.run,
 ) -> dict[str, Any]:
-    """Run the complete Python profile audit and retain non-blocking REUSE evidence.
+    """Run the complete Python profile audit and the blocking REUSE lint.
 
     Parameters
     ----------
@@ -114,7 +116,7 @@ def run_python_compliance_scanners(
     -------
     dict
         Compliance summary; incomplete dependency coverage or any known finding
-        fails the lane. REUSE's existing non-blocking policy remains explicit.
+        fails the lane, and so does any REUSE lint finding.
     """
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
@@ -183,6 +185,7 @@ def main(
     *,
     runner: Callable[..., dict[str, Any]] = run_python_compliance_scanners,
 ) -> int:
+    """Run the scanners from the command line and return 0 only for a passing summary."""
     args = build_parser().parse_args(argv)
     summary = runner(repo_root=args.repo_root, output_dir=args.output_dir)
     print(json.dumps(summary, indent=2, sort_keys=True))

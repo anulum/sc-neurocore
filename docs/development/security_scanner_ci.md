@@ -49,7 +49,7 @@ sequence.
 - A Rust scanner lane summary at `security/rust_scanner_summary.json` when CI
   runs `cargo-audit` and `cargo-deny`.
 - A Python compliance scanner summary at `security/python_compliance_summary.json`
-  when CI runs blocking `pip-audit` and non-blocking REUSE lint.
+  when CI runs blocking `pip-audit` and blocking REUSE lint.
 - Machine-readable vulnerability-status fields in the release index:
   `vulnerability_status`, `missing_required_vulnerability_status`,
   `missing_optional_vulnerability_status`, and `vulnerability_summary`.
@@ -156,7 +156,7 @@ It is therefore a mixed execution/planning envelope:
   `actionlint`,
 - Rust scanner commands are executed for `cargo-audit` and `cargo-deny`,
 - Python compliance commands are executed for blocking `pip-audit` and
-  non-blocking REUSE lint,
+  blocking REUSE lint,
 - OSV-Scanner v2 is executed in the main packet lane and fails closed on
   unresolved vulnerabilities or invalid/missing JSON output,
 - typing commands for Pyright and strict Mypy have an executable runner and
@@ -211,9 +211,8 @@ The packet is used as a compliance aid for security and release workflows. Both
 the security packet workflow and tagged release workflow use
 `--fail-on-missing-required` so missing required packet artefacts fail closed.
 
-REUSE lint is intentionally non-blocking in this lane while the repository-wide
-legacy SPDX coverage debt is remediated. The JSON report is still uploaded in
-the packet so the remaining file-level compliance gap is visible and measurable.
+REUSE lint blocks this lane: any file without licensing or copyright
+information fails it. The JSON report is uploaded in the packet.
 The OSV configuration has no vulnerability exceptions. The former bounded
 `RUSTSEC-2024-0436` waiver was removed after the GPU backend moved to a wgpu
 release whose Apple backend no longer depends on the unmaintained `paste` crate.
