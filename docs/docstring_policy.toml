@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1575
+expected_file_count = 1576
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6434,3 +6434,7 @@ rationale = "Construction, measurement and coupling of the spin-pool matrix prod
 [[file]]
 path = "tests/test_source_tree_ships_no_test_packages.py"
 rationale = "The wheel's real package discovery ships no test package, and the relocated quantum cognition suite is collected from tests."
+
+[[file]]
+path = "tests/test_tools/test_release_workflow_security_packet.py"
+rationale = "The release workflow runs the security sweep with pinned scanners, uploads its packet even on failure, and publishes both security summaries among the checksummed attachments."

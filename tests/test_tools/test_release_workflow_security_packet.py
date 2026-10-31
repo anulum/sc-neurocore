@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Release workflow security packet contracts
+
+"""Bind the release workflow to its security sweep, tools and published CVE status."""
 
 from __future__ import annotations
 
@@ -32,6 +35,7 @@ def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
 
 
 def test_release_workflow_builds_security_packet_before_release() -> None:
+    """The release job runs the security sweep, with fuzzing, into the packet directory."""
     workflow = _load_release_workflow()
     steps = workflow["jobs"]["release"]["steps"]
     run_steps = [step["run"] for step in steps if isinstance(step, dict) and "run" in step]
@@ -48,6 +52,7 @@ def test_release_workflow_builds_security_packet_before_release() -> None:
 
 
 def test_release_workflow_supports_manual_tag_backfill() -> None:
+    """A dispatch with a tag builds that tag and publishes only when asked to."""
     workflow = _load_release_workflow()
     events = _workflow_events(workflow)
     dispatch = events["workflow_dispatch"]
@@ -77,6 +82,7 @@ def test_release_workflow_supports_manual_tag_backfill() -> None:
 
 
 def test_release_workflow_installs_real_release_sweep_tools() -> None:
+    """The sweep's scanners come from hash-locked requirements and pinned tool versions."""
     workflow = _load_release_workflow()
     steps = workflow["jobs"]["release"]["steps"]
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
@@ -100,6 +106,7 @@ def test_release_workflow_installs_real_release_sweep_tools() -> None:
 
 
 def test_release_workflow_uploads_security_packet_even_on_failure() -> None:
+    """The security packet is uploaded as an artifact even when a later step fails."""
     workflow = _load_release_workflow()
     steps = workflow["jobs"]["release"]["steps"]
     upload_steps = [
@@ -117,6 +124,11 @@ def test_release_workflow_uploads_security_packet_even_on_failure() -> None:
 
 
 def test_release_workflow_attaches_cve_status_to_github_release() -> None:
+    """Both security summaries are attachments the release step publishes and checksums.
+
+    The release step takes its files from the one attachment list of the release-notes
+    step, which also writes their SHA-256 into the release body.
+    """
     workflow = _load_release_workflow()
     steps = workflow["jobs"]["release"]["steps"]
     release_steps = [
@@ -127,6 +139,16 @@ def test_release_workflow_attaches_cve_status_to_github_release() -> None:
     ]
 
     assert len(release_steps) == 1
-    files = release_steps[0]["with"]["files"]
-    assert "security/ci-security-packet/release_security_artifact_index.json" in files
-    assert "security/ci-security-packet/security/release_security_sweep_summary.json" in files
+    assert release_steps[0]["with"]["files"] == "${{ steps.changelog.outputs.files }}"
+    notes = [
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Release notes for this tag"
+    ]
+    assert len(notes) == 1
+    attachments = notes[0]["run"].splitlines()
+    for packet_file in (
+        "security/ci-security-packet/release_security_artifact_index.json",
+        "security/ci-security-packet/security/release_security_sweep_summary.json",
+    ):
+        assert packet_file in (line.strip() for line in attachments)
