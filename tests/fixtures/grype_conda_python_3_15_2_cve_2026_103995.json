@@ -1,0 +1,141 @@
+{
+  "artifact": {
+    "id": "27836d2f0812a5ed",
+    "metadata": {
+      "build": "h6e52b48_100_cp315",
+      "build_number": 100,
+      "channel": "https://conda.anaconda.org/conda-forge/",
+      "fn": "python-3.15.2-h6e52b48_100_cp315.conda",
+      "md5": "38c3edc23439db3ca383be02ae2b702e",
+      "name": "python",
+      "sha256": "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25",
+      "size": 29327137,
+      "subdir": "linux-64",
+      "version": "3.15.2"
+    },
+    "metadataType": "conda-metadata-entry",
+    "name": "python",
+    "purl": "",
+    "type": "conda",
+    "version": "3.15.2"
+  },
+  "match": {
+    "artifact": {
+      "cpes": [
+        "cpe:2.3:a:python:python:3.15.2:*:*:*:*:*:*:*"
+      ],
+      "id": "27836d2f0812a5ed",
+      "language": "",
+      "licenses": [
+        "Python-2.0"
+      ],
+      "locations": [
+        {
+          "accessPath": "/conda-meta/python-3.15.2-h6e52b48_100_cp315.json",
+          "path": "/conda-meta/python-3.15.2-h6e52b48_100_cp315.json"
+        }
+      ],
+      "name": "python",
+      "purl": "",
+      "type": "conda",
+      "upstreams": [],
+      "version": "3.15.2"
+    },
+    "matchDetails": [
+      {
+        "fix": {
+          "suggestedVersion": "3.16.0"
+        },
+        "found": {
+          "cpes": [
+            "cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"
+          ],
+          "versionConstraint": "< 3.16.0 (unknown)",
+          "vulnerabilityID": "CVE-2026-103995"
+        },
+        "matcher": "stock-matcher",
+        "searchedBy": {
+          "cpes": [
+            "cpe:2.3:a:python:python:3.15.2:*:*:*:*:*:*:*"
+          ],
+          "namespace": "nvd:cpe",
+          "package": {
+            "name": "python",
+            "version": "3.15.2"
+          }
+        },
+        "type": "cpe-match"
+      }
+    ],
+    "relatedVulnerabilities": [],
+    "vulnerability": {
+      "advisories": [],
+      "cvss": [
+        {
+          "metrics": {
+            "baseScore": 2
+          },
+          "source": "cna@python.org",
+          "type": "Secondary",
+          "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:H/UI:P/VC:N/VI:N/VA:N/SC:N/SI:L/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+          "vendorMetadata": {},
+          "version": "4.0"
+        }
+      ],
+      "cwes": [
+        {
+          "cve": "CVE-2026-103995",
+          "cwe": "CWE-444",
+          "source": "cna@python.org",
+          "type": "Secondary"
+        }
+      ],
+      "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2026-103995",
+      "description": "Response body and chunk parsing would handle non-hex or negative integers incorrectly which could result in misinterpreting HTTP response contents.",
+      "epss": [
+        {
+          "cve": "CVE-2026-103995",
+          "date": "2026-10-30",
+          "epss": 0.0036,
+          "percentile": 0.29759
+        }
+      ],
+      "fix": {
+        "available": [
+          {
+            "date": "2026-10-31",
+            "kind": "first-observed",
+            "version": "3.16.0"
+          }
+        ],
+        "state": "fixed",
+        "versions": [
+          "3.16.0"
+        ]
+      },
+      "id": "CVE-2026-103995",
+      "namespace": "nvd:cpe",
+      "risk": 0.09,
+      "severity": "Low",
+      "urls": [
+        "https://github.com/python/cpython/commit/2eb2af805c156ca52b316bb4ced5e0ab3971d0ae",
+        "https://github.com/python/cpython/commit/9f52b443c002cccfb54bda0706a9276b6b4a109d",
+        "https://github.com/python/cpython/issues/150751",
+        "https://github.com/python/cpython/pull/150752"
+      ]
+    }
+  },
+  "provenance": {
+    "artifact": "dependency-audit-pixi",
+    "artifact_sha256": "e0d123277021eeaea40bf88d0ee06c85cb860c956db50880f889ef5b0c8a89c1",
+    "artifact_trimmed_to": "id, name, version, type, purl, metadataType and the package identity fields of metadata; the installed file list is omitted",
+    "description": "Verbatim Grype match and matched Syft artifact from the hosted pixi lock audit of commit c1a5501586457315108d21e906c6094c2fb631b7 (Mojo environment with conda-forge python 3.15.2), kept so the unreleased-vendor-fix exception path is exercised on real scanner output.",
+    "grype_report": "lock-1/grype/stdout.json",
+    "grype_report_sha256": "419443947fb5693d08dc03312f4412ff9027fc304455d993d3d5dcad223b139d",
+    "grype_version": "0.120.1",
+    "syft_report": "lock-1/syft/stdout.json",
+    "syft_report_sha256": "c0a82e455d7c915e168c1150640e4a3a7bb4b95f3242c2afe3a9dbc7722ea801",
+    "syft_version": "1.54.1",
+    "workflow_run": "https://github.com/anulum/sc-neurocore/actions/runs/41188413902"
+  }
+}

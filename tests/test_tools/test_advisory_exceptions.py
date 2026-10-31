@@ -8,10 +8,11 @@
 
 """Reject altered vendor proofs and exception scope using recorded real scanner findings.
 
-The maintained Mojo lock no longer carries a finding that needs an exception: it moved from conda-forge
-python 3.15.0 to 3.15.2. The exception path is therefore exercised on the last reviewed record and on the
-verbatim Grype match and Syft identity of the hosted audit that accepted it, with the fixed vendor source
-read from its immutable CPython commit.
+The fixed-code path is exercised on the last reviewed CVE-2025-15367 record and the verbatim Grype match
+and Syft identity of the hosted audit that accepted it, with the fixed vendor source read from its
+immutable CPython commit. The unreleased-fix path is exercised on the committed CVE-2026-103995 record,
+the hosted match that blocked it, the immutable CPython 3.15.2 release file and a recorded conda-forge
+version list.
 """
 
 from __future__ import annotations
@@ -30,9 +31,12 @@ import pytest
 
 from tests.test_tools.test_pixi_audit_cli import LOCK, ROOT
 from tools.security_scan.advisory_exceptions import (
+    CONDA_FORGE_PYTHON_INDEX,
     EXCEPTION_FILE,
     conda_lock_decision,
     load_exceptions,
+    newer_vendor_releases,
+    read_url,
 )
 
 RECORDED = ROOT / "tests/fixtures/grype_conda_python_3_15_0_cve_2025_15367.json"
@@ -229,6 +233,7 @@ def test_recorded_finding_cannot_outlive_its_exact_vendor_proof(
         ('advisory = "CVE-2025-15367"', 'advisory = "*"'),
         ('proof_path = "lib/python3.15/poplib.py"', 'proof_path = "../poplib.py"'),
         ('reason = "fixed_code_present"', 'reason = "no_fixed_version_in_channel"'),
+        ('reason = "fixed_code_present"', 'reason = "vendor_fix_unreleased"'),
         ('advisory = "CVE-2025-15367"', 'advisory = "CVE-2025-15366"'),
         (f'artifact_sha256 = "{ARTIFACT_SHA256}"', 'artifact_sha256 = "unavailable"'),
     ],
@@ -299,3 +304,262 @@ def test_exception_for_an_unaudited_lock_is_refused(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="unaudited lock"):
         conda_lock_decision(checkout, LOCK, [match], {artifact["id"]: artifact}, tmp_path)
+
+
+UNRELEASED_RECORDED = ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_103995.json"
+CHANNEL_VERSIONS = ROOT / "tests/fixtures/conda_forge_python_versions_2026_10_31.json"
+UNRELEASED_SOURCE = (
+    "https://raw.githubusercontent.com/python/cpython/"
+    "5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/http/client.py"
+)
+UNRELEASED_PROOF_SHA256 = "f4506633b5fe4fe06add63d9e32ab5e6e7cda84ec1df365da7faa5c1315fdbc5"
+UNRELEASED_ARTIFACT_SHA256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+
+
+def unreleased_record(review_by: str) -> str:
+    """Return the committed unreleased-fix record, due for review on ``review_by``.
+
+    Parameters
+    ----------
+    review_by : str
+        ISO date written into the record.
+
+    Returns
+    -------
+    str
+        TOML table with that one record, identical to the committed one apart from the date.
+    """
+    committed = (ROOT / EXCEPTION_FILE).read_text()
+    start = committed.index("[[exception]]")
+    return committed[start:].replace('review_by = "2026-11-14"', f'review_by = "{review_by}"')
+
+
+def channel_index(*extra: str) -> bytes:
+    """Return the recorded conda-forge version list as a package document, with extra versions.
+
+    Parameters
+    ----------
+    *extra : str
+        Versions appended to the recorded list.
+
+    Returns
+    -------
+    bytes
+        JSON document with a ``versions`` member, as the channel API returns it.
+    """
+    versions = json.loads(CHANNEL_VERSIONS.read_text())["versions"]
+    return json.dumps({"versions": [*versions, *extra]}).encode()
+
+
+def unreleased_checkout(tmp_path: Path, review_by: str) -> tuple[Path, Path, dict[str, str]]:
+    """Build a real Git checkout holding the lock and the record, and the installed proof file.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Disposable root of the checkout and the installed-prefix stand-in.
+    review_by : str
+        Review date written into the record.
+
+    Returns
+    -------
+    tuple
+        The checkout, the prefix and the loaded record.
+    """
+    checkout, prefix = tmp_path / "checkout", tmp_path / "prefix"
+    checkout.mkdir()
+    shutil.copytree(ROOT / "requirements", checkout / "requirements")
+    lock = checkout / LOCK
+    lock.parent.mkdir(parents=True)
+    lock.write_bytes((ROOT / LOCK).read_bytes())
+    table = checkout / EXCEPTION_FILE
+    table.parent.mkdir(parents=True)
+    table.write_text(unreleased_record(review_by))
+    for argv in (
+        ["git", "init", "--initial-branch=main", str(checkout)],
+        ["git", "add", "requirements", LOCK],
+    ):
+        subprocess.run(argv, cwd=checkout, capture_output=True, check=True, timeout=30)
+    record = load_exceptions(table.read_bytes())[0]
+    proof = prefix / record["proof_path"]
+    proof.parent.mkdir(parents=True)
+    proof.write_bytes(vendor_source(UNRELEASED_SOURCE, UNRELEASED_PROOF_SHA256))
+    return checkout, prefix, record
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["none", "prerelease", "patch_release", "fixed_release", "bytes", "artifact", "fix", "unused"],
+)
+def test_unreleased_fix_holds_only_while_the_channel_has_nothing_newer(
+    tmp_path: Path, change: str
+) -> None:
+    """Accept the hosted finding only while the exact release is installed and nothing newer exists.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Real independent Git checkout and an installed-prefix stand-in.
+    change : str
+        ``none`` and ``prerelease`` keep the exception valid, since a prerelease is not an
+        installable fix. A newer patch or fixed release, altered installed bytes, another artifact,
+        another fix boundary or a vanished finding each refuse it.
+    """
+    data = json.loads(UNRELEASED_RECORDED.read_text())
+    match, artifact = data["match"], data["artifact"]
+    assert artifact["metadata"]["sha256"] == UNRELEASED_ARTIFACT_SHA256
+    checkout, prefix, record = unreleased_checkout(tmp_path, due_date())
+    extra = {
+        "prerelease": ("3.16.0rc1",),
+        "patch_release": ("3.15.3",),
+        "fixed_release": ("3.16.0",),
+    }
+    index = channel_index(*extra.get(change, ()))
+    served: list[str] = []
+
+    def read(url: str, limit: int) -> bytes:
+        served.append(url)
+        return index if url == CONDA_FORGE_PYTHON_INDEX else read_url(url, limit)
+
+    actual = [copy.deepcopy(match)]
+    inventories = {artifact["id"]: copy.deepcopy(artifact)}
+    proof = prefix / record["proof_path"]
+    if change == "bytes":
+        proof.write_bytes(proof.read_bytes() + b"\n")
+    elif change == "artifact":
+        inventories[artifact["id"]]["metadata"]["sha256"] = "0" * 64
+    elif change == "fix":
+        actual[0]["vulnerability"]["fix"]["versions"] = ["3.15.3"]
+    elif change == "unused":
+        actual.clear()
+    decision = conda_lock_decision(checkout, LOCK, actual, inventories, prefix, read)
+    if change in {"none", "prerelease"}:
+        assert served == [UNRELEASED_SOURCE, CONDA_FORGE_PYTHON_INDEX]
+        assert decision["passed"] is True and decision["blocked"] == decision["unused"] == []
+        assert decision["accepted"][0]["evidence"] == {
+            "holds": True,
+            "source": UNRELEASED_SOURCE,
+            "proof_sha256": UNRELEASED_PROOF_SHA256,
+            "channel": CONDA_FORGE_PYTHON_INDEX,
+            "newer_releases": [],
+        }
+        return
+    assert decision["passed"] is False and decision["accepted"] == []
+    assert decision["blocked"] or decision["unused"]
+    if change in {"patch_release", "fixed_release"}:
+        assert decision["blocked"] == [match]
+
+
+def test_oversized_channel_index_is_an_error(tmp_path: Path) -> None:
+    """A channel document beyond the size limit stops the audit instead of passing it."""
+    data = json.loads(UNRELEASED_RECORDED.read_text())
+    checkout, prefix, _ = unreleased_checkout(tmp_path, due_date())
+
+    def read(url: str, limit: int) -> bytes:
+        return b"0" * limit if url == CONDA_FORGE_PYTHON_INDEX else read_url(url, limit)
+
+    with pytest.raises(ValueError, match="size limit"):
+        conda_lock_decision(
+            checkout,
+            LOCK,
+            [data["match"]],
+            {data["artifact"]["id"]: data["artifact"]},
+            prefix,
+            read,
+        )
+
+
+@pytest.mark.parametrize(
+    ("index", "message"),
+    [
+        (b"[]", "no version list"),
+        (b'{"versions": []}', "no version list"),
+        (b'{"versions": [3.15]}', "not text"),
+        (b'{"versions": ["3.15.2", "not a version"]}', "cannot be ordered"),
+    ],
+)
+def test_unreadable_channel_index_is_refused(index: bytes, message: str) -> None:
+    """Channel documents that cannot prove the absence of a newer release are refused.
+
+    Parameters
+    ----------
+    index : bytes
+        Malformed package document.
+    message : str
+        Expected refusal.
+    """
+    with pytest.raises(ValueError, match=message):
+        newer_vendor_releases(index, "3.15.2")
+
+
+def test_newer_releases_are_final_releases_in_order() -> None:
+    """Only final releases newer than the installed version count, in ascending order."""
+    index = channel_index("3.16.0", "3.15.3", "3.16.0rc1", "3.16.0.dev1", "3.14.9")
+    assert newer_vendor_releases(index, "3.15.2") == ["3.15.3", "3.16.0"]
+    assert newer_vendor_releases(channel_index(), "3.15.2") == []
+
+
+def test_live_channel_index_is_readable() -> None:
+    """The real conda-forge document parses and lists the installed release."""
+    index = read_url(CONDA_FORGE_PYTHON_INDEX, 32 * 1024 * 1024 + 1)
+    assert len(index) <= 32 * 1024 * 1024
+    assert "3.15.2" in json.loads(index)["versions"]
+    assert all(isinstance(version, str) for version in newer_vendor_releases(index, "3.15.2"))
+
+
+@pytest.mark.parametrize(
+    ("original", "replacement", "message"),
+    [
+        ('version = "3.15.2"', 'version = "3.16.0"', "already contains the vendor fix"),
+        ('advisory = "CVE-2026-103995"', 'advisory = "CVE-2025-15367"', "vendor source"),
+        ("/Lib/http/client.py", "/Lib/poplib.py", "vendor source"),
+        ('reason = "vendor_fix_unreleased"', 'reason = "fixed_code_present"', "vendor source"),
+    ],
+)
+def test_unreleased_fix_scope_cannot_be_broadened(
+    original: str, replacement: str, message: str
+) -> None:
+    """The unreleased-fix reason admits only its advisory, its source and an unfixed version.
+
+    Parameters
+    ----------
+    original : str
+        Exact field of the committed record.
+    replacement : str
+        Candidate that removes a required boundary.
+    message : str
+        Expected refusal.
+    """
+    raw = unreleased_record(due_date())
+    assert original in raw and len(load_exceptions(raw.encode())) == 1
+    with pytest.raises(ValueError, match=message):
+        load_exceptions(raw.replace(original, replacement).encode())
+
+
+def test_unreleased_fix_review_cannot_exceed_two_weeks() -> None:
+    """A review date beyond fourteen days is refused; fourteen days is accepted."""
+    today = datetime.now(timezone.utc).date()
+    assert load_exceptions(unreleased_record((today + timedelta(days=14)).isoformat()).encode())
+    with pytest.raises(ValueError, match="exceeds two weeks"):
+        load_exceptions(unreleased_record((today + timedelta(days=15)).isoformat()).encode())
+
+
+def test_table_rewritten_during_verification_is_an_error(tmp_path: Path) -> None:
+    """A table that changes while its proofs are read is refused rather than trusted."""
+    data = json.loads(UNRELEASED_RECORDED.read_text())
+    checkout, prefix, _ = unreleased_checkout(tmp_path, due_date())
+    table = checkout / EXCEPTION_FILE
+
+    def read(url: str, limit: int) -> bytes:
+        table.write_text(table.read_text() + "\n")
+        return channel_index() if url == CONDA_FORGE_PYTHON_INDEX else read_url(url, limit)
+
+    with pytest.raises(ValueError, match="changed during its verification"):
+        conda_lock_decision(
+            checkout,
+            LOCK,
+            [data["match"]],
+            {data["artifact"]["id"]: data["artifact"]},
+            prefix,
+            read,
+        )

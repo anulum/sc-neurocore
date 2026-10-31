@@ -117,17 +117,39 @@ can miss vulnerabilities or misattribute package names and version ranges.
 Complete installed-package inventory does not establish complete advisory
 coverage. See [Anchore's ecosystem documentation](https://oss.anchore.com/docs/guides/vulnerability/ecosystems/).
 
-### Exact fixed-code exceptions
+### Exact vendor-source exceptions
 
 Each record in `tools/security_scan/advisory_exceptions.toml` names one advisory,
-locked package version, artifact digest, fixed source path, source digest and
+locked package version, artifact digest, vendor source path, source digest and
 review-by date.
 An exception applies only if its lock exists in the committed inventory, its
 exact package and advisory match, and every audit re-establishes its proof.
 Unused, expired or unavailable proofs block the audit; no finding is hidden from
 the raw Grype output or the accepted/blocked decision.
 
-No record is currently needed. The last one addressed Grype's generic comparison
+Each reason admits exactly one advisory and one kind of immutable CPython file:
+
+- `fixed_code_present`: the installed file equals the fixed vendor source, so the
+  installed version already contains the fix that Grype's comparison misses.
+- `vendor_fix_unreleased`: the vendor has fixed the advisory but published no
+  installable release. The installed version must be older than the fix
+  boundary, and the installed file must equal the immutable source of the
+  installed release. Every audit also reads the conda-forge package index, and
+  any final release newer than the installed version blocks the audit, so the
+  lock moves as soon as the vendor publishes. The review date may be at most
+  14 days ahead.
+
+The current record is CVE-2026-103995 (Low, CVSS 4.0 base score 2.0) for
+conda-forge Python 3.15.2 in the Mojo lock: `http.client` accepted signed,
+underscored, padded and `0x`-prefixed Content-Length and chunk-size values.
+CPython fixed it on its main branch (gh-150751), which will become 3.16. No 3.15
+release carries the fix, and conda-forge lists nothing newer than 3.15.2. The
+installed `http/client.py` equals the CPython 3.15.2 release file, and the
+Mojo kernels and runner make no HTTP requests. The record lapses on its review
+date, when Grype stops reporting the finding, or as soon as conda-forge lists a
+newer final release.
+
+The previous fixed-code record addressed Grype's generic comparison
 of Python 3.15.0 against its prerelease fix boundary 3.15.0a6 for CVE-2025-15367:
 Python version ordering places the final release after that boundary, and the
 installed `poplib.py` had to be byte-identical to its SHA-256-bound file from the

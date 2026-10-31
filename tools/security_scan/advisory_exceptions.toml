@@ -6,7 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Exact installed vendor-fix advisory evidence
 
-# No locked package currently needs an exception. The last record (CVE-2025-15367, conda-forge
-# python 3.15.0 in the Mojo lock) was removed when that lock moved to python 3.15.2, where Grype
-# no longer reports it; an unused record would block the audit.
-exception = []
+# CVE-2026-103995 (Low): CPython fixed http.client Content-Length and chunk-size validation only on
+# its main branch (gh-150751); no 3.15 release carries it and conda-forge publishes nothing newer
+# than python 3.15.2. The record lapses on its review date, once Grype stops reporting the finding,
+# or as soon as the channel lists a newer final release.
+
+[[exception]]
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "python"
+version = "3.15.2"
+advisory = "CVE-2026-103995"
+artifact_sha256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+reason = "vendor_fix_unreleased"
+fixed_version = "3.16.0"
+proof_path = "lib/python3.15/http/client.py"
+proof_sha256 = "f4506633b5fe4fe06add63d9e32ab5e6e7cda84ec1df365da7faa5c1315fdbc5"
+source = "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/http/client.py"
+review_by = "2026-11-14"
+rationale = "The vendor fix is unreleased for Python 3.15. The Mojo build environment never parses untrusted HTTP responses; the installed http/client.py must equal the immutable CPython 3.15.2 release file and conda-forge must list no newer final release."
