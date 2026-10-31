@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Make the REUSE lint blocking in the Python compliance lane of the security packet and the release sweep.
+
 ## [4.0.0] - 2026-10-29
 
 - The curated summary of this release is `docs/development/RELEASE_NOTES_v4.0.0.md`, which is also the GitHub Release text.
@@ -32,7 +34,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Preserve a positive signed LUT index bound for narrow fixed-point words. In particular, `sqrt(0)` and `log(1)` at signed two-bit integer precision now return zero; exhaustive small-word RTL regressions check every admitted input code against independent table oracles. C and Rust kernels retain their existing full-width clamp.
 - Publish the SHA-256 of exactly the files attached to the GitHub Release; the release workflow refuses a missing or empty attachment.
 - Refuse GPU waveform stream dimensions beyond the CPU packet and shader limits, and reject buffers larger than the device allocation or storage-binding limits before creating them. Add physical-GPU packet parity, lossless decoding and error-recovery checks at channel, ADC, workgroup and adaptive-count boundaries.
-- Make the REUSE lint blocking in the Python compliance lane of the security packet and the release sweep.
 - State the 4.0.x security support policy, with support for 3.x ended, and update the public roadmap and group map for the 4.0.0 release.
 - Install the hash-locked CPU build of torch before the development extras in every CI job that installs them, and check that build afterwards.
 - Accept CVE-2026-103995 (Low) for conda-forge Python 3.15.2 in the Mojo lock while no Python 3.15 release carries the fix. The exception is valid for at most two weeks per review. Each audit checks that the installed `http/client.py` is the exact 3.15.2 release file, and any newer conda-forge release blocks the audit.
