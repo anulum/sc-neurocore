@@ -18,8 +18,8 @@ The group comprises the workbench, LOOP-TIMING-WITNESS, 13 specialized SC-NC
 repositories and 25 supporting tools. The repository names below identify the
 intended destinations; implementation and release status are separate from naming.
 
-The split architecture is prepared for the **unpublished 4.0.0 roadmap**.
-The current public package remains at its documented version and maturity;
+The split architecture is prepared and is **not part of the 4.0.0 release**.
+SC-NeuroCore 4.0.0 is published as one package at its documented maturity;
 component releases and migration guides will accompany the transition.
 
 ## Public workbench and future products

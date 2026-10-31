@@ -24,7 +24,7 @@ intermediate representations, NIR bridge work, Rust acceleration paths, and
 Verilog-generation collateral.
 
 Public claims are limited to committed artefacts and CI-verifiable behaviour.
-The package metadata reports version **3.16.0**. The configured Python coverage
+The package version is defined once in `pyproject.toml`. The configured Python coverage
 gate is **100%**; passing that gate for a release requires its exact-head CI
 evidence and is not a claim about every optional or hardware-dependent path.
 

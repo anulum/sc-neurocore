@@ -488,7 +488,8 @@ def test_public_maturity_classifier_stays_beta_until_stable_gate() -> None:
     assert "Development Status :: 5 - Production/Stable" not in classifiers
     assert "Development Status :: 5 - Production/Stable" not in pyproject
     assert "public, open-source development workbench" in compact
-    assert "unpublished 4.0.0 roadmap" in compact
+    assert "not part of the 4.0.0 release" in compact
+    assert "unpublished 4.0.0 roadmap" not in compact
     assert "evidenced stability gates" in compact
     assert (
         "reviewed api, dependency boundary, packaging contract, compatibility checks "

@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-09-23. Priorities may shift based on
+> Last updated: 2026-10-31. Priorities may shift based on
 > validation results and community feedback.
 
 ## Historical Maintenance Snapshot — 2026-07-06
@@ -216,7 +216,6 @@ Feature-gated wgpu backend for DenseLayer stochastic computing:
 - Exact bit-identical parity mapped bridging `PyTorch Surrogate Autograd` and `Rust Spintronic Emulation`.
 - `sc_neurocore.plasticity.create_plasticity_layer` fully integrates supervised biological convergence loops mapped securely to deterministic `SymbiYosys` formal proofs.
 - 4 Metaplasticity rules (STDP, BCM, R-STDP, ELIGENT).
-- **Available now via v4.1**: Fully functional, verified natively on `rust-wgpu` parallel cross-platform frameworks supporting massive scale edge deployments natively.
 
 ### Model documentation upgrade — in progress
 
@@ -265,13 +264,31 @@ dependabot PRs merged.
 - API documentation updated with experimental scope and hardware-validation boundaries.
 - Cross-repo bridges verified: SCPN-QUANTUM-CONTROL, SCPN-PHASE-ORCHESTRATOR.
 
-## v3.16 — Current Release Baseline ✓ (current)
+## v4.0.0 — Current release ✓ (current)
 
-- Package metadata, generated capability snapshot, and public docs report
-  version 3.16.0.
-- Current static inventory is generated in the
+The curated summary is
+[RELEASE_NOTES_v4.0.0.md](docs/development/RELEASE_NOTES_v4.0.0.md); the complete
+list of changes is the `[4.0.0]` section of [CHANGELOG.md](CHANGELOG.md).
+
+- Equation compiler: supported equation models lower through a typed native IR
+  to SystemVerilog, fixed-point C and Rust, and portable C++.
+- Model catalogue with agreement across the Python, Rust, Julia, Go and Mojo
+  implementations tracked per model; the current inventory is generated in the
   [README capability snapshot](README.md#version-and-capability-snapshot).
-- Current HDL static inventory: 43 top-level non-testbench Verilog RTL modules
+- Per-model readiness receipts bound to the exact sources they checked.
+- Hash-locked requirements and blocking audits of the committed locks.
+- NIR round trips that keep graph metadata, ordering and the timestep and reset
+  convention; `from_snntorch()` and `to_snntorch()` for supported inference networks.
+- SNN Studio ships as a development preview; Studio 1.0 follows after its own
+  acceptance.
+- Python 3.11 is the minimum, and the `lava` optional extra is removed.
+- Only the latest 4.0.x patch receives security fixes; support for 3.x ended
+  with this release (see [SECURITY.md](SECURITY.md)).
+
+## v3.16 — Previous release baseline ✓
+
+- Released 2026-07-05.
+- HDL static inventory at that release: 43 top-level non-testbench Verilog RTL modules
   and 16 `tb_sc_*.v` simulation testbenches.
 - The configured Python coverage gate is 100%; each release needs exact-head
   CI evidence before claiming that it passed.
@@ -386,7 +403,8 @@ Progress (2026-05-21): `ArcaneZenithCognitiveCore` now exposes a built-in outer-
 
 ### Silicon partnerships
 
-- Intel Loihi 2: LAVA framework backend adapter
+- Intel Loihi 2: LAVA framework backend adapter (blocked: `lava-nc` requires
+  Python < 3.11, and 4.0.0 removed the `lava` extra)
 - SpiNNaker2: SpiNNTools compilation target
 - One-click NIR mapping reports for Loihi 2 and SpiNNaker2, including
   supported-node lowering, unsupported-node diagnostics, resource estimates,

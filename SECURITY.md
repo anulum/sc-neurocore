@@ -4,11 +4,12 @@
 
 | Version | Supported          | Notes |
 |---------|--------------------|-------|
-| 3.13.x  | :white_check_mark: | Current stable (Rust engine + Python bridge) |
+| 4.0.x   | :white_check_mark: | Current release (Rust engine + Python bridge) |
+| 3.x     | :x:                | Support ended with 4.0.0; no backports |
 | 2.2.x   | :x:                | Superseded (pure-Python legacy) |
 | < 2.0   | :x:                | Pre-release / unreleased |
 
-Only the latest `3.x` patch receives security fixes. Upgrade with:
+Only the latest `4.0.x` patch receives security fixes. Upgrade with:
 
 ```bash
 pip install --upgrade sc-neurocore
