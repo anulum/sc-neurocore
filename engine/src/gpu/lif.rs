@@ -8,12 +8,13 @@
 
 //! GPU-accelerated fixed-point LIF batch runner using a wgpu compute shader.
 //!
-//! Mirrors the CPU [`crate::lib_batch_lif_run_multi`] contract: `n_neurons`
+//! Mirrors the CPU `batch_lif_run_multi` binding: `n_neurons`
 //! independent fixed-point LIF neurons, each driven by its own constant current,
 //! advanced for `n_steps` with zero noise. One GPU thread owns one neuron and
 //! loops the steps internally (no per-step dispatch overhead), producing the same
 //! `[n_neurons × n_steps]` spike (i32) and voltage (i16-range) layout as the CPU.
-//! The integer arithmetic is bit-exact with `FixedPointLif::step`.
+//! The integer arithmetic is bit-exact with
+//! [`FixedPointLif::step`](crate::neuron::FixedPointLif::step).
 
 use std::sync::Arc;
 

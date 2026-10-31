@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refuse GPU waveform stream dimensions beyond the CPU packet and shader limits, and reject buffers larger than the device allocation or storage-binding limits before creating them. Add physical-GPU packet parity, lossless decoding and error-recovery checks at channel, ADC, workgroup and adaptive-count boundaries.
+
 ## [4.0.0] - 2026-10-29
 
 - The curated summary of this release is `docs/development/RELEASE_NOTES_v4.0.0.md`, which is also the GitHub Release text.

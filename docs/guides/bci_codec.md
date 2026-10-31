@@ -127,6 +127,23 @@ stateful stream codec after a lost packet). With the engine's `gpu` feature,
 `GpuStreamEncoder` (Rust only) encodes one range coder per channel on a GPU and
 writes the same packets as the CPU encoder with `groups == channels`.
 
+The GPU encoder accepts 1–65,535 channels, ADC widths of 1–16 bits, and
+nonzero maximum window lengths that fit a `u32`. It checks the output,
+state and lookup-table storage against the device's buffer and binding
+limits before allocation. Invalid window shapes, windows above the configured
+capacity and contradictory ADC samples return an error; a valid window can
+then continue the same stream. The GPU contract tests require a physical
+Vulkan, Metal or DX12 adapter and fail if it is unavailable:
+
+```bash
+cargo test --manifest-path engine/Cargo.toml --no-default-features --features gpu \
+  --test waveform_stream_gpu -- --test-threads=1
+```
+
+Set `SC_GPU_ADAPTER` to a substring of the desired adapter's name to select it.
+The contract vectors exercise integer boundaries, missing ADC codes and
+stream-state recovery; they are separate from recording-based benchmarks.
+
 ### Rust kernels
 
 Noise thresholds, spike detection, template matching, background extraction

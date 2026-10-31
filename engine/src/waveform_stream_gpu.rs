@@ -84,12 +84,19 @@ impl GpuStreamEncoder {
     /// New GPU encoder for `channels` channels of a `bits`-bit ADC and windows of at most
     /// `max_samples` samples. The adapter whose name contains `SC_GPU_ADAPTER` (if set) is used,
     /// otherwise the high-performance default.
+    ///
+    /// Channels must fit the CPU packet contract (`1..=65535`), ADC widths must be `1..=16`,
+    /// and window lengths must fit a nonzero `u32`. Buffer sizes must fit both the device's
+    /// allocation and storage-binding limits and the shader's 32-bit indices.
     pub fn new(channels: usize, bits: u32, max_samples: usize) -> Result<Self, String> {
         if channels == 0 || !(1..=16).contains(&bits) || max_samples == 0 {
             return Err(
                 "GPU stream encoder needs channels >= 1, adc_bits 1..16 and max_samples >= 1"
                     .into(),
             );
+        }
+        if channels > u16::MAX as usize || max_samples > u32::MAX as usize {
+            return Err("GPU stream dimensions exceed the CPU channel or u32 shader limits".into());
         }
         // Per channel and level: exact value, count and dense rank (three adjacent words,
         // channels * 2^bits * 3 in all), which must fit one storage binding.
@@ -170,20 +177,22 @@ impl GpuStreamEncoder {
             pipeline("compact_out"),
         );
         let max_words = (12 * max_samples as u128 + 8).div_ceil(4);
-        // The largest buffers hold 4 * channels * max_words bytes; refuse sizes the device or
-        // the shader's 32-bit indices cannot hold instead of letting buffer creation fail.
-        let largest = 4 * channels as u128 * max_words;
-        if largest > u128::from(limits.max_buffer_size).min(u128::from(u32::MAX)) {
+        // Output buffers bound sample and per-channel staging sizes; the level lookup also
+        // bounds the nominal lookup, and the three-word table bounds pending level values.
+        // Check state and both lookup tables as well as output before allocating any of them.
+        let largest = (4 * channels as u128 * max_words)
+            .max(4 * channels as u128 * STATE_WORDS as u128)
+            .max(u128::from(table_bytes))
+            .max(4 * 65536);
+        let buffer_limit = u128::from(limits.max_buffer_size)
+            .min(u128::from(limits.max_storage_buffer_binding_size))
+            .min(u128::from(u32::MAX));
+        if largest > buffer_limit {
             return Err(format!(
-                "{channels} channels with windows of {max_samples} samples need {largest}-byte buffers, above the GPU limit"
+                "{channels} channels with windows of {max_samples} samples need {largest}-byte buffers, above the GPU buffer, binding or index limit"
             ));
         }
         let max_words = max_words as usize;
-        if table_bytes > u64::from(limits.max_storage_buffer_binding_size) {
-            return Err(format!(
-                "{channels} channels of {bits}-bit level tables need {table_bytes} bytes, above the GPU binding limit"
-            ));
-        }
         let level_table: Vec<u32> = (-32768_i64..=32767)
             .map(|v| level_of(v, bits) as u32)
             .collect();
