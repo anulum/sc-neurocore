@@ -12,13 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-- Stop shipping the quantum cognition test suite inside the package. Its 88 cases moved from `src/sc_neurocore/quantum_cognition/tests` to `tests/test_quantum_cognition`, where CI now collects them; before, pytest never ran them and every wheel carried them.
-
-- Keep keyboard focus inside the first-run Studio tour and let Escape dismiss it. Preserve dismissal across visits, and keep tour keys from activating workbench shortcuts.
-
 ## [4.0.0] - 2026-10-29
 
 - The curated summary of this release is `docs/development/RELEASE_NOTES_v4.0.0.md`, which is also the GitHub Release text.
+- Stop shipping the quantum cognition test suite inside the package. Its 88 cases moved from `src/sc_neurocore/quantum_cognition/tests` to `tests/test_quantum_cognition`, where CI now collects them; before, pytest never ran them and every wheel carried them.
+- Keep keyboard focus inside the first-run Studio tour and let Escape dismiss it. Preserve dismissal across visits, and keep tour keys from activating workbench shortcuts.
+- Pin the Studio frontend's development-only `minimatch` dependency to 11.0.1 to address GHSA-g3hv-75wg-m249; production code is unchanged.
 - Add public `function_unit_functions()` discovery and `emit_function_unit_verilog()` generation for isolated combinational fixed-point functions. Unary and binary units expose independent signed ports and reuse the existing arithmetic. The new API defaults to `v2`; the existing equation compiler retains its `lut-v1` default.
 - Add `from_snntorch()` and `to_snntorch()` for supported sequential inference networks on CPU float64, preserving admitted spikes, membrane states and independently owned parameters. These APIs exchange fresh-state inference definitions rather than training checkpoints; unsupported dynamics, topologies, precision and SC bitstream, encoding or Q-format contracts are refused.
 - Add separate `interop-snntorch` and `interop-sinabs` optional dependency profiles. The Sinabs profile uses its compatible legacy NIR file route and does not imply identical native Sinabs and SC discrete dynamics.
