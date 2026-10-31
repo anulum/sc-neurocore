@@ -243,7 +243,10 @@ jobs:
           fi
 
           CRATE_STATUS_PATH="$(mktemp)"
-          HTTP_STATUS="$(curl -sS -o "$CRATE_STATUS_PATH" -w "%{http_code}" "https://crates.io/api/v1/crates/${CRATE_NAME}/${CRATE_VERSION}")"
+          HTTP_STATUS="$(curl -sS \
+            --user-agent 'sc-neurocore-release (+https://github.com/anulum/sc-neurocore)' \
+            -o "$CRATE_STATUS_PATH" -w "%{http_code}" \
+            "https://crates.io/api/v1/crates/${CRATE_NAME}/${CRATE_VERSION}")"
           case "$HTTP_STATUS" in
             "200")
               echo "${CRATE_NAME} ${CRATE_VERSION} already exists on crates.io; skipping publish."

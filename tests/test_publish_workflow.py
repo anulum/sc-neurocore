@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# © Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Release workflow contracts
 
 """Release-workflow contracts: trusted publishing, idempotent uploads and the wheel matrix."""
 
@@ -12,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Any, cast
@@ -92,6 +94,26 @@ def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
     assert '"200")' in publish_text
     assert "already exists on crates.io" in publish_text
     assert "cargo publish --manifest-path engine/Cargo.toml" in publish_text
+
+
+def test_crates_registry_queries_identify_the_release_project() -> None:
+    """Every actual crates.io API query identifies this project and its contact URL."""
+    queries = []
+    for job in _workflow()["jobs"].values():
+        for command in re.findall(r'\$\((curl\b.*?)\)"', _run_text(job), re.DOTALL):
+            arguments = shlex.split(command.replace("\\\n", " "))
+            if any(argument.startswith("https://crates.io/api/") for argument in arguments):
+                queries.append(arguments)
+    assert queries, "The crate publication must check the registry before uploading"
+    for arguments in queries:
+        agents = [
+            arguments[index + 1]
+            for index, argument in enumerate(arguments[:-1])
+            if argument in {"--user-agent", "-A"}
+        ]
+        assert len(agents) == 1, "crates.io refuses unidentified registry clients"
+        assert agents[0].startswith("sc-neurocore-release ")
+        assert "https://github.com/anulum/sc-neurocore" in agents[0]
 
 
 def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -> None:
