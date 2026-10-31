@@ -130,9 +130,9 @@ sequence.
   build timeout, then runs `cargo fuzz run` with libFuzzer's per-target time
   budget. The default build timeout is one hour: the first instrumented build
   compiles the whole engine and has taken 22 to more than 30 minutes on hosted
-  runners. Every command runs in its own process group, and a timeout kills the
-  whole group, so no orphaned compiler keeps the build directory locked for the
-  next target. Per-target reports record whether a failure happened during `build` or
+  runners. Every command runs in its own process group, and a timeout or an
+  interruption such as Ctrl-C kills the whole group, so no orphaned compiler
+  keeps the build directory locked for the next target. Per-target reports record whether a failure happened during `build` or
   `run`, including the relevant command tails, so scheduled CI timeouts remain
   actionable instead of being ambiguous scanner failures.
 - The nightly/manual benchmark-regression lane writes

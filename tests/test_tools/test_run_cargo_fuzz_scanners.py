@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import signal
 import subprocess
 import sys
+import textwrap
 import time
+from types import FrameType
 from pathlib import Path
 from typing import Any
 
@@ -484,3 +488,95 @@ def test_main_reports_a_refused_selection_as_status_2(
         "error": "unknown fuzz targets: missing",
         "passed": False,
     }
+
+
+def _wait_until_gone(pid: int) -> bool:
+    deadline = time.monotonic() + 10
+    while not _process_is_gone(pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    return _process_is_gone(pid)
+
+
+def _wait_for_pid(pid_file: Path) -> int:
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if pid_file.is_file() and pid_file.read_text(encoding="utf-8").strip():
+            return int(pid_file.read_text(encoding="utf-8"))
+        time.sleep(0.05)
+    raise AssertionError("the command never started its child")
+
+
+class _Interrupted(BaseException):
+    """An interruption that is not an ``Exception``, like ``KeyboardInterrupt``."""
+
+
+def test_an_interruption_while_waiting_kills_every_process_and_propagates(tmp_path: Path) -> None:
+    """A ``BaseException`` raised during the wait kills the whole group and is re-raised."""
+    tool = _load_tool()
+    pid_file = tmp_path / "child.pid"
+    command = ["sh", "-c", f"sleep 120 >/dev/null 2>&1 & echo $! > {pid_file}; wait"]
+
+    def interrupt(_signum: int, _frame: FrameType | None) -> None:
+        raise _Interrupted
+
+    previous = signal.signal(signal.SIGALRM, interrupt)
+    signal.setitimer(signal.ITIMER_REAL, 1.0)
+    try:
+        with pytest.raises(_Interrupted):
+            tool.run_in_process_group(
+                command, cwd=tmp_path, capture_output=True, text=True, timeout=60, check=False
+            )
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+    child = int(pid_file.read_text(encoding="utf-8"))
+    assert _wait_until_gone(child), f"child {child} outlived the interrupted command"
+
+
+def test_ctrl_c_on_the_runner_kills_the_command_it_started(tmp_path: Path) -> None:
+    """SIGINT to a real runner process stops it and leaves no child of its command running."""
+    repo_root = Path(__file__).resolve().parents[2]
+    pid_file = tmp_path / "child.pid"
+    driver = textwrap.dedent(
+        f"""
+        import importlib.util, pathlib, sys
+        path = pathlib.Path({str(repo_root / "tools" / "security_scan" / "run_cargo_fuzz_scanners.py")!r})
+        spec = importlib.util.spec_from_file_location("runner", path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["runner"] = module
+        spec.loader.exec_module(module)
+        module.run_in_process_group(
+            ["sh", "-c", "sleep 120 >/dev/null 2>&1 & echo $! > {pid_file}; wait"],
+            cwd=pathlib.Path({str(tmp_path)!r}),
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        """
+    )
+    runner = subprocess.Popen(
+        [sys.executable, "-c", driver], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    try:
+        child = _wait_for_pid(pid_file)
+        os.kill(runner.pid, signal.SIGINT)
+        _, stderr = runner.communicate(timeout=30)
+    finally:
+        if runner.poll() is None:
+            runner.kill()
+            runner.wait()
+
+    assert runner.returncode != 0
+    assert "KeyboardInterrupt" in stderr
+    assert _wait_until_gone(child), f"child {child} outlived the interrupted runner"
+
+
+def test_killing_an_emptied_process_group_is_harmless(tmp_path: Path) -> None:
+    """A group whose members have all exited is skipped without an error."""
+    tool = _load_tool()
+    finished = subprocess.Popen(["true"], cwd=tmp_path, start_new_session=True)
+    assert finished.wait(timeout=30) == 0
+
+    assert tool._kill_process_group(finished.pid) is None

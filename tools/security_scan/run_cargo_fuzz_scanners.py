@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import signal
@@ -30,6 +31,12 @@ CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 3600
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
+def _kill_process_group(pgid: int) -> None:
+    """Kill every process in the group; a group that has already emptied is fine."""
+    with contextlib.suppress(ProcessLookupError):
+        os.killpg(pgid, signal.SIGKILL)
+
+
 def run_in_process_group(
     command: list[str],
     *,
@@ -44,7 +51,9 @@ def run_in_process_group(
     ``cargo +nightly fuzz`` runs a toolchain proxy, cargo, cargo-fuzz, a nested
     cargo and rustc. ``subprocess.run`` kills only the first of them on timeout;
     the orphaned compiler keeps the build directory locked, and the next target
-    waits on that lock.
+    waits on that lock. The command runs in its own session, so a terminal
+    interrupt no longer reaches it either: any exception while waiting, such as
+    ``KeyboardInterrupt``, also kills the group before it propagates.
     """
     if not capture_output or not text or check:
         raise ValueError("run_in_process_group captures text output and never checks")
@@ -59,9 +68,13 @@ def run_in_process_group(
     try:
         stdout, stderr = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGKILL)
+        _kill_process_group(process.pid)
         stdout, stderr = process.communicate()
         raise subprocess.TimeoutExpired(command, timeout, output=stdout, stderr=stderr) from None
+    except BaseException:
+        _kill_process_group(process.pid)
+        process.wait()
+        raise
     return subprocess.CompletedProcess(command, process.returncode, stdout=stdout, stderr=stderr)
 
 
