@@ -43,7 +43,9 @@ jobs:
       - name: Install MkDocs and package
         run: |
           pip install --require-hashes -r requirements/docs.txt
+          python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
           python tools/ci_install_dev.py
+          python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
 
       - name: Build MkDocs site
         run: mkdocs build --site-dir _site

@@ -210,3 +210,29 @@ def test_cpu_mapping_requires_exact_profile_and_official_index(tmp_path: Path) -
     (tmp_path / "requirements/runtime.txt").write_text(raw)
     with pytest.raises(ValueError):
         read_dependency_profile(tmp_path, "requirements/runtime.txt")
+
+
+def test_every_development_install_in_ci_takes_the_hash_locked_cpu_torch() -> None:
+    """Each workflow step that runs ``ci_install_dev.py`` installs the CPU torch lock first.
+
+    The development extras include ``training``. Without the lock, pip resolves the default
+    CUDA torch build and several gigabytes of NVIDIA wheels, which once exhausted the disk of
+    a hosted runner. The step must install the lock with hashes before the extras and check
+    the CPU build afterwards.
+    """
+    install = "python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt"
+    check = "assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
+    steps: list[str] = []
+    for path in sorted((REPO / ".github/workflows").glob("*.yml")):
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for job_name, job in workflow["jobs"].items():
+            for step in job.get("steps", []):
+                run = step.get("run", "")
+                if "python tools/ci_install_dev.py" not in run:
+                    continue
+                steps.append(f"{path.name}:{job_name}")
+                lines = [line.strip() for line in run.splitlines()]
+                position = lines.index("python tools/ci_install_dev.py")
+                assert install in lines[:position], f"{path.name}:{job_name} installs CUDA torch"
+                assert any(check in line for line in lines[position + 1 :]), path.name
+    assert len(steps) >= 8, steps

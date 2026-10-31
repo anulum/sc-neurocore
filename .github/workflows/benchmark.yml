@@ -132,7 +132,10 @@ jobs:
           python-version: "3.12.16"
 
       - name: Install package
-        run: python tools/ci_install_dev.py
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
+          python tools/ci_install_dev.py
+          python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
 
       - name: Run Python benchmarks (quick)
         run: python benchmarks/benchmark_suite.py --json --markdown
@@ -167,7 +170,10 @@ jobs:
           python-version: "3.12.16"
 
       - name: Install package
-        run: python tools/ci_install_dev.py
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
+          python tools/ci_install_dev.py
+          python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
 
       - name: Run perf-gated pytest selector
         run: |
