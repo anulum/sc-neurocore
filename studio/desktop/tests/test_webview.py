@@ -155,6 +155,38 @@ def _script(page: QWebEnginePage, source: str) -> object:
     return result[0]
 
 
+def _dismiss_first_run_tour(view: QWebEngineView, page: QWebEnginePage) -> None:
+    """Close the first-run tour with Escape, as a user must before using the page.
+
+    The tour is a native modal: while it is open the rest of the document is inert
+    and a click on it reaches nothing. A fresh profile always opens it.
+
+    Parameters
+    ----------
+    view : QWebEngineView
+        Shown view whose renderer widget receives the key.
+    page : QWebEnginePage
+        Page that shows the tour.
+    """
+    assert (
+        _script(
+            page,
+            "document.querySelector('dialog[open][aria-labelledby=\"onboarding-title\"]')"
+            " === document.activeElement?.closest('dialog') ? true : null",
+        )
+        is True
+    )
+    QTest.keyClick(view.focusProxy() or view, Qt.Key.Key_Escape)
+    assert (
+        _script(
+            page,
+            "document.querySelector('dialog[open]') === null && "
+            "localStorage.getItem('sc-studio-onboarding-dismissed') === 'true' ? true : null",
+        )
+        is True
+    )
+
+
 def _arrival(received: list[str], target: str, response: Path) -> None:
     loop = QEventLoop()
     poll = QTimer(loop)
@@ -272,6 +304,7 @@ def test_renderer_confines_traffic_and_routes_user_selected_links(
         assert popup_urls == [page.url().toString()]
         assert page.url().toString() == instance.origin + "/studios/sc-neurocore/"
         assert received == controls
+        _dismiss_first_run_tour(view, page)
         for target, path in [("_self", "/user-link"), ("_blank", "/user-popup")]:
             url_handler.unlink()
             position = _script(
