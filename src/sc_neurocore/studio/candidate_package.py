@@ -244,9 +244,9 @@ def validate_candidate(
         check.fail("", "a candidate package must be a JSON object")
         return CandidateValidation(tuple(check.diagnostics), None)
     if catalogue is None:
-        from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+        from sc_neurocore.neurons.model_registry import MODEL_MODULES
 
-        catalogue = frozenset(_CLASS_TO_MODULE)
+        catalogue = frozenset(MODEL_MODULES)
     version = document.get("schema_version")
     if version != CANDIDATE_SCHEMA_VERSION:
         check.fail(

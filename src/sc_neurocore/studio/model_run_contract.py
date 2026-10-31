@@ -31,7 +31,7 @@ import numpy as np
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
 from sc_neurocore.neurons.model_profile import resolve_profile
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.neurons.universal_dsl import load_schema
 from sc_neurocore.studio.model_introspection import _fixed_step_attribute, _load_class
 from sc_neurocore.studio.simulation import _make_current_trace
@@ -647,7 +647,7 @@ def resolve_model_run_inputs(
         On any unknown, mistyped, non-finite, fractional-integer or
         unsupported input, naming the field and reason.
     """
-    if not isinstance(name, str) or name not in _CLASS_TO_MODULE:
+    if not isinstance(name, str) or name not in MODEL_MODULES:
         raise ModelInputError(
             model=name if isinstance(name, str) else None,
             field="name",

@@ -3,6 +3,9 @@
 The Studio catalogue lists **every registered model**, including a model whose
 metadata cannot be read. It says which ones those are.
 
+Library integrations can enumerate the same identities without loading model
+classes through the [read-only model provider](model-provider.md).
+
 ## Why a listing that never shrinks
 
 The catalogue used to drop an entry whose metadata raised while it was being

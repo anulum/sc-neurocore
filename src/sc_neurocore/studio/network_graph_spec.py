@@ -33,7 +33,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_run_contract import (
     ModelInputError,
@@ -476,7 +476,7 @@ def _validate_populations(
             count = None
         model = raw.get("model", DEFAULT_MODEL)
         inputs: ModelRunInputs | None = None
-        if not isinstance(model, str) or model not in _CLASS_TO_MODULE:
+        if not isinstance(model, str) or model not in MODEL_MODULES:
             collector.add(
                 f"{field}.model",
                 f"Population {label_text} model {model!r} is not a catalogue model",

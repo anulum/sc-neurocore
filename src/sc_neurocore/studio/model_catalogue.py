@@ -26,7 +26,7 @@ from sc_neurocore.neurons.model_descriptor import (
     descriptor_completeness_tier,
 )
 from sc_neurocore.neurons.model_profile import resolve_profile
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
 from sc_neurocore.studio.model_run_contract import (
@@ -417,7 +417,7 @@ def readiness_seal_payload() -> dict[str, Any]:
     """Return the verified-readiness seal of every registered catalogue model."""
     from sc_neurocore.neurons.model_identity import identity_registry
 
-    registered = [name for name in _CLASS_TO_MODULE if name in identity_registry()]
+    registered = [name for name in MODEL_MODULES if name in identity_registry()]
     return build_seal(registered, partial(_receipt_verified_detail, snapshot=ReceiptSnapshot()))
 
 
@@ -496,7 +496,7 @@ def _introspected_summary(name: str) -> dict[str, Any]:
     state_vars, params = _classify_fields(cls)
     return {
         "name": name,
-        "module": _CLASS_TO_MODULE[name],
+        "module": MODEL_MODULES[name],
         **_identity_fields(name),
         "metadata_state": METADATA_STATE_UNAVAILABLE,
         "metadata_error": None,
@@ -553,7 +553,7 @@ def _unreadable_summary(name: str) -> dict[str, Any]:
     """
     return {
         "name": name,
-        "module": _CLASS_TO_MODULE[name],
+        "module": MODEL_MODULES[name],
         **_identity_fields(name),
         "metadata_state": METADATA_STATE_INVALID,
         "metadata_error": "Model metadata unavailable",
@@ -651,7 +651,7 @@ def list_models() -> list[dict[str, Any]]:
 def _build_model_list() -> list[dict[str, Any]]:
     result = []
     snapshot = ReceiptSnapshot()
-    for name in sorted(_CLASS_TO_MODULE.keys()):
+    for name in sorted(MODEL_MODULES.keys()):
         try:
             descriptor = load_descriptor(name)
             entry = (
@@ -684,7 +684,7 @@ def _model_input_detail(name: str) -> dict[str, object]:
 
 def get_model_detail(name: str) -> dict[str, Any] | None:
     """Return the full declared metadata view for a single model."""
-    if name not in _CLASS_TO_MODULE:
+    if name not in MODEL_MODULES:
         return None
     try:
         descriptor = load_descriptor(name)
@@ -841,7 +841,7 @@ def model_documentation(name: str) -> dict[str, Any] | None:
         undocumented for the same reason, which is a fact about the
         distribution and not about any model.
     """
-    if name not in _CLASS_TO_MODULE:
+    if name not in MODEL_MODULES:
         return None
     root = documentation_root()
     if root is None:
@@ -849,7 +849,7 @@ def model_documentation(name: str) -> dict[str, Any] | None:
             "no model reference pages are installed: this distribution packages "
             "none and no checkout was found beside it"
         )
-    module = _CLASS_TO_MODULE[name]
+    module = MODEL_MODULES[name]
     path = root / f"{module}.md"
     if not path.is_file():
         return None

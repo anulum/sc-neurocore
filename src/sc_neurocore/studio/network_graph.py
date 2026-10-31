@@ -24,7 +24,7 @@ from copy import deepcopy
 from collections.abc import Mapping
 from typing import Any
 
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_introspection import _load_class
 from sc_neurocore.studio.model_run_contract import (
@@ -98,7 +98,7 @@ def population_model_admission(name: str) -> str | None:
     the Studio protocol can satisfy and no ``seed`` constructor field (every
     neuron of a population would otherwise share the seed and its noise).
     """
-    if name not in _CLASS_TO_MODULE:
+    if name not in MODEL_MODULES:
         return "not a catalogue model"
     cls = _load_class(name)
     try:
@@ -389,7 +389,7 @@ def envelope_to_graph(nir_data: object) -> dict[str, Any]:
         if not isinstance(node, Mapping):
             raise GraphEnvelopeRefusal(f"Graph envelope node {node_id!r} must be an object")
         model = node.get("type", DEFAULT_MODEL)
-        if not isinstance(model, str) or model not in _CLASS_TO_MODULE:
+        if not isinstance(model, str) or model not in MODEL_MODULES:
             raise GraphEnvelopeRefusal(
                 f"Graph envelope node {node_id!r} type {model!r} is not a catalogue model"
             )

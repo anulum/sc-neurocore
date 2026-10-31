@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1580
+expected_file_count = 1584
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6454,3 +6454,19 @@ rationale = "The Python compliance lane runs the hash-locked pip-audit and the R
 [[file]]
 path = "tests/test_tools/test_run_python_compliance_scanners.py"
 rationale = "Real scanner runs prove that an unlicensed file or a missing repository fails the lane, and that nothing is non-blocking."
+
+[[file]]
+path = "src/sc_neurocore/neurons/model_registry.py"
+rationale = "Immutable public model discovery keeps catalogue identities and lazy imports on one canonical registry."
+
+[[file]]
+path = "tests/test_model_registry.py"
+rationale = "Real model imports, mutation refusals and a fresh interpreter verify the public discovery contract."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_introspection.py"
+rationale = "Studio class loading and field introspection consume the public model discovery provider."
+
+[[file]]
+path = "tests/test_studio_catalogue_metadata_state.py"
+rationale = "Catalogue API health retains every identity and exposes unreadable metadata without leaking internal errors."

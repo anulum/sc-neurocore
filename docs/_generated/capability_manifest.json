@@ -977,12 +977,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 660,
+    "public_documentation_pages": 661,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5518
+    "test_files": 5519
   },
   "documentation": {
     "public_pages": [
@@ -1507,6 +1507,7 @@
       "docs/studio/manual/networks-and-training.md",
       "docs/studio/manual/projects-and-evidence.md",
       "docs/studio/manual/troubleshooting.md",
+      "docs/studio/model-provider.md",
       "docs/studio/model-readiness.md",
       "docs/studio/network-canvas.md",
       "docs/studio/numeric-contract.md",
@@ -6501,6 +6502,7 @@
       "tests/test_model_rall_cable_rall_cable_propagation.py",
       "tests/test_model_rall_cable_rall_cable_spiking.py",
       "tests/test_model_receipts.py",
+      "tests/test_model_registry.py",
       "tests/test_model_renshaw_cell.py",
       "tests/test_model_resonate_and_fire_batch_and_reset.py",
       "tests/test_model_resonate_and_fire_constructor_rejects.py",

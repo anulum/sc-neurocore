@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Read-only model discovery API shared by the Studio catalogue, simulation,
+  candidate authoring and network validation.
 - Identify the release client in crates.io registry queries so the version check can proceed before publishing.
 - Refuse Studio CSV export and spike-triggered averaging when full-resolution samples were explicitly omitted; show the server reason, retain JSON and display SVG, and allow recovery by shortening the simulation.
 - Make the REUSE lint blocking in the Python compliance lane of the security packet and the release sweep.

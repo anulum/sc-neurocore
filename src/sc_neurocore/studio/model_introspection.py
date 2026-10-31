@@ -16,7 +16,7 @@ import inspect
 import math
 from typing import Any
 
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 
 # State variable names that change during .step() — common across models
 _KNOWN_STATE_VARS = {
@@ -66,7 +66,7 @@ _class_cache: dict[str, type] = {}
 def _load_class(name: str) -> type:
     if name in _class_cache:
         return _class_cache[name]
-    module_name = _CLASS_TO_MODULE[name]
+    module_name = MODEL_MODULES[name]
     mod = importlib.import_module(f"sc_neurocore.neurons.models.{module_name}")
     cls: type = getattr(mod, name)
     _class_cache[name] = cls

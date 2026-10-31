@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from sc_neurocore.neurons.model_identity import resolve_identity, schema_for_class
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.neurons.universal_dsl import load_schema
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.candidate_package import CANDIDATE_SCHEMA_VERSION
@@ -50,7 +50,7 @@ def candidate_from_catalogue(model_name: str) -> dict[str, str]:
         If an identified source resource cannot be read or encoded. Resource
         faults must not be presented as defects in the author's proposal.
     """
-    if model_name not in _CLASS_TO_MODULE:
+    if model_name not in MODEL_MODULES:
         raise CatalogueCandidateUnavailable("Select a registered catalogue model.")
     try:
         identity = resolve_identity(model_name)

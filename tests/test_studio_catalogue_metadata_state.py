@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Catalogue metadata health and identity conservation
+
+"""Exercise catalogue discovery and retained diagnostics through library and HTTP APIs."""
 
 from __future__ import annotations
 
@@ -16,6 +19,8 @@ from typing import Any
 import pytest
 from starlette.testclient import TestClient
 
+from sc_neurocore.neurons.model_catalogue import load_descriptor
+from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio import model_catalogue as catalogue
 
@@ -23,23 +28,22 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
-def broken_descriptor() -> Iterator[str]:
+def broken_descriptor(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
     """Make one model's descriptor load raise, the way a corrupt file would."""
     catalogue._models_cache = None
-    victim = sorted(catalogue._CLASS_TO_MODULE)[0]
-    real = catalogue.load_descriptor
+    victim = sorted(MODEL_MODULES)[0]
+    real = load_descriptor
 
     def _load(name: str) -> Any:
         if name == victim:
             raise ValueError("descriptor is not valid TOML")
         return real(name)
 
-    catalogue.load_descriptor = _load  # type: ignore[assignment]
+    monkeypatch.setattr(catalogue, "load_descriptor", _load)
     catalogue._models_cache = None
     try:
         yield victim
     finally:
-        catalogue.load_descriptor = real  # type: ignore[assignment]
         catalogue._models_cache = None
 
 
@@ -52,7 +56,7 @@ def test_every_registered_model_is_listed() -> None:
     catalogue._models_cache = None
     names = {str(row["name"]) for row in catalogue.list_models()}
 
-    assert names == set(catalogue._CLASS_TO_MODULE)
+    assert names == set(MODEL_MODULES)
 
 
 def test_a_healthy_entry_declares_available_metadata() -> None:
@@ -69,7 +73,7 @@ def test_unreadable_metadata_is_reported_not_omitted(broken_descriptor: str) -> 
     rows = catalogue.list_models()
     row = _entry(broken_descriptor)
 
-    assert len(rows) == len(catalogue._CLASS_TO_MODULE)
+    assert len(rows) == len(MODEL_MODULES)
     assert row["metadata_state"] == catalogue.METADATA_STATE_INVALID
     assert row["metadata_error"] == "Model metadata unavailable"
 
@@ -104,7 +108,7 @@ def test_facets_census_names_the_invalid_models(broken_descriptor: str) -> None:
     """Corpus health is a census plus names, not a total that quietly shrinks."""
     facets = catalogue.model_facets()
 
-    assert facets["total"] == len(catalogue._CLASS_TO_MODULE)
+    assert facets["total"] == len(MODEL_MODULES)
     assert facets["metadata_states"][catalogue.METADATA_STATE_INVALID] == 1
     assert facets["invalid_models"] == [broken_descriptor]
 
@@ -152,5 +156,5 @@ def test_conformance_scope_keeps_a_model_whose_metadata_broke(
 
     names = module.model_names()
 
-    assert len(names) == len(catalogue._CLASS_TO_MODULE)
+    assert len(names) == len(MODEL_MODULES)
     assert broken_descriptor in names
