@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Keep background graph job controls readable in both enabled and disabled states.
+
 - Read DCLS synthesis statistics from native JSON, preserve FPGA fit verdicts for hierarchy debug metadata, and qualify resource counts against each supported Yosys version.
 - Qualify the complete committed Q16.16 Wang–Buzsaki RTL through four-input LUT mapping with the paired native ABC executable, retaining the synthesis timeout and source event-count check.
 - Install the locked compliance scanners in every native test shard and refresh the five-language evolutionary benchmark from its current sources.

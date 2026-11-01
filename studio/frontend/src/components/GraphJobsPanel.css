@@ -1,0 +1,29 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Commercial license available
+ * © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+ * © Code 2020–2026 Miroslav Šotek. All rights reserved.
+ * ORCID: 0009-0009-3560-0851
+ * Contact: www.anulum.li | protoscience@anulum.li
+ * SC-NeuroCore — Readable background graph job controls
+ */
+
+.graph-jobs-panel button {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.graph-jobs-panel button:enabled:hover {
+  background: var(--bg-hover);
+}
+
+.graph-jobs-panel button:disabled {
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  cursor: not-allowed;
+  opacity: 1;
+}

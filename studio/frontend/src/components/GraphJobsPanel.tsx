@@ -9,6 +9,7 @@
 import { graphJobActive } from "../graphJobs";
 import { useGraphJobs } from "../useGraphJobs";
 import { useStudioStore } from "../stores/studio";
+import "./GraphJobsPanel.css";
 
 /**
  * Submit and recover actual supervised graph work from the maintained network canvas.
