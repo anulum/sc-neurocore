@@ -9,7 +9,7 @@
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useStudioStore } from "./studio";
-import { STUDIO_SAVED_SESSIONS_KEY, readStoredStudioSessions } from "../studioSavedSessions";
+import { STUDIO_SAVED_SESSIONS_KEY, readStoredStudioSessions, studioSavedSessionRestoreState } from "../studioSavedSessions";
 import { stringifyStudioJson } from "../studioJson";
 
 const initial = useStudioStore.getState();
@@ -38,11 +38,39 @@ it("returns and records a real successful write with exact seed custody and name
   expect(useStudioStore.getState().sessionWriteResult).toBe(result);
   expect(localStorage.getItem(STUDIO_SAVED_SESSIONS_KEY)).toContain('"seed":9223372036854775807');
   expect(readStoredStudioSessions().map((session) => session.name)).toEqual(["current", "previous"]);
+  const restored = studioSavedSessionRestoreState(readStoredStudioSessions()[0]?.state ?? {});
+  expect(restored.seed).toBe(9223372036854775807n);
+  expect(restored.graphWorkspaceId).toBe(initial.graphWorkspaceId);
+  expect(restored.graphPopulations).toEqual(initial.graphPopulations);
+  expect(restored.graphProjections).toEqual(initial.graphProjections);
   useStudioStore.setState({ current: 12 });
   useStudioStore.getState().saveSession("current");
   expect(readStoredStudioSessions().map((session) => session.name)).toEqual(["current", "previous"]);
   expect(readStoredStudioSessions()[0]?.state.current).toBe(12);
   expect(useStudioStore.getState().error).toBe("An unrelated simulation failed");
+});
+
+it.each([
+  { graphWorkspaceId: "invalid-workspace" },
+  { graphJobRecovery: { schema_version: "studio.graph.job-recovery.v1", owner: initial.authSession?.principal_id ?? "local", selectedJobId: "invalid-job", submission: null } },
+] as const)("refuses malformed graph metadata before replacing a saved session: %j", (invalid) => {
+  const stored = localStorage.getItem(STUDIO_SAVED_SESSIONS_KEY);
+  const sessions = useStudioStore.getState().savedSessions;
+  useStudioStore.setState(invalid);
+  const result = useStudioStore.getState().saveSession("previous");
+  expect(result.status).toBe("failed");
+  expect(result.message).toContain("The current workspace could not be captured:");
+  expect(useStudioStore.getState().sessionWriteResult).toBe(result);
+  expect(useStudioStore.getState().savedSessions).toEqual(sessions);
+  expect(localStorage.getItem(STUDIO_SAVED_SESSIONS_KEY)).toBe(stored);
+  expect(readStoredStudioSessions()).toEqual([previous]);
+  expect(useStudioStore.getState().seed).toBe(9223372036854775807n);
+  expect(useStudioStore.getState().error).toBe("An unrelated simulation failed");
+
+  useStudioStore.setState({ graphWorkspaceId: initial.graphWorkspaceId, graphJobRecovery: null });
+  expect(useStudioStore.getState().saveSession("previous")).toEqual({ status: "ok", message: "" });
+  expect(readStoredStudioSessions()).toHaveLength(1);
+  expect(studioSavedSessionRestoreState(readStoredStudioSessions()[0]?.state ?? {}).seed).toBe(9223372036854775807n);
 });
 
 it("returns and records successful deletion while preserving another snapshot", () => {

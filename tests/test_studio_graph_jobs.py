@@ -14,6 +14,7 @@ import hashlib
 import json
 import math
 import os
+import platform
 import resource
 import sqlite3
 import time
@@ -21,9 +22,11 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 from starlette.testclient import TestClient
 
+import sc_neurocore
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.network_graph import simulate_graph
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
@@ -491,19 +494,24 @@ def test_embedded_graph_owner_cancels_a_real_running_worker(
         (
             "test_fixture",
             "926df67d10a4fef7ef382af4e654849ab0bc08de6cbacd388a4b99c314a1286e",
-            "6239784ce23ee57d3d006a4bccff55c54f024d183e2644e6cabaabd4eb928417",
+            "c241da2a32bd3b3a8ace8863b84e302ea02e55f645577d01a00e0a8dbfb60715",
         ),
         (
             "example",
             "a2de856760a6c897b963f30c43744284875392eec4670262ae864dd16c5cdbfe",
-            "8c00174f41fb90eabbc82455725fea05ef175b50f6bb6d547e53908b20a129e8",
+            "f006bb4848dc1af7b5d08c355fd942f5ce1ff07088ffc0bc7c6898b448ff1c11",
         ),
     ],
 )
 def test_existing_sync_graph_and_result_digests_are_unchanged(
     fixture: str, expected_graph: str, expected_result: str
 ) -> None:
-    """Pin canonical synchronous scientific output independently of async interpretation."""
+    """Pin every scientific result field, checking environment provenance separately.
+
+    Python, NumPy and package versions describe the actual execution environment;
+    they cannot be part of an environment-independent scientific golden. The job
+    artifact digest still binds the complete result bytes, including provenance.
+    """
     request = (
         graph()
         if fixture == "test_fixture"
@@ -513,5 +521,10 @@ def test_existing_sync_graph_and_result_digests_are_unchanged(
     assert result["success"] is True
     assert "execution_mode" not in result["spec"]
     assert result["spec"]["graph_sha256"] == expected_graph
+    assert result["execution"].pop("runtime") == {
+        "package_version": sc_neurocore.__version__,
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+    }
     canonical = json.dumps(result, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert hashlib.sha256(canonical).hexdigest() == expected_result

@@ -20,6 +20,7 @@ export default defineConfig({
       "src/stores/studioCompile.test.ts", "src/stores/studioBundle.test.ts",
       "src/studioBundleContext.test.ts", "src/studioProjectState.test.ts",
       "src/studioSavedSessions.test.ts",
+      "src/stores/studioSessionPersistence.test.ts",
       "e2e/compiler-inspector-live.test.tsx",
     ],
     exclude: configDefaults.exclude,

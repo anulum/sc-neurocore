@@ -40,6 +40,7 @@ const TRAINING_CONFIG = {
 function source(overrides: Partial<StudioGuidedFlowSource> = {}): StudioGuidedFlowSource {
   return {
     bundleContexts: {}, candidates: [], graphPopulations: [], graphProjections: [],
+    graphWorkspaceId: "88fc6fd7-5915-4140-bf52-90fd7ff5c21b", graphJobRecovery: null,
     synthTarget: "ice40", projectRevision: null,
     equationIrConfig: defaultEquationIrConfiguration(),
     latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null,
@@ -357,6 +358,9 @@ describe("the rules this module carries unchanged", () => {
     };
     expect(derive(state).evidenceExported).toBe(true);
     expect(derive({ ...state, sourceMode: "ode" }).evidenceExported).toBe(false);
+    if (surface === "project") {
+      expect(derive({ ...state, graphWorkspaceId: "21874e9e-d994-459e-8325-7de4d55d8b7f" }).evidenceExported).toBe(false);
+    }
     state.bundleContexts[surface].jobId = "sj_other";
     expect(derive(state).evidenceExported).toBe(false);
   });
