@@ -39,3 +39,10 @@ Registry membership says that a class is registered. Scientific classification,
 parameter contracts, numerical profiles and verified hardware readiness come
 from their separate descriptor, identity, profile and evidence APIs. A historical
 class alias that remains importable does not become a new catalogue identity.
+
+Bundled model schemas are available through
+`sc_neurocore.neurons.model_identity.SCHEMA_DIR`; parse them with the public
+`sc_neurocore.neurons.universal_dsl.load_schema` function. Studio uses this
+resource directory to hash the selected schema into an experiment's identity,
+preferring TOML over JSON when both formats exist. Installed workers read the
+schemas shipped with their library; no neighbouring source checkout is needed.

@@ -49,8 +49,9 @@ from sc_neurocore.neurons.seed_domain import (
 from sc_neurocore.neurons.facet_receipts import descriptor_contract_digest_of
 from sc_neurocore.neurons.model_catalogue import descriptor_path, load_descriptor
 from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
+from sc_neurocore.neurons.model_identity import SCHEMA_DIR as _SCHEMA_DIR
 from sc_neurocore.neurons.model_profile import resolve_profile
-from sc_neurocore.neurons.universal_dsl import _SCHEMA_DIR, load_schema
+from sc_neurocore.neurons.universal_dsl import load_schema
 from sc_neurocore.studio.model_run_contract import (
     STUDIO_DEFAULT_DT_MS,
     SUPPORTED_PROTOCOLS,
