@@ -30,7 +30,8 @@ on:
       - "hdl/**"
 
 concurrency:
-  group: yosys-${{ github.ref }}
+  # A manual run has its own group, so a push cannot cancel a long formal run.
+  group: yosys-${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}', github.run_id) || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -101,7 +102,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -119,7 +120,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cvc5 z3 libreadline8t64 libtcl8.6
+          sudo apt-get install -y -qq cvc5 time z3 libreadline8t64 libtcl8.6
           # Jobs whose engine is a bare `smtbmc` default to Yices; if the package
           # is unavailable they are recorded as ERROR rather than skipped.
           sudo apt-get install -y -qq yices2 || echo "::warning title=Yices::yices2 could not be installed"
@@ -139,7 +140,9 @@ jobs:
         shell: bash
         env:
           SHARD: ${{ matrix.shard }}
-          SHARDS: "4"
+          SHARDS: "6"
+          JOB_TIMEOUT_SECONDS: "1800"
+          SHARD_BUDGET_SECONDS: "19200"
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/formal-timing"
@@ -153,8 +156,13 @@ jobs:
             name="$(echo "$job" | tr '/' '_')"
             log="$out/logs/${name}.log"
             timing="$out/logs/${name}.time"
+            # Start a job only if its full timeout still fits in the job budget.
+            if [ $((SECONDS + JOB_TIMEOUT_SECONDS)) -gt "$SHARD_BUDGET_SECONDS" ]; then
+              printf '%s\t%s\t%s\t%s\n' "$job" NOT_RUN NA NA | tee -a "$table"
+              continue
+            fi
             set +e
-            (cd "$(dirname "$job")" && timeout --kill-after=30 3600 \
+            (cd "$(dirname "$job")" && timeout --kill-after=30 "$JOB_TIMEOUT_SECONDS" \
               /usr/bin/time -f '%e %M' -o "$timing" \
               sby -f -d "$RUNNER_TEMP/sby-work/${name%.sby}" "$(basename "$job")") > "$log" 2>&1
             rc=$?
@@ -168,7 +176,11 @@ jobs:
             else
               status=ERROR
             fi
-            read -r wall rss < <(tail -1 "$timing" 2>/dev/null || echo "NA NA")
+            wall=NA
+            rss=NA
+            if [ -s "$timing" ]; then
+              read -r wall rss < <(tail -1 "$timing") || true
+            fi
             printf '%s\t%s\t%s\t%s\n' "$job" "$status" "$wall" "$rss" | tee -a "$table"
             rm -rf "$RUNNER_TEMP/sby-work/${name%.sby}"
           done < "$out/jobs.txt"
