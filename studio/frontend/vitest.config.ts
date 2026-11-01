@@ -18,6 +18,7 @@ export default defineConfig({
       "src/candidateCatalogue.test.ts",
       "src/components/CandidateCatalogueStart.test.tsx",
       "src/components/CandidatePanel.test.tsx",
+      "src/components/GraphJobsPanel.test.tsx",
     ],
   },
 });

@@ -22,6 +22,7 @@ from sc_neurocore.studio.api.compiler import build_compiler_router
 from sc_neurocore.studio.api.cosim import build_cosim_router
 from sc_neurocore.studio.api.deploy import build_deploy_router
 from sc_neurocore.studio.api.design import build_design_router
+from sc_neurocore.studio.api.graph_jobs import build_graph_jobs_router
 from sc_neurocore.studio.api.export import build_export_router
 from sc_neurocore.studio.api.identity import build_identity_router
 from sc_neurocore.studio.api.host_jobs import build_host_jobs_router
@@ -68,6 +69,7 @@ def build_studio_routers(context: StudioApiContext) -> tuple[APIRouter, ...]:
         build_cosim_router(context),
         build_synthesis_router(context),
         build_design_router(context),
+        build_graph_jobs_router(context),
         build_deploy_router(context),
         build_training_router(context),
         build_export_router(context),

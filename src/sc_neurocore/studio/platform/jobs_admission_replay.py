@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobSubmission
-from sc_neurocore.studio.platform.jobs_models import StudioJobRefused
+from sc_neurocore.studio.platform.jobs_models import StudioJobConflict, StudioJobRefused
 from sc_neurocore.studio.platform.jobs_snapshot import decode_job_snapshot
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -70,7 +70,7 @@ def read_admission_replay(
     if row is None:
         return None
     if row["payload_sha256"] != replay.payload_sha256:
-        raise StudioJobRefused("Storage mutation identity was reused with changed content.")
+        raise StudioJobConflict("Storage mutation identity was reused with changed content.")
     if row["outcome"] == "admitted" and row["record_json"] is not None:
         try:
             record = decode_job_snapshot(json.loads(str(row["record_json"])))

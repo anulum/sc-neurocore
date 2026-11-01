@@ -53,7 +53,6 @@ class CapabilityRequirement:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a public, non-secret representation."""
-
         return {
             "name": self.name,
             "available": self.available,
@@ -92,7 +91,6 @@ class CapabilityHealth:
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a public, non-secret API representation."""
-
         return {
             "capability_id": self.capability_id,
             "title": self.title,
@@ -121,14 +119,12 @@ class CapabilityRegistry:
         ValueError
             If another capability already uses the same stable ID.
         """
-
         if descriptor.capability_id in self._descriptors:
             raise ValueError(f"Capability {descriptor.capability_id!r} is already registered.")
         self._descriptors[descriptor.capability_id] = descriptor
 
     def health(self, capability_id: str) -> CapabilityHealth:
         """Return runtime health for one capability."""
-
         descriptor = self._descriptors[capability_id]
         unavailable = [item for item in descriptor.requirements if not item.available]
         if unavailable:
@@ -155,7 +151,6 @@ class CapabilityRegistry:
 
     def health_all(self) -> list[CapabilityHealth]:
         """Return runtime health for all capabilities sorted by stable ID."""
-
         return [self.health(capability_id) for capability_id in sorted(self._descriptors)]
 
 
@@ -165,7 +160,6 @@ def _executable_requirement(
     resolver: ExecutableResolver,
 ) -> CapabilityRequirement:
     """Build a path-free runtime requirement for one external executable."""
-
     available = resolver(executable) is not None
     return CapabilityRequirement(
         executable,
@@ -179,7 +173,6 @@ def build_default_studio_capability_registry(
     executable_resolver: ExecutableResolver = shutil.which,
 ) -> CapabilityRegistry:
     """Build the default capability registry for the current Studio backend."""
-
     registry = CapabilityRegistry()
     registry.register(
         CapabilityDescriptor(
@@ -209,10 +202,14 @@ def build_default_studio_capability_registry(
         CapabilityDescriptor(
             capability_id="studio.network_canvas",
             title="Network Canvas",
-            summary="Graph validation, simulation, and NIR import/export surfaces.",
+            summary=(
+                "Graph validation, quick simulation, recoverable background jobs, "
+                "and NIR import/export surfaces."
+            ),
             status=CapabilityStatus.EXPERIMENTAL,
             requirements=(
                 CapabilityRequirement("sc_neurocore.studio.network_graph", True, "importable"),
+                CapabilityRequirement("sc_neurocore.studio.graph_job", True, "importable"),
             ),
             evidence=(EvidenceClass.CONTRACT_TEST,),
             ui_placement="Build",

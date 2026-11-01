@@ -129,14 +129,24 @@ def serve_record_read(
                     principal is None
                     or record.owner != principal.principal_id
                     or (
-                        (
+                        request.authorized_route == "/api/candidates/jobs/{job_id}"
+                        and (
                             record.kind != "analysis"
                             or record.admission.get("candidate_operation")
                             not in ("simulate", "review")
                         )
-                        if request.authorized_route == "/api/candidates/jobs/{job_id}"
-                        else record.admission.get("laboratory_task")
+                    )
+                    or (
+                        request.authorized_route == "/api/fits/jobs/{job_id}"
+                        and record.admission.get("laboratory_task")
                         not in {"fit", "fit_replay", "cohort"}
+                    )
+                    or (
+                        request.authorized_route == "/api/graph/jobs/{job_id}"
+                        and (
+                            record.kind != "analysis"
+                            or record.admission.get("graph_operation") != "simulate"
+                        )
                     )
                 ):
                     response["status"] = "not_found"

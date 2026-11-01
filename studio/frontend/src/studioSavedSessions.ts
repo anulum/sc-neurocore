@@ -9,6 +9,7 @@ import { readModelParameters, type ModelParameters } from "./modelInputs";
 import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
 import { readEquationIrConfiguration, type EquationIrConfiguration } from "./equationIrConfig";
 import { parseStudioJson, stringifyStudioJson } from "./studioJson";
+import { saveStudioGraphWorkspace, restoreStudioGraphWorkspace, type StudioGraphWorkspaceInput, type StudioGraphWorkspaceRestoreState } from "./studioGraphWorkspace";
 
 /**
  * Keeping named experiment snapshots in the browser, and reading them back.
@@ -40,7 +41,7 @@ export interface StudioSavedSession {
 export type StudioSavedSessionSourceMode = "model" | "ode";
 
 /** Everything a workspace remembers, as the panel holds it. */
-export interface StudioSavedSessionInput {
+export interface StudioSavedSessionInput extends StudioGraphWorkspaceInput {
   sourceMode: StudioSavedSessionSourceMode;
   equations: string[];
   threshold: string;
@@ -71,11 +72,16 @@ export type StudioSavedSessionTrial = "replay" | "fresh";
  * must restore to the shape it was saved from, and stating that as the same
  * type is what keeps the two from drifting.
  */
-export type StudioSavedSessionRestoreState = StudioSavedSessionInput;
+export type StudioSavedSessionRestoreState = StudioSavedSessionInput & Partial<StudioGraphWorkspaceRestoreState>;
 
 /** The patch that replaces the store's list of saved workspaces. */
 export interface StudioSavedSessionsStatePatch {
   savedSessions: StudioSavedSession[];
+}
+
+/** A captured page snapshot and its actual browser persistence outcome. */
+export interface StudioSessionSavedState extends StudioSavedSessionsStatePatch {
+  sessionWriteResult: StudioSessionWriteResult;
 }
 
 /**
@@ -231,6 +237,7 @@ export function browserSavedSessionStorage(): StudioSavedSessionStorage | null {
  */
 export function studioSavedSessionState(input: StudioSavedSessionInput): Record<string, unknown> {
   return {
+    ...saveStudioGraphWorkspace(input),
     sourceMode: input.sourceMode,
     equations: input.equations,
     threshold: input.threshold,
@@ -264,6 +271,8 @@ export function studioSavedSessionRestoreState(
   state: Record<string, unknown>,
 ): StudioSavedSessionRestoreState {
   return {
+    ...(state.graphPopulations === undefined && state.graphProjections === undefined
+      ? {} : restoreStudioGraphWorkspace(state)),
     sourceMode: sourceModeValue(state.sourceMode),
     equations: stringArrayValue(state.equations),
     threshold: stringValue(state.threshold, ""),
@@ -458,6 +467,32 @@ export function studioSavedSessionUpsertState(
   return {
     savedSessions: upsertStudioSavedSession(sessions, nextSession),
   };
+}
+
+/**
+ * Capture and store a named session without losing prior snapshots on a malformed input.
+ *
+ * @param input - Current typed workspace, whose explicit graph fields are checked before capture.
+ * @param name - Name of the snapshot to create or replace.
+ * @param sessions - Existing page snapshots, retained unchanged when capture refuses.
+ * @param storage - Actual browser persistence target, or null where unavailable.
+ * @returns Page snapshots and a reported capture/write outcome; never an uncaught capture refusal.
+ */
+export function captureAndStoreStudioSession(
+  input: StudioSavedSessionInput,
+  name: string,
+  sessions: readonly StudioSavedSession[],
+  storage: StudioSavedSessionStorage | null = browserSavedSessionStorage(),
+): StudioSessionSavedState {
+  let state: Record<string, unknown>;
+  try { state = studioSavedSessionState(input); }
+  catch (failure) {
+    return { savedSessions: [...sessions], sessionWriteResult: {
+      status: "failed", message: `The current workspace could not be captured: ${String(failure)}`,
+    } };
+  }
+  const savedSessions = upsertStudioSavedSession(sessions, { name, state });
+  return { savedSessions, sessionWriteResult: writeStoredStudioSessions(savedSessions, storage) };
 }
 
 /**

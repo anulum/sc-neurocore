@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
 from sc_neurocore.studio.platform.jobs_admission_replay import StorageAdmissionReplay
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobSubmission
+from sc_neurocore.studio.platform.jobs_models import StudioJobConflict
 from sc_neurocore.studio.platform.storage_admission_protocol import StorageNamedAdmissionRequest
 from sc_neurocore.studio.platform.storage_named_tasks import resolve_named_studio_task
 
@@ -28,7 +29,7 @@ _Count = Annotated[int, Field(ge=0)]
 
 
 class StorageNamedAdmissionResponse(BaseModel):
-    """One exact admission or capacity-refusal outcome from the authority.
+    """One exact admission, capacity refusal or changed-content retry conflict.
 
     A caller must supply the result of its durable authority transaction; the
     codec cannot prove persistence from a Python object alone. A lost reply
@@ -44,7 +45,7 @@ class StorageNamedAdmissionResponse(BaseModel):
     workspace: _Name
     task_name: _Name
     payload_sha256: _Digest
-    status: Literal["admitted", "queue_full"]
+    status: Literal["admitted", "queue_full", "conflict"]
     job_id: _Name | None
     running: _Count | None
     queued: _Count | None
@@ -57,8 +58,14 @@ class StorageNamedAdmissionResponse(BaseModel):
         if self.status == "admitted":
             if self.job_id is None or any(item is not None for item in metrics):
                 raise ValueError("invalid admitted storage outcome")
-        elif self.job_id is not None or any(item is None for item in metrics):
+        elif self.status == "queue_full" and (
+            self.job_id is not None or any(item is None for item in metrics)
+        ):
             raise ValueError("invalid queue-full storage outcome")
+        elif self.status == "conflict" and (
+            self.job_id is not None or any(item is not None for item in metrics)
+        ):
+            raise ValueError("invalid conflicting storage outcome")
         return self
 
 
@@ -98,7 +105,7 @@ def encode_named_admission_response(
     *,
     request: StorageNamedAdmissionRequest,
     replay: StorageAdmissionReplay,
-    outcome: StudioJobSubmission | StudioJobQueueFull,
+    outcome: StudioJobSubmission | StudioJobQueueFull | StudioJobConflict,
     max_bytes: int,
 ) -> bytes:
     """Serialize one actual authority outcome within a trusted frame ceiling.
@@ -109,7 +116,7 @@ def encode_named_admission_response(
         Exact request already authorized and prepared by the service.
     replay : StorageAdmissionReplay
         Service-derived content identity used in the durable transaction.
-    outcome : StudioJobSubmission or StudioJobQueueFull
+    outcome : StudioJobSubmission, StudioJobQueueFull or StudioJobConflict
         Admission or capacity refusal returned by the authority transaction.
     max_bytes : int
         Positive trusted maximum response-frame payload bytes.
@@ -131,7 +138,7 @@ def encode_named_admission_response(
     running: int | None = None
     queued: int | None = None
     limit: int | None = None
-    status: Literal["admitted", "queue_full"]
+    status: Literal["admitted", "queue_full", "conflict"]
     if isinstance(outcome, StudioJobSubmission):
         task = resolve_named_studio_task(
             request.task_name, authorized_route=request.authorized_route
@@ -149,6 +156,8 @@ def encode_named_admission_response(
     elif isinstance(outcome, StudioJobQueueFull):
         status = "queue_full"
         running, queued, limit = outcome.running, outcome.queued, outcome.limit
+    elif isinstance(outcome, StudioJobConflict):
+        status = "conflict"
     else:
         raise ValueError("unsupported storage admission outcome")
     response = StorageNamedAdmissionResponse(
@@ -178,7 +187,7 @@ def decode_named_admission_response(
     replay: StorageAdmissionReplay,
     max_bytes: int,
 ) -> str:
-    """Return the admitted job ID or raise the exact durable queue refusal.
+    """Return the admitted ID or raise a correlated durable queue or retry refusal.
 
     This codec checks a bounded response from a separately verified service
     peer. It cannot prove that the worker was launched or safely supervised;
@@ -206,6 +215,8 @@ def decode_named_admission_response(
     ------
     StudioJobQueueFull
         A correlated durable capacity refusal.
+    StudioJobConflict
+        The durable retry key was already bound to different content.
     ValueError
         Framing, JSON, schema, outcome or request correlation is invalid.
     """
@@ -238,4 +249,6 @@ def decode_named_admission_response(
             queued=cast(int, response.queued),
             limit=cast(int, response.limit),
         )
+    if response.status == "conflict":
+        raise StudioJobConflict("Storage mutation identity was reused with changed content.")
     return cast(str, response.job_id)

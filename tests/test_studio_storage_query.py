@@ -47,7 +47,7 @@ VIEWER = StorageRequester(principal_id="viewer", roles=("studio.viewer",))
 
 @pytest.fixture
 def ledger(tmp_path: Path) -> Iterator[StudioJobLedger]:
-    """Authority ledger with a frozen clock, so creation times tie."""
+    """Provide an authority ledger with a frozen clock so creation times tie."""
     authority = StudioJobLedger(
         root=tmp_path / "authority", supervisor="storage:1:1", clock=Clock()
     )
@@ -252,3 +252,75 @@ def test_the_handler_reads_its_own_first_frame_and_refuses_no_workspace(
         assert [str(failure) for failure in failures] == (
             [] if workspace else ["storage workspace must be nonempty"]
         )
+
+
+def test_graph_pages_and_cursors_keep_workspace_actor_and_operation_custody(
+    ledger: StudioJobLedger,
+) -> None:
+    """Real query pages never use another actor or scientific family as a cursor."""
+    alice = StorageRequester(principal_id="alice", roles=("studio.admin",))
+    rows: list[tuple[str, str, str, dict[str, object]]] = [
+        ("alice", "default", "analysis", {"graph_operation": "simulate"}),
+        ("bob", "default", "analysis", {"graph_operation": "simulate"}),
+        ("alice", "default", "analysis", {"candidate_operation": "simulate"}),
+        ("alice", "default", "analysis", {"graph_operation": "simulate"}),
+        ("alice", "elsewhere", "analysis", {"graph_operation": "simulate"}),
+        ("alice", "default", "compiler", {"graph_operation": "simulate"}),
+        ("alice", "default", "analysis", {"laboratory_task": "fit"}),
+        ("alice", "default", "analysis", {"graph_operation": "simulate"}),
+        ("alice", "default", "analysis", {}),
+    ]
+    ids = [f"sj_{0xFFFF - index:016x}" for index in range(len(rows))]
+    for job_id, (actor, workspace, kind, admission) in zip(ids, rows, strict=True):
+        ledger.create(
+            job_id=job_id,
+            kind=kind,
+            actor=actor,
+            workspace=workspace,
+            request_id=None,
+            idempotency_key=None,
+            experiment_sha256=None,
+            admission=admission,
+            execution_model="process",
+        )
+    ledger.transition(ids[0], "running")
+    ledger.transition(ids[0], "completed", result={"must_stay_out_of_history": [1, 2, 3]})
+    authority = Authority(ledger)
+    try:
+        reader = _reader(authority)
+        expected_ids = [ids[0], ids[3], ids[7]]
+        records = reader.records(alice, graph_only=True)
+        assert [record.job_id for record in records] == expected_ids
+        assert all(record.result is None for record in records)
+        assert ledger.record(ids[0]).result is not None
+        with pytest.raises(ValueError, match="only one scientific job family"):
+            reader.records(alice, candidate_only=True, graph_only=True)
+        assert [record.job_id for record in reader.records(alice, candidate_only=True)] == [ids[2]]
+        received: list[str] = []
+        after = None
+        while True:
+            page = exchange_query(
+                authority.connect(),
+                query_request("default", "graph_records", requester=alice, limit=1, after=after),
+                expected_service_uid=os.getuid(),
+                max_bytes=FRAME,
+                deadline=time.monotonic() + 10,
+            )
+            received.extend(str(item["job_id"]) for item in page.items)
+            after = page.next_after
+            if after is None:
+                break
+            assert after == received[-1]
+        assert received == expected_ids
+        for foreign_id in [ids[index] for index in (1, 2, 4, 5, 6, 8)]:
+            with pytest.raises(ValueError, match="cursor"):
+                exchange_query(
+                    authority.connect(),
+                    query_request("default", "graph_records", requester=alice, after=foreign_id),
+                    expected_service_uid=os.getuid(),
+                    max_bytes=FRAME,
+                    deadline=time.monotonic() + 10,
+                )
+        assert len(reader.records(alice)) == 8
+    finally:
+        authority.join()

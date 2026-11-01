@@ -8,6 +8,7 @@
 import { readModelParameters, type ModelParameters } from "./modelInputs";
 import { readSimulationSeed, type SimulationSeedInput } from "./simulationSeed";
 import { readEquationIrConfiguration, type EquationIrConfiguration } from "./equationIrConfig";
+import { saveStudioGraphWorkspace, restoreStudioGraphWorkspace, type StudioGraphWorkspaceInput, type StudioGraphWorkspaceRestoreState } from "./studioGraphWorkspace";
 
 /**
  * Turning the store into a saved workspace, and a saved workspace back.
@@ -62,7 +63,7 @@ export interface StudioCandidateDraft {
 }
 
 /** Everything the store contributes to a snapshot. */
-export interface StudioProjectSnapshotInput {
+export interface StudioProjectSnapshotInput extends StudioGraphWorkspaceInput {
   sourceMode: StudioSimulationSourceMode;
   equations: string[];
   threshold: string;
@@ -141,6 +142,7 @@ export interface StudioProjectFailureStatePatch {
  */
 export function studioProjectSaveState(input: StudioProjectSnapshotInput): StudioProjectStateSnapshot {
   return {
+    ...saveStudioGraphWorkspace(input),
     sourceMode: input.sourceMode,
     equations: input.equations,
     threshold: input.threshold,
@@ -157,8 +159,8 @@ export function studioProjectSaveState(input: StudioProjectSnapshotInput): Studi
     frequencyHz: input.frequencyHz,
     seed: input.seed,
     trial: input.trial,
-    graphPopulations: input.graphPopulations,
-    graphProjections: input.graphProjections,
+    graphPopulations: structuredClone(input.graphPopulations),
+    graphProjections: structuredClone(input.graphProjections),
     synthTarget: input.synthTarget,
     trainingConfig: input.trainingConfig,
     candidates: input.candidates,
@@ -291,8 +293,8 @@ export function studioProjectDeletedListedState(
  */
 export function studioProjectRestoreState(
   projectState: StudioProjectStateSnapshot,
-): StudioProjectStateSnapshot {
-  return studioProjectSaveState(projectState);
+): StudioProjectStateSnapshot & StudioGraphWorkspaceRestoreState {
+  return { ...studioProjectSaveState(projectState), ...restoreStudioGraphWorkspace(projectState) };
 }
 
 /**
@@ -348,8 +350,7 @@ export function studioProjectStateFromLoadResponse(
     frequencyHz: simulationFrequencyValue(state.frequencyHz),
     seed: readSimulationSeed(state.seed),
     trial: simulationTrialValue(state.trial),
-    graphPopulations: populationArrayValue(state.graphPopulations),
-    graphProjections: projectionArrayValue(state.graphProjections),
+    ...restoreStudioGraphWorkspace(state),
     synthTarget: stringValue(state.synthTarget, "ice40"),
     trainingConfig: trainingConfigValue(state.trainingConfig, fallbackTrainingConfig),
     candidates: candidateDraftsValue(state.candidates),
@@ -511,36 +512,6 @@ function numberArrayValue(value: unknown, fallback: number[]): number[] {
     numbers.push(item);
   }
   return numbers;
-}
-
-/**
- * Read the stored populations, dropping any that are not shaped like one.
- *
- * @param value - The stored value.
- * @returns The populations.
- */
-function populationArrayValue(value: unknown): PopulationNode[] {
-  return Array.isArray(value) ? value.filter(isRecord) as unknown as PopulationNode[] : [];
-}
-
-/**
- * Read the stored projections, dropping any that are not shaped like one.
- *
- * @param value - The stored value.
- * @returns The projections.
- */
-function projectionArrayValue(value: unknown): ProjectionEdge[] {
-  return Array.isArray(value) ? value.filter(isRecord) as unknown as ProjectionEdge[] : [];
-}
-
-/**
- * Whether a value is a plain object, as against an array or `null`.
- *
- * @param value - The value.
- * @returns Whether it is a record.
- */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**

@@ -259,6 +259,27 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     (
         "POST",
+        "/api/graph/jobs/validate",
+        RouteVisibility.AUTHENTICATED,
+        "studio.graph.job_validate",
+    ),
+    ("POST", "/api/graph/jobs", RouteVisibility.AUTHENTICATED, "studio.graph.job_submit"),
+    ("GET", "/api/graph/jobs", RouteVisibility.AUTHENTICATED, "studio.graph.job_history"),
+    ("GET", "/api/graph/jobs/{job_id}", RouteVisibility.AUTHENTICATED, "studio.graph.job_status"),
+    (
+        "POST",
+        "/api/graph/jobs/{job_id}/cancel",
+        RouteVisibility.AUTHENTICATED,
+        "studio.graph.job_cancel",
+    ),
+    (
+        "GET",
+        "/api/graph/jobs/{job_id}/result",
+        RouteVisibility.AUTHENTICATED,
+        "studio.graph.job_result",
+    ),
+    (
+        "POST",
         "/api/graph/notebook",
         RouteVisibility.AUTHENTICATED,
         "studio.graph.notebook",

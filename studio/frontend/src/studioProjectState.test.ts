@@ -64,6 +64,8 @@ function snapshot(): StudioProjectStateSnapshot {
     frequencyHz: 37,
     seed: 424242,
     trial: "replay",
+    graphWorkspaceId: "01234567-89ab-4def-8123-0123456789ab",
+    graphJobRecovery: null,
     graphPopulations: [{
       id: "p1",
       type: "population",
@@ -108,7 +110,7 @@ describe("Studio project state helpers", () => {
         const restored = studioProjectStateFromLoadResponse({ state: saved }, fallbackTrainingConfig);
         expect(saved).toMatchObject({ frequencyHz: 37, seed, trial });
         expect(studioExperimentKey(restored)).toBe(studioExperimentKey(original));
-        expect(studioProjectRestoreState(restored)).toEqual(saved);
+        expect(studioProjectSaveState(studioProjectRestoreState(restored))).toEqual(saved);
       }
     }
   });
@@ -199,8 +201,6 @@ describe("Studio project state helpers", () => {
         dt: 0,
         duration: -100,
         current: 0,
-        graphPopulations: [{ id: "p1" }, null],
-        graphProjections: "bad",
         trainingConfig: {
           epochs: Number.POSITIVE_INFINITY,
           hidden: [64, "bad"],
@@ -216,7 +216,7 @@ describe("Studio project state helpers", () => {
     expect(restored.dt).toBe(0.1);
     expect(restored.duration).toBe(100);
     expect(restored.current).toBe(0);
-    expect(restored.graphPopulations).toEqual([{ id: "p1" }]);
+    expect(restored.graphPopulations).toEqual([]);
     expect(restored.graphProjections).toEqual([]);
     expect(restored.trainingConfig).toEqual({
       ...fallbackTrainingConfig,
@@ -244,6 +244,14 @@ describe("Studio project state helpers", () => {
       trainingConfig: fallbackTrainingConfig,
       candidates: [],
     });
+  });
+
+  it.each([{ graphPopulations: [{ id: "p1" }, null] }, { graphProjections: "bad" },
+    { graphPopulations: null }, { graphProjections: null }])("refuses unreadable explicit graph input instead of dropping scientific fields: %j", (patch) => {
+    const state = { ...snapshot(), ...patch };
+    const before = structuredClone(state);
+    expect(() => studioProjectStateFromLoadResponse({ state }, fallbackTrainingConfig)).toThrow("Saved graph input is unreadable");
+    expect(state).toEqual(before);
   });
 
   it("restores the fallback architecture when a saved hidden-layer field is not a list", () => {
@@ -291,7 +299,10 @@ describe("Studio project state helpers", () => {
       projectSaveResult: saved,
     });
     expect(studioProjectListLoadedState(summaries)).toEqual({ serverProjects: summaries });
-    expect(studioProjectRestoreState(snapshot())).toEqual(snapshot());
+    const reopened = studioProjectRestoreState(snapshot());
+    expect(studioProjectSaveState(reopened)).toEqual(snapshot());
+    expect(reopened.graphSimResult).toBeNull();
+    expect(reopened.graphContextToken).not.toBe(studioProjectRestoreState(snapshot()).graphContextToken);
     expect(studioProjectFailureState(new Error("storage offline"), "fallback")).toEqual({
       error: "storage offline",
     });

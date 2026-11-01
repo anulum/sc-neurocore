@@ -26,7 +26,7 @@ from pydantic import JsonValue
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.jobs_ledger_writes import transition_job
-from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
+from sc_neurocore.studio.platform.jobs_models import StudioJobRecord, StudioJobRejected
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.policy_models import Principal
 from sc_neurocore.studio.platform.policy_routes import build_default_studio_route_policy_registry
@@ -45,6 +45,27 @@ from sc_neurocore.studio.platform.storage_peer import (
 from sc_neurocore.studio.platform.storage_view_content import send_view_content, view_content_limit
 
 
+def _requester_owns_cancelled_job(current: StudioJobRecord, request: StorageCancelRequest) -> bool:
+    """Keep scientific job families and their cancellation routes actor-bound."""
+    candidate = current.kind == "analysis" and current.admission.get("candidate_operation") in (
+        "simulate",
+        "review",
+    )
+    graph = current.kind == "analysis" and current.admission.get("graph_operation") == "simulate"
+    laboratory = current.admission.get("laboratory_task") in {"fit", "fit_replay", "cohort"}
+    route_matches = {
+        "/api/candidates/jobs/{job_id}/cancel": candidate,
+        "/api/graph/jobs/{job_id}/cancel": graph,
+        "/api/fits/jobs/{job_id}/cancel": laboratory,
+    }
+    route = request.authorized_route
+    if route is not None and route in route_matches and not route_matches[route]:
+        return False
+    return not (candidate or graph or laboratory) or (
+        request.requester is not None and current.owner == request.requester.principal_id
+    )
+
+
 def apply_cancel(
     ledger: StudioJobLedger, request: StorageCancelRequest, *, allowed: bool
 ) -> StorageCancelResponse:
@@ -57,31 +78,7 @@ def apply_cancel(
         except KeyError:
             status = "not_found"
         else:
-            candidate = current.kind == "analysis" and current.admission.get(
-                "candidate_operation"
-            ) in ("simulate", "review")
-            candidate_route = request.authorized_route == "/api/candidates/jobs/{job_id}/cancel"
-            if (candidate or candidate_route) and (
-                not candidate
-                or request.requester is None
-                or current.owner != request.requester.principal_id
-            ):
-                return StorageCancelResponse(
-                    schema_version=CANCEL_SCHEMA_VERSION,
-                    operation="cancel",
-                    request_id=request.request_id,
-                    job_id=request.job_id,
-                    status="not_found",
-                    record=None,
-                )
-            if (
-                request.authorized_route == "/api/fits/jobs/{job_id}/cancel"
-                or current.admission.get("laboratory_task") in {"fit", "fit_replay", "cohort"}
-            ) and (
-                request.requester is None
-                or current.owner != request.requester.principal_id
-                or current.admission.get("laboratory_task") not in {"fit", "fit_replay", "cohort"}
-            ):
+            if not _requester_owns_cancelled_job(current, request):
                 return StorageCancelResponse(
                     schema_version=CANCEL_SCHEMA_VERSION,
                     operation="cancel",

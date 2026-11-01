@@ -86,6 +86,11 @@ class IsolatedJobManager:
     def _deadline(self) -> float:
         return time.monotonic() + self._runtime.transfer_timeout_seconds
 
+    @property
+    def max_seed_file_bytes(self) -> int:
+        """Bound one seed by both the authority ingress and actual worker read ceilings."""
+        return min(self._configuration.max_seed_bytes, self._runtime.max_artifact_bytes)
+
     def submit_process_task(
         self,
         *,
@@ -166,6 +171,14 @@ class IsolatedJobManager:
                     "/api/candidates/jobs/{job_id}/cancel",
                     "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}",
                 }
+                else "/api/graph/jobs/{job_id}"
+                if _delegation().route
+                in {
+                    "/api/graph/jobs",
+                    "/api/graph/jobs/{job_id}",
+                    "/api/graph/jobs/{job_id}/cancel",
+                    "/api/graph/jobs/{job_id}/result",
+                }
                 else None
             ),
         )
@@ -203,7 +216,9 @@ class IsolatedJobManager:
     ) -> tuple[StudioJobRecord, ...]:
         """Return the workspace's records in creation order, scoped when asked."""
         records = self._reader.records(
-            _delegation().requester, candidate_only=_delegation().route == "/api/candidates/jobs"
+            _delegation().requester,
+            candidate_only=_delegation().route == "/api/candidates/jobs",
+            graph_only=_delegation().route == "/api/graph/jobs",
         )
         return tuple(
             record
@@ -250,6 +265,7 @@ class IsolatedJobManager:
         """
         signal_worker = self._threads.is_service_task(job_id) and _delegation().route not in {
             "/api/candidates/jobs/{job_id}/cancel",
+            "/api/graph/jobs/{job_id}/cancel",
             "/api/fits/jobs/{job_id}/cancel",
             "/api/studio/jobs/{job_id}/cancel",
         }
@@ -267,6 +283,8 @@ class IsolatedJobManager:
                         if _delegation().route == "/api/studio/jobs/{job_id}/cancel"
                         else "/api/candidates/jobs/{job_id}/cancel"
                         if _delegation().route == "/api/candidates/jobs/{job_id}/cancel"
+                        else "/api/graph/jobs/{job_id}/cancel"
+                        if _delegation().route == "/api/graph/jobs/{job_id}/cancel"
                         else None
                     ),
                 ),

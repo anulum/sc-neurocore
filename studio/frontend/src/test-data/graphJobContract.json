@@ -1,0 +1,214 @@
+{
+  "admission": {
+    "execution_mode": "async_job",
+    "graph_sha256": "fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4",
+    "job": {
+      "admission": {
+        "graph_operation": "simulate",
+        "graph_sha256": "fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4",
+        "projected_neuron_steps": 800,
+        "request_sha256": "e6f9332d2e3088e5f2a2bff4c42bd404b62815390a5dbb6263ed7d1c805ae39b"
+      },
+      "artifacts": [],
+      "created_at_utc": "2026-11-01T04:57:18Z",
+      "error": null,
+      "execution_model": "process",
+      "experiment_sha256": "449ed57adef3687131db2cc590bb6df22d340d9824246f88131d927f9705708a",
+      "finished_at_utc": null,
+      "heartbeat_at_utc": "2026-11-01T04:57:18Z",
+      "idempotency_key": "typed-graph-contract",
+      "job_id": "sj_4fcdacc56d8cca63",
+      "kind": "analysis",
+      "lease_expires_at_utc": "2026-11-01T04:58:18Z",
+      "lease_owner": "aaarthuus:860329:273636391",
+      "owner": "alice",
+      "request_id": "a505d934-ab22-4a07-9d14-09f2f80cbd96",
+      "result": null,
+      "started_at_utc": null,
+      "status": "pending",
+      "training_config": null,
+      "workspace": "default"
+    },
+    "job_id": "sj_4fcdacc56d8cca63",
+    "projected_neuron_steps": 800,
+    "request_sha256": "e6f9332d2e3088e5f2a2bff4c42bd404b62815390a5dbb6263ed7d1c805ae39b",
+    "schema_version": "studio.graph.job.v1",
+    "status_route": "/api/graph/jobs/sj_4fcdacc56d8cca63"
+  },
+  "artifact_text": "{\"contract\":{\"applicability\":[\"populations of catalogue models with a float drive and no seed field\",\"public Network Python loop with previous-step spike propagation\",\"dt 0.1 ms shared by every population\"],\"definition\":\"Per population, every spike event (step, neuron) recorded by a public SpikeMonitor; mean_rate_hz = spikes / (count \\u00d7 effective duration); binned rate_hz = spikes in bin / (count \\u00d7 bin duration)\",\"domain\":\"complete\",\"domain_detail\":{},\"kind\":\"network-population-activity\",\"limitations\":[\"binned rates cover only whole bins; the remainder of the run is counted in mean_rate_hz and events only\",\"membrane traces are not recorded; spikes and final finiteness only\"],\"schema_version\":\"studio.metric-contract.v1\",\"units\":{\"drive.current\":\"model-defined\",\"events.step\":\"step index (time = step \\u00d7 dt ms)\",\"mean_rate_hz\":\"Hz per neuron\",\"rate.rate_hz\":\"Hz per neuron\",\"rate.time_ms\":\"ms (bin start)\",\"spike_times\":\"ms\",\"weight\":\"model-defined\"}},\"dt\":0.1,\"duration\":20.0,\"execution\":{\"autapses\":\"removed on self-projections unless the projection declares autapses\",\"backend\":{\"rejected\":[{\"name\":\"rust-network-runner\",\"reason\":\"constructs populations with default model parameters, carries no stimuli and reads only the maximum delay; it cannot preserve this graph\"}],\"selected\":\"python\"},\"delay_semantics\":\"a spike at step t reaches its targets at step t + 1 + delay_steps; delay 0 means the inherent one-step latency only\",\"loop\":\"public Network._run_python\",\"network_dt_s\":0.0001,\"population_construction\":\"model class with the validated constructor keywords\",\"projection_latency_steps\":1,\"runtime\":{\"numpy\":\"2.5.4\",\"package_version\":\"4.0.0\",\"python\":\"3.12.16\"},\"state_check\":\"final membrane voltages must be finite; no per-step state trace\",\"step_order\":\"stimuli into currents; projections propagate the previous step's spikes (delay buffers in whole steps); every population steps once; monitors record\",\"synapse_semantics\":\"each source spike injects the synaptic weight as drive into the target for exactly one step; the membrane increment per spike is model-defined\"},\"graph_summary\":{\"n_excitatory\":3,\"n_inhibitory\":1,\"n_neurons\":4,\"n_populations\":3,\"n_projections\":2,\"n_synapses\":3},\"n_spikes\":4,\"n_steps\":200,\"n_total\":4,\"populations\":[{\"count\":2,\"events\":{\"neuron\":[0,1,0,1],\"step\":[69,69,139,139]},\"id\":\"e\",\"label\":\"e\",\"mean_rate_hz\":100.0,\"model\":\"SCLapicqueLIFNeuron\",\"n_spikes\":4,\"neuron_type\":\"excitatory\",\"offset\":0,\"rate\":{\"bin_ms\":0.2,\"bin_steps\":2,\"covered_steps\":200,\"rate_hz\":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,5000.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,5000.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],\"time_ms\":[0.0,0.2,0.4,0.6000000000000001,0.8,1.0,1.2000000000000002,1.4000000000000001,1.6,1.8,2.0,2.2,2.4000000000000004,2.6,2.8000000000000003,3.0,3.2,3.4000000000000004,3.6,3.8000000000000003,4.0,4.2,4.4,4.6000000000000005,4.800000000000001,5.0,5.2,5.4,5.6000000000000005,5.800000000000001,6.0,6.2,6.4,6.6000000000000005,6.800000000000001,7.0,7.2,7.4,7.6000000000000005,7.800000000000001,8.0,8.200000000000001,8.4,8.6,8.8,9.0,9.200000000000001,9.4,9.600000000000001,9.8,10.0,10.200000000000001,10.4,10.600000000000001,10.8,11.0,11.200000000000001,11.4,11.600000000000001,11.8,12.0,12.200000000000001,12.4,12.600000000000001,12.8,13.0,13.200000000000001,13.4,13.600000000000001,13.8,14.0,14.200000000000001,14.4,14.600000000000001,14.8,15.0,15.200000000000001,15.4,15.600000000000001,15.8,16.0,16.2,16.400000000000002,16.6,16.8,17.0,17.2,17.400000000000002,17.6,17.8,18.0,18.2,18.400000000000002,18.6,18.8,19.0,19.200000000000003,19.400000000000002,19.6,19.8]}},{\"count\":1,\"events\":{\"neuron\":[],\"step\":[]},\"id\":\"i\",\"label\":\"i\",\"mean_rate_hz\":0.0,\"model\":\"SCLapicqueLIFNeuron\",\"n_spikes\":0,\"neuron_type\":\"inhibitory\",\"offset\":2,\"rate\":{\"bin_ms\":0.2,\"bin_steps\":2,\"covered_steps\":200,\"rate_hz\":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],\"time_ms\":[0.0,0.2,0.4,0.6000000000000001,0.8,1.0,1.2000000000000002,1.4000000000000001,1.6,1.8,2.0,2.2,2.4000000000000004,2.6,2.8000000000000003,3.0,3.2,3.4000000000000004,3.6,3.8000000000000003,4.0,4.2,4.4,4.6000000000000005,4.800000000000001,5.0,5.2,5.4,5.6000000000000005,5.800000000000001,6.0,6.2,6.4,6.6000000000000005,6.800000000000001,7.0,7.2,7.4,7.6000000000000005,7.800000000000001,8.0,8.200000000000001,8.4,8.6,8.8,9.0,9.200000000000001,9.4,9.600000000000001,9.8,10.0,10.200000000000001,10.4,10.600000000000001,10.8,11.0,11.200000000000001,11.4,11.600000000000001,11.8,12.0,12.200000000000001,12.4,12.600000000000001,12.8,13.0,13.200000000000001,13.4,13.600000000000001,13.8,14.0,14.200000000000001,14.4,14.600000000000001,14.8,15.0,15.200000000000001,15.4,15.600000000000001,15.8,16.0,16.2,16.400000000000002,16.6,16.8,17.0,17.2,17.400000000000002,17.6,17.8,18.0,18.2,18.400000000000002,18.6,18.8,19.0,19.200000000000003,19.400000000000002,19.6,19.8]}},{\"count\":1,\"events\":{\"neuron\":[],\"step\":[]},\"id\":\"disconnected\",\"label\":\"disconnected\",\"mean_rate_hz\":0.0,\"model\":\"SCLapicqueLIFNeuron\",\"n_spikes\":0,\"neuron_type\":\"excitatory\",\"offset\":3,\"rate\":{\"bin_ms\":0.2,\"bin_steps\":2,\"covered_steps\":200,\"rate_hz\":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],\"time_ms\":[0.0,0.2,0.4,0.6000000000000001,0.8,1.0,1.2000000000000002,1.4000000000000001,1.6,1.8,2.0,2.2,2.4000000000000004,2.6,2.8000000000000003,3.0,3.2,3.4000000000000004,3.6,3.8000000000000003,4.0,4.2,4.4,4.6000000000000005,4.800000000000001,5.0,5.2,5.4,5.6000000000000005,5.800000000000001,6.0,6.2,6.4,6.6000000000000005,6.800000000000001,7.0,7.2,7.4,7.6000000000000005,7.800000000000001,8.0,8.200000000000001,8.4,8.6,8.8,9.0,9.200000000000001,9.4,9.600000000000001,9.8,10.0,10.200000000000001,10.4,10.600000000000001,10.8,11.0,11.200000000000001,11.4,11.600000000000001,11.8,12.0,12.200000000000001,12.4,12.600000000000001,12.8,13.0,13.200000000000001,13.4,13.600000000000001,13.8,14.0,14.200000000000001,14.4,14.600000000000001,14.8,15.0,15.200000000000001,15.4,15.600000000000001,15.8,16.0,16.2,16.400000000000002,16.6,16.8,17.0,17.2,17.400000000000002,17.6,17.8,18.0,18.2,18.400000000000002,18.6,18.8,19.0,19.200000000000003,19.400000000000002,19.6,19.8]}}],\"schema_version\":\"studio.network-graph-result.v1\",\"spec\":{\"dt\":0.1,\"duration_effective_ms\":20.0,\"duration_requested_ms\":20.0,\"execution_mode\":\"async_job\",\"graph_sha256\":\"fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4\",\"limits\":{\"max_neuron_steps\":2000000,\"max_neurons\":2000,\"max_steps\":2000000},\"n_neurons\":4,\"n_steps\":200,\"neuron_steps\":800,\"populations\":[{\"count\":2,\"drive\":{\"current\":2.0,\"kind\":\"constant\",\"rate_hz\":null,\"seed\":null,\"seed_source\":\"none\",\"weight\":null},\"dt\":0.1,\"dt_source\":\"override\",\"id\":\"e\",\"label\":\"e\",\"model\":\"SCLapicqueLIFNeuron\",\"neuron_type\":\"excitatory\",\"offset\":0,\"overrides_applied\":[\"tau\"],\"parameters\":{\"dt\":0.1,\"resistance\":1.0,\"tau\":10.0,\"v\":0.0,\"v_reset\":0.0,\"v_rest\":0.0,\"v_threshold\":1.0}},{\"count\":1,\"drive\":{\"current\":null,\"kind\":\"poisson\",\"rate_hz\":100.0,\"seed\":9,\"seed_source\":\"request\",\"weight\":1.0},\"dt\":0.1,\"dt_source\":\"override\",\"id\":\"i\",\"label\":\"i\",\"model\":\"SCLapicqueLIFNeuron\",\"neuron_type\":\"inhibitory\",\"offset\":2,\"overrides_applied\":[\"tau\"],\"parameters\":{\"dt\":0.1,\"resistance\":1.0,\"tau\":15.0,\"v\":0.0,\"v_reset\":0.0,\"v_rest\":0.0,\"v_threshold\":1.0}},{\"count\":1,\"drive\":{\"current\":null,\"kind\":\"none\",\"rate_hz\":null,\"seed\":null,\"seed_source\":\"none\",\"weight\":null},\"dt\":0.1,\"dt_source\":\"override\",\"id\":\"disconnected\",\"label\":\"disconnected\",\"model\":\"SCLapicqueLIFNeuron\",\"neuron_type\":\"excitatory\",\"offset\":3,\"overrides_applied\":[],\"parameters\":{\"dt\":0.1,\"resistance\":1.0,\"tau\":20.0,\"v\":0.0,\"v_reset\":0.0,\"v_rest\":0.0,\"v_threshold\":1.0}}],\"projections\":[{\"autapses\":false,\"delay_ms\":0.2,\"delay_steps\":2,\"id\":\"ei\",\"probability\":0.5,\"rule\":\"random\",\"seed\":123,\"seed_source\":\"request\",\"sign\":\"excitatory\",\"source\":\"e\",\"target\":\"i\",\"weight\":10.0},{\"autapses\":false,\"delay_ms\":0.0,\"delay_steps\":0,\"id\":\"ie\",\"probability\":1.0,\"rule\":\"all_to_all\",\"seed\":500939758,\"seed_source\":\"derived\",\"sign\":\"inhibitory\",\"source\":\"i\",\"target\":\"e\",\"weight\":-8.0}],\"request_schema_version\":\"studio.network-graph.v1\",\"schema_version\":\"studio.network-graph-spec.v1\",\"seed\":42,\"time_unit\":\"ms\"},\"spike_neurons\":[0,1,0,1],\"spike_times\":[6.9,6.9,13.9,13.9],\"success\":true,\"topology\":{\"connectivity_included\":true,\"connectivity_omitted_reason\":null,\"n_synapses\":3,\"projections\":[{\"autapses_removed\":0,\"csr_sha256\":\"524616b09c276a998a308f83c62ee7bd87d61ab3272bf09f457046eea07ae505\",\"delay_mode\":\"uniform\",\"delay_steps\":2,\"id\":\"ei\",\"indices\":[0],\"indptr\":[0,0,1],\"n_synapses\":1,\"rule\":\"random\",\"seed\":123,\"source\":\"e\",\"target\":\"i\",\"weight\":10.0},{\"autapses_removed\":0,\"csr_sha256\":\"62e80d29265745efe398669853c42704c4915e92450b4308b0430f5912944ee3\",\"delay_mode\":\"none\",\"delay_steps\":0,\"id\":\"ie\",\"indices\":[0,1],\"indptr\":[0,2],\"n_synapses\":2,\"rule\":\"all_to_all\",\"seed\":500939758,\"source\":\"i\",\"target\":\"e\",\"weight\":-8.0}]}}",
+  "completed": {
+    "admission": {
+      "graph_operation": "simulate",
+      "graph_sha256": "fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4",
+      "projected_neuron_steps": 800,
+      "request_sha256": "e6f9332d2e3088e5f2a2bff4c42bd404b62815390a5dbb6263ed7d1c805ae39b"
+    },
+    "artifacts": [
+      {
+        "relative_path": "graph/result.json",
+        "sha256": "2f085958bd3b0c947a3ded29c69376924b83deed82964713f2fad69fa12d65e8",
+        "size_bytes": 9866
+      }
+    ],
+    "created_at_utc": "2026-11-01T04:57:18Z",
+    "error": null,
+    "execution_model": "process",
+    "experiment_sha256": "449ed57adef3687131db2cc590bb6df22d340d9824246f88131d927f9705708a",
+    "finished_at_utc": "2026-11-01T04:57:20Z",
+    "heartbeat_at_utc": "2026-11-01T04:57:20Z",
+    "idempotency_key": "typed-graph-contract",
+    "job_id": "sj_4fcdacc56d8cca63",
+    "kind": "analysis",
+    "lease_expires_at_utc": null,
+    "lease_owner": null,
+    "owner": "alice",
+    "request_id": "a505d934-ab22-4a07-9d14-09f2f80cbd96",
+    "result": {
+      "graph_sha256": "fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4",
+      "n_spikes": 4,
+      "n_steps": 200,
+      "n_total": 4,
+      "result_artifact": "graph/result.json",
+      "result_sha256": "2f085958bd3b0c947a3ded29c69376924b83deed82964713f2fad69fa12d65e8",
+      "result_size_bytes": 9866,
+      "schema_version": "studio.graph.job.result.v1"
+    },
+    "started_at_utc": "2026-11-01T04:57:18Z",
+    "status": "completed",
+    "training_config": null,
+    "workspace": "default"
+  },
+  "history": {
+    "jobs": [
+      {
+        "admission": {
+          "graph_operation": "simulate",
+          "graph_sha256": "fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4",
+          "projected_neuron_steps": 800,
+          "request_sha256": "e6f9332d2e3088e5f2a2bff4c42bd404b62815390a5dbb6263ed7d1c805ae39b"
+        },
+        "artifacts": [
+          {
+            "relative_path": "graph/result.json",
+            "sha256": "2f085958bd3b0c947a3ded29c69376924b83deed82964713f2fad69fa12d65e8",
+            "size_bytes": 9866
+          }
+        ],
+        "created_at_utc": "2026-11-01T04:57:18Z",
+        "error": null,
+        "execution_model": "process",
+        "experiment_sha256": "449ed57adef3687131db2cc590bb6df22d340d9824246f88131d927f9705708a",
+        "finished_at_utc": "2026-11-01T04:57:20Z",
+        "heartbeat_at_utc": "2026-11-01T04:57:20Z",
+        "idempotency_key": "typed-graph-contract",
+        "job_id": "sj_4fcdacc56d8cca63",
+        "kind": "analysis",
+        "lease_expires_at_utc": null,
+        "lease_owner": null,
+        "owner": "alice",
+        "request_id": "a505d934-ab22-4a07-9d14-09f2f80cbd96",
+        "result": null,
+        "started_at_utc": "2026-11-01T04:57:18Z",
+        "status": "completed",
+        "training_config": null,
+        "workspace": "default"
+      }
+    ],
+    "schema_version": "studio.graph.jobs.v1"
+  },
+  "request": {
+    "dt": 0.1,
+    "duration": 20.0,
+    "populations": [
+      {
+        "count": 2,
+        "drive": {
+          "current": 2.0,
+          "kind": "constant"
+        },
+        "id": "e",
+        "label": "e",
+        "model": "SCLapicqueLIFNeuron",
+        "neuron_type": "excitatory",
+        "params": {
+          "tau": 10.0
+        },
+        "position": {
+          "x": 0.0,
+          "y": 20.0
+        },
+        "type": "population"
+      },
+      {
+        "count": 1,
+        "drive": {
+          "kind": "poisson",
+          "rate_hz": 100.0,
+          "seed": 9,
+          "weight": 1.0
+        },
+        "id": "i",
+        "label": "i",
+        "model": "SCLapicqueLIFNeuron",
+        "neuron_type": "inhibitory",
+        "params": {
+          "tau": 15.0
+        },
+        "position": {
+          "x": 100.0,
+          "y": 20.0
+        },
+        "type": "population"
+      },
+      {
+        "count": 1,
+        "drive": {
+          "kind": "none"
+        },
+        "id": "disconnected",
+        "label": "disconnected",
+        "model": "SCLapicqueLIFNeuron",
+        "neuron_type": "excitatory",
+        "params": {},
+        "position": {
+          "x": 200.0,
+          "y": 20.0
+        },
+        "type": "population"
+      }
+    ],
+    "projections": [
+      {
+        "delay": 0.2,
+        "id": "ei",
+        "probability": 0.5,
+        "rule": "random",
+        "seed": 123,
+        "source": "e",
+        "target": "i",
+        "weight": 10.0
+      },
+      {
+        "delay": 0.0,
+        "id": "ie",
+        "rule": "all_to_all",
+        "source": "i",
+        "target": "e",
+        "weight": -8.0
+      }
+    ],
+    "seed": 42
+  },
+  "schema_version": "studio.graph.http-contract-fixture.v1",
+  "validation": {
+    "execution_mode": "async_job",
+    "graph_sha256": "fedb88dc040c0b8c3baab282c8034506c0495ac9e7bba7cc6664425bfbc323e4",
+    "n_neurons": 4,
+    "n_steps": 200,
+    "projected_neuron_steps": 800,
+    "request_seal_sha256": "16799f48b6b736164a3f6974f77fce8069773767e848982369696923ad7891d2",
+    "request_sha256": "e6f9332d2e3088e5f2a2bff4c42bd404b62815390a5dbb6263ed7d1c805ae39b",
+    "schema_version": "studio.graph.job.validation.v1",
+    "submission_sha256": "449ed57adef3687131db2cc590bb6df22d340d9824246f88131d927f9705708a"
+  }
+}

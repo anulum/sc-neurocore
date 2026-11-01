@@ -11,12 +11,14 @@ import { at } from "../arrayAt";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PopulationNode, ProjectionEdge } from "../api/client";
 import type { PipelineEvidenceModel } from "../pipelineEvidence";
 import { useStudioStore } from "../stores/studio";
 import NetworkCanvas, { PipelineEvidenceStrip } from "./NetworkCanvas";
+
+beforeAll(() => { Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true }); });
 
 const evidence: PipelineEvidenceModel = {
   actionKind: "studio.pipeline.run",
@@ -199,7 +201,7 @@ describe("NetworkCanvas projection editor", () => {
 
     await act(async () => { useStudioStore.getState().selectProjection("e1"); });
 
-    expect(container.querySelector("section")?.getAttribute("aria-label")).toBe(
+    expect(container.querySelector('section[aria-label^="Projection "]')?.getAttribute("aria-label")).toBe(
       "Projection Input → Output",
     );
     expect(container.querySelector<HTMLInputElement>("#projection-weight")?.value).toBe("0.5");
@@ -327,7 +329,7 @@ describe("NetworkCanvas population editor", () => {
     });
     await act(async () => { useStudioStore.getState().selectPopulation("p1"); });
 
-    expect(container.querySelector("section")?.getAttribute("aria-label")).toBe(
+    expect(container.querySelector('section[aria-label^="Population "]')?.getAttribute("aria-label")).toBe(
       "Population Input",
     );
     expect(container.querySelector<HTMLInputElement>("#population-count")?.value).toBe("100");

@@ -23,6 +23,7 @@ import pytest
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
 from sc_neurocore.studio.platform.jobs_admission_replay import StorageAdmissionReplay
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.studio.platform.jobs_models import StudioJobConflict
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobSubmission
 from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmission
 from sc_neurocore.studio.platform.storage_admission_protocol import StorageNamedAdmissionRequest
@@ -272,3 +273,54 @@ def test_encoder_refuses_wrong_domain_record_and_frame_budget(
             replay=replay,
             max_bytes=8192,
         )
+
+
+def test_durable_content_conflict_is_correlated_and_has_no_job_or_queue_data(
+    tmp_path: Path,
+) -> None:
+    """A real committed retry conflict survives the codec without accepting corrupt custody."""
+    original_replay = StorageAdmissionReplay("operator", "retry-one", "a" * 64)
+    changed_replay = StorageAdmissionReplay("operator", "retry-one", "b" * 64)
+    ledger = StudioJobLedger(root=tmp_path)
+    try:
+        admission = SharedJobAdmission(ledger, max_concurrent=1, max_queued=0)
+        original = _admit(admission, job_id="sj_0000000000000001", replay=original_replay)
+        with pytest.raises(StudioJobConflict) as captured:
+            _admit(admission, job_id="sj_0000000000000002", replay=changed_replay)
+        request = _request()
+        payload = encode_named_admission_response(
+            request=request, replay=changed_replay, outcome=captured.value, max_bytes=8192
+        )
+        with pytest.raises(StudioJobConflict, match="changed content"):
+            decode_named_admission_response(
+                payload, request=request, replay=changed_replay, max_bytes=8192
+            )
+        response = json.loads(payload)
+        assert response["status"] == "conflict"
+        assert all(response[key] is None for key in ("job_id", "running", "queued", "limit"))
+        for field, value in [
+            ("job_id", original.record.job_id),
+            ("running", 0),
+            ("queued", 0),
+            ("limit", 0),
+        ]:
+            with pytest.raises(ValueError, match="invalid conflicting storage outcome"):
+                decode_named_admission_response(
+                    json.dumps({**response, field: value}).encode(),
+                    request=request,
+                    replay=changed_replay,
+                    max_bytes=8192,
+                )
+        for field in ("request_id", "mutation_id", "workspace", "task_name", "payload_sha256"):
+            value = "c" * 64 if field == "payload_sha256" else "other"
+            with pytest.raises(ValueError, match="does not match request"):
+                decode_named_admission_response(
+                    json.dumps({**response, field: value}).encode(),
+                    request=request,
+                    replay=changed_replay,
+                    max_bytes=8192,
+                )
+        assert [record.job_id for record in ledger.list_records()] == [original.record.job_id]
+        assert admission.snapshot().admitted == 1
+    finally:
+        ledger.close()

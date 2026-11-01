@@ -64,6 +64,10 @@ class StudioJobRefused(StudioJobRejected, AuthoredRefusal):
     """A source-authored job policy refusal, compatible with legacy handlers."""
 
 
+class StudioJobConflict(StudioJobRefused):
+    """A durable retry identity was already bound to different job content."""
+
+
 class StudioJobCancelled(RuntimeError):
     """Raised inside a cooperative Studio job when cancellation is requested."""
 

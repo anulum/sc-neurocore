@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Run network-canvas simulations as durable supervised process jobs, with graph-bound
+  submission, history, cancellation and result downloads that survive reconnects and
+  API restarts. Preserve the existing synchronous simulation limits and numerical results.
+- Save graph job recovery with workspaces and named sessions; retain the current
+  canvas and undo history when opening legacy sessions without a graph. Clear
+  account-owned recovery and results when the signed-in account changes.
+- Refuse unavailable graph job artifacts without exposing internal exception text;
+  retain the original graph and result identity through delayed replies and failed exports.
+
 - Refresh the compatible Python, frontend, Julia and Mojo dependency locks,
   including CPU-only Torch 2.15.0, Mypy 2.4.1 and Node 26.13.0. Retain Rust
   1.98.1 and Mojo 1.0.0 while their recorded migration constraints remain.

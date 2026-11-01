@@ -62,24 +62,35 @@ async function waitReady(origin: string): Promise<void> {
  * The kernel chooses a free loopback port. Every caller must settle its jobs
  * and call stop; an outer test deadline additionally owns the process group.
  *
+ * @param browserPassword - Optional ephemeral password for two actual test accounts.
  * @returns The ready origin and its deterministic cleanup action.
  */
-export async function startCandidateTestServer(): Promise<CandidateTestServer> {
+export async function startCandidateTestServer(browserPassword?: string): Promise<CandidateTestServer> {
   const repo = resolve(import.meta.dirname, "../../..");
   const root = await mkdtemp(join(tmpdir(), "candidate-ui-"));
   const code = [
     "import json, socket, sys, uvicorn",
+    "from pathlib import Path",
+    "from sc_neurocore.studio.platform.identity import add_studio_browser_user_record",
     "from sc_neurocore.studio.app import create_app",
     "from sc_neurocore.studio.platform.settings import StudioRuntimeSettings",
+    "auth = {}",
+    "if sys.argv[2] == 'users':",
+    "    password=sys.stdin.read(); identities=Path(sys.argv[1])/'identity.json'",
+    "    identities.write_text(json.dumps({'schema_version':'sc-neurocore.studio.identity.v1','service_accounts':[],'browser_users':[]})); identities.chmod(0o600)",
+    "    for user in ('alice', 'bob'): add_studio_browser_user_record(identities, username=user, principal_id=user, roles=['viewer'], password=password)",
+    "    auth=dict(identity_file_path=str(identities), enforce_route_policies=True, allow_header_principal=False)",
     "sock=socket.socket(); sock.bind(('127.0.0.1',0)); sock.listen(128)",
     "origin='http://127.0.0.1:'+str(sock.getsockname()[1])",
     "print(json.dumps({'port':sock.getsockname()[1]}),flush=True)",
-    "uvicorn.run(create_app(StudioRuntimeSettings(job_root_path=sys.argv[1]+'/jobs', audit_log_path=sys.argv[1]+'/audit.jsonl', cors_allowed_origins=(origin,))), fd=sock.fileno(), log_level='warning')",
+    "uvicorn.run(create_app(StudioRuntimeSettings(job_root_path=sys.argv[1]+'/jobs', audit_log_path=sys.argv[1]+'/audit.jsonl', cors_allowed_origins=(origin,), **auth)), fd=sock.fileno(), log_level='warning')",
   ].join("\n");
-  const child = spawn(process.env.SC_NEUROCORE_STUDIO_CANDIDATE_PYTHON ?? "python", ["-u", "-c", code, root], {
-    cwd: repo, env: { ...process.env, PYTHONPATH: `${repo}/src:${repo}/bridge:${repo}` },
-    stdio: ["ignore", "pipe", "pipe"],
+  const child = spawn(process.env.SC_NEUROCORE_STUDIO_CANDIDATE_PYTHON ?? "python", ["-u", "-c", code, root, browserPassword === undefined ? "local" : "users"], {
+    cwd: repo, env: { ...process.env, PYTHONPATH: `${repo}/src:${repo}/bridge:${repo}`,
+      SC_NEUROCORE_STUDIO_PROJECT_ROOT: join(root, "projects"), PYTHONDONTWRITEBYTECODE: "1" },
+    stdio: ["pipe", "pipe", "pipe"],
   });
+  child.stdin.end(browserPassword ?? "");
   let stderr = "";
   child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
   try {

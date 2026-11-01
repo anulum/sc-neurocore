@@ -11,6 +11,7 @@ import { emptyGraphHistory } from "../studioGraphHistory";
 import type { StudioStateData } from "./studioTypes";
 import { readStoredStudioSessions } from "../studioSavedSessions";
 import { defaultEquationIrConfiguration } from "../equationIrConfig";
+import { initialGraphWorkspaceId } from "../graphJobRecovery";
 
 /**
  * What every Studio field holds before anything has happened.
@@ -65,6 +66,7 @@ export const studioInitialData = {
   candidates: [],
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [], graphIssues: [], selectedProjectionId: null, selectedPopulationId: null, selectedPopulationIds: [],
   graphNotice: null,
+  graphWorkspaceId: initialGraphWorkspaceId(), graphContextToken: { restored: false }, graphJobRecovery: null,
   populationModelContract: null,
   graphHistory: emptyGraphHistory(),
   projectSaveResult: null, projectRevision: null, serverProjects: [],

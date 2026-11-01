@@ -108,6 +108,14 @@ def _answer(
     if allowed:
         try:
             record = ledger.record(request.job_id, workspace=request.workspace)
+            if request.route == "/api/graph/jobs/{job_id}/result" and (
+                request.requester is None
+                or record.owner != request.requester.principal_id
+                or record.kind != "analysis"
+                or record.admission.get("graph_operation") != "simulate"
+                or request.relative_path != "graph/result.json"
+            ):
+                raise KeyError(request.job_id)
             if request.route == "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}" and (
                 request.requester is None
                 or record.owner != request.requester.principal_id

@@ -25,6 +25,7 @@ from tests.studio_seccomp_support import run_child
 
 
 _NAMED_ROUTES = {
+    "graph.run": "/api/graph/jobs",
     "candidate.simulate": "/api/candidates/simulate",
     "candidate.review": "/api/candidates/review-packet",
     "host.analysis": "/api/studio/host-jobs",
@@ -53,7 +54,7 @@ def test_named_process_tasks_require_actual_nonpublic_post_policies() -> None:
     """All observed process submissions have an exact protected policy route."""
     policies = build_default_studio_route_policy_registry()
     source_root = Path(__file__).resolve().parents[1] / "src"
-    assert len(_NAMED_ROUTES) == 21
+    assert len(_NAMED_ROUTES) == 22
     for name, route in _NAMED_ROUTES.items():
         task = resolve_named_studio_task(name, authorized_route=route)
         assert task.name == name
@@ -196,3 +197,31 @@ def test_candidate_registration_requires_matching_operation_and_both_input_diges
     service = resolve_named_studio_task("model.scan", authorized_route="/api/models/scan/jobs")
     assert service.owner_for(None) == service.owner
     service.validate_admission(authorized_route=service.routes[0], payload={}, admission=None)
+
+
+def test_graph_registration_binds_requester_operation_and_exact_input_digests() -> None:
+    """The public named graph contract rejects altered custody before any allocation."""
+    route = "/api/graph/jobs"
+    task = resolve_named_studio_task("graph.run", authorized_route=route)
+    payload: dict[str, object] = {"graph_sha256": "a" * 64, "request_sha256": "b" * 64}
+    admission: dict[str, object] = {**payload, "graph_operation": "simulate"}
+    assert task.owner_for("alice") == "alice"
+    task.validate_admission(authorized_route=route, payload=payload, admission=admission)
+    invalid: list[tuple[dict[str, object], dict[str, object] | None]] = [
+        ({}, admission),
+        ({**payload, "request_sha256": 3}, admission),
+        ({**payload, "request_sha256": "not-a-digest"}, admission),
+        (payload, None),
+        (payload, {**admission, "graph_operation": "review"}),
+        (payload, {**admission, "request_sha256": "c" * 64}),
+        (payload, {**admission, "graph_sha256": "c" * 64}),
+    ]
+    for changed_payload, changed_admission in invalid:
+        with pytest.raises(ValueError, match="graph operation and digests") as caught:
+            task.validate_admission(
+                authorized_route=route, payload=changed_payload, admission=changed_admission
+            )
+        assert isinstance(caught.value, AuthoredRefusal)
+    for other_route in ("/api/analysis/jobs", "/api/candidates/simulate"):
+        with pytest.raises(ValueError, match="not available"):
+            resolve_named_studio_task("graph.run", authorized_route=other_route)

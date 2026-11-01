@@ -12,6 +12,8 @@ import type { EquationIRResult } from "../api/equationIrTypes";
 // Studio store state shape and view-mode types.
 
 import type { StudioGraphHistory } from "../studioGraphHistory";
+import type { GraphJobRecovery } from "../graphJobRecovery";
+import type { StudioGraphWorkspaceContext } from "../studioGraphWorkspace";
 import type { StudioGraphIssueLocation } from "../studioGraphValidation";
 import type {
   StudioTrialMode,
@@ -177,6 +179,12 @@ export interface StudioState {
   graphProjections: ProjectionEdge[];
   graphModels: string[];
   graphSimResult: GraphSimResult | null;
+  /** Stable graph workspace identity, retained in named sessions and server projects. */
+  graphWorkspaceId: string;
+  /** New object on every workspace restore, including an identical graph. Never persisted. */
+  graphContextToken: StudioGraphWorkspaceContext;
+  /** Only exact retry input and a selected job pointer; completed result bytes are reverified. */
+  graphJobRecovery: GraphJobRecovery | null;
   progressPct: number;
   progressMsg: string;
   graphErrors: string[];

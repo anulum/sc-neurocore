@@ -60,7 +60,7 @@ it.each(cases.slice(1))("%s drops stale bundle success and failure", async (surf
     useStudioStore.getState().setSourceMode(useStudioStore.getState().sourceMode === "model" ? "ode" : "model");
     io.finish(fail); await run;
     expect(useStudioStore.getState()[field]).toBeNull();
-    expect(useStudioStore.getState()[errorField]).toBeNull();
+    expect(useStudioStore.getState()[errorField]).toContain("workspace changed during export");
   }
 });
 
@@ -137,4 +137,17 @@ it("does not count an administrative bundle as experiment export", async () => {
   expect(studioGuidedFlowInputs(useStudioStore.getState(), {
     trainingSkipped: false, evidenceExportSatisfied: false,
   }).evidenceExported).toBe(false);
+});
+
+it("reports native fetch's non-Error abort reason through the public export action", async () => {
+  const nativeFetch = globalThis.fetch;
+  const controller = new AbortController();
+  const reason = { cause: "export aborted", toString: () => "Export transport aborted" };
+  controller.abort(reason);
+  await expect(nativeFetch("http://127.0.0.1", { signal: controller.signal })).rejects.toEqual(reason);
+  vi.stubGlobal("fetch", (input: string, init?: RequestInit): Promise<Response> =>
+    nativeFetch(new URL(input, "http://127.0.0.1"), { ...init, signal: controller.signal }));
+  await useStudioStore.getState().createEvidenceBundleForSurface("project", request);
+  expect(useStudioStore.getState().projectEvidenceBundleError).toBe(String(reason));
+  expect(useStudioStore.getState().projectEvidenceBundleLoading).toBe(false);
 });

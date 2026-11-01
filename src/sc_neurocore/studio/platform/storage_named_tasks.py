@@ -63,6 +63,19 @@ class NamedStudioTask:
         Both the isolated API facade and authority apply this registered
         contract. Existing service-task payload contracts remain unchanged.
         """
+        if self.name == "graph.run":
+            if (
+                set(payload) != {"graph_sha256", "request_sha256"}
+                or not all(
+                    isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+                    for value in payload.values()
+                )
+                or not isinstance(admission, Mapping)
+                or admission.get("graph_operation") != "simulate"
+                or any(admission.get(key) != value for key, value in payload.items())
+            ):
+                raise StudioJobRefused("graph operation and digests must match admission")
+            return
         if self.name in {"candidate.simulate", "candidate.review"}:
             candidate_operation = "simulate" if self.name == "candidate.simulate" else "review"
             if (
@@ -97,6 +110,14 @@ class NamedStudioTask:
 
 
 _TASKS = (
+    NamedStudioTask(
+        "graph.run",
+        "analysis",
+        "studio-graph",
+        "sc_neurocore.studio.graph_job:run_graph_job",
+        ("/api/graph/jobs",),
+        requester_owned=True,
+    ),
     NamedStudioTask(
         "candidate.simulate",
         "analysis",

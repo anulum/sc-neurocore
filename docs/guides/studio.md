@@ -611,6 +611,12 @@ with that reason.
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate graph JSON and return structured errors |
 | POST | `/api/graph/simulate` | Run a graph through the public `Network` runtime |
+| POST | `/api/graph/jobs/validate` | Resolve asynchronous identity and work without allocating a job |
+| POST | `/api/graph/jobs` | Submit or recover a captured graph under its original retry key |
+| GET | `/api/graph/jobs` | List the requesting actor's newest graph summaries |
+| GET | `/api/graph/jobs/{job_id}` | Observe one actor-owned graph record and complete-result receipt |
+| POST | `/api/graph/jobs/{job_id}/cancel` | Request cancellation through the process supervisor |
+| GET | `/api/graph/jobs/{job_id}/result` | Download the complete verified original result bytes |
 | POST | `/api/graph/notebook` | Export a tutorial notebook that rebuilds the graph with the public API and checks its spikes |
 | POST | `/api/graph/export-nir` | Write the validated graph as a NIR (HDF5) file, returned as base64 with notes |
 | POST | `/api/graph/import-nir` | Read a NIR file or a legacy graph envelope into Studio graph JSON |
@@ -631,6 +637,22 @@ population and a metric contract. Validation reports every error of a graph
 at once; nothing is clamped, rounded or replaced by a template default, and an
 oversized run is refused rather than shortened. See
 [Network Canvas](../studio/network-canvas.md).
+
+**Run background job** uses a distinct asynchronous profile: at most 2000
+neurons, 2000000 steps and 2000000 neuron-steps, with no shortened result.
+The browser retains the original request, validation identity and retry key
+before admission. **Recover original submission** observes or retries that
+same calculation after a lost acknowledgement; history, reload and saved
+workspace restoration never submit another calculation automatically.
+Graph inputs, layout, workspace identity and recovery metadata travel with
+named sessions and server projects. A legacy named session without graph fields
+preserves the existing canvas and undo history. Logout clears account-owned graph
+recovery before another account can save. Results are verified from their original
+bytes and adopted only after the current graph is revalidated; scientific
+edits withdraw adoption while verified historical results remain exportable.
+See [background graph jobs](../studio/network-canvas.md#background-graph-jobs)
+for all six routes, limits, cancellation, restart and byte-custody details.
+
 
 ### Example: POST /api/simulate
 
@@ -1305,7 +1327,7 @@ The Studio includes five additional panels beyond the core research workbench:
 - **Compiler Inspector** — build SC IR, verify, emit SystemVerilog. [Details](../studio/compiler-inspector.md)
 - **Synthesis Dashboard** — worker-backed Yosys synthesis for 4 FPGA targets, multi-target comparison, target provenance, resource estimation. [Details](../studio/synthesis-dashboard.md)
 - **Training Monitor** — live SNN training with 6 surrogate gradients, SSE metric streaming. [Details](../studio/training-monitor.md)
-- **Network Canvas** — drag-and-drop populations and projections with React Flow, NIR export/import. [Details](../studio/network-canvas.md)
+- **Network Canvas** — drag-and-drop populations and projections with React Flow, quick simulation, recoverable background graph jobs, and NIR export/import. [Details](../studio/network-canvas.md)
 - **Integration** — worker-backed full pipeline (graph → compile → synthesise), project save/load. [Details](../studio/integration.md)
 
 Full documentation: [Studio Hub](../studio/index.md)

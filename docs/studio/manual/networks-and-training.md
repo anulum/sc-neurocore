@@ -36,6 +36,28 @@ single-model simulation is not automatically a supported population model.
 The graph uses its declared timestep, drives, constructor inputs, connectivity
 and seeds; moving a node changes layout, not the simulated specification.
 
+## Run a background calculation
+
+Choose **Run background job** to submit the current graph to the supervised
+worker. Read its observed status in **Background graph jobs**. The asynchronous
+profile permits up to 2000 neurons, 2000000 steps and 2000000 neuron-steps;
+a larger request is refused before it runs.
+
+If the admission reply is lost, use **Recover original submission**. It retries
+the retained original input and key so a calculation already accepted by the
+server is recovered rather than duplicated. **Refresh jobs** reloads actual
+history and status; **Cancel selected job** asks the supervisor to stop and
+shows its returned state.
+
+Save a project or named session to retain the graph, layout and selected
+calculation. Reopening observes that stored work without submitting another
+run. A completed result is adopted only for the current scientific graph;
+editing scientific inputs withdraws it, while moving a node preserves it.
+**Export verified result** saves the original verified bytes, including when
+the calculation belongs to an earlier graph. See
+[background graph jobs](../network-canvas.md#background-graph-jobs) for the full
+recovery, integrity and restart contract.
+
 ## Edit without losing the graph
 
 - Select and edit populations/projections through their property panels.

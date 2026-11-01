@@ -44,6 +44,7 @@ from sc_neurocore.studio.model_run_contract import (
     resolve_model_run_inputs,
 )
 from sc_neurocore.studio.simulation import MAX_STEPS
+from sc_neurocore.studio.experiment_spec import JOB_MAX_STEPS
 
 GRAPH_SCHEMA_VERSION = "studio.network-graph.v1"
 GRAPH_SPEC_SCHEMA_VERSION = "studio.network-graph-spec.v1"
@@ -64,6 +65,7 @@ NeuronType = Literal["excitatory", "inhibitory"]
 ConnectionRule = Literal["random", "all_to_all"]
 DriveKind = Literal["none", "constant", "poisson"]
 SeedSource = Literal["request", "derived", "none"]
+GraphExecutionMode = Literal["synchronous", "async_job"]
 
 _GRAPH_FIELDS: frozenset[str] = frozenset({"populations", "projections", "duration", "dt", "seed"})
 _POPULATION_FIELDS: frozenset[str] = frozenset(
@@ -209,7 +211,12 @@ class ProjectionSpec:
 
 @dataclass(frozen=True, slots=True)
 class GraphSpec:
-    """The resolved, digest-bound specification of one graph run."""
+    """The resolved, digest-bound specification of one graph run.
+
+    ``execution_mode`` selects fixed server work limits. Synchronous public
+    dictionaries retain their original shape and digest; asynchronous ones
+    include their mode and the existing two-million-update job ceiling.
+    """
 
     populations: tuple[PopulationSpec, ...]
     projections: tuple[ProjectionSpec, ...]
@@ -218,6 +225,7 @@ class GraphSpec:
     n_steps: int
     seed: int
     n_neurons: int
+    execution_mode: GraphExecutionMode = "synchronous"
 
     @property
     def neuron_steps(self) -> int:
@@ -246,12 +254,18 @@ class GraphSpec:
             "neuron_steps": self.neuron_steps,
             "limits": {
                 "max_neurons": MAX_NEURONS,
-                "max_steps": MAX_GRAPH_STEPS,
-                "max_neuron_steps": MAX_NEURON_STEPS,
+                "max_steps": MAX_GRAPH_STEPS
+                if self.execution_mode == "synchronous"
+                else JOB_MAX_STEPS,
+                "max_neuron_steps": MAX_NEURON_STEPS
+                if self.execution_mode == "synchronous"
+                else JOB_MAX_STEPS,
             },
             "populations": [population.to_public_dict() for population in self.populations],
             "projections": [projection.to_public_dict() for projection in self.projections],
         }
+        if self.execution_mode == "async_job":
+            body["execution_mode"] = self.execution_mode
         body["graph_sha256"] = _sha256_json(body)
         return body
 
@@ -287,7 +301,10 @@ def _as_float(value: object) -> float | None:
     """Return ``value`` as a float when it is a finite real number, else ``None``."""
     if not isinstance(value, Real) or isinstance(value, bool):
         return None
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
     return number if math.isfinite(number) else None
 
 
@@ -678,17 +695,24 @@ def _validate_projections(
             ok = False
         elif dt is not None:
             ratio = delay / dt
-            steps = int(round(ratio))
-            if abs(ratio - steps) > _DELAY_STEP_TOLERANCE * max(1.0, abs(ratio)):
+            if not math.isfinite(ratio):
                 collector.add(
                     f"{field}.delay",
-                    f"Projection {label} delay {delay:g} ms is not a whole number "
-                    f"of {dt:g} ms steps; the public Network rounds delays, this graph does not",
+                    f"Projection {label} delay exceeds the finite timestep range",
                 )
                 ok = False
             else:
-                delay_ms = delay
-                delay_steps = steps
+                steps = int(round(ratio))
+                if abs(ratio - steps) > _DELAY_STEP_TOLERANCE * max(1.0, abs(ratio)):
+                    collector.add(
+                        f"{field}.delay",
+                        f"Projection {label} delay {delay:g} ms is not a whole number "
+                        f"of {dt:g} ms steps; the public Network rounds delays, this graph does not",
+                    )
+                    ok = False
+                else:
+                    delay_ms = delay
+                    delay_steps = steps
         seed_raw = raw.get("seed")
         seed: int | None = None
         seed_source: SeedSource = "derived"
@@ -749,8 +773,17 @@ def _validate_projections(
     return specs
 
 
-def _analyse(graph: object) -> tuple[_Collector, GraphSpec | None]:
+def _analyse(
+    graph: object, *, execution_mode: GraphExecutionMode = "synchronous"
+) -> tuple[_Collector, GraphSpec | None]:
+    """Resolve scientific contracts under one fixed server execution profile."""
     collector = _Collector()
+    if execution_mode not in ("synchronous", "async_job"):
+        collector.add("execution_mode", "Graph execution mode is unsupported")
+        return collector, None
+    max_steps = MAX_GRAPH_STEPS if execution_mode == "synchronous" else JOB_MAX_STEPS
+    max_neuron_steps = MAX_NEURON_STEPS if execution_mode == "synchronous" else JOB_MAX_STEPS
+    budget_name = "synchronous" if execution_mode == "synchronous" else "asynchronous"
     if not isinstance(graph, Mapping):
         collector.add("graph", "Network graph must be an object")
         return collector, None
@@ -782,29 +815,38 @@ def _analyse(graph: object) -> tuple[_Collector, GraphSpec | None]:
     if n_neurons > MAX_NEURONS:
         collector.add(
             "populations",
-            f"Total neuron count {n_neurons} exceeds {MAX_NEURONS} limit for browser simulation",
+            f"Total neuron count {n_neurons} exceeds {MAX_NEURONS} limit for "
+            + ("browser simulation" if execution_mode == "synchronous" else "job simulation"),
         )
     n_steps: int | None = None
     if duration is not None and dt is not None:
-        requested = int(duration / dt)
+        ratio = duration / dt
+        if not math.isfinite(ratio):
+            collector.add(
+                "duration",
+                f"Graph duration and dt exceed the {budget_name} step limit of {max_steps}; "
+                "the run is not shortened",
+            )
+            return collector, None
+        requested = int(ratio)
         if requested < 1:
             collector.add(
                 "duration",
                 f"duration {duration:g} ms with dt {dt:g} ms yields no complete step",
             )
-        elif requested > MAX_GRAPH_STEPS:
+        elif requested > max_steps:
             collector.add(
                 "duration",
-                f"{requested} steps exceed the synchronous limit of {MAX_GRAPH_STEPS}; "
+                f"{requested} steps exceed the {budget_name} limit of {max_steps}; "
                 "the run is not shortened, reduce duration or dt",
             )
         else:
             n_steps = requested
-    if n_steps is not None and n_neurons * n_steps > MAX_NEURON_STEPS:
+    if n_steps is not None and n_neurons * n_steps > max_neuron_steps:
         collector.add(
             "duration",
             f"{n_neurons} neurons over {n_steps} steps are {n_neurons * n_steps} neuron-steps, "
-            f"above the synchronous limit of {MAX_NEURON_STEPS}; the run is not shortened",
+            f"above the {budget_name} limit of {max_neuron_steps}; the run is not shortened",
         )
 
     if collector or dt is None or duration is None or seed is None or n_steps is None:
@@ -819,17 +861,35 @@ def _analyse(graph: object) -> tuple[_Collector, GraphSpec | None]:
         n_steps=n_steps,
         seed=seed,
         n_neurons=n_neurons,
+        execution_mode=execution_mode,
     )
     return collector, spec
 
 
-def graph_issues(graph: object) -> list[GraphIssue]:
-    """Return every validation issue of ``graph`` in request order (empty = valid)."""
-    collector, _spec = _analyse(graph)
+def graph_issues(
+    graph: object, *, execution_mode: GraphExecutionMode = "synchronous"
+) -> list[GraphIssue]:
+    """Return every graph validation issue in request order.
+
+    Parameters
+    ----------
+    graph : object
+        Existing graph request to validate without executing it.
+    execution_mode : {"synchronous", "async_job"}
+        Fixed server profile; callers cannot choose arbitrary limits.
+
+    Returns
+    -------
+    list[GraphIssue]
+        Located issues, empty only when the selected profile accepts the graph.
+    """
+    collector, _spec = _analyse(graph, execution_mode=execution_mode)
     return list(collector.issues)
 
 
-def validate_graph(graph: object) -> list[str]:
+def validate_graph(
+    graph: object, *, execution_mode: GraphExecutionMode = "synchronous"
+) -> list[str]:
     """Validate a network graph and return its error messages (empty = valid).
 
     Structural errors (shapes, ids, endpoints), model-contract errors (unknown
@@ -838,19 +898,45 @@ def validate_graph(graph: object) -> list[str]:
     probability conflicts, delays that are not whole timesteps, seeds,
     autapses) and budget errors (neuron cap, step cap, neuron-step cap) are all
     reported together.
+
+    Parameters
+    ----------
+    graph : object
+        Network graph request, including its clock, topology and drives.
+    execution_mode : {"synchronous", "async_job"}
+        Server profile whose work limits apply. The default is unchanged.
+
+    Returns
+    -------
+    list[str]
+        Every refusal message, or an empty list for an admitted graph.
     """
-    return [issue.message for issue in graph_issues(graph)]
+    return [issue.message for issue in graph_issues(graph, execution_mode=execution_mode)]
 
 
-def resolve_graph(graph: object) -> GraphSpec:
+def resolve_graph(
+    graph: object, *, execution_mode: GraphExecutionMode = "synchronous"
+) -> GraphSpec:
     """Resolve ``graph`` into its executable specification.
+
+    Parameters
+    ----------
+    graph : object
+        Network graph request with model, topology, drive and clock inputs.
+    execution_mode : {"synchronous", "async_job"}
+        Server-selected admission profile included in asynchronous identity.
+
+    Returns
+    -------
+    GraphSpec
+        The effective inputs and the limits the execution must preserve.
 
     Raises
     ------
     GraphRejected
         With the field and message of the first validation issue.
     """
-    collector, spec = _analyse(graph)
+    collector, spec = _analyse(graph, execution_mode=execution_mode)
     if spec is None:
         first = collector.issues[0] if collector.issues else GraphIssue("graph", "invalid graph")
         raise GraphRejected(field=first.field, reason=first.message)
@@ -874,6 +960,7 @@ __all__ = [
     "GraphIssue",
     "GraphRejected",
     "GraphSpec",
+    "GraphExecutionMode",
     "PopulationSpec",
     "ProjectionSpec",
     "derived_seed",

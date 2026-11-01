@@ -25,7 +25,23 @@ parameters, network graph populations and projections, synthesis target, and
 the Training Monitor configuration. Positive timebase settings and finite
 numeric parameters are restored from saved values, including zero current,
 while malformed optional fields fall back to Studio defaults before the next
-simulation refresh.
+simulation refresh. Structurally invalid graph inputs, an invalid explicit
+workspace identity or unreadable graph recovery metadata refuse the restore
+rather than replacing only part of the network.
+
+Graph inputs and layout, the stable graph workspace identity and its selected
+job or retained original retry intent are included in server projects and
+named browser sessions. Opening an explicit saved revision uses that revision's
+selection rather than a newer browser cache, with visible precedence and the
+cached retry retained until an explicit recovery action. Legacy named sessions
+without graph fields preserve the current canvas and undo history.
+Reopening observes stored work;
+it never submits a graph calculation. A result is adopted only after its bytes
+and receipt are verified and the current graph is revalidated on the server.
+Different-account metadata cannot select, adopt or enter a new save of the
+previous actor's recovery. Logout clears account-owned graph recovery.
+See [background graph jobs](network-canvas.md#background-graph-jobs) for recovery,
+cancellation and export behavior.
 
 ### Storage Format
 

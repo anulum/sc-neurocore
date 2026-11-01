@@ -31,7 +31,9 @@ from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmissio
 from sc_neurocore.studio.platform.policy_models import InMemoryAuditSink
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.storage_dispatch import StorageServices, serve_operation
+from sc_neurocore.studio.platform.storage_admission_protocol import decode_named_admission_request
 from sc_neurocore.studio.platform.storage_named_admit import named_process_admission
+from sc_neurocore.studio.platform.storage_artifact_protocol import StorageArtifactResponse
 from sc_neurocore.studio.platform.storage_finish_protocol import (
     decode_finish_request,
     decode_finish_response,
@@ -57,7 +59,8 @@ def _deadline() -> float:
 class Authority:
     """Serve each API connection with the real handlers in its own thread.
 
-    ``lose`` maps ``start``, ``heartbeat`` or ``finish`` to how many of the
+    ``lose`` maps ``start``, ``heartbeat``, ``finish`` or seed-only
+    ``admit_named`` to how many of the
     next final replies of that operation are dropped after the handler acted.
     ``seen`` records every operation received, in order.
     """
@@ -84,6 +87,8 @@ class Authority:
             authority_dirfd=self._directory,
         )
         self.lose: dict[str, int] = {}
+        #: One-shot corruption of a real acted-on response at the transport boundary.
+        self.alter: dict[str, Callable[[bytes], bytes]] = {}
         self.seen: list[str] = []
         #: Runs on each serving thread before its handler, e.g. to schedule a
         #: competing writer through that thread's SQLite trace hook.
@@ -121,22 +126,46 @@ class Authority:
                 )
                 operation = classify_storage_operation(frame)
                 name = operation if operation == "finish" else json.loads(frame)["operation"]
-                if not self._losing(name):
+                losing = self._losing(name)
+                alter = self.alter.pop(name, None)
+                if not losing and alter is None:
                     self._handle(channel, frame)
                     return
-                self._relay_losing_reply(channel, frame, operation)
+                self._relay_losing_reply(channel, frame, operation, alter=alter)
         except BaseException as exc:
             self.failures.append(exc)
         finally:
             self.ledger.close()
 
-    def _relay_losing_reply(self, client: socket.socket, frame: bytes, operation: str) -> None:
-        """Let the real handler act through a relay that drops its final reply."""
+    def _relay_losing_reply(
+        self,
+        client: socket.socket,
+        frame: bytes,
+        operation: str,
+        *,
+        alter: Callable[[bytes], bytes] | None = None,
+    ) -> None:
+        """Let the real handler act before dropping or damaging its response bytes."""
         relay, service = socket.socketpair()
         handler = threading.Thread(target=self._serve_inner, args=(service, frame), daemon=True)
         handler.start()
         with relay:
+            if operation == "admit_named":
+                admission_request = decode_named_admission_request(frame, max_metadata_bytes=FRAME)
+                for name in sorted(admission_request.seed_manifest):
+                    for offset in range(0, admission_request.seed_manifest[name], FRAME):
+                        payload = read_frame(client, max_bytes=FRAME, deadline=_deadline())
+                        assert len(payload) == min(
+                            FRAME, admission_request.seed_manifest[name] - offset
+                        )
+                        write_frame(relay, payload, max_bytes=FRAME, deadline=_deadline())
             reply = read_frame(relay, max_bytes=FRAME, deadline=_deadline())
+            if operation == "artifact":
+                response = StorageArtifactResponse.model_validate_json(reply, strict=True)
+                if response.artifact is not None:
+                    for offset in range(0, response.artifact.size_bytes, FRAME):
+                        payload = read_frame(relay, max_bytes=FRAME, deadline=_deadline())
+                        assert len(payload) == min(FRAME, response.artifact.size_bytes - offset)
             if operation == "finish":
                 request = decode_finish_request(frame, max_bytes=FRAME)
                 decoded = decode_finish_response(reply, request=request, max_bytes=FRAME)
@@ -148,7 +177,10 @@ class Authority:
                             assert len(payload) == min(FRAME, artifact.size_bytes - offset)
                             write_frame(relay, payload, max_bytes=FRAME, deadline=_deadline())
                     read_frame(relay, max_bytes=FRAME, deadline=_deadline())
-        handler.join(timeout=_WIRE)
+            handler.join(timeout=_WIRE)
+            assert not handler.is_alive(), "The real response must finish before it is lost"
+            if alter is not None:
+                write_frame(client, alter(reply), max_bytes=FRAME, deadline=_deadline())
 
     def _serve_inner(self, channel: socket.socket, frame: bytes) -> None:
         try:

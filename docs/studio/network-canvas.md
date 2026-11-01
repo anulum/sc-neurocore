@@ -423,6 +423,141 @@ whose field names an index the graph no longer holds, or a shape this build
 does not recognise, is still shown, named by its own field: a refusal that
 cannot be placed still has to be read.
 
+## Background graph jobs
+
+**Run background job** prepares the current graph on the server and submits a
+supervised calculation. It uses the same public Python network runtime as
+**Simulate**, with a separate asynchronous work profile: at most 2000 neurons,
+2000000 steps and 2000000 neuron-steps. Both step limits apply; the server
+refuses excess work rather than shortening it. The specification records
+`execution_mode: "async_job"` and its effective limits, so its `graph_sha256`
+is distinct from the synchronous profile's digest even for identical inputs.
+
+Preparation (`POST /api/graph/jobs/validate`) resolves the actual server
+contract without creating a job, reservation, seed file or result artifact.
+Its `studio.graph.job.validation.v1` response contains the graph, request,
+submission and portable input-seal digests, plus `n_steps`, `n_neurons` and
+`projected_neuron_steps`. It does not echo the request or supply model defaults.
+The portable input seal checks the browser's captured input; the authority's
+submission identity binds the canonical request digest and effective graph digest.
+Preparation and submission share validation, authentication and effective
+request-byte budgets. Submission recomputes this interpretation; preparation
+is neither authorisation nor a reservation.
+
+Before submission the browser stores the captured input, preparation identity
+and retry key for the current workspace and account. A lost response can follow
+a real admission: **Recover original submission** therefore retries that exact
+input and key. It does not create a fresh key or silently run the edited graph.
+Starting another calculation or selecting a different stored job requires
+recovering or forgetting an unconfirmed submission first. A browser storage
+failure stops submission before admission.
+
+**Graph job history** observes stored calculations without submitting them.
+**Refresh jobs** reloads actual status and recovery metadata after a connection
+failure. **Cancel selected job** asks the supervisor to stop its process; the
+interface displays the authority's observed state, including `cancelling`,
+rather than promising immediate cancellation. **Forget local selection** clears
+this browser's pointer and retained retry intent; it leaves server jobs and
+history intact.
+
+### Try the HTTP example
+
+From a source checkout with a local Studio listening on port 8001:
+
+```bash
+curl --fail-with-body \
+  -H 'Content-Type: application/json' -H 'Sec-Fetch-Site: none' \
+  --data-binary @examples/studio_graph_job.json \
+  http://127.0.0.1:8001/api/graph/jobs/validate
+```
+
+The example declares two driven LIF neurons, 200 steps and 400 neuron-steps.
+Take `submission_sha256` from that response. Submit the unchanged file to
+`/api/graph/jobs` with both `X-Studio-Graph-Submission-SHA256: <that digest>`
+and `Idempotency-Key: graph-example-1`, retaining this file and key for any
+retry. Follow the returned `status_route`; after `completed`, download its
+`/result` response and check its size and SHA-256 against the record's receipt.
+An authenticated deployment also requires the current actor's bearer session;
+the caller headers above do not authenticate or grant access.
+
+### Saving and reopening
+
+Named browser sessions and server projects save the graph, its layout, stable
+workspace identity and recovery metadata. They do not save a trusted scientific
+result. Opening a saved snapshot uses that snapshot's selection, even if a newer
+browser cache exists. The panel states this precedence; a different cached retry
+is kept until an explicit run, recovery, history selection or forget action.
+Startup can recover the tab's cached selection. Neither operation submits work.
+Opening a legacy named session without graph fields preserves the current
+canvas, selections and undo history. An explicitly saved empty graph still
+opens as empty. A different account cannot adopt the previous account's
+selection, and switching account or workspace immediately clears the displayed
+observations while its own history loads. Logout also clears recovery metadata;
+loading another account's recovery cannot put it into subsequent project or
+named-session saves.
+
+A project evidence export captures the saved workspace, including graph recovery
+metadata. Changing this metadata while exporting invalidates that export for the
+current workspace. The interface reports the change and asks you to export again;
+it does not silently attach an outdated bundle.
+
+After a completed job is selected, the browser verifies the original artifact's
+byte count and SHA-256, parses its complete result contract and revalidates the
+current graph on the server before adopting the result. Moving populations keeps
+the same scientific input. Changing a model, parameter, drive, topology or run
+setting withdraws the adopted result. A valid stored result for a different graph
+can still be exported, with a message explaining why it was not adopted.
+
+After a backend restart, observe the persisted job instead of submitting it
+again. Stored complete results remain bound to their original records; a process
+that was running is not promised to resume. Its actual recovered status decides
+which actions remain available.
+
+### HTTP submission and result custody
+
+Submit the same graph body used by synchronous simulation to
+`POST /api/graph/jobs`. Use an `Idempotency-Key` of 1–128 visible ASCII characters
+and retain it with the original body. Send the preparation response's
+`submission_sha256` as `X-Studio-Graph-Submission-SHA256`; a changed server
+interpretation returns `409 graph_job_preparation_changed` before admission.
+The Studio browser always supplies both headers. Reusing a key for different
+work returns `409 graph_job_idempotency_conflict`.
+
+An unconfirmed admission returns `503 graph_job_admission_unconfirmed`, including
+a malformed reply or an unreadable record after the authority already admitted
+work. Keep the same input and retry key. A permission refusal returns
+`403 graph_job_admission_refused`; a full queue returns HTTP 503 with
+`detail.error: "job_queue_full"` and its running, queued and limit counts.
+Observation failures return `503 graph_job_observation_unavailable`.
+A lost cancellation reply returns `503 graph_job_cancellation_unconfirmed`;
+refresh its actual status before deciding what happened. Explicit cancellation
+refusals return `403 graph_job_cancellation_refused`. Missing or inaccessible
+records and artifacts remain 404. A result transport failure returns
+`503 graph_job_result_unconfirmed`; unavailable or invalid complete results
+remain 409 and never carry scientific download bytes.
+
+Successful admission returns `studio.graph.job.v1`, `execution_mode: "async_job"`,
+the digests and projected work, `job_id`, `job`, and `status_route`. Observe that
+route for the durable record. History returns `studio.graph.jobs.v1`, at most
+100 summaries, newest first, with `result: null`; fetch an individual status
+before downloading its result. Status, cancellation and downloads are scoped to
+the requesting actor; another actor's job is returned as not found.
+
+A completed record holds a compact `studio.graph.job.result.v1` receipt with the
+graph digest, artifact path, SHA-256, byte count and result counts. The complete
+`studio.network-graph-result.v1` remains in `graph/result.json`, including every
+declared population event and topology field. Each download verifies the stored
+artifact and binds it to the receipt. Its response includes
+`X-Studio-Artifact-SHA256` and `X-Studio-Artifact-Size`.
+**Export verified result** downloads those exact bytes as `network-result.json`;
+it does not reserialise the parsed object.
+
+The complete result has a 16 MiB worker ceiling, and an operator's lower service
+artifact budget can refuse it earlier. A result that exceeds either applicable
+budget fails rather than returning truncated scientific data. A failed,
+cancelled or incomplete job has no exportable complete result. Requesting its
+result returns `409 graph_job_result_unavailable`.
+
 ## NIR Export/Import
 
 **Export NIR** writes the canvas network as a real
@@ -556,6 +691,12 @@ fails while running answers 422 with the failure.
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate a graph; every error at once, each with the field it came from |
 | POST | `/api/graph/simulate` | Run the graph through the public Network runtime |
+| POST | `/api/graph/jobs/validate` | Prepare asynchronous identity and work without allocating a job |
+| POST | `/api/graph/jobs` | Submit or recover captured graph work with a durable retry key |
+| GET | `/api/graph/jobs` | List the requesting actor's recent graph summaries (`limit` 1–100, default 50) |
+| GET | `/api/graph/jobs/{job_id}` | Observe one actor-owned durable graph record and compact result receipt |
+| POST | `/api/graph/jobs/{job_id}/cancel` | Request cancellation through the process supervisor |
+| GET | `/api/graph/jobs/{job_id}/result` | Download the complete integrity-verified original graph result |
 | POST | `/api/graph/notebook` | A tutorial notebook that rebuilds the graph with the public API and checks its run against the Studio's |
 | POST | `/api/graph/export-nir` | Write the graph as a NIR (HDF5) file, returned as base64 with notes on what it does not carry |
 | POST | `/api/graph/import-nir` | Read a NIR file (`content_base64`) or a legacy graph envelope back into a graph |

@@ -32,6 +32,14 @@ from sc_neurocore.studio.platform.jobs_models import (
 class StudioJobService(Protocol):
     """Job submission, observation, control and custody used by the API."""
 
+    @property
+    def max_seed_file_bytes(self) -> int:
+        """Return the effective byte ceiling for one submitted seed file.
+
+        Aggregate seed and entry limits are separate. A single-file graph
+        submission must also obey its API operator's request limit.
+        """
+
     def submit_process_task(
         self,
         *,

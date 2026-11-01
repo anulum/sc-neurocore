@@ -123,6 +123,11 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         """Return the directory holding the ledger and every job's sandbox."""
         return self._root
 
+    @property
+    def max_seed_file_bytes(self) -> int:
+        """Return the existing per-file seed ceiling enforced by this manager and worker."""
+        return self._max_artifact_bytes
+
     def submit(
         self,
         *,

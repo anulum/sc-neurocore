@@ -24,6 +24,13 @@ from sc_neurocore.studio.platform.jobs_failures import (
 
 WORKER_FAILURE_SCHEMA = "studio.worker.failure.v1"
 _MESSAGES = {
+    "graph_json_size": "Graph job JSON exceeds its byte limit.",
+    "graph_json": "Graph job requires finite UTF-8 JSON.",
+    "graph_portability": "Graph job request cannot be sealed portably.",
+    "graph_envelope": "Graph job envelope is invalid.",
+    "graph_request_digest": "Graph job request digest does not match.",
+    "graph_seed_json": "Graph job seed JSON is invalid.",
+    "graph_spec_digest": "Graph job specification digest does not match.",
     "artifact_size": "Studio job artifact exceeds configured size limit.",
     "artifact_absent": "Studio job artifact is unavailable.",
     "event_json": "Studio job event payload must be JSON.",

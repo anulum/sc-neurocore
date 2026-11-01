@@ -25,6 +25,7 @@ from typing import cast
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobSubmission
+from sc_neurocore.studio.platform.jobs_models import StudioJobConflict
 from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmission
 from sc_neurocore.studio.platform.policy_gateway import PolicyGateway
 from sc_neurocore.studio.platform.storage_admission_protocol import decode_named_admission_request
@@ -99,10 +100,15 @@ def _admit(
         request = decode_named_admission_request(
             prepared.request_json, max_metadata_bytes=len(prepared.request_json)
         )
+        outcome: StudioJobSubmission | StudioJobQueueFull | StudioJobConflict
+        try:
+            outcome = handler(prepared)
+        except StudioJobConflict as conflict:
+            outcome = conflict
         response = encode_named_admission_response(
             request=request,
             replay=prepared.replay,
-            outcome=handler(prepared),
+            outcome=outcome,
             max_bytes=services.frame_max_bytes,
         )
         write_verified_frame(

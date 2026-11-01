@@ -70,6 +70,8 @@ describe("Studio saved-session persistence", () => {
   };
 
   it("returns an empty list when browser storage is unavailable or invalid", () => {
+    expect(browserSavedSessionStorage()).toBeNull();
+    expect(readStudioSessionsResult()).toEqual({ sessions: [], status: "unavailable", discarded: 0 });
     expect(readStoredStudioSessions(null)).toEqual([]);
     expect(readStoredStudioSessions(createStorage("not-json"))).toEqual([]);
     expect(readStoredStudioSessions(createStorage("{\"name\":\"demo\"}"))).toEqual([]);

@@ -156,21 +156,47 @@ class QueryReader:
         )
 
     def records(
-        self, requester: StorageRequester | None, *, candidate_only: bool = False
+        self,
+        requester: StorageRequester | None,
+        *,
+        candidate_only: bool = False,
+        graph_only: bool = False,
     ) -> tuple[StudioJobRecord, ...]:
-        """Return workspace records, or only the requester’s candidate summaries.
+        """Return workspace records or one requester-owned scientific job family.
+
+        Parameters
+        ----------
+        requester : StorageRequester or None
+            Authenticated principal delegated by the verified API.
+        candidate_only : bool
+            Select only this actor's candidate summaries under their own policy.
+        graph_only : bool
+            Select only this actor's graph summaries. The two scoped families
+            cannot both be selected. Leaving both false retains the existing
+            administrator records view and its policy.
+
+        Returns
+        -------
+        tuple[StudioJobRecord, ...]
+            Complete correlated records in creation order, with large scientific
+            results omitted for the two actor-owned summary views.
 
         Raises
         ------
         ValueError
             A page is malformed, names another workspace, or its cursor does
-            not name its own last record.
+            not name its own last record, or both scoped families are requested.
         """
+        if candidate_only and graph_only:
+            raise ValueError("a storage record query selects only one scientific job family")
+        view: QueryView = (
+            "candidate_records" if candidate_only else "graph_records" if graph_only else "records"
+        )
         records: list[StudioJobRecord] = []
         after: str | None = None
         while True:
             page = self._query(
-                "candidate_records" if candidate_only else "records",
+                view,
                 requester,
                 limit=1000,
                 after=after,

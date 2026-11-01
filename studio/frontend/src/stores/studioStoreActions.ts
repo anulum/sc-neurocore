@@ -120,8 +120,7 @@ import {
 import {
   studioSavedSessionRemovedState,
   studioSavedSessionRestoreState,
-  studioSavedSessionState,
-  studioSavedSessionUpsertState,
+  captureAndStoreStudioSession,
   writeStoredStudioSessions,
 } from "../studioSavedSessions";
 import {
@@ -633,7 +632,7 @@ export function createStudioStoreActions(
     trainingListVersion += 1;
     trainingStream?.close();
     trainingStream = null;
-    set(studioAuthLoadingState());
+    set({ ...studioAuthLoadingState(), graphJobRecovery: null, graphSimResult: null });
     try {
       await logoutStudioBrowserUser();
     } catch (error: unknown) {
@@ -1132,9 +1131,9 @@ export function createStudioStoreActions(
   },
 
   saveProjectToServer: async (name) => {
-    const state = studioProjectSaveState(get());
     const expected = studioProjectExpectedRevision(get().projectRevision, name);
     try {
+      const state = studioProjectSaveState(get());
       const projectSaveResult = await apiSaveProject(name, state, expected);
       set(studioProjectSavedState(projectSaveResult));
       await get().listServerProjects();
@@ -1739,11 +1738,9 @@ export function createStudioStoreActions(
 
   saveSession: (name) => {
     const s = get();
-    const state = studioSavedSessionState(s);
-    const nextState = studioSavedSessionUpsertState(s.savedSessions, { name, state });
-    const result = writeStoredStudioSessions(nextState.savedSessions);
-    set({ ...nextState, sessionWriteResult: result });
-    return result;
+    const saved = captureAndStoreStudioSession(s, name, s.savedSessions);
+    set(saved);
+    return saved.sessionWriteResult;
   },
 
   loadSession: (name) => {

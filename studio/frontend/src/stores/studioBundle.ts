@@ -38,7 +38,7 @@ export async function runStoreBundle(
     key = surfaceKey(surface, get());
     const bundle = await createStudioEvidenceBundle(request);
     const [operator, jobs] = await Promise.all([fetchStudioOperatorStatus(), fetchStudioJobs()]);
-    if (surfaceKey(surface, get()) !== key) { set({ [keys.loading]: false }); return; }
+    if (surfaceKey(surface, get()) !== key) { set({ [keys.loading]: false, [keys.error]: "The workspace changed during export. Export again for the current workspace." }); return; }
     set({ ...(surface === "admin" ? adminEvidenceBundleCreatedState(bundle, operator, jobs)
       : scopedEvidenceBundleCreatedState(surface, bundle, operator, jobs)),
       bundleContexts: { ...get().bundleContexts,
@@ -47,7 +47,7 @@ export async function runStoreBundle(
   } catch (error: unknown) {
     let failure = error;
     try {
-      if (key !== null && surfaceKey(surface, get()) !== key) { set({ [keys.loading]: false }); return; }
+      if (key !== null && surfaceKey(surface, get()) !== key) { set({ [keys.loading]: false, [keys.error]: "The workspace changed during export. Export again for the current workspace." }); return; }
     } catch (currentInputError: unknown) { failure = currentInputError; }
     set({ [keys.loading]: false, [keys.error]: failure instanceof Error ? failure.message : String(failure) });
   }

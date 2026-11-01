@@ -8,6 +8,7 @@
 // Studio Zustand store composition root (public entry for App/hooks).
 
 import { create } from "zustand";
+import { withGraphAccountState } from "../studioGraphAccountStore";
 import { setStudioAuthToken } from "../api/client";
 import { syncStoredStudioAuthToken } from "../studioAuthSession";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
@@ -21,7 +22,7 @@ export type { EvidenceBundleSurface } from "../evidenceBundles";
 
 syncStoredStudioAuthToken(setStudioAuthToken);
 
-export const useStudioStore = create<StudioState>((set, get) => {
+export const useStudioStore = create<StudioState>(withGraphAccountState((set, get) => {
   const actions = createStudioStoreActions(set, get);
   const state: StudioState = {
     ...studioInitialData,
@@ -29,7 +30,7 @@ export const useStudioStore = create<StudioState>((set, get) => {
     ...createStudioEquationIrActions(set, get),
   };
   return state;
-});
+}));
 
 
 const startupHashState = readStudioStartupHashState();

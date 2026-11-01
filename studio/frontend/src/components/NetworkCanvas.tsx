@@ -44,6 +44,7 @@ import NetworkGraphConnect from "./NetworkGraphConnect";
 import NetworkGraphTable from "./NetworkGraphTable";
 import PopulationEditor from "./PopulationEditor";
 import ProjectionEditor from "./ProjectionEditor";
+import GraphJobsPanel from "./GraphJobsPanel";
 
 /**
  * How the canvas frames its populations: never closer than 1:1.
@@ -450,6 +451,8 @@ export default function NetworkCanvas() {
           {graphPopulations.length} pop · {graphProjections.length} proj · drag to connect
         </span>
       </div>
+
+      <GraphJobsPanel />
 
       {graphNotice !== null && (
         <div role="status" style={{

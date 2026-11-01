@@ -42960,6 +42960,23 @@ app_module_file:
 
 ---
 
+## Module `studio.api.graph_jobs`
+
+### Function `build_graph_jobs_router(context)`
+Build actor-scoped graph admission, history, result and cancellation routes.
+
+Parameters
+----------
+context : StudioApiContext
+    Existing settings, job service and policy collaborators.
+
+Returns
+-------
+APIRouter
+    Graph routes sharing the embedded or isolated durable job authority.
+
+---
+
 ## Module `studio.api.hardware`
 
 ### Function `build_hardware_router()`
@@ -45938,6 +45955,70 @@ pathlib.Path or None
 
 ---
 
+## Module `studio.graph_job`
+
+### Class `GraphJobRefused`
+Refuse graph request custody or result size without a partial success.
+
+
+### Class `PreparedGraphJob`
+Resolved asynchronous graph and the exact finite JSON the worker receives.
+
+- **graph_sha256**()
+  - Return the digest of the effective graph and its asynchronous limits.
+- **submission_sha256**()
+  - Bind retries to both exact request bytes and the effective work profile.
+
+### Function `prepare_graph_job(graph, *, max_request_bytes)`
+Validate and bind graph input before allocating any durable job resources.
+
+Parameters
+----------
+graph : object
+    Existing network graph request, including its scientific settings.
+max_request_bytes : int
+    Operator-owned seed-input limit, never a graph request field.
+
+Returns
+-------
+PreparedGraphJob
+    Asynchronous specification and bounded canonical request bytes.
+
+Raises
+------
+GraphRejected
+    The graph cannot execute within the asynchronous work profile.
+GraphJobRefused
+    Input JSON cannot be represented portably or exceeds its byte allowance.
+
+### Function `run_graph_job(context, payload)`
+Run one digest-bound graph through the maintained public Network runtime.
+
+Parameters
+----------
+context : StudioJobContext
+    Existing supervisor's confined cancellation, seed and artifact access.
+payload : Mapping&#91;str, object&#93;
+    Exact request and graph digests; scientific bytes come from the seed.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Compact, versioned receipt binding the complete graph-result artifact.
+    Scientific arrays remain in that declared, integrity-checked file so
+    both execution profiles preserve their bounded control messages.
+
+Raises
+------
+GraphJobRefused
+    The seed binding or bounded complete-result contract cannot be met.
+GraphRejected
+    The stored request no longer meets the graph contract.
+StudioJobCancelled
+    Cancellation was requested before execution or result publication.
+
+---
+
 ## Module `studio.hardware_catalogue`
 
 ### Class `HardwareCatalogueEntry`
@@ -46791,6 +46872,10 @@ One resolved projection: rule, signed weight, exact delay steps, seed.
 ### Class `GraphSpec`
 The resolved, digest-bound specification of one graph run.
 
+``execution_mode`` selects fixed server work limits. Synchronous public
+dictionaries retain their original shape and digest; asynchronous ones
+include their mode and the existing two-million-update job ceiling.
+
 - **neuron_steps**()
   - Total neuron updates the run performs (``n_neurons * n_steps``).
 - **population**(population_id)
@@ -46806,10 +46891,22 @@ spawn_key=(kind, index))`` so projections and drives draw from independent
 streams that a direct public-runtime script can reproduce from the graph
 seed alone.
 
-### Function `graph_issues(graph)`
-Return every validation issue of ``graph`` in request order (empty = valid).
+### Function `graph_issues(graph, *, execution_mode)`
+Return every graph validation issue in request order.
 
-### Function `validate_graph(graph)`
+Parameters
+----------
+graph : object
+    Existing graph request to validate without executing it.
+execution_mode : {"synchronous", "async_job"}
+    Fixed server profile; callers cannot choose arbitrary limits.
+
+Returns
+-------
+list&#91;GraphIssue&#93;
+    Located issues, empty only when the selected profile accepts the graph.
+
+### Function `validate_graph(graph, *, execution_mode)`
 Validate a network graph and return its error messages (empty = valid).
 
 Structural errors (shapes, ids, endpoints), model-contract errors (unknown
@@ -46819,8 +46916,32 @@ probability conflicts, delays that are not whole timesteps, seeds,
 autapses) and budget errors (neuron cap, step cap, neuron-step cap) are all
 reported together.
 
-### Function `resolve_graph(graph)`
+Parameters
+----------
+graph : object
+    Network graph request, including its clock, topology and drives.
+execution_mode : {"synchronous", "async_job"}
+    Server profile whose work limits apply. The default is unchanged.
+
+Returns
+-------
+list&#91;str&#93;
+    Every refusal message, or an empty list for an admitted graph.
+
+### Function `resolve_graph(graph, *, execution_mode)`
 Resolve ``graph`` into its executable specification.
+
+Parameters
+----------
+graph : object
+    Network graph request with model, topology, drive and clock inputs.
+execution_mode : {"synchronous", "async_job"}
+    Server-selected admission profile included in asynchronous identity.
+
+Returns
+-------
+GraphSpec
+    The effective inputs and the limits the execution must preserve.
 
 Raises
 ------
@@ -49064,6 +49185,8 @@ Reading what those jobs did is the custody surface this inherits from
   - Configure bounded execution over the durable job ledger.
 - **root**()
   - Return the directory holding the ledger and every job's sandbox.
+- **max_seed_file_bytes**()
+  - Return the existing per-file seed ceiling enforced by this manager and worker.
 - **submit**(\*, kind, owner, request_id, task, timeout_seconds, workspace, idempotency_key, experiment_sha256, admission)
   - Submit one local task to the bounded thread supervisor.
 - **submit_process_task**(\*, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config)
@@ -49134,6 +49257,10 @@ Raised when a Studio job request violates the local sandbox policy.
 
 ### Class `StudioJobRefused`
 A source-authored job policy refusal, compatible with legacy handlers.
+
+
+### Class `StudioJobConflict`
+A durable retry identity was already bound to different job content.
 
 
 ### Class `StudioJobCancelled`
@@ -50088,7 +50215,7 @@ before durable admission. This decoder has no ledger or task import access.
 ## Module `studio.platform.storage_admission_response`
 
 ### Class `StorageNamedAdmissionResponse`
-One exact admission or capacity-refusal outcome from the authority.
+One exact admission, capacity refusal or changed-content retry conflict.
 
 A caller must supply the result of its durable authority transaction; the
 codec cannot prove persistence from a Python object alone. A lost reply
@@ -50107,7 +50234,7 @@ request : StorageNamedAdmissionRequest
     Exact request already authorized and prepared by the service.
 replay : StorageAdmissionReplay
     Service-derived content identity used in the durable transaction.
-outcome : StudioJobSubmission or StudioJobQueueFull
+outcome : StudioJobSubmission, StudioJobQueueFull or StudioJobConflict
     Admission or capacity refusal returned by the authority transaction.
 max_bytes : int
     Positive trusted maximum response-frame payload bytes.
@@ -50123,7 +50250,7 @@ ValueError
     Correlation, domain outcome or complete frame size is invalid.
 
 ### Function `decode_named_admission_response(payload, *, request, replay, max_bytes)`
-Return the admitted job ID or raise the exact durable queue refusal.
+Return the admitted ID or raise a correlated durable queue or retry refusal.
 
 This codec checks a bounded response from a separately verified service
 peer. It cannot prove that the worker was launched or safely supervised;
@@ -50151,6 +50278,8 @@ Raises
 ------
 StudioJobQueueFull
     A correlated durable capacity refusal.
+StudioJobConflict
+    The durable retry key was already bound to different content.
 ValueError
     Framing, JSON, schema, outcome or request correlation is invalid.
 
@@ -51058,6 +51187,8 @@ Serve the API's job methods through the storage authority and launcher.
 
 - **__init__**(runtime, configuration, \*, allowed_kinds, default_timeout_seconds)
   - Bind the trusted runtime and boundary; nothing is contacted yet.
+- **max_seed_file_bytes**()
+  - Bound one seed by both the authority ingress and actual worker read ceilings.
 - **submit_process_task**(\*, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config)
   - Admit a named process job and supervise its launched worker here.
 - **generation_failures**()
@@ -51981,8 +52112,8 @@ Read whole views through a connection factory and bounded exchanges.
 
 - **__init__**(connect, \*, workspace, storage_uid, max_bytes, timeout_seconds, max_content_bytes)
   - Keep the trusted endpoint settings; nothing is sent yet.
-- **records**(requester, \*, candidate_only)
-  - Return workspace records, or only the requester’s candidate summaries.
+- **records**(requester, \*, candidate_only, graph_only)
+  - Return workspace records or one requester-owned scientific job family.
 - **status**(requester)
   - Return the authority's aggregate summary for the workspace.
 - **purges**(requester, \*, limit, after)
@@ -52249,7 +52380,7 @@ ValueError
 Notes
 -----
 Nullable identity and trace fields remain mandatory. The optional
-``authorized_route`` selects only actor-owned laboratory or candidate reads; omission
+``authorized_route`` selects only actor-owned laboratory, candidate or graph reads; omission
 retains the existing administrator read policy and original wire shape.
 Workspace and requester checks belong to the authority before ledger access.
 
@@ -53253,6 +53384,8 @@ kill the kernel refuses to deliver leaves that process unreported.
 ### Class `StudioJobService`
 Job submission, observation, control and custody used by the API.
 
+- **max_seed_file_bytes**()
+  - Return the effective byte ceiling for one submitted seed file.
 - **submit_process_task**(\*, kind, owner, request_id, task_path, payload, timeout_seconds, seed_inputs, workspace, idempotency_key, experiment_sha256, admission, training_config)
   - Submit one process task and return its record.
 - **wait**(job_id, timeout_seconds)

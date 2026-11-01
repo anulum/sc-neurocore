@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1596
+expected_file_count = 1616
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6518,3 +6518,83 @@ rationale = "Native simulator version floors and their CI admission ordering rem
 [[file]]
 path = "tests/test_tools/test_audit_cadence_contract.py"
 rationale = "Scheduled inventory collection retains simulator, synthesis, native backend and documentation prerequisites without running the full suite."
+
+[[file]]
+path = "src/sc_neurocore/studio/graph_job.py"
+rationale = "Bounded original graph inputs and complete process results retain their scientific identity, byte digests and cancellation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/api/graph_jobs.py"
+rationale = "Actor-owned graph preparation, submission, observation, cancellation and original-result downloads preserve authority and verified artifact linkage."
+
+[[file]]
+path = "tests/test_studio_graph_jobs.py"
+rationale = "Real supervised graph HTTP jobs preserve complete scientific results and refuse excess work, damaged custody and conflicting retry identities."
+
+[[file]]
+path = "tests/test_studio_graph_job.py"
+rationale = "Actual process execution refuses corrupt graph envelopes and nonportable finite-JSON inputs before scientific result publication."
+
+[[file]]
+path = "tests/test_studio_jobs_worker_refusals.py"
+rationale = "Real worker refusal envelopes retain authored reasons without leaking unanticipated internal exceptions."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_dispatch.py"
+rationale = "The existing storage authority dispatches named graph requests through confined authenticated protocol handlers."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_admission_response.py"
+rationale = "Bounded admission responses preserve durable identity across lost acknowledgements and refuse contradictory protocol declarations."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/studio_job_service.py"
+rationale = "The shared service exposes effective seed budgets while preserving process admission and actor-scoped storage operations."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_manager.py"
+rationale = "The maintained job authority retains resource budgets, process lifecycle and durable graph admission metadata."
+
+[[file]]
+path = "tests/test_studio_graph_jobs_isolated.py"
+rationale = "Actual isolated storage and process workers retain graph authority, complete results, cancellation and bounded seed custody."
+
+[[file]]
+path = "tests/studio_storage_generation_support.py"
+rationale = "Real storage-generation fixtures preserve worker ownership, protocol roots and explicit lifecycle teardown."
+
+[[file]]
+path = "tests/test_studio_storage_admission_response.py"
+rationale = "Native admission-response round trips refuse malformed records and preserve acknowledged or unconfirmed durable jobs."
+
+[[file]]
+path = "tests/test_studio_storage_query.py"
+rationale = "Real actor-scoped storage queries keep graph and other job families separate without widening history authority."
+
+[[file]]
+path = "tests/test_studio_graph_jobs_admission.py"
+rationale = "Real graph submission distinguishes refusal, conflict and unconfirmed admission without manufacturing a successful acknowledgement."
+
+[[file]]
+path = "tests/test_studio_graph_jobs_restart.py"
+rationale = "A restarted real backend observes the same retained graph calculation and verified artifact without another allocation."
+
+[[file]]
+path = "tests/test_studio_graph_jobs_validation.py"
+rationale = "Real repeated preparation is nonallocating, shares admission budgets and errors, and binds fresh submission to its checked interpretation."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/capabilities.py"
+rationale = "Public capability discovery states the graph worker dependency and preserves experimental status and fail-closed requirement health."
+
+[[file]]
+path = "tests/test_studio_graph_job_discovery.py"
+rationale = "The documented request executes through all six real graph routes, with public capability, policy, OpenAPI and byte-custody agreement."
+
+[[file]]
+path = "tests/studio_graph_worker_probe.py"
+rationale = "Observe actual graph workers inside their numerical loop, read kernel resource ceilings and hold deterministic cancellation without replacing execution."
+
+[[file]]
+path = "tests/test_studio_graph_jobs_service_faults.py"
+rationale = "Corrupt actual acted-on storage replies and verify graph HTTP uncertainty, refusal, retry custody and standard queue-full outcomes."

@@ -113,10 +113,12 @@ def read_record_page(
     """
     budget = max_bytes - len(encode_query_message(_page_response(request, [], "sj_" + "0" * 16)))
     items: list[dict[str, JsonValue]] = []
-    candidate_only = request.view == "candidate_records"
+    requester_only = request.view in {"candidate_records", "graph_records"}
     custody_parameters = (
-        candidate_only,
+        requester_only,
         request.requester.principal_id if request.requester else "",
+        request.view == "candidate_records",
+        request.view == "graph_records",
     )
     with ledger.transaction() as connection:
         cursor: tuple[str, int] = ("", 0)
@@ -124,7 +126,8 @@ def read_record_page(
             row = connection.execute(
                 "SELECT created_at_utc, rowid FROM jobs WHERE job_id = ? AND workspace = ? "
                 "AND (? = 0 OR (kind = 'analysis' AND actor = ? AND "
-                "json_extract(admission, '$.candidate_operation') IN ('simulate', 'review')))",
+                "((? = 1 AND json_extract(admission, '$.candidate_operation') IN ('simulate', 'review')) "
+                "OR (? = 1 AND json_extract(admission, '$.graph_operation') = 'simulate'))))",
                 (request.after, request.workspace, *custody_parameters),
             ).fetchone()
             if row is None:
@@ -133,7 +136,8 @@ def read_record_page(
         rows = connection.execute(
             "SELECT * FROM jobs WHERE workspace = ? AND (created_at_utc, rowid) > (?, ?) "
             "AND (? = 0 OR (kind = 'analysis' AND actor = ? AND "
-            "json_extract(admission, '$.candidate_operation') IN ('simulate', 'review'))) "
+            "((? = 1 AND json_extract(admission, '$.candidate_operation') IN ('simulate', 'review')) "
+            "OR (? = 1 AND json_extract(admission, '$.graph_operation') = 'simulate')))) "
             "ORDER BY created_at_utc, rowid LIMIT ?",
             (request.workspace, *cursor, *custody_parameters, request.limit + 1),
         )
@@ -145,7 +149,7 @@ def read_record_page(
                     json.dumps(record_from_row(row).to_public_dict(), allow_nan=False)
                 )
                 item = {str(key): value for key, value in decoded.items()}
-                if candidate_only:
+                if requester_only:
                     item["result"] = None
                 size = (
                     len(
