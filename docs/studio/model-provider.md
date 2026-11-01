@@ -46,3 +46,12 @@ Bundled model schemas are available through
 resource directory to hash the selected schema into an experiment's identity,
 preferring TOML over JSON when both formats exist. Installed workers read the
 schemas shipped with their library; no neighbouring source checkout is needed.
+
+The public seed contract lives in `sc_neurocore.neurons.seed_domain`.
+`DEFAULT_LFSR16_SEED` exposes the canonical deterministic fallback `0xACE1`
+(44257); `LFSR16_ALIASES` maps an explicit LFSR16 request of zero to this state.
+Studio equation simulations use the same default when `seed` is omitted, and
+an authored equation IR request serializes its omitted `rng_seed` as the exact
+string `"44257"`. Explicit counter-based random keys remain distinct: zero is
+not an alias for 44257 in `rand()`, `randn()`, `poisson()` or `xi` draws.
+Model constructors that accept `None` for fresh entropy keep that behaviour.

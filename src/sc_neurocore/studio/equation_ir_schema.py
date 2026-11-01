@@ -27,7 +27,7 @@ from pydantic import (
 )
 from typing_extensions import Self
 
-from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
+from sc_neurocore.neurons.seed_domain import DEFAULT_LFSR16_SEED
 
 FiniteNumber = (
     Annotated[int, Field(strict=True)] | Annotated[float, Field(strict=True, allow_inf_nan=False)]

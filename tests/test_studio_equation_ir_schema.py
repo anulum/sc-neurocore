@@ -49,6 +49,24 @@ class EquationIRRequestTests(unittest.TestCase):
         round_trip = EquationIRRequest.model_validate_json(request.model_dump_json())
         self.assertEqual(round_trip, request)
 
+    def test_omitted_seed_round_trips_as_the_documented_default_key(self) -> None:
+        """Omitted keys retain the exact deterministic default over public JSON."""
+        request = EquationIRRequest.model_validate_json(
+            json.dumps(
+                {
+                    "schema_version": "studio.equation-ir-request.v1",
+                    "model": {"equations": [{"name": "v", "expression": "rand() + I"}]},
+                }
+            )
+        )
+        self.assertEqual(request.model.rng_seed, "44257")
+        self.assertEqual(EquationIRRequest.model_validate_json(request.model_dump_json()), request)
+        schema = EquationIRRequest.model_json_schema()
+        self.assertEqual(
+            schema["$defs"]["AuthoredEquationModel"]["properties"]["rng_seed"]["default"],
+            "44257",
+        )
+
     def test_seed_refuses_numeric_loss_and_out_of_domain_text(self) -> None:
         """A key cannot travel through a JavaScript number or noncanonical text."""
         for value in (1, True, 1.5, "-1", "01", " 1", "1e3", str(2**64), ""):

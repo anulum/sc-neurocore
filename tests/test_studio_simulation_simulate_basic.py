@@ -1,16 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Studio simulation simulate basic
+# SC-NeuroCore — Studio equation simulation contracts
 
 """Focused suite: TestSimulateBasic from former test_studio_simulation.py."""
 
 from __future__ import annotations
 
-from tests.studio_simulation_support import *  # noqa: F403
+from sc_neurocore.neurons.seed_domain import DEFAULT_LFSR16_SEED
+from sc_neurocore.studio.simulation import simulate
+from sc_neurocore.studio.templates import TEMPLATES
 
 
 class TestSimulateBasic:
@@ -81,3 +83,23 @@ class TestSimulateBasic:
             current=0.0,
         )
         assert result["n_steps"] == 20
+
+    def test_default_seed_replays_complete_stochastic_state_and_events(self) -> None:
+        """Omitted and published default keys replay; distinct counter keys do not."""
+        runs = [
+            simulate(
+                equations=["dv/dt = rand() + I", "dw/dt = v - w"],
+                threshold="v > 2.5",
+                reset="v = 0",
+                init={"v": 0.75, "w": -0.25},
+                dt=0.125,
+                duration=8.0,
+                current=0.5,
+                seed=seed,
+            )
+            for seed in (None, DEFAULT_LFSR16_SEED, 44257, 1, 0)
+        ]
+        assert runs[0] == runs[1] == runs[2]
+        assert runs[0]["spike_count"] > 0
+        assert runs[0]["raw"] != runs[3]["raw"]
+        assert runs[0]["raw"] != runs[4]["raw"]

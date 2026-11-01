@@ -25,6 +25,14 @@ one.
 A model declares its domain with a ``SEED_DOMAIN`` class attribute. It is a
 statement of what that constructor already enforces, made per identity, not a
 new rule imposed on it.
+
+Attributes
+----------
+DEFAULT_LFSR16_SEED : int
+    Canonical deterministic LFSR16 fallback, ``0xACE1`` (44257), re-exported
+    from the shared stochastic primitive. Studio uses the same value when an
+    equation run or authored compiler request omits its random key. This does
+    not change the fresh-entropy meaning of ``None`` in model constructors.
 """
 
 from __future__ import annotations
@@ -32,6 +40,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Final
+
+from sc_neurocore.neurons._stochastic_threshold import (
+    DEFAULT_LFSR16_SEED as DEFAULT_LFSR16_SEED,
+)
 
 #: The domain every seeded model in the catalogue accepts, used where the
 #: model is unknown or declares nothing. It is the narrowest declared domain,
@@ -46,7 +58,7 @@ LFSR16_DOMAIN: Final = (0, 65535)
 
 #: The LFSR16 request seed that starts another seed's state: zero runs as the
 #: documented fallback ``0xACE1`` (the recurrence's all-zero state is dead).
-LFSR16_ALIASES: Final[Mapping[int, int]] = MappingProxyType({0: 0xACE1})
+LFSR16_ALIASES: Final[Mapping[int, int]] = MappingProxyType({0: DEFAULT_LFSR16_SEED})
 
 #: A NumPy-backed model's domain. `SeedSequence` accepts any non-negative
 #: integer; the upper bound is the largest a signed 64-bit field carries, which
@@ -164,6 +176,7 @@ def check_seed(model_name: str, seed: int, domain: SeedDomain) -> int:
 
 
 __all__ = [
+    "DEFAULT_LFSR16_SEED",
     "LFSR16_ALIASES",
     "LFSR16_DOMAIN",
     "NONZERO_SEED_DOMAIN",

@@ -20,7 +20,7 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
+from sc_neurocore.neurons.seed_domain import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import from_equations
 from sc_neurocore.studio.state_layout import (
     StateObservationError,
