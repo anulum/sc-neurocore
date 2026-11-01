@@ -64,15 +64,17 @@ jobs:
       # --- Rustdoc (Rust engine API) ---
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # nightly
         with:
-          toolchain: "1.98.1"
+          toolchain: nightly
 
       - name: Build and merge Rustdoc
         run: |
           # Rustdoc is best-effort: the MkDocs site is the primary deliverable, so a
           # nightly-rustdoc build/copy hiccup (e.g. a partial doc tree from an OOM-killed
           # run) must degrade to "MkDocs only", never fail the docs deploy. On a healthy
-          # run the full Rustdoc still merges.
-          cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items || true
+          # run the full Rustdoc still merges. A failed build is reported as a warning.
+          if ! cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items; then
+            echo "::warning title=Rustdoc::cargo +nightly doc failed; deploying MkDocs only"
+          fi
           # Find the doc output (could be target/doc or engine/target/doc)
           DOC_DIR=""
           if [ -d "target/doc/sc_neurocore_engine" ]; then

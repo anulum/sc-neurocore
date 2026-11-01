@@ -72,7 +72,7 @@ def test_manifest_python_compliance_commands_are_executable_and_pinned() -> None
         "--output-dir security/ci-security-packet"
     )
 
-    assert scanners["reuse"]["pinned_version"] == "reuse==6.2.0"
+    assert scanners["reuse"]["pinned_version"] == "reuse==6.3.0"
     assert scanners["reuse"]["command"] == "reuse --root . lint --json"
     assert scanners["reuse"]["blocking_policy"] == "blocking"
     assert scanners["reuse"]["allowed_to_fail_rationale"] is None
