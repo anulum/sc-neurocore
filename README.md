@@ -693,7 +693,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-24 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
+25 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -713,6 +713,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **dependency-audit.yml** | Complete audit of every committed dependency lock, per ecosystem |
 | **hdc-reference.yml** | Hyperdimensional-computing reference comparison |
 | **fuzz.yml** | Rust engine fuzzing with nightly cargo-fuzz targets |
+| **hdl-toolchain.yml** | Shared build and cache of the source-pinned Yosys and SBY toolchain for CI and synthesis |
 | **mlir-circt.yml** | Python MLIR round-trip and native IR numerical CIRCT/RTL comparisons |
 | **nir-canary.yml** | Latest NIR compatibility canary |
 | **scorecard.yml** | OpenSSF Scorecard |
