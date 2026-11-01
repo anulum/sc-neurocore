@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Rust security scanner regression tests
+
+"""Check Rust report custody and scanner command declarations."""
 
 from __future__ import annotations
 
@@ -40,6 +43,7 @@ def _load_manifest_tool() -> Any:
 
 
 def test_manifest_rust_commands_use_stdout_reports_not_lockfile_output() -> None:
+    """Use the exported manifest's root options and retain stdout evidence capture."""
     manifest_tool = _load_manifest_tool()
     manifest = manifest_tool.build_scanner_manifest()
     commands = {scanner["name"]: scanner["command"] for scanner in manifest["scanners"]}
@@ -48,13 +52,15 @@ def test_manifest_rust_commands_use_stdout_reports_not_lockfile_output() -> None
     assert "security/cargo_audit.json" not in commands["cargo-audit"]
 
     assert commands["cargo-deny"].startswith(
-        "cargo deny --format json --manifest-path engine/Cargo.toml check"
+        "cargo deny --format json --manifest-path engine/Cargo.toml "
+        "--config engine/deny.toml --locked check"
     )
     assert "--config engine/deny.toml" in commands["cargo-deny"]
     assert commands["cargo-deny"].endswith("licenses")
 
 
 def test_runner_captures_cargo_stdout_to_security_artifacts(tmp_path: Path) -> None:
+    """Retain the executor's JSON output in both configured evidence paths."""
     tool = _load_tool()
     calls: list[list[str]] = []
 
@@ -89,6 +95,7 @@ def test_runner_captures_cargo_stdout_to_security_artifacts(tmp_path: Path) -> N
 
 
 def test_runner_records_invalid_json_as_raw_output(tmp_path: Path) -> None:
+    """Preserve invalid output and both unsuccessful executor statuses."""
     tool = _load_tool()
 
     def fake_run(
@@ -117,6 +124,7 @@ def test_runner_records_invalid_json_as_raw_output(tmp_path: Path) -> None:
 
 
 def test_runner_captures_json_lines_from_stderr_when_stdout_is_empty(tmp_path: Path) -> None:
+    """Retain structured stderr when a scanner supplies no stdout report."""
     tool = _load_tool()
 
     def fake_run(

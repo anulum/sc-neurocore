@@ -973,7 +973,7 @@
     ]
   },
   "counts": {
-    "github_workflows": 24,
+    "github_workflows": 25,
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5519
+    "test_files": 5520
   },
   "documentation": {
     "public_pages": [
@@ -3329,6 +3329,7 @@
       ".github/workflows/docs.yml",
       ".github/workflows/fuzz.yml",
       ".github/workflows/hdc-reference.yml",
+      ".github/workflows/hdl-toolchain.yml",
       ".github/workflows/mlir-circt.yml",
       ".github/workflows/nir-canary.yml",
       ".github/workflows/pre-commit.yml",
@@ -4607,6 +4608,7 @@
       "tests/test_compte_wm_engine_binding.py",
       "tests/test_connor_stevens_mojo.py",
       "tests/test_constants.py",
+      "tests/test_container_build_parallelism.py",
       "tests/test_continual_continual_learner.py",
       "tests/test_continual_plasticity_config.py",
       "tests/test_contrastive_csdp_rule.py",

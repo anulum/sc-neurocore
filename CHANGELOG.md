@@ -12,6 +12,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refresh the compatible Python, frontend, Julia and Mojo dependency locks,
+  including CPU-only Torch 2.15.0, Mypy 2.4.1 and Node 26.13.0. Retain Rust
+  1.98.1 and Mojo 1.0.0 while their recorded migration constraints remain.
+- Use ndarray 0.17 with the NumPy 0.29 Rust bridge so native array types agree.
+- Pin the CPU container's Python, Rust and base image. Accept an optional
+  `BUILD_JOBS` build argument that limits both Cargo and CMake; leaving it unset
+  preserves normal or inherited build parallelism.
+- Update the pinned security scanners and their native command contracts,
+  including Syft 1.55.0 and Grype 0.121.0 for the locked Conda audit.
+- Build and cache source-pinned Yosys 0.70 and SBY 0.70 once for the CI test
+  shards and synthesis workflow. Read both legacy and current native resource
+  tables so the newer column order cannot silently produce zero counts.
 - Expose the shared HDL identifier validator through the public library API;
   Studio project loading and native co-simulation use that same documented contract.
 - Read-only model discovery API shared by the Studio catalogue, simulation,

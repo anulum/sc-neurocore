@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Security Scanner Workflow CI Wiring
+# SC-NeuroCore — Security scanner workflow CI wiring
 
 """Check scanner triggers, pinned tools, required lanes and retained evidence."""
 
@@ -100,8 +100,8 @@ def test_security_scanner_workflow_runs_rust_scanner_lane() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "cargo install cargo-audit --version 0.22.1 --locked" in run_text
-    assert "cargo install cargo-deny --version 0.19.6 --locked" in run_text
+    assert "cargo install cargo-audit --version 0.22.2 --locked" in run_text
+    assert "cargo install cargo-deny --version 0.20.2 --locked" in run_text
     assert "tools/security_scan/run_rust_security_scanners.py" in run_text
     assert "security/ci-security-packet/security/rust_scanner_summary.json" in run_text
 
@@ -133,7 +133,7 @@ def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
     ]
 
     assert "1.27.3" in setup_go_versions
-    assert "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8" in run_text
+    assert "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0" in run_text
     assert "tools/security_scan/run_osv_scanners.py" in run_text
     assert "security/ci-security-packet/security/osv_scanner.json" in run_text
     assert "security/ci-security-packet/security/osv_scanner_summary.json" in run_text
@@ -167,7 +167,7 @@ def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "go install github.com/anchore/syft/cmd/syft@v1.20.0" in run_text
+    assert "go install github.com/anchore/syft/cmd/syft@v1.55.0" in run_text
     assert "tools/security_scan/run_syft_cyclonedx_scanners.py" in run_text
     assert "security/ci-security-packet/security/sbom.cdx.json" in run_text
     assert "security/ci-security-packet/security/syft_cyclonedx_summary.json" in run_text
@@ -183,8 +183,8 @@ def test_security_scanner_workflow_runs_source_policy_scanner_lanes() -> None:
     assert (
         "python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt" in run_text
     )
-    assert "go install github.com/zricethezav/gitleaks/v8@v8.20.1" in run_text
-    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.58.1" in run_text
+    assert "go install github.com/zricethezav/gitleaks/v8@v8.30.1" in run_text
+    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.1" in run_text
 
     assert "tools/security_scan/run_semgrep_scanners.py" in run_text
     assert "security/ci-security-packet/security/semgrep.json" in run_text

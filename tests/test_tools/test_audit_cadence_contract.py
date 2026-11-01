@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Audit cadence workflow contract
 
+"""Keep scheduled inventory collection wired to its native prerequisites."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,20 +18,17 @@ import yaml
 
 def _repo_root() -> Path:
     """Return the repository root containing the audit cadence workflow."""
-
     return Path(__file__).resolve().parents[2]
 
 
 def _load_workflow() -> dict[str, Any]:
     """Load the audit cadence workflow through the same YAML surface CI uses."""
-
     workflow = _repo_root() / ".github" / "workflows" / "audit-cadence.yml"
     return cast(dict[str, Any], yaml.safe_load(workflow.read_text(encoding="utf-8")))
 
 
 def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
     """Return GitHub event configuration while preserving YAML's boolean key quirk."""
-
     raw_events = workflow.get("on")
     if raw_events is None:
         raw_events = cast(dict[Any, Any], workflow).get(True, {})
@@ -38,14 +37,12 @@ def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
 
 def _run_text(workflow: dict[str, Any]) -> str:
     """Return all shell snippets from the test-inventory job."""
-
     steps = workflow["jobs"]["test-inventory"]["steps"]
     return "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
 
 def test_audit_cadence_workflow_is_monthly_and_manual() -> None:
     """Keep the recurring audit cadence explicit and low-privilege."""
-
     workflow = _load_workflow()
     events = _workflow_events(workflow)
 
@@ -58,7 +55,6 @@ def test_audit_cadence_workflow_is_monthly_and_manual() -> None:
 
 def test_audit_cadence_collects_inventory_without_running_full_suite() -> None:
     """Ensure the monthly lane stays an inventory audit, not a full test run."""
-
     run_text = _run_text(_load_workflow())
 
     assert "python -m pytest tests/ --collect-only -q" in run_text
@@ -70,7 +66,6 @@ def test_audit_cadence_collects_inventory_without_running_full_suite() -> None:
 
 def test_audit_cadence_builds_collection_gating_backends() -> None:
     """Keep native parity modules collectable instead of module-skipped."""
-
     workflow = _load_workflow()
     steps = workflow["jobs"]["test-inventory"]["steps"]
     uses = [str(step.get("uses", "")) for step in steps if isinstance(step, dict)]
@@ -78,14 +73,14 @@ def test_audit_cadence_builds_collection_gating_backends() -> None:
 
     assert any(item.startswith("actions/setup-go@") for item in uses)
     assert any(item.startswith("prefix-dev/setup-pixi@") for item in uses)
-    assert "sudo apt-get install -y -qq iverilog yosys" in run_text
+    assert "sudo apt-get install -y -qq iverilog" in run_text
+    assert "hdl-toolchain" in workflow["jobs"]["test-inventory"]["needs"]
     assert "for model in rk4_neurons wilson_cowan" in run_text
     assert "mojo build --emit shared-lib --target-cpu x86-64-v3" in run_text
 
 
 def test_audit_cadence_is_documented_and_in_navigation() -> None:
     """Keep the workflow, public guide, and MkDocs navigation connected."""
-
     repo = _repo_root()
     docs = (repo / "docs" / "development" / "audit_cadence.md").read_text(encoding="utf-8")
     mkdocs = (repo / "mkdocs.yml").read_text(encoding="utf-8")

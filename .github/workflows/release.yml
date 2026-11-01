@@ -59,9 +59,11 @@ jobs:
         with:
           go-version: "1.27.3"
 
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # stable
+        with:
+          toolchain: "1.98.1"
 
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # nightly
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # nightly
         with:
           toolchain: nightly
 
@@ -83,19 +85,19 @@ jobs:
           # The fuzz subset imports the package, so the runtime lock is installed with it.
           python -m pip install --require-hashes -r requirements/fuzz.txt -r requirements/runtime.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
-          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
-          go install github.com/anchore/syft/cmd/syft@v1.20.0
-          go install github.com/zricethezav/gitleaks/v8@v8.20.1
-          go install github.com/aquasecurity/trivy/cmd/trivy@v0.58.1
+          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0
+          go install github.com/anchore/syft/cmd/syft@v1.55.0
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-          cargo install cargo-audit --version 0.22.1 --locked
-          cargo install cargo-deny --version 0.19.6 --locked
+          cargo install cargo-audit --version 0.22.2 --locked
+          cargo install cargo-deny --version 0.20.2 --locked
           cargo install cargo-fuzz --version 0.13.2 --locked
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "26.12.1"
+          node-version: "26.13.0"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 

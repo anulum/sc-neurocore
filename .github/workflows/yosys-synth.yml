@@ -15,11 +15,13 @@ on:
   push:
     paths:
       - ".github/workflows/yosys-synth.yml"
+      - ".github/workflows/hdl-toolchain.yml"
       - "hdl/**"
       - "tools/yosys_synth.*"
   pull_request:
     paths:
       - ".github/workflows/yosys-synth.yml"
+      - ".github/workflows/hdl-toolchain.yml"
       - "hdl/**"
 
 concurrency:
@@ -27,18 +29,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  hdl-toolchain:
+    if: github.event_name != 'push' || github.ref_type != 'tag'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/hdl-toolchain.yml
+
   synthesize:
     if: github.event_name != 'push' || github.ref_type != 'tag'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: [hdl-toolchain]
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install Yosys
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: stable-hdl-sdk
+          path: ${{ runner.temp }}/hdl-download
+
+      - name: Install the verified synthesis toolchain
+        shell: bash
         run: |
+          set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq yosys
+          sudo apt-get install -y -qq libreadline8t64 libtcl8.6
+          cd "$RUNNER_TEMP/hdl-download"
+          sha256sum --check --status scn-hdl.tar.gz.sha256
+          tar -xzf scn-hdl.tar.gz -C "$RUNNER_TEMP"
+          cat "$RUNNER_TEMP/scn-hdl/PROVENANCE.txt"
+          echo "$RUNNER_TEMP/scn-hdl/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/scn-hdl/bin/yosys" -V
 
       - name: Install sv2v
         run: |

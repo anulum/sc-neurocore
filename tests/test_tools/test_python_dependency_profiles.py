@@ -221,7 +221,7 @@ def test_every_development_install_in_ci_takes_the_hash_locked_cpu_torch() -> No
     the CPU build afterwards.
     """
     install = "python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt"
-    check = "assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
+    check = "assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
     steps: list[str] = []
     for path in sorted((REPO / ".github/workflows").glob("*.yml")):
         workflow = yaml.safe_load(path.read_text(encoding="utf-8"))

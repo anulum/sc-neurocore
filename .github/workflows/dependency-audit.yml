@@ -35,7 +35,7 @@ jobs:
           cache-dependency-path: requirements/security-scanners.txt
       - name: Install hashlocked audit dependencies
         run: python -m pip install --require-hashes -r requirements/security-scanners.txt
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # 1.98.1
         if: matrix.ecosystem == 'rust'
         with:
           toolchain: "1.98.1"
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: matrix.ecosystem == 'npm'
         with:
-          node-version: "26.12.1"
+          node-version: "26.13.0"
       - name: Install verified npm
         if: matrix.ecosystem == 'npm'
         uses: ./.github/actions/setup-npm

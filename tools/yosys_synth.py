@@ -6,9 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Yosys FPGA Synthesis Runner
 
-"""
-Yosys FPGA Synthesis Runner
-============================
+"""Run FPGA synthesis and read native resource counts.
 
 Invokes Yosys on each SC-NeuroCore HDL module and parses LUT/FF/BRAM counts.
 
@@ -96,6 +94,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 @dataclass
 class SynthResult:
+    """Measured FPGA resources and native synthesis completion for one top."""
+
     module: str
     luts: int
     ffs: int
@@ -106,11 +106,22 @@ class SynthResult:
 
 
 def parse_stat_output(text: str) -> dict[str, int]:
-    """Extract resource counts from the LAST Yosys 'stat' block.
+    """Extract resources from the last Yosys statistics block.
 
     Yosys prints intermediate stats during synth_xilinx; only the final
     block (from the explicit ``stat`` command) is authoritative.
-    Format: ``  <CELL_TYPE>   <count>``  (cell name before count).
+    Accept both the cell-first table in Yosys 0.33 and the count-first table
+    in the official Yosys 0.70 release.
+
+    Parameters
+    ----------
+    text : str
+        Native Yosys standard output containing intermediate and final tables.
+
+    Returns
+    -------
+    dict of str to int
+        LUT, flip-flop, block-RAM and DSP totals from the final table.
     """
     blocks = text.split("Printing statistics.")
     if len(blocks) < 2:
@@ -119,10 +130,12 @@ def parse_stat_output(text: str) -> dict[str, int]:
 
     counts: dict[str, int] = {"luts": 0, "ffs": 0, "bram": 0, "dsp": 0}
     for line in last_block.splitlines():
-        m = re.match(r"\s*(\S+)\s+(\d+)\s*$", line)
+        m = re.match(r"\s*(?P<cell>\S+)\s+(?P<count>\d+)\s*$", line)
+        if m is None:
+            m = re.match(r"\s*(?P<count>\d+)\s+(?P<cell>\S+)\s*$", line)
         if not m:
             continue
-        cell, n = m.group(1), int(m.group(2))
+        cell, n = m.group("cell"), int(m.group("count"))
         if cell in ("LUT1", "LUT2", "LUT3", "LUT4", "LUT5", "LUT6"):
             counts["luts"] += n
         elif cell in ("FDRE", "FDSE", "FDCE", "FDPE"):
@@ -179,6 +192,20 @@ def _build_yosys_commands(module: str, sources: list[Path]) -> str:
 
 
 def run_synth(module: str, sources: list[Path]) -> SynthResult:
+    """Synthesize a source closure and preserve native failure details.
+
+    Parameters
+    ----------
+    module : str
+        Top-level HDL module to synthesize for Xilinx 7-series.
+    sources : list of Path
+        Ordered HDL dependency closure for the requested top.
+
+    Returns
+    -------
+    SynthResult
+        Final resource counts, or the native failure and timeout reason.
+    """
     yosys_cmds = _build_yosys_commands(module, sources)
     try:
         result = subprocess.run(
@@ -209,6 +236,18 @@ def run_synth(module: str, sources: list[Path]) -> SynthResult:
 
 
 def format_markdown(results: list[SynthResult]) -> str:
+    """Format resource counts and native failures as a Markdown table.
+
+    Parameters
+    ----------
+    results : list of SynthResult
+        Ordered synthesis results, including any failed module.
+
+    Returns
+    -------
+    str
+        Table retaining each module's counts and completion status.
+    """
     lines = [
         "| Module | LUTs | FFs | BRAM | DSP | Status |",
         "|--------|-----:|----:|-----:|----:|--------|",
@@ -220,6 +259,13 @@ def format_markdown(results: list[SynthResult]) -> str:
 
 
 def main() -> int:
+    """Run the requested synthesis tops and write their optional report.
+
+    Returns
+    -------
+    int
+        Zero when the results satisfy the selected skip policy.
+    """
     ap = argparse.ArgumentParser(description="Yosys FPGA synthesis for SC-NeuroCore HDL")
     ap.add_argument("--module", type=str, help="single module to synthesize")
     ap.add_argument("--json", type=str, help="write results to JSON file")

@@ -124,7 +124,7 @@ jobs:
           test -n "${IMAGE_REF}"
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:0.70.0 image \
+            aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c image \
             --scanners vuln \
             --ignore-unfixed \
             --severity CRITICAL,HIGH \
@@ -140,7 +140,7 @@ jobs:
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "${PWD}:/work" \
-            aquasec/trivy:0.70.0 image \
+            aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c image \
             --scanners vuln \
             --ignore-unfixed \
             --severity CRITICAL,HIGH \

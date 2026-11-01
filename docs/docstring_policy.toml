@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1588
+expected_file_count = 1596
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6486,3 +6486,35 @@ rationale = "Native co-simulation consumes the public HDL identifier contract an
 [[file]]
 path = "tests/test_hdl_gen/test_ident.py"
 rationale = "Public validation, real project files and compiler entrypoints refuse malformed HDL names."
+
+[[file]]
+path = "tools/security_scan/run_rust_security_scanners.py"
+rationale = "Native Rust scanners use the reviewed advisory and licence commands and preserve their actual reports and exit statuses."
+
+[[file]]
+path = "tests/test_tools/test_run_rust_security_scanners.py"
+rationale = "The exported scanner commands retain evidence capture and the Cargo licence policy uses the supported root configuration options."
+
+[[file]]
+path = "tests/test_tools/test_run_syft_cyclonedx_scanners.py"
+rationale = "The current Syft pin, retained CycloneDX inventory and refusal of missing or invalid reports remain enforced by their owning contracts."
+
+[[file]]
+path = "tests/test_container_build_parallelism.py"
+rationale = "The production container shell forwards an explicit compiler job limit and preserves inherited or automatic parallelism otherwise."
+
+[[file]]
+path = "tools/yosys_synth.py"
+rationale = "Native synthesis reports retain final FPGA resource counts across legacy and current Yosys statistics formats."
+
+[[file]]
+path = "tests/test_tools/test_yosys_synth.py"
+rationale = "Measured native LIF resource tables, top-specific source closures and explicit partial-result policies remain enforced."
+
+[[file]]
+path = "tests/test_tools/test_icarus_verilog_dependency.py"
+rationale = "Native simulator version floors and their CI admission ordering remain required alongside the shared synthesis toolchain."
+
+[[file]]
+path = "tests/test_tools/test_audit_cadence_contract.py"
+rationale = "Scheduled inventory collection retains simulator, synthesis, native backend and documentation prerequisites without running the full suite."

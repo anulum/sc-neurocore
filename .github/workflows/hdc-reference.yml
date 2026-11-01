@@ -48,7 +48,7 @@ jobs:
 
       - name: Check reference identity
         run: |
-          python -c "import importlib.metadata, torch; assert importlib.metadata.version('torch-hd') == '5.8.4'; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
+          python -c "import importlib.metadata, torch; assert importlib.metadata.version('torch-hd') == '5.8.4'; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
 
       - name: HDC semantic and pinned reference comparisons
         run: python -m pytest tests/test_hdc/ -q -rs

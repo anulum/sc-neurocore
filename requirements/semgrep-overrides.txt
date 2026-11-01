@@ -10,7 +10,7 @@
 # v1 dependency; MCP v2 removes the FastMCP imports its server still uses.
 # CI installs the complete hash-locked set with --no-deps, and the real
 # repository scanner is the compatibility gate.
-click==8.3.3
+click==8.4.2
 # MCP 1.30 fixes unbounded stateful HTTP sessions (CVE-2026-59951).
 mcp==1.30.0
 # PyJWT 2.13.0 carries ten advisories first patched in 2.14.0; Semgrep
@@ -21,8 +21,8 @@ pyjwt==2.15.1
 # Semgrep's direct telemetry pins retain CVE-2026-114603 in API 1.37.
 # Keep its tracing/export/instrumentation dependencies on one patched family.
 # The real repository scan is the compatibility gate for these overrides.
-opentelemetry-api==1.45.1
-opentelemetry-sdk==1.45.1
-opentelemetry-exporter-otlp-proto-http==1.45.1
-opentelemetry-instrumentation-requests==0.66b1
-opentelemetry-instrumentation-threading==0.66b1
+opentelemetry-api==1.45.2
+opentelemetry-sdk==1.45.2
+opentelemetry-exporter-otlp-proto-http==1.45.2
+opentelemetry-instrumentation-requests==0.66b2
+opentelemetry-instrumentation-threading==0.66b2

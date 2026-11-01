@@ -21,7 +21,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 TYPING_SCANNER_SCHEMA_VERSION = "sc-neurocore.typing-scanners.v2"
-TYPING_TOOL_VERSIONS = {"pyright": "1.1.414", "mypy": "2.4.0"}
+TYPING_TOOL_VERSIONS = {"pyright": "1.1.414", "mypy": "2.4.1"}
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 

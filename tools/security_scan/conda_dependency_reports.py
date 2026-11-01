@@ -18,8 +18,8 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-SYFT_VERSION = "1.54.1"
-GRYPE_VERSION = "0.120.1"
+SYFT_VERSION = "1.55.0"
+GRYPE_VERSION = "0.121.0"
 GRYPE_DATABASE_URL = "https://grype.anchore.io/databases"
 
 

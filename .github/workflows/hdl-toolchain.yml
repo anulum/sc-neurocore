@@ -1,0 +1,138 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Shared stable synthesis and formal toolchain
+
+name: Stable HDL toolchain
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    concurrency:
+      group: stable-hdl-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+      - name: Install the locked SBY Python dependency
+        run: python -m pip install --require-hashes -r requirements/sby.txt
+      - name: Install the build and runtime dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bison binutils cmake flex g++-13 gcc-13 git \
+            libedit-dev libffi-dev libfl-dev libgmock-dev libgtest-dev \
+            libreadline-dev libreadline8t64 libtcl8.6 make pkg-config tcl-dev zlib1g-dev
+      - name: Identify the actual compiler and build dependencies
+        id: build-environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          dpkg-query -W -f='${binary:Package}=${Version}\n' \
+            bison binutils cmake flex g++-13 gcc-13 libedit-dev libffi-dev \
+            libfl-dev libgmock-dev libgtest-dev libreadline-dev libreadline8t64 \
+            libtcl8.6 make pkg-config tcl-dev zlib1g-dev \
+            > "$RUNNER_TEMP/scn-hdl-build-environment.txt"
+          cat "$RUNNER_TEMP/scn-hdl-build-environment.txt"
+          printf 'digest=%s\n' \
+            "$(sha256sum "$RUNNER_TEMP/scn-hdl-build-environment.txt" | cut -d ' ' -f 1)" \
+            >> "$GITHUB_OUTPUT"
+      - name: Restore the source-pinned HDL tools
+        id: tools
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/scn-hdl
+          key: ubuntu24-x64-hdl-yosys070-sby070-${{ steps.build-environment.outputs.digest }}-${{ hashFiles('.github/workflows/hdl-toolchain.yml', 'requirements/sby.txt') }}
+      - name: Build the verified stable sources once
+        if: steps.tools.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="$RUNNER_TEMP/scn-hdl-source"
+          build_root="$RUNNER_TEMP/scn-hdl-build"
+          tool_prefix="$RUNNER_TEMP/scn-hdl"
+          mkdir -p "$source_root/yosys"
+          curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
+            https://github.com/YosysHQ/yosys/releases/download/v0.70/yosys.tar.gz \
+            -o "$source_root/yosys.tar.gz"
+          echo "c6bd8b83aad633f6786fc861fe8f5dbc74c37bfae77f7bd0220e6f00f15f1d55  $source_root/yosys.tar.gz" \
+            | sha256sum --check --status
+          tar -xzf "$source_root/yosys.tar.gz" -C "$source_root/yosys"
+          test "$(cat "$source_root/yosys/.gitcommit")" = 0c11ea098be065e585a90a06e7b7da49936cf231
+          /usr/bin/cmake -S "$source_root/yosys" -B "$build_root" \
+            -DCMAKE_BUILD_TYPE=Release -DYOSYS_USE_BUNDLED_LIBS=ON \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc-13 -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 \
+            -DCMAKE_INSTALL_PREFIX="$tool_prefix" \
+            -DPython3_EXECUTABLE="$(command -v python)"
+          /usr/bin/cmake --build "$build_root" --parallel "$(nproc)"
+          /usr/bin/ctest --test-dir "$build_root/tests/unit" --output-on-failure \
+            --no-tests=error --parallel "$(nproc)"
+          /usr/bin/cmake --install "$build_root" --strip
+          git init -q "$source_root/sby"
+          git -C "$source_root/sby" remote add origin https://github.com/YosysHQ/sby
+          for _ in 1 2 3; do
+            git -C "$source_root/sby" fetch -q --depth 1 origin \
+              refs/tags/v0.70:refs/tags/v0.70 && break
+            sleep 2
+          done
+          test "$(git -C "$source_root/sby" rev-parse refs/tags/v0.70)" = 25affa40dc0bfe613f4c88be2d17ac5de6657f2f
+          git -C "$source_root/sby" checkout -q --detach b1a1e98cba941ec8433f8dc27f416cd7bb7f14be
+          test "$(git -C "$source_root/sby" rev-parse HEAD)" = b1a1e98cba941ec8433f8dc27f416cd7bb7f14be
+          make -C "$source_root/sby" install PREFIX="$tool_prefix"
+      - name: Retain upstream and bundled dependency notices
+        if: steps.tools.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for component in yosys sby; do
+            notices="$RUNNER_TEMP/scn-hdl/share/licenses/$component"
+            mkdir -p "$notices"
+            (
+              cd "$RUNNER_TEMP/scn-hdl-source/$component"
+              find . -type f \( -iname '*copying*' -o -iname '*license*' -o -iname '*copyright*' \) -print0 \
+                | tar --null --files-from=- -cf -
+            ) | tar -C "$notices" -xf -
+          done
+      - name: Verify and package the toolchain for this run
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_prefix="$RUNNER_TEMP/scn-hdl"
+          test -s "$tool_prefix/share/licenses/yosys/COPYING"
+          test -s "$tool_prefix/share/licenses/sby/COPYING"
+          version="$("$tool_prefix/bin/yosys" -V)"
+          # The official release archive lacks Git distance metadata; its
+          # reported +post source tree is identical to the v0.70 tag tree.
+          case "$version" in
+            "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231,"*) ;;
+            *) printf '%s\n' "$version" >&2; exit 1 ;;
+          esac
+          test "$("$tool_prefix/bin/sby" --version)" = "SBY v0.70"
+          {
+            printf '%s\n' "$version"
+            "$tool_prefix/bin/sby" --version
+            printf '%s\n' 'Yosys asset SHA256 c6bd8b83aad633f6786fc861fe8f5dbc74c37bfae77f7bd0220e6f00f15f1d55'
+            printf '%s\n' 'SBY source b1a1e98cba941ec8433f8dc27f416cd7bb7f14be'
+          } > "$tool_prefix/PROVENANCE.txt"
+          tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/scn-hdl.tar.gz" scn-hdl
+          cd "$RUNNER_TEMP"
+          sha256sum scn-hdl.tar.gz > scn-hdl.tar.gz.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: stable-hdl-sdk
+          path: |
+            ${{ runner.temp }}/scn-hdl.tar.gz
+            ${{ runner.temp }}/scn-hdl.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7

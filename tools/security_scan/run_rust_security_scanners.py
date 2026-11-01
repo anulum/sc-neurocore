@@ -23,6 +23,13 @@ RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the repository and evidence-directory arguments.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser for the public Rust scanner command.
+    """
     parser = argparse.ArgumentParser(description="Run Rust security scanners.")
     parser.add_argument(
         "--repo-root",
@@ -106,6 +113,29 @@ def run_rust_scanners(
     output_dir: Path,
     run_command: RunCommand = subprocess.run,
 ) -> dict[str, Any]:
+    """Capture native advisory and licence results without rewriting the lock.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Checkout containing the committed Rust graph and licence policy.
+    output_dir : Path
+        Packet root receiving both scanner reports and their summary.
+    run_command : callable
+        Process executor; the default runs the installed Cargo subcommands.
+
+    Returns
+    -------
+    dict
+        Actual exit statuses, report paths and combined pass status.
+
+    Raises
+    ------
+    OSError
+        A scanner cannot start or its evidence cannot be written.
+    subprocess.TimeoutExpired
+        A native scanner exceeds its existing process budget.
+    """
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
 
@@ -123,9 +153,10 @@ def run_rust_scanners(
             "json",
             "--manifest-path",
             "engine/Cargo.toml",
-            "check",
             "--config",
             "engine/deny.toml",
+            "--locked",
+            "check",
             "licenses",
         ],
         repo_root=repo_root,
@@ -163,6 +194,20 @@ def main(
     *,
     runner: Callable[..., dict[str, Any]] = run_rust_scanners,
 ) -> int:
+    """Run the selected scanners and return their combined exit status.
+
+    Parameters
+    ----------
+    argv : list of str or None, optional
+        Command arguments; None reads the process arguments.
+    runner : callable
+        Scanner entry point receiving the parsed repository and packet paths.
+
+    Returns
+    -------
+    int
+        Zero only when the scanner summary explicitly reports success.
+    """
     args = build_parser().parse_args(argv)
     summary = runner(repo_root=args.repo_root, output_dir=args.output_dir)
     print(json.dumps(summary, indent=2, sort_keys=True))

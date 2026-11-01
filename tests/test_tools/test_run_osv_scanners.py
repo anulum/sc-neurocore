@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# © Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — OSV scanner regression tests
@@ -58,7 +58,7 @@ def test_manifest_osv_command_uses_packet_runner_and_v2_pin() -> None:
     manifest = manifest_tool.build_scanner_manifest()
     scanners = {scanner["name"]: scanner for scanner in manifest["scanners"]}
 
-    assert scanners["osv-scanner"]["pinned_version"] == "osv-scanner==2.3.8"
+    assert scanners["osv-scanner"]["pinned_version"] == "osv-scanner==2.7.0"
     assert scanners["osv-scanner"]["command"] == (
         "python tools/security_scan/run_osv_scanners.py --output-dir security/ci-security-packet"
     )
@@ -87,7 +87,7 @@ def test_semgrep_overrides_remove_mcp_waivers() -> None:
 
     for ghsa in ("GHSA-vj7q-gjh5-988w", "GHSA-jpw9-pfvf-9f58", "GHSA-hvrp-rf83-w775"):
         assert ghsa not in ignored
-    assert "click==8.3.3" in overrides
+    assert "click==8.4.2" in overrides
     assert "mcp==1.30.0" in overrides
 
 
@@ -95,7 +95,7 @@ def test_semgrep_hash_lock_materializes_security_overrides() -> None:
     """The installed scanner lock must not silently ignore its safe overrides."""
     locked = (_repo_root() / "requirements" / "semgrep.txt").read_text(encoding="utf-8")
 
-    assert "click==8.3.3" in locked
+    assert "click==8.4.2" in locked
     assert "mcp==1.30.0" in locked
     assert "click==8.1.8" not in locked
     assert "mcp==1.23.3" not in locked

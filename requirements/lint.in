@@ -1,6 +1,6 @@
 ruff==0.17.3
 bandit==1.9.4
-mypy==2.4.0
+mypy==2.4.1
 numpy
 tomli==2.5.0
 types-defusedxml==0.7.0.20260504

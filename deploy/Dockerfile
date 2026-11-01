@@ -1,13 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — CPU container image
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_VERSION=3.12
-ARG RUST_VERSION=stable
+ARG PYTHON_VERSION=3.12.16
+ARG RUST_VERSION=1.98.1
 
 # ── Stage 1: Rust engine build ───────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS rust-builder
+FROM python:${PYTHON_VERSION}-slim@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS rust-builder
 
 ARG RUST_VERSION
+ARG BUILD_JOBS
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl build-essential cmake clang libclang-dev pkg-config \
@@ -30,11 +37,14 @@ COPY engine/ ./engine/
 COPY bridge/ ./bridge/
 COPY README.md ./README.md
 
-RUN cd bridge && maturin build --release --locked --interpreter python3 \
+RUN if [ -n "${BUILD_JOBS:-}" ]; then \
+        export CARGO_BUILD_JOBS="${BUILD_JOBS}" CMAKE_BUILD_PARALLEL_LEVEL="${BUILD_JOBS}"; \
+    fi \
+    && cd bridge && maturin build --release --locked --interpreter python3 \
     && ls /build/target/wheels/
 
 # ── Stage 2: Python package build ────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS py-builder
+FROM python:${PYTHON_VERSION}-slim@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS py-builder
 
 ARG INSTALL_EXTRAS=""
 
@@ -72,7 +82,7 @@ COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
 RUN python -m installer --prefix=/install /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS runtime
+FROM python:${PYTHON_VERSION}-slim@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS runtime
 
 LABEL org.opencontainers.image.title="SC-NeuroCore" \
       org.opencontainers.image.description="Universal Stochastic Computing Framework for Neuromorphic Hardware" \

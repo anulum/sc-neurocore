@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Security scanner manifest regression tests
 
 """Contract tests of the security scanner manifest: scanner set, fields, validation and the CLI."""
 
@@ -69,9 +70,9 @@ def test_manifest_scanner_versions_match_governed_locks() -> None:
     scanners = {scanner["name"]: scanner for scanner in tool.build_scanner_manifest()["scanners"]}
 
     assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
-    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.182.1"
+    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.183.0"
     assert scanners["ruff"]["pinned_version"] == "ruff==0.17.3"
-    assert scanners["mypy"]["pinned_version"] == "mypy==2.4.0"
+    assert scanners["mypy"]["pinned_version"] == "mypy==2.4.1"
     repo = Path(__file__).resolve().parents[2]
     for name, source in (("semgrep", "semgrep.in"), ("ruff", "lint.in"), ("mypy", "lint.in")):
         assert scanners[name]["pinned_version"] in (repo / "requirements" / source).read_text()

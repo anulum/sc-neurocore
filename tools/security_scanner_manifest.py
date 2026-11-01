@@ -111,7 +111,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="osv-scanner==2.3.8",
+        pinned_version="osv-scanner==2.7.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -129,7 +129,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="Rust security maintainer",
         noise="low",
-        pinned_version="cargo-audit==0.22.1",
+        pinned_version="cargo-audit==0.22.2",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -137,7 +137,10 @@ _MANDATORY_SCANNERS = (
         ecosystem="rust",
         cadence="on-push",
         blocking_policy="blocking",
-        command="cargo deny --format json --manifest-path engine/Cargo.toml check --config engine/deny.toml licenses",
+        command=(
+            "cargo deny --format json --manifest-path engine/Cargo.toml "
+            "--config engine/deny.toml --locked check licenses"
+        ),
         inputs=(
             _input(
                 path="Cargo.lock",
@@ -147,7 +150,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="Rust security maintainer",
         noise="low",
-        pinned_version="cargo-deny==0.19.6",
+        pinned_version="cargo-deny==0.20.2",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -170,7 +173,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="medium",
-        pinned_version="gitleaks==8.20.1",
+        pinned_version="gitleaks==8.30.1",
         allowed_to_fail_rationale="Gitleaks false positive noise is expected during docs and test fixture churn; triage is performed weekly.",
     ),
     ScannerManifestEntry(
@@ -193,7 +196,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.182.1",
+        pinned_version="semgrep==1.183.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -214,7 +217,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="medium",
-        pinned_version="trivy==0.58.1",
+        pinned_version="trivy==0.76.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -232,7 +235,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="syft==1.20.0",
+        pinned_version="syft==1.55.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -248,7 +251,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore docs compliance owner",
         noise="low",
-        pinned_version="reuse==6.2.0",
+        pinned_version="reuse==6.3.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -299,7 +302,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore typing owner",
         noise="low",
-        pinned_version="mypy==2.4.0",
+        pinned_version="mypy==2.4.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

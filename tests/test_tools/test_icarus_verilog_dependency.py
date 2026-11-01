@@ -197,7 +197,8 @@ def test_ci_workflow_checks_icarus_verilog_after_install() -> None:
 
     install_run = steps[install_index]["run"]
     verify_run = steps[verify_index]["run"]
-    assert "apt-get install -y -qq cvc5 git iverilog make verilator yosys" in install_run
+    assert "apt-get install -y -qq cvc5 git iverilog make verilator" in install_run
+    assert "hdl-toolchain" in workflow["jobs"]["test"]["needs"]
     assert "python tools/check_icarus_verilog.py --minimum-major 12" in verify_run
     assert install_index < verify_index < package_index
 

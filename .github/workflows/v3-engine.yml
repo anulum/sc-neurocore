@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # 1.98.1
         with:
           toolchain: "1.98.1"
           components: clippy, rustfmt
@@ -67,7 +67,7 @@ jobs:
         run: cargo check --manifest-path engine/Cargo.toml --no-default-features
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit@0.22.1
+        run: cargo install cargo-audit --version 0.22.2 --locked
 
       - name: Cargo audit
         run: |
@@ -75,10 +75,10 @@ jobs:
           cargo audit
 
       - name: Install cargo-deny
-        run: cargo install cargo-deny@0.19.0
+        run: cargo install cargo-deny --version 0.20.2 --locked
 
       - name: Cargo deny
-        run: cargo deny --manifest-path engine/Cargo.toml check licenses advisories
+        run: cargo deny --manifest-path engine/Cargo.toml --config engine/deny.toml --locked check licenses advisories
 
   test-engine:
     name: Test Engine (${{ matrix.os }})
@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # 1.98.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # 1.98.1
         with:
           toolchain: "1.98.1"
 

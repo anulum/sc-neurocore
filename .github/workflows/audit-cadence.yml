@@ -21,9 +21,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  hdl-toolchain:
+    uses: ./.github/workflows/hdl-toolchain.yml
+
   test-inventory:
     name: Test Inventory Audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: [hdl-toolchain]
     permissions:
       contents: read
     env:
@@ -59,12 +63,31 @@ jobs:
         run: |
           python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
           python tools/ci_install_dev.py
-          python -c "import torch; assert torch.__version__ == '2.14.1+cpu'; assert torch.version.cuda is None"
+          python -c "import torch; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
 
       - name: Install collection-gating HDL tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq iverilog yosys
+          sudo apt-get install -y -qq iverilog libreadline8t64 libtcl8.6
+          python -m pip install --require-hashes -r requirements/sby.txt
+
+      - name: Retrieve this run's shared HDL toolchain
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: stable-hdl-sdk
+          path: ${{ runner.temp }}/hdl-download
+
+      - name: Install the verified synthesis and formal tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/hdl-download"
+          sha256sum --check --status scn-hdl.tar.gz.sha256
+          tar -xzf scn-hdl.tar.gz -C "$RUNNER_TEMP"
+          cat "$RUNNER_TEMP/scn-hdl/PROVENANCE.txt"
+          echo "$RUNNER_TEMP/scn-hdl/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/scn-hdl/bin/yosys" -V
+          "$RUNNER_TEMP/scn-hdl/bin/sby" --version
 
       - name: Build collection-gating native backends
         shell: bash

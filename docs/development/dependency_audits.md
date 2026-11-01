@@ -94,13 +94,13 @@ particular CPU wheel has no build-specific vulnerability.
 ### Conda inventory and vulnerability matching
 
 The Pixi lane installs its committed Mojo environment with `pixi install --locked`.
-Syft 1.54.1 catalogs its installed `conda-meta/*.json` records. Each URL, SHA-256,
+Syft 1.55.0 catalogs its installed `conda-meta/*.json` records. Each URL, SHA-256,
 name, version and build must match the lock, with no omitted or additional package.
 Metadata and lock bytes are checked again after scanning. The current adapter
 requires one default `linux-64` environment and Conda artifact records; additional
 platforms, environments or PyPI records fail until they have a maintained adapter.
 
-Grype 0.120.1 reads that exact Syft SBOM and uses the public Anchore vulnerability
+Grype 0.121.0 reads that exact Syft SBOM and uses the public Anchore vulnerability
 database. The Linux scanner archives are SHA-256 pinned in
 `tools/install_conda_audit_scanners.sh`. The database must have a valid hash,
 be no older than five days and successfully check for updates. Findings of every
