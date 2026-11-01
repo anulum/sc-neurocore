@@ -579,6 +579,11 @@ jobs:
           python tools/ci_install_dev.py
           python -c "import torch; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
 
+      - name: Install locked Python compliance scanners
+        run: >-
+          python -m pip install --require-hashes --only-binary :all:
+          -r requirements/security-scanners.txt
+
       # All coverage shards install it, so each batch runs in the same
       # environment as it did in the former single instrumented leg.
       - name: Install native Studio desktop dependencies

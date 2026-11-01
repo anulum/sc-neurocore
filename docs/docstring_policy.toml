@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1617
+expected_file_count = 1621
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6602,3 +6602,19 @@ rationale = "Corrupt actual acted-on storage replies and verify graph HTTP uncer
 [[file]]
 path = "tests/test_studio_network_graph_input_contracts.py"
 rationale = "Public network graph validation preserves located input refusals, constructor defaults, deterministic streams and server-selected work budgets before execution."
+
+[[file]]
+path = "src/sc_neurocore/studio/synthesis_cell_costs.py"
+rationale = "Native FPGA primitive costs preserve exact family accounting, zero-cost debug hierarchy metadata and refusal to guess the cost of unknown hardware."
+
+[[file]]
+path = "tests/test_dcls_rtl_emission.py"
+rationale = "Real Rust DCLS contracts and native structured Yosys statistics verify the maintained layer RTL without depending on human-readable statistics formatting."
+
+[[file]]
+path = "tests/test_studio_synthesis_capacity_verdict.py"
+rationale = "Native family netlists retain exact version-bound resource counts, known hierarchical fit and unknown physical blackbox refusal."
+
+[[file]]
+path = "tests/test_cosim_wang_buzsaki_catalogue.py"
+rationale = "Committed Q16.16 Wang-Buzsaki RTL is bound to its live compiler lowering, original event-count envelope and full native synthesis."

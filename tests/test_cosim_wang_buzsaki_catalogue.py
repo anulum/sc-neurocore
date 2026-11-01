@@ -6,8 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — committed Wang-Buzsaki RTL evidence
 
+"""Check committed Wang-Buzsaki RTL against its compiler and native tools."""
+
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import re
 import shutil
@@ -35,11 +38,13 @@ def _compiler_rtl() -> str:
 
 
 def test_committed_rtl_is_the_current_q1616_compiler_lowering() -> None:
+    """Bind the committed fixed-point RTL bytes to the current public compiler lowering."""
     assert RTL.read_text(encoding="utf-8") == _compiler_rtl()
 
 
 @pytest.mark.skipif(shutil.which("iverilog") is None, reason="iverilog is required")
 def test_committed_rtl_matches_the_bounded_source_event_count() -> None:
+    """Compare real committed RTL events with the original bounded neuron reference."""
     macro_steps = 20
     substeps = 50
     source = WangBuzsakiNeuron()
@@ -53,6 +58,7 @@ def test_committed_rtl_matches_the_bounded_source_event_count() -> None:
         data_width=32,
         fraction=16,
     )
+    testbench = "\n".join(line for line in testbench.splitlines() if "$dump" not in line)
     with tempfile.TemporaryDirectory() as tmpdir:
         work = Path(tmpdir)
         testbench_path = work / "tb.v"
@@ -80,13 +86,44 @@ def test_committed_rtl_matches_the_bounded_source_event_count() -> None:
 
 
 @pytest.mark.skipif(shutil.which("yosys") is None, reason="Yosys is required")
-def test_yosys_synthesises_committed_rtl() -> None:
+def test_yosys_synthesises_committed_rtl(tmp_path: Path) -> None:
+    """Lower every process and arithmetic cell, then map the complete RTL to LUTs."""
+    yosys = shutil.which("yosys")
+    abc = shutil.which("yosys-abc")
+    assert yosys is not None and abc is not None
+    assert Path(abc).samefile(Path(yosys).with_name(Path(abc).name))
+    (tmp_path / "map.abc").write_text("strash;\nif -K 4;\n")
+    script = "; ".join(
+        [
+            f"read_verilog {RTL}",
+            f"synth -top {MODULE} -run begin:fine",
+            "select -assert-none p:*",
+            "memory_map",
+            "techmap",
+            "select -assert-none p:*",
+            "opt_clean",
+            "opt_expr",
+            "opt_clean",
+            "abc -exe yosys-abc -lut 4 -script map.abc",
+            "clean",
+            "check -assert",
+            f"tee -o statistics.json stat -json -top {MODULE}",
+            "write_verilog -noattr mapped.v",
+        ]
+    )
     completed = subprocess.run(
-        ["yosys", "-q", "-p", f"read_verilog {RTL}; synth -top {MODULE}; stat"],
-        cwd=ROOT,
+        [yosys, "-Q", "-T", "-l", "synthesis.log", "-p", script],
+        cwd=tmp_path,
         check=False,
         capture_output=True,
         text=True,
         timeout=300,
     )
     assert completed.returncode == 0, completed.stderr
+    module = json.loads((tmp_path / "statistics.json").read_text())["modules"][f"\\{MODULE}"]
+    cells = module["num_cells_by_type"]
+    assert module["num_processes"] == 0
+    assert module["num_memories"] == 0
+    assert cells.get("$lut", 0) > 0
+    assert all(name in {"$lut", "$scopeinfo"} or name.startswith("$_") for name in cells)
+    assert (tmp_path / "mapped.v").stat().st_size > 0

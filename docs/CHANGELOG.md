@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Read DCLS synthesis statistics from native JSON, preserve FPGA fit verdicts for hierarchy debug metadata, and qualify resource counts against each supported Yosys version.
+- Qualify the complete committed Q16.16 Wang–Buzsaki RTL through four-input LUT mapping with the paired native ABC executable, retaining the synthesis timeout and source event-count check.
+- Install the locked compliance scanners in every native test shard and refresh the five-language evolutionary benchmark from its current sources.
+
 - Run network-canvas simulations as durable supervised process jobs, with graph-bound
   submission, history, cancellation and result downloads that survive reconnects and
   API restarts. Preserve the existing synchronous simulation limits and numerical results.

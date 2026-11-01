@@ -11,27 +11,28 @@
 from __future__ import annotations
 
 import shutil
+import re
 
 import pytest
 
 from sc_neurocore.studio.synthesis import (
-    _CAPACITY_DEVICE,
-    _DEVICE_CAPACITY,
-    _TARGETS,
     capacity_sentence,
     capacity_verdict,
     estimate_resources,
     run_synthesis,
 )
+from sc_neurocore.studio.synthesis_profiles import _CAPACITY_DEVICE, _DEVICE_CAPACITY, _TARGETS
 
 
 def test_the_up5k_has_its_eight_dsp_blocks() -> None:
+    """Retain the UltraPlus device's eight physical DSP blocks."""
     # Lattice iCE40 UltraPlus data sheet: the UP5K has 8 SB_MAC16 blocks. The
     # table said 0, which made any multiplier "not fit".
     assert _DEVICE_CAPACITY["ice40"] == {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 8}
 
 
 def test_a_design_within_every_capacity_fits() -> None:
+    """Accept a design whose known resources fit every device limit."""
     verdict = capacity_verdict(
         {"luts": 1413, "ffs": 85, "brams": 0, "dsps": 0}, _DEVICE_CAPACITY["ice40"]
     )
@@ -44,6 +45,7 @@ def test_a_design_within_every_capacity_fits() -> None:
 
 
 def test_each_resource_beyond_the_device_is_named_with_both_counts() -> None:
+    """Report both required and available counts for every exceeded resource."""
     # The measured 20-neuron network: 6237 LUTs against the UP5K's 5280.
     verdict = capacity_verdict(
         {"luts": 6237, "ffs": 340, "brams": 0, "dsps": 9}, _DEVICE_CAPACITY["ice40"]
@@ -60,10 +62,12 @@ def test_each_resource_beyond_the_device_is_named_with_both_counts() -> None:
 
 
 def test_a_target_without_capacity_data_gets_no_verdict() -> None:
+    """Leave a target without device-capacity evidence undecided."""
     assert capacity_verdict({"luts": 10**9}, {}) == {}
 
 
 def test_an_estimate_is_judged_the_same_way() -> None:
+    """Apply the device-capacity contract to estimated resources."""
     small = estimate_resources(10, "ice40")
     large = estimate_resources(10_000, "ice40")
     assert small["fits_device"] is True
@@ -72,6 +76,7 @@ def test_an_estimate_is_judged_the_same_way() -> None:
 
 
 def test_every_target_names_the_device_its_capacity_describes() -> None:
+    """Bind each family to its documented reference device capacity."""
     assert set(_CAPACITY_DEVICE) == set(_TARGETS) == set(_DEVICE_CAPACITY)
     # nextpnr-ecp5 --25k: 24288 LUT4 and TRELLIS_FF (the table said 24576).
     assert _DEVICE_CAPACITY["ecp5"] == {"luts": 24288, "ffs": 24288, "brams": 56, "dsps": 28}
@@ -82,6 +87,7 @@ def test_every_target_names_the_device_its_capacity_describes() -> None:
 
 
 def test_cells_of_unknown_cost_leave_the_verdict_open() -> None:
+    """Preserve an unknown fit when an uncounted physical cell remains."""
     verdict = capacity_verdict(
         {"luts": 10, "ffs": 10, "brams": 0, "dsps": 0},
         _DEVICE_CAPACITY["gowin"],
@@ -94,6 +100,7 @@ def test_cells_of_unknown_cost_leave_the_verdict_open() -> None:
 
 
 def test_counts_that_already_overflow_decide_despite_unknown_cells() -> None:
+    """Reject a known capacity overflow even with additional unknown cells."""
     verdict = capacity_verdict(
         {"luts": 30_000}, _DEVICE_CAPACITY["gowin"], uncounted={"RAM16SDP4": 1}
     )
@@ -118,24 +125,38 @@ endmodule
 
 @pytest.mark.skipif(shutil.which("yosys") is None, reason="yosys is not installed")
 @pytest.mark.parametrize(
-    ("target", "expected"),
+    ("target", "legacy_expected", "sdk_expected"),
     [
-        # nextpnr-ecp5 --25k on the same netlist: 24 LUT4, 56 TRELLIS_FF,
-        # 1 DP16KD, 1 MULT18X18D (the 12 carry cells are 2 LUT4s each).
-        ("ecp5", {"luts": 24, "ffs": 56, "brams": 1, "dsps": 1}),
+        # Yosys 0.33 emits 12 CCU2C; 0.70 adds one LUT4. Each carry cell
+        # occupies two LUT4 sites, and both flows retain 56 FFs, RAM and DSP.
+        (
+            "ecp5",
+            {"luts": 24, "ffs": 56, "brams": 1, "dsps": 1},
+            {"luts": 25, "ffs": 56, "brams": 1, "dsps": 1},
+        ),
         # One B-SRAM, not 64 LUT-RAMs counted as block RAM; wide multiplexers
         # are not LUTs.
-        ("gowin", {"brams": 1, "dsps": 0}),
+        ("gowin", {"brams": 1, "dsps": 0}, {"brams": 1, "dsps": 1}),
         # The Xilinx target failed on every design ("-json" is not an option
         # of synth_xilinx). 16 RAM256X1S LUT-RAMs are 64 LUTs, not 16 BRAMs.
-        ("xilinx", {"brams": 0, "dsps": 1}),
-        ("ice40", {"brams": 1, "dsps": 0}),
+        ("xilinx", {"brams": 0, "dsps": 1}, {"brams": 0, "dsps": 1}),
+        ("ice40", {"brams": 1, "dsps": 0}, {"brams": 1, "dsps": 0}),
     ],
 )
-def test_real_netlists_are_counted_per_family(target: str, expected: dict[str, int]) -> None:
+def test_real_netlists_are_counted_per_family(
+    target: str, legacy_expected: dict[str, int], sdk_expected: dict[str, int]
+) -> None:
+    """Match exact physical-resource counts for each qualified native Yosys baseline."""
     result = run_synthesis(_MIXED_DESIGN, target)
 
     assert result["success"] is True, result.get("error")
+    version = next(
+        tool["version"] for tool in result["target_provenance"]["tools"] if tool["key"] == "yosys"
+    )
+    assert isinstance(version, str)
+    qualified = re.match(r"Yosys (0\.33|0\.70)(?=[ +])", version)
+    assert qualified is not None, f"Qualify physical resource counts for {version}"
+    expected = {"0.33": legacy_expected, "0.70": sdk_expected}[qualified.group(1)]
     assert {key: result["resources"][key] for key in expected} == expected
     assert result["uncounted_cells"] == {}
     assert result["fits_device"] is True
@@ -143,6 +164,7 @@ def test_real_netlists_are_counted_per_family(target: str, expected: dict[str, i
 
 
 def test_a_yosys_failure_is_told_by_its_error_lines() -> None:
+    """Preserve native error lines when surrounding Yosys help is verbose."""
     from sc_neurocore.studio.synthesis import _yosys_failure_message
 
     # Standard output can end mid-line; the error from standard error follows it.
@@ -152,3 +174,41 @@ def test_a_yosys_failure_is_told_by_its_error_lines() -> None:
     )
     assert _yosys_failure_message("x" * 600).startswith("Synthesis failed. Log:\n")
     assert _yosys_failure_message("x" * 600).endswith("x" * 500)
+
+
+_HIERARCHICAL_DESIGN = """
+module leaf(input clk, input a, input b, output reg y);
+  always @(posedge clk) y <= a & b;
+endmodule
+module top(input clk, input a, input b, output y);
+  leaf child(.clk(clk), .a(a), .b(b), .y(y));
+endmodule
+"""
+
+
+@pytest.mark.parametrize("target", ["ice40", "ecp5", "gowin", "xilinx"])
+def test_hierarchy_metadata_keeps_the_native_device_fit_known(target: str) -> None:
+    """Judge real hierarchical mapped logic without charging debug scope metadata."""
+    result = run_synthesis(_HIERARCHICAL_DESIGN, target)
+
+    assert result["success"] is True, result.get("error")
+    assert result["resources"]["luts"] > 0
+    assert result["resources"]["ffs"] > 0
+    assert result["uncounted_cells"] == {}
+    assert result["fits_device"] is True
+
+
+@pytest.mark.parametrize("target", ["ice40", "ecp5", "gowin", "xilinx"])
+def test_an_unknown_native_blackbox_still_leaves_device_fit_open(target: str) -> None:
+    """Keep a real unknown hardware primitive distinct from zero-cost debug metadata."""
+    design = """
+(* blackbox *) module CUSTOM(input a, output y); endmodule
+module top(input a, output y);
+  CUSTOM unknown(.a(a), .y(y));
+endmodule
+"""
+    result = run_synthesis(design, target)
+
+    assert result["success"] is True, result.get("error")
+    assert result["uncounted_cells"] == {"CUSTOM": 1}
+    assert result["fits_device"] is None

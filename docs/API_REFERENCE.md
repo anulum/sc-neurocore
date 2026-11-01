@@ -55213,22 +55213,6 @@ Public terminal report plus private implementation artifacts.
 ### Function `check_tools()`
 Detect which EDA tools are installed.
 
-### Function `cell_cost(target, cell_type)`
-Return what one cell takes of the judged resources, or None if unknown.
-
-Parameters
-----------
-target : str
-    Target identifier.
-cell_type : str
-    The Yosys cell type.
-
-Returns
--------
-dict&#91;str, int&#93; or None
-    Resource amounts, empty for a cell that takes none, None for a cell
-    whose cost the Studio does not know.
-
 ### Function `capacity_verdict(resources, capacity, *, device, uncounted)`
 Say whether a synthesised design fits its target device.
 
@@ -55358,6 +55342,26 @@ Returns
 dict&#91;str, Any&#93;
     Path-free PnR result with success state, timing metadata, log excerpt,
     or a bounded error message.
+
+---
+
+## Module `studio.synthesis_cell_costs`
+
+### Function `cell_cost(target, cell_type)`
+Return what one cell takes of the judged resources, or None if unknown.
+
+Parameters
+----------
+target : str
+    Target identifier.
+cell_type : str
+    The Yosys cell type.
+
+Returns
+-------
+dict&#91;str, int&#93; or None
+    Resource amounts, empty for a cell that takes none, None for a cell
+    whose cost the Studio does not know.
 
 ---
 
