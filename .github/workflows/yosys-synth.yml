@@ -143,6 +143,9 @@ jobs:
           SHARDS: "6"
           JOB_TIMEOUT_SECONDS: "1800"
           SHARD_BUDGET_SECONDS: "19200"
+          # A job that outgrows the runner's memory must fail alone: without a
+          # cap the kernel kills the runner and the shard loses every row.
+          JOB_MEMORY_LIMIT: "12G"
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/formal-timing"
@@ -152,22 +155,39 @@ jobs:
           git ls-files -- 'hdl/formal/*.sby' | sort \
             | awk -v n="$SHARDS" -v i="$SHARD" '(NR - 1) % n == i' > "$out/jobs.txt"
           echo "Shard ${SHARD}/${SHARDS}: $(wc -l < "$out/jobs.txt") jobs"
+          index=0
           while IFS= read -r job; do
+            index=$((index + 1))
             name="$(echo "$job" | tr '/' '_')"
             log="$out/logs/${name}.log"
             timing="$out/logs/${name}.time"
+            unit="formal-${SHARD}-${index}"
             # Start a job only if its full timeout still fits in the job budget.
             if [ $((SECONDS + JOB_TIMEOUT_SECONDS)) -gt "$SHARD_BUDGET_SECONDS" ]; then
               printf '%s\t%s\t%s\t%s\n' "$job" NOT_RUN NA NA | tee -a "$table"
               continue
             fi
+            started="$(date '+%Y-%m-%d %H:%M:%S')"
             set +e
             (cd "$(dirname "$job")" && timeout --kill-after=30 "$JOB_TIMEOUT_SECONDS" \
-              /usr/bin/time -f '%e %M' -o "$timing" \
-              sby -f -d "$RUNNER_TEMP/sby-work/${name%.sby}" "$(basename "$job")") > "$log" 2>&1
+              sudo systemd-run --scope --quiet --unit="$unit" \
+                -p MemoryMax="$JOB_MEMORY_LIMIT" -p MemorySwapMax=0 -p OOMPolicy=continue \
+                --uid="$(id -u)" --gid="$(id -g)" \
+                /usr/bin/env PATH="$PATH" HOME="$HOME" \
+                /usr/bin/time -f '%e %M' -o "$timing" \
+                sby -f -d "$RUNNER_TEMP/sby-work/${name%.sby}" "$(basename "$job")") > "$log" 2>&1
             rc=$?
             set -e
-            if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            # A SIGKILL from timeout does not reach the scope's processes.
+            sudo systemctl stop "${unit}.scope" > /dev/null 2>&1 || true
+            oom=no
+            if sudo journalctl -q --no-pager --since "$started" -u "${unit}.scope" 2>/dev/null | grep -qi 'oom'; then
+              oom=yes
+            fi
+            sudo systemctl reset-failed "${unit}.scope" > /dev/null 2>&1 || true
+            if [ "$oom" = yes ]; then
+              status=MEMORY
+            elif [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
               status=TIMEOUT
             elif grep -q 'DONE (PASS' "$log" && ! grep -q 'DONE (FAIL\|DONE (ERROR\|DONE (UNKNOWN\|DONE (TIMEOUT' "$log"; then
               status=PASS
