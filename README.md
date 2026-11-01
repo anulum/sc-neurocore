@@ -720,7 +720,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **security-scanners.yml** | pip-audit, cargo-audit, Semgrep, and release security scans |
 | **pre-commit.yml** | Pre-commit hook validation |
 | **studio-desktop-installation.yml** | Studio Linux installation acceptance on two complete prepared bundles with the real runtime |
-| **yosys-synth.yml** | Yosys HDL synthesis verification |
+| **yosys-synth.yml** | Yosys HDL synthesis verification; a manual run can also run and time every SymbiYosys job |
 | **stale.yml** | Auto-label and close stale issues |
 
 ## Benchmarks

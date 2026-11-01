@@ -12,6 +12,11 @@ permissions: {}
 
 on:
   workflow_dispatch:
+    inputs:
+      run_all_formal:
+        description: "Also run and time every tracked SymbiYosys job under hdl/formal"
+        type: boolean
+        default: false
   push:
     paths:
       - ".github/workflows/yosys-synth.yml"
@@ -85,3 +90,109 @@ jobs:
         with:
           name: yosys-synth-results
           path: benchmarks/results/yosys_synth.json
+
+  formal-all:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_all_formal
+    runs-on: ubuntu-24.04
+    needs: [hdl-toolchain]
+    timeout-minutes: 330
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: stable-hdl-sdk
+          path: ${{ runner.temp }}/hdl-download
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+
+      - name: Install the verified formal toolchain and solvers
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cvc5 z3 libreadline8t64 libtcl8.6
+          # Jobs whose engine is a bare `smtbmc` default to Yices; if the package
+          # is unavailable they are recorded as ERROR rather than skipped.
+          sudo apt-get install -y -qq yices2 || echo "::warning title=Yices::yices2 could not be installed"
+          python -m pip install --require-hashes -r requirements/sby.txt
+          cd "$RUNNER_TEMP/hdl-download"
+          sha256sum --check --status scn-hdl.tar.gz.sha256
+          tar -xzf scn-hdl.tar.gz -C "$RUNNER_TEMP"
+          cat "$RUNNER_TEMP/scn-hdl/PROVENANCE.txt"
+          echo "$RUNNER_TEMP/scn-hdl/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/scn-hdl/bin/yosys" -V
+          "$RUNNER_TEMP/scn-hdl/bin/sby" --version
+          z3 --version
+          cvc5 --version | head -1
+          if command -v yices-smt2 >/dev/null; then yices-smt2 --version | head -1; fi
+
+      - name: Run and time this shard's SymbiYosys jobs
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: "4"
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/formal-timing"
+          mkdir -p "$out/logs"
+          table="$out/formal_timing_shard_${SHARD}.tsv"
+          printf 'job\tstatus\twall_seconds\tmax_rss_kib\n' > "$table"
+          git ls-files -- 'hdl/formal/*.sby' | sort \
+            | awk -v n="$SHARDS" -v i="$SHARD" '(NR - 1) % n == i' > "$out/jobs.txt"
+          echo "Shard ${SHARD}/${SHARDS}: $(wc -l < "$out/jobs.txt") jobs"
+          while IFS= read -r job; do
+            name="$(echo "$job" | tr '/' '_')"
+            log="$out/logs/${name}.log"
+            timing="$out/logs/${name}.time"
+            set +e
+            (cd "$(dirname "$job")" && timeout --kill-after=30 3600 \
+              /usr/bin/time -f '%e %M' -o "$timing" \
+              sby -f -d "$RUNNER_TEMP/sby-work/${name%.sby}" "$(basename "$job")") > "$log" 2>&1
+            rc=$?
+            set -e
+            if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+              status=TIMEOUT
+            elif grep -q 'DONE (PASS' "$log" && ! grep -q 'DONE (FAIL\|DONE (ERROR\|DONE (UNKNOWN\|DONE (TIMEOUT' "$log"; then
+              status=PASS
+            elif grep -q 'DONE (FAIL' "$log"; then
+              status=FAIL
+            else
+              status=ERROR
+            fi
+            read -r wall rss < <(tail -1 "$timing" 2>/dev/null || echo "NA NA")
+            printf '%s\t%s\t%s\t%s\n' "$job" "$status" "$wall" "$rss" | tee -a "$table"
+            rm -rf "$RUNNER_TEMP/sby-work/${name%.sby}"
+          done < "$out/jobs.txt"
+          {
+            echo "### SymbiYosys timing, shard ${SHARD}"
+            echo
+            echo '| Job | Status | Wall s | Max RSS KiB |'
+            echo '|---|---|---:|---:|'
+            tail -n +2 "$table" | sort -t$'\t' -k3,3 -g -r \
+              | awk -F'\t' '{printf "| %s | %s | %s | %s |\n", $1, $2, $3, $4}'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the shard timing table and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: formal-timing-shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/formal-timing
+
+      - name: Fail when any SymbiYosys job did not pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          table="$RUNNER_TEMP/formal-timing/formal_timing_shard_${{ matrix.shard }}.tsv"
+          bad="$(tail -n +2 "$table" | awk -F'\t' '$2 != "PASS"' | wc -l)"
+          echo "Non-passing jobs in this shard: ${bad}"
+          test "$bad" -eq 0
