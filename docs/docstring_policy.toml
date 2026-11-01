@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1616
+expected_file_count = 1617
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"
@@ -6598,3 +6598,7 @@ rationale = "Observe actual graph workers inside their numerical loop, read kern
 [[file]]
 path = "tests/test_studio_graph_jobs_service_faults.py"
 rationale = "Corrupt actual acted-on storage replies and verify graph HTTP uncertainty, refusal, retry custody and standard queue-full outcomes."
+
+[[file]]
+path = "tests/test_studio_network_graph_input_contracts.py"
+rationale = "Public network graph validation preserves located input refusals, constructor defaults, deterministic streams and server-selected work budgets before execution."

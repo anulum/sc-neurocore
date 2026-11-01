@@ -293,10 +293,6 @@ def _is_number(value: object) -> bool:
     return isinstance(value, Real) and not isinstance(value, bool)
 
 
-def _finite(value: object) -> bool:
-    return _as_float(value) is not None
-
-
 def _as_float(value: object) -> float | None:
     """Return ``value`` as a float when it is a finite real number, else ``None``."""
     if not isinstance(value, Real) or isinstance(value, bool):
@@ -849,9 +845,15 @@ def _analyse(
             f"above the {budget_name} limit of {max_neuron_steps}; the run is not shortened",
         )
 
-    if collector or dt is None or duration is None or seed is None or n_steps is None:
-        return collector, None
-    if len(population_specs) != len(populations) or len(projection_specs) != len(projections):
+    if (
+        collector
+        or dt is None
+        or duration is None
+        or seed is None
+        or n_steps is None
+        or len(population_specs) != len(populations)
+        or len(projection_specs) != len(projections)
+    ):
         return collector, None
     spec = GraphSpec(
         populations=tuple(population_specs),

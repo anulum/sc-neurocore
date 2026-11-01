@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 import socket
+import threading
 import time
 from pathlib import Path
 from dataclasses import replace
@@ -167,6 +168,26 @@ def test_empty_sealed_artifact_returns_metadata_without_a_content_frame(
     authority.join()
 
 
+@pytest.mark.parametrize(
+    "route",
+    [
+        "/api/candidates/jobs/{job_id}/artifacts/{artifact_path:path}",
+        "/api/graph/jobs/{job_id}/result",
+    ],
+)
+def test_scientific_result_routes_refuse_a_sealed_ordinary_job(
+    ledger: StudioJobLedger, sealed: Path, route: ArtifactRoute
+) -> None:
+    """An ordinary sealed job cannot impersonate a candidate or network result."""
+    record = ledger.record(JOB, workspace="default")
+    assert record.admission.get("candidate_operation") not in ("simulate", "review")
+    authority = Authority(ledger)
+    with pytest.raises(KeyError):
+        _read(authority, "weights.bin", route=route)
+    assert _read(authority, "weights.bin").payload == FILES["weights.bin"]
+    authority.join()
+
+
 @pytest.mark.parametrize("limit", [0, -1, True])
 def test_invalid_artifact_service_budget_closes_the_real_channel_before_any_read(
     ledger: StudioJobLedger,
@@ -185,4 +206,64 @@ def test_invalid_artifact_service_budget_closes_the_real_channel_before_any_read
             max_artifact_bytes=limit,
             deadline=time.monotonic() + 1,
         )
+    assert channel.fileno() == -1
+
+
+def test_empty_artifact_service_workspace_closes_the_channel_before_any_read(
+    ledger: StudioJobLedger,
+) -> None:
+    """A missing operator workspace cannot start a public artifact handler."""
+    channel, peer = socket.socketpair()
+    with peer, pytest.raises(ValueError, match="storage workspace must be nonempty"):
+        serve_artifact_read(
+            channel,
+            ledger=ledger,
+            gateway=PolicyGateway(InMemoryAuditSink()),
+            workspace="",
+            expected_api_uid=os.getuid(),
+            max_bytes=FRAME,
+            deadline=time.monotonic() + 1,
+        )
+    assert channel.fileno() == -1
+
+
+def test_artifact_handler_independently_binds_the_requested_workspace(
+    ledger: StudioJobLedger, sealed: Path
+) -> None:
+    """The public handler refuses another workspace over an actual client exchange."""
+    channel, peer = socket.socketpair()
+    failures: list[BaseException] = []
+
+    def serve() -> None:
+        try:
+            serve_artifact_read(
+                channel,
+                ledger=ledger,
+                gateway=PolicyGateway(InMemoryAuditSink()),
+                workspace="default",
+                expected_api_uid=os.getuid(),
+                max_bytes=FRAME,
+                deadline=time.monotonic() + 10,
+            )
+        except BaseException as exc:
+            failures.append(exc)
+        finally:
+            ledger.close()
+
+    thread = threading.Thread(target=serve)
+    thread.start()
+    try:
+        with pytest.raises(EOFError):
+            exchange_artifact(
+                peer,
+                artifact_request("elsewhere", JOB, "weights.bin", route=DOWNLOAD, requester=ADMIN),
+                expected_service_uid=os.getuid(),
+                max_bytes=FRAME,
+                deadline=time.monotonic() + 10,
+            )
+    finally:
+        thread.join(timeout=10)
+    assert not thread.is_alive()
+    assert [type(error) for error in failures] == [ValueError]
+    assert str(failures[0]) == "storage request does not match configured workspace"
     assert channel.fileno() == -1
