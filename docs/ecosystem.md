@@ -14,13 +14,14 @@ repositories clear responsibilities, smaller installation boundaries and
 versioned interfaces. The workbench continues to bring those parts together for
 experimentation, research-to-hardware workflows and integration.
 
-The group comprises the workbench, LOOP-TIMING-WITNESS, 13 specialized SC-NC
+The existing programme comprises the workbench, LOOP-TIMING-WITNESS, 13 specialized SC-NC
 repositories and 25 supporting tools. The repository names below identify the
 intended destinations; implementation and release status are separate from naming.
 
-The split architecture is prepared and is **not part of the 4.0.0 release**.
-SC-NeuroCore 4.0.0 is published as one package at its documented maturity;
-component releases and migration guides will accompany the transition.
+The split architecture is prepared. The current integrated package retains
+its documented maturity; separately published component releases and migration
+guides will accompany the transition. See the repository releases for the
+current version.
 
 ## Public workbench and future products
 
@@ -30,7 +31,8 @@ Their licensing and commercial boundaries remain under discussion with investors
 and IP partners and will be announced individually. Several supporting tools
 will remain public, with their own documented licensing and release status.
 
-The map below describes responsibilities and implementation status. Future
+The map below covers that existing programme. The adopted general circuit-design
+expansion is described separately below. Future
 licensing decisions will be announced separately for each project.
 
 ![SC Neuromorphic Computing Systems: development workbench, timing instrument, 13 specialized repositories and 25 supporting tools. Full functions and status follow below.](assets/sc_neurocore_group_map.svg)
@@ -168,6 +170,158 @@ NEURO-EVIDENCE-BENCH provides the shared plan-execution and result protocol that
 those suites and Studio can consume. LOOP-TIMING-WITNESS measures timing;
 AER-LINK-WITNESS assesses event-link behaviour. These boundaries keep domain
 workloads, shared tooling and physical measurements distinct.
+
+## General circuit-design platform
+
+The group is designing a general platform connecting circuit specifications,
+simulation, implementation, physical design, assembly and measured hardware.
+It is intended for analogue, digital and mixed-signal designs from the beginning,
+with explicit extension points for other physical domains and technologies.
+SC-NeuroCore would be one application of that platform; the general platform
+would be usable without neuron models or an SNN runtime.
+
+**Status: adopted architectural direction; implementation is planned.** The
+fourteen names below are the adopted destinations for the new family. They do
+not identify available packages or newly created public repositories. Actual
+tool, process, device and manufacturing support must be
+qualified for each operation and published with its limitations. There is no
+announced tapeout, manufacturing schedule or universal technology-support claim.
+
+### Coverage and separate semantics
+
+| Design family | Intended scope and distinct requirements |
+| --- | --- |
+| Digital | Synchronous and asynchronous logic, control, processors, accelerators and memories; FPGA and ASIC implementations, clocks/reset, equivalence, timing and testability. |
+| Analogue | Signal conditioning, references, filters, oscillators, sensors and power circuits; continuous device behaviour, stability, noise, variability and operating limits. |
+| Mixed-signal | Data converters, timing circuits, sensor interfaces and digitally assisted analogue; explicit sampling, thresholds, event timing and continuous/discrete coupling. |
+| RF and coupled fields | RF/microwave structures, signal/power integrity and electrothermal or electromechanical effects; specialised models, geometry, meshes and boundary conditions. |
+| Photonic and optoelectronic | Optical circuit/layout models and electrical coupling, with wavelength, mode, polarisation and optical-loss semantics. |
+| Device and specialist technologies | Process/device modelling, specialised memories, MEMS and research extensions such as cryogenic circuits, each with its own supported models and validation. |
+| Assembly and boards | Die/package/interposer/PCB interfaces, discrete components, heterogeneous chiplets and stacked systems, test fixtures and bring-up. |
+
+Technology profiles would distinguish silicon CMOS/SOI and device families,
+SiGe/BiCMOS and high-voltage processes, compound or wide-bandgap materials such
+as GaAs, InP, GaN and SiC, optical platforms and specialised functional materials.
+Material, substrate, device, process, layout stack and package are separate
+attributes. Adding one profile would not imply support for every design or
+operation using that material. Emerging or research models would retain their
+research status.
+
+### Planned platform repositories
+
+| Repository | Planned responsibility |
+| --- | --- |
+| **CIRCUIT-CORE** | Neutral design hierarchy, ports, units, parameters, view correspondence and operation contracts. |
+| **CIRCUIT-TECHNOLOGY** | Identified PDK, device, library, verification-deck and assembly profiles with tool compatibility and applicability. |
+| **CIRCUIT-FLOW** | Reproducible circuit workflows, admitted tool dispatch, artefact propagation and recovery. |
+| **CIRCUIT-DIGITAL** | Digital simulation, formal/synthesis and implementation adapters, timing and testability intent. |
+| **CIRCUIT-ANALOG** | Circuit/schematic and device-model integration, analogue simulation, sizing and layout constraints. |
+| **CIRCUIT-MIXED-SIGNAL** | Boundary models and co-simulation integration for continuous and discrete participants. |
+| **CIRCUIT-PHYSICAL** | Layout implementation and interchange, extraction and technology-specific physical-check integration. |
+| **CIRCUIT-ASSEMBLY** | Die, package, interposer, board and test-fixture integration. |
+| **CIRCUIT-ACCEPTANCE** | Requirement-specific checks, comparison laws, coverage and scoped acceptance. |
+| **CIRCUIT-LAB** | Hardware bring-up, instrument integration and traceable characterisation. |
+| **CIRCUIT-WORKBENCH** | General design and review workspace using the same headless operations as the library and command-line clients. |
+
+Three further planned specialist destinations are **CIRCUIT-FIELDS** for electromagnetic
+and coupled-field operations, **CIRCUIT-PHOTONICS** for optical design semantics,
+and **CIRCUIT-DEVICES** for device/TCAD and compact-model work. Their independent
+repositories depend on actual supported use cases, maintainers and release
+boundaries. A distinct material, node or adapter does not automatically require
+another repository. Every destination follows a module-first implementation decision; shared foundation packages
+may initially live in one workspace. Separate repositories require independent
+consumers, lifecycle and maintainers. CIRCUIT-ACCEPTANCE aggregates requirement
+results; SC-NC-VERIFY retains SNN fidelity and digital formal operations remain
+with their actual tool owners.
+
+### Integration model
+
+```mermaid
+flowchart TD
+    S[Specifications and design views] --> F[Admitted circuit workflows]
+    F --> D[Digital operations]
+    F --> A[Analogue operations]
+    F --> M[Mixed-signal and specialist operations]
+    D --> P[Physical design and verification]
+    A --> P
+    M --> P
+    P --> H[Package board and manufacturing preparation]
+    H --> L[Hardware characterisation]
+    L --> S
+```
+
+The arrows describe an intended lifecycle. Individual views and operations keep
+their own semantics and entry points; an existing RTL, schematic, netlist or
+layout can enter at the appropriate stage. Iterations produce versioned successor
+designs and preserve their original inputs and results.
+
+The first integration route uses existing open-source tools. Candidates include
+[Yosys/OpenROAD/KLayout through OpenROAD-flow-scripts](https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts),
+[xschem](https://xschem.sourceforge.io/stefan/xschem_man/netlisting.html),
+[ngspice with supported compact models and digital co-simulation](https://ngspice.sourceforge.io/extras.html),
+and [KiCad](https://docs.kicad.org/) for board integration. Specialist tools and
+commercial flows would be admitted through explicit tool/technology contracts.
+Existing workflow and representation infrastructure, including
+[SiliconCompiler](https://docs.siliconcompiler.com/en/latest/),
+[LibreLane](https://librelane.readthedocs.io/en/stable/) and
+[CIRCT](https://circt.llvm.org/), would be evaluated before building equivalent
+functionality. Relevant [Accellera interface and verification standards](https://www.accellera.org/downloads/standards)
+would inform supported interchange contracts. Own tools would address
+demonstrated integration or engineering requirements.
+PDK and IP access, applicable licences and manufacturer requirements remain
+specific to the selected target; open tooling alone does not establish
+production readiness.
+
+The general platform would reuse the existing evidence, record and measurement
+contracts as those capabilities become available. Tool operations would treat designs, PDK decks and embedded scripts as
+untrusted executable inputs, with explicit isolated execution and bounded
+resources. Instrument drivers and original calibration associations would have
+one source owner. It would preserve original
+artefacts and distinguish simulated, implemented, manufacturer-accepted and
+measured results. Digital exactness, analogue error/statistical laws and
+specialist physics would retain separate acceptance criteria.
+
+### Effect on the SC-NeuroCore split
+
+The thirteen SC-NC destinations remain the neuromorphic decomposition.
+SC-NC-COMPILER would retain model-specific numerical semantics and lowering;
+SC-NC-HARDWARE would retain SNN target and runtime integration. They could
+consume admitted general circuit operations through optional adapters.
+SC-NC-VERIFY would retain domain fidelity checks, and SC-NC-STUDIO could expose
+those operations to its users.
+
+Execution profiles would support admitted local, cloud, cluster and future
+environments; the architecture is not tied to the current machines. Actual
+provider resources, data/IP access and isolation would be checked per operation.
+
+The generic platform would have no production dependency on SC-NeuroCore.
+Simulation and learning users would not acquire mandatory PDK, physical-design
+or laboratory installations. The existing parent-stability and separately
+reviewed extraction gates still apply. Open implementation, native-runtime,
+scientific and hardware obligations remain requirements of their actual
+components; an architecture document does not complete them.
+
+### Development roadmap
+
+| Milestone | Intended result | Evidence required before claiming it |
+| --- | --- | --- |
+| Architecture and interfaces | Accepted ownership, design/view and technology contracts, tool boundaries and compatibility policy. | Reviewed interfaces and actual consumers, with supported and unsupported cases explicit. |
+| Qualified design operations | Usable digital and analogue operations with selected real tools and technology profiles. | Installed library/CLI workflows, actual simulation/implementation outputs and engineering checks, including failures and recovery. |
+| Integrated mixed-signal workflow | Real continuous/discrete participants and a workbench over the same headless operations. | Non-neural digital, analogue and mixed reference designs, cross-view correspondence, coupling/error checks and reproducibility. |
+| Manufacturing preparation | Consistent physical, die/package/board and test deliverables for a selected target. | Applicable physical checks, testability, actual manufacturer review and accepted fabrication/assembly conditions. |
+| Measured hardware and extensions | Characterised implementations and independently qualified specialist profiles. | Original DUT/instrument/calibration identities, uncertainty, measured-versus-predicted results and compatibility evidence. |
+
+Architecture and interface review is the current stage. Implementation stages
+depend on accepted boundaries, supplier contracts and actual engineering
+capacity. Publicly documented measured designs, such as the
+[OpenFASOC temperature-sensor tapeout](https://openfasoc.readthedocs.io/en/latest/tapeouts.html),
+would provide external comparison references after their source/data and
+measurement conditions are admitted.
+
+These milestones describe intended capability and acceptance. They carry no
+release dates and do not announce packages, fabricated devices or specialist
+support that has not been demonstrated. The original workbench and component
+transition continues under its existing stability and migration requirements.
 
 ## How the transition will work
 
