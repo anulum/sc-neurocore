@@ -16,6 +16,7 @@ import re
 import subprocess
 
 from tools.formal_evidence_validation import (
+    REFERENCE_HOST_PROFILE,
     EvidencePolicy,
     confined_file,
     digest,
@@ -30,7 +31,9 @@ from tools.formal_log_normalization import validate_public_log
 from tools.formal_nonvacuity import native_configuration
 from tools.formal_receipt_identity import executed_configuration
 
-ML350_AUDIT_POLICY = EvidencePolicy(memory_bytes=8 * 1024**3, timeout_seconds=1800)
+ML350_AUDIT_POLICY = EvidencePolicy(
+    REFERENCE_HOST_PROFILE, memory_bytes=8 * 1024**3, timeout_seconds=1800
+)
 
 
 def _task(

@@ -25,25 +25,25 @@
       "receipt": "benchmarks/results/formal/sc_amari_field/receipt.json",
       "review": "benchmarks/results/formal/sc_amari_field/resource-contract-review.json",
       "qualification": "ML350, attested",
-      "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
-      "review_sha256": "d543f38e370ddf1fdbaf60b8bdc2e2828f09691bfbe5ebefe8ed4293e2cdb8b7",
+      "receipt_sha256": "186db658194476a9a69da1eb328da4705fc3f60df17370845bf8fc0c55685a40",
+      "review_sha256": "1cbdea73e28ae4493b6a0cfc83dc849393cf2a75490e612a959d59638b281cf6",
       "resource_contract": "amari-historical-64-v1",
       "nonvacuity": "benchmarks/results/formal/sc_amari_field/nonvacuity.json",
-      "nonvacuity_sha256": "4a61749c2eb10f391f1b97e765abf8fcb309869b85407fc0b3e233d738beea14",
+      "nonvacuity_sha256": "78c3a1071ede0d3a648364a8c2456cbd3053bd3eab6ab353b6411a7ee9cb0356",
       "nonvacuity_review": "benchmarks/results/formal/sc_amari_field/nonvacuity-review.json",
-      "nonvacuity_review_sha256": "9a85bd9a80764905992d4a874fa002b39b2610df6ee11d2174177ed91cf1319d",
+      "nonvacuity_review_sha256": "76c763f5d7bcafb8e01634c458ab2b4e1efaa40b61c1146aa5f38dc880420ca8",
       "identity_conversion": {
         "path": "benchmarks/results/formal/public_identity_conversion.json",
-        "sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+        "sha256": "6b337115f7e8b7c32d7036714120c066c93a96ada27caaeb9566bf8bac25af13"
       }
     },
     "hdl/formal/catalogue/sc_chaotic_map.sby": {
       "outcome": "PASS",
       "resource_contract": "yices-resource-retry-64-v1",
       "receipt": "benchmarks/results/formal/sc_chaotic_map/receipt.json",
-      "receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
+      "receipt_sha256": "f2c4c44b72407f4ebbc5ea104d5ccf6296933376288bbd72d0bca0dcbd1277fd",
       "review": "benchmarks/results/formal/sc_chaotic_map/review.json",
-      "review_sha256": "b0a8307c0e3ec6c0b2ae09521f916555f42c54a5b83791a0dab2ea3d9e3b4bfe",
+      "review_sha256": "1b24f9546797320dc49e13721d0be7b9325d2b5ed7ff3fb848a218b5bfe1db65",
       "configuration": {
         "path": "benchmarks/results/formal/sc_chaotic_map/configuration.sby",
         "sha256": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483"
@@ -52,53 +52,53 @@
         {
           "resource_contract": "z3-primary-40-v1",
           "receipt": "benchmarks/results/formal/sc_chaotic_map_z3primary40/receipt.json",
-          "receipt_sha256": "94cceb2b0646dd7c13f0210eb3a530399b9b7201380e7d4949b232b8a089df94",
+          "receipt_sha256": "948d1c0deceec749c30ed1211e62afb7806494779a0053a0e711ce280ccaed54",
           "review": "benchmarks/results/formal/sc_chaotic_map_z3primary40/review.json",
-          "review_sha256": "bc5469d23567d6c58c01cb2987ba5954e621a3669ffed0376612f4517e2cf8a9"
+          "review_sha256": "d6e04e01e9d00657140c579d0f0e0b66be989dcdd36a8f811fc63569cc63f968"
         },
         {
           "resource_contract": "z3-memory-retry-64-v1",
           "receipt": "benchmarks/results/formal/sc_chaotic_map_z3memory64/receipt.json",
-          "receipt_sha256": "d5bb01f4adf9cf4e8712a2a6af4115ac3a7bd57929682b690de0419c75d85eb2",
+          "receipt_sha256": "6bd7f83a1bc846652ad8cc6285ca97d880392985811d6034a285f08dd277d256",
           "review": "benchmarks/results/formal/sc_chaotic_map_z3memory64/review.json",
-          "review_sha256": "b1b955f002589550de100c0e32f787b52209541dc08ca683cade817521ebfa68"
+          "review_sha256": "a4483969da4c34d7dbd44c75e90dd07e5eec42c68a0c52debff627943b7baff1"
         }
       ],
       "nonvacuity": "benchmarks/results/formal/sc_chaotic_map/nonvacuity.json",
-      "nonvacuity_sha256": "f98334946efbb5606826ef40cbbfa0e8b70b9f7dbc0856b6c6fa7cc04a018149",
+      "nonvacuity_sha256": "68a27050d2d4146ab02c03611eedc8a70890f8c9a1e12c11785a298c3f17295e",
       "nonvacuity_review": "benchmarks/results/formal/sc_chaotic_map/nonvacuity-review.json",
-      "nonvacuity_review_sha256": "1b36b70f0a1b4eac17ed1207cdadb30d106eca31748b158fc44eb46b2cdc64fc",
+      "nonvacuity_review_sha256": "312314e0c9bc568ece43f488e9e8deefebea34e8a700d4d980b75b2c2e00888e",
       "identity_conversion": {
         "path": "benchmarks/results/formal/public_identity_conversion.json",
-        "sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+        "sha256": "6b337115f7e8b7c32d7036714120c066c93a96ada27caaeb9566bf8bac25af13"
       }
     },
     "hdl/formal/catalogue/sc_chialvo_map.sby": {
       "outcome": "PASS",
       "resource_contract": "chialvo-solver-repair-yices-64-v1",
       "receipt": "benchmarks/results/formal/sc_chialvo_map/receipt.json",
-      "receipt_sha256": "49f07401637c63459e15bbc6bed4fa104023831938506aad9ac028306e918ff5",
+      "receipt_sha256": "a64ec3d6bd217957dfb70bf23591ba0215128915e8976d6d78d7d48d776cff57",
       "review": "benchmarks/results/formal/sc_chialvo_map/review.json",
-      "review_sha256": "f3b39912d5086f47a2dbb22c7dd4a3cc7a3cbead598731eb35569954338cc9ee",
+      "review_sha256": "dbb11e8ef030eb9e2e0ccff071f18c8bae970b854e9f07cd81c5c069a53dde6d",
       "configuration": {
         "path": "benchmarks/results/formal/sc_chialvo_map/configuration.sby",
         "sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be"
       },
       "solver_error": {
         "receipt": "benchmarks/results/formal/sc_chialvo_map_z3memory64/receipt.json",
-        "receipt_sha256": "4967f867e68be34bdfdac077dff55f9dd63133391c55072ac0a67fc6de16d48f",
+        "receipt_sha256": "02509e524c4b63e9756446e0991f57bb452809bc61c168197bddb8e1d85f0b70",
         "review": "benchmarks/results/formal/sc_chialvo_map_z3memory64/review.json",
-        "review_sha256": "dd25cb278dd5401a46fd7f6062c9bcd10c44b0f20648e02160cc204677a82d93",
+        "review_sha256": "608e88f973c65293f461ce795a9fed3f5a59fdaed3f3a9242fb2d519f6494b44",
         "diagnostic": "benchmarks/results/formal/sc_chialvo_map_z3memory64/diagnostic.json",
-        "diagnostic_sha256": "f29b2cac3fac2aa00bfedc73f0e8f96f85391b240343925e1339fa22d2bfd22f"
+        "diagnostic_sha256": "1b25d03da27c8e0917bfd633d01aca0db18c86f1683cb9909eeeae359c2e2b46"
       },
       "nonvacuity": "benchmarks/results/formal/sc_chialvo_map/nonvacuity.json",
-      "nonvacuity_sha256": "e17c3b1e559e63210a1425eabae1468dffcc96d72d0ed4690cf74e2b85151c95",
+      "nonvacuity_sha256": "7bd265198d5ff182a00c51fcecf0dfea9577c3b430a3bb20242b7e27be298025",
       "nonvacuity_review": "benchmarks/results/formal/sc_chialvo_map/nonvacuity-review.json",
-      "nonvacuity_review_sha256": "6d72a392635c2b2edcc536ccb414a8942e9aa88f68eb4979d493260b4ab76138",
+      "nonvacuity_review_sha256": "7ea00813f707528b77dc00a5044d539deefb693c4ca6ae76f2425a1a02ea1b1c",
       "identity_conversion": {
         "path": "benchmarks/results/formal/public_identity_conversion.json",
-        "sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+        "sha256": "6b337115f7e8b7c32d7036714120c066c93a96ada27caaeb9566bf8bac25af13"
       }
     },
     "hdl/formal/catalogue/sc_clipped_rational_recovery_map.sby": {

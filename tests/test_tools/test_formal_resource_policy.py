@@ -46,7 +46,7 @@ def test_index_and_review_select_fixed_budget(name: str, solver: str, memory: in
     policy = contract.policy()
     assert policy.memory_bytes == memory * 1024**3
     assert policy.timeout_seconds == 7200
-    assert policy.hostname == "god-of-the-math"
+    assert policy.host_profile == "ML350"
     assert policy.audit_memory_bytes == 8 * 1024**3
     assert policy.audit_timeout_seconds == 1800
 

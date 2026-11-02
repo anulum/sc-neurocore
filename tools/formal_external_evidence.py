@@ -20,6 +20,7 @@ import subprocess
 import sys
 
 from tools.formal_evidence_validation import (
+    REFERENCE_HOST_PROFILE,
     EvidencePolicy,
     confined_file,
     digest,
@@ -37,7 +38,7 @@ from tools.formal_resource_evidence import validate_resource_history, validate_r
 from tools.formal_log_normalization import validate_public_log
 from tools.formal_nonvacuity_evidence import validate_nonvacuity
 
-ML350_POLICY = EvidencePolicy()
+ML350_POLICY = EvidencePolicy(REFERENCE_HOST_PROFILE)
 
 
 def validate_external(
@@ -180,7 +181,7 @@ def validate_external(
             receipt_sha,
             task_names,
             policy=EvidencePolicy(
-                policy.hostname,
+                policy.host_profile,
                 policy.audit_memory_bytes,
                 policy.audit_timeout_seconds,
                 policy.label,

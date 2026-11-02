@@ -35,7 +35,6 @@
     }
   },
   "measurement": {
-    "hostname": "god-of-the-math",
     "status": "TIMEOUT",
     "native_exit_code": 1,
     "native_exit_source": "systemd-exec",
@@ -62,7 +61,8 @@
       "oom_group_kill": 0
     },
     "invocation_id": "4471d1d692834fb5adf25e38fe720c21",
-    "original_result_sha256": "4a90357384cb20df615c0ff88c308d4b921b3b80a9148f4e06281f83876987d0"
+    "original_result_sha256": "4a90357384cb20df615c0ff88c308d4b921b3b80a9148f4e06281f83876987d0",
+    "host_profile": "ML350"
   },
   "log": {
     "path": "benchmarks/results/formal/sc_chaotic_map_z3memory64/native.log",

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 from pathlib import Path
 import pwd
 import subprocess
@@ -131,7 +132,7 @@ def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = Fa
             for name in ("ExecMainStartTimestampMonotonic", "ExecMainExitTimestampMonotonic")
         )
         measurement: dict[str, object] = {
-            "hostname": policy.hostname,
+            "host_profile": policy.host_profile,
             "unit": unit,
             "status": "PASS",
             "wall_clock_source": "systemd-exec-monotonic",
@@ -182,7 +183,7 @@ def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = Fa
             {
                 "workspace": str(root),
                 "unit": unit,
-                "hostname": policy.hostname,
+                "hostname": socket.gethostname(),
                 "username": pwd.getpwuid(os.getuid()).pw_name,
             },
         )

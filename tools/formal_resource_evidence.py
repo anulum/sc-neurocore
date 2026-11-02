@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 
 from tools.formal_evidence_validation import (
+    REFERENCE_HOST_PROFILE,
     EvidencePolicy,
     confined_file,
     digest,
@@ -260,7 +261,7 @@ def validate_resource_row(
         parent_entry["configuration"] = parent_attempt["configuration"]
     else:
         parent_entry.pop("configuration", None)
-    policy = EvidencePolicy() if policy is None else policy
+    policy = EvidencePolicy(REFERENCE_HOST_PROFILE) if policy is None else policy
     inputs = resolve_job(repository, job)
     task_statuses = object_fields(receipts[parent].get("task_statuses"))
     audit = validate_nonvacuity(

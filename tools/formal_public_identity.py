@@ -26,13 +26,14 @@ from tools.formal_evidence_validation import (
     require,
 )
 
-SCHEMA_VERSION = "sc-neurocore.formal-public-identity-conversion.v1"
+SCHEMA_VERSION = "sc-neurocore.formal-public-identity-conversion.v2"
 PRIMARY_UNIT = "<FORMAL_PRIMARY_UNIT>"
 AUDIT_UNIT = "<FORMAL_AUDIT_UNIT>"
 _IDENTITY_NAME = re.compile(r"-(?:[0-9a-f]{8}|codex[^ /]*|claude[^ /]*)-20\d{6}T")
 _CHANGES = {
-    "receipt": {"measurement.unit", "custody.released_nonce"},
+    "receipt": {"measurement.unit", "custody.released_nonce", "measurement.hostname"},
     "nonvacuity": {
+        "measurement.hostname",
         "measurement.unit",
         "producer",
         "receipt_sha256",
@@ -54,7 +55,7 @@ def _field(value: dict[str, object], path: str) -> object:
     result: object = value
     for key in path.split("."):
         fields = object_fields(result)
-        require(key in fields, "A converted public identity field is absent.")
+        require(key in fields, f"Converted public identity field {path} is absent.")
         result = fields[key]
     return result
 
@@ -121,6 +122,19 @@ def _converted_record(repository: Path, record: dict[str, object]) -> tuple[str,
                 and _is_digest(custody.get("lease_release_sha256")),
                 "Public lease identity must retain its complete private release-receipt binding.",
             )
+        elif field == "measurement.hostname":
+            profile = _field(payload, "measurement.host_profile")
+            require(
+                change.get("operation") == "rename"
+                and change.get("public_field") == "measurement.host_profile"
+                and "hostname" not in object_fields(payload.get("measurement"))
+                and isinstance(profile, str)
+                and bool(profile.strip())
+                and change.get("public_value_sha256") == _hash(profile)
+                and change.get("public_value_sha256") != change.get("original_value_sha256"),
+                "Public host profile differs from its declared private identity conversion.",
+            )
+            _omit(preserved, "measurement.host_profile")
         else:
             require(
                 change.get("operation") == "replace"
@@ -128,6 +142,10 @@ def _converted_record(repository: Path, record: dict[str, object]) -> tuple[str,
                 "Public identity field value differs from its conversion.",
             )
         _omit(preserved, field)
+    require(
+        "measurement.hostname" in seen,
+        "Public converted evidence lacks its explicit host profile conversion.",
+    )
     require(
         kind != "receipt" or "custody.released_nonce" in seen,
         "Public receipt conversion omits the private lease identity removal.",
@@ -190,7 +208,12 @@ def validate_identity_conversion(repository: Path, entry: dict[str, object]) -> 
     needs_conversion = False
     for _kind, name in artifacts:
         payload = read_object(confined_file(repository, name))
-        unit = object_fields(payload.get("measurement")).get("unit")
+        measurement = object_fields(payload.get("measurement"))
+        require(
+            "hostname" not in measurement,
+            "Public evidence contains a private hostname field.",
+        )
+        unit = measurement.get("unit")
         require(
             not isinstance(unit, str) or _IDENTITY_NAME.search(unit) is None,
             "Public evidence contains a private coordination unit identity.",

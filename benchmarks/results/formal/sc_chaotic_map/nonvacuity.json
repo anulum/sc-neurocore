@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "producer": "Native assertion-enable audit",
-  "receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
+  "receipt_sha256": "f2c4c44b72407f4ebbc5ea104d5ccf6296933376288bbd72d0bca0dcbd1277fd",
   "source_hashes": {
     "hdl/formal/catalogue/sc_chaotic_map.sby": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
     "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
@@ -23,7 +23,6 @@
     }
   },
   "measurement": {
-    "hostname": "god-of-the-math",
     "unit": "<FORMAL_AUDIT_UNIT>",
     "status": "PASS",
     "native_exit_code": 0,
@@ -48,7 +47,8 @@
       "oom_kill": 0,
       "oom_group_kill": 0
     },
-    "invocation_id": "27e8b61bf4af457098fa2e653ca45240"
+    "invocation_id": "27e8b61bf4af457098fa2e653ca45240",
+    "host_profile": "ML350"
   },
   "tasks": {
     "default": {
@@ -114,7 +114,7 @@
   },
   "receipt_conversion": {
     "native_audit_parent_receipt_sha256": "5ac366c9b391f33ffe65e5ab34548265b57eb90e3c0b5b8c8892aafa74c3899e",
-    "public_parent_receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
+    "public_parent_receipt_sha256": "f2c4c44b72407f4ebbc5ea104d5ccf6296933376288bbd72d0bca0dcbd1277fd",
     "field": "measurement.cgroup_processes",
     "native_empty_representation": "",
     "public_empty_representation": [],

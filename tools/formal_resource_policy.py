@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
-from tools.formal_evidence_validation import EvidencePolicy, require
+from tools.formal_evidence_validation import REFERENCE_HOST_PROFILE, EvidencePolicy, require
 
 PRIMARY = "z3-primary-40-v1"
 MEMORY_RETRY = "z3-memory-retry-64-v1"
@@ -21,7 +21,7 @@ YICES_RETRY = "yices-resource-retry-64-v1"
 HISTORICAL_AMARI = "amari-historical-64-v1"
 CHIALVO_REPAIR = "chialvo-solver-repair-yices-64-v1"
 CHIALVO_JOB = "hdl/formal/catalogue/sc_chialvo_map.sby"
-AMARI_RECEIPT = "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75"
+AMARI_RECEIPT = "186db658194476a9a69da1eb328da4705fc3f60df17370845bf8fc0c55685a40"
 AMARI_JOB = "hdl/formal/catalogue/sc_amari_field.sby"
 
 
@@ -52,7 +52,7 @@ class ResourceContract:
             ML350 host and audit limits with this fixed primary budget.
         """
         return replace(
-            EvidencePolicy(),
+            EvidencePolicy(REFERENCE_HOST_PROFILE),
             memory_bytes=self.memory_bytes,
             timeout_seconds=self.timeout_seconds,
         )

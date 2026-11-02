@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Attest admitted host profiles in public formal evidence while retaining machine identity privately through hash-bound originals. Reject private hostnames and missing or mismatched profiles without changing measurements, resource contracts or proof gates.
+
 - Give schema co-simulation tests and evidence references descriptive names. Advance the schema-gap report to version 2 with readable validation priorities and reject stale report vocabulary.
 
 - Use descriptive public formal-execution labels and retain private execution custody through an explicit hash-bound conversion. Preserve native invocation identities, measurements and proof gates.

@@ -75,7 +75,7 @@ def test_actual_dual_solver_timeout_row_is_never_pass(case: NativeEvidence) -> N
     assert object_fields(result["nonvacuity"])["status"] == "NONVACUOUS"
     assert result["depth_scope"] == {"default": {"mode": "bmc", "depth": 1000000}}
     assert float(str(result["wall_seconds"])) >= 2 * case.policy.timeout_seconds
-    with pytest.raises(ValueError, match="hostname"):
+    with pytest.raises(ValueError, match="host_profile"):
         validate_external(
             case.repository, JOB, bind_resource_row(case), case.provenance, case.solvers
         )
@@ -89,7 +89,7 @@ def test_actual_dual_solver_timeout_row_is_never_pass(case: NativeEvidence) -> N
         ("measurement.status", "UNKNOWN", "not TIMEOUT or MEMORY"),
         ("measurement.status", "FAIL", "not TIMEOUT or MEMORY"),
         ("measurement.status", "PASS", "not TIMEOUT or MEMORY"),
-        ("measurement.hostname", "other-host", "hostname"),
+        ("measurement.host_profile", "unadmitted-profile", "host_profile"),
         ("measurement.unit_accounting", "missing", "unit_accounting"),
         ("measurement.native_exit_source", "log", "native_exit_source"),
         ("measurement.wall_clock_source", "estimated", "wall_clock_source"),

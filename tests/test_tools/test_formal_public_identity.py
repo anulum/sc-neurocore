@@ -18,6 +18,7 @@ from typing import cast
 
 import pytest
 
+from tests.formal_native_evidence_support import collect_native
 from tools.formal_evidence_validation import digest, object_fields, read_object
 from tools.formal_public_identity import validate_identity_conversion
 
@@ -89,13 +90,10 @@ def test_real_measurement_conversion_keeps_native_identities(
     assert read_object(repository / str(entry["review"]))["verdict"] in {"OPEN", "CLEAR"}
 
 
-def test_unconverted_descriptive_metadata_needs_no_conversion_alias(
-    case: tuple[Path, dict[str, object], dict[str, object]],
-) -> None:
-    """Accept identity metadata that has neither a replaced unit nor a private lease."""
-    repository, jobs, _manifest = case
-    entry = {"receipt": object_fields(jobs[AMARI])["receipt"]}
-    validate_identity_conversion(repository, entry)
+def test_unconverted_descriptive_metadata_needs_no_conversion_alias(tmp_path: Path) -> None:
+    """Accept an actual native profile emitted without private identity fields."""
+    native = collect_native(tmp_path)
+    validate_identity_conversion(native.repository, {"receipt": "receipt.json"})
 
 
 @pytest.mark.parametrize("field", ["receipt", "nonvacuity"])
@@ -163,6 +161,16 @@ def test_coordination_identity_and_unbound_conversion_refuse(
         "duplicate_record",
         "omitted_record",
         "review_binding",
+        "host_conversion_missing",
+        "host_destination",
+        "host_operation",
+        "host_public_digest",
+        "host_original_digest",
+        "host_same_identity",
+        "host_profile_missing",
+        "host_profile_empty",
+        "host_profile_nonstring",
+        "host_original_retained",
     ],
 )
 def test_real_conversion_refuses_isolated_binding_and_scope_changes(
@@ -177,6 +185,9 @@ def test_real_conversion_refuses_isolated_binding_and_scope_changes(
     target = repository / str(record["path"])
     payload = read_object(target)
     changes = cast(list[dict[str, object]], record["changes"])
+    nonce_change = next(change for change in changes if change["field"] == "custody.released_nonce")
+    unit_change = next(change for change in changes if change["field"] == "measurement.unit")
+    host_change = next(change for change in changes if change["field"] == "measurement.hostname")
     if mutation == "schema":
         manifest["schema_version"] = "obsolete"
     elif mutation == "records":
@@ -198,9 +209,9 @@ def test_real_conversion_refuses_isolated_binding_and_scope_changes(
     elif mutation == "original_field_digest":
         changes[0]["original_value_sha256"] = "invalid"
     elif mutation == "remove_operation":
-        changes[-1]["operation"] = "replace"
+        nonce_change["operation"] = "replace"
     elif mutation == "remove_public_digest":
-        changes[-1]["public_value_sha256"] = "0" * 64
+        nonce_change["public_value_sha256"] = "0" * 64
     elif mutation == "lease_binding":
         custody = object_fields(payload["custody"])
         custody["lease_release_sha256"] = "invalid"
@@ -210,9 +221,9 @@ def test_real_conversion_refuses_isolated_binding_and_scope_changes(
     elif mutation == "public_field_digest":
         changes[0]["public_value_sha256"] = "0" * 64
     elif mutation == "nonce_removal_missing":
-        record["changes"] = changes[:-1]
+        record["changes"] = [change for change in changes if change is not nonce_change]
     elif mutation == "unit_conversion_missing":
-        record["changes"] = changes[1:]
+        record["changes"] = [change for change in changes if change is not unit_change]
     elif mutation == "unit_label":
         measurement = object_fields(payload["measurement"])
         measurement["unit"] = "<FORMAL_AUDIT_UNIT>"
@@ -233,6 +244,33 @@ def test_real_conversion_refuses_isolated_binding_and_scope_changes(
         measurement = object_fields(payload["measurement"])
         measurement["peak_memory_bytes"] = 1
         payload["measurement"] = measurement
+    elif mutation == "host_conversion_missing":
+        record["changes"] = [change for change in changes if change is not host_change]
+    elif mutation == "host_destination":
+        host_change["public_field"] = "measurement.wall_seconds"
+    elif mutation == "host_operation":
+        host_change["operation"] = "replace"
+    elif mutation == "host_public_digest":
+        host_change["public_value_sha256"] = "0" * 64
+    elif mutation == "host_original_digest":
+        host_change["original_value_sha256"] = None
+    elif mutation == "host_same_identity":
+        host_change["original_value_sha256"] = host_change["public_value_sha256"]
+    elif mutation in {
+        "host_profile_missing",
+        "host_profile_empty",
+        "host_profile_nonstring",
+        "host_original_retained",
+    }:
+        measurement = object_fields(payload["measurement"])
+        if mutation == "host_profile_missing":
+            measurement.pop("host_profile")
+        elif mutation == "host_original_retained":
+            measurement["hostname"] = "forbidden-private-host"
+        else:
+            measurement["host_profile"] = "" if mutation == "host_profile_empty" else 7
+            host_change["public_value_sha256"] = _value_hash(measurement["host_profile"])
+        payload["measurement"] = measurement
     elif mutation == "duplicate_record":
         records.append(record.copy())
     elif mutation == "omitted_record":
@@ -242,9 +280,24 @@ def test_real_conversion_refuses_isolated_binding_and_scope_changes(
         review = read_object(review_path)
         review["identity_conversion_sha256"] = "0" * 64
         _write(review_path, review)
-    if mutation in {"lease_binding", "unit_label", "producer", "preserved_fact", "absent_field"}:
+    if mutation in {
+        "lease_binding",
+        "unit_label",
+        "producer",
+        "preserved_fact",
+        "absent_field",
+        "host_profile_missing",
+        "host_profile_empty",
+        "host_profile_nonstring",
+        "host_original_retained",
+    }:
         _write(target, payload)
         record["public_artifact_sha256"] = digest(target)
     _bind(repository, entry, manifest)
-    with pytest.raises(ValueError):
+    host_reason = {
+        "host_original_digest": "original identity digest",
+        "host_profile_missing": "measurement.host_profile.*absent",
+        "host_original_retained": "private hostname field",
+    }.get(mutation, "host profile" if mutation.startswith("host_") else None)
+    with pytest.raises(ValueError, match=host_reason):
         validate_identity_conversion(repository, entry)

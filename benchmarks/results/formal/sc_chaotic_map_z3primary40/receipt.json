@@ -35,7 +35,6 @@
     }
   },
   "measurement": {
-    "hostname": "god-of-the-math",
     "status": "MEMORY",
     "native_exit_code": 1,
     "native_exit_source": "systemd-exec",
@@ -62,7 +61,8 @@
       "oom_group_kill": 0
     },
     "invocation_id": "97d5276b69574e37a9bbadd13cf5512c",
-    "original_result_sha256": "6805f28fe346d2e093f0dc985886e7a49caaf6df47dd2267121b502b152bbd0a"
+    "original_result_sha256": "6805f28fe346d2e093f0dc985886e7a49caaf6df47dd2267121b502b152bbd0a",
+    "host_profile": "ML350"
   },
   "log": {
     "path": "benchmarks/results/formal/sc_chaotic_map_z3primary40/native.log",

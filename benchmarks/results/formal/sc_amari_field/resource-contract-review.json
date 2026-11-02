@@ -2,7 +2,7 @@
   "schema_version": 1,
   "verdict": "CLEAR",
   "reviewer": "Independent formal evidence review",
-  "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
+  "receipt_sha256": "186db658194476a9a69da1eb328da4705fc3f60df17370845bf8fc0c55685a40",
   "raw_log_sha256": "8f1c753598fedf974d1e46c34124e2dfde13c6dae681670540221df2e0ac23fa",
   "normalized_log_sha256": "623d7db263f5fa1c539aca0b7e2cb207d22ad18a54c9c447b87e153227d404b8",
   "normalizer_id": "sc-neurocore-native-log-identity-v1",
@@ -13,7 +13,7 @@
     "hdl/formal/catalogue/sc_amari_field_formal.v": "e0e4df7b7d89a002bb5019b060410296eb0b710e13de38af3a1d86ca8b0ec9d8"
   },
   "execution_exception": "amari-gc-20261101",
-  "exception_registry_sha256": "79b0629516610be4a58ccb3042bffc39f79fe4308b7b7b0c4cd3e7259736e1cd",
+  "exception_registry_sha256": "c47bc29dd2694346057f378dacea749a1df08c07482a77a1c211c83dc60e5816",
   "checks": [
     "Re-ran the committed normaliser on the retained raw log: output sha256 equals the published log; 67 lines in both; no line differs except the substituted workspace path (76 occurrences; unit, host and user literals do not occur).",
     "Final line 'DONE (PASS, rc=0)' and 'summary: successful proof by k-induction' preserved; raw and normalised DONE line hashes match the receipt.",
@@ -24,7 +24,7 @@
     "Attested evidence, not reproduced by CI: the measurement was not re-run by the reviewer.",
     "Unit exit code and Exec timestamps were lost to systemd unit garbage collection; the native exit comes from the final SBY DONE line and the wall time from the systemd journal, admitted only through the named one-time exception.",
     "Non-isolated shared host; the wall time is not a performance claim.",
-    "The receipt publishes the measurement hostname while the log normaliser replaces host literals; keep one convention for future receipts.",
+    "The public receipt identifies its admitted host profile; native host identity remains private and hash-bound by the declared conversion.",
     "This attestation covers the measurement receipt only. Assertion-enable non-vacuity is attested separately by the source-bound audit artifact and its independent review."
   ],
   "supersedes_for_public_use": {
@@ -33,5 +33,5 @@
     "description": "Earlier public measurement-only attestation, retained unchanged."
   },
   "resource_contract": "amari-historical-64-v1",
-  "identity_conversion_sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+  "identity_conversion_sha256": "6b337115f7e8b7c32d7036714120c066c93a96ada27caaeb9566bf8bac25af13"
 }

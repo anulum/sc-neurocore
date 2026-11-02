@@ -155,7 +155,7 @@ def measure_native_unit(
             state["Result"], "ERROR"
         )
         measurement: dict[str, object] = {
-            "hostname": policy.hostname,
+            "host_profile": policy.host_profile,
             "unit": unit,
             "status": status,
             "unit_accounting": "retained",
@@ -207,7 +207,12 @@ def collect_native_resources(repository: Path) -> NativeEvidence:
         under a local 128 MiB policy. Never production ML350 evidence.
     """
     policy = EvidencePolicy(
-        socket.gethostname(), 128 * 1024**2, 4, "local resource qualification", 128 * 1024**2, 20
+        "local resource qualification",
+        128 * 1024**2,
+        4,
+        "local resource qualification",
+        128 * 1024**2,
+        20,
     )
     yosys, sby, z3, yices = (_tool(name) for name in ("yosys", "sby", "z3", "yices-smt2"))
     provenance = (yosys.parent.parent / "PROVENANCE.txt").read_text()
@@ -253,7 +258,7 @@ def collect_native_resources(repository: Path) -> NativeEvidence:
                 {
                     "workspace": str(repository),
                     "unit": str(measurement["unit"]),
-                    "hostname": policy.hostname,
+                    "hostname": socket.gethostname(),
                     "username": pwd.getpwuid(os.getuid()).pw_name,
                 },
             )

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "producer": "Native assertion-enable audit",
-  "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
+  "receipt_sha256": "186db658194476a9a69da1eb328da4705fc3f60df17370845bf8fc0c55685a40",
   "source_hashes": {
     "hdl/formal/catalogue/sc_amari_field.sby": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
     "hdl/formal/catalogue/sc_amari_field.v": "de387d6ad68cf582a583758b5df87f6dc9ef7c6e77c4289586bd63c81350ad6c",
@@ -23,7 +23,6 @@
     }
   },
   "measurement": {
-    "hostname": "god-of-the-math",
     "unit": "<FORMAL_AUDIT_UNIT>",
     "status": "PASS",
     "native_exit_code": 0,
@@ -48,7 +47,8 @@
       "oom_kill": 0,
       "oom_group_kill": 0
     },
-    "invocation_id": "967f5a01f5b24e5c9b9dd7ee99c011a3"
+    "invocation_id": "967f5a01f5b24e5c9b9dd7ee99c011a3",
+    "host_profile": "ML350"
   },
   "tasks": {
     "default": {

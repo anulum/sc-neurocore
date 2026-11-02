@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import socket
 from pathlib import Path
 import re
 import pwd
@@ -38,7 +39,7 @@ def _identities(native: NativeEvidence) -> dict[str, str]:
     return {
         "workspace": str(native.repository),
         "unit": str(measurement["unit"]),
-        "hostname": native.policy.hostname,
+        "hostname": socket.gethostname(),
         "username": pwd.getpwuid(os.getuid()).pw_name,
     }
 

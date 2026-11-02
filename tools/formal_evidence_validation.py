@@ -18,14 +18,18 @@ from pathlib import Path
 import re
 
 
+REFERENCE_HOST_PROFILE = "ML350"
+
+
 @dataclass(frozen=True)
 class EvidencePolicy:
-    """Identify the expected machine and its admitted measurement limits.
+    """Identify an explicitly admitted host profile and its measurement limits.
 
     Parameters
     ----------
-    hostname : str
-        Actual machine hostname, not a display label supplied by the receipt.
+    host_profile : str
+        Attestation identity supplied by the trusted admitting policy.
+        The receipt cannot select its expected profile.
     memory_bytes : int
         Exact admitted cgroup memory limit.
     timeout_seconds : int
@@ -38,7 +42,7 @@ class EvidencePolicy:
         Separate assertion-enable audit's admitted runtime ceiling.
     """
 
-    hostname: str = "god-of-the-math"
+    host_profile: str
     memory_bytes: int = 64 * 1024**3
     timeout_seconds: int = 7200
     label: str = "ML350"
@@ -230,8 +234,9 @@ def validate_measurement(
         If execution, accounting, resource limits or closure do not qualify.
     """
     measurement = object_fields(receipt.get("measurement"))
+    require("hostname" not in measurement, "Private hostname is not public measurement data.")
     for field, expected in {
-        "hostname": policy.hostname,
+        "host_profile": policy.host_profile,
         "status": "PASS",
         "active_state": "inactive",
         "cgroup_processes": [],

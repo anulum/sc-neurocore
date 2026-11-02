@@ -35,7 +35,6 @@
     }
   },
   "measurement": {
-    "hostname": "god-of-the-math",
     "status": "PASS",
     "native_exit_code": 0,
     "native_exit_source": "sby-final-DONE",
@@ -72,7 +71,8 @@
     "status_file": {
       "path": "benchmarks/results/formal/sc_amari_field/status.txt",
       "sha256": "ca7891a9b281ba6b6acfb33154478d4fd9b59896fea140bd4c593674f792d90f"
-    }
+    },
+    "host_profile": "ML350"
   },
   "log": {
     "path": "benchmarks/results/formal/sc_amari_field/native.log",

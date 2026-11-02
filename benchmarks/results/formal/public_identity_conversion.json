@@ -1,19 +1,26 @@
 {
-  "schema_version": "sc-neurocore.formal-public-identity-conversion.v1",
-  "scope": "Descriptive public execution labels and omission of private coordination lease identities. Original records are retained privately. Every other measurement, source, tool, model, native invocation and log field is preserved.",
+  "schema_version": "sc-neurocore.formal-public-identity-conversion.v2",
+  "scope": "Descriptive execution labels, omission of private coordination lease identities, and explicit renaming of private measurement hostnames to admitted host-profile identities. Original records and identity values remain private and hash-bound. Every other measurement, clock, limit, source, tool, model, native invocation and log fact is preserved.",
   "records": [
     {
       "path": "benchmarks/results/formal/sc_amari_field/receipt.json",
       "kind": "receipt",
       "original_artifact_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
-      "public_artifact_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
-      "preserved_payload_sha256": "32738dafcf2d2633103d9e85843dc6607dcf5d6ba1b0e12c0cd57ed5af9383b7",
+      "public_artifact_sha256": "186db658194476a9a69da1eb328da4705fc3f60df17370845bf8fc0c55685a40",
+      "preserved_payload_sha256": "392d822c89d5eb3f53ee00d57794f3299625f053d747fc5f462235fb7c1d564a",
       "changes": [
         {
           "field": "custody.released_nonce",
           "operation": "remove",
           "original_value_sha256": "ed3320ed0e9a1d2dd91a6261060e5586099e797bb5405a3035fc2a4c4f01e20b",
           "public_value_sha256": null
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -21,8 +28,8 @@
       "path": "benchmarks/results/formal/sc_chaotic_map/receipt.json",
       "kind": "receipt",
       "original_artifact_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
-      "public_artifact_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
-      "preserved_payload_sha256": "1fe8088d88b5cd9506b967f4228ee2e6d10160385eb6a514d10431055251a61f",
+      "public_artifact_sha256": "f2c4c44b72407f4ebbc5ea104d5ccf6296933376288bbd72d0bca0dcbd1277fd",
+      "preserved_payload_sha256": "95542d0cf08316edb95bb9085a1b69c1066cb4432c74d0c82216812d6531543a",
       "changes": [
         {
           "field": "measurement.unit",
@@ -35,6 +42,13 @@
           "operation": "remove",
           "original_value_sha256": "6c3dded5797d24398375e152eed7468089e726a00de611349893d9207ae93b7f",
           "public_value_sha256": null
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -42,8 +56,8 @@
       "path": "benchmarks/results/formal/sc_chaotic_map_z3memory64/receipt.json",
       "kind": "receipt",
       "original_artifact_sha256": "118ca7e03cce00d5d25b8fe7d61184287238ae8ea077ad5497d58233e8b693f3",
-      "public_artifact_sha256": "d5bb01f4adf9cf4e8712a2a6af4115ac3a7bd57929682b690de0419c75d85eb2",
-      "preserved_payload_sha256": "7cc2d9b5277d91c2f156268c0a02a6a599b70c022d53aa06a896bc681e6c121e",
+      "public_artifact_sha256": "6bd7f83a1bc846652ad8cc6285ca97d880392985811d6034a285f08dd277d256",
+      "preserved_payload_sha256": "f3fbd23e1e9eb006a048363591a730ac68bfc68c7111370c5569699a88c2abf3",
       "changes": [
         {
           "field": "measurement.unit",
@@ -56,6 +70,13 @@
           "operation": "remove",
           "original_value_sha256": "85c2a9d09073f8698795d57f76643b36b22a9044297906179eb44dd8dab0632f",
           "public_value_sha256": null
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -63,8 +84,8 @@
       "path": "benchmarks/results/formal/sc_chaotic_map_z3primary40/receipt.json",
       "kind": "receipt",
       "original_artifact_sha256": "a68284d346d792e228e6763436d85d0c9f7d3950ab2ab33a4b6d0d25dcd978eb",
-      "public_artifact_sha256": "94cceb2b0646dd7c13f0210eb3a530399b9b7201380e7d4949b232b8a089df94",
-      "preserved_payload_sha256": "d2bb04353c7dca076ef0b1254891d93541aabdfe7de73531375a5a104f25dcee",
+      "public_artifact_sha256": "948d1c0deceec749c30ed1211e62afb7806494779a0053a0e711ce280ccaed54",
+      "preserved_payload_sha256": "b96377285c54c5b36bffffa3e403327d9f9c91f04050d6af456c23e04819693a",
       "changes": [
         {
           "field": "measurement.unit",
@@ -77,6 +98,13 @@
           "operation": "remove",
           "original_value_sha256": "b04a2a5f14c11dd8dd9cb550d9b6f201fb48b886f3ec07dcc9b947186e6aa232",
           "public_value_sha256": null
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -84,8 +112,8 @@
       "path": "benchmarks/results/formal/sc_chialvo_map/receipt.json",
       "kind": "receipt",
       "original_artifact_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
-      "public_artifact_sha256": "49f07401637c63459e15bbc6bed4fa104023831938506aad9ac028306e918ff5",
-      "preserved_payload_sha256": "dddcc84b50693ba2501396e1846f57d8774ae21653b7bc617525ae7092e4bfa2",
+      "public_artifact_sha256": "a64ec3d6bd217957dfb70bf23591ba0215128915e8976d6d78d7d48d776cff57",
+      "preserved_payload_sha256": "c252c373bb4d4db48f5043eb384fe93e84cbc8277ac78fa5b1614b2c435c33a5",
       "changes": [
         {
           "field": "measurement.unit",
@@ -98,6 +126,13 @@
           "operation": "remove",
           "original_value_sha256": "e891038c504fb98fff24a00184834b29ec5f81a31e73c92b77dc9862776ade94",
           "public_value_sha256": null
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -105,8 +140,8 @@
       "path": "benchmarks/results/formal/sc_chialvo_map_z3memory64/receipt.json",
       "kind": "receipt",
       "original_artifact_sha256": "e563b400466e9c2970236b7560c33100ba1d6769fde5dc922e2efb4a17eb6d6f",
-      "public_artifact_sha256": "4967f867e68be34bdfdac077dff55f9dd63133391c55072ac0a67fc6de16d48f",
-      "preserved_payload_sha256": "d9b2094767d99836721607f233b2035916ae6d424bb176cb4c24b1435f54dcc6",
+      "public_artifact_sha256": "02509e524c4b63e9756446e0991f57bb452809bc61c168197bddb8e1d85f0b70",
+      "preserved_payload_sha256": "e926c3084ded01cfcaa8f9697dd480aa362c5ede77065793b284dbae8bf84688",
       "changes": [
         {
           "field": "measurement.unit",
@@ -119,6 +154,13 @@
           "operation": "remove",
           "original_value_sha256": "471266c616df5425c0db0a5d5ca3001bd9ef983baf4938877606f6a1f9c9fec0",
           "public_value_sha256": null
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -126,8 +168,8 @@
       "path": "benchmarks/results/formal/sc_amari_field/nonvacuity.json",
       "kind": "nonvacuity",
       "original_artifact_sha256": "5cfcc73d699c435a40a48c50b6cd5322def6f04525163e10beeadd9bc70bc8e2",
-      "public_artifact_sha256": "4a61749c2eb10f391f1b97e765abf8fcb309869b85407fc0b3e233d738beea14",
-      "preserved_payload_sha256": "2a9421840a87defe0ac9e7a6095a977acdf4a7815b0452cb07e6463fcc1b2b87",
+      "public_artifact_sha256": "78c3a1071ede0d3a648364a8c2456cbd3053bd3eab6ab353b6411a7ee9cb0356",
+      "preserved_payload_sha256": "f7407400fa305fe7b7b3bca45946aa98d3f62c69fa9b436d611e0ddffd7623da",
       "changes": [
         {
           "field": "measurement.unit",
@@ -145,7 +187,14 @@
           "field": "receipt_sha256",
           "operation": "replace",
           "original_value_sha256": "b0bf690b22623332fc65fd08c749b573c8ed55606785ba72df8bb59c30c5f46c",
-          "public_value_sha256": "3399a1e3f9376b338c439c70af941b308aad6d068ef4da4ca8db6fa14928498f"
+          "public_value_sha256": "3d17b159ab8320cd5a4d665b457fbffe062312ae57a55b80851dde5015c45b4c"
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -153,8 +202,8 @@
       "path": "benchmarks/results/formal/sc_chaotic_map/nonvacuity.json",
       "kind": "nonvacuity",
       "original_artifact_sha256": "15969d5bafd8f9033a50dd9601e1f12bfc5f0d1f07b31bdb8218c277a291ba0c",
-      "public_artifact_sha256": "f98334946efbb5606826ef40cbbfa0e8b70b9f7dbc0856b6c6fa7cc04a018149",
-      "preserved_payload_sha256": "195e75adcd9824239b17ed919f3e973820e992ec696e497e9e9862135e44aad0",
+      "public_artifact_sha256": "68a27050d2d4146ab02c03611eedc8a70890f8c9a1e12c11785a298c3f17295e",
+      "preserved_payload_sha256": "7dc357ab48467da89d698ad5d9b15e16a2ce23a9751bd73e928e9bacb320ca05",
       "changes": [
         {
           "field": "measurement.unit",
@@ -172,13 +221,20 @@
           "field": "receipt_sha256",
           "operation": "replace",
           "original_value_sha256": "f9471832d06eb652ff639a618c4d1577229fc1080ad36e49343e9beeb7d0a7e6",
-          "public_value_sha256": "e175ea2b3215c87b390cdb650f96583e3d6241e88b8e668916635bd1ea62959b"
+          "public_value_sha256": "77ec2367999d6fd969924c46e4bd0814b03e0150829da035f3cdd4123fbb14b8"
         },
         {
           "field": "receipt_conversion.public_parent_receipt_sha256",
           "operation": "replace",
           "original_value_sha256": "f9471832d06eb652ff639a618c4d1577229fc1080ad36e49343e9beeb7d0a7e6",
-          "public_value_sha256": "e175ea2b3215c87b390cdb650f96583e3d6241e88b8e668916635bd1ea62959b"
+          "public_value_sha256": "77ec2367999d6fd969924c46e4bd0814b03e0150829da035f3cdd4123fbb14b8"
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     },
@@ -186,8 +242,8 @@
       "path": "benchmarks/results/formal/sc_chialvo_map/nonvacuity.json",
       "kind": "nonvacuity",
       "original_artifact_sha256": "af9057fbc2a97d1bfb99ac81585ca7a074d5dc42ebfe5bd4503fd754c008f47e",
-      "public_artifact_sha256": "e17c3b1e559e63210a1425eabae1468dffcc96d72d0ed4690cf74e2b85151c95",
-      "preserved_payload_sha256": "e0db9b6896bd26dcbcfab44f3b4411daaee1d74d40aa5af68befefe2e71a659a",
+      "public_artifact_sha256": "7bd265198d5ff182a00c51fcecf0dfea9577c3b430a3bb20242b7e27be298025",
+      "preserved_payload_sha256": "81c0fcfee10b5aed65579096a70d632a52bfce7a36383682ceab60a41119f5b5",
       "changes": [
         {
           "field": "measurement.unit",
@@ -205,13 +261,20 @@
           "field": "receipt_sha256",
           "operation": "replace",
           "original_value_sha256": "e91f7a2a3295bb7fa5baffe0a1d0fe0d7f4fa8441e0160f6027509eb4a302029",
-          "public_value_sha256": "adca87b1304fafed695fa230ddfcfc629b40105971fa2ccae0f3a50444045702"
+          "public_value_sha256": "7caf20e5cb99b03f8c0a1597f67b430ec6615ed9e748ff19100021b6628e621c"
         },
         {
           "field": "receipt_conversion.public_parent_receipt_sha256",
           "operation": "replace",
           "original_value_sha256": "e91f7a2a3295bb7fa5baffe0a1d0fe0d7f4fa8441e0160f6027509eb4a302029",
-          "public_value_sha256": "adca87b1304fafed695fa230ddfcfc629b40105971fa2ccae0f3a50444045702"
+          "public_value_sha256": "7caf20e5cb99b03f8c0a1597f67b430ec6615ed9e748ff19100021b6628e621c"
+        },
+        {
+          "field": "measurement.hostname",
+          "operation": "rename",
+          "public_field": "measurement.host_profile",
+          "original_value_sha256": "8aaa8236b963a1d4caa7eb297c742c2de7468916c6cc8e438a1e86e581e9842c",
+          "public_value_sha256": "83c1de1c10efa7d8c3d8deadbac8f4d5e6b105952d89da6913bef02ce0c3f000"
         }
       ]
     }

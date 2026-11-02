@@ -2,7 +2,7 @@
   "schema_version": 1,
   "verdict": "CLEAR",
   "reviewer": "Independent formal evidence review",
-  "receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
+  "receipt_sha256": "f2c4c44b72407f4ebbc5ea104d5ccf6296933376288bbd72d0bca0dcbd1277fd",
   "resource_contract": "yices-resource-retry-64-v1",
   "source_hashes": {
     "hdl/formal/catalogue/sc_chaotic_map.sby": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
@@ -20,19 +20,19 @@
     {
       "resource_contract": "z3-primary-40-v1",
       "native_status": "MEMORY",
-      "receipt_sha256": "94cceb2b0646dd7c13f0210eb3a530399b9b7201380e7d4949b232b8a089df94",
-      "review_sha256": "bc5469d23567d6c58c01cb2987ba5954e621a3669ffed0376612f4517e2cf8a9"
+      "receipt_sha256": "948d1c0deceec749c30ed1211e62afb7806494779a0053a0e711ce280ccaed54",
+      "review_sha256": "d6e04e01e9d00657140c579d0f0e0b66be989dcdd36a8f811fc63569cc63f968"
     },
     {
       "resource_contract": "z3-memory-retry-64-v1",
       "native_status": "TIMEOUT",
-      "receipt_sha256": "d5bb01f4adf9cf4e8712a2a6af4115ac3a7bd57929682b690de0419c75d85eb2",
-      "review_sha256": "b1b955f002589550de100c0e32f787b52209541dc08ca683cade817521ebfa68"
+      "receipt_sha256": "6bd7f83a1bc846652ad8cc6285ca97d880392985811d6034a285f08dd277d256",
+      "review_sha256": "a4483969da4c34d7dbd44c75e90dd07e5eec42c68a0c52debff627943b7baff1"
     }
   ],
   "receipt_conversion": {
     "native_audit_parent_receipt_sha256": "5ac366c9b391f33ffe65e5ab34548265b57eb90e3c0b5b8c8892aafa74c3899e",
-    "public_parent_receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
+    "public_parent_receipt_sha256": "f2c4c44b72407f4ebbc5ea104d5ccf6296933376288bbd72d0bca0dcbd1277fd",
     "field": "measurement.cgroup_processes",
     "native_empty_representation": "",
     "public_empty_representation": [],
@@ -47,5 +47,5 @@
   "limits": [
     "Temporal induction and enable reachability do not establish property strength."
   ],
-  "identity_conversion_sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+  "identity_conversion_sha256": "6b337115f7e8b7c32d7036714120c066c93a96ada27caaeb9566bf8bac25af13"
 }

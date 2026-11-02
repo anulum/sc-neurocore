@@ -41,10 +41,11 @@ def validate_resource_measurement(
         If accounting, stop cause, closure, clock, cap or OOM evidence differs.
     """
     measurement = object_fields(receipt.get("measurement"))
+    require("hostname" not in measurement, "Private hostname is not public measurement data.")
     status = measurement.get("status")
     require(status in ("TIMEOUT", "MEMORY"), "Resource receipt is not TIMEOUT or MEMORY.")
     for name, expected in {
-        "hostname": policy.hostname,
+        "host_profile": policy.host_profile,
         "unit_accounting": "retained",
         "native_exit_source": "systemd-exec",
         "wall_clock_source": "systemd-exec-monotonic",

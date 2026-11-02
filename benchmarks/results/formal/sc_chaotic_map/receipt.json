@@ -35,7 +35,6 @@
     }
   },
   "measurement": {
-    "hostname": "god-of-the-math",
     "status": "PASS",
     "native_exit_code": 0,
     "native_exit_source": "systemd-exec",
@@ -66,7 +65,8 @@
     "status_file": {
       "path": "benchmarks/results/formal/sc_chaotic_map/status.txt",
       "sha256": "9768d51e75bbaf455ceae1cb5204dc0141f1d615040e48bd90d44c2613f92e9a"
-    }
+    },
+    "host_profile": "ML350"
   },
   "log": {
     "path": "benchmarks/results/formal/sc_chaotic_map/native.log",

@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import copy
-import socket
 import sys
 
 import pytest
@@ -26,7 +25,7 @@ def oom(tmp_path_factory: pytest.TempPathFactory) -> tuple[dict[str, object], Ev
     """Collect an actual finite kernel OOM kill, without any proof claim."""
     root = tmp_path_factory.mktemp("actual-kernel-oom-accounting")
     policy = EvidencePolicy(
-        socket.gethostname(), 128 * 1024**2, 10, "local OOM accounting-only control"
+        "local OOM accounting-only control", 128 * 1024**2, 10, "local OOM accounting-only control"
     )
     program = """import os,signal,sys,time
 from pathlib import Path

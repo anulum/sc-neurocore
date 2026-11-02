@@ -77,6 +77,18 @@ def test_actual_native_receipt_and_production_policy_boundary(case: NativeEviden
         validate_external(case.repository, JOB, case.rebind(), case.provenance, case.solvers)
 
 
+def test_missing_host_profile_refuses_actual_native_receipt(case: NativeEvidence) -> None:
+    """Reject a missing admitted identity after rebinding an actual native proof."""
+    receipt = read_object(case.repository / "receipt.json")
+    measurement = object_fields(receipt["measurement"])
+    measurement.pop("host_profile")
+    receipt["measurement"] = measurement
+    (case.repository / "receipt.json").write_text(json.dumps(receipt))
+
+    with pytest.raises(ValueError, match="Native host_profile does not qualify"):
+        _check(case)
+
+
 @pytest.mark.parametrize(
     "field,value,reason",
     [
@@ -98,7 +110,7 @@ def test_actual_native_receipt_and_production_policy_boundary(case: NativeEviden
         ("toolchain.solver.name", "unknown", "solver is not"),
         ("toolchain.solver.sha256", "0" * 64, "solver binary"),
         ("toolchain.solver.version", "wrong version", "solver version"),
-        ("measurement.hostname", "another-machine", "hostname"),
+        ("measurement.host_profile", "unadmitted-profile", "host_profile"),
         ("measurement.status", "TIMEOUT", "status"),
         ("measurement.unit_result", "oom-kill", "systemd exit facts"),
         ("measurement.unit_accounting", None, "accounting is missing"),

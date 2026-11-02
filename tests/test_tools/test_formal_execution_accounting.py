@@ -21,7 +21,7 @@ from tools.formal_execution_accounting import EXCEPTION_REGISTRY, validate_execu
 
 ROOT = Path(__file__).resolve().parents[2]
 RECEIPT = "benchmarks/results/formal/sc_amari_field/receipt.json"
-ACTUAL_RECEIPT_SHA256 = "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75"
+ACTUAL_RECEIPT_SHA256 = "186db658194476a9a69da1eb328da4705fc3f60df17370845bf8fc0c55685a40"
 
 
 @pytest.fixture

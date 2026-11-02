@@ -71,7 +71,7 @@ class NativeEvidence:
     repository : Path
         Copied unchanged tracked job and collected native evidence.
     policy : EvidencePolicy
-        Actual local test machine and bounded service limits.
+        Explicit local qualification profile and bounded service limits.
     provenance : str
         Actual SDK provenance.
     solvers : dict of str to Path
@@ -225,7 +225,7 @@ def collect_native(
     control = ["sudo", "systemctl"] if hosted else ["systemctl", "--user"]
     launcher = ["sudo", "systemd-run"] if hosted else ["systemd-run", "--user"]
     policy = EvidencePolicy(
-        socket.gethostname(), 128 * 1024**2, 60, "local qualification", 128 * 1024**2, 60
+        "local qualification", 128 * 1024**2, 60, "local qualification", 128 * 1024**2, 60
     )
     unit = "scn-formal-receipt-test-" + uuid.uuid4().hex + ".service"
     log = repository / "native.log"
@@ -328,7 +328,7 @@ def collect_native(
                 },
             },
             "measurement": {
-                "hostname": policy.hostname,
+                "host_profile": policy.host_profile,
                 "unit": unit,
                 "wall_clock_source": "systemd-exec-monotonic",
                 "start_monotonic_microseconds": int(state["ExecMainStartTimestampMonotonic"]),
@@ -369,7 +369,7 @@ def collect_native(
             {
                 "workspace": str(repository),
                 "unit": unit,
-                "hostname": policy.hostname,
+                "hostname": socket.gethostname(),
                 "username": pwd.getpwuid(os.getuid()).pw_name,
             },
         )

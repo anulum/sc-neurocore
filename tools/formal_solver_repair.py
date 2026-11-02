@@ -24,8 +24,8 @@ from tools.formal_log_normalization import validate_public_log
 from tools.formal_receipt_identity import validate_review
 from tools.formal_resource_policy import CHIALVO_JOB, CHIALVO_REPAIR
 
-ERROR_RECEIPT = "4967f867e68be34bdfdac077dff55f9dd63133391c55072ac0a67fc6de16d48f"
-ERROR_DIAGNOSTIC = "f29b2cac3fac2aa00bfedc73f0e8f96f85391b240343925e1339fa22d2bfd22f"
+ERROR_RECEIPT = "02509e524c4b63e9756446e0991f57bb452809bc61c168197bddb8e1d85f0b70"
+ERROR_DIAGNOSTIC = "1b25d03da27c8e0917bfd633d01aca0db18c86f1683cb9909eeeae359c2e2b46"
 REPAIRED_CONFIGURATION = "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be"
 PORTABLE_YICES = "524357fd625311f9a43affded6ea4250c19783f07b2119d82d57ebb25c75d50e"
 
