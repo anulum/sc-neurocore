@@ -51,6 +51,15 @@ Worker refusal raises the same recoverable `MemoryError` and permits a fresh
 construction with the original seed. Its existing scalar and parallel forward
 thresholds are unchanged; a successfully constructed layer already has an
 initialised shared pool.
+
+The `DenseLayer` facade and native class references retain the same identity
+through every pickle protocol supported by Python. Live layer instances refuse
+pickle, shallow copy and deep copy with `TypeError`. A refusal preserves weights
+and inference, permits subsequent weight updates and leaves independent layers
+unchanged. Installed-wheel checks pin these contracts in
+`tests/test_dense_layer_engine_binding_serialization.py`; class-reference
+serialization does not imply support for persisting a live layer.
+
 The Python `GpuLifBatch` and `GpuIzhikevichBatch` runners validate nonempty
 output products, shader indices, device buffer capacity and workgroup limits
 before allocating or dispatching. Unrepresentable or oversized output storage
