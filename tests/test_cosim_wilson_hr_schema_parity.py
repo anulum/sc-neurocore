@@ -4,17 +4,17 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Wilson-HR schema and reference-integrator parity
+# SC-NeuroCore — Wilson Hindmarsh-Rose schema and hand-model parity
 
-"""Exercise both Wilson-HR schema formats against an independent RK4 path."""
+"""Compare Wilson Hindmarsh-Rose schema dynamics with the reference hand model."""
 
 from __future__ import annotations
 
 from tests.cosim_wilson_hr_support import *
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B Wilson-HR schema enrolment."""
+class TestSchemaModelParity:
+    """Wilson-HR schema parity."""
 
     def test_wilson_hr_schema_formats_match_hand_rk4_sequence(self) -> None:
         """The TOML and JSON schemas track Wilson-HR over a varied drive.

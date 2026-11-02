@@ -115,7 +115,7 @@ evidence = "tests/test_reference_perfect_integrator_source_receipt.py; tests/tes
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_perfect_integrator.py::TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl"
+cosim_evidence = "tests/test_cosim_perfect_integrator.py::TestSchemaModelParity::test_source_strict_boundary_matches_curated_q88_rtl"
 synthesised = true
 synth_report = "hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30.json"
 target_device = "generic RTL (Yosys coarse synthesis)"

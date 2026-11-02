@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (apply) from former test_readiness_evidence_index.py
 
+"""Apply real committed descriptor facets without weakening stronger evidence."""
+
 from __future__ import annotations
 
 from readiness_evidence_index_support import *  # noqa: F403
@@ -17,7 +19,7 @@ def test_apply_writes_facets_and_raises_live_tiers(
     """--apply path: write facets for one enrolled model via temp descriptor dir.
 
     Uses the real AdExNeuron payload as a template, redirects descriptor I/O to a
-    temporary directory so the WC-A5 peer tree is not mutated by this unit test.
+    temporary directory so the canonical source tree is not mutated by this unit test.
     """
     from sc_neurocore.neurons import model_catalogue as catalogue
 

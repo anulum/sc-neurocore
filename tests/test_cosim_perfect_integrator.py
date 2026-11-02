@@ -30,8 +30,8 @@ _INPUT_CURRENT = 0.7
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B Perfect Integrator enrolment."""
+class TestSchemaModelParity:
+    """Perfect Integrator schema parity."""
 
     def test_perfect_integrator_schema_matches_hand_model_sequence(self) -> None:
         """The schema mirrors the hand-authored non-leaky integrator step law."""
@@ -52,7 +52,9 @@ class TestTierBModelCosim:
         assert hand_spikes == schema_spikes == verilog_spikes == 66
 
     @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-    def test_perfect_integrator_generated_q88_declares_fractional_boundary(self) -> None:
+    def test_perfect_integrator_generated_q88_declares_fractional_boundary(
+        self,
+    ) -> None:
         """Record generic-Q8.8 quantisation separately from curated source RTL."""
         current = 0.333
         hand_spikes = _perfect_integrator_hand_spike_count(_N_STEPS, current)

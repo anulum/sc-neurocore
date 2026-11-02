@@ -8,7 +8,7 @@ tolerances. The production validator loads those JSON entries from the package,
 executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
-This page documents the WC-A1 deterministic schema corpus, the pinned IQIF
+This page documents the bundled deterministic schema corpus, the pinned IQIF
 source-implementation trace, the stateless McCulloch-Pitts primary-source truth
 table, and the separate seeded EscapeRate and Poisson statistical references.
 It does not claim NEST, Brian2,

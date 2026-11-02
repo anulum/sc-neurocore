@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestTierBModelCosim from former test_cosim_pernarowski.py
+# SC-NeuroCore — Pernarowski schema and hand-model parity
 
-"""Focused suite: TestTierBModelCosim from former test_cosim_pernarowski.py."""
+"""Compare Pernarowski schema dynamics with the reference hand model."""
 
 from __future__ import annotations
 
 from tests.cosim_pernarowski_support import *  # noqa: F403
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B Pernarowski schema enrolment."""
+class TestSchemaModelParity:
+    """Pernarowski schema parity."""
 
     def test_pernarowski_schema_formats_match_hand_rk4_sequence(self) -> None:
         """The TOML and JSON schemas reproduce the hand model over a varied drive.

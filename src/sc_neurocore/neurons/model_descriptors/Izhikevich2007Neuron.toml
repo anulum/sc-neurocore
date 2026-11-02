@@ -162,13 +162,13 @@ dynamics_faithful = true
 metric = "parity"
 operating_point = "schema-DSL izhikevich2007; Euler; hand/schema/RTL"
 tolerance = "exact Q16.16 spike parity per enrolment"
-evidence = "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog"
+evidence = "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog"
 
 [silicon]
 compiles = true
 cosim_validated = true
 synthesised = true
-cosim_evidence = "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog"
+cosim_evidence = "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog"
 synth_report = "hdl/reports/yosys_izhikevich2007_q88_2026-08-28.json"
 target_device = "generic synchronous logic (Yosys coarse synthesis)"
 target_tier = "H2"

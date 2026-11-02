@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Give schema co-simulation tests and evidence references descriptive names. Advance the schema-gap report to version 2 with readable validation priorities and reject stale report vocabulary.
+
 - Use descriptive public formal-execution labels and retain private execution custody through an explicit hash-bound conversion. Preserve native invocation identities, measurements and proof gates.
 
 - Add typed discovery for six spike-codec families and two stream interfaces, with variant, wire-format and native-component descriptions plus explicit availability diagnostics. Preserve the five-name raster factory and existing packet compatibility.
@@ -5228,7 +5230,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   (`independent_macrostep_gauss_seidel_reference`, a 3-state helper bit-exact vs the runner,
   spike_count 4), replacing the deleted resting-gate trace; descriptor dynamics synced to the
   exprel form; the 15%-band cosim test becomes a macro-step three-way parity test. Wang-Buzsáki is
-  the last of the four WC-A5 conductance oscillators (Morris-Lecar, Connor-Stevens, Hodgkin-Huxley,
+  the last of the four schema-compiled conductance oscillators (Morris-Lecar, Connor-Stevens, Hodgkin-Huxley,
   Wang-Buzsáki), all now faithfully enrolled; the polynomial edge-crossing oscillators
   (FitzHugh-Nagumo, McKean) were enrolled earlier.
 
@@ -5279,7 +5281,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ### Morris-Lecar faithful re-enrolment (RK4, no reset, rising-edge crossing)
 - Re-enrolled the Morris-Lecar (1981) calcium-potassium oscillator (`morris_lecar` schema,
   DOI `10.1016/S0006-3495(81)84782-0`) as the first **conductance** edge-crossing oscillator
-  in the WC-A5 Python↔Verilog co-simulation set. The prior schema was `method="euler"` with a
+  in the schema-driven Python↔Verilog co-simulation set. The prior schema was `method="euler"` with a
   no-op `[reset]` (`v -> v`, `w -> w`) that disabled edge detection and over-counted every
   above-threshold step — a caricature that only "passed" a ~15% band because both sides
   over-counted identically. The faithful schema mirrors `MorrisLecarNeuron`'s maintained
@@ -5302,7 +5304,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### McKean piecewise-linear oscillator enrolment (RK4, no reset, rising-edge crossing)
 - Enrolled the McKean (1970) piecewise-linear FitzHugh-Nagumo caricature (`mckean` schema,
-  DOI `10.1016/0001-8708(70)90023-X`) into the WC-A5 schema corpus and Python↔Verilog
+  DOI `10.1016/0001-8708(70)90023-X`) into the model-schema corpus and Python↔Verilog
   co-simulation. The bundled schema is RK4, no reset, rising-edge (`v >= v_peak`) detection,
   with the three-branch piecewise-linear membrane `f(v) = min(max(-v, v - a), 1 - v)` — the
   second edge-crossing oscillator after FitzHugh-Nagumo. The min/max branch selection lowers
@@ -5366,7 +5368,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Mihalas-Niebur RK4 co-simulation enrollment
 - Enrolled `mihalas_niebur` (Mihalaş & Niebur 2009 generalised linear
-  integrate-and-fire) into the WC-A5 schema corpus and Python↔Verilog
+  integrate-and-fire) into the model-schema corpus and Python↔Verilog
   co-simulation as the first `method="rk4"` bundled model: a four-state RK4 flow
   (membrane, adaptive threshold, two spike-triggered currents) with a
   state-to-state `v >= theta` threshold and a `max(theta, theta_reset)`
@@ -5384,7 +5386,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### DYNAP-SE differential-pair integrator co-simulation enrollment
 - Enrolled `dpi_neuron` (Chicca et al. 2014 DYNAP-SE differential-pair
-  integrator, current-mode subthreshold LIF) into the WC-A5 Python↔Verilog
+  integrator, current-mode subthreshold LIF) into the schema-driven Python↔Verilog
   co-simulation campaign: the explicit-Euler discretisation co-simulates at exact
   Q16.16 spike-count parity (three-way hand-model / schema / RTL) on a partial
   spike train, with a committed independent Euler-parity reference trace covering
@@ -5395,7 +5397,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Izhikevich 2007 co-simulation enrollment and Verilog parameter-collision fix
 - Enrolled `izhikevich2007` (Izhikevich 2007 biophysical quadratic IF, NeuroML
-  `izhikevich2007Cell`) into the WC-A5 Python↔Verilog co-simulation campaign: the
+  `izhikevich2007Cell`) into the schema-driven Python↔Verilog co-simulation campaign: the
   explicit-Euler discretisation co-simulates at exact Q16.16 spike-count parity
   (three-way hand-model / schema / RTL), with a committed independent
   Euler-parity reference trace covering the new bundled schema. The model's RK4
@@ -5450,7 +5452,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   so no polyglot counterpart or benchmark artefact changed.
 - Re-enrolled the Morris-Lecar calcium-potassium oscillator (`morris_lecar` schema,
   Morris & Lecar 1981, DOI `10.1016/S0006-3495(81)84782-0`) faithfully as the first
-  **conductance** edge-crossing oscillator in the WC-A5 co-simulation set. The bundled
+  **conductance** edge-crossing oscillator in the schema co-simulation set. The bundled
   schema was `method="euler"` with a no-op `[reset]` (`v -> v`, `w -> w`) that disabled
   edge detection, routed to the level datapath, and over-counted every above-threshold
   step; both Python and Verilog over-counted identically so a ~15% tolerance band passed
@@ -5476,7 +5478,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   artefact changed.
 
 ### Deterministic reference-trace corpus
-- Completed the deterministic bundled-schema reference-trace corpus for WC-A1b:
+- Completed the deterministic bundled-schema reference-trace corpus for the reference models:
   all 17 deterministic schema-DSL models now have committed package data
   entries validated through `sc_neurocore.neurons.reference_traces`, while
   stochastic schemas and external simulator traces remain explicitly outside
@@ -5585,7 +5587,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Schema-gap reporting
-- Added `tools/schema_gap_report.py` and focused tests for WC-A5 schema-DSL
+- Added `tools/schema_gap_report.py` and focused tests for schema-DSL
   coverage planning. The report scans live model/schema files without importing
   optional backends, distinguishes the net schema gap from exact source-module
   alias coverage, and ranks missing-schema rows by source-evidence enrolment

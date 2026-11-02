@@ -8280,10 +8280,10 @@
               "origin": "descriptor",
               "scope": "class",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8299,10 +8299,10 @@
               "origin": "descriptor",
               "scope": "class",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8353,10 +8353,10 @@
               "origin": "descriptor",
               "scope": "class",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8372,10 +8372,10 @@
               "origin": "descriptor",
               "scope": "class",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8542,10 +8542,10 @@
               "origin": "descriptor",
               "scope": "profile",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8561,10 +8561,10 @@
               "origin": "descriptor",
               "scope": "profile",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8615,10 +8615,10 @@
               "origin": "descriptor",
               "scope": "profile",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -8634,10 +8634,10 @@
               "origin": "descriptor",
               "scope": "profile",
               "executable": true,
-              "raw": "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "raw": "tests/test_cosim_izhikevich2007.py::TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "kind": "test-node",
               "path": "tests/test_cosim_izhikevich2007.py",
-              "node": "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog",
+              "node": "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog",
               "resolution": "resolved"
             }
           ]
@@ -12691,10 +12691,10 @@
               "origin": "descriptor",
               "scope": "profile",
               "executable": true,
-              "raw": "tests/test_cosim_perfect_integrator.py::TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl",
+              "raw": "tests/test_cosim_perfect_integrator.py::TestSchemaModelParity::test_source_strict_boundary_matches_curated_q88_rtl",
               "kind": "test-node",
               "path": "tests/test_cosim_perfect_integrator.py",
-              "node": "TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl",
+              "node": "TestSchemaModelParity::test_source_strict_boundary_matches_curated_q88_rtl",
               "resolution": "resolved"
             }
           ]
@@ -12710,10 +12710,10 @@
               "origin": "descriptor",
               "scope": "profile",
               "executable": true,
-              "raw": "tests/test_cosim_perfect_integrator.py::TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl",
+              "raw": "tests/test_cosim_perfect_integrator.py::TestSchemaModelParity::test_source_strict_boundary_matches_curated_q88_rtl",
               "kind": "test-node",
               "path": "tests/test_cosim_perfect_integrator.py",
-              "node": "TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl",
+              "node": "TestSchemaModelParity::test_source_strict_boundary_matches_curated_q88_rtl",
               "resolution": "resolved"
             }
           ]

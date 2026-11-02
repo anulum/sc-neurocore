@@ -7,7 +7,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Schema-DSL coverage and co-simulation enrolment report
 
-"""Report schema-DSL coverage for the WC-A5 co-simulation campaign.
+"""Report model-schema coverage and co-simulation requirements.
 
 The report is derived from source files and schema files in the current
 checkout. It does not import neuron modules, so optional backend dependencies
@@ -24,16 +24,16 @@ from pathlib import Path
 from typing import Any, Literal
 
 
-SCHEMA_VERSION = "sc-neurocore.schema-gap-report.v1"
+SCHEMA_VERSION = "sc-neurocore.schema-gap-report.v2"
 MODEL_DIR = Path("src/sc_neurocore/neurons/models")
 SCHEMA_DIR = Path("src/sc_neurocore/neurons/model_schemas")
 # Canonical alias table (schema stem ↔ module); keep import local so this tool
 # remains usable without a full package install when run as a script.
 try:
-    from sc_neurocore.neurons.schema_module_aliases import (  # type: ignore[import-not-found]
+    from sc_neurocore.neurons.schema_module_aliases import (
         SCHEMA_SOURCE_ALIASES as _CANONICAL_SCHEMA_SOURCE_ALIASES,
     )
-    from sc_neurocore.neurons.schema_module_aliases import (  # type: ignore[import-not-found]
+    from sc_neurocore.neurons.schema_module_aliases import (
         SCHEMA_TO_MODULE as _CANONICAL_SCHEMA_TO_MODULE,
     )
 
@@ -66,14 +66,14 @@ Classification = Literal[
 ]
 
 PRIORITY_ORDER: dict[str, int] = {
-    "P0-schema-present": 0,
-    "P1-euler-schema-candidate": 1,
-    "P1-exact-flow-schema-candidate": 2,
-    "P2-exp-euler-schema-candidate": 3,
-    "P3-rk4-or-higher-order-blocked": 4,
-    "P4-statistical-or-discrete-validation": 5,
-    "P5-out-of-auto-cosim": 6,
-    "P6-source-review-required": 7,
+    "schema-present": 0,
+    "euler-schema-candidate": 1,
+    "exact-flow-schema-candidate": 2,
+    "exponential-euler-schema-candidate": 3,
+    "higher-order-schema-required": 4,
+    "statistical-or-discrete-validation": 5,
+    "outside-automatic-cosimulation": 6,
+    "source-review-required": 7,
 }
 
 
@@ -141,7 +141,11 @@ def build_report(repo: Path) -> dict[str, Any]:
             asdict(record)
             for record in sorted(
                 missing,
-                key=lambda item: (PRIORITY_ORDER[item.priority], item.classification, item.model),
+                key=lambda item: (
+                    PRIORITY_ORDER[item.priority],
+                    item.classification,
+                    item.model,
+                ),
             )
         ],
     }
@@ -157,7 +161,7 @@ def classify_model(repo: Path, model: str, *, schema_name: str | None) -> ModelG
     if schema_present:
         classification: Classification = "schema_present"
         evidence = [f"schema file exists for {schema_name}"]
-        priority = "P0-schema-present"
+        priority = "schema-present"
     else:
         classification, evidence = classify_source(model, lower)
         priority = priority_for(classification)
@@ -182,13 +186,23 @@ def classify_source(model: str, lower_source: str) -> tuple[Classification, list
     ):
         return "package_alias", ["module re-exports another implementation"]
     if _has_any(
-        model, lower_source, ("poisson", "stochastic", "random", "rng", "gaussian white noise")
+        model,
+        lower_source,
+        ("poisson", "stochastic", "random", "rng", "gaussian white noise"),
     ):
         return "stochastic_or_rate", ["source contains stochastic/rate-process evidence"]
     if _has_any(
         model,
         lower_source,
-        ("compartment", "dendrit", "soma", "purkinje", "pinsky", "hay_l5", "multicompartment"),
+        (
+            "compartment",
+            "dendrit",
+            "soma",
+            "purkinje",
+            "pinsky",
+            "hay_l5",
+            "multicompartment",
+        ),
     ):
         return "multi_compartment", ["source contains compartmental morphology evidence"]
     if _has_any(
@@ -208,7 +222,17 @@ def classify_source(model: str, lower_source: str) -> tuple[Classification, list
     if _has_any(
         model,
         lower_source,
-        ("rk4", "runge-kutta", "runge kutta", "k1_", "k2_", "k3_", "k4_", "k1 =", "k2 ="),
+        (
+            "rk4",
+            "runge-kutta",
+            "runge kutta",
+            "k1_",
+            "k2_",
+            "k3_",
+            "k4_",
+            "k1 =",
+            "k2 =",
+        ),
     ):
         if _has_any(model, lower_source, ("neural mass", "wilson-cowan", "population rate")):
             return "neural_mass_rk4", ["source uses RK4 neural-mass update evidence"]
@@ -231,29 +255,31 @@ def classify_source(model: str, lower_source: str) -> tuple[Classification, list
     if _has_any(model, lower_source, ("neural mass", "eeg", "population", "dy0", "dy1")):
         return "neural_mass_euler", ["source contains neural-mass Euler evidence"]
     if _has_any(
-        model, lower_source, ("ode", "dca", "dv", "derivative", "+= ", "* self.dt", "*self.dt")
+        model,
+        lower_source,
+        ("ode", "dca", "dv", "derivative", "+= ", "* self.dt", "*self.dt"),
     ):
         return "euler_candidate", ["source contains explicit-Euler-style update evidence"]
     return "source_review_required", ["no deterministic integrator evidence matched static rules"]
 
 
 def priority_for(classification: Classification) -> str:
-    """Return the WC-A5 enrolment priority bucket for a classification."""
+    """Return the schema validation priority for a classification."""
     if classification == "schema_present":
-        return "P0-schema-present"
+        return "schema-present"
     if classification == "euler_candidate" or classification == "neural_mass_euler":
-        return "P1-euler-schema-candidate"
+        return "euler-schema-candidate"
     if classification == "exact_flow_candidate":
-        return "P1-exact-flow-schema-candidate"
+        return "exact-flow-schema-candidate"
     if classification == "exp_euler_candidate":
-        return "P2-exp-euler-schema-candidate"
+        return "exponential-euler-schema-candidate"
     if classification == "rk4_required" or classification == "neural_mass_rk4":
-        return "P3-rk4-or-higher-order-blocked"
+        return "higher-order-schema-required"
     if classification in {"event_discrete", "map_or_discrete", "stochastic_or_rate"}:
-        return "P4-statistical-or-discrete-validation"
+        return "statistical-or-discrete-validation"
     if classification in {"multi_compartment", "package_alias"}:
-        return "P5-out-of-auto-cosim"
-    return "P6-source-review-required"
+        return "outside-automatic-cosimulation"
+    return "source-review-required"
 
 
 def module_for_schema_stem(schema: str) -> str:
@@ -278,7 +304,16 @@ def schema_for_source(model: str, schema_names: set[str]) -> str | None:
 
 def render_markdown(report: dict[str, Any]) -> str:
     """Render a Markdown report from :func:`build_report` output."""
+    if report.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("Unsupported schema-gap report version.")
     counts = report["counts"]
+    priorities = [
+        *counts["missing_priority"],
+        *(record["priority"] for record in report["records"]),
+        *(record["priority"] for record in report["ranked_enrolment"]),
+    ]
+    if any(priority not in PRIORITY_ORDER for priority in priorities):
+        raise ValueError("Unsupported schema-gap report priority.")
     lines = [
         "<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->",
         "<!-- Commercial license available -->",
@@ -291,7 +326,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "# Schema-DSL Gap Report",
         "",
         "This report is generated from the current checkout by",
-        "`tools/schema_gap_report.py`. It is a planning aid for WC-A5",
+        "`tools/schema_gap_report.py`. It summarizes schema availability and validation requirements for",
         "Python↔Verilog co-simulation enrolment; it does not certify scientific",
         "validity for any individual model.",
         "",
@@ -309,13 +344,13 @@ def render_markdown(report: dict[str, Any]) -> str:
         "|---|---:|---|",
     ]
     meanings = {
-        "P1-euler-schema-candidate": "Direct schema candidate; explicit Euler-style update evidence.",
-        "P1-exact-flow-schema-candidate": "Direct schema candidate if the exact flow is preserved or declared.",
-        "P2-exp-euler-schema-candidate": "Schema candidate once exponential-Euler semantics are explicit.",
-        "P3-rk4-or-higher-order-blocked": "Blocked from parity until higher-order emitter path is ready.",
-        "P4-statistical-or-discrete-validation": "Needs statistical/discrete validation, not spike-count parity.",
-        "P5-out-of-auto-cosim": "Out of automatic single-schema co-sim path.",
-        "P6-source-review-required": "Needs manual source review before enrolment.",
+        "euler-schema-candidate": "Direct schema candidate; explicit Euler-style update evidence.",
+        "exact-flow-schema-candidate": "Direct schema candidate if the exact flow is preserved or declared.",
+        "exponential-euler-schema-candidate": "Schema candidate once exponential-Euler semantics are explicit.",
+        "higher-order-schema-required": "Blocked from parity until higher-order emitter path is ready.",
+        "statistical-or-discrete-validation": "Needs statistical/discrete validation, not spike-count parity.",
+        "outside-automatic-cosimulation": "Out of automatic single-schema co-sim path.",
+        "source-review-required": "Needs manual source review before enrolment.",
     }
     for priority, count in sorted(
         counts["missing_priority"].items(), key=lambda item: PRIORITY_ORDER[item[0]]

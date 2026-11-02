@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for schema-gap reporting tool
 
+"""Verify live schema coverage, public report formats and stale-format refusal."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -39,13 +41,14 @@ def _write(path: Path, text: str) -> None:
 
 
 def test_live_schema_gap_counts_match_current_checkout() -> None:
+    """Bind the public report counts and aliases to the current source tree."""
     tool = _load_tool()
 
     report = tool.build_report(REPO)
     modules = tool.collect_model_names(REPO)
     counts = report["counts"]
 
-    assert report["schema_version"] == tool.SCHEMA_VERSION
+    assert report["schema_version"] == tool.SCHEMA_VERSION == "sc-neurocore.schema-gap-report.v2"
     assert counts["model_modules"] == len(modules)
     assert counts["schema_models"] == len(tool.collect_schema_names(REPO)) == 80
     assert counts["schema_only_models"] == 0
@@ -68,7 +71,8 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
     )
 
 
-def test_live_report_classifies_known_wc_a5_examples() -> None:
+def test_live_report_classifies_reference_model_examples() -> None:
+    """Preserve integrator classifications for maintained reference models."""
     tool = _load_tool()
     report = tool.build_report(REPO)
     records = {row["model"]: row for row in report["records"]}
@@ -87,15 +91,16 @@ def test_live_report_classifies_known_wc_a5_examples() -> None:
     assert records["ibarz_tanaka_map"]["schema_present"] is True
     assert records["ibarz_tanaka_map"]["schema_name"] == "ibarz_tanaka_map"
     assert records["butera_respiratory"]["classification"] == "schema_present"
-    assert records["butera_respiratory"]["priority"] == "P0-schema-present"
+    assert records["butera_respiratory"]["priority"] == "schema-present"
     assert records["sc_six_state_thalamocortical"]["classification"] == "rk4_required"
-    assert records["sc_six_state_thalamocortical"]["priority"] == ("P3-rk4-or-higher-order-blocked")
+    assert records["sc_six_state_thalamocortical"]["priority"] == ("higher-order-schema-required")
     assert records["pinsky_rinzel"]["classification"] == "multi_compartment"
     assert records["akida_neuron"]["classification"] == "event_discrete"
     assert records["astrocyte"]["classification"] == "euler_candidate"
 
 
 def test_markdown_report_contains_ranked_enrolment_table() -> None:
+    """Render current descriptive priorities and model counts in Markdown."""
     tool = _load_tool()
     report = tool.build_report(REPO)
     markdown = tool.render_markdown(report)
@@ -104,14 +109,15 @@ def test_markdown_report_contains_ranked_enrolment_table() -> None:
 
     assert f"Net missing schema-DSL models: **{missing}**" in markdown
     assert f"Source modules without a same-name or alias schema: **{without}**" in markdown
-    assert "| `P1-euler-schema-candidate` |" in markdown
-    assert "| `P3-rk4-or-higher-order-blocked` |" in markdown
-    assert "| `P5-out-of-auto-cosim` |" in markdown
+    assert "| `euler-schema-candidate` |" in markdown
+    assert "| `higher-order-schema-required` |" in markdown
+    assert "| `outside-automatic-cosimulation` |" in markdown
     assert "`sc_six_state_thalamocortical`" in markdown
     assert "`stochastic_lif`" in markdown
 
 
 def test_cli_writes_json_and_markdown_reports(tmp_path: Path) -> None:
+    """Write both public report formats through real CLI subprocesses."""
     json_path = tmp_path / "schema_gap.json"
     markdown_path = tmp_path / "schema_gap.md"
 
@@ -162,6 +168,7 @@ def test_cli_writes_json_and_markdown_reports(tmp_path: Path) -> None:
 
 
 def test_portable_fixture_counts_unique_schema_stems(tmp_path: Path) -> None:
+    """Count shared TOML and JSON stems once in a portable source tree."""
     tool = _load_tool()
     _write(tmp_path / "src/sc_neurocore/neurons/models/__init__.py", "")
     _write(
@@ -187,19 +194,21 @@ def test_portable_fixture_counts_unique_schema_stems(tmp_path: Path) -> None:
 
 
 def test_classifier_fallbacks_and_priority_helpers() -> None:
+    """Retain discrete, source-review and existing-schema classifications."""
     tool = _load_tool()
 
     classification, evidence = tool.classify_source("opaque", "class Opaque:\n    pass\n")
 
     assert classification == "source_review_required"
     assert evidence == ["no deterministic integrator evidence matched static rules"]
-    assert tool.priority_for("schema_present") == "P0-schema-present"
-    assert tool.priority_for("source_review_required") == "P6-source-review-required"
+    assert tool.priority_for("schema_present") == "schema-present"
+    assert tool.priority_for("source_review_required") == "source-review-required"
 
 
 def test_main_prints_json_to_stdout(
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Emit the same live JSON inventory through the stdout CLI path."""
     tool = _load_tool()
     monkeypatch.setattr(sys, "argv", [str(TOOL), "--repo", str(REPO), "--format", "json"])
 
@@ -212,6 +221,7 @@ def test_main_prints_json_to_stdout(
 
 
 def test_script_entrypoint_writes_report(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise the script entry point with a real output file."""
     output = tmp_path / "entrypoint.json"
     monkeypatch.setattr(
         sys,
@@ -222,3 +232,27 @@ def test_script_entrypoint_writes_report(tmp_path: Path, monkeypatch: pytest.Mon
     runpy.run_path(str(TOOL), run_name="__main__")
 
     assert json.loads(output.read_text(encoding="utf-8"))["schema_only_models"] == []
+
+
+def test_markdown_rejects_obsolete_report_schema() -> None:
+    """A report with the obsolete priority vocabulary cannot be rendered."""
+    tool = _load_tool()
+    report = tool.build_report(REPO)
+    report["schema_version"] = "sc-neurocore.schema-gap-report.v1"
+
+    with pytest.raises(ValueError, match="Unsupported schema-gap report version"):
+        tool.render_markdown(report)
+
+
+@pytest.mark.parametrize("location", ["counts", "records", "ranked_enrolment"])
+def test_markdown_rejects_obsolete_priority_values(location: str) -> None:
+    """Reject the stale coded value even when its schema version is forged."""
+    tool = _load_tool()
+    report = tool.build_report(REPO)
+    if location == "counts":
+        report["counts"]["missing_priority"] = {"P0-schema-present": 1}
+    else:
+        report[location][0]["priority"] = "P0-schema-present"
+
+    with pytest.raises(ValueError, match="Unsupported schema-gap report priority"):
+        tool.render_markdown(report)

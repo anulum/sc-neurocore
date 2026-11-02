@@ -8,7 +8,7 @@
 
 """A pack exported through the real routes, rechecked without the Studio.
 
-The whole point of ST-13 is that a reader does not have to trust the exporter,
+An evidence-pack reader must be able to verify the exporter independently,
 so these cases run the real HTTP export — including the JSON round trip through
 the browser that used to make every recorded seal unreproducible — and then
 verify the pack from disk with the offline tool. The failure cases edit the pack
@@ -44,7 +44,9 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
         job_default_timeout_seconds=30.0,
     )
     return TestClient(
-        create_app(settings), base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}
+        create_app(settings),
+        base_url="http://127.0.0.1",
+        headers={"sec-fetch-site": "none"},
     )
 
 

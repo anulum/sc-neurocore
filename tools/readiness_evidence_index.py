@@ -23,7 +23,7 @@ each descriptor. This tool:
 
 Validation is **schema-DSL path** evidence (``UniversalNeuron`` + RTL), not a
 claim that every hand ``models/*.py`` class is bit-identical. Operating points
-state that boundary explicitly (audit finding P3-02).
+state the distinction between schema and hand-model evidence explicitly.
 
 Usage::
 
@@ -222,7 +222,7 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         level="h1_cosim",
         evidence=(
             "tests/test_cosim_perfect_integrator.py::"
-            "TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl"
+            "TestSchemaModelParity::test_source_strict_boundary_matches_curated_q88_rtl"
         ),
         operating_point=(
             "Naud-Gerstner 2012 strict-threshold exact integral at the equality-sensitive "
@@ -316,7 +316,7 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         level="h1_cosim",
         evidence=(
             "tests/test_cosim_izhikevich2007.py::"
-            "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog"
+            "TestSchemaModelParity::test_izhikevich2007_q1616_matches_hand_and_verilog"
         ),
         operating_point="schema-DSL izhikevich2007; Euler; hand/schema/RTL",
         tolerance="exact Q16.16 spike parity per enrolment",
@@ -632,7 +632,7 @@ def index_payload(rows: list[ReadinessRow]) -> dict[str, Any]:
         "gap_count": sum(1 for row in rows if row.gap and not row.skip_apply),
         "notes": (
             "Facets describe schema-DSL co-simulation evidence. Hand model classes "
-            "may differ; see dual-lens audit P3-02."
+            "may differ; schema evidence does not establish hand-model parity."
         ),
     }
 
@@ -779,7 +779,7 @@ def report_text(rows: list[ReadinessRow]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point."""
+    """Report or apply committed descriptor evidence through the public CLI."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", action="store_true", help="print the inventory table")
     parser.add_argument(

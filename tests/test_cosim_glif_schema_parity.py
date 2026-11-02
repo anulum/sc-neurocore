@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestTierBModelCosim from former test_cosim_glif.py
+# SC-NeuroCore — Generalized leaky integrate-and-fire schema and hand-model parity
 
-"""Focused suite: TestTierBModelCosim from former test_cosim_glif.py."""
+"""Compare Generalized leaky integrate-and-fire schema dynamics with the reference hand model."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from tests.cosim_glif_support import *  # noqa: F403
 _ModelType = type[GLIFNeuron] | type[SCFourStateGLIFNeuron]
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B GLIF schema enrolment."""
+class TestSchemaModelParity:
+    """Compare GLIF schema trajectories with the maintained model families."""
 
     @pytest.mark.parametrize(
         ("schema_name", "model_type", "variables", "expected_events", "tolerance"),

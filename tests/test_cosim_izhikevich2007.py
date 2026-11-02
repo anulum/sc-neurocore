@@ -22,8 +22,8 @@ from tests.cosim_support import (
 )
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B Izhikevich 2007 enrolment."""
+class TestSchemaModelParity:
+    """Izhikevich 2007 schema parity."""
 
     def test_izhikevich2007_schema_matches_hand_euler_sequence(self) -> None:
         """The schema mirrors the Izhikevich 2007 Euler step law and reset over a sequence.
