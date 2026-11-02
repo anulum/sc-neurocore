@@ -43,6 +43,7 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.fit_jobs",
         "sc_neurocore.studio.api.fits",
         "sc_neurocore.studio.api.frontend",
+        "sc_neurocore.studio.api.graph_jobs",
         "sc_neurocore.studio.api.identity",
         "sc_neurocore.studio.api.jobs",
         "sc_neurocore.studio.api.host_jobs",
@@ -141,23 +142,21 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
 
-    # 140 since `POST /api/graph/notebook`, a tutorial notebook that rebuilds
-    # a drawn network with the public API and checks it against the Studio run.
-    # 148 since the fit and cohort job routes (`/api/fits/jobs`, its status and
-    # cancel, `/api/fits/replay/jobs`, `/api/cohorts/jobs`, `/measurements`,
-    # `/replay`) and `GET /api/training/target-profiles`, which landed without
-    # this count being raised, so the assertion failed on main until then.
-    # The count is pinned so a route cannot
-    # appear without a deliberate change here; raising it is how a new route is
-    # admitted, never by relaxing the assertion.
-    # Swagger and ReDoc now have explicit frontend-owned handlers so their
-    # generated scripts can be bound to the response CSP by content hash.
-    # The authored compiler added POST /api/ir/replay, bringing the baseline to151.
-    # The three closed hosted description/submission/cancellation routes add three.
-    # Read-only hardware registration discovery adds one public route.
-    # Actor-owned candidate history, status, cancellation and artifacts add four.
-    # Read-only catalogue-to-candidate preparation adds one authenticated route.
-    assert len(backend_routes) == 160
+    # Pin the total and the six actor-owned graph routes explicitly so a new
+    # endpoint requires deliberate admission to this ownership contract.
+    assert len(backend_routes) == 166
+    assert {
+        (route.path, tuple(sorted(route.methods or ())))
+        for route in backend_routes
+        if route.endpoint.__module__ == "sc_neurocore.studio.api.graph_jobs"
+    } == {
+        ("/api/graph/jobs/validate", ("POST",)),
+        ("/api/graph/jobs", ("POST",)),
+        ("/api/graph/jobs", ("GET",)),
+        ("/api/graph/jobs/{job_id}", ("GET",)),
+        ("/api/graph/jobs/{job_id}/cancel", ("POST",)),
+        ("/api/graph/jobs/{job_id}/result", ("GET",)),
+    }
     assert {
         (route.path, tuple(sorted(route.methods or ())))
         for route in backend_routes

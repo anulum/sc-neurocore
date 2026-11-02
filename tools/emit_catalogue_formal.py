@@ -90,7 +90,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 }
 
 # Count-neutral SC identities with dedicated generated formal jobs. They are
-# emitted alongside, but not counted as, source-literature S5 models.
+# emitted alongside, but not counted as, source-literature models.
 RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
     "SCInclusivePerfectIntegratorNeuron": "sc_perfect_integrator",
     "SCSymmetricQuadraticIFNeuron": "sc_symmetric_quadratic_if",
@@ -313,6 +313,9 @@ FLATTEN_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wilson_cowan"})
 # but runs for over ten minutes under z3 4.8.12, the Ubuntu 24.04 package CI
 # installs.
 CVC5_FORMAL_SCHEMAS: frozenset[str] = frozenset({"dpi_neuron", "iqif", "terman_wang"})
+
+# Keep the repaired committed Wang-Buzsaki job on its enrolled Yices backend.
+YICES_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wang_buzsaki"})
 
 # Width overrides are additive: every pre-existing catalogue job retains Q8.8.
 # Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
@@ -691,10 +694,21 @@ def _sby_script(
     flatten: bool = False,
     evidence_label: str = "dual-axis perfect model",
     solver: str = "z3",
+    title: str | None = None,
+    licensed: bool = True,
 ) -> str:
     prep = f"prep -top {module}_formal" + (" -flatten" if flatten else "")
     sby_evidence_label = evidence_label[:1].upper() + evidence_label[1:]
-    return (
+    header = (
+        "# SPDX-License-Identifier: AGPL-3.0-or-later\n"
+        "# Commercial license available\n"
+        "# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.\n"
+        "# © Code 2020–2026 Miroslav Šotek. All rights reserved.\n"
+        "# ORCID: 0009-0009-3560-0851\n"
+        "# Contact: www.anulum.li | protoscience@anulum.li\n"
+        f"# SC-NeuroCore — {title or module + ' safety proof'}\n\n"
+    )
+    return (header if licensed else "") + (
         f"# SymbiYosys job for catalogue model {module}\n"
         f"# {sby_evidence_label} formal (BMC)\n"
         "\n"
@@ -752,7 +766,13 @@ def _emit_schema(
         else _reset_state_words(neuron.to_equation_neuron(), ports, data_width, fraction)
     )
     properties, assumptions = _generated_claims(schema, minimal=minimal, ports=ports)
-    solver = "cvc5" if schema in CVC5_FORMAL_SCHEMAS else "z3"
+    solver = (
+        "yices"
+        if schema in YICES_FORMAL_SCHEMAS
+        else "cvc5"
+        if schema in CVC5_FORMAL_SCHEMAS
+        else "z3"
+    )
     formal_path.write_text(
         _formal_wrapper(
             ports,
@@ -785,6 +805,20 @@ def _emit_schema(
         ),
         encoding="utf-8",
     )
+    # Existing proof inputs retain their header presence and descriptive heading;
+    # newly created configurations receive the standard licence header.
+    sby_title = None
+    sby_licensed = True
+    if sby_path.is_file():
+        first_block = sby_path.read_text(encoding="utf-8").partition("\n\n")[0].splitlines()
+        sby_licensed = bool(first_block) and first_block[0].startswith("# SPDX-License-Identifier:")
+        prefix = "# SC-NeuroCore — "
+        if (
+            len(first_block) == 7
+            and first_block[0] == "# SPDX-License-Identifier: AGPL-3.0-or-later"
+            and first_block[6].startswith(prefix)
+        ):
+            sby_title = first_block[6][len(prefix) :]
     sby_path.write_text(
         _sby_script(
             module,
@@ -792,6 +826,8 @@ def _emit_schema(
             flatten=schema in FLATTEN_FORMAL_SCHEMAS,
             evidence_label=evidence_label,
             solver=solver,
+            title=sby_title,
+            licensed=sby_licensed,
         ),
         encoding="utf-8",
     )
@@ -1041,6 +1077,18 @@ def run_sby(results: list[EmitResult], *, timeout_s: int = 120) -> dict[str, str
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Generate enrolled jobs and optionally execute their bounded checks.
+
+    Parameters
+    ----------
+    argv : list of str or None
+        Optional command arguments; use process arguments when omitted.
+
+    Returns
+    -------
+    int
+        Zero after generation, or one when an optional formal run fails.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--run-sby",

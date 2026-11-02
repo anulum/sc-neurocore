@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (emitter_inventory) from former test_catalogue_formal.py
 
+"""Verify catalogue job inventory, source generation and solver retention."""
+
 from __future__ import annotations
 
 from tests.catalogue_formal_support import *  # noqa: F403
@@ -32,8 +34,10 @@ def test_emitter_lists_every_perfect_model() -> None:
     assert not overlap, f"classes cannot be both generated and curated: {sorted(overlap)}"
 
 
-def test_catalogue_formal_inventory_matches_perfect_count() -> None:
-    """Every perfect model's job exists; additional SC jobs remain enrolled."""
+def test_catalogue_formal_inventory_matches_perfect_count(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Retain enrolled solvers and exact regenerated sources with and without licence headers."""
     import importlib.util
     import sys
 
@@ -57,6 +61,22 @@ def test_catalogue_formal_inventory_matches_perfect_count() -> None:
         text = sby.read_text(encoding="utf-8")
         assert "mode bmc" in text or "mode prove" in text
         assert "smtbmc " in text
+
+    # Exercise the public emitter without overwriting the committed job. A solver
+    # repair must survive regeneration of both the job and its inventory row.
+    import json
+
+    monkeypatch.setattr(mod, "OUT_DIR", tmp_path)
+    inventory = json.loads((CATALOGUE / "inventory.json").read_text(encoding="utf-8"))
+    for class_name in ("WangBuzsakiNeuron", "AdaptiveThresholdIFNeuron"):
+        row = next(job for job in inventory["jobs"] if job["class"] == class_name)
+        module = row["module"]
+        shutil.copyfile(CATALOGUE / f"{module}.sby", tmp_path / f"{module}.sby")
+        result = mod.emit_one(class_name)
+        assert result.solver == row["solver"]
+        for suffix in (".v", "_formal.v", ".sby"):
+            name = result.module + suffix
+            assert (tmp_path / name).read_bytes() == (CATALOGUE / name).read_bytes()
 
 
 def test_mckean_uses_only_the_curated_q3232_formal_lane() -> None:

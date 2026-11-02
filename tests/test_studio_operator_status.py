@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -97,6 +98,7 @@ def _job_status(tmp_path: Path, *, configured: bool) -> StudioJobStatusSnapshot:
 def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> None:
     """The operator status reports profile, route-policy counts, identity, audit, login throttle and job health."""
     registry = _capability_registry()
+    route_policies = build_default_studio_route_policy_registry()
     status = build_studio_operator_status(
         settings=StudioRuntimeSettings(
             enforce_route_policies=True,
@@ -124,37 +126,29 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
             max_retry_after_seconds=58,
         ),
         job_status=_job_status(tmp_path, configured=True),
-        route_policy_registry=build_default_studio_route_policy_registry(),
+        route_policy_registry=route_policies,
     )
 
     payload = status.to_public_dict()
 
     assert payload["schema_version"] == OPERATOR_STATUS_SCHEMA_VERSION
     assert payload["deployment_profile"] == "development"
-    # 141 since ten served routes gained the policies they lacked (three public
-    # catalogue and graph reads, seven authenticated project operations), the
-    # four authenticated candidate-package routes arrived, and the two
-    # authenticated fitting routes after them, the two authenticated
-    # review-comment routes, the authenticated replay-notebook export and the
-    # authenticated network tutorial notebook; 149 since the seven
-    # authenticated fitting and cohort job routes of the experiment laboratory
-    # and the public training target-profile catalogue, which was served
-    # without a policy until the route-policy gate caught it; 155 since the
-    # single-operator lab profile (7014fa6a3) classified the six served
-    # frontend and API-document reads (/, /docs, /redoc, /openapi.json and
-    # GET/HEAD /studios/sc-neurocore) as public and made one public read
-    # authenticated. The authenticated compiler replay route adds one; hosted
-    # description, submission and cancellation add public/authenticated/admin.
-    # 160 to 165 since the five authenticated candidate catalogue and job routes.
+    # Route admission is pinned by the router contract; this payload follows
+    # the active registry, independently checked below with a hand-built one.
+    policies = [policy for _, _, policy in route_policies.policies()]
+    visibility_counts = Counter(policy.visibility for policy in policies)
+    protected = [policy for policy in policies if policy.visibility is not RouteVisibility.PUBLIC]
     assert payload["route_policies"] == {
-        "admin_count": 29,
-        "authenticated_count": 94,
+        "admin_count": visibility_counts[RouteVisibility.ADMIN],
+        "authenticated_count": visibility_counts[RouteVisibility.AUTHENTICATED],
         "enforced": True,
-        "protected_audit_action_count": 123,
-        "protected_count": 123,
+        "protected_audit_action_count": sum(
+            bool(policy.audit_action and policy.audit_action.strip()) for policy in protected
+        ),
+        "protected_count": len(protected),
         "protected_routes_audited": True,
-        "public_count": 42,
-        "total_count": 165,
+        "public_count": visibility_counts[RouteVisibility.PUBLIC],
+        "total_count": len(policies),
     }
     assert payload["identity"] == {
         "configured": True,
