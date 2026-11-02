@@ -108,8 +108,8 @@ cost little only when many channels share a group:
 | 1024 channels, one group (replayed, 2 s) | 3.4646x | 3.4668x |
 | one channel, first 1000 samples of one file | 1.94x | (one 1000-sample packet: 3.23x) |
 
-The 1024-channel row is one core of the ML350 on 2026-10-22; the single-channel
-row is from the independent review of the coder (codex fcd7). Both ratios count
+The 1024-channel row is one Xeon E5-2640 core on 2026-10-22; the single-channel
+row is from the independent review of the coder. Both ratios count
 packet bytes only; the 3.457x below codes each whole file as one packet.
 
 ```python
@@ -224,7 +224,7 @@ group, see above). The noise in these recordings (about 4.6 bits per sample
 after prediction) bounds every lossless coder near 3.5x.
 
 Real-time speed of the streaming coder, pure Rust, one channel group,
-measured 2026-10-22: one core of a Xeon E5-2640 (ML350) codes 1024 channels at
+measured 2026-10-22: one core of a Xeon E5-2640 codes 1024 channels at
 19,531 Hz with 1 ms windows in 1.69 ms (encode) and 1.64 ms (decode) per window
 (real-time factor 0.60), so two cores carry 1024 channels; channel groups
 spread larger arrays over more cores. A GTX 1060 runs the GPU encoder at
@@ -466,8 +466,12 @@ blocks do not establish a synthesised whole-codec implementation:
 | XOR (actual vs predicted) | XOR gate array |
 | ISI encoder | Counter and shift register |
 
-The shared LFSR polynomial is x^16 + x^14 + x^13 + x^11 + 1. A proof inventory
-for individual HDL modules does not establish end-to-end codec equivalence.
+The shared LFSR polynomial is x^16 + x^14 + x^13 + x^11 + 1.
+The [repository-wide formal source inventory](../tutorials/21_formal_verification.md)
+contains 90 SymbiYosys proof jobs and 476 formal statements
+(311 assert, 121 assume, 44 cover), counted from Git-tracked sources under
+`hdl/formal`. These source counts do not establish that every proof job has
+passed, end-to-end codec equivalence or a synthesised whole-codec implementation.
 Predictor state resets for each batch; lossless raster recovery requires
 `base_mode="lossless"`.
 
