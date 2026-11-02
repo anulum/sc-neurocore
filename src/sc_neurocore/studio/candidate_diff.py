@@ -32,7 +32,10 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Callable, Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol, cast
+
+if TYPE_CHECKING:
+    import sympy
 
 from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
 from sc_neurocore.neurons.equation_refusals import EquationRefusal
@@ -47,10 +50,19 @@ class _NotSymbolic(EquationRefusal):
     """The expression has no exact symbolic reading."""
 
 
+class _RealSymbolConstructor(Protocol):
+    """Describe the real-symbol constructor used by the safe AST converter."""
+
+    def __call__(self, name: str, *, real: bool) -> sympy.Symbol:
+        """Construct a symbolic name with the existing real-value assumption."""
+        ...
+
+
 def _to_sympy(expression: str) -> Any:
     """Convert one safe DSL expression to SymPy without evaluating it."""
     import sympy
 
+    symbol = cast(_RealSymbolConstructor, sympy.Symbol)
     ExpressionSafetyValidator().validate(expression)
     exact: dict[str, Callable[..., Any]] = {
         "exp": sympy.exp,
@@ -82,7 +94,7 @@ def _to_sympy(expression: str) -> Any:
             # A decimal literal is taken exactly, so 0.5 and 1/2 are the same number.
             return sympy.Rational(repr(node.value))
         if isinstance(node, ast.Name):
-            return sympy.pi if node.id == "pi" else sympy.Symbol(node.id, real=True)
+            return sympy.pi if node.id == "pi" else symbol(node.id, real=True)
         if isinstance(node, ast.BinOp) and type(node.op) in operators:
             return operators[type(node.op)](convert(node.left), convert(node.right))
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
@@ -114,16 +126,19 @@ def compare_expressions(parent: str, candidate: str) -> dict[str, Any]:
         return {"status": "unchanged"}
     import sympy
 
+    expand = cast(Callable[[sympy.Expr], sympy.Expr], sympy.expand)
+    count_ops = cast(Callable[[sympy.Expr], int], sympy.count_ops)
+    simplify = cast(Callable[[sympy.Expr], sympy.Expr], sympy.simplify)
     try:
         difference = _to_sympy(candidate) - _to_sympy(parent)
     except _NotSymbolic as exc:
         return {"status": "not_comparable", "reason": f"uses {exc}, which has no symbolic reading"}
-    expanded = sympy.expand(difference)
+    expanded = expand(difference)
     if expanded == 0:
         return {"status": "equivalent"}
-    if sympy.count_ops(expanded) > _MAX_SIMPLIFY_OPS:
+    if count_ops(expanded) > _MAX_SIMPLIFY_OPS:
         return {"status": "undecided", "reason": "the difference is too large to simplify here"}
-    simplified = sympy.simplify(expanded)
+    simplified = simplify(expanded)
     if simplified == 0:
         return {"status": "equivalent"}
     return {"status": "changed", "difference": str(simplified)}
