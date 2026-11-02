@@ -41046,7 +41046,7 @@ Compression strategy:
 2. Compute inter-spike intervals (ISIs) per neuron
 3. Encode ISIs with chosen backend:
    'varint': LEB128 variable-length integers (fast, simple)
-   'huffman': Adaptive Huffman (30-60% smaller on dense data)
+   'huffman': Canonical Huffman coding of inter-spike intervals
 
 Each neuron is encoded independently. No inter-channel modeling.
 For inter-channel compression, use DeltaSpikeCodec.
@@ -41058,7 +41058,15 @@ mode : str
 timing_precision : int
     For lossy mode: quantize spike times to this resolution.
 entropy : str
-    'varint' (default) or 'huffman'.
+    'auto' (default), 'varint' or 'huffman'. Auto selects Huffman above
+    3% event density and varint otherwise.
+
+Notes
+-----
+Varint packets require T < 2**24 to keep their first byte distinct
+from the Huffman marker. Explicit Huffman coding supports longer rasters
+within its existing field and resource limits. Auto refuses a longer
+raster when its density selects varint.
 
 - **__init__**(mode, timing_precision, entropy)
 - **compress**(spikes)
@@ -41086,7 +41094,8 @@ Parameters
 ----------
 group_size : int
     Channels per group. Larger groups = more sharing but weaker
-    correlation with distant channels. 4-16 typical for probes.
+    correlation with distant channels. Must be in 1..256: the packet
+    stores each group-local reference index in one byte.
 mode : str
     'lossless' or 'lossy' for the underlying ISI codec.
 timing_precision : int

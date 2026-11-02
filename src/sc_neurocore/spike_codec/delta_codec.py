@@ -56,7 +56,8 @@ class DeltaSpikeCodec:
     ----------
     group_size : int
         Channels per group. Larger groups = more sharing but weaker
-        correlation with distant channels. 4-16 typical for probes.
+        correlation with distant channels. Must be in 1..256: the packet
+        stores each group-local reference index in one byte.
     mode : str
         'lossless' or 'lossy' for the underlying ISI codec.
     timing_precision : int
@@ -72,7 +73,12 @@ class DeltaSpikeCodec:
         timing_precision: int = 1,
     ):
         self.group_size = group_size
+        self._validate_group_size()
         self.base_codec = SpikeCodec(mode=mode, timing_precision=timing_precision)
+
+    def _validate_group_size(self) -> None:
+        if not 1 <= self.group_size <= 256:
+            raise ValueError("group_size must be in 1..256 for uint8 reference indices")
 
     def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, DeltaCompressionResult]:
         """Compress spike raster using inter-channel delta coding.
@@ -85,6 +91,7 @@ class DeltaSpikeCodec:
         -------
         (compressed_bytes, DeltaCompressionResult)
         """
+        self._validate_group_size()
         spikes = np.asarray(spikes, dtype=np.int8)
         T, N = spikes.shape
         original_bits = T * N

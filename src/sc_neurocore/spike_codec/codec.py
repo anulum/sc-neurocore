@@ -59,7 +59,7 @@ class SpikeCodec:
     2. Compute inter-spike intervals (ISIs) per neuron
     3. Encode ISIs with chosen backend:
        'varint': LEB128 variable-length integers (fast, simple)
-       'huffman': Adaptive Huffman (30-60% smaller on dense data)
+       'huffman': Canonical Huffman coding of inter-spike intervals
 
     Each neuron is encoded independently. No inter-channel modeling.
     For inter-channel compression, use DeltaSpikeCodec.
@@ -71,7 +71,15 @@ class SpikeCodec:
     timing_precision : int
         For lossy mode: quantize spike times to this resolution.
     entropy : str
-        'varint' (default) or 'huffman'.
+        'auto' (default), 'varint' or 'huffman'. Auto selects Huffman above
+        3% event density and varint otherwise.
+
+    Notes
+    -----
+    Varint packets require T < 2**24 to keep their first byte distinct
+    from the Huffman marker. Explicit Huffman coding supports longer rasters
+    within its existing field and resource limits. Auto refuses a longer
+    raster when its density selects varint.
     """
 
     def __init__(self, mode: str = "lossless", timing_precision: int = 1, entropy: str = "auto"):
@@ -167,6 +175,12 @@ class SpikeCodec:
         backend = self._pick_entropy(n_spikes, T * N)
         if backend == "huffman":
             return self._encode_events_huffman(events, T, N)
+
+        if T >= 1 << 24:
+            raise ValueError(
+                "varint packets require T < 2**24 to avoid the Huffman marker collision; "
+                "use entropy='huffman' for longer rasters"
+            )
 
         parts = []
         # Header: T, N as 4-byte big-endian + entropy flag

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1644
+expected_file_count = 1645
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6710,3 +6710,7 @@ rationale = "Committed Q16.16 Wang-Buzsaki RTL is bound to its live compiler low
 [[file]]
 path = "tests/test_dense_layer_engine_binding_serialization.py"
 rationale = "Installed facade/native dense class identities survive every pickle protocol while live instance pickle/copy refusals preserve weights, inference and independent layers."
+
+[[file]]
+path = "tests/test_codec_lossless_format_limits.py"
+rationale = "Public regressions for refusing ambiguous ISI headers and overflowing group-local delta references while preserving valid packet bytes"

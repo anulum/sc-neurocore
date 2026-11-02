@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5543
+    "test_files": 5544
   },
   "documentation": {
     "public_pages": [
@@ -4572,6 +4572,7 @@
       "tests/test_coba_lif_backend_loading.py",
       "tests/test_coba_lif_backends.py",
       "tests/test_coba_lif_engine_binding.py",
+      "tests/test_codec_lossless_format_limits.py",
       "tests/test_codec_registry_codec_registry.py",
       "tests/test_codec_registry_recommend_codec.py",
       "tests/test_comm_aer_aer_event.py",
