@@ -83,7 +83,6 @@
   },
   "custody": {
     "closure_sha256": "924bac0e2fde1c4d32f984eb0777e816591e46adbfd0fb198480a675940560b9",
-    "lease_release_sha256": "7e357132ad4810e2cb4c0ea804ba7aa94723a29a14f0980e7920e3629021c8e6",
-    "released_nonce": "72ba467a2bfe4b57b581aab25ad92f00"
+    "lease_release_sha256": "7e357132ad4810e2cb4c0ea804ba7aa94723a29a14f0980e7920e3629021c8e6"
   }
 }

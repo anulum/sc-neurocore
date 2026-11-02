@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1664
+expected_file_count = 1666
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6790,3 +6790,11 @@ rationale = "Discovered raster, waveform and stateful stream interfaces perform 
 [[file]]
 path = "src/sc_neurocore/spike_codec/registry.py"
 rationale = "The legacy raster factory documents its distinct name set, constructors and configuration-based recommendation without claiming measured performance."
+
+[[file]]
+path = "tools/formal_public_identity.py"
+rationale = "Validate hash-bound descriptive public labels while preserving every native proof fact."
+
+[[file]]
+path = "tests/test_tools/test_formal_public_identity.py"
+rationale = "Exercise retained real evidence conversions and isolated binding, scope and identity refusals."

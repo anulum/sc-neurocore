@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "producer": "Arcane Sapience native assertion-enable audit",
-  "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
+  "producer": "Native assertion-enable audit",
+  "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
   "source_hashes": {
     "hdl/formal/catalogue/sc_amari_field.sby": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
     "hdl/formal/catalogue/sc_amari_field.v": "de387d6ad68cf582a583758b5df87f6dc9ef7c6e77c4289586bd63c81350ad6c",
@@ -24,7 +24,7 @@
   },
   "measurement": {
     "hostname": "god-of-the-math",
-    "unit": "scn-formal-amari-nv8-F3-01a1824a-20261102T115853847641Z.service",
+    "unit": "<FORMAL_AUDIT_UNIT>",
     "status": "PASS",
     "native_exit_code": 0,
     "native_exit_source": "systemd-exec",

@@ -17,6 +17,8 @@ import shutil
 
 import pytest
 
+from tests.formal_native_evidence_support import copy_identity_conversion
+
 from tools.formal_evidence_validation import digest, object_fields, read_object
 from tools.formal_external_evidence import validate_external
 from tools.formal_resource_policy import CHIALVO_JOB, CHIALVO_REPAIR, YICES_RETRY
@@ -59,6 +61,7 @@ def case(tmp_path: Path) -> RepairCase:
         path.write_bytes((source / name).read_bytes())
     index = object_fields(read_object(source / "benchmarks/results/formal/index.json")["jobs"])
     entry = object_fields(index[CHIALVO_JOB])
+    copy_identity_conversion(source, tmp_path, entry)
     return RepairCase(
         tmp_path,
         entry,

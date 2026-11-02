@@ -2,8 +2,8 @@
   "schema_version": 1,
   "verdict": "CLEAR",
   "reviewer": "Independent formal evidence review",
-  "artifact_sha256": "5cfcc73d699c435a40a48c50b6cd5322def6f04525163e10beeadd9bc70bc8e2",
-  "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
+  "artifact_sha256": "4a61749c2eb10f391f1b97e765abf8fcb309869b85407fc0b3e233d738beea14",
+  "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
   "source_hashes": {
     "hdl/formal/catalogue/sc_amari_field.sby": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
     "hdl/formal/catalogue/sc_amari_field.v": "de387d6ad68cf582a583758b5df87f6dc9ef7c6e77c4289586bd63c81350ad6c",
@@ -20,5 +20,6 @@
   "limits": [
     "Assertion-enable reachability does not establish property strength.",
     "Independent review checks retained execution evidence; it does not reproduce the heavy audit."
-  ]
+  ],
+  "identity_conversion_sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
 }

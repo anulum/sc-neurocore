@@ -2,7 +2,7 @@
   "schema_version": 1,
   "verdict": "CLEAR",
   "reviewer": "Independent formal evidence review",
-  "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
+  "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
   "raw_log_sha256": "8f1c753598fedf974d1e46c34124e2dfde13c6dae681670540221df2e0ac23fa",
   "normalized_log_sha256": "623d7db263f5fa1c539aca0b7e2cb207d22ad18a54c9c447b87e153227d404b8",
   "normalizer_id": "sc-neurocore-native-log-identity-v1",
@@ -13,7 +13,7 @@
     "hdl/formal/catalogue/sc_amari_field_formal.v": "e0e4df7b7d89a002bb5019b060410296eb0b710e13de38af3a1d86ca8b0ec9d8"
   },
   "execution_exception": "amari-gc-20261101",
-  "exception_registry_sha256": "f6c21b651283f1cdb41802639f71d273a199d65b63ffb8c0963caa324414bc1e",
+  "exception_registry_sha256": "79b0629516610be4a58ccb3042bffc39f79fe4308b7b7b0c4cd3e7259736e1cd",
   "checks": [
     "Re-ran the committed normaliser on the retained raw log: output sha256 equals the published log; 67 lines in both; no line differs except the substituted workspace path (76 occurrences; unit, host and user literals do not occur).",
     "Final line 'DONE (PASS, rc=0)' and 'summary: successful proof by k-induction' preserved; raw and normalised DONE line hashes match the receipt.",
@@ -32,5 +32,6 @@
     "reason": "Bind the explicit historical 64 GiB resource contract; unchanged receipt and separate assertion-enable audit.",
     "description": "Earlier public measurement-only attestation, retained unchanged."
   },
-  "resource_contract": "amari-historical-64-v1"
+  "resource_contract": "amari-historical-64-v1",
+  "identity_conversion_sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
 }

@@ -274,3 +274,7 @@ Changing `formal_nonvacuity.py` or `formal_assertion_enables.py` invalidates
 every existing audit artifact, even if the primary proof sources are unchanged.
 The current implementation and transform hashes must match; run the audit again
 before relying on that evidence.
+
+## Public execution identity conversion
+
+Public receipts use separate descriptive labels for primary and assertion-enable audit execution. A versioned conversion manifest records the original and public artifact hashes, the hashes of changed identity fields and a digest of every preserved field. Private coordination lease identities remain in the immutable native custody records; public receipts retain the complete release-receipt hash. Native systemd invocation identities and all model, tool, clock and measured outcome fields remain unchanged. The index and independent reviews bind the conversion manifest as well as the converted evidence. Historical execution exceptions remain limited to an exact receipt representation.

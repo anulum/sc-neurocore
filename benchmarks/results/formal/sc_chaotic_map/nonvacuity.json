@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "producer": "Arcane Sapience native assertion-enable audit",
-  "receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+  "producer": "Native assertion-enable audit",
+  "receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
   "source_hashes": {
     "hdl/formal/catalogue/sc_chaotic_map.sby": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
     "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
@@ -24,7 +24,7 @@
   },
   "measurement": {
     "hostname": "god-of-the-math",
-    "unit": "scn-formal-sc-chaotic-map-nv8-01a1824a-20261102T130710215179Z.service",
+    "unit": "<FORMAL_AUDIT_UNIT>",
     "status": "PASS",
     "native_exit_code": 0,
     "native_exit_source": "systemd-exec",
@@ -114,7 +114,7 @@
   },
   "receipt_conversion": {
     "native_audit_parent_receipt_sha256": "5ac366c9b391f33ffe65e5ab34548265b57eb90e3c0b5b8c8892aafa74c3899e",
-    "public_parent_receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+    "public_parent_receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
     "field": "measurement.cgroup_processes",
     "native_empty_representation": "",
     "public_empty_representation": [],

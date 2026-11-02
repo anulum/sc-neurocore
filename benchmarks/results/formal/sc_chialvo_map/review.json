@@ -2,7 +2,7 @@
   "schema_version": 1,
   "verdict": "CLEAR",
   "reviewer": "Independent formal evidence review",
-  "receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+  "receipt_sha256": "49f07401637c63459e15bbc6bed4fa104023831938506aad9ac028306e918ff5",
   "resource_contract": "chialvo-solver-repair-yices-64-v1",
   "source_hashes": {
     "hdl/formal/catalogue/sc_chialvo_map.sby": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
@@ -18,14 +18,14 @@
   "configuration_sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
   "solver_repair": {
     "resource_contract": "chialvo-solver-repair-yices-64-v1",
-    "error_receipt_sha256": "e563b400466e9c2970236b7560c33100ba1d6769fde5dc922e2efb4a17eb6d6f",
-    "error_review_sha256": "d407975c58ee4b2602ac8f30cf9c7e1780f415e7d788997522a9cd754a7dbb70",
-    "diagnostic_sha256": "e4129dae491d5b72f65062780a45ac9ecbd8397dac6f300780e5cad8c21bcf9e",
+    "error_receipt_sha256": "4967f867e68be34bdfdac077dff55f9dd63133391c55072ac0a67fc6de16d48f",
+    "error_review_sha256": "dd25cb278dd5401a46fd7f6062c9bcd10c44b0f20648e02160cc204677a82d93",
+    "diagnostic_sha256": "f29b2cac3fac2aa00bfedc73f0e8f96f85391b240343925e1339fa22d2bfd22f",
     "configuration_sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be"
   },
   "receipt_conversion": {
     "native_audit_parent_receipt_sha256": "f367a430d2b5cba315f736f97646dd8594de7bbbd8345a2a94ce5f01d6d51aeb",
-    "public_parent_receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+    "public_parent_receipt_sha256": "49f07401637c63459e15bbc6bed4fa104023831938506aad9ac028306e918ff5",
     "field": "measurement.cgroup_processes",
     "native_empty_representation": "",
     "public_empty_representation": [],
@@ -40,5 +40,6 @@
   "limits": [
     "This model-specific repair does not admit other ERROR retries.",
     "Bounded BMC success and enable reachability do not establish property strength or unbounded correctness."
-  ]
+  ],
+  "identity_conversion_sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
 }

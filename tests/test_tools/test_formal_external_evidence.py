@@ -18,7 +18,13 @@ import sys
 
 import pytest
 
-from tests.formal_native_evidence_support import JOB, NativeEvidence, collect_native, copy_case
+from tests.formal_native_evidence_support import (
+    JOB,
+    NativeEvidence,
+    collect_native,
+    copy_case,
+    copy_identity_conversion,
+)
 from tools.formal_evidence_validation import digest, object_fields, read_object
 from tools.formal_external_evidence import main, validate_external
 
@@ -326,7 +332,9 @@ def retry(tmp_path: Path) -> tuple[Path, dict[str, object]]:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes((repository / name).read_bytes())
     index = object_fields(read_object(repository / "benchmarks/results/formal/index.json")["jobs"])
-    return tmp_path, object_fields(index["hdl/formal/catalogue/sc_chaotic_map.sby"])
+    entry = object_fields(index["hdl/formal/catalogue/sc_chaotic_map.sby"])
+    copy_identity_conversion(repository, tmp_path, entry)
+    return tmp_path, entry
 
 
 def _check_retry(retry: tuple[Path, dict[str, object]]) -> dict[str, object]:
@@ -390,7 +398,8 @@ def test_resource_retry_pass_lineage_refusals(
         path.write_text(json.dumps(receipt))
         entry["receipt_sha256"] = digest(path)
         review["receipt_sha256"] = digest(path)
-        reason = "reuses or predates"
+        # Converted native facts are now bound before the later lineage check.
+        reason = "Public identity conversion artifact binding differs"
     review["reviewer"] = "Negative lineage control; not a production attestation"
     review_path.write_text(json.dumps(review))
     entry["review_sha256"] = digest(review_path)

@@ -777,10 +777,10 @@ jobs:
         run: |
           set -euo pipefail
           tests=(
-            tests/test_tools/test_formal_{external_evidence,nonvacuity_evidence,resource_policy,resource_evidence,resource_accounting,receipt_identity,solver_repair,workflow}.py
+            tests/test_tools/test_formal_{external_evidence,nonvacuity_evidence,resource_policy,resource_evidence,resource_accounting,receipt_identity,solver_repair,public_identity,execution_accounting,workflow}.py
           )
           files=(
-            tools/formal_{external_evidence,nonvacuity_evidence,resource_policy,resource_evidence,resource_accounting,receipt_identity,solver_repair}.py
+            tools/formal_{external_evidence,nonvacuity_evidence,resource_policy,resource_evidence,resource_accounting,receipt_identity,solver_repair,public_identity}.py
             tests/formal_native_{evidence,nonvacuity,resource}_support.py
             "${tests[@]}"
           )
@@ -797,7 +797,7 @@ jobs:
           from pathlib import Path
           configuration = Path(os.environ["COVERAGE_RCFILE"])
           configuration.write_text(
-              "[run]\nbranch = True\nsource = tools.formal_external_evidence, tools.formal_nonvacuity_evidence, tools.formal_resource_policy, tools.formal_resource_evidence, tools.formal_resource_accounting, tools.formal_receipt_identity, tools.formal_solver_repair\n"
+              "[run]\nbranch = True\nsource = tools.formal_external_evidence, tools.formal_nonvacuity_evidence, tools.formal_resource_policy, tools.formal_resource_evidence, tools.formal_resource_accounting, tools.formal_receipt_identity, tools.formal_solver_repair, tools.formal_public_identity\n"
               f"data_file = {configuration.parent / 'coverage.data'}\n"
               "[report]\nfail_under = 100\nshow_missing = True\nexclude_lines =\n"
           )

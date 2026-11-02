@@ -29,6 +29,7 @@ from tools.formal_evidence_validation import (
     validate_measurement,
 )
 from tools.formal_execution_accounting import validate_execution_accounting
+from tools.formal_public_identity import validate_identity_conversion
 from tools.formal_receipt_identity import validate_identity, validate_review
 from tools.formal_resource_policy import CHIALVO_REPAIR, HISTORICAL_AMARI, PRIMARY, select_contract
 from tools.formal_solver_repair import validate_solver_repair
@@ -80,6 +81,7 @@ def validate_external(
         If the real SBY parser or solver identification fails.
     """
     repository = repository.resolve(strict=True)
+    validate_identity_conversion(repository, entry)
     if entry.get("outcome") == "UNPROVEN-RESOURCE":
         return validate_resource_row(repository, job, entry, provenance, solvers, policy=policy)
     require(entry.get("outcome") in (None, "PASS"), "Unknown external formal outcome.")

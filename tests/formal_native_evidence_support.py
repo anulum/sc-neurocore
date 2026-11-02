@@ -37,6 +37,31 @@ ROOT = Path(__file__).resolve().parents[1]
 JOB = Path("hdl/formal/catalogue/sc_mccullochpittsneuron.sby")
 
 
+def copy_identity_conversion(source: Path, repository: Path, entry: dict[str, object]) -> None:
+    """Copy the complete real manifest closure for an indexed converted receipt.
+
+    Parameters
+    ----------
+    source : Path
+        Checkout containing the actual independently reviewed public records.
+    repository : Path
+        Isolated test repository whose other source and review files are copied.
+    entry : dict of str to object
+        Actual indexed receipt with its optional identity conversion binding.
+    """
+    if "identity_conversion" not in entry:
+        return
+    binding = object_fields(entry["identity_conversion"])
+    manifest = str(binding["path"])
+    records = read_object(source / manifest)["records"]
+    assert isinstance(records, list)
+    names = [manifest, *(str(object_fields(row)["path"]) for row in records)]
+    for name in names:
+        destination = repository / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source / name, destination)
+
+
 @dataclass
 class NativeEvidence:
     """Retain real result files and the policy used by their qualification.

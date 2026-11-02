@@ -43,7 +43,7 @@
     "unit_exec_code": 1,
     "unit_result": "oom-kill",
     "unit_accounting": "retained",
-    "unit": "<FORMAL_UNIT>",
+    "unit": "<FORMAL_PRIMARY_UNIT>",
     "active_state": "failed",
     "main_pid": 0,
     "cgroup_processes": [],
@@ -73,7 +73,6 @@
   },
   "custody": {
     "closure_sha256": "faa80a441f23a85d3f1b630742b5cbba58ebb2e4f964733192a5e86ec9ff3605",
-    "lease_release_sha256": "fd9f7c2508a083e2fac6f65d3524be4d336f34dde4d3e8554d30ec3cb9b69357",
-    "released_nonce": "8642ee9dacbb409aae75ba73bb57bcfe"
+    "lease_release_sha256": "fd9f7c2508a083e2fac6f65d3524be4d336f34dde4d3e8554d30ec3cb9b69357"
   }
 }

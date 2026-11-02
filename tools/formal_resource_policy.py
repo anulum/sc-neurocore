@@ -21,7 +21,7 @@ YICES_RETRY = "yices-resource-retry-64-v1"
 HISTORICAL_AMARI = "amari-historical-64-v1"
 CHIALVO_REPAIR = "chialvo-solver-repair-yices-64-v1"
 CHIALVO_JOB = "hdl/formal/catalogue/sc_chialvo_map.sby"
-AMARI_RECEIPT = "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4"
+AMARI_RECEIPT = "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75"
 AMARI_JOB = "hdl/formal/catalogue/sc_amari_field.sby"
 
 

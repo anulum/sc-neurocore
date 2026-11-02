@@ -43,7 +43,7 @@
     "unit_exec_code": 1,
     "unit_result": "timeout",
     "unit_accounting": "retained",
-    "unit": "<FORMAL_UNIT>",
+    "unit": "<FORMAL_PRIMARY_UNIT>",
     "active_state": "failed",
     "main_pid": 0,
     "cgroup_processes": [],
@@ -73,7 +73,6 @@
   },
   "custody": {
     "closure_sha256": "5a85d88e0677d729cbd77b0526f7d1a57fed5aa431a368b1cef7bedfc70e0d5a",
-    "lease_release_sha256": "f9b768c2020cc31bf36e14ca65adca30ca71d0bb54fea60c6822719032b1616f",
-    "released_nonce": "05ab7d6669ad47e38caf30e3cc8001c5"
+    "lease_release_sha256": "f9b768c2020cc31bf36e14ca65adca30ca71d0bb54fea60c6822719032b1616f"
   }
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "receipts": {
-    "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4": {
+    "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75": {
       "id": "amari-gc-20261101",
       "job": "hdl/formal/catalogue/sc_amari_field.sby",
       "original_result_sha256": "e63926332e4917858e71a9400ff219eb2b5911c30382aa92b894b513e3857c79",

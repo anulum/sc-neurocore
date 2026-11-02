@@ -25,21 +25,25 @@
       "receipt": "benchmarks/results/formal/sc_amari_field/receipt.json",
       "review": "benchmarks/results/formal/sc_amari_field/resource-contract-review.json",
       "qualification": "ML350, attested",
-      "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
-      "review_sha256": "2f8c802e2785e8672567d6f5a0bc8276f6e6ec63e864f36aa36d3cf7f3d85ebc",
+      "receipt_sha256": "188b5cd2741c55b2bcc4b3331971c263a9c30a05b9b1948a0f48ab463471bd75",
+      "review_sha256": "d543f38e370ddf1fdbaf60b8bdc2e2828f09691bfbe5ebefe8ed4293e2cdb8b7",
       "resource_contract": "amari-historical-64-v1",
       "nonvacuity": "benchmarks/results/formal/sc_amari_field/nonvacuity.json",
-      "nonvacuity_sha256": "5cfcc73d699c435a40a48c50b6cd5322def6f04525163e10beeadd9bc70bc8e2",
+      "nonvacuity_sha256": "4a61749c2eb10f391f1b97e765abf8fcb309869b85407fc0b3e233d738beea14",
       "nonvacuity_review": "benchmarks/results/formal/sc_amari_field/nonvacuity-review.json",
-      "nonvacuity_review_sha256": "14b60c1275e71c2ce6c926e04440921c6e8041d10eea0eeacf9057cff314e478"
+      "nonvacuity_review_sha256": "9a85bd9a80764905992d4a874fa002b39b2610df6ee11d2174177ed91cf1319d",
+      "identity_conversion": {
+        "path": "benchmarks/results/formal/public_identity_conversion.json",
+        "sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+      }
     },
     "hdl/formal/catalogue/sc_chaotic_map.sby": {
       "outcome": "PASS",
       "resource_contract": "yices-resource-retry-64-v1",
       "receipt": "benchmarks/results/formal/sc_chaotic_map/receipt.json",
-      "receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+      "receipt_sha256": "af6382af420cdd4375af33430d4bc159b8c9a251aa4acd44402adf47eea8a3e9",
       "review": "benchmarks/results/formal/sc_chaotic_map/review.json",
-      "review_sha256": "ee49a73aea43a0b37ab9d3a3448fcc0bdc759860018a52c6a9321c76e9525e67",
+      "review_sha256": "b0a8307c0e3ec6c0b2ae09521f916555f42c54a5b83791a0dab2ea3d9e3b4bfe",
       "configuration": {
         "path": "benchmarks/results/formal/sc_chaotic_map/configuration.sby",
         "sha256": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483"
@@ -48,46 +52,54 @@
         {
           "resource_contract": "z3-primary-40-v1",
           "receipt": "benchmarks/results/formal/sc_chaotic_map_z3primary40/receipt.json",
-          "receipt_sha256": "a68284d346d792e228e6763436d85d0c9f7d3950ab2ab33a4b6d0d25dcd978eb",
+          "receipt_sha256": "94cceb2b0646dd7c13f0210eb3a530399b9b7201380e7d4949b232b8a089df94",
           "review": "benchmarks/results/formal/sc_chaotic_map_z3primary40/review.json",
-          "review_sha256": "198195806895d7e72a41836b14a7285fe19a5bc93e2f4ff13c24d4d5272475dc"
+          "review_sha256": "bc5469d23567d6c58c01cb2987ba5954e621a3669ffed0376612f4517e2cf8a9"
         },
         {
           "resource_contract": "z3-memory-retry-64-v1",
           "receipt": "benchmarks/results/formal/sc_chaotic_map_z3memory64/receipt.json",
-          "receipt_sha256": "118ca7e03cce00d5d25b8fe7d61184287238ae8ea077ad5497d58233e8b693f3",
+          "receipt_sha256": "d5bb01f4adf9cf4e8712a2a6af4115ac3a7bd57929682b690de0419c75d85eb2",
           "review": "benchmarks/results/formal/sc_chaotic_map_z3memory64/review.json",
-          "review_sha256": "9551b7e241677d59b0bc4fe73984f4f340b7ea6f180843611c8d421bea39817e"
+          "review_sha256": "b1b955f002589550de100c0e32f787b52209541dc08ca683cade817521ebfa68"
         }
       ],
       "nonvacuity": "benchmarks/results/formal/sc_chaotic_map/nonvacuity.json",
-      "nonvacuity_sha256": "15969d5bafd8f9033a50dd9601e1f12bfc5f0d1f07b31bdb8218c277a291ba0c",
+      "nonvacuity_sha256": "f98334946efbb5606826ef40cbbfa0e8b70b9f7dbc0856b6c6fa7cc04a018149",
       "nonvacuity_review": "benchmarks/results/formal/sc_chaotic_map/nonvacuity-review.json",
-      "nonvacuity_review_sha256": "c9e04898fe79b7b06f2edd7e8cefbb7c6a7149780b811b43bfab080a7da6a3d4"
+      "nonvacuity_review_sha256": "1b36b70f0a1b4eac17ed1207cdadb30d106eca31748b158fc44eb46b2cdc64fc",
+      "identity_conversion": {
+        "path": "benchmarks/results/formal/public_identity_conversion.json",
+        "sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+      }
     },
     "hdl/formal/catalogue/sc_chialvo_map.sby": {
       "outcome": "PASS",
       "resource_contract": "chialvo-solver-repair-yices-64-v1",
       "receipt": "benchmarks/results/formal/sc_chialvo_map/receipt.json",
-      "receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+      "receipt_sha256": "49f07401637c63459e15bbc6bed4fa104023831938506aad9ac028306e918ff5",
       "review": "benchmarks/results/formal/sc_chialvo_map/review.json",
-      "review_sha256": "91bc3acc16d6d1a7782458ef42eb685b8126ebd3e4ba2b1cd7da6a9683b3d65f",
+      "review_sha256": "f3b39912d5086f47a2dbb22c7dd4a3cc7a3cbead598731eb35569954338cc9ee",
       "configuration": {
         "path": "benchmarks/results/formal/sc_chialvo_map/configuration.sby",
         "sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be"
       },
       "solver_error": {
         "receipt": "benchmarks/results/formal/sc_chialvo_map_z3memory64/receipt.json",
-        "receipt_sha256": "e563b400466e9c2970236b7560c33100ba1d6769fde5dc922e2efb4a17eb6d6f",
+        "receipt_sha256": "4967f867e68be34bdfdac077dff55f9dd63133391c55072ac0a67fc6de16d48f",
         "review": "benchmarks/results/formal/sc_chialvo_map_z3memory64/review.json",
-        "review_sha256": "d407975c58ee4b2602ac8f30cf9c7e1780f415e7d788997522a9cd754a7dbb70",
+        "review_sha256": "dd25cb278dd5401a46fd7f6062c9bcd10c44b0f20648e02160cc204677a82d93",
         "diagnostic": "benchmarks/results/formal/sc_chialvo_map_z3memory64/diagnostic.json",
-        "diagnostic_sha256": "e4129dae491d5b72f65062780a45ac9ecbd8397dac6f300780e5cad8c21bcf9e"
+        "diagnostic_sha256": "f29b2cac3fac2aa00bfedc73f0e8f96f85391b240343925e1339fa22d2bfd22f"
       },
       "nonvacuity": "benchmarks/results/formal/sc_chialvo_map/nonvacuity.json",
-      "nonvacuity_sha256": "af9057fbc2a97d1bfb99ac81585ca7a074d5dc42ebfe5bd4503fd754c008f47e",
+      "nonvacuity_sha256": "e17c3b1e559e63210a1425eabae1468dffcc96d72d0ed4690cf74e2b85151c95",
       "nonvacuity_review": "benchmarks/results/formal/sc_chialvo_map/nonvacuity-review.json",
-      "nonvacuity_review_sha256": "cea1827a2104a723a6795dd75375ee482727877f508909b66673393f74dc34f0"
+      "nonvacuity_review_sha256": "6d72a392635c2b2edcc536ccb414a8942e9aa88f68eb4979d493260b4ab76138",
+      "identity_conversion": {
+        "path": "benchmarks/results/formal/public_identity_conversion.json",
+        "sha256": "72dedbe027a77f0b93ab8707991a9fc8d7cce0a130e402590470b188302eef72"
+      }
     },
     "hdl/formal/catalogue/sc_clipped_rational_recovery_map.sby": {
       "receipt": "benchmarks/results/formal/sc_clipped_rational_recovery_map/receipt.json",
