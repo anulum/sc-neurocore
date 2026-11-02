@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "verdict": "CLEAR",
+  "reviewer": "Independent formal evidence review",
+  "receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+  "resource_contract": "chialvo-solver-repair-yices-64-v1",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chialvo_map.sby": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
+    "hdl/formal/catalogue/sc_chialvo_map.v": "a04091a7f71acdae7bf86902e675c5f48346f3b86171106962a34df2389198e9",
+    "hdl/formal/catalogue/sc_chialvo_map_formal.v": "e9a9596181fc43e55a22727110822233ac3e13eb165387d94540fe023d5b2054"
+  },
+  "raw_log_sha256": "ba804214775cef44763ee8ed5eca23ba9186accc8b5c8d341cd8a26eb2db7d28",
+  "normalized_log_sha256": "19aa94d7fedc0bfc2bc695eaf0cb755733c3750821c9f23627177dd1937c536a",
+  "normalizer_id": "sc-neurocore-native-log-identity-v1",
+  "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3",
+  "execution_exception": null,
+  "exception_registry_sha256": null,
+  "configuration_sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
+  "solver_repair": {
+    "resource_contract": "chialvo-solver-repair-yices-64-v1",
+    "error_receipt_sha256": "e563b400466e9c2970236b7560c33100ba1d6769fde5dc922e2efb4a17eb6d6f",
+    "error_review_sha256": "d407975c58ee4b2602ac8f30cf9c7e1780f415e7d788997522a9cd754a7dbb70",
+    "diagnostic_sha256": "e4129dae491d5b72f65062780a45ac9ecbd8397dac6f300780e5cad8c21bcf9e",
+    "configuration_sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be"
+  },
+  "receipt_conversion": {
+    "native_audit_parent_receipt_sha256": "f367a430d2b5cba315f736f97646dd8594de7bbbd8345a2a94ce5f01d6d51aeb",
+    "public_parent_receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+    "field": "measurement.cgroup_processes",
+    "native_empty_representation": "",
+    "public_empty_representation": [],
+    "scope": "Faithful conversion of the empty native process observation to the public list schema. All model, source, task, tool, invocation, clock and measured outcome fields are unchanged."
+  },
+  "checks": [
+    "The immutable Z3 ERROR, diagnostic and same-model solver-only repair are independently reviewed.",
+    "A distinct subsequent native Yices PASS keeps the unchanged model, BMC mode and depth four.",
+    "Separate assertion-enable audit of the retained primary model is NONVACUOUS, with actual witnesses before depth four.",
+    "Public receipt conversion retains the original audit-parent digest and the exact empty-process schema mapping."
+  ],
+  "limits": [
+    "This model-specific repair does not admit other ERROR retries.",
+    "Bounded BMC success and enable reachability do not establish property strength or unbounded correctness."
+  ]
+}

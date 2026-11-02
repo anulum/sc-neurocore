@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "verdict": "CLEAR",
+  "reviewer": "Independent formal evidence review",
+  "artifact_sha256": "5cfcc73d699c435a40a48c50b6cd5322def6f04525163e10beeadd9bc70bc8e2",
+  "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_amari_field.sby": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
+    "hdl/formal/catalogue/sc_amari_field.v": "de387d6ad68cf582a583758b5df87f6dc9ef7c6e77c4289586bd63c81350ad6c",
+    "hdl/formal/catalogue/sc_amari_field_formal.v": "e0e4df7b7d89a002bb5019b060410296eb0b710e13de38af3a1d86ca8b0ec9d8"
+  },
+  "prepared_model_sha256": {
+    "default": "b440619cb4ac8f6ea7a89a2f0114377a514d7b755b227fbbc7a52a760418a830"
+  },
+  "checks": [
+    "Retained original prepared model, configuration and source closure match the measured primary; no primary replay or regenerated model.",
+    "All six assertion enables reached at step 2 within prove depth 12; no unreached enables.",
+    "Separate native audit success with retained execution accounting, 8 GiB cap, 1800-second ceiling, zero swap and OOM counters, closed process tree and released lease."
+  ],
+  "limits": [
+    "Assertion-enable reachability does not establish property strength.",
+    "Independent review checks retained execution evidence; it does not reproduce the heavy audit."
+  ]
+}

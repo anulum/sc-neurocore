@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "producer": "Arcane Sapience native assertion-enable audit",
+  "receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chaotic_map.sby": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
+    "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
+    "hdl/formal/catalogue/sc_chaotic_map_formal.v": "4ab19598d68001cd8807c7d1a9e2d1f9abfd3dcead09e06cfe87f94c1a1a3900"
+  },
+  "toolchain": {
+    "yosys_source": "0c11ea098be065e585a90a06e7b7da49936cf231",
+    "sby_source": "b1a1e98cba941ec8433f8dc27f416cd7bb7f14be",
+    "binary_sha256": {
+      "yosys": "a71b68f5998f7e75ba1ba5821c0d8723f7a520c3a81d98c680ed67a6888239d7",
+      "sby": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88"
+    },
+    "yosys_version": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "sby_version": "SBY v0.70",
+    "solver": {
+      "name": "yices-smt2",
+      "sha256": "524357fd625311f9a43affded6ea4250c19783f07b2119d82d57ebb25c75d50e",
+      "version": "Yices 2.7.0\nCopyright SRI International.\nLinked with GMP 6.3.0\nCopyright Free Software Foundation, Inc.\nBuild date: 2025-07-16\nPlatform: x86_64-pc-linux-gnu (release/static)\nRevision: 85cf17e44eac76b5d14b297c09fc9bfecf47ef65"
+    }
+  },
+  "measurement": {
+    "hostname": "god-of-the-math",
+    "unit": "scn-formal-sc-chaotic-map-nv8-01a1824a-20261102T130710215179Z.service",
+    "status": "PASS",
+    "native_exit_code": 0,
+    "native_exit_source": "systemd-exec",
+    "unit_exit_code": 0,
+    "unit_accounting": "retained",
+    "unit_result": "success",
+    "wall_clock_source": "systemd-exec-monotonic",
+    "start_monotonic_microseconds": 2338086624186,
+    "stop_monotonic_microseconds": 2338089763289,
+    "wall_seconds": 3.139103,
+    "peak_memory_bytes": 37847040,
+    "memory_limit_bytes": 8589934592,
+    "swap_limit_bytes": 0,
+    "time_limit_seconds": 1800,
+    "main_pid": 0,
+    "active_state": "inactive",
+    "cgroup_processes": [],
+    "process_tree_closed": true,
+    "oom_events": {
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "invocation_id": "27e8b61bf4af457098fa2e653ca45240"
+  },
+  "tasks": {
+    "default": {
+      "report": {
+        "schema_version": 1,
+        "check": "assertion-enable non-vacuity",
+        "mode": "prove",
+        "depth": 12,
+        "config_sha256": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
+        "design_prep_sha256": "2e709e95391209e6d43ba78b6ea2ad53c403465b937f358f81950f53b60ded83",
+        "prepared_json_sha256": "33555bd7bf95c903507c8d5a74ef4b13881457864533bef984a7e5bcc71c6057",
+        "sby_sha256": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88",
+        "implementation_sha256": "7397422c161f76da47bd2371d01349263aaf0198f1ed439cd6dfe9fac6001989",
+        "verdict": "NONVACUOUS",
+        "native_status": "PASS",
+        "native_exit_code": 0,
+        "auxiliary_json_sha256": "36b73900d01dbcd8f5e6e6681b3e97f9ffd157529f6bf821513f71d7367641a2",
+        "auxiliary_config_sha256": "34ef4199ae8355c16dda4a677319e5e8516456e6608cd1db4e5a0564fb39df09",
+        "auxiliary_log_sha256": "a4db374a5096d1aa9526fdff0d409c12663b220f3732b95e9e1080eb35732cf5",
+        "assertions": {
+          "scn_assertion_enable_000000": "sc_chaotic_map_formal/_witness_.check_assert_sc_chaotic_map_formal_v_37_11",
+          "scn_assertion_enable_000001": "sc_chaotic_map_formal/_witness_.check_assert_sc_chaotic_map_formal_v_39_15",
+          "scn_assertion_enable_000002": "sc_chaotic_map_formal/_witness_.check_assert_sc_chaotic_map_formal_v_40_19",
+          "scn_assertion_enable_000003": "sc_chaotic_map_formal/_witness_.check_assert_sc_chaotic_map_formal_v_41_23"
+        },
+        "first_reached_steps": {
+          "scn_assertion_enable_000000": 1,
+          "scn_assertion_enable_000001": 3,
+          "scn_assertion_enable_000002": 3,
+          "scn_assertion_enable_000003": 3
+        },
+        "assertion_enable_status": "REACHED",
+        "unreached_assertions": [],
+        "transform_sha256": "0e560544daa1cc7d4638fa21f2725a48c0d824e06838a397e2127c6db67eb29c"
+      },
+      "configuration": {
+        "options": {
+          "mode": "prove",
+          "depth": "12"
+        },
+        "engines": {
+          "null": [
+            [
+              "smtbmc",
+              "yices"
+            ]
+          ]
+        }
+      },
+      "model_custody": {
+        "origin": "retained original",
+        "primary_sha256": "2e709e95391209e6d43ba78b6ea2ad53c403465b937f358f81950f53b60ded83",
+        "audited_sha256": "2e709e95391209e6d43ba78b6ea2ad53c403465b937f358f81950f53b60ded83"
+      },
+      "log": {
+        "path": "benchmarks/results/formal/sc_chaotic_map/audit.log",
+        "raw_sha256": "a4db374a5096d1aa9526fdff0d409c12663b220f3732b95e9e1080eb35732cf5",
+        "normalized_sha256": "3363a36ae91b57808befbb12e05193de0c39601cfcaa72de61d4c5f468d9f0b4",
+        "normalizer_id": "sc-neurocore-native-log-identity-v1",
+        "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3"
+      }
+    }
+  },
+  "receipt_conversion": {
+    "native_audit_parent_receipt_sha256": "5ac366c9b391f33ffe65e5ab34548265b57eb90e3c0b5b8c8892aafa74c3899e",
+    "public_parent_receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+    "field": "measurement.cgroup_processes",
+    "native_empty_representation": "",
+    "public_empty_representation": [],
+    "scope": "Faithful conversion of the empty native process observation to the public list schema. All model, source, task, tool, invocation, clock and measured outcome fields are unchanged."
+  }
+}

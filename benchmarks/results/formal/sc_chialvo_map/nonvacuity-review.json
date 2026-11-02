@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "verdict": "CLEAR",
+  "reviewer": "Independent formal evidence review",
+  "artifact_sha256": "af9057fbc2a97d1bfb99ac81585ca7a074d5dc42ebfe5bd4503fd754c008f47e",
+  "receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chialvo_map.sby": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
+    "hdl/formal/catalogue/sc_chialvo_map.v": "a04091a7f71acdae7bf86902e675c5f48346f3b86171106962a34df2389198e9",
+    "hdl/formal/catalogue/sc_chialvo_map_formal.v": "e9a9596181fc43e55a22727110822233ac3e13eb165387d94540fe023d5b2054"
+  },
+  "prepared_model_sha256": {
+    "default": "34cc29eca3ca8e05b4579a3aa34971f7282410aff5ef55ff573571ccac891c30"
+  },
+  "checks": [
+    "Retained original primary prepared model was audited, without regenerating or replaying the primary proof.",
+    "All assertion enables have actual witnesses before the unchanged primary depth.",
+    "Separate native audit PASS, retained accounting, zero OOM events, closed process tree and released lease.",
+    "Public receipt conversion preserves the native empty-process observation while using the public list schema; original pre-conversion audit-parent receipt digest is retained."
+  ],
+  "limits": [
+    "Enable reachability does not establish property strength."
+  ],
+  "receipt_conversion": {
+    "native_audit_parent_receipt_sha256": "f367a430d2b5cba315f736f97646dd8594de7bbbd8345a2a94ce5f01d6d51aeb",
+    "public_parent_receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+    "field": "measurement.cgroup_processes",
+    "native_empty_representation": "",
+    "public_empty_representation": [],
+    "scope": "Faithful conversion of the empty native process observation to the public list schema. All model, source, task, tool, invocation, clock and measured outcome fields are unchanged."
+  }
+}

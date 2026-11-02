@@ -29,6 +29,7 @@ from tools.formal_evidence_validation import (
     source_pins,
 )
 from tools.formal_job_inputs import resolve_job
+from tools.formal_resource_policy import PRIMARY
 from tools.formal_log_normalization import NORMALIZER_ID, normalize_native_log
 from tests.formal_native_nonvacuity_support import bind_audit, collect_native_audit
 
@@ -75,6 +76,7 @@ class NativeEvidence:
                 {
                     "schema_version": 1,
                     "verdict": "CLEAR",
+                    "resource_contract": PRIMARY,
                     "reviewer": "receipt contract fixture; not a production attestation",
                     "receipt_sha256": digest(receipt),
                     "raw_log_sha256": log["raw_sha256"],
@@ -88,6 +90,7 @@ class NativeEvidence:
             )
         )
         return {
+            "resource_contract": PRIMARY,
             "receipt": "receipt.json",
             "receipt_sha256": digest(receipt),
             "review": "review.json",
@@ -135,6 +138,7 @@ def _state(control: list[str], unit: str) -> dict[str, str]:
         "MainPID",
         "Result",
         "ExecMainStatus",
+        "ExecMainCode",
         "ControlGroup",
         "MemoryPeak",
         "InvocationID",
@@ -243,14 +247,18 @@ def collect_native(
             state = _state(control, unit)
             if state["ControlGroup"]:
                 cgroup = Path("/sys/fs/cgroup") / state["ControlGroup"].lstrip("/")
-            if cgroup is not None and (cgroup / "memory.peak").is_file():
-                peak = max(peak, int((cgroup / "memory.peak").read_text()))
-                events = {
-                    key: int(value)
-                    for key, value in (
-                        line.split() for line in (cgroup / "memory.events").read_text().splitlines()
-                    )
-                }
+            if cgroup is not None:
+                try:
+                    peak = max(peak, int((cgroup / "memory.peak").read_text()))
+                    events = {
+                        key: int(value)
+                        for key, value in (
+                            line.split()
+                            for line in (cgroup / "memory.events").read_text().splitlines()
+                        )
+                    }
+                except FileNotFoundError:
+                    pass
             if state.get("MemoryPeak", "").isdigit():
                 peak = max(peak, int(state["MemoryPeak"]))
             if state["SubState"] in ("exited", "failed", "dead"):

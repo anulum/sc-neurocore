@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "producer": "Arcane Sapience native assertion-enable audit",
+  "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_amari_field.sby": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
+    "hdl/formal/catalogue/sc_amari_field.v": "de387d6ad68cf582a583758b5df87f6dc9ef7c6e77c4289586bd63c81350ad6c",
+    "hdl/formal/catalogue/sc_amari_field_formal.v": "e0e4df7b7d89a002bb5019b060410296eb0b710e13de38af3a1d86ca8b0ec9d8"
+  },
+  "toolchain": {
+    "yosys_source": "0c11ea098be065e585a90a06e7b7da49936cf231",
+    "sby_source": "b1a1e98cba941ec8433f8dc27f416cd7bb7f14be",
+    "binary_sha256": {
+      "yosys": "4632e5ba5a1c0e5897ae9fd1c6588eba12b77f1651c5e9815864c6a3824d563f",
+      "sby": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88"
+    },
+    "yosys_version": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "sby_version": "SBY v0.70",
+    "solver": {
+      "name": "z3",
+      "sha256": "c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb",
+      "version": "Z3 version 4.8.12 - 64 bit"
+    }
+  },
+  "measurement": {
+    "hostname": "god-of-the-math",
+    "unit": "scn-formal-amari-nv8-F3-01a1824a-20261102T115853847641Z.service",
+    "status": "PASS",
+    "native_exit_code": 0,
+    "native_exit_source": "systemd-exec",
+    "unit_exit_code": 0,
+    "unit_accounting": "retained",
+    "unit_result": "success",
+    "wall_clock_source": "systemd-exec-monotonic",
+    "start_monotonic_microseconds": 2333987212146,
+    "stop_monotonic_microseconds": 2334892007534,
+    "wall_seconds": 904.795388,
+    "peak_memory_bytes": 4208074752,
+    "memory_limit_bytes": 8589934592,
+    "swap_limit_bytes": 0,
+    "time_limit_seconds": 1800,
+    "main_pid": 0,
+    "active_state": "inactive",
+    "cgroup_processes": [],
+    "process_tree_closed": true,
+    "oom_events": {
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "invocation_id": "967f5a01f5b24e5c9b9dd7ee99c011a3"
+  },
+  "tasks": {
+    "default": {
+      "report": {
+        "schema_version": 1,
+        "check": "assertion-enable non-vacuity",
+        "mode": "prove",
+        "depth": 12,
+        "config_sha256": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
+        "design_prep_sha256": "b440619cb4ac8f6ea7a89a2f0114377a514d7b755b227fbbc7a52a760418a830",
+        "prepared_json_sha256": "8d07229a0916a4dbcbdc754a92514415d1117f7ad01af1c96881ca4482da6b0b",
+        "sby_sha256": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88",
+        "implementation_sha256": "7397422c161f76da47bd2371d01349263aaf0198f1ed439cd6dfe9fac6001989",
+        "verdict": "NONVACUOUS",
+        "native_status": "PASS",
+        "native_exit_code": 0,
+        "auxiliary_json_sha256": "8eff9dcf057eea5dce5ceef9beaca2a0f83797b55898a454e96270c2b114083e",
+        "auxiliary_config_sha256": "ebdf61ca095f8ba56cef1a93b9484e106604be196d3610a30102feba4e177cc8",
+        "auxiliary_log_sha256": "10d73288bd4aa6e0c10f1a0e05c998cc2724e8b08ecff63b4c09206c2670fcb2",
+        "assertions": {
+          "scn_assertion_enable_000000": "sc_amari_field_formal/_witness_.check_assert_sc_amari_field_formal_v_32_9",
+          "scn_assertion_enable_000001": "sc_amari_field_formal/_witness_.check_assert_sc_amari_field_formal_v_35_20",
+          "scn_assertion_enable_000002": "sc_amari_field_formal/_witness_.check_assert_sc_amari_field_formal_v_36_24",
+          "scn_assertion_enable_000003": "sc_amari_field_formal/_witness_.check_assert_sc_amari_field_formal_v_37_28",
+          "scn_assertion_enable_000004": "sc_amari_field_formal/_witness_.check_assert_sc_amari_field_formal_v_38_32",
+          "scn_assertion_enable_000005": "sc_amari_field_formal/_witness_.check_assert_sc_amari_field_formal_v_39_36"
+        },
+        "first_reached_steps": {
+          "scn_assertion_enable_000000": 2,
+          "scn_assertion_enable_000001": 2,
+          "scn_assertion_enable_000002": 2,
+          "scn_assertion_enable_000003": 2,
+          "scn_assertion_enable_000004": 2,
+          "scn_assertion_enable_000005": 2
+        },
+        "assertion_enable_status": "REACHED",
+        "unreached_assertions": [],
+        "transform_sha256": "0e560544daa1cc7d4638fa21f2725a48c0d824e06838a397e2127c6db67eb29c"
+      },
+      "configuration": {
+        "options": {
+          "mode": "prove",
+          "depth": "12"
+        },
+        "engines": {
+          "null": [
+            [
+              "smtbmc",
+              "z3"
+            ]
+          ]
+        }
+      },
+      "model_custody": {
+        "origin": "retained original",
+        "primary_sha256": "b440619cb4ac8f6ea7a89a2f0114377a514d7b755b227fbbc7a52a760418a830",
+        "audited_sha256": "b440619cb4ac8f6ea7a89a2f0114377a514d7b755b227fbbc7a52a760418a830"
+      },
+      "log": {
+        "path": "benchmarks/results/formal/sc_amari_field/audit.log",
+        "raw_sha256": "10d73288bd4aa6e0c10f1a0e05c998cc2724e8b08ecff63b4c09206c2670fcb2",
+        "normalized_sha256": "30060799fafcb26c6de663db222478dcd755d59f090ca5d5ef2d488f4434eb5f",
+        "normalizer_id": "sc-neurocore-native-log-identity-v1",
+        "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3"
+      }
+    }
+  }
+}

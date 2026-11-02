@@ -29,23 +29,26 @@ if TYPE_CHECKING:
 _AUDIT = """
 import json, sys
 from pathlib import Path
-from tools.formal_nonvacuity import check_task, native_configuration
+from tools.formal_nonvacuity import check_task, check_prepared_assertions, native_configuration
 r = Path(sys.argv[1])
-primary = r / ('proof' if (r / 'proof/status').is_file() else 'proof_default')
-report = check_task(primary, r / 'enable-audit')
+primary = r / ('proof' if (r / 'proof/config.sby').is_file() else 'proof_default')
+check = check_prepared_assertions if sys.argv[2] == 'resource' else check_task
+report = check(primary, r / 'enable-audit')
 configuration = native_configuration((primary / 'config.sby').read_text())
 (r / 'native-audit.json').write_text(json.dumps({'configuration': configuration, 'report': report}))
 raise SystemExit(0 if report['verdict'] == 'NONVACUOUS' else 2)
 """
 
 
-def collect_native_audit(evidence: NativeEvidence) -> None:
+def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = False) -> None:
     """Measure the public native enable check separately from its real primary.
 
     Parameters
     ----------
     evidence : NativeEvidence
-        Successful primary fixture whose original prepared model is retained.
+        Actual primary fixture whose original prepared model is retained.
+    resource_parent : bool, optional
+        Audit prepared assertions after a real resource stop, without asserting PASS.
     """
     from tests.formal_native_evidence_support import _state
 
@@ -86,6 +89,7 @@ def collect_native_audit(evidence: NativeEvidence) -> None:
         "-c",
         _AUDIT,
         str(root),
+        "resource" if resource_parent else "pass",
     ]
     cgroup: Path | None = None
     peak = 0
@@ -97,14 +101,18 @@ def collect_native_audit(evidence: NativeEvidence) -> None:
             state = _state(control, unit)
             if state["ControlGroup"]:
                 cgroup = Path("/sys/fs/cgroup") / state["ControlGroup"].lstrip("/")
-            if cgroup is not None and (cgroup / "memory.peak").is_file():
-                peak = max(peak, int((cgroup / "memory.peak").read_text()))
-                events = dict(
-                    (key, int(value))
-                    for key, value in (
-                        line.split() for line in (cgroup / "memory.events").read_text().splitlines()
+            if cgroup is not None:
+                try:
+                    peak = max(peak, int((cgroup / "memory.peak").read_text()))
+                    events = dict(
+                        (key, int(value))
+                        for key, value in (
+                            line.split()
+                            for line in (cgroup / "memory.events").read_text().splitlines()
+                        )
                     )
-                )
+                except FileNotFoundError:
+                    pass
             if state["SubState"] in ("exited", "failed", "dead"):
                 break
             assert time.monotonic() < deadline, "Enable audit exceeded its actual finite ceiling."
@@ -161,7 +169,7 @@ def collect_native_audit(evidence: NativeEvidence) -> None:
         "origin": "retained original",
         "primary_sha256": digest(
             root
-            / ("proof" if (root / "proof/status").is_file() else "proof_default")
+            / ("proof" if (root / "proof/config.sby").is_file() else "proof_default")
             / "model/design_prep.il"
         ),
         "audited_sha256": report["design_prep_sha256"],

@@ -765,6 +765,46 @@ jobs:
           python -m coverage combine --keep "${{ runner.temp }}"
           python -m coverage report --show-missing
 
+      - name: Native formal evidence quality and exact coverage
+        if: matrix.primary
+        shell: bash
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+          PYTHONDONTWRITEBYTECODE: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MYPYPATH: src:bridge:.
+        run: |
+          set -euo pipefail
+          tests=(
+            tests/test_tools/test_formal_{external_evidence,nonvacuity_evidence,resource_policy,resource_evidence,resource_accounting,receipt_identity,solver_repair,workflow}.py
+          )
+          files=(
+            tools/formal_{external_evidence,nonvacuity_evidence,resource_policy,resource_evidence,resource_accounting,receipt_identity,solver_repair}.py
+            tests/formal_native_{evidence,nonvacuity,resource}_support.py
+            "${tests[@]}"
+          )
+          ruff check "${files[@]}"
+          ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' --select D,E902 --ignore-noqa --no-cache "${files[@]}"
+          ruff format --check "${files[@]}"
+          mypy --strict --explicit-package-bases "${files[@]}"
+          namespace="$RUNNER_TEMP/formal-evidence"
+          mkdir -p "$namespace/tmp"
+          export TMPDIR="$namespace/tmp"
+          export COVERAGE_RCFILE="$namespace/coverage.ini"
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          configuration = Path(os.environ["COVERAGE_RCFILE"])
+          configuration.write_text(
+              "[run]\nbranch = True\nsource = tools.formal_external_evidence, tools.formal_nonvacuity_evidence, tools.formal_resource_policy, tools.formal_resource_evidence, tools.formal_resource_accounting, tools.formal_receipt_identity, tools.formal_solver_repair\n"
+              f"data_file = {configuration.parent / 'coverage.data'}\n"
+              "[report]\nfail_under = 100\nshow_missing = True\nexclude_lines =\n"
+          )
+          PYTHON
+          python -m coverage run -m pytest -q -o addopts= "${tests[@]}" --basetemp="$namespace/pytest"
+          python -m coverage report --show-missing
+
       - name: Native Studio application and exact coverage
         if: matrix.primary
         shell: bash

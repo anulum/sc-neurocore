@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "producer": "SC-NeuroCore native formal measurement producer",
+  "job": "hdl/formal/catalogue/sc_chaotic_map.sby",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chaotic_map.sby": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
+    "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
+    "hdl/formal/catalogue/sc_chaotic_map_formal.v": "4ab19598d68001cd8807c7d1a9e2d1f9abfd3dcead09e06cfe87f94c1a1a3900"
+  },
+  "task_statuses": {
+    "default": "PASS"
+  },
+  "command": {
+    "program": "sby",
+    "options": [
+      "-f"
+    ],
+    "output_option": "-d",
+    "directory": "hdl/formal/catalogue",
+    "argument": "sc_chaotic_map.sby"
+  },
+  "toolchain": {
+    "yosys_source": "0c11ea098be065e585a90a06e7b7da49936cf231",
+    "sby_source": "b1a1e98cba941ec8433f8dc27f416cd7bb7f14be",
+    "binary_sha256": {
+      "yosys": "a71b68f5998f7e75ba1ba5821c0d8723f7a520c3a81d98c680ed67a6888239d7",
+      "sby": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88"
+    },
+    "yosys_version": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "sby_version": "SBY v0.70",
+    "solver": {
+      "name": "yices-smt2",
+      "sha256": "524357fd625311f9a43affded6ea4250c19783f07b2119d82d57ebb25c75d50e",
+      "version": "Yices 2.7.0\nCopyright SRI International.\nLinked with GMP 6.3.0\nCopyright Free Software Foundation, Inc.\nBuild date: 2025-07-16\nPlatform: x86_64-pc-linux-gnu (release/static)\nRevision: 85cf17e44eac76b5d14b297c09fc9bfecf47ef65"
+    }
+  },
+  "measurement": {
+    "hostname": "god-of-the-math",
+    "status": "PASS",
+    "native_exit_code": 0,
+    "native_exit_source": "systemd-exec",
+    "unit_exit_code": 0,
+    "unit_exec_code": 1,
+    "unit_result": "success",
+    "unit_accounting": "retained",
+    "unit": "<FORMAL_UNIT>",
+    "active_state": "inactive",
+    "main_pid": 0,
+    "cgroup_processes": [],
+    "process_tree_closed": true,
+    "wall_seconds": 5.80442,
+    "wall_clock_source": "systemd-exec-monotonic",
+    "start_monotonic_microseconds": 2337810764112,
+    "stop_monotonic_microseconds": 2337816568532,
+    "peak_memory_bytes": 68751360,
+    "memory_limit_bytes": 68719476736,
+    "swap_limit_bytes": 0,
+    "time_limit_seconds": 7200,
+    "oom_events": {
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "invocation_id": "fad37939efbe4857b0b399c523fc4c0a",
+    "original_result_sha256": "ee932a42f105e16b8b1751fca03edf47e2402b52ccf8540408bb42fe3c488c20",
+    "status_file": {
+      "path": "benchmarks/results/formal/sc_chaotic_map/status.txt",
+      "sha256": "9768d51e75bbaf455ceae1cb5204dc0141f1d615040e48bd90d44c2613f92e9a"
+    }
+  },
+  "log": {
+    "path": "benchmarks/results/formal/sc_chaotic_map/native.log",
+    "raw_sha256": "fca8768ad88f6871258a18588a229c0fd3af5fd00a2969e20e28d0e34ba88181",
+    "normalized_sha256": "a4c61e95e7cbbe3f63e73155157ceec82bdea9c1e5fa98474da574598a6e1738",
+    "normalizer_id": "sc-neurocore-native-log-identity-v1",
+    "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3"
+  },
+  "custody": {
+    "closure_sha256": "63fc46480fc50b965c6659ba4bc68ea8caf15ac54889651e0290c40fb87fadcb",
+    "lease_release_sha256": "c532d172ba483fe7a03273b8e31f83a949067bbf816a062c773d20c2a8e04009",
+    "released_nonce": "82168d687dea44f8ba2fa3394d77bd15"
+  }
+}

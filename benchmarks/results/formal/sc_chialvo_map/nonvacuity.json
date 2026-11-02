@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "producer": "Arcane Sapience native assertion-enable audit",
+  "receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chialvo_map.sby": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
+    "hdl/formal/catalogue/sc_chialvo_map.v": "a04091a7f71acdae7bf86902e675c5f48346f3b86171106962a34df2389198e9",
+    "hdl/formal/catalogue/sc_chialvo_map_formal.v": "e9a9596181fc43e55a22727110822233ac3e13eb165387d94540fe023d5b2054"
+  },
+  "toolchain": {
+    "yosys_source": "0c11ea098be065e585a90a06e7b7da49936cf231",
+    "sby_source": "b1a1e98cba941ec8433f8dc27f416cd7bb7f14be",
+    "binary_sha256": {
+      "yosys": "a71b68f5998f7e75ba1ba5821c0d8723f7a520c3a81d98c680ed67a6888239d7",
+      "sby": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88"
+    },
+    "yosys_version": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "sby_version": "SBY v0.70",
+    "solver": {
+      "name": "yices-smt2",
+      "sha256": "524357fd625311f9a43affded6ea4250c19783f07b2119d82d57ebb25c75d50e",
+      "version": "Yices 2.7.0\nCopyright SRI International.\nLinked with GMP 6.3.0\nCopyright Free Software Foundation, Inc.\nBuild date: 2025-07-16\nPlatform: x86_64-pc-linux-gnu (release/static)\nRevision: 85cf17e44eac76b5d14b297c09fc9bfecf47ef65"
+    }
+  },
+  "measurement": {
+    "hostname": "god-of-the-math",
+    "unit": "scn-formal-sc-chialvo-map-nv8-01a1824a-20261102T130709287059Z.service",
+    "status": "PASS",
+    "native_exit_code": 0,
+    "native_exit_source": "systemd-exec",
+    "unit_exit_code": 0,
+    "unit_accounting": "retained",
+    "unit_result": "success",
+    "wall_clock_source": "systemd-exec-monotonic",
+    "start_monotonic_microseconds": 2338082889139,
+    "stop_monotonic_microseconds": 2338085872536,
+    "wall_seconds": 2.983397,
+    "peak_memory_bytes": 46014464,
+    "memory_limit_bytes": 8589934592,
+    "swap_limit_bytes": 0,
+    "time_limit_seconds": 1800,
+    "main_pid": 0,
+    "active_state": "inactive",
+    "cgroup_processes": [],
+    "process_tree_closed": true,
+    "oom_events": {
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "invocation_id": "d73c8e3a43634f768fbe5ea54946101b"
+  },
+  "tasks": {
+    "default": {
+      "report": {
+        "schema_version": 1,
+        "check": "assertion-enable non-vacuity",
+        "mode": "bmc",
+        "depth": 4,
+        "config_sha256": "46f40e22ff28f6538d14872f09b4ecddcbdc3ddba86f4171f2ef1a59acdba7be",
+        "design_prep_sha256": "34cc29eca3ca8e05b4579a3aa34971f7282410aff5ef55ff573571ccac891c30",
+        "prepared_json_sha256": "0c119ad01eb5ce37b26417bd633efc9a429604a0393e8b1a8db1d55b85f78a5e",
+        "sby_sha256": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88",
+        "implementation_sha256": "7397422c161f76da47bd2371d01349263aaf0198f1ed439cd6dfe9fac6001989",
+        "verdict": "NONVACUOUS",
+        "native_status": "PASS",
+        "native_exit_code": 0,
+        "auxiliary_json_sha256": "29d25dc5ed3075d00fb7ccfcbc91ee9f6179a68239afee967c9cbda45b3d574e",
+        "auxiliary_config_sha256": "3bc2d0aaca3c5dfd3510e5a55a3b8d3788ecaaf97617a65103b528b30fdd308e",
+        "auxiliary_log_sha256": "d5b19349c8f9b80087133598b4dfb0fa0e44e1132b304348c2793456b40f5443",
+        "assertions": {
+          "scn_assertion_enable_000000": "sc_chialvo_map_formal/_witness_.check_assert_sc_chialvo_map_formal_v_46_10",
+          "scn_assertion_enable_000001": "sc_chialvo_map_formal/_witness_.check_assert_sc_chialvo_map_formal_v_47_12",
+          "scn_assertion_enable_000002": "sc_chialvo_map_formal/_witness_.check_assert_sc_chialvo_map_formal_v_48_14",
+          "scn_assertion_enable_000003": "sc_chialvo_map_formal/_witness_.check_assert_sc_chialvo_map_formal_v_56_21"
+        },
+        "first_reached_steps": {
+          "scn_assertion_enable_000000": 0,
+          "scn_assertion_enable_000001": 0,
+          "scn_assertion_enable_000002": 0,
+          "scn_assertion_enable_000003": 3
+        },
+        "assertion_enable_status": "REACHED",
+        "unreached_assertions": [],
+        "transform_sha256": "0e560544daa1cc7d4638fa21f2725a48c0d824e06838a397e2127c6db67eb29c"
+      },
+      "configuration": {
+        "options": {
+          "mode": "bmc",
+          "depth": "4"
+        },
+        "engines": {
+          "null": [
+            [
+              "smtbmc",
+              "yices"
+            ]
+          ]
+        }
+      },
+      "model_custody": {
+        "origin": "retained original",
+        "primary_sha256": "34cc29eca3ca8e05b4579a3aa34971f7282410aff5ef55ff573571ccac891c30",
+        "audited_sha256": "34cc29eca3ca8e05b4579a3aa34971f7282410aff5ef55ff573571ccac891c30"
+      },
+      "log": {
+        "path": "benchmarks/results/formal/sc_chialvo_map/audit.log",
+        "raw_sha256": "d5b19349c8f9b80087133598b4dfb0fa0e44e1132b304348c2793456b40f5443",
+        "normalized_sha256": "a37bc63c5607b843339e2f6b8d2cb0baef9dc8955c40498457bb202811aade70",
+        "normalizer_id": "sc-neurocore-native-log-identity-v1",
+        "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3"
+      }
+    }
+  },
+  "receipt_conversion": {
+    "native_audit_parent_receipt_sha256": "f367a430d2b5cba315f736f97646dd8594de7bbbd8345a2a94ce5f01d6d51aeb",
+    "public_parent_receipt_sha256": "d6fcaeb1f222283795aa377f761bed43f17e455e303dbbc0bf597c4e93931e4a",
+    "field": "measurement.cgroup_processes",
+    "native_empty_representation": "",
+    "public_empty_representation": [],
+    "scope": "Faithful conversion of the empty native process observation to the public list schema. All model, source, task, tool, invocation, clock and measured outcome fields are unchanged."
+  }
+}

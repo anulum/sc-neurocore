@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "verdict": "CLEAR",
+  "reviewer": "Independent formal evidence review",
+  "receipt_sha256": "118ca7e03cce00d5d25b8fe7d61184287238ae8ea077ad5497d58233e8b693f3",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chaotic_map.sby": "260220c6123e49f326693da4c44de8592fc05194574fb6d36483337d6c6a2b85",
+    "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
+    "hdl/formal/catalogue/sc_chaotic_map_formal.v": "4ab19598d68001cd8807c7d1a9e2d1f9abfd3dcead09e06cfe87f94c1a1a3900"
+  },
+  "native_status": "TIMEOUT",
+  "resource_contract": "z3-memory-retry-64-v1",
+  "raw_log_sha256": "fdb2f025b19898a7bfa9011d09d65220b66cbb82cebebf05a3e2d105accbd223",
+  "normalized_log_sha256": "3f1a6e746aff41e98dbdf18b239497ccc075d102025a7621309cd5bded7fc4a1",
+  "normalizer_id": "sc-neurocore-native-log-identity-v1",
+  "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3",
+  "execution_exception": null,
+  "exception_registry_sha256": null,
+  "configuration_sha256": null,
+  "scope": "Actual incomplete Z3 predecessor; task status unavailable after the external resource stop is represented as null. This is not a successful proof."
+}

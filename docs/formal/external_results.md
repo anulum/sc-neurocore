@@ -11,17 +11,19 @@ The formal workflow distinguishes native hosted proofs from independently
 attested external results. CI validates the external evidence and its bindings;
 it does not reproduce that external execution.
 
-Full formal qualification remains incomplete for 26 resource-intensive jobs.
+Full formal qualification remains incomplete for 23 resource-intensive jobs.
 The `formal-all` gate is expected to fail until their results and required
 assertion-enable evidence qualify. Core 4.1.0 remains blocked until this gate is honestly green.
-The indexed Amari primary PASS currently lacks its required non-vacuity
-artifact and review, so the validator refuses it. Timeouts, memory limits and
-solver execution errors do not count as proofs.
+The indexed Amari primary PASS has a separate, independently reviewed
+assertion-enable audit over its retained prepared model. All six enables are
+reached at step 2 within the original prove depth 12. Timeouts, memory limits
+and solver execution errors do not count as proofs.
 
 | Workflow status | Location | Meaning |
 |---|---|---|
 | `PASS` | `hosted` | The current hosted invocation passed. |
 | `ATTESTED` | `ML350, attested` | An actual native PASS has matching source, tool, measurement and independent review records. |
+| `UNPROVEN-RESOURCE` | `ML350, attested` | Both admitted solvers exhausted their resources; exact attempts, reached assertion enables and bounded scope have an independent review. No successful proof is claimed. |
 | `ERROR` | `external, refused` | Indexed evidence is missing, stale, unsuccessful or inconsistent. |
 
 Indexed jobs have no hosted fallback. A refused external result fails its shard.
@@ -29,9 +31,26 @@ Hosted jobs retain their 12 GiB memory cap, zero swap and 1,800-second runtime
 limit. Their primary proof and assertion-enable audit share that single
 budget. The qualification report retains the primary verdict separately;
 an incomplete audit never turns a native PASS into a qualified PASS.
-External ML350 measurements use a 64 GiB cap, zero swap and a
-7,200-second runtime limit. Neither resource limit changes the declared SBY
-mode, depth, engine, assumptions or properties.
+External ML350 primaries use Z3 with a 40 GiB cap, zero swap and a
+7,200-second runtime limit. A primary memory stop permits one Z3 retry at
+64 GiB. A Z3 timeout, or a resource stop on that memory retry, permits one
+Yices attempt at 64 GiB with the same runtime ceiling and zero swap.
+No resource retry changes the declared mode, depth, assumptions or properties;
+the Yices configuration changes only the SMTBMC solver token.
+
+## Retained external results
+
+| Model | Scope | Native proof | Separate enable audit |
+|---|---|---|---|
+| Amari field | prove, depth 12 | PASS | Six enables reached at step 2. |
+| Chaotic map | prove, depth 12 | Yices PASS after Z3 MEMORY40 and TIMEOUT64 | Four enables reached at steps 1, 3, 3, 3. |
+| Chialvo map | bmc, depth 4 | Yices PASS under the exact solver-crash repair contract | Four enables reached at steps 0, 0, 0, 3. |
+
+The Chialvo result is bounded BMC evidence. The Chaotic result includes
+successful temporal induction. Each audit uses the same retained prepared
+model as its primary. These checks establish their stated obligations and
+enable reachability, without claiming property strength or broader model
+correctness. All earlier incomplete or failed executions remain retained.
 
 ## Validate a result
 
@@ -51,12 +70,60 @@ actual task engine. The shared SDK pins Z3 4.8.12 to the same executable bytes
 used by the external measurements; package, executable and upstream copyright
 checks apply when building and restoring the SDK.
 
-A qualifying receipt requires all task verdicts and final DONE markers to be
+A qualifying PASS receipt requires all task verdicts and final DONE markers to be
 PASS, a successful native exit, finite measurements within the declared limits,
 zero OOM events, and an inactive service with no remaining processes. Retained
 systemd execution accounting supplies the exit status and monotonic timestamps.
 The attestation must identify a distinct reviewer and bind the exact receipt,
 source hashes, log hashes, normalizer source and any execution exception.
+
+## Explicit resource contracts
+
+Each external index entry and its independent review name the same
+`resource_contract`. The validator selects the host, solver, memory and time
+limits from that registered contract; observed memory use never selects it.
+
+| Contract | Solver | Cap | Admission |
+|---|---|---|---|
+| `z3-primary-40-v1` | Z3 | 40 GiB | First native attempt. |
+| `z3-memory-retry-64-v1` | Z3 | 64 GiB | One closed 40 GiB primary with actual kernel OOM accounting. |
+| `yices-resource-retry-64-v1` | Yices | 64 GiB | Closed Z3 timeout, or closed resource stop on the admitted 64 GiB Z3 retry. |
+| `amari-historical-64-v1` | Z3 | 64 GiB | Only the exact historical Amari receipt identified below. |
+| `chialvo-solver-repair-yices-64-v1` | Yices | 64 GiB | Only the exact reviewed Chialvo Z3 crash, diagnosis and solver-only variant. |
+
+Retries bind the complete ordered `predecessors` chain. Receipts retain
+distinct invocation identities and actual monotonic start/stop times, closed
+process trees, zero swap, actual caps and native exit facts. A MEMORY result
+requires retained kernel OOM and kill counts; a TIMEOUT requires its real
+runtime ceiling and zero OOM counts. A solver crash, counterexample, ERROR,
+UNKNOWN, missing accounting or changed proof input refuses the row. A tool
+repair after an ERROR requires a separate reviewed execution contract.
+
+The Chialvo repair contract pins the original ERROR receipt and crash
+diagnosis, the exact configuration variant and portable Yices binary. Its
+independent PASS review binds that lineage; the new invocation must follow
+the original crash and have its own successful proof and enable audit. It
+does not admit another model, another ERROR, a changed depth, or an
+`UNPROVEN-RESOURCE` result. The original crash remains an ERROR.
+
+An index entry may explicitly declare `outcome: UNPROVEN-RESOURCE` only when
+its complete `attempts` chain ends with an actual incomplete Yices attempt.
+Every attempt has its own receipt and independent review. The row also names
+`nonvacuity_parent_sha256`: the exact attempt whose retained prepared model
+was audited separately. Missing or unreachable assertion enables still refuse
+the row. No primary proof is rerun merely to obtain this audit.
+
+The row review binds all ordered attempt receipt/review hashes, the audit and
+its independent review, the exact parent, and every task's mode and depth.
+`release_notes` binds a public file by SHA-256. One explicit line in that file
+must name the job, `UNPROVEN-RESOURCE`, every receipt hash, the audit hash and
+each `task: mode=bmc; depth=…` scope (using the actual task mode and depth).
+The review and release notes cannot silently describe an unbounded proof.
+
+The workflow accepts a fully qualified resource-incomplete row separately
+from PASS, displays its status and prominent count, and excludes it from the
+native-proof total. A green evidence gate can therefore include explicitly
+reviewed incomplete rows. Their scientific proof obligations remain open.
 
 
 ## Solver placement
@@ -181,6 +248,13 @@ depth, prepared-model custody and per-assertion witness steps. Normalized audit
 logs must preserve the successful DONE marker and each reported enable witness.
 The independent review binds the exact artifact, receipt, sources and prepared
 model hashes. Missing or unreachable enables refuse the whole external result.
+
+When a native empty `cgroup.procs` observation is converted from an empty
+string to the public empty-list schema, `receipt_conversion` in both the
+audit artifact and independent review records the original and converted
+receipt digests, field and values. The original native audit-parent receipt
+remains retained; this explicitly reviewed representation change does not
+change its execution, model, source or measured outcome.
 
 External audits have their own service invocation, zero swap, an 8 GiB cap and
 a 1,800-second ceiling. They retain native exit and monotonic accounting; the

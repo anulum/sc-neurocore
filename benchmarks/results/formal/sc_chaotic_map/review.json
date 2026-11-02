@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "verdict": "CLEAR",
+  "reviewer": "Independent formal evidence review",
+  "receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+  "resource_contract": "yices-resource-retry-64-v1",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chaotic_map.sby": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
+    "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
+    "hdl/formal/catalogue/sc_chaotic_map_formal.v": "4ab19598d68001cd8807c7d1a9e2d1f9abfd3dcead09e06cfe87f94c1a1a3900"
+  },
+  "raw_log_sha256": "fca8768ad88f6871258a18588a229c0fd3af5fd00a2969e20e28d0e34ba88181",
+  "normalized_log_sha256": "a4c61e95e7cbbe3f63e73155157ceec82bdea9c1e5fa98474da574598a6e1738",
+  "normalizer_id": "sc-neurocore-native-log-identity-v1",
+  "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3",
+  "execution_exception": null,
+  "exception_registry_sha256": null,
+  "configuration_sha256": "01c95f2350a430fd163b7712f2239738bcbdbbd598afccaa250169979a40b483",
+  "predecessors": [
+    {
+      "resource_contract": "z3-primary-40-v1",
+      "native_status": "MEMORY",
+      "receipt_sha256": "a68284d346d792e228e6763436d85d0c9f7d3950ab2ab33a4b6d0d25dcd978eb",
+      "review_sha256": "198195806895d7e72a41836b14a7285fe19a5bc93e2f4ff13c24d4d5272475dc"
+    },
+    {
+      "resource_contract": "z3-memory-retry-64-v1",
+      "native_status": "TIMEOUT",
+      "receipt_sha256": "118ca7e03cce00d5d25b8fe7d61184287238ae8ea077ad5497d58233e8b693f3",
+      "review_sha256": "9551b7e241677d59b0bc4fe73984f4f340b7ea6f180843611c8d421bea39817e"
+    }
+  ],
+  "receipt_conversion": {
+    "native_audit_parent_receipt_sha256": "5ac366c9b391f33ffe65e5ab34548265b57eb90e3c0b5b8c8892aafa74c3899e",
+    "public_parent_receipt_sha256": "c1f8340dd6f7b6ce4d2d8b84544d2811a237244bfece0262b44a072108edb1f6",
+    "field": "measurement.cgroup_processes",
+    "native_empty_representation": "",
+    "public_empty_representation": [],
+    "scope": "Faithful conversion of the empty native process observation to the public list schema. All model, source, task, tool, invocation, clock and measured outcome fields are unchanged."
+  },
+  "checks": [
+    "Actual MEMORY40 followed by a single Z3 TIMEOUT64, then distinct subsequent Yices PASS.",
+    "Canonical RTL, properties, mode and depth unchanged; only reviewed solver token differs.",
+    "Primary native accounting and separate same-model assertion-enable audit independently reviewed.",
+    "Public receipt uses the list schema for the empty native process observation; original audit-parent digest and exact conversion are retained."
+  ],
+  "limits": [
+    "Temporal induction and enable reachability do not establish property strength."
+  ]
+}

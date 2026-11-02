@@ -1,0 +1,40 @@
+SBY 14:07:16 [cover] Copy '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_portable_nv8_20261102T130709287059Z/audit-task-0/enables.json' to '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_portable_nv8_20261102T130709287059Z/audit-task-0/cover/src/enables.json'.
+SBY 14:07:16 [cover] engine_0: smtbmc yices
+SBY 14:07:16 [cover] base: starting process "cd cover/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 14:07:16 [cover] base: finished (returncode=0)
+SBY 14:07:16 [cover] prep: starting process "cd cover/model; yosys -ql design_prep.log design_prep.ys"
+SBY 14:07:16 [cover] prep: finished (returncode=0)
+SBY 14:07:16 [cover] smt2: starting process "cd cover/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 14:07:16 [cover] smt2: finished (returncode=0)
+SBY 14:07:16 [cover] engine_0: starting process "cd cover; yosys-smtbmc -s yices --presat --unroll -c --noprogress -t 4  --append 0 --dump-vcd engine_0/trace%.vcd --dump-yw engine_0/trace%.yw --dump-vlogtb engine_0/trace%_tb.v --dump-smtc engine_0/trace%.smtc model/design_smt2.smt2"
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Solver: yices
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Checking cover reachability in step 0..
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Reached cover statement in step 0 at sc_chialvo_map_formal: scn_assertion_enable_000000
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Reached cover statement in step 0 at sc_chialvo_map_formal: scn_assertion_enable_000001
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Reached cover statement in step 0 at sc_chialvo_map_formal: scn_assertion_enable_000002
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to VCD file: engine_0/trace0.vcd
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to Verilog testbench: engine_0/trace0_tb.v
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to constraints file: engine_0/trace0.smtc
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to Yosys witness file: engine_0/trace0.yw
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Checking cover reachability in step 0..
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Checking cover reachability in step 1..
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Checking cover reachability in step 2..
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Checking cover reachability in step 3..
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Reached cover statement in step 3 at sc_chialvo_map_formal: scn_assertion_enable_000003
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to VCD file: engine_0/trace1.vcd
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to Verilog testbench: engine_0/trace1_tb.v
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to constraints file: engine_0/trace1.smtc
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Writing trace to Yosys witness file: engine_0/trace1.yw
+SBY 14:07:17 [cover] engine_0: ##   0:00:00  Status: passed
+SBY 14:07:17 [cover] engine_0: finished (returncode=0)
+SBY 14:07:17 [cover] engine_0: Status returned by engine: pass
+SBY 14:07:17 [cover] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 14:07:17 [cover] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 14:07:17 [cover] summary: engine_0 (smtbmc yices) returned pass
+SBY 14:07:17 [cover] summary: cover trace: cover/engine_0/trace0.vcd
+SBY 14:07:17 [cover] summary:   reached cover statement sc_chialvo_map_formal.scn_assertion_enable_000000 at sc_chialvo_map_formal.v:46.13-46.39
+SBY 14:07:17 [cover] summary:   reached cover statement sc_chialvo_map_formal.scn_assertion_enable_000001 at sc_chialvo_map_formal.v:47.13-47.46
+SBY 14:07:17 [cover] summary:   reached cover statement sc_chialvo_map_formal.scn_assertion_enable_000002 at sc_chialvo_map_formal.v:48.13-48.46
+SBY 14:07:17 [cover] summary: cover trace: cover/engine_0/trace1.vcd
+SBY 14:07:17 [cover] summary:   reached cover statement sc_chialvo_map_formal.scn_assertion_enable_000003 at sc_chialvo_map_formal.v:56.13-62.14 step 3
+SBY 14:07:17 [cover] DONE (PASS, rc=0)

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "producer": "SC-NeuroCore native formal measurement producer",
+  "job": "hdl/formal/catalogue/sc_chaotic_map.sby",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chaotic_map.sby": "260220c6123e49f326693da4c44de8592fc05194574fb6d36483337d6c6a2b85",
+    "hdl/formal/catalogue/sc_chaotic_map.v": "99b5b801937f3f873a9044af36ceffb8b7bf333896cea40545a1d92afc196183",
+    "hdl/formal/catalogue/sc_chaotic_map_formal.v": "4ab19598d68001cd8807c7d1a9e2d1f9abfd3dcead09e06cfe87f94c1a1a3900"
+  },
+  "task_statuses": {
+    "default": null
+  },
+  "command": {
+    "program": "sby",
+    "options": [
+      "-f"
+    ],
+    "output_option": "-d",
+    "directory": "hdl/formal/catalogue",
+    "argument": "sc_chaotic_map.sby"
+  },
+  "toolchain": {
+    "yosys_source": "0c11ea098be065e585a90a06e7b7da49936cf231",
+    "sby_source": "b1a1e98cba941ec8433f8dc27f416cd7bb7f14be",
+    "binary_sha256": {
+      "yosys": "4632e5ba5a1c0e5897ae9fd1c6588eba12b77f1651c5e9815864c6a3824d563f",
+      "sby": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88"
+    },
+    "yosys_version": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "sby_version": "SBY v0.70",
+    "solver": {
+      "name": "z3",
+      "sha256": "c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb",
+      "version": "Z3 version 4.8.12 - 64 bit"
+    }
+  },
+  "measurement": {
+    "hostname": "god-of-the-math",
+    "status": "MEMORY",
+    "native_exit_code": 1,
+    "native_exit_source": "systemd-exec",
+    "unit_exit_code": 1,
+    "unit_exec_code": 1,
+    "unit_result": "oom-kill",
+    "unit_accounting": "retained",
+    "unit": "<FORMAL_UNIT>",
+    "active_state": "failed",
+    "main_pid": 0,
+    "cgroup_processes": [],
+    "process_tree_closed": true,
+    "wall_seconds": 3887.921216,
+    "wall_clock_source": "systemd-exec-monotonic",
+    "start_monotonic_microseconds": 2303216588143,
+    "stop_monotonic_microseconds": 2307104509359,
+    "peak_memory_bytes": 42949672960,
+    "memory_limit_bytes": 42949672960,
+    "swap_limit_bytes": 0,
+    "time_limit_seconds": 7200,
+    "oom_events": {
+      "oom": 2,
+      "oom_kill": 1,
+      "oom_group_kill": 0
+    },
+    "invocation_id": "97d5276b69574e37a9bbadd13cf5512c",
+    "original_result_sha256": "6805f28fe346d2e093f0dc985886e7a49caaf6df47dd2267121b502b152bbd0a"
+  },
+  "log": {
+    "path": "benchmarks/results/formal/sc_chaotic_map_z3primary40/native.log",
+    "raw_sha256": "7f61f6443955b4f93fa8c2616d2a1ca0f30d7fd0b9c82a5257af584a05f3416b",
+    "normalized_sha256": "5f67940e26acccf34e7e21ab0b5b636f9e8d426894df49f5cfd7a93555a5f949",
+    "normalizer_id": "sc-neurocore-native-log-identity-v1",
+    "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3"
+  },
+  "custody": {
+    "closure_sha256": "faa80a441f23a85d3f1b630742b5cbba58ebb2e4f964733192a5e86ec9ff3605",
+    "lease_release_sha256": "fd9f7c2508a083e2fac6f65d3524be4d336f34dde4d3e8554d30ec3cb9b69357",
+    "released_nonce": "8642ee9dacbb409aae75ba73bb57bcfe"
+  }
+}

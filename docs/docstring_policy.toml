@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1645
+expected_file_count = 1657
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6714,3 +6714,51 @@ rationale = "Installed facade/native dense class identities survive every pickle
 [[file]]
 path = "tests/test_codec_lossless_format_limits.py"
 rationale = "Public regressions for refusing ambiguous ISI headers and overflowing group-local delta references while preserving valid packet bytes"
+
+[[file]]
+path = "tools/formal_resource_policy.py"
+rationale = "Select reviewed resource contracts without inferring limits from measurements."
+
+[[file]]
+path = "tools/formal_resource_accounting.py"
+rationale = "Distinguish a real bounded resource stop from proof or tool failure."
+
+[[file]]
+path = "tools/formal_resource_evidence.py"
+rationale = "Qualify explicitly reviewed resource-incomplete rows without claiming PASS."
+
+[[file]]
+path = "tools/formal_receipt_identity.py"
+rationale = "Bind native formal attempts to their actual source, solver and review."
+
+[[file]]
+path = "tests/test_tools/test_formal_resource_policy.py"
+rationale = "Reject inferred budgets, solver changes and invalid formal retry sequences."
+
+[[file]]
+path = "tests/formal_native_resource_support.py"
+rationale = "Measure real local resource stops; never manufacture a native proof outcome."
+
+[[file]]
+path = "tests/test_tools/test_formal_resource_evidence.py"
+rationale = "Exercise real exhausted solvers and refuse tampered resource evidence."
+
+[[file]]
+path = "tests/test_tools/test_formal_resource_accounting.py"
+rationale = "Measure a real tiny OOM and refuse fabricated resource-stop accounting."
+
+[[file]]
+path = "tests/test_tools/test_formal_receipt_identity.py"
+rationale = "Keep actual model configuration bytes unchanged except the selected solver."
+
+[[file]]
+path = "tests/test_tools/test_formal_workflow.py"
+rationale = "Execute actual workflow gate and summary scripts on explicit table controls."
+
+[[file]]
+path = "tools/formal_solver_repair.py"
+rationale = "Keep one reviewed solver repair separate from ordinary resource retries."
+
+[[file]]
+path = "tests/test_tools/test_formal_solver_repair.py"
+rationale = "Exercise the public repair gate with retained actual native evidence."

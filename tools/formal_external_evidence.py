@@ -26,11 +26,13 @@ from tools.formal_evidence_validation import (
     object_fields,
     read_object,
     require,
-    source_pins,
     validate_measurement,
 )
 from tools.formal_execution_accounting import validate_execution_accounting
-from tools.formal_job_inputs import resolve_job
+from tools.formal_receipt_identity import validate_identity, validate_review
+from tools.formal_resource_policy import CHIALVO_REPAIR, HISTORICAL_AMARI, PRIMARY, select_contract
+from tools.formal_solver_repair import validate_solver_repair
+from tools.formal_resource_evidence import validate_resource_history, validate_resource_row
 from tools.formal_log_normalization import validate_public_log
 from tools.formal_nonvacuity_evidence import validate_nonvacuity
 
@@ -44,7 +46,7 @@ def validate_external(
     provenance: str,
     solvers: Mapping[str, Path],
     *,
-    policy: EvidencePolicy = ML350_POLICY,
+    policy: EvidencePolicy | None = None,
 ) -> dict[str, object]:
     """Validate a receipt and its independent review against current inputs.
 
@@ -78,6 +80,9 @@ def validate_external(
         If the real SBY parser or solver identification fails.
     """
     repository = repository.resolve(strict=True)
+    if entry.get("outcome") == "UNPROVEN-RESOURCE":
+        return validate_resource_row(repository, job, entry, provenance, solvers, policy=policy)
+    require(entry.get("outcome") in (None, "PASS"), "Unknown external formal outcome.")
     receipt_path = confined_file(repository, entry.get("receipt"))
     receipt_sha = digest(receipt_path)
     require(receipt_sha == entry.get("receipt_sha256"), "Receipt digest differs from the index.")
@@ -86,96 +91,16 @@ def validate_external(
         type(receipt.get("schema_version")) is int and receipt.get("schema_version") == 1,
         "Unknown receipt schema.",
     )
-    inputs = resolve_job(repository, job)
-    require(
-        receipt.get("job") == inputs.job.relative_to(repository).as_posix(),
-        "Receipt identifies another formal job.",
+    inputs, task_names, solver_name = validate_identity(
+        repository, job, entry, receipt, provenance, solvers
     )
-    require(receipt.get("source_hashes") == inputs.source_hashes(), "Proof sources are stale.")
-    command = object_fields(receipt.get("command"))
-    require(command.get("output_option") in ("-d", "--prefix"), "Unknown SBY output option.")
-    require(
-        command
-        == {
-            "program": "sby",
-            "options": ["-f"],
-            "output_option": command["output_option"],
-            "directory": inputs.directory.relative_to(repository).as_posix(),
-            "argument": inputs.job.relative_to(inputs.directory).as_posix(),
-        },
-        "Native invocation differs from the unchanged SBY job.",
-    )
-    task_names = subprocess.run(
-        ["sby", "--dumptasks", str(inputs.job)],
-        cwd=repository,
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=30,
-    ).stdout.splitlines() or ["default"]
     require(
         receipt.get("task_statuses") == dict.fromkeys(task_names, "PASS"),
         "Every declared SBY task must have an actual PASS.",
     )
-    tools = object_fields(receipt.get("toolchain"))
-    for name, pin in source_pins(provenance).items():
-        require(tools.get(name) == pin, f"External {name} differs from the current SDK.")
-    for name in ("yosys", "sby"):
-        binaries = object_fields(tools.get("binary_sha256"))
-        recorded = binaries.get(name)
-        require(
-            isinstance(recorded, str) and re.fullmatch(r"[0-9a-f]{64}", recorded) is not None,
-            f"Used {name} binary digest is missing or invalid.",
-        )
-    yosys = tools.get("yosys_version")
-    require(
-        isinstance(yosys, str) and yosys.split(" (", 1)[0] == provenance.split(" (", 1)[0],
-        "Used Yosys version differs from the current SDK.",
-    )
-    sby_versions = [line for line in provenance.splitlines() if line.startswith("SBY v")]
-    require(
-        len(sby_versions) == 1 and tools.get("sby_version") == sby_versions[0],
-        "Used SBY version differs from the current SDK.",
-    )
-    solver = object_fields(tools.get("solver"))
-    solver_name = solver.get("name")
-    require(
-        isinstance(solver_name, str) and solver_name in solvers,
-        "Native solver is not in the current SDK.",
-    )
-    task_info = object_fields(
-        json.loads(
-            subprocess.run(
-                ["sby", "--dumptaskinfo", str(inputs.job)],
-                cwd=repository,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=30,
-            ).stdout
-        )
-    )
-    engine_solver = "yices" if solver_name == "yices-smt2" else solver_name
-    engine_groups = [
-        group
-        for task in task_info.values()
-        for group in object_fields(object_fields(task).get("engines")).values()
-    ]
-    require(
-        bool(engine_groups)
-        and all(group == [["smtbmc", engine_solver]] for group in engine_groups),
-        "Receipt solver differs from the actual SBY task engines.",
-    )
-    executable = solvers[str(solver_name)]
-    require(solver.get("sha256") == digest(executable), "Native solver binary differs.")
-    version = subprocess.run(
-        [str(executable), "--version"], capture_output=True, text=True, check=True, timeout=15
-    ).stdout.strip()
-    require(solver.get("version") == version, "Native solver version differs.")
     actual_wall, exception_id, registry_digest = validate_execution_accounting(
         repository, receipt, receipt_sha
     )
-    wall, peak = validate_measurement(receipt, policy, actual_wall)
     log_entry = object_fields(receipt.get("log"))
     log = validate_public_log(repository, log_entry)
     markers = re.findall(r"DONE \((PASS|FAIL|ERROR|UNKNOWN|TIMEOUT), rc=(-?\d+)\)", log.read_text())
@@ -183,36 +108,62 @@ def validate_external(
         markers == [("PASS", "0")] * len(task_names),
         "Native final DONE markers disagree with the task verdicts.",
     )
-    review_path = confined_file(repository, entry.get("review"))
-    require(digest(review_path) == entry.get("review_sha256"), "Review digest differs.")
-    review = read_object(review_path)
-    require(
-        type(review.get("schema_version")) is int
-        and review.get("schema_version") == 1
-        and review.get("verdict") == "CLEAR",
-        "Independent external-result review is not CLEAR.",
+    review_path, review = validate_review(
+        repository, entry, receipt, receipt_sha, exception_id, registry_digest
     )
-    require(review.get("receipt_sha256") == receipt_sha, "Review binds another receipt.")
-    for field, expected in {
-        "raw_log_sha256": log_entry.get("raw_sha256"),
-        "normalized_log_sha256": log_entry.get("normalized_sha256"),
-        "normalizer_id": log_entry.get("normalizer_id"),
-        "normalizer_sha256": log_entry.get("normalizer_sha256"),
-        "source_hashes": receipt.get("source_hashes"),
-        "execution_exception": exception_id,
-        "exception_registry_sha256": registry_digest,
-    }.items():
-        require(review.get(field) == expected, f"Independent review {field} binding differs.")
-    reviewer, producer = review.get("reviewer"), receipt.get("producer")
-    require(
-        isinstance(reviewer, str)
-        and bool(reviewer.strip())
-        and isinstance(producer, str)
-        and bool(producer.strip())
-        and reviewer != producer,
-        "Receipt requires a distinct identified independent reviewer.",
+    contract = select_contract(
+        entry, review, receipt_sha, inputs.job.relative_to(repository).as_posix()
     )
+    require(
+        solver_name == contract.solver, "Receipt solver differs from the indexed resource contract."
+    )
+    qualification_policy = policy
+    policy = contract.policy() if policy is None else policy
+    wall, peak = validate_measurement(receipt, policy, actual_wall)
+    if entry["resource_contract"] == CHIALVO_REPAIR:
+        validate_solver_repair(repository, job, entry, receipt, review)
+    elif entry["resource_contract"] not in (PRIMARY, HISTORICAL_AMARI):
+        history, previous_receipts, expected = validate_resource_history(
+            repository,
+            job,
+            entry.get("predecessors"),
+            provenance,
+            solvers,
+            policy=qualification_policy,
+        )
+        require(
+            expected == entry["resource_contract"],
+            "PASS retry lacks its admitted predecessor chain.",
+        )
+        bindings = [
+            {
+                key: row[key]
+                for key in ("resource_contract", "native_status", "receipt_sha256", "review_sha256")
+            }
+            for row in history
+        ]
+        require(
+            review.get("predecessors") == bindings,
+            "PASS review does not bind the predecessor history.",
+        )
+        previous = object_fields(previous_receipts[-1].get("measurement"))
+        current = object_fields(receipt.get("measurement"))
+        require(
+            current.get("invocation_id")
+            not in [
+                object_fields(r.get("measurement")).get("invocation_id") for r in previous_receipts
+            ]
+            and int(str(current["start_monotonic_microseconds"]))
+            >= int(str(previous["stop_monotonic_microseconds"])),
+            "PASS retry reuses or predates its predecessor invocation.",
+        )
+    else:
+        require(
+            entry.get("predecessors") in (None, []),
+            "Primary or historical PASS cannot hide predecessor attempts.",
+        )
     return {
+        "resource_contract": entry["resource_contract"],
         "location": f"{policy.label}, attested",
         "native_status": "PASS",
         "wall_seconds": wall,
@@ -236,7 +187,7 @@ def validate_external(
     }
 
 
-def main(argv: Sequence[str] | None = None, *, policy: EvidencePolicy = ML350_POLICY) -> int:
+def main(argv: Sequence[str] | None = None, *, policy: EvidencePolicy | None = None) -> int:
     """Identify hosted jobs or validate their indexed external evidence.
 
     Parameters

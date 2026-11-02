@@ -1,0 +1,40 @@
+SBY 12:59:01 [cover] Copy '<FORMAL_WORKSPACE>/audit-task-0/enables.json' to '<FORMAL_WORKSPACE>/audit-task-0/cover/src/enables.json'.
+SBY 12:59:01 [cover] engine_0: smtbmc z3
+SBY 12:59:01 [cover] base: starting process "cd cover/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 12:59:01 [cover] base: finished (returncode=0)
+SBY 12:59:01 [cover] prep: starting process "cd cover/model; yosys -ql design_prep.log design_prep.ys"
+SBY 12:59:01 [cover] prep: finished (returncode=0)
+SBY 12:59:01 [cover] smt2: starting process "cd cover/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 12:59:01 [cover] smt2: finished (returncode=0)
+SBY 12:59:01 [cover] engine_0: starting process "cd cover; yosys-smtbmc -s z3 --presat -c --noprogress -t 12  --append 0 --dump-vcd engine_0/trace%.vcd --dump-yw engine_0/trace%.yw --dump-vlogtb engine_0/trace%_tb.v --dump-smtc engine_0/trace%.smtc model/design_smt2.smt2"
+SBY 12:59:01 [cover] engine_0: ##   0:00:00  Solver: z3
+SBY 12:59:01 [cover] engine_0: ##   0:00:00  Checking cover reachability in step 0..
+SBY 13:00:01 [cover] engine_0: ##   0:01:00  waiting for solver (1 minute)
+SBY 13:04:01 [cover] engine_0: ##   0:05:00  waiting for solver (5 minutes)
+SBY 13:09:01 [cover] engine_0: ##   0:10:00  waiting for solver (10 minutes)
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Checking cover reachability in step 1..
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Checking cover reachability in step 2..
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Reached cover statement in step 2 at sc_amari_field_formal: scn_assertion_enable_000000
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Reached cover statement in step 2 at sc_amari_field_formal: scn_assertion_enable_000001
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Reached cover statement in step 2 at sc_amari_field_formal: scn_assertion_enable_000002
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Reached cover statement in step 2 at sc_amari_field_formal: scn_assertion_enable_000003
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Reached cover statement in step 2 at sc_amari_field_formal: scn_assertion_enable_000004
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Reached cover statement in step 2 at sc_amari_field_formal: scn_assertion_enable_000005
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Writing trace to VCD file: engine_0/trace0.vcd
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Writing trace to Verilog testbench: engine_0/trace0_tb.v
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Writing trace to constraints file: engine_0/trace0.smtc
+SBY 13:14:00 [cover] engine_0: ##   0:14:59  Writing trace to Yosys witness file: engine_0/trace0.yw
+SBY 13:14:03 [cover] engine_0: ##   0:15:01  Status: passed
+SBY 13:14:03 [cover] engine_0: finished (returncode=0)
+SBY 13:14:03 [cover] engine_0: Status returned by engine: pass
+SBY 13:14:03 [cover] summary: Elapsed clock time [H:MM:SS (secs)]: 0:15:02 (902)
+SBY 13:14:03 [cover] summary: Elapsed process time [H:MM:SS (secs)]: 0:15:01 (901)
+SBY 13:14:03 [cover] summary: engine_0 (smtbmc z3) returned pass
+SBY 13:14:03 [cover] summary: cover trace: cover/engine_0/trace0.vcd
+SBY 13:14:03 [cover] summary:   reached cover statement sc_amari_field_formal.scn_assertion_enable_000000 at sc_amari_field_formal.v:32.13-32.74 step 2
+SBY 13:14:03 [cover] summary:   reached cover statement sc_amari_field_formal.scn_assertion_enable_000001 at sc_amari_field_formal.v:35.13-35.52 step 2
+SBY 13:14:03 [cover] summary:   reached cover statement sc_amari_field_formal.scn_assertion_enable_000002 at sc_amari_field_formal.v:36.13-36.52 step 2
+SBY 13:14:03 [cover] summary:   reached cover statement sc_amari_field_formal.scn_assertion_enable_000003 at sc_amari_field_formal.v:37.13-37.52 step 2
+SBY 13:14:03 [cover] summary:   reached cover statement sc_amari_field_formal.scn_assertion_enable_000004 at sc_amari_field_formal.v:38.13-38.52 step 2
+SBY 13:14:03 [cover] summary:   and 1 further cover statement
+SBY 13:14:03 [cover] DONE (PASS, rc=0)

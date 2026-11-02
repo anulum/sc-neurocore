@@ -1,0 +1,28 @@
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] Removing directory '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby'.
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] Copy '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/source/hdl/formal/catalogue/sc_chialvo_map_formal.v' to '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby/src/sc_chialvo_map_formal.v'.
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] Copy '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/source/hdl/formal/catalogue/sc_chialvo_map.v' to '<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby/src/sc_chialvo_map.v'.
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: smtbmc z3
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] base: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] base: finished (returncode=0)
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] prep: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby/model; yosys -ql design_prep.log design_prep.ys"
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] prep: finished (returncode=0)
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] smt2: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] smt2: finished (returncode=0)
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby; yosys-smtbmc -s z3 --presat --noprogress -t 4  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY  8:05:47 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: ##   0:00:00  Solver: z3
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: Traceback (most recent call last):
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: File "<FORMAL_WORKSPACE>/hosted-sdk/bin/yosys-smtbmc", line 481, in <module>
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: smt.write(line)
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: File "<FORMAL_WORKSPACE>/hosted-sdk/bin/../share/yosys/python3/smtio.py", line 555, in write
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: self.p_write(stmt + "\n", True)
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: File "<FORMAL_WORKSPACE>/hosted-sdk/bin/../share/yosys/python3/smtio.py", line 424, in p_write
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: if flush: self.p.stdin.flush()
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: ^^^^^^^^^^^^^^^^^^^^
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: BrokenPipeError: [Errno 32] Broken pipe
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] engine_0: finished (returncode=1)
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] ERROR: engine_0: Engine terminated without status.
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] summary: Elapsed clock time [H:MM:SS (secs)]: 1:22:25 (4945)
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] summary: engine_0 (smtbmc z3) did not return a status
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] summary: engine_0 did not produce any traces
+SBY  9:28:12 [<FORMAL_WORKSPACE>/measurements/sc_chialvo_map_z3memory64_v3_20261102T055850Z/measurement-sby] DONE (ERROR, rc=16)

@@ -186,7 +186,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
-| Python test files | 5544 |
+| Python test files | 5551 |
 | Public documentation pages | 663 |
 | GitHub Actions workflows | 25 |
 
@@ -575,7 +575,7 @@ hdl/
 Formal verification inventory: **90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover)** under `hdl/formal/` (18
 non-catalogue jobs + **72 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked job configurations and statements; it is not a count
-of qualified passing results. Full qualification remains incomplete for 26
+of qualified passing results. Full qualification remains incomplete for 23
 resource-intensive jobs, so `formal-all` is expected to remain red and the next
 stable Core 4.1.0 release remains blocked. See [external formal evidence](docs/formal/external_results.md).
 Re-emit catalogue harnesses with `tools/emit_catalogue_formal.py`.

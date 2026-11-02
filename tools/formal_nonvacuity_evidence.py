@@ -28,15 +28,23 @@ from tools.formal_execution_accounting import validate_execution_accounting
 from tools.formal_job_inputs import FormalJobInputs
 from tools.formal_log_normalization import validate_public_log
 from tools.formal_nonvacuity import native_configuration
+from tools.formal_receipt_identity import executed_configuration
 
 ML350_AUDIT_POLICY = EvidencePolicy(memory_bytes=8 * 1024**3, timeout_seconds=1800)
 
 
-def _task(repository: Path, name: str | None, value: object, inputs: FormalJobInputs) -> str:
+def _task(
+    repository: Path,
+    name: str | None,
+    value: object,
+    inputs: FormalJobInputs,
+    configuration_path: Path,
+    primary_pass: bool,
+) -> str:
     """Check native task options, model custody and all enable witnesses."""
     task = object_fields(value)
     native = subprocess.run(
-        ["sby", "--dumpcfg", str(inputs.job), *([] if name is None else [name])],
+        ["sby", "--dumpcfg", str(configuration_path), *([] if name is None else [name])],
         cwd=inputs.directory,
         capture_output=True,
         text=True,
@@ -87,6 +95,7 @@ def _task(repository: Path, name: str | None, value: object, inputs: FormalJobIn
         "Audit implementation is stale.",
     )
     if options.get("mode") == "cover":
+        require(primary_pass, "Original cover requires an actual primary PASS.")
         covers = report.get("original_cover_goals")
         require(
             isinstance(covers, list)
@@ -207,7 +216,8 @@ def validate_nonvacuity(
     require(
         artifact.get("receipt_sha256") == receipt_sha256, "Audit binds another primary receipt."
     )
-    sources = inputs.source_hashes()
+    configuration_path = executed_configuration(repository, inputs, entry, receipt)
+    sources = object_fields(receipt.get("source_hashes"))
     require(artifact.get("source_hashes") == sources, "Audit sources are stale.")
     require(
         artifact.get("toolchain") == receipt.get("toolchain"),
@@ -240,7 +250,7 @@ def validate_nonvacuity(
         "Audit SBY binary differs from the measured toolchain.",
     )
     declared = subprocess.run(
-        ["sby", "--dumptasks", str(inputs.job)],
+        ["sby", "--dumptasks", str(configuration_path)],
         cwd=inputs.directory,
         capture_output=True,
         text=True,
@@ -248,7 +258,14 @@ def validate_nonvacuity(
         timeout=30,
     ).stdout.splitlines()
     models = {
-        name: _task(repository, name if name in declared else None, task, inputs)
+        name: _task(
+            repository,
+            name if name in declared else None,
+            task,
+            inputs,
+            configuration_path,
+            primary_measurement.get("status") == "PASS",
+        )
         for name, task in tasks.items()
     }
     review_path = confined_file(repository, entry.get("nonvacuity_review"))

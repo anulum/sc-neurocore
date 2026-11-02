@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5544
+    "test_files": 5551
   },
   "documentation": {
     "public_pages": [
@@ -3524,6 +3524,7 @@
       "tests/folded_interconnect_support.py",
       "tests/formal_native_evidence_support.py",
       "tests/formal_native_nonvacuity_support.py",
+      "tests/formal_native_resource_support.py",
       "tests/formal_network_properties_support.py",
       "tests/formal_property_check_support.py",
       "tests/fusion_multimodal_support.py",
@@ -8495,6 +8496,12 @@
       "tests/test_tools/test_formal_nonvacuity.py",
       "tests/test_tools/test_formal_nonvacuity_evidence.py",
       "tests/test_tools/test_formal_qualified_run.py",
+      "tests/test_tools/test_formal_receipt_identity.py",
+      "tests/test_tools/test_formal_resource_accounting.py",
+      "tests/test_tools/test_formal_resource_evidence.py",
+      "tests/test_tools/test_formal_resource_policy.py",
+      "tests/test_tools/test_formal_solver_repair.py",
+      "tests/test_tools/test_formal_workflow.py",
       "tests/test_tools/test_generate_model_descriptors.py",
       "tests/test_tools/test_generate_studio_openapi.py",
       "tests/test_tools/test_go_doc_history_native.py",

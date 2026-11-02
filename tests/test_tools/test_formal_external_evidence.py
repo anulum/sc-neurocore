@@ -309,3 +309,90 @@ def test_actual_other_solver_cannot_attest_z3_job(case: NativeEvidence) -> None:
     )
     with pytest.raises(ValueError, match="actual SBY task engines"):
         _check(case)
+
+
+@pytest.fixture
+def retry(tmp_path: Path) -> tuple[Path, dict[str, object]]:
+    """Copy the actual reviewed ML350 resource-to-PASS sequence for gate controls."""
+    repository = Path(__file__).resolve().parents[2]
+    for name in ("sc_chaotic_map", "sc_chaotic_map_z3primary40", "sc_chaotic_map_z3memory64"):
+        prefix = Path("benchmarks/results/formal") / name
+        shutil.copytree(repository / prefix, tmp_path / prefix)
+    parent = read_object(
+        tmp_path / "benchmarks/results/formal/sc_chaotic_map_z3primary40/receipt.json"
+    )
+    for name in object_fields(parent["source_hashes"]):
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((repository / name).read_bytes())
+    index = object_fields(read_object(repository / "benchmarks/results/formal/index.json")["jobs"])
+    return tmp_path, object_fields(index["hdl/formal/catalogue/sc_chaotic_map.sby"])
+
+
+def _check_retry(retry: tuple[Path, dict[str, object]]) -> dict[str, object]:
+    """Validate the retained production sequence using actual current SDK tools."""
+    repository, entry = retry
+    yosys = shutil.which("yosys")
+    assert yosys is not None
+    provenance = (Path(yosys).resolve().parents[1] / "PROVENANCE.txt").read_text()
+    solvers = {
+        name: Path(executable)
+        for name in ("z3", "yices-smt2")
+        if (executable := shutil.which(name)) is not None
+    }
+    return validate_external(
+        repository, Path("hdl/formal/catalogue/sc_chaotic_map.sby"), entry, provenance, solvers
+    )
+
+
+def test_actual_resource_retry_pass_and_nonvacuity(
+    retry: tuple[Path, dict[str, object]],
+) -> None:
+    """The public gate accepts actual MEMORY40, TIMEOUT64, Yices PASS and audit."""
+    result = _check_retry(retry)
+    assert result["native_status"] == "PASS"
+    assert object_fields(result["nonvacuity"])["status"] == "NONVACUOUS"
+
+
+@pytest.mark.parametrize("change", ["chain", "review", "invocation", "clock"])
+def test_resource_retry_pass_lineage_refusals(
+    retry: tuple[Path, dict[str, object]], change: str
+) -> None:
+    """A rehashed negative fixture cannot hide missing or overlapping retry lineage."""
+    repository, entry = retry
+    history = entry["predecessors"]
+    assert isinstance(history, list)
+    review_path = repository / str(entry["review"])
+    review = read_object(review_path)
+    if change == "chain":
+        entry["predecessors"] = history[:-1]
+        reason = "admitted predecessor chain"
+    elif change == "review":
+        review["predecessors"] = []
+        reason = "bind the predecessor history"
+    else:
+        path = repository / str(entry["receipt"])
+        receipt = read_object(path)
+        current = object_fields(receipt["measurement"])
+        last = object_fields(history[-1])
+        previous = object_fields(read_object(repository / str(last["receipt"]))["measurement"])
+        if change == "invocation":
+            current["invocation_id"] = previous["invocation_id"]
+        else:
+            duration = int(str(current["stop_monotonic_microseconds"])) - int(
+                str(current["start_monotonic_microseconds"])
+            )
+            current["start_monotonic_microseconds"] = previous["start_monotonic_microseconds"]
+            current["stop_monotonic_microseconds"] = (
+                int(str(current["start_monotonic_microseconds"])) + duration
+            )
+        receipt["measurement"] = current
+        path.write_text(json.dumps(receipt))
+        entry["receipt_sha256"] = digest(path)
+        review["receipt_sha256"] = digest(path)
+        reason = "reuses or predates"
+    review["reviewer"] = "Negative lineage control; not a production attestation"
+    review_path.write_text(json.dumps(review))
+    entry["review_sha256"] = digest(review_path)
+    with pytest.raises(ValueError, match=reason):
+        _check_retry(retry)

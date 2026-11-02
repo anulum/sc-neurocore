@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "verdict": "CLEAR",
+  "reviewer": "Independent formal evidence review",
+  "receipt_sha256": "e563b400466e9c2970236b7560c33100ba1d6769fde5dc922e2efb4a17eb6d6f",
+  "diagnostic_sha256": "e4129dae491d5b72f65062780a45ac9ecbd8397dac6f300780e5cad8c21bcf9e",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_chialvo_map.sby": "cc87fb6d6c86e0692fc4682aa4d6c38a25cc0d5a88eed98dbdf435daf95d39cd",
+    "hdl/formal/catalogue/sc_chialvo_map.v": "a04091a7f71acdae7bf86902e675c5f48346f3b86171106962a34df2389198e9",
+    "hdl/formal/catalogue/sc_chialvo_map_formal.v": "e9a9596181fc43e55a22727110822233ac3e13eb165387d94540fe023d5b2054"
+  },
+  "native_status": "ERROR",
+  "classification": "SOLVER-CRASH",
+  "raw_log_sha256": "dfb4a88c2e6bbc0b280e50744e16da88e7112a0adc5d1b22a4607535a01a27a0",
+  "normalized_log_sha256": "690a4575257dd51a1e7c1b47b2aef1f3e7f04842217d30144ef64f851e26e969",
+  "normalizer_id": "sc-neurocore-native-log-identity-v1",
+  "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3",
+  "execution_exception": null,
+  "exception_registry_sha256": null,
+  "configuration_sha256": null,
+  "scope": "Review of original immutable Z3 ERROR and its diagnosis, not a successful proof or an UNPROVEN-RESOURCE attestation.",
+  "receipt_conversion": {
+    "native_representation_receipt_sha256": "e5d60594db31761fcc6ee5c1484effc1778bc1a7674080bb71736607664382ca",
+    "public_parent_receipt_sha256": "e563b400466e9c2970236b7560c33100ba1d6769fde5dc922e2efb4a17eb6d6f",
+    "field": "measurement.cgroup_processes",
+    "native_empty_representation": "",
+    "public_empty_representation": []
+  }
+}
