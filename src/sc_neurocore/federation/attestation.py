@@ -55,7 +55,7 @@ from .evidence import (
 )
 from .verbs import FPGA_DEPLOYMENT_SCHEMA, SC_INFERENCE_SCHEMA, STUDIO_ID
 
-#: The grading code recorded in every envelope; its own error rate is WS-3's concern.
+#: Grading implementation identity recorded in every signed envelope.
 GRADER: Mapping[str, str] = {"name": "sc-neurocore.federation", "version": "2"}
 
 _REFERENCE_VALIDATED = "reference-validated"
