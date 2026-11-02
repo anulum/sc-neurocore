@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1678
+expected_file_count = 1680
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6846,3 +6846,11 @@ rationale = "Index committed co-simulation evidence and wire dual-axis descripto
 [[file]]
 path = "tools/schema_gap_report.py"
 rationale = "Report model-schema coverage and co-simulation requirements."
+
+[[file]]
+path = "tests/test_tools_runtime_state_ceiling.py"
+rationale = "Check real state transport ceiling accounting and reject increased dropped state or fewer fully carried models."
+
+[[file]]
+path = "tests/test_tools_runtime_state_conformance.py"
+rationale = "Verify source-derived state matrices, operator census output and real command-line persistence and drift refusal."

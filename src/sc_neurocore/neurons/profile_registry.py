@@ -20,7 +20,7 @@ validators the descriptor and the schema declare for each facet, which of them
 resolve and are executed into a bound receipt, and whether the profile is
 admitted for evidence at all.
 
-Admission is the gate FF-04, FF-05 and FF-14 consume: a profile is
+Admission guards profile-specific execution and evidence: a profile is
 ``admitted`` only when it is executable, contradiction-free and every facet the
 descriptor declares through an evidence field has at least one executable
 validator (a test file or exact test node that exists) scoped to that profile.

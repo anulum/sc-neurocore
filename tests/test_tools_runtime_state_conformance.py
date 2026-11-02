@@ -8,9 +8,8 @@
 
 """The matrix says how much of each model's state a lane could carry.
 
-It is the answer to FF-05's question in a form an operator can read without the
-code: per model and lane, which declared variables would cross the boundary,
-which would not, and whether the lane exports anything the model has no name
+Operators can inspect each model and runtime lane: which declared variables
+would cross the boundary, which would not, and whether the lane exports anything the model has no name
 for. These cases hold the committed file to the live contract, and hold the
 matrix to the one question it answers — a lane's *contract*, never whether that
 lane happens to be built on this machine.
@@ -57,6 +56,8 @@ def _rows(matrix: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 class TestTheCommittedMatrix:
+    """Check committed matrix bytes and deterministic source-derived encoding."""
+
     def test_the_committed_file_matches_the_live_contract(self) -> None:
         """The drift gate: a changed layout or packet must be regenerated."""
         assert _COMMITTED.is_file()
@@ -72,22 +73,28 @@ class TestTheCommittedMatrix:
 
 
 class TestTheMatrix:
+    """Check declared model state and packet accounting across every runtime lane."""
+
     def test_it_names_its_contract_and_the_packet_contract(self, matrix: dict[str, Any]) -> None:
+        """Retain the matrix schema and each runtime packet contract."""
         assert matrix["schema_version"] == CONFORMANCE_SCHEMA
         assert matrix["packet_schema_version"] == RUNTIME_STATE_PACKET_SCHEMA_VERSION
         assert matrix["lanes"] == [RUST_BATCH_PACKET.to_public_dict()]
 
     def test_every_catalogue_model_has_a_row(self, matrix: dict[str, Any]) -> None:
+        """Account for every catalogue model exactly once in the sorted matrix."""
         rows = _rows(matrix)
 
         assert [row["model"] for row in rows] == list(model_names())
         assert matrix["summary"]["models"] == len(rows)
 
     def test_every_row_is_judged_by_every_lane(self, matrix: dict[str, Any]) -> None:
+        """Include every declared runtime lane in each model row."""
         for row in _rows(matrix):
             assert sorted(row["lanes"]) == sorted(packet.runtime for packet in LANES)
 
     def test_a_row_reports_the_model_s_own_declared_state(self, matrix: dict[str, Any]) -> None:
+        """Preserve the model's declared state variable names in its row."""
         by_model = {row["model"]: row for row in _rows(matrix)}
         expected = [spec.name for spec in declared_state("PinskyRinzelNeuron")[2]]
 
@@ -96,6 +103,7 @@ class TestTheMatrix:
     def test_a_model_the_lane_can_name_nothing_in_is_reported_as_such(
         self, matrix: dict[str, Any]
     ) -> None:
+        """Report unnameable state without claiming complete transport."""
         by_model = {row["model"]: row for row in _rows(matrix)}
         coverage = by_model["PinskyRinzelNeuron"]["lanes"]["rust-batch"]
 
@@ -106,6 +114,7 @@ class TestTheMatrix:
     def test_a_model_the_lane_partly_carries_is_reported_as_such(
         self, matrix: dict[str, Any]
     ) -> None:
+        """Distinguish carried and dropped variables for partial transport."""
         by_model = {row["model"]: row for row in _rows(matrix)}
         coverage = by_model["AdExNeuron"]["lanes"]["rust-batch"]
 
@@ -128,6 +137,7 @@ class TestTheMatrix:
         )
 
     def test_models_without_declared_state_are_counted_apart(self, matrix: dict[str, Any]) -> None:
+        """Separate undeclared model state from measured transport coverage."""
         rows = _rows(matrix)
 
         assert matrix["summary"]["models_without_declared_state"] == sum(
@@ -136,7 +146,10 @@ class TestTheMatrix:
 
 
 class TestTheSummary:
+    """Check operator census output and malformed summary refusal."""
+
     def test_it_names_every_lane_and_its_counts(self, matrix: dict[str, Any]) -> None:
+        """Print the declared variable and model counts for each runtime lane."""
         text = render_summary(matrix)
 
         assert "rust-batch" in text
@@ -145,10 +158,12 @@ class TestTheSummary:
         assert str(matrix["summary"]["models"]) in text
 
     def test_a_matrix_without_a_summary_mapping_is_refused(self) -> None:
+        """Refuse an operator summary whose census is not a mapping."""
         with pytest.raises(TypeError, match="mapping for its summary"):
             render_summary({"schema_version": CONFORMANCE_SCHEMA, "summary": []})
 
     def test_a_matrix_without_a_lane_census_is_refused(self) -> None:
+        """Refuse an operator summary with malformed per-lane accounting."""
         with pytest.raises(TypeError, match="mapping for its lane census"):
             render_summary(
                 {
@@ -161,9 +176,35 @@ class TestTheSummary:
                 }
             )
 
+    def test_a_malformed_selectable_census_is_refused(self, matrix: dict[str, Any]) -> None:
+        """Reject malformed selectable counts instead of reporting a false census."""
+        altered = dict(matrix)
+        altered["summary"] = dict(matrix["summary"])
+        altered["summary"]["per_lane_selectable"] = []
+
+        with pytest.raises(TypeError, match="mapping for its selectable census"):
+            render_summary(altered)
+
+    def test_a_matrix_without_selectable_counts_retains_the_whole_census(
+        self, matrix: dict[str, Any]
+    ) -> None:
+        """Keep whole-catalogue accounting usable when selectable counts are absent."""
+        altered = dict(matrix)
+        altered["summary"] = dict(matrix["summary"])
+        del altered["summary"]["per_lane_selectable"]
+
+        text = render_summary(altered)
+
+        assert "rust-batch" in text
+        assert "declared variables carried" in text
+        assert "it can be selected for" not in text
+
 
 class TestCommandLine:
+    """Exercise matrix writing, drift checks and actual command output."""
+
     def test_writing_and_checking_agree(self, tmp_path: Path) -> None:
+        """Write a real matrix file and accept its unchanged source contract."""
         destination = tmp_path / "matrix.json"
 
         assert main(["--write", "--output", str(destination)]) == 0
@@ -175,6 +216,7 @@ class TestCommandLine:
     def test_an_absent_file_fails_the_check(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Refuse a missing matrix file with an explicit command error."""
         assert main(["--check", "--output", str(tmp_path / "absent.json")]) == 1
 
         assert "is absent" in capsys.readouterr().err
@@ -182,6 +224,7 @@ class TestCommandLine:
     def test_a_drifted_file_fails_the_check(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Refuse stored matrix bytes that differ from the current contract."""
         destination = tmp_path / "matrix.json"
         destination.write_text('{"schema_version": "stale"}\n', encoding="utf-8")
 
@@ -192,6 +235,7 @@ class TestCommandLine:
     def test_the_default_invocation_prints_the_census(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Print the operator census without creating an output file."""
         assert main(["--output", str(tmp_path / "unused.json")]) == 0
 
         printed = capsys.readouterr().out
@@ -201,6 +245,7 @@ class TestCommandLine:
     def test_writing_also_prints_the_census_when_asked(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """Write the matrix and print the requested per-lane census."""
         destination = tmp_path / "matrix.json"
 
         assert main(["--write", "--summary", "--output", str(destination)]) == 0
@@ -287,7 +332,12 @@ class TestTheSelectableCensus:
             / "validation"
             / "runtime_state_conformance.md"
         ).read_text(encoding="utf-8")
-        restricted = build_matrix()["summary"]["per_lane_selectable"]["rust-batch"]
+        summary = build_matrix()["summary"]
+        assert isinstance(summary, dict)
+        selectable = summary["per_lane_selectable"]
+        assert isinstance(selectable, dict)
+        restricted = selectable["rust-batch"]
+        assert isinstance(restricted, dict)
         for value in (
             restricted["models"],
             restricted["models_with_declared_state"],

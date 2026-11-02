@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Runtime state transport ceiling contracts
+
+"""Check state transport ceilings against measured lane accounting."""
 
 from __future__ import annotations
 
@@ -11,6 +14,8 @@ import importlib.util
 import sys
 from pathlib import Path
 from typing import Any
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,12 +32,12 @@ def _tool() -> Any:
 
 
 def _matrix(dropped: int, complete: int) -> dict[str, Any]:
-    """A matrix summary carrying one lane's counts, which is all a ceiling reads."""
+    """Return the dropped-variable and complete-model counts for one lane."""
     return {"summary": {"per_lane": {"rust-batch": {"dropped": dropped, "complete": complete}}}}
 
 
 def test_a_lane_at_its_ceiling_passes() -> None:
-    """Standing still is allowed; FF-05 is a long campaign, not one commit."""
+    """Accept unchanged dropped-variable and complete-model counts."""
     tool = _tool()
     ceiling = {"lanes": {"rust-batch": {"max_dropped": 415, "min_complete": 20}}}
 
@@ -87,3 +92,51 @@ def test_the_committed_ceiling_matches_the_live_matrix() -> None:
     ceiling = tool.tomllib.loads(ceiling_path.read_text(encoding="utf-8"))
 
     assert tool.ceiling_verdicts(tool.build_matrix(), ceiling) == []
+
+
+def test_a_malformed_lane_table_is_refused() -> None:
+    """Reject a ceiling document whose lane limits cannot be interpreted."""
+    tool = _tool()
+
+    with pytest.raises(tool.RuntimeStateCeilingError, match="must be a table"):
+        tool.ceiling_verdicts(_matrix(10, 1), {"lanes": []})
+
+
+def test_checking_an_absent_ceiling_fails_without_creating_it(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Require an explicit ceiling update before admitting a missing file."""
+    tool = _tool()
+    destination = tmp_path / "ceiling.toml"
+
+    assert tool.main(["--check-ceiling", "--ceiling", str(destination)]) == 1
+    assert "is absent; run --update-ceiling" in capsys.readouterr().err
+    assert not destination.exists()
+
+
+@pytest.mark.parametrize("operation", ["--check-ceiling", "--update-ceiling"])
+def test_a_regressed_ceiling_fails_without_overwriting_the_file(
+    operation: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Preserve stricter recorded limits when actual transport falls short."""
+    tool = _tool()
+    destination = tmp_path / "ceiling.toml"
+    original = b"[lanes.rust-batch]\nmax_dropped = -1\nmin_complete = 10000\n"
+    destination.write_bytes(original)
+
+    assert tool.main([operation, "--ceiling", str(destination)]) == 1
+    assert "transport got worse" in capsys.readouterr().err
+    assert destination.read_bytes() == original
+
+
+def test_an_existing_ceiling_regenerates_without_changing_its_values(tmp_path: Path) -> None:
+    """Emit descriptive headers while retaining the measured transport limits."""
+    tool = _tool()
+    destination = tmp_path / "ceiling.toml"
+    original = (REPO_ROOT / "tools" / "runtime_state_ceiling.toml").read_bytes()
+    destination.write_bytes(original)
+
+    assert tool.main(["--update-ceiling", "--ceiling", str(destination)]) == 0
+    generated = destination.read_bytes()
+    assert generated == original
+    assert tool.tomllib.loads(generated.decode()) == tool.tomllib.loads(original.decode())

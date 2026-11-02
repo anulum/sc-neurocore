@@ -246,8 +246,8 @@ class RuntimeStateCeilingError(RuntimeError):
 def ceiling_verdicts(matrix: Mapping[str, Any], ceiling: Mapping[str, Any]) -> list[str]:
     """Return one line per lane whose transport is worse than its ceiling.
 
-    FF-05 is a per-model, per-lane campaign that will run for a long time. The
-    matrix already refuses to drift from what it derives, but regenerating it
+    Runtime transport is checked per model and lane. The matrix already refuses
+    to drift from what it derives, but regenerating it
     accepts a worse number as readily as a better one. These ceilings make the
     direction part of the contract: dropped state may only fall, complete
     models may only rise.
@@ -307,7 +307,7 @@ def render_ceiling(matrix: Mapping[str, Any]) -> str:
         "# © Code 2020–2026 Miroslav Šotek. All rights reserved.",
         "# ORCID: 0009-0009-3560-0851",
         "# Contact: www.anulum.li | protoscience@anulum.li",
-        "# SC-NeuroCore — Runtime state transport ratchets (FF-05)",
+        "# SC-NeuroCore — Runtime state transport ratchets",
         "",
         "# Measured ceilings, never copied: `--update-ceiling` writes what the",
         "# matrix currently derives and refuses to loosen one. Dropped state may",
