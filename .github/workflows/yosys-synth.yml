@@ -23,11 +23,15 @@ on:
       - ".github/workflows/hdl-toolchain.yml"
       - "hdl/**"
       - "tools/yosys_synth.*"
+      - "tools/formal*.py"
+      - "tests/test_tools/test_formal*.py"
   pull_request:
     paths:
       - ".github/workflows/yosys-synth.yml"
       - ".github/workflows/hdl-toolchain.yml"
       - "hdl/**"
+      - "tools/formal*.py"
+      - "tests/test_tools/test_formal*.py"
 
 concurrency:
   # A manual run has its own group, so a push cannot cancel a long formal run.
@@ -67,17 +71,6 @@ jobs:
           cat "$RUNNER_TEMP/scn-hdl/PROVENANCE.txt"
           echo "$RUNNER_TEMP/scn-hdl/bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/scn-hdl/bin/yosys" -V
-
-      - name: Install sv2v
-        run: |
-          SV2V_VERSION="v0.0.13"
-          SV2V_SHA256="552799a1d76cd177b9b4cc63a3e77823a3d2a6eb4ec006569288abeff28e1ff8"
-          SV2V_URL="https://github.com/zachjs/sv2v/releases/download/${SV2V_VERSION}/sv2v-Linux.zip"
-          curl --proto '=https' --tlsv1.2 -fsSL "$SV2V_URL" -o /tmp/sv2v.zip
-          echo "${SV2V_SHA256}  /tmp/sv2v.zip" | sha256sum -c -
-          unzip -o /tmp/sv2v.zip -d /tmp/sv2v
-          sudo install /tmp/sv2v/sv2v-Linux/sv2v /usr/local/bin/sv2v
-          sv2v --version
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -120,10 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cvc5 time z3 libreadline8t64 libtcl8.6
-          # Jobs whose engine is a bare `smtbmc` default to Yices; if the package
-          # is unavailable they are recorded as ERROR rather than skipped.
-          sudo apt-get install -y -qq yices2 || echo "::warning title=Yices::yices2 could not be installed"
+          sudo apt-get install -y -qq cvc5 time libreadline8t64 libtcl8.6
           python -m pip install --require-hashes -r requirements/sby.txt
           cd "$RUNNER_TEMP/hdl-download"
           sha256sum --check --status scn-hdl.tar.gz.sha256
@@ -132,9 +122,11 @@ jobs:
           echo "$RUNNER_TEMP/scn-hdl/bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/scn-hdl/bin/yosys" -V
           "$RUNNER_TEMP/scn-hdl/bin/sby" --version
-          z3 --version
+          test "$("$RUNNER_TEMP/scn-hdl/bin/yices-smt2" --version | head -1)" = "Yices 2.7.0"
+          test "$("$RUNNER_TEMP/scn-hdl/bin/sv2v" --numeric-version)" = "0.0.13"
+          "$RUNNER_TEMP/scn-hdl/bin/z3" --version
           cvc5 --version | head -1
-          if command -v yices-smt2 >/dev/null; then yices-smt2 --version | head -1; fi
+          "$RUNNER_TEMP/scn-hdl/bin/yices-smt2" --version
 
       - name: Run and time this shard's SymbiYosys jobs
         shell: bash
@@ -151,10 +143,13 @@ jobs:
           out="$RUNNER_TEMP/formal-timing"
           mkdir -p "$out/logs"
           table="$out/formal_timing_shard_${SHARD}.tsv"
-          printf 'job\tstatus\twall_seconds\tmax_rss_kib\n' > "$table"
+          printf 'job\tstatus\twall_seconds\tmax_rss_kib\tlocation\tnative_status\tcgroup_peak_bytes\n' > "$table"
           git ls-files -- 'hdl/formal/*.sby' | sort \
             | awk -v n="$SHARDS" -v i="$SHARD" '(NR - 1) % n == i' > "$out/jobs.txt"
           echo "Shard ${SHARD}/${SHARDS}: $(wc -l < "$out/jobs.txt") jobs"
+          refuse_job() {
+            printf '%s\tERROR\tNA\tNA\t%s\tNA\tNA\n' "$job" "$1" | tee -a "$table"
+          }
           index=0
           while IFS= read -r job; do
             index=$((index + 1))
@@ -162,20 +157,80 @@ jobs:
             log="$out/logs/${name}.log"
             timing="$out/logs/${name}.time"
             unit="formal-${SHARD}-${index}"
+            if ! (
+              test "$(command -v z3)" = "$RUNNER_TEMP/scn-hdl/bin/z3" &&
+              echo "c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb  $RUNNER_TEMP/scn-hdl/bin/z3" \
+                | sha256sum --check --status &&
+              test "$(z3 --version)" = "Z3 version 4.8.12 - 64 bit"
+            ) > "$log" 2>&1; then
+              refuse_job 'toolchain, refused'
+              continue
+            fi
+            attestation="$out/logs/${name}.attestation.json"
+            # External evidence stays visibly attested; missing or stale evidence
+            # fails this row rather than replaying an exhausted hosted job.
+            if ! python -m tools.formal_external_evidence "$job" \
+              --provenance "$RUNNER_TEMP/scn-hdl/PROVENANCE.txt" \
+              > "$attestation" 2> "$log"; then
+              refuse_job 'external, refused'
+              continue
+            fi
+            if ! location="$(python -c \
+              'import json,sys; print(json.load(open(sys.argv[1]))["location"])' \
+              "$attestation" 2>> "$log")"; then
+              refuse_job 'external, refused'
+              continue
+            fi
+            if [ "$location" != hosted ]; then
+              if [ "$location" != 'ML350, attested' ]; then
+                refuse_job 'external, refused'
+                continue
+              fi
+              if ! attested_data="$(python -c \
+                'import json,sys; r=json.load(open(sys.argv[1])); print(r["wall_seconds"]); print(r["peak_memory_bytes"]); print(r["native_status"])' \
+                "$attestation" 2>> "$log")"; then
+                refuse_job 'external, refused'
+                continue
+              fi
+              mapfile -t attested <<< "$attested_data"
+              if [ "${#attested[@]}" -ne 3 ] || [ "${attested[2]}" != PASS ]; then
+                refuse_job 'external, refused'
+                continue
+              fi
+              cat "$attestation" >> "$log"
+              printf '%s\tATTESTED\t%s\tNA\t%s\tPASS\t%s\n' \
+                "$job" "${attested[0]}" "$location" "${attested[1]}" | tee -a "$table"
+              continue
+            fi
+            # Existing jobs use both job-relative and checkout-relative sources.
+            # Let the pinned SBY parser identify them; never rewrite their inputs.
+            if ! resolved="$(python tools/formal_job_inputs.py "$job" 2> "$log")"; then
+              printf '%s\t%s\t%s\t%s\thosted\tERROR\tNA\n' "$job" ERROR NA NA | tee -a "$table"
+              continue
+            fi
+            mapfile -t invocation <<< "$resolved"
+            if [ "${#invocation[@]}" -ne 2 ]; then
+              refuse_job hosted
+              continue
+            fi
             # Start a job only if its full timeout still fits in the job budget.
             if [ $((SECONDS + JOB_TIMEOUT_SECONDS)) -gt "$SHARD_BUDGET_SECONDS" ]; then
-              printf '%s\t%s\t%s\t%s\n' "$job" NOT_RUN NA NA | tee -a "$table"
+              printf '%s\t%s\t%s\t%s\thosted\tNOT_RUN\tNA\n' "$job" NOT_RUN NA NA | tee -a "$table"
               continue
             fi
             started="$(date '+%Y-%m-%d %H:%M:%S')"
             set +e
-            (cd "$(dirname "$job")" && timeout --kill-after=30 "$JOB_TIMEOUT_SECONDS" \
+            qualification="$out/logs/${name}.qualification.json"
+            timeout --kill-after=30 "$JOB_TIMEOUT_SECONDS" \
               sudo systemd-run --scope --quiet --unit="$unit" \
                 -p MemoryMax="$JOB_MEMORY_LIMIT" -p MemorySwapMax=0 -p OOMPolicy=continue \
                 --uid="$(id -u)" --gid="$(id -g)" \
                 /usr/bin/env PATH="$PATH" HOME="$HOME" \
                 /usr/bin/time -f '%e %M' -o "$timing" \
-                sby -f -d "$RUNNER_TEMP/sby-work/${name%.sby}" "$(basename "$job")") > "$log" 2>&1
+                python -m tools.formal_qualified_run "$job" \
+                  --repository "$GITHUB_WORKSPACE" \
+                  --work-root "$RUNNER_TEMP/sby-work/${name%.sby}" \
+                  --report "$qualification" >> "$log" 2>&1
             rc=$?
             set -e
             # A SIGKILL from timeout does not reach the scope's processes.
@@ -185,13 +240,27 @@ jobs:
               oom=yes
             fi
             sudo systemctl reset-failed "${unit}.scope" > /dev/null 2>&1 || true
+            native_status=UNKNOWN
+            qualified_status=ERROR
+            nonvacuity_status=NOT_RUN
+            if qualified_data="$(python -c \
+              'import json,sys; r=json.load(open(sys.argv[1])); print(r["status"]); print(r["primary_status"]); print(r["nonvacuity_status"])' \
+              "$qualification" 2>> "$log")"; then
+              mapfile -t qualified <<< "$qualified_data"
+              if [ "${#qualified[@]}" -eq 3 ]; then
+                qualified_status="${qualified[0]}"
+                native_status="${qualified[1]}"
+                nonvacuity_status="${qualified[2]}"
+              fi
+            fi
             if [ "$oom" = yes ]; then
               status=MEMORY
             elif [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
               status=TIMEOUT
-            elif grep -q 'DONE (PASS' "$log" && ! grep -q 'DONE (FAIL\|DONE (ERROR\|DONE (UNKNOWN\|DONE (TIMEOUT' "$log"; then
+            elif [ "$rc" -eq 0 ] && [ "$qualified_status" = PASS ] \
+              && [ "$native_status" = PASS ] && [ "$nonvacuity_status" = NONVACUOUS ]; then
               status=PASS
-            elif grep -q 'DONE (FAIL' "$log"; then
+            elif [ "$native_status" = FAIL ]; then
               status=FAIL
             else
               status=ERROR
@@ -201,16 +270,18 @@ jobs:
             if [ -s "$timing" ]; then
               read -r wall rss < <(tail -1 "$timing") || true
             fi
-            printf '%s\t%s\t%s\t%s\n' "$job" "$status" "$wall" "$rss" | tee -a "$table"
+            printf '%s\t%s\t%s\t%s\thosted\t%s\tNA\n' "$job" "$status" "$wall" "$rss" "$native_status" | tee -a "$table"
             rm -rf "$RUNNER_TEMP/sby-work/${name%.sby}"
           done < "$out/jobs.txt"
           {
             echo "### SymbiYosys timing, shard ${SHARD}"
             echo
-            echo '| Job | Status | Wall s | Max RSS KiB |'
-            echo '|---|---|---:|---:|'
+            echo 'Qualification is incomplete for 26 resource-intensive jobs; `formal-all` is expected RED and Core 4.1.0 remains blocked until the required evidence qualifies.'
+            echo
+            echo '| Job | Status | Wall s | Max RSS KiB | Location | Native status | Cgroup peak B |'
+            echo '|---|---|---:|---:|---|---|---:|'
             tail -n +2 "$table" | sort -t$'\t' -k3,3 -g -r \
-              | awk -F'\t' '{printf "| %s | %s | %s | %s |\n", $1, $2, $3, $4}'
+              | awk -F'\t' '{printf "| %s | %s | %s | %s | %s | %s | %s |\n", $1, $2, $3, $4, $5, $6, $7}'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the shard timing table and logs
@@ -225,6 +296,6 @@ jobs:
         run: |
           set -euo pipefail
           table="$RUNNER_TEMP/formal-timing/formal_timing_shard_${{ matrix.shard }}.tsv"
-          bad="$(tail -n +2 "$table" | awk -F'\t' '$2 != "PASS"' | wc -l)"
+          bad="$(tail -n +2 "$table" | awk -F'\t' '!($2 == "PASS" && $5 == "hosted" && $6 == "PASS") && !($2 == "ATTESTED" && $5 == "ML350, attested" && $6 == "PASS")' | wc -l)"
           echo "Non-passing jobs in this shard: ${bad}"
           test "$bad" -eq 0

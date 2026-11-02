@@ -16,6 +16,9 @@ module sc_bitstream_encoder_formal(
 );
 
     wire bit_out;
+`ifdef FORMAL
+    wire [15:0] lfsr_state;
+`endif
 
     // Instantiate the module under test
     sc_bitstream_encoder #(
@@ -28,24 +31,31 @@ module sc_bitstream_encoder_formal(
         .x_value(x_value),
         .t_index(t_index),
         .bit_out(bit_out)
+`ifdef FORMAL
+        , .formal_lfsr_state(lfsr_state)
+`endif
     );
 
 `ifdef FORMAL
     // Initial state tracking
     reg init = 1;
     always @(posedge clk) begin
+        // Establish reset once; all subsequent inputs and resets remain free.
+        if (init) assume(!rst_n);
         if (init) init <= 0;
 
         // 1. Invariant: LFSR must never lock into the all-zero state
         // The LFSR uses XOR feedback which gets stuck at 0 if it ever reaches 0.
         if (!init && rst_n) begin
-            assert(uut.lfsr_reg != 16'h0000);
+            assert(lfsr_state != 16'h0000);
         end
 
         // 2. Invariant: If x_value is exactly 0, the output must be 0
         // (probability of spiking is 0)
-        if (!init && rst_n && x_value == 16'h0000) begin
+        // bit_out contains the comparison of the previous sampled input.
+        if (!init && rst_n && $past(rst_n) && $past(x_value) == 16'h0000) begin
             assert(bit_out == 1'b0);
+            cover(bit_out == 1'b0);
         end
 
         // 3. Cover: Ensure it's possible to generate a spike

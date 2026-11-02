@@ -14,7 +14,95 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1621
+expected_file_count = 1643
+
+[[file]]
+path = "tools/capability_manifest.py"
+rationale = "Generate capability counts from repository sources and retain the required ownership fields in rendered inventories."
+
+[[file]]
+path = "tests/test_tools/test_capability_manifest.py"
+rationale = "Bind actual source inventories, portable CLI output, rendered ownership and README count markers to the manifest."
+
+[[file]]
+path = "tools/formal_job_inputs.py"
+rationale = "Resolve existing formal-job directory conventions using SymbiYosys itself."
+
+[[file]]
+path = "tests/test_tools/test_formal_job_inputs.py"
+rationale = "Exercise the real SBY parser, checkout inputs and public invocation command."
+
+[[file]]
+path = "tools/formal_external_evidence.py"
+rationale = "Validate source-bound, independently attested external formal receipts."
+
+[[file]]
+path = "tools/formal_evidence_validation.py"
+rationale = "Check external proof evidence without claiming to reproduce its execution."
+
+[[file]]
+path = "tests/test_tools/test_formal_external_evidence.py"
+rationale = "Validate real native evidence and refuse isolated mutations of its bindings."
+
+[[file]]
+path = "tests/formal_native_evidence_support.py"
+rationale = "Produce a real small SBY result; never synthesize a successful proof verdict."
+
+[[file]]
+path = "tools/formal_log_normalization.py"
+rationale = "Replace reviewed identity literals while preserving every other log byte."
+
+[[file]]
+path = "tests/test_tools/test_formal_log_normalization.py"
+rationale = "Check reversible identity normalization on an actual native proof log."
+
+[[file]]
+path = "tools/formal_execution_accounting.py"
+rationale = "Require retained native accounting or an exact reviewed historical receipt."
+
+[[file]]
+path = "tests/test_tools/test_formal_execution_accounting.py"
+rationale = "Check the exact real historical recovery and refuse altered native facts."
+
+[[file]]
+path = "tools/formal_assertion_enables.py"
+rationale = "Derive covers of assertion enables from an already prepared Yosys model."
+
+[[file]]
+path = "tools/formal_nonvacuity.py"
+rationale = "Check assertion-enable reachability using the primary proof's prepared model."
+
+[[file]]
+path = "tools/formal_qualified_run.py"
+rationale = "Run a native proof and its enable audit inside one caller-supplied budget."
+
+[[file]]
+path = "tests/test_tools/test_formal_assertion_enables.py"
+rationale = "Exercise the graph transform on an actual prepared catalogue proof."
+
+[[file]]
+path = "tests/test_tools/test_formal_nonvacuity.py"
+rationale = "Prove real assertion enables and reject a permanently disabled native assertion."
+
+[[file]]
+path = "tests/test_tools/test_formal_qualified_run.py"
+rationale = "Exercise the command used by hosted formal jobs against actual catalogue RTL."
+
+[[file]]
+path = "tools/formal_nonvacuity_evidence.py"
+rationale = "Validate a separate enable audit without rewriting its primary receipt."
+
+[[file]]
+path = "tests/test_tools/test_formal_nonvacuity_evidence.py"
+rationale = "Accept actual separately measured audits and reject altered evidence bindings."
+
+[[file]]
+path = "tests/formal_native_nonvacuity_support.py"
+rationale = "Collect a real enable audit with its own finite cgroup and native accounting."
+
+[[file]]
+path = "tests/test_tools/test_check_yices_isa.py"
+rationale = "Exercise the actual SDK scanner with assembled supported and forbidden code."
 
 [[file]]
 path = "tests/test_studio_storage_artifact_read.py"

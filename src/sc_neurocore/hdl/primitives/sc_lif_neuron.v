@@ -54,6 +54,10 @@ module sc_lif_neuron #(
 
     // Optional: expose membrane potential for debug
     output reg signed [DATA_WIDTH-1:0]    v_out
+`ifdef FORMAL
+    // Exact counter state for the formal harness; absent from production ports.
+    , output wire [31:0] formal_refractory_counter
+`endif
 );
 
 // Internal membrane potential
@@ -61,6 +65,9 @@ reg signed [DATA_WIDTH-1:0] v_reg;
 
 // Refractory counter
 reg [31:0] refractory_counter;
+`ifdef FORMAL
+assign formal_refractory_counter = refractory_counter;
+`endif
 
 // Intermediate wide products for fixed-point math
 wire signed [2*DATA_WIDTH-1:0] leak_mul;

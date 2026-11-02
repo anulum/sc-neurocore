@@ -19,6 +19,15 @@ module sc_firing_rate_bank_formal (
 );
 
     wire [31:0] rate_q16 [0:6];
+    wire [111:0] formal_accumulators;
+    wire [15:0] formal_accumulator_0 = formal_accumulators[0 +: 16];
+    wire [15:0] formal_accumulator_1 = formal_accumulators[16 +: 16];
+    wire [15:0] formal_accumulator_2 = formal_accumulators[32 +: 16];
+    wire [15:0] formal_accumulator_3 = formal_accumulators[48 +: 16];
+    wire [15:0] formal_accumulator_4 = formal_accumulators[64 +: 16];
+    wire [15:0] formal_accumulator_5 = formal_accumulators[80 +: 16];
+    wire [15:0] formal_accumulator_6 = formal_accumulators[96 +: 16];
+
 
     sc_firing_rate_bank #(
         .N_NEURONS(7),
@@ -32,11 +41,14 @@ module sc_firing_rate_bank_formal (
         .run_active(run_active),
         .run_done(run_done),
         .SCALE_Q16(SCALE_Q16),
-        .rate_q16(rate_q16)
+        .rate_q16(rate_q16),
+        .formal_accumulators(formal_accumulators)
     );
 
 `ifdef FORMAL
     reg past_valid = 0;
+    // Establish only the first reset; later inputs stay unconstrained.
+    always @(posedge clk) if (!past_valid) assume(!rst_n);
     always @(posedge clk)
         past_valid <= 1;
 
@@ -46,13 +58,13 @@ module sc_firing_rate_bank_formal (
     // 1. After reset, all accumulators are zero
     always @(posedge clk) begin
         if (past_valid && !rst_n) begin
-            assert(uut.accumulators[0] == 0);
-            assert(uut.accumulators[1] == 0);
-            assert(uut.accumulators[2] == 0);
-            assert(uut.accumulators[3] == 0);
-            assert(uut.accumulators[4] == 0);
-            assert(uut.accumulators[5] == 0);
-            assert(uut.accumulators[6] == 0);
+            assert(formal_accumulator_0 == 0);
+            assert(formal_accumulator_1 == 0);
+            assert(formal_accumulator_2 == 0);
+            assert(formal_accumulator_3 == 0);
+            assert(formal_accumulator_4 == 0);
+            assert(formal_accumulator_5 == 0);
+            assert(formal_accumulator_6 == 0);
         end
     end
 
@@ -61,13 +73,13 @@ module sc_firing_rate_bank_formal (
     //    reach at most stream_len. Prove the weaker invariant: acc < 2^16.
     always @(posedge clk) begin
         if (past_valid && rst_n) begin
-            assert(uut.accumulators[0] < 16'hFFFF);
-            assert(uut.accumulators[1] < 16'hFFFF);
-            assert(uut.accumulators[2] < 16'hFFFF);
-            assert(uut.accumulators[3] < 16'hFFFF);
-            assert(uut.accumulators[4] < 16'hFFFF);
-            assert(uut.accumulators[5] < 16'hFFFF);
-            assert(uut.accumulators[6] < 16'hFFFF);
+            assert(formal_accumulator_0 < 16'hFFFF);
+            assert(formal_accumulator_1 < 16'hFFFF);
+            assert(formal_accumulator_2 < 16'hFFFF);
+            assert(formal_accumulator_3 < 16'hFFFF);
+            assert(formal_accumulator_4 < 16'hFFFF);
+            assert(formal_accumulator_5 < 16'hFFFF);
+            assert(formal_accumulator_6 < 16'hFFFF);
         end
     end
 
@@ -88,7 +100,7 @@ module sc_firing_rate_bank_formal (
     // 4. Cover: accumulator counts spikes
     always @(posedge clk) begin
         if (past_valid && rst_n)
-            cover(uut.accumulators[0] > 0);
+            cover(formal_accumulator_0 > 0);
     end
 `endif
 

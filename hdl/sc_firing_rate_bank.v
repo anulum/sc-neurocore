@@ -37,10 +37,19 @@ module sc_firing_rate_bank #(
 
     // Output rates (Q16.16 fixed-point)
     output reg [31:0]               rate_q16 [0:N_NEURONS-1]
+`ifdef FORMAL
+    , output wire [N_NEURONS*CNT_WIDTH-1:0] formal_accumulators
+`endif
 );
 
     // Internal counters
     reg [CNT_WIDTH-1:0] accumulators [0:N_NEURONS-1];
+`ifdef FORMAL
+    genvar formal_i;
+    generate for (formal_i=0; formal_i<N_NEURONS; formal_i=formal_i+1) begin: OBSERVE
+        assign formal_accumulators[formal_i*CNT_WIDTH +: CNT_WIDTH] = accumulators[formal_i];
+    end endgenerate
+`endif
 
     // Wide product to avoid overflow: CNT_WIDTH + SCALE_WIDTH bits
     reg [CNT_WIDTH + SCALE_WIDTH - 1:0] wide_product;

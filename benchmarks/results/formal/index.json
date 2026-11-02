@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "jobs": {
+    "hdl/formal/catalogue/mckean.sby": {
+      "receipt": "benchmarks/results/formal/mckean/receipt.json",
+      "review": "benchmarks/results/formal/mckean/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_adaptive_threshold_if.sby": {
+      "receipt": "benchmarks/results/formal/sc_adaptive_threshold_if/receipt.json",
+      "review": "benchmarks/results/formal/sc_adaptive_threshold_if/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_adaptive_threshold_map.sby": {
+      "receipt": "benchmarks/results/formal/sc_adaptive_threshold_map/receipt.json",
+      "review": "benchmarks/results/formal/sc_adaptive_threshold_map/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_adex.sby": {
+      "receipt": "benchmarks/results/formal/sc_adex/receipt.json",
+      "review": "benchmarks/results/formal/sc_adex/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_amari_field.sby": {
+      "receipt": "benchmarks/results/formal/sc_amari_field/receipt.json",
+      "review": "benchmarks/results/formal/sc_amari_field/review.json",
+      "qualification": "ML350, attested",
+      "receipt_sha256": "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4",
+      "review_sha256": "faeb832221fe049180f9e4c3b23e7c82ab15d6e6842d68f5e9109d51b2695bc9"
+    },
+    "hdl/formal/catalogue/sc_chaotic_map.sby": {
+      "receipt": "benchmarks/results/formal/sc_chaotic_map/receipt.json",
+      "review": "benchmarks/results/formal/sc_chaotic_map/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_chialvo_map.sby": {
+      "receipt": "benchmarks/results/formal/sc_chialvo_map/receipt.json",
+      "review": "benchmarks/results/formal/sc_chialvo_map/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_clipped_rational_recovery_map.sby": {
+      "receipt": "benchmarks/results/formal/sc_clipped_rational_recovery_map/receipt.json",
+      "review": "benchmarks/results/formal/sc_clipped_rational_recovery_map/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_cobalifneuron.sby": {
+      "receipt": "benchmarks/results/formal/sc_cobalifneuron/receipt.json",
+      "review": "benchmarks/results/formal/sc_cobalifneuron/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_connor_stevens.sby": {
+      "receipt": "benchmarks/results/formal/sc_connor_stevens/receipt.json",
+      "review": "benchmarks/results/formal/sc_connor_stevens/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_ermentrout_kopell_map_neuron.sby": {
+      "receipt": "benchmarks/results/formal/sc_ermentrout_kopell_map_neuron/receipt.json",
+      "review": "benchmarks/results/formal/sc_ermentrout_kopell_map_neuron/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_escaperateneuron.sby": {
+      "receipt": "benchmarks/results/formal/sc_escaperateneuron/receipt.json",
+      "review": "benchmarks/results/formal/sc_escaperateneuron/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_exponential_if.sby": {
+      "receipt": "benchmarks/results/formal/sc_exponential_if/receipt.json",
+      "review": "benchmarks/results/formal/sc_exponential_if/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_four_state_glif.sby": {
+      "receipt": "benchmarks/results/formal/sc_four_state_glif/receipt.json",
+      "review": "benchmarks/results/formal/sc_four_state_glif/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_glif.sby": {
+      "receipt": "benchmarks/results/formal/sc_glif/receipt.json",
+      "review": "benchmarks/results/formal/sc_glif/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_hodgkin_huxley.sby": {
+      "receipt": "benchmarks/results/formal/sc_hodgkin_huxley/receipt.json",
+      "review": "benchmarks/results/formal/sc_hodgkin_huxley/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_izhikevich2007.sby": {
+      "receipt": "benchmarks/results/formal/sc_izhikevich2007/receipt.json",
+      "review": "benchmarks/results/formal/sc_izhikevich2007/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_jansenritunit.sby": {
+      "receipt": "benchmarks/results/formal/sc_jansenritunit/receipt.json",
+      "review": "benchmarks/results/formal/sc_jansenritunit/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_medvedev_map.sby": {
+      "receipt": "benchmarks/results/formal/sc_medvedev_map/receipt.json",
+      "review": "benchmarks/results/formal/sc_medvedev_map/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_mihalasnieburneuron.sby": {
+      "receipt": "benchmarks/results/formal/sc_mihalasnieburneuron/receipt.json",
+      "review": "benchmarks/results/formal/sc_mihalasnieburneuron/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_morris_lecar.sby": {
+      "receipt": "benchmarks/results/formal/sc_morris_lecar/receipt.json",
+      "review": "benchmarks/results/formal/sc_morris_lecar/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_scaled_reset_adaptive_if.sby": {
+      "receipt": "benchmarks/results/formal/sc_scaled_reset_adaptive_if/receipt.json",
+      "review": "benchmarks/results/formal/sc_scaled_reset_adaptive_if/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_theta.sby": {
+      "receipt": "benchmarks/results/formal/sc_theta/receipt.json",
+      "review": "benchmarks/results/formal/sc_theta/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_triangular_mckean.sby": {
+      "receipt": "benchmarks/results/formal/sc_triangular_mckean/receipt.json",
+      "review": "benchmarks/results/formal/sc_triangular_mckean/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    },
+    "hdl/formal/catalogue/sc_wang_buzsaki.sby": {
+      "receipt": "benchmarks/results/formal/sc_wang_buzsaki/receipt.json",
+      "review": "benchmarks/results/formal/sc_wang_buzsaki/review.json",
+      "qualification": "Native ML350 TIMEOUT; unqualified"
+    },
+    "hdl/formal/catalogue/sc_wongwangunit.sby": {
+      "receipt": "benchmarks/results/formal/sc_wongwangunit/receipt.json",
+      "review": "benchmarks/results/formal/sc_wongwangunit/review.json",
+      "qualification": "PENDING; missing evidence must fail closed"
+    }
+  }
+}

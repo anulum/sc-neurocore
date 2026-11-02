@@ -1,10 +1,16 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Formal verification inventory and qualification -->
 
 # Tutorial 21: Formal Verification with SymbiYosys
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-90 SymbiYosys proof jobs and 449 formal statements (299 assert, 114 assume, 36 cover) across the HDL formal tree.
+90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
 [Yosys](https://yosyshq.net/yosys/), an SMT solver (Z3 or Boolector)
@@ -16,24 +22,30 @@ sudo apt install yosys symbiyosys z3
 conda install -c litex-hub yosys symbiyosys
 ```
 
-## 1. What's formally verified
+## 1. Formal verification inventory
 
-SC-NeuroCore proves properties through the SymbiYosys jobs under `hdl/formal/`.
+The SymbiYosys jobs under `hdl/formal/` declare the properties to be checked.
 The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
 | SymbiYosys `.sby` proof jobs | 90 |
-| `assert(...)` statements | 299 |
-| `assume(...)` statements | 114 |
-| `cover(...)` statements | 36 |
-| Total formal statements | 449 |
+| `assert(...)` statements | 311 |
+| `assume(...)` statements | 121 |
+| `cover(...)` statements | 44 |
+| Total formal statements | 476 |
 
-**Total: 90 SymbiYosys proof jobs and 449 formal statements (299 assert, 114 assume, 36 cover).**
+**Total: 90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the
 older seven-module tutorial inventory.
+
+These counts describe checked-in configurations and statements. Full formal
+qualification remains incomplete: 26 resource-intensive jobs are open or refused,
+and the `formal-all` gate remains red until their required evidence qualifies.
+See [external formal evidence](../formal/external_results.md) for the acceptance
+conditions; a native primary PASS alone does not satisfy the non-vacuity gate.
 
 ## 2. Running a single proof
 

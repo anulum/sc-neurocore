@@ -59,6 +59,16 @@ module sc_masking_shield #(
     // if someone modifies the masking logic incorrectly.
     // ------------------------------------------------------------------
 `ifdef FORMAL
+    reg formal_past_valid = 0;
+    // Establish reset once; data, enable and every later reset remain free.
+    always @(posedge clk) begin
+        if (!formal_past_valid)
+            assume(!rst_n);
+        formal_past_valid <= 1'b1;
+        if (formal_past_valid && rst_n && prev_enable)
+            cover(shares_valid);
+    end
+
     reg [DATA_WIDTH-1:0] prev_data_in;
     reg                  prev_enable;
 

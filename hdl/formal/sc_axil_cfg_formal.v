@@ -110,6 +110,9 @@ module sc_axil_cfg_formal (
 
 `ifdef FORMAL
     reg past_valid = 0;
+    // Establish reset once; later traffic and resets remain unconstrained.
+    always @(posedge clk)
+        if (!past_valid) assume(!rst_n);
     always @(posedge clk)
         past_valid <= 1;
 
@@ -145,7 +148,8 @@ module sc_axil_cfg_formal (
 
     // 5. After reset, handshake outputs are de-asserted
     always @(posedge clk) begin
-        if (past_valid && !rst_n) begin
+        // Synchronous reset outputs are visible at the following sampled edge.
+        if (past_valid && !$past(rst_n)) begin
             assert(!S_AXI_AWREADY);
             assert(!S_AXI_WREADY);
             assert(!S_AXI_BVALID);
@@ -153,6 +157,11 @@ module sc_axil_cfg_formal (
             assert(!S_AXI_ARREADY);
             assert(!cfg_start_pulse);
         end
+    end
+
+    always @(posedge clk) begin
+        if (past_valid && !rst_n && !$past(rst_n))
+            cover(!S_AXI_RVALID && !S_AXI_BVALID);
     end
 
     // 6. Cover: write transaction completes
@@ -165,6 +174,68 @@ module sc_axil_cfg_formal (
     always @(posedge clk) begin
         if (past_valid && rst_n)
             cover(S_AXI_RVALID);
+    end
+
+    // One outstanding write: each accepted AW/W produces one B response.
+    reg write_pending = 0;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            write_pending <= 1'b0;
+        end else begin
+            if (S_AXI_AWVALID && S_AXI_AWREADY && S_AXI_WVALID && S_AXI_WREADY) begin
+                assert(!write_pending);
+                write_pending <= 1'b1;
+            end
+            if (S_AXI_BVALID)
+                assert(write_pending);
+            if (S_AXI_BVALID && S_AXI_BREADY) begin
+                assert(write_pending);
+                write_pending <= 1'b0;
+            end
+        end
+    end
+
+    always @(posedge clk) begin
+        if (past_valid && rst_n && $past(rst_n)) begin
+            if ($past(S_AXI_AWREADY && S_AXI_AWVALID && S_AXI_WREADY && S_AXI_WVALID))
+                assert(S_AXI_BVALID);
+            if ($past(S_AXI_BVALID && !S_AXI_BREADY)) begin
+                assert(S_AXI_BVALID);
+                assert(S_AXI_BRESP == $past(S_AXI_BRESP));
+                cover(((S_AXI_AWVALID && S_AXI_WVALID) && !S_AXI_AWREADY) && !S_AXI_WREADY);
+            end
+        end
+    end
+
+    // One outstanding read: each accepted AR produces one R response.
+    reg read_pending = 0;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            read_pending <= 1'b0;
+        end else begin
+            if (S_AXI_ARVALID && S_AXI_ARREADY) begin
+                assert(!read_pending);
+                read_pending <= 1'b1;
+            end
+            if (S_AXI_RVALID)
+                assert(read_pending);
+            if (S_AXI_RVALID && S_AXI_RREADY) begin
+                assert(read_pending);
+                read_pending <= 1'b0;
+            end
+        end
+    end
+
+    always @(posedge clk) begin
+        if (past_valid && rst_n && $past(rst_n)) begin
+            if ($past(S_AXI_ARREADY && S_AXI_ARVALID))
+                assert(S_AXI_RVALID);
+            if ($past(S_AXI_RVALID && !S_AXI_RREADY)) begin
+                assert(S_AXI_RVALID);
+                assert(S_AXI_RDATA == $past(S_AXI_RDATA));
+                cover(S_AXI_ARVALID && !S_AXI_ARREADY);
+            end
+        end
     end
 `endif
 

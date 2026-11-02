@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipts": {
+    "62818e196760fa3dd904a2a7ed7dd013f721beece75be29b6367f70109a6a8c4": {
+      "id": "amari-gc-20261101",
+      "job": "hdl/formal/catalogue/sc_amari_field.sby",
+      "original_result_sha256": "e63926332e4917858e71a9400ff219eb2b5911c30382aa92b894b513e3857c79",
+      "journal_sha256": "de8ac4b766b9b3804bf78eb6259f9baaf06b6080994dd544f4b7315fd07aab42",
+      "invocation_id": "69cf3f86b1954867a5f8a261aa5a5f24",
+      "raw_log_sha256": "8f1c753598fedf974d1e46c34124e2dfde13c6dae681670540221df2e0ac23fa"
+    }
+  }
+}

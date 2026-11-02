@@ -49,6 +49,9 @@ module sc_dense_layer_core #(
     output wire                  step_valid,
     output reg                   run_done,
     output reg                   running
+`ifdef FORMAL
+    , output wire [31:0] formal_t_counter
+`endif
 );
 
 // ----------------------------------------------------------------
@@ -56,6 +59,9 @@ module sc_dense_layer_core #(
 // ----------------------------------------------------------------
 // Counter width must be sufficient for max stream_len (e.g. 2^32)
 reg [31:0] t_counter;
+`ifdef FORMAL
+assign formal_t_counter = t_counter;
+`endif
 
 // Unpacked scalar inputs and weights (for readability)
 wire [DATA_WIDTH-1:0] x_inputs_arr [0:N_INPUTS-1];

@@ -1,3 +1,10 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Formal verification inventory and qualification -->
 # Tutorial 52: Formal Equivalence Verification
 
 Prove that your generated Verilog produces identical outputs to the
@@ -124,7 +131,7 @@ this when SymbiYosys is installed.
 
 | Feature | SC-NeuroCore | Brian2 | snnTorch | NEST |
 |---------|:-----------:|:------:|:--------:|:----:|
-| Formal verification | 90 proof jobs, 449 formal statements | No | No | No |
+| Formal verification | 90 proof jobs, 476 formal statements | No | No | No |
 | Equivalence proof | LIF (BMC, Z3) | No | No | No |
 | Co-simulation | Python ↔ Verilog | No | No | No |
 | RTL generation | Yes | No | No | No |

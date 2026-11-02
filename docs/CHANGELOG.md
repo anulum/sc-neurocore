@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Repair AXI-Lite register updates, byte strobes and responses under backpressure;
+  retain stalled read responses and verify consecutive write transactions.
+- Align formal reset sampling and internal state observers with their RTL, and
+  check that every assertion enable is reachable within its declared proof depth.
+- Validate external native proof receipts against source, tools, execution
+  accounting and independent reviews; require a separate non-vacuity audit.
+- Build the pinned Yices SDK for generic x86-64, verify its instruction set and
+  SAT/UNSAT behaviour, and distribute the same artifact to hosted and external runs.
+- Correct the formal inventory to 90 jobs and 476 statements.
 - Keep background graph job controls readable in both enabled and disabled states.
 
 - Read DCLS synthesis statistics from native JSON, preserve FPGA fit verdicts for hierarchy debug metadata, and qualify resource counts against each supported Yosys version.

@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Capability manifest contracts
+
+"""Bind generated inventories, rendered ownership and public counts to their sources."""
 
 from __future__ import annotations
 
@@ -35,6 +38,7 @@ def _load_tool() -> Any:
 
 
 def test_manifest_scans_core_capability_surfaces() -> None:
+    """Bind manifest counts to the scanned exports, models, workflows and tests."""
     tool = _load_tool()
     manifest = tool.build_capability_manifest(_repo_root())
 
@@ -59,6 +63,7 @@ def test_manifest_scans_core_capability_surfaces() -> None:
 
 
 def test_rust_wrapper_scan_includes_modular_binding_siblings(tmp_path: Path) -> None:
+    """Include model bindings declared beside the Rust facade."""
     tool = _load_tool()
     facade = tmp_path / "engine/src/pyo3_neurons.rs"
     binding = tmp_path / "engine/src/bindings/jansen_rit.rs"
@@ -75,6 +80,7 @@ def test_rust_wrapper_scan_includes_modular_binding_siblings(tmp_path: Path) -> 
 
 
 def test_rust_model_wrapper_scan_excludes_engine_infrastructure(tmp_path: Path) -> None:
+    """Keep engine infrastructure classes out of the model count."""
     tool = _load_tool()
     facade = tmp_path / "engine/src/pyo3_neurons.rs"
     binding = tmp_path / "engine/src/bindings/infrastructure.rs"
@@ -94,6 +100,7 @@ def test_rust_model_wrapper_scan_excludes_engine_infrastructure(tmp_path: Path) 
 
 
 def test_manifest_ignores_commented_rust_wrapper_examples() -> None:
+    """Count active Rust declarations while excluding commented examples."""
     tool = _load_tool()
     with _tempdir() as repo:
         _write_portable_fixture(repo)
@@ -124,6 +131,7 @@ def test_manifest_ignores_commented_rust_wrapper_examples() -> None:
 
 
 def test_manifest_validation_rejects_count_drift() -> None:
+    """Refuse a model count that disagrees with the manifest list."""
     tool = _load_tool()
     manifest = tool.build_capability_manifest(_repo_root())
     manifest["counts"]["python_model_classes"] += 1
@@ -135,12 +143,14 @@ def test_manifest_validation_rejects_count_drift() -> None:
 
 
 def test_generated_outputs_are_current() -> None:
+    """Require committed manifest outputs to match current source inventories."""
     tool = _load_tool()
 
     tool.assert_outputs_current(_repo_root())
 
 
 def test_readme_snapshot_matches_generated_markdown() -> None:
+    """Bind the README inventory block to the generated snapshot."""
     tool = _load_tool()
     readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
     start = "<!-- capability-snapshot:start -->"
@@ -154,16 +164,27 @@ def test_readme_snapshot_matches_generated_markdown() -> None:
 
 
 def test_markdown_snapshot_is_readme_safe() -> None:
+    """Retain ownership comments and evidence boundaries in rendered inventories."""
     tool = _load_tool()
     manifest = tool.build_capability_manifest(_repo_root())
     snapshot = tool.render_markdown_snapshot(manifest)
 
+    assert snapshot.splitlines()[:7] == [
+        "<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->",
+        "<!-- Commercial license available -->",
+        "<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->",
+        "<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->",
+        "<!-- ORCID: 0009-0009-3560-0851 -->",
+        "<!-- Contact: www.anulum.li | protoscience@anulum.li -->",
+        "<!-- SC-NeuroCore — Capability inventory -->",
+    ]
     assert "do not edit counts by hand" in snapshot
     assert f"| Package version | {manifest['project']['version']} |" in snapshot
     assert "Evidence boundary" in snapshot
 
 
 def test_refresh_outputs_updates_configured_readme_block() -> None:
+    """Regenerate configured portable inventories and their README block."""
     tool = _load_tool()
     with _tempdir() as repo:
         _write_portable_fixture(repo)
@@ -185,6 +206,7 @@ def test_refresh_outputs_updates_configured_readme_block() -> None:
 
 
 def test_cli_writes_valid_manifest_and_markdown() -> None:
+    """Exercise CLI generation and validation with explicit output paths."""
     tool_path = _repo_root() / "tools" / "capability_manifest.py"
     with _tempdir() as tmpdir:
         json_path = tmpdir / "capability_manifest.json"
@@ -227,6 +249,7 @@ def test_cli_writes_valid_manifest_and_markdown() -> None:
 
 
 def test_cli_uses_portable_config_and_refreshes_readme() -> None:
+    """Use a portable configuration to generate outputs and refresh its README."""
     tool_path = _repo_root() / "tools" / "capability_manifest.py"
     with _tempdir() as repo:
         _write_portable_fixture(repo)
@@ -338,6 +361,7 @@ def _write_portable_fixture(repo: Path) -> None:
 
 
 def test_architecture_map_is_complete_and_uses_locked_vocab() -> None:
+    """Match scanned packages to unique architecture entries and allowed statuses."""
     tool = _load_tool()
     repo = _repo_root()
     manifest = tool.build_capability_manifest(repo)
@@ -386,6 +410,7 @@ def test_architecture_map_is_complete_and_uses_locked_vocab() -> None:
 
 
 def test_architecture_map_completeness_gate_rejects_unmapped_subpackage() -> None:
+    """Refuse an architecture map that omits a scanned package."""
     import pytest
 
     tool = _load_tool()
@@ -422,6 +447,7 @@ def test_architecture_map_completeness_gate_rejects_unmapped_subpackage() -> Non
 
 
 def test_the_catalogue_count_is_the_registry_the_studio_lists() -> None:
+    """Match the manifest catalogue to the model registry used by Studio."""
     from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
     manifest = _load_tool().build_capability_manifest(_repo_root())
@@ -431,6 +457,7 @@ def test_the_catalogue_count_is_the_registry_the_studio_lists() -> None:
 
 
 def test_the_catalogue_is_read_only_from_the_registry_literal(tmp_path: Path) -> None:
+    """Read registry declarations without executing their module."""
     tool = _load_tool()
     registry = tmp_path / "__init__.py"
     assert tool._catalogue_models(registry) == []
@@ -463,6 +490,7 @@ def _with_bound_page(repo: Path, count: str = "studio_catalogue_models") -> Path
 
 
 def test_a_bound_count_is_rewritten_and_a_stale_one_fails_the_check() -> None:
+    """Refuse stale bound counts and regenerate them from the actual catalogue."""
     tool = _load_tool()
     with _tempdir() as repo:
         page = _with_bound_page(repo)
@@ -482,6 +510,7 @@ def test_a_bound_count_is_rewritten_and_a_stale_one_fails_the_check() -> None:
 
 
 def test_a_binding_to_a_count_the_manifest_lacks_is_refused() -> None:
+    """Refuse documentation that binds a count absent from the manifest."""
     tool = _load_tool()
     with _tempdir() as repo:
         _with_bound_page(repo, count="no_such_count")
@@ -492,6 +521,7 @@ def test_a_binding_to_a_count_the_manifest_lacks_is_refused() -> None:
 
 
 def test_the_published_studio_pages_bind_the_catalogue_count() -> None:
+    """Require Studio guide pages to bind the current catalogue count."""
     manifest = _load_tool().build_capability_manifest(_repo_root())
     binding = (
         "<!-- count:studio_catalogue_models -->"

@@ -26,6 +26,7 @@ module sc_dense_layer_core_formal (
     wire        step_valid;
     wire        run_done;
     wire        running;
+    wire [31:0] t_counter;
 
     sc_dense_layer_core #(
         .N_INPUTS(3),
@@ -46,11 +47,14 @@ module sc_dense_layer_core_formal (
         .spikes(spikes),
         .step_valid(step_valid),
         .run_done(run_done),
-        .running(running)
+        .running(running),
+        .formal_t_counter(t_counter)
     );
 
 `ifdef FORMAL
     reg past_valid = 0;
+    // Establish only the first reset; all later inputs stay unconstrained.
+    always @(posedge clk) if (!past_valid) assume(!rst_n);
     always @(posedge clk)
         past_valid <= 1;
 
@@ -74,19 +78,23 @@ module sc_dense_layer_core_formal (
     // 3. t_counter increments by 1 when running (and not at terminal count)
     always @(posedge clk) begin
         if (past_valid && rst_n && $past(running) && $past(rst_n)
-            && $past(uut.t_counter) != $past(stream_len) - 1) begin
-            assert(uut.t_counter == $past(uut.t_counter) + 1);
+            && $past(t_counter) != $past(stream_len) - 1) begin
+            assert(t_counter == $past(t_counter) + 1);
         end
     end
 
     // 4. run_done asserts exactly when t_counter reaches stream_len-1
     always @(posedge clk) begin
         if (past_valid && rst_n && $past(running) && $past(rst_n)
-            && $past(uut.t_counter) == $past(stream_len) - 1) begin
+            && $past(t_counter) == $past(stream_len) - 1) begin
             assert(run_done == 1'b1);
             assert(running == 1'b0);
         end
     end
+
+    // Reach the post-reset mutual-exclusion antecedent.
+    always @(posedge clk) if (past_valid && rst_n && $past(rst_n))
+        cover(running && !run_done);
 
     // 5. Cover: a complete run finishes
     always @(posedge clk) begin

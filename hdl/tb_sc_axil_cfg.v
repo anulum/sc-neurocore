@@ -128,6 +128,111 @@ module tb_sc_axil_cfg;
         end
     endtask
 
+    // A control write emits its pulse independently of response backpressure.
+    task axi_write_stalled_ctrl;
+        input [31:0] data;
+        input expected_pulse;
+        begin
+            @(negedge clk);
+            awaddr = 8'h00;
+            awvalid = 1'b1;
+            wdata = data;
+            wvalid = 1'b1;
+            bready = 1'b0;
+            wait (awready && wready);
+            @(posedge clk); #1;
+            awvalid = 1'b0;
+            wvalid = 1'b0;
+            if (cfg_start_pulse !== expected_pulse)
+                $fatal(1, "CTRL bit 0 did not produce the expected start pulse");
+            repeat (4) begin
+                @(posedge clk); #1;
+                if (cfg_start_pulse !== 1'b0)
+                    $fatal(1, "Start pulse stretched while BREADY was low");
+                if (bvalid !== 1'b1)
+                    $fatal(1, "Write response disappeared during backpressure");
+            end
+            bready = 1'b1;
+            @(posedge clk); #1;
+            bready = 1'b0;
+        end
+    endtask
+
+    // A pending response must backpressure, then accept, the following write.
+    task axi_write_stalled_followup;
+        begin
+            @(negedge clk);
+            awaddr = 8'h10;
+            awvalid = 1'b1;
+            wdata = 32'h0000_1111;
+            wvalid = 1'b1;
+            bready = 1'b0;
+            wait (awready && wready);
+            @(posedge clk); #1;
+            awvalid = 1'b0;
+            wvalid = 1'b0;
+            @(negedge clk);
+            awvalid = 1'b1;
+            wvalid = 1'b1;
+            wdata = 32'h0000_2222;
+            repeat (3) begin
+                @(posedge clk);
+                if (awready || wready)
+                    $fatal(1, "A second write was accepted behind a stalled response");
+            end
+            @(negedge clk);
+            bready = 1'b1;
+            @(posedge clk); #1;
+            bready = 1'b0;
+            wait (awready && wready);
+            @(posedge clk); #1;
+            awvalid = 1'b0;
+            wvalid = 1'b0;
+            if (!bvalid)
+                $fatal(1, "The queued write did not complete after backpressure");
+            bready = 1'b1;
+            @(posedge clk); #1;
+            bready = 1'b0;
+        end
+    endtask
+
+    // A pending read response must hold off the next address until it is accepted.
+    task axi_read_stalled_followup;
+        begin
+            axi_write(8'h10, 32'h0000_1111);
+            axi_write(8'h14, 32'h0000_2222);
+            @(negedge clk);
+            araddr = 8'h10;
+            arvalid = 1'b1;
+            rready = 1'b0;
+            wait (arready);
+            @(posedge clk); #1;
+            arvalid = 1'b0;
+            if (!rvalid || rdata !== 32'h0000_1111)
+                $fatal(1, "First stalled read returned incorrect data");
+            @(negedge clk);
+            araddr = 8'h14;
+            arvalid = 1'b1;
+            repeat (3) begin
+                @(posedge clk);
+                if (arready)
+                    $fatal(1, "A second read was accepted behind a stalled response");
+            end
+            @(negedge clk);
+            rready = 1'b1;
+            @(posedge clk); #1;
+            rready = 1'b0;
+            wait (arready);
+            @(posedge clk); #1;
+            arvalid = 1'b0;
+            if (!rvalid || rdata !== 32'h0000_2222)
+                $fatal(1, "The read following a stalled response was lost");
+            rready = 1'b1;
+            @(posedge clk); #1;
+            rready = 1'b0;
+        end
+    endtask
+
     // ----------------------------------------------------------------
     // AXI-Lite read task
     // ----------------------------------------------------------------
@@ -225,7 +330,7 @@ module tb_sc_axil_cfg;
             end
         join
 
-        // Verify it cleared after BVALID/BREADY handshake
+        // Verify it remains clear after the write response.
         repeat (3) @(posedge clk);
         if (cfg_start_pulse === 1'b0) begin
             $display("[PASS] C2: cfg_start_pulse cleared");
@@ -234,6 +339,18 @@ module tb_sc_axil_cfg;
             $display("[FAIL] C2: cfg_start_pulse still high");
             fail_count = fail_count + 1;
         end
+
+        axi_write_stalled_ctrl(32'h0000_0001, 1'b1);
+        axi_write_stalled_ctrl(32'h0000_0000, 1'b0);
+        $display("[PASS] C3: CTRL pulse is one cycle under response backpressure");
+        pass_count = pass_count + 1;
+
+        axi_write_stalled_followup();
+        axi_read(8'h10, rd_data);
+        if (rd_data !== 32'h0000_2222)
+            $fatal(1, "The write following a stalled response was lost");
+        $display("[PASS] C4: backpressured follow-up write is preserved");
+        pass_count = pass_count + 1;
 
         // --- Test D: read STATUS register ---
         stat_busy = 1'b1;
@@ -259,6 +376,10 @@ module tb_sc_axil_cfg;
         end
 
         // --- Test E: read RATE registers ---
+        axi_read_stalled_followup();
+        $display("[PASS] D3: backpressured follow-up read is preserved");
+        pass_count = pass_count + 1;
+
         stat_rate_q16[0] = 32'hDEAD_BEEF;
         stat_rate_q16[3] = 32'h1234_5678;
         axi_read(8'h80, rd_data);
@@ -303,15 +424,14 @@ module tb_sc_axil_cfg;
         if (fail_count == 0)
             $display("[PASS] All tests passed");
         else
-            $display("[FAIL] %0d test(s) failed", fail_count);
+            $fatal(1, "[FAIL] %0d test(s) failed", fail_count);
         $finish;
     end
 
     // Safety timeout
     initial begin
         #100000;
-        $display("[FAIL] Global timeout");
-        $finish;
+        $fatal(1, "[FAIL] Global timeout");
     end
 
 endmodule

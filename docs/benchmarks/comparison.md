@@ -1,4 +1,10 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Formal verification inventory and qualification -->
 
 # Benchmark Comparison
 
@@ -81,7 +87,7 @@ no measured accuracy figures for it.
 | Python models | **183 lazy-loaded classes / 176 source modules** |
 | Rust/compiled models | **212 Rust PyO3 wrappers / 180-model NetworkRunner** |
 | Neuromorphic-hardware neuron models | Loihi (CUBA, Loihi 2), TrueNorth, SpiNNaker (LIF, SpiNNaker 2), Akida, BrainScaleS AdEx, DYNAP-SE DPI |
-| Formal verification | **90 SymbiYosys proof jobs and 449 formal statements (299 assert, 114 assume, 36 cover)** |
+| Formal verification | **90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover)** |
 | Train-to-FPGA export | **Yes** |
 
 ## IQIF signed-integer polyglot batch loop

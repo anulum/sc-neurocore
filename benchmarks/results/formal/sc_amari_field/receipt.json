@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "producer": "SC-NeuroCore native formal measurement producer",
+  "job": "hdl/formal/catalogue/sc_amari_field.sby",
+  "source_hashes": {
+    "hdl/formal/catalogue/sc_amari_field.sby": "58eba2f251710f0b6e3f8076bf6e53cedf6ea83e93f778f5afcf316056a0dd30",
+    "hdl/formal/catalogue/sc_amari_field.v": "de387d6ad68cf582a583758b5df87f6dc9ef7c6e77c4289586bd63c81350ad6c",
+    "hdl/formal/catalogue/sc_amari_field_formal.v": "e0e4df7b7d89a002bb5019b060410296eb0b710e13de38af3a1d86ca8b0ec9d8"
+  },
+  "task_statuses": {
+    "default": "PASS"
+  },
+  "command": {
+    "program": "sby",
+    "options": [
+      "-f"
+    ],
+    "output_option": "-d",
+    "directory": "hdl/formal/catalogue",
+    "argument": "sc_amari_field.sby"
+  },
+  "toolchain": {
+    "yosys_source": "0c11ea098be065e585a90a06e7b7da49936cf231",
+    "sby_source": "b1a1e98cba941ec8433f8dc27f416cd7bb7f14be",
+    "binary_sha256": {
+      "yosys": "4632e5ba5a1c0e5897ae9fd1c6588eba12b77f1651c5e9815864c6a3824d563f",
+      "sby": "0f6ad00b1877e7baff163505af7054e2466d5c3869a46f70920afff33fbecd88"
+    },
+    "yosys_version": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "sby_version": "SBY v0.70",
+    "solver": {
+      "name": "z3",
+      "sha256": "c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb",
+      "version": "Z3 version 4.8.12 - 64 bit"
+    }
+  },
+  "measurement": {
+    "hostname": "god-of-the-math",
+    "status": "PASS",
+    "native_exit_code": 0,
+    "native_exit_source": "sby-final-DONE",
+    "unit_exit_code": null,
+    "unit_result": null,
+    "unit_accounting": "garbage-collected",
+    "active_state": "inactive",
+    "main_pid": 0,
+    "cgroup_processes": [],
+    "process_tree_closed": true,
+    "wall_seconds": null,
+    "wall_clock_source": "journal-recovered",
+    "journal_recovered_wall_seconds": 3382.523562,
+    "start_monotonic_microseconds": 2286977333431,
+    "stop_monotonic_microseconds": 2290359856993,
+    "journal_sha256": "de8ac4b766b9b3804bf78eb6259f9baaf06b6080994dd544f4b7315fd07aab42",
+    "original_result_sha256": "e63926332e4917858e71a9400ff219eb2b5911c30382aa92b894b513e3857c79",
+    "peak_memory_bytes": 14327123968,
+    "memory_limit_bytes": 68719476736,
+    "swap_limit_bytes": 0,
+    "time_limit_seconds": 7200,
+    "limits_source": "accepted-systemd-run-properties; private admission and launch retained",
+    "oom_events": {
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "invocation_id": "69cf3f86b1954867a5f8a261aa5a5f24",
+    "native_done": {
+      "normalized_line": "SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] DONE (PASS, rc=0)",
+      "raw_line_sha256": "629f870438248ff33f4bb42659c4bed4f16d50bab5eaa1a20b89664c39fc4493",
+      "normalized_line_sha256": "330b9fb0ec28ec46a1089df239f1df210fceca4cdc704bbec9d6468f1ba5bed4"
+    },
+    "status_file": {
+      "path": "benchmarks/results/formal/sc_amari_field/status.txt",
+      "sha256": "ca7891a9b281ba6b6acfb33154478d4fd9b59896fea140bd4c593674f792d90f"
+    }
+  },
+  "log": {
+    "path": "benchmarks/results/formal/sc_amari_field/native.log",
+    "raw_sha256": "8f1c753598fedf974d1e46c34124e2dfde13c6dae681670540221df2e0ac23fa",
+    "normalized_sha256": "623d7db263f5fa1c539aca0b7e2cb207d22ad18a54c9c447b87e153227d404b8",
+    "normalizer_id": "sc-neurocore-native-log-identity-v1",
+    "normalizer_sha256": "4fb973b5a21f1a57374ee5dee0cd705adea6a32ada2a74b82f92ebd7a9cea2e3"
+  },
+  "custody": {
+    "closure_sha256": "924bac0e2fde1c4d32f984eb0777e816591e46adbfd0fb198480a675940560b9",
+    "lease_release_sha256": "7e357132ad4810e2cb4c0ea804ba7aa94723a29a14f0980e7920e3629021c8e6",
+    "released_nonce": "72ba467a2bfe4b57b581aab25ad92f00"
+  }
+}

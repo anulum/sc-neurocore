@@ -15,6 +15,10 @@ reg past_valid=0;
 initial assume(!rst_n);
 always @(posedge clk) begin
     assume(!rst_n);past_valid<=1;
+end
+// Check the post-reset state directly; a second registered enable would
+// postpone the first check beyond the existing depth-two bound.
+always @(*) begin
     if(past_valid) assert(v==0&&w==0&&!event_out);
 end
 `endif

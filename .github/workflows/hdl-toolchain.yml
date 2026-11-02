@@ -28,8 +28,8 @@ jobs:
       - name: Install the build and runtime dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq bison binutils cmake flex g++-13 gcc-13 git \
-            libedit-dev libffi-dev libfl-dev libgmock-dev libgtest-dev \
+          sudo apt-get install -y -qq autoconf bison binutils cmake flex g++-13 gcc-13 git \
+            libc6-dev libedit-dev libffi-dev libfl-dev libgmock-dev libgtest-dev \
             libreadline-dev libreadline8t64 libtcl8.6 make pkg-config tcl-dev zlib1g-dev
       - name: Identify the actual compiler and build dependencies
         id: build-environment
@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           dpkg-query -W -f='${binary:Package}=${Version}\n' \
-            bison binutils cmake flex g++-13 gcc-13 libedit-dev libffi-dev \
+            autoconf bison binutils cmake flex g++-13 gcc-13 libc6-dev libedit-dev libffi-dev \
             libfl-dev libgmock-dev libgtest-dev libreadline-dev libreadline8t64 \
             libtcl8.6 make pkg-config tcl-dev zlib1g-dev \
             > "$RUNNER_TEMP/scn-hdl-build-environment.txt"
@@ -50,7 +50,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/scn-hdl
-          key: ubuntu24-x64-hdl-yosys070-sby070-${{ steps.build-environment.outputs.digest }}-${{ hashFiles('.github/workflows/hdl-toolchain.yml', 'requirements/sby.txt') }}
+          key: ubuntu24-x64-hdl-yosys070-sby070-z34812-3b15884d-yices270-generic-v1-sv2v0013-${{ steps.build-environment.outputs.digest }}-${{ hashFiles('.github/workflows/hdl-toolchain.yml', 'tools/build_yices.sh', 'tools/check_yices_isa.sh', 'requirements/sby.txt') }}
       - name: Build the verified stable sources once
         if: steps.tools.outputs.cache-hit != 'true'
         shell: bash
@@ -87,6 +87,26 @@ jobs:
           git -C "$source_root/sby" checkout -q --detach b1a1e98cba941ec8433f8dc27f416cd7bb7f14be
           test "$(git -C "$source_root/sby" rev-parse HEAD)" = b1a1e98cba941ec8433f8dc27f416cd7bb7f14be
           make -C "$source_root/sby" install PREFIX="$tool_prefix"
+          curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
+            https://archive.ubuntu.com/ubuntu/pool/universe/z/z3/z3_4.8.12-3.1build1_amd64.deb \
+            -o "$source_root/z3.deb"
+          echo "3b15884d5f77563b2941f5c679ce9c3d252d098340094f46b891bc57603e3793  $source_root/z3.deb" \
+            | sha256sum --check --status
+          dpkg-deb --extract "$source_root/z3.deb" "$source_root/z3"
+          install -m 755 "$source_root/z3/usr/bin/z3" "$tool_prefix/bin/z3"
+          mkdir -p "$tool_prefix/share/licenses/z3"
+          cp "$source_root/z3/usr/share/doc/z3/copyright" "$tool_prefix/share/licenses/z3/"
+          bash tools/build_yices.sh "$tool_prefix" "$source_root"
+          curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
+            https://github.com/zachjs/sv2v/releases/download/v0.0.13/sv2v-Linux.zip \
+            -o "$source_root/sv2v.zip"
+          echo "552799a1d76cd177b9b4cc63a3e77823a3d2a6eb4ec006569288abeff28e1ff8  $source_root/sv2v.zip" \
+            | sha256sum --check --status
+          unzip -q "$source_root/sv2v.zip" -d "$source_root/sv2v"
+          install -m 755 "$source_root/sv2v/sv2v-Linux/sv2v" "$tool_prefix/bin/sv2v"
+          mkdir -p "$tool_prefix/share/licenses/sv2v"
+          cp "$source_root/sv2v/sv2v-Linux/LICENSE" "$source_root/sv2v/sv2v-Linux/NOTICE" \
+            "$tool_prefix/share/licenses/sv2v/"
       - name: Retain upstream and bundled dependency notices
         if: steps.tools.outputs.cache-hit != 'true'
         shell: bash
@@ -106,8 +126,27 @@ jobs:
         run: |
           set -euo pipefail
           tool_prefix="$RUNNER_TEMP/scn-hdl"
+          dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libc6)" ge 2.38
+          dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libstdc++6)" ge 13.1
           test -s "$tool_prefix/share/licenses/yosys/COPYING"
           test -s "$tool_prefix/share/licenses/sby/COPYING"
+          test -s "$tool_prefix/share/licenses/z3/copyright"
+          test -s "$tool_prefix/share/licenses/yices/README"
+          test -s "$tool_prefix/share/licenses/yices/LICENSE"
+          test -s "$tool_prefix/share/licenses/gmp/copyright"
+          test -s "$tool_prefix/share/licenses/gperf/copyright"
+          (cd "$tool_prefix" && sha256sum --check share/yices-build/SHA256SUMS)
+          test "$(sed -n 's/^Yices recipe SHA256 //p' "$tool_prefix/share/yices-build/PROVENANCE.txt")" \
+            = "$(sha256sum tools/build_yices.sh | cut -d ' ' -f 1)"
+          test "$(sed -n 's/^Yices ISA checker SHA256 //p' "$tool_prefix/share/yices-build/PROVENANCE.txt")" \
+            = "$(sha256sum tools/check_yices_isa.sh | cut -d ' ' -f 1)"
+          grep -Eq '^Yices own-object ISA scan PASS: [1-9][0-9]* objects;' \
+            "$tool_prefix/share/yices-build/isa-scan.txt"
+          timeout 5 "$tool_prefix/bin/yices-smt2" --incremental \
+            < "$tool_prefix/share/yices-build/smoke.smt2" > "$RUNNER_TEMP/yices-smoke.out"
+          test "$(cat "$RUNNER_TEMP/yices-smoke.out")" = "$(printf 'sat\nunsat')"
+          test -s "$tool_prefix/share/licenses/sv2v/LICENSE"
+          test -s "$tool_prefix/share/licenses/sv2v/NOTICE"
           version="$("$tool_prefix/bin/yosys" -V)"
           # The official release archive lacks Git distance metadata; its
           # reported +post source tree is identical to the v0.70 tag tree.
@@ -116,11 +155,31 @@ jobs:
             *) printf '%s\n' "$version" >&2; exit 1 ;;
           esac
           test "$("$tool_prefix/bin/sby" --version)" = "SBY v0.70"
+          echo "c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb  $tool_prefix/bin/z3" \
+            | sha256sum --check --status
+          test "$("$tool_prefix/bin/z3" --version)" = "Z3 version 4.8.12 - 64 bit"
+          test "$("$tool_prefix/bin/yices-smt2" --version | head -1)" = "Yices 2.7.0"
+          test "$("$tool_prefix/bin/sv2v" --numeric-version)" = "0.0.13"
           {
             printf '%s\n' "$version"
             "$tool_prefix/bin/sby" --version
+            "$tool_prefix/bin/z3" --version
+            "$tool_prefix/bin/yices-smt2" --version
+            "$tool_prefix/bin/sv2v" --version
             printf '%s\n' 'Yosys asset SHA256 c6bd8b83aad633f6786fc861fe8f5dbc74c37bfae77f7bd0220e6f00f15f1d55'
             printf '%s\n' 'SBY source b1a1e98cba941ec8433f8dc27f416cd7bb7f14be'
+            printf '%s\n' 'Z3 package Ubuntu noble universe 4.8.12-3.1build1 amd64'
+            printf '%s\n' 'Z3 runtime libc6 >= 2.38; libgcc-s1 >= 3.4; libstdc++6 >= 13.1'
+            printf '%s\n' 'Z3 Ubuntu archive signature F6ECB3762474EDA9D21B7022871920D1991BC93C'
+            printf '%s\n' 'Z3 Ubuntu noble InRelease SHA256 cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0'
+            printf '%s\n' 'Z3 Ubuntu noble universe Packages.xz SHA256 ba9057fa1b91438cc8a1d26808d00c85389fe101d0c1496254df97236405599a'
+            printf '%s\n' 'Z3 asset SHA256 3b15884d5f77563b2941f5c679ce9c3d252d098340094f46b891bc57603e3793'
+            printf '%s\n' 'Z3 asset SHA512 2be0041846ef17c141ff96a3aad8958e7c6e36a06af93a0c902833818edda0c766c920c4938f539caaab953d4db78b3f4d1f2e8cca5cffa91232e76c4a806e21'
+            printf '%s\n' 'Z3 binary SHA256 c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb'
+            cat "$tool_prefix/share/yices-build/PROVENANCE.txt"
+            cat "$RUNNER_TEMP/scn-hdl-build-environment.txt"
+            printf '%s\n' 'sv2v provenance: pinned GitHub release-asset SHA256 only; no signed archive-index chain'
+            printf '%s\n' 'sv2v asset SHA256 552799a1d76cd177b9b4cc63a3e77823a3d2a6eb4ec006569288abeff28e1ff8'
           } > "$tool_prefix/PROVENANCE.txt"
           tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/scn-hdl.tar.gz" scn-hdl
           cd "$RUNNER_TEMP"

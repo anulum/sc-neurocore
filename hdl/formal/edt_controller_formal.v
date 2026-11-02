@@ -31,6 +31,15 @@ module edt_controller_formal #(
     wire decision_value;
     wire freeze;
 
+    reg past_valid = 1'b0;
+    always @(posedge clk) begin
+        // Establish reset once without constraining later inputs or state.
+        if (!past_valid) assume(!rst_n);
+        past_valid <= 1'b1;
+        if (past_valid && rst_n)
+            cover(freeze && decision_ready);
+    end
+
     sc_edt_controller #(
         .DATA_WIDTH(DATA_WIDTH),
         .MARGIN(MARGIN),

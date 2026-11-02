@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — FPGA hardware manual -->
+
 # SC-NeuroCore FPGA Hardware Manual
 **Version:** 4.0.0
 **Date**: April 13, 2026
@@ -62,6 +70,14 @@ The `sc_firing_rate_bank` accumulates spikes over the duration of a simulation r
 | `0x84` | `RATE1` | R | Firing rate for Neuron 1. |
 | ... | ... | ... | ... |
 | `0x98` | `RATE6` | R | Firing rate for Neuron 6. |
+
+Writing bit 0 of `CTRL_REG` emits a start pulse lasting exactly one clock cycle,
+independently of write-response backpressure. The AXI-Lite slave accepts one
+write at a time and holds off the next write until the preceding response is
+accepted. Keep `AWVALID` and `WVALID` asserted until their handshake completes.
+Read addresses are also backpressured while a response is pending. Hold
+`ARVALID` until acceptance and consume the response with `RREADY` before the
+next address can be accepted; each accepted address produces one response.
 
 ### 3.1 Live Parameter-Bank Control Window
 

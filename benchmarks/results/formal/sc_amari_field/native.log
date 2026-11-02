@@ -1,0 +1,66 @@
+SBY 23:55:29 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] Removing directory '<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby'.
+SBY 23:55:29 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] Copy '<FORMAL_WORKSPACE>/measurements/sc_amari_field/source/hdl/formal/catalogue/sc_amari_field_formal.v' to '<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby/src/sc_amari_field_formal.v'.
+SBY 23:55:29 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] Copy '<FORMAL_WORKSPACE>/measurements/sc_amari_field/source/hdl/formal/catalogue/sc_amari_field.v' to '<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby/src/sc_amari_field.v'.
+SBY 23:55:29 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0: smtbmc z3
+SBY 23:55:29 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] base: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] base: finished (returncode=0)
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] prep: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby/model; yosys -ql design_prep.log design_prep.ys"
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] prep: finished (returncode=0)
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] smt2: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] smt2: finished (returncode=0)
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby; yosys-smtbmc -s z3 --presat --noprogress -t 12  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: starting process "cd <FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby; yosys-smtbmc -s z3 --presat -i --noprogress -t 12  --append 0 --dump-vcd engine_0/trace_induct.vcd --dump-yw engine_0/trace_induct.yw --dump-vlogtb engine_0/trace_induct_tb.v --dump-smtc engine_0/trace_induct.smtc model/design_smt2.smt2"
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:00:00  Solver: z3
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:00:00  Solver: z3
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:00:00  Checking assumptions in step 0..
+SBY 23:55:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:00:00  Trying induction in step 12..
+SBY 23:56:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:01:00  waiting for solver (1 minute)
+SBY 23:56:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:01:00  waiting for solver (1 minute)
+SBY  0:00:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:05:00  waiting for solver (5 minutes)
+SBY  0:00:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:05:00  waiting for solver (5 minutes)
+SBY  0:05:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:10:00  waiting for solver (10 minutes)
+SBY  0:05:31 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:10:00  waiting for solver (10 minutes)
+SBY  0:10:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:15:00  waiting for solver (15 minutes)
+SBY  0:10:31 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:15:00  waiting for solver (15 minutes)
+SBY  0:25:30 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:30:00  waiting for solver (30 minutes)
+SBY  0:25:31 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:30:00  waiting for solver (30 minutes)
+SBY  0:49:34 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:54:03  Trying induction in step 11..
+SBY  0:49:35 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:54:04  Trying induction in step 10..
+SBY  0:49:35 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:54:05  Temporal induction successful.
+SBY  0:49:53 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: ##   0:54:22  Status: passed
+SBY  0:49:53 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: finished (returncode=0)
+SBY  0:49:53 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.induction: Status returned by engine for induction: pass
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assertions in step 0..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assumptions in step 1..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assertions in step 1..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assumptions in step 2..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assertions in step 2..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assumptions in step 3..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:28  Checking assertions in step 3..
+SBY  0:49:59 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:29  Checking assumptions in step 4..
+SBY  0:50:00 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:29  Checking assertions in step 4..
+SBY  0:50:00 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:30  Checking assumptions in step 5..
+SBY  0:50:03 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:32  Checking assertions in step 5..
+SBY  0:50:03 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:32  Checking assumptions in step 6..
+SBY  0:50:04 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:33  Checking assertions in step 6..
+SBY  0:50:04 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:34  Checking assumptions in step 7..
+SBY  0:50:06 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:35  Checking assertions in step 7..
+SBY  0:50:06 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:36  Checking assumptions in step 8..
+SBY  0:50:10 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:40  Checking assertions in step 8..
+SBY  0:50:12 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:41  Checking assumptions in step 9..
+SBY  0:50:21 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:50  Checking assertions in step 9..
+SBY  0:50:21 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:54:51  Checking assumptions in step 10..
+SBY  0:51:21 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:55:51  waiting for solver (1 minute)
+SBY  0:51:44 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:56:13  Checking assertions in step 10..
+SBY  0:51:44 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:56:14  Checking assumptions in step 11..
+SBY  0:51:48 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:56:17  Checking assertions in step 11..
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: ##   0:56:20  Status: passed
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: finished (returncode=0)
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] engine_0.basecase: Status returned by engine for basecase: pass
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] summary: Elapsed clock time [H:MM:SS (secs)]: 0:56:21 (3381)
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] summary: Elapsed process time [H:MM:SS (secs)]: 0:56:21 (3381)
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] summary: engine_0 (smtbmc z3) returned pass for basecase
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] summary: engine_0 (smtbmc z3) returned pass for induction
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] summary: engine_0 did not produce any traces
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] summary: successful proof by k-induction.
+SBY  0:51:51 [<FORMAL_WORKSPACE>/measurements/sc_amari_field/measurement-sby] DONE (PASS, rc=0)

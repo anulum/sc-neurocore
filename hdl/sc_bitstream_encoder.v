@@ -44,6 +44,10 @@ module sc_bitstream_encoder #(
     input wire [31:0]               t_index,
 
     output reg                      bit_out
+`ifdef FORMAL
+    // Exact LFSR state for the formal harness; absent from production ports.
+    , output wire [LFSR_WIDTH-1:0] formal_lfsr_state
+`endif
 );
 
 // ----------------------------------------------------------------
@@ -54,6 +58,9 @@ module sc_bitstream_encoder #(
 // (common maximal-length polynomial).
 // Tools will infer a small register + XOR network.
 reg [LFSR_WIDTH-1:0] lfsr_reg;
+`ifdef FORMAL
+assign formal_lfsr_state = lfsr_reg;
+`endif
 wire                 feedback;
 
 assign feedback = lfsr_reg[LFSR_WIDTH-1] ^

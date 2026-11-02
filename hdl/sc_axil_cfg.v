@@ -121,18 +121,21 @@ always @(posedge S_AXI_ACLK) begin
         cfg_start_pulse <= 1'b0;
         // init cfg regs if you want
     end else begin
+        cfg_start_pulse <= 1'b0;
+
         // Write address ready
         if (~S_AXI_AWREADY && S_AXI_AWVALID && S_AXI_WVALID && aw_en) begin
             S_AXI_AWREADY <= 1'b1;
             axi_awaddr <= S_AXI_AWADDR;
-        end else if (S_AXI_BVALID && S_AXI_BREADY) begin
+            aw_en <= 1'b0;
+        end else begin
             S_AXI_AWREADY <= 1'b0;
         end
 
         // Write data ready
         if (~S_AXI_WREADY && S_AXI_WVALID && S_AXI_AWVALID && aw_en) begin
             S_AXI_WREADY <= 1'b1;
-        end else if (S_AXI_BVALID && S_AXI_BREADY) begin
+        end else begin
             S_AXI_WREADY <= 1'b0;
         end
 
@@ -169,7 +172,7 @@ always @(posedge S_AXI_ACLK) begin
             S_AXI_BRESP  <= 2'b00;
         end else if (S_AXI_BVALID && S_AXI_BREADY) begin
             S_AXI_BVALID <= 1'b0;
-            cfg_start_pulse <= 1'b0; // clear pulse
+            aw_en <= 1'b1;
         end
     end
 end
@@ -184,7 +187,7 @@ always @(posedge S_AXI_ACLK) begin
         S_AXI_RVALID  <= 1'b0;
         S_AXI_RRESP   <= 2'b00;
     end else begin
-        if (~S_AXI_ARREADY && S_AXI_ARVALID) begin
+        if (~S_AXI_ARREADY && S_AXI_ARVALID && ~S_AXI_RVALID) begin
             S_AXI_ARREADY <= 1'b1;
             axi_araddr    <= S_AXI_ARADDR;
         end else begin

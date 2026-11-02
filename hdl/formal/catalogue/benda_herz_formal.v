@@ -15,6 +15,9 @@ reg past_valid=0;
 initial assume(rst);
 always @(posedge clk) begin
     assume(rst); past_valid<=1;
+end
+// Check the post-reset state directly within the existing depth-two bound.
+always @(*) begin
     if(past_valid) assert(adaptation_q==0 && phase_q==0 && !spike);
 end
 `endif

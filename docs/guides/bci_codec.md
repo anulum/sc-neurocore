@@ -1,3 +1,10 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Formal verification inventory and qualification -->
 # Neural Data Compression Library
 
 Two compression layers: raw waveform (10-bit ADC) and spike raster (binary).
@@ -440,7 +447,7 @@ print(f"LFSR: {result_hw.compression_ratio:.1f}x")
 The LFSR predictor uses the same polynomial (x^16 + x^14 + x^13 + x^11 + 1)
 and step semantics as `sc_bitstream_encoder.v`. Python prediction = Verilog
 prediction, bit-for-bit. Formally verified through the HDL SymbiYosys
-inventory: 90 proof jobs and 449 formal statements.
+inventory: 90 proof jobs and 476 formal statements.
 
 ## Delta Codec (Neural Probes)
 

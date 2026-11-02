@@ -1,3 +1,10 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Formal verification inventory and qualification -->
 # Tutorial 60: Temporal Logic Verification
 
 Prove safety properties of your SNN — or find counterexamples. Testing
@@ -137,8 +144,8 @@ provides complete coverage.
 
 ## Integration with FPGA Formal Verification
 
-SC-NeuroCore also provides 90 SymbiYosys proof jobs and 449 formal statements
-(299 assert, 114 assume, 36 cover) for RTL-level verification of generated
+SC-NeuroCore also provides 90 SymbiYosys proof jobs and 476 formal statements
+(311 assert, 121 assume, 44 cover) for RTL-level verification of generated
 Verilog.
 The temporal properties here verify the *algorithm*; SymbiYosys verifies
 the *hardware implementation*.

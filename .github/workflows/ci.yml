@@ -507,7 +507,7 @@ jobs:
           sudo apt-get update -qq
           # libhdf5-dev: the SHD readers link HDF5 (Go via `pkg-config hdf5`
           # under -tags=hdf5, Mojo by loading libhdf5_serial.so).
-          sudo apt-get install -y -qq cvc5 git iverilog make verilator z3 libhdf5-dev pkg-config libreadline8t64 libtcl8.6
+          sudo apt-get install -y -qq cvc5 git iverilog make verilator libhdf5-dev pkg-config libreadline8t64 libtcl8.6
           python -m pip install --require-hashes -r requirements/sby.txt
 
       - name: Retrieve this run's shared HDL toolchain
@@ -527,6 +527,9 @@ jobs:
           echo "$RUNNER_TEMP/scn-hdl/bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/scn-hdl/bin/yosys" -V
           "$RUNNER_TEMP/scn-hdl/bin/sby" --version
+          echo "c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb  $RUNNER_TEMP/scn-hdl/bin/z3" \
+            | sha256sum --check --status
+          test "$("$RUNNER_TEMP/scn-hdl/bin/z3" --version)" = "Z3 version 4.8.12 - 64 bit"
 
       - name: Verify HDL simulator versions
         run: python tools/check_icarus_verilog.py --minimum-major 12

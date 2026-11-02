@@ -25,6 +25,8 @@ module halton16_formal #(
 
     wire [DATA_WIDTH-1:0] quasi_random;
     wire valid;
+    reg past_valid;
+    initial past_valid = 0;
 
     sc_halton16_source #(.DATA_WIDTH(DATA_WIDTH)) uut (
         .clk(clk),
@@ -63,14 +65,17 @@ module halton16_formal #(
 
     // P3: Valid only when enabled
     always @(posedge clk) begin
-        if (rst_n && !enable)
+        // valid reports the previous sampled enable, rather than the current input.
+        if (past_valid && rst_n && $past(rst_n) && !$past(enable)) begin
             assert(!valid);
+            cover(!valid);
+        end
     end
 
     // P4: After reset, outputs are zero
-    reg past_valid;
-    initial past_valid = 0;
     always @(posedge clk) begin
+        // Establish reset once; later enable and reset transitions remain free.
+        if (!past_valid) assume(!rst_n);
         past_valid <= 1;
         if (past_valid && !rst_n) begin
             assert(quasi_random == 0);

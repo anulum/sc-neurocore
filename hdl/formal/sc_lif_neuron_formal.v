@@ -19,6 +19,9 @@ module sc_lif_neuron_formal (
 
     wire        spike_out;
     wire signed [15:0] v_out;
+`ifdef FORMAL
+    wire [31:0] refractory_counter;
+`endif
 
     sc_lif_neuron #(
         .DATA_WIDTH(16),
@@ -36,12 +39,18 @@ module sc_lif_neuron_formal (
         .noise_in(noise_in),
         .spike_out(spike_out),
         .v_out(v_out)
+`ifdef FORMAL
+        , .formal_refractory_counter(refractory_counter)
+`endif
     );
 
 `ifdef FORMAL
     reg past_valid = 0;
-    always @(posedge clk)
+    always @(posedge clk) begin
+        // Establish reset once; no later current, gain, leak or noise is restricted.
+        if (!past_valid) assume(!rst_n);
         past_valid <= 1;
+    end
 
     // 1. After reset, membrane potential equals V_REST
     always @(posedge clk) begin
@@ -59,16 +68,18 @@ module sc_lif_neuron_formal (
     // 3. Refractory counter decrements monotonically
     //    During refractory, v is clamped to V_REST and no spike
     always @(posedge clk) begin
-        if (past_valid && rst_n && uut.refractory_counter > 0) begin
+        // A spike loads the counter; only a previously nonzero counter suppresses it.
+        if (past_valid && rst_n && $past(rst_n) && $past(refractory_counter) > 0) begin
             assert(spike_out == 1'b0);
             assert(v_out == 16'sd0);  // Clamped to V_REST
+            cover(spike_out == 1'b0 && v_out == 16'sd0);
         end
     end
 
     // 4. Refractory counter bounded by REFRACTORY_PERIOD
     always @(posedge clk) begin
         if (past_valid && rst_n)
-            assert(uut.refractory_counter <= 3);
+            assert(refractory_counter <= 3);
     end
 
     // 5. Cover: spike is reachable

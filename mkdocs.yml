@@ -283,6 +283,7 @@ nav:
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
   - Hardware:
       - Timing-Aware Formal Properties: formal/timing_aware_properties.md
+      - External Formal Evidence: formal/external_results.md
       - Hardware Guide: hardware/HARDWARE_GUIDE.md
       - Hardware Experiment Protocol: hardware/experiment_protocol.md
       - AER Priority Queue: hardware/aer_priority_queue.md
