@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1657
+expected_file_count = 1664
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6762,3 +6762,31 @@ rationale = "Keep one reviewed solver repair separate from ordinary resource ret
 [[file]]
 path = "tests/test_tools/test_formal_solver_repair.py"
 rationale = "Exercise the public repair gate with retained actual native evidence."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/catalogue.py"
+rationale = "Public codec discovery checks real entry points, native components and loader diagnostics without constructing an encoder."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/catalogue_types.py"
+rationale = "Immutable typed descriptions preserve the distinct codec input, state, wire and native component contracts."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/_catalogue_data.py"
+rationale = "Existing formats and variants record source-grounded reconstruction and native implementation boundaries."
+
+[[file]]
+path = "tests/test_spike_codec_catalogue_descriptions.py"
+rationale = "Public catalogue descriptions match real signatures, remain immutable and avoid optional native imports during cold discovery."
+
+[[file]]
+path = "tests/test_spike_codec_catalogue_availability.py"
+rationale = "Real public availability probes handle host import policies and unavailable exports while preserving working Python codecs."
+
+[[file]]
+path = "tests/test_spike_codec_catalogue_workflows.py"
+rationale = "Discovered raster, waveform and stateful stream interfaces perform actual lossless or declared lossy workflows."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/registry.py"
+rationale = "The legacy raster factory documents its distinct name set, constructors and configuration-based recommendation without claiming measured performance."

@@ -12,6 +12,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add typed discovery for six spike-codec families and two stream interfaces, with variant, wire-format and native-component descriptions plus explicit availability diagnostics. Preserve the five-name raster factory and existing packet compatibility.
+
 - Reject ISI varint rasters with 16,777,216 or more time steps and delta groups outside 1–256 before encoding, preventing ambiguous headers and reference-index wrap without changing valid packet bytes. Data encoded with 4.0.0 using such varint rasters (including auto-selected varint), or delta groups larger than 256, may not decode to the original. Re-encode affected data from its original source.
 
 - Repair AXI-Lite register updates, byte strobes and responses under backpressure;

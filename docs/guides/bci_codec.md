@@ -4,10 +4,20 @@
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
-<!-- SC-NeuroCore — Formal verification inventory and qualification -->
+<!-- SC-NeuroCore — Neural data compression guide -->
 # Neural Data Compression Library
 
 Two compression layers: raw waveform (10-bit ADC) and spike raster (binary).
+
+The [typed catalogue](../api/spike_codec.md#discover-and-inspect) describes six
+families and two additional stateful stream APIs. The legacy `get_codec`
+factory serves five raster codecs; waveforms and stateful streams use their
+own public interfaces. See the [wire-format reference](../reference/spike_codec_wire_formats.md)
+for framing, external metadata, reset rules and native-component boundaries.
+
+The measurements below are historical snapshots for their stated inputs.
+Hardware descriptions are incomplete for some tables; those figures do not
+establish a current side-by-side performance qualification of the catalogue.
 
 ## The Problem
 
@@ -34,7 +44,7 @@ Raw ADC (T, N, 10-bit)
     +-- Spike Snippets -> Template Library + Quantized Residuals
     |       -> ~7% of compressed output (16 templates learned)
     |
-    +-- Background LFP -> 4x downsample + delta + quantize + zlib
+    +-- Background LFP -> 16x downsample + delta + quantize + zstd/zlib
             -> ~92% of compressed output
 ```
 
@@ -329,19 +339,24 @@ real recordings the ratio is far lower (see the Neuralink measurement above).
 python examples/demo_waveform_codec.py --channels 1024 --duration 1.0
 ```
 
-## Six Codecs, One API
+## Five Raster Codecs Through One Factory
+
+`recommend_codec` is a deterministic configuration heuristic. It does not
+measure a recording or guarantee processing latency; `firing_rate` is retained
+for compatibility and does not affect the result. Use `list_codec_descriptors`
+and `probe_codec` for the complete catalogue and explicit runtime availability.
 
 ```python
 from sc_neurocore.spike_codec import get_codec, recommend_codec, list_codecs
 
-# Auto-select based on your system
+# Select a raster configuration with the documented heuristic
 name = recommend_codec(n_channels=1024, firing_rate=2.0, latency_ms=5.0)
 codec = get_codec(name)
 
 # Or pick directly
 codec = get_codec("predictive", alpha=0.005)
 
-# All codecs: compress(spikes) → (bytes, result), decompress(bytes, T, N) → spikes
+# Raster codecs: compress(spikes) → (bytes, result), decompress(bytes, T, N) → spikes
 data, result = codec.compress(spikes)
 recovered = codec.decompress(data, T, N)
 ```
@@ -352,8 +367,8 @@ recovered = codec.decompress(data, T, N)
 | `predictive` (context) | Structured data | Markov context + XOR | 25.5x on bursty (3x over ISI) |
 | `predictive` (lfsr) | Hardware BCI | Q8.8 LFSR, bit-true Verilog | Same ratio, ASIC-deployable |
 | `delta` | Neural probes | Inter-channel XOR residuals | 8.2x on correlated (70% over ISI) |
-| `streaming` | Real-time BCI | Fixed-latency bitmask frames | Bounded worst-case |
-| `aer` (adaptive) | Neuromorphic | Event list, auto-invert >50% | Format-compatible with Loihi/SpiNNaker |
+| `streaming` | Independent raster windows | Bitmask frames | Measure complete frame size and latency |
+| `aer` (adaptive) | Address-event rasters | Event list, auto-invert >50% | Device and transport adapters require qualification |
 
 ### Competitive Benchmarks (measured, all lossless)
 
@@ -403,10 +418,17 @@ print(result.summary())
 
 ## Predictive Codec (BCI Implants)
 
-Only transmit surprises. Two predictor modes:
+Encode XOR residuals with four predictor choices:
 
 - **`ema`** (default): float EMA rate tracking + threshold comparison. Simple, fast.
-- **`lfsr`**: Q8.8 fixed-point rate + LFSR comparator. **Bit-true with `sc_bitstream_encoder.v`** — the prediction logic maps directly to Verilog RTL. No float arithmetic, no multipliers. Same LFSR polynomial as the hardware (x^16 + x^14 + x^13 + x^11 + 1).
+- **`lfsr`**: Q8.8 fixed-point rate and an LFSR comparator.
+- **`context`**: a Python context predictor controlled by `context_bits`.
+- **`world_model`**: an optional Python predictor excluded from the base wheel;
+  probe this variant before use.
+
+Real Rust kernels accelerate EMA/LFSR prediction and recovery. The packet
+container and the other predictors remain Python; no backend keyword or
+standalone native predictive container is provided by this interface.
 
 ```
 Encoder:                          Decoder:
@@ -433,21 +455,21 @@ print(f"LFSR: {result_hw.compression_ratio:.1f}x")
 
 ### Hardware Mapping
 
-**LFSR mode maps 1:1 to existing Verilog RTL:**
+The LFSR predictor has these candidate hardware operations. Shared building
+blocks do not establish a synthesised whole-codec implementation:
 
-| Operation | Verilog Module | Gates (1024ch) |
-|-----------|---------------|----------------|
-| LFSR pseudo-random | `sc_bitstream_encoder.v` | ~2K |
-| Q8.8 rate update | shift-add accumulator | ~10K |
-| Comparator (LFSR < rate) | comparator bank | ~1K |
-| XOR (actual vs predicted) | XOR gate array | ~1K |
-| ISI encoder | counter + shift register | ~30K |
-| **Total** | | **~44K** (excl. SRAM) |
+| Operation | Candidate building block |
+|-----------|--------------------------|
+| LFSR pseudo-random | `sc_bitstream_encoder.v` |
+| Q8.8 rate update | Shift-add accumulator |
+| Comparator (LFSR < rate) | Comparator bank |
+| XOR (actual vs predicted) | XOR gate array |
+| ISI encoder | Counter and shift register |
 
-The LFSR predictor uses the same polynomial (x^16 + x^14 + x^13 + x^11 + 1)
-and step semantics as `sc_bitstream_encoder.v`. Python prediction = Verilog
-prediction, bit-for-bit. Formally verified through the HDL SymbiYosys
-inventory: 90 proof jobs and 476 formal statements.
+The shared LFSR polynomial is x^16 + x^14 + x^13 + x^11 + 1. A proof inventory
+for individual HDL modules does not establish end-to-end codec equivalence.
+Predictor state resets for each batch; lossless raster recovery requires
+`base_mode="lossless"`.
 
 ## Delta Codec (Neural Probes)
 
@@ -465,8 +487,9 @@ print(f"{result.compression_ratio:.1f}x, delta sparsity: {result.mean_delta_spar
 
 ## Streaming Codec (Real-Time)
 
-Fixed-size time windows, each independently decodable. Bounded worst-case
-latency = window_size / sample_rate.
+Fixed-size time windows, each independently decodable. The acquisition
+duration is `window_size / sample_rate`; processing and transport add latency
+and require separate measurement.
 
 ```python
 from sc_neurocore.spike_codec import StreamingSpikeCodec
@@ -483,8 +506,10 @@ recovered = codec.decompress_frame(frame)
 ## AER Codec (Neuromorphic)
 
 Address-Event Representation: compact (timestamp_delta, neuron_id) event stream.
-Compatible with `comm/aer_udp.py` protocol. Delta-encodes timestamps for
-compression. O(n_spikes) bytes.
+It uses AERX/AERI raster packets, distinct from the `comm/aer_udp.py`
+transport header. An explicit adapter and real integration test are required
+before claiming transport or physical-device interoperability. Packet size
+also includes framing, address widths and timestamp escapes.
 
 ```python
 from sc_neurocore.spike_codec import AERSpikeCodec

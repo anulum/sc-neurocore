@@ -387,6 +387,7 @@ nav:
           - Spike DSP: api/spike_dsp.md
       - Data:
           - Spike Codec: api/spike_codec.md
+          - Spike Codec Wire Formats: reference/spike_codec_wire_formats.md
           - Spike GNN: api/spike_gnn.md
       - Symbolic:
           - Symbolic Reasoning: api/symbolic.md

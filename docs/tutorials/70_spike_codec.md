@@ -1,7 +1,20 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Spike codec tutorial -->
+
 # Tutorial 70: Spike Codec Library
 
 Compress spike trains for BCI telemetry, neural probes, neuromorphic routing,
-and real-time streaming. Six codecs behind one API.
+and independent streaming frames. Five raster codecs share the legacy factory;
+the waveform family and two stateful stream APIs have separate contracts.
+Use the [typed catalogue](../api/spike_codec.md#discover-and-inspect) to discover
+all six families, their variants and actual native-component availability.
+The [wire reference](../reference/spike_codec_wire_formats.md) records the
+metadata, state and compatibility requirements for each interface.
 
 ## The Bandwidth Problem
 
@@ -12,7 +25,11 @@ and real-time streaming. Six codecs behind one API.
 | Neuropixels 2.0 (384ch) | 30 Mbps | disk storage | archival ratio |
 | Closed-loop BCI | 200 Mbps | on-chip | <1ms latency |
 
-## Quick Start — Auto-Select
+## Quick Start — Select a Raster Configuration
+
+`recommend_codec` applies a deterministic configuration heuristic. It does not
+measure the data, backend speed or end-to-end latency. `firing_rate` is retained
+for compatibility and does not change its selection.
 
 ```python
 import numpy as np
@@ -22,7 +39,7 @@ from sc_neurocore.spike_codec import get_codec, recommend_codec
 rng = np.random.RandomState(42)
 spikes = (rng.random((1000, 1024)) < 0.005).astype(np.int8)
 
-# Auto-recommend codec for your system
+# Apply the raster configuration heuristic
 name = recommend_codec(
     n_channels=1024,
     firing_rate=2.0,      # Hz per neuron
@@ -41,8 +58,9 @@ print(f"{result.compression_ratio:.1f}x compression")
 
 ## Codec 1: ISI (Baseline)
 
-Inter-spike interval encoding. Per-neuron spike times → differences → LEB128
-variable-length integers. Pure sparsity exploitation.
+Inter-spike interval encoding. Entropy defaults to `auto`, which selects
+canonical Huffman above 3% event density and LEB128 varints otherwise.
+Explicit `entropy="varint"` and `entropy="huffman"` are also available.
 
 ```python
 from sc_neurocore.spike_codec import SpikeCodec
@@ -57,7 +75,8 @@ codec_lossy = SpikeCodec(mode="lossy", timing_precision=5)
 data_lossy, result_lossy = codec_lossy.compress(spikes)
 ```
 
-Best for: general-purpose, extremely sparse data (>100x at <0.1% firing rate).
+Compare the complete packet size on your own sparse raster before choosing
+an entropy mode; compression ratios depend on the recording and framing.
 
 ## Codec 2: Predictive (BCI Implants)
 
@@ -112,13 +131,14 @@ print(f"{result.compression_ratio:.1f}x, "
       f"{result.n_groups} groups of {result.group_size}")
 ```
 
-Best for: spatially correlated recordings (Neuropixels, Utah arrays). 70%+
-improvement over ISI on correlated data.
+Use for spatially correlated rasters and compare its complete packet size with
+ISI on the same data. Group size must be in 1–256, including after mutation.
 
 ## Codec 4: Streaming (Real-Time BCI)
 
 Fixed-size time windows, each independently decodable. No inter-frame
-dependencies. Bounded worst-case latency = window_size / sample_rate.
+dependencies. `window_size / sample_rate` is the acquisition duration of a
+frame; encoding, transport and decoding add latency and require measurement.
 
 ```python
 from sc_neurocore.spike_codec import StreamingSpikeCodec
@@ -135,13 +155,14 @@ frame_bytes = codec.compress_frame(window)   # single (20, N) window
 recovered_window = codec.decompress_frame(frame_bytes)
 ```
 
-Best for: closed-loop BCI, real-time spike sorting, bounded-latency telemetry.
+Use the frame API when independent raster windows match the consumer contract.
 
 ## Codec 5: AER (Neuromorphic Routing)
 
 Address-Event Representation: (timestamp_delta, neuron_id) event list.
-Delta-encoded timestamps, variable-width neuron IDs. Compatible with
-the AER-over-UDP protocol in `sc_neurocore.comm.aer_udp`.
+Delta-encoded timestamps, variable-width neuron IDs. Its AERX/AERI raster
+packets differ from the transport format in `sc_neurocore.comm.aer_udp`;
+integration requires an explicit, qualified adapter.
 
 ```python
 from sc_neurocore.spike_codec import AERSpikeCodec
@@ -153,10 +174,10 @@ print(f"{result.n_events} events, "
       f"{result.compression_ratio:.1f}x")
 ```
 
-Best for: neuromorphic inter-chip (Loihi, SpiNNaker, BrainScaleS), event
-cameras (DVS), event-driven simulators.
+This interface encodes binary rasters. Physical-device and camera
+interoperability need their own adapters and execution evidence.
 
-## Comparing All Codecs
+## Comparing the Five Raster Codecs
 
 ```python
 from sc_neurocore.spike_codec import get_codec, list_codecs
@@ -173,15 +194,15 @@ target systems (BCI, probe, neuromorphic, real-time).
 
 ## Hardware Mapping
 
-The predictive codec maps to on-implant ASIC with minimal gate count:
+The predictive algorithm uses these operations. This is an illustrative
+mapping, not a synthesised whole-codec implementation or a gate-count result:
 
-| Operation | Hardware | Gates (1024ch) |
-|-----------|----------|----------------|
-| EMA update | shift-add accumulator | ~10K |
-| Threshold compare | comparator bank | ~1K |
-| XOR (actual vs predicted) | XOR gate array | ~1K |
-| ISI encoder | counter + shift register | ~30K |
-| **Total** | | **~50K** (excl. SRAM) |
+| Operation | Candidate building block |
+|-----------|--------------------------|
+| EMA update | Shift-add accumulator |
+| Threshold compare | Comparator bank |
+| XOR (actual vs predicted) | XOR gate array |
+| ISI encoder | Counter and shift register |
 
 Verilog building blocks in `hdl/`: `sc_aer_encoder.v`, `sc_lif_neuron.v`,
 `sc_bitstream_encoder.v`.

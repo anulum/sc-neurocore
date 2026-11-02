@@ -977,12 +977,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 663,
+    "public_documentation_pages": 664,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5551
+    "test_files": 5554
   },
   "documentation": {
     "public_pages": [
@@ -1475,6 +1475,7 @@
       "docs/index.md",
       "docs/pricing.md",
       "docs/product_overview.md",
+      "docs/reference/spike_codec_wire_formats.md",
       "docs/reports/SC_NEUROCORE_CAPABILITY_REPORT_v3.13.md",
       "docs/reports/SC_NEUROCORE_COMPREHENSIVE_STATE_REPORT_2026-02-01.md",
       "docs/reports/SC_NEUROCORE_DISCREPANCY_REMEDIATION_PLAN_2026-02-11.md",
@@ -7732,6 +7733,9 @@
       "tests/test_spike_alu_spike_register.py",
       "tests/test_spike_alu_spike_sort.py",
       "tests/test_spike_codec_base_distribution_import.py",
+      "tests/test_spike_codec_catalogue_availability.py",
+      "tests/test_spike_codec_catalogue_descriptions.py",
+      "tests/test_spike_codec_catalogue_workflows.py",
       "tests/test_spike_codec_huffman_encoder.py",
       "tests/test_spike_codec_spike_codec.py",
       "tests/test_spike_codec_spike_codec_huffman.py",

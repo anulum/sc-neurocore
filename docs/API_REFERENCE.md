@@ -41030,6 +41030,186 @@ neuron_bits : int
 
 ---
 
+## Module `spike_codec.catalogue`
+
+### Function `list_codec_descriptors()`
+Return immutable descriptions of six families and two stream APIs.
+
+Returns
+-------
+tuple of CodecDescriptor
+    Descriptions sorted by name, including optional variants independently
+    of installation. Use ``probe_codec`` for an explicit runtime check.
+
+### Function `describe_codec(name)`
+Look up an existing codec's interface and wire contracts.
+
+Parameters
+----------
+name : str
+    Exact case-sensitive catalogue identifier.
+
+Returns
+-------
+CodecDescriptor
+    Static immutable description. Lookup performs no backend probing.
+
+Raises
+------
+ValueError
+    If the name is not in the catalogue.
+
+### Function `probe_codec(name, variant)`
+Probe public entry points and actual native component imports explicitly.
+
+Parameters
+----------
+name : str
+    Exact catalogue identifier.
+variant : str or None
+    Mode, predictor or timing choice; None selects the constructor default.
+
+Returns
+-------
+CodecAvailability
+    Import availability and diagnostics. This probe neither constructs a
+    codec nor qualifies data, hardware, performance or full Rust containers.
+    Predictive kernels are cached by their owning module; installing an engine
+    later does not update existing instances. Start a fresh process in that case.
+    Native loader OSError or RuntimeError excludes ``auto`` from advertised
+    choices; ImportError permits the classes' documented Python fallback.
+
+Raises
+------
+ValueError
+    If the codec or variant name is unknown.
+
+---
+
+## Module `spike_codec.catalogue_types`
+
+### Class `CodecWireFormat`
+Describe a currently readable or writable wire representation.
+
+Parameters
+----------
+name : str
+    Format identifier used by a variant's ``formats`` field.
+magic_hex : str or None
+    Leading marker in hexadecimal, or None when there is no fixed marker.
+byte_order : str
+    Field byte order; individual bit layouts are described in the format guide.
+dimensions_in_header : bool
+    Whether dimensions occur in the representation, independently of whether
+    the current public decoder still requires explicit dimensions.
+required_decode_metadata : tuple of str
+    Configuration, sample counts or preceding state required outside the packet.
+checksum : str or None
+    Embedded integrity check, or None when the format has none.
+readable, writable : bool
+    Whether current public decoders and encoders accept or emit this format.
+notes : tuple of str
+    Compatibility restrictions and interpretation details.
+
+
+### Class `CodecVariant`
+Describe one existing mode, predictor or event-timing choice.
+
+Parameters
+----------
+name : str
+    Value of the descriptor's variant parameter, or its sole fixed variant.
+fidelity : {'lossless', 'lossy', 'configurable'}
+    Preservation of the descriptor's input under the documented input contract.
+    Configurable variants depend on parameters described in ``notes``.
+native_scope : str
+    Existing Rust component scope; a kernel or packet coder does not imply
+    a standalone native implementation of its enclosing Python container.
+native_module : str or None
+    Importable module containing the required native callables.
+native_symbols : tuple of str
+    Callables needed for both directions of the declared native component.
+optional_modules : tuple of str
+    Additional Python modules required by this particular variant.
+formats : tuple of str
+    Format identifiers from the enclosing descriptor.
+notes : tuple of str
+    Fidelity conditions, state rules and native implementation boundaries.
+
+
+### Class `CodecDescriptor`
+Describe a codec family or a distinct existing stream API.
+
+Parameters
+----------
+name, title : str
+    Stable lookup identifier and human-readable name.
+category : {'family', 'stream_api'}
+    Six batch families are distinguished from two additional stream APIs.
+family : str
+    Related algorithm family; stream APIs do not increase the family count.
+input_kind : {'binary_raster', 'numeric_waveform', 'int16_waveform'}
+    Input contract, with time rows and channel columns.
+output_kind : str
+    Decoded result kind, rather than a promise of a common decoder signature.
+encoder_entrypoint, decoder_entrypoint : str
+    Importable public class paths. Batch codecs use one class in both directions.
+encode_method, decode_method : str
+    Public methods on those classes.
+encoder_required_parameters, decoder_required_parameters : tuple of str
+    Required constructor arguments; defaults remain defined by the public classes.
+decode_required_parameters : tuple of str
+    Required decode method arguments after the payload.
+configuration_parameters : tuple of str
+    Existing encoder constructor parameter names.
+variant_parameter : str or None
+    Constructor parameter selecting a variant, or None for a fixed interface.
+backend_parameter : bool
+    Whether the encoder accepts ``backend='auto'|'python'|'rust'`` explicitly.
+    Automatic predictive kernels are not such a selector.
+input_dtype : str
+    Intended public input values; coercion is defined by the actual class.
+input_layout : str
+    Time-major two-dimensional layout.
+time_unit : str
+    Timestamp and window-count unit; sample rate is external unless configured.
+stateful : bool
+    Whether model state persists between packets on the same instance.
+variants : tuple of CodecVariant
+    Existing choices, with the constructor default first.
+wire_formats : tuple of CodecWireFormat
+    Read/write representations and their external metadata requirements.
+uses_codecs : tuple of str
+    Other catalogue entries used inside this implementation.
+notes : tuple of str
+    Input assumptions, additional methods and integration boundaries.
+
+- **variant**(name)
+  - Return a named variant, or the constructor default.
+
+### Class `CodecAvailability`
+Report an explicit runtime probe without selecting an encoder backend.
+
+Parameters
+----------
+name, variant : str
+    Catalogue and variant identifiers that were probed.
+python_available : bool
+    Public Python entry points and optional variant modules are importable.
+rust_components_available : bool
+    Required native callables are importable now. This does not certify a
+    complete Rust container or change existing instances' cached backend choices.
+native_scope : str
+    Scope of the native callables, as declared by the variant.
+backend_choices : tuple of str
+    Explicit backend selector values available to the public Python interface.
+    Empty when that interface has no backend parameter or cannot be loaded.
+diagnostics : tuple of str
+    Missing modules, missing symbols or actual loader errors observed by the probe.
+
+
+---
+
 ## Module `spike_codec.codec`
 
 ### Class `CompressionResult`
@@ -41198,7 +41378,7 @@ Codec instance with compress/decompress methods.
 List available codec names.
 
 ### Function `recommend_codec(n_channels, firing_rate, latency_ms, correlated, neuromorphic)`
-Recommend a codec based on data characteristics.
+Suggest a raster codec using a deterministic configuration heuristic.
 
 Parameters
 ----------
@@ -41211,11 +41391,15 @@ latency_ms : float
 correlated : bool
     True if nearby channels are spatially correlated.
 neuromorphic : bool
-    True if target is neuromorphic hardware (Loihi, SpiNNaker).
+    Request address-event raster coding; this does not verify hardware or UDP compatibility.
 
 Returns
 -------
-str — codec name
+str
+    Raster codec name. Priority: neuromorphic -> aer; latency_ms <= 1 ->
+    streaming; correlated and channels >= 16 -> delta; channels >= 64 ->
+    predictive; otherwise isi. firing_rate is retained for compatibility
+    and does not affect this heuristic. No measured speed or latency is promised.
 
 ---
 

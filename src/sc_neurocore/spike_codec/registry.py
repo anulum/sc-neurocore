@@ -8,16 +8,20 @@
 
 """Codec registry: lookup by name, recommend by data characteristics.
 
-Six codecs for different use cases:
+Five raster codecs in this legacy factory:
 
-    isi         — Baseline ISI + varint. Simple, general-purpose.
-    predictive  — EMA predictor + XOR errors. Best for BCI implants.
-    delta       — Inter-channel XOR. Best for correlated probe arrays.
-    streaming   — Fixed-latency frames. Best for real-time decoding.
-    aer         — Event list. Best for neuromorphic inter-chip routing.
+    isi         — ISI with auto-selected varint/Huffman entropy.
+    predictive  — Predictor + XOR residuals.
+    delta       — Inter-channel XOR residuals.
+    streaming   — Independent frames; window size is in samples.
+    aer         — Address-event raster packets.
 
 All share the same API: compress(spikes) → (bytes, result),
 decompress(bytes, T, N) → spikes.
+
+Use list_codec_descriptors from sc_neurocore.spike_codec for the full
+catalogue, including waveform and stateful stream interfaces. These have
+different contracts and are not inserted into this raster-only factory.
 """
 
 from __future__ import annotations
@@ -74,7 +78,7 @@ def recommend_codec(
     correlated: bool = False,
     neuromorphic: bool = False,
 ) -> str:
-    """Recommend a codec based on data characteristics.
+    """Suggest a raster codec using a deterministic configuration heuristic.
 
     Parameters
     ----------
@@ -87,11 +91,15 @@ def recommend_codec(
     correlated : bool
         True if nearby channels are spatially correlated.
     neuromorphic : bool
-        True if target is neuromorphic hardware (Loihi, SpiNNaker).
+        Request address-event raster coding; this does not verify hardware or UDP compatibility.
 
     Returns
     -------
-    str — codec name
+    str
+        Raster codec name. Priority: neuromorphic -> aer; latency_ms <= 1 ->
+        streaming; correlated and channels >= 16 -> delta; channels >= 64 ->
+        predictive; otherwise isi. firing_rate is retained for compatibility
+        and does not affect this heuristic. No measured speed or latency is promised.
     """
     if neuromorphic:
         return "aer"
