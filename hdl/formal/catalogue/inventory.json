@@ -21,7 +21,7 @@
       "properties": [
         "curated harness: 4 assertions"
       ],
-      "q_format": "Q8.8",
+      "q_format": "Q16.16",
       "reachability_asserted": false,
       "solver": "z3"
     },

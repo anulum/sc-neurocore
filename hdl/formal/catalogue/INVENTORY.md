@@ -10,7 +10,7 @@ Jobs: **49**
 
 | Class | Schema | Module | State port | Q format | Depth |
 | --- | --- | --- | --- | --- | ---: |
-| AdExNeuron | adex | `sc_adex` | `v_out` | Q8.8 | 6 |
+| AdExNeuron | adex | `sc_adex` | `v_out` | Q16.16 | 6 |
 | AdaptiveThresholdIFNeuron | adaptive_threshold_if | `sc_adaptive_threshold_if` | `v_out` | Q32.32 | 4 |
 | AiharaMapNeuron | aihara_map | `sc_aihara_map` | `y_out` | Q8.24 | 6 |
 | AlphaNeuron | alpha | `sc_alpha_synapse_lif` | `v_out` | Q32.32 | 4 |

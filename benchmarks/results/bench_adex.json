@@ -10,11 +10,11 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 8.862885,
-      "minimum_call_ms": 8.297036,
-      "speedup_vs_python": 152.84887031705813,
+      "median_call_ms": 5.557075,
+      "minimum_call_ms": 5.213876,
+      "speedup_vs_python": 118.74554599317088,
       "used": true,
-      "v_parity_max_abs_diff": 7.105427357601002E-15,
+      "v_parity_max_abs_diff": 7.105427357601002e-15,
       "w_parity_max_abs_diff": 0.0
     },
     "julia": {
@@ -27,9 +27,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 4.635596,
-      "minimum_call_ms": 3.699177,
-      "speedup_vs_python": 292.2346899945552,
+      "median_call_ms": 3.806454,
+      "minimum_call_ms": 3.481722,
+      "speedup_vs_python": 173.35764598757797,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -44,12 +44,12 @@
         "v": -52.37869326736917,
         "w": 74.95731155256478
       },
-      "median_call_ms": 8.350119,
-      "minimum_call_ms": 7.825658,
-      "speedup_vs_python": 162.23504838673557,
+      "median_call_ms": 6.400672,
+      "minimum_call_ms": 6.256276,
+      "speedup_vs_python": 103.09509767099455,
       "used": true,
-      "v_parity_max_abs_diff": 7.389644451905042E-13,
-      "w_parity_max_abs_diff": 5.684341886080802E-14
+      "v_parity_max_abs_diff": 7.389644451905042e-13,
+      "w_parity_max_abs_diff": 5.684341886080802e-14
     },
     "python": {
       "available": true,
@@ -61,8 +61,8 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 1354.68196,
-      "minimum_call_ms": 1222.31595,
+      "median_call_ms": 659.877905,
+      "minimum_call_ms": 580.495263,
       "speedup_vs_python": 1.0,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
@@ -78,9 +78,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.852808,
-      "minimum_call_ms": 3.664618,
-      "speedup_vs_python": 351.60899790490464,
+      "median_call_ms": 2.956489,
+      "minimum_call_ms": 2.871906,
+      "speedup_vs_python": 223.19646885207422,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -90,8 +90,8 @@
   "measured_order": [
     "rust",
     "julia",
-    "mojo",
     "go",
+    "mojo",
     "python"
   ],
   "meta": {
@@ -102,31 +102,31 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      8.64501953125,
-      10.0615234375,
-      14.91748046875
+      8.1298828125,
+      7.9560546875,
+      7.9140625
     ],
     "load_average_start": [
-      8.86865234375,
-      10.22412109375,
-      15.10205078125
+      8.78662109375,
+      8.07421875,
+      7.95166015625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
-      "go": "go version go1.24.0 linux/amd64",
-      "julia": "julia version 1.12.6",
-      "mojo": "Mojo 1.0.0b1 (a9591de6)",
-      "numpy": "2.2.6",
+      "go": "unavailable",
+      "julia": "julia version 1.11.9",
+      "mojo": "Mojo 1.0.0 (ed45d567)",
+      "numpy": "2.5.4",
       "python": "3.12.3",
-      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
+      "rust": "rustc 1.98.1 (48a229cea 2026-09-01)"
     },
     "single_cpu_pinned": true
   },
   "schema_version": "sc-neurocore.polyglot-benchmark.v2",
   "source_hashes": {
     "benchmarks/bench_adex.py": "2a41179927562aa73bd737ce4d8ebf8ca7ed7fb7729c34c6455e8a57c058c50d",
-    "bridge/sc_neurocore_engine/__init__.py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70",
+    "bridge/sc_neurocore_engine/__init__.py": "2cc87991c550d623ac99f241b43a63b494640dc9ad0e7deba4779a56af74f72f",
     "engine/src/bindings/adex_neuron.rs": "c10a0e6e9033e6113b977ffdc44d98d59523dc9f53232ef7c3f5464d26e129f1",
     "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
     "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
@@ -134,8 +134,8 @@
     "engine/src/neuron/adex.rs": "d91aaab348984697ec7f54077a9b78a3dcff1cb37bb89347c227c6f3ee55ed57",
     "engine/src/neuron/adex/simulation.rs": "23ea4e27f902502eb755c3403d6c91d0ea494a756a35ea18b5042bde1748122d",
     "hdl/formal/catalogue/sc_adex.sby": "1f66fbaf7de689662aff7b6f0d7163ed9a045c213b1fc3435f875a4ab19878c4",
-    "hdl/formal/catalogue/sc_adex.v": "748b85dc5d30653332b8249fe09a06f81b1fa1264b219d918c8dd5b771b9a2be",
-    "hdl/formal/catalogue/sc_adex_formal.v": "112b5e631e9e12ea5535aa96202da8178ce44cad93754f799ccf4f07d199f768",
+    "hdl/formal/catalogue/sc_adex.v": "d647bf02cac7ef8711b51df5bc15e0d641581102394bbf60b7d940dd18d6ae68",
+    "hdl/formal/catalogue/sc_adex_formal.v": "6e90d3c689883d6d3afb1c5e21f9a1317a56c7e068fba7697dbdf6c7ea87406b",
     "hdl/reports/yosys_adex_q1616_2026-08-30.json": "c1faf824958d767fb08a547ae8932975fa12a7db4ff42f75408885ee2c9cc27d",
     "src/sc_neurocore/accel/go/neurons/adex/adex.go": "cbfc88e549f8f67dfb50f915122dbf5b9b8d9f1447c513f7f07bddb02c7f9ff7",
     "src/sc_neurocore/accel/go/services/adex.go": "971e5554082393d046a405999b1519e70954fb7808e92e9f50a7055e26f3a3b1",
@@ -143,9 +143,9 @@
     "src/sc_neurocore/accel/mojo/kernels/adex.mojo": "972f189171a83f7e76582c9f197e094659a6d0b3d91d468f0ad5753bbb625319",
     "src/sc_neurocore/accel/rust/safety/adex.rs": "073ac7e19bbd2a069933a8452c5f03a06115468c29ab320f788c562f3d4c07f6",
     "src/sc_neurocore/neurons/model_descriptors/AdExNeuron.toml": "098acc2eca46847584172d00c4c149b8dc1bbdca60e059e01d64729ddc982fc1",
-    "src/sc_neurocore/neurons/model_schemas/adex.json": "5485589e2fe09d0ad858991966740c359f71bf02cf8d5899de0d05f641ee6a7c",
-    "src/sc_neurocore/neurons/model_schemas/adex.toml": "f146a06d7a7cdf6f467e3a29294ca09042f7ca35d57570f9f9a520f3a0290363",
-    "src/sc_neurocore/neurons/models/adex.py": "f4599bd6235ca863357b8e02537b5d87bda14a7121ae7df9645d29787e263140",
+    "src/sc_neurocore/neurons/model_schemas/adex.json": "bb469e16344fd3bc6a6af800f4757689e0feb16aba05b559eb43c7d13ee715c4",
+    "src/sc_neurocore/neurons/model_schemas/adex.toml": "98eafef87b845817c12e97b49cbc882eb414a398dd69881beac855a2f4c77513",
+    "src/sc_neurocore/neurons/models/adex.py": "06c73c9e8cd52598504786960fa9965cf6e7ae9d20e4d9398c21f79a30498146",
     "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json": "e6b747d6e0db330b9e5ed9ddb9df7655810d9e5af54ed8653753b60889c7e50c",
     "src/sc_neurocore/neurons/reference_trace_data/adex_resting_adaptation_doi.json": "5a5c2b5df423e07dd47066619a677bd0b1cc1a13bfbcea9989e933b914a1fcd0"
   },
@@ -154,6 +154,6 @@
     "n_steps": 100000,
     "parameters": "AdEx maintained defaults; candidate-first baseline Euler",
     "repeats": 7,
-    "state_trace_atol": 5E-12
+    "state_trace_atol": 5e-12
   }
 }

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1682
+expected_file_count = 1684
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6862,3 +6862,11 @@ rationale = "Generate formal catalogue jobs with retained solver selection, lice
 [[file]]
 path = "tests/test_catalogue_formal_emitter_inventory.py"
 rationale = "Exercise actual catalogue regeneration while retaining the committed sources and solver of repaired jobs."
+
+[[file]]
+path = "tests/test_cosim_adex.py"
+rationale = "Execute generated and committed AdEx RTL against maintained event counts across four input drives."
+
+[[file]]
+path = "tests/test_catalogue_formal_other_precision_jobs.py"
+rationale = "Verify catalogue precision choices preserve representable model parameters and existing formal harness contracts."

@@ -19,7 +19,10 @@ from tests.cosim_support import (
     HAS_IVERILOG,
     _python_spike_count,
     _verilog_spike_count_q1616,
+    simulate,
 )
+from sc_neurocore.compiler.equation_compiler import generate_testbench
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 
@@ -28,9 +31,8 @@ REPOSITORY = Path(__file__).resolve().parents[1]
 class TestQ1616Precision:
     """Q16.16 precision mode: 16 integer + 16 fractional bits (32-bit).
 
-    Q16.16 combines Q8.8's wide integer range [-32768, +32767] with
-    1/65536 ≈ 0.000015 resolution. This is the "gold standard" for
-    hardware neuron fidelity, suitable for all model dynamics.
+    Q16.16 represents the positive capacitance and tested input drives while
+    retaining 1/65536 ≈ 0.000015 resolution.
     """
 
     @pytest.mark.parametrize(
@@ -42,6 +44,33 @@ class TestQ1616Precision:
         py_spikes = _python_spike_count("adex", 500, current)
         vlog_spikes = _verilog_spike_count_q1616("adex", 500, current)
         assert py_spikes == vlog_spikes == expected_events
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+@pytest.mark.parametrize(
+    ("current", "expected_events"),
+    [(0.0, 0), (200.0, 2), (500.0, 6), (1000.0, 12)],
+)
+def test_committed_formal_adex_matches_the_maintained_source_events(
+    current: float, expected_events: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Execute the shipped formal DUT with a carrier that represents the positive capacitance."""
+    monkeypatch.chdir(tmp_path)
+    neuron = UniversalNeuron.from_schema("adex")
+    rtl = (REPOSITORY / "hdl/formal/catalogue/sc_adex.v").read_text(encoding="utf-8")
+    testbench = generate_testbench(
+        neuron.to_equation_neuron(),
+        module_name="sc_adex",
+        n_steps=500,
+        input_current=current,
+        data_width=32,
+        fraction=16,
+    )
+    assert (
+        simulate(rtl, testbench, "sc_adex")
+        == _python_spike_count("adex", 500, current)
+        == expected_events
+    )
 
 
 def test_committed_yosys_report_proves_nontrivial_coarse_synthesis() -> None:

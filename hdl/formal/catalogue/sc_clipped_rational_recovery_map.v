@@ -43,8 +43,8 @@ wire signed [63:0] _dres3 = _div3[63:0];
 wire signed [127:0] _mul4 = P_BETA * (x_reg + 64'sd4294967296);
 wire signed [63:0] _t3 = (_mul4 >>> 32);
 
-wire signed [127:0] dx = ((((((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J)) + 128'sd0) < (((-P_CLIP_BOUND)) + 128'sd0)) ? (-P_CLIP_BOUND) : ((((((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J)) + 128'sd0) > ((P_CLIP_BOUND) + 128'sd0)) ? P_CLIP_BOUND : ((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J)));
-wire signed [127:0] dy = (((((y_reg - _t3)) + 128'sd0) < (((-P_CLIP_BOUND)) + 128'sd0)) ? (-P_CLIP_BOUND) : (((((y_reg - _t3)) + 128'sd0) > ((P_CLIP_BOUND) + 128'sd0)) ? P_CLIP_BOUND : (y_reg - _t3)));
+wire signed [127:0] dx = ((((((((((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J)) + 128'sd0) < (((-P_CLIP_BOUND)) + 128'sd0)) ? (-P_CLIP_BOUND) : ((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J))) + 128'sd0) > ((P_CLIP_BOUND) + 128'sd0)) ? P_CLIP_BOUND : ((((((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J)) + 128'sd0) < (((-P_CLIP_BOUND)) + 128'sd0)) ? (-P_CLIP_BOUND) : ((((((((x_reg) + 128'sd0) < ((64'sd0) + 128'sd0))) ? (_t0) : (_dres3)) + y_reg) + I_t) + P_J)));
+wire signed [127:0] dy = (((((((((y_reg - _t3)) + 128'sd0) < (((-P_CLIP_BOUND)) + 128'sd0)) ? (-P_CLIP_BOUND) : (y_reg - _t3))) + 128'sd0) > ((P_CLIP_BOUND) + 128'sd0)) ? P_CLIP_BOUND : (((((y_reg - _t3)) + 128'sd0) < (((-P_CLIP_BOUND)) + 128'sd0)) ? (-P_CLIP_BOUND) : (y_reg - _t3)));
 
 wire signed [127:0] x_raw = dx;
 wire signed [63:0] x_next = (x_raw > 65'sd9223372036854775807) ? 64'sd9223372036854775807 : (x_raw < (-65'sd9223372036854775808)) ? (-64'sd9223372036854775808) : x_raw[63:0];

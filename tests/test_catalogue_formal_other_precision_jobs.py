@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (other_precision_jobs) from former test_catalogue_formal.py
 
+"""Check representable catalogue carriers and retained formal proof contracts."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -205,3 +207,30 @@ def test_mcculloch_pitts_formal_job_is_stateless_q320_safety() -> None:
     assert ports.primary_state is None
     assert ports.signed_outputs == ()
     assert ports.bit_outputs == ("spike_out",)
+
+
+def test_adex_formal_carrier_retains_source_capacitance_and_curated_properties() -> None:
+    """The maintained AdEx formal lane uses its co-simulated representable carrier and original safety harness."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("emit_catalogue_formal_adex_precision", EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    assert module.PRECISION_BY_SCHEMA["adex"] == (32, 16)
+    assert module.DEPTH_BY_SCHEMA["adex"] == 6
+    assert module.CURATED_CLASS_TO_MODULE["AdExNeuron"] == "sc_adex"
+    result = module.emit_one("AdExNeuron")
+    assert (result.data_width, result.fraction, result.depth) == (32, 16, 6)
+    assert result.properties == ("curated harness: 4 assertions",)
+    assert result.assumptions == ("curated harness: 3 assumptions",)
+    from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
+    expected = UniversalNeuron.from_schema("adex").to_verilog(
+        module_name="sc_adex", data_width=32, fraction=16
+    )
+    assert result.rtl_path.read_text(encoding="utf-8") == expected.rstrip() + "\n"
+    harness = result.formal_path.read_text(encoding="utf-8")
+    assert "cover (past_valid && rst_n && spike_out);" in harness
+    assert "assert ($signed(v_out) == -32'sd4456448);" in harness

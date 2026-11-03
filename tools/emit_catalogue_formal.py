@@ -336,6 +336,8 @@ YICES_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wang_buzsaki"})
 # claim formal equivalence or H4.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
+    # AdEx capacitance C=200 and its driven protocols cannot fit signed Q8.8.
+    "adex": (32, 16),
     "adaptive_threshold_if": (64, 32),
     "aihara_map": (32, 24),
     "alpha": (64, 32),

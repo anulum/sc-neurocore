@@ -8,16 +8,16 @@
 
 `default_nettype none
 
-// Formal wrapper for the generated Q8.8 AdEx recurrence.
+// Formal wrapper for the generated Q16.16 AdEx recurrence.
 module sc_adex_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [31:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] v_out;
-    wire signed [15:0] w_out;
+    wire signed [31:0] v_out;
+    wire signed [31:0] w_out;
 
     sc_adex uut (
         .clk(clk),
@@ -43,15 +43,15 @@ module sc_adex_formal (
     always @(*) begin
         if (!rst_n) begin
             assert (spike_out == 1'b0);
-            assert ($signed(v_out) == -16'sd16640);
-            assert ($signed(w_out) == 16'sd0);
+            assert ($signed(v_out) == -32'sd4259840);
+            assert ($signed(w_out) == 32'sd0);
         end
     end
 
     // A public event and the public reset state are committed atomically.
     always @(posedge clk) begin
         if (past_valid && rst_n && spike_out)
-            assert ($signed(v_out) == -16'sd17408);
+            assert ($signed(v_out) == -32'sd4456448);
         cover (past_valid && rst_n && spike_out);
     end
 `endif

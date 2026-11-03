@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Emit the catalogue AdEx formal RTL in Q16.16 so its capacitance is
+  representable, preserving the reset and event assertions. Compare the shipped
+  RTL with the Python model at four input currents.
+- Regenerate the EscapeRate and clipped rational recovery-map clamp expressions
+  from the maintained compiler and check generated catalogue DUTs for drift.
+- Refresh the five-backend AdEx benchmark against the repaired formal RTL.
+  Retain the dated Yosys statistics as historical measurements.
+
 - Attest admitted host profiles in public formal evidence while retaining machine identity privately through hash-bound originals. Reject private hostnames and missing or mismatched profiles without changing measurements, resource contracts or proof gates.
 
 - Give schema co-simulation tests and evidence references descriptive names. Advance the schema-gap report to version 2 with readable validation priorities and reject stale report vocabulary.

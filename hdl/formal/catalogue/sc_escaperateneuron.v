@@ -333,7 +333,7 @@ wire signed [95:0] _dnum7 = _dop7 <<< 24;
 wire signed [95:0] _div7 = _dnum7 / _dden7;
 wire signed [47:0] _dres7 = _div7[47:0];
 // _exp_lut lookup table (256 entries over [-16.0, 16.0), step 0.125)
-wire signed [47:0] _exp_lut8_arg = ((((_dres7) + 96'sd0) < (((-48'sd11744051200)) + 96'sd0)) ? (-48'sd11744051200) : ((((_dres7) + 96'sd0) > ((48'sd11744051200) + 96'sd0)) ? 48'sd11744051200 : _dres7));
+wire signed [47:0] _exp_lut8_arg = ((((((((_dres7) + 96'sd0) < (((-48'sd11744051200)) + 96'sd0)) ? (-48'sd11744051200) : _dres7)) + 96'sd0) > ((48'sd11744051200) + 96'sd0)) ? 48'sd11744051200 : ((((_dres7) + 96'sd0) < (((-48'sd11744051200)) + 96'sd0)) ? (-48'sd11744051200) : _dres7));
 wire signed [48:0] _exp_lut8_raw = ($signed({{_exp_lut8_arg[47]}, _exp_lut8_arg}) + 49'sd268435456) >>> 21;
 wire [7:0] _exp_lut8_idx = (_exp_lut8_raw < 0) ? 8'd0 : ((_exp_lut8_raw > 49'sd255) ? 8'd255 : _exp_lut8_raw[7:0]);
 reg signed [47:0] _exp_lut8_out;
