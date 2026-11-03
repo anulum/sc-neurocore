@@ -31,7 +31,6 @@ from sc_neurocore.studio.platform.jobs import (
 
 def test_submit_process_task_delivers_confined_seed_inputs(tmp_path: Path) -> None:
     """Process workers read confined seed inputs written at submission time."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"training"}),
@@ -56,29 +55,55 @@ def test_submit_process_task_delivers_confined_seed_inputs(tmp_path: Path) -> No
 
 
 def test_submit_process_task_rejects_oversized_seed_input(tmp_path: Path) -> None:
-    """Seed inputs larger than the artifact ceiling are rejected at submission."""
-
+    """The advertised seed boundary admits exact bytes and refuses one byte more."""
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"training"}),
         default_timeout_seconds=5.0,
         max_artifact_bytes=8,
+        max_concurrent_jobs=1,
+        max_queued_jobs=0,
     )
+    seed = b"s" * manager.max_seed_file_bytes
 
-    with pytest.raises(StudioJobRejected, match="seed input exceeds"):
-        manager.submit_process_task(
+    try:
+        with pytest.raises(StudioJobRejected, match="seed input exceeds"):
+            manager.submit_process_task(
+                kind="training",
+                owner="studio-training-attach",
+                request_id="req-big",
+                task_path="tests.studio_job_tasks:process_seed_echo_task",
+                payload={"seed_path": "weights/model.bin"},
+                seed_inputs={"weights/model.bin": seed + b"s"},
+            )
+        refused = manager.list_records()
+        assert len(refused) == 1 and refused[0].status == "failed"
+        assert manager.status().active_count == 0
+        assert manager.unreaped_workers == ()
+
+        record = manager.submit_process_task(
             kind="training",
             owner="studio-training-attach",
-            request_id="req-big",
+            request_id="req-boundary",
             task_path="tests.studio_job_tasks:process_seed_echo_task",
             payload={"seed_path": "weights/model.bin"},
-            seed_inputs={"weights/model.bin": b"this payload is too large"},
+            seed_inputs={"weights/model.bin": seed},
         )
+        completed = manager.wait(record.job_id, timeout_seconds=20.0)
+        assert completed.status == "completed", completed.public_error
+        assert completed.result == {"seed_text": seed.decode("utf-8"), "seed_bytes": len(seed)}
+        assert completed.artifacts == ()
+        assert manager.status().active_count == 0
+        assert manager.unreaped_workers == ()
+    finally:
+        for record in manager.list_records():
+            manager.cancel(record.job_id)
+            manager.wait(record.job_id, timeout_seconds=20.0)
+        manager._ledger.close()
 
 
 def test_submit_process_task_rejects_escaping_seed_path(tmp_path: Path) -> None:
     """Seed inputs whose path escapes the seed directory are rejected."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"training"}),
@@ -98,7 +123,6 @@ def test_submit_process_task_rejects_escaping_seed_path(tmp_path: Path) -> None:
 
 def test_read_seed_input_reports_missing_payload(tmp_path: Path) -> None:
     """Reading an absent seed input fails closed."""
-
     context = StudioJobContext(
         job_id="sj_seed",
         work_dir=tmp_path / "seed-job",
@@ -112,7 +136,6 @@ def test_read_seed_input_reports_missing_payload(tmp_path: Path) -> None:
 
 def test_read_seed_input_rejects_escaping_path(tmp_path: Path) -> None:
     """Reading a seed input whose path escapes the seed directory fails closed."""
-
     work_dir = tmp_path / "seed-job"
     (work_dir / STUDIO_SEED_INPUT_DIR).mkdir(parents=True)
     context = StudioJobContext(
@@ -128,7 +151,6 @@ def test_read_seed_input_rejects_escaping_path(tmp_path: Path) -> None:
 
 def test_read_seed_input_rejects_symlinked_seed_directory(tmp_path: Path) -> None:
     """Seed reads reject reserved seed directories that resolve outside the job."""
-
     work_dir = tmp_path / "seed-job"
     outside_dir = tmp_path / "outside"
     outside_dir.mkdir()

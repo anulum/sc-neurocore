@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1685
+expected_file_count = 1686
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6874,3 +6874,7 @@ rationale = "Verify catalogue precision choices preserve representable model par
 [[file]]
 path = "tests/test_neurocore_top_rtl.py"
 rationale = "Exercise the actual AXI-Lite configuration reset, complete dense-layer pipeline and repeated measurement lifecycle through native RTL ports."
+
+[[file]]
+path = "tests/test_studio_jobs_process_seeds.py"
+rationale = "Exercise confined process seed delivery, the advertised size boundary and path escape refusals."
