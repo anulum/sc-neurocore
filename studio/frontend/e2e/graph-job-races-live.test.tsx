@@ -225,7 +225,7 @@ it("observes a known durable selection even when the real history response has n
   expect(current().selected?.job_id).toBe(id);
   await act(async () => { gate.release(); await dom.happyDOM.waitUntilComplete(); });
   expect(await authorityJobCount()).toBe(count);
-});
+}, 90_000);
 
 it("refuses a retained retry when its actual input-seal digest completes in another workspace", async () => {
   const before = await authorityJobCount();

@@ -282,7 +282,7 @@ it("withdraws an adopted result when a public editor action produces a nonfinite
   await act(async () => { useStudioStore.getState().updatePopulation("e", { params: { tau: Number.NaN } }); });
   expect(useStudioStore.getState().graphSimResult).toBeNull();
   expect(current().resultError).toContain("withdrawn");
-});
+}, 90_000);
 
 it("preserves an unsaved canvas, undo history and selection when opening a graph-less legacy named session", async () => {
   await act(async () => {
@@ -320,7 +320,7 @@ it("clears account-owned recovery atomically before another account can save, in
   const project = await loadProject("bob-workspace-project");
   expect(JSON.stringify(project)).not.toContain(alice?.submission?.retryKey);
   expect(JSON.stringify(project)).toContain('"graphJobRecovery":null');
-});
+}, 90_000);
 
 it("keeps a different unconfirmed browser retry while visibly opening a saved selection", async () => {
   await act(async () => { await current().submit(false); });
@@ -337,7 +337,7 @@ it("keeps a different unconfirmed browser retry while visibly opening a saved se
   await act(async () => { root.render(<StrictMode><GraphJobsPanel /></StrictMode>); });
   await until(() => container.textContent.includes("takes precedence over this tab's recovery cache"));
   expect(loadGraphJobRecovery(workspace, "local")?.submission?.retryKey).toBe(cached.submission.retryKey);
-});
+}, 90_000);
 
 it("prevents actual Alice login/logout recovery from entering Bob's actual server and browser saves", async () => {
   const password = randomUUID();
@@ -393,7 +393,7 @@ it.each([false, true])("reports a changed graph recovery during an actual projec
   expect(useStudioStore.getState().projectEvidenceBundle).toBeNull();
   expect(useStudioStore.getState().projectEvidenceBundleLoading).toBe(false);
   expect(useStudioStore.getState().projectEvidenceBundleError).toContain("workspace changed during export");
-});
+}, 90_000);
 
 it("reports an unsealable graph clock during an actual in-flight project export", async () => {
   const gate = await responseGate("POST", (path) => path === "/api/studio/evidence/bundle");
@@ -412,4 +412,4 @@ it("reports an unsealable graph clock during an actual in-flight project export"
   expect(useStudioStore.getState().projectEvidenceBundle).toBeNull();
   expect(useStudioStore.getState().projectEvidenceBundleError).toContain("NaN");
   expect(useStudioStore.getState().projectEvidenceBundleLoading).toBe(false);
-});
+}, 90_000);

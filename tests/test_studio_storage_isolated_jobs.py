@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
@@ -25,7 +26,12 @@ import threading
 import time
 
 import pytest
+from fastapi import FastAPI
+from starlette.testclient import TestClient
 
+from sc_neurocore.studio.api.graph_jobs import build_graph_jobs_router
+from sc_neurocore.studio.api.runtime import build_studio_api_context
+from sc_neurocore.studio.api.security import install_studio_security_middleware
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.platform.jobs_admission import StudioJobQueueFull
@@ -33,6 +39,7 @@ from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.platform.training_process import TRAINING_PROCESS_TASK
 from sc_neurocore.studio.training_contract import resolve_training_config
 from sc_neurocore.studio.platform.policy_models import Principal
+from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
 from sc_neurocore.studio.platform.storage_isolated_jobs import IsolatedJobManager
 from sc_neurocore.studio.platform.storage_requester import delegated
@@ -43,6 +50,7 @@ from tests.studio_storage_generation_support import FRAME, Authority
 from tests.studio_storage_launcher_support import Launcher
 from tests.studio_storage_supervision_support import JOB, admit
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
+from tests.test_studio_graph_jobs import graph, terminal_record
 
 ADMIN = Principal("operator", frozenset({"studio.admin"}))
 ANALYSIS = "/api/analysis/jobs"
@@ -322,3 +330,87 @@ def test_an_unanswered_finish_is_kept_for_operators(
         time.sleep(0.05)
     assert completed.status == "completed"
     assert isinstance(manager.generation_failures[job_id], TimeoutError)
+
+
+@pytest.mark.parametrize("seed_limit,worker_limit", [(1, 1 << 20), (1 << 16, 1)])
+def test_graph_http_checks_both_isolated_seed_limits_before_allocating(
+    manager: IsolatedJobManager,
+    base: Path,
+    authority: Authority,
+    ledger: StudioJobLedger,
+    seed_limit: int,
+    worker_limit: int,
+) -> None:
+    """Refuse either restrictive seed budget, then complete the same graph with valid budgets.
+
+    Parameters
+    ----------
+    manager : IsolatedJobManager
+        Existing facade with usable authority and worker limits.
+    base : Path
+        Test-owned namespace of the real authority and launcher.
+    authority : Authority
+        Socket-served production dispatch over the real ledger.
+    ledger : StudioJobLedger
+        Durable job authority used to check refusal before allocation.
+    seed_limit : int
+        Maximum request bytes accepted by the isolated boundary.
+    worker_limit : int
+        Maximum seed bytes readable by a launched worker.
+    """
+    limited = IsolatedJobManager(
+        replace(api_runtime(base, authority), max_artifact_bytes=worker_limit),
+        StorageBoundaryConfiguration.model_validate(
+            _configuration(base).model_dump() | {"max_seed_bytes": seed_limit}, strict=True
+        ),
+        allowed_kinds=frozenset({"analysis"}),
+        default_timeout_seconds=120.0,
+    )
+    request = graph()
+    for service, expected_status in ((limited, 422), (manager, 200)):
+        application = FastAPI()
+        context = build_studio_api_context(
+            application,
+            StudioRuntimeSettings(
+                enforce_route_policies=True,
+                job_root_path=str(base / "unused-context-jobs"),
+                audit_log_path=str(base / "audit.jsonl"),
+                benchmark_databank_path=str(base / "databank.jsonl"),
+            ),
+        )
+        context.studio_job_manager = service
+        application.state.studio_job_manager = service
+        install_studio_security_middleware(application, context)
+        application.include_router(build_graph_jobs_router(context))
+        with TestClient(
+            application,
+            base_url="http://127.0.0.1",
+            headers={"x-studio-principal": "alice", "sec-fetch-site": "none"},
+        ) as client:
+            validated = client.post("/api/graph/jobs/validate", json=request)
+            submitted = client.post("/api/graph/jobs", json=request)
+            assert validated.status_code == submitted.status_code == expected_status
+            if expected_status == 422:
+                assert (
+                    validated.json()
+                    == submitted.json()
+                    == {
+                        "detail": {
+                            "error": "graph_job_refused",
+                            "reason": "Graph job JSON exceeds its byte limit.",
+                        }
+                    }
+                )
+                assert ledger.list_records() == ()
+                assert authority.seen == []
+                assert list((base / "spool").iterdir()) == []
+            else:
+                receipt = submitted.json()
+                assert receipt["graph_sha256"] == validated.json()["graph_sha256"]
+                completed = terminal_record(client, receipt["status_route"])
+                assert completed["status"] == "completed", completed
+                assert completed["owner"] == "alice"
+                result = client.get(receipt["status_route"] + "/result")
+                assert result.status_code == 200, result.text
+                assert (result.json()["n_total"], result.json()["n_steps"]) == (4, 200)
+    assert limited.generation_failures == manager.generation_failures == {}

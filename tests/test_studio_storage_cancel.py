@@ -36,6 +36,7 @@ from sc_neurocore.studio.platform.policy_models import InMemoryAuditSink
 from sc_neurocore.studio.platform.storage_cancel import serve_cancel
 from sc_neurocore.studio.platform.storage_cancel_client import cancel_request, exchange_cancel
 from sc_neurocore.studio.platform.storage_cancel_protocol import (
+    CancelAuthorizedRoute,
     StorageCancelResponse,
     decode_cancel_request,
     decode_cancel_response,
@@ -343,5 +344,79 @@ def test_general_route_authority_preserves_laboratory_owner(
                     deadline=time.monotonic() + 10,
                 )
             assert ledger.record(lab_job).status == "pending"
+    finally:
+        authority.join()
+
+
+@pytest.mark.parametrize(
+    "admission,matching_route",
+    [
+        ({"candidate_operation": "simulate"}, "/api/candidates/jobs/{job_id}/cancel"),
+        ({"graph_operation": "simulate"}, "/api/graph/jobs/{job_id}/cancel"),
+        ({"laboratory_task": "fit"}, "/api/fits/jobs/{job_id}/cancel"),
+    ],
+)
+def test_scientific_cancellation_routes_cannot_cancel_another_job_family(
+    ledger: StudioJobLedger,
+    admission: dict[str, object],
+    matching_route: CancelAuthorizedRoute,
+) -> None:
+    """Refuse mismatched routes without mutation, then cancel through the owning route.
+
+    Parameters
+    ----------
+    ledger : StudioJobLedger
+        Real authority with a test-owned SQLite database.
+    admission : dict[str, object]
+        Scientific family metadata retained by the admitted process job.
+    matching_route : CancelAuthorizedRoute
+        The authenticated cancellation route belonging to that family.
+    """
+    job_id = "sj_" + "b" * 16
+    SharedJobAdmission(ledger, max_concurrent=2, max_queued=0).admit(
+        job_id=job_id,
+        kind="analysis",
+        actor="alice",
+        workspace="default",
+        request_id=None,
+        idempotency_key=None,
+        experiment_sha256=None,
+        admission=admission,
+        execution_model="process",
+        supervisor=supervisor_identity(),
+    )
+    before = ledger.record(job_id)
+    history = ledger.transitions(job_id)
+    requester = StorageRequester(principal_id="alice", roles=())
+    routes: tuple[CancelAuthorizedRoute, ...] = (
+        "/api/candidates/jobs/{job_id}/cancel",
+        "/api/graph/jobs/{job_id}/cancel",
+        "/api/fits/jobs/{job_id}/cancel",
+    )
+    authority = Authority(ledger)
+    try:
+        for route in routes:
+            if route == matching_route:
+                continue
+            with pytest.raises(KeyError):
+                exchange_cancel(
+                    authority.connect(),
+                    cancel_request("default", job_id, requester=requester, authorized_route=route),
+                    expected_service_uid=os.getuid(),
+                    max_bytes=FRAME,
+                    deadline=time.monotonic() + 10,
+                )
+            assert ledger.record(job_id) == before
+            assert ledger.transitions(job_id) == history
+        cancelled = exchange_cancel(
+            authority.connect(),
+            cancel_request("default", job_id, requester=requester, authorized_route=matching_route),
+            expected_service_uid=os.getuid(),
+            max_bytes=FRAME,
+            deadline=time.monotonic() + 10,
+        )
+        assert cancelled.status == "cancelling"
+        assert len(ledger.transitions(job_id)) == len(history) + 1
+        assert authority.seen == ["cancel", "cancel", "cancel"]
     finally:
         authority.join()
