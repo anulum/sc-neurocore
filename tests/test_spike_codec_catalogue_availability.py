@@ -185,3 +185,28 @@ def test_unavailable_explicit_rust_is_refused_by_real_public_constructors() -> N
             kwargs["sample_rate_hz"] = 19531.0
         with pytest.raises(ValueError, match="[Rr]ust"):
             cls(**kwargs)
+
+
+def test_blocked_optional_module_is_unavailable_and_its_import_state_is_restored(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Report a genuine import-system refusal and restore the optional module afterwards."""
+    from sc_neurocore.spike_codec import describe_codec
+
+    selected = describe_codec("predictive").variant("world_model")
+    module_name = selected.optional_modules[0]
+    baseline = probe_codec("predictive", "world_model")
+    original = sys.modules.get(module_name)
+    with monkeypatch.context() as imports:
+        imports.setitem(sys.modules, module_name, None)
+        with pytest.raises(ModuleNotFoundError, match="None in sys.modules"):
+            import_module(module_name)
+        unavailable = probe_codec("predictive", "world_model")
+        assert not unavailable.python_available
+        assert unavailable.backend_choices == ()
+        assert unavailable.diagnostics
+        diagnostic = unavailable.diagnostics[0]
+        assert diagnostic.startswith(module_name + ": ModuleNotFoundError:")
+        assert "None in sys.modules" in diagnostic
+    assert sys.modules.get(module_name) is original
+    assert probe_codec("predictive", "world_model").python_available == baseline.python_available
