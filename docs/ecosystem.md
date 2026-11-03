@@ -32,17 +32,25 @@ remain planned. See the repository releases for the current package version.
 
 ## Programme overview
 
-![Programme overview: existing SC-NeuroCore workbench, architecture-stage timing and evidence tooling, thirteen planned neuromorphic components, twenty-five supporting tools, and sixteen planned circuit destinations with optional laboratory and production integration.](assets/sc_neurocore_group_map.svg)
+![All 56 programme entries individually described: SC-NEUROCORE and LOOP-TIMING-WITNESS, 13 neuromorphic extraction destinations, 25 supporting tools and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing.](assets/sc_neurocore_group_map.svg)
 
 [Open the full-size SVG](assets/sc_neurocore_group_map.svg),
 [download PNG](assets/sc_neurocore_group_map.png), or
 [download JPG](assets/sc_neurocore_group_map.jpg).
 
-The maps use solid green for existing software, blue for architecture-stage
-projects or accepted design direction, and dashed outlines for planned
-implementation. An existing scaffold does not imply an installed domain runtime.
-The connecting lines show responsibilities and intended integration; they do not
-specify package dependencies or an extraction order.
+The detailed programme map describes all 56 entries individually: the two
+programme anchors, thirteen neuromorphic destinations, twenty-five supporting
+tools and sixteen circuit destinations. Each destination has documented
+architectural ownership and planning material. Its delivery label separately
+identifies planned extraction or implementation, an existing scaffold, or
+validation tooling; those labels do not mean that its architecture is absent.
+Architecture, implementation and qualification remain separate milestones.
+
+The circuit-platform and lifecycle maps use solid green for existing software,
+blue for architecture-stage projects or accepted design direction, and dashed
+outlines for planned implementation. An existing scaffold does not imply an
+installed domain runtime. Lines show responsibilities and intended integration;
+they do not specify package dependencies or an extraction order.
 
 ## Public workbench and future products
 
