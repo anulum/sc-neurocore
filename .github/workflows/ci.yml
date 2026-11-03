@@ -406,6 +406,20 @@ jobs:
             shard-index: 1
             primary: true
     steps:
+      - name: Record native Go gate enclosing-job clock
+        if: matrix.coverage && matrix.shard-index == 8
+        shell: bash
+        run: |
+          python3 - <<'PY_START'
+          import os
+          from pathlib import Path
+          import time
+          # Clock origin is this first owned step, before checkout/toolchains;
+          # it is not claimed to be GitHub's service-side job-start timestamp.
+          with Path(os.environ["GITHUB_ENV"]).open("a") as stream:
+              stream.write("SCN_NATIVE_GO_JOB_STARTED_EPOCH=" + str(time.time()) + "\n")
+          PY_START
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -1346,8 +1360,95 @@ jobs:
           name: test-results-py${{ matrix.python-minor }}${{ matrix.shard-index && format('-shard{0}', matrix.shard-index) || '' }}
           path: test-results/test-results-batch-*.xml
 
-      # Last step on purpose: a shard publishes its data only when every
-      # earlier step passed, so the union cannot be built from a failed shard.
+      # Run the native gate before the unchanged final shard Stage/Preserve pair.
+      # A native failure preserves its own always() evidence, fails shard 8,
+      # and skips success()-guarded shard coverage; the union then fails closed.
+      - name: Complete native Go MAT statement gate
+        if: matrix.coverage && matrix.shard-index == 8
+        id: native_go_mat
+        env:
+          SCN_NATIVE_GO_JOB_TIMEOUT_MINUTES: ${{ matrix.coverage && 300 || 240 }}
+        shell: bash
+        run: |
+          python - <<'PY_GATE'
+          import json
+          import os
+          from pathlib import Path
+          import shutil
+          import subprocess
+          import sys
+          import time
+          from tools.go_coverage_budget import derive_profile
+          from tools.go_coverage_trace import write_config
+          allocation = Path(os.environ["RUNNER_TEMP"])
+          # Explicit policy fractions, separate from observed host capacity.
+          profile = derive_profile(
+              float(os.environ["SCN_NATIVE_GO_JOB_TIMEOUT_MINUTES"]) * 60,
+              float(os.environ["SCN_NATIVE_GO_JOB_STARTED_EPOCH"]),
+              allocation, runtime_fraction=1 / 4, stop_fraction=1 / 200,
+          )
+          output = allocation / "native-go-mat"
+          trace_config = write_config(Path.cwd(), allocation / "native-go-mat-python-linux")
+          compiler = shutil.which("go")
+          if compiler is None:
+              raise RuntimeError("The same-job Go producer is unavailable")
+          argv = [sys.executable, "-I", "-B", "-m", "coverage", "run", "--rcfile", str(trace_config),
+                  "tools/go_mat_coverage.py",
+                  "--repository", str(Path.cwd()), "--output", str(output),
+                  "--go", str(Path(compiler).resolve(strict=True)),
+                  "--seconds", str(profile["seconds"]), "--jobs", str(profile["jobs"]),
+                  "--stop-seconds", str(profile["stop_seconds"]),
+                  "--python-coverage-config", str(trace_config)]
+          with (allocation / "native-go-mat-profile.json").open("x") as stream:
+              stream.write(json.dumps({"profile": profile, "argv": argv,
+                                       "clock_origin_scope": "first owned test-job step before checkout/toolchains"}, indent=2) + "\n")
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as stream:
+              stream.write("profile_written=true\n")
+          started = time.monotonic()
+          terminal: dict[str, object] = {"returncode": None, "operation_error": None}
+          try:
+              result = subprocess.run(argv, check=True)
+              terminal["returncode"] = result.returncode
+          except subprocess.CalledProcessError as error:
+              terminal["returncode"] = error.returncode
+              terminal["operation_error"] = repr(error)
+              raise
+          except BaseException as error:
+              terminal["operation_error"] = repr(error)
+              raise
+          finally:
+              terminal["elapsed_seconds"] = time.monotonic() - started
+              with (allocation / "native-go-mat-terminal.json").open("x") as stream:
+                  stream.write(json.dumps(terminal, indent=2) + "\n")
+          PY_GATE
+
+      - name: Preserve native Go MAT gate evidence
+        if: always() && matrix.coverage && matrix.shard-index == 8 && steps.native_go_mat.outputs.profile_written == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-go-mat-statement-evidence
+          path: |
+            ${{ runner.temp }}/native-go-mat-profile.json
+            ${{ runner.temp }}/native-go-mat-terminal.json
+            ${{ runner.temp }}/native-go-mat/*.json
+            ${{ runner.temp }}/native-go-mat/*.xml
+            ${{ runner.temp }}/native-go-mat/artifacts
+            ${{ runner.temp }}/native-go-mat/commands
+            ${{ runner.temp }}/native-go-mat/process-counters
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve native Go gate Linux Python counters
+        if: always() && matrix.coverage && matrix.shard-index == 8 && steps.native_go_mat.outputs.profile_written == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-go-mat-python-linux
+          path: ${{ runner.temp }}/native-go-mat-python-linux
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Stage this shard's coverage data
         if: matrix.coverage
         shell: bash
@@ -1364,6 +1465,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
+
 
   test-timings:
     runs-on: ubuntu-24.04
@@ -1396,13 +1498,119 @@ jobs:
           path: ${{ runner.temp }}/pytest-timings/pytest-durations.json
           key: ${{ github.repository }}-pytest-timings-v1-${{ github.run_id }}-${{ github.run_attempt }}
 
+  native-go-windows-refusal:
+    name: Native Go gate Windows refusal (20-minute governance ceiling)
+    runs-on: windows-latest
+    # Explicit CI governance policy, not a measured runtime or host-capacity estimate.
+    timeout-minutes: 20
+    steps:
+      - name: Record native Go Windows job budget origin
+        id: native_go_job_clock
+        shell: pwsh
+        run: |
+          $startedMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+          "started_ms=$startedMs" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.10"  # Maintained Windows-build pin, as in the canonical SHD job.
+      - name: Install hashlocked native Go Windows test dependencies
+        run: python -m pip install --require-hashes -r requirements/ci-dev.txt
+      - name: Install the maintained Go compiler for real platform-refusal inputs
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27.3"
+          cache-dependency-path: src/sc_neurocore/accel/go/go.mod
+
+      - name: Exercise actual native Go gate Windows refusal
+        id: native_go_platform
+        env:
+          # These policy values mirror the enclosing governance ceiling and reserve
+          # four minutes for setup-origin skew, cancellation, and evidence upload.
+          SCN_NATIVE_GO_PLATFORM_JOB_TIMEOUT_MINUTES: "20"
+          SCN_NATIVE_GO_PLATFORM_RESERVE_MINUTES: "4"
+          SCN_NATIVE_GO_PLATFORM_STARTED_MS: ${{ steps.native_go_job_clock.outputs.started_ms }}
+        shell: bash
+        run: |
+          python - <<'PY_PLATFORM'
+          import json
+          import math
+          import os
+          from pathlib import Path
+          import shutil
+          import subprocess
+          import sys
+          import time
+          from tools.go_coverage_trace import write_config
+          root = Path.cwd()
+          # Dedicated counter namespace, outside the SHD/package coverage tree.
+          allocation = Path(os.environ["RUNNER_TEMP"]).resolve() / "native-go-mat-python-windows"
+          config = write_config(root, allocation)
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as stream:
+              stream.write("trace_written=true\n")
+          started = time.monotonic()
+          result = None
+          error = None
+          argv = None
+          budget = {}
+          try:
+              ceiling = int(os.environ["SCN_NATIVE_GO_PLATFORM_JOB_TIMEOUT_MINUTES"]) * 60
+              reserve = int(os.environ["SCN_NATIVE_GO_PLATFORM_RESERVE_MINUTES"]) * 60
+              elapsed = time.time() - int(os.environ["SCN_NATIVE_GO_PLATFORM_STARTED_MS"]) / 1000
+              if not 0 < reserve < ceiling or elapsed < 0:
+                  raise RuntimeError("The actual job clock or governance reserve is invalid")
+              seconds = math.floor(ceiling - reserve - elapsed)
+              budget = {"governance_seconds": ceiling, "reserve_seconds": reserve,
+                        "actual_setup_elapsed_seconds": elapsed, "inner_seconds": seconds}
+              if not 0 < seconds < ceiling:
+                  raise RuntimeError("No bounded Windows refusal budget remains after actual setup")
+              compiler = shutil.which("go")
+              if compiler is None:
+                  raise RuntimeError("The actual maintained Windows compiler input is unavailable")
+              argv = [
+                  sys.executable, "-I", "-B", "-m", "coverage", "run", "--rcfile", str(config),
+                  "tests/native_go_coverage_platform.py", "--repository", str(root),
+                  "--allocation", str(allocation), "--go", str(Path(compiler).resolve(strict=True)),
+                  "--job-seconds", str(seconds), "--python-coverage-config", str(config),
+              ]
+              with (allocation / "platform.stdout.log").open("xb") as stdout, \
+                   (allocation / "platform.stderr.log").open("xb") as stderr:
+                  result = subprocess.run(argv, stdout=stdout, stderr=stderr,
+                                          timeout=seconds, check=False)
+              if result.returncode != 0:
+                  raise RuntimeError("The actual native Go Windows refusal contract failed")
+          except BaseException as exception:
+              error = repr(exception)
+              raise
+          finally:
+              with (allocation / "actual-enclosing-job-budget-and-terminal.json").open("x") as stream:
+                  json.dump({"repository": str(root), "platform": sys.platform,
+                             "budget": budget, "argv": argv,
+                             "returncode": None if result is None else result.returncode,
+                             "operation_error": error,
+                             "elapsed_seconds": time.monotonic() - started,
+                             "Windows_backend_qualification": False}, stream, indent=2)
+                  stream.write("\n")
+          PY_PLATFORM
+
+      - name: Preserve actual native Go gate Windows Python counters
+        if: always() && steps.native_go_platform.outputs.trace_written == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-go-mat-python-windows
+          path: ${{ runner.temp }}/native-go-mat-python-windows
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
   coverage-union:
     # Carries the required check name: the instrumented suite is sharded, but
     # the 100 % gate applies once, to the union of every shard and the native
     # Windows refusal leg.
     name: test (3.12)
     runs-on: ubuntu-latest
-    needs: [test, shd-non-linux-refusal]
+    needs: [test, shd-non-linux-refusal, native-go-windows-refusal]
     # A skipped job would report success to branch protection, so this job
     # runs after failed legs too and requires every test shard to pass.
     if: ${{ !cancelled() }}
@@ -1415,6 +1623,12 @@ jobs:
         shell: bash
         run: test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success
 
+      - name: Require successful native Go Windows refusal
+        env:
+          GO_WINDOWS_RESULT: ${{ needs.native-go-windows-refusal.result }}
+        shell: bash
+        run: test "$GO_WINDOWS_RESULT" = success
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -1422,6 +1636,7 @@ jobs:
           python-version: "3.12.16"
 
       - name: Install the locked coverage tool
+        id: native_counter_tools
         shell: bash
         run: |
           set -euo pipefail
@@ -1432,13 +1647,17 @@ jobs:
           from pathlib import Path
 
           lines = Path("requirements/ci-dev.txt").read_text(encoding="utf-8").splitlines()
-          start = next(i for i, line in enumerate(lines) if re.match(r"coverage==\S+ \\$", line))
-          block = [lines[start]]
-          for line in lines[start + 1 :]:
-              if not line.strip().startswith("--hash="):
-                  break
-              block.append(line)
-          Path(sys.argv[1]).write_text("\n".join(block).rstrip(" \\") + "\n", encoding="utf-8")
+          blocks = []
+          for name in ("coverage", "pytest", "pluggy", "iniconfig", "packaging", "pygments"):
+              start = next(i for i, line in enumerate(lines)
+                           if re.match(re.escape(name) + r"==\S+ \\$", line))
+              block = [lines[start]]
+              for line in lines[start + 1 :]:
+                  if not line.strip().startswith("--hash="):
+                      break
+                  block.append(line)
+              blocks.append("\n".join(block).rstrip(" \\"))
+          Path(sys.argv[1]).write_text("\n".join(blocks) + "\n", encoding="utf-8")
           PY
           python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/coverage-requirements.txt"
 
@@ -1463,7 +1682,104 @@ jobs:
           bash tools/run_full_cov.sh --combine-from="$RUNNER_TEMP/coverage-shards" \
             --expect-shards="$SCN_CI_SHARD_COUNT" --html --cov-fail-under=100
 
+      - name: Retrieve native Go gate Linux Python counters
+        if: ${{ !cancelled() && steps.native_counter_tools.outcome == 'success' && needs.test.result == 'success' && needs.native-go-windows-refusal.result == 'success' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: native-go-mat-python-linux
+          path: ${{ runner.temp }}/native-go-python-inputs/linux
+
+      - name: Retrieve actual native Go gate Windows Python counters
+        if: ${{ !cancelled() && steps.native_counter_tools.outcome == 'success' && needs.test.result == 'success' && needs.native-go-windows-refusal.result == 'success' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: native-go-mat-python-windows
+          path: ${{ runner.temp }}/native-go-python-inputs/windows
+
+      - name: Complete native Go gate Python statement and branch union
+        if: ${{ !cancelled() && steps.native_counter_tools.outcome == 'success' && needs.test.result == 'success' && needs.native-go-windows-refusal.result == 'success' }}
+        id: native_go_python_union
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        shell: bash
+        run: |
+          python - <<'PY_NATIVE_UNION'
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+          import time
+          from tools.go_coverage_trace import union_config
+          root = Path.cwd()
+          inputs = Path(os.environ["RUNNER_TEMP"]) / "native-go-python-inputs"
+          output = Path(os.environ["RUNNER_TEMP"]) / "native-go-python-union"
+          config = union_config(root, output,
+              (inputs / "linux/source-platform.json", inputs / "windows/source-platform.json"),
+              frozenset({"linux", "win32"}))
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as stream:
+              stream.write("trace_written=true\n")
+          def command(label: str, argv: list[str], accepted: tuple[int, ...] = (0,)) -> None:
+              """Retain each actual counter command's terminal without inventing a failed spawn."""
+              directory = output / "commands" / label
+              directory.mkdir(parents=True)
+              started = time.monotonic()
+              result: subprocess.CompletedProcess[str] | None = None
+              operation_error: str | None = None
+              try:
+                  result = subprocess.run(argv, capture_output=True, text=True, check=False)
+              except BaseException as error:
+                  operation_error = repr(error)
+                  raise
+              finally:
+                  with (directory / "receipt.json").open("x") as stream:
+                      stream.write(json.dumps({"argv": argv,
+                          "returncode": None if result is None else result.returncode,
+                          "stdout": None if result is None else result.stdout,
+                          "stderr": None if result is None else result.stderr,
+                          "operation_error": operation_error,
+                          "elapsed_seconds": time.monotonic() - started}, indent=2) + "\n")
+              if result is None:
+                  raise RuntimeError("No actual counter process terminal was retained")
+              print(result.stdout, end="")
+              print(result.stderr, end="", file=sys.stderr)
+              if result.returncode not in accepted:
+                  raise RuntimeError("Actual native gate Python counter command refused: " + label)
+          coverage = [sys.executable, "-I", "-B", "-m", "coverage"]
+          command("combine-real-platforms", coverage + ["combine", "--rcfile", str(config), "--keep",
+              str(inputs / "linux"), str(inputs / "windows")])
+          before = output / "before-report-contracts.json"
+          # Status 2 is retained as a genuine provisional coverage refusal;
+          # this JSON is observational, never a passing counter fixture.
+          command("actual-provisional-report", coverage + ["json", "--rcfile", str(config),
+              "-o", str(before)], accepted=(0, 2))
+          contracts = root / "tests/native_go_coverage_contracts"
+          command("actual-report-contracts", coverage + ["run", "--rcfile", str(config), "-m", "pytest",
+              "-q", "-o", "addopts=", "-o", "pythonpath=", "-p", "no:cacheprovider",
+              "--rootdir", str(contracts), "--confcutdir", str(contracts),
+              "--basetemp", str(output / "pytest-tmp"), "--junitxml", str(output / "report-contracts.xml"),
+              "--native-go-python-report", str(before), "--native-go-report-repository", str(root),
+              str(contracts / "report_contract.py")])
+          command("append-report-contract-counters", coverage + ["combine", "--rcfile", str(config),
+              "--append", "--keep", str(output)])
+          command("actual-final-report", coverage + ["json", "--rcfile", str(config),
+              "-o", str(output / "python-source-coverage.json")], accepted=(0, 2))
+          command("require-every-own-statement-and-branch", coverage + ["report", "--rcfile", str(config),
+              "--fail-under=100", "--show-missing"])
+          PY_NATIVE_UNION
+
+      - name: Preserve native Go gate Python qualification diagnostics
+        if: always() && steps.native_go_python_union.outputs.trace_written == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-go-gate-python-qualification
+          path: ${{ runner.temp }}/native-go-python-union
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload coverage report
+        if: ${{ !cancelled() && steps.native_counter_tools.outcome == 'success' && needs.test.result == 'success' && needs.shd-non-linux-refusal.result == 'success' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: coverage-report

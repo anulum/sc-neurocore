@@ -1,0 +1,19 @@
+{
+  "purpose": "Historical real native Go atomic profiles for parser contracts; not fresh runtime or branch qualification.",
+  "profiles": {
+    "before": {
+      "file": "before.txt.gz",
+      "bytes": 339789,
+      "sha256": "f413651868f79c8bf4d8a9bf528e49e004178f6222f318962faf40d8ed9e14c3",
+      "compressed_bytes": 30070,
+      "compressed_sha256": "60173aaeabed56cdda43d731068615002531f4484b59fe562981471da6705ed0"
+    },
+    "complete": {
+      "file": "complete.txt.gz",
+      "bytes": 339939,
+      "sha256": "2dc6b2ad8a6440154528984897409ea021995b62e4265b0b8c3d7c49625e9c4a",
+      "compressed_bytes": 30249,
+      "compressed_sha256": "1393c4d70f396973a1a0ba937e6d08de2234ed3dc4b4694ec8a14c3ee9aabf2c"
+    }
+  }
+}

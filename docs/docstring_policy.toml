@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1686
+expected_file_count = 1721
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6878,3 +6878,143 @@ rationale = "Exercise the actual AXI-Lite configuration reset, complete dense-la
 [[file]]
 path = "tests/test_studio_jobs_process_seeds.py"
 rationale = "Exercise confined process seed delivery, the advertised size boundary and path escape refusals."
+
+[[file]]
+path = "tests/native_go_coverage_consumer.py"
+rationale = "Require all 630 unchanged ABI cases with exact collection, real execution and no failed or skipped reports."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/budget_contract.py"
+rationale = "Compare actual capacity with caller policy and reject corrupted cgroup, affinity, memory, disk and quota metadata."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/build_contract.py"
+rationale = "Exercise real child statuses, missing executables, immutable receipts and profile-derived timeout reaping."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/conftest.py"
+rationale = "Bind dedicated native-tool contracts to current real artifacts, exact source and the original admitted deadline."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/controls_contract.py"
+rationale = "Detect contrary real profile verdicts and native controls that restore valid metadata instead of corrupting it."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/environment_contract.py"
+rationale = "Reconcile actual parent and child environment digests and refuse damaged copies without ignoring inherited metadata."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/gate_contract.py"
+rationale = "Check actual public-entry refusals, immutable source pins and exact declared consumer environments."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/images_contract.py"
+rationale = "Reject damaged actual image declarations and closed-input registration through real Python children."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/packaging_contract.py"
+rationale = "Build actual sdist and ordinary wheel manifests while retaining diagnostic tags and frozen source inputs."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/records_contract.py"
+rationale = "Falsify copied actual process and counter records while preserving all original native artifacts."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/report_contract.py"
+rationale = "Conserve complete actual Python counter reports and reject damaged copies without manufacturing successful coverage."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/run.py"
+rationale = "Run every dedicated gate contract explicitly and reject failed, skipped or empty actual JUnit results."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/trace_contract.py"
+rationale = "Refuse changed real tracing configurations and counter manifests without relabelling source or platform."
+
+[[file]]
+path = "tests/native_go_coverage_platform.py"
+rationale = "Exercise genuine non-Linux public API and CLI refusals without claiming native backend qualification."
+
+[[file]]
+path = "tests/test_go_coverage_ci_contract.py"
+rationale = "Bind the native gate to same-job producers, later placement, live budgets and complete source-policy enrollment."
+
+[[file]]
+path = "tests/test_tools/test_go_coverage_profiles.py"
+rationale = "Refuse damaged copies of complete historical native profiles and preserve real public CLI verdicts."
+
+[[file]]
+path = "tools/go_coverage_budget.py"
+rationale = "Derive explicit hosted budgets from actual affinity, ancestor quotas and remaining caller job time."
+
+[[file]]
+path = "tools/go_coverage_controls.py"
+rationale = "Exercise real native tool, image, environment and artifact-collision refusals without fabricating process results."
+
+[[file]]
+path = "tools/go_coverage_environment.py"
+rationale = "Bind every inherited original ABI child mapping to its real parent launch, installed Pytest and complete collected case."
+
+[[file]]
+path = "tools/go_coverage_images.py"
+rationale = "Observe actual native image loads, closed environments, executable mappings and genuine Go snapshots."
+
+[[file]]
+path = "tools/go_coverage_profiles.py"
+rationale = "Conserve complete native profile geometry and enforce every maintained MAT and diagnostic statement."
+
+[[file]]
+path = "tools/go_coverage_records.py"
+rationale = "Reconcile every original ABI child launch, process identity, loaded image and cumulative native snapshot."
+
+[[file]]
+path = "tools/go_coverage_trace.py"
+rationale = "Preserve exact own-code tracing scope, source-bound counter path aliases and complete real report membership."
+
+[[file]]
+path = "tools/go_mat_coverage.py"
+rationale = "Orchestrate the complete source-bound Go MAT producer, unchanged ABI consumers and required native evidence."
+
+[[file]]
+path = "tools/go_mat_coverage_build.py"
+rationale = "Retain actual bounded command outcomes and separate receipts from native build, test and covdata outputs."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/terminal_environment_contract.py"
+rationale = "Conserve actual Readline initialization and terminal metadata, and require refusal of real native drift and damaged records."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/record_inputs_contract.py"
+rationale = "Refuse damaged copies of actual process headers, child argument geometry and before-work snapshot membership without fabricating providers."
+
+[[file]]
+path = "tools/go_coverage_build_inputs.py"
+rationale = "Conserve actual native formatter, export, dependency and complete Go test observations through explicit refusal validators."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/build_inputs_contract.py"
+rationale = "Refuse genuine formatter faults and damaged copies of actual symbol, dependency and full native Go test observations without numerical replays."
+
+[[file]]
+path = "tools/go_coverage_image_inputs.py"
+rationale = "Conserve real image declarations, descriptor and backing identity, executable map observations and actual native snapshot status/files."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/image_inputs_contract.py"
+rationale = "Refuse changes to unmapped real image copies and damaged actual map/status/counter inputs while preserving every loaded library and original counter."
+
+[[file]]
+path = "tools/go_coverage_gate_inputs.py"
+rationale = "Conserve actual compiler pins, before-work native subjects, copied Mojo images and complete final image/bootstrap/source custody."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/gate_inputs_contract.py"
+rationale = "Refuse changed unmapped native copies and damaged actual compiler, baseline, bootstrap and source observations without replaying models."
+
+[[file]]
+path = "tools/go_coverage_consumer_inputs.py"
+rationale = "Conserve genuine full ABI collection, module origin, source custody, real framework reports and complete execution results without invented metadata."
+
+[[file]]
+path = "tests/native_go_coverage_contracts/consumer_contract.py"
+rationale = "Require productive optimized/source/collection/result refusals and genuine small Pytest setup-failure, call-failure and skip reports without numerical replays."

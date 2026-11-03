@@ -537,6 +537,7 @@ nav:
   - Development:
       - Audit Cadence: development/audit_cadence.md
       - Maintenance Tools: development/maintenance_tools.md
+      - Native Go MAT Statement Gate: development/native_go_coverage.md
       - Security Hardening: development/security_hardening.md
       - Licensing: development/licensing.md
       - Security Scanner CI Packet: development/security_scanner_ci.md
