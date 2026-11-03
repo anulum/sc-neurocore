@@ -181,7 +181,7 @@ SC-NeuroCore would be one application of that platform; the general platform
 would be usable without neuron models or an SNN runtime.
 
 **Status: adopted architectural direction; implementation is planned.** The
-fourteen names below are the adopted destinations for the new family. They do
+sixteen names below are the adopted destinations for the new family. They do
 not identify available packages or newly created public repositories. Actual
 tool, process, device and manufacturing support must be
 qualified for each operation and published with its limitations. There is no
@@ -222,6 +222,8 @@ research status.
 | **CIRCUIT-ACCEPTANCE** | Requirement-specific checks, comparison laws, coverage and scoped acceptance. |
 | **CIRCUIT-LAB** | Hardware bring-up, instrument integration and traceable characterisation. |
 | **CIRCUIT-WORKBENCH** | General design and review workspace using the same headless operations as the library and command-line clients. |
+| **CIRCUIT-MANUFACTURING** | Versioned routes and recipes, material genealogy, work-order and inspection integration, and controlled supplier handoff. |
+| **CIRCUIT-AUTOMATION** | Admitted equipment capabilities and local execution-provider adapters for instruments, cells and robot tasks. |
 
 Three further planned specialist destinations are **CIRCUIT-FIELDS** for electromagnetic
 and coupled-field operations, **CIRCUIT-PHOTONICS** for optical design semantics,
@@ -281,6 +283,36 @@ artefacts and distinguish simulated, implemented, manufacturer-accepted and
 measured results. Digital exactness, analogue error/statistical laws and
 specialist physics would retain separate acceptance criteria.
 
+### Manufacturing and laboratory automation
+
+Manufacturing is an optional integration path. Circuit design and simulation
+would remain usable without a laboratory, production line or manufacturing
+execution system. The supported modes would distinguish supplier handoff,
+operator-owned equipment and non-actuating qualification or replay.
+
+CIRCUIT-MANUFACTURING would bind design and technology identities to approved
+routes, recipe versions, material genealogy, work orders and inspection results.
+It would integrate an existing manufacturing authority and its records rather
+than introduce a competing factory-management system. CIRCUIT-AUTOMATION would
+provide explicit equipment capabilities and adapters to qualified local execution
+providers. Instruments shared with CIRCUIT-LAB would retain one canonical driver
+and their original calibration associations.
+
+Platform workflows would dispatch admitted operations through CIRCUIT-FLOW.
+Actual control-loop timing, equipment arbitration, interlocks and protective
+responses would remain with the qualified local controller and site authority.
+A circuit view, manufacturing recipe, robot task and measurement record would
+keep distinct semantics. Lost acknowledgements or restarts must be reconciled
+against actual equipment state; they cannot authorise blind physical replay.
+
+The first operating integration would use read-only equipment observations and
+real material records. Supervised operations, robot handling, lithography or
+other specialist processes would require their own selected equipment, process
+window, calibration, inspection, failure and recovery evidence. Bounded unattended
+operation would require an explicit qualified operating envelope and intervention
+path. No automated fabrication capability or machine-control permission is
+announced by this architecture.
+
 ### Effect on the SC-NeuroCore split
 
 The thirteen SC-NC destinations remain the neuromorphic decomposition.
@@ -310,6 +342,7 @@ components; an architecture document does not complete them.
 | Integrated mixed-signal workflow | Real continuous/discrete participants and a workbench over the same headless operations. | Non-neural digital, analogue and mixed reference designs, cross-view correspondence, coupling/error checks and reproducibility. |
 | Manufacturing preparation | Consistent physical, die/package/board and test deliverables for a selected target. | Applicable physical checks, testability, actual manufacturer review and accepted fabrication/assembly conditions. |
 | Measured hardware and extensions | Characterised implementations and independently qualified specialist profiles. | Original DUT/instrument/calibration identities, uncertainty, measured-versus-predicted results and compatibility evidence. |
+| Qualified manufacturing operations | Selected supplier, laboratory or cell integration with controlled material and process records. | Real read-only provider round-trips, approved route/recipe identities, qualified local protection, supervised operation and inspection/recovery evidence before physical or unattended claims. |
 
 Architecture and interface review is the current stage. Implementation stages
 depend on accepted boundaries, supplier contracts and actual engineering
