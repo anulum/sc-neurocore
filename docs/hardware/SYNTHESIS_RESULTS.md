@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Source-bound synthesis resource observations -->
+
 # Yosys Synthesis Results
 
 Gate-level synthesis of SC-NeuroCore Verilog RTL modules. The original rows use
@@ -39,6 +47,29 @@ The [source-bound report](https://github.com/anulum/sc-neurocore/blob/main/hdl/r
 records the commands, counts and scope. These are generic synthesis and
 simulation observations; board clock limits and rail energy need device
 measurements.
+
+## Dense-layer configuration reset and completion — 2026-11-02
+
+The complete default `sc_neurocore_top` (three inputs, seven neurons) was
+synthesised before and after the configuration-reset and pollable-completion
+repair using the same source-pinned Yosys 0.70 and sv2v 0.0.13 toolchain.
+Both invocations used the actual eight-module dependency closure and
+`synth_xilinx -top sc_neurocore_top -flatten; stat` for Xilinx 7-series mapping.
+
+| Source | LUTs | FFs | BRAM | DSP |
+|--------|-----:|----:|-----:|----:|
+| Previous reset and completion behaviour | 1,338 | 1,126 | 0 | 30 |
+| Deterministic reset and pollable completion | 1,339 | 1,127 | 0 | 30 |
+| Change | +1 | +1 | 0 | 0 |
+
+The converted Verilog SHA-256 digests are
+`4a40d9a1decb5ecff95d8ddbbc8fbf32dffb52023aa653527abbee4477014a5c`
+(previous) and
+`dff2e1c2b4456206b87312b87bce62d3e8961047010c8746a362eb65cccd1bee`
+(repaired). These are technology-mapped resource observations, separate from
+the historical generic-cell rows above. They do not measure routed timing,
+board power or FPGA acceptance. Neuron arithmetic and encoder dynamics were
+unchanged by this repair.
 
 ## BCI Codec Hardware Estimates
 

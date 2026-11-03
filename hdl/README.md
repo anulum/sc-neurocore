@@ -1,7 +1,15 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Hardware modules and native validation -->
+
 # SC-NeuroCore HDL Modules
 
 Synthesisable Verilog for the SC-NeuroCore neuromorphic datapath.
-All modules target Yosys 0.63 + sv2v 0.0.13.
+The source-pinned CI toolchain uses Yosys 0.70, SBY 0.70 and sv2v 0.0.13.
 
 ## RTL Modules
 
@@ -16,13 +24,27 @@ All modules target Yosys 0.63 + sv2v 0.0.13.
 | `sc_axil_cfg.v` | AXI-Lite configuration register file | tb | sby |
 | `sc_dense_matrix_layer.v` | Matrix-level dense layer (multi-core) | tb | -- |
 | `sc_dense_layer_top.v` | Top-level dense layer wrapper | -- | -- |
-| `sc_neurocore_top.v` | Full chip top-level integration | tb | -- |
+| `sc_neurocore_top.v` | AXI-Lite dense-layer measurement and pollable completion | tb | sby |
 
-**7/10** modules have SymbiYosys formal proofs (`hdl/formal/*.sby`).
+**8/10** modules have SymbiYosys formal jobs (`hdl/formal/*.sby`); job presence
+does not establish that a proof has completed on the current source.
 **7/10** modules have simulation testbenches (`hdl/tb_*.v`).
 
-Modules without formal proofs (`sc_dense_matrix_layer`, `sc_dense_layer_top`,
-`sc_neurocore_top`) are integration wrappers verified by simulation only.
+The integration wrappers `sc_dense_matrix_layer` and `sc_dense_layer_top`
+have no formal job configuration; they require their own integration acceptance.
+
+The full `sc_neurocore_top` regression and its AXI lifecycle bench run through
+`pytest tests/test_neurocore_top_rtl.py -q`, included in the main CI test shards.
+They use the actual encoders, neuron datapath, register bank and rate bank.
+All configuration registers have deterministic reset values: zero drive,
+leak and gain, a one-clock measurement window, 1 ms host metadata and its
+Q16.16 unit reciprocal. Input and weight words are unsigned 16-bit LFSR
+thresholds (`0xC000` is approximately 0.75); current endpoints, leak and gain
+use signed Q8.8. Completion stays set after reads until reset or the next
+accepted start, while the rate bank receives only the original one-clock
+completion pulse. Neurons and LFSRs keep clocking between measurements;
+start does not reinitialise their state. See the
+[register map and lifecycle](../docs/hardware/SC_NEUROCORE_HARDWARE_MANUAL.md#3-register-map).
 
 `sc_dotproduct_to_current` requires a positive `N_INPUTS` and maps each
 population count to `y_min + trunc((y_max-y_min)*count/N_INPUTS)`. Division

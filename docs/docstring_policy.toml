@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1684
+expected_file_count = 1685
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6870,3 +6870,7 @@ rationale = "Execute generated and committed AdEx RTL against maintained event c
 [[file]]
 path = "tests/test_catalogue_formal_other_precision_jobs.py"
 rationale = "Verify catalogue precision choices preserve representable model parameters and existing formal harness contracts."
+
+[[file]]
+path = "tests/test_neurocore_top_rtl.py"
+rationale = "Exercise the actual AXI-Lite configuration reset, complete dense-layer pipeline and repeated measurement lifecycle through native RTL ports."

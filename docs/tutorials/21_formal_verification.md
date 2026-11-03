@@ -10,7 +10,8 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover) across the HDL formal tree.
+91 SymbiYosys proof jobs and 496 formal statements (328 assert, 122 assume,
+46 cover) across the HDL formal tree and inline top-wrapper properties.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
 [Yosys](https://yosyshq.net/yosys/), an SMT solver (Z3 or Boolector)
@@ -25,31 +26,35 @@ conda install -c litex-hub yosys symbiyosys
 ## 1. Formal verification inventory
 
 The SymbiYosys jobs under `hdl/formal/` declare the properties to be checked.
-The current inventory is:
+The inventory counts unique `.sby` configurations, declarations in the
+tracked `.v`, `.sv` and `.svh` files under `hdl/formal/`, and the inline
+`FORMAL` properties in `hdl/sc_neurocore_top.v`. The BMC and cover tasks of
+one configuration do not count as two jobs. The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
-| SymbiYosys `.sby` proof jobs | 90 |
-| `assert(...)` statements | 311 |
-| `assume(...)` statements | 121 |
-| `cover(...)` statements | 44 |
-| Total formal statements | 476 |
+| SymbiYosys `.sby` proof jobs | 91 |
+| `assert(...)` statements | 328 |
+| `assume(...)` statements | 122 |
+| `cover(...)` statements | 46 |
+| Total formal statements | 496 |
 
-**Total: 90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover).**
+**Total: 91 SymbiYosys proof jobs and 496 formal statements (328 assert, 122 assume, 46 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the
 older seven-module tutorial inventory.
 
 These counts describe checked-in configurations and statements. Full formal
-qualification remains incomplete: 26 resource-intensive jobs are open or refused,
-and the `formal-all` gate remains red until their required evidence qualifies.
+qualification remains incomplete, and the `formal-all` gate stays open until
+every required job and its non-vacuity evidence qualify.
 See [external formal evidence](../formal/external_results.md) for the acceptance
 conditions; a native primary PASS alone does not satisfy the non-vacuity gate.
 
 ## 2. Running a single proof
 
-Each module has a `.sby` task file and a `_formal.v` wrapper:
+A job uses a `.sby` configuration and either a separate formal harness or
+inline `FORMAL` properties in the actual module. For example:
 
 ```bash
 cd hdl/formal
@@ -97,6 +102,22 @@ inventing membrane state:
 ```bash
 sby -f sc_mccullochpittsneuron.sby
 ```
+
+The top-level completion configuration uses the actual AXI-Lite register
+bank, dense-layer core, neurons and rate bank. Its BMC task checks reset,
+accepted-start clearing, completion setting and holding; its cover task
+requires a completed idle state and a later accepted start within 20 clocks.
+Run both default tasks with:
+
+```bash
+cd hdl/formal
+sby sc_neurocore_top.sby
+```
+
+Simulation exercises delayed and repeated status reads, busy-start refusal,
+rate preservation and restart through the public AXI ports:
+`pytest tests/test_neurocore_top_rtl.py -q`. A native BMC PASS applies to its
+declared depth and assumptions; it does not establish unbounded correctness.
 
 ## 3. Anatomy of a formal wrapper
 

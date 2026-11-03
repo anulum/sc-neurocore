@@ -186,7 +186,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
-| Python test files | 5555 |
+| Python test files | 5556 |
 | Public documentation pages | 664 |
 | GitHub Actions workflows | 25 |
 
@@ -489,7 +489,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>90 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>91 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -564,20 +564,22 @@ hdl/
   sc_dma_controller.v         -- DMA for weight upload and output readback
   sc_cdc_primitives.v         -- Clock domain crossing (2-FF sync, Gray, async FIFO)
   sc_dense_layer_top.v        -- Dense layer top wrapper
-  sc_neurocore_top.v          -- System top (DMA + AXI + layers)
+  sc_neurocore_top.v          -- AXI-Lite dense-layer measurement and rate readback
   sc_aer_encoder.v            -- AER spike encoder (event-driven output)
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v                   -- Self-checking simulation testbenches
-  formal/ (90 proof jobs)     -- catalogue model checks + legacy SC cores
+  formal/ (91 proof jobs)     -- catalogue model checks + legacy SC cores
 ```
 
-Formal verification inventory: **90 SymbiYosys proof jobs and 476 formal statements (311 assert, 121 assume, 44 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **72 catalogue jobs** under `hdl/formal/catalogue/`). This
-counts the git-tracked job configurations and statements; it is not a count
-of qualified passing results. Full qualification remains incomplete for 23
-resource-intensive jobs, so `formal-all` is expected to remain red and the next
-stable Core 4.1.0 release remains blocked. See [external formal evidence](docs/formal/external_results.md).
+Formal verification inventory: **91 SymbiYosys proof jobs and 496 formal
+statements (328 assert, 122 assume, 46 cover)** in `hdl/formal/` and the inline
+top-wrapper properties (19 non-catalogue jobs + **72 catalogue jobs** under
+`hdl/formal/catalogue/`). This counts unique job configurations and statements,
+including the inline `FORMAL` block in `hdl/sc_neurocore_top.v`; it is not a
+count of qualified passing results. Full qualification remains incomplete,
+so `formal-all` is expected to remain red and the next stable Core 4.1.0
+release remains blocked. See [external formal evidence](docs/formal/external_results.md).
 Re-emit catalogue harnesses with `tools/emit_catalogue_formal.py`.
 
 ### GPU Acceleration

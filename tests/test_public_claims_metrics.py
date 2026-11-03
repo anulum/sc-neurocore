@@ -96,8 +96,9 @@ def _rust_networkrunner_model_count() -> int:
 
 
 def _tracked_formal_paths(suffixes: tuple[str, ...]) -> list[Path]:
-    """Return git-tracked ``hdl/formal`` files with one of ``suffixes``.
+    """Return tracked formal-tree and inline-top sources with matching suffixes.
 
+    Include properties in the actual top module alongside separate harnesses.
     The count is taken from the git index, not an on-disk ``rglob``, so the
     generated harnesses under the git-ignored ``hdl/formal/catalogue/*/``
     directories never inflate the public inventory: the number a contributor
@@ -106,7 +107,7 @@ def _tracked_formal_paths(suffixes: tuple[str, ...]) -> list[Path]:
     """
     root = _repo_root()
     completed = subprocess.run(
-        ["git", "ls-files", "-z", "--", "hdl/formal"],
+        ["git", "ls-files", "-z", "--", "hdl/formal", "hdl/sc_neurocore_top.v"],
         cwd=root,
         check=True,
         capture_output=True,

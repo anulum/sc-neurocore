@@ -131,7 +131,7 @@ this when SymbiYosys is installed.
 
 | Feature | SC-NeuroCore | Brian2 | snnTorch | NEST |
 |---------|:-----------:|:------:|:--------:|:----:|
-| Formal verification | 90 proof jobs, 476 formal statements | No | No | No |
+| Formal verification | 91 proof jobs, 496 formal statements | No | No | No |
 | Equivalence proof | LIF (BMC, Z3) | No | No | No |
 | Co-simulation | Python ↔ Verilog | No | No | No |
 | RTL generation | Yes | No | No | No |

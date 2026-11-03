@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5555
+    "test_files": 5556
   },
   "documentation": {
     "public_pages": [
@@ -6862,6 +6862,7 @@
       "tests/test_neuro_symbolic/test_predictive_coding_symbol_encoder.py",
       "tests/test_neuro_symbolic/test_predictive_coding_verifiable_inference.py",
       "tests/test_neuro_symbolic_self_verification.py",
+      "tests/test_neurocore_top_rtl.py",
       "tests/test_neuroml_import_create_neuron.py",
       "tests/test_neuroml_import_import_ad_ex.py",
       "tests/test_neuroml_import_import_iaf_cell.py",

@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Initialise every AXI-Lite dense-layer configuration register on reset and
+  hold completion until the next accepted start, keeping final rates readable
+  after delayed or repeated polls. Preserve the rate bank's one-clock completion
+  pulse and continuously clocked neuron state. Correct the hardware examples to
+  use unsigned encoder thresholds for inputs and weights; current endpoints,
+  leak and gain retain their signed Q8.8 format. Add complete AXI lifecycle
+  regressions and bounded completion/reset properties.
+
+
 - Emit the catalogue AdEx formal RTL in Q16.16 so its capacitance is
   representable, preserving the reset and event assertions. Compare the shipped
   RTL with the Python model at four input currents.
@@ -38,7 +47,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   accounting and independent reviews; require a separate non-vacuity audit.
 - Build the pinned Yices SDK for generic x86-64, verify its instruction set and
   SAT/UNSAT behaviour, and distribute the same artifact to hosted and external runs.
-- Correct the formal inventory to 90 jobs and 476 statements.
+- Count 91 formal job configurations and 496 declared statements, including
+  the inline top-wrapper properties.
 - Keep background graph job controls readable in both enabled and disabled states.
 
 - Read DCLS synthesis statistics from native JSON, preserve FPGA fit verdicts for hierarchy debug metadata, and qualify resource counts against each supported Yosys version.

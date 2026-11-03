@@ -52,13 +52,13 @@ The `sc_firing_rate_bank` accumulates spikes over the duration of a simulation r
 | Address Offset | Name | Type | Description |
 | :--- | :--- | :--- | :--- |
 | `0x00` | `CTRL_REG` | W | Control register. Bit 0: Start Simulation (Pulse). |
-| `0x04` | `STATUS_REG` | R | Status register. Bit 0: Busy, Bit 1: Done. |
-| `0x10` | `X0_IN` | R/W | Input 0 (Fixed-point Q8.8). |
-| `0x14` | `X1_IN` | R/W | Input 1 (Fixed-point Q8.8). |
-| `0x18` | `X2_IN` | R/W | Input 2 (Fixed-point Q8.8). |
-| `0x20` | `W0_WEIGHT` | R/W | Weight 0 (Fixed-point Q8.8). |
-| `0x24` | `W1_WEIGHT` | R/W | Weight 1 (Fixed-point Q8.8). |
-| `0x28` | `W2_WEIGHT` | R/W | Weight 2 (Fixed-point Q8.8). |
+| `0x04` | `STATUS_REG` | R | Bit 0: Busy. Bit 1: completion, held until reset or the next accepted start; reads do not clear it. |
+| `0x10` | `X0_IN` | R/W | Input 0 unsigned 16-bit LFSR threshold. |
+| `0x14` | `X1_IN` | R/W | Input 1 unsigned 16-bit LFSR threshold. |
+| `0x18` | `X2_IN` | R/W | Input 2 unsigned 16-bit LFSR threshold. |
+| `0x20` | `W0_WEIGHT` | R/W | Weight 0 unsigned 16-bit LFSR threshold. |
+| `0x24` | `W1_WEIGHT` | R/W | Weight 1 unsigned 16-bit LFSR threshold. |
+| `0x28` | `W2_WEIGHT` | R/W | Weight 2 unsigned 16-bit LFSR threshold. |
 | `0x30` | `Y_MIN` | R/W | Output range minimum (Fixed-point Q8.8). |
 | `0x34` | `Y_MAX` | R/W | Output range maximum (Fixed-point Q8.8). |
 | `0x40` | `STRM_LEN` | R/W | Bitstream length (cycles per run, e.g., 1024). |
@@ -78,6 +78,23 @@ accepted. Keep `AWVALID` and `WVALID` asserted until their handshake completes.
 Read addresses are also backpressured while a response is pending. Hold
 `ARVALID` until acceptance and consume the response with `RREADY` before the
 next address can be accepted; each accepted address produces one response.
+
+Reset initialises all input and weight thresholds, current-range endpoints,
+leak and gain to zero. `STRM_LEN` resets to one clock, `DT_MS` to
+`0x00010000` (1 ms in Q16.16), and `SCALE_Q16` to `0x00010000` (the
+reciprocal of that one-clock window). These neutral defaults keep the
+continuously clocked neuron state defined while the host configures the core.
+Program the complete desired configuration before starting a measurement.
+`DT_MS` is retained host metadata; the core advances once per hardware clock.
+
+A start received while idle opens the measurement window and clears the
+previous completion flag. A start received while busy is ignored by the core.
+The flag becomes visible with the final rate-bank values and remains readable
+after arbitrarily delayed or repeated status reads. The rate bank still receives
+one completion pulse per run. A start does not reset or hold neuron membrane
+state or encoder LFSRs: both continue clocking outside the measurement window.
+Use hardware reset when a new seed/state initialisation is required, then
+restore the desired configuration.
 
 ### 3.1 Live Parameter-Bank Control Window
 
@@ -120,14 +137,19 @@ unselected sticky fault evidence latched for later operator inspection.
 ## 4. Module Descriptions
 
 ### 4.1 `sc_bitstream_encoder.v`
-Converts a 16-bit probability value (Q8.8) into a stochastic bitstream.
+Converts an unsigned 16-bit threshold into a stochastic bitstream. This word
+is compared directly with the LFSR state; it is not signed Q8.8. `0x0000`
+produces no events, `0xC000` represents approximately 0.75, and `0xFFFF`
+is almost unity. The strict comparison and nonzero LFSR states mean the largest
+word does not produce an event on every clock. Current endpoints, neuron leak
+and gain remain signed Q8.8 values.
 - **Algorithm**: A 16-bit Linear Feedback Shift Register (LFSR) generates a pseudo-random sequence. The output bit is '1' if `LFSR_val < input_val`.
 - **Note**: Each encoder should be initialized with a unique seed to prevent cross-correlation errors.
 
 ### 4.2 `sc_lif_neuron.v`
 Implements Leaky Integrate-and-Fire dynamics using fixed-point arithmetic.
 - **Update Rule**: `V(t+1) = V(t) + gain * I(t) - leak * V(t)`
-- **Firing**: If `V(t) > V_thresh`, emit a spike and reset `V(t) = 0`.
+- **Firing**: If `V(t+1) >= V_thresh`, emit a spike and reset `V(t) = 0`.
 - **Optimization**: The leak and gain are implemented as multipliers, allowing for real-time biological tuning.
 
 ### 4.3 `sc_firing_rate_bank.v`
@@ -149,29 +171,43 @@ Estimates the firing frequency of the neuron population.
 4.  **Constraints**: Apply standard timing constraints for 100 MHz AXI clock.
 5.  **Bitstream**: Generate the bitstream and export the `.bit` and `.hwh` files.
 
-### 5.2 PYNQ Driver Usage
-```python
-from pynq import Overlay
-from sc_neurocore.drivers import ScNeurocoreDriver
+### 5.2 Host Register Sequence
 
-# Load bitstream
-overlay = Overlay("sc_neurocore.bit")
-driver = ScNeurocoreDriver(overlay.sc_neurocore_0)
+Use the AXI-Lite register offsets above through the MMIO interface of the
+loaded bitstream. The addresses in this manual assume the example Vivado
+address assignment; read the actual design address map before accessing them.
+The experimental Python driver in `sc_neurocore.drivers` does not implement
+this wrapper's configuration and measurement API.
 
-# Configure neurons
-driver.set_bio_params(leak=0.05, gain=1.2)
-driver.set_inputs([0.5, 0.75, 0.1])
+The native lifecycle bench exercises this complete transaction sequence:
 
-# Run 1024-bit simulation
-rates = driver.run_simulation(stream_len=1024)
-print(f"Neuron firing rates: {rates}")
-```
+1. Assert hardware reset, then release it and read back all configuration
+   defaults before programming a measurement.
+2. Write `X0_IN`, `X1_IN`, and `X2_IN` with `0xC000` for approximately 0.75,
+   and write all three weights with `0xFFFF` for almost unity. These words are
+   unsigned encoder thresholds; do not encode them as Q8.8 values.
+3. Set `Y_MIN = Y_MAX = 0x0100`, `LEAK_K = 0`, and `GAIN_K = 0x0100`.
+   This gives the continuously clocked LIF neurons a constant current of one.
+4. Set `STRM_LEN = 64` and `SCALE_Q16 = 1024`, then write `CTRL_REG = 1`.
+   The reciprocal scale normalises the spike count over that 64-clock window.
+5. Poll `STATUS_REG` until completion bit 1 is set. Read `RATE0` through
+   `RATE6`; this deterministic test produces `0x00010000` for every neuron.
+   Repeated or delayed reads preserve both completion and the final rates.
+6. Set `GAIN_K = 0` and start another measurement. The accepted start clears
+   completion; the completed second window reports zero rates.
+
+This sequence is verified in RTL simulation. Bitstream generation, board
+mapping and physical FPGA acceptance require separate validation on the target.
 
 ---
 
-## 6. Advanced Usage: Ethical Veto
+## 6. Control Scope
 
-The SC-NeuroCore includes hardwired support for the **Ethical Veto (Layer 16)**. When the `VETO_MODE` is enabled in `CTRL_REG`, the core monitors the **Information Heat** (variance of the firing rates). If the heat exceeds a pre-defined threshold, the core will automatically invert the phase of the bitstream generators, causing localized decoherence and halting entropic propagation.
+The `sc_neurocore_top` wrapper implements start control and the status/register
+map in Section 3. It exposes no veto-mode bit in `CTRL_REG`, information-heat
+monitor or automatic phase-inversion control. Generated live-control parameter
+banks in Section 3.1 are a separate compiler surface and must use their own
+manifest-selected address window.
 
 ---
 *Anulum Institute Technical Documentation*

@@ -156,6 +156,19 @@ module sc_axil_cfg_formal (
             assert(!S_AXI_RVALID);
             assert(!S_AXI_ARREADY);
             assert(!cfg_start_pulse);
+            assert(cfg_x_input[0] == 0);
+            assert(cfg_x_input[1] == 0);
+            assert(cfg_x_input[2] == 0);
+            assert(cfg_weight[0] == 0);
+            assert(cfg_weight[1] == 0);
+            assert(cfg_weight[2] == 0);
+            assert(cfg_y_min == 0);
+            assert(cfg_y_max == 0);
+            assert(cfg_leak == 0);
+            assert(cfg_gain == 0);
+            assert(cfg_stream_len == 1);
+            assert(cfg_dt_ms == 32'h0001_0000);
+            assert(cfg_scale_q16 == 32'h0001_0000);
         end
     end
 

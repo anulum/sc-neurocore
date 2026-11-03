@@ -51,8 +51,8 @@ module sc_axil_cfg #(
     // Register outputs (to SC core)
     // --------------------------------------------------
     output reg                                     cfg_start_pulse,
-    output reg [15:0]                              cfg_x_input [0:2], // Q8.8
-    output reg [15:0]                              cfg_weight [0:2],  // Q8.8
+    output reg [15:0]                              cfg_x_input [0:2], // Unsigned LFSR threshold
+    output reg [15:0]                              cfg_weight [0:2],  // Unsigned LFSR threshold
     output reg [15:0]                              cfg_y_min,         // Q8.8
     output reg [15:0]                              cfg_y_max,         // Q8.8
     output reg [15:0]                              cfg_leak,          // Q8.8 Leak rate
@@ -108,6 +108,7 @@ localparam ADDR_RATE6       = 8'h98;
 reg aw_en;
 reg [C_S_AXI_ADDR_WIDTH-1:0] axi_awaddr;
 reg [C_S_AXI_ADDR_WIDTH-1:0] axi_araddr;
+integer reset_index;
 
 
 // AXI ready/valid handshaking simplified
@@ -118,8 +119,21 @@ always @(posedge S_AXI_ACLK) begin
         S_AXI_BVALID  <= 1'b0;
         S_AXI_BRESP   <= 2'b00;
         aw_en         <= 1'b1;
+        axi_awaddr    <= {C_S_AXI_ADDR_WIDTH{1'b0}};
         cfg_start_pulse <= 1'b0;
-        // init cfg regs if you want
+        // Neutral drive keeps continuously clocked neurons at a known state
+        // while the host programs the remaining registers.
+        for (reset_index = 0; reset_index < 3; reset_index = reset_index + 1) begin
+            cfg_x_input[reset_index] <= 16'b0;
+            cfg_weight[reset_index] <= 16'b0;
+        end
+        cfg_y_min      <= 16'b0;
+        cfg_y_max      <= 16'b0;
+        cfg_leak       <= 16'b0;
+        cfg_gain       <= 16'b0;
+        cfg_stream_len <= 32'd1;
+        cfg_dt_ms      <= 32'h0001_0000; // 1 ms in Q16.16, host metadata
+        cfg_scale_q16  <= 32'h0001_0000; // Reciprocal of the one-cycle window
     end else begin
         cfg_start_pulse <= 1'b0;
 
@@ -186,6 +200,7 @@ always @(posedge S_AXI_ACLK) begin
         axi_araddr    <= {C_S_AXI_ADDR_WIDTH{1'b0}};
         S_AXI_RVALID  <= 1'b0;
         S_AXI_RRESP   <= 2'b00;
+        S_AXI_RDATA   <= {C_S_AXI_DATA_WIDTH{1'b0}};
     end else begin
         if (~S_AXI_ARREADY && S_AXI_ARVALID && ~S_AXI_RVALID) begin
             S_AXI_ARREADY <= 1'b1;

@@ -161,15 +161,15 @@ module tb_sc_neurocore_top;
         repeat (2) @(posedge clk);
 
         // --- Step A: configure registers via AXI ---
-        // X inputs: 0.75 Q8.8 = 0x00C0
-        axi_write(8'h10, 32'h0000_00C0); // X0
-        axi_write(8'h14, 32'h0000_00C0); // X1
-        axi_write(8'h18, 32'h0000_00C0); // X2
+        // Unsigned 16-bit LFSR thresholds: approximately 0.75.
+        axi_write(8'h10, 32'h0000_C000); // X0
+        axi_write(8'h14, 32'h0000_C000); // X1
+        axi_write(8'h18, 32'h0000_C000); // X2
 
-        // Weights: 1.0 Q8.8 = 0x0100
-        axi_write(8'h20, 32'h0000_0100); // W0
-        axi_write(8'h24, 32'h0000_0100); // W1
-        axi_write(8'h28, 32'h0000_0100); // W2
+        // The largest threshold is almost unity, not signed Q8.8 1.0.
+        axi_write(8'h20, 32'h0000_FFFF); // W0
+        axi_write(8'h24, 32'h0000_FFFF); // W1
+        axi_write(8'h28, 32'h0000_FFFF); // W2
 
         // Y range: y_min=-1.0 (0xFF00), y_max=+2.0 (0x0200)
         axi_write(8'h30, 32'h0000_FF00); // Y_MIN
@@ -187,11 +187,11 @@ module tb_sc_neurocore_top;
 
         // Verify one config register read-back
         axi_read(8'h10, rd_data);
-        if (rd_data[15:0] == 16'h00C0) begin
+        if (rd_data[15:0] == 16'hC000) begin
             $display("[PASS] A: config readback X0 = 0x%04h", rd_data[15:0]);
             pass_count = pass_count + 1;
         end else begin
-            $display("[FAIL] A: config readback X0 = 0x%04h, expected 0x00C0", rd_data[15:0]);
+            $display("[FAIL] A: config readback X0 = 0x%04h, expected 0xC000", rd_data[15:0]);
             fail_count = fail_count + 1;
         end
 
@@ -262,15 +262,14 @@ module tb_sc_neurocore_top;
         if (fail_count == 0)
             $display("[PASS] All tests passed");
         else
-            $display("[FAIL] %0d test(s) failed", fail_count);
+            $fatal(1, "[FAIL] %0d test(s) failed", fail_count);
         $finish;
     end
 
     // Safety timeout
     initial begin
         #500000;
-        $display("[FAIL] Global timeout");
-        $finish;
+        $fatal(1, "[FAIL] Global timeout");
     end
 
 endmodule

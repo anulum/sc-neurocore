@@ -17,7 +17,7 @@
 module sc_dense_layer_core #(
     parameter integer N_INPUTS = 3,
     parameter integer N_NEURONS = 5,
-    parameter integer DATA_WIDTH = 16 // fixed-point width for x_inputs/weights
+    parameter integer DATA_WIDTH = 16 // Probability threshold and signed current word width
 )(
     input wire          clk,
     input wire          rst_n,
@@ -26,11 +26,11 @@ module sc_dense_layer_core #(
     input wire          start_pulse,
     input wire [31:0]   stream_len, // Runtime configurable length
 
-    // Scalar inputs (Packed fixed-point bus)
+    // Unsigned encoder thresholds, compared directly with the LFSR word.
     // x_input_fp[i] is slice [i*DATA_WIDTH +: DATA_WIDTH]
     input wire [N_INPUTS*DATA_WIDTH-1:0] x_input_fp,
 
-    // Scalar weights (Packed fixed-point bus)
+    // Unsigned weight thresholds, with the same encoding as the inputs.
     input wire [N_INPUTS*DATA_WIDTH-1:0] weight_fp,
 
     // Configuration for mapping probability -> current range

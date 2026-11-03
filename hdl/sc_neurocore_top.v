@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Top-level wrapper:
+// SC-NeuroCore — AXI-Lite stochastic dense layer and firing-rate wrapper
 
 // hdl/sc_neurocore_top.v
 //
@@ -133,10 +133,21 @@ wire [N_NEURONS-1:0] neuron_spikes_t;
 wire                 running;
 wire                 step_valid;
 wire                 run_done;
+reg                  completion_latched;
 
-// Busy/done outputs for AXI
+// Completion becomes visible with the rate bank's final values. Reads do not
+// consume it; only reset or the next accepted measurement clears it.
 assign stat_busy = running;
-assign stat_done = run_done;
+assign stat_done = completion_latched;
+
+always @(posedge S_AXI_ACLK or negedge S_AXI_ARESETN) begin
+    if (!S_AXI_ARESETN)
+        completion_latched <= 1'b0;
+    else if (cfg_start_pulse && !running)
+        completion_latched <= 1'b0;
+    else if (run_done)
+        completion_latched <= 1'b1;
+end
 
 sc_dense_layer_core #(
     .N_INPUTS(N_INPUTS),
@@ -178,5 +189,30 @@ sc_firing_rate_bank #(
     .SCALE_Q16   (cfg_scale_q16),
     .rate_q16    (stat_rate_q16)
 );
+
+`ifdef FORMAL
+reg formal_past_valid = 0;
+always @(posedge S_AXI_ACLK) begin
+    if (!formal_past_valid)
+        assume(!S_AXI_ARESETN);
+    formal_past_valid <= 1'b1;
+
+    if (formal_past_valid && !$past(S_AXI_ARESETN))
+        assert(!completion_latched);
+
+    if (formal_past_valid && S_AXI_ARESETN && $past(S_AXI_ARESETN)) begin
+        if ($past(cfg_start_pulse && !running)) begin
+            assert(!completion_latched);
+        end else if ($past(run_done)) begin
+            assert(completion_latched);
+        end else begin
+            assert(completion_latched == $past(completion_latched));
+        end
+
+        cover(completion_latched && !running);
+        cover($past(completion_latched) && cfg_start_pulse && !running);
+    end
+end
+`endif
 
 endmodule

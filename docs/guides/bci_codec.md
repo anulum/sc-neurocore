@@ -468,9 +468,10 @@ blocks do not establish a synthesised whole-codec implementation:
 
 The shared LFSR polynomial is x^16 + x^14 + x^13 + x^11 + 1.
 The [repository-wide formal source inventory](../tutorials/21_formal_verification.md)
-contains 90 SymbiYosys proof jobs and 476 formal statements
-(311 assert, 121 assume, 44 cover), counted from Git-tracked sources under
-`hdl/formal`. These source counts do not establish that every proof job has
+contains 91 SymbiYosys proof jobs and 496 formal statements
+(328 assert, 122 assume, 46 cover), counted from Git-tracked sources under
+`hdl/formal` and the inline `FORMAL` properties in `hdl/sc_neurocore_top.v`.
+These source counts do not establish that every proof job has
 passed, end-to-end codec equivalence or a synthesised whole-codec implementation.
 Predictor state resets for each batch; lossless raster recovery requires
 `base_mode="lossless"`.
