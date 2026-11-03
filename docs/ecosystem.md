@@ -9,49 +9,59 @@
 # Group and Project Map
 
 **SC-NeuroCore will remain a public, open-source development workbench** for the
-**SC Neuromorphic Computing Systems** group. The upcoming split gives focused
-repositories clear responsibilities, smaller installation boundaries and
-versioned interfaces. The workbench continues to bring those parts together for
-experimentation, research-to-hardware workflows and integration.
+**SC Neuromorphic Computing Systems** group. The group is building a connected
+engineering workflow: develop models, compare their behaviour, implement them
+on a selected target and trace measured results back to the original design.
+The intended scope extends from neuromorphic software to general circuit
+engineering and optional laboratory and production integration.
 
-The existing programme comprises the workbench, LOOP-TIMING-WITNESS, 13 specialized SC-NC
-repositories and 25 supporting tools. The repository names below identify the
-intended destinations; implementation and release status are separate from naming.
+The programme has four connected parts. Each retains its own engineering
+semantics, implementation status and evidence requirements.
+
+| Programme line | Purpose and relationship |
+| --- | --- |
+| Neuromorphic workbench and components | The existing workbench brings simulation, learning, analysis, acceleration, compilation and experimental Studio workflows together. Thirteen planned SC-NC extractions would give these responsibilities focused releases and versioned interfaces. |
+| Evidence and measurement | LOOP-TIMING-WITNESS and 25 supporting tools cover timing, data quality, numerical conformance, provenance, benchmarking, deployment and assurance. Shared records connect a claim to its actual source; they do not replace the domain or instrument checks. |
+| General circuit engineering | Sixteen adopted destinations describe a platform for analogue, digital and mixed-signal designs, with specialist physical domains and technologies. Neuromorphic designs would be one application; the platform would also serve non-neural circuits. |
+| Laboratory and production integration | Optional manufacturing and automation paths would connect design identities, approved processes, materials, equipment providers and measured hardware. Local controllers and manufacturing authorities retain their operational responsibilities. |
 
 The split architecture is prepared. The current integrated package retains
-its documented maturity; separately published component releases and migration
-guides will accompany the transition. See the repository releases for the
-current version.
+its documented maturity; component releases and migration guides will accompany
+the transition. General circuit and manufacturing capabilities described here
+remain planned. See the repository releases for the current package version.
 
-## Public workbench and future products
+## Programme overview
 
-SC-NeuroCore keeps its public workbench role and current open-source license.
-Future specialized components may become open-source or proprietary products.
-Their licensing and commercial boundaries remain under discussion with investors
-and IP partners and will be announced individually. Several supporting tools
-will remain public, with their own documented licensing and release status.
-
-The map below covers that existing programme. The adopted general circuit-design
-expansion is described separately below. Future
-licensing decisions will be announced separately for each project.
-
-![SC Neuromorphic Computing Systems: development workbench, timing instrument, 13 specialized repositories and 25 supporting tools. Full functions and status follow below.](assets/sc_neurocore_group_map.svg)
+![Programme overview: existing SC-NeuroCore workbench, architecture-stage timing and evidence tooling, thirteen planned neuromorphic components, twenty-five supporting tools, and sixteen planned circuit destinations with optional laboratory and production integration.](assets/sc_neurocore_group_map.svg)
 
 [Open the full-size SVG](assets/sc_neurocore_group_map.svg),
 [download PNG](assets/sc_neurocore_group_map.png), or
-[download JPG](assets/sc_neurocore_group_map.jpg) (3200 × 3740 pixels).
-The map groups responsibilities for navigation; its connecting lines do not
+[download JPG](assets/sc_neurocore_group_map.jpg).
+
+The maps use solid green for existing software, blue for architecture-stage
+projects or accepted design direction, and dashed outlines for planned
+implementation. An existing scaffold does not imply an installed domain runtime.
+The connecting lines show responsibilities and intended integration; they do not
 specify package dependencies or an extraction order.
+
+## Public workbench and future products
+
+SC-NeuroCore keeps its public workbench role and current open-source licence.
+Future specialised components may become open-source or proprietary products.
+Their licensing and commercial boundaries remain under discussion with investors
+and IP partners and will be announced individually. Several supporting tools
+will remain public, with their own documented licensing and release status.
 
 ## What exists today
 
 | Repository | Function | Current status |
 | --- | --- | --- |
-| [SC-NEUROCORE](https://github.com/anulum/sc-neurocore) | Integrated development workbench: simulation, learning, analysis, acceleration, compilation and hardware-oriented evidence. | Existing repository and Python package; package metadata remains at beta maturity. Individual capabilities have their own evidence boundaries. |
+| [SC-NEUROCORE](https://github.com/anulum/sc-neurocore) | Integrated development workbench: simulation, learning, analysis, acceleration, compilation, hardware-oriented evidence and the experimental visual Studio (`sc-neurocore[studio]`). | Existing repository and Python package; package metadata remains at beta maturity. Individual capabilities have their own evidence boundaries. |
 | [LOOP-TIMING-WITNESS](https://github.com/anulum/loop-timing-witness) | Timing instrument for loop and accelerator latency, jitter, deadlines, fault response and energy measurements. | Architecture stage, with software/native/RTL simulation and measurement contracts. Physical board qualification remains pending. |
 | EVIDENCE-MANIFEST-TOOLKIT | Portable evidence-manifest contracts and validation infrastructure. | Existing architecture-stage scaffold with local repository checks. No released signing, verification or domain runtime package. |
+| NEURO-EVIDENCE-BENCH | Auditable benchmark plans, evidence-backed results and independent reruns. | Architecture-stage repository with validation tooling; benchmark execution, metric collection and comparison remain under implementation. No released benchmark runtime. |
 
-The remaining specialized repositories and supporting tools are planned.
+The remaining specialised repositories and supporting tools are planned.
 A place on this map does not imply an available package, completed extraction or
 qualified hardware. Published repositories and releases will provide their own
 installation instructions, compatibility contracts and evidence.
@@ -66,11 +76,13 @@ entry points easier to understand and maintain.
 
 SC-NeuroCore keeps its role as the place to develop and integrate the complete
 workflow. It will continue to support experiments spanning several components
-and provide a practical route through the group. Specialized repositories will
+and provide a practical route through the group. Specialised repositories will
 own their implementations and public interfaces; shared functionality should
 be consumed through those interfaces rather than copied between repositories.
 
-## Specialized repositories
+<a id="specialized-repositories"></a>
+
+## Specialised repositories
 
 All 13 repositories in this section are planned extraction destinations.
 Their functions describe ownership, not separate releases already available.
@@ -113,7 +125,8 @@ Their functions describe ownership, not separate releases already available.
 These 25 tools are sibling projects serving the group through explicit data,
 measurement and evidence contracts. They complement the SC-NC components and
 have separate responsibilities. EVIDENCE-MANIFEST-TOOLKIT has the scaffold
-status described above; the other tools below are planned.
+status described above. NEURO-EVIDENCE-BENCH also has architecture-stage
+validation tooling; the remaining tools below are planned.
 
 ### Evidence and lineage
 
@@ -230,27 +243,28 @@ and coupled-field operations, **CIRCUIT-PHOTONICS** for optical design semantics
 and **CIRCUIT-DEVICES** for device/TCAD and compact-model work. Their independent
 repositories depend on actual supported use cases, maintainers and release
 boundaries. A distinct material, node or adapter does not automatically require
-another repository. Every destination follows a module-first implementation decision; shared foundation packages
-may initially live in one workspace. Separate repositories require independent
-consumers, lifecycle and maintainers. CIRCUIT-ACCEPTANCE aggregates requirement
+another repository. Every destination follows a module-first implementation
+decision; shared foundation packages may initially live in one workspace.
+Separate repositories require independent consumers, lifecycle and maintainers. CIRCUIT-ACCEPTANCE aggregates requirement
 results; SC-NC-VERIFY retains SNN fidelity and digital formal operations remain
 with their actual tool owners.
 
+![Sixteen planned circuit destinations grouped into shared foundations, domain operations, physical and acceptance operations, workspace and production integration, and three specialist destinations. All use explicit contracts; FLOW dispatches admitted providers.](assets/sc_neurocore_circuit_platform_map.svg)
+
+[Open the circuit-platform SVG](assets/sc_neurocore_circuit_platform_map.svg),
+[download PNG](assets/sc_neurocore_circuit_platform_map.png), or
+[download JPG](assets/sc_neurocore_circuit_platform_map.jpg).
+The destinations share design and technology contracts while retaining
+separate domain models and acceptance rules. Their grouping is not a package
+dependency graph or a commitment to extract sixteen repositories at once.
+
 ### Integration model
 
-```mermaid
-flowchart TD
-    S[Specifications and design views] --> F[Admitted circuit workflows]
-    F --> D[Digital operations]
-    F --> A[Analogue operations]
-    F --> M[Mixed-signal and specialist operations]
-    D --> P[Physical design and verification]
-    A --> P
-    M --> P
-    P --> H[Package board and manufacturing preparation]
-    H --> L[Hardware characterisation]
-    L --> S
-```
+![Intended circuit lifecycle from specifications through simulation, implementation and physical verification to optional assembly, manufacturing and laboratory measurements. Measured feedback creates a new design revision. General circuit stages remain planned; existing bounded SC-NeuroCore workflows are shown separately.](assets/sc_neurocore_design_lifecycle.svg)
+
+[Open the lifecycle SVG](assets/sc_neurocore_design_lifecycle.svg),
+[download PNG](assets/sc_neurocore_design_lifecycle.png), or
+[download JPG](assets/sc_neurocore_design_lifecycle.jpg).
 
 The arrows describe an intended lifecycle. Individual views and operations keep
 their own semantics and entry points; an existing RTL, schematic, netlist or
@@ -275,12 +289,12 @@ specific to the selected target; open tooling alone does not establish
 production readiness.
 
 The general platform would reuse the existing evidence, record and measurement
-contracts as those capabilities become available. Tool operations would treat designs, PDK decks and embedded scripts as
-untrusted executable inputs, with explicit isolated execution and bounded
-resources. Instrument drivers and original calibration associations would have
-one source owner. It would preserve original
-artefacts and distinguish simulated, implemented, manufacturer-accepted and
-measured results. Digital exactness, analogue error/statistical laws and
+contracts as those capabilities become available. Tool operations would treat
+designs, PDK decks and embedded scripts as untrusted executable inputs, with
+explicit isolated execution and bounded resources. Instrument drivers and
+original calibration associations would have one source owner. The platform
+would preserve original artefacts and distinguish simulated, implemented,
+manufacturer-accepted and measured results. Digital exactness, analogue error/statistical laws and
 specialist physics would retain separate acceptance criteria.
 
 ### Manufacturing and laboratory automation
@@ -367,7 +381,7 @@ There is no announced split date or migration deadline.
 For current use, continue with the existing
 [SC-NeuroCore installation profiles](guides/install_profiles.md) and
 [getting-started guide](guides/getting-started.md). This map introduces the
-repository organization; it does not announce a package-name change or ask
+repository organisation; it does not announce a package-name change or ask
 users to migrate now. Release notes and migration guides will describe any
 future import or installation changes before users need to act.
 

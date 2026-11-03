@@ -116,11 +116,13 @@ be announced per project. **Several supporting tools will remain public.** This
 roadmap does not change the current repository's open-source license or its
 continuing public workbench role.
 
-The [group and project map](docs/ecosystem.md) presents all 13 specialized
-repositories, 25 supporting tools and LOOP-TIMING-WITNESS, with their functions
-and current status. Read it as a map of responsibilities and implementation
-status; future licensing decisions will be announced separately. Migration
-guides will accompany component releases.
+The [group and project map](docs/ecosystem.md) explains the whole programme:
+13 specialised neuromorphic destinations, 25 supporting tools,
+LOOP-TIMING-WITNESS and the planned general circuit-design platform with
+16 adopted destinations, including manufacturing and equipment automation.
+Programme, circuit-platform and lifecycle maps distinguish existing software
+from architecture and planned implementation. Migration guides will accompany
+component releases.
 
 [![SC Neuromorphic Computing Systems repository map](docs/assets/sc_neurocore_group_map.svg)](docs/ecosystem.md)
 

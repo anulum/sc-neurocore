@@ -4,148 +4,88 @@
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
-<!-- SC-NeuroCore — Group schematic -->
+<!-- SC-NeuroCore — Programme architecture map -->
 
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1870" viewBox="0 0 1600 1870" role="img" aria-labelledby="title desc">
-<title id="title">SC Neuromorphic Computing Systems — group and repository map</title>
-<desc id="desc">SC-NeuroCore continues as the development workbench. LOOP-TIMING-WITNESS is an architecture-stage timing instrument. Thirteen SC-NC repositories are planned extraction destinations. Twenty-five supporting tools are grouped by function; Evidence Manifest Toolkit has an architecture-stage scaffold and the other tools are planned. Lines show organizational grouping, not runtime dependencies.</desc>
-<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker></defs>
-<style>text{font-family:DejaVu Sans,Arial,sans-serif;fill:#18283b}.title{font-size:34px;font-weight:700}.sub{font-size:18px;fill:#42566e}.heading{font-size:23px;font-weight:700}.name{font-size:18px;font-weight:700}.tool{font-size:17px;font-weight:700}.role{font-size:16px;fill:#42566e}.badge{font-size:14px;font-weight:700;letter-spacing:1px;fill:#345372}.line{stroke:#64748b;stroke-width:2;fill:none}</style>
-<rect width="1600" height="1870" fill="#f5f8fc"/>
-<text x="48" y="62" class="title">SC Neuromorphic Computing Systems</text>
-<text x="48" y="96" class="sub">Group map • SC-NeuroCore continues as the development workbench</text>
-<rect x="48" y="125" width="915" height="150" rx="12" fill="#e4f2ff" stroke="#9aaec4" stroke-width="1.5"/>
-<text x="70" y="158" class="badge">CURRENT DEVELOPMENT WORKBENCH</text>
-<text x="70" y="192" class="heading">SC-NEUROCORE</text>
-<text x="70" y="226" class="sub">Experimentation • integration • research-to-hardware workflows</text>
-<text x="70" y="253" class="role">Existing repository and package; capabilities retain their individual evidence boundaries.</text>
-<rect x="987" y="125" width="565" height="150" rx="12" fill="#e9f4ee" stroke="#9aaec4" stroke-width="1.5"/>
-<text x="1009" y="158" class="badge">EXISTING • ARCHITECTURE STAGE</text>
-<text x="1009" y="192" class="heading">LOOP-TIMING-WITNESS</text>
-<text x="1009" y="226" class="role">Timing, jitter, deadlines and energy; physical board</text>
-<text x="1009" y="248" class="role">qualification pending.</text>
-<text x="48" y="326" class="heading">13 specialized repositories</text>
-<text x="48" y="355" class="badge">PLANNED EXTRACTION • clear ownership, versioned interfaces and focused installations</text>
-<path class="line" d="M500 275 V286 H1568 V373 H230 V380" marker-end="url(#arrow)"/>
-<path class="line" d="M230 373 V380" marker-end="url(#arrow)"/>
-<path class="line" d="M610 373 V380" marker-end="url(#arrow)"/>
-<path class="line" d="M990 373 V380" marker-end="url(#arrow)"/>
-<path class="line" d="M1340 373 V380" marker-end="url(#arrow)"/>
-<rect x="48" y="390" width="364" height="388" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="64" y="425" class="name">Foundation and execution</text>
-<text x="64" y="470" class="name">SC-NC-CORE</text>
-<text x="64" y="495" class="role">Primitives, graphs and numerical</text>
-<text x="64" y="517" class="role">semantics</text>
-<text x="64" y="546" class="name">SC-NC-CATALOGUE</text>
-<text x="64" y="571" class="role">Models, topologies and connectomes</text>
-<text x="64" y="622" class="name">SC-NC-ENGINE</text>
-<text x="64" y="647" class="role">Rust, SIMD and distributed</text>
-<text x="64" y="669" class="role">execution</text>
-<text x="64" y="698" class="name">SC-NC-BRIDGES</text>
-<text x="64" y="723" class="role">Interchange and cross-domain</text>
-<text x="64" y="745" class="role">bridges</text>
-<rect x="428" y="390" width="364" height="388" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="444" y="425" class="name">Learning and data</text>
-<text x="444" y="470" class="name">SC-NC-LEARN</text>
-<text x="444" y="495" class="role">Training, plasticity and adaptation</text>
-<text x="444" y="546" class="name">SC-NC-DATA</text>
-<text x="444" y="571" class="role">Datasets, encodings and codecs</text>
-<text x="444" y="622" class="name">SC-NC-ANALYSIS</text>
-<text x="444" y="647" class="role">Spike analysis and visualisation</text>
-<rect x="808" y="390" width="364" height="388" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="824" y="425" class="name">Silicon and verification</text>
-<text x="824" y="470" class="name">SC-NC-COMPILER</text>
-<text x="824" y="495" class="role">IR to RTL, co-simulation and export</text>
-<text x="824" y="546" class="name">SC-NC-HARDWARE</text>
-<text x="824" y="571" class="role">Targets, drivers and deployment</text>
-<text x="824" y="622" class="name">SC-NC-VERIFY</text>
-<text x="824" y="647" class="role">Formal checks, faults and</text>
-<text x="824" y="669" class="role">resilience</text>
-<rect x="1188" y="390" width="364" height="388" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="1204" y="425" class="name">Workspace and research</text>
-<text x="1204" y="470" class="name">SC-NC-STUDIO</text>
-<text x="1204" y="495" class="role">Visual IDE and evidence</text>
-<text x="1204" y="517" class="role">presentation</text>
-<text x="1204" y="546" class="name">SC-NC-RESEARCH</text>
-<text x="1204" y="571" class="role">Experimental research paths</text>
-<text x="1204" y="622" class="name">SC-NC-BENCH</text>
-<text x="1204" y="647" class="role">Benchmark suites and run evidence</text>
-<text x="48" y="819" class="heading">25 supporting tools</text>
-<text x="48" y="848" class="sub">Sibling services for data, comparisons, measurements, lineage and deployment</text>
-<rect x="48" y="879" width="490" height="452" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="66" y="913" class="name">Evidence and lineage</text>
-<text x="66" y="941" class="badge">SCAFFOLD + PLANNED TOOLS</text>
-<text x="66" y="979" class="tool">EVIDENCE-MANIFEST-TOOLKIT</text>
-<text x="66" y="1002" class="role">Architecture-stage scaffold</text>
-<text x="66" y="1023" class="role">Evidence schemas, hashing and validation</text>
-<text x="66" y="1053" class="tool">MODEL-PROVENANCE-PACK</text>
-<text x="66" y="1079" class="role">Model and conversion provenance</text>
-<text x="66" y="1127" class="tool">EXPERIMENT-LEDGER</text>
-<text x="66" y="1153" class="role">Configurations and evidence lineage</text>
-<text x="66" y="1201" class="tool">SPIKE-LOG</text>
-<text x="66" y="1227" class="role">Event integrity and replay</text>
-<rect x="555" y="879" width="490" height="452" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="573" y="913" class="name">Data and encoders</text>
-<text x="573" y="941" class="badge">PLANNED TOOLS</text>
-<text x="573" y="979" class="tool">SPIKE-FORMAT-BRIDGE</text>
-<text x="573" y="1005" class="role">Event-format conversion</text>
-<text x="573" y="1053" class="tool">SPIKE-CODEC-BENCH</text>
-<text x="573" y="1079" class="role">Compression, distortion and cost</text>
-<text x="573" y="1127" class="tool">SPIKE-ENCODER-CHARACTERISER</text>
-<text x="573" y="1153" class="role">Encoder quality, rate and latency</text>
-<text x="573" y="1201" class="tool">SPIKE-QUALITY-GATE</text>
-<text x="573" y="1227" class="role">Event-data quality reports</text>
-<text x="573" y="1275" class="tool">SPIKE-GROUNDTRUTH</text>
-<text x="573" y="1301" class="role">Reproducible labelled stimuli</text>
-<rect x="1062" y="879" width="490" height="640" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="1080" y="913" class="name">Numerical behaviour and conformance</text>
-<text x="1080" y="941" class="badge">PLANNED TOOLS</text>
-<text x="1080" y="979" class="tool">SNN-DIVERGENCE-HARNESS</text>
-<text x="1080" y="1005" class="role">Cross-runtime numerical comparison</text>
-<text x="1080" y="1053" class="tool">SC-STREAM-PROVER</text>
-<text x="1080" y="1079" class="role">Stochastic arithmetic error bounds</text>
-<text x="1080" y="1127" class="tool">RANDOMNESS-WITNESS</text>
-<text x="1080" y="1153" class="role">Randomness-source qualification</text>
-<text x="1080" y="1201" class="tool">MUTATION-SNN</text>
-<text x="1080" y="1227" class="role">Domain mutation testing</text>
-<text x="1080" y="1275" class="tool">NIR-CONFORMANCE</text>
-<text x="1080" y="1301" class="role">NIR import/export conformance</text>
-<text x="1080" y="1349" class="tool">NEURO-EVIDENCE-BENCH</text>
-<text x="1080" y="1375" class="role">Benchmark plans and result contracts</text>
-<text x="1080" y="1423" class="tool">SPIKE-CALIBRATOR</text>
-<text x="1080" y="1449" class="role">Confidence calibration and drift</text>
-<rect x="48" y="1353" width="490" height="439" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="66" y="1387" class="name">Hardware measurements</text>
-<text x="66" y="1415" class="badge">PLANNED TOOLS</text>
-<text x="66" y="1453" class="tool">BITSTREAM-EVIDENCE-CI</text>
-<text x="66" y="1479" class="role">FPGA build and bitstream evidence</text>
-<text x="66" y="1527" class="tool">PLASTICITY-WITNESS</text>
-<text x="66" y="1553" class="role">Physical learning-rule measurements</text>
-<text x="66" y="1601" class="tool">AER-LINK-WITNESS</text>
-<text x="66" y="1627" class="role">Event-link throughput and loss</text>
-<text x="66" y="1675" class="tool">RELIABILITY-WITNESS</text>
-<text x="66" y="1701" class="role">Fabric errors and drift</text>
-<text x="66" y="1749" class="tool">SIM-REAL-WITNESS</text>
-<text x="66" y="1775" class="role">Simulation-to-fabric comparison</text>
-<rect x="555" y="1353" width="490" height="439" rx="12" fill="#fff" stroke="#9aaec4" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="573" y="1387" class="name">Deployment and assurance</text>
-<text x="573" y="1415" class="badge">PLANNED TOOLS</text>
-<text x="573" y="1453" class="tool">DEPLOY-PACK</text>
-<text x="573" y="1479" class="role">Evidence-bound deployment units</text>
-<text x="573" y="1527" class="tool">FIELD-OPS-WITNESS</text>
-<text x="573" y="1553" class="role">Field health, timing and drift</text>
-<text x="573" y="1601" class="tool">FLIGHT-RECORDER</text>
-<text x="573" y="1627" class="role">On-unit event and state histories</text>
-<text x="573" y="1675" class="tool">NEURO-SAFETY-CASE</text>
-<text x="573" y="1701" class="role">Assurance arguments and gaps</text>
-<rect x="1062" y="1541" width="490" height="251" rx="12" fill="#edf2f8" stroke="#9aaec4" stroke-width="1.5"/>
-<text x="1080" y="1577" class="name">How to read this map</text>
-<text x="1080" y="1610" class="role">Solid cards: existing projects. Dashed cards:</text>
-<text x="1080" y="1632" class="role">planned destinations or tool families. Toolkit</text>
-<text x="1080" y="1654" class="role">scaffold status is explicit.</text>
-<text x="1080" y="1690" class="role">Names identify destinations; release status is</text>
-<text x="1080" y="1712" class="role">separate. Lines show grouping, not package</text>
-<text x="1080" y="1734" class="role">dependencies.</text>
-<text x="48" y="1822" class="sub">Transition: evidenced stability → reviewed contracts → focused releases and migration guides</text>
-<text x="48" y="1850" class="role">Continue with the current SC-NeuroCore package. No split date or migration deadline is announced.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1430" viewBox="0 0 1600 1430" role="img" aria-labelledby="title desc">
+<title id="title">SC Neuromorphic Computing Systems</title><desc id="desc">Programme overview: existing public workbench; architecture-stage timing instrument and evidence tooling; 13 planned neuromorphic extraction destinations, 25 supporting tools and 16 planned general circuit destinations. Manufacturing and equipment automation are optional future integrations. Lines express programme relationships, not package dependencies or extraction order.</desc>
+<metadata id="project-metadata"><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:cc="http://creativecommons.org/ns#"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Programme overview: existing public workbench; architecture-stage timing instrument and evidence tooling; 13 planned neuromorphic extraction destinations, 25 supporting tools and 16 planned general circuit destinations. Manufacturing and equipment automation are optional future integrations. Lines express programme relationships, not package dependencies or extraction order.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_group_map.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html"/></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#526782"/></marker></defs>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif;fill:#142941}.title{font-size:34px;font-weight:700}.sub{font-size:20px;fill:#3d536d}.heading{font-size:23px;font-weight:700}.name{font-size:19px;font-weight:700}.body{font-size:18px}.small{font-size:16px;fill:#3d536d}.tag{font-size:14px;font-weight:700;letter-spacing:1px}.exists{fill:#e6f4eb;stroke:#287a4d;stroke-width:2}.architecture{fill:#e8efff;stroke:#4865a0;stroke-width:2}.planned{fill:#fff;stroke:#6c7a91;stroke-width:2;stroke-dasharray:8 5}.note{fill:#edf1f7;stroke:#9aa8bc;stroke-width:1.5}.link{fill:none;stroke:#526782;stroke-width:2.5}</style>
+<rect width="1600" height="1430" fill="#f6f8fc"/>
+<text x="56" y="66" class="title">SC Neuromorphic Computing Systems</text>
+<text x="56" y="103" class="sub">From neuromorphic models to circuit engineering, reproducible evidence and measured hardware</text>
+<rect x="56" y="132" width="210" height="38" rx="14" class="exists"/>
+<text x="71" y="157" class="small">Existing software</text>
+<rect x="290" y="132" width="225" height="38" rx="14" class="architecture"/>
+<text x="305" y="157" class="small">Architecture stage</text>
+<rect x="539" y="132" width="300" height="38" rx="14" class="planned"/>
+<text x="554" y="157" class="small">Planned implementation</text>
+<rect x="56" y="218" width="984" height="190" rx="14" class="exists"/>
+<text x="78" y="250" class="tag">PUBLIC, OPEN-SOURCE DEVELOPMENT WORKBENCH</text>
+<text x="78" y="288" class="heading">SC-NEUROCORE</text>
+<text x="78" y="327" class="body">Simulation · learning · analysis · compilation · experimental Studio</text>
+<text x="78" y="366" class="small">Existing beta package; each capability keeps its own evidence limits.</text>
+<rect x="1064" y="218" width="480" height="190" rx="14" class="architecture"/>
+<text x="1086" y="250" class="tag">TIMING INSTRUMENT</text>
+<text x="1086" y="288" class="heading">LOOP-TIMING-WITNESS</text>
+<text x="1086" y="327" class="small">Software/native/RTL measurement contracts</text>
+<text x="1086" y="360" class="small">Physical board qualification pending.</text>
+<path d="M1304 408 V443" class="link"/>
+<path d="M548 408 V443 H296 V490" class="link" marker-end="url(#arrow)"/>
+<path d="M548 443 H800 V490" class="link" marker-end="url(#arrow)"/>
+<path d="M800 443 H1304 V490" class="link" marker-end="url(#arrow)"/>
+<text x="56" y="430" class="small">Planned extraction · shared evidence contracts · optional circuit-platform adapters</text>
+<rect x="56" y="500" width="480" height="514" rx="14" class="planned"/>
+<text x="78" y="539" class="heading">13 neuromorphic components</text>
+<rect x="560" y="500" width="480" height="514" rx="14" class="planned"/>
+<text x="582" y="539" class="heading">25 supporting tools</text>
+<rect x="1064" y="500" width="480" height="514" rx="14" class="planned"/>
+<text x="1086" y="539" class="heading">16 circuit destinations</text>
+<text x="78" y="574" class="tag">PLANNED EXTRACTION</text>
+<text x="78" y="610" class="body">SC-NC-CORE</text>
+<text x="78" y="638" class="body">SC-NC-CATALOGUE</text>
+<text x="78" y="666" class="body">SC-NC-ENGINE</text>
+<text x="78" y="694" class="body">SC-NC-BRIDGES</text>
+<text x="78" y="722" class="body">SC-NC-LEARN</text>
+<text x="78" y="750" class="body">SC-NC-DATA</text>
+<text x="78" y="778" class="body">SC-NC-ANALYSIS</text>
+<text x="78" y="806" class="body">SC-NC-COMPILER</text>
+<text x="78" y="834" class="body">SC-NC-HARDWARE</text>
+<text x="78" y="862" class="body">SC-NC-VERIFY</text>
+<text x="78" y="890" class="body">SC-NC-STUDIO</text>
+<text x="78" y="918" class="body">SC-NC-RESEARCH</text>
+<text x="78" y="946" class="body">SC-NC-BENCH</text>
+<text x="582" y="574" class="tag">ARCHITECTURE + PLANNED TOOLS</text>
+<text x="582" y="603" class="small">EVIDENCE-MANIFEST-TOOLKIT: scaffold</text>
+<text x="582" y="625" class="small">NEURO-EVIDENCE-BENCH: tooling</text>
+<text x="582" y="658" class="name">Evidence and lineage</text>
+<text x="582" y="684" class="small">Schemas, records and source lineage</text>
+<text x="582" y="720" class="name">Data and encoders</text>
+<text x="582" y="746" class="small">Formats, codecs, quality and reference stimuli</text>
+<text x="582" y="782" class="name">Numerical conformance</text>
+<text x="582" y="808" class="small">Oracles, bounds and cross-runtime comparisons</text>
+<text x="582" y="844" class="name">Hardware measurements</text>
+<text x="582" y="870" class="small">Timing, links, learning and fabric behaviour</text>
+<text x="582" y="906" class="name">Deployment and assurance</text>
+<text x="582" y="932" class="small">Deployment records, field history and claims</text>
+<text x="1086" y="574" class="tag">ADOPTED DIRECTION; IMPLEMENTATION PLANNED</text>
+<text x="1086" y="617" class="body">General design without an SNN runtime.</text>
+<text x="1086" y="654" class="small">13 platform destinations + 3 specialists.</text>
+<text x="1086" y="707" class="small">Analogue · digital · mixed-signal</text>
+<text x="1086" y="754" class="small">Physical design · package · board</text>
+<text x="1086" y="801" class="small">Lab · acceptance · reproducible workflows</text>
+<text x="1086" y="848" class="small">Manufacturing · equipment integration</text>
+<text x="1086" y="895" class="small">Fields · photonics · device physics</text>
+<path d="M1304 1014 V1064" class="link" marker-end="url(#arrow)"/>
+<rect x="56" y="1080" width="1488" height="220" rx="14" class="architecture"/>
+<text x="78" y="1117" class="heading">Optional laboratory and production integration</text>
+<text x="78" y="1156" class="name">CIRCUIT-MANUFACTURING</text>
+<text x="78" y="1188" class="body">Routes, recipes, materials and supplier handoff.</text>
+<text x="78" y="1225" class="small">Existing manufacturing authority retains control.</text>
+<text x="826" y="1156" class="name">CIRCUIT-AUTOMATION</text>
+<text x="826" y="1188" class="body">Equipment capabilities and local-provider adapters.</text>
+<text x="826" y="1225" class="small">Timing, interlocks and protection stay local.</text>
+<text x="78" y="1270" class="small">Planned integration; no fabrication capability or machine-control authority is implied.</text>
+<text x="56" y="1351" class="small">Lines show responsibilities and intended integration, not package dependencies or extraction order.</text>
+<text x="56" y="1383" class="small">Naming a destination does not announce a package, completed extraction, tapeout or release date.</text>
 </svg>
