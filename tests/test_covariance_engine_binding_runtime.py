@@ -77,7 +77,7 @@ for index in range(3):
 refuse([list(arrays), 0], 'bin_size must be positive')
 arguments: list[object] = [list(arrays), 5]
 empty = np.empty(0, dtype=np.int32)
-large_arguments: list[object] = [[empty] * 1025, 5]
+large_arguments: list[object] = [[empty] * 2049, 5]
 
 if pool == 'warm':
     engine.set_num_threads(1)
@@ -90,7 +90,9 @@ if pressure:
                        for line in Path('/proc/self/status').read_text().splitlines()
                        if line.startswith('VmSize:'))) * 1024
     previous = resource.getrlimit(resource.RLIMIT_AS)
-    limit = virtual + 1024**2
+    # 8 MiB keeps ordinary interpreter and engine allocations off the limit,
+    # while the 64 MiB worker stack and the 2049 x 2049 output exceed it.
+    limit = virtual + 8 * 1024**2
     assert previous[1] == resource.RLIM_INFINITY or limit <= previous[1]
     resource.setrlimit(resource.RLIMIT_AS, (limit, previous[1]))
     try:
@@ -145,7 +147,12 @@ print(json.dumps({'operation': operation, 'pool': pool, 'pressure': pressure,
             pool,
         ],
         cwd=os.environ.get("TMPDIR", os.getcwd()),
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "RAYON_NUM_THREADS": "1"},
+        env={
+            **os.environ,
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "RAYON_NUM_THREADS": "1",
+            "RUST_MIN_STACK": str(64 * 1024**2),
+        },
         capture_output=True,
         text=True,
         timeout=60,
