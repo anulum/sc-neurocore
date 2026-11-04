@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1721
+expected_file_count = 1772
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7018,3 +7018,157 @@ rationale = "Conserve genuine full ABI collection, module origin, source custody
 [[file]]
 path = "tests/native_go_coverage_contracts/consumer_contract.py"
 rationale = "Require productive optimized/source/collection/result refusals and genuine small Pytest setup-failure, call-failure and skip reports without numerical replays."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_aiger.py"
+rationale = "Exercise native complete-domain checks and deliberate corruption of actual receipts."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_bdd.py"
+rationale = "Exercise complete original-domain native proofs, actual result faults and changed retained protocol evidence."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_cache.py"
+rationale = "Exercise real mapping reuse, preserved failures and stale evidence refusal."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_checkpoints.py"
+rationale = "Exercise real native checkpoint exports and refuse altered sources, commands, streams and retained custody."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_cli.py"
+rationale = "Exercise command outputs and exit status using the installed native synthesis tools."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_dsp_contracts.py"
+rationale = "Exercise all required real macro configurations and complete retained-proof custody."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_dsp_ports.py"
+rationale = "Actual native DSP graphs exercise complete interface extensions, invalid parameters and controls, observable added outputs, and changed retained evidence."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_dsp_proof.py"
+rationale = "Prove complete native residuals and refuse faults in actual DSP checkpoints."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_exports.py"
+rationale = "Exercise complete native exports while preserving the original physical mapping."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_gia.py"
+rationale = "Exercise actual complete GIA proofs, last-output defects and retained-proof custody."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_gia_fallback.py"
+rationale = "Keep the large real exp qualification independent of fast native proof-contract tests."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_json.py"
+rationale = "Exercise lossless acquisition and adverse retained artifacts using actual Yosys output."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_netlist.py"
+rationale = "Actual synthesis netlists preserve complete independent ports, exact parameters and source custody while refusing malformed or aliased hardware."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_partition.py"
+rationale = "Exercises actual native cofactor proofs and refuses missing, overlapping, duplicate or swapped restrictions and altered retained commands, graphs and budgets."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_partition_acquisition.py"
+rationale = "Runs native acquisition boundaries with real elapsed cohort budgets and concurrent artifact corruption, preserving incomplete outcomes and original proof custody."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_polynomial.py"
+rationale = "Exact word polynomials match exhaustive signed integer arithmetic and refuse invalid widths, slices, floors and expansion budgets."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_proof.py"
+rationale = "Exercise actual integrated DSP proofs and refusal of damaged retained evidence."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_records.py"
+rationale = "Check the resource records against emitted RTL and real mapped circuits."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_report.py"
+rationale = "Exercise reports through actual cache, mapping, proof and numerical measurements."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_retention.py"
+rationale = "Actual native proof retention preserves source, output and time while refusing corrupt streams, changed custody, unsafe paths and unqualified native artifacts."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_source_proof.py"
+rationale = "Prove real normalization graphs and reject damaged or genuinely different native evidence."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_structural_proof.py"
+rationale = "Exercise structural comparison on native muxes and a real oversized wire interface."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_toolchain.py"
+rationale = "Exercise installed tools, their actual library data and bounded subprocesses."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_word_graph.py"
+rationale = "Validate independent operands and exact arithmetic against actual native graph faults."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_word_proof.py"
+rationale = "Refuse corrupted correspondences and arithmetic in real native DSP checkpoints."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_words.py"
+rationale = "Real native checkpoints preserve original word products, complete structural dependencies and independently validated DSP configuration."
+[[file]]
+path = "tests/test_tools/test_function_synthesis_yosys.py"
+rationale = "Exercise real mapped RTL, complete port bindings and corrupted export refusal."
+[[file]]
+path = "tools/function_synthesis.py"
+rationale = "Measure function hardware or report the complete source-bound comparison matrix.  Run from the source checkout with ``python -m tools.function_synthesis``. The compiler package and tooling must originate in that checkout."
+[[file]]
+path = "tools/function_synthesis_aiger.py"
+rationale = "Require explicit native equivalence of every declared primary input and output."
+[[file]]
+path = "tools/function_synthesis_bdd.py"
+rationale = "Prove all original results over every independent primary input through bounded complete native BDD construction."
+[[file]]
+path = "tools/function_synthesis_cache.py"
+rationale = "Reuse exact successful mappings while retaining failed native attempts."
+[[file]]
+path = "tools/function_synthesis_checkpoints.py"
+rationale = "Export complete original RTL and physical graphs through native compressed checkpoints with immutable source-bound readback."
+[[file]]
+path = "tools/function_synthesis_dsp_contracts.py"
+rationale = "Prove actual configured DSP arithmetic against the inspected native library model."
+[[file]]
+path = "tools/function_synthesis_dsp_ports.py"
+rationale = "Complete native DSP configurations and source interface derivations preserve original graphs and require independent unobserved additions with exact retained readback."
+[[file]]
+path = "tools/function_synthesis_dsp_proof.py"
+rationale = "Prove all connected DSP inputs and original outputs under universal primitive values."
+[[file]]
+path = "tools/function_synthesis_exports.py"
+rationale = "Preserve physical mapping while exporting complete native models only when needed."
+[[file]]
+path = "tools/function_synthesis_gia.py"
+rationale = "Compare every named model bit through a retained, full-domain singleton miter."
+[[file]]
+path = "tools/function_synthesis_json.py"
+rationale = "Keep original native JSON while admitting its lossless compact serialization."
+[[file]]
+path = "tools/function_synthesis_netlist.py"
+rationale = "Read the actual words, ports and primitive connections used by a proof."
+[[file]]
+path = "tools/function_synthesis_partition.py"
+rationale = "Native original-input cofactors retain every output difference, with independent full-domain coverage verification and source-bound bounded proof readback."
+[[file]]
+path = "tools/function_synthesis_polynomial.py"
+rationale = "Check universal integer word identities with explicit floor and wrap semantics."
+[[file]]
+path = "tools/function_synthesis_proof.py"
+rationale = "Qualify actual DSP mappings without changing the original physical synthesis flow."
+[[file]]
+path = "tools/function_synthesis_records.py"
+rationale = "Describe function measurements and read the actual mapped Yosys statistics."
+[[file]]
+path = "tools/function_synthesis_report.py"
+rationale = "Combine admitted mappings with separately measured numerical error and domains."
+[[file]]
+path = "tools/function_synthesis_retention.py"
+rationale = "Complete native proof artifacts retain every original byte and mode in bounded lossless storage, with temporary views for unchanged proof validation."
+[[file]]
+path = "tools/function_synthesis_source_proof.py"
+rationale = "Require exact structural keys or a complete native original-domain proof."
+[[file]]
+path = "tools/function_synthesis_structural_proof.py"
+rationale = "Compare complete original output functions using exact canonical bit expressions."
+[[file]]
+path = "tools/function_synthesis_toolchain.py"
+rationale = "Inspect the actual synthesis executables and libraries used by a measurement."
+[[file]]
+path = "tools/function_synthesis_word_graph.py"
+rationale = "Interpret checked combinational word cones over their actual connected bits."
+[[file]]
+path = "tools/function_synthesis_word_proof.py"
+rationale = "Prove local product identities and every original word-function connection."
+[[file]]
+path = "tools/function_synthesis_yosys.py"
+rationale = "Map standalone RTL and require explicit equivalence of every input/output bit."
