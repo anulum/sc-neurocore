@@ -41,9 +41,9 @@
 </a>
 <text x="93" y="698" font-size="22" fill="#40566e" font-weight="400">Build and compare neuron models, learning rules and ways to</text>
 <text x="93" y="726" font-size="22" fill="#40566e" font-weight="400">run them.</text>
-<text x="93" y="814" font-size="17" fill="#126b68" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="93" y="847" font-size="20" fill="#40566e" font-weight="400">Model/profile identity, neutral state/events and learning/runtime</text>
-<text x="93" y="873" font-size="20" fill="#40566e" font-weight="400">boundaries.</text>
+<text x="93" y="790" font-size="17" fill="#126b68" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="826" font-size="20" fill="#40566e" font-weight="400">Model/profile identity, neutral state/events and learning/runtime</text>
+<text x="93" y="852" font-size="20" fill="#40566e" font-weight="400">boundaries.</text>
 <rect x="845" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#126b68" stroke-width="2"/>
 <text x="868" y="392" font-size="28" fill="#126b68" font-weight="700">Data, sensors and event streams</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-data">
@@ -69,9 +69,9 @@
 </a>
 <text x="868" y="698" font-size="22" fill="#40566e" font-weight="400">Turn sensor recordings and datasets into usable spike and</text>
 <text x="868" y="726" font-size="22" fill="#40566e" font-weight="400">event streams.</text>
-<text x="868" y="814" font-size="17" fill="#126b68" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="868" y="847" font-size="20" fill="#40566e" font-weight="400">Dataset and stream identities, timebase, encoding and</text>
-<text x="868" y="873" font-size="20" fill="#40566e" font-weight="400">conversion/loss reports.</text>
+<text x="868" y="790" font-size="17" fill="#126b68" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="826" font-size="20" fill="#40566e" font-weight="400">Dataset and stream identities, timebase, encoding and</text>
+<text x="868" y="852" font-size="20" fill="#40566e" font-weight="400">conversion/loss reports.</text>
 <rect x="1620" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
 <text x="1643" y="392" font-size="28" fill="#365ab1" font-weight="700">Compilers and EDA integration</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-compiler">
@@ -91,9 +91,9 @@
 </a>
 <text x="1643" y="698" font-size="22" fill="#40566e" font-weight="400">Connect existing design tools and translate designs between</text>
 <text x="1643" y="726" font-size="22" fill="#40566e" font-weight="400">them.</text>
-<text x="1643" y="814" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="1643" y="847" font-size="20" fill="#40566e" font-weight="400">Model/IR/target constraints; neutral operation/provider and</text>
-<text x="1643" y="873" font-size="20" fill="#40566e" font-weight="400">technology profiles.</text>
+<text x="1643" y="790" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="1643" y="826" font-size="20" fill="#40566e" font-weight="400">Model/IR/target constraints; neutral operation/provider and</text>
+<text x="1643" y="852" font-size="20" fill="#40566e" font-weight="400">technology profiles.</text>
 <rect x="2395" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="2418" y="392" font-size="28" fill="#855025" font-weight="700">Digital FPGA and ASIC</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-hardware">
@@ -113,9 +113,9 @@
 </a>
 <text x="2418" y="698" font-size="22" fill="#40566e" font-weight="400">Take digital designs from simulation to programmable</text>
 <text x="2418" y="726" font-size="22" fill="#40566e" font-weight="400">hardware or custom chips.</text>
-<text x="2418" y="814" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="2418" y="847" font-size="20" fill="#40566e" font-weight="400">HDL and clock/reset intent, build identities, layout/extraction and</text>
-<text x="2418" y="873" font-size="20" fill="#40566e" font-weight="400">comparison results.</text>
+<text x="2418" y="790" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="2418" y="826" font-size="20" fill="#40566e" font-weight="400">HDL and clock/reset intent, build identities, layout/extraction and</text>
+<text x="2418" y="852" font-size="20" fill="#40566e" font-weight="400">comparison results.</text>
 <rect x="70" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="93" y="962" font-size="28" fill="#855025" font-weight="700">Analogue and mixed-signal</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-analog">
@@ -125,9 +125,9 @@
 <text x="93" y="1068" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-MIXED-SIGNAL</text>
 </a>
 <text x="93" y="1268" font-size="22" fill="#40566e" font-weight="400">Simulate analogue circuits and connect them to digital logic.</text>
-<text x="93" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="93" y="1417" font-size="20" fill="#40566e" font-weight="400">Schematic/netlist and operating conditions; participant boundary</text>
-<text x="93" y="1443" font-size="20" fill="#40566e" font-weight="400">and error laws.</text>
+<text x="93" y="1360" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="1396" font-size="20" fill="#40566e" font-weight="400">Schematic/netlist and operating conditions; participant boundary</text>
+<text x="93" y="1422" font-size="20" fill="#40566e" font-weight="400">and error laws.</text>
 <rect x="845" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="868" y="962" font-size="28" fill="#855025" font-weight="700">RF, EM and coupled fields</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-fields">
@@ -135,9 +135,9 @@
 </a>
 <text x="868" y="1268" font-size="22" fill="#40566e" font-weight="400">Check how fields, high frequencies and other physical effects</text>
 <text x="868" y="1296" font-size="22" fill="#40566e" font-weight="400">change a design.</text>
-<text x="868" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="868" y="1417" font-size="20" fill="#40566e" font-weight="400">Geometry/material/mesh, boundaries, reference planes and</text>
-<text x="868" y="1443" font-size="20" fill="#40566e" font-weight="400">convergence evidence.</text>
+<text x="868" y="1360" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="1396" font-size="20" fill="#40566e" font-weight="400">Geometry/material/mesh, boundaries, reference planes and</text>
+<text x="868" y="1422" font-size="20" fill="#40566e" font-weight="400">convergence evidence.</text>
 <rect x="1620" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="1643" y="962" font-size="28" fill="#855025" font-weight="700">Photonics and optoelectronics</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-photonics">
@@ -145,9 +145,9 @@
 </a>
 <text x="1643" y="1268" font-size="22" fill="#40566e" font-weight="400">Design optical circuits and connect them to electronic</text>
 <text x="1643" y="1296" font-size="22" fill="#40566e" font-weight="400">components.</text>
-<text x="1643" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="1643" y="1417" font-size="20" fill="#40566e" font-weight="400">Wavelength, mode, polarisation, normalisation and optical/electrical</text>
-<text x="1643" y="1443" font-size="20" fill="#40566e" font-weight="400">correspondence.</text>
+<text x="1643" y="1360" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="1643" y="1396" font-size="20" fill="#40566e" font-weight="400">Wavelength, mode, polarisation, normalisation and optical/electrical</text>
+<text x="1643" y="1422" font-size="20" fill="#40566e" font-weight="400">correspondence.</text>
 <rect x="2395" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="2418" y="962" font-size="28" fill="#855025" font-weight="700">Devices, TCAD and materials</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-devices">
@@ -158,9 +158,9 @@
 </a>
 <text x="2418" y="1268" font-size="22" fill="#40566e" font-weight="400">Study devices and materials, then check the models used in</text>
 <text x="2418" y="1296" font-size="22" fill="#40566e" font-weight="400">circuit design.</text>
-<text x="2418" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="2418" y="1417" font-size="20" fill="#40566e" font-weight="400">Device/material laws, mesh and operating envelope; model/profile</text>
-<text x="2418" y="1443" font-size="20" fill="#40566e" font-weight="400">validity and access.</text>
+<text x="2418" y="1360" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="2418" y="1396" font-size="20" fill="#40566e" font-weight="400">Device/material laws, mesh and operating envelope; model/profile</text>
+<text x="2418" y="1422" font-size="20" fill="#40566e" font-weight="400">validity and access.</text>
 <rect x="70" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="93" y="1532" font-size="28" fill="#855025" font-weight="700">Packaging, PCB and assembly</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-assembly">
@@ -168,9 +168,9 @@
 </a>
 <text x="93" y="1838" font-size="22" fill="#40566e" font-weight="400">Connect chips, packages and circuit boards into one testable</text>
 <text x="93" y="1866" font-size="22" fill="#40566e" font-weight="400">assembly.</text>
-<text x="93" y="1954" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="93" y="1987" font-size="20" fill="#40566e" font-weight="400">Pin/bump/net correspondence, orientation/units, constraints and</text>
-<text x="93" y="2013" font-size="20" fill="#40566e" font-weight="400">manufacturing/test inputs.</text>
+<text x="93" y="1930" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="1966" font-size="20" fill="#40566e" font-weight="400">Pin/bump/net correspondence, orientation/units, constraints and</text>
+<text x="93" y="1992" font-size="20" fill="#40566e" font-weight="400">manufacturing/test inputs.</text>
 <rect x="845" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="868" y="1532" font-size="28" fill="#855025" font-weight="700">Laboratory, test and instrumentation</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-lab">
@@ -192,9 +192,9 @@
 <text x="868" y="1758" font-size="23" fill="#172c46" font-weight="700">SIM-REAL-WITNESS</text>
 </a>
 <text x="868" y="1838" font-size="22" fill="#40566e" font-weight="400">Connect instruments and measure what real hardware does.</text>
-<text x="868" y="1954" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="868" y="1987" font-size="20" fill="#40566e" font-weight="400">DUT/fixture/instrument identity, capture/timebase, exposure and</text>
-<text x="868" y="2013" font-size="20" fill="#40566e" font-weight="400">comparison protocol.</text>
+<text x="868" y="1930" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="1966" font-size="20" fill="#40566e" font-weight="400">DUT/fixture/instrument identity, capture/timebase, exposure and</text>
+<text x="868" y="1992" font-size="20" fill="#40566e" font-weight="400">comparison protocol.</text>
 <rect x="1620" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
 <text x="1643" y="1532" font-size="28" fill="#855025" font-weight="700">Manufacturing and automation</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-manufacturing">
@@ -205,9 +205,9 @@
 </a>
 <text x="1643" y="1838" font-size="22" fill="#40566e" font-weight="400">Connect approved designs to manufacturing steps,</text>
 <text x="1643" y="1866" font-size="22" fill="#40566e" font-weight="400">equipment and robots.</text>
-<text x="1643" y="1954" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="1643" y="1987" font-size="20" fill="#40566e" font-weight="400">Released package/route/recipe, material genealogy and admitted</text>
-<text x="1643" y="2013" font-size="20" fill="#40566e" font-weight="400">local equipment operation.</text>
+<text x="1643" y="1930" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="1643" y="1966" font-size="20" fill="#40566e" font-weight="400">Released package/route/recipe, material genealogy and admitted</text>
+<text x="1643" y="1992" font-size="20" fill="#40566e" font-weight="400">local equipment operation.</text>
 <rect x="2395" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
 <text x="2418" y="1532" font-size="28" fill="#365ab1" font-weight="700">Verification, assurance and safety</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-verify">
@@ -233,9 +233,9 @@
 </a>
 <text x="2418" y="1838" font-size="22" fill="#40566e" font-weight="400">Check behaviour and requirements, and show where</text>
 <text x="2418" y="1866" font-size="22" fill="#40566e" font-weight="400">evidence is missing.</text>
-<text x="2418" y="1954" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="2418" y="1987" font-size="20" fill="#40566e" font-weight="400">Subject and oracle identity, acceptance law, coverage and</text>
-<text x="2418" y="2013" font-size="20" fill="#40566e" font-weight="400">claim-to-evidence bindings.</text>
+<text x="2418" y="1930" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="2418" y="1966" font-size="20" fill="#40566e" font-weight="400">Subject and oracle identity, acceptance law, coverage and</text>
+<text x="2418" y="1992" font-size="20" fill="#40566e" font-weight="400">claim-to-evidence bindings.</text>
 <rect x="70" y="2060" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
 <text x="93" y="2102" font-size="28" fill="#365ab1" font-weight="700">Benchmarking and evidence</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-bench">
@@ -261,9 +261,9 @@
 </a>
 <text x="93" y="2408" font-size="22" fill="#40566e" font-weight="400">Measure performance, reproduce experiments and preserve</text>
 <text x="93" y="2436" font-size="22" fill="#40566e" font-weight="400">the supporting records.</text>
-<text x="93" y="2524" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="93" y="2557" font-size="20" fill="#40566e" font-weight="400">Versioned run plan, metric source, canonical manifest, provenance</text>
-<text x="93" y="2583" font-size="20" fill="#40566e" font-weight="400">and result protocol.</text>
+<text x="93" y="2500" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="2536" font-size="20" fill="#40566e" font-weight="400">Versioned run plan, metric source, canonical manifest, provenance</text>
+<text x="93" y="2562" font-size="20" fill="#40566e" font-weight="400">and result protocol.</text>
 <rect x="845" y="2060" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
 <text x="868" y="2102" font-size="28" fill="#365ab1" font-weight="700">Workbenches, deployment and operations</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-studio">
@@ -283,9 +283,9 @@
 </a>
 <text x="868" y="2408" font-size="22" fill="#40566e" font-weight="400">Build engineering interfaces and deploy, observe and</text>
 <text x="868" y="2436" font-size="22" fill="#40566e" font-weight="400">investigate systems.</text>
-<text x="868" y="2524" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
-<text x="868" y="2557" font-size="20" fill="#40566e" font-weight="400">Project/job interfaces, deployment unit identity, health observations</text>
-<text x="868" y="2583" font-size="20" fill="#40566e" font-weight="400">and bounded histories.</text>
+<text x="868" y="2500" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="2536" font-size="20" fill="#40566e" font-weight="400">Project/job interfaces, deployment unit identity, health observations</text>
+<text x="868" y="2562" font-size="20" fill="#40566e" font-weight="400">and bounded histories.</text>
 <rect x="1620" y="2060" width="1510" height="530" rx="16" fill="#122c45" stroke="none" stroke-width="2"/>
 <text x="1648" y="2111" font-size="29" fill="#ffffff" font-weight="700">A CLEAR INTEGRATION CONVERSATION</text>
 <text x="1648" y="2178" font-size="26" fill="#d5e4f4" font-weight="400">Identify the input your team supplies and the result it needs.</text>
