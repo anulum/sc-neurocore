@@ -49,11 +49,14 @@ not blanket qualification of every model, backend or physical target._
 
 </div>
 
-!!! info "Documented architecture, explicit delivery"
+<div class="admonition info" markdown="1">
+<p class="admonition-title">Documented architecture, explicit delivery</p>
 
-    Project summaries below describe their responsibility and main inputs and
-    outputs. They are architectural interfaces, rather than released API names
-    or a claim that every planned operation is implemented.
+Project summaries below describe their responsibility and main inputs and
+outputs. They are architectural interfaces, rather than released API names
+or a claim that every planned operation is implemented.
+
+</div>
 
 **SC-NeuroCore will remain a public, open-source development workbench** for the
 **SC Neuromorphic Computing Systems** group. The group is building a connected
@@ -201,17 +204,17 @@ controllers and site authorities retain physical timing and protective control.
 
 ```mermaid
 flowchart LR
-    N[Neuromorphic workbench and components]
-    E[Evidence and measurement]
-    C[General circuit engineering]
-    P[Optional laboratory and production integration]
-    N -->|models, streams and run results| E
-    N -.->|optional design and target adapters| C
-    C -->|simulation and implementation results| E
-    C -.->|accepted design and process identities| P
-    P -->|original observations and inspection records| E
-    E -.->|comparison informs a new model revision| N
-    E -.->|comparison informs a new design revision| C
+    N["Neuromorphic workbench<br/>and components"]
+    C["General circuit<br/>engineering"]
+    P["Optional laboratory<br/>and production<br/>integration"]
+    E["Evidence and<br/>measurement"]
+    N -. "optional design and<br/>target adapters" .-> C
+    C -. "accepted design and<br/>process identities" .-> P
+    N -- "models, streams<br/>and run results" --> E
+    C -- "simulation and<br/>implementation results" --> E
+    P -- "original observations<br/>and inspection records" --> E
+    E -. "comparison informs a<br/>new model revision" .-> N
+    E -. "comparison informs a<br/>new design revision" .-> C
 ```
 
 The diagram summarises the four programme lines. Detailed project ownership
@@ -623,41 +626,44 @@ certification and deployment approval require the applicable human assessment.
 
 ## Abbreviations
 
-??? info "Engineering and technology terms used on this page"
+<details class="info" markdown="1">
+<summary>Engineering and technology terms used on this page</summary>
 
-    | Term | Meaning |
-    | --- | --- |
-    | AER | Address-event representation: an event interface carrying source addresses. |
-    | API | Application programming interface. |
-    | ASIC | Application-specific integrated circuit. |
-    | BiCMOS | Bipolar and complementary metal-oxide-semiconductor devices in one process. |
-    | CMOS | Complementary metal-oxide-semiconductor technology. |
-    | DUT | Device under test. |
-    | EDA | Electronic design automation. |
-    | EM | Electromagnetic. |
-    | MES | Manufacturing execution system. |
-    | FPGA | Field-programmable gate array. |
-    | GaAs / GaN | Gallium arsenide / gallium nitride. |
-    | HDL | Hardware description language. |
-    | IDE | Integrated development environment. |
-    | InP | Indium phosphide. |
-    | IP | Intellectual property; reusable design blocks in circuit engineering. |
-    | IR | Intermediate representation used between design or compiler stages. |
-    | MEMS | Microelectromechanical systems. |
-    | MPI | Message Passing Interface for distributed computation. |
-    | NIR | Neuromorphic Intermediate Representation for exchanging neural graphs. |
-    | PCB | Printed circuit board. |
-    | PDK | Process design kit: process-specific device, layout and verification resources. |
-    | PyO3 | Rust bindings for Python interfaces and extension modules. |
-    | RF | Radio frequency. |
-    | RTL | Register-transfer level, a digital hardware representation. |
-    | SC | Stochastic computing. |
-    | SiC / SiGe | Silicon carbide / silicon-germanium. |
-    | SIMD | Single instruction, multiple data. |
-    | SNN | Spiking neural network. |
-    | SOI | Silicon on insulator. |
-    | TCAD | Technology computer-aided design for device and process modelling. |
-    | UI / CLI | User interface / command-line interface. |
+| Term | Meaning |
+| --- | --- |
+| AER | Address-event representation: an event interface carrying source addresses. |
+| API | Application programming interface. |
+| ASIC | Application-specific integrated circuit. |
+| BiCMOS | Bipolar and complementary metal-oxide-semiconductor devices in one process. |
+| CMOS | Complementary metal-oxide-semiconductor technology. |
+| DUT | Device under test. |
+| EDA | Electronic design automation. |
+| EM | Electromagnetic. |
+| MES | Manufacturing execution system. |
+| FPGA | Field-programmable gate array. |
+| GaAs / GaN | Gallium arsenide / gallium nitride. |
+| HDL | Hardware description language. |
+| IDE | Integrated development environment. |
+| InP | Indium phosphide. |
+| IP | Intellectual property; reusable design blocks in circuit engineering. |
+| IR | Intermediate representation used between design or compiler stages. |
+| MEMS | Microelectromechanical systems. |
+| MPI | Message Passing Interface for distributed computation. |
+| NIR | Neuromorphic Intermediate Representation for exchanging neural graphs. |
+| PCB | Printed circuit board. |
+| PDK | Process design kit: process-specific device, layout and verification resources. |
+| PyO3 | Rust bindings for Python interfaces and extension modules. |
+| RF | Radio frequency. |
+| RTL | Register-transfer level, a digital hardware representation. |
+| SC | Stochastic computing. |
+| SiC / SiGe | Silicon carbide / silicon-germanium. |
+| SIMD | Single instruction, multiple data. |
+| SNN | Spiking neural network. |
+| SOI | Silicon on insulator. |
+| TCAD | Technology computer-aided design for device and process modelling. |
+| UI / CLI | User interface / command-line interface. |
+
+</details>
 
 ## Get involved
 
