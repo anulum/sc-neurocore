@@ -1,0 +1,67 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Programme architecture map -->
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc" xml:lang="en">
+<title id="title">SC Neuromorphic Computing Systems — Analogue, fields, photonics, devices and assembly</title><desc id="desc">Partner discipline entry points with project ownership and first interfaces. Slide format 16:9. Architectural participation does not imply released implementation or physical qualification.</desc>
+<metadata id="project-metadata"><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:cc="http://creativecommons.org/ns#"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — Analogue, fields, photonics, devices and assembly</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Partner discipline entry points with project ownership and first interfaces. Slide format 16:9. Architectural participation does not imply released implementation or physical qualification.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — Analogue, fields, photonics, devices and assembly</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_partner_physical_slide.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html"/></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif}a{text-decoration:none}</style>
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#40566e"/></marker></defs>
+<rect x="0" y="0" width="1920" height="1080" rx="0" fill="#f5f8fc" stroke="none" stroke-width="2"/>
+<rect x="0" y="0" width="1920" height="132" rx="0" fill="#122c45" stroke="none" stroke-width="2"/>
+<text x="50" y="40" font-size="23" fill="#d5e4f4" font-weight="700">SC NEUROMORPHIC COMPUTING SYSTEMS</text>
+<text x="50" y="85" font-size="32" fill="#ffffff" font-weight="700">Analogue, fields, photonics, devices and assembly</text>
+<text x="50" y="116" font-size="20" fill="#d5e4f4" font-weight="400">Architecture documented · each row starts with the team task; technical terms: ecosystem page glossary</text>
+<rect x="50" y="155" width="1820" height="174" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
+<text x="72" y="189" font-size="25" fill="#855025" font-weight="700">Analogue and mixed-signal</text>
+<text x="72" y="246" font-size="18" fill="#40566e" font-weight="400">Simulate analogue circuits and connect them to</text>
+<text x="72" y="268" font-size="18" fill="#40566e" font-weight="400">digital logic.</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-analog">
+<text x="540" y="190" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-ANALOG</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-mixed-signal">
+<text x="1195" y="190" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-MIXED-SIGNAL</text>
+</a>
+<text x="540" y="306" font-size="19" fill="#40566e" font-weight="400">Technical interface: Schematic/netlist and operating conditions; participant boundary and error laws.</text>
+<rect x="50" y="333" width="1820" height="174" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
+<text x="72" y="367" font-size="25" fill="#855025" font-weight="700">RF, EM and coupled fields</text>
+<text x="72" y="424" font-size="18" fill="#40566e" font-weight="400">Check how fields, high frequencies and other</text>
+<text x="72" y="446" font-size="18" fill="#40566e" font-weight="400">physical effects change a design.</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-fields">
+<text x="540" y="368" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-FIELDS</text>
+</a>
+<text x="540" y="484" font-size="19" fill="#40566e" font-weight="400">Technical interface: Geometry/material/mesh, boundaries, reference planes and convergence evidence.</text>
+<rect x="50" y="511" width="1820" height="174" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
+<text x="72" y="545" font-size="25" fill="#855025" font-weight="700">Photonics and optoelectronics</text>
+<text x="72" y="602" font-size="18" fill="#40566e" font-weight="400">Design optical circuits and connect them to</text>
+<text x="72" y="624" font-size="18" fill="#40566e" font-weight="400">electronic components.</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-photonics">
+<text x="540" y="546" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-PHOTONICS</text>
+</a>
+<text x="540" y="662" font-size="19" fill="#40566e" font-weight="400">Technical interface: Wavelength, mode, polarisation, normalisation and optical/electrical correspondence.</text>
+<rect x="50" y="689" width="1820" height="174" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
+<text x="72" y="723" font-size="25" fill="#855025" font-weight="700">Devices, TCAD and materials</text>
+<text x="72" y="780" font-size="18" fill="#40566e" font-weight="400">Study devices and materials, then check the</text>
+<text x="72" y="802" font-size="18" fill="#40566e" font-weight="400">models used in circuit design.</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-devices">
+<text x="540" y="724" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-DEVICES</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-technology">
+<text x="1195" y="724" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-TECHNOLOGY</text>
+</a>
+<text x="540" y="840" font-size="19" fill="#40566e" font-weight="400">Technical interface: Device/material laws, mesh and operating envelope; model/profile validity and access.</text>
+<rect x="50" y="867" width="1820" height="174" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
+<text x="72" y="901" font-size="25" fill="#855025" font-weight="700">Packaging, PCB and assembly</text>
+<text x="72" y="958" font-size="18" fill="#40566e" font-weight="400">Connect chips, packages and circuit boards into</text>
+<text x="72" y="980" font-size="18" fill="#40566e" font-weight="400">one testable assembly.</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-assembly">
+<text x="540" y="902" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-ASSEMBLY</text>
+</a>
+<text x="540" y="1018" font-size="19" fill="#40566e" font-weight="400">Technical interface: Pin/bump/net correspondence, orientation/units, constraints and manufacturing/test inputs.</text>
+<text x="50" y="1055" font-size="12" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
+<text x="50" y="1072" font-size="12" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
+</svg>

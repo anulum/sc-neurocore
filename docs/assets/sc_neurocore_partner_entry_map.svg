@@ -1,0 +1,299 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Programme architecture map -->
+
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="2810" viewBox="0 0 3200 2810" role="img" aria-labelledby="title desc" xml:lang="en">
+<title id="title">SC Neuromorphic Computing Systems — partner entry map</title><desc id="desc">Fourteen discipline lanes show where partner teams can contribute or consume interfaces across all 56 programme entries. Projects may appear in several lanes. Architecture documented and implementation delivery are separate.</desc>
+<metadata id="project-metadata"><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:cc="http://creativecommons.org/ns#"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — partner entry map</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Fourteen discipline lanes show where partner teams can contribute or consume interfaces across all 56 programme entries. Projects may appear in several lanes. Architecture documented and implementation delivery are separate.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — partner entry map</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_partner_entry_map.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html"/></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif}a{text-decoration:none}</style>
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#40566e"/></marker></defs>
+<rect x="0" y="0" width="3200" height="2810" rx="0" fill="#f5f8fc" stroke="none" stroke-width="2"/>
+<rect x="0" y="0" width="3200" height="180" rx="0" fill="#122c45" stroke="none" stroke-width="2"/>
+<text x="70" y="64" font-size="42" fill="#ffffff" font-weight="700">WHERE YOUR TEAM FITS</text>
+<text x="70" y="112" font-size="29" fill="#d5e4f4" font-weight="400">Partner entry map · fourteen disciplines · all 56 programme entries</text>
+<text x="70" y="151" font-size="23" fill="#d5e4f4" font-weight="400">Start with the artefact or capability your team contributes, then agree its input/output and evidence boundary.</text>
+<rect x="70" y="212" width="3060" height="104" rx="16" fill="#e9eef5" stroke="none" stroke-width="2"/>
+<text x="94" y="252" font-size="24" fill="#172c46" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY AND PHYSICAL QUALIFICATION REMAIN SCOPED</text>
+<text x="94" y="288" font-size="23" fill="#172c46" font-weight="400">Teal: neuromorphic work · blue: shared interfaces/evidence · ochre: circuit/physical work. Colour identifies a domain, not readiness.</text>
+<rect x="70" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#126b68" stroke-width="2"/>
+<text x="93" y="392" font-size="28" fill="#126b68" font-weight="700">Neuromorphic modelling and learning</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-neurocore">
+<text x="93" y="468" font-size="23" fill="#172c46" font-weight="700">SC-NEUROCORE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-core">
+<text x="93" y="498" font-size="23" fill="#172c46" font-weight="700">SC-NC-CORE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-catalogue">
+<text x="93" y="528" font-size="23" fill="#172c46" font-weight="700">SC-NC-CATALOGUE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-engine">
+<text x="93" y="558" font-size="23" fill="#172c46" font-weight="700">SC-NC-ENGINE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-learn">
+<text x="93" y="588" font-size="23" fill="#172c46" font-weight="700">SC-NC-LEARN</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-research">
+<text x="93" y="618" font-size="23" fill="#172c46" font-weight="700">SC-NC-RESEARCH</text>
+</a>
+<text x="93" y="698" font-size="22" fill="#40566e" font-weight="400">Build and compare neuron models, learning rules and ways to</text>
+<text x="93" y="726" font-size="22" fill="#40566e" font-weight="400">run them.</text>
+<text x="93" y="814" font-size="17" fill="#126b68" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="847" font-size="20" fill="#40566e" font-weight="400">Model/profile identity, neutral state/events and learning/runtime</text>
+<text x="93" y="873" font-size="20" fill="#40566e" font-weight="400">boundaries.</text>
+<rect x="845" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#126b68" stroke-width="2"/>
+<text x="868" y="392" font-size="28" fill="#126b68" font-weight="700">Data, sensors and event streams</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-data">
+<text x="868" y="468" font-size="23" fill="#172c46" font-weight="700">SC-NC-DATA</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-format-bridge">
+<text x="868" y="498" font-size="23" fill="#172c46" font-weight="700">SPIKE-FORMAT-BRIDGE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-codec-bench">
+<text x="868" y="528" font-size="23" fill="#172c46" font-weight="700">SPIKE-CODEC-BENCH</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-encoder-characteriser">
+<text x="868" y="558" font-size="23" fill="#172c46" font-weight="700">SPIKE-ENCODER-CHARACTERISER</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-quality-gate">
+<text x="868" y="588" font-size="23" fill="#172c46" font-weight="700">SPIKE-QUALITY-GATE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-groundtruth">
+<text x="868" y="618" font-size="23" fill="#172c46" font-weight="700">SPIKE-GROUNDTRUTH</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-log">
+<text x="868" y="648" font-size="23" fill="#172c46" font-weight="700">SPIKE-LOG</text>
+</a>
+<text x="868" y="698" font-size="22" fill="#40566e" font-weight="400">Turn sensor recordings and datasets into usable spike and</text>
+<text x="868" y="726" font-size="22" fill="#40566e" font-weight="400">event streams.</text>
+<text x="868" y="814" font-size="17" fill="#126b68" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="847" font-size="20" fill="#40566e" font-weight="400">Dataset and stream identities, timebase, encoding and</text>
+<text x="868" y="873" font-size="20" fill="#40566e" font-weight="400">conversion/loss reports.</text>
+<rect x="1620" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
+<text x="1643" y="392" font-size="28" fill="#365ab1" font-weight="700">Compilers and EDA integration</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-compiler">
+<text x="1643" y="468" font-size="23" fill="#172c46" font-weight="700">SC-NC-COMPILER</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-bridges">
+<text x="1643" y="498" font-size="23" fill="#172c46" font-weight="700">SC-NC-BRIDGES</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-core">
+<text x="1643" y="528" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-CORE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-technology">
+<text x="1643" y="558" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-TECHNOLOGY</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-flow">
+<text x="1643" y="588" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-FLOW</text>
+</a>
+<text x="1643" y="698" font-size="22" fill="#40566e" font-weight="400">Connect existing design tools and translate designs between</text>
+<text x="1643" y="726" font-size="22" fill="#40566e" font-weight="400">them.</text>
+<text x="1643" y="814" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="1643" y="847" font-size="20" fill="#40566e" font-weight="400">Model/IR/target constraints; neutral operation/provider and</text>
+<text x="1643" y="873" font-size="20" fill="#40566e" font-weight="400">technology profiles.</text>
+<rect x="2395" y="350" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="2418" y="392" font-size="28" fill="#855025" font-weight="700">Digital FPGA and ASIC</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-hardware">
+<text x="2418" y="468" font-size="23" fill="#172c46" font-weight="700">SC-NC-HARDWARE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-digital">
+<text x="2418" y="498" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-DIGITAL</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-physical">
+<text x="2418" y="528" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-PHYSICAL</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#bitstream-evidence-ci">
+<text x="2418" y="558" font-size="23" fill="#172c46" font-weight="700">BITSTREAM-EVIDENCE-CI</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-stream-prover">
+<text x="2418" y="588" font-size="23" fill="#172c46" font-weight="700">SC-STREAM-PROVER</text>
+</a>
+<text x="2418" y="698" font-size="22" fill="#40566e" font-weight="400">Take digital designs from simulation to programmable</text>
+<text x="2418" y="726" font-size="22" fill="#40566e" font-weight="400">hardware or custom chips.</text>
+<text x="2418" y="814" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="2418" y="847" font-size="20" fill="#40566e" font-weight="400">HDL and clock/reset intent, build identities, layout/extraction and</text>
+<text x="2418" y="873" font-size="20" fill="#40566e" font-weight="400">comparison results.</text>
+<rect x="70" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="93" y="962" font-size="28" fill="#855025" font-weight="700">Analogue and mixed-signal</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-analog">
+<text x="93" y="1038" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-ANALOG</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-mixed-signal">
+<text x="93" y="1068" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-MIXED-SIGNAL</text>
+</a>
+<text x="93" y="1268" font-size="22" fill="#40566e" font-weight="400">Simulate analogue circuits and connect them to digital logic.</text>
+<text x="93" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="1417" font-size="20" fill="#40566e" font-weight="400">Schematic/netlist and operating conditions; participant boundary</text>
+<text x="93" y="1443" font-size="20" fill="#40566e" font-weight="400">and error laws.</text>
+<rect x="845" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="868" y="962" font-size="28" fill="#855025" font-weight="700">RF, EM and coupled fields</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-fields">
+<text x="868" y="1038" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-FIELDS</text>
+</a>
+<text x="868" y="1268" font-size="22" fill="#40566e" font-weight="400">Check how fields, high frequencies and other physical effects</text>
+<text x="868" y="1296" font-size="22" fill="#40566e" font-weight="400">change a design.</text>
+<text x="868" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="1417" font-size="20" fill="#40566e" font-weight="400">Geometry/material/mesh, boundaries, reference planes and</text>
+<text x="868" y="1443" font-size="20" fill="#40566e" font-weight="400">convergence evidence.</text>
+<rect x="1620" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="1643" y="962" font-size="28" fill="#855025" font-weight="700">Photonics and optoelectronics</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-photonics">
+<text x="1643" y="1038" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-PHOTONICS</text>
+</a>
+<text x="1643" y="1268" font-size="22" fill="#40566e" font-weight="400">Design optical circuits and connect them to electronic</text>
+<text x="1643" y="1296" font-size="22" fill="#40566e" font-weight="400">components.</text>
+<text x="1643" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="1643" y="1417" font-size="20" fill="#40566e" font-weight="400">Wavelength, mode, polarisation, normalisation and optical/electrical</text>
+<text x="1643" y="1443" font-size="20" fill="#40566e" font-weight="400">correspondence.</text>
+<rect x="2395" y="920" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="2418" y="962" font-size="28" fill="#855025" font-weight="700">Devices, TCAD and materials</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-devices">
+<text x="2418" y="1038" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-DEVICES</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-technology">
+<text x="2418" y="1068" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-TECHNOLOGY</text>
+</a>
+<text x="2418" y="1268" font-size="22" fill="#40566e" font-weight="400">Study devices and materials, then check the models used in</text>
+<text x="2418" y="1296" font-size="22" fill="#40566e" font-weight="400">circuit design.</text>
+<text x="2418" y="1384" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="2418" y="1417" font-size="20" fill="#40566e" font-weight="400">Device/material laws, mesh and operating envelope; model/profile</text>
+<text x="2418" y="1443" font-size="20" fill="#40566e" font-weight="400">validity and access.</text>
+<rect x="70" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="93" y="1532" font-size="28" fill="#855025" font-weight="700">Packaging, PCB and assembly</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-assembly">
+<text x="93" y="1608" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-ASSEMBLY</text>
+</a>
+<text x="93" y="1838" font-size="22" fill="#40566e" font-weight="400">Connect chips, packages and circuit boards into one testable</text>
+<text x="93" y="1866" font-size="22" fill="#40566e" font-weight="400">assembly.</text>
+<text x="93" y="1954" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="1987" font-size="20" fill="#40566e" font-weight="400">Pin/bump/net correspondence, orientation/units, constraints and</text>
+<text x="93" y="2013" font-size="20" fill="#40566e" font-weight="400">manufacturing/test inputs.</text>
+<rect x="845" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="868" y="1532" font-size="28" fill="#855025" font-weight="700">Laboratory, test and instrumentation</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-lab">
+<text x="868" y="1608" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-LAB</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#loop-timing-witness">
+<text x="868" y="1638" font-size="23" fill="#172c46" font-weight="700">LOOP-TIMING-WITNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#plasticity-witness">
+<text x="868" y="1668" font-size="23" fill="#172c46" font-weight="700">PLASTICITY-WITNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#aer-link-witness">
+<text x="868" y="1698" font-size="23" fill="#172c46" font-weight="700">AER-LINK-WITNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#reliability-witness">
+<text x="868" y="1728" font-size="23" fill="#172c46" font-weight="700">RELIABILITY-WITNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sim-real-witness">
+<text x="868" y="1758" font-size="23" fill="#172c46" font-weight="700">SIM-REAL-WITNESS</text>
+</a>
+<text x="868" y="1838" font-size="22" fill="#40566e" font-weight="400">Connect instruments and measure what real hardware does.</text>
+<text x="868" y="1954" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="1987" font-size="20" fill="#40566e" font-weight="400">DUT/fixture/instrument identity, capture/timebase, exposure and</text>
+<text x="868" y="2013" font-size="20" fill="#40566e" font-weight="400">comparison protocol.</text>
+<rect x="1620" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="1643" y="1532" font-size="28" fill="#855025" font-weight="700">Manufacturing and automation</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-manufacturing">
+<text x="1643" y="1608" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-MANUFACTURING</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-automation">
+<text x="1643" y="1638" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-AUTOMATION</text>
+</a>
+<text x="1643" y="1838" font-size="22" fill="#40566e" font-weight="400">Connect approved designs to manufacturing steps,</text>
+<text x="1643" y="1866" font-size="22" fill="#40566e" font-weight="400">equipment and robots.</text>
+<text x="1643" y="1954" font-size="17" fill="#855025" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="1643" y="1987" font-size="20" fill="#40566e" font-weight="400">Released package/route/recipe, material genealogy and admitted</text>
+<text x="1643" y="2013" font-size="20" fill="#40566e" font-weight="400">local equipment operation.</text>
+<rect x="2395" y="1490" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
+<text x="2418" y="1532" font-size="28" fill="#365ab1" font-weight="700">Verification, assurance and safety</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-verify">
+<text x="2418" y="1608" font-size="23" fill="#172c46" font-weight="700">SC-NC-VERIFY</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-acceptance">
+<text x="2418" y="1638" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-ACCEPTANCE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#snn-divergence-harness">
+<text x="2418" y="1668" font-size="23" fill="#172c46" font-weight="700">SNN-DIVERGENCE-HARNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#mutation-snn">
+<text x="2418" y="1698" font-size="23" fill="#172c46" font-weight="700">MUTATION-SNN</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#nir-conformance">
+<text x="2418" y="1728" font-size="23" fill="#172c46" font-weight="700">NIR-CONFORMANCE</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#randomness-witness">
+<text x="2418" y="1758" font-size="23" fill="#172c46" font-weight="700">RANDOMNESS-WITNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#neuro-safety-case">
+<text x="2418" y="1788" font-size="23" fill="#172c46" font-weight="700">NEURO-SAFETY-CASE</text>
+</a>
+<text x="2418" y="1838" font-size="22" fill="#40566e" font-weight="400">Check behaviour and requirements, and show where</text>
+<text x="2418" y="1866" font-size="22" fill="#40566e" font-weight="400">evidence is missing.</text>
+<text x="2418" y="1954" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="2418" y="1987" font-size="20" fill="#40566e" font-weight="400">Subject and oracle identity, acceptance law, coverage and</text>
+<text x="2418" y="2013" font-size="20" fill="#40566e" font-weight="400">claim-to-evidence bindings.</text>
+<rect x="70" y="2060" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
+<text x="93" y="2102" font-size="28" fill="#365ab1" font-weight="700">Benchmarking and evidence</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-bench">
+<text x="93" y="2178" font-size="23" fill="#172c46" font-weight="700">SC-NC-BENCH</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-analysis">
+<text x="93" y="2208" font-size="23" fill="#172c46" font-weight="700">SC-NC-ANALYSIS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#evidence-manifest-toolkit">
+<text x="93" y="2238" font-size="23" fill="#172c46" font-weight="700">EVIDENCE-MANIFEST-TOOLKIT</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#neuro-evidence-bench">
+<text x="93" y="2268" font-size="23" fill="#172c46" font-weight="700">NEURO-EVIDENCE-BENCH</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#experiment-ledger">
+<text x="93" y="2298" font-size="23" fill="#172c46" font-weight="700">EXPERIMENT-LEDGER</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#model-provenance-pack">
+<text x="93" y="2328" font-size="23" fill="#172c46" font-weight="700">MODEL-PROVENANCE-PACK</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#spike-calibrator">
+<text x="93" y="2358" font-size="23" fill="#172c46" font-weight="700">SPIKE-CALIBRATOR</text>
+</a>
+<text x="93" y="2408" font-size="22" fill="#40566e" font-weight="400">Measure performance, reproduce experiments and preserve</text>
+<text x="93" y="2436" font-size="22" fill="#40566e" font-weight="400">the supporting records.</text>
+<text x="93" y="2524" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="93" y="2557" font-size="20" fill="#40566e" font-weight="400">Versioned run plan, metric source, canonical manifest, provenance</text>
+<text x="93" y="2583" font-size="20" fill="#40566e" font-weight="400">and result protocol.</text>
+<rect x="845" y="2060" width="735" height="530" rx="16" fill="#ffffff" stroke="#365ab1" stroke-width="2"/>
+<text x="868" y="2102" font-size="28" fill="#365ab1" font-weight="700">Workbenches, deployment and operations</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-studio">
+<text x="868" y="2178" font-size="23" fill="#172c46" font-weight="700">SC-NC-STUDIO</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-workbench">
+<text x="868" y="2208" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-WORKBENCH</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#deploy-pack">
+<text x="868" y="2238" font-size="23" fill="#172c46" font-weight="700">DEPLOY-PACK</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#field-ops-witness">
+<text x="868" y="2268" font-size="23" fill="#172c46" font-weight="700">FIELD-OPS-WITNESS</text>
+</a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#flight-recorder">
+<text x="868" y="2298" font-size="23" fill="#172c46" font-weight="700">FLIGHT-RECORDER</text>
+</a>
+<text x="868" y="2408" font-size="22" fill="#40566e" font-weight="400">Build engineering interfaces and deploy, observe and</text>
+<text x="868" y="2436" font-size="22" fill="#40566e" font-weight="400">investigate systems.</text>
+<text x="868" y="2524" font-size="17" fill="#365ab1" font-weight="700">TECHNICAL INTERFACE · TERMS: PAGE GLOSSARY</text>
+<text x="868" y="2557" font-size="20" fill="#40566e" font-weight="400">Project/job interfaces, deployment unit identity, health observations</text>
+<text x="868" y="2583" font-size="20" fill="#40566e" font-weight="400">and bounded histories.</text>
+<rect x="1620" y="2060" width="1510" height="530" rx="16" fill="#122c45" stroke="none" stroke-width="2"/>
+<text x="1648" y="2111" font-size="29" fill="#ffffff" font-weight="700">A CLEAR INTEGRATION CONVERSATION</text>
+<text x="1648" y="2178" font-size="26" fill="#d5e4f4" font-weight="400">Identify the input your team supplies and the result it needs.</text>
+<text x="1648" y="2260" font-size="26" fill="#d5e4f4" font-weight="400">Choose the project that owns the semantic or physical operation.</text>
+<text x="1648" y="2342" font-size="26" fill="#d5e4f4" font-weight="400">Agree supported formats, technology, rights and compatibility.</text>
+<text x="1648" y="2424" font-size="26" fill="#d5e4f4" font-weight="400">Name the reference, measurement and evidence needed for the claim.</text>
+<text x="70" y="2650" font-size="23" fill="#172c46" font-weight="400">Teams can span lanes. Each implementation, driver, model and evidence operation retains one responsibility owner.</text>
+<text x="70" y="2700" font-size="21" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
+<text x="70" y="2732" font-size="21" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
+<text x="70" y="2770" font-size="21" fill="#40566e" font-weight="400">Source: github.com/anulum/sc-neurocore · docs/ecosystem.md#where-your-team-fits</text>
+</svg>

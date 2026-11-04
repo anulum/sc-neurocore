@@ -5,517 +5,490 @@
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
 <!-- SC-NeuroCore — Programme architecture map -->
-
-
-
-<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="4020" viewBox="0 0 3200 4020" role="img" aria-labelledby="title desc" xml:lang="en">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="adobe:ns:meta/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" width="3200" height="4020" viewBox="0 0 3200 4020" role="img" aria-labelledby="title desc" xml:lang="en">
 <title id="title">SC Neuromorphic Computing Systems — detailed architecture map</title><desc id="desc">All 56 programme entries individually described: the SC-NEUROCORE workbench, 13 neuromorphic extraction destinations, 26 measurement and evidence projects and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing.</desc>
-<metadata id="project-metadata"><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:cc="http://creativecommons.org/ns#"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — detailed architecture map</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">All 56 programme entries individually described: the SC-NEUROCORE workbench, 13 neuromorphic extraction destinations, 26 measurement and evidence projects and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — detailed architecture map</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_group_map.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html"/></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<metadata id="project-metadata"><x:xmpmeta><rdf:RDF><rdf:Description rdf:about=""><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — detailed architecture map</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">All 56 programme entries individually described: the SC-NEUROCORE workbench, 13 neuromorphic extraction destinations, 26 measurement and evidence projects and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — detailed architecture map</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_group_map.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html" /></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
 <style>text{font-family:DejaVu Sans,Arial,sans-serif}a{text-decoration:none}</style>
-<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#657e96"/></marker></defs>
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#657e96" /></marker></defs>
 <rect x="0" y="0" width="3200" height="4020" rx="0" fill="#f5f8fc" stroke="none" />
 <rect x="0" y="0" width="3200" height="180" rx="0" fill="#122c45" stroke="none" />
-<text x="70" y="63" font-size="40" fill="#ffffff" font-weight="700" >SC NEUROMORPHIC COMPUTING SYSTEMS</text>
-<text x="70" y="109" font-size="27" fill="#d5e4f4" font-weight="400" >Detailed architecture map · every project, its responsibility and its place in the engineering chain</text>
-<text x="70" y="150" font-size="23" fill="#d5e4f4" font-weight="400" >56 entries = 1 workbench + 13 neuromorphic destinations + 26 measurement and evidence projects + 16 circuit destinations</text>
-<rect x="70" y="210" width="3060" height="182" rx="16" fill="#e6f4eb" stroke="#27734c" stroke-width="2"/>
-<text x="96" y="245" font-size="18" fill="#1b6240" font-weight="700" >EXISTING PUBLIC WORKBENCH · BETA PACKAGE</text>
-<text x="96" y="284" font-size="31" fill="#172c46" font-weight="700" >SC-NEUROCORE</text>
-<text x="96" y="324" font-size="25" fill="#40566e" font-weight="400" >Integrated simulation, learning, analysis, acceleration and compilation; hardware-oriented workflows and experimental visual Studio.</text>
-<text x="96" y="371" font-size="21" fill="#172c46" font-weight="400" >The parent remains the integration workbench; separate component extraction has its own acceptance gates.</text>
+<text x="70" y="63" font-size="40" fill="#ffffff" font-weight="700">SC NEUROMORPHIC COMPUTING SYSTEMS</text>
+<text x="70" y="109" font-size="27" fill="#d5e4f4" font-weight="400">Detailed architecture map · every project, its responsibility and its place in the engineering chain</text>
+<text x="70" y="150" font-size="23" fill="#d5e4f4" font-weight="400">56 entries = 1 workbench + 13 neuromorphic destinations + 26 measurement and evidence projects + 16 circuit destinations</text>
+<rect x="70" y="210" width="3060" height="182" rx="16" fill="#e6f4eb" stroke="#27734c" stroke-width="2" />
+<text x="96" y="245" font-size="18" fill="#1b6240" font-weight="700">EXISTING PUBLIC WORKBENCH · BETA PACKAGE</text>
+<text x="96" y="284" font-size="31" fill="#172c46" font-weight="700">SC-NEUROCORE</text>
+<text x="96" y="324" font-size="25" fill="#40566e" font-weight="400">Integrated simulation, learning, analysis, acceleration and compilation; hardware-oriented workflows and experimental visual Studio.</text>
+<text x="96" y="371" font-size="21" fill="#172c46" font-weight="400">The parent remains the integration workbench; separate component extraction has its own acceptance gates.</text>
 <rect x="70" y="419" width="3060" height="102" rx="16" fill="#e9eef5" stroke="none" />
-<text x="96" y="451" font-size="19" fill="#172c46" font-weight="700" >ARCHITECTURE AND DELIVERY ARE SEPARATE</text>
-<text x="96" y="481" font-size="24" fill="#172c46" font-weight="400" >All destinations have documented architectural ownership and planning material. Reviewed plans do not make their implementations complete.</text>
-<text x="96" y="508" font-size="21" fill="#172c46" font-weight="400" >Status labels below describe delivery. Lines show intended integration and responsibility; they do not prescribe package imports or extraction order.</text>
+<text x="96" y="451" font-size="19" fill="#172c46" font-weight="700">ARCHITECTURE AND DELIVERY ARE SEPARATE</text>
+<text x="96" y="481" font-size="24" fill="#172c46" font-weight="400">All destinations have documented architectural ownership and planning material. Reviewed plans do not make their implementations complete.</text>
+<text x="96" y="508" font-size="21" fill="#172c46" font-weight="400">Status labels below describe delivery. Lines show intended integration and responsibility; they do not prescribe package imports or extraction order.</text>
 <rect x="70" y="552" width="735" height="88" rx="16" fill="#e6f4f1" stroke="#126b68" />
-<text x="92" y="587" font-size="24" fill="#126b68" font-weight="700" >NEUROMORPHIC COMPONENTS</text>
-<text x="92" y="621" font-size="18" fill="#172c46" font-weight="400" >13 destinations · extraction planned</text>
-<rect x="70" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="92" y="587" font-size="24" fill="#126b68" font-weight="700">NEUROMORPHIC COMPONENTS</text>
+<text x="92" y="621" font-size="18" fill="#172c46" font-weight="400">13 destinations · extraction planned</text>
+<rect x="70" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="662" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="696" font-size="24" fill="#172c46" font-weight="700" >SC-NC-CORE</text>
+<text x="93" y="696" font-size="24" fill="#172c46" font-weight="700">SC-NC-CORE</text>
 </a>
-<text x="93" y="730" font-size="23" fill="#40566e" font-weight="400" >Neuron and synapse primitives, network graphs,</text>
-<text x="93" y="759" font-size="23" fill="#40566e" font-weight="400" >simulation loop and numerical semantics.</text>
-<text x="93" y="809" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="730" font-size="23" fill="#40566e" font-weight="400">Neutral population, graph, state, event, seed and</text><text x="93" y="759" font-size="23" fill="#40566e" font-weight="400">numerical protocols; resolved model factories enter</text><text x="93" y="788" font-size="23" fill="#40566e" font-weight="400">through explicit contracts.</text><text x="93" y="809" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="842" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="876" font-size="24" fill="#172c46" font-weight="700" >SC-NC-CATALOGUE</text>
+<text x="93" y="876" font-size="24" fill="#172c46" font-weight="700">SC-NC-CATALOGUE</text>
 </a>
-<text x="93" y="910" font-size="23" fill="#40566e" font-weight="400" >Neuron and model catalogue, model zoo, topology and</text>
-<text x="93" y="939" font-size="23" fill="#40566e" font-weight="400" >connectome generators.</text>
-<text x="93" y="989" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="910" font-size="23" fill="#40566e" font-weight="400">Canonical model identities, authored equations and</text><text x="93" y="939" font-size="23" fill="#40566e" font-weight="400">profiles, declarations and factories, with provenance and</text><text x="93" y="968" font-size="23" fill="#40566e" font-weight="400">compatibility preserved.</text><text x="93" y="989" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1022" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="1056" font-size="24" fill="#172c46" font-weight="700" >SC-NC-ENGINE</text>
+<text x="93" y="1056" font-size="24" fill="#172c46" font-weight="700">SC-NC-ENGINE</text>
 </a>
-<text x="93" y="1090" font-size="23" fill="#40566e" font-weight="400" >Accelerated execution through Rust/PyO3, SIMD and</text>
-<text x="93" y="1119" font-size="23" fill="#40566e" font-weight="400" >distributed MPI paths.</text>
-<text x="93" y="1169" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="1090" font-size="23" fill="#40566e" font-weight="400">Execution, scheduling, native ABI and runtime</text><text x="93" y="1119" font-size="23" fill="#40566e" font-weight="400">state/update/restore boundaries under explicit model</text><text x="93" y="1148" font-size="23" fill="#40566e" font-weight="400">contracts.</text><text x="93" y="1169" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1202" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="1236" font-size="24" fill="#172c46" font-weight="700" >SC-NC-BRIDGES</text>
+<text x="93" y="1236" font-size="24" fill="#172c46" font-weight="700">SC-NC-BRIDGES</text>
 </a>
-<text x="93" y="1270" font-size="23" fill="#40566e" font-weight="400" >Interchange and NIR integration, plus quantum,</text>
-<text x="93" y="1299" font-size="23" fill="#40566e" font-weight="400" >hyperdimensional and neuro-symbolic bridges.</text>
-<text x="93" y="1349" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="1270" font-size="23" fill="#40566e" font-weight="400">Directional interchange and provider adapters, with typed</text><text x="93" y="1299" font-size="23" fill="#40566e" font-weight="400">representations and declared transformation assumptions</text><text x="93" y="1328" font-size="23" fill="#40566e" font-weight="400">and losses.</text><text x="93" y="1349" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1382" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="1416" font-size="24" fill="#172c46" font-weight="700" >SC-NC-LEARN</text>
+<text x="93" y="1416" font-size="24" fill="#172c46" font-weight="700">SC-NC-LEARN</text>
 </a>
-<text x="93" y="1450" font-size="23" fill="#40566e" font-weight="400" >Training, plasticity and adaptation, surrogate gradients,</text>
-<text x="93" y="1479" font-size="23" fill="#40566e" font-weight="400" >quantisation-aware training and distillation.</text>
-<text x="93" y="1529" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="1450" font-size="23" fill="#40566e" font-weight="400">Training and optimiser policy/state, quantisation-aware</text><text x="93" y="1479" font-size="23" fill="#40566e" font-weight="400">objectives and distillation through explicit model/runtime</text><text x="93" y="1508" font-size="23" fill="#40566e" font-weight="400">contracts.</text><text x="93" y="1529" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1562" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="1596" font-size="24" fill="#172c46" font-weight="700" >SC-NC-DATA</text>
+<text x="93" y="1596" font-size="24" fill="#172c46" font-weight="700">SC-NC-DATA</text>
 </a>
-<text x="93" y="1630" font-size="23" fill="#40566e" font-weight="400" >Datasets, event and spike encodings, codecs, sources and</text>
-<text x="93" y="1659" font-size="23" fill="#40566e" font-weight="400" >recorders.</text>
-<text x="93" y="1709" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="1630" font-size="23" fill="#40566e" font-weight="400">Datasets, preprocessing, encodings and typed stream</text><text x="93" y="1659" font-size="23" fill="#40566e" font-weight="400">adapters; accepted state payloads retain their runtime</text><text x="93" y="1688" font-size="23" fill="#40566e" font-weight="400">semantics.</text><text x="93" y="1709" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1742" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="1776" font-size="24" fill="#172c46" font-weight="700" >SC-NC-ANALYSIS</text>
+<text x="93" y="1776" font-size="24" fill="#172c46" font-weight="700">SC-NC-ANALYSIS</text>
 </a>
-<text x="93" y="1810" font-size="23" fill="#40566e" font-weight="400" >Spike-train analysis, visualisation and explanations.</text>
-<text x="93" y="1889" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="1810" font-size="23" fill="#40566e" font-weight="400">Derived spike/state observables, statistical interpretation</text><text x="93" y="1839" font-size="23" fill="#40566e" font-weight="400">and views; runtime collection stays with its producer.</text><text x="93" y="1889" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1922" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="1956" font-size="24" fill="#172c46" font-weight="700" >SC-NC-COMPILER</text>
+<text x="93" y="1956" font-size="24" fill="#172c46" font-weight="700">SC-NC-COMPILER</text>
 </a>
-<text x="93" y="1990" font-size="23" fill="#40566e" font-weight="400" >Intermediate representations to RTL/Verilog, co-simulation,</text>
-<text x="93" y="2019" font-size="23" fill="#40566e" font-weight="400" >equivalence and ASIC export.</text>
-<text x="93" y="2069" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="1990" font-size="23" fill="#40566e" font-weight="400">Typed intermediate representations, transforms and</text><text x="93" y="2019" font-size="23" fill="#40566e" font-weight="400">lowering from model/profile and target constraints to</text><text x="93" y="2048" font-size="23" fill="#40566e" font-weight="400">generated artefacts.</text><text x="93" y="2069" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="2102" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="2136" font-size="24" fill="#172c46" font-weight="700" >SC-NC-HARDWARE</text>
+<text x="93" y="2136" font-size="24" fill="#172c46" font-weight="700">SC-NC-HARDWARE</text>
 </a>
-<text x="93" y="2170" font-size="23" fill="#40566e" font-weight="400" >Target profiles, mapping, adapters, drivers and physical</text>
-<text x="93" y="2199" font-size="23" fill="#40566e" font-weight="400" >deployment models.</text>
-<text x="93" y="2249" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="2170" font-size="23" fill="#40566e" font-weight="400">Target/device adapters and original acquisition; target</text><text x="93" y="2199" font-size="23" fill="#40566e" font-weight="400">profiles remain separate from physical board qualification.</text><text x="93" y="2249" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="2282" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="2316" font-size="24" fill="#172c46" font-weight="700" >SC-NC-VERIFY</text>
+<text x="93" y="2316" font-size="24" fill="#172c46" font-weight="700">SC-NC-VERIFY</text>
 </a>
-<text x="93" y="2350" font-size="23" fill="#40566e" font-weight="400" >Formal checks, fault injection, resilience and verification.</text>
-<text x="93" y="2429" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="2350" font-size="23" fill="#40566e" font-weight="400">Independent references, comparison laws and scoped</text><text x="93" y="2379" font-size="23" fill="#40566e" font-weight="400">findings for model, runtime, compiler and hardware</text><text x="93" y="2408" font-size="23" fill="#40566e" font-weight="400">artefacts.</text><text x="93" y="2429" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="2462" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="2496" font-size="24" fill="#172c46" font-weight="700" >SC-NC-STUDIO</text>
+<text x="93" y="2496" font-size="24" fill="#172c46" font-weight="700">SC-NC-STUDIO</text>
 </a>
-<text x="93" y="2530" font-size="23" fill="#40566e" font-weight="400" >Visual IDE, integration workflows and evidence</text>
-<text x="93" y="2559" font-size="23" fill="#40566e" font-weight="400" >presentation.</text>
-<text x="93" y="2609" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="2530" font-size="23" fill="#40566e" font-weight="400">Projects, visual design, jobs, replay and evidence</text><text x="93" y="2559" font-size="23" fill="#40566e" font-weight="400">presentation over public operations, with desktop and host</text><text x="93" y="2588" font-size="23" fill="#40566e" font-weight="400">lifecycle in scope.</text><text x="93" y="2609" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="2642" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="2676" font-size="24" fill="#172c46" font-weight="700" >SC-NC-RESEARCH</text>
+<text x="93" y="2676" font-size="24" fill="#172c46" font-weight="700">SC-NC-RESEARCH</text>
 </a>
-<text x="93" y="2710" font-size="23" fill="#40566e" font-weight="400" >Retained experimental research paths whose contracts are</text>
-<text x="93" y="2739" font-size="23" fill="#40566e" font-weight="400" >not yet stable.</text>
-<text x="93" y="2789" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
-<rect x="70" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="93" y="2710" font-size="23" fill="#40566e" font-weight="400">Named hypotheses, contextual experiments and research</text><text x="93" y="2739" font-size="23" fill="#40566e" font-weight="400">workloads, with explicit source, purpose, uncertainty and</text><text x="93" y="2768" font-size="23" fill="#40566e" font-weight="400">disposition.</text><text x="93" y="2789" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
+<rect x="70" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="2822" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
-<text x="93" y="2856" font-size="24" fill="#172c46" font-weight="700" >SC-NC-BENCH</text>
+<text x="93" y="2856" font-size="24" fill="#172c46" font-weight="700">SC-NC-BENCH</text>
 </a>
-<text x="93" y="2890" font-size="23" fill="#40566e" font-weight="400" >Workload-specific benchmark suites and immutable run</text>
-<text x="93" y="2919" font-size="23" fill="#40566e" font-weight="400" >evidence.</text>
-<text x="93" y="2969" font-size="16" fill="#126b68" font-weight="700" >EXTRACTION PLANNED</text>
+<text x="93" y="2890" font-size="23" fill="#40566e" font-weight="400">Versioned neuromorphic workloads and public-runtime</text><text x="93" y="2919" font-size="23" fill="#40566e" font-weight="400">comparison adapters; shared execution/evidence protocols</text><text x="93" y="2948" font-size="23" fill="#40566e" font-weight="400">stay separately owned.</text><text x="93" y="2969" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · EXTRACTION PLANNED</text>
 <rect x="845" y="552" width="735" height="88" rx="16" fill="#edf2ff" stroke="#365ab1" />
-<text x="867" y="587" font-size="24" fill="#365ab1" font-weight="700" >EVIDENCE &amp; DATA TOOLS</text>
-<text x="867" y="621" font-size="18" fill="#172c46" font-weight="400" >26 measurement / evidence projects in two columns</text>
-<rect x="845" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="867" y="587" font-size="24" fill="#365ab1" font-weight="700">EVIDENCE &amp; DATA TOOLS</text>
+<text x="867" y="621" font-size="18" fill="#172c46" font-weight="400">26 measurement / evidence projects in two columns</text>
+<rect x="845" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="662" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="696" font-size="24" fill="#172c46" font-weight="700" >EVIDENCE-MANIFEST-TOOLKIT</text>
+<text x="868" y="696" font-size="24" fill="#172c46" font-weight="700">EVIDENCE-MANIFEST-TOOLKIT</text>
 </a>
-<text x="868" y="730" font-size="23" fill="#40566e" font-weight="400" >Shared evidence schemas, canonical bytes, hashing,</text>
-<text x="868" y="759" font-size="23" fill="#40566e" font-weight="400" >sealing, signatures and validation.</text>
-<text x="868" y="809" font-size="16" fill="#365ab1" font-weight="700" >SCAFFOLD · DOMAIN RUNTIME OPEN</text>
-<rect x="845" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="730" font-size="23" fill="#40566e" font-weight="400">Shared evidence schemas, canonical bytes, hashing,</text>
+<text x="868" y="759" font-size="23" fill="#40566e" font-weight="400">sealing, signatures and validation.</text>
+<text x="868" y="809" font-size="16" fill="#365ab1" font-weight="700">SCAFFOLD · DOMAIN RUNTIME OPEN</text>
+<rect x="845" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="842" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="876" font-size="24" fill="#172c46" font-weight="700" >MODEL-PROVENANCE-PACK</text>
+<text x="868" y="876" font-size="24" fill="#172c46" font-weight="700">MODEL-PROVENANCE-PACK</text>
 </a>
-<text x="868" y="910" font-size="23" fill="#40566e" font-weight="400" >Training, conversion and quantisation provenance tied to</text>
-<text x="868" y="939" font-size="23" fill="#40566e" font-weight="400" >evidence.</text>
-<text x="868" y="989" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="910" font-size="23" fill="#40566e" font-weight="400">Training, conversion and quantisation provenance tied to</text>
+<text x="868" y="939" font-size="23" fill="#40566e" font-weight="400">evidence.</text>
+<text x="868" y="989" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="1022" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="1056" font-size="24" fill="#172c46" font-weight="700" >EXPERIMENT-LEDGER</text>
+<text x="868" y="1056" font-size="24" fill="#172c46" font-weight="700">EXPERIMENT-LEDGER</text>
 </a>
-<text x="868" y="1090" font-size="23" fill="#40566e" font-weight="400" >Queryable experiment configurations and evidence</text>
-<text x="868" y="1119" font-size="23" fill="#40566e" font-weight="400" >lineage.</text>
-<text x="868" y="1169" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="1090" font-size="23" fill="#40566e" font-weight="400">Queryable experiment configurations and evidence</text>
+<text x="868" y="1119" font-size="23" fill="#40566e" font-weight="400">lineage.</text>
+<text x="868" y="1169" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="1202" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="1236" font-size="24" fill="#172c46" font-weight="700" >SPIKE-LOG</text>
+<text x="868" y="1236" font-size="24" fill="#172c46" font-weight="700">SPIKE-LOG</text>
 </a>
-<text x="868" y="1270" font-size="23" fill="#40566e" font-weight="400" >Event-stream containers, integrity checks and replay.</text>
-<text x="868" y="1349" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="1270" font-size="23" fill="#40566e" font-weight="400">Event-stream containers, integrity checks and replay.</text>
+<text x="868" y="1349" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="1382" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="1416" font-size="24" fill="#172c46" font-weight="700" >SPIKE-FORMAT-BRIDGE</text>
+<text x="868" y="1416" font-size="24" fill="#172c46" font-weight="700">SPIKE-FORMAT-BRIDGE</text>
 </a>
-<text x="868" y="1450" font-size="23" fill="#40566e" font-weight="400" >Event-format conversion with round-trip and loss evidence.</text>
-<text x="868" y="1529" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="1450" font-size="23" fill="#40566e" font-weight="400">Event-format conversion with round-trip and loss evidence.</text>
+<text x="868" y="1529" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="1562" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="1596" font-size="24" fill="#172c46" font-weight="700" >SPIKE-CODEC-BENCH</text>
+<text x="868" y="1596" font-size="24" fill="#172c46" font-weight="700">SPIKE-CODEC-BENCH</text>
 </a>
-<text x="868" y="1630" font-size="23" fill="#40566e" font-weight="400" >Compression ratio, distortion and computational cost</text>
-<text x="868" y="1659" font-size="23" fill="#40566e" font-weight="400" >measurements.</text>
-<text x="868" y="1709" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="1630" font-size="23" fill="#40566e" font-weight="400">Compression ratio, distortion and computational cost</text>
+<text x="868" y="1659" font-size="23" fill="#40566e" font-weight="400">measurements.</text>
+<text x="868" y="1709" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="1742" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="1776" font-size="24" fill="#172c46" font-weight="700" >SPIKE-ENCODER-CHARACTERISER</text>
+<text x="868" y="1776" font-size="24" fill="#172c46" font-weight="700">SPIKE-ENCODER-CHARACTERISER</text>
 </a>
-<text x="868" y="1810" font-size="23" fill="#40566e" font-weight="400" >Sensor-to-spike quality, rate and latency characterisation.</text>
-<text x="868" y="1889" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="1810" font-size="23" fill="#40566e" font-weight="400">Sensor-to-spike quality, rate and latency characterisation.</text>
+<text x="868" y="1889" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="1922" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="1956" font-size="24" fill="#172c46" font-weight="700" >SPIKE-QUALITY-GATE</text>
+<text x="868" y="1956" font-size="24" fill="#172c46" font-weight="700">SPIKE-QUALITY-GATE</text>
 </a>
-<text x="868" y="1990" font-size="23" fill="#40566e" font-weight="400" >Versioned event-data quality policies and reports.</text>
-<text x="868" y="2069" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="1990" font-size="23" fill="#40566e" font-weight="400">Versioned event-data quality policies and reports.</text>
+<text x="868" y="2069" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="2102" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="2136" font-size="24" fill="#172c46" font-weight="700" >SPIKE-GROUNDTRUTH</text>
+<text x="868" y="2136" font-size="24" fill="#172c46" font-weight="700">SPIKE-GROUNDTRUTH</text>
 </a>
-<text x="868" y="2170" font-size="23" fill="#40566e" font-weight="400" >Reproducible, labelled and sealed stimulus streams.</text>
-<text x="868" y="2249" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="2170" font-size="23" fill="#40566e" font-weight="400">Reproducible, labelled and sealed stimulus streams.</text>
+<text x="868" y="2249" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="2282" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="2316" font-size="24" fill="#172c46" font-weight="700" >SNN-DIVERGENCE-HARNESS</text>
+<text x="868" y="2316" font-size="24" fill="#172c46" font-weight="700">SNN-DIVERGENCE-HARNESS</text>
 </a>
-<text x="868" y="2350" font-size="23" fill="#40566e" font-weight="400" >Cross-runtime SNN comparisons against declared</text>
-<text x="868" y="2379" font-size="23" fill="#40566e" font-weight="400" >numerical oracles.</text>
-<text x="868" y="2429" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="2350" font-size="23" fill="#40566e" font-weight="400">Cross-runtime SNN comparisons against declared</text>
+<text x="868" y="2379" font-size="23" fill="#40566e" font-weight="400">numerical oracles.</text>
+<text x="868" y="2429" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="2462" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="2496" font-size="24" fill="#172c46" font-weight="700" >SC-STREAM-PROVER</text>
+<text x="868" y="2496" font-size="24" fill="#172c46" font-weight="700">SC-STREAM-PROVER</text>
 </a>
-<text x="868" y="2530" font-size="23" fill="#40566e" font-weight="400" >Realised stochastic arithmetic errors compared with</text>
-<text x="868" y="2559" font-size="23" fill="#40566e" font-weight="400" >declared bounds.</text>
-<text x="868" y="2609" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="2530" font-size="23" fill="#40566e" font-weight="400">Realised stochastic arithmetic errors compared with</text>
+<text x="868" y="2559" font-size="23" fill="#40566e" font-weight="400">declared bounds.</text>
+<text x="868" y="2609" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="2642" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="2676" font-size="24" fill="#172c46" font-weight="700" >RANDOMNESS-WITNESS</text>
+<text x="868" y="2676" font-size="24" fill="#172c46" font-weight="700">RANDOMNESS-WITNESS</text>
 </a>
-<text x="868" y="2710" font-size="23" fill="#40566e" font-weight="400" >Random and low-discrepancy source qualification for a</text>
-<text x="868" y="2739" font-size="23" fill="#40566e" font-weight="400" >declared use.</text>
-<text x="868" y="2789" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="845" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="868" y="2710" font-size="23" fill="#40566e" font-weight="400">Random and low-discrepancy source qualification for a</text>
+<text x="868" y="2739" font-size="23" fill="#40566e" font-weight="400">declared use.</text>
+<text x="868" y="2789" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="845" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="845" y="2822" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="868" y="2856" font-size="24" fill="#172c46" font-weight="700" >MUTATION-SNN</text>
+<text x="868" y="2856" font-size="24" fill="#172c46" font-weight="700">MUTATION-SNN</text>
 </a>
-<text x="868" y="2890" font-size="23" fill="#40566e" font-weight="400" >SNN-specific mutation testing to assess test-suite</text>
-<text x="868" y="2919" font-size="23" fill="#40566e" font-weight="400" >adequacy.</text>
-<text x="868" y="2969" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
+<text x="868" y="2890" font-size="23" fill="#40566e" font-weight="400">SNN-specific mutation testing to assess test-suite</text>
+<text x="868" y="2919" font-size="23" fill="#40566e" font-weight="400">adequacy.</text>
+<text x="868" y="2969" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
 <rect x="1620" y="552" width="735" height="88" rx="16" fill="#edf2ff" stroke="#365ab1" />
-<text x="1642" y="587" font-size="24" fill="#365ab1" font-weight="700" >CONFORMANCE &amp; FIELD TOOLS</text>
-<text x="1642" y="621" font-size="18" fill="#172c46" font-weight="400" >Shared protocols; distinct domain checks</text>
-<rect x="1620" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1642" y="587" font-size="24" fill="#365ab1" font-weight="700">CONFORMANCE &amp; FIELD TOOLS</text>
+<text x="1642" y="621" font-size="18" fill="#172c46" font-weight="400">Shared protocols; distinct domain checks</text>
+<rect x="1620" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="662" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="696" font-size="24" fill="#172c46" font-weight="700" >NIR-CONFORMANCE</text>
+<text x="1643" y="696" font-size="24" fill="#172c46" font-weight="700">NIR-CONFORMANCE</text>
 </a>
-<text x="1643" y="730" font-size="23" fill="#40566e" font-weight="400" >Independent checks of versioned NIR import/export</text>
-<text x="1643" y="759" font-size="23" fill="#40566e" font-weight="400" >semantics.</text>
-<text x="1643" y="809" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="730" font-size="23" fill="#40566e" font-weight="400">Independent checks of versioned NIR import/export</text>
+<text x="1643" y="759" font-size="23" fill="#40566e" font-weight="400">semantics.</text>
+<text x="1643" y="809" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="842" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="876" font-size="24" fill="#172c46" font-weight="700" >NEURO-EVIDENCE-BENCH</text>
+<text x="1643" y="876" font-size="24" fill="#172c46" font-weight="700">NEURO-EVIDENCE-BENCH</text>
 </a>
-<text x="1643" y="910" font-size="23" fill="#40566e" font-weight="400" >Shared benchmark-plan execution and verifiable result</text>
-<text x="1643" y="939" font-size="23" fill="#40566e" font-weight="400" >contracts.</text>
-<text x="1643" y="989" font-size="16" fill="#365ab1" font-weight="700" >VALIDATION TOOLING · RUNTIME IN DEVELOPMENT</text>
-<rect x="1620" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="910" font-size="23" fill="#40566e" font-weight="400">Shared benchmark-plan execution and verifiable result</text>
+<text x="1643" y="939" font-size="23" fill="#40566e" font-weight="400">contracts.</text>
+<text x="1643" y="989" font-size="16" fill="#365ab1" font-weight="700">VALIDATION TOOLING · RUNTIME IN DEVELOPMENT</text>
+<rect x="1620" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="1022" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="1056" font-size="24" fill="#172c46" font-weight="700" >SPIKE-CALIBRATOR</text>
+<text x="1643" y="1056" font-size="24" fill="#172c46" font-weight="700">SPIKE-CALIBRATOR</text>
 </a>
-<text x="1643" y="1090" font-size="23" fill="#40566e" font-weight="400" >Classifier-confidence calibration and</text>
-<text x="1643" y="1119" font-size="23" fill="#40566e" font-weight="400" >deployment-placement drift.</text>
-<text x="1643" y="1169" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="1090" font-size="23" fill="#40566e" font-weight="400">Classifier-confidence calibration and</text>
+<text x="1643" y="1119" font-size="23" fill="#40566e" font-weight="400">deployment-placement drift.</text>
+<text x="1643" y="1169" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="1202" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="1236" font-size="24" fill="#172c46" font-weight="700" >LOOP-TIMING-WITNESS</text>
+<text x="1643" y="1236" font-size="24" fill="#172c46" font-weight="700">LOOP-TIMING-WITNESS</text>
 </a>
-<text x="1643" y="1270" font-size="23" fill="#40566e" font-weight="400" >Timing instrument for loop and accelerator latency, jitter,</text>
-<text x="1643" y="1299" font-size="23" fill="#40566e" font-weight="400" >deadlines, fault response and energy measurements.</text>
-<text x="1643" y="1349" font-size="16" fill="#365ab1" font-weight="700" >ARCHITECTURE · PHYSICAL QUALIFICATION OPEN</text>
-<rect x="1620" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="1270" font-size="23" fill="#40566e" font-weight="400">Timing instrument for loop and accelerator latency, jitter,</text>
+<text x="1643" y="1299" font-size="23" fill="#40566e" font-weight="400">deadlines, fault response and energy measurements.</text>
+<text x="1643" y="1349" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · PHYSICAL GATE OPEN</text>
+<rect x="1620" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="1382" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="1416" font-size="24" fill="#172c46" font-weight="700" >BITSTREAM-EVIDENCE-CI</text>
+<text x="1643" y="1416" font-size="24" fill="#172c46" font-weight="700">BITSTREAM-EVIDENCE-CI</text>
 </a>
-<text x="1643" y="1450" font-size="23" fill="#40566e" font-weight="400" >Reproducible FPGA build inputs, toolchain and bitstream</text>
-<text x="1643" y="1479" font-size="23" fill="#40566e" font-weight="400" >evidence.</text>
-<text x="1643" y="1529" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="1450" font-size="23" fill="#40566e" font-weight="400">Reproducible FPGA build inputs, toolchain and bitstream</text>
+<text x="1643" y="1479" font-size="23" fill="#40566e" font-weight="400">evidence.</text>
+<text x="1643" y="1529" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="1562" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="1596" font-size="24" fill="#172c46" font-weight="700" >PLASTICITY-WITNESS</text>
+<text x="1643" y="1596" font-size="24" fill="#172c46" font-weight="700">PLASTICITY-WITNESS</text>
 </a>
-<text x="1643" y="1630" font-size="23" fill="#40566e" font-weight="400" >Measured physical learning-rule updates compared with</text>
-<text x="1643" y="1659" font-size="23" fill="#40566e" font-weight="400" >fixed-point oracles.</text>
-<text x="1643" y="1709" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="1630" font-size="23" fill="#40566e" font-weight="400">Measured physical learning-rule updates compared with</text>
+<text x="1643" y="1659" font-size="23" fill="#40566e" font-weight="400">fixed-point oracles.</text>
+<text x="1643" y="1709" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="1742" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="1776" font-size="24" fill="#172c46" font-weight="700" >AER-LINK-WITNESS</text>
+<text x="1643" y="1776" font-size="24" fill="#172c46" font-weight="700">AER-LINK-WITNESS</text>
 </a>
-<text x="1643" y="1810" font-size="23" fill="#40566e" font-weight="400" >Address-event link throughput, loss, reordering and</text>
-<text x="1643" y="1839" font-size="23" fill="#40566e" font-weight="400" >starvation.</text>
-<text x="1643" y="1889" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="1810" font-size="23" fill="#40566e" font-weight="400">Address-event link throughput, loss, reordering and</text>
+<text x="1643" y="1839" font-size="23" fill="#40566e" font-weight="400">starvation.</text>
+<text x="1643" y="1889" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="1922" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="1956" font-size="24" fill="#172c46" font-weight="700" >RELIABILITY-WITNESS</text>
+<text x="1643" y="1956" font-size="24" fill="#172c46" font-weight="700">RELIABILITY-WITNESS</text>
 </a>
-<text x="1643" y="1990" font-size="23" fill="#40566e" font-weight="400" >Observed fabric errors and drift within declared exposure</text>
-<text x="1643" y="2019" font-size="23" fill="#40566e" font-weight="400" >limits.</text>
-<text x="1643" y="2069" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="1990" font-size="23" fill="#40566e" font-weight="400">Observed fabric errors and drift within declared exposure</text>
+<text x="1643" y="2019" font-size="23" fill="#40566e" font-weight="400">limits.</text>
+<text x="1643" y="2069" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="2102" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="2136" font-size="24" fill="#172c46" font-weight="700" >SIM-REAL-WITNESS</text>
+<text x="1643" y="2136" font-size="24" fill="#172c46" font-weight="700">SIM-REAL-WITNESS</text>
 </a>
-<text x="1643" y="2170" font-size="23" fill="#40566e" font-weight="400" >Simulation-to-fabric divergence for a declared</text>
-<text x="1643" y="2199" font-size="23" fill="#40566e" font-weight="400" >implementation pair.</text>
-<text x="1643" y="2249" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="2170" font-size="23" fill="#40566e" font-weight="400">Simulation-to-fabric divergence for a declared</text>
+<text x="1643" y="2199" font-size="23" fill="#40566e" font-weight="400">implementation pair.</text>
+<text x="1643" y="2249" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="2282" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="2316" font-size="24" fill="#172c46" font-weight="700" >DEPLOY-PACK</text>
+<text x="1643" y="2316" font-size="24" fill="#172c46" font-weight="700">DEPLOY-PACK</text>
 </a>
-<text x="1643" y="2350" font-size="23" fill="#40566e" font-weight="400" >Installable deployment units bound to their supporting</text>
-<text x="1643" y="2379" font-size="23" fill="#40566e" font-weight="400" >evidence.</text>
-<text x="1643" y="2429" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="2350" font-size="23" fill="#40566e" font-weight="400">Installable deployment units bound to their supporting</text>
+<text x="1643" y="2379" font-size="23" fill="#40566e" font-weight="400">evidence.</text>
+<text x="1643" y="2429" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="2462" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="2496" font-size="24" fill="#172c46" font-weight="700" >FIELD-OPS-WITNESS</text>
+<text x="1643" y="2496" font-size="24" fill="#172c46" font-weight="700">FIELD-OPS-WITNESS</text>
 </a>
-<text x="1643" y="2530" font-size="23" fill="#40566e" font-weight="400" >Deployment health, drift, timing and coverage against</text>
-<text x="1643" y="2559" font-size="23" fill="#40566e" font-weight="400" >baselines.</text>
-<text x="1643" y="2609" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="2530" font-size="23" fill="#40566e" font-weight="400">Deployment health, drift, timing and coverage against</text>
+<text x="1643" y="2559" font-size="23" fill="#40566e" font-weight="400">baselines.</text>
+<text x="1643" y="2609" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="2642" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="2676" font-size="24" fill="#172c46" font-weight="700" >FLIGHT-RECORDER</text>
+<text x="1643" y="2676" font-size="24" fill="#172c46" font-weight="700">FLIGHT-RECORDER</text>
 </a>
-<text x="1643" y="2710" font-size="23" fill="#40566e" font-weight="400" >Bounded on-unit event and state histories for incident</text>
-<text x="1643" y="2739" font-size="23" fill="#40566e" font-weight="400" >investigation.</text>
-<text x="1643" y="2789" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="1620" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="1643" y="2710" font-size="23" fill="#40566e" font-weight="400">Bounded on-unit event and state histories for incident</text>
+<text x="1643" y="2739" font-size="23" fill="#40566e" font-weight="400">investigation.</text>
+<text x="1643" y="2789" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="1620" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="1620" y="2822" width="7" height="166" rx="0" fill="#365ab1" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#supporting-tools">
-<text x="1643" y="2856" font-size="24" fill="#172c46" font-weight="700" >NEURO-SAFETY-CASE</text>
+<text x="1643" y="2856" font-size="24" fill="#172c46" font-weight="700">NEURO-SAFETY-CASE</text>
 </a>
-<text x="1643" y="2890" font-size="23" fill="#40566e" font-weight="400" >Scoped assurance arguments and explicit evidence gaps</text>
-<text x="1643" y="2919" font-size="23" fill="#40566e" font-weight="400" >for human assessment.</text>
-<text x="1643" y="2969" font-size="16" fill="#365ab1" font-weight="700" >IMPLEMENTATION PLANNED</text>
+<text x="1643" y="2890" font-size="23" fill="#40566e" font-weight="400">Scoped assurance arguments and explicit evidence gaps</text>
+<text x="1643" y="2919" font-size="23" fill="#40566e" font-weight="400">for human assessment.</text>
+<text x="1643" y="2969" font-size="16" fill="#365ab1" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
 <rect x="2395" y="552" width="735" height="88" rx="16" fill="#fcf0e3" stroke="#855025" />
-<text x="2417" y="587" font-size="24" fill="#855025" font-weight="700" >GENERAL CIRCUIT PLATFORM</text>
-<text x="2417" y="621" font-size="18" fill="#172c46" font-weight="400" >16 destinations · implementation planned</text>
-<rect x="2395" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2417" y="587" font-size="24" fill="#855025" font-weight="700">GENERAL CIRCUIT PLATFORM</text>
+<text x="2417" y="621" font-size="18" fill="#172c46" font-weight="400">16 destinations · implementation planned</text>
+<rect x="2395" y="662" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="662" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="696" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-CORE</text>
+<text x="2418" y="696" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-CORE</text>
 </a>
-<text x="2418" y="730" font-size="23" fill="#40566e" font-weight="400" >Neutral design hierarchy, ports, units, parameters, view</text>
-<text x="2418" y="759" font-size="23" fill="#40566e" font-weight="400" >correspondence and operation contracts.</text>
-<text x="2418" y="809" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="730" font-size="23" fill="#40566e" font-weight="400">Neutral design hierarchy, ports, units, parameters, view</text>
+<text x="2418" y="759" font-size="23" fill="#40566e" font-weight="400">correspondence and operation contracts.</text>
+<text x="2418" y="809" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="842" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="842" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="876" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-TECHNOLOGY</text>
+<text x="2418" y="876" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-TECHNOLOGY</text>
 </a>
-<text x="2418" y="910" font-size="23" fill="#40566e" font-weight="400" >Identified PDK, device, library, verification-deck and</text>
-<text x="2418" y="939" font-size="23" fill="#40566e" font-weight="400" >assembly profiles with tool compatibility and applicability.</text>
-<text x="2418" y="989" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="910" font-size="23" fill="#40566e" font-weight="400">Identified PDK, device, library, verification-deck and</text>
+<text x="2418" y="939" font-size="23" fill="#40566e" font-weight="400">assembly profiles with tool compatibility and applicability.</text>
+<text x="2418" y="989" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="1022" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="1022" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="1056" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-FLOW</text>
+<text x="2418" y="1056" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-FLOW</text>
 </a>
-<text x="2418" y="1090" font-size="23" fill="#40566e" font-weight="400" >Reproducible circuit workflows, admitted tool dispatch,</text>
-<text x="2418" y="1119" font-size="23" fill="#40566e" font-weight="400" >artefact propagation and recovery.</text>
-<text x="2418" y="1169" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="1090" font-size="23" fill="#40566e" font-weight="400">Reproducible circuit workflows, admitted tool dispatch,</text>
+<text x="2418" y="1119" font-size="23" fill="#40566e" font-weight="400">artefact propagation and recovery.</text>
+<text x="2418" y="1169" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="1202" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="1202" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="1236" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-DIGITAL</text>
+<text x="2418" y="1236" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-DIGITAL</text>
 </a>
-<text x="2418" y="1270" font-size="23" fill="#40566e" font-weight="400" >Digital simulation, formal/synthesis and implementation</text>
-<text x="2418" y="1299" font-size="23" fill="#40566e" font-weight="400" >adapters, timing and testability intent.</text>
-<text x="2418" y="1349" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="1270" font-size="23" fill="#40566e" font-weight="400">Digital simulation, formal/synthesis and implementation</text>
+<text x="2418" y="1299" font-size="23" fill="#40566e" font-weight="400">adapters, timing and testability intent.</text>
+<text x="2418" y="1349" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="1382" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="1382" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="1416" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-ANALOG</text>
+<text x="2418" y="1416" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-ANALOG</text>
 </a>
-<text x="2418" y="1450" font-size="23" fill="#40566e" font-weight="400" >Circuit/schematic and device-model integration, analogue</text>
-<text x="2418" y="1479" font-size="23" fill="#40566e" font-weight="400" >simulation, sizing and layout constraints.</text>
-<text x="2418" y="1529" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="1450" font-size="23" fill="#40566e" font-weight="400">Circuit/schematic and device-model integration, analogue</text>
+<text x="2418" y="1479" font-size="23" fill="#40566e" font-weight="400">simulation, sizing and layout constraints.</text>
+<text x="2418" y="1529" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="1562" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="1562" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="1596" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-MIXED-SIGNAL</text>
+<text x="2418" y="1596" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-MIXED-SIGNAL</text>
 </a>
-<text x="2418" y="1630" font-size="23" fill="#40566e" font-weight="400" >Boundary models and co-simulation integration for</text>
-<text x="2418" y="1659" font-size="23" fill="#40566e" font-weight="400" >continuous and discrete participants.</text>
-<text x="2418" y="1709" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="1630" font-size="23" fill="#40566e" font-weight="400">Boundary models and co-simulation integration for</text>
+<text x="2418" y="1659" font-size="23" fill="#40566e" font-weight="400">continuous and discrete participants.</text>
+<text x="2418" y="1709" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="1742" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="1742" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="1776" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-PHYSICAL</text>
+<text x="2418" y="1776" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-PHYSICAL</text>
 </a>
-<text x="2418" y="1810" font-size="23" fill="#40566e" font-weight="400" >Layout implementation and interchange, extraction and</text>
-<text x="2418" y="1839" font-size="23" fill="#40566e" font-weight="400" >technology-specific physical-check integration.</text>
-<text x="2418" y="1889" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="1810" font-size="23" fill="#40566e" font-weight="400">Layout implementation and interchange, extraction and</text>
+<text x="2418" y="1839" font-size="23" fill="#40566e" font-weight="400">technology-specific physical-check integration.</text>
+<text x="2418" y="1889" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="1922" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="1956" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-ASSEMBLY</text>
+<text x="2418" y="1956" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-ASSEMBLY</text>
 </a>
-<text x="2418" y="1990" font-size="23" fill="#40566e" font-weight="400" >Die, package, interposer, board and test-fixture</text>
-<text x="2418" y="2019" font-size="23" fill="#40566e" font-weight="400" >integration.</text>
-<text x="2418" y="2069" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="1990" font-size="23" fill="#40566e" font-weight="400">Die, package, interposer, board and test-fixture</text>
+<text x="2418" y="2019" font-size="23" fill="#40566e" font-weight="400">integration.</text>
+<text x="2418" y="2069" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="2102" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="2102" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="2136" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-ACCEPTANCE</text>
+<text x="2418" y="2136" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-ACCEPTANCE</text>
 </a>
-<text x="2418" y="2170" font-size="23" fill="#40566e" font-weight="400" >Requirement-specific checks, comparison laws, coverage</text>
-<text x="2418" y="2199" font-size="23" fill="#40566e" font-weight="400" >and scoped acceptance.</text>
-<text x="2418" y="2249" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="2170" font-size="23" fill="#40566e" font-weight="400">Requirement-specific checks, comparison laws, coverage</text>
+<text x="2418" y="2199" font-size="23" fill="#40566e" font-weight="400">and scoped acceptance.</text>
+<text x="2418" y="2249" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="2282" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="2316" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-LAB</text>
+<text x="2418" y="2316" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-LAB</text>
 </a>
-<text x="2418" y="2350" font-size="23" fill="#40566e" font-weight="400" >Hardware bring-up, instrument integration and traceable</text>
-<text x="2418" y="2379" font-size="23" fill="#40566e" font-weight="400" >characterisation.</text>
-<text x="2418" y="2429" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="2350" font-size="23" fill="#40566e" font-weight="400">Hardware bring-up, instrument integration and traceable</text>
+<text x="2418" y="2379" font-size="23" fill="#40566e" font-weight="400">characterisation.</text>
+<text x="2418" y="2429" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="2462" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="2462" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="2496" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-WORKBENCH</text>
+<text x="2418" y="2496" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-WORKBENCH</text>
 </a>
-<text x="2418" y="2530" font-size="23" fill="#40566e" font-weight="400" >General design and review workspace using the same</text>
-<text x="2418" y="2559" font-size="23" fill="#40566e" font-weight="400" >headless operations as the library and command-line</text>
-<text x="2418" y="2588" font-size="23" fill="#40566e" font-weight="400" >clients.</text>
-<text x="2418" y="2609" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="2530" font-size="23" fill="#40566e" font-weight="400">General design and review workspace using the same</text>
+<text x="2418" y="2559" font-size="23" fill="#40566e" font-weight="400">headless operations as the library and command-line</text>
+<text x="2418" y="2588" font-size="23" fill="#40566e" font-weight="400">clients.</text>
+<text x="2418" y="2609" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="2642" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="2642" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="2676" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-MANUFACTURING</text>
+<text x="2418" y="2676" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-MANUFACTURING</text>
 </a>
-<text x="2418" y="2710" font-size="23" fill="#40566e" font-weight="400" >Versioned routes and recipes, material genealogy,</text>
-<text x="2418" y="2739" font-size="23" fill="#40566e" font-weight="400" >work-order and inspection integration, and controlled</text>
-<text x="2418" y="2768" font-size="23" fill="#40566e" font-weight="400" >supplier handoff.</text>
-<text x="2418" y="2789" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="2710" font-size="23" fill="#40566e" font-weight="400">Versioned routes and recipes, material genealogy,</text>
+<text x="2418" y="2739" font-size="23" fill="#40566e" font-weight="400">work-order and inspection integration, and controlled</text>
+<text x="2418" y="2768" font-size="23" fill="#40566e" font-weight="400">supplier handoff.</text>
+<text x="2418" y="2789" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="2822" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="2822" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="2856" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-AUTOMATION</text>
+<text x="2418" y="2856" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-AUTOMATION</text>
 </a>
-<text x="2418" y="2890" font-size="23" fill="#40566e" font-weight="400" >Admitted equipment capabilities and local</text>
-<text x="2418" y="2919" font-size="23" fill="#40566e" font-weight="400" >execution-provider adapters for instruments, cells and</text>
-<text x="2418" y="2948" font-size="23" fill="#40566e" font-weight="400" >robot tasks.</text>
-<text x="2418" y="2969" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="3002" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="2890" font-size="23" fill="#40566e" font-weight="400">Admitted equipment capabilities and local</text>
+<text x="2418" y="2919" font-size="23" fill="#40566e" font-weight="400">execution-provider adapters for instruments, cells and</text>
+<text x="2418" y="2948" font-size="23" fill="#40566e" font-weight="400">robot tasks.</text>
+<text x="2418" y="2969" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="3002" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="3002" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="3036" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-FIELDS</text>
+<text x="2418" y="3036" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-FIELDS</text>
 </a>
-<text x="2418" y="3070" font-size="23" fill="#40566e" font-weight="400" >Electromagnetic and coupled-field operations, retaining</text>
-<text x="2418" y="3099" font-size="23" fill="#40566e" font-weight="400" >specialised geometry, meshes and boundary conditions.</text>
-<text x="2418" y="3149" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="3182" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="3070" font-size="23" fill="#40566e" font-weight="400">Electromagnetic and coupled-field operations, retaining</text>
+<text x="2418" y="3099" font-size="23" fill="#40566e" font-weight="400">specialised geometry, meshes and boundary conditions.</text>
+<text x="2418" y="3149" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="3182" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="3182" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="3216" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-PHOTONICS</text>
+<text x="2418" y="3216" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-PHOTONICS</text>
 </a>
-<text x="2418" y="3250" font-size="23" fill="#40566e" font-weight="400" >Optical circuit and layout semantics, including wavelength,</text>
-<text x="2418" y="3279" font-size="23" fill="#40566e" font-weight="400" >mode, polarisation, loss and electrical coupling.</text>
-<text x="2418" y="3329" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
-<rect x="2395" y="3362" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5"/>
+<text x="2418" y="3250" font-size="23" fill="#40566e" font-weight="400">Optical circuit and layout semantics, including wavelength,</text>
+<text x="2418" y="3279" font-size="23" fill="#40566e" font-weight="400">mode, polarisation, loss and electrical coupling.</text>
+<text x="2418" y="3329" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
+<rect x="2395" y="3362" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="2395" y="3362" width="7" height="166" rx="0" fill="#855025" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#general-circuit-design-platform">
-<text x="2418" y="3396" font-size="24" fill="#172c46" font-weight="700" >CIRCUIT-DEVICES</text>
+<text x="2418" y="3396" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-DEVICES</text>
 </a>
-<text x="2418" y="3430" font-size="23" fill="#40566e" font-weight="400" >Device physics, TCAD and compact-model work, with</text>
-<text x="2418" y="3459" font-size="23" fill="#40566e" font-weight="400" >process-specific models and validation.</text>
-<text x="2418" y="3509" font-size="16" fill="#855025" font-weight="700" >IMPLEMENTATION PLANNED</text>
+<text x="2418" y="3430" font-size="23" fill="#40566e" font-weight="400">Device physics, TCAD and compact-model work, with</text>
+<text x="2418" y="3459" font-size="23" fill="#40566e" font-weight="400">process-specific models and validation.</text>
+<text x="2418" y="3509" font-size="16" fill="#855025" font-weight="700">ARCHITECTURE DOCUMENTED · DELIVERY PLANNED</text>
 <rect x="70" y="3030" width="735" height="470" rx="16" fill="#e9eef5" stroke="#b5c5d8" />
-<text x="94" y="3069" font-size="23" fill="#126b68" font-weight="700" >COMPONENT INTEGRATION</text>
-<text x="94" y="3110" font-size="23" fill="#40566e" font-weight="400" >SC-NEUROCORE remains the public workbench. Thirteen</text>
-<text x="94" y="3142" font-size="23" fill="#40566e" font-weight="400" >destinations give focused ownership and future release</text>
-<text x="94" y="3174" font-size="23" fill="#40566e" font-weight="400" >boundaries.</text>
-<text x="94" y="3232" font-size="23" fill="#40566e" font-weight="400" >COMPILER and HARDWARE may consume optional general</text>
-<text x="94" y="3264" font-size="23" fill="#40566e" font-weight="400" >circuit adapters. Simulation and learning do not acquire</text>
-<text x="94" y="3296" font-size="23" fill="#40566e" font-weight="400" >mandatory PDK or lab dependencies.</text>
-<text x="94" y="3354" font-size="23" fill="#40566e" font-weight="400" >BENCH owns domain workloads; NEURO-EVIDENCE-BENCH</text>
-<text x="94" y="3386" font-size="23" fill="#40566e" font-weight="400" >supplies the shared execution and result protocol.</text>
+<text x="94" y="3069" font-size="23" fill="#126b68" font-weight="700">COMPONENT INTEGRATION</text>
+<text x="94" y="3110" font-size="23" fill="#40566e" font-weight="400">SC-NEUROCORE remains the public workbench. Thirteen</text>
+<text x="94" y="3142" font-size="23" fill="#40566e" font-weight="400">destinations give focused ownership and future release</text>
+<text x="94" y="3174" font-size="23" fill="#40566e" font-weight="400">boundaries.</text>
+<text x="94" y="3232" font-size="23" fill="#40566e" font-weight="400">COMPILER and HARDWARE may consume optional general</text>
+<text x="94" y="3264" font-size="23" fill="#40566e" font-weight="400">circuit adapters. Simulation and learning do not acquire</text>
+<text x="94" y="3296" font-size="23" fill="#40566e" font-weight="400">mandatory PDK or lab dependencies.</text>
+<text x="94" y="3354" font-size="23" fill="#40566e" font-weight="400">BENCH owns domain workloads; NEURO-EVIDENCE-BENCH</text>
+<text x="94" y="3386" font-size="23" fill="#40566e" font-weight="400">supplies the shared execution and result protocol.</text>
 <rect x="845" y="3030" width="735" height="470" rx="16" fill="#e9eef5" stroke="#b5c5d8" />
-<text x="869" y="3069" font-size="23" fill="#365ab1" font-weight="700" >ONE EVIDENCE CHAIN</text>
-<text x="869" y="3110" font-size="23" fill="#40566e" font-weight="400" >Design or model identity → versioned inputs →</text>
-<text x="869" y="3142" font-size="23" fill="#40566e" font-weight="400" >reproducible operation → original results → evidence</text>
-<text x="869" y="3174" font-size="23" fill="#40566e" font-weight="400" >manifest → scoped assessment.</text>
-<text x="869" y="3232" font-size="23" fill="#40566e" font-weight="400" >Shared hashing, sealing and lineage preserve provenance.</text>
-<text x="869" y="3264" font-size="23" fill="#40566e" font-weight="400" >Domain laws, numerical oracles and physical calibration</text>
-<text x="869" y="3296" font-size="23" fill="#40566e" font-weight="400" >retain their own owners.</text>
-<text x="869" y="3354" font-size="23" fill="#40566e" font-weight="400" >Neither a scaffold nor a valid record establishes a qualified</text>
-<text x="869" y="3386" font-size="23" fill="#40566e" font-weight="400" >measurement or an independently reproduced result.</text>
+<text x="869" y="3069" font-size="23" fill="#365ab1" font-weight="700">ONE EVIDENCE CHAIN</text>
+<text x="869" y="3110" font-size="23" fill="#40566e" font-weight="400">Design or model identity → versioned inputs →</text>
+<text x="869" y="3142" font-size="23" fill="#40566e" font-weight="400">reproducible operation → original results → evidence</text>
+<text x="869" y="3174" font-size="23" fill="#40566e" font-weight="400">manifest → scoped assessment.</text>
+<text x="869" y="3232" font-size="23" fill="#40566e" font-weight="400">Shared hashing, sealing and lineage preserve provenance.</text>
+<text x="869" y="3264" font-size="23" fill="#40566e" font-weight="400">Domain laws, numerical oracles and physical calibration</text>
+<text x="869" y="3296" font-size="23" fill="#40566e" font-weight="400">retain their own owners.</text>
+<text x="869" y="3354" font-size="23" fill="#40566e" font-weight="400">Neither a scaffold nor a valid record establishes a qualified</text>
+<text x="869" y="3386" font-size="23" fill="#40566e" font-weight="400">measurement or an independently reproduced result.</text>
 <rect x="1620" y="3030" width="735" height="510" rx="16" fill="#e9eef5" stroke="#b5c5d8" />
-<text x="1644" y="3069" font-size="23" fill="#365ab1" font-weight="700" >CROSS-DOMAIN INTEGRATION</text>
-<text x="1644" y="3110" font-size="23" fill="#40566e" font-weight="400" >Neuromorphic workloads use the general circuit platform</text>
-<text x="1644" y="3142" font-size="23" fill="#40566e" font-weight="400" >through optional contracts. General circuit engineering</text>
-<text x="1644" y="3174" font-size="23" fill="#40566e" font-weight="400" >does not require an SNN runtime.</text>
-<text x="1644" y="3232" font-size="23" fill="#40566e" font-weight="400" >CORE and TECHNOLOGY define shared identities and</text>
-<text x="1644" y="3264" font-size="23" fill="#40566e" font-weight="400" >operation contracts; FLOW dispatches admitted providers.</text>
-<text x="1644" y="3322" font-size="23" fill="#40566e" font-weight="400" >Acceptance combines requirement-specific results while</text>
-<text x="1644" y="3354" font-size="23" fill="#40566e" font-weight="400" >analogue, digital and specialist physics retain distinct</text>
-<text x="1644" y="3386" font-size="23" fill="#40566e" font-weight="400" >semantics.</text>
-<text x="1644" y="3444" font-size="23" fill="#40566e" font-weight="400" >Measured feedback creates a new design revision; original</text>
-<text x="1644" y="3476" font-size="23" fill="#40566e" font-weight="400" >inputs and results remain attributable.</text>
+<text x="1644" y="3069" font-size="23" fill="#365ab1" font-weight="700">CROSS-DOMAIN INTEGRATION</text>
+<text x="1644" y="3110" font-size="23" fill="#40566e" font-weight="400">Neuromorphic workloads use the general circuit platform</text>
+<text x="1644" y="3142" font-size="23" fill="#40566e" font-weight="400">through optional contracts. General circuit engineering</text>
+<text x="1644" y="3174" font-size="23" fill="#40566e" font-weight="400">does not require an SNN runtime.</text>
+<text x="1644" y="3232" font-size="23" fill="#40566e" font-weight="400">CORE and TECHNOLOGY define shared identities and</text>
+<text x="1644" y="3264" font-size="23" fill="#40566e" font-weight="400">operation contracts; FLOW dispatches admitted providers.</text>
+<text x="1644" y="3322" font-size="23" fill="#40566e" font-weight="400">Acceptance combines requirement-specific results while</text>
+<text x="1644" y="3354" font-size="23" fill="#40566e" font-weight="400">analogue, digital and specialist physics retain distinct</text>
+<text x="1644" y="3386" font-size="23" fill="#40566e" font-weight="400">semantics.</text>
+<text x="1644" y="3444" font-size="23" fill="#40566e" font-weight="400">Measured feedback creates a new design revision; original</text>
+<text x="1644" y="3476" font-size="23" fill="#40566e" font-weight="400">inputs and results remain attributable.</text>
 <rect x="70" y="3578" width="3060" height="160" rx="16" fill="#122c45" stroke="none" />
-<text x="96" y="3617" font-size="23" fill="#ffffff" font-weight="700" >OPTIONAL LABORATORY AND PRODUCTION CHAIN</text>
-<text x="96" y="3656" font-size="27" fill="#ffffff" font-weight="400" >Design + technology → simulation / implementation → physical checks → assembly → manufacturing handoff → laboratory evidence</text>
-<text x="96" y="3694" font-size="23" fill="#d5e4f4" font-weight="400" >CIRCUIT-MANUFACTURING owns routes, recipes and materials; CIRCUIT-AUTOMATION connects admitted local equipment providers.</text>
-<text x="96" y="3724" font-size="21" fill="#d5e4f4" font-weight="400" >Local controllers retain timing, equipment arbitration, interlocks and protection. No fabrication capability or machine-control authority is implied.</text>
-<text x="70" y="3784" font-size="20" fill="#855025" font-weight="700" >TECHNOLOGY PROFILES</text>
-<text x="70" y="3819" font-size="25" fill="#172c46" font-weight="400" >Analogue · digital · mixed-signal · RF / fields · photonics · device physics / MEMS · die / package / board</text>
-<text x="70" y="3853" font-size="23" fill="#172c46" font-weight="400" >CMOS / SOI · SiGe / BiCMOS · GaAs / InP · GaN / SiC · optical and specialist functional materials — support is qualified per operation.</text>
-<text x="70" y="3912" font-size="21" fill="#172c46" font-weight="400" >© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
-<text x="70" y="3945" font-size="21" fill="#172c46" font-weight="400" >AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
-<text x="70" y="3978" font-size="21" fill="#40566e" font-weight="400" >Source: github.com/anulum/sc-neurocore · docs/ecosystem.md · SC-NeuroCore programme architecture</text>
+<text x="96" y="3617" font-size="23" fill="#ffffff" font-weight="700">OPTIONAL LABORATORY AND PRODUCTION CHAIN</text>
+<text x="96" y="3656" font-size="27" fill="#ffffff" font-weight="400">Design + technology → simulation / implementation → physical checks → assembly → manufacturing handoff → laboratory evidence</text>
+<text x="96" y="3694" font-size="23" fill="#d5e4f4" font-weight="400">CIRCUIT-MANUFACTURING owns routes, recipes and materials; CIRCUIT-AUTOMATION connects admitted local equipment providers.</text>
+<text x="96" y="3724" font-size="21" fill="#d5e4f4" font-weight="400">Local controllers retain timing, equipment arbitration, interlocks and protection. No fabrication capability or machine-control authority is implied.</text>
+<text x="70" y="3784" font-size="20" fill="#855025" font-weight="700">TECHNOLOGY PROFILES</text>
+<text x="70" y="3819" font-size="25" fill="#172c46" font-weight="400">Analogue · digital · mixed-signal · RF / fields · photonics · device physics / MEMS · die / package / board</text>
+<text x="70" y="3853" font-size="23" fill="#172c46" font-weight="400">CMOS / SOI · SiGe / BiCMOS · GaAs / InP · GaN / SiC · optical and specialist functional materials — support is qualified per operation.</text>
+<text x="70" y="3912" font-size="21" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
+<text x="70" y="3945" font-size="21" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
+<text x="70" y="3978" font-size="21" fill="#40566e" font-weight="400">Source: github.com/anulum/sc-neurocore · docs/ecosystem.md · SC-NeuroCore programme architecture</text>
 </svg>

@@ -5,62 +5,61 @@
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
 <!-- SC-NeuroCore — Programme architecture map -->
-
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1150" viewBox="0 0 1600 1150" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="adobe:ns:meta/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" width="1600" height="1150" viewBox="0 0 1600 1150" role="img" aria-labelledby="title desc">
 <title id="title">Design, implementation and measured feedback</title><desc id="desc">Intended general circuit lifecycle: specifications and design views, simulation and models, implementation and lowering, physical verification, optional assembly and manufacturing, then laboratory measurements feeding a new design revision. Every circuit-platform stage is planned. Existing bounded SNN workbench paths do not qualify the general platform or a physical manufacturing process.</desc>
-<metadata id="project-metadata"><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:cc="http://creativecommons.org/ns#"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Design, implementation and measured feedback</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Intended general circuit lifecycle: specifications and design views, simulation and models, implementation and lowering, physical verification, optional assembly and manufacturing, then laboratory measurements feeding a new design revision. Every circuit-platform stage is planned. Existing bounded SNN workbench paths do not qualify the general platform or a physical manufacturing process.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_design_lifecycle.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html"/></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
-<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#526782"/></marker></defs>
-<style>text{font-family:DejaVu Sans,Arial,sans-serif;fill:#142941}.title{font-size:34px;font-weight:700}.sub{font-size:20px;fill:#3d536d}.heading{font-size:23px;font-weight:700}.name{font-size:19px;font-weight:700}.body{font-size:18px}.small{font-size:16px;fill:#3d536d}.tag{font-size:14px;font-weight:700;letter-spacing:1px}.exists{fill:#e6f4eb;stroke:#287a4d;stroke-width:2}.architecture{fill:#e8efff;stroke:#4865a0;stroke-width:2}.planned{fill:#fff;stroke:#6c7a91;stroke-width:2;stroke-dasharray:8 5}.note{fill:#edf1f7;stroke:#9aa8bc;stroke-width:1.5}.link{fill:none;stroke:#526782;stroke-width:2.5}</style>
-<rect width="1600" height="1150" fill="#f6f8fc"/>
+<metadata id="project-metadata"><x:xmpmeta><rdf:RDF><rdf:Description rdf:about=""><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Design, implementation and measured feedback</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Intended general circuit lifecycle: specifications and design views, simulation and models, implementation and lowering, physical verification, optional assembly and manufacturing, then laboratory measurements feeding a new design revision. Every circuit-platform stage is planned. Existing bounded SNN workbench paths do not qualify the general platform or a physical manufacturing process.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_design_lifecycle.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html" /></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#40566e" /></marker></defs>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif;fill:#172c46}.title{font-size:34px;font-weight:700}.sub{font-size:20px;fill:#40566e}.heading{font-size:23px;font-weight:700}.name{font-size:19px;font-weight:700}.body{font-size:18px}.small{font-size:16px;fill:#40566e}.tag{font-size:14px;font-weight:700;letter-spacing:1px}.exists{fill:#e6f4eb;stroke:#126b68;stroke-width:2}.architecture{fill:#edf2ff;stroke:#365ab1;stroke-width:2}.planned{fill:#fff;stroke:#b5c5d8;stroke-width:2;stroke-dasharray:8 5}.note{fill:#e9eef5;stroke:#b5c5d8;stroke-width:1.5}.link{fill:none;stroke:#40566e;stroke-width:2.5}</style>
+<rect width="1600" height="1150" fill="#f5f8fc" />
 <text x="56" y="66" class="title">Design, implementation and measured feedback</text>
 <text x="56" y="103" class="sub">Intended lifecycle · enter at an appropriate supported view · retain original inputs and results</text>
-<rect x="56" y="132" width="210" height="38" rx="14" class="exists"/>
+<rect x="56" y="132" width="210" height="38" rx="14" class="exists" />
 <text x="71" y="157" class="small">Existing software</text>
-<rect x="290" y="132" width="225" height="38" rx="14" class="architecture"/>
+<rect x="290" y="132" width="225" height="38" rx="14" class="architecture" />
 <text x="305" y="157" class="small">Architecture stage</text>
-<rect x="539" y="132" width="300" height="38" rx="14" class="planned"/>
+<rect x="539" y="132" width="300" height="38" rx="14" class="planned" />
 <text x="554" y="157" class="small">Planned implementation</text>
-<rect x="56" y="207" width="1488" height="66" rx="14" class="architecture"/>
+<rect x="56" y="207" width="1488" height="66" rx="14" class="architecture" />
 <text x="78" y="247" class="body">General circuit operations are planned; assembly, manufacturing and laboratory integrations are optional.</text>
 <text x="56" y="314" class="small">Measured feedback creates a new attributed design revision</text>
-<rect x="56" y="338" width="440" height="184" rx="14" class="planned"/>
+<rect x="56" y="338" width="440" height="184" rx="14" class="planned" />
 <text x="76" y="373" class="name">Specification and design views</text>
-<text x="76" y="406" class="tag">PLANNED CIRCUIT OPERATIONS</text>
+<text x="76" y="406" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="76" y="448" class="small">Requirements, units and interfaces</text>
 <text x="76" y="476" class="small">CIRCUIT-CORE / CIRCUIT-TECHNOLOGY</text>
-<rect x="580" y="338" width="440" height="184" rx="14" class="planned"/>
+<rect x="580" y="338" width="440" height="184" rx="14" class="planned" />
 <text x="600" y="373" class="name">Simulation and models</text>
-<text x="600" y="406" class="tag">PLANNED CIRCUIT OPERATIONS</text>
+<text x="600" y="406" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="600" y="448" class="small">Digital, analogue and mixed-signal</text>
 <text x="600" y="476" class="small">Domain-specific error and coupling laws</text>
-<rect x="1104" y="338" width="440" height="184" rx="14" class="planned"/>
+<rect x="1104" y="338" width="440" height="184" rx="14" class="planned" />
 <text x="1124" y="373" class="name">Implementation and lowering</text>
-<text x="1124" y="406" class="tag">PLANNED CIRCUIT OPERATIONS</text>
+<text x="1124" y="406" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="1124" y="448" class="small">Selected tools and qualified profiles</text>
 <text x="1124" y="476" class="small">RTL, netlists and implementation intent</text>
-<rect x="1104" y="667" width="440" height="184" rx="14" class="planned"/>
+<rect x="1104" y="667" width="440" height="184" rx="14" class="planned" />
 <text x="1124" y="702" class="name">Physical verification</text>
-<text x="1124" y="735" class="tag">PLANNED CIRCUIT OPERATIONS</text>
+<text x="1124" y="735" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="1124" y="777" class="small">Layout, extraction, timing and checks</text>
 <text x="1124" y="805" class="small">CIRCUIT-PHYSICAL / CIRCUIT-ACCEPTANCE</text>
-<rect x="580" y="667" width="440" height="184" rx="14" class="planned"/>
+<rect x="580" y="667" width="440" height="184" rx="14" class="planned" />
 <text x="600" y="702" class="name">Assembly and manufacturing</text>
-<text x="600" y="735" class="tag">PLANNED CIRCUIT OPERATIONS</text>
+<text x="600" y="735" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="600" y="777" class="small">Package, board and supplier handoff</text>
 <text x="600" y="805" class="small">Optional approved routes and recipes</text>
-<rect x="56" y="667" width="440" height="184" rx="14" class="planned"/>
+<rect x="56" y="667" width="440" height="184" rx="14" class="planned" />
 <text x="76" y="702" class="name">Laboratory measurements</text>
-<text x="76" y="735" class="tag">PLANNED CIRCUIT OPERATIONS</text>
+<text x="76" y="735" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="76" y="777" class="small">Real DUT, instruments and calibration</text>
 <text x="76" y="805" class="small">Uncertainty and measured-versus-predicted</text>
-<path d="M496 430 H567" class="link" marker-end="url(#arrow)"/>
-<path d="M1020 430 H1091" class="link" marker-end="url(#arrow)"/>
-<path d="M1324 522 V654" class="link" marker-end="url(#arrow)"/>
-<path d="M1104 759 H1033" class="link" marker-end="url(#arrow)"/>
-<path d="M580 759 H509" class="link" marker-end="url(#arrow)"/>
-<path d="M56 759 H28 V372 H48" class="link" marker-end="url(#arrow)"/>
+<path d="M496 430 H567" class="link" marker-end="url(#arrow)" />
+<path d="M1020 430 H1091" class="link" marker-end="url(#arrow)" />
+<path d="M1324 522 V654" class="link" marker-end="url(#arrow)" />
+<path d="M1104 759 H1033" class="link" marker-end="url(#arrow)" />
+<path d="M580 759 H509" class="link" marker-end="url(#arrow)" />
+<path d="M56 759 H28 V372 H48" class="link" marker-end="url(#arrow)" />
 <text x="960" y="590" class="small">View-specific acceptance gates</text>
-<rect x="56" y="927" width="1488" height="135" rx="14" class="exists"/>
+<rect x="56" y="927" width="1488" height="135" rx="14" class="exists" />
 <text x="78" y="965" class="heading">Existing application: SC-NeuroCore</text>
 <text x="78" y="1003" class="body">Bounded SNN modelling, compilation and experimental Studio workflows exist in the current workbench.</text>
 <text x="78" y="1035" class="small">They do not establish generic circuit-platform, manufacturer acceptance or measured-device qualification.</text>

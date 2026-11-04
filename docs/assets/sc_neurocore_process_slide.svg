@@ -1,0 +1,65 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Programme architecture map -->
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc" xml:lang="en">
+<title id="title">SC Neuromorphic Computing Systems — engineering chain</title><desc id="desc">Models and designs feed optional implementation and physical workflows. Every stage contributes attributable evidence. Comparison informs a new model or design revision; original results remain preserved. Slide format 16:9.</desc>
+<metadata id="project-metadata"><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:cc="http://creativecommons.org/ns#"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — engineering chain</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Models and designs feed optional implementation and physical workflows. Every stage contributes attributable evidence. Comparison informs a new model or design revision; original results remain preserved. Slide format 16:9.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — engineering chain</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_process_slide.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html"/></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif}a{text-decoration:none}</style>
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#40566e"/></marker></defs>
+<rect x="0" y="0" width="1920" height="1080" rx="0" fill="#f5f8fc" stroke="none" stroke-width="2"/>
+<rect x="0" y="0" width="1920" height="145" rx="0" fill="#122c45" stroke="none" stroke-width="2"/>
+<text x="50" y="48" font-size="25" fill="#d5e4f4" font-weight="700">SC NEUROMORPHIC COMPUTING SYSTEMS</text>
+<text x="50" y="98" font-size="39" fill="#ffffff" font-weight="700">From an idea to a design and a checked result</text>
+<text x="50" y="132" font-size="21" fill="#d5e4f4" font-weight="400">One workbench · thirteen neuromorphic destinations · twenty-six evidence/measurement projects · sixteen circuit destinations</text>
+<rect x="50" y="205" width="540" height="415" rx="16" fill="#ffffff" stroke="#126b68" stroke-width="2"/>
+<text x="73" y="250" font-size="28" fill="#126b68" font-weight="700">MODEL &amp; EXECUTE</text>
+<text x="73" y="297" font-size="24" fill="#172c46" font-weight="700">SC-NEUROCORE + SC-NC</text>
+<text x="73" y="328" font-size="24" fill="#172c46" font-weight="700">components</text>
+<text x="73" y="377" font-size="24" fill="#172c46" font-weight="400">Build and test neuron models and</text>
+<text x="73" y="409" font-size="24" fill="#172c46" font-weight="400">learning methods.</text>
+<text x="73" y="463" font-size="20" fill="#40566e" font-weight="400">Model + inputs → state, events, learned</text>
+<text x="73" y="490" font-size="20" fill="#40566e" font-weight="400">parameters and run results.</text>
+<text x="73" y="569" font-size="18" fill="#40566e" font-weight="400">Simulation and learning work without a process design</text>
+<text x="73" y="594" font-size="18" fill="#40566e" font-weight="400">kit or laboratory.</text>
+<rect x="690" y="205" width="540" height="415" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="713" y="250" font-size="28" fill="#855025" font-weight="700">DESIGN &amp; IMPLEMENT</text>
+<text x="713" y="297" font-size="24" fill="#172c46" font-weight="700">General circuit engineering</text>
+<text x="713" y="377" font-size="24" fill="#172c46" font-weight="400">Turn circuit ideas into simulated or</text>
+<text x="713" y="409" font-size="24" fill="#172c46" font-weight="400">buildable designs.</text>
+<text x="713" y="463" font-size="20" fill="#40566e" font-weight="400">Design + technology + constraints → simulation,</text>
+<text x="713" y="490" font-size="20" fill="#40566e" font-weight="400">generated source, layout and checks.</text>
+<text x="713" y="569" font-size="18" fill="#40566e" font-weight="400">Digital, analogue and specialist domains keep their</text>
+<text x="713" y="594" font-size="18" fill="#40566e" font-weight="400">own rules.</text>
+<rect x="1330" y="205" width="540" height="415" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2"/>
+<text x="1353" y="250" font-size="28" fill="#855025" font-weight="700">MEASURE &amp; OPERATE</text>
+<text x="1353" y="297" font-size="24" fill="#172c46" font-weight="700">Optional laboratory / production</text>
+<text x="1353" y="328" font-size="24" fill="#172c46" font-weight="700">path</text>
+<text x="1353" y="377" font-size="24" fill="#172c46" font-weight="400">Measure real hardware and connect</text>
+<text x="1353" y="409" font-size="24" fill="#172c46" font-weight="400">approved production steps.</text>
+<text x="1353" y="463" font-size="20" fill="#40566e" font-weight="400">Accepted design/process + identified device or</text>
+<text x="1353" y="490" font-size="20" fill="#40566e" font-weight="400">materials → measurements and execution</text>
+<text x="1353" y="517" font-size="20" fill="#40566e" font-weight="400">records.</text>
+<text x="1353" y="569" font-size="18" fill="#40566e" font-weight="400">Calibration and local protective control keep their own</text>
+<text x="1353" y="594" font-size="18" fill="#40566e" font-weight="400">authority.</text>
+<path d="M590 392 L676 392" stroke="#40566e" stroke-width="3" fill="none" marker-end="url(#arrow)" stroke-dasharray="12 8"/>
+<path d="M1230 392 L1316 392" stroke="#40566e" stroke-width="3" fill="none" marker-end="url(#arrow)" stroke-dasharray="12 8"/>
+<text x="604" y="362" font-size="16" fill="#40566e" font-weight="400">optional</text>
+<text x="1244" y="362" font-size="16" fill="#40566e" font-weight="400">optional</text>
+<path d="M320 620 L320 650" stroke="#40566e" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+<path d="M960 620 L960 650" stroke="#40566e" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+<path d="M1600 620 L1600 650" stroke="#40566e" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+<rect x="50" y="664" width="1820" height="177" rx="16" fill="#edf2ff" stroke="#365ab1" stroke-width="2"/>
+<text x="75" y="710" font-size="30" fill="#365ab1" font-weight="700">SHARED EVIDENCE AND MEASUREMENT</text>
+<text x="75" y="756" font-size="26" fill="#172c46" font-weight="400">Record how each result was obtained, compare it with the requirements and make checks repeatable.</text>
+<text x="75" y="802" font-size="22" fill="#40566e" font-weight="400">Technical interface: original results + measurement sources + history → manifests, comparisons and acceptance reports.</text>
+<path d="M1770 841 L1770 903 L165 903" stroke="#40566e" stroke-width="3" fill="none" marker-end="url(#arrow)" stroke-dasharray="12 8"/>
+<text x="75" y="955" font-size="27" fill="#855025" font-weight="700">COMPARISON INFORMS A NEW MODEL OR DESIGN REVISION</text>
+<text x="75" y="996" font-size="25" fill="#40566e" font-weight="400">Keep the original inputs, results, failures and measurement conditions. Technical terms: page glossary.</text>
+<text x="50" y="1040" font-size="12" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
+<text x="50" y="1057" font-size="12" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
+</svg>

@@ -1,0 +1,1246 @@
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+Commercial license available
+© Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+© Code 2020–2026 Miroslav Šotek. All rights reserved.
+ORCID: 0009-0009-3560-0851
+Contact: www.anulum.li | protoscience@anulum.li
+SC-NeuroCore — Group and project map
+-->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-NeuroCore — Ecosystem and partner guide</title>
+<meta name="author" content="Miroslav Šotek">
+<meta name="copyright" content="Concepts 1996–2026; Code 2020–2026 Miroslav Šotek. All rights reserved.">
+<meta name="license" content="AGPL-3.0-or-later; commercial licensing available">
+<meta name="description" content="Print-friendly architecture and partner guide with all 56 project summaries, interfaces, delivery status and discipline entry points.">
+<link rel="canonical" href="https://anulum.github.io/sc-neurocore/ecosystem/">
+<link rel="icon" type="image/jpeg" href="anulum_logo_company.jpg">
+<style>body{font-family:DejaVu Sans,Arial,sans-serif;color:#172c46;background:white;line-height:1.5;max-width:1450px;margin:30px auto;padding:0 25px}h1,h2,h3{line-height:1.2;color:#122c45}h2{margin-top:2em;border-bottom:2px solid #b5c5d8;padding-bottom:.3em}a{color:#365ab1}table{border-collapse:collapse;width:100%;font-size:.92em;margin:1em 0}th,td{border:1px solid #b5c5d8;padding:8px;vertical-align:top;overflow-wrap:anywhere}th{background:#edf2ff;text-align:left}thead{display:table-header-group}img{display:block;width:100%;height:auto;max-height:170mm;object-fit:contain;margin:1em auto}.architecture-map{margin:2em 0}.architecture-map img{max-height:none}.architecture-map figcaption{font-size:.9em;margin-top:.6em}pre{white-space:pre-wrap;border:1px solid #b5c5d8;padding:12px}code{font-family:DejaVu Sans Mono,monospace;font-size:.9em}.grid.cards>ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));list-style:none;padding:0;gap:14px}.grid.cards>ul>li{padding:15px;border:1px solid #b5c5d8;border-radius:12px}.admonition{border-left:5px solid #126b68;background:#e6f4f1;padding:12px 18px}.admonition-title,summary{font-weight:700}details{margin:1em 0}footer{margin-top:3em;font-size:.8em;border-top:1px solid #b5c5d8;padding-top:15px}@media(prefers-color-scheme:dark){body{background:#12202e;color:#e4edf5}h1,h2,h3{color:#eef5fb}a{color:#adc5ff}th{background:#213850}.admonition{background:#183936}img{background:#f5f8fc}}@media print{@page{size:A4 landscape;margin:12mm}body{font-size:10pt;max-width:none;margin:0;padding:0;color:#172c46;background:white}h1,h2,h3{color:#122c45}a{color:#172c46;text-decoration:none}table{font-size:8.5pt}.architecture-map{break-before:page;break-after:page}.architecture-map img{max-height:160mm}tr,img,.admonition,.grid.cards>ul>li{break-inside:avoid}th{background:#f1f3f6}.admonition{background:white}h2,h3{break-after:avoid}details>*{display:block!important}.grid.cards>ul{display:grid}footer{font-size:8pt}}</style></head><body><main><!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Group and project map -->
+
+<h1 id="group-and-project-map">Group and Project Map</h1>
+<h2 id="what-this-programme-is-for">What this programme is for</h2>
+<p>This programme connects models of spiking neurons, circuit design and hardware
+testing so teams can carry a design from an experiment to a result they can
+check and reproduce. It serves researchers, software and circuit engineers,
+measurement teams and collaborators assessing the work. SC-NeuroCore is the
+existing software workbench; the smaller components, general circuit platform
+and manufacturing integrations are at the stages shown below.</p>
+<p><em>Last reviewed: 2026-11-04. Status describes the documented delivery boundary,
+not blanket qualification of every model, backend or physical target.</em></p>
+<div class="grid cards">
+<ul>
+<li>
+<p><strong>Use the workbench today</strong></p>
+<p>Start with <a href="https://anulum.github.io/sc-neurocore/guides/install_profiles/">installation profiles</a> and
+<a href="https://anulum.github.io/sc-neurocore/guides/getting-started/">getting started</a>. The experimental visual
+interface has its own <a href="https://anulum.github.io/sc-neurocore/studio/manual/">Studio manual</a>.</p>
+</li>
+<li>
+<p><strong>Find your team's entry point</strong></p>
+<p>Browse <a href="#where-your-team-fits">disciplines and interfaces</a> or the
+<a href="#partner-entry-map">partner entry map</a>. Teams can contribute an adapter,
+a domain method, a design, a reference or a measurement capability.</p>
+</li>
+<li>
+<p><strong>Understand the architecture</strong></p>
+<p>Follow the <a href="#programme-overview">project catalogue</a>,
+<a href="#processes-and-interfaces">processes</a> and
+<a href="#neuromorphic-transition-roadmap">transition roadmap</a>.</p>
+</li>
+<li>
+<p><strong>Read the evidence boundary</strong></p>
+<p><a href="#how-to-read-status">Architecture and delivery</a> are distinct.
+<a href="#what-exists-today">Current project status</a> separates the workbench,
+scaffolds and unfinished implementations.</p>
+</li>
+</ul>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Documented architecture, explicit delivery</p>
+<p>Project summaries below describe their responsibility and main inputs and
+outputs. They are architectural interfaces, rather than released API names
+or a claim that every planned operation is implemented.</p>
+</div>
+<p><strong>SC-NeuroCore will remain a public, open-source development workbench</strong> for the
+<strong>SC Neuromorphic Computing Systems</strong> group. The group is building a connected
+engineering workflow: develop models, compare their behaviour, implement them
+on a selected target and trace measured results back to the original design.
+The intended scope extends from neuromorphic software to general circuit
+engineering and optional laboratory and production integration.</p>
+<p>The programme has four connected parts. Each retains its own engineering
+semantics, implementation status and evidence requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Programme line</th>
+<th>Purpose and relationship</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neuromorphic workbench and components</td>
+<td>The existing workbench brings simulation, learning, analysis, acceleration, compilation and experimental Studio workflows together. Thirteen planned SC-NC extractions would give these responsibilities focused releases and versioned interfaces.</td>
+</tr>
+<tr>
+<td>Evidence and measurement</td>
+<td>LOOP-TIMING-WITNESS and 25 supporting tools cover timing, data quality, numerical conformance, provenance, benchmarking, deployment and assurance. Shared records connect a claim to its actual source; they do not replace the domain or instrument checks.</td>
+</tr>
+<tr>
+<td>General circuit engineering</td>
+<td>Sixteen adopted destinations describe a platform for analogue, digital and mixed-signal designs, with specialist physical domains and technologies. Neuromorphic designs would be one application; the platform would also serve non-neural circuits.</td>
+</tr>
+<tr>
+<td>Laboratory and production integration</td>
+<td>Optional manufacturing and automation paths would connect design identities, approved processes, materials, equipment providers and measured hardware. Local controllers and manufacturing authorities retain their operational responsibilities.</td>
+</tr>
+</tbody>
+</table>
+<p>The split architecture is prepared. The current integrated package retains
+its documented maturity; component releases and migration guides will accompany
+the transition. General circuit and manufacturing capabilities described here
+remain planned. See the repository releases for the current package version.</p>
+<h2 id="how-to-read-status">How to read status</h2>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Meaning on this page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Existing</strong></td>
+<td>A current repository and usable package surface with its own documented maturity and supported workflows.</td>
+</tr>
+<tr>
+<td><strong>Scaffold</strong></td>
+<td>Repository and validation infrastructure exist; an installed domain runtime or released service is not established.</td>
+</tr>
+<tr>
+<td><strong>Architecture stage</strong></td>
+<td>Owned contracts and architecture-stage software or validation tooling exist; implementation and qualification remain scoped to their actual evidence.</td>
+</tr>
+<tr>
+<td><strong>Architecture documented</strong></td>
+<td>An owned written design and main interfaces exist. Implementation, independent qualification and release are separate milestones.</td>
+</tr>
+<tr>
+<td><strong>Planned</strong></td>
+<td>An adopted destination or extraction boundary; a separately released implementation is not announced. Current related work may still live in SC-NeuroCore.</td>
+</tr>
+</tbody>
+</table>
+<p>Architecture and delivery are separate axes. “Architecture documented” describes
+the design; Existing, Scaffold, Architecture stage and Planned describe delivery.
+These labels apply to the project destination. The “Where it lives today”
+column links current source and documentation, rather than promising that every
+listed module ships in the base wheel. Optional and source-only research paths
+retain their <a href="https://anulum.github.io/sc-neurocore/architecture/package_boundary_decision/">package boundaries</a>.
+A documented architecture, valid manifest, simulation, synthesis report,
+manufacturer acceptance and calibrated physical measurement establish different
+facts. Domain laws, uncertainty and approval remain specific to the operation.</p>
+<p>The maps share <strong>56 entries: 1 workbench + 13 neuromorphic destinations +
+26 measurement and evidence projects + 16 circuit destinations</strong>. In the
+catalogue, delivery is written on each card. In the circuit and lifecycle maps,
+green denotes existing software, blue architecture-stage projects or adopted
+direction, and dashed outlines planned implementation. Arrows in all four maps
+show intended handoffs and responsibility, rather than package imports,
+extraction order, released capability or physical operating permission.</p>
+<h2 id="where-your-team-fits">Where your team fits</h2>
+<p>Choose a discipline, identify the artefact your team produces or consumes, and
+start with the corresponding project interfaces. A team may span several lanes;
+shared participation preserves the single responsibility owner named in each
+project summary. Source formats, numerical laws, technology access, instrument
+calibration and local operating authority remain explicit at integration.
+The <a href="#abbreviations">glossary</a> explains the technical abbreviations used below;
+each discipline starts with what its team would do in everyday engineering terms.</p>
+<table>
+<thead>
+<tr>
+<th>Discipline</th>
+<th>Projects your team touches</th>
+<th>Contribute or consume</th>
+<th>Interfaces to inspect first</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neuromorphic modelling and learning</td>
+<td><a href="#sc-neurocore">SC-NEUROCORE</a>, <a href="#sc-nc-core">SC-NC-CORE</a>, <a href="#sc-nc-catalogue">SC-NC-CATALOGUE</a>, <a href="#sc-nc-engine">SC-NC-ENGINE</a>, <a href="#sc-nc-learn">SC-NC-LEARN</a>, <a href="#sc-nc-research">SC-NC-RESEARCH</a></td>
+<td>Build and compare neuron models, learning rules and ways to run them.<br>Contribute model semantics, learning methods or runtime capabilities; consume explicit state and numerical contracts.</td>
+<td>Model/profile identity, neutral state/events and learning/runtime boundaries.</td>
+</tr>
+<tr>
+<td>Data, sensors and event streams</td>
+<td><a href="#sc-nc-data">SC-NC-DATA</a>, <a href="#spike-format-bridge">SPIKE-FORMAT-BRIDGE</a>, <a href="#spike-codec-bench">SPIKE-CODEC-BENCH</a>, <a href="#spike-encoder-characteriser">SPIKE-ENCODER-CHARACTERISER</a>, <a href="#spike-quality-gate">SPIKE-QUALITY-GATE</a>, <a href="#spike-groundtruth">SPIKE-GROUNDTRUTH</a>, <a href="#spike-log">SPIKE-LOG</a></td>
+<td>Turn sensor recordings and datasets into usable spike and event streams.<br>Contribute encoders, readers, datasets or data-quality methods; consume identified streams with declared loss.</td>
+<td>Dataset and stream identities, timebase, encoding and conversion/loss reports.</td>
+</tr>
+<tr>
+<td>Compilers and electronic design automation (EDA)</td>
+<td><a href="#sc-nc-compiler">SC-NC-COMPILER</a>, <a href="#sc-nc-bridges">SC-NC-BRIDGES</a>, <a href="#circuit-core">CIRCUIT-CORE</a>, <a href="#circuit-technology">CIRCUIT-TECHNOLOGY</a>, <a href="#circuit-flow">CIRCUIT-FLOW</a></td>
+<td>Connect existing design tools and translate designs between them.<br>Contribute compiler passes or tool adapters; consume typed design views and admitted execution interfaces.</td>
+<td>Model/IR/target constraints; neutral operation/provider and technology profiles.</td>
+</tr>
+<tr>
+<td>Digital programmable logic (FPGA) and custom chips (ASIC)</td>
+<td><a href="#sc-nc-hardware">SC-NC-HARDWARE</a>, <a href="#circuit-digital">CIRCUIT-DIGITAL</a>, <a href="#circuit-physical">CIRCUIT-PHYSICAL</a>, <a href="#bitstream-evidence-ci">BITSTREAM-EVIDENCE-CI</a>, <a href="#sc-stream-prover">SC-STREAM-PROVER</a></td>
+<td>Take digital designs from simulation to programmable hardware or custom chips.<br>Contribute RTL, constraints, digital validation or target integration; consume traceable implementation artefacts.</td>
+<td>HDL and clock/reset intent, build identities, layout/extraction and comparison results.</td>
+</tr>
+<tr>
+<td>Analogue and mixed-signal</td>
+<td><a href="#circuit-analog">CIRCUIT-ANALOG</a>, <a href="#circuit-mixed-signal">CIRCUIT-MIXED-SIGNAL</a></td>
+<td>Simulate analogue circuits and connect them to digital logic.<br>Contribute device-model integration, circuit studies or continuous/discrete coupling; consume scoped simulation results.</td>
+<td>Schematic/netlist and operating conditions; participant boundary and error laws.</td>
+</tr>
+<tr>
+<td>Radio frequency (RF), electromagnetics (EM) and coupled fields</td>
+<td><a href="#circuit-fields">CIRCUIT-FIELDS</a></td>
+<td>Check how fields, high frequencies and other physical effects change a design.<br>Contribute electromagnetic or coupled-field operations; consume declared port or reduced-model results.</td>
+<td>Geometry/material/mesh, boundaries, reference planes and convergence evidence.</td>
+</tr>
+<tr>
+<td>Photonics and optoelectronics</td>
+<td><a href="#circuit-photonics">CIRCUIT-PHOTONICS</a></td>
+<td>Design optical circuits and connect them to electronic components.<br>Contribute optical models, layout integration or electrical coupling; consume technology-specific optical views.</td>
+<td>Wavelength, mode, polarisation, normalisation and optical/electrical correspondence.</td>
+</tr>
+<tr>
+<td>Devices, device/process simulation (TCAD) and materials</td>
+<td><a href="#circuit-devices">CIRCUIT-DEVICES</a>, <a href="#circuit-technology">CIRCUIT-TECHNOLOGY</a></td>
+<td>Study devices and materials, then check the models used in circuit design.<br>Contribute device/process studies, material profiles or compact-model validation; consume explicit applicability limits.</td>
+<td>Device/material laws, mesh and operating envelope; model/profile validity and access.</td>
+</tr>
+<tr>
+<td>Packaging, printed circuit boards (PCB) and assembly</td>
+<td><a href="#circuit-assembly">CIRCUIT-ASSEMBLY</a></td>
+<td>Connect chips, packages and circuit boards into one testable assembly.<br>Contribute die/package/board interfaces, stackups or test-fixture integration; consume consistent assembly deliverables.</td>
+<td>Pin/bump/net correspondence, orientation/units, constraints and manufacturing/test inputs.</td>
+</tr>
+<tr>
+<td>Laboratory, test and instrumentation</td>
+<td><a href="#circuit-lab">CIRCUIT-LAB</a>, <a href="#loop-timing-witness">LOOP-TIMING-WITNESS</a>, <a href="#plasticity-witness">PLASTICITY-WITNESS</a>, <a href="#aer-link-witness">AER-LINK-WITNESS</a>, <a href="#reliability-witness">RELIABILITY-WITNESS</a>, <a href="#sim-real-witness">SIM-REAL-WITNESS</a></td>
+<td>Connect instruments and measure what real hardware does.<br>Contribute instrument adapters, measurement methods or independently supported calibration; consume original captures and uncertainty.</td>
+<td>Device under test (DUT), fixture and instrument identity; capture/timebase, exposure and comparison protocol.</td>
+</tr>
+<tr>
+<td>Manufacturing and automation</td>
+<td><a href="#circuit-manufacturing">CIRCUIT-MANUFACTURING</a>, <a href="#circuit-automation">CIRCUIT-AUTOMATION</a></td>
+<td>Connect approved designs to manufacturing steps, equipment and robots.<br>Contribute supplier/MES/equipment adapters and process qualification; consume approved routes and original execution observations.</td>
+<td>Released package/route/recipe, material genealogy and admitted local equipment operation.</td>
+</tr>
+<tr>
+<td>Verification, assurance and safety</td>
+<td><a href="#sc-nc-verify">SC-NC-VERIFY</a>, <a href="#circuit-acceptance">CIRCUIT-ACCEPTANCE</a>, <a href="#snn-divergence-harness">SNN-DIVERGENCE-HARNESS</a>, <a href="#mutation-snn">MUTATION-SNN</a>, <a href="#nir-conformance">NIR-CONFORMANCE</a>, <a href="#randomness-witness">RANDOMNESS-WITNESS</a>, <a href="#neuro-safety-case">NEURO-SAFETY-CASE</a></td>
+<td>Check behaviour and requirements, and show where evidence is missing.<br>Contribute independent references, comparison laws or assurance arguments; consume attributable results and visible gaps.</td>
+<td>Subject and oracle identity, acceptance law, coverage and claim-to-evidence bindings.</td>
+</tr>
+<tr>
+<td>Benchmarking and evidence</td>
+<td><a href="#sc-nc-bench">SC-NC-BENCH</a>, <a href="#sc-nc-analysis">SC-NC-ANALYSIS</a>, <a href="#evidence-manifest-toolkit">EVIDENCE-MANIFEST-TOOLKIT</a>, <a href="#neuro-evidence-bench">NEURO-EVIDENCE-BENCH</a>, <a href="#experiment-ledger">EXPERIMENT-LEDGER</a>, <a href="#model-provenance-pack">MODEL-PROVENANCE-PACK</a>, <a href="#spike-calibrator">SPIKE-CALIBRATOR</a></td>
+<td>Measure performance, reproduce experiments and preserve the supporting records.<br>Contribute workloads, statistics or reproducibility methods; consume evidence-bound results and model/experiment lineage.</td>
+<td>Versioned run plan, metric source, canonical manifest, provenance and result protocol.</td>
+</tr>
+<tr>
+<td>Workbenches, deployment and operations</td>
+<td><a href="#sc-nc-studio">SC-NC-STUDIO</a>, <a href="#circuit-workbench">CIRCUIT-WORKBENCH</a>, <a href="#deploy-pack">DEPLOY-PACK</a>, <a href="#field-ops-witness">FIELD-OPS-WITNESS</a>, <a href="#flight-recorder">FLIGHT-RECORDER</a></td>
+<td>Build engineering interfaces and deploy, observe and investigate systems.<br>Contribute accessible engineering UI, deployment integration or incident workflows; consume existing headless operations and evidence.</td>
+<td>Project/job interfaces, deployment unit identity, health observations and bounded histories.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="presentation-and-print">Presentation and print</h3>
+<p>The detailed maps preserve the complete catalogue. These 16:9 figures provide
+larger text for presenting the process and discipline entry points:</p>
+<ul>
+<li><a href="sc_neurocore_process_slide.png">Engineering chain — PNG</a>
+  (<a href="sc_neurocore_process_slide.svg">SVG</a>).</li>
+<li><a href="sc_neurocore_partner_modelling_slide.png">Models, data, compilers and digital design — PNG</a>
+  (<a href="sc_neurocore_partner_modelling_slide.svg">SVG</a>).</li>
+<li><a href="sc_neurocore_partner_physical_slide.png">Analogue, fields, photonics, devices and assembly — PNG</a>
+  (<a href="sc_neurocore_partner_physical_slide.svg">SVG</a>).</li>
+<li><a href="sc_neurocore_partner_integration_slide.png">Laboratory, manufacturing, assurance, evidence and operations — PNG</a>
+  (<a href="sc_neurocore_partner_integration_slide.svg">SVG</a>).</li>
+</ul>
+<p><a href="sc_neurocore_ecosystem_print.html">Open the print-friendly page</a> for a
+standalone reading and browser-print version with the same project summaries.</p>
+<h2 id="programme-overview">Programme overview</h2>
+<figure class="architecture-map"><img src="sc_neurocore_group_map.svg" alt="All 56 programme entries individually described: the SC-NEUROCORE workbench, 13 neuromorphic extraction destinations, 26 measurement and evidence projects and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing."><figcaption>Programme map — the workbench and all 55 destinations, with responsibilities and delivery status. <a href="sc_neurocore_group_map.png">PNG fallback</a> · <a href="sc_neurocore_group_map.svg">Open full-size SVG</a></figcaption></figure>
+
+<p><a href="sc_neurocore_group_map.svg">Open the full-size SVG</a>,
+<a href="sc_neurocore_group_map.png">download PNG</a>, or
+<a href="sc_neurocore_group_map.jpg">download JPG</a>.</p>
+<p>Browse the catalogue by responsibility:
+<a href="#specialized-repositories">neuromorphic components</a>,
+<a href="#supporting-tools">measurement and evidence tools</a>, or
+<a href="#planned-platform-repositories">general circuit destinations</a>.
+The companion views explain the process interfaces, circuit family and lifecycle.</p>
+<h2 id="processes-and-interfaces">Processes and interfaces</h2>
+<figure class="architecture-map"><img src="sc_neurocore_process_map.svg" alt="Intended process and artefact interfaces for all 56 programme entries. Neuromorphic development and general circuit engineering retain separate semantics, optional adapters and one traceable evidence chain. Feedback creates successor revisions. Arrows show architectural handoffs, not implemented dependencies or physical operating permission."><figcaption>Process and interface map — what passes between projects, where checks occur and how observations inform a new revision. <a href="sc_neurocore_process_map.png">PNG fallback</a> · <a href="sc_neurocore_process_map.svg">Open full-size SVG</a></figcaption></figure>
+
+<p><a href="sc_neurocore_process_map.svg">Open the process and interface SVG</a>,
+<a href="sc_neurocore_process_map.png">download PNG</a>, or
+<a href="sc_neurocore_process_map.jpg">download JPG</a>.
+Follow the <a href="#integration-model">integration contracts</a>,
+<a href="#supporting-tools">measurement responsibilities</a> and
+<a href="#manufacturing-and-laboratory-automation">production path</a> in the text.</p>
+<p>This companion view places all 56 entries in their intended engineering flows.
+Each operation can reject unsupported inputs and returns attributable results.</p>
+<p>Neuromorphic models and streams lead through execution, learning, lowering and
+checks to target observations and analysis. Optional compiler and hardware
+adapters hand explicit design views to general circuit operations. Circuit
+engineering retains its own models, technology profiles and acceptance laws;
+existing schematics, RTL, netlists or layouts may enter at the appropriate stage.
+The diagram's left-to-right order does not require fabrication for every design.</p>
+<p>Input, numerical, hardware and field tools contribute evidence at their relevant
+stages. Shared manifests and experiment lineage preserve the source and conditions
+of each result. SC-NC-BENCH owns neuromorphic workloads; NEURO-EVIDENCE-BENCH
+provides a shared execution and result protocol. CIRCUIT-ACCEPTANCE aggregates
+circuit requirement results without replacing domain checks or human approval.</p>
+<p>The optional production branch binds accepted design and process identities to
+supplier handoff or admitted local equipment. Original material, inspection and
+measurement records return through laboratory and evidence contracts. Failures,
+measured divergence and field incidents inform a new revision of the owning
+design or model; they do not overwrite its original results. Qualified local
+controllers and site authorities retain physical timing and protective control.</p>
+<h3 id="programme-connections">Programme connections</h3>
+<p><img alt="Engineering chain with optional circuit and physical paths feeding shared evidence and attributable revision feedback." src="sc_neurocore_process_slide.svg" /></p>
+<p>The diagram summarises the four programme lines. Detailed project ownership
+appears in the tables and full-size maps; physical control remains with the
+qualified local controller and site authority.</p>
+<h3 id="partner-entry-map">Partner entry map</h3>
+<figure class="architecture-map"><img src="sc_neurocore_partner_entry_map.svg" alt="Partner disciplines mapped to all 56 programme entries, with contribution and first-interface guidance. Participation may span lanes; architecture and delivery remain separate."><figcaption>Team entry map — the disciplines involved, the projects they touch and where collaboration starts. <a href="sc_neurocore_partner_entry_map.png">PNG fallback</a> · <a href="sc_neurocore_partner_entry_map.svg">Open full-size SVG</a></figcaption></figure>
+
+<p><a href="sc_neurocore_partner_entry_map.svg">Open the partner entry SVG</a>,
+<a href="sc_neurocore_partner_entry_map.png">download PNG</a>, or
+<a href="sc_neurocore_partner_entry_map.jpg">download JPG</a>.
+Use the <a href="#where-your-team-fits">discipline matrix</a> for direct project links and
+<a href="#specialized-repositories">project summaries</a> for exact ownership boundaries.</p>
+<h2 id="public-workbench-and-future-products">Public workbench and future products</h2>
+<p>SC-NeuroCore keeps its public workbench role and current open-source licence.
+Future specialised components may become open-source or proprietary products.
+Their licensing and commercial boundaries remain under discussion with investors
+and IP partners and will be announced individually. Several supporting tools
+will remain public, with their own documented licensing and release status.</p>
+<h2 id="what-exists-today">What exists today</h2>
+<table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Function</th>
+<th>Current status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="sc-neurocore"></a><a href="https://github.com/anulum/sc-neurocore">SC-NEUROCORE</a></td>
+<td>Integrated development workbench: simulation, learning, analysis, acceleration, compilation, hardware-oriented evidence and the experimental visual Studio (<code>sc-neurocore[studio]</code>).<br><strong>Interfaces:</strong> Model, data and workflow configuration → simulation, analysis and implementation artefacts with scoped evidence.</td>
+<td><strong>Existing</strong> · architecture documented — repository and Python package; package metadata remains at beta maturity. Individual capabilities have their own evidence boundaries.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/anulum/loop-timing-witness">LOOP-TIMING-WITNESS</a></td>
+<td>Timing instrument for loop and accelerator latency, jitter, deadlines, fault response and energy measurements.</td>
+<td><strong>Architecture stage</strong> — software/native/RTL simulation and measurement contracts. Physical board qualification remains pending.</td>
+</tr>
+<tr>
+<td>EVIDENCE-MANIFEST-TOOLKIT</td>
+<td>Portable evidence-manifest contracts and validation infrastructure.</td>
+<td><strong>Scaffold</strong> — architecture-stage repository with local checks. No released signing, verification or domain runtime package.</td>
+</tr>
+<tr>
+<td>NEURO-EVIDENCE-BENCH</td>
+<td>Auditable benchmark plans, evidence-backed results and independent reruns.</td>
+<td><strong>Architecture stage</strong> — repository with validation tooling; benchmark execution, metric collection and comparison remain under implementation. No released benchmark runtime.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="why-split-the-workbench">Why split the workbench</h2>
+<p>A modeller should be able to work with neuron primitives and analysis without
+installing an FPGA toolchain. A hardware engineer should find compilation and
+target integration together. A team checking results should be able to use an
+evidence tool through a documented contract. Focused repositories make these
+entry points easier to understand and maintain.</p>
+<p>SC-NeuroCore keeps its role as the place to develop and integrate the complete
+workflow. It will continue to support experiments spanning several components
+and provide a practical route through the group. Specialised repositories will
+own their implementations and public interfaces; shared functionality should
+be consumed through those interfaces rather than copied between repositories.</p>
+<p><a id="specialized-repositories"></a></p>
+<h2 id="specialised-repositories">Specialised repositories</h2>
+<p>All 13 repositories in this section are planned extraction destinations.
+Their summaries describe documented ownership and intended interfaces. The
+current implementations remain in the workbench until the transition gates pass.</p>
+<h3 id="foundation-and-execution">Foundation and execution</h3>
+<table>
+<thead>
+<tr>
+<th>Destination</th>
+<th>Responsibility</th>
+<th>Status</th>
+<th>Where it lives today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="sc-nc-core"></a><strong>SC-NC-CORE</strong></td>
+<td>Neutral population, graph, state, event, seed and numerical protocols. Concrete model selection stays with the catalogue or compatibility facade.<br><strong>Interfaces:</strong> Resolved model factories and numerical/state contracts → neutral populations, graphs, state and events.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/neurons">neurons</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/synapses">synapses</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/network">network</a>. <a href="https://anulum.github.io/sc-neurocore/api/neurons/">Neuron APIs</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-catalogue"></a><strong>SC-NC-CATALOGUE</strong></td>
+<td>Canonical model identities, authored equations and profiles, declarations and model factories, with provenance and compatibility preserved.<br><strong>Interfaces:</strong> Authored equations, profiles and provenance → identified models, declarations and resolved factories.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/neurons/models">neuron models</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/model_zoo">model_zoo</a>; <a href="https://github.com/anulum/sc-neurocore/blob/main/src/sc_neurocore/network/topology.py">network topology</a>. <a href="https://anulum.github.io/sc-neurocore/api/model_zoo/">Model zoo</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-engine"></a><strong>SC-NC-ENGINE</strong></td>
+<td>Execution, scheduling and native-runtime boundaries, including supported state, update and restore contracts; model semantics remain catalogue-owned.<br><strong>Interfaces:</strong> Admitted model/runtime contracts and commands → execution state, events and attributable observations.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/accel">accel</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/engine/src">Rust engine</a>; <a href="https://github.com/anulum/sc-neurocore/blob/main/src/sc_neurocore/network/mpi_runner.py">MPI runner</a>. <a href="https://anulum.github.io/sc-neurocore/api/accel/">Acceleration boundaries</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-bridges"></a><strong>SC-NC-BRIDGES</strong></td>
+<td>Directional interchange and external-provider adapters with declared transformation assumptions and losses; model equations and lowering retain their owners.<br><strong>Interfaces:</strong> External models, formats or provider requests → typed representations or results with explicit changes and losses.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/nir_bridge">nir_bridge</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/adapters">adapters</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/bridges">bridges</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/quantum">quantum</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/hdc">hdc</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/neuro_symbolic">neuro_symbolic</a>. <a href="https://anulum.github.io/sc-neurocore/guides/nir_integration/">NIR integration</a>. Speculative bridges retain research status.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="learning-and-data">Learning and data</h3>
+<table>
+<thead>
+<tr>
+<th>Destination</th>
+<th>Responsibility</th>
+<th>Status</th>
+<th>Where it lives today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="sc-nc-learn"></a><strong>SC-NC-LEARN</strong></td>
+<td>Training orchestration, learning rules and optimiser state, quantisation-aware objectives and distillation through explicit model/runtime contracts.<br><strong>Interfaces:</strong> Model, data, learning rule and optimiser configuration → learned parameters, learning state and provenance.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/learning">learning</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/training">training</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/synapses">synaptic plasticity</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/qat">qat</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/distillation">distillation</a>. <a href="https://anulum.github.io/sc-neurocore/api/learning/">Learning APIs</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-data"></a><strong>SC-NC-DATA</strong></td>
+<td>Datasets, event and spike encodings, codecs, sources and recorders.<br><strong>Interfaces:</strong> Digital samples, datasets and accepted state payloads → typed streams, encodings and checkpoint records.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/datasets">datasets</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/encoding">encoding</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/recorders">recorders</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/spike_codec">spike_codec</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/sources">sources</a>. <a href="https://anulum.github.io/sc-neurocore/api/datasets/">Dataset contracts</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-analysis"></a><strong>SC-NC-ANALYSIS</strong></td>
+<td>Derived observables, statistical interpretation and visual views over identified traces; runtime collection stays with the producer.<br><strong>Interfaces:</strong> Identified traces, events and comparison results → derived observables, validity information and views.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/analysis">analysis</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/viz">viz</a>. <a href="https://anulum.github.io/sc-neurocore/api/analysis/">Analysis reference</a>. Source-only areas excluded from the base wheel.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="silicon-and-verification">Silicon and verification</h3>
+<table>
+<thead>
+<tr>
+<th>Destination</th>
+<th>Responsibility</th>
+<th>Status</th>
+<th>Where it lives today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="sc-nc-compiler"></a><strong>SC-NC-COMPILER</strong></td>
+<td>Intermediate representations to RTL/Verilog, co-simulation, equivalence and ASIC export.<br><strong>Interfaces:</strong> Model/profile, typed intermediate representation and target constraints → generated source and bound artefact bundles.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/compiler">compiler</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/ir">ir</a>. <a href="https://anulum.github.io/sc-neurocore/api/compiler/">Compiler APIs</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-hardware"></a><strong>SC-NC-HARDWARE</strong></td>
+<td>Target profiles, mapping, adapters, drivers and physical deployment models.<br><strong>Interfaces:</strong> Target facts, generated artefacts and admitted commands → device integration and original acquisition observations.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/hardware">hardware</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/compiler/platforms">target profiles</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/drivers">source-only drivers</a>. <a href="https://anulum.github.io/sc-neurocore/api/hardware/">Hardware abstraction</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-verify"></a><strong>SC-NC-VERIFY</strong></td>
+<td>Formal checks, fault injection, resilience and verification.<br><strong>Interfaces:</strong> Bound subject, comparison law and independent reference → scoped findings, conformance or inconclusive results.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/verification">verification</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/formal">formal</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/fault_injection">fault_injection</a>. <a href="https://anulum.github.io/sc-neurocore/api/verification/">Verification contracts</a>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workspace-and-research">Workspace and research</h3>
+<table>
+<thead>
+<tr>
+<th>Destination</th>
+<th>Responsibility</th>
+<th>Status</th>
+<th>Where it lives today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="sc-nc-studio"></a><strong>SC-NC-STUDIO</strong></td>
+<td>Visual IDE, integration workflows and evidence presentation.<br><strong>Interfaces:</strong> User projects and public operation requests → observed jobs, design views, replay and evidence presentation.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/studio">Studio backend</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/studio/frontend">frontend</a>. <a href="https://anulum.github.io/sc-neurocore/studio/">Studio preview</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-research"></a><strong>SC-NC-RESEARCH</strong></td>
+<td>Named hypotheses, contextual experiments and research workloads with explicit source, purpose, uncertainty and disposition.<br><strong>Interfaces:</strong> Named hypotheses, source models and experimental context → attributable experiments and explicit limitations.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td>Not yet consolidated. <a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/experimental">opt-in experiments</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/research">source-only research</a>. <a href="https://anulum.github.io/sc-neurocore/api/research-speculative/">Research boundaries</a>.</td>
+</tr>
+<tr>
+<td><a id="sc-nc-bench"></a><strong>SC-NC-BENCH</strong></td>
+<td>Versioned neuromorphic workloads and public-runtime comparison adapters; shared evidence execution protocols remain separately owned.<br><strong>Interfaces:</strong> Versioned workloads, public runtime adapters and comparison conditions → benchmark observations and reproducibility records.</td>
+<td><strong>Architecture documented</strong> · extraction planned</td>
+<td><a href="https://github.com/anulum/sc-neurocore/tree/main/src/sc_neurocore/benchmarks">benchmark APIs</a>; <a href="https://github.com/anulum/sc-neurocore/tree/main/benchmarks">workloads and results</a>. <a href="https://anulum.github.io/sc-neurocore/api/benchmarks/">Benchmark evidence</a>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supporting-tools">Supporting tools</h2>
+<p>These 26 measurement and evidence projects comprise LOOP-TIMING-WITNESS and
+25 supporting tools. They serve the group through explicit data,
+measurement and evidence contracts. They complement the SC-NC components and
+have separate responsibilities. EVIDENCE-MANIFEST-TOOLKIT has the scaffold
+status described above. NEURO-EVIDENCE-BENCH also has architecture-stage
+validation tooling. LOOP-TIMING-WITNESS has software/native/RTL measurement
+contracts; physical board qualification remains pending. The other tools below
+are planned.</p>
+<h3 id="evidence-and-lineage">Evidence and lineage</h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="evidence-manifest-toolkit"></a><strong>EVIDENCE-MANIFEST-TOOLKIT</strong></td>
+<td>Shared evidence schemas, canonical bytes, hashing, sealing, signatures and validation.<br><strong>Interfaces:</strong> Artefacts, schema/profile identities and trust policy → canonical manifests, seals and scoped verification outcomes.</td>
+<td><strong>Architecture documented</strong> · scaffold; domain runtime open</td>
+</tr>
+<tr>
+<td><a id="model-provenance-pack"></a><strong>MODEL-PROVENANCE-PACK</strong></td>
+<td>Training, conversion and quantisation provenance tied to evidence.<br><strong>Interfaces:</strong> Model, training and conversion lineage plus evidence references → policy-checkable provenance packs.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="experiment-ledger"></a><strong>EXPERIMENT-LEDGER</strong></td>
+<td>Queryable experiment configurations and evidence lineage.<br><strong>Interfaces:</strong> Versioned configurations and artefact references → queryable experiment history and lineage reports.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="spike-log"></a><strong>SPIKE-LOG</strong></td>
+<td>Event-stream containers, integrity checks and replay.<br><strong>Interfaces:</strong> Captured events and declared timebase → integrity-checked containers, slices and logical replay.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-and-encoders">Data and encoders</h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="spike-format-bridge"></a><strong>SPIKE-FORMAT-BRIDGE</strong></td>
+<td>Event-format conversion with round-trip and loss evidence.<br><strong>Interfaces:</strong> Source event files/streams and conversion settings → target formats, correspondence and loss reports.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="spike-codec-bench"></a><strong>SPIKE-CODEC-BENCH</strong></td>
+<td>Compression ratio, distortion and computational cost measurements.<br><strong>Interfaces:</strong> Identified datasets, codec adapters and declared metrics → compression, distortion, runtime and memory results.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="spike-encoder-characteriser"></a><strong>SPIKE-ENCODER-CHARACTERISER</strong></td>
+<td>Sensor-to-spike quality, rate and latency characterisation.<br><strong>Interfaces:</strong> Continuous-valued stimuli and encoder settings → spikes and measured quality/rate/latency trade-offs.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="spike-quality-gate"></a><strong>SPIKE-QUALITY-GATE</strong></td>
+<td>Versioned event-data quality policies and reports.<br><strong>Interfaces:</strong> Event streams, conversion context and versioned policy → located quality measurements and policy verdicts.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="spike-groundtruth"></a><strong>SPIKE-GROUNDTRUTH</strong></td>
+<td>Reproducible, labelled and sealed stimulus streams.<br><strong>Interfaces:</strong> Generator identity, parameters and seeds → reproducible stimulus streams, labels and provenance.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+</tbody>
+</table>
+<h3 id="numerical-behaviour-and-conformance">Numerical behaviour and conformance</h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="snn-divergence-harness"></a><strong>SNN-DIVERGENCE-HARNESS</strong></td>
+<td>Cross-runtime SNN comparisons against declared numerical oracles.<br><strong>Interfaces:</strong> Network/input specification, backend adapters and declared oracle → comparison outcomes and reproducing counterexamples where found.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="sc-stream-prover"></a><strong>SC-STREAM-PROVER</strong></td>
+<td>Realised stochastic arithmetic errors compared with declared bounds.<br><strong>Interfaces:</strong> Arithmetic experiment, stream sources and error budget → realised error, bound comparisons and stream-length results.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="randomness-witness"></a><strong>RANDOMNESS-WITNESS</strong></td>
+<td>Random and low-discrepancy source qualification for a declared use.<br><strong>Interfaces:</strong> Source identity, captured streams and intended use → source/capture-specific statistical qualification reports.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="mutation-snn"></a><strong>MUTATION-SNN</strong></td>
+<td>SNN-specific mutation testing to assess test-suite adequacy.<br><strong>Interfaces:</strong> Model, passing baseline suite and mutation operators → classified mutant outcomes and test-adequacy findings.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="nir-conformance"></a><strong>NIR-CONFORMANCE</strong></td>
+<td>Independent checks of versioned NIR import/export semantics.<br><strong>Interfaces:</strong> Versioned NIR semantics, reference graphs and import/export adapters → per-primitive conformance outcomes.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="neuro-evidence-bench"></a><strong>NEURO-EVIDENCE-BENCH</strong></td>
+<td>Shared benchmark-plan execution and verifiable result contracts.<br><strong>Interfaces:</strong> Sealed benchmark plan and admitted execution/instrument providers → evidence-bound results and comparisons.</td>
+<td><strong>Architecture documented</strong> · validation tooling; runtime in development</td>
+</tr>
+<tr>
+<td><a id="spike-calibrator"></a><strong>SPIKE-CALIBRATOR</strong></td>
+<td>Classifier-confidence calibration and deployment-placement drift.<br><strong>Interfaces:</strong> Model, datasets, confidence definition and shift protocol → classifier-calibration and placement-drift reports.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hardware-measurements">Hardware measurements</h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="loop-timing-witness"></a><strong>LOOP-TIMING-WITNESS</strong></td>
+<td>Timing instrument for loop and accelerator latency, jitter, deadlines, fault response and energy measurements.<br><strong>Interfaces:</strong> Loop/accelerator profile, original event captures and instrument context → timing, deadline and fault-response evidence; energy uses its own measurement source.</td>
+<td><strong>Architecture documented</strong> · physical qualification open</td>
+</tr>
+<tr>
+<td><a id="bitstream-evidence-ci"></a><strong>BITSTREAM-EVIDENCE-CI</strong></td>
+<td>Reproducible FPGA build inputs, toolchain and bitstream evidence.<br><strong>Interfaces:</strong> Pinned HDL, constraints, tools and build conditions → original build outputs and reproducibility evidence.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="plasticity-witness"></a><strong>PLASTICITY-WITNESS</strong></td>
+<td>Measured physical learning-rule updates compared with fixed-point oracles.<br><strong>Interfaces:</strong> Learning-rule protocol, physical update captures and independent oracle → update-level or declared distributional comparisons.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="aer-link-witness"></a><strong>AER-LINK-WITNESS</strong></td>
+<td>Address-event link throughput, loss, reordering and starvation.<br><strong>Interfaces:</strong> Traffic patterns, link/router under test and original event captures → throughput, loss, ordering and service-delay results.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="reliability-witness"></a><strong>RELIABILITY-WITNESS</strong></td>
+<td>Observed fabric errors and drift within declared exposure limits.<br><strong>Interfaces:</strong> Identified workloads, valid exposure and observed conditions/events → error-rate bounds and drift reports.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="sim-real-witness"></a><strong>SIM-REAL-WITNESS</strong></td>
+<td>Simulation-to-fabric divergence for a declared implementation pair.<br><strong>Interfaces:</strong> Matched network/input identities and simulation/fabric observations → scoped divergence and budget comparisons.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deployment-and-assurance">Deployment and assurance</h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="deploy-pack"></a><strong>DEPLOY-PACK</strong></td>
+<td>Installable deployment units bound to their supporting evidence.<br><strong>Interfaces:</strong> Target artefacts, provenance and policy-required evidence → verifiable deployment units and installation/update records.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="field-ops-witness"></a><strong>FIELD-OPS-WITNESS</strong></td>
+<td>Deployment health, drift, timing and coverage against baselines.<br><strong>Interfaces:</strong> Unit identity, deployment envelope and observed telemetry → health/drift findings with coverage and gaps explicit.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="flight-recorder"></a><strong>FLIGHT-RECORDER</strong></td>
+<td>Bounded on-unit event and state histories for incident investigation.<br><strong>Interfaces:</strong> Declared on-unit capture scope and event/state observations → bounded histories and gap-aware incident reconstruction.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="neuro-safety-case"></a><strong>NEURO-SAFETY-CASE</strong></td>
+<td>Scoped assurance arguments and explicit evidence gaps for human assessment.<br><strong>Interfaces:</strong> Claim structure and evidence bindings → visible assurance gaps and assessor-oriented exports for human review.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+</tbody>
+</table>
+<p>SC-NC-BENCH owns workload-specific benchmark suites and their run evidence.
+NEURO-EVIDENCE-BENCH provides the shared plan-execution and result protocol that
+those suites and Studio can consume. LOOP-TIMING-WITNESS measures timing;
+AER-LINK-WITNESS assesses event-link behaviour. These boundaries keep domain
+workloads, shared tooling and physical measurements distinct.</p>
+<h2 id="general-circuit-design-platform">General circuit-design platform</h2>
+<p>The group is designing a general platform connecting circuit specifications,
+simulation, implementation, physical design, assembly and measured hardware.
+It is intended for analogue, digital and mixed-signal designs from the beginning,
+with explicit extension points for other physical domains and technologies.
+SC-NeuroCore would be one application of that platform; the general platform
+would be usable without neuron models or an SNN runtime.</p>
+<p>The sixteen names below are adopted destinations for the new family. Actual
+tool, process, device and manufacturing support is qualified per operation and
+published with its limitations. No tapeout or manufacturing schedule is announced.</p>
+<h3 id="coverage-and-separate-semantics">Coverage and separate semantics</h3>
+<table>
+<thead>
+<tr>
+<th>Design family</th>
+<th>Intended scope and distinct requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Digital</td>
+<td>Synchronous and asynchronous logic, control, processors, accelerators and memories; FPGA and ASIC implementations, clocks/reset, equivalence, timing and testability.</td>
+</tr>
+<tr>
+<td>Analogue</td>
+<td>Signal conditioning, references, filters, oscillators, sensors and power circuits; continuous device behaviour, stability, noise, variability and operating limits.</td>
+</tr>
+<tr>
+<td>Mixed-signal</td>
+<td>Data converters, timing circuits, sensor interfaces and digitally assisted analogue; explicit sampling, thresholds, event timing and continuous/discrete coupling.</td>
+</tr>
+<tr>
+<td>RF and coupled fields</td>
+<td>RF/microwave structures, signal/power integrity and electrothermal or electromechanical effects; specialised models, geometry, meshes and boundary conditions.</td>
+</tr>
+<tr>
+<td>Photonic and optoelectronic</td>
+<td>Optical circuit/layout models and electrical coupling, with wavelength, mode, polarisation and optical-loss semantics.</td>
+</tr>
+<tr>
+<td>Device and specialist technologies</td>
+<td>Process/device modelling, specialised memories, MEMS and research extensions such as cryogenic circuits, each with its own supported models and validation.</td>
+</tr>
+<tr>
+<td>Assembly and boards</td>
+<td>Die/package/interposer/PCB interfaces, discrete components, heterogeneous chiplets and stacked systems, test fixtures and bring-up.</td>
+</tr>
+</tbody>
+</table>
+<p>Technology profiles would distinguish silicon CMOS/SOI and device families,
+SiGe/BiCMOS and high-voltage processes, compound or wide-bandgap materials such
+as GaAs, InP, GaN and SiC, optical platforms and specialised functional materials.
+Material, substrate, device, process, layout stack and package are separate
+attributes. Adding one profile would not imply support for every design or
+operation using that material. Emerging or research models would retain their
+research status.</p>
+<h3 id="planned-platform-repositories">Planned platform repositories</h3>
+<table>
+<thead>
+<tr>
+<th>Destination</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="circuit-core"></a><strong>CIRCUIT-CORE</strong></td>
+<td>Neutral design hierarchy, ports, units, parameters, view correspondence and operation contracts.<br><strong>Interfaces:</strong> Native design views, hierarchy, units and capability descriptions → typed identities, correspondence and operation contracts.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-technology"></a><strong>CIRCUIT-TECHNOLOGY</strong></td>
+<td>Identified PDK, device, library, verification-deck and assembly profiles with tool compatibility and applicability.<br><strong>Interfaces:</strong> Identified PDKs, models, libraries, decks and access conditions → applicable technology/tool profiles.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-flow"></a><strong>CIRCUIT-FLOW</strong></td>
+<td>Reproducible circuit workflows, admitted tool dispatch, artefact propagation and recovery.<br><strong>Interfaces:</strong> Operation graph, admitted providers and input/profile identities → traceable execution, outputs and recovery state.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-digital"></a><strong>CIRCUIT-DIGITAL</strong></td>
+<td>Digital simulation, formal/synthesis and implementation adapters, timing and testability intent.<br><strong>Interfaces:</strong> HDL, elaboration/stimulus parameters and clock/reset constraints → digital simulation, formal or synthesis artefacts.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-analog"></a><strong>CIRCUIT-ANALOG</strong></td>
+<td>Circuit/schematic and device-model integration, analogue simulation, sizing and layout constraints.<br><strong>Interfaces:</strong> Schematic/netlist, compact models and operating/study conditions → raw circuit results, convergence and specification comparisons.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-mixed-signal"></a><strong>CIRCUIT-MIXED-SIGNAL</strong></td>
+<td>Boundary models and co-simulation integration for continuous and discrete participants.<br><strong>Interfaces:</strong> Continuous/discrete participant views and explicit coupling laws → coordinated results and cross-domain discrepancy evidence.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-physical"></a><strong>CIRCUIT-PHYSICAL</strong></td>
+<td>Layout implementation and interchange, extraction and technology-specific physical-check integration.<br><strong>Interfaces:</strong> Design/layout correspondence, technology decks and constraints → layout, extraction and physical-check results.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-assembly"></a><strong>CIRCUIT-ASSEMBLY</strong></td>
+<td>Die, package, interposer, board and test-fixture integration.<br><strong>Interfaces:</strong> Die/package/board views, pin/net correspondence and constraints → assembly, manufacturing and test-fixture deliverables.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-acceptance"></a><strong>CIRCUIT-ACCEPTANCE</strong></td>
+<td>Requirement-specific checks, comparison laws, coverage and scoped acceptance.<br><strong>Interfaces:</strong> Requirements, declared laws and actual domain results → scoped coverage and acceptance reports.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-lab"></a><strong>CIRCUIT-LAB</strong></td>
+<td>Hardware bring-up, instrument integration and traceable characterisation.<br><strong>Interfaces:</strong> DUT, fixture, method, instrument/calibration and authority → original measurement captures with conditions and uncertainty.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-workbench"></a><strong>CIRCUIT-WORKBENCH</strong></td>
+<td>General design and review workspace using the same headless operations as the library and command-line clients.<br><strong>Interfaces:</strong> Projects, design views and authorised user actions → headless operation requests and accessible engineering review.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-manufacturing"></a><strong>CIRCUIT-MANUFACTURING</strong></td>
+<td>Versioned routes and recipes, material genealogy, work-order and inspection integration, and controlled supplier handoff.<br><strong>Interfaces:</strong> Accepted packages, approved routes/recipes and material identities → work-order, genealogy, inspection and supplier-handoff records.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-automation"></a><strong>CIRCUIT-AUTOMATION</strong></td>
+<td>Admitted equipment capabilities and local execution-provider adapters for instruments, cells and robot tasks.<br><strong>Interfaces:</strong> Equipment capabilities, local authority and bounded admitted requests → native execution observations and reconciled outcomes.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-fields"></a><strong>CIRCUIT-FIELDS</strong></td>
+<td>Electromagnetic and coupled-field operations, with specialised geometry, meshes and boundary conditions.<br><strong>Interfaces:</strong> Geometry, materials, mesh, boundaries and excitation → field/port results and declared reduced-model validity.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-photonics"></a><strong>CIRCUIT-PHOTONICS</strong></td>
+<td>Optical design semantics, including wavelength, mode, polarisation, loss and electrical coupling.<br><strong>Interfaces:</strong> Optical views, technology and wavelength/mode conventions → optical results and electrical/layout correspondence.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+<tr>
+<td><a id="circuit-devices"></a><strong>CIRCUIT-DEVICES</strong></td>
+<td>Device/TCAD and compact-model work, with process-specific validation.<br><strong>Interfaces:</strong> Device geometry, material laws, solver controls and reference data → device studies and validated compact-model candidates.</td>
+<td><strong>Architecture documented</strong> · implementation planned</td>
+</tr>
+</tbody>
+</table>
+<p>The three specialist destinations have independent repository boundaries only
+when actual supported use cases, maintainers and release ownership justify them. A distinct material, node or adapter does not automatically require
+another repository. Every destination follows a module-first implementation
+decision; shared foundation packages may initially live in one workspace.
+Separate repositories require independent consumers, lifecycle and maintainers. CIRCUIT-ACCEPTANCE aggregates requirement
+results; SC-NC-VERIFY retains SNN fidelity and digital formal operations remain
+with their actual tool owners.</p>
+<figure class="architecture-map"><img src="sc_neurocore_circuit_platform_map.svg" alt="Sixteen planned circuit destinations grouped into shared foundations, domain operations, physical and acceptance operations, workspace and production integration, and three specialist destinations. All use explicit contracts; FLOW dispatches admitted providers."><figcaption>Circuit platform — shared foundations and separate owners for each design domain. <a href="sc_neurocore_circuit_platform_map.png">PNG fallback</a> · <a href="sc_neurocore_circuit_platform_map.svg">Open full-size SVG</a></figcaption></figure>
+
+<p><a href="sc_neurocore_circuit_platform_map.svg">Open the circuit-platform SVG</a>,
+<a href="sc_neurocore_circuit_platform_map.png">download PNG</a>, or
+<a href="sc_neurocore_circuit_platform_map.jpg">download JPG</a>.
+Browse <a href="#planned-platform-repositories">all circuit destinations</a> and their
+<a href="#coverage-and-separate-semantics">separate design semantics</a>.
+The destinations share design and technology contracts while retaining
+separate domain models and acceptance rules. Their grouping does not commit to extracting sixteen repositories at once.</p>
+<h3 id="integration-model">Integration model</h3>
+<figure class="architecture-map"><img src="sc_neurocore_design_lifecycle.svg" alt="Intended circuit lifecycle from specifications through simulation, implementation and physical verification to optional assembly, manufacturing and laboratory measurements. Measured feedback creates a new design revision. General circuit stages remain planned; existing bounded SC-NeuroCore workflows are shown separately."><figcaption>Design lifecycle — the path from design to implementation, laboratory work and optional production integration. <a href="sc_neurocore_design_lifecycle.png">PNG fallback</a> · <a href="sc_neurocore_design_lifecycle.svg">Open full-size SVG</a></figcaption></figure>
+
+<p><a href="sc_neurocore_design_lifecycle.svg">Open the lifecycle SVG</a>,
+<a href="sc_neurocore_design_lifecycle.png">download PNG</a>, or
+<a href="sc_neurocore_design_lifecycle.jpg">download JPG</a>.
+Read the <a href="#integration-model">integration model</a>,
+<a href="#manufacturing-and-laboratory-automation">production responsibilities</a> and
+<a href="#development-roadmap">acceptance milestones</a>.</p>
+<p>The arrows describe an intended lifecycle. Individual views and operations keep
+their own semantics and entry points; an existing RTL, schematic, netlist or
+layout can enter at the appropriate stage. Iterations produce versioned successor
+designs and preserve their original inputs and results.</p>
+<p>The first integration route uses existing open-source tools. Candidates include
+<a href="https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts">Yosys/OpenROAD/KLayout through OpenROAD-flow-scripts</a>,
+<a href="https://xschem.sourceforge.io/stefan/xschem_man/netlisting.html">xschem</a>,
+<a href="https://ngspice.sourceforge.io/extras.html">ngspice with supported compact models and digital co-simulation</a>,
+and <a href="https://docs.kicad.org/">KiCad</a> for board integration. Specialist tools and
+commercial flows would be admitted through explicit tool/technology contracts.
+Existing workflow and representation infrastructure, including
+<a href="https://docs.siliconcompiler.com/en/latest/">SiliconCompiler</a>,
+<a href="https://librelane.readthedocs.io/en/stable/">LibreLane</a> and
+<a href="https://circt.llvm.org/">CIRCT</a>, would be evaluated before building equivalent
+functionality. Relevant <a href="https://www.accellera.org/downloads/standards">Accellera interface and verification standards</a>
+would inform supported interchange contracts. Own tools would address
+demonstrated integration or engineering requirements.
+PDK and IP access, applicable licences and manufacturer requirements remain
+specific to the selected target; open tooling alone does not establish
+production readiness.</p>
+<p>The general platform would reuse the existing evidence, record and measurement
+contracts as those capabilities become available. Tool operations would treat
+designs, PDK decks and embedded scripts as untrusted executable inputs, with
+explicit isolated execution and bounded resources. Instrument drivers and
+original calibration associations would have one source owner. The platform
+would preserve original artefacts and distinguish simulated, implemented,
+manufacturer-accepted and measured results. Digital exactness, analogue error/statistical laws and
+specialist physics would retain separate acceptance criteria.</p>
+<h3 id="manufacturing-and-laboratory-automation">Manufacturing and laboratory automation</h3>
+<p>Manufacturing is an optional integration path. Circuit design and simulation
+would remain usable without a laboratory, production line or manufacturing
+execution system. The supported modes would distinguish supplier handoff,
+operator-owned equipment and non-actuating qualification or replay.</p>
+<p>CIRCUIT-MANUFACTURING would bind design and technology identities to approved
+routes, recipe versions, material genealogy, work orders and inspection results.
+It would integrate an existing manufacturing authority and its records rather
+than introduce a competing factory-management system. CIRCUIT-AUTOMATION would
+provide explicit equipment capabilities and adapters to qualified local execution
+providers. Instruments shared with CIRCUIT-LAB would retain one canonical driver
+and their original calibration associations.</p>
+<p>Platform workflows would dispatch admitted operations through CIRCUIT-FLOW.
+Actual control-loop timing, equipment arbitration, interlocks and protective
+responses would remain with the qualified local controller and site authority.
+A circuit view, manufacturing recipe, robot task and measurement record would
+keep distinct semantics. Lost acknowledgements or restarts must be reconciled
+against actual equipment state; they cannot authorise blind physical replay.</p>
+<p>The first operating integration would use read-only equipment observations and
+real material records. Supervised operations, robot handling, lithography or
+other specialist processes would require their own selected equipment, process
+window, calibration, inspection, failure and recovery evidence. Bounded unattended
+operation would require an explicit qualified operating envelope and intervention
+path. No automated fabrication capability or machine-control permission is
+announced by this architecture.</p>
+<h3 id="effect-on-the-sc-neurocore-split">Effect on the SC-NeuroCore split</h3>
+<p>The thirteen SC-NC destinations remain the neuromorphic decomposition.
+SC-NC-COMPILER would retain model-specific numerical semantics and lowering;
+SC-NC-HARDWARE would retain SNN target and runtime integration. They could
+consume admitted general circuit operations through optional adapters.
+SC-NC-VERIFY would retain domain fidelity checks, and SC-NC-STUDIO could expose
+those operations to its users.</p>
+<p>Execution profiles would support admitted local, cloud, cluster and future
+environments; the architecture is not tied to the current machines. Actual
+provider resources, data/IP access and isolation would be checked per operation.</p>
+<p>The generic platform would have no production dependency on SC-NeuroCore.
+Simulation and learning users would not acquire mandatory PDK, physical-design
+or laboratory installations. The existing parent-stability and separately
+reviewed extraction gates still apply. Open implementation, native-runtime,
+scientific and hardware obligations remain requirements of their actual
+components; an architecture document does not complete them.</p>
+<h3 id="development-roadmap">Development roadmap</h3>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Intended result</th>
+<th>Evidence required before claiming it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Architecture and interfaces</td>
+<td>Accepted ownership, design/view and technology contracts, tool boundaries and compatibility policy.</td>
+<td>Reviewed interfaces and actual consumers, with supported and unsupported cases explicit.</td>
+</tr>
+<tr>
+<td>Qualified design operations</td>
+<td>Usable digital and analogue operations with selected real tools and technology profiles.</td>
+<td>Installed library/CLI workflows, actual simulation/implementation outputs and engineering checks, including failures and recovery.</td>
+</tr>
+<tr>
+<td>Integrated mixed-signal workflow</td>
+<td>Real continuous/discrete participants and a workbench over the same headless operations.</td>
+<td>Non-neural digital, analogue and mixed reference designs, cross-view correspondence, coupling/error checks and reproducibility.</td>
+</tr>
+<tr>
+<td>Manufacturing preparation</td>
+<td>Consistent physical, die/package/board and test deliverables for a selected target.</td>
+<td>Applicable physical checks, testability, actual manufacturer review and accepted fabrication/assembly conditions.</td>
+</tr>
+<tr>
+<td>Measured hardware and extensions</td>
+<td>Characterised implementations and independently qualified specialist profiles.</td>
+<td>Original DUT/instrument/calibration identities, uncertainty, measured-versus-predicted results and compatibility evidence.</td>
+</tr>
+<tr>
+<td>Qualified manufacturing operations</td>
+<td>Selected supplier, laboratory or cell integration with controlled material and process records.</td>
+<td>Real read-only provider round-trips, approved route/recipe identities, qualified local protection, supervised operation and inspection/recovery evidence before physical or unattended claims.</td>
+</tr>
+</tbody>
+</table>
+<p>Architecture and interface review is the current stage. Implementation stages
+depend on accepted boundaries, supplier contracts and actual engineering
+capacity. Publicly documented measured designs, such as the
+<a href="https://openfasoc.readthedocs.io/en/latest/tapeouts.html">OpenFASOC temperature-sensor tapeout</a>,
+would provide external comparison references after their source/data and
+measurement conditions are admitted.</p>
+<p>These milestones describe intended capability and acceptance. They carry no
+release dates and do not announce packages, fabricated devices or specialist
+support that has not been demonstrated. The original workbench and component
+transition continues under its existing stability and migration requirements.</p>
+<h2 id="neuromorphic-transition-roadmap">Neuromorphic transition roadmap</h2>
+<p>The thirteen destinations follow the retained workbench's stability gates.
+Milestones describe the evidence needed for a transition; no extraction date is
+announced and current users continue with the existing package.</p>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Intended result</th>
+<th>Evidence required before claiming it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retained workbench stability</td>
+<td>Complete the retained component, model-fidelity and Studio obligations before extraction.</td>
+<td>Reviewed behaviour, native and scientific evidence, reproducible workflows and the applicable stability gates for the complete retained programme.</td>
+</tr>
+<tr>
+<td>Component boundaries</td>
+<td>Versioned public APIs, dependency and package boundaries for the thirteen destinations.</td>
+<td>Reviewed contracts, real consumers, compatibility checks and explicit optional dependencies.</td>
+</tr>
+<tr>
+<td>First qualified extraction</td>
+<td>An independently installable component consumed by the workbench.</td>
+<td>Installed producer and separate consumer workflows, matching numerical/artefact behaviour, release ownership and migration guidance.</td>
+</tr>
+<tr>
+<td>Progressive migration</td>
+<td>Extract further components only when each accepted boundary is qualified.</td>
+<td>Per-component packaging, compatibility, documentation, parity and benchmark evidence where applicable; supported workbench workflows preserved.</td>
+</tr>
+<tr>
+<td>Integrated component ecosystem</td>
+<td>Workbench and specialised consumers use maintained versioned interfaces.</td>
+<td>End-to-end cross-component workflows, maintained releases and published migration/support contracts.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-the-transition-will-work">How the transition will work</h2>
+<p>The retained programme must reach its evidenced stability gates before
+extraction. Each component then needs a reviewed API, dependency boundary,
+packaging contract, compatibility checks and a migration guide. The workbench
+will integrate components through those contracts as they become available.
+There is no announced split date or migration deadline.</p>
+<p>For current use, continue with the existing
+<a href="https://anulum.github.io/sc-neurocore/guides/install_profiles/">SC-NeuroCore installation profiles</a> and
+<a href="https://anulum.github.io/sc-neurocore/guides/getting-started/">getting-started guide</a>. This map introduces the
+repository organisation; it does not announce a package-name change or ask
+users to migrate now. Release notes and migration guides will describe any
+future import or installation changes before users need to act.</p>
+<p>Use the <a href="https://anulum.github.io/sc-neurocore/product_overview/">product overview</a> for today's workflow and
+<a href="https://anulum.github.io/sc-neurocore/benchmarks/cross_framework/">evidence boundary</a> when evaluating results.
+Measurement, verification and assurance tools will report scoped evidence;
+certification and deployment approval require the applicable human assessment.</p>
+<h2 id="reading-paths-by-role">Reading paths by role</h2>
+<div class="grid cards">
+<ul>
+<li>
+<p><strong>Modeller or researcher</strong></p>
+<p><a href="https://anulum.github.io/sc-neurocore/guides/install_profiles/">Installation</a> → <a href="https://anulum.github.io/sc-neurocore/guides/getting-started/">getting started</a>
+→ <a href="https://anulum.github.io/sc-neurocore/api/neurons/">neuron APIs</a>, <a href="https://anulum.github.io/sc-neurocore/api/model_zoo/">model zoo</a> and
+<a href="https://anulum.github.io/sc-neurocore/studio/manual/">Studio manual</a>.</p>
+</li>
+<li>
+<p><strong>Hardware engineer</strong></p>
+<p><a href="https://anulum.github.io/sc-neurocore/api/compiler/">Compiler APIs</a> → <a href="https://anulum.github.io/sc-neurocore/api/hardware/">hardware abstraction</a>
+→ <a href="https://anulum.github.io/sc-neurocore/guides/hardware_profiles/">target profiles</a> and
+<a href="https://anulum.github.io/sc-neurocore/studio/manual/hardware/">hardware evidence</a>.</p>
+</li>
+<li>
+<p><strong>Evaluator or reviewer</strong></p>
+<p><a href="https://anulum.github.io/sc-neurocore/benchmarks/cross_framework/">Cross-framework evidence</a> →
+<a href="https://anulum.github.io/sc-neurocore/api/benchmarks/">benchmark contracts</a>, <a href="https://anulum.github.io/sc-neurocore/api/verification/">verification</a>
+and the <a href="#processes-and-interfaces">process map</a>.</p>
+</li>
+<li>
+<p><strong>Partner or investor</strong></p>
+<p><a href="https://anulum.github.io/sc-neurocore/product_overview/">Product overview</a> → <a href="#where-your-team-fits">where your team fits</a>
+→ <a href="#what-exists-today">current status</a>, <a href="#public-workbench-and-future-products">licensing</a>,
+<a href="#neuromorphic-transition-roadmap">neuromorphic transition</a> and
+<a href="#development-roadmap">circuit milestones</a>.</p>
+</li>
+</ul>
+</div>
+<h2 id="abbreviations">Abbreviations</h2>
+<details open class="info">
+<summary>Engineering and technology terms used on this page</summary>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AER</td>
+<td>Address-event representation: an event interface carrying source addresses.</td>
+</tr>
+<tr>
+<td>API</td>
+<td>Application programming interface.</td>
+</tr>
+<tr>
+<td>ASIC</td>
+<td>Application-specific integrated circuit.</td>
+</tr>
+<tr>
+<td>BiCMOS</td>
+<td>Bipolar and complementary metal-oxide-semiconductor devices in one process.</td>
+</tr>
+<tr>
+<td>CMOS</td>
+<td>Complementary metal-oxide-semiconductor technology.</td>
+</tr>
+<tr>
+<td>DUT</td>
+<td>Device under test.</td>
+</tr>
+<tr>
+<td>EDA</td>
+<td>Electronic design automation.</td>
+</tr>
+<tr>
+<td>EM</td>
+<td>Electromagnetic.</td>
+</tr>
+<tr>
+<td>MES</td>
+<td>Manufacturing execution system.</td>
+</tr>
+<tr>
+<td>FPGA</td>
+<td>Field-programmable gate array.</td>
+</tr>
+<tr>
+<td>GaAs / GaN</td>
+<td>Gallium arsenide / gallium nitride.</td>
+</tr>
+<tr>
+<td>HDL</td>
+<td>Hardware description language.</td>
+</tr>
+<tr>
+<td>IDE</td>
+<td>Integrated development environment.</td>
+</tr>
+<tr>
+<td>InP</td>
+<td>Indium phosphide.</td>
+</tr>
+<tr>
+<td>IP</td>
+<td>Intellectual property; reusable design blocks in circuit engineering.</td>
+</tr>
+<tr>
+<td>IR</td>
+<td>Intermediate representation used between design or compiler stages.</td>
+</tr>
+<tr>
+<td>MEMS</td>
+<td>Microelectromechanical systems.</td>
+</tr>
+<tr>
+<td>MPI</td>
+<td>Message Passing Interface for distributed computation.</td>
+</tr>
+<tr>
+<td>NIR</td>
+<td>Neuromorphic Intermediate Representation for exchanging neural graphs.</td>
+</tr>
+<tr>
+<td>PCB</td>
+<td>Printed circuit board.</td>
+</tr>
+<tr>
+<td>PDK</td>
+<td>Process design kit: process-specific device, layout and verification resources.</td>
+</tr>
+<tr>
+<td>PyO3</td>
+<td>Rust bindings for Python interfaces and extension modules.</td>
+</tr>
+<tr>
+<td>RF</td>
+<td>Radio frequency.</td>
+</tr>
+<tr>
+<td>RTL</td>
+<td>Register-transfer level, a digital hardware representation.</td>
+</tr>
+<tr>
+<td>SC</td>
+<td>Stochastic computing.</td>
+</tr>
+<tr>
+<td>SiC / SiGe</td>
+<td>Silicon carbide / silicon-germanium.</td>
+</tr>
+<tr>
+<td>SIMD</td>
+<td>Single instruction, multiple data.</td>
+</tr>
+<tr>
+<td>SNN</td>
+<td>Spiking neural network.</td>
+</tr>
+<tr>
+<td>SOI</td>
+<td>Silicon on insulator.</td>
+</tr>
+<tr>
+<td>TCAD</td>
+<td>Technology computer-aided design for device and process modelling.</td>
+</tr>
+<tr>
+<td>UI / CLI</td>
+<td>User interface / command-line interface.</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h2 id="get-involved">Get involved</h2>
+<p>Use <a href="https://github.com/anulum/sc-neurocore/issues">GitHub issues</a> for reproducible
+problems or a concrete contribution proposal, and
+<a href="https://github.com/anulum/sc-neurocore/discussions">discussions</a> for workflow and
+integration questions. Include the affected model, package/profile, inputs and
+evidence boundary so the discussion reaches the relevant responsibility.</p>
+<p>For research collaboration, manufacturing integration, commercial licensing or
+partnership/IP enquiries: <a href="https://www.anulum.li">www.anulum.li</a> |
+<a href="mailto:protoscience@anulum.li">protoscience@anulum.li</a>.</p>
+<p>When citing the software, use the versioned
+<a href="https://github.com/anulum/sc-neurocore/blob/main/CITATION.cff">CITATION.cff metadata</a>
+and identify the release used. Project-level citation does not replace the
+original model publication or the provenance of a particular dataset or result.</p></main>
+<footer>© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.<br>AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</footer></body></html>
