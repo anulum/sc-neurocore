@@ -140,7 +140,7 @@ def test_model_cli_retains_every_runtime_repetition(
     assert versions["go"].startswith("go1.")
     assert versions["julia"].startswith("julia version ")
     context = payload["measurement_context"]
-    assert context["host"]
+    assert "host" not in context
     assert context["architecture"]
     assert context["cpu_model"]
     assert context["logical_cpu_count"] == os.cpu_count()

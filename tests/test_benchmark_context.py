@@ -28,7 +28,7 @@ def test_measurement_context_records_reproducibility_contract() -> None:
     assert "cpu_governor" in context
     assert "cpu_frequency_mhz" in context
 
-    assert context["host"]
+    assert "host" not in context
     assert context["architecture"]
     assert context["cpu_model"]
     assert context["logical_cpu_count"]

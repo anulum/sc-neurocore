@@ -62,7 +62,10 @@ def test_a_real_run_times_every_case_and_checks_values_first(tmp_path: Path) -> 
     )
     payload = json.loads(output.read_text(encoding="utf-8"))
     context = payload["measurement_context"]
-    assert context["cpu_model"] and context["host"]
+    assert context["cpu_model"] and context["architecture"]
+    assert context["operating_system"] and context["python_version"] and context["numpy_version"]
+    assert isinstance(context["logical_cpu_count"], int) and context["logical_cpu_count"] > 0
+    assert "host" not in context
     assert isinstance(context["ram_bytes"], int) and context["ram_bytes"] > 0
     assert context["production_rerun_requirement"]
     assert set(payload["expressions"]) == set(benchmark.EXPRESSIONS)

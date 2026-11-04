@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Omit machine hostnames from newly recorded benchmark context while retaining
+  processor, architecture, memory, runtime versions, affinity and load for
+  reproducibility. Verify the shared context and its equation, Verilog and
+  repeated model benchmark readers through their public entry points.
+
 - Initialise every AXI-Lite dense-layer configuration register on reset and
   hold completion until the next accepted start, keeping final rates readable
   after delayed or repeated polls. Preserve the rate bank's one-clock completion

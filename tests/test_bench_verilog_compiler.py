@@ -143,7 +143,11 @@ def test_reduced_cli_executes_real_compiler_paths(tmp_path: Path) -> None:
     payload = _payload(output)
 
     context = _mapping(payload["measurement_context"])
-    assert context["cpu_model"] and context["host"]
+    assert context["cpu_model"] and context["architecture"]
+    assert context["operating_system"] and context["python_version"] and context["numpy_version"]
+    logical_cpu_count = context["logical_cpu_count"]
+    assert isinstance(logical_cpu_count, int) and logical_cpu_count > 0
+    assert "host" not in context
     memory = context["ram_bytes"]
     assert isinstance(memory, int) and memory > 0
     assert context["production_rerun_requirement"]

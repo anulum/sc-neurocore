@@ -101,7 +101,6 @@ def measurement_context(load_average_before: list[float] | None) -> dict[str, ob
         else None
     )
     return {
-        "host": platform.node(),
         "architecture": platform.machine(),
         "cpu_model": cpu_model,
         "logical_cpu_count": os.cpu_count(),
