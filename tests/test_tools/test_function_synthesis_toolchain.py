@@ -75,7 +75,7 @@ def test_actual_abc_runs_without_startup_files(
     assert "--signal=KILL" in argv
 
 
-@pytest.mark.parametrize("variable", ["LD_PRELOAD", "LD_LIBRARY_PATH", "LD_AUDIT"])
+@pytest.mark.parametrize("variable", ["LD_PRELOAD", "LD_AUDIT", "LD_BIND_NOW"])
 def test_loader_overrides_are_refused_before_native_execution(
     inspected: tuple[SynthesisToolchain, Path],
     tmp_path: Path,
@@ -114,6 +114,29 @@ def test_actual_native_environment_excludes_unbound_ambient_settings(
     assert f"TMPDIR={temporary}\n" in text
     assert f"HOME={tmp_path}\n" in text
     assert "LC_ALL=C\n" in text and "COLUMNS=32768\n" in text
+
+
+def test_interpreter_library_path_is_accepted_but_never_reaches_native(
+    inspected: tuple[SynthesisToolchain, Path],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Accept a standard interpreter search path while a real child runs without it."""
+    tools, _ = inspected
+    library = tmp_path / "interpreter-library"
+    library.mkdir()
+    monkeypatch.setenv("LD_LIBRARY_PATH", str(library))
+    log = tmp_path / "library-path-environment.log"
+    tools.run(
+        [str(tools.yosys), "-Q", "-T", "-p", "exec -- /usr/bin/env"],
+        tmp_path,
+        log,
+        timeout=10,
+    )
+    text = log.read_text()
+    assert "LD_LIBRARY_PATH=" not in text
+    assert str(library) not in text
+    assert f"HOME={tmp_path}\n" in text
 
 
 @pytest.mark.parametrize("mode", ["interrupt", "stopped-deadline"])

@@ -57,8 +57,14 @@ def _executable(name: str) -> Path:
 
 
 def _environment(command: Path, directory: Path) -> dict[str, str]:
-    """Exclude ambient code injection while retaining the caller's confined temporary root."""
-    if any(name.startswith("LD_") for name in os.environ):
+    """Exclude ambient code injection while retaining the caller's confined temporary root.
+
+    Loader injection (``LD_PRELOAD``, ``LD_AUDIT`` and any other ``LD_*`` setting)
+    is refused. ``LD_LIBRARY_PATH`` is a library search path that standard Python
+    installations set for their own interpreter; it is accepted for the caller but,
+    like every other ambient setting, never reaches the native child.
+    """
+    if any(name.startswith("LD_") and name != "LD_LIBRARY_PATH" for name in os.environ):
         raise ValueError("Native synthesis refuses dynamic-loader environment overrides")
     return {
         "PATH": str(command.parent) + os.pathsep + os.defpath,
