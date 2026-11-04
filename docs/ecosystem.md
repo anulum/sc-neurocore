@@ -32,15 +32,15 @@ remain planned. See the repository releases for the current package version.
 
 ## Programme overview
 
-![All 56 programme entries individually described: SC-NEUROCORE and LOOP-TIMING-WITNESS, 13 neuromorphic extraction destinations, 25 supporting tools and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing.](assets/sc_neurocore_group_map.svg)
+![All 56 programme entries individually described: the SC-NEUROCORE workbench, 13 neuromorphic extraction destinations, 26 measurement and evidence projects and 16 general circuit destinations. Documented architecture and implementation status are separate. Intended integrations are not a package dependency graph or a declaration of qualified manufacturing.](assets/sc_neurocore_group_map.svg)
 
 [Open the full-size SVG](assets/sc_neurocore_group_map.svg),
 [download PNG](assets/sc_neurocore_group_map.png), or
 [download JPG](assets/sc_neurocore_group_map.jpg).
 
-The detailed programme map describes all 56 entries individually: the two
-programme anchors, thirteen neuromorphic destinations, twenty-five supporting
-tools and sixteen circuit destinations. Each destination has documented
+The detailed programme map describes all 56 entries individually: the SC-NEUROCORE
+workbench, thirteen neuromorphic destinations, twenty-six measurement and
+evidence projects, and sixteen circuit destinations. Each destination has documented
 architectural ownership and planning material. Its delivery label separately
 identifies planned extraction or implementation, an existing scaffold, or
 validation tooling; those labels do not mean that its architecture is absent.
@@ -51,6 +51,40 @@ blue for architecture-stage projects or accepted design direction, and dashed
 outlines for planned implementation. An existing scaffold does not imply an
 installed domain runtime. Lines show responsibilities and intended integration;
 they do not specify package dependencies or an extraction order.
+
+## Processes and interfaces
+
+![Intended process and artefact interfaces for all 56 programme entries. Neuromorphic development and general circuit engineering retain separate semantics, optional adapters and one traceable evidence chain. Feedback creates successor revisions. Arrows show architectural handoffs, not implemented dependencies or physical operating permission.](assets/sc_neurocore_process_map.svg)
+
+[Open the process and interface SVG](assets/sc_neurocore_process_map.svg),
+[download PNG](assets/sc_neurocore_process_map.png), or
+[download JPG](assets/sc_neurocore_process_map.jpg).
+
+This companion view places all 56 entries in their intended engineering flows.
+Arrows identify artefact handoffs; each operation can reject unsupported inputs
+and returns attributable results. They describe architectural interfaces rather
+than installed dependencies. The current delivery status remains on the detailed
+programme map and in “What exists today”.
+
+Neuromorphic models and streams lead through execution, learning, lowering and
+checks to target observations and analysis. Optional compiler and hardware
+adapters hand explicit design views to general circuit operations. Circuit
+engineering retains its own models, technology profiles and acceptance laws;
+existing schematics, RTL, netlists or layouts may enter at the appropriate stage.
+The diagram's left-to-right order does not require fabrication for every design.
+
+Input, numerical, hardware and field tools contribute evidence at their relevant
+stages. Shared manifests and experiment lineage preserve the source and conditions
+of each result. SC-NC-BENCH owns neuromorphic workloads; NEURO-EVIDENCE-BENCH
+provides a shared execution and result protocol. CIRCUIT-ACCEPTANCE aggregates
+circuit requirement results without replacing domain checks or human approval.
+
+The optional production branch binds accepted design and process identities to
+supplier handoff or admitted local equipment. Original material, inspection and
+measurement records return through laboratory and evidence contracts. Failures,
+measured divergence and field incidents inform a new revision of the owning
+design or model; they do not overwrite its original results. Qualified local
+controllers and site authorities retain physical timing and protective control.
 
 ## Public workbench and future products
 
@@ -130,11 +164,14 @@ Their functions describe ownership, not separate releases already available.
 
 ## Supporting tools
 
-These 25 tools are sibling projects serving the group through explicit data,
+These 26 measurement and evidence projects comprise LOOP-TIMING-WITNESS and
+25 supporting tools. They serve the group through explicit data,
 measurement and evidence contracts. They complement the SC-NC components and
 have separate responsibilities. EVIDENCE-MANIFEST-TOOLKIT has the scaffold
 status described above. NEURO-EVIDENCE-BENCH also has architecture-stage
-validation tooling; the remaining tools below are planned.
+validation tooling. LOOP-TIMING-WITNESS has software/native/RTL measurement
+contracts; physical board qualification remains pending. The other tools below
+are planned.
 
 ### Evidence and lineage
 
@@ -171,6 +208,7 @@ validation tooling; the remaining tools below are planned.
 
 | Tool | Intended function |
 | --- | --- |
+| **LOOP-TIMING-WITNESS** | Timing instrument for loop and accelerator latency, jitter, deadlines, fault response and energy measurements. |
 | **BITSTREAM-EVIDENCE-CI** | Reproducible FPGA build inputs, toolchain and bitstream evidence. |
 | **PLASTICITY-WITNESS** | Measured physical learning-rule updates compared with fixed-point oracles. |
 | **AER-LINK-WITNESS** | Address-event link throughput, loss, reordering and starvation. |
