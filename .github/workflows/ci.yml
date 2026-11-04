@@ -609,6 +609,24 @@ jobs:
         run: |
           python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
           python tools/ci_install_dev.py
+          # The editable extras resolve coverage from an open range; reinstall the
+          # hash-locked CI pin so every shard, the combined union and the native
+          # Go statement gate measure with the same coverage release.
+          python - "$RUNNER_TEMP/coverage-pin.txt" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path("requirements/ci-dev.txt").read_text(encoding="utf-8").splitlines()
+          start = next(i for i, line in enumerate(lines) if re.match(r"coverage==\S+ \\$", line))
+          block = [lines[start]]
+          for line in lines[start + 1 :]:
+              if not line.strip().startswith("--hash="):
+                  break
+              block.append(line)
+          Path(sys.argv[1]).write_text("\n".join(block).rstrip(" \\") + "\n", encoding="utf-8")
+          PY
+          python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/coverage-pin.txt"
           python -c "import torch; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
 
       - name: Install locked Python compliance scanners
@@ -1857,6 +1875,24 @@ jobs:
         run: |
           python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
           python tools/ci_install_dev.py
+          # The editable extras resolve coverage from an open range; reinstall the
+          # hash-locked CI pin so every shard, the combined union and the native
+          # Go statement gate measure with the same coverage release.
+          python - "$RUNNER_TEMP/coverage-pin.txt" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path("requirements/ci-dev.txt").read_text(encoding="utf-8").splitlines()
+          start = next(i for i, line in enumerate(lines) if re.match(r"coverage==\S+ \\$", line))
+          block = [lines[start]]
+          for line in lines[start + 1 :]:
+              if not line.strip().startswith("--hash="):
+                  break
+              block.append(line)
+          Path(sys.argv[1]).write_text("\n".join(block).rstrip(" \\") + "\n", encoding="utf-8")
+          PY
+          python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/coverage-pin.txt"
           python -c "import torch; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
 
       - name: Build autonomous_learning cdylib
