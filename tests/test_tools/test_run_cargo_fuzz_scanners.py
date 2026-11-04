@@ -262,7 +262,7 @@ def _process_is_gone(pid: int) -> bool:
     stat = Path(f"/proc/{pid}/stat")
     try:
         state = stat.read_text(encoding="utf-8").rsplit(")", 1)[1].split()[0]
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
         return True
     return state == "Z"
 

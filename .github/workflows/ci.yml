@@ -420,6 +420,21 @@ jobs:
               stream.write("SCN_NATIVE_GO_JOB_STARTED_EPOCH=" + str(time.time()) + "\n")
           PY_START
 
+      # The hosted image ships SDKs this job never uses (.NET, Android, GHC,
+      # CodeQL bundles, Swift, Boost and cached container images). Together
+      # with the Rust, Julia, Go, Pixi, HDL and Python toolchains installed
+      # below, shards exhausted the root disk ("No space left on device").
+      # None of the removed SDKs is used by any step of this job.
+      - name: Free unused runner disk space
+        shell: bash
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift \
+            /usr/local/share/boost
+          sudo docker image prune --all --force > /dev/null
+          df -h /
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
