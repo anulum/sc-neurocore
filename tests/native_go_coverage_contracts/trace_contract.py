@@ -99,9 +99,11 @@ def test_bootstrap_is_allocation_owned_and_collision_preserves_every_byte(
     )
     files = {p.name: p.read_bytes() for p in preload.parent.iterdir()}
     assert set(files) == {"preload.py", "sitecustomize.py"}
+    # REUSE-IgnoreStart
     assert all(
         data.startswith(b"# SPDX-License-Identifier: AGPL-3.0-or-later") for data in files.values()
     )
+    # REUSE-IgnoreEnd
     for name, body in files.items():
         ast.parse(body, filename=name)
     assert b"coverage.Coverage(config_file=" in files["sitecustomize.py"]

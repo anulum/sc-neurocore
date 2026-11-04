@@ -169,6 +169,7 @@ def test_markdown_snapshot_is_readme_safe() -> None:
     manifest = tool.build_capability_manifest(_repo_root())
     snapshot = tool.render_markdown_snapshot(manifest)
 
+    # REUSE-IgnoreStart
     assert snapshot.splitlines()[:7] == [
         "<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->",
         "<!-- Commercial license available -->",
@@ -178,6 +179,7 @@ def test_markdown_snapshot_is_readme_safe() -> None:
         "<!-- Contact: www.anulum.li | protoscience@anulum.li -->",
         "<!-- SC-NeuroCore — Capability inventory -->",
     ]
+    # REUSE-IgnoreEnd
     assert "do not edit counts by hand" in snapshot
     assert f"| Package version | {manifest['project']['version']} |" in snapshot
     assert "Evidence boundary" in snapshot
