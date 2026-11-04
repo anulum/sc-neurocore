@@ -345,6 +345,7 @@ nav:
           - Compiler: api/compiler.md
           - Compiler Surface Policy: api/compiler_surface.md
           - Standalone Function Units: compiler/standalone_function_units.md
+          - Function Synthesis Diagnostics: compiler/function_synthesis.md
           - Adaptive Precision: api/adaptive_precision.md
           - Export: api/export.md
           - HDL Generation: api/hdl_gen.md
