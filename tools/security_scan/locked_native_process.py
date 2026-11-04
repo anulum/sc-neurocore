@@ -49,20 +49,39 @@ def execute_command(
     Raises
     ------
     OSError, ValueError, subprocess.SubprocessError
-        Process creation, output decoding or bounded completion failed.
+        Process creation, output decoding or bounded completion failed. Original
+        output bytes remain in the packet when decoding fails. A failed spawn
+        records the OS exception and empty native streams before propagating it.
     """
     if isinstance(timeout, bool) or not math.isfinite(timeout) or not 0 < timeout <= 360:
         raise ValueError("Native audit command requires a positive timeout.")
     directory.mkdir(parents=True, exist_ok=False)
     (directory / "command.json").write_text(json.dumps(command) + "\n", encoding="utf-8")
-    process = subprocess.Popen(
-        command,
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        start_new_session=True,
-    )
+    try:
+        process = subprocess.Popen(
+            command,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
+    except OSError as error:
+        (directory / "stdout.json").write_bytes(b"")
+        (directory / "stderr.log").write_bytes(b"")
+        (directory / "receipt.json").write_text(
+            json.dumps(
+                {
+                    "returncode": None,
+                    "timed_out": False,
+                    "process_reaped": False,
+                    "exception_type": type(error).__name__,
+                    "exception": str(error),
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        raise
     timed_out = False
     try:
         stdout, stderr = process.communicate(timeout=timeout)
@@ -74,8 +93,8 @@ def execute_command(
         except subprocess.TimeoutExpired:
             os.killpg(process.pid, signal.SIGKILL)
             stdout, stderr = process.communicate()
-    (directory / "stdout.json").write_text(stdout, encoding="utf-8")
-    (directory / "stderr.log").write_text(stderr, encoding="utf-8")
+    (directory / "stdout.json").write_bytes(stdout)
+    (directory / "stderr.log").write_bytes(stderr)
     (directory / "receipt.json").write_text(
         json.dumps(
             {
@@ -89,4 +108,4 @@ def execute_command(
     )
     if timed_out:
         raise ValueError("Dependency audit timed out; its process group was stopped.")
-    return process.returncode, json.loads(stdout) if json_output else None
+    return process.returncode, json.loads(stdout.decode("utf-8")) if json_output else None
