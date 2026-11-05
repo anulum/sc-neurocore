@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import json
 from pathlib import Path
 import shutil
@@ -17,6 +18,13 @@ from typing import cast
 
 import pytest
 
+from tools.go_coverage_profiles import (
+    DIAGNOSTIC_SOURCES,
+    TARGET_STATEMENTS,
+    compare_profiles,
+    diagnostic_statements,
+    read_profile,
+)
 from tools.go_coverage_controls import (
     native_refusal_controls,
     profile_verdict,
@@ -134,6 +142,91 @@ def test_public_profile_cli_retains_real_parse_and_output_creation_refusals(
         error = (native_builder.job / "commands/profile-cli-refusal/stderr.log").read_text()
         assert "Native profile result could not be created:" in error
         assert blocked.is_file()
+
+
+def _rewrite_rows(source: Path, target: Path, rewrite: Callable[[str], list[str]]) -> Path:
+    """Copy an actual native profile, changing only the data rows chosen by ``rewrite``."""
+    header, *rows = source.read_text(encoding="utf-8").splitlines()
+    assert header == "mode: atomic" and rows
+    target.write_text(
+        "\n".join([header, *(new for row in rows for new in rewrite(row))]) + "\n",
+        encoding="utf-8",
+    )
+    return target
+
+
+def _row_fields(row: str) -> tuple[str, str, int, int]:
+    """Split one actual row into filename, geometry, statements and count."""
+    location, statements, count = row.rsplit(" ", 2)
+    filename, geometry = location.rsplit(":", 1)
+    return filename, geometry, int(statements), int(count)
+
+
+@pytest.mark.parametrize(
+    ("fault", "message"),
+    [
+        ("malformed-row", "Malformed native profile row"),
+        ("invalid-geometry", "Invalid native source geometry"),
+        ("duplicate-block", "Duplicate native block"),
+        ("changed-denominator", "statement denominator changed"),
+        ("shrunk-subject", "statement scope shrunk"),
+        ("executed-before-work", "already executed"),
+        ("uncovered-diagnostic", "uncovered native diagnostic statements"),
+    ],
+)
+def test_actual_profile_damage_meets_each_native_admission_refusal(
+    native_job: Path, tmp_path: Path, fault: str, message: str
+) -> None:
+    """Each admission refusal is reached from damaged copies of the real Go profiles."""
+    before = native_job / "artifacts/before.txt"
+    complete = native_job / "artifacts/complete.txt"
+    damaged = tmp_path / (fault + ".txt")
+    subject = next(iter(TARGET_STATEMENTS))
+    if fault in {"malformed-row", "invalid-geometry", "duplicate-block"}:
+        first = complete.read_text(encoding="utf-8").splitlines()[1]
+        filename, geometry, statements, count = _row_fields(first)
+        replacement = {
+            "malformed-row": [first, first.rsplit(" ", 1)[0]],
+            "invalid-geometry": [
+                f"{filename}:0{geometry[geometry.index('.') :]} {statements} {count}"
+            ],
+            "duplicate-block": [first, first],
+        }[fault]
+        _rewrite_rows(complete, damaged, lambda row: replacement if row == first else [row])
+        with pytest.raises(ValueError, match=message):
+            read_profile(damaged)
+    elif fault == "changed-denominator":
+        first = complete.read_text(encoding="utf-8").splitlines()[1]
+        filename, geometry, statements, count = _row_fields(first)
+        changed = f"{filename}:{geometry} {statements + 1} {count}"
+        _rewrite_rows(complete, damaged, lambda row: [changed] if row == first else [row])
+        with pytest.raises(ValueError, match=message):
+            compare_profiles(before, damaged)
+    elif fault == "shrunk-subject":
+
+        def emptied(row: str) -> list[str]:
+            filename, geometry, _, count = _row_fields(row)
+            return [f"{filename}:{geometry} 0 {count}" if filename == subject else row]
+
+        shrunk_before = _rewrite_rows(before, tmp_path / "shrunk-before.txt", emptied)
+        _rewrite_rows(complete, damaged, emptied)
+        with pytest.raises(ValueError, match=message + ": " + subject):
+            compare_profiles(shrunk_before, damaged)
+    elif fault == "executed-before-work":
+        with pytest.raises(ValueError, match=message + ": " + subject):
+            compare_profiles(complete, complete)
+    else:
+        diagnostic = DIAGNOSTIC_SOURCES[0]
+
+        def unexecuted(row: str) -> list[str]:
+            filename, geometry, statements, _ = _row_fields(row)
+            return [f"{filename}:{geometry} {statements} 0" if filename == diagnostic else row]
+
+        assert diagnostic_statements(complete)
+        _rewrite_rows(complete, damaged, unexecuted)
+        with pytest.raises(ValueError, match=message + ": " + diagnostic):
+            diagnostic_statements(damaged)
+    assert read_profile(complete) and read_profile(before)
 
 
 @pytest.mark.parametrize("fault", ["accepted", "other-error", "existing-output"])
