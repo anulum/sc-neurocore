@@ -1,0 +1,142 @@
+{
+  "artifact": {
+    "id": "27836d2f0812a5ed",
+    "metadataType": "conda-metadata-entry",
+    "name": "python",
+    "purl": "",
+    "type": "conda",
+    "version": "3.15.2",
+    "metadata": {
+      "build": "h6e52b48_100_cp315",
+      "build_number": 100,
+      "channel": "https://conda.anaconda.org/conda-forge/",
+      "fn": "python-3.15.2-h6e52b48_100_cp315.conda",
+      "md5": "38c3edc23439db3ca383be02ae2b702e",
+      "name": "python",
+      "sha256": "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25",
+      "size": 29327137,
+      "subdir": "linux-64",
+      "version": "3.15.2"
+    }
+  },
+  "match": {
+    "vulnerability": {
+      "id": "CVE-2026-116566",
+      "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2026-116566",
+      "namespace": "nvd:cpe",
+      "severity": "Medium",
+      "urls": [
+        "https://github.com/python/cpython/commit/131a3a66c5f400b588f9fd2732a5ed4e89623ee3",
+        "https://github.com/python/cpython/issues/160898",
+        "https://github.com/python/cpython/pull/160899",
+        "https://mail.python.org/archives/list/security-announce@python.org/thread/HCHE62VYTPYI6WOPJQDWUBR4CINBPSM7/",
+        "http://www.openwall.com/lists/oss-security/2026/10/29/4"
+      ],
+      "description": "socket.getaddrinfo() previously accepted null bytes within *host* and *port* parameters which can cause the values to be silently truncated.",
+      "cvss": [
+        {
+          "source": "cna@python.org",
+          "type": "Secondary",
+          "version": "4.0",
+          "vector": "CVSS:4.0/AV:A/AC:L/AT:P/PR:H/UI:P/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+          "metrics": {
+            "baseScore": 5.3
+          },
+          "vendorMetadata": {}
+        }
+      ],
+      "epss": [
+        {
+          "cve": "CVE-2026-116566",
+          "epss": 0.00259,
+          "percentile": 0.17757,
+          "date": "2026-11-04"
+        }
+      ],
+      "cwes": [
+        {
+          "cve": "CVE-2026-116566",
+          "cwe": "CWE-158",
+          "source": "cna@python.org",
+          "type": "Secondary"
+        }
+      ],
+      "fix": {
+        "versions": [
+          "3.16.0"
+        ],
+        "state": "fixed",
+        "available": [
+          {
+            "version": "3.16.0",
+            "date": "2026-11-05",
+            "kind": "first-observed"
+          }
+        ]
+      },
+      "advisories": [],
+      "risk": 0.133385
+    },
+    "relatedVulnerabilities": [],
+    "matchDetails": [
+      {
+        "type": "cpe-match",
+        "matcher": "stock-matcher",
+        "searchedBy": {
+          "namespace": "nvd:cpe",
+          "cpes": [
+            "cpe:2.3:a:python:python:3.15.2:*:*:*:*:*:*:*"
+          ],
+          "package": {
+            "name": "python",
+            "version": "3.15.2"
+          }
+        },
+        "found": {
+          "vulnerabilityID": "CVE-2026-116566",
+          "versionConstraint": "< 3.16.0 (unknown)",
+          "cpes": [
+            "cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"
+          ]
+        },
+        "fix": {
+          "suggestedVersion": "3.16.0"
+        }
+      }
+    ],
+    "artifact": {
+      "id": "27836d2f0812a5ed",
+      "name": "python",
+      "version": "3.15.2",
+      "type": "conda",
+      "locations": [
+        {
+          "path": "/conda-meta/python-3.15.2-h6e52b48_100_cp315.json",
+          "accessPath": "/conda-meta/python-3.15.2-h6e52b48_100_cp315.json"
+        }
+      ],
+      "language": "",
+      "licenses": [
+        "Python-2.0"
+      ],
+      "cpes": [
+        "cpe:2.3:a:python:python:3.15.2:*:*:*:*:*:*:*"
+      ],
+      "purl": "",
+      "upstreams": []
+    }
+  },
+  "provenance": {
+    "artifact": "dependency-audit-pixi",
+    "artifact_sha256": "59359ffef4936a376fb30d57f376186ff52af8aa0425e70b07e7c741375e54fa",
+    "artifact_trimmed_to": "id, name, version, type, purl, metadataType and the package identity fields of metadata; the installed file list is omitted",
+    "description": "Verbatim Grype match and matched Syft artifact from the hosted pixi lock audit of commit 02f34e3b7d8b45f37a3e84a12a089965ba771f1c (Mojo environment with conda-forge python 3.15.2), kept so the unreleased-vendor-fix exception path is exercised on real scanner output for CVE-2026-116566.",
+    "grype_report": "lock-1/grype/stdout.json",
+    "grype_report_sha256": "6f3b820291556eb841ae79fdd7ebf9efaa37a5c718b9d50a16b2b21b84b0e41f",
+    "grype_version": "0.121.0",
+    "syft_report": "lock-1/syft/stdout.json",
+    "syft_report_sha256": "02ea172872882504da637c13850c6832e1ab2dffe14ecd6f68bd3e31767ffebd",
+    "syft_version": "1.55.0",
+    "workflow_run": "https://github.com/anulum/sc-neurocore/actions/runs/42084413620"
+  }
+}

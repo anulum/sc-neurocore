@@ -12,7 +12,8 @@ Two reasons exist. ``fixed_code_present`` accepts a finding whose installed file
 equals the immutable fixed vendor source. ``vendor_fix_unreleased`` accepts, for at
 most two weeks per review, a finding whose fix the vendor has not released: the
 installed file must equal the immutable source of the installed release, and the
-vendor channel must list no release newer than the installed version.
+vendor channel must list no release newer than the installed version. Each reason
+admits only the advisories named here, each bound to its own vendor source file.
 """
 
 from __future__ import annotations
@@ -35,17 +36,20 @@ CONDA_FORGE_PYTHON_INDEX = "https://api.anaconda.org/package/conda-forge/python"
 _SOURCE_LIMIT = 65536
 _INDEX_LIMIT = 32 * 1024 * 1024
 UNRELEASED_FIX_REVIEW_WINDOW = timedelta(days=14)
-# Each reason admits exactly one advisory and the immutable CPython file that proves it.
-_REASONS = {
-    "fixed_code_present": (
-        "CVE-2025-15367",
-        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/poplib\.py",
+# Each (reason, advisory) pair admits exactly the immutable CPython file that proves it.
+_SOURCES = {
+    ("fixed_code_present", "CVE-2025-15367"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/poplib\.py"
     ),
-    "vendor_fix_unreleased": (
-        "CVE-2026-103995",
-        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/http/client\.py",
+    ("vendor_fix_unreleased", "CVE-2026-103995"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/http/client\.py"
+    ),
+    # The fix is in the C socket module; the Python front end proves the unmodified release.
+    ("vendor_fix_unreleased", "CVE-2026-116566"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/socket\.py"
     ),
 }
+_REASONS = frozenset(reason for reason, _advisory in _SOURCES)
 ReadUrl = Callable[[str, int], bytes]
 _FIELDS = frozenset(
     {
@@ -169,8 +173,8 @@ def load_exceptions(raw: bytes) -> tuple[dict[str, str], ...]:
             for key in ("artifact_sha256", "proof_sha256")
         ):
             raise ValueError("Advisory exception digest is invalid.")
-        advisory, source = _REASONS[row["reason"]]
-        if re.fullmatch(source, row["source"]) is None or row["advisory"] != advisory:
+        source = _SOURCES.get((row["reason"], row["advisory"]))
+        if source is None or re.fullmatch(source, row["source"]) is None:
             raise ValueError("Advisory exception vendor source is unsupported.")
         today = datetime.now(timezone.utc).date()
         review_by = datetime.fromisoformat(row["review_by"]).date()

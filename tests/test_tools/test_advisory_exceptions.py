@@ -10,9 +10,9 @@
 
 The fixed-code path is exercised on the last reviewed CVE-2025-15367 record and the verbatim Grype match
 and Syft identity of the hosted audit that accepted it, with the fixed vendor source read from its
-immutable CPython commit. The unreleased-fix path is exercised on the committed CVE-2026-103995 record,
-the hosted match that blocked it, the immutable CPython 3.15.2 release file and a recorded conda-forge
-version list.
+immutable CPython commit. The unreleased-fix path is exercised on each committed record
+(CVE-2026-103995 and CVE-2026-116566), the hosted match that blocked it, its immutable CPython 3.15.2
+release file and a recorded conda-forge version list.
 """
 
 from __future__ import annotations
@@ -306,23 +306,36 @@ def test_exception_for_an_unaudited_lock_is_refused(tmp_path: Path) -> None:
         conda_lock_decision(checkout, LOCK, [match], {artifact["id"]: artifact}, tmp_path)
 
 
-UNRELEASED_RECORDED = ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_103995.json"
 CHANNEL_VERSIONS = ROOT / "tests/fixtures/conda_forge_python_versions_2026_10_31.json"
-UNRELEASED_SOURCE = (
-    "https://raw.githubusercontent.com/python/cpython/"
-    "5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/http/client.py"
+RELEASE_COMMIT = (
+    "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077"
 )
-UNRELEASED_PROOF_SHA256 = "f4506633b5fe4fe06add63d9e32ab5e6e7cda84ec1df365da7faa5c1315fdbc5"
 UNRELEASED_ARTIFACT_SHA256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+# Each committed unreleased-fix advisory: its hosted finding, release source file and digest.
+UNRELEASED = {
+    "CVE-2026-103995": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_103995.json",
+        RELEASE_COMMIT + "/Lib/http/client.py",
+        "f4506633b5fe4fe06add63d9e32ab5e6e7cda84ec1df365da7faa5c1315fdbc5",
+    ),
+    "CVE-2026-116566": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_116566.json",
+        RELEASE_COMMIT + "/Lib/socket.py",
+        "463dc951122dff8a378862e32461d020a457ef4d80697b3396adca80c87f9e79",
+    ),
+}
+UNRELEASED_RECORDED, UNRELEASED_SOURCE, UNRELEASED_PROOF_SHA256 = UNRELEASED["CVE-2026-103995"]
 
 
-def unreleased_record(review_by: str) -> str:
-    """Return the committed unreleased-fix record, due for review on ``review_by``.
+def unreleased_record(review_by: str, advisory: str = "CVE-2026-103995") -> str:
+    """Return one committed unreleased-fix record, due for review on ``review_by``.
 
     Parameters
     ----------
     review_by : str
         ISO date written into the record.
+    advisory : str, optional
+        Advisory of the committed record to return.
 
     Returns
     -------
@@ -330,8 +343,9 @@ def unreleased_record(review_by: str) -> str:
         TOML table with that one record, identical to the committed one apart from the date.
     """
     committed = (ROOT / EXCEPTION_FILE).read_text()
-    start = committed.index("[[exception]]")
-    return committed[start:].replace('review_by = "2026-11-14"', f'review_by = "{review_by}"')
+    blocks = ["[[exception]]" + block for block in committed.split("[[exception]]")[1:]]
+    (record,) = [block for block in blocks if f'advisory = "{advisory}"' in block]
+    return record.replace('review_by = "2026-11-14"', f'review_by = "{review_by}"')
 
 
 def channel_index(*extra: str) -> bytes:
@@ -351,7 +365,9 @@ def channel_index(*extra: str) -> bytes:
     return json.dumps({"versions": [*versions, *extra]}).encode()
 
 
-def unreleased_checkout(tmp_path: Path, review_by: str) -> tuple[Path, Path, dict[str, str]]:
+def unreleased_checkout(
+    tmp_path: Path, review_by: str, advisory: str = "CVE-2026-103995"
+) -> tuple[Path, Path, dict[str, str]]:
     """Build a real Git checkout holding the lock and the record, and the installed proof file.
 
     Parameters
@@ -360,6 +376,8 @@ def unreleased_checkout(tmp_path: Path, review_by: str) -> tuple[Path, Path, dic
         Disposable root of the checkout and the installed-prefix stand-in.
     review_by : str
         Review date written into the record.
+    advisory : str, optional
+        Advisory of the committed record and its installed release file.
 
     Returns
     -------
@@ -374,7 +392,7 @@ def unreleased_checkout(tmp_path: Path, review_by: str) -> tuple[Path, Path, dic
     lock.write_bytes((ROOT / LOCK).read_bytes())
     table = checkout / EXCEPTION_FILE
     table.parent.mkdir(parents=True)
-    table.write_text(unreleased_record(review_by))
+    table.write_text(unreleased_record(review_by, advisory))
     for argv in (
         ["git", "init", "--initial-branch=main", str(checkout)],
         ["git", "add", "requirements", LOCK],
@@ -383,16 +401,18 @@ def unreleased_checkout(tmp_path: Path, review_by: str) -> tuple[Path, Path, dic
     record = load_exceptions(table.read_bytes())[0]
     proof = prefix / record["proof_path"]
     proof.parent.mkdir(parents=True)
-    proof.write_bytes(vendor_source(UNRELEASED_SOURCE, UNRELEASED_PROOF_SHA256))
+    _, source, digest = UNRELEASED[advisory]
+    proof.write_bytes(vendor_source(source, digest))
     return checkout, prefix, record
 
 
+@pytest.mark.parametrize("advisory", sorted(UNRELEASED))
 @pytest.mark.parametrize(
     "change",
     ["none", "prerelease", "patch_release", "fixed_release", "bytes", "artifact", "fix", "unused"],
 )
 def test_unreleased_fix_holds_only_while_the_channel_has_nothing_newer(
-    tmp_path: Path, change: str
+    tmp_path: Path, change: str, advisory: str
 ) -> None:
     """Accept the hosted finding only while the exact release is installed and nothing newer exists.
 
@@ -404,11 +424,15 @@ def test_unreleased_fix_holds_only_while_the_channel_has_nothing_newer(
         ``none`` and ``prerelease`` keep the exception valid, since a prerelease is not an
         installable fix. A newer patch or fixed release, altered installed bytes, another artifact,
         another fix boundary or a vanished finding each refuse it.
+    advisory : str
+        Committed unreleased-fix record and its recorded hosted finding.
     """
-    data = json.loads(UNRELEASED_RECORDED.read_text())
+    recorded, source, digest = UNRELEASED[advisory]
+    data = json.loads(recorded.read_text())
     match, artifact = data["match"], data["artifact"]
+    assert match["vulnerability"]["id"] == advisory
     assert artifact["metadata"]["sha256"] == UNRELEASED_ARTIFACT_SHA256
-    checkout, prefix, record = unreleased_checkout(tmp_path, due_date())
+    checkout, prefix, record = unreleased_checkout(tmp_path, due_date(), advisory)
     extra = {
         "prerelease": ("3.16.0rc1",),
         "patch_release": ("3.15.3",),
@@ -434,12 +458,12 @@ def test_unreleased_fix_holds_only_while_the_channel_has_nothing_newer(
         actual.clear()
     decision = conda_lock_decision(checkout, LOCK, actual, inventories, prefix, read)
     if change in {"none", "prerelease"}:
-        assert served == [UNRELEASED_SOURCE, CONDA_FORGE_PYTHON_INDEX]
+        assert served == [source, CONDA_FORGE_PYTHON_INDEX]
         assert decision["passed"] is True and decision["blocked"] == decision["unused"] == []
         assert decision["accepted"][0]["evidence"] == {
             "holds": True,
-            "source": UNRELEASED_SOURCE,
-            "proof_sha256": UNRELEASED_PROOF_SHA256,
+            "source": source,
+            "proof_sha256": digest,
             "channel": CONDA_FORGE_PYTHON_INDEX,
             "newer_releases": [],
         }
@@ -508,32 +532,51 @@ def test_live_channel_index_is_readable() -> None:
 
 
 @pytest.mark.parametrize(
-    ("original", "replacement", "message"),
+    ("advisory", "original", "replacement", "message"),
     [
-        ('version = "3.15.2"', 'version = "3.16.0"', "already contains the vendor fix"),
-        ('advisory = "CVE-2026-103995"', 'advisory = "CVE-2025-15367"', "vendor source"),
-        ("/Lib/http/client.py", "/Lib/poplib.py", "vendor source"),
-        ('reason = "vendor_fix_unreleased"', 'reason = "fixed_code_present"', "vendor source"),
+        ("CVE-2026-103995", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        (
+            "CVE-2026-103995",
+            'advisory = "CVE-2026-103995"',
+            'advisory = "CVE-2025-15367"',
+            "source",
+        ),
+        ("CVE-2026-103995", "/Lib/http/client.py", "/Lib/poplib.py", "vendor source"),
+        ("CVE-2026-103995", "/Lib/http/client.py", "/Lib/socket.py", "vendor source"),
+        ("CVE-2026-103995", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
+        ("CVE-2026-116566", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        ("CVE-2026-116566", 'advisory = "CVE-2026-116566"', 'advisory = "CVE-2026-1"', "source"),
+        ("CVE-2026-116566", "/Lib/socket.py", "/Lib/http/client.py", "vendor source"),
+        ("CVE-2026-116566", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
     ],
 )
 def test_unreleased_fix_scope_cannot_be_broadened(
-    original: str, replacement: str, message: str
+    advisory: str, original: str, replacement: str, message: str
 ) -> None:
-    """The unreleased-fix reason admits only its advisory, its source and an unfixed version.
+    """Each unreleased-fix advisory admits only its own source file and an unfixed version.
 
     Parameters
     ----------
+    advisory : str
+        Committed record under change.
     original : str
         Exact field of the committed record.
     replacement : str
-        Candidate that removes a required boundary.
+        Candidate that removes a required boundary, including another advisory's source.
     message : str
         Expected refusal.
     """
-    raw = unreleased_record(due_date())
+    raw = unreleased_record(due_date(), advisory)
     assert original in raw and len(load_exceptions(raw.encode())) == 1
     with pytest.raises(ValueError, match=message):
         load_exceptions(raw.replace(original, replacement).encode())
+
+
+def test_committed_table_names_each_unreleased_advisory_once() -> None:
+    """The committed table holds exactly one record for each recorded unreleased-fix finding."""
+    records = load_exceptions((ROOT / EXCEPTION_FILE).read_bytes())
+    unreleased = [row["advisory"] for row in records if row["reason"] == "vendor_fix_unreleased"]
+    assert sorted(unreleased) == sorted(UNRELEASED)
 
 
 def test_unreleased_fix_review_cannot_exceed_two_weeks() -> None:
