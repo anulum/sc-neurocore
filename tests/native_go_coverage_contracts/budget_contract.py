@@ -31,12 +31,15 @@ from tools.go_coverage_budget import (
 def test_live_profile_derives_all_cli_values_from_actual_capacity(native_job: Path) -> None:
     """The current allocation supplies actual time, CPU, memory and disk observations."""
     inputs = json.loads((native_job / "producer-inputs.json").read_text())
-    profile = derive_profile(inputs["seconds"], inputs["started_epoch"], native_job, 1 / 4, 1 / 200)
+    stop_fraction = 1 / 200
+    profile = derive_profile(
+        inputs["seconds"], inputs["started_epoch"], native_job, 1 / 4, stop_fraction
+    )
     assert profile["resource_admission_claimed"] is False
     assert profile["memory_or_disk_reservation_claimed"] is False
     assert profile["jobs"] == max(1, math.floor(float(profile["effective_cpu_capacity"])))
     assert profile["seconds"] == math.floor(float(profile["remaining_job_seconds"]) / 4)
-    assert profile["stop_seconds"] == float(profile["seconds"]) / 200
+    assert profile["stop_seconds"] == float(profile["seconds"]) * stop_fraction
     assert profile["visible_cpu_quotas"] and profile["affinity"]
     assert float(profile["host_mem_available_bytes"]) > 0
     assert float(profile["allocation_disk_free_bytes"]) > 0
