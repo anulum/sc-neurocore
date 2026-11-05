@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.request
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -24,7 +25,7 @@ import pytest
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QStandardPaths, Qt, QTimer
 from PySide6.QtTest import QTest
 from PySide6.QtWebEngineCore import QWebEngineDownloadRequest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QFileDialog
 
 from sc_neurocore.studio.desktop.runtime import DesktopBackend
 from sc_neurocore.studio.desktop.window import StudioWindow
@@ -105,7 +106,32 @@ def _dialog_action(action: str, destination: Path) -> Iterator[subprocess.Popen[
     ------
     subprocess.Popen
         Owned controller, reaped before the application fixture is disposed.
+
+    Notes
+    -----
+    The save dialog runs its own modal event loop, so a dialog left open
+    would block every bounded wait of the test. Timers still run inside that
+    loop: a dialog still open 15 seconds after the controller ends is
+    rejected and recorded, and the test fails instead of blocking.
     """
+    abandoned: list[str] = []
+    ended: list[float] = []
+
+    def reject_abandoned() -> None:
+        """Reject an export dialog that outlived its controller by the grace period."""
+        if process.poll() is None:
+            return
+        if not ended:
+            ended.append(time.monotonic())
+        if time.monotonic() - ended[0] < 15:
+            return
+        for widget in QApplication.topLevelWidgets():
+            if isinstance(widget, QFileDialog) and widget.isVisible():
+                abandoned.append(widget.windowTitle())
+                widget.reject()
+
+    watchdog = QTimer()
+    watchdog.timeout.connect(reject_abandoned)
     with (destination.parent / "native-dialog.log").open("w") as output:
         process = subprocess.Popen(
             [
@@ -121,12 +147,15 @@ def _dialog_action(action: str, destination: Path) -> Iterator[subprocess.Popen[
             stdout=output,
             stderr=subprocess.STDOUT,
         )
+        watchdog.start(250)
         try:
             yield process
         finally:
+            watchdog.stop()
             if process.poll() is None:
                 process.terminate()
             process.wait(timeout=5)
+    assert not abandoned, "An export dialog outlived its native controller: " + repr(abandoned)
 
 
 @pytest.mark.parametrize("action", ["save", "cancel"])
