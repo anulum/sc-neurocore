@@ -854,6 +854,9 @@ jobs:
 
       - name: Native Studio application and exact coverage
         if: matrix.primary
+        # The step takes about two minutes; a blocked native window must fail
+        # here instead of holding the shard until the job limit.
+        timeout-minutes: 15
         shell: bash
         env:
           COVERAGE_FILE: ${{ runner.temp }}/studio-native/.coverage
