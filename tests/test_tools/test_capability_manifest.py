@@ -279,6 +279,58 @@ def test_cli_uses_portable_config_and_refreshes_readme() -> None:
         )
 
 
+def test_untracked_work_does_not_change_the_counts_until_it_is_staged() -> None:
+    """Only the Git index counts, so another contributor's untracked files change nothing.
+
+    Pre-commit hides unstaged edits but leaves untracked files on disk. A committed
+    portable repository gains an untracked test, model, workflow, document and
+    subpackage: the manifest and its architecture map stay identical. Staged, the
+    files are counted, and the staged subpackage is refused as unmapped.
+    """
+    tool = _load_tool()
+    with _tempdir() as repo:
+        _write_portable_fixture(repo)
+        _write_file(
+            repo / "tools/architecture_map.toml",
+            'version = "fixture"\npipeline_stages = []\nbackends = []\ninterfaces = []\n'
+            "wire_formats = []\ncross_repo = []\nboundaries = []\n\n"
+            '[capabilities.domains]\nmodelling = ["models"]\n\n[capabilities.status]\n',
+        )
+        identity = ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid"]
+        for arguments in (
+            ["init", "--quiet", "--initial-branch=main"],
+            ["add", "--all"],
+            [*identity, "commit", "--quiet", "--no-verify", "--message", "Portable fixture"],
+        ):
+            subprocess.run(["git", *arguments], cwd=repo, check=True, timeout=30)
+        config = tool.load_config(repo, repo / "tools/capability_manifest.toml")
+        committed = tool.build_capability_manifest(repo, config)
+        files = (
+            "tests/test_foreign.py",
+            "src/portable_project/models/foreign.py",
+            ".github/workflows/foreign.yml",
+            "docs/api/models/foreign.md",
+        )
+        package = "src/portable_project/foreign_package/__init__.py"
+        for relative in (*files, package):
+            _write_file(repo / relative, "class ForeignModel:\n    pass\n")
+        assert tool.build_capability_manifest(repo, config) == committed
+
+        subprocess.run(["git", "add", *files], cwd=repo, check=True, timeout=30)
+        counts = tool.build_capability_manifest(repo, config)["counts"]
+        for key in (
+            "test_files",
+            "python_model_source_modules",
+            "github_workflows",
+            "model_documentation_pages",
+        ):
+            assert counts[key] == committed["counts"][key] + 1, key
+
+        subprocess.run(["git", "add", package], cwd=repo, check=True, timeout=30)
+        with pytest.raises(RuntimeError, match="missing a domain: \\['foreign_package'\\]"):
+            tool.build_capability_manifest(repo, config)
+
+
 @contextmanager
 def _tempdir() -> Iterator[Path]:
     with tempfile.TemporaryDirectory() as directory:

@@ -26,7 +26,9 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import re
+import subprocess
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -230,10 +232,14 @@ def build_architecture_map(
     paths = capability_paths(repo, config)
     research = _research_tier_packages(_load_pyproject(paths.pyproject))
 
+    indexed = _index_listing(paths.package_root)
     scanned = sorted(
         entry.name
         for entry in paths.package_root.iterdir()
-        if entry.is_dir() and entry.name != "__pycache__" and not entry.name.endswith(".egg-info")
+        if entry.is_dir()
+        and entry.name != "__pycache__"
+        and not entry.name.endswith(".egg-info")
+        and (indexed is None or any(path.startswith(entry.name + "/") for path in indexed))
     )
     domains: dict[str, list[str]] = raw["capabilities"]["domains"]
     status_override: dict[str, str] = raw["capabilities"]["status"]
@@ -618,16 +624,14 @@ def _literal_string_list(node: ast.AST) -> list[str]:
 def _python_model_sources(models_root: Path, *, repo: Path) -> list[str]:
     if not models_root.exists():
         return []
-    return [
-        _rel(path, repo) for path in sorted(models_root.glob("*.py")) if path.name != "__init__.py"
-    ]
+    return [_rel(path, repo) for path in _scan(models_root, "*.py") if path.name != "__init__.py"]
 
 
 def _python_model_classes(models_root: Path, *, repo: Path) -> list[dict[str, str]]:
     if not models_root.exists():
         return []
     rows: list[dict[str, str]] = []
-    for path in sorted(models_root.glob("*.py")):
+    for path in _scan(models_root, "*.py"):
         if path.name == "__init__.py":
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -664,11 +668,11 @@ def _catalogue_models(registry: Path) -> list[str]:
 
 def _rust_pyo3_wrapper_names(path: Path) -> list[str]:
     """Return model-wrapper names from the facade and modular bindings."""
-    sources = sorted(path.rglob("*.rs")) if path.is_dir() else [path]
+    sources = _scan(path, "*.rs", recursive=True) if path.is_dir() else [path]
     if path.is_file():
         bindings = path.parent / "bindings"
         if bindings.is_dir():
-            sources.extend(sorted(bindings.rglob("*.rs")))
+            sources.extend(_scan(bindings, "*.rs", recursive=True))
 
     names: set[str] = set()
     for source in sources:
@@ -691,14 +695,14 @@ def _workflow_files(workflows_root: Path, *, repo: Path) -> list[str]:
         return []
     return [
         _rel(path, repo)
-        for path in sorted(list(workflows_root.glob("*.yml")) + list(workflows_root.glob("*.yaml")))
+        for path in sorted(_scan(workflows_root, "*.yml") + _scan(workflows_root, "*.yaml"))
     ]
 
 
 def _python_files(root: Path, *, repo: Path) -> list[str]:
     if not root.exists():
         return []
-    return [_rel(path, repo) for path in sorted(root.rglob("*.py"))]
+    return [_rel(path, repo) for path in _scan(root, "*.py", recursive=True)]
 
 
 def _markdown_docs(
@@ -713,9 +717,44 @@ def _markdown_docs(
     relative_root = display_root or repo
     return [
         _rel(path, relative_root)
-        for path in sorted(root.rglob("*.md"))
+        for path in _scan(root, "*.md", recursive=True)
         if not set(path.relative_to(root).parts).intersection(exclude_parts)
     ]
+
+
+def _index_listing(root: Path) -> frozenset[str] | None:
+    """Return the files below ``root`` that the Git index records, or None outside Git.
+
+    The index is the commit candidate: tracked files and staged additions. During a
+    commit, Git points ``GIT_INDEX_FILE`` at the index of exactly what is being
+    committed, and the inherited environment keeps it.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--cached", "-z"],
+            capture_output=True,
+            check=False,
+            timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    return frozenset(os.fsdecode(part) for part in completed.stdout.split(b"\0") if part)
+
+
+def _scan(root: Path, pattern: str, *, recursive: bool = False) -> list[Path]:
+    """List the files below ``root`` that match ``pattern`` and belong to the commit candidate.
+
+    Inside a Git checkout only indexed files count, so untracked work in the same
+    tree, such as another contributor's uncommitted files, cannot change a count.
+    Outside Git every matching file on disk counts.
+    """
+    found = sorted(root.rglob(pattern) if recursive else root.glob(pattern))
+    indexed = _index_listing(root)
+    if indexed is None:
+        return found
+    return [path for path in found if path.relative_to(root).as_posix() in indexed]
 
 
 def _rel(path: Path, root: Path) -> str:
