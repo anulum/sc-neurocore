@@ -240,8 +240,11 @@ def test_every_development_install_in_ci_takes_the_hash_locked_cpu_torch() -> No
 
 
 _CPU_TORCH_LOCK = "-r requirements/ci-torch-cpu.txt"
+_PIP_INSTALL = re.compile(r"\bpip(?:3(?:\.\d+)?)? install\b")
+# The helper installs the ``training`` extra, so calling it counts as a torch install.
 _TORCH_INSTALL = re.compile(
-    r"pip install\b(?=.*(?:\[[^\]]*\btraining\b[^\]]*\]|(?<![\w./-])torch(?![\w.-])))"
+    r"\bpip(?:3(?:\.\d+)?)? install\b(?=.*(?:\[[^\]]*\btraining\b[^\]]*\]|(?<![\w./-])torch(?![\w.-])))"
+    r"|\bpython3?\s+(?:\S+/)?ci_install_dev\.py\b"
 )
 
 
@@ -256,13 +259,15 @@ def _torch_installs_without_the_cpu_lock(run: str) -> list[str]:
     Returns
     -------
     list of str
-        Lines installing the ``training`` extra or a ``torch`` requirement that are
-        not preceded, in the same step, by the hash-locked CPU torch install.
+        Commands installing the ``training`` extra or a ``torch`` requirement, or
+        running ``ci_install_dev.py``, that are not preceded, in the same step, by
+        the hash-locked CPU torch install. Backslash-continued lines are joined first.
     """
     offenders = []
     locked = False
-    for line in (line.strip() for line in run.splitlines()):
-        if "pip install" in line and _CPU_TORCH_LOCK in line:
+    joined = re.sub(r"\\\n", " ", run)
+    for line in (line.strip() for line in joined.splitlines()):
+        if _PIP_INSTALL.search(line) and _CPU_TORCH_LOCK in line:
             locked = True
         elif _TORCH_INSTALL.search(line) and not locked:
             offenders.append(line)
@@ -270,10 +275,10 @@ def _torch_installs_without_the_cpu_lock(run: str) -> list[str]:
 
 
 def test_no_workflow_installs_torch_around_the_cpu_lock() -> None:
-    """Installing ``[training]`` or ``torch`` directly needs the CPU lock first, as the helper does.
+    """Installing ``[training]`` or ``torch``, directly or through the helper, needs the CPU lock first.
 
-    A step that bypasses ``ci_install_dev.py`` would otherwise let pip resolve the
-    CUDA build and its NVIDIA wheels.
+    Without the lock earlier in the same step, pip would resolve the CUDA build and
+    its NVIDIA wheels.
     """
     offenders = []
     for path in sorted((REPO / ".github/workflows").glob("*.yml")):
@@ -297,6 +302,18 @@ def test_no_workflow_installs_torch_around_the_cpu_lock() -> None:
         ),
         ("python -m pip install -e '.[dev]'", False),
         ("pip install torchvision-stubs-free-package", False),
+        ("python -m pip install \\\n  -e '.[dev,training]'", True),
+        ("pip3 install torch", True),
+        ("python tools/ci_install_dev.py", True),
+        (
+            f"python -m pip install --require-hashes {_CPU_TORCH_LOCK}\npython tools/ci_install_dev.py",
+            False,
+        ),
+        (
+            f"pip3 install --require-hashes \\\n  {_CPU_TORCH_LOCK}\npip install -e '.[training]'",
+            False,
+        ),
+        ("python -m pytest tests/test_ci_install_dev.py", False),
     ],
 )
 def test_the_torch_install_scan_recognises_a_bypass(run: str, refused: bool) -> None:
