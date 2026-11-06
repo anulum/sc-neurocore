@@ -107,10 +107,10 @@ the table gives the median of seven samples.
 
 | Model | First collector call (ms) | Cached median per call (µs) |
 | --- | ---: | ---: |
-| Paired exponentials | 5.40 | 132.13 |
-| Clipped hypot | 115.49 | 280.89 |
-| Literal and dynamic powers | 807.73 | 201.53 |
-| Exponential Euler with events | 21.93 | 317.88 |
+| Paired exponentials | 1.93 | 93.39 |
+| Clipped hypot | 89.64 | 165.71 |
+| Literal and dynamic powers | 737.74 | 175.55 |
+| Exponential Euler with events | 7.55 | 275.65 |
 
 These are local measurements on a shared host, with CPU, memory, affinity,
 versions and load recorded in the result. Source hashes are checked before and
@@ -119,12 +119,13 @@ They measure Python analysis cost, not generated hardware throughput. No native
 implementation of this metadata analysis is asserted; generated C, Rust and RTL
 remain separate numerical validation targets.
 
-The complete equation-IR benchmark was also rerun after standalone API integration: `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
+The complete equation-IR benchmark was rerun after the lookup tables were built once per format instead of once per read: `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
 measured transactions after two warmups for each of twelve models. It includes
 source replay and both native emitters, pins all compiler source files and the
 unchanged native binary, and checks identical graph/output checksums on every
 call. It makes no throughput or speedup claim.
 
 Both historical equation-IR result filenames contain that same twelve-case capture,
-not separate measurements. The capture records frontend version 4.0.0 and the
-installed engine version 3.16.0; the pinned native binary was not rebuilt.
+not separate measurements. The capture records the distribution versions the
+interpreter reported (frontend metadata 3.16.0 from the editable checkout's
+installation, engine 4.0.0) and the SHA-256 of the native binary it loaded.

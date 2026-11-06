@@ -2,7 +2,7 @@
   "cases": {
     "bench_euler": {
       "clocks_per_timestep": 1,
-      "median_ms": 1.031677,
+      "median_ms": 0.882989,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -68,22 +68,22 @@
       "output_sha256": "3e7c8d2ffbddb05afaf9bac7039746a0c87ce2e40937452b19ea9e2d1626687f",
       "pipeline_registers": 0,
       "samples_ns": [
-        944895,
-        1436000,
-        1314585,
-        1056861,
-        1020356,
-        938532,
-        982600,
-        1016383,
-        1486339,
-        1031677,
-        1903893
+        861180,
+        863278,
+        847682,
+        942899,
+        874581,
+        882989,
+        865178,
+        1097737,
+        1194452,
+        1050454,
+        898361
       ]
     },
     "bench_heaviside": {
       "clocks_per_timestep": 1,
-      "median_ms": 1.241181,
+      "median_ms": 0.976914,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -152,22 +152,22 @@
       "output_sha256": "3155602379dc252c1f8133fd2ec60306cc3c03c2fade5f5b8ef856016bce292b",
       "pipeline_registers": 0,
       "samples_ns": [
-        999236,
-        1354284,
-        1257671,
-        1241181,
-        1084658,
-        972753,
-        1199472,
-        1197648,
-        2007853,
-        1380614,
-        2269288
+        901099,
+        889815,
+        976914,
+        1069686,
+        902586,
+        915860,
+        942023,
+        1038177,
+        1194363,
+        1036673,
+        1123257
       ]
     },
     "bench_held_state_rk4": {
       "clocks_per_timestep": 1,
-      "median_ms": 3.771867,
+      "median_ms": 3.843379,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -241,22 +241,22 @@
       "output_sha256": "51963fd09648b55e260166cf8d3c41668a1c5060c9585850f5f12d12b3069136",
       "pipeline_registers": 0,
       "samples_ns": [
-        3684249,
-        3697688,
-        3449058,
-        5030587,
-        3603250,
-        3352880,
-        3771867,
-        7138930,
-        6945813,
-        6420577,
-        4399995
+        3488005,
+        3097645,
+        3364602,
+        3843379,
+        4673841,
+        4626798,
+        3748761,
+        5008073,
+        3914563,
+        3985149,
+        3302430
       ]
     },
     "bench_hypot": {
       "clocks_per_timestep": 1,
-      "median_ms": 3.932084,
+      "median_ms": 3.31046,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -317,22 +317,22 @@
       "output_sha256": "da5cee99b40ae9545af8c6df5cf0894bb7670825dd9080b5b57fc47e6892e0f2",
       "pipeline_registers": 0,
       "samples_ns": [
-        3450100,
-        4855581,
-        3769597,
-        3603513,
-        3932084,
-        4061663,
-        3674191,
-        5039717,
-        6526841,
-        3875616,
-        6196266
+        3086142,
+        3172140,
+        3201052,
+        3579220,
+        3257288,
+        3310460,
+        3183008,
+        3447106,
+        3345493,
+        3717754,
+        4316142
       ]
     },
     "bench_initial_state_map": {
       "clocks_per_timestep": 1,
-      "median_ms": 213.236117,
+      "median_ms": 189.626411,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -397,22 +397,22 @@
       "output_sha256": "f1f29522fcc5a1baa651f44a5c9ec5aa411342066f273d24144f8289ba430e58",
       "pipeline_registers": 0,
       "samples_ns": [
-        214597191,
-        235697729,
-        194950063,
-        213236117,
-        193811378,
-        194044987,
-        186616327,
-        268411564,
-        208636513,
-        237937853,
-        237332507
+        178127145,
+        180742255,
+        189626411,
+        186851659,
+        190026201,
+        189191632,
+        177900367,
+        228788393,
+        204186028,
+        191615428,
+        202372735
       ]
     },
     "bench_macro": {
       "clocks_per_timestep": 3,
-      "median_ms": 1.990576,
+      "median_ms": 1.63218,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -481,22 +481,22 @@
       "output_sha256": "9ed71eccc810c2975c167ed4e75015f905b55cff944b93bd7e3eedc34698d1a4",
       "pipeline_registers": 0,
       "samples_ns": [
-        1850441,
-        1857332,
-        1990576,
-        3098741,
-        2235135,
-        1756307,
-        1606371,
-        2833626,
-        2236475,
-        3661252,
-        1725933
+        1440006,
+        1434936,
+        1504074,
+        1587398,
+        1433152,
+        1723972,
+        1632180,
+        1993781,
+        2314385,
+        1684171,
+        2467614
       ]
     },
     "bench_power_dynamic": {
       "clocks_per_timestep": 1,
-      "median_ms": 50.264878,
+      "median_ms": 45.431472,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -557,22 +557,22 @@
       "output_sha256": "cb2ba84712cafa7b2e4501b4a35bbb677aa62bb1c7366ac83692930cb90328d0",
       "pipeline_registers": 0,
       "samples_ns": [
-        47291825,
-        47780745,
-        58792935,
-        46084347,
-        47266098,
-        55806785,
-        50264878,
-        69027422,
-        79375902,
-        47468746,
-        62323056
+        48658871,
+        43461377,
+        43376935,
+        45431472,
+        44349310,
+        45741475,
+        43595551,
+        45028727,
+        46198120,
+        46423677,
+        46266532
       ]
     },
     "bench_power_literal": {
       "clocks_per_timestep": 1,
-      "median_ms": 53.67992,
+      "median_ms": 44.30951,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -633,22 +633,22 @@
       "output_sha256": "dfd24e637641b1af0fcfd33548b7f0fb4cff4156ed427f08c4fd123567053fad",
       "pipeline_registers": 0,
       "samples_ns": [
-        45008175,
-        49360230,
-        61283800,
-        57001369,
-        45411839,
-        43179756,
-        43253366,
-        79555432,
-        69661833,
-        53679920,
-        69231867
+        59468506,
+        43133942,
+        48941075,
+        41540215,
+        43217498,
+        45456528,
+        42656528,
+        48274918,
+        49497723,
+        44309510,
+        42066122
       ]
     },
     "bench_random": {
       "clocks_per_timestep": 1,
-      "median_ms": 4.256523,
+      "median_ms": 3.724154,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -719,22 +719,22 @@
       "output_sha256": "89d8cd010a4030c7dc776abf1f0795b1a8a4d3211f5a028e340c396b024c548f",
       "pipeline_registers": 0,
       "samples_ns": [
-        3773130,
-        4256523,
-        4100505,
-        4293857,
-        4361779,
-        3751885,
-        3737250,
-        5729276,
-        4339239,
-        8137411,
-        4058244
+        3452356,
+        3333354,
+        3724154,
+        4481340,
+        3343766,
+        4065455,
+        3613151,
+        3840357,
+        3985125,
+        3591168,
+        4708805
       ]
     },
     "bench_rk4": {
       "clocks_per_timestep": 5,
-      "median_ms": 6.020432,
+      "median_ms": 4.912237,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -822,22 +822,22 @@
       "output_sha256": "62d20072f11f4790bb3cb391472be1aae656efc836f50149050f94cbeb969a82",
       "pipeline_registers": 4,
       "samples_ns": [
-        4769020,
-        6140572,
-        6020432,
-        5314084,
-        6202730,
-        5368146,
-        5099746,
-        6197912,
-        5375356,
-        9888610,
-        10030977
+        4767069,
+        4912237,
+        4687845,
+        5266871,
+        4841363,
+        4909093,
+        4748502,
+        5767754,
+        5298382,
+        5443182,
+        4926128
       ]
     },
     "bench_round": {
       "clocks_per_timestep": 1,
-      "median_ms": 1.127689,
+      "median_ms": 0.965626,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -898,22 +898,22 @@
       "output_sha256": "6f384c8a3e7af90c32d537b7da1cff0558b672eb3a6379c0d24e9dbc82bf1863",
       "pipeline_registers": 0,
       "samples_ns": [
-        933795,
-        1437166,
-        1127689,
-        1089544,
-        1024776,
-        1005327,
-        1030294,
-        1900564,
-        1881010,
-        1352001,
-        2675874
+        851472,
+        828626,
+        937540,
+        1078813,
+        909507,
+        912134,
+        965626,
+        1340256,
+        1068482,
+        1076169,
+        1015436
       ]
     },
     "bench_rsqrt": {
       "clocks_per_timestep": 1,
-      "median_ms": 6.928102,
+      "median_ms": 5.425789,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -974,51 +974,40 @@
       "output_sha256": "c0a833361fdde93cb23b5e8e9b81de045b7c5b14882cc85952d76e7a1e18afca",
       "pipeline_registers": 0,
       "samples_ns": [
-        5577520,
-        8051164,
-        6208210,
-        7297042,
-        6928102,
-        5711448,
-        6664301,
-        8189340,
-        10902030,
-        5722311,
-        10228291
+        5184462,
+        5425789,
+        5375498,
+        5549940,
+        6129664,
+        5420689,
+        5316002,
+        5419072,
+        5459328,
+        6012054,
+        5568521
       ]
     }
   },
-  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json /media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/agentic_group_workspace/SC-NEUROCORE/01a18246-737c-7300-8346-8d78a0b40144/scratch/standalone-function-api-20261030/canonical-qualification-retry/bench_equation_ir.json",
+  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json /media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/agentic_group_workspace/SC-NEUROCORE/56e920d9-f39e-4f97-898b-21e63007780e/ap-1106/bench/bench_equation_ir.json",
   "cross_language_comparison": false,
-  "generated_at": "2026-10-30T19:04:51.782582+00:00",
+  "generated_at": "2026-11-06T21:38:48.266526+00:00",
   "hardware_measurement_claimed": false,
   "implementation_scope": "Python model frontend with maintained Rust graph backend",
   "isolation": "shared loaded host; no exclusive core reservation",
   "load_average_after": [
-    9.42041015625,
-    11.4384765625,
-    11.6357421875
+    5.1318359375,
+    6.0166015625,
+    5.845703125
   ],
   "measurement_context": {
     "architecture": "x86_64",
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
     "cpu_affinity": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11
+      3
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3900.07,
-      "min_observed_mhz": 3899.96,
+      "max_observed_mhz": 4600.407,
+      "min_observed_mhz": 4404.737,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -1026,17 +1015,16 @@
     ],
     "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
     "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-    "host": "aaarthuus",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      9.42041015625,
-      11.4384765625,
-      11.6357421875
+      5.1318359375,
+      6.0166015625,
+      5.845703125
     ],
     "load_average_before": [
-      9.9794921875,
-      11.5810546875,
-      11.6826171875
+      5.1435546875,
+      6.0341796875,
+      5.8505859375
     ],
     "logical_cpu_count": 12,
     "numpy_version": "2.5.4",
@@ -1046,18 +1034,18 @@
     "ram_bytes": 33422090240,
     "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
   },
-  "native_sha256": "4d9bd287076a5e39206df9478475b42cd76c5b65d26b2b678389b645c4720095",
+  "native_sha256": "5ad9807d654f3ddacaf4607b9cffff20d30719d4d0b4d3ec90f2cb18867e7fd0",
   "performance_promotion_claimed": false,
   "samples_per_case": 11,
   "schema_version": 1,
-  "source_base_sha": "8570fc9e048fd2e0e4c2a5e1c7b0d53b8ef4ef5d",
+  "source_base_sha": "6ab3977d3a91258527d67d01b3f1cf2866946cc3",
   "source_sha256": {
-    "Cargo.lock": "207694cd848ac6746a5c4aba0794be31367c06682f6c5a04e90e4036037fe220",
-    "benchmarks/_benchmark_context.py": "ddca1b29e4828f6c99b09280c440bc527699a81d31a3e3dc7d61c0b96871e36a",
+    "Cargo.lock": "ce4a77a2011b1237406510b85ce817341db23c5d3efe965da9d0abf1bca55a5f",
+    "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
     "benchmarks/bench_equation_ir.py": "21b3a64b7b29c45ac87df891788dbf460c825a111d6aed870d6146f6ef973dda",
     "bridge/sc_neurocore_engine/_ir_native.py": "7e4d716b3532f7d8aef70fb0f4bec0de6348ab73b7577a506cbc5cef430bfe17",
     "bridge/sc_neurocore_engine/ir.py": "f5e9ac833bd01a3dae2f1fadb4fe56084e522804049925727ffc0ce11b3670f1",
-    "engine/Cargo.toml": "d35f59be196fa91d581eabe7f6cf93f7788cd5e4ef36f64869f9fb40ebf15e54",
+    "engine/Cargo.toml": "b948cdc49dfd8474e0ec6b9130b4cc7b2f1ada3cfb75b167397427c321a0e8b4",
     "engine/src/ir/arithmetic_contract.rs": "c001b88dfe8526950dc7af40d3fc390f8023e7f29822265724ce9e425f98196e",
     "engine/src/ir/bindings.rs": "1c7358acb709fa0904bbc53528ff0b2cf550a782ef337e6f8a90656aec6890de",
     "engine/src/ir/builder.rs": "7aa64bba746103a5acd60895fb66381d662fc536ceddaac7b1c0fb7094dc3c6b",
@@ -1154,6 +1142,7 @@
     "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
     "src/sc_neurocore/compiler/function_unit_programs.py": "ccbaa67a3b56c9520d6c796fb1a6f7e7b37e90f6f4b231128e490738b0b0824f",
     "src/sc_neurocore/compiler/function_units.py": "0fcd1955054251a84e16d752e3840cf598f32004eb506a936e451d28a70784b5",
+    "src/sc_neurocore/compiler/guarantee_summary.py": "f0717a85b39945b2019cf8031756428b4b6f3b4f73cf793d0ccd13e3ef764092",
     "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
     "src/sc_neurocore/compiler/hardware_numeric_contract.py": "220efa51c8f29b64fa1dc6a70ce9c0f462559a4710ee644fc0bace8382b1f499",
     "src/sc_neurocore/compiler/host_driver_gen.py": "05fd4dc67ec12c544d6b5a41d07d00a93c8f80989a9055c689f2622f3d4f3387",
@@ -1252,7 +1241,7 @@
     "src/sc_neurocore/compiler/live_control_ops.py": "9a3a49d6b99e6495ba4a55d072d2ef1d98e4aadce42de936b42169b79f8f1b51",
     "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
     "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
-    "src/sc_neurocore/compiler/lut_accuracy.py": "09bbd9215875e1e70098eefa1069ed4e9d03d09d14b5369543ef63d4eb245bb8",
+    "src/sc_neurocore/compiler/lut_accuracy.py": "50bca6057ce3ec2d3fff68d3c3dcfb02f460f1129c6fefd2757745f7a3a9b057",
     "src/sc_neurocore/compiler/magnitude_function_programs.py": "6562e0ac0e99366312be7028f62d316a5d4d5e895bd79a269e8b1d6afe67cd59",
     "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
     "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
@@ -1329,13 +1318,13 @@
     "src/sc_neurocore/compiler/verilog_expr_emitter.py": "6737c50072aa3dc1d8f8f283901504f7369d137d99131772e703e58bc5a7b674",
     "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
     "src/sc_neurocore/neurons/_units.py": "c04c063bbd229425f519794919c3f6af838150eda03f8af97c741099a8c95f42",
-    "src/sc_neurocore/neurons/equation_builder.py": "fea065e3f69945aed0f05edb50f9e4168d863cd8d3f084b7c16d4bce639c2c7c",
+    "src/sc_neurocore/neurons/equation_builder.py": "cd4f9c2fe25895aa4cb91bb98a7ed050c575d6cc7c0fd16154de99320754f5bd",
     "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
     "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
     "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
-    "src/sc_neurocore/neurons/equation_random.py": "edb76121a97de6c41660b7513511f5d5c06fa040edcd2688aa2e2c52f671a9bc",
+    "src/sc_neurocore/neurons/equation_random.py": "c3b5befd17c9990d0ea1c2639fedc55671060ea7cd1f5848435b90610dd40202",
     "src/sc_neurocore/neurons/equation_refusals.py": "5ebb46ecaaf66f8108c05bbb3207d5e6b82d70138c6ba11cc4c2848197156692",
-    "src/sc_neurocore/neurons/equation_safety.py": "5494a8c3f93de7f359048370e9b22e433fdbaec64f4f031faafbcd46e4b24569",
+    "src/sc_neurocore/neurons/equation_safety.py": "2627e82d2be63efd7bbb33eba5248a37aed969c9eb67de2468d3e66f987d0386",
     "src/sc_neurocore/neurons/equation_units_runtime.py": "15cd730c6222bd55891a7746c0de9c4b76d4217da049b7bfceff99a0c2479fb6",
     "src/sc_neurocore/neurons/expression_derivative.py": "eb010dedeeb34d0f82921943479099f7b8a02f20ff895aa97c427e0f7a8dde5c"
   },
@@ -1344,8 +1333,8 @@
   "versions": {
     "numpy": "2.5.4",
     "pint": "0.26.2",
-    "sc-neurocore": "4.0.0",
-    "sc-neurocore-engine": "3.16.0",
+    "sc-neurocore": "3.16.0",
+    "sc-neurocore-engine": "4.0.0",
     "sympy": "1.14.0"
   },
   "warmup_per_case": 2

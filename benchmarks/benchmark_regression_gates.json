@@ -5018,6 +5018,7 @@
         "src/sc_neurocore/compiler/function_unit_ir.py": "source_sha256.src/sc_neurocore/compiler/function_unit_ir.py",
         "src/sc_neurocore/compiler/function_unit_programs.py": "source_sha256.src/sc_neurocore/compiler/function_unit_programs.py",
         "src/sc_neurocore/compiler/function_units.py": "source_sha256.src/sc_neurocore/compiler/function_units.py",
+        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py",
         "src/sc_neurocore/compiler/guard_bits.py": "source_sha256.src/sc_neurocore/compiler/guard_bits.py",
         "src/sc_neurocore/compiler/hardware_numeric_contract.py": "source_sha256.src/sc_neurocore/compiler/hardware_numeric_contract.py",
         "src/sc_neurocore/compiler/host_driver_gen.py": "source_sha256.src/sc_neurocore/compiler/host_driver_gen.py",
@@ -5104,6 +5105,7 @@
         "src/sc_neurocore/neurons/model_identity.py": "source_sha256.src/sc_neurocore/neurons/model_identity.py",
         "src/sc_neurocore/neurons/model_profile.py": "source_sha256.src/sc_neurocore/neurons/model_profile.py",
         "src/sc_neurocore/neurons/model_receipts.py": "source_sha256.src/sc_neurocore/neurons/model_receipts.py",
+        "src/sc_neurocore/neurons/model_registry.py": "source_sha256.src/sc_neurocore/neurons/model_registry.py",
         "src/sc_neurocore/neurons/model_taxonomy.py": "source_sha256.src/sc_neurocore/neurons/model_taxonomy.py",
         "src/sc_neurocore/neurons/profile_registry.py": "source_sha256.src/sc_neurocore/neurons/profile_registry.py",
         "src/sc_neurocore/neurons/readiness.py": "source_sha256.src/sc_neurocore/neurons/readiness.py",
@@ -5134,7 +5136,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "4d9bd287076a5e39206df9478475b42cd76c5b65d26b2b678389b645c4720095"
+        "native_sha256": "5ad9807d654f3ddacaf4607b9cffff20d30719d4d0b4d3ec90f2cb18867e7fd0"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -5464,7 +5466,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "4d9bd287076a5e39206df9478475b42cd76c5b65d26b2b678389b645c4720095"
+        "native_sha256": "5ad9807d654f3ddacaf4607b9cffff20d30719d4d0b4d3ec90f2cb18867e7fd0"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",

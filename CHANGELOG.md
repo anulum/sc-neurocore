@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Build each lookup table of the function-accuracy measurement once per format
+  instead of once per read. `lut_read_int` rebuilt and saturated the whole table
+  for every input code, so measuring a function over many codes rebuilt it as
+  many times. The Studio's model detail spent most of its time there: the
+  capability matrix of ConnorStevensNeuron took 115.9 s and now takes 1.1 s on
+  this host, with an identical result. The function-call-domain and
+  equation-IR benchmarks are re-recorded against the changed source.
+
 - Export a hash-bound evidence packet for one generated dense layer design, and
   verify it. `sc-neurocore evidence-packet export GRAPH -o DIR` accepts an IR
   graph of one `sc.input` of `vec<rate,N>`, constants, one `sc.dense_forward`

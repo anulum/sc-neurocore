@@ -114,6 +114,19 @@ _ENTRIES: dict[str, Callable[[int, int], list[int]]] = {
     "sqrt": lambda _dw, fr: expr_lut_tables.sqrt_lut_entries(fr),
 }
 
+
+@lru_cache(maxsize=512)
+def _stored_entries(function: str, data_width: int, fraction: int) -> tuple[int, ...]:
+    """Return a table's entries, saturated to its word, built once per format.
+
+    :func:`lut_read_int` reads one entry per input code. Building the whole table on
+    every read made a measurement over N codes build the table N times.
+    """
+    return tuple(
+        expr_lut_tables.saturate_entries(_ENTRIES[function](data_width, fraction), data_width)
+    )
+
+
 # Inputs the Python model evaluates to a real number: the logarithms need x > 0
 # (log1p: x > -1); ``sqrt`` refuses x < 0; ``x ** (1/3)`` of a negative float is
 # NaN in NumPy, as are arcsin and arccos outside [-1, 1].
@@ -203,8 +216,7 @@ def lut_read(function: str, codes: IntArray, data_width: int, fraction: int) -> 
             "bits for the shifted index; use lut_read_int"
         )
     geometry = GEOMETRY[function]
-    stored = expr_lut_tables.saturate_entries(_ENTRIES[function](data_width, fraction), data_width)
-    entries = np.asarray(stored, dtype=np.int64)
+    entries = np.asarray(_stored_entries(function, data_width, fraction), dtype=np.int64)
     min_q = round(geometry.lo * (1 << fraction))
     shift = fraction - round(-math.log2(geometry.step))
     offset = codes.astype(np.int64) - min_q
@@ -259,7 +271,7 @@ def lut_read_int(function: str, code: int, data_width: int, fraction: int) -> in
 
     """
     geometry = GEOMETRY[function]
-    entries = expr_lut_tables.saturate_entries(_ENTRIES[function](data_width, fraction), data_width)
+    entries = _stored_entries(function, data_width, fraction)
     shift = fraction - round(-math.log2(geometry.step))
     offset = code - round(geometry.lo * (1 << fraction))
     index = offset >> shift if shift >= 0 else offset << -shift
