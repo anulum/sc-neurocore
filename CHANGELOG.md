@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Smoke-test every engine wheel before the PyPI upload on a runner of its own
+  platform and with its own Python: Linux x86-64 and arm64, Windows and macOS,
+  Python 3.11 to 3.14. Before, only the Linux x86-64 wheel for Python 3.12 was
+  installed and imported, and the other 15 wheels were uploaded untried.
+
 - Report library status and failures through module loggers instead of
   printing them: the Mojo kernel runner logs a failed build or benchmark as
   an error, the AER router supervisor logs its build, start and stop, and

@@ -172,19 +172,35 @@ jobs:
           name: engine-wheel-linux-arm64-py${{ matrix.python-version }}
           path: dist-engine/*.whl
 
+  # Every wheel that is uploaded is installed and imported first, on a runner of its
+  # own platform and with its own Python: Linux x86-64 and arm64, Windows and macOS.
   smoke-engine-wheels:
     needs: [build-engine-wheels, build-engine-linux-arm]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.target.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        target:
+          - { runner: ubuntu-latest, artifact: ubuntu-latest }
+          - { runner: windows-latest, artifact: windows-latest }
+          - { runner: macos-latest, artifact: macos-latest }
+          - { runner: ubuntu-24.04-arm, artifact: linux-arm64 }
     steps:
+      # Only the project metadata is needed: the installed engine must carry its version.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: pyproject.toml
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.16"
+          python-version: ${{ matrix.python-version }}
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          pattern: engine-wheel-ubuntu-latest-py3.12
-          merge-multiple: true
+          name: engine-wheel-${{ matrix.target.artifact }}-py${{ matrix.python-version }}
           path: dist-engine/
       - name: Install and smoke test engine wheel
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -194,7 +210,22 @@ jobs:
               raise SystemExit(f"Expected exactly one engine wheel, found {len(wheels)}")
           PY
           python -m pip install dist-engine/*.whl
-          python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
+          python - <<'PY'
+          import importlib.metadata
+          import tomllib
+          from pathlib import Path
+
+          import sc_neurocore_engine
+
+          expected = tomllib.loads(Path("pyproject.toml").read_text("utf-8"))["project"]["version"]
+          found = {
+              "module": sc_neurocore_engine.__version__,
+              "distribution": importlib.metadata.version("sc-neurocore-engine"),
+          }
+          if set(found.values()) != {expected}:
+              raise SystemExit(f"engine wheel version {found} differs from the project version {expected}")
+          print(expected, sc_neurocore_engine.simd_tier())
+          PY
 
   publish-engine-pypi:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'

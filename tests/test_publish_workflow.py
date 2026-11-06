@@ -228,6 +228,60 @@ def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -
     assert jobs["publish-engine-pypi"]["needs"] == ["smoke-engine-wheels"]
 
 
+def test_every_uploaded_engine_wheel_is_smoke_tested_on_its_own_platform() -> None:
+    """The smoke matrix installs exactly the artifacts the build jobs upload, each natively.
+
+    Each build job names its artifact ``engine-wheel-<platform>-py<version>``; the smoke
+    job downloads one such artifact per matrix cell, on a runner of that platform with that
+    Python, so a wheel that cannot be installed or imported anywhere stops the upload.
+    """
+    jobs = _workflow()["jobs"]
+    build = jobs["build-engine-wheels"]["strategy"]["matrix"]
+    arm = jobs["build-engine-linux-arm"]["strategy"]["matrix"]
+    built = {
+        (os_name, version) for os_name in build["os"] for version in build["python-version"]
+    } | {("linux-arm64", version) for version in arm["python-version"]}
+    assert jobs["build-engine-wheels"]["steps"][-1]["with"]["name"] == (
+        "engine-wheel-${{ matrix.os }}-py${{ matrix.python-version }}"
+    )
+    assert jobs["build-engine-linux-arm"]["steps"][-1]["with"]["name"] == (
+        "engine-wheel-linux-arm64-py${{ matrix.python-version }}"
+    )
+
+    smoke = jobs["smoke-engine-wheels"]
+    matrix = smoke["strategy"]["matrix"]
+    runners = {"ubuntu-latest": "ubuntu-latest", "windows-latest": "windows-latest"}
+    runners |= {"macos-latest": "macos-latest", "linux-arm64": "ubuntu-24.04-arm"}
+    assert {target["artifact"]: target["runner"] for target in matrix["target"]} == runners
+    smoked = {
+        (target["artifact"], version)
+        for target in matrix["target"]
+        for version in matrix["python-version"]
+    }
+    assert smoked == built
+    assert smoke["strategy"]["fail-fast"] is False
+    assert smoke["runs-on"] == "${{ matrix.target.runner }}"
+    setup = _uses_step(smoke, "actions/setup-python@")
+    assert setup["with"]["python-version"] == "${{ matrix.python-version }}"
+    download = _uses_step(smoke, "actions/download-artifact@")["with"]
+    assert (
+        download["name"]
+        == "engine-wheel-${{ matrix.target.artifact }}-py${{ matrix.python-version }}"
+    )
+    assert "pattern" not in download
+    install = next(
+        step for step in smoke["steps"] if "pip install dist-engine/*.whl" in step.get("run", "")
+    )
+    assert install["shell"] == "bash"
+    # The installed engine must report the project version, so a stale wheel cannot pass.
+    checkout = _uses_step(smoke, "actions/checkout@")["with"]
+    assert checkout["sparse-checkout"] == "pyproject.toml"
+    run = install["run"]
+    assert 'tomllib.loads(Path("pyproject.toml")' in run
+    assert 'importlib.metadata.version("sc-neurocore-engine")' in run
+    assert "set(found.values()) != {expected}" in run
+
+
 def test_publish_workflow_engine_wheel_release_matrix_matches_ci() -> None:
     """Release builds the same prebuilt engine wheel targets as wheel CI."""
     jobs = _workflow()["jobs"]
