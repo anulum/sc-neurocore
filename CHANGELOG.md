@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Query crates.io through one tool that identifies the project, in both the
+  publishing crate job and the dry-run crate job, so a dispatch without
+  publishing proves the registry query a tag run depends on. The tool reads the
+  engine crate name and version from its manifest and stops the publication on
+  any registry answer other than found or not found.
+
 - Correct the published SHD hardware claims. The committed Vivado reports
   describe an out-of-context synthesis of `sc_shd_top` without weights or
   delays (990 LUT, 670 FF), because the weight ROM and delay tables load only

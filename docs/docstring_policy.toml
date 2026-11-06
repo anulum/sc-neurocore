@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1777
+expected_file_count = 1779
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -219,6 +219,14 @@ rationale = "Catalogue filters read verified readiness, facet counts drill down,
 [[file]]
 path = "tests/test_hardware_number_provenance.py"
 rationale = "Public SHD hardware figures quote the committed Vivado reports, say they were obtained without weights or delays, and never claim a silicon run or an unsourced figure."
+
+[[file]]
+path = "tools/crates_io_release_status.py"
+rationale = "Read the engine crate identity from its manifest and ask crates.io, as an identified client, whether that version is published."
+
+[[file]]
+path = "tests/test_tools/test_crates_io_release_status.py"
+rationale = "A real loopback registry shows the identified query, the published and unpublished answers, every refusal and the command output the publish jobs read."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"

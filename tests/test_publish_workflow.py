@@ -13,7 +13,6 @@ from __future__ import annotations
 import hashlib
 import os
 import re
-import shlex
 import subprocess
 from pathlib import Path
 from typing import Any, cast
@@ -82,38 +81,35 @@ def test_pypi_publish_steps_are_idempotent_for_tag_retries() -> None:
         assert publish_step["with"]["skip-existing"] is True
 
 
+_CRATE_STATUS = "python3 tools/crates_io_release_status.py engine/Cargo.toml"
+
+
 def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
-    """The crate job checks crates.io for the engine version before it publishes."""
+    """The crate job asks the shared status tool and uploads only an unpublished version."""
+    publish_text = _run_text(_workflow()["jobs"]["publish-crate"])
+
+    assert f'STATUS="$({_CRATE_STATUS})"' in publish_text
+    assert "published)" in publish_text and "unpublished)" in publish_text
+    assert "already exists on crates.io; skipping publish." in publish_text
+    assert publish_text.index("unpublished)") < publish_text.index(
+        "cargo publish --manifest-path engine/Cargo.toml"
+    )
+    assert "Unexpected crates.io release status" in publish_text
+
+
+def test_both_crate_jobs_query_the_registry_through_one_tool() -> None:
+    """A dispatch without publishing proves the same registry query the tag run needs."""
     jobs = _workflow()["jobs"]
-    publish_text = _run_text(jobs["publish-crate"])
-
-    assert "CRATE_NAME=" in publish_text
-    assert "CRATE_VERSION=" in publish_text
-    assert "https://crates.io/api/v1/crates/${CRATE_NAME}/${CRATE_VERSION}" in publish_text
-    assert "HTTP_STATUS" in publish_text
-    assert '"200")' in publish_text
-    assert "already exists on crates.io" in publish_text
-    assert "cargo publish --manifest-path engine/Cargo.toml" in publish_text
+    dry_run, publish = _run_text(jobs["dry-run-crate"]), _run_text(jobs["publish-crate"])
+    assert _CRATE_STATUS in dry_run and _CRATE_STATUS in publish
+    assert dry_run.index(_CRATE_STATUS) < dry_run.index("cargo publish")
 
 
-def test_crates_registry_queries_identify_the_release_project() -> None:
-    """Every actual crates.io API query identifies this project and its contact URL."""
-    queries = []
-    for job in _workflow()["jobs"].values():
-        for command in re.findall(r'\$\((curl\b.*?)\)"', _run_text(job), re.DOTALL):
-            arguments = shlex.split(command.replace("\\\n", " "))
-            if any(argument.startswith("https://crates.io/api/") for argument in arguments):
-                queries.append(arguments)
-    assert queries, "The crate publication must check the registry before uploading"
-    for arguments in queries:
-        agents = [
-            arguments[index + 1]
-            for index, argument in enumerate(arguments[:-1])
-            if argument in {"--user-agent", "-A"}
-        ]
-        assert len(agents) == 1, "crates.io refuses unidentified registry clients"
-        assert agents[0].startswith("sc-neurocore-release ")
-        assert "https://github.com/anulum/sc-neurocore" in agents[0]
+def test_no_workflow_queries_the_crates_registry_by_hand() -> None:
+    """Every crates.io API query goes through the tool that identifies the project."""
+    for path in sorted((_repo_root() / ".github" / "workflows").glob("*.yml")):
+        text = path.read_text(encoding="utf-8")
+        assert "crates.io/api" not in text, f"{path.name} queries crates.io outside the tool"
 
 
 def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -> None:
