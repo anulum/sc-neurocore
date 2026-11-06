@@ -197,8 +197,11 @@ Heidelberg Digits (SHD) speech classification targeting Zynq XC7Z020
 - **Vivado synthesis:** out-of-context, without weights or delays: 990 LUT
   (1.86%), 670 FF (0.63%), 0 BRAM, 0 DSP, WNS +4.048 ns at 100 MHz. This is
   not the resource cost of the network with its weights.
-- **Block design:** Zynq PS + AXI-Lite script for Vivado v2025.2; no
-  bitstream or routed report is committed
+- **Block design:** Zynq PS + AXI-Lite script for Vivado v2025.2. On
+  2026-04-13 it was placed, routed and written to a bitstream for the design
+  without weights or delays; those outputs were removed from the repository on
+  2026-07-26 as reproducible, and trimmed placed and routed reports remain as
+  parser fixtures under `tests/fixtures/vivado/`
 - **PYNQ deployment package:** driver and demo; the synthesised design has no
   weight or delay load path yet
 - **Q8.8 co-simulation:** bit-true Python reference matches Verilog, 4% gap vs PyTorch

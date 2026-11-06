@@ -44,7 +44,6 @@ _SILICON_CLAIMS = (
     "silicon-proven",
     "real Xilinx silicon",
     "fits in under 2%",
-    "Bitstream generated",
 )
 
 

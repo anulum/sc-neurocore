@@ -185,7 +185,8 @@ without weights or delays
     |  990 LUT (1.86%), 670 FF (0.63%), WNS +4.048 ns
     v
 Block design script (hdl/pynq/create_block_design.tcl)
-    |  Zynq PS + AXI-Lite; no bitstream or routed report is committed
+    |  Zynq PS + AXI-Lite; placed, routed and written to a bitstream on
+    |  2026-04-13 without weights or delays (outputs no longer in the tree)
     v
 PYNQ-Z2 driver package (hdl/pynq/), not yet run on a board
     sc_shd_driver.py -> SHDAccelerator class

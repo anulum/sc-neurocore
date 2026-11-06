@@ -28,9 +28,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   describe an out-of-context synthesis of `sc_shd_top` without weights or
   delays (990 LUT, 670 FF), because the weight ROM and delay tables load only
   in simulation and the AXI wrapper has no load path; they are not the cost of
-  the network with its weights. Remove the claims of an end-to-end silicon run,
-  of fitting in under 2% of the device and of a generated bitstream, and the
-  unsourced 1 317 LUT and 848 FF figures. The hardware number provenance test
+  the network with its weights. Remove the claims of an end-to-end silicon run
+  and of fitting in under 2% of the device. The 1 317 LUT and 848 FF figures
+  came close to the out-of-context synthesis of the AXI wrapper IP (1 319 LUT,
+  848 FF), also without weights, and are no longer quoted. The bitstream and
+  routed reports of 13 April 2026, built from the same design without weights,
+  were removed from the repository on 26 July 2026 as reproducible outputs.
+  The hardware number provenance test
   now covers the roadmap, the benchmark page and the generated manifests, and
   requires the qualifier beside every quoted figure.
 
