@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Push the container image that the vulnerability scan passed, instead of
+  building it a second time for the push. Each release tag must name the
+  scanned image in the runner's Docker daemon before it is pushed from there.
+
 - Omit the machine hostname from the seven remaining benchmark producers that
   recorded it: the shared non-resetting LIF harness and the MAT, nonlinear
   LIF, SC resetting MAT, SFA, spike response and SpiNNaker LIF benchmarks.

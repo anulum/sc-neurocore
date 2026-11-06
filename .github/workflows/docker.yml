@@ -148,15 +148,24 @@ jobs:
             --output /work/trivy-results.sarif \
             "${IMAGE_REF}"
 
+      # Push the image Trivy scanned, not a rebuild: every tag must name the scanned image
+      # in the local daemon before any tag is pushed from there.
       - name: Push the scanned image
-        id: build_push
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          file: deploy/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          scanned="$(docker image inspect --format '{{.Id}}' "${IMAGE_REF}")"
+          test -n "${scanned}"
+          mapfile -t tags < <(printf '%s\n' "${TAGS}" | sed '/^$/d')
+          test "${#tags[@]}" -gt 0
+          for tag in "${tags[@]}"; do
+            test "$(docker image inspect --format '{{.Id}}' "${tag}")" = "${scanned}"
+          done
+          for tag in "${tags[@]}"; do
+            docker push "${tag}"
+          done
 
       - name: Wait for GHCR image availability
         shell: bash

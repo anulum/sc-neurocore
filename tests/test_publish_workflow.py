@@ -415,7 +415,11 @@ def test_unpublished_dispatch_runs_the_full_crate_verify_build() -> None:
 
 
 def test_container_image_is_scanned_before_any_push() -> None:
-    """No image tag reaches GHCR before the CRITICAL/HIGH gate passed."""
+    """No image tag reaches GHCR before the CRITICAL/HIGH gate passed, and only the scanned image does.
+
+    The one image build loads into the local daemon. The push step rebuilds nothing: it checks
+    that every tag names the scanned image, and only then pushes that image.
+    """
     job = _named_workflow("docker.yml")["jobs"]["build-push"]
     build_at, build = _step(job, "Build the image locally")
     scan_at, scan = _step(job, "Trivy fail on CRITICAL/HIGH")
@@ -423,11 +427,27 @@ def test_container_image_is_scanned_before_any_push() -> None:
     assert build_at < scan_at < push_at
     assert build["with"]["load"] is True and build["with"]["push"] is False
     assert "--exit-code 1" in scan["run"]
-    assert push["with"]["push"] is True
-    pushes = [
-        s for s in job["steps"] if isinstance(s, dict) and s.get("with", {}).get("push") is True
+    assert push["env"]["IMAGE_REF"] == scan["env"]["IMAGE_REF"]
+    builds = [
+        s
+        for s in job["steps"]
+        if isinstance(s, dict) and str(s.get("uses", "")).startswith("docker/build-push-action@")
     ]
-    assert pushes == [push]
+    assert builds == [build]
+    assert not any(
+        isinstance(s, dict) and s.get("with", {}).get("push") is True for s in job["steps"]
+    )
+    commands = push["run"]
+    same_image = commands.index(
+        'test "$(docker image inspect --format \'{{.Id}}\' "${tag}")" = "${scanned}"'
+    )
+    # Every tag is checked before the first push, so a mismatch publishes nothing.
+    assert (
+        commands.index('scanned="$(docker image inspect')
+        < same_image
+        < commands.index("done", same_image)
+        < commands.index('docker push "${tag}"')
+    )
     assert _step(job, "Extract metadata")[1]["with"]["flavor"].split() == ["latest=auto"]
 
 
