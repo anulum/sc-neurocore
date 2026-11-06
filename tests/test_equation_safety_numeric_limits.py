@@ -81,10 +81,10 @@ def test_a_text_that_exhausts_the_parser_is_refused_not_raised() -> None:
     makes it raise ``RecursionError`` where the C stack limits the parser; that limit
     depends on the interpreter and the host (Python 3.14 on the hosted runners
     parses the chain). The expected refusal is therefore taken from this
-    interpreter's own parse: the parser refusal where it recurses too deeply, the
-    depth refusal where it does not. Random draw-site numbering, which parses a
-    neuron's raw text before the gate, finds no calls in either text and leaves
-    the refusal to the gate.
+    interpreter's own parse: the parser refusal where it recurses too deeply or
+    overflows its stack, the depth refusal where it does not. Random draw-site
+    numbering, which parses a neuron's raw text before the gate, finds no calls in
+    either text and leaves the refusal to the gate.
     """
     powers = "**".join(["v"] * 3000)
     additions = " + ".join(["v"] * 100_000)
@@ -94,7 +94,8 @@ def test_a_text_that_exhausts_the_parser_is_refused_not_raised() -> None:
         ExpressionSafetyValidator().validate(powers)
     try:
         ast.parse(additions, mode="eval")
-    except RecursionError:
+    except (RecursionError, MemoryError):
+        # The same two parser failures the gate turns into its parser refusal.
         expected = message
     else:
         expected = "Equation AST depth 100002 exceeds limit 20"
