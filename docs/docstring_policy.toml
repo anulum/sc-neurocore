@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1772
+expected_file_count = 1775
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -199,6 +199,18 @@ rationale = "Named Grype matches retain exact installed artifact and fixed-code 
 [[file]]
 path = "tests/test_tools/test_advisory_exceptions.py"
 rationale = "Actual scanner findings and copied vendor source prove that byte corruption, missing or external proof, changed scope and expired records block acceptance."
+
+[[file]]
+path = "conftest.py"
+rationale = "Start JuliaCall before Torch and leave a Julia project that would be resolved again untouched unless the run requires Julia."
+
+[[file]]
+path = "tests/julia_requirement.py"
+rationale = "Skip Julia-lane modules only when the bridge is absent or left uninitialised, never in CI, and keep collection from resolving an unrequested Julia project."
+
+[[file]]
+path = "tests/test_julia_requirement_gate.py"
+rationale = "Real collection leaves a Julia project needing resolution byte-for-byte unchanged, and the bridge gate skips or fails exactly as CI and local runs require."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"

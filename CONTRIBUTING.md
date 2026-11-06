@@ -92,6 +92,17 @@ immediate process exit. Each process writes separate data; pytest-cov combines
 it into the current batch, and `--cov-append` retains earlier batches. Keep both
 patches and the parallel setting when changing the coverage runner.
 
+The root `conftest.py` starts JuliaCall before any test can import Torch.
+`juliapkg` resolves its Julia project again whenever that project was last
+resolved for another checkout, interpreter or Julia executable, and the default
+project of a virtual environment is shared by every checkout that uses it.
+Unless `SC_NEUROCORE_REQUIRE_JULIA=1` is set, a project that would be resolved
+again stays untouched: JuliaCall is left uninitialised, the run summary says
+so, and modules gated by `tests/julia_requirement.py` skip. To run them from
+another checkout, point `PYTHON_JULIAPKG_PROJECT` at a private copy of the
+project and set `SC_NEUROCORE_REQUIRE_JULIA=1`. The main CI workflow sets it
+for every job.
+
 Hosted CI partitions the complete test-module list into eight shards for each
 Python interpreter, then runs each shard in memory-reclaiming batches. Every
 module runs once per interpreter; interpreter-independent formal proofs retain
