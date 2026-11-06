@@ -17,10 +17,11 @@ import json
 import os
 import signal
 import subprocess
-import tomllib
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
+
+import tomllib
 
 CARGO_FUZZ_SCHEMA_VERSION = "sc-neurocore.cargo-fuzz-scanners.v1"
 CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS = 300
@@ -57,24 +58,27 @@ def run_in_process_group(
     """
     if not capture_output or not text or check:
         raise ValueError("run_in_process_group captures text output and never checks")
-    process = subprocess.Popen(
+    # Leaving the block closes both pipes and reaps the process on every path.
+    with subprocess.Popen(
         command,
         cwd=cwd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         start_new_session=True,
-    )
-    try:
-        stdout, stderr = process.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        _kill_process_group(process.pid)
-        stdout, stderr = process.communicate()
-        raise subprocess.TimeoutExpired(command, timeout, output=stdout, stderr=stderr) from None
-    except BaseException:
-        _kill_process_group(process.pid)
-        process.wait()
-        raise
+    ) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _kill_process_group(process.pid)
+            stdout, stderr = process.communicate()
+            raise subprocess.TimeoutExpired(
+                command, timeout, output=stdout, stderr=stderr
+            ) from None
+        except BaseException:
+            _kill_process_group(process.pid)
+            process.wait()
+            raise
     return subprocess.CompletedProcess(command, process.returncode, stdout=stdout, stderr=stderr)
 
 
