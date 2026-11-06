@@ -127,7 +127,10 @@ exact package and advisory match, and every audit re-establishes its proof.
 Unused, expired or unavailable proofs block the audit; no finding is hidden from
 the raw Grype output or the accepted/blocked decision.
 
-Each reason admits exactly one advisory and one kind of immutable CPython file:
+Each reason admits only the advisories named in
+`tools/security_scan/advisory_exceptions.py`, and each advisory is bound to its
+own immutable CPython file. An unnamed advisory, another reason or another
+source file is refused:
 
 - `fixed_code_present`: the installed file equals the fixed vendor source, so the
   installed version already contains the fix that Grype's comparison misses.
@@ -139,15 +142,24 @@ Each reason admits exactly one advisory and one kind of immutable CPython file:
   lock moves as soon as the vendor publishes. The review date may be at most
   14 days ahead.
 
-The current record is CVE-2026-103995 (Low, CVSS 4.0 base score 2.0) for
-conda-forge Python 3.15.2 in the Mojo lock: `http.client` accepted signed,
-underscored, padded and `0x`-prefixed Content-Length and chunk-size values.
-CPython fixed it on its main branch (gh-150751), which will become 3.16. No 3.15
-release carries the fix, and conda-forge lists nothing newer than 3.15.2. The
-installed `http/client.py` equals the CPython 3.15.2 release file, and the
-Mojo kernels and runner make no HTTP requests. The record lapses on its review
-date, when Grype stops reporting the finding, or as soon as conda-forge lists a
-newer final release.
+The current records cover two advisories for conda-forge Python 3.15.2 in the
+Mojo lock. CPython fixed both on its main branch, which will become 3.16. No
+3.15 release carries either fix, and conda-forge lists nothing newer than 3.15.2.
+
+- CVE-2026-103995 (Low, CVSS 4.0 base score 2.0): `http.client` accepted signed,
+  underscored, padded and `0x`-prefixed Content-Length and chunk-size values
+  (gh-150751). The installed `http/client.py` equals the CPython 3.15.2 release
+  file, and the Mojo kernels and runner make no HTTP requests.
+- CVE-2026-116566 (Medium, CVSS 4.0 base score 5.3): `socket.getaddrinfo()`
+  accepted null bytes in its host and port arguments, which could silently
+  truncate them (gh-160898). The fix changes the C module
+  `Modules/socketmodule.c`. The installed `socket.py`, the module's Python front
+  end, equals the CPython 3.15.2 release file; together with the locked package
+  digest, this proves the unmodified release. The Mojo environment takes no host
+  or port from untrusted input.
+
+Each record lapses on its review date, when Grype stops reporting the finding,
+or as soon as conda-forge lists a newer final release.
 
 The previous fixed-code record addressed Grype's generic comparison
 of Python 3.15.0 against its prerelease fix boundary 3.15.0a6 for CVE-2025-15367:
