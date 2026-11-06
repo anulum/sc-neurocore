@@ -22,7 +22,11 @@ import time
 import uuid
 
 from tests.formal_native_evidence_support import JOB, ROOT, NativeEvidence, _state, _tool
-from tests.formal_native_nonvacuity_support import bind_audit, collect_native_audit
+from tests.formal_native_nonvacuity_support import (
+    bind_audit,
+    collect_native_audit,
+    read_cgroup_file,
+)
 from tools.formal_evidence_validation import (
     EvidencePolicy,
     digest,
@@ -117,17 +121,13 @@ def measure_native_unit(
             if state["ControlGroup"]:
                 cgroup = Path("/sys/fs/cgroup") / state["ControlGroup"].lstrip("/")
             if cgroup is not None:
-                try:
-                    peak = max(peak, int((cgroup / "memory.peak").read_text()))
+                if (reading := read_cgroup_file(cgroup, "memory.peak")) is not None:
+                    peak = max(peak, int(reading))
+                if (reading := read_cgroup_file(event_group, "memory.events")) is not None:
                     events = dict(
                         (name, int(value))
-                        for name, value in (
-                            line.split()
-                            for line in (event_group / "memory.events").read_text().splitlines()
-                        )
+                        for name, value in (line.split() for line in reading.splitlines())
                     )
-                except FileNotFoundError:
-                    pass
             if state.get("MemoryPeak", "").isdigit():
                 peak = max(peak, int(state["MemoryPeak"]))
             if state["SubState"] in ("exited", "failed", "dead"):
@@ -136,12 +136,9 @@ def measure_native_unit(
                 "Owned native resource fixture exceeded its ceiling."
             )
             time.sleep(0.01)
-        processes = []
-        if cgroup is not None:
-            try:
-                processes = (cgroup / "cgroup.procs").read_text().split()
-            except FileNotFoundError:
-                pass
+        processes = (
+            (read_cgroup_file(cgroup, "cgroup.procs") or "").split() if cgroup is not None else []
+        )
         assert state["MainPID"] == "0" and not processes, state
         events = dict(
             (name, int(value))

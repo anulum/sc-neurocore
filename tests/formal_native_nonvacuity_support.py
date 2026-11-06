@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import socket
@@ -39,6 +40,33 @@ configuration = native_configuration((primary / 'config.sby').read_text())
 (r / 'native-audit.json').write_text(json.dumps({'configuration': configuration, 'report': report}))
 raise SystemExit(0 if report['verdict'] == 'NONVACUOUS' else 2)
 """
+
+
+def read_cgroup_file(cgroup: Path, name: str) -> str | None:
+    """Read an actual cgroup interface file, or nothing once systemd removed the group.
+
+    systemd removes an exited unit's cgroup asynchronously. A file opened just
+    before that removal fails to read with ENODEV instead of ENOENT, so both
+    mean the group is gone; every other failure propagates.
+
+    Parameters
+    ----------
+    cgroup : Path
+        Actual cgroup directory of an owned transient unit or slice.
+    name : str
+        Interface file within that cgroup.
+
+    Returns
+    -------
+    str or None
+        The file content, or None when the cgroup no longer exists.
+    """
+    try:
+        return (cgroup / name).read_text()
+    except OSError as error:
+        if error.errno in (errno.ENOENT, errno.ENODEV):
+            return None
+        raise
 
 
 def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = False) -> None:
@@ -103,17 +131,13 @@ def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = Fa
             if state["ControlGroup"]:
                 cgroup = Path("/sys/fs/cgroup") / state["ControlGroup"].lstrip("/")
             if cgroup is not None:
-                try:
-                    peak = max(peak, int((cgroup / "memory.peak").read_text()))
+                if (reading := read_cgroup_file(cgroup, "memory.peak")) is not None:
+                    peak = max(peak, int(reading))
+                if (reading := read_cgroup_file(cgroup, "memory.events")) is not None:
                     events = dict(
                         (key, int(value))
-                        for key, value in (
-                            line.split()
-                            for line in (cgroup / "memory.events").read_text().splitlines()
-                        )
+                        for key, value in (line.split() for line in reading.splitlines())
                     )
-                except FileNotFoundError:
-                    pass
             if state["SubState"] in ("exited", "failed", "dead"):
                 break
             assert time.monotonic() < deadline, "Enable audit exceeded its actual finite ceiling."
@@ -122,11 +146,7 @@ def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = Fa
             root / "audit-unit.log"
         ).read_text()
         assert state["MainPID"] == "0"
-        assert (
-            cgroup is None
-            or not (cgroup / "cgroup.procs").exists()
-            or not (cgroup / "cgroup.procs").read_text().split()
-        )
+        assert cgroup is None or not (read_cgroup_file(cgroup, "cgroup.procs") or "").split()
         start, stop = (
             int(state[name])
             for name in ("ExecMainStartTimestampMonotonic", "ExecMainExitTimestampMonotonic")
@@ -158,11 +178,7 @@ def collect_native_audit(evidence: NativeEvidence, *, resource_parent: bool = Fa
         subprocess.run([*control, "stop", unit], capture_output=True, check=True, timeout=15)
         closing = _state(control, unit)
         assert closing["ActiveState"] in ("inactive", "failed") and closing["MainPID"] == "0"
-        assert (
-            cgroup is None
-            or not (cgroup / "cgroup.procs").exists()
-            or not (cgroup / "cgroup.procs").read_text().split()
-        )
+        assert cgroup is None or not (read_cgroup_file(cgroup, "cgroup.procs") or "").split()
     measurement["active_state"] = closing["ActiveState"]
     task = read_object(root / "native-audit.json")
     report = object_fields(task["report"])

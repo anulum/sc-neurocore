@@ -31,7 +31,11 @@ from tools.formal_evidence_validation import (
 from tools.formal_job_inputs import resolve_job
 from tools.formal_resource_policy import PRIMARY
 from tools.formal_log_normalization import NORMALIZER_ID, normalize_native_log
-from tests.formal_native_nonvacuity_support import bind_audit, collect_native_audit
+from tests.formal_native_nonvacuity_support import (
+    bind_audit,
+    collect_native_audit,
+    read_cgroup_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 JOB = Path("hdl/formal/catalogue/sc_mccullochpittsneuron.sby")
@@ -273,17 +277,13 @@ def collect_native(
             if state["ControlGroup"]:
                 cgroup = Path("/sys/fs/cgroup") / state["ControlGroup"].lstrip("/")
             if cgroup is not None:
-                try:
-                    peak = max(peak, int((cgroup / "memory.peak").read_text()))
+                if (reading := read_cgroup_file(cgroup, "memory.peak")) is not None:
+                    peak = max(peak, int(reading))
+                if (reading := read_cgroup_file(cgroup, "memory.events")) is not None:
                     events = {
                         key: int(value)
-                        for key, value in (
-                            line.split()
-                            for line in (cgroup / "memory.events").read_text().splitlines()
-                        )
+                        for key, value in (line.split() for line in reading.splitlines())
                     }
-                except FileNotFoundError:
-                    pass
             if state.get("MemoryPeak", "").isdigit():
                 peak = max(peak, int(state["MemoryPeak"]))
             if state["SubState"] in ("exited", "failed", "dead"):
@@ -291,9 +291,7 @@ def collect_native(
             assert time.monotonic() < deadline, "Actual tiny SBY job exceeded its finite ceiling."
             time.sleep(0.05)
         processes = (
-            (cgroup / "cgroup.procs").read_text().split()
-            if cgroup is not None and (cgroup / "cgroup.procs").is_file()
-            else []
+            (read_cgroup_file(cgroup, "cgroup.procs") or "").split() if cgroup is not None else []
         )
         assert state["MainPID"] == "0" and not processes, state
         assert state["Result"] == "success" and state["ExecMainStatus"] == "0", log.read_text()
@@ -357,11 +355,7 @@ def collect_native(
         subprocess.run([*control, "stop", unit], capture_output=True, check=True, timeout=15)
         closing = _state(control, unit)
         assert closing["ActiveState"] == "inactive" and closing["MainPID"] == "0", closing
-        assert (
-            cgroup is None
-            or not (cgroup / "cgroup.procs").exists()
-            or not (cgroup / "cgroup.procs").read_text().split()
-        )
+        assert cgroup is None or not (read_cgroup_file(cgroup, "cgroup.procs") or "").split()
     public_log = repository / "public-native.log"
     public_log.write_bytes(
         normalize_native_log(
