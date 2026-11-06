@@ -29,6 +29,9 @@ channel is only missing.
   are idempotent: both PyPI steps skip files PyPI already holds (`skip-existing`), and the crate job skips a version
   that crates.io already lists. A missing GitHub Release can also be published from the tag by dispatching
   `release.yml` with `tag` set to the release tag and `publish` set to true.
+- **GHCR after a partial push.** Re-run the Docker job only when it pushed no tag. A re-run builds the image again,
+  and the new image can differ from the one already pushed. Once a tag is pushed, create each missing tag from it
+  without a rebuild, with the `alias_from` and `alias_to` inputs of `docker.yml`.
 - **A published artifact is faulty.** Withdraw it as below, even when other channels never published, and fix
   forward.
 

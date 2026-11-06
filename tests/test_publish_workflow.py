@@ -125,6 +125,72 @@ def test_rollback_plan_completes_a_partial_publication_only_by_existing_mechanis
     assert inputs["tag"]["required"] is True and inputs["publish"]["type"] == "boolean"
     checkout = release["jobs"]["release"]["steps"][0]
     assert "inputs.publish && inputs.tag" in checkout["with"]["ref"]
+    # GHCR: once a tag is pushed, missing tags come from it through the alias job, not a rebuild.
+    assert "`alias_from` and `alias_to` inputs of `docker.yml`" in section
+    docker = _named_workflow("docker.yml")
+    assert {"alias_from", "alias_to"} <= set(
+        cast(dict[Any, Any], docker).get(True, {})["workflow_dispatch"]["inputs"]
+    )
+    alias_run = _run_text(docker["jobs"]["alias-image"])
+    assert "docker buildx imagetools create" in alias_run and "build-push-action" not in str(
+        docker["jobs"]["alias-image"]
+    )
+
+
+_UNTRUSTED_CONTEXT = re.compile(r"\$\{\{[^}]*\b(?:inputs\.|github\.event\.|github\.head_ref)")
+
+
+def _script_interpolations(run: str) -> list[str]:
+    """Return the lines of a step script that expand dispatch or event data as script text.
+
+    Parameters
+    ----------
+    run : str
+        Shell text of one workflow step.
+
+    Returns
+    -------
+    list of str
+        Lines in which an ``inputs``, ``github.event`` or ``github.head_ref`` expression is
+        substituted into the script itself, where its value would be parsed as shell.
+    """
+    return [line.strip() for line in run.splitlines() if _UNTRUSTED_CONTEXT.search(line)]
+
+
+def test_no_workflow_script_expands_dispatch_or_event_data_as_shell() -> None:
+    """Dispatch inputs and event data reach every step script through ``env``, never as its text."""
+    offenders = []
+    for path in sorted((_repo_root() / ".github" / "workflows").glob("*.yml")):
+        workflow = _named_workflow(path.name)
+        for job_name, job in workflow["jobs"].items():
+            for step in job.get("steps", []):
+                for line in _script_interpolations(step.get("run", "")):
+                    offenders.append(f"{path.name}:{job_name}: {line}")
+    assert offenders == []
+
+
+@pytest.mark.parametrize(
+    ("run", "expanded"),
+    [
+        ('RELEASE_TAG="${{ inputs.tag }}"', True),
+        ("-max_total_time=${{ github.event.inputs.max_total_time || '300' }}", True),
+        ('echo "${{ github.head_ref }}"', True),
+        ('RELEASE_TAG="${DISPATCH_TAG}"', False),
+        ('if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then', False),
+        ("echo ${{ steps.meta.outputs.version }}", False),
+    ],
+)
+def test_the_script_scan_recognises_an_expanded_input(run: str, expanded: bool) -> None:
+    """The scan finds an input or event expression in script text and accepts env references.
+
+    Parameters
+    ----------
+    run : str
+        Step shell text.
+    expanded : bool
+        Whether the text substitutes dispatch or event data into the script.
+    """
+    assert bool(_script_interpolations(run)) is expanded
 
 
 def test_both_crate_jobs_query_the_registry_through_one_tool() -> None:

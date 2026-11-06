@@ -68,7 +68,9 @@ def test_release_workflow_supports_manual_tag_backfill() -> None:
     )
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
-    assert 'RELEASE_TAG="${{ inputs.tag }}"' in run_text
+    resolve = next(step for step in steps if step.get("name") == "Resolve release tag")
+    assert resolve["env"]["DISPATCH_TAG"] == "${{ inputs.tag }}"
+    assert 'RELEASE_TAG="${DISPATCH_TAG}"' in resolve["run"]
     assert 'TAG="$RELEASE_TAG"' in run_text
 
     release_step = [

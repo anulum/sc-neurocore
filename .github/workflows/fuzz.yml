@@ -53,11 +53,15 @@ jobs:
         # engine/rust-toolchain.toml pins the stable channel, which would otherwise
         # override the nightly installed above; cargo-fuzz needs nightly for the
         # -Z sanitizer flags, so select it explicitly with `+nightly`.
+        # The dispatch input reaches the script through env and must be whole seconds.
+        env:
+          MAX_TOTAL_TIME: ${{ github.event.inputs.max_total_time || '300' }}
         run: |
+          [[ "${MAX_TOTAL_TIME}" =~ ^[0-9]+$ ]]
           for target in parse_ir roundtrip_ir bitstream csr_matrix; do
             echo "::group::fuzz $target"
             cargo +nightly fuzz run "$target" -- \
-              -max_total_time=${{ github.event.inputs.max_total_time || '300' }} \
+              -max_total_time="${MAX_TOTAL_TIME}" \
               -max_len=8192
             echo "::endgroup::"
           done

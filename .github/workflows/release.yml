@@ -42,10 +42,13 @@ jobs:
           # publish backfill checks out the historical release tag.
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.publish && inputs.tag || github.ref }}
 
+      # The dispatch input reaches the script through env, never as script text.
       - name: Resolve release tag
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            RELEASE_TAG="${{ inputs.tag }}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${DISPATCH_TAG}"
           else
             RELEASE_TAG="${GITHUB_REF#refs/tags/}"
           fi
