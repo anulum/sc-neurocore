@@ -33,7 +33,10 @@ def test_no_command_prints_grouped_help(capsys: pytest.CaptureFixture[str]) -> N
     assert rc == 0
     output = capsys.readouterr().out
     assert "usage" in output.lower()
-    assert "Model     info, compile, compile-nir, compile-ir, serve, map-nir" in output
+    assert (
+        "Model     info, compile, compile-nir, compile-ir, evidence-packet, serve, map-nir"
+        in output
+    )
     assert "Hardware  deploy, collect-synthesis, scnir, formal, hub-init" in output
     assert "Studio    studio and studio-* operator commands" in output
     assert "Data      dataset manifest, dataset verify, dataset split" in output

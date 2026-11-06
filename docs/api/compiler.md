@@ -273,6 +273,67 @@ does not instantiate, when a formal entry no longer matches its committed job,
 harness parameters or module defaults, and, where SymbiYosys and its solvers are installed, when a named job does not
 pass.
 
+### 3.6 Evidence Packet of a Dense Layer Design
+
+`sc-neurocore evidence-packet export GRAPH.sc --output DIR` writes one
+hash-bound directory of evidence for one generated design, and
+`sc-neurocore evidence-packet verify DIR` checks it. The supported design is an
+IR graph of exactly one shape: one `sc.input` of type `vec<rate,N>`, constants
+for the weight matrix, the leak and the gain, one `sc.dense_forward` and one
+`sc.output` of its spikes. Any other operation is refused, and the refusal names
+every unsupported operation (for example `sc.lif_step` or `sc.encode`).
+
+| Member | Content |
+| --- | --- |
+| `design.sc`, `design.sv` | The IR text exactly as given, and the SystemVerilog the installed engine emits from it. |
+| `design.guarantees.json`, `.txt` | The guarantee summary of §3.5. |
+| `parameters.json` | Geometry, the Q format of the inputs, weights, leak, gain and state words, the current range, the stream length, and the LFSR seed of every input and weight encoder. |
+| `cosim/` | The stimulus, the Python bit-true reference trace, the Icarus Verilog trace of the emitted top level, the testbench and the verdict with the first differing cycle. |
+| `formal/` | For every library module the summary classifies `FORMAL` or `PROVEN AT OTHER PARAMETERS`, and for every module inside a `CO-SIMULATED ONLY` module, its committed SymbiYosys job run in a scratch copy outside the checkout: verdict, mode, depth, engine, assumptions, the SHA-256 of the log and of every job source. A job whose tools are missing is recorded as unavailable with the reason. |
+| `synthesis/` | The Yosys report of `run_synthesis` for the top level with its primitives and its SHA-256, or the reason synthesis is unavailable. No place and route is run. |
+| `tools.json`, `source.json` | Versions of Icarus Verilog, Yosys, SymbiYosys, the SMT solvers, Python, the package and the engine; the package version and, from a Git checkout, the commit and whether the tree is dirty. |
+| `evidence.json`, `evidence.txt` | The verdicts and the boundary statement. |
+| `manifest.json` | Every other member with its SHA-256 and size, and the content digest of that list computed by `safety_cert.evidence.EvidenceBag`. |
+
+The reference in `sc_neurocore.safety_cert.dense_cosim` models the emitted
+`sc_dense_matrix_layer` cycle by cycle from the RTL and emitter sources it
+cites: input encoder `i` is seeded with `INPUT_SEED_BASE + 7 i` and weight
+encoder `(j, i)` with `WEIGHT_SEED_BASE + 13 N j + 13 i` (16-bit); a probability
+word at or below zero never fires, a word at or above one fires on every LFSR
+state but `0xFFFF`, and any other word becomes bits `[F +: 16]` of
+`word * 65535`; the current is `y_min + (y_max - y_min) * count / N`, divided
+toward zero; the neuron is `sc_lif_neuron` with threshold 256 and no refractory
+period. Spikes, every membrane word and the run controller's `running` and
+`run_done` are compared after each edge.
+
+The boundary statement says what the packet establishes: the exact artefacts,
+bit-exact agreement of the emitted top level with the reference over the
+recorded stimulus and cycles, and each formal verdict at its stated depth and
+harness parameters. It also says what it does not: no unbounded proof, no
+formal proof of the generated top level or of a module at parameters other
+than its harness proves, nothing about other stimuli or seeds and no error
+bound on the stochastic estimates, no measured power, timing or behaviour on
+hardware and no place and route, synthesis figures that are estimates of
+the named tool for the named target, and no authenticity: the manifest is a
+digest list, not a signature, so a rewritten packet with a rewritten manifest
+verifies. Keep the reported `manifest_sha256` apart from the packet and compare
+it.
+
+Only a formal job that ran with verdict `PASS` is listed as established. A job
+that did not run, or ran with any other verdict (`FAIL`, `TIMEOUT`, `UNKNOWN`,
+`ERROR`), is listed under what the packet does not establish, and so is a job
+whose `hdl/<module>.v` differs from the packaged primitive the co-simulation
+used. `source.json` is read before any member is written, so a packet written
+inside the checkout does not mark it dirty.
+
+`verify_evidence_packet(DIR)` re-reads and re-hashes every member and refuses a
+missing member, an extra file, a directory that holds no member, an entry that
+is not a regular file (such as a FIFO, which is never opened), an altered
+member, a symbolic link and a manifest whose digest does not match its list. The Python API is
+`sc_neurocore.safety_cert.evidence_packet` (`export_evidence_packet`,
+`verify_evidence_packet`) and `sc_neurocore.safety_cert.dense_cosim`
+(`parse_dense_design`, `reference_trace`, `run_rtl`, `cosimulate`).
+
 ## 4. Python API
 
 ### 4.1 Equation Compiler

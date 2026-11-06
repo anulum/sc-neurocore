@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1796
+expected_file_count = 1801
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7257,3 +7257,18 @@ rationale = "Exercise version, grouped help and per-command help through the pub
 [[file]]
 path = "tests/test_cli_architecture.py"
 rationale = "Protect the command package boundary, its single registrations and the removed CLI mirrors."
+[[file]]
+path = "src/sc_neurocore/safety_cert/dense_cosim.py"
+rationale = "Co-simulate an emitted dense layer graph against its bit-true Python reference, cycle by cycle."
+[[file]]
+path = "src/sc_neurocore/safety_cert/evidence_packet.py"
+rationale = "Export and verify the hash-bound evidence packet of one generated dense layer design."
+[[file]]
+path = "src/sc_neurocore/cli/commands/evidence_packet.py"
+rationale = "Export or verify an evidence packet from the command line with exit status zero or one."
+[[file]]
+path = "tests/test_dense_cosim.py"
+rationale = "Bind the dense layer reference to the emitted RTL, the neuron models, planted faults and refusals."
+[[file]]
+path = "tests/test_evidence_packet.py"
+rationale = "Export real packets, run their formal and synthesis members, and refuse every tamper class."

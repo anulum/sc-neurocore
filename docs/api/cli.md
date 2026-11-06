@@ -29,7 +29,7 @@ optional dependencies merely to discover their metadata.
 Top-level help groups the product into five modes:
 
 ```text
-Model     info, compile, compile-nir, compile-ir, serve, map-nir
+Model     info, compile, compile-nir, compile-ir, evidence-packet, serve, map-nir
 Hardware  deploy, collect-synthesis, scnir, formal, hub-init
 Studio    studio and studio-* operator commands
 Data      dataset manifest, dataset verify, dataset split
@@ -76,6 +76,7 @@ preserving the original console-script contract.
 | `compile` | Lower one ODE into Verilog and optional HLS C++ | equation builder/compiler, HLS exporter, optional Yosys adapter |
 | `compile-nir` | Lower NIR/ONNX into RTL, SC-NIR metadata, manifests, and optional handoff audit | NIR bridge and SC-NIR writers |
 | `compile-ir` | Emit one IR graph as SystemVerilog with its guarantee summary | engine IR verifier and emitter, `sc_neurocore.compiler.guarantee_summary` |
+| `evidence-packet export`, `evidence-packet verify` | Write or check the hash-bound evidence packet of one dense layer IR graph | `sc_neurocore.safety_cert.evidence_packet`, `sc_neurocore.safety_cert.dense_cosim` |
 | `serve` | Serve a NIR graph over the spike-stream protocol | `sc_neurocore.serve.SpikeServer` |
 | `map-nir` | Emit deterministic target-mapping evidence | NIR silicon-mapping writer |
 
@@ -144,6 +145,29 @@ Python reference by a committed test), `PROBABILISTIC` (a stochastic-bitstream
 estimate with its stream length and seed; no error bound is established for LFSR
 streams yet) or `NONE` (inline logic or wiring). The same summary is available from
 Python through `sc_neurocore.compiler.guarantee_summary.summarize_graph`.
+
+Write and check the evidence packet of one dense layer design:
+
+```bash
+sc-neurocore evidence-packet export dense.sc --output build/dense_packet
+sc-neurocore evidence-packet verify build/dense_packet
+```
+
+`evidence-packet export` accepts only a graph of one `sc.input` of type
+`vec<rate,N>`, constants, one `sc.dense_forward` and one `sc.output`, and names
+every other operation in its refusal. It refuses an output directory that
+exists and is not empty, and it needs Icarus Verilog. The packet holds the IR and
+SystemVerilog, the guarantee summary, `parameters.json`, a co-simulation of the
+emitted top level against the Python bit-true reference (`--cycles`, default
+256), the committed formal jobs of the modules involved run in a scratch copy, a
+Yosys report (`--target`, default `ice40`), tool and source versions, a
+boundary statement and `manifest.json`. A formal job or synthesis whose tools are
+missing is recorded as unavailable with the reason. `evidence-packet verify`
+re-hashes every member and exits with status 1 on a missing, extra, altered or
+symbolically linked member, a directory that holds no member, an entry that is
+not a regular file, or a manifest digest mismatch. Export exits with
+status 1 when the input cannot be read, is refused, or the co-simulation
+differs.
 
 Serve and map a graph:
 

@@ -39,6 +39,7 @@ def test_command_modules_have_one_registration_boundary() -> None:
         "compile_ir",
         "dataset",
         "deploy",
+        "evidence_packet",
         "formal",
         "hub",
         "info",

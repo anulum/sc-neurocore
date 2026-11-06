@@ -12,6 +12,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Export a hash-bound evidence packet for one generated dense layer design, and
+  verify it. `sc-neurocore evidence-packet export GRAPH -o DIR` accepts an IR
+  graph of one `sc.input` of `vec<rate,N>`, constants, one `sc.dense_forward`
+  and one `sc.output`, and refuses any other operation by name. It writes the
+  IR and SystemVerilog, the guarantee summary, the Q formats and every encoder
+  seed, a cycle-by-cycle co-simulation of the emitted top level under Icarus
+  Verilog against a new bit-true Python reference
+  (`sc_neurocore.safety_cert.dense_cosim`, N inputs by M neurons; tested from
+  2x2 to 4x3 at state widths 12 to 64), the committed formal jobs of the library modules involved run in a
+  scratch copy outside the checkout, a Yosys report, tool and source versions,
+  a statement of what the packet does and does not establish, and a manifest of
+  SHA-256 digests. A formal job or synthesis whose tools are missing is
+  recorded as unavailable with the reason; only a formal `PASS` is listed as
+  established, and a job that did not run, did not pass, or proved a source
+  other than the simulated primitive is listed as a gap. `sc-neurocore
+  evidence-packet verify DIR` refuses a missing, extra, altered or symbolically
+  linked member, a directory that holds no member, an entry that is not a
+  regular file, and a manifest digest mismatch. Tests export packets for real 2x2 and 3x2 designs,
+  find planted faults in the reference configuration at their first differing
+  cycle, and refuse every tamper class.
+
 - Refuse an equation that overflows Python's parser instead of failing with an
   internal error. Some texts far below the 16,384-character limit make CPython's
   parser raise `MemoryError` ("Parser stack overflowed"), for example 3,000

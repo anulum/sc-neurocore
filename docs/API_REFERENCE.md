@@ -7629,6 +7629,46 @@ bool
 
 ---
 
+## Module `cli.commands.evidence_packet`
+
+### Function `add_evidence_packet_command(subparsers)`
+Register ``evidence-packet export`` and ``evidence-packet verify``.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_evidence_packet_export(args)`
+Export one evidence packet.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``evidence-packet export`` arguments.
+
+Returns
+-------
+int
+    Zero when the packet was written and the co-simulation agreed; one when the
+    file cannot be read, the graph is invalid or unsupported, the output directory
+    is not empty, the simulator is missing or fails, or the co-simulation differs.
+
+### Function `run_evidence_packet_verify(args)`
+Verify one evidence packet.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``evidence-packet verify`` arguments.
+
+Returns
+-------
+int
+    Zero when every member matches the manifest; one otherwise.
+
+---
+
 ## Module `cli.commands.formal`
 
 ### Function `add_formal_command(subparsers)`
@@ -39378,6 +39418,383 @@ Navigate curated clause relationships without asserting equivalence.
 
 ---
 
+## Module `safety_cert.dense_cosim`
+
+### Class `UnsupportedDesignError`
+The graph is not the one dense layer shape this module models.
+
+Parameters
+----------
+message : str
+    What is unsupported.
+operations : Sequence&#91;str&#93;
+    The unsupported operation keywords, such as ``sc.lif_step``, if any.
+
+- **__init__**(message, operations)
+
+### Class `SimulatorUnavailableError`
+Icarus Verilog (``iverilog`` and ``vvp``) is not installed.
+
+
+### Class `CosimError`
+The simulator failed to compile or run the design and its testbench.
+
+
+### Class `ScalarFormat`
+Hardware word layout of one declared IR scalar type.
+
+Attributes
+----------
+type : str
+    The IR type as written, such as ``rate`` or ``fixed<16,8>``.
+width : int
+    Bits per word.
+fraction : int
+    Binary point.
+signed : bool
+    Whether the word is two's complement.
+
+- **to_json**()
+  - Return the layout as a JSON object.
+
+### Class `DenseDesign`
+Every parameter of a supported dense layer graph, as its IR text states them.
+
+Attributes
+----------
+name : str
+    Graph name, which is the emitted module name.
+input_name, output_name : str
+    Names of the top-level input and output ports.
+n_inputs, n_neurons : int
+    Matrix geometry.
+data_width : int
+    Width of the signed Q8 state, current, leak and gain words.
+stream_length : int
+    Run length of the layer's step controller.
+input_seed_base, weight_seed_base : int
+    Seed bases of the input and weight encoders.
+y_min, y_max : int
+    Current endpoints, as raw signed Q8 words.
+input_format : ScalarFormat
+    Layout of each input element (``rate``, signed Q8.8).
+weight_format : ScalarFormat
+    Layout of each weight element.
+weight_words : tuple of int
+    Raw signed weight words in row-major order, ``W&#91;j&#93;&#91;i&#93;`` at ``j * n_inputs + i``.
+leak, gain : int
+    Raw signed leak and gain words.
+leak_format, gain_format : ScalarFormat
+    Layouts of the leak and gain constants.
+
+- **fraction**()
+  - Binary point of the state words, fixed by the emitter.
+- **instance**()
+  - Instance name of the layer in the emitted top level.
+- **input_seed**(i)
+  - Return the LFSR seed of input encoder ``i``.
+- **weight_seed**(j, i)
+  - Return the LFSR seed of the weight encoder of neuron ``j``, input ``i``.
+- **weight_thresholds**()
+  - Encoder thresholds of the weight words, in row-major order.
+- **to_parameters**()
+  - Return the Q formats, seeds and every other parameter as a JSON object.
+
+### Class `TraceRow`
+State of the layer after one rising clock edge.
+
+Attributes
+----------
+cycle : int
+    Index of the edge after reset, from zero.
+spikes : int
+    The output spike vector, neuron ``j`` at bit ``j``.
+membranes : tuple of int
+    Signed membrane word of every neuron.
+running : int
+    The layer's ``running`` flag.
+run_done : int
+    The layer's ``run_done`` flag.
+
+- **to_json**()
+  - Return the row as a JSON object.
+
+### Class `CosimResult`
+Reference and RTL traces of one stimulus, with the first cycle they differ at.
+
+Attributes
+----------
+design : DenseDesign
+    The design the reference was computed for.
+stimulus : tuple of tuple of int
+    Signed Q8.8 input words applied before each edge.
+reference : tuple of TraceRow
+    Python bit-true trace.
+rtl : tuple of TraceRow
+    Trace printed by the simulated RTL.
+first_difference : int or None
+    First differing cycle, or ``None`` when the traces are equal.
+testbench : str
+    The generated testbench source.
+primitives : Mapping&#91;str, str&#93;
+    SHA-256 of each packaged primitive source that was simulated.
+simulator : Mapping&#91;str, str&#93;
+    First version line of ``iverilog`` and ``vvp``.
+
+- **agrees**()
+  - Whether the RTL trace equals the reference on every recorded cycle.
+- **verdict**()
+  - Return the outcome as a JSON object.
+
+### Function `probability_threshold(word, layout)`
+Return the unsigned 16-bit encoder threshold of a signed probability word.
+
+engine/src/ir/emit_sv/probability.rs lines 40-53: zero for a word at or below zero;
+``0xFFFF`` for a word at or above one when ``fraction + 1 < width``; otherwise bits
+``&#91;fraction +: 16&#93;`` of ``word * 65535``.
+
+Parameters
+----------
+word : int
+    Raw signed word.
+layout : ScalarFormat
+    Its layout.
+
+Returns
+-------
+int
+    The ``x_value`` the encoder compares its LFSR against.
+
+### Function `lfsr_step(state)`
+Advance the 16-bit encoder LFSR by one clock.
+
+sc_bitstream_encoder.v lines 66-69 and 92: feedback from bits 15, 13, 12 and 10,
+shifted in at bit 0.
+
+Parameters
+----------
+state : int
+    Current register value.
+
+Returns
+-------
+int
+    The next register value.
+
+### Function `dotproduct_current(count, n_inputs, y_min, y_max, width)`
+Return the current word of ``count`` coincident post-synaptic bits.
+
+sc_dotproduct_to_current.v lines 71-86: ``y_min + (y_max - y_min) * count / N`` with
+the product exact, the division truncated toward zero, and the sum reduced to the
+signed ``DATA_WIDTH`` word.
+
+Parameters
+----------
+count : int
+    Number of set post-synaptic bits.
+n_inputs : int
+    ``N_INPUTS``.
+y_min, y_max : int
+    Raw signed current endpoints.
+width : int
+    ``DATA_WIDTH``.
+
+Returns
+-------
+int
+    The signed current word.
+
+### Function `lif_step(v, current, leak, gain, width)`
+Return the spike and the membrane word after one clock of the layer's neuron.
+
+sc_lif_neuron.v lines 85-93 and 111-121, with ``V_REST = V_RESET = 0``,
+``V_THRESHOLD = 256`` and no refractory period: the leak and input products are
+formed in ``2 * DATA_WIDTH`` bits, shifted arithmetically by ``FRACTION`` and
+reduced to ``DATA_WIDTH`` bits; their sum with the membrane wraps in ``DATA_WIDTH``
+bits; a sum at or above the threshold spikes and resets.
+
+Parameters
+----------
+v : int
+    Signed membrane word before the edge.
+current, leak, gain : int
+    Signed current, leak and gain words.
+width : int
+    ``DATA_WIDTH``.
+
+Returns
+-------
+tuple of int
+    ``(spike, membrane)`` after the edge.
+
+### Function `parse_dense_design(text)`
+Read a supported dense layer design from IR text.
+
+Parameters
+----------
+text : str
+    IR text as ``ScGraph.to_text`` prints it.
+
+Returns
+-------
+DenseDesign
+    Every parameter of the design.
+
+Raises
+------
+UnsupportedDesignError
+    The graph has an operation other than ``sc.input``, ``sc.constant``,
+    ``sc.dense_forward`` and ``sc.output`` (all are named), or not exactly the
+    supported shape.
+ValueError
+    A line cannot be read or a constant does not fit its type.
+
+### Function `default_stimulus(design, cycles)`
+Return the deterministic stimulus: signed Q8.8 words cycling through six levels.
+
+Input ``i`` holds ``(-64, 384, 128, 256, 0, 192)&#91;(cycle // 5 + i) % 6&#93;`` before edge
+``cycle``: below zero, above one, and four values in between, each for five cycles,
+shifted by one level per input. This is the stimulus of ``tests/test_ir_dense_rtl.py``.
+
+Parameters
+----------
+design : DenseDesign
+    The design to drive.
+cycles : int, default 256
+    Number of clock edges.
+
+Returns
+-------
+tuple of tuple of int
+    One word per input for every cycle.
+
+Raises
+------
+ValueError
+    ``cycles`` is not positive.
+
+### Function `reference_trace(design, stimulus)`
+Step the bit-true Python model of the emitted layer through a stimulus.
+
+Every register of the layer updates on the same edge. The neurons therefore
+integrate the encoder bits registered at the previous edge, and the encoders then
+compare their LFSR with this cycle's words (sc_bitstream_encoder.v lines 80-100).
+Reset loads every LFSR with its seed (lines 86-88, ``t_index`` tied to zero by
+sc_dense_matrix_layer.v lines 105 and 126) and clears every bit, membrane and
+controller flag.
+
+Parameters
+----------
+design : DenseDesign
+    The design.
+stimulus : Sequence&#91;Sequence&#91;int&#93;&#93;
+    Signed Q8.8 input words applied before each edge.
+
+Returns
+-------
+tuple of TraceRow
+    The state after every edge.
+
+Raises
+------
+ValueError
+    A stimulus row does not have one word per input.
+
+### Function `generate_testbench(design, stimulus)`
+Return a testbench that drives the emitted top level and prints its state.
+
+The bench holds reset over two clock edges, then for every cycle sets the input
+words, raises the clock and prints, after the edge, the spike vector, each
+neuron's ``v_out`` and the layer's ``running`` and ``run_done`` flags.
+
+Parameters
+----------
+design : DenseDesign
+    The design whose top level is driven.
+stimulus : Sequence&#91;Sequence&#91;int&#93;&#93;
+    Signed Q8.8 input words for every cycle.
+
+Returns
+-------
+str
+    SystemVerilog source of module :data:`TESTBENCH_MODULE`.
+
+### Function `run_rtl(design, verilog, stimulus, work, *, timeout_s)`
+Simulate the emitted top level with Icarus Verilog and read its trace.
+
+Parameters
+----------
+design : DenseDesign
+    The design the top level was emitted for.
+verilog : str
+    The emitted SystemVerilog top level.
+stimulus : Sequence&#91;Sequence&#91;int&#93;&#93;
+    Signed Q8.8 input words for every cycle.
+work : Path
+    Existing directory for the sources and the compiled simulation.
+timeout_s : float, default 600.0
+    Wall-clock limit for compilation and for the run, each.
+
+Returns
+-------
+tuple
+    The RTL trace, the testbench source and the SHA-256 of each simulated primitive.
+
+Raises
+------
+SimulatorUnavailableError
+    ``iverilog`` or ``vvp`` is not installed.
+CosimError
+    Compilation or simulation fails or prints a malformed row.
+
+### Function `first_difference(reference, rtl, cycles)`
+Return the first cycle at which two traces differ.
+
+Parameters
+----------
+reference, rtl : Sequence&#91;TraceRow&#93;
+    The two traces.
+cycles : int
+    Number of cycles both should cover; a missing row is a difference.
+
+Returns
+-------
+int or None
+    The first differing or missing cycle, or ``None`` when both hold the same
+    ``cycles`` rows.
+
+### Function `cosimulate(design, verilog, stimulus, *, cycles, timeout_s)`
+Run the reference and the emitted RTL on one stimulus and compare them.
+
+Parameters
+----------
+design : DenseDesign
+    The design the reference is computed for.
+verilog : str
+    The emitted SystemVerilog top level.
+stimulus : Sequence&#91;Sequence&#91;int&#93;&#93; or None, optional
+    Signed Q8.8 input words per cycle; :func:`default_stimulus` when omitted.
+cycles : int, default 256
+    Cycles of the default stimulus.
+timeout_s : float, default 600.0
+    Wall-clock limit for compilation and for the run, each.
+
+Returns
+-------
+CosimResult
+    Both traces and the first differing cycle.
+
+Raises
+------
+SimulatorUnavailableError
+    ``iverilog`` or ``vvp`` is not installed.
+CosimError
+    Compilation or simulation fails.
+ValueError
+    The stimulus is empty, or a row does not have one word per input.
+
+---
+
 ## Module `safety_cert.evidence`
 
 ### Class `EvidenceItem`
@@ -39405,6 +39822,243 @@ Ordered manifest of uniquely named evidence artifacts.
   - Return the historical 32-character prefix of the manifest digest.
 - **verify**(directory)
   - Verify all declared digests against regular non-symlink files.
+
+---
+
+## Module `safety_cert.evidence_packet`
+
+### Class `FormalTarget`
+One library module whose committed formal job the packet runs.
+
+Attributes
+----------
+module : str
+    Verilog module name.
+job : str
+    Repository path of its ``.sby`` job.
+origin : str
+    Why the packet runs it: named by the guarantee summary, or instantiated
+    inside a co-simulated-only module.
+summary : Mapping&#91;str, Any&#93; or None
+    The guarantee summary entry, when the summary names the module.
+
+
+### Class `PacketExport`
+Outcome of :func:`export_evidence_packet`.
+
+Attributes
+----------
+directory : Path
+    The packet directory.
+manifest_sha256 : str
+    Content digest of the manifest's member list.
+members : int
+    Number of members listed in the manifest.
+cosim_agrees : bool
+    Whether the RTL trace equalled the reference on every cycle.
+first_difference : int or None
+    First differing cycle, or ``None``.
+
+
+### Class `PacketVerification`
+Outcome of :func:`verify_evidence_packet`.
+
+Attributes
+----------
+directory : Path
+    The checked directory.
+ok : bool
+    Whether no problem was found.
+problems : tuple of str
+    Every problem found, one per line.
+members : int
+    Number of members the manifest lists.
+manifest_sha256 : str or None
+    The digest the manifest records, when it could be read.
+
+
+### Function `checkout_root(module_file)`
+Return the source checkout a package module lies in, or ``None`` when installed.
+
+Parameters
+----------
+module_file : Path
+    A module file of the ``sc_neurocore.safety_cert`` package.
+
+Returns
+-------
+Path or None
+    The directory three levels above the package directory (``src/sc_neurocore``
+    sits below it) when it holds ``hdl/formal`` and ``src/sc_neurocore``; ``None``
+    for an installed package.
+
+### Function `formal_targets(summary)`
+Return the formal jobs a summary calls for and the co-simulated-only boundaries.
+
+Parameters
+----------
+summary : Mapping&#91;str, Any&#93;
+    A guarantee summary of :func:`sc_neurocore.compiler.guarantee_summary.summarize_ir_text`.
+
+Returns
+-------
+tuple
+    The jobs to run, one per module, and one boundary record per co-simulated-only
+    operation.
+
+### Function `run_formal_job(repository, target, out_dir, *, timeout_s, scratch_parent)`
+Run one committed SymbiYosys job in a scratch copy and record its outcome.
+
+The job and every source it reads are copied, with their relative layout, into a
+fresh temporary directory, and ``sby`` runs there, so no run directory is ever
+written into the checkout. The log of a completed run is written to
+``formal/<module>.log`` under ``out_dir``.
+
+Parameters
+----------
+repository : Path or None
+    Source checkout holding ``hdl/formal``, or ``None`` when not run from one.
+target : FormalTarget
+    The module and its job.
+out_dir : Path
+    Packet directory that receives the log.
+timeout_s : float, default 1800.0
+    Wall-clock limit of the ``sby`` run.
+scratch_parent : Path or None, optional
+    Directory for the scratch copy; the system temporary directory when omitted.
+
+Returns
+-------
+dict
+    The record: ``status`` ``run`` with the verdict, the log path and its SHA-256,
+    or ``unavailable`` with the reason; mode, depth, engine, assumptions and the
+    SHA-256 of every job source whenever the job could be read.
+
+Raises
+------
+ValueError
+    The scratch directory lies inside the checkout, where a run would write into
+    the committed job tree.
+
+### Function `synthesize(verilog, out_dir, target)`
+Synthesise a design with Yosys through the Studio synthesis backend.
+
+A report Yosys produced, successful or not, is written to
+``synthesis/yosys_report.json`` under ``out_dir``.
+
+Parameters
+----------
+verilog : str
+    The top level with every library source it needs.
+out_dir : Path
+    Packet directory that receives the report.
+target : str, default "ice40"
+    Synthesis target identifier of :func:`sc_neurocore.studio.synthesis.run_synthesis`.
+
+Returns
+-------
+dict
+    The record: ``completed``, ``failed`` or ``unavailable`` with the reason, and
+    the report path and its SHA-256 when a report exists.
+
+### Function `tool_versions()`
+Return the version of every external tool and of Python and both packages.
+
+Returns
+-------
+dict
+    ``tools`` (availability and first version line of each of :data:`TOOLS`),
+    ``python``, ``sc_neurocore`` and ``sc_neurocore_engine``.
+
+Raises
+------
+ImportError
+    The ``sc_neurocore_engine`` package is not installed.
+
+### Function `source_identity(repository)`
+Return the package version and, from a Git checkout, its commit and dirty flag.
+
+Parameters
+----------
+repository : Path or None
+    Directory the package runs from, or ``None`` when it is installed.
+
+Returns
+-------
+dict
+    ``package_version`` and ``checkout``; with a checkout, ``commit`` and ``dirty``
+    (uncommitted or untracked files), otherwise the ``reason``.
+
+### Function `boundary_statement(cosim, formal, boundaries, synthesis)`
+Say what a packet establishes and what it does not.
+
+Parameters
+----------
+cosim : Mapping&#91;str, Any&#93;
+    Co-simulation verdict of :meth:`CosimResult.verdict`.
+formal : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
+    Formal job records of :func:`run_formal_job`.
+boundaries : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
+    Co-simulated-only records of :func:`formal_targets`.
+synthesis : Mapping&#91;str, Any&#93;
+    Synthesis record of :func:`synthesize`.
+
+Returns
+-------
+dict
+    ``establishes`` and ``does_not_establish``, each a list of sentences.
+
+### Function `export_evidence_packet(graph_text, out_dir, *, cycles, synthesis_target, formal_timeout_s, repository)`
+Write the evidence packet of one dense layer design into a new directory.
+
+Parameters
+----------
+graph_text : str
+    IR text of a supported dense layer graph.
+out_dir : Path
+    Directory to create; an existing one must be empty.
+cycles : int, default 256
+    Cycles of the co-simulation stimulus.
+synthesis_target : str, default "ice40"
+    Yosys synthesis target.
+formal_timeout_s : float, default 1800.0
+    Wall-clock limit of each formal job.
+repository : Path or None, optional
+    Source checkout holding the formal jobs and the Git identity; the checkout this
+    package runs from when omitted, if any.
+
+Returns
+-------
+PacketExport
+    Directory, manifest digest, member count and co-simulation outcome.
+
+Raises
+------
+ValueError
+    The text is not valid IR, fails verification, is not a supported dense design
+    (:class:`~sc_neurocore.safety_cert.dense_cosim.UnsupportedDesignError` names the
+    unsupported operations), or ``out_dir`` exists and is not an empty directory.
+sc_neurocore.safety_cert.dense_cosim.SimulatorUnavailableError
+    Icarus Verilog is not installed.
+sc_neurocore.safety_cert.dense_cosim.CosimError
+    The simulator fails.
+
+### Function `verify_evidence_packet(directory)`
+Re-read and re-hash every member of an evidence packet.
+
+Parameters
+----------
+directory : Path
+    The packet directory.
+
+Returns
+-------
+PacketVerification
+    ``ok`` only when the manifest's digest matches its member list, every listed
+    member is a regular file with the listed SHA-256 and size, and the directory
+    holds no other file, no directory that holds no member, no entry that is not a
+    regular file (such as a FIFO or a socket) and no symbolic link. No such entry is
+    ever opened.
 
 ---
 
