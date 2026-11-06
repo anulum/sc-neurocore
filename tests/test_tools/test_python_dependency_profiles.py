@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import shlex
 import shutil
 import sys
@@ -236,3 +237,76 @@ def test_every_development_install_in_ci_takes_the_hash_locked_cpu_torch() -> No
                 assert install in lines[:position], f"{path.name}:{job_name} installs CUDA torch"
                 assert any(check in line for line in lines[position + 1 :]), path.name
     assert len(steps) >= 8, steps
+
+
+_CPU_TORCH_LOCK = "-r requirements/ci-torch-cpu.txt"
+_TORCH_INSTALL = re.compile(
+    r"pip install\b(?=.*(?:\[[^\]]*\btraining\b[^\]]*\]|(?<![\w./-])torch(?![\w.-])))"
+)
+
+
+def _torch_installs_without_the_cpu_lock(run: str) -> list[str]:
+    """Return the install lines of a step that reach torch before its CPU lock.
+
+    Parameters
+    ----------
+    run : str
+        Shell text of one workflow step.
+
+    Returns
+    -------
+    list of str
+        Lines installing the ``training`` extra or a ``torch`` requirement that are
+        not preceded, in the same step, by the hash-locked CPU torch install.
+    """
+    offenders = []
+    locked = False
+    for line in (line.strip() for line in run.splitlines()):
+        if "pip install" in line and _CPU_TORCH_LOCK in line:
+            locked = True
+        elif _TORCH_INSTALL.search(line) and not locked:
+            offenders.append(line)
+    return offenders
+
+
+def test_no_workflow_installs_torch_around_the_cpu_lock() -> None:
+    """Installing ``[training]`` or ``torch`` directly needs the CPU lock first, as the helper does.
+
+    A step that bypasses ``ci_install_dev.py`` would otherwise let pip resolve the
+    CUDA build and its NVIDIA wheels.
+    """
+    offenders = []
+    for path in sorted((REPO / ".github/workflows").glob("*.yml")):
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for job_name, job in workflow["jobs"].items():
+            for step in job.get("steps", []):
+                for line in _torch_installs_without_the_cpu_lock(step.get("run", "")):
+                    offenders.append(f"{path.name}:{job_name}: {line}")
+    assert offenders == []
+
+
+@pytest.mark.parametrize(
+    ("run", "refused"),
+    [
+        ("python -m pip install -e '.[dev,training]'", True),
+        ("pip install torch==2.15.0", True),
+        ("python -m pip install --upgrade pip torch", True),
+        (
+            f"python -m pip install --require-hashes {_CPU_TORCH_LOCK}\npip install -e '.[training]'",
+            False,
+        ),
+        ("python -m pip install -e '.[dev]'", False),
+        ("pip install torchvision-stubs-free-package", False),
+    ],
+)
+def test_the_torch_install_scan_recognises_a_bypass(run: str, refused: bool) -> None:
+    """The scan finds a direct training or torch install and accepts one after the lock.
+
+    Parameters
+    ----------
+    run : str
+        Step shell text.
+    refused : bool
+        Whether the step reaches torch without the CPU lock.
+    """
+    assert bool(_torch_installs_without_the_cpu_lock(run)) is refused
