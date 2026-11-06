@@ -621,7 +621,7 @@ jobs:
           blocks = []
           for name in (
               "coverage", "pytest", "pluggy", "iniconfig", "packaging", "pygments",
-              "pytest-cov", "pytest-xdist", "hypothesis",
+              "pytest-cov", "pytest-xdist", "hypothesis", "execnet", "sortedcontainers",
           ):
               start = next(i for i, line in enumerate(lines)
                            if re.match(re.escape(name) + r"==\S+ \\$", line))
@@ -1897,7 +1897,7 @@ jobs:
           blocks = []
           for name in (
               "coverage", "pytest", "pluggy", "iniconfig", "packaging", "pygments",
-              "pytest-cov", "pytest-xdist", "hypothesis",
+              "pytest-cov", "pytest-xdist", "hypothesis", "execnet", "sortedcontainers",
           ):
               start = next(i for i, line in enumerate(lines)
                            if re.match(re.escape(name) + r"==\S+ \\$", line))
