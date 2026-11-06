@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -279,17 +280,28 @@ def test_cli_uses_portable_config_and_refreshes_readme() -> None:
         )
 
 
-def test_untracked_work_does_not_change_the_counts_until_it_is_staged() -> None:
+def test_untracked_work_does_not_change_the_counts_until_it_is_staged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Only the Git index counts, so another contributor's untracked files change nothing.
 
     Pre-commit hides unstaged edits but leaves untracked files on disk. A committed
-    portable repository gains an untracked test, model, workflow, document and
-    subpackage: the manifest and its architecture map stay identical. Staged, the
-    files are counted, and the staged subpackage is refused as unmapped.
+    portable repository gains an untracked test, model, workflow, document, Rust
+    model binding and subpackage: the manifest and its architecture map stay
+    identical. Staged, the files are counted, and the staged subpackage is refused
+    as unmapped. Git variables of an enclosing hook, such as ``GIT_INDEX_FILE``,
+    are removed so the fixture repository reads its own index.
     """
+    for name in list(os.environ):
+        if name.startswith("GIT_"):
+            monkeypatch.delenv(name)
     tool = _load_tool()
     with _tempdir() as repo:
         _write_portable_fixture(repo)
+        _write_file(
+            repo / "engine/src/pyo3_neurons.rs",
+            'py_neuron_default!("PortableModel", PortableModel);\n',
+        )
         _write_file(
             repo / "tools/architecture_map.toml",
             'version = "fixture"\npipeline_stages = []\nbackends = []\ninterfaces = []\n'
@@ -310,10 +322,16 @@ def test_untracked_work_does_not_change_the_counts_until_it_is_staged() -> None:
             "src/portable_project/models/foreign.py",
             ".github/workflows/foreign.yml",
             "docs/api/models/foreign.md",
+            "engine/src/bindings/foreign.rs",
         )
         package = "src/portable_project/foreign_package/__init__.py"
         for relative in (*files, package):
-            _write_file(repo / relative, "class ForeignModel:\n    pass\n")
+            text = (
+                'py_neuron_default!("ForeignModel", ForeignModel);\n'
+                if relative.endswith(".rs")
+                else "class ForeignModel:\n    pass\n"
+            )
+            _write_file(repo / relative, text)
         assert tool.build_capability_manifest(repo, config) == committed
 
         subprocess.run(["git", "add", *files], cwd=repo, check=True, timeout=30)
@@ -323,6 +341,7 @@ def test_untracked_work_does_not_change_the_counts_until_it_is_staged() -> None:
             "python_model_source_modules",
             "github_workflows",
             "model_documentation_pages",
+            "rust_pyo3_model_wrappers",
         ):
             assert counts[key] == committed["counts"][key] + 1, key
 
