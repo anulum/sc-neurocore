@@ -17,11 +17,13 @@ Important boundary:
 - transcript-style mirrors under ``accel/mojo/kernels/*.mojo`` are not an
   authoritative runtime contract unless they are explicitly loaded and tested
 
-Expects `pixi run mojo` to be available strictly on the system PATH.
+Expects `pixi run mojo` to be available strictly on the system PATH. Build
+and benchmark failures are reported through the module logger, not printed.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import subprocess
@@ -30,6 +32,8 @@ from pathlib import Path
 from typing import Final
 
 from sc_neurocore.accel.mojo.isa_baseline import pin_isa
+
+_LOG = logging.getLogger(__name__)
 
 MOJO_HELPER_BACKEND: Final = "python-fallback"
 """Backend used by scalar helper methods on ``MojoKernelRunner`` today."""
@@ -93,7 +97,8 @@ class MojoKernelRunner:
         -------
         bool
             ``True`` when ``pixi run mojo build kernels.mojo`` exits cleanly;
-            ``False`` when the toolchain invocation raises.
+            ``False`` when the toolchain invocation raises, after logging the
+            error.
         """
         try:
             subprocess.run(
@@ -103,7 +108,7 @@ class MojoKernelRunner:
             )
             return True
         except Exception as e:
-            print(f"[Mojo Runner] Build failed: {e}")
+            _LOG.error("Mojo kernel build failed: %s", e)
             return False
 
     def run_benchmark(self, timeout_sec: int = 60) -> dict[str, float]:
@@ -118,8 +123,9 @@ class MojoKernelRunner:
         -------
         dict[str, float]
             Mapping from benchmark labels printed by ``kernels.mojo`` to their
-            measured millisecond durations. Returns an empty mapping when the
-            subprocess fails, times out, or cannot be launched.
+            measured millisecond durations. Returns an empty mapping, after
+            logging the error, when the subprocess fails, times out, or cannot
+            be launched.
         """
         try:
             result = subprocess.run(
@@ -146,15 +152,13 @@ class MojoKernelRunner:
             return timings
 
         except subprocess.CalledProcessError as e:
-            print(f"[Mojo Runner] Execution failed: {e.stderr}")
+            _LOG.error("Mojo kernel benchmark failed: %s", e.stderr)
             return {}
         except subprocess.TimeoutExpired:
-            print(f"[Mojo Runner] Hard timeout of {timeout_sec}s exceeded.")
+            _LOG.error("Mojo kernel benchmark exceeded its %d s timeout", timeout_sec)
             return {}
         except FileNotFoundError:
-            print(
-                f"[Mojo Runner] Pixi or Mojo completely missing at {self._pixi_bin}. Check installation bounds."
-            )
+            _LOG.error("pixi was not found at %s", self._pixi_bin)
             return {}
 
     def popcount(self, data: list[int]) -> int:

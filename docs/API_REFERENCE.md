@@ -19987,12 +19987,22 @@ extras : bool
 ## Module `edge.aer_router`
 
 ### Class `AERRoutingDaemon`
-Orchestrates the Go-based AER UDP mesh multi-FPGA router pipeline dynamically.
+Supervise the Go AER UDP mesh router that links several FPGA boards.
 
-- **__init__**(port)
+Parameters
+----------
+port : int, optional
+    UDP port the router is reported to listen on.
+router_dir : pathlib.Path, optional
+    Directory holding the router's ``main.go`` and its ``aer_router``
+    binary; the router shipped with the package when omitted.
+
+- **__init__**(port, router_dir)
+  - Remember the port and router directory; nothing is built or started yet.
 - **start**(build)
+  - Build the router if asked, then start it in the background.
 - **stop**()
-  - Tears down the active background UDP topology safely.
+  - Terminate the running router and wait up to two seconds for it to exit.
 
 ---
 

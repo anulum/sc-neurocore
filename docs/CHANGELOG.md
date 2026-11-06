@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Report library status and failures through module loggers instead of
+  printing them: the Mojo kernel runner logs a failed build or benchmark as
+  an error, the AER router supervisor logs its build, start and stop, and
+  the Julia fusion solver logs its run and a failed run before raising it.
+  `AERRoutingDaemon` accepts `router_dir` and `JuliaFusionSolver` accepts
+  `julia_bin` to select another router directory or Julia executable. Their
+  tests now run real processes instead of replacing the subprocess calls.
+
 - Refuse an equation expression longer than 16,384 characters before it is
   parsed, with a message that states the length and does not repeat the
   text. The depth limit bounded nesting but not width, so a long balanced

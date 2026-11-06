@@ -273,7 +273,9 @@ UDP mesh routing at AER rates (~Mpkts/s peak) needs concurrency and
 zero GC pauses. Go's goroutine model handles the fan-out per channel
 without the GIL bottleneck that Python would have. The Python
 :class:`AERRoutingDaemon` is a supervisor: `go build` on demand,
-spawn, `SIGTERM` on teardown.
+spawn, `SIGTERM` on teardown. It reports the build, start and stop through
+the `sc_neurocore.edge.aer_router` logger, and `router_dir` selects a
+router directory other than the one shipped with the package.
 
 ---
 

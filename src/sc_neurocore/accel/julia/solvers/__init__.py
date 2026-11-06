@@ -6,26 +6,60 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Continuous ODE Solvers using DiffEq.jl
 
+"""Run the reference ``fusion_solver.jl`` ODE script through a Julia executable.
+
+The run and its failure are reported through the module logger, not printed.
+"""
+
+from __future__ import annotations
+
+import logging
 import shutil
 import subprocess
 from pathlib import Path
 
+_LOG = logging.getLogger(__name__)
+
 
 class JuliaFusionSolver:
-    """Orchestrates Julia ODE solvers executing the `fusion_solver.jl` logic natively."""
+    """Run ``fusion_solver.jl`` (DifferentialEquations.jl) in a Julia subprocess.
 
-    def __init__(self) -> None:
+    Parameters
+    ----------
+    julia_bin : str, optional
+        Julia executable to run; the ``julia`` found on ``PATH`` when omitted.
+
+    Raises
+    ------
+    FileNotFoundError
+        No executable was given and ``PATH`` holds no ``julia``.
+    """
+
+    def __init__(self, julia_bin: str | None = None) -> None:
+        """Locate the script and the Julia executable."""
         self.julia_script = Path(__file__).parent / "fusion_solver.jl"
-        julia_bin = shutil.which("julia")
-        if not julia_bin:
+        found = shutil.which("julia") if julia_bin is None else julia_bin
+        if not found:
             raise FileNotFoundError("Julia binary not found on system PATH. Please install Julia.")
-        self._julia_bin: str = julia_bin
+        self._julia_bin: str = found
 
     def run_dynamics(self, steps: int) -> None:
-        """Invoke continuous ODE simulation on the Julia baseline bounds."""
+        """Run the script for ``steps`` steps and wait for it to finish.
+
+        Parameters
+        ----------
+        steps : int
+            Step count passed to the script as its only argument.
+
+        Raises
+        ------
+        subprocess.CalledProcessError
+            The Julia process exits with a non-zero status; the failure is
+            logged before it is raised again.
+        """
+        _LOG.info("Running %s with %d steps", self.julia_script.name, steps)
         try:
-            print("[Julia Solvers] Executing continuous physics wrapper via DiffEq.jl")
             subprocess.run([self._julia_bin, str(self.julia_script), str(steps)], check=True)
         except subprocess.CalledProcessError as e:
-            print(f"[Julia Solvers] Process execution failed natively: {e}")
+            _LOG.error("Julia fusion solver failed: %s", e)
             raise
