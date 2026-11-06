@@ -63,6 +63,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_dcls_engine_binding.py",
     "tests/test_decoding_engine_binding_runtime.py",
     "tests/test_default_neuron_engine_binding.py",
+    "tests/test_dense_cosim.py",
     "tests/test_dense_layer_engine_binding_allocation.py",
     "tests/test_dense_layer_engine_binding_copy.py",
     "tests/test_dense_layer_engine_binding_goldens.py",
@@ -81,6 +82,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_equation_state.py",
     "tests/test_ermentrout_kopell_map_engine_binding.py",
     "tests/test_escape_rate_engine_binding.py",
+    "tests/test_evidence_packet.py",
     "tests/test_evo_substrate/test_engine_bindings.py",
     "tests/test_evolution_engine_binding_runtime.py",
     "tests/test_expif_engine_binding.py",
@@ -511,7 +513,7 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
     """Dominance: an unconditional module-body gate precedes every import."""
-    assert len(_GUARDED_BINDING_FILES) == 155
+    assert len(_GUARDED_BINDING_FILES) == 157
     for relative in _GUARDED_BINDING_FILES:
         analysis = _analyse(_ROOT / relative)
         assert analysis.require_engine_gate_line is not None, (
