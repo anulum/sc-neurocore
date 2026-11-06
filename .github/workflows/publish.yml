@@ -240,10 +240,12 @@ jobs:
           pattern: engine-wheel-*
           merge-multiple: true
           path: dist-engine/
+      # Trusted publishing: PyPI accepts this job's OIDC token for sc-neurocore-engine
+      # (publisher anulum/sc-neurocore, publish.yml, environment pypi), so no API token
+      # is stored, and the action attaches provenance attestations to every file.
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           packages-dir: dist-engine/
-          password: ${{ secrets.PYPI_ENGINE_TOKEN }}
           skip-existing: true
 
   # A manual run without publishing still proves the crate: the registry query the

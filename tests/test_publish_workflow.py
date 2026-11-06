@@ -66,10 +66,16 @@ def test_python_and_engine_pypi_publish_use_oidc_trusted_publishing() -> None:
     assert engine_publish["environment"] == "pypi"
     assert engine_publish["permissions"] == {"id-token": "write"}
 
-    engine_publish_text = str(engine_publish)
-    assert "PYPI_ENGINE_TOKEN" in engine_publish_text
-    assert "password" in engine_publish_text
-    assert "attestations: false" not in engine_publish_text
+    # Neither upload carries an API token, so PyPI authenticates the job's OIDC
+    # identity and the action keeps its default provenance attestations.
+    for job_name in ("publish-python-pypi", "publish-engine-pypi"):
+        upload = _uses_step(jobs[job_name], "pypa/gh-action-pypi-publish@")["with"]
+        assert "password" not in upload and "user" not in upload
+        assert "attestations" not in upload
+    workflow_text = (_repo_root() / ".github" / "workflows" / "publish.yml").read_text("utf-8")
+    assert "secrets.PYPI" not in workflow_text
+    security = " ".join((_repo_root() / "SECURITY.md").read_text("utf-8").split())
+    assert "Both PyPI packages, `sc-neurocore` and `sc-neurocore-engine`" in security
 
 
 def test_pypi_publish_steps_are_idempotent_for_tag_retries() -> None:

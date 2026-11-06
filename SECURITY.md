@@ -63,8 +63,10 @@ correct Python ↔ Rust conversions.
   requirements.
 
 ### Release provenance
-- The Python package is uploaded to PyPI through trusted publishing, and
-  its files carry PyPI provenance attestations.
+- Both PyPI packages, `sc-neurocore` and `sc-neurocore-engine`, are uploaded
+  through trusted publishing, and their files carry PyPI provenance
+  attestations. For the engine this holds from the first release after
+  4.0.0; its 4.0.0 files were uploaded with an API token and carry none.
 - Releases tagged after 4.0.0 also attach a signed SLSA build provenance
   attestation (Sigstore, GitHub artifact attestations) to every GitHub
   Release file and to the release image on GHCR. Verify them with the

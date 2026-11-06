@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Publish the engine wheels to PyPI through trusted publishing, as the Python
+  package already does, instead of a stored API token. Every uploaded engine
+  file then carries a provenance attestation; the 4.0.0 engine files had none.
+
 - Drop the unused `pyo3-build-config` build dependency from the engine crate.
   The crate has no build script, so the dependency was never used; the
   published crate and the lockfiles no longer list it.
