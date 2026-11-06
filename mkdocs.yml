@@ -18,6 +18,7 @@ exclude_docs: |
 not_in_nav: |
   API_REFERENCE.md
   _generated/capability_snapshot.md
+  _generated/hardware_path_support.md
   RUST_FFI_INTEGRATION.md
   api/models/*.md
   api/autonomous_learning.md

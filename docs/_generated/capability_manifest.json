@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5611
+    "test_files": 5614
   },
   "documentation": {
     "public_pages": [
@@ -4579,6 +4579,7 @@
       "tests/test_cli_formal_input_validation.py",
       "tests/test_cli_formal_sva_report_write.py",
       "tests/test_cli_formal_symbiyosys_integration.py",
+      "tests/test_cli_hardware_path.py",
       "tests/test_cli_hub.py",
       "tests/test_cli_info.py",
       "tests/test_cli_maintenance.py",
@@ -5536,6 +5537,7 @@
       "tests/test_hardware_numeric_contract.py",
       "tests/test_hardware_numeric_contract_call_domains.py",
       "tests/test_hardware_package_contracts.py",
+      "tests/test_hardware_path_support_doc.py",
       "tests/test_hardware_resource_estimator.py",
       "tests/test_hdc/test_base.py",
       "tests/test_hdc/test_hdc_algebra_properties.py",
@@ -8108,6 +8110,7 @@
       "tests/test_studio_graph_validation_locations.py",
       "tests/test_studio_hardware_catalogue.py",
       "tests/test_studio_hardware_catalogue_routes.py",
+      "tests/test_studio_hardware_path.py",
       "tests/test_studio_host_job_tasks.py",
       "tests/test_studio_host_jobs.py",
       "tests/test_studio_host_jobs_schema.py",

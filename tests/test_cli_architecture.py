@@ -41,6 +41,7 @@ def test_command_modules_have_one_registration_boundary() -> None:
         "deploy",
         "evidence_packet",
         "formal",
+        "hardware_path",
         "hub",
         "info",
         "maintenance",

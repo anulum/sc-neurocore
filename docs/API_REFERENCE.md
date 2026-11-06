@@ -7694,6 +7694,50 @@ int
 
 ---
 
+## Module `cli.commands.hardware_path`
+
+### Function `add_hardware_path_command(subparsers)`
+Register the ``hardware-path`` command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `parse_params(text)`
+Parse ``name=value`` pairs separated by commas.
+
+Parameters
+----------
+text : str or None
+    The ``--params`` argument.
+
+Returns
+-------
+dict of str to float
+    The overrides; empty for ``None`` or an empty string.
+
+Raises
+------
+ValueError
+    A pair has no ``=``, an empty name, or a value that is not a finite number.
+
+### Function `run_hardware_path_command(args)`
+Run the hardware path of one model, or list the supported set.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``hardware-path`` arguments.
+
+Returns
+-------
+int
+    Zero when the path completed or the list was printed; one on any
+    refusal, on invalid arguments, or when no model or output is given.
+
+---
+
 ## Module `cli.commands.hub`
 
 ### Function `add_hub_command(subparsers)`
@@ -47091,6 +47135,268 @@ HardwareCatalogue
     and the separately declared BrainScaleS-3 manifest remain distinct.
     Device planning constants are not published as measured specifications.
     This function performs no vendor SDK calls, tool probes or writes.
+
+---
+
+## Module `studio.hardware_path`
+
+### Class `HardwarePathRefusal`
+A stage of the hardware path refused, by name and with a code.
+
+Parameters
+----------
+stage : str
+    The stage that refused: ``output``, ``capabilities``, ``configuration``,
+    ``cosimulation``, ``synthesis`` or ``place_and_route``.
+code : str
+    A stable refusal code, such as ``cosim-not-bit-exact``.
+message : str
+    What was refused, naming the model, parameter, tool or operation.
+
+Attributes
+----------
+manifest_path : Path or None
+    The ``hardware_path.json`` written for the refused run, or ``None``
+    when the refusal came before the output directory was accepted.
+
+- **__init__**(stage, code, message)
+- **to_public_dict**()
+  - Return the refusal as it is recorded in the manifest.
+
+### Class `HardwarePathResult`
+A completed hardware path.
+
+Attributes
+----------
+out_dir : Path
+    The directory that holds every artefact.
+manifest_path : Path
+    ``hardware_path.json``.
+summary_path : Path
+    ``hardware_path.txt``.
+manifest : dict
+    The manifest as written.
+
+
+### Function `run_hardware_path(model_name, *, out_dir, q_format, integrator, params, dt, current, n_steps, target, module_name, formal_inventory, readiness_seal, cosimulate)`
+Run one catalogue model through capabilities, RTL, co-simulation and synthesis.
+
+Parameters
+----------
+model_name : str
+    A catalogue model, such as ``LapicqueNeuron``.
+out_dir : Path
+    A new or empty directory; every artefact is written below it.
+q_format : str or None, optional
+    Fixed-point format; ``None`` takes the catalogue's default format of
+    the model (the smallest that holds it).
+integrator : str or None, optional
+    Integrator; ``None`` takes the model's schema default.
+params : Mapping&#91;str, float&#93; or None, optional
+    Schema parameter overrides.
+dt : float or None, optional
+    Step override; ``None`` keeps the schema's step.
+current : float, optional
+    Constant input of the requested co-simulation run (Studio default 10.0).
+n_steps : int, optional
+    Cycles of the requested co-simulation run, 1 to 2048 (Studio default
+    128); the fixed stress schedule runs after it.
+target : str, optional
+    Synthesis target (Studio terminal default ``ecp5``).
+module_name : str or None, optional
+    Verilog module name; ``None`` takes the Studio default
+    ``sc_<schema>_neuron``.
+formal_inventory : Path, optional
+    The catalogue formal inventory; its jobs' RTL files are read beside it.
+readiness_seal : Path, optional
+    The sealed verified-readiness record.
+cosimulate : callable, optional
+    The co-simulation, called as ``cosimulate(configuration, current=...,
+    n_steps=...)``; :func:`~sc_neurocore.studio.model_cosim.run_model_cosim`.
+    Whatever it returns passes the same bit-exact check before any later stage.
+
+Returns
+-------
+HardwarePathResult
+    The completed path and its manifest.
+
+Raises
+------
+HardwarePathRefusal
+    Any stage refused. Unless the output directory itself was refused,
+    ``hardware_path.json`` with status ``refused`` and every artefact
+    written up to the refusal are in ``out_dir``, and ``manifest_path``
+    names the manifest.
+
+### Function `gate_refusal(operations)`
+Return the first required operation the capability matrix disables, and why.
+
+Parameters
+----------
+operations : Mapping
+    ``operations`` of a :func:`model_capabilities` matrix.
+
+Returns
+-------
+tuple of (str, str) or None
+    The operation and its reason, or ``None`` when compile, co-simulation
+    and synthesis are all enabled.
+
+### Function `mirrored_combinations(cosimulate)`
+Return the integrator and format pairs a bit-true C kernel mirrors.
+
+Parameters
+----------
+cosimulate : Mapping
+    The ``cosimulate`` operation of a capability matrix.
+
+Returns
+-------
+list of dict
+    ``{"integrator": ..., "q_format": ...}`` per mirrored pair, in matrix
+    order; empty when the matrix lists none.
+
+### Function `require_bit_exact(report, *, model_name)`
+Stop the path unless a co-simulation report is completed and bit-exact.
+
+Parameters
+----------
+report : Mapping
+    A ``studio.cosim-parity.v1`` report.
+model_name : str
+    The model, named in the refusal.
+
+Returns
+-------
+Mapping
+    ``report`` itself, which the later stages consume.
+
+Raises
+------
+HardwarePathRefusal
+    ``cosim-not-bit-exact`` at stage ``cosimulation``, naming the first
+    differing cycle and signals of the requested run or of the stress
+    schedule.
+
+### Function `model_guarantee_summary(configuration, verilog, cosim_report, *, formal_inventory, readiness_seal)`
+Classify what the emitted RTL of one model is guaranteed by.
+
+Parameters
+----------
+configuration : ResolvedModelCompileConfiguration
+    The resolved model configuration.
+verilog : str
+    The RTL emitted for it.
+cosim_report : Mapping
+    Its bit-exact ``studio.cosim-parity.v1`` report.
+formal_inventory : Path, optional
+    The catalogue formal inventory.
+readiness_seal : Path, optional
+    The sealed verified-readiness record.
+
+Returns
+-------
+dict
+    Schema, model, RTL digest, the co-simulation and formal guarantee
+    entries, the readiness labels and the number of entries per class of
+    :data:`~sc_neurocore.compiler.guarantee_summary.GUARANTEE_CLASSES`.
+
+### Function `formal_guarantee(model_name, verilog, run_parameters, *, inventory)`
+Classify the catalogue formal job of a model against the emitted RTL.
+
+The job is never run here: the inventory states what it checks. A job
+covers this RTL only when its RTL file holds exactly the bytes the catalogue
+emitter (``tools/emit_catalogue_formal.py``) writes for this RTL: the
+compiler's text, terminated by one newline when it does not end with one.
+Both digests are recorded.
+
+Parameters
+----------
+model_name : str
+    The catalogue model.
+verilog : str
+    The emitted RTL.
+run_parameters : Mapping
+    This run's ``module``, ``schema`` and ``q_format`` (compared with the
+    job's ``module``, ``profile`` and ``q_format``) and its other settings.
+inventory : Path, optional
+    ``hdl/formal/catalogue/inventory.json``; job RTL files are read beside it.
+
+Returns
+-------
+dict
+    A ``FORMAL``, ``PROVEN AT OTHER PARAMETERS`` or ``NONE`` entry with the
+    reason; the first two carry the job and both parameter sets.
+
+### Function `readiness_labels(model_name, seal)`
+Return a model's verified readiness labels from the sealed record.
+
+Parameters
+----------
+model_name : str
+    The catalogue model.
+seal : Path, optional
+    The sealed ``verified_readiness.json``.
+
+Returns
+-------
+dict
+    ``source`` (``sealed`` or ``unsealed``), the verified ``profile``,
+    ``science_label`` and ``silicon_label``, every facet's status and, for
+    an unsealed record, the reason.
+
+### Function `supported_models(names, *, tool_status, capabilities)`
+Say, for every catalogue model, whether the hardware path is supported and why not.
+
+Two verdicts are given. ``model_supported`` depends only on the model: it
+compiles and a bit-true C kernel mirrors at least one integrator and
+format. ``supported`` is the verdict on this host: the capability gate of
+:func:`run_hardware_path` also needs the co-simulation tools and Yosys.
+
+Parameters
+----------
+names : Sequence&#91;str&#93; or None, optional
+    Models to judge; every registered catalogue model when omitted.
+tool_status : Mapping or None, optional
+    An EDA tool snapshot as :func:`~sc_neurocore.studio.synthesis.check_tools`
+    returns; taken once when omitted.
+capabilities : Callable, optional
+    The capability matrix; :func:`model_capabilities`.
+
+Returns
+-------
+list of dict
+    Per model: ``model``, ``model_supported``, ``model_refusal`` (the
+    operation and reason, or ``None``), ``supported``, ``refusal`` (the
+    first required operation this host disables, or ``None``) and the
+    mirrored ``combinations``.
+
+### Function `render_model_guarantee_text(summary)`
+Render a model guarantee summary as short text.
+
+Parameters
+----------
+summary : Mapping
+    A summary returned by :func:`model_guarantee_summary`.
+
+Returns
+-------
+str
+    One line per guarantee, the readiness labels and the class counts.
+
+### Function `render_hardware_path_text(manifest)`
+Render a hardware path manifest as text for people.
+
+Parameters
+----------
+manifest : Mapping
+    A manifest as :func:`run_hardware_path` writes it.
+
+Returns
+-------
+str
+    Status, each stage, the refusal if any, the artefacts with their
+    SHA-256 and the boundary statement.
 
 ---
 

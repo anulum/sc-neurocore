@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1801
+expected_file_count = 1807
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7272,3 +7272,21 @@ rationale = "Bind the dense layer reference to the emitted RTL, the neuron model
 [[file]]
 path = "tests/test_evidence_packet.py"
 rationale = "Export real packets, run their formal and synthesis members, and refuse every tamper class."
+[[file]]
+path = "src/sc_neurocore/studio/hardware_path.py"
+rationale = "Take one catalogue model through its capability gate, RTL, bit-exact co-simulation, guarantee summary and synthesis, refusing by name at each stage."
+[[file]]
+path = "src/sc_neurocore/cli/commands/hardware_path.py"
+rationale = "Run the hardware path of one model or list the supported set from the command line with exit status zero or one."
+[[file]]
+path = "tools/hardware_path_support.py"
+rationale = "Write or check the supported-set table derived from the per-model capability matrix."
+[[file]]
+path = "tests/test_studio_hardware_path.py"
+rationale = "Run real models through every stage, bind every artefact digest and reach every refusal, including the bit-exact stop and both formal classes."
+[[file]]
+path = "tests/test_cli_hardware_path.py"
+rationale = "Check the hardware-path command's exit statuses, refusal messages, parameter parsing and list output."
+[[file]]
+path = "tests/test_hardware_path_support_doc.py"
+rationale = "Keep the tracked supported-set table equal to the derivation from the capability matrix."

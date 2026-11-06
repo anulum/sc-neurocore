@@ -29,7 +29,8 @@ optional dependencies merely to discover their metadata.
 Top-level help groups the product into five modes:
 
 ```text
-Model     info, compile, compile-nir, compile-ir, evidence-packet, serve, map-nir
+Model     info, compile, compile-nir, compile-ir, evidence-packet, hardware-path, serve,
+          map-nir
 Hardware  deploy, collect-synthesis, scnir, formal, hub-init
 Studio    studio and studio-* operator commands
 Data      dataset manifest, dataset verify, dataset split
@@ -77,6 +78,7 @@ preserving the original console-script contract.
 | `compile-nir` | Lower NIR/ONNX into RTL, SC-NIR metadata, manifests, and optional handoff audit | NIR bridge and SC-NIR writers |
 | `compile-ir` | Emit one IR graph as SystemVerilog with its guarantee summary | engine IR verifier and emitter, `sc_neurocore.compiler.guarantee_summary` |
 | `evidence-packet export`, `evidence-packet verify` | Write or check the hash-bound evidence packet of one dense layer IR graph | `sc_neurocore.safety_cert.evidence_packet`, `sc_neurocore.safety_cert.dense_cosim` |
+| `hardware-path` | Take one catalogue model through its capability gate, RTL, bit-exact co-simulation, guarantee summary and synthesis, or list the supported set | `sc_neurocore.studio.hardware_path` |
 | `serve` | Serve a NIR graph over the spike-stream protocol | `sc_neurocore.serve.SpikeServer` |
 | `map-nir` | Emit deterministic target-mapping evidence | NIR silicon-mapping writer |
 
@@ -168,6 +170,34 @@ symbolically linked member, a directory that holds no member, an entry that is
 not a regular file, or a manifest digest mismatch. Export exits with
 status 1 when the input cannot be read, is refused, or the co-simulation
 differs.
+
+Take one catalogue model from its schema to synthesis:
+
+```bash
+sc-neurocore hardware-path LapicqueNeuron --q-format Q16.16 --integrator map \
+  --target ecp5 -o build/lapicque
+sc-neurocore hardware-path --list
+```
+
+`hardware-path` checks the model's capability matrix, writes its RTL and
+compile traceability, co-simulates the RTL against the generated bit-true C
+kernel (`--current`, default 10.0; `--steps`, default 128; then a fixed stress
+schedule), writes `guarantees.json` and `guarantees.txt`, and synthesises with
+Yosys (`--target`, default `ecp5`). For `ice40` and `ecp5` with nextpnr
+installed it also places and routes; otherwise place and route is recorded as
+not run with the reason. `--q-format` and `--integrator` default to the
+model's own defaults; `--params name=value,...`, `--dt` and `--module-name`
+are passed to the configuration. The output directory must be new or empty.
+It exits with status 0 when every stage completed and 1 on any refusal, which
+it prints with its stage and code; except for an occupied output directory,
+the refusal is also recorded in `hardware_path.json` and `hardware_path.txt`.
+`--list [MODEL ...]` prints, for the named models or the whole catalogue,
+whether this host can run the path and, if not, the operation and reason;
+deriving the whole catalogue takes minutes. The model-level supported set is
+generated into the [supported-set table](../_generated/hardware_path_support.md).
+See the
+[compiler API](compiler.md#37-one-command-hardware-path-of-a-catalogue-model)
+for the stages and the boundary statement.
 
 Serve and map a graph:
 

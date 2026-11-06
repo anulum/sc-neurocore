@@ -12,6 +12,37 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Take one catalogue model from its schema to synthesis with one command.
+  `sc-neurocore hardware-path MODEL -o DIR` (Python:
+  `sc_neurocore.studio.hardware_path.run_hardware_path`) checks the model's
+  capability matrix (compile, co-simulation and synthesis required), resolves
+  its configuration and writes the RTL with its compile traceability,
+  co-simulates the RTL cycle by cycle against the generated bit-true C kernel,
+  writes a guarantee summary, and synthesises with Yosys; for `ice40` and
+  `ecp5` with nextpnr installed it also places and routes through the
+  digest-bound Studio terminal, otherwise place and route is recorded as not
+  run with the reason. Each stage refuses by name with a code (unknown model,
+  a disabled operation, an undeclared or uncosimulated integrator, a format
+  that cannot hold the model, a configuration, current or step count the
+  resolver or co-simulation rejects, a missing or failing tool, a design the
+  device cannot place); a co-simulation that is not bit-exact writes its report
+  and stops before synthesis. The guarantee summary uses the IR summary's
+  classes: the co-simulation is `CO-SIMULATED ONLY` with its boundary and
+  uncovered cases quoted; the model's catalogue formal job is `FORMAL` only when
+  its RTL file holds exactly the bytes the catalogue emitter writes for this
+  RTL, `PROVEN AT OTHER PARAMETERS` with both parameter sets otherwise, and
+  `NONE` without a job (no job is run); readiness labels come from the sealed
+  readiness record. `hardware_path.json` and `hardware_path.txt` record every
+  stage, the SHA-256 of every artefact, the tool versions and what the run does
+  and does not establish: equality with the bit-true kernel at the chosen
+  format for the recorded stimuli, not with the floating-point model; formal
+  results only as bounded safety on a job's own RTL; synthesis and timing
+  figures as tool estimates; no measured hardware. `sc-neurocore hardware-path
+  --list [MODEL ...]` prints the supported set on the host, and
+  `tools/hardware_path_support.py --write|--check` keeps
+  `docs/_generated/hardware_path_support.md` (41 of 185 catalogue models
+  supported) derived from the capability matrix.
+
 - Build each lookup table of the function-accuracy measurement once per format
   instead of once per read. `lut_read_int` rebuilt and saturated the whole table
   for every input code, so measuring a function over many codes rebuilt it as

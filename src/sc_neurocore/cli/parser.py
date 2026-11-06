@@ -20,6 +20,7 @@ from .commands.dataset import add_dataset_command
 from .commands.deploy import add_deploy_command
 from .commands.evidence_packet import add_evidence_packet_command
 from .commands.formal import add_formal_command
+from .commands.hardware_path import add_hardware_path_command
 from .commands.hub import add_hub_command
 from .commands.info import add_info_command
 from .commands.maintenance import add_maintenance_commands
@@ -32,7 +33,8 @@ from .commands.train import add_train_command
 
 _HELP_EPILOG = """\
 Modes and first steps:
-  Model     info, compile, compile-nir, compile-ir, evidence-packet, serve, map-nir
+  Model     info, compile, compile-nir, compile-ir, evidence-packet, hardware-path, serve,
+            map-nir
   Hardware  deploy, collect-synthesis, scnir, formal, hub-init
   Studio    studio and studio-* operator commands
   Data      dataset manifest, dataset verify, dataset split
@@ -73,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_compile_commands(subparsers)
     add_compile_ir_command(subparsers)
     add_evidence_packet_command(subparsers)
+    add_hardware_path_command(subparsers)
     add_serve_command(subparsers)
     add_mapping_command(subparsers)
     add_deploy_command(subparsers)

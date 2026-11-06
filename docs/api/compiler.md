@@ -334,6 +334,76 @@ member, a symbolic link and a manifest whose digest does not match its list. The
 `verify_evidence_packet`) and `sc_neurocore.safety_cert.dense_cosim`
 (`parse_dense_design`, `reference_trace`, `run_rtl`, `cosimulate`).
 
+### 3.7 One-Command Hardware Path of a Catalogue Model
+
+`sc-neurocore hardware-path MODEL -o DIR` runs one catalogue model from its
+canonical schema to synthesis; the Python API is
+`sc_neurocore.studio.hardware_path.run_hardware_path(model_name, *, out_dir,
+q_format=None, integrator=None, params=None, dt=None, current=10.0,
+n_steps=128, target="ecp5", module_name=None)`. It composes the Studio
+functions that already exist, in this order, and each stage refuses with a
+`HardwarePathRefusal(stage, code, message)` naming the model, parameter, tool
+or operation:
+
+| Stage | Composed function | Refusal codes |
+| --- | --- | --- |
+| `output` | — | `output-not-empty`, `output-not-directory`, `output-is-symlink` (nothing is written) |
+| `capabilities` | `studio.model_capabilities.model_capabilities` | `unknown-model`, `compile-refused`, `cosimulate-refused`, `synthesise-refused` (with the matrix's reason, including a missing `gcc`, `iverilog`, `vvp` or Yosys), `unknown-target`, `integrator-not-declared`, `integrator-not-cosimulated`, `q-format-not-offered`, `combination-not-mirrored` |
+| `configuration` | `studio.model_compile_configuration.resolve_model_compile_configuration`, `studio.compile_traceability.build_model_compile_traceability` | `configuration-refused` (unknown parameter, invalid step, a value the format cannot hold) |
+| `cosimulation` | `studio.model_cosim.run_model_cosim` | `cosim-refused` (current outside the format, step count), `cosim-failed` (a tool fails), `cosim-not-bit-exact` |
+| `guarantees` | `compiler.guarantee_summary.GUARANTEE_CLASSES`, the formal inventory, `studio.readiness_seal.sealed_detail` | — |
+| `synthesis`, `place_and_route` | `studio.synthesis.run_synthesis_terminal` for `ice40`/`ecp5` with nextpnr installed, else `studio.synthesis.run_synthesis` | `terminal-refused`, `synthesis-failed`, `place-and-route-failed` |
+
+Compile, co-simulation and synthesis are mandatory, so a host without the
+co-simulation tools or Yosys is refused at the capability gate rather than
+given a partial path. Place and route is optional: for `gowin` and `xilinx`,
+or when the target's nextpnr is not installed, it is recorded as not run with
+the reason. A co-simulation that is not bit-exact writes `cosim/report.json`
+and stops: RTL that disagrees with its reference is never synthesised. The
+place-and-route terminal checks the co-simulation evidence itself, and the
+Yosys-only stage repeats the bit-exact check before it runs.
+
+The output directory holds `rtl/MODULE.v`, `rtl/compile_traceability.json`,
+`rtl/configuration.json`, `cosim/report.json` (`studio.cosim-parity.v1`) with
+the C reference and testbench it compiled, `guarantees.json` and
+`guarantees.txt`, `synthesis/report.json` (the Yosys result, or the
+`studio.silicon-terminal.v1` report with `netlist.json` and the routed design),
+and `hardware_path.json` with `hardware_path.txt`. The manifest records every
+stage, the request, the SHA-256 and size of every other artefact, the tool
+versions the composed functions report, the refusal if any, and the boundary
+statement. A refused run writes the same manifest with status `refused` and
+the artefacts written up to the refusal.
+
+The guarantee summary (`sc-neurocore.studio.model-guarantee-summary.v1`) uses
+the classes of §3.5:
+
+| Aspect | Class |
+| --- | --- |
+| Co-simulation | `CO-SIMULATED ONLY`: bit-exact against the generated bit-true C kernel at this Q format for the recorded stimuli; the report's boundary statement and `not_covered` cases are quoted. |
+| Formal | The model's job in `hdl/formal/catalogue/inventory.json`. `FORMAL` only when the job's RTL file holds exactly the bytes the catalogue emitter writes for this RTL (the compiler's text, terminated by one newline); `PROVEN AT OTHER PARAMETERS` otherwise, with the job's module, profile and format beside this run's module, schema, format, integrator, step and overrides; `NONE` when the model has no job, the inventory is not installed, or the job's RTL file is missing. No job is run. |
+
+The summary also carries the model's verified readiness labels from the
+sealed `verified_readiness.json`; an installation without the seal records
+`unsealed` with the reason.
+
+The boundary statement says what a completed run establishes: the exact RTL
+bytes; their bit-exact equality with the generated bit-true C kernel at the
+chosen format for the recorded stimuli; a byte-identical catalogue job where
+there is one; synthesis (and placement and routing) of those bytes, with
+resource counts and maximum frequency as the tools' estimates. It also says
+what it does not: equality with the floating-point model, stimuli other than
+those recorded and the report's uncovered cases, any formal result beyond
+bounded safety on a job's own RTL, place and route where it was not run, and
+any measured hardware behaviour, timing, power or resources.
+
+`supported_models()` gives, for every catalogue model, the model-level verdict
+(it compiles and a bit-true C kernel mirrors at least one integrator and
+format) and the verdict on this host, each with the refusing operation and its
+reason, derived from the capability matrix. `tools/hardware_path_support.py
+--write` renders the model-level verdicts into the
+[supported-set table](../_generated/hardware_path_support.md), and a test fails
+when that file is not the current derivation.
+
 ## 4. Python API
 
 ### 4.1 Equation Compiler
