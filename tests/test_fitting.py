@@ -54,6 +54,7 @@ def _recording(name: str, level: float, rng: np.random.Generator, samples: int =
 
 @pytest.fixture(scope="module")
 def cohort() -> tuple[tuple[Recording, ...], tuple[Recording, ...]]:
+    """Record two training steps and one hold-out step with seeded noise."""
     rng = np.random.default_rng(7)
     train = (_recording("step +5", 5.0, rng), _recording("step -4", -4.0, rng))
     holdout = (_recording("step +8", 8.0, rng),)
@@ -79,14 +80,19 @@ def _problem(cohort: Any, **overrides: Any) -> FitProblem:
     return FitProblem(**fields)
 
 
+@pytest.fixture(scope="class")
+def result(cohort: Any) -> dict[str, Any]:
+    """Fit the benchmark problem once for the cases of a class."""
+    return fit_parameters(_problem(cohort))
+
+
 class TestFit:
-    @pytest.fixture(scope="class")
-    def result(self, cohort: Any) -> dict[str, Any]:
-        return fit_parameters(_problem(cohort))
+    """One fit of the identifiable benchmark problem, read from several sides."""
 
     def test_known_parameters_are_recovered_within_their_stated_uncertainty(
         self, result: dict[str, Any]
     ) -> None:
+        """Each true parameter lies within four of its reported standard errors."""
         assert result["identifiability"]["identifiable"] is True
         errors = result["uncertainty"]["standard_errors"]
         for name in ("v_rest", "tau_m", "R"):
@@ -98,6 +104,7 @@ class TestFit:
     def test_held_out_error_is_measured_on_data_the_fit_never_saw(
         self, result: dict[str, Any]
     ) -> None:
+        """The hold-out error is measured on the unseen step and stays near the noise level."""
         (held,) = result["holdout"]
         assert held["recording"] == "step +8"
         assert held["diverged"] is False
@@ -106,6 +113,7 @@ class TestFit:
         assert [row["recording"] for row in result["training"]] == ["step +5", "step -4"]
 
     def test_the_optimiser_history_and_trial_counts_are_kept(self, result: dict[str, Any]) -> None:
+        """The optimiser keeps its evaluation count, failed trials and a non-increasing loss history."""
         optimiser = result["optimiser"]
         assert optimiser["evaluations"] > 100
         assert optimiser["failed_trials"] == 0
@@ -116,6 +124,7 @@ class TestFit:
     def test_the_result_carries_its_problem_and_provenance_under_one_digest(
         self, result: dict[str, Any], cohort: Any
     ) -> None:
+        """The result restores its exact problem and carries its seed and a SHA-256 digest."""
         assert result["schema_version"] == FIT_SCHEMA_VERSION
         assert problem_from_dict(result["problem"]) == _problem(cohort)
         assert result["provenance"]["seed"] == 3
@@ -123,6 +132,7 @@ class TestFit:
 
 
 def test_parameters_seen_only_as_a_ratio_are_reported_unidentifiable(cohort: Any) -> None:
+    """Resistance and capacitance seen only as a ratio give one unconstrained direction."""
     result = fit_parameters(
         _problem(
             cohort,
@@ -146,6 +156,7 @@ def test_parameters_seen_only_as_a_ratio_are_reported_unidentifiable(cohort: Any
 
 
 def test_a_parameter_the_data_never_touch_is_unconstrained(cohort: Any) -> None:
+    """A parameter without influence on the data has a zero relative eigenvalue."""
     result = fit_parameters(
         _problem(
             cohort,
@@ -162,7 +173,7 @@ def test_a_parameter_the_data_never_touch_is_unconstrained(cohort: Any) -> None:
 
 
 def _explosive() -> dict[str, Any]:
-    """A model whose state overflows when its gain passes a threshold within 150 steps."""
+    """Return a model whose state overflows within 150 steps once its gain passes a threshold."""
     return {
         "metadata": {"schema_version": 2, "name": "Explosive"},
         "state": {"v": 1.0},
@@ -197,6 +208,7 @@ def test_trials_whose_state_overflows_are_counted_as_failed() -> None:
 
 
 def test_a_fit_that_finds_no_finite_trial_does_not_claim_convergence() -> None:
+    """When every trial diverges the fit reports neither convergence nor identifiability."""
     result = fit_parameters(
         _explosive_problem(domains=(ParameterDomain("k", 150.0, 400.0),)),
         generations=2,
@@ -208,6 +220,7 @@ def test_a_fit_that_finds_no_finite_trial_does_not_claim_convergence() -> None:
 
 
 def test_near_a_divergence_the_diagnosis_says_so_instead_of_differencing_it() -> None:
+    """At and beyond the overflow edge the diagnosis names the divergence and gives no errors."""
     objective = _Objective(_explosive_problem())
     # Locate the gain at which 150 steps overflow, then stand just below it.
     low, high = 0.0, 400.0
@@ -226,6 +239,7 @@ def test_near_a_divergence_the_diagnosis_says_so_instead_of_differencing_it() ->
 
 
 def test_a_diverging_run_is_reported_as_none_and_held_out_as_diverged() -> None:
+    """An overflowing or unsquarable run has no error and is marked as diverged."""
     assert simulate(_explosive(), "v", {"k": 300.0}, [0.0] * 150) is None
     problem = _explosive_problem()
     from sc_neurocore.fitting.fit import _rmse
@@ -240,6 +254,7 @@ def test_a_diverging_run_is_reported_as_none_and_held_out_as_diverged() -> None:
 
 
 def test_an_exported_fit_replays_to_the_same_digest(cohort: Any) -> None:
+    """Replaying an exported fit reproduces its result digest exactly."""
     result = fit_parameters(_problem(cohort), generations=3, population=5)
     replayed = replay_fit(result)
     assert replayed["reproduced"] is True
@@ -264,11 +279,13 @@ def test_an_exported_fit_replays_to_the_same_digest(cohort: Any) -> None:
 def test_an_ill_formed_problem_is_refused(
     cohort: Any, change: dict[str, Any], message: str
 ) -> None:
+    """Problems with a bad observable, schema, domain set, split or overlap are refused."""
     with pytest.raises(ValueError, match=message):
         _problem(cohort, **change)
 
 
 def test_the_same_name_or_data_in_both_splits_is_refused(cohort: Any) -> None:
+    """A recording name or recording data shared by both splits is refused."""
     train, holdout = cohort
     renamed = Recording(holdout[0].name, train[0].current, train[0].observed)
     with pytest.raises(ValueError, match="recording names must be unique"):
@@ -289,6 +306,7 @@ def test_the_same_name_or_data_in_both_splits_is_refused(cohort: Any) -> None:
     ],
 )
 def test_an_ill_formed_domain_is_refused(domain: tuple[Any, ...], message: str) -> None:
+    """Empty, infinite, non-positive logarithmic and unknown-scale domains are refused."""
     with pytest.raises(ValueError, match=message):
         ParameterDomain(*domain)
 
@@ -304,11 +322,13 @@ def test_an_ill_formed_domain_is_refused(domain: tuple[Any, ...], message: str) 
 def test_an_ill_formed_recording_is_refused(
     current: tuple[float, ...], observed: tuple[float, ...], message: str
 ) -> None:
+    """Recordings that are too short, unequal in length or not finite are refused."""
     with pytest.raises(ValueError, match=message):
         Recording("r", current, observed)
 
 
 def test_another_fit_document_version_is_refused(cohort: Any) -> None:
+    """A fit document of another schema version is refused."""
     document = _problem(cohort).to_public_dict()
     document["schema_version"] = "sc-neurocore.fit.v0"
     with pytest.raises(ValueError, match="unsupported fit document"):
@@ -316,6 +336,7 @@ def test_another_fit_document_version_is_refused(cohort: Any) -> None:
 
 
 def test_the_optimiser_size_must_be_meaningful(cohort: Any) -> None:
+    """Zero generations and a population below four are refused."""
     with pytest.raises(ValueError, match="generations must be at least 1"):
         fit_parameters(_problem(cohort), generations=0)
     with pytest.raises(ValueError, match="population at least 4"):

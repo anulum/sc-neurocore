@@ -15,9 +15,11 @@ bit-exact; an RK model compiles and has co-simulation disabled by name.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -41,17 +43,28 @@ needs_cosim_tools = pytest.mark.skipif(
 )
 
 
-def _operations(name: str, **kwargs: object) -> dict:
-    capabilities = model_capabilities(name, **kwargs)
+def _operations(
+    name: str,
+    *,
+    tool_status: Mapping[str, Mapping[str, object]] | None = None,
+    formal_inventory: Path = FORMAL_INVENTORY,
+) -> dict[str, Any]:
+    capabilities = model_capabilities(
+        name, tool_status=tool_status, formal_inventory=formal_inventory
+    )
     assert capabilities is not None
     assert capabilities["schema_version"] == MODEL_CAPABILITIES_SCHEMA_VERSION
     assert capabilities["model"] == name
-    return capabilities["operations"]
+    operations: dict[str, Any] = capabilities["operations"]
+    return operations
 
 
 class TestMatrix:
+    """The capability matrix of single models under the tools this host provides."""
+
     @needs_cosim_tools
     def test_a_map_model_offers_the_chain_this_host_can_run(self) -> None:
+        """A map model compiles in both formats, co-simulates both and follows the installed tools."""
         tools = check_tools()
         operations = _operations("AdaptiveThresholdIFNeuron", tool_status=tools)
 
@@ -79,6 +92,7 @@ class TestMatrix:
                 assert (target in pnr["targets"]) is installed
 
     def test_an_rk_model_compiles_and_names_why_it_cannot_be_co_simulated(self) -> None:
+        """An RK4 model compiles, but without a mirrored C kernel later stages say why not."""
         operations = _operations("SCScaledResetAdaptiveIFNeuron")
 
         assert operations["compile"]["enabled"] is True
@@ -94,6 +108,7 @@ class TestMatrix:
         assert operations["place_and_route"]["reason"] == "place and route follows synthesis"
 
     def test_a_model_without_a_compilable_schema_disables_everything(self) -> None:
+        """Without an executable schema profile, compilation and co-simulation are refused."""
         operations = _operations("ATypeKNeuron")
         assert operations["compile"]["reason"] == (
             "the model has no canonical schema with an executable profile for the compiler"
@@ -104,6 +119,7 @@ class TestMatrix:
         }
 
     def test_a_model_no_format_holds_is_not_compiled(self) -> None:
+        """A model whose values no Studio fixed-point format holds is not offered for compiling."""
         compile_op = _operations("SCClippedRationalRecoveryMapNeuron")["compile"]
         assert compile_op["enabled"] is False
         assert compile_op["reason"].startswith("no Studio fixed-point format holds the model")
@@ -122,6 +138,7 @@ class TestMatrix:
 
     @needs_cosim_tools
     def test_synthesis_and_place_and_route_follow_the_installed_tools(self) -> None:
+        """Synthesis needs Yosys, and each place-and-route target needs its own nextpnr."""
         without_yosys = _operations("AdaptiveThresholdIFNeuron", tool_status={})
         assert without_yosys["synthesise"]["reason"] == "Yosys is not installed"
 
@@ -138,6 +155,7 @@ class TestMatrix:
         )
 
     def test_the_formal_job_is_named_though_the_studio_cannot_run_it(self, tmp_path: Path) -> None:
+        """The catalogue formal job is reported but disabled, and absent where none exists."""
         formal = _operations("AdaptiveThresholdIFNeuron")["formal"]
         jobs = json.loads(FORMAL_INVENTORY.read_text(encoding="utf-8"))["jobs"]
         (job,) = [entry for entry in jobs if entry["class"] == "AdaptiveThresholdIFNeuron"]
@@ -151,6 +169,7 @@ class TestMatrix:
         assert absent["formal"]["catalogue_job"] is None
 
     def test_a_name_the_catalogue_does_not_hold_has_no_matrix(self) -> None:
+        """An unknown model name has no capability matrix at all."""
         assert model_capabilities("NoSuchNeuron") is None
 
 
@@ -176,16 +195,22 @@ def test_every_enabled_co_simulation_combination_is_bit_exact(model: str) -> Non
     assert ran >= 1
 
 
+@pytest.fixture(scope="class")
+def client() -> TestClient:
+    """Serve the real Studio application once to the route cases of a class."""
+    return TestClient(create_app(), base_url="http://127.0.0.1")
+
+
 class TestRoute:
-    @pytest.fixture(scope="class")
-    def client(self) -> TestClient:
-        return TestClient(create_app(), base_url="http://127.0.0.1")
+    """The capability matrix through the Studio HTTP route."""
 
     def test_the_route_serves_the_matrix(self, client: TestClient) -> None:
+        """A catalogue model's matrix is served with the current schema version."""
         response = client.get("/api/models/AdaptiveThresholdIFNeuron/capabilities")
         assert response.status_code == 200
         assert response.json()["schema_version"] == MODEL_CAPABILITIES_SCHEMA_VERSION
 
     def test_the_route_refuses_an_unknown_model(self, client: TestClient) -> None:
+        """An unknown model name is HTTP 404."""
         response = client.get("/api/models/NoSuchNeuron/capabilities")
         assert response.status_code == 404

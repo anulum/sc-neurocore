@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1779
+expected_file_count = 1781
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -227,6 +227,14 @@ rationale = "Read the engine crate identity from its manifest and ask crates.io,
 [[file]]
 path = "tests/test_tools/test_crates_io_release_status.py"
 rationale = "A real loopback registry shows the identified query, the published and unpublished answers, every refusal and the command output the publish jobs read."
+
+[[file]]
+path = "tests/test_fitting.py"
+rationale = "Fits of a seeded benchmark recover known parameters within their stated errors, report unidentifiable and diverging cases, replay exactly and refuse ill-formed problems."
+
+[[file]]
+path = "tests/test_studio_model_capabilities.py"
+rationale = "The per-model capability matrix enables only operations that run, names why the others are disabled, and is served by the real HTTP route."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"
