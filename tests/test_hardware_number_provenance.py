@@ -12,7 +12,9 @@ The public architecture pages and the generated capability highlights
 must quote exactly what the committed out-of-context synthesis and
 timing reports for ``sc_shd_top`` measured — never a hand-typed figure
 that drifts from the artefact, and never an estimator output presented
-as a measurement.
+as a measurement. That synthesis excludes the weight ROM and delay
+tables, so every quoted figure must say it was obtained without weights
+or delays, and no page may claim a silicon run.
 """
 
 from __future__ import annotations
@@ -25,11 +27,24 @@ _UTIL_REPORT = _ROOT / "hdl/reports/vivado_util_xc7z020_100mhz.rpt"
 _TIMING_REPORT = _ROOT / "hdl/reports/vivado_timing_xc7z020_100mhz.rpt"
 _PUBLIC_FILES = (
     "ARCHITECTURE.md",
+    "ROADMAP.md",
     "tools/architecture_map.toml",
     "README.md",
     "docs/index.md",
     "docs/architecture/SYSTEM_MAP.md",
+    "docs/benchmarks/BENCHMARKS.md",
     "docs/COMPETITIVE_LANDSCAPE.md",
+    "docs/_generated/capability_manifest.json",
+    "docs/_generated/studio_manifest.json",
+)
+_QUALIFIER = "without weights or delays"
+_SILICON_CLAIMS = (
+    "proven on silicon",
+    "proven end-to-end",
+    "silicon-proven",
+    "real Xilinx silicon",
+    "fits in under 2%",
+    "Bitstream generated",
 )
 
 
@@ -43,7 +58,6 @@ def _site_row(report: str, site: str) -> tuple[int, float]:
 
 def test_architecture_table_matches_the_committed_reports() -> None:
     """The ARCHITECTURE.md table quotes the artefact values verbatim."""
-
     report = _UTIL_REPORT.read_text(encoding="utf-8")
     luts, lut_pct = _site_row(report, "Slice LUTs*")
     regs, reg_pct = _site_row(report, "Slice Registers")
@@ -64,7 +78,6 @@ def test_architecture_table_matches_the_committed_reports() -> None:
 
 def test_capability_highlight_matches_the_committed_report() -> None:
     """The generated-manifest source quotes the artefact LUT count."""
-
     report = _UTIL_REPORT.read_text(encoding="utf-8")
     luts, _ = _site_row(report, "Slice LUTs*")
     highlight_source = (_ROOT / "tools/architecture_map.toml").read_text(encoding="utf-8")
@@ -73,11 +86,38 @@ def test_capability_highlight_matches_the_committed_report() -> None:
 
 def test_public_pages_do_not_carry_drifted_or_estimated_hardware_numbers() -> None:
     """Retired hand-typed figures and estimator outputs stay unpublished."""
-
     for relative in _PUBLIC_FILES:
         text = (_ROOT / relative).read_text(encoding="utf-8")
-        for stale in ("1317 LUT", "1,317", "848 FF", "56,243", "56243"):
+        for stale in ("1317 LUT", "1 317", "1,317", "848 FF", "56,243", "56243"):
             assert stale not in text, f"{relative} republishes the drifted figure {stale!r}"
-        assert "proven on silicon" not in text, (
-            f"{relative} claims silicon proof while on-device classification evidence is still open"
-        )
+        for claim in _SILICON_CLAIMS:
+            assert claim not in text, (
+                f"{relative} claims {claim!r} while no board run or weighted synthesis exists"
+            )
+
+
+def _figure_blocks(relative: str, text: str) -> list[str]:
+    """Split a public file into the blocks that must carry the qualifier themselves.
+
+    Markdown pages are split at headings, so a section that quotes a figure must
+    qualify it; any other file is split into lines, one setting or string each.
+    """
+    if relative.endswith(".md"):
+        return re.split(r"^#{1,6} ", text, flags=re.MULTILINE)
+    return text.splitlines()
+
+
+def test_every_quoted_synthesis_figure_says_it_has_no_weights() -> None:
+    """A section or line that quotes the report's LUT count also names what it omits."""
+    luts, _ = _site_row(_UTIL_REPORT.read_text(encoding="utf-8"), "Slice LUTs*")
+    figure = re.compile(rf"\b{luts} LUT|\|\s*LUTs\s*\|\s*{luts}\s*\|")
+    quoted = 0
+    for relative in _PUBLIC_FILES:
+        text = (_ROOT / relative).read_text(encoding="utf-8")
+        for block in _figure_blocks(relative, text):
+            if figure.search(block):
+                quoted += 1
+                assert _QUALIFIER in block, (
+                    f"{relative} quotes the {luts} LUT synthesis without saying it has no weights"
+                )
+    assert quoted >= 5

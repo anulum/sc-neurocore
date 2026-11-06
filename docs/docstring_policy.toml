@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1776
+expected_file_count = 1777
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -215,6 +215,10 @@ rationale = "Real collection leaves a Julia project needing resolution byte-for-
 [[file]]
 path = "tests/test_studio_catalogue_query.py"
 rationale = "Catalogue filters read verified readiness, facet counts drill down, parameters are parsed or refused with a reason, and the real HTTP route agrees with the query."
+
+[[file]]
+path = "tests/test_hardware_number_provenance.py"
+rationale = "Public SHD hardware figures quote the committed Vivado reports, say they were obtained without weights or delays, and never claim a silicon run or an unsourced figure."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"

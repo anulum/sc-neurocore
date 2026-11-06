@@ -194,11 +194,13 @@ Heidelberg Digits (SHD) speech classification targeting Zynq XC7Z020
   runs.
 - **Verilog:** 5 new modules (sc_shd_top, sc_vmin_lif_neuron, sc_axonal_delay,
   sc_dense_int8_sparse, sc_shd_axi_wrapper) — 25 total HDL modules, 5 455 lines
-- **Vivado synthesis:** 1 317 LUT (2.5%), 848 FF (0.8%), 0 BRAM, 0 DSP,
-  WNS +4.048 ns at 100 MHz (~168 MHz achievable)
-- **Bitstream generated** via Vivado v2025.2 (Zynq PS + AXI-Lite block design)
-- **PYNQ deployment package:** driver, demo, .bit, .hwh generated for the
-  pre-silicon deployment package
+- **Vivado synthesis:** out-of-context, without weights or delays: 990 LUT
+  (1.86%), 670 FF (0.63%), 0 BRAM, 0 DSP, WNS +4.048 ns at 100 MHz. This is
+  not the resource cost of the network with its weights.
+- **Block design:** Zynq PS + AXI-Lite script for Vivado v2025.2; no
+  bitstream or routed report is committed
+- **PYNQ deployment package:** driver and demo; the synthesised design has no
+  weight or delay load path yet
 - **Q8.8 co-simulation:** bit-true Python reference matches Verilog, 4% gap vs PyTorch
 - **Collaboration:** Joint work with T. Masquelier, A. Queant, B. Cottereau (CNRS/CerCo)
 
@@ -322,9 +324,10 @@ labels until their stable contracts are accepted.
 
 ### FPGA deployment proof (P0 blocker) PARTIALLY DONE
 
-- ~~Generate Zynq 7020 deployment artefacts~~ ✓ (SHD bitstream generated,
-  2.5% LUT in Vivado reports)
-- ~~Measure: LUT count, BRAM, DSP, Fmax~~ ✓ (Vivado reports committed)
+- Generate Zynq 7020 deployment artefacts with the weights and delays loaded
+  (the committed Vivado reports cover an out-of-context synthesis without
+  them)
+- Measure LUT count, BRAM, DSP and Fmax of the design with its weights
 - Verify on physical PYNQ-Z2 board (board not yet available)
 - Measure dynamic power on silicon
 - ~~Emit FPGA power and thermal digital-twin JSON beside deployable bitstream

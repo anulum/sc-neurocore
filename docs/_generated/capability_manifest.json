@@ -76,7 +76,7 @@
         "dispatch_order": 0,
         "language": "Verilog",
         "name": "fpga-rtl",
-        "role": "synthesisable SC hardware (hdl/, silicon-proven SHD)",
+        "role": "synthesisable SC hardware (hdl/)",
         "status": "build-available"
       }
     ],
@@ -90,7 +90,7 @@
       ],
       "executed": [
         "SC inference rust/numpy bit-identical for fixed seed (accel/backend.py)",
-        "SHD pipeline synthesised for Zynq XC7Z020: 990 LUT / 1.9% (committed OOC synthesis report), co-simulation bit-exact"
+        "SHD pipeline synthesised for Zynq XC7Z020 without weights or delays: 990 LUT / 1.9% (committed OOC synthesis report; not the cost with weights), co-simulation bit-exact"
       ],
       "feasibility_only": [
         "per-language speed multipliers asserted only in docstrings (e.g. Mojo 27-214x) lack stored measured artefacts",
@@ -948,7 +948,7 @@
           "FPGA bitstream (.bit+.hwh)",
           "ASIC PDK deck"
         ],
-        "processing_model": "Yosys -> nextpnr/OpenROAD / Vivado -> PYNQ-Z2; ASIC flow SKY130/GF180/TSMC28/Intel16 (silicon-proven: SHD on Zynq XC7Z020)",
+        "processing_model": "Yosys -> nextpnr/OpenROAD / Vivado -> PYNQ-Z2; ASIC flow SKY130/GF180/TSMC28/Intel16 (SHD synthesised for Zynq XC7Z020; no board run yet)",
         "stage": "synthesise-deploy"
       }
     ],

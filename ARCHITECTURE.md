@@ -158,10 +158,11 @@ sc-neurocore/
                                   +--------------+
 ```
 
-## SHD FPGA Pipeline (proven end-to-end)
+## SHD FPGA Pipeline
 
-The SHD (Spiking Heidelberg Digits) pipeline demonstrates the full
-train-to-deploy flow on real Xilinx silicon:
+The SHD (Spiking Heidelberg Digits) pipeline runs from training to a
+synthesised netlist and a PYNQ-Z2 driver package. Co-simulation checks the
+Verilog against its Q8.8 reference; no board run has validated it yet:
 
 ```
 SpikingJelly DCLS max training (Vertex AI T4)
@@ -179,15 +180,16 @@ Verilog modules (hdl/sc_shd_top.v + 4 submodules)
 iverilog co-simulation (hdl/tb_sc_shd_top.v)
     |  bit-exact match with Q8.8 reference
     v
-Vivado v2025.2 synthesis (Zynq XC7Z020, 100 MHz)
+Vivado v2025.2 out-of-context synthesis (Zynq XC7Z020, 100 MHz),
+without weights or delays
     |  990 LUT (1.86%), 670 FF (0.63%), WNS +4.048 ns
     v
-Bitstream generation (system_wrapper.bit + system.hwh)
-    |  via Vivado block design (Zynq PS + AXI-Lite)
+Block design script (hdl/pynq/create_block_design.tcl)
+    |  Zynq PS + AXI-Lite; no bitstream or routed report is committed
     v
-PYNQ-Z2 deployment package (hdl/pynq/)
+PYNQ-Z2 driver package (hdl/pynq/), not yet run on a board
     sc_shd_driver.py -> SHDAccelerator class
-    demo_shd_fpga.py -> end-to-end demo
+    demo_shd_fpga.py -> demo script
 ```
 
 ### Vivado Synthesis Results (Zynq XC7Z020-1CLG400, 100 MHz)
@@ -207,9 +209,14 @@ post-implementation counts are typically lower).
 `tests/test_hardware_number_provenance.py` keeps this table bound to
 those committed reports.
 
-All weights, delays, scales, and LUT contents are hardcoded in Verilog.
-No external memory. The entire SHD inference network fits in under 2% of a
-Zynq-7020's LUTs at synthesis.
+These figures describe a netlist without weights or delays.
+`hdl/sc_shd_top.v` and `hdl/sc_dense_int8_sparse.v` load their delay tables
+and weight ROM with `$readmemh` only when `SYNTHESIS` is undefined, and
+`hdl/sc_shd_axi_wrapper.v` has no weight or delay register, so the
+synthesised design carries no model. The figures are therefore not the
+resource cost of the SHD network with its trained weights, and they do not
+show that the network fits the device. A weight and delay load path and a
+synthesis with the model loaded remain open.
 
 ## Build Targets
 

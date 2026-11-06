@@ -51,9 +51,10 @@ Python/SystemVerilog contract evidence for strict-priority ordering, FIFO ties,
 backpressure drops, critical-deadline traps, and Yosys RTL elaboration; it is
 not an FPGA throughput or latency measurement.
 
-> **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
-> (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
-> `hdl/reports/vivado_util_xc7z020_100mhz.rpt` for full Vivado report.
+> **v3.14.0 additions:** out-of-context SHD synthesis on Zynq XC7Z020
+> without weights or delays — 990 LUT (1.86%), 670 FF (0.63%), WNS +4.048 ns
+> at 100 MHz. This is not the resource cost of the network with its weights.
+> See `hdl/reports/vivado_util_xc7z020_100mhz.rpt` and `ARCHITECTURE.md` §SHD.
 
 ---
 

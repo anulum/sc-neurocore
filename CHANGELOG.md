@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Correct the published SHD hardware claims. The committed Vivado reports
+  describe an out-of-context synthesis of `sc_shd_top` without weights or
+  delays (990 LUT, 670 FF), because the weight ROM and delay tables load only
+  in simulation and the AXI wrapper has no load path; they are not the cost of
+  the network with its weights. Remove the claims of an end-to-end silicon run,
+  of fitting in under 2% of the device and of a generated bitstream, and the
+  unsourced 1 317 LUT and 848 FF figures. The hardware number provenance test
+  now covers the roadmap, the benchmark page and the generated manifests, and
+  requires the qualifier beside every quoted figure.
+
 - Omit machine hostnames from newly recorded benchmark context while retaining
   processor, architecture, memory, runtime versions, affinity and load for
   reproducibility. Verify the shared context and its equation, Verilog and

@@ -34,8 +34,9 @@ a network defined in Python down to bit-true RTL on FPGA/ASIC silicon:
 The defining design choice is **stochastic computing**: values are encoded as
 Bernoulli/quasi-random bitstreams, so arithmetic becomes single-gate logic
 (multiply = AND/XNOR, scaled-add = MUX) — directly mappable to extremely small,
-low-power digital hardware. The SHD pipeline is proven end-to-end on a Zynq
-XC7Z020 (`ARCHITECTURE.md` §SHD; 1 317 LUT / 2.5 %).
+low-power digital hardware. The SHD pipeline is synthesised for a Zynq
+XC7Z020 and matches its Q8.8 reference bit for bit in co-simulation; no board
+run has validated it yet (`ARCHITECTURE.md` §SHD).
 
 ### Module tiers (from `pyproject.toml` + `__init__.py`)
 
