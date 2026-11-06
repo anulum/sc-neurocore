@@ -28,6 +28,7 @@ import http.client
 import http.server
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import threading
@@ -353,7 +354,10 @@ def unreleased_record(review_by: str, advisory: str = "CVE-2026-103995") -> str:
     committed = (ROOT / EXCEPTION_FILE).read_text()
     blocks = ["[[exception]]" + block for block in committed.split("[[exception]]")[1:]]
     (record,) = [block for block in blocks if f'advisory = "{advisory}"' in block]
-    return record.replace('review_by = "2026-11-14"', f'review_by = "{review_by}"')
+    # Any committed date is replaced, so a renewal changes only the table.
+    dated, count = re.subn(r'review_by = "\d{4}-\d{2}-\d{2}"', f'review_by = "{review_by}"', record)
+    assert count == 1
+    return dated
 
 
 def channel_index(*extra: str) -> bytes:
