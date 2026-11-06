@@ -265,3 +265,19 @@ def test_work_outside_the_commit_candidate_does_not_change_the_verdict(tmp_path:
     assert run_guard(root).returncode == 0
     fixture_git(root, "add", "foreign.py")
     assert check_scope(root, {}).violations == ("Missing required policy file: foreign.py",)
+
+
+def test_a_staged_deletion_needs_no_enrollment(tmp_path: Path) -> None:
+    """Removing a Python file that the policy never enrolled is not a change to document.
+
+    The cohort holds added, copied, modified, renamed and type-changed files only;
+    a deleted file has no source to document, so it never asks for enrollment.
+    """
+    root = repository_fixture(tmp_path)
+    (root / "helper.py").write_text("def undocumented():\n    return 1\n", encoding="utf-8")
+    fixture_git(root, "add", "helper.py")
+    fixture_git(root, "commit", "--message", "Unenrolled helper fixture")
+    fixture_git(root, "rm", "--quiet", "helper.py")
+    result = check_scope(root, {})
+    assert result.violations == () and result.changed_files == 0
+    assert run_guard(root).returncode == 0
