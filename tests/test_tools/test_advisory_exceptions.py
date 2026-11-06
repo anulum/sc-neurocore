@@ -12,19 +12,27 @@ The fixed-code path is exercised on the last reviewed CVE-2025-15367 record and 
 and Syft identity of the hosted audit that accepted it, with the fixed vendor source read from its
 immutable CPython commit. The unreleased-fix path is exercised on each committed record
 (CVE-2026-103995 and CVE-2026-116566), the hosted match that blocked it, its immutable CPython 3.15.2
-release file and a recorded conda-forge version list.
+release file and a recorded conda-forge version list. Repetition of vendor reads is exercised
+against a real loopback HTTP server that returns temporary failures, lasting refusals and
+truncated bodies.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 import copy
 from datetime import datetime, timedelta, timezone
 import hashlib
+import http.client
+import http.server
 import json
 from pathlib import Path
 import shutil
 import subprocess
+import threading
 from typing import Any
+import urllib.error
 import urllib.request
 
 import pytest
@@ -529,6 +537,168 @@ def test_live_channel_index_is_readable() -> None:
     assert len(index) <= 32 * 1024 * 1024
     assert "3.15.2" in json.loads(index)["versions"]
     assert all(isinstance(version, str) for version in newer_vendor_releases(index, "3.15.2"))
+
+
+Outcome = int | bytes | str
+
+
+class _ScriptedServer(http.server.ThreadingHTTPServer):
+    """Loopback HTTP server that answers each request with its next scripted outcome."""
+
+    def __init__(self, outcomes: list[Outcome]) -> None:
+        super().__init__(("127.0.0.1", 0), _ScriptedHandler)
+        self.outcomes = outcomes
+        self.requests = 0
+
+
+class _ScriptedHandler(http.server.BaseHTTPRequestHandler):
+    """Send an HTTP status, a complete body, a truncated body or no response at all."""
+
+    server: _ScriptedServer
+
+    def do_GET(self) -> None:
+        """Answer with the next outcome; ``drop`` closes the connection without a response."""
+        self.server.requests += 1
+        outcome = self.server.outcomes.pop(0)
+        if outcome == "drop":
+            self.close_connection = True
+            return
+        if isinstance(outcome, int):
+            self.send_error(outcome)
+            return
+        if outcome == "truncated":
+            body, declared = b"truncated", 64
+        else:
+            assert isinstance(outcome, bytes)
+            body, declared = outcome, len(outcome)
+        self.send_response(200)
+        self.send_header("Content-Length", str(declared))
+        self.end_headers()
+        self.wfile.write(body)
+        self.close_connection = True
+
+    def log_message(self, format: str, *args: object) -> None:
+        """Keep the server's request log out of the test output."""
+
+
+@contextmanager
+def scripted_server(outcomes: list[Outcome]) -> Iterator[tuple[str, _ScriptedServer]]:
+    """Serve the scripted outcomes on an ephemeral loopback port until the block ends.
+
+    Parameters
+    ----------
+    outcomes : list
+        One outcome per expected request, in order.
+
+    Yields
+    ------
+    tuple
+        The served address and the running server, whose request count the test reads.
+    """
+    server = _ScriptedServer(outcomes)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/source", server
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=10)
+
+
+@pytest.mark.parametrize(
+    "failures",
+    [[503], [429, 502], ["drop"], ["truncated"], [408, "drop"]],
+)
+def test_read_url_repeats_a_temporary_failure(failures: list[Outcome]) -> None:
+    """Temporary server or transport failures are repeated until the source is read.
+
+    Parameters
+    ----------
+    failures : list
+        Temporary statuses, a connection closed without a response or a body cut short of
+        its declared length, before the real body.
+    """
+    body = b"vendor source bytes"
+    with scripted_server([*failures, body]) as (url, server):
+        assert read_url(url, 1024, delays=(0.0, 0.0)) == body
+        assert server.requests == len(failures) + 1
+
+
+@pytest.mark.parametrize("status", [400, 403, 404, 410])
+def test_read_url_does_not_repeat_a_lasting_refusal(status: int) -> None:
+    """A status that will not change on repetition fails at the first request.
+
+    Parameters
+    ----------
+    status : int
+        Client-error status of the vendor address.
+    """
+    with scripted_server([status, b"never served"]) as (url, server):
+        with pytest.raises(urllib.error.HTTPError) as caught:
+            read_url(url, 1024, delays=(0.0, 0.0))
+        assert caught.value.code == status and server.requests == 1
+
+
+@pytest.mark.parametrize(
+    ("failure", "error"),
+    [(503, urllib.error.HTTPError), ("drop", OSError), ("truncated", http.client.IncompleteRead)],
+)
+def test_read_url_reports_a_failure_that_outlasts_every_repetition(
+    failure: Outcome, error: type[Exception]
+) -> None:
+    """After the last permitted request the last failure propagates instead of partial data.
+
+    Parameters
+    ----------
+    failure : int or str
+        Temporary failure returned to every request.
+    error : type
+        Exception the caller receives.
+    """
+    with scripted_server([failure] * 3) as (url, server):
+        with pytest.raises(error):
+            read_url(url, 1024, delays=(0.0, 0.0))
+        assert server.requests == 3
+
+
+def test_read_url_keeps_the_size_limit() -> None:
+    """A body longer than the limit returns exactly ``limit`` bytes for the caller to reject."""
+    with scripted_server([b"x" * 100, b"x" * 8]) as (url, server):
+        assert read_url(url, 9, delays=()) == b"x" * 9
+        assert read_url(url, 9, delays=()) == b"x" * 8
+        assert server.requests == 2
+
+
+def test_both_unreleased_fixes_share_one_channel_snapshot(tmp_path: Path) -> None:
+    """Two holding unreleased-fix records read the channel index once, not once each."""
+    checkout, prefix, _ = unreleased_checkout(tmp_path, due_date(), "CVE-2026-103995")
+    table = checkout / EXCEPTION_FILE
+    table.write_text(table.read_text() + unreleased_record(due_date(), "CVE-2026-116566"))
+    records = load_exceptions(table.read_bytes())
+    assert [record["advisory"] for record in records] == sorted(UNRELEASED)
+    matches, inventories = [], {}
+    for record in records:
+        recorded, source, digest = UNRELEASED[record["advisory"]]
+        data = json.loads(recorded.read_text())
+        matches.append(data["match"])
+        inventories[data["artifact"]["id"]] = data["artifact"]
+        proof = prefix / record["proof_path"]
+        proof.parent.mkdir(parents=True, exist_ok=True)
+        proof.write_bytes(vendor_source(source, digest))
+    served: list[str] = []
+
+    def read(url: str, limit: int) -> bytes:
+        served.append(url)
+        return channel_index() if url == CONDA_FORGE_PYTHON_INDEX else read_url(url, limit)
+
+    decision = conda_lock_decision(checkout, LOCK, matches, inventories, prefix, read)
+    assert decision["passed"] is True and len(decision["accepted"]) == 2
+    assert served == [
+        UNRELEASED["CVE-2026-103995"][1],
+        CONDA_FORGE_PYTHON_INDEX,
+        UNRELEASED["CVE-2026-116566"][1],
+    ]
 
 
 @pytest.mark.parametrize(

@@ -142,6 +142,13 @@ source file is refused:
   lock moves as soon as the vendor publishes. The review date may be at most
   14 days ahead.
 
+One audit reads the channel index once for all of its unreleased-fix records.
+Vendor-source and channel reads are made up to three times, 2 and 8 seconds
+apart, after a timeout, a dropped connection, a body shorter than its declared
+length or HTTP status 408, 425, 429, 500, 502, 503 or 504. Any other status
+fails at once, and the last failure stops the audit; a partial body is never
+compared or parsed.
+
 The current records cover two advisories for conda-forge Python 3.15.2 in the
 Mojo lock. CPython fixed both on its main branch, which will become 3.16. No
 3.15 release carries either fix, and conda-forge lists nothing newer than 3.15.2.

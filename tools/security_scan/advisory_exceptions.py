@@ -21,11 +21,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 import hashlib
+import http.client
 import json
 from pathlib import Path, PurePosixPath
 import re
+import time
 import tomllib
 from typing import Any
+import urllib.error
 import urllib.request
 
 from packaging.version import InvalidVersion, Version
@@ -36,6 +39,10 @@ CONDA_FORGE_PYTHON_INDEX = "https://api.anaconda.org/package/conda-forge/python"
 _SOURCE_LIMIT = 65536
 _INDEX_LIMIT = 32 * 1024 * 1024
 UNRELEASED_FIX_REVIEW_WINDOW = timedelta(days=14)
+# Hosted runners met transient HTTP errors and timeouts on these reads; three requests in
+# about ten seconds outlast a short service interruption without hiding a lasting one.
+RETRY_DELAYS = (2.0, 8.0)
+TRANSIENT_HTTP_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504})
 # Each (reason, advisory) pair admits exactly the immutable CPython file that proves it.
 _SOURCES = {
     ("fixed_code_present", "CVE-2025-15367"): (
@@ -69,8 +76,12 @@ _FIELDS = frozenset(
 )
 
 
-def read_url(url: str, limit: int) -> bytes:
+def read_url(url: str, limit: int, *, delays: tuple[float, ...] = RETRY_DELAYS) -> bytes:
     """Read at most ``limit`` bytes from a pinned HTTPS address.
+
+    A failed connection, a timeout, a truncated body or an HTTP status that
+    reports a temporary server condition is retried after each delay in turn.
+    Every other HTTP status fails at once, and the last failure propagates.
 
     Parameters
     ----------
@@ -78,15 +89,40 @@ def read_url(url: str, limit: int) -> bytes:
         Address fixed by this module or by a validated exception record.
     limit : int
         Number of bytes to read; callers pass one more than they accept.
+    delays : tuple of float, optional
+        Seconds to wait before each repeated request; one request per delay
+        follows the first.
 
     Returns
     -------
     bytes
         The bytes read, which a caller rejects when they reach ``limit``.
+
+    Raises
+    ------
+    OSError, http.client.HTTPException
+        The address cannot be read after every permitted request.
     """
+    for delay in delays:
+        try:
+            return _read_once(url, limit)
+        except (OSError, http.client.HTTPException) as error:
+            if isinstance(error, urllib.error.HTTPError):
+                error.close()
+                if error.code not in TRANSIENT_HTTP_STATUSES:
+                    raise
+        time.sleep(delay)
+    return _read_once(url, limit)
+
+
+def _read_once(url: str, limit: int) -> bytes:
+    """Make one request; a body cut short of its declared length is an error, not data."""
     # Every address is an HTTPS constant or passed the record's source pattern.
     with urllib.request.urlopen(url, timeout=30) as response:  # nosec B310
-        return bytes(response.read(limit))
+        payload = bytes(response.read(limit))
+        if len(payload) < limit and response.length:
+            raise http.client.IncompleteRead(payload, response.length)
+        return payload
 
 
 def newer_vendor_releases(index: bytes, installed: str) -> list[str]:
@@ -240,6 +276,8 @@ def conda_lock_decision(
     accepted: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
     used: set[int] = set()
+    # One channel snapshot answers every unreleased-fix record of this decision.
+    channel_index: bytes | None = None
     for match in matches:
         artifact, advisory = match["artifact"], match["vulnerability"]
         chosen = [
@@ -282,10 +320,11 @@ def conda_lock_decision(
         if record["reason"] == "vendor_fix_unreleased":
             newer: list[str] = []
             if holds:
-                index = read(CONDA_FORGE_PYTHON_INDEX, _INDEX_LIMIT + 1)
-                if len(index) > _INDEX_LIMIT:
-                    raise ValueError("Vendor channel index exceeds its size limit.")
-                newer = newer_vendor_releases(index, record["version"])
+                if channel_index is None:
+                    channel_index = read(CONDA_FORGE_PYTHON_INDEX, _INDEX_LIMIT + 1)
+                    if len(channel_index) > _INDEX_LIMIT:
+                        raise ValueError("Vendor channel index exceeds its size limit.")
+                newer = newer_vendor_releases(channel_index, record["version"])
                 holds = not newer
             evidence.update(holds=holds, channel=CONDA_FORGE_PYTHON_INDEX, newer_releases=newer)
         if holds:
