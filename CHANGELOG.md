@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Write a guarantee summary next to the SystemVerilog emitted from an IR graph.
+  The new `sc-neurocore compile-ir` command verifies the graph, emits the top
+  level and writes `NAME.guarantees.json` and `.txt`: for each operation, the
+  library module it instantiates and whether its own formal job proves this
+  instance (mode, depth, engine, assumptions and parameters), proves it only at
+  other parameters (both sets shown), or whether the module is only
+  co-simulated, yields a stochastic estimate (stream length and seed; no error
+  bound yet), or is inline logic with no separate proof. Tests bind the table to the IR operations, the
+  emitter's instantiations and the committed formal jobs, and run the named
+  jobs where the solvers are installed.
+
 - Publish the engine wheels to PyPI through trusted publishing, as the Python
   package already does, instead of a stored API token. Every uploaded engine
   file then carries a provenance attestation; the 4.0.0 engine files had none.

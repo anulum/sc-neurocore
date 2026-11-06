@@ -7507,6 +7507,32 @@ The command supports three compilation modes via CLI flags:
 
 ---
 
+## Module `cli.commands.compile_ir`
+
+### Function `add_compile_ir_command(subparsers)`
+Register the ``compile-ir`` command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_compile_ir(args)`
+Emit one IR graph and its guarantee summary.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``compile-ir`` arguments.
+
+Returns
+-------
+int
+    Zero when the top level and both summaries were written; one when the file
+    cannot be read, does not parse or fails IR verification.
+
+---
+
 ## Module `cli.commands.dataset`
 
 ### Function `add_dataset_command(subparsers)`
@@ -10581,6 +10607,168 @@ Raises
 ValueError
     For an unknown function, wrong operand count, a format
     :func:`check_format` refuses, or binary/``softplus``/``round``/``rsqrt`` input codes outside the declared word domain.
+
+---
+
+## Module `compiler.guarantee_summary`
+
+### Class `FormalEvidence`
+A tracked SymbiYosys job that checks one library module on its own.
+
+Attributes
+----------
+job : str
+    Repository path of the ``.sby`` job.
+mode : str
+    SymbiYosys mode, ``prove`` (induction) or ``bmc`` (bounded).
+depth : int
+    Induction or bounded-model-check depth in clock cycles.
+engine : str
+    Engine line of the job, including an explicit solver when it names one.
+assertions : int
+    Assertions in the job's harness.
+assumptions : tuple of str
+    Assumption statements of the harness, as written.
+parameters : Mapping&#91;str, str&#93;
+    Every module parameter as the harness instantiates it, as written.
+defaults : Mapping&#91;str, str&#93;
+    The module's own parameter defaults, as written in its declaration.
+
+
+### Class `CosimEvidence`
+A committed test that simulates a library module's emitted RTL against Python.
+
+Attributes
+----------
+test : str
+    Repository path of the co-simulation test.
+
+
+### Class `LibraryModule`
+A library module the IR compiler instantiates, with the evidence it has.
+
+Attributes
+----------
+name : str
+    Verilog module name.
+evidence : FormalEvidence or CosimEvidence
+    Its own formal job, or, when it has none, its co-simulation test.
+
+
+### Class `OperationRule`
+How the IR compiler emits one operation keyword.
+
+Attributes
+----------
+module : str or None
+    Library module the operation instantiates, or ``None`` for inline logic.
+stochastic : bool
+    Whether the operation's value is a stochastic-bitstream estimate.
+emitted : str
+    What the compiler writes into the top level for it.
+
+
+### Class `IrGraph`
+The part of an engine ``ScGraph`` the summary reads.
+
+- **name**()
+  - Graph name, also the emitted module name.
+- **to_text**()
+  - Return the graph's IR text.
+- **emit_sv**()
+  - Return the emitted SystemVerilog top level.
+
+### Function `verilog_value(text)`
+Return the integer a Verilog parameter value denotes, or its text when not a literal.
+
+Parameters
+----------
+text : str
+    Parameter value as written, such as ``256``, ``16'sd256`` or ``16'hACE1``.
+
+Returns
+-------
+int or str
+    The literal's value; an expression is returned unchanged, stripped of spaces.
+
+### Function `parse_instances(verilog)`
+Return every library-module instance of a top level, with its parameter assignments.
+
+Parameters
+----------
+verilog : str
+    Emitted SystemVerilog.
+
+Returns
+-------
+list of tuple
+    ``(module, {parameter: value as written})`` in emission order.
+
+### Function `summarize_ir_text(name, text, verilog)`
+Classify every operation of a graph from its IR text and emitted top level.
+
+Parameters
+----------
+name : str
+    Graph name, which is also the emitted module name.
+text : str
+    The graph's IR text, as ``ScGraph.to_text`` writes it.
+verilog : str
+    The SystemVerilog emitted for that graph, whose instances give the parameters.
+
+Returns
+-------
+dict
+    The summary: schema, graph name, SHA-256 of the IR text and of the top level,
+    one entry per operation in graph order, and the number of entries per class.
+
+Raises
+------
+ValueError
+    An operation keyword has no classification, or an operation's module has no
+    matching instance in the top level.
+
+### Function `summarize_graph(graph)`
+Classify every operation of an engine IR graph.
+
+Parameters
+----------
+graph : IrGraph
+    A built or parsed ``sc_neurocore_engine.ScGraph``.
+
+Returns
+-------
+dict
+    The summary of :func:`summarize_ir_text` for the graph's IR text and its
+    emitted top level.
+
+### Function `render_guarantee_text(summary)`
+Render a summary as short text, one line per operation.
+
+Parameters
+----------
+summary : Mapping&#91;str, Any&#93;
+    A summary returned by :func:`summarize_ir_text`.
+
+Returns
+-------
+str
+    Header, one line per operation and the class counts.
+
+### Function `write_guarantee_summary(graph, sv_path)`
+Write the summary of a graph next to its emitted top level.
+
+Parameters
+----------
+graph : IrGraph
+    The graph whose emitted SystemVerilog is at ``sv_path``.
+sv_path : Path
+    Path of the emitted ``.sv`` file.
+
+Returns
+-------
+tuple of Path
+    The JSON and text files, ``<stem>.guarantees.json`` and ``<stem>.guarantees.txt``.
 
 ---
 

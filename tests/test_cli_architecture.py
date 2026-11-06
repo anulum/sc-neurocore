@@ -23,6 +23,7 @@ MAX_COMPOSITION_ROOT_LINES = 150
 
 
 def test_cli_entrypoint_is_packaged_without_legacy_module() -> None:
+    """The CLI is the ``sc_neurocore.cli`` package, and the old single-file module is gone."""
     assert callable(main)
     assert CLI_ROOT.is_dir()
     assert not (REPO_ROOT / "src/sc_neurocore/cli.py").exists()
@@ -30,10 +31,12 @@ def test_cli_entrypoint_is_packaged_without_legacy_module() -> None:
 
 
 def test_command_modules_have_one_registration_boundary() -> None:
+    """Each command module is listed here and registers its commands through one function."""
     command_files = sorted(COMMAND_ROOT.glob("*.py"))
     assert {path.stem for path in command_files} == {
         "__init__",
         "compile",
+        "compile_ir",
         "dataset",
         "deploy",
         "formal",
@@ -69,6 +72,7 @@ def test_cli_split_cannot_regrow_a_godfile() -> None:
 
 
 def test_command_dependency_graph_is_acyclic() -> None:
+    """Command modules import one another without forming a cycle."""
     dependencies: dict[str, set[str]] = {}
     for path in COMMAND_ROOT.glob("*.py"):
         module = path.stem
@@ -97,6 +101,7 @@ def test_command_dependency_graph_is_acyclic() -> None:
 
 
 def test_non_compute_cli_has_no_false_polyglot_mirrors() -> None:
+    """The removed Julia, Mojo and Rust mirrors of the CLI stay removed."""
     stale_mirrors = (
         "src/sc_neurocore/accel/julia/core/cli.jl",
         "src/sc_neurocore/accel/mojo/kernels/cli.mojo",

@@ -19,6 +19,7 @@ from tests.cli_test_support import run_cli
 
 
 def test_version_flag(capsys: pytest.CaptureFixture[str]) -> None:
+    """``--version`` prints the installed package version and exits cleanly."""
     rc = run_cli("--version")
     assert rc == 0
     from sc_neurocore import __version__
@@ -27,17 +28,19 @@ def test_version_flag(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_no_command_prints_grouped_help(capsys: pytest.CaptureFixture[str]) -> None:
+    """Running with no command prints the help grouped by mode, every command listed."""
     rc = run_cli()
     assert rc == 0
     output = capsys.readouterr().out
     assert "usage" in output.lower()
-    assert "Model     info, compile, compile-nir, serve, map-nir" in output
+    assert "Model     info, compile, compile-nir, compile-ir, serve, map-nir" in output
     assert "Hardware  deploy, collect-synthesis, scnir, formal, hub-init" in output
     assert "Studio    studio and studio-* operator commands" in output
     assert "Data      dataset manifest, dataset verify, dataset split" in output
 
 
 def test_command_help_is_progressively_disclosed(capsys: pytest.CaptureFixture[str]) -> None:
+    """A command's own help shows its options and not those of other commands."""
     with pytest.raises(SystemExit, match="0"):
         run_cli("compile-nir", "--help")
     output = capsys.readouterr().out

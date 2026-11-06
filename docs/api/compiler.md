@@ -248,6 +248,31 @@ sc-neurocore compile "dv/dt = -(v)/tau + I" \
 
 ---
 
+### 3.5 IR Graph Compilation and Guarantee Summary
+
+`sc-neurocore compile-ir GRAPH.ir --output DIR` verifies one IR graph, emits its
+SystemVerilog top level and writes a guarantee summary beside it
+(`NAME.guarantees.json` and `NAME.guarantees.txt`). For every operation the
+summary names what the emitted hardware rests on:
+
+| Class | Meaning |
+| --- | --- |
+| `FORMAL` | The operation instantiates a library module with its own tracked SymbiYosys job, and the instance's effective parameters equal those the job's harness proves; the entry gives the job, mode, depth, engine, assertion count, harness assumptions and parameters. Modules with a job today: `sc_bitstream_encoder`, `sc_lif_neuron`, `sc_dcls_layer_core`. |
+| `PROVEN AT OTHER PARAMETERS` | The module has its own job, but the instance differs from the harness in at least one parameter (for example another LFSR seed or threshold), so the proof does not cover it; the entry gives both parameter sets and the differing names. |
+| `CO-SIMULATED ONLY` | The library module has no formal job of its own, but a committed test simulates the emitted RTL against its Python reference. Today: `sc_dense_matrix_layer`, `sc_graph_forward`, `sc_softmax_attention`, `sc_kuramoto_step`. |
+| `PROBABILISTIC` | The value is a stochastic-bitstream estimate (encode, AND, XOR, popcount, decode); the entry records the stream length and seed. No error bound is established for LFSR streams yet, so `bound` is empty. |
+| `NONE` | Inline logic or wiring the compiler writes itself (ports, constants, registers, fixed-point arithmetic, checks), with no separate proof or receipt. |
+
+Instance parameters are read from the emitted top level; a parameter the
+instance does not set takes the module's default. Literals compare by value, so
+`16'sd256` equals `256`. An encoder carries a formal class and `PROBABILISTIC`. The Python API is
+`sc_neurocore.compiler.guarantee_summary` (`summarize_graph`,
+`summarize_ir_text`, `write_guarantee_summary`). The repository tests fail when
+an IR operation has no classification, when the table names a module the emitter
+does not instantiate, when a formal entry no longer matches its committed job,
+harness parameters or module defaults, and, where SymbiYosys and its solvers are installed, when a named job does not
+pass.
+
 ## 4. Python API
 
 ### 4.1 Equation Compiler

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1791
+expected_file_count = 1796
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7242,3 +7242,18 @@ rationale = "Run the AER router supervisor against real router processes, includ
 [[file]]
 path = "tests/test_accel/test_julia_fusion_solver.py"
 rationale = "Run the Julia fusion-solver wrapper against real stand-in executables and its logged results."
+[[file]]
+path = "src/sc_neurocore/compiler/guarantee_summary.py"
+rationale = "Classify every IR operation by the formal job, co-simulation or stochastic estimate its emitted hardware rests on."
+[[file]]
+path = "src/sc_neurocore/cli/commands/compile_ir.py"
+rationale = "Emit one verified IR graph as SystemVerilog with its guarantee summary beside it."
+[[file]]
+path = "tests/test_guarantee_summary.py"
+rationale = "Bind the guarantee table to the IR operations, the emitter, the committed formal jobs and real graphs."
+[[file]]
+path = "tests/test_cli_dispatch.py"
+rationale = "Exercise version, grouped help and per-command help through the public CLI."
+[[file]]
+path = "tests/test_cli_architecture.py"
+rationale = "Protect the command package boundary, its single registrations and the removed CLI mirrors."

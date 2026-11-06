@@ -29,7 +29,7 @@ optional dependencies merely to discover their metadata.
 Top-level help groups the product into five modes:
 
 ```text
-Model     info, compile, compile-nir, serve, map-nir
+Model     info, compile, compile-nir, compile-ir, serve, map-nir
 Hardware  deploy, collect-synthesis, scnir, formal, hub-init
 Studio    studio and studio-* operator commands
 Data      dataset manifest, dataset verify, dataset split
@@ -75,6 +75,7 @@ preserving the original console-script contract.
 | `info` | Report runtime and optional-engine status | package metadata and `sc_neurocore_engine.simd_tier()` |
 | `compile` | Lower one ODE into Verilog and optional HLS C++ | equation builder/compiler, HLS exporter, optional Yosys adapter |
 | `compile-nir` | Lower NIR/ONNX into RTL, SC-NIR metadata, manifests, and optional handoff audit | NIR bridge and SC-NIR writers |
+| `compile-ir` | Emit one IR graph as SystemVerilog with its guarantee summary | engine IR verifier and emitter, `sc_neurocore.compiler.guarantee_summary` |
 | `serve` | Serve a NIR graph over the spike-stream protocol | `sc_neurocore.serve.SpikeServer` |
 | `map-nir` | Emit deterministic target-mapping evidence | NIR silicon-mapping writer |
 
@@ -124,6 +125,25 @@ bundles include the top module, neuron modules, weight ROM, stochastic source
 modules, hierarchy boundary modules when present, `scnir_document.json`, and
 `scnir_source_manifest.json`. Folded builds additionally write
 `folded_metrics.json`.
+
+Compile an IR graph and record what each operation is guaranteed by:
+
+```bash
+sc-neurocore compile-ir encoder_demo.ir --output build/encoder_demo
+```
+
+`compile-ir` reads IR text (`sc.graph @name { ... }`), refuses a graph that does
+not parse or fails IR verification, and writes `NAME.sv` with
+`NAME.guarantees.json` and `NAME.guarantees.txt` beside it. The summary gives each
+operation one or two classes: `FORMAL` (a library module with its own tracked
+SymbiYosys job whose harness proves exactly the instance's parameters, with mode,
+depth, engine, assertion count, assumptions and parameters), `PROVEN AT OTHER
+PARAMETERS` (the module's job proves other parameters than the instance uses; both
+sets and the differing names are given), `CO-SIMULATED ONLY` (a library module whose emitted RTL is simulated against its
+Python reference by a committed test), `PROBABILISTIC` (a stochastic-bitstream
+estimate with its stream length and seed; no error bound is established for LFSR
+streams yet) or `NONE` (inline logic or wiring). The same summary is available from
+Python through `sc_neurocore.compiler.guarantee_summary.summarize_graph`.
 
 Serve and map a graph:
 

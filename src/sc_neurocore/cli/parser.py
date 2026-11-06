@@ -15,6 +15,7 @@ from collections.abc import Callable, Sequence
 from typing import cast
 
 from .commands.compile import add_compile_commands
+from .commands.compile_ir import add_compile_ir_command
 from .commands.dataset import add_dataset_command
 from .commands.deploy import add_deploy_command
 from .commands.formal import add_formal_command
@@ -30,7 +31,7 @@ from .commands.train import add_train_command
 
 _HELP_EPILOG = """\
 Modes and first steps:
-  Model     info, compile, compile-nir, serve, map-nir
+  Model     info, compile, compile-nir, compile-ir, serve, map-nir
   Hardware  deploy, collect-synthesis, scnir, formal, hub-init
   Studio    studio and studio-* operator commands
   Data      dataset manifest, dataset verify, dataset split
@@ -69,6 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     add_info_command(subparsers)
     add_compile_commands(subparsers)
+    add_compile_ir_command(subparsers)
     add_serve_command(subparsers)
     add_mapping_command(subparsers)
     add_deploy_command(subparsers)
