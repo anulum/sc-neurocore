@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import ast
+
 import pytest
 
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
@@ -75,10 +77,14 @@ def test_a_text_that_exhausts_the_parser_is_refused_not_raised() -> None:
 
     CPython's parser raises ``MemoryError`` ("Parser stack overflowed") on 3,000
     chained powers in 8,998 characters, on Python 3.11 to 3.14. A chain of
-    100,000 additions makes it raise ``RecursionError`` on the same versions, and
-    is reached here through a validator with a larger length limit. Random
-    draw-site numbering, which parses a neuron's raw text before the gate, finds no
-    calls in either text and leaves the refusal to the gate.
+    100,000 additions, reached through a validator with a larger length limit,
+    makes it raise ``RecursionError`` where the C stack limits the parser; that limit
+    depends on the interpreter and the host (Python 3.14 on the hosted runners
+    parses the chain). The expected refusal is therefore taken from this
+    interpreter's own parse: the parser refusal where it recurses too deeply, the
+    depth refusal where it does not. Random draw-site numbering, which parses a
+    neuron's raw text before the gate, finds no calls in either text and leaves
+    the refusal to the gate.
     """
     powers = "**".join(["v"] * 3000)
     additions = " + ".join(["v"] * 100_000)
@@ -86,7 +92,13 @@ def test_a_text_that_exhausts_the_parser_is_refused_not_raised() -> None:
     message = "Equation expression is too deep to parse"
     with pytest.raises(EquationRefusal, match=message):
         ExpressionSafetyValidator().validate(powers)
-    with pytest.raises(EquationRefusal, match=message):
+    try:
+        ast.parse(additions, mode="eval")
+    except RecursionError:
+        expected = message
+    else:
+        expected = "Equation AST depth 100002 exceeds limit 20"
+    with pytest.raises(EquationRefusal, match=expected):
         ExpressionSafetyValidator(max_length=len(additions)).validate(additions)
     assert not draws_in([powers, additions])
     with pytest.raises(EquationRefusal, match=message):

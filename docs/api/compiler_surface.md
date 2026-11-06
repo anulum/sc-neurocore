@@ -61,6 +61,7 @@ can change without a deprecation window.
 | `function_unit_ir` | internal build tool | Straight-line 64-bit integer program behind the `v2` function units and the random draws, emitted to Verilog, C and Rust. |
 | `function_unit_programs` | internal build tool | Builds each `v2` function unit as an integer program for the expression emitters. |
 | `function_units` | internal build tool | Integer reference of the `v2` function units that the RTL and the bit-true kernel mirror. |
+| `guarantee_summary` | direct public module | Writes, beside an emitted IR top level, which library module, formal job, co-simulation or stochastic estimate each operation rests on (`compile-ir`). |
 | `guard_bits` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
 | `hardware_numeric_contract` | direct public module | Reports the RTL encoding of a neuron at a chosen fixed-point format for Studio and compiler consumers. |
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
