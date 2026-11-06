@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Drop the unused `pyo3-build-config` build dependency from the engine crate.
+  The crate has no build script, so the dependency was never used; the
+  published crate and the lockfiles no longer list it.
+
 - Attach a signed SLSA build provenance attestation (Sigstore, through GitHub
   artifact attestations) to every GitHub Release file and to the release
   image pushed to GHCR. `SECURITY.md` shows how to verify them with

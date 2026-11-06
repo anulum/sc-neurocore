@@ -639,7 +639,6 @@ dependencies = [
  "ndarray",
  "numpy",
  "pyo3",
- "pyo3-build-config",
  "rand",
  "rand_chacha",
  "rand_distr",
