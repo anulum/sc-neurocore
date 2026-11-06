@@ -154,8 +154,9 @@ module sc_shd_top #(
 
     // Delay initialisation: only performed during simulation. Synthesis
     // tools (yosys, Vivado) define `SYNTHESIS` so the `$readmemh` calls
-    // are skipped — the delay tables become uninitialised memories that
-    // the real bitstream writes through AXI at boot time.
+    // are skipped and the delay tables become uninitialised memories.
+    // No load path fills them yet: sc_shd_axi_wrapper.v has no delay
+    // register, so a synthesised design carries no trained delays.
     initial begin
 `ifndef SYNTHESIS
         $readmemh("delays_layer1.hex", delays_l1_mem);

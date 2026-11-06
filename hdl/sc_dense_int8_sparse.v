@@ -20,7 +20,7 @@
 // while preserving 16-bit fractional precision for the small per-tensor
 // scales seen in practice (~1e-4 to 1e-1).
 //
-// Weights are loaded once at elaboration time from a flat $readmemh hex
+// In simulation, weights are loaded once at elaboration time from a flat $readmemh hex
 // file (one 8-bit signed value per line, row-major order
 // `[j*IN_FEATURES + i]`), exactly the format emitted by
 // tools/extract_shd_weights.py::write_int8_hex(). The path is a string
@@ -68,8 +68,9 @@ module sc_dense_int8_sparse #(
 
     // Weight initialisation: only performed during simulation. Synthesis
     // tools (yosys, Vivado) define `SYNTHESIS` so the `$readmemh` call is
-    // skipped — the weight ROM becomes an uninitialised BRAM/LUT that the
-    // real bitstream writes through AXI at boot time. The default
+    // skipped and the weight ROM becomes an uninitialised BRAM/LUT. No load
+    // path fills it yet: sc_shd_axi_wrapper.v has no weight register, so a
+    // synthesised design carries no trained weights. The default
     // WEIGHT_FILE = "weights.hex" is only meaningful to simulation
     // testbenches that stage the file into their temporary work dir.
     initial begin
