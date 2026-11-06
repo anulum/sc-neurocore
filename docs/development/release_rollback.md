@@ -19,6 +19,21 @@ in place. A faulty release is withdrawn and then fixed forward with a new patch 
 - **Never reuse a version number.** PyPI and crates.io refuse a re-upload of the same version anyway.
 - **Record every step**, with its time and the reason, in the release record of the coordination log.
 
+## Partial publication
+
+`publish.yml` (PyPI and crates.io), `docker.yml` (GHCR) and `release.yml` (GitHub Release) start independently on
+the tag, so one can fail after another has published. First decide whether a published artifact is faulty or a
+channel is only missing.
+
+- **A channel is missing and the published artifacts are good.** Re-run the failed jobs of that tag run. The uploads
+  are idempotent: both PyPI steps skip files PyPI already holds (`skip-existing`), and the crate job skips a version
+  that crates.io already lists. A missing GitHub Release can also be published from the tag by dispatching
+  `release.yml` with `tag` set to the release tag and `publish` set to true.
+- **A published artifact is faulty.** Withdraw it as below, even when other channels never published, and fix
+  forward.
+
+Record the partial state and how it was completed in the release record.
+
 ## Withdraw the faulty version
 
 Do only the steps that apply to the fault.

@@ -97,6 +97,36 @@ def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
     assert "Unexpected crates.io release status" in publish_text
 
 
+def test_rollback_plan_completes_a_partial_publication_only_by_existing_mechanisms() -> None:
+    """The plan's recovery of a partly published tag names only what the workflows provide.
+
+    Re-running a tag run is safe only because both PyPI uploads skip existing files and the
+    crate job skips a listed version; the GitHub Release backfill is a ``release.yml``
+    dispatch with ``tag`` and ``publish`` inputs that checks out that tag.
+    """
+    plan = " ".join(
+        (_repo_root() / "docs" / "development" / "release_rollback.md").read_text("utf-8").split()
+    )
+    section = plan[
+        plan.index("## Partial publication") : plan.index("## Withdraw the faulty version")
+    ]
+    for workflow_name in ("publish.yml", "docker.yml", "release.yml"):
+        assert f"`{workflow_name}`" in section
+        events = cast(dict[Any, Any], _named_workflow(workflow_name)).get(True, {})
+        assert events["push"]["tags"] == ["v*"]
+    assert "`skip-existing`" in section
+    jobs = _workflow()["jobs"]
+    for job_name in ("publish-python-pypi", "publish-engine-pypi"):
+        assert _uses_step(jobs[job_name], "pypa/gh-action-pypi-publish@")["with"]["skip-existing"]
+    assert "skipping publish." in _run_text(jobs["publish-crate"])
+    assert "dispatching `release.yml` with `tag`" in section and "`publish` set to true" in section
+    release = _named_workflow("release.yml")
+    inputs = cast(dict[Any, Any], release).get(True, {})["workflow_dispatch"]["inputs"]
+    assert inputs["tag"]["required"] is True and inputs["publish"]["type"] == "boolean"
+    checkout = release["jobs"]["release"]["steps"][0]
+    assert "inputs.publish && inputs.tag" in checkout["with"]["ref"]
+
+
 def test_both_crate_jobs_query_the_registry_through_one_tool() -> None:
     """A dispatch without publishing proves the same registry query the tag run needs."""
     jobs = _workflow()["jobs"]
