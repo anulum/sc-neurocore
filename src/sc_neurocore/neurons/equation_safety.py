@@ -24,8 +24,8 @@ their classes. Reading any other attribute is refused for the same reason.
 The earlier rules stay in force and report first: builtins and escape names
 are refused by name, string constants are refused (a format string's field
 names reach any attribute or index, dunders included, where no node check
-sees them), and deep trees, giant constants and large or nested exponents are
-refused before they can exhaust the evaluator. Three further rules bound what
+sees them), and over-long text, deep trees, giant constants and large or nested
+exponents are refused before they can exhaust the parser or the evaluator. Three further rules bound what
 an accepted expression can ask for: an array function of the namespace cannot
 be handed an output array (a positional argument after its inputs must be the
 literal ``None``), and a tuple or list literal cannot be repeated or
@@ -124,6 +124,16 @@ that means "no output array". How many inputs a call must supply is left to
 the function itself and to the callers' own signature checks.
 """
 
+_DEFAULT_MAX_EXPRESSION_LENGTH = 16_384
+"""Longest expression text, in characters, that is parsed at all.
+
+The depth limit bounds nesting, not width: a balanced tree of depth 20 can hold
+hundreds of thousands of literals, and both the parse and a product of those
+literals grow with the text. The longest expression of the model catalogue and
+the longest symbolic derivative taken from its dynamics have 738 characters each
+(November 2026), so this bound leaves a wide margin for authored models.
+"""
+
 _DEFAULT_MAX_AST_DEPTH = 20
 """Maximum expression AST nesting depth (stack-exhaustion / obfuscation guard)."""
 
@@ -190,8 +200,8 @@ _BLOCKED_NAMES = {
 class ExpressionSafetyValidator:
     """Validate equation expression strings against the AST allowlist.
 
-    Holds the allowed node set, the blocked-name set, and the maximum AST depth,
-    and exposes :meth:`validate` and :meth:`checked_tree`, which raise
+    Holds the allowed node set, the blocked-name set, the maximum text length and
+    the maximum AST depth, and exposes :meth:`validate` and :meth:`checked_tree`, which raise
     :class:`ValueError` on any disallowed construct. The same validator instance
     is reused for a neuron's dynamics, threshold, reset rules, and (for
     exponential Euler) its symbolic Jacobian. A program is only ever built from
@@ -199,13 +209,48 @@ class ExpressionSafetyValidator:
     without having passed this gate.
     """
 
-    def __init__(self, *, max_depth: int = _DEFAULT_MAX_AST_DEPTH) -> None:
-        """Create a validator with the given maximum AST depth."""
+    def __init__(
+        self,
+        *,
+        max_depth: int = _DEFAULT_MAX_AST_DEPTH,
+        max_length: int = _DEFAULT_MAX_EXPRESSION_LENGTH,
+    ) -> None:
+        """Create a validator with the given maximum AST depth and text length.
+
+        Parameters
+        ----------
+        max_depth : int, optional
+            Deepest AST nesting accepted.
+        max_length : int, optional
+            Longest expression text, in characters, that is parsed.
+        """
         self._max_depth = max_depth
+        self._max_length = max_length
 
     def validate(self, expr: str) -> None:
         """Validate an expression against the AST whitelist."""
         self.checked_tree(expr)
+
+    def check_length(self, expr: str) -> None:
+        """Refuse a text longer than the length limit, without parsing or repeating it.
+
+        :meth:`checked_tree` applies this first. A caller that must parse raw
+        text for another purpose before the gate runs calls it beforehand.
+
+        Parameters
+        ----------
+        expr : str
+            Authored expression.
+
+        Raises
+        ------
+        EquationRefusal
+            The text is longer than the validator's ``max_length``.
+        """
+        if len(expr) > self._max_length:
+            raise EquationRefusal(
+                f"Equation expression of {len(expr)} characters exceeds limit {self._max_length}"
+            )
 
     def checked_tree(self, expr: str) -> ast.Expression:
         """Parse an expression, apply every rule and return the checked tree.
@@ -223,9 +268,11 @@ class ExpressionSafetyValidator:
         Raises
         ------
         EquationRefusal
-            The expression does not parse or breaks a rule of the gate.
+            The expression is longer than the length limit, does not parse or
+            breaks a rule of the gate. The length refusal does not repeat the text.
 
         """
+        self.check_length(expr)
         try:
             tree = ast.parse(expr, mode="eval")
         except SyntaxError as e:

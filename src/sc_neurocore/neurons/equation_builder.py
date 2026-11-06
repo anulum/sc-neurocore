@@ -197,6 +197,19 @@ class EquationNeuron:
         self.substeps = substeps
         self.rate_expression = rate_expression
         self.probability_expression = probability_expression
+        # Numbering the random draw sites below is the first parse of the raw text,
+        # so the gate's length bound is applied before it.
+        self._safety = ExpressionSafetyValidator()
+        for raw in (
+            *equations.values(),
+            threshold,
+            *self.reset_rules.values(),
+            rate_expression,
+            probability_expression,
+            spike_value,
+        ):
+            if raw is not None:
+                self._safety.check_length(str(raw))
         try:
             numbered = number_random_sites(
                 [
@@ -350,7 +363,6 @@ class EquationNeuron:
         self._noise_rng = noise_rng
         self._xi_substep = 0
 
-        self._safety = ExpressionSafetyValidator()
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
         if self.threshold_expr:
             all_exprs.append(self.threshold_expr)

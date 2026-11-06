@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refuse an equation expression longer than 16,384 characters before it is
+  parsed, with a message that states the length and does not repeat the
+  text. The depth limit bounded nesting but not width, so a long balanced
+  expression could make the parser, and a product of its literals, as large
+  as its text. The longest expression of the model catalogue, and the longest
+  symbolic derivative of its dynamics, have 738 characters. A validator can
+  set its own bound with `max_length`, and an equation neuron applies the
+  bound to every expression before any of its text is parsed.
+
 - Record the engine-loader re-exports that 4.0.0 removed without a line in
   its notes. `bridges.quantum_annealing` no longer offers `get_ising_energy`,
   `get_batch_ising_energy`, `get_simulated_annealing` and

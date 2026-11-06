@@ -28604,18 +28604,20 @@ Preserve unavailable-symbol compatibility without generated diagnostics.
 ### Class `ExpressionSafetyValidator`
 Validate equation expression strings against the AST allowlist.
 
-Holds the allowed node set, the blocked-name set, and the maximum AST depth,
-and exposes :meth:`validate` and :meth:`checked_tree`, which raise
+Holds the allowed node set, the blocked-name set, the maximum text length and
+the maximum AST depth, and exposes :meth:`validate` and :meth:`checked_tree`, which raise
 :class:`ValueError` on any disallowed construct. The same validator instance
 is reused for a neuron's dynamics, threshold, reset rules, and (for
 exponential Euler) its symbolic Jacobian. A program is only ever built from
 the tree that :meth:`checked_tree` returns, so no expression is evaluated
 without having passed this gate.
 
-- **__init__**(\*, max_depth)
-  - Create a validator with the given maximum AST depth.
+- **__init__**(\*, max_depth, max_length)
+  - Create a validator with the given maximum AST depth and text length.
 - **validate**(expr)
   - Validate an expression against the AST whitelist.
+- **check_length**(expr)
+  - Refuse a text longer than the length limit, without parsing or repeating it.
 - **checked_tree**(expr)
   - Parse an expression, apply every rule and return the checked tree.
 

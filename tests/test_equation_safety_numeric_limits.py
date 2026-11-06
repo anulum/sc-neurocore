@@ -6,13 +6,67 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Equation safety numeric-limit tests
 
-"""Nested exponentiation, exponent ceiling, and literal-magnitude contracts."""
+"""Text length, nested exponentiation, exponent ceiling, and literal-magnitude contracts."""
 
 from __future__ import annotations
 
 import pytest
 
-from sc_neurocore.neurons.equation_safety import ExpressionSafetyValidator
+from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
+from sc_neurocore.neurons.equation_safety import (
+    _DEFAULT_MAX_EXPRESSION_LENGTH,
+    ExpressionSafetyValidator,
+)
+
+
+def test_expression_text_beyond_the_length_limit_is_refused_before_parsing() -> None:
+    """A text one character over the limit is refused by length, even when it would not parse.
+
+    The refusal names the length and the limit and does not repeat the text.
+    """
+    limit = _DEFAULT_MAX_EXPRESSION_LENGTH
+    ExpressionSafetyValidator().validate("v" * limit)
+    for text in ("v" * (limit + 1), "(" * (limit + 1)):
+        with pytest.raises(
+            EquationRefusal, match=f"of {limit + 1} characters exceeds limit {limit}"
+        ) as refusal:
+            ExpressionSafetyValidator().validate(text)
+        assert len(str(refusal.value)) < 100
+
+
+def test_a_validator_applies_its_own_length_limit() -> None:
+    """``max_length`` sets the bound; the default applies otherwise."""
+    short = ExpressionSafetyValidator(max_length=8)
+    short.validate("v + 1.25")
+    with pytest.raises(EquationRefusal, match="of 9 characters exceeds limit 8"):
+        short.validate("v + w * 2")
+    ExpressionSafetyValidator().validate("v + w * 2")
+
+
+def test_a_neuron_applies_the_length_limit_before_it_parses_any_text() -> None:
+    """Every public construction refuses an over-long expression by length, before any parse.
+
+    Numbering the random draw sites is the first parse of a neuron's raw text; a
+    deeply chained text that it would fail to parse is refused by length instead.
+    """
+    limit = _DEFAULT_MAX_EXPRESSION_LENGTH
+    at_limit = "-v + 0." + "0" * (limit - len("-v + 0."))
+    assert len(at_limit) == limit
+    EquationNeuron({"v": at_limit}, threshold="v > 1", reset={"v": "0.0"})
+    over = at_limit + "0"
+    message = f"of {limit + 1} characters exceeds limit {limit}"
+    with pytest.raises(EquationRefusal, match=message):
+        EquationNeuron({"v": over}, threshold="v > 1")
+    with pytest.raises(EquationRefusal, match=message):
+        EquationNeuron({"v": "-v"}, threshold="v > 1", reset={"v": over})
+    with pytest.raises(EquationRefusal, match=message):
+        from_equations(f"dv/dt = {over}", threshold="v > 1")
+    chained = "v*0" + "+1" * 20000
+    with pytest.raises(
+        EquationRefusal, match=f"of {len(chained)} characters exceeds limit {limit}"
+    ):
+        EquationNeuron({"v": chained}, threshold="v > 1")
 
 
 def test_nested_exponentiation_is_rejected() -> None:
