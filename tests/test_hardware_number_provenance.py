@@ -120,3 +120,34 @@ def test_every_quoted_synthesis_figure_says_it_has_no_weights() -> None:
                     f"{relative} quotes the {luts} LUT synthesis without saying it has no weights"
                 )
     assert quoted >= 5
+
+
+def test_a_qualified_section_quotes_only_the_reported_figures() -> None:
+    """Every LUT and flip-flop count beside the qualifier is the one the report measured.
+
+    The qualifier rule alone accepts a wrong number written next to it, so each
+    section or line that carries the qualifier must quote exactly the reported
+    LUT and register counts and no other.
+    """
+    report = _UTIL_REPORT.read_text(encoding="utf-8")
+    luts, _ = _site_row(report, "Slice LUTs*")
+    regs, _ = _site_row(report, "Slice Registers")
+    patterns = {
+        luts: (r"\b(\d[\d ,]*)\s?LUT\b", r"\|\s*LUTs\s*\|\s*([\d ,]+)\|"),
+        regs: (r"\b(\d[\d ,]*)\s?FF\b", r"\|\s*Flip-flops\s*\|\s*([\d ,]+)\|"),
+    }
+    checked = 0
+    for relative in _PUBLIC_FILES:
+        text = (_ROOT / relative).read_text(encoding="utf-8")
+        for block in _figure_blocks(relative, text):
+            if _QUALIFIER not in block:
+                continue
+            for expected, expressions in patterns.items():
+                for expression in expressions:
+                    for figure in re.findall(expression, block):
+                        checked += 1
+                        assert int(re.sub(r"[ ,]", "", figure)) == expected, (
+                            f"{relative} quotes {figure.strip()} beside the qualifier, "
+                            f"not the reported {expected}"
+                        )
+    assert checked >= 8
