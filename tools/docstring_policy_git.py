@@ -130,7 +130,12 @@ def baseline_commit(root: Path, environment: Mapping[str, str]) -> str:
 
 
 def changed_python_paths(root: Path, baseline: str) -> set[str]:
-    """Discover changed tracked and untracked Python files across all source roots.
+    """Discover the Python files that the commit candidate adds or changes.
+
+    The candidate is the index: what the next commit records, which in CI is
+    the checked-out commit itself. Files present only in the working tree, such
+    as another contributor's uncommitted work, are not part of the candidate and
+    cannot change the verdict; a new module is judged once it is staged.
 
     Parameters
     ----------
@@ -147,13 +152,20 @@ def changed_python_paths(root: Path, baseline: str) -> set[str]:
     Raises
     ------
     PolicyError
-        If either complete native source query fails or has invalid encoding.
+        If the native index query fails or a path is not valid UTF-8.
     """
     changed = git_bytes(
-        root, "diff", "--name-only", "-z", "--diff-filter=ACMRT", baseline, "--", "*.py"
+        root,
+        "diff",
+        "--cached",
+        "--name-only",
+        "-z",
+        "--diff-filter=ACMRT",
+        baseline,
+        "--",
+        "*.py",
     )
-    untracked = git_bytes(root, "ls-files", "--others", "--exclude-standard", "-z", "--", "*.py")
     try:
-        return {part.decode("utf-8") for part in (changed + untracked).split(b"\0") if part}
+        return {part.decode("utf-8") for part in changed.split(b"\0") if part}
     except UnicodeError as exc:
         raise PolicyError("Changed source paths must be valid UTF-8.") from exc

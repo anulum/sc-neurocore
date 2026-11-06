@@ -18,6 +18,7 @@ import pytest
 
 from tests.docstring_policy_guard_support import (
     DOCUMENTED_SOURCE,
+    fixture_git,
     repository_fixture,
     run_guard,
     write_policy,
@@ -32,6 +33,7 @@ def test_original_and_enrolled_addition_preserve_native_provenance(tmp_path: Pat
     original = (root / "docs/docstring_policy.toml").read_bytes()
     assert run_guard(root).returncode == 0
     (root / "new.py").write_text(DOCUMENTED_SOURCE, encoding="utf-8")
+    fixture_git(root, "add", "new.py")
     policy = write_policy(root, ["original.py", "new.py"], minimum=30)
     result = check_scope(root, {})
     assert result.violations == ()
@@ -68,12 +70,13 @@ def test_original_rules_cannot_be_weakened(tmp_path: Path, candidate: str) -> No
     "directory", ["src", "tests", "tools", "examples", "research", "cosim", "bridge", "hdl"]
 )
 def test_new_python_files_in_every_root_require_enrollment(tmp_path: Path, directory: str) -> None:
-    """Discover untracked Python inputs even in roots excluded by ordinary Ruff."""
+    """Discover staged Python additions even in roots excluded by ordinary Ruff."""
     root = repository_fixture(tmp_path)
     folder = root / directory
     folder.mkdir()
     relative = f"{directory}/new.py"
     (root / relative).write_text("def undocumented():\n    return 1\n", encoding="utf-8")
+    fixture_git(root, "add", relative)
     result = check_scope(root, {})
     assert result.changed_files == 1
     assert f"Missing required policy file: {relative}" in result.violations
@@ -81,13 +84,11 @@ def test_new_python_files_in_every_root_require_enrollment(tmp_path: Path, direc
 
 
 def test_changed_tracked_and_staged_python_are_enrolled(tmp_path: Path) -> None:
-    """Preserve tracked changes and staged additions in the complete Git cohort."""
-    from tests.docstring_policy_guard_support import fixture_git
-
+    """Preserve staged changes to tracked files and staged additions in the cohort."""
     root = repository_fixture(tmp_path)
     (root / "original.py").write_text(DOCUMENTED_SOURCE + "VALUE = 2\n", encoding="utf-8")
     (root / "staged.py").write_text(DOCUMENTED_SOURCE, encoding="utf-8")
-    fixture_git(root, "add", "staged.py")
+    fixture_git(root, "add", "original.py", "staged.py")
     result = check_scope(root, {})
     assert result.changed_files == 2
     assert result.violations == ("Missing required policy file: staged.py",)
@@ -244,5 +245,23 @@ def test_native_path_encoding_failure_and_cli_return_values(
     bad = os.fsencode(root) + b"/invalid\xff.py"
     descriptor = os.open(bad, os.O_CREAT | os.O_WRONLY, 0o600)
     os.close(descriptor)
+    fixture_git(root, "add", "--all")
     assert main(["--repo", str(root)]) == 2
     assert "UTF-8" in capsys.readouterr().err
+
+
+def test_work_outside_the_commit_candidate_does_not_change_the_verdict(tmp_path: Path) -> None:
+    """Another contributor's untracked or unstaged work is not judged with this commit.
+
+    Pre-commit hides unstaged changes to tracked files but leaves untracked files in
+    place, so a concurrent contributor's new module stays visible on disk. Only the
+    staged candidate counts: the same module is refused once it is staged.
+    """
+    root = repository_fixture(tmp_path)
+    (root / "foreign.py").write_text("def undocumented():\n    return 1\n", encoding="utf-8")
+    (root / "original.py").write_text("def undocumented():\n    return 1\n", encoding="utf-8")
+    result = check_scope(root, {})
+    assert result.violations == () and result.changed_files == 0
+    assert run_guard(root).returncode == 0
+    fixture_git(root, "add", "foreign.py")
+    assert check_scope(root, {}).violations == ("Missing required policy file: foreign.py",)
