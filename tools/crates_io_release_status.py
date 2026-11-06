@@ -56,7 +56,7 @@ def crate_identity(manifest: Path) -> tuple[str, str]:
     return name, version
 
 
-def release_status(name: str, version: str, api: str = CRATES_API) -> str:
+def release_status(name: str, version: str, api: str = CRATES_API, timeout: float = 30.0) -> str:
     """Ask the registry whether one crate version exists.
 
     Parameters
@@ -67,6 +67,8 @@ def release_status(name: str, version: str, api: str = CRATES_API) -> str:
         Exact crate version.
     api : str, optional
         Base address of the crates API.
+    timeout : float, optional
+        Seconds to wait for the connection and each read before failing.
 
     Returns
     -------
@@ -84,7 +86,7 @@ def release_status(name: str, version: str, api: str = CRATES_API) -> str:
     request = urllib.request.Request(f"{api}/{name}/{version}", headers={"User-Agent": USER_AGENT})
     try:
         # The address is the fixed crates API or an explicit test or mirror base.
-        with urllib.request.urlopen(request, timeout=30) as response:  # nosec B310
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
             status = response.status
     except urllib.error.HTTPError as error:
         with error:

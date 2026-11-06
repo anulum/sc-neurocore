@@ -17,6 +17,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 import http.server
+import socket
 from pathlib import Path
 import subprocess
 import sys
@@ -218,3 +219,32 @@ def test_the_script_runs_as_the_workflow_calls_it() -> None:
         )
     assert completed.returncode == 0, completed.stderr
     assert completed.stdout == "published\n"
+
+
+def test_a_refusal_keeps_only_the_start_of_a_long_body() -> None:
+    """The error message carries at most 4096 bytes of the registry's response body."""
+    body = b"a" * 4096 + b"b" * 4096
+    with registry(403, body) as (api, _), pytest.raises(RuntimeError) as caught:
+        release_status("sc_neurocore_engine", "4.0.0", api)
+    message = str(caught.value)
+    assert "a" * 4096 in message and "b" not in message.split(":", 1)[1]
+
+
+def test_a_registry_that_never_answers_fails_within_the_timeout() -> None:
+    """A registry that accepts the connection but never answers fails instead of hanging."""
+    outcome: list[BaseException] = []
+
+    def query(port: int) -> None:
+        try:
+            release_status(
+                "sc_neurocore_engine", "4.0.0", f"http://127.0.0.1:{port}/api", timeout=0.5
+            )
+        except BaseException as error:
+            outcome.append(error)
+
+    with socket.create_server(("127.0.0.1", 0)) as silent:
+        worker = threading.Thread(target=query, args=(silent.getsockname()[1],), daemon=True)
+        worker.start()
+        worker.join(timeout=10)
+        assert not worker.is_alive(), "the query waited past its timeout"
+    assert len(outcome) == 1 and isinstance(outcome[0], TimeoutError)
