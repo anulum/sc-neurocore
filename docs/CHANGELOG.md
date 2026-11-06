@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Attach a signed SLSA build provenance attestation (Sigstore, through GitHub
+  artifact attestations) to every GitHub Release file and to the release
+  image pushed to GHCR. `SECURITY.md` shows how to verify them with
+  `gh attestation verify`.
+
 - Smoke-test every engine wheel before the PyPI upload on a runner of its own
   platform and with its own Python: Linux x86-64 and arm64, Windows and macOS,
   Python 3.11 to 3.14. Before, only the Linux x86-64 wheel for Python 3.12 was

@@ -601,6 +601,51 @@ def test_container_image_is_scanned_before_any_push() -> None:
     assert _step(job, "Extract metadata")[1]["with"]["flavor"].split() == ["latest=auto"]
 
 
+_ATTEST = "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8"
+
+
+def test_release_files_and_image_get_signed_build_provenance() -> None:
+    """Every Release file and the pushed image carry a Sigstore-signed build provenance.
+
+    The release job attests exactly the files it attaches, under the same condition and
+    before the Release is created; the Docker job attests the digest the registry reported
+    for the pushed image and stores the attestation in the registry.
+    """
+    release = _named_workflow("release.yml")["jobs"]["release"]
+    assert release["permissions"] == {
+        "contents": "write",
+        "id-token": "write",
+        "attestations": "write",
+    }
+    notes_at, _ = _step(release, "Release notes for this tag")
+    attest_at, attest = _step(release, "Attest the release attachments")
+    create_at, create = _step(release, "Create GitHub Release")
+    assert notes_at < attest_at < create_at
+    assert attest["uses"] == _ATTEST
+    assert attest["if"] == create["if"]
+    assert attest["with"] == {"subject-path": create["with"]["files"]}
+
+    docker = _named_workflow("docker.yml")["jobs"]["build-push"]
+    assert docker["permissions"]["id-token"] == "write"
+    assert docker["permissions"]["attestations"] == "write"
+    push_at, _ = _step(docker, "Push the scanned image")
+    wait_at, _ = _step(docker, "Wait for GHCR image availability")
+    digest_at, digest = _step(docker, "Resolve the pushed image digest")
+    image_at, image = _step(docker, "Attest the pushed image")
+    assert push_at < wait_at < digest_at < image_at
+    assert '[[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]' in digest["run"]
+    assert image["uses"] == _ATTEST
+    assert image["with"] == {
+        "subject-name": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",
+        "subject-digest": "${{ steps.digest.outputs.digest }}",
+        "push-to-registry": True,
+    }
+
+    security = (_repo_root() / "SECURITY.md").read_text("utf-8")
+    assert "gh attestation verify oci://ghcr.io/anulum/sc-neurocore:<version>" in security
+    assert "gh attestation verify sc_neurocore-<version>.tar.gz" in security
+
+
 def test_release_fuzz_subset_can_import_the_package() -> None:
     """The release sweep's fuzz subset imports the package, so the runtime lock is installed with it."""
     release = _named_workflow("release.yml")["jobs"]["release"]

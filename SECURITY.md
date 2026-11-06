@@ -62,6 +62,19 @@ correct Python ↔ Rust conversions.
   on SBOM metadata drift as well as hard errors such as un-hashed release
   requirements.
 
+### Release provenance
+- The Python package is uploaded to PyPI through trusted publishing, and
+  its files carry PyPI provenance attestations.
+- Releases tagged after 4.0.0 also attach a signed SLSA build provenance
+  attestation (Sigstore, GitHub artifact attestations) to every GitHub
+  Release file and to the release image on GHCR. Verify them with the
+  GitHub CLI:
+
+  ```bash
+  gh attestation verify sc_neurocore-<version>.tar.gz -R anulum/sc-neurocore
+  gh attestation verify oci://ghcr.io/anulum/sc-neurocore:<version> -R anulum/sc-neurocore
+  ```
+
 ## Known Limitations
 
 - **No fuzzing harness yet.** Property-based testing via `proptest` (Rust) and
